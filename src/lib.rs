@@ -2,4 +2,5 @@
 
 //! PineAPPL is not an extension of APPLgrid.
 
+pub mod grid;
 pub mod lumi;
