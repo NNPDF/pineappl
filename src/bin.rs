@@ -24,7 +24,15 @@ pub enum BinLimits {
 impl BinLimits {
     /// Constructor for BinLimits. This function automatically decides whether the given `limits`
     /// are `Equal` or `Unequal`.
-    pub fn new(limits: Vec<f64>) -> BinLimits {
+    pub fn new(mut limits: Vec<f64>) -> BinLimits {
+        limits.sort_by(|left, right| {
+            if left < right {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        });
+
         let values = limits.iter();
         let next_values = limits.iter().skip(1);
         let differences: Vec<f64> = values
@@ -34,7 +42,7 @@ impl BinLimits {
 
         if differences
             .windows(2)
-            .all(|values| ((values[0] - values[1]) / values[0]).abs() <= 8.0 * f64::EPSILON)
+            .all(|val| (val[0] / val[1]).max(val[1] / val[0]) <= 1.0 + 8.0 * f64::EPSILON)
         {
             BinLimits::Equal {
                 left: *limits.first().unwrap(),
@@ -136,16 +144,37 @@ mod test {
         assert_eq!(limits.index(0.45), Some(4));
         assert_eq!(limits.index(1.1), None);
 
-        // finally check a bin limits that are unequally sized
-        let limits = BinLimits::new(vec![0.0, 0.1, 0.3, 0.8, 1.0]);
+        // check the special case of one bin
+        let limits = BinLimits::new(vec![0.0, 1.0]);
+        assert!(limits.is_equal());
+        assert!(!limits.is_unequal());
+        assert_eq!(limits.bins(), 1);
+        assert_eq!(limits.index(-0.1), None);
+        assert_eq!(limits.index(0.5), Some(0));
+        assert_eq!(limits.index(1.1), None);
+
+        // check bin limits that are unequally sized, with ascending bin sizes
+        let limits = BinLimits::new(vec![0.0, 0.1, 0.3, 0.6, 1.0]);
         assert!(!limits.is_equal());
         assert!(limits.is_unequal());
         assert_eq!(limits.bins(), 4);
         assert_eq!(limits.index(-1.0), None);
         assert_eq!(limits.index(0.05), Some(0));
         assert_eq!(limits.index(0.2), Some(1));
-        assert_eq!(limits.index(0.5), Some(2));
+        assert_eq!(limits.index(0.4), Some(2));
         assert_eq!(limits.index(0.9), Some(3));
-        assert_eq!(limits.index(1.1), None);
+        assert_eq!(limits.index(1.3), None);
+
+        // check bin limits that are unequally sized, with descending bin sizes
+        let limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
+        assert!(!limits.is_equal());
+        assert!(limits.is_unequal());
+        assert_eq!(limits.bins(), 4);
+        assert_eq!(limits.index(-1.0), None);
+        assert_eq!(limits.index(0.2), Some(0));
+        assert_eq!(limits.index(0.5), Some(1));
+        assert_eq!(limits.index(0.8), Some(2));
+        assert_eq!(limits.index(0.95), Some(3));
+        assert_eq!(limits.index(1.3), None);
     }
 }
