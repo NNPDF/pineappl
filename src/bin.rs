@@ -33,14 +33,11 @@ impl BinLimits {
             }
         });
 
-        let values = limits.iter();
-        let next_values = limits.iter().skip(1);
-        let differences: Vec<f64> = values
-            .zip(next_values)
+        if limits
+            .iter()
+            .zip(limits.iter().skip(1))
             .map(|(current, next)| next - current)
-            .collect();
-
-        if differences
+            .collect::<Vec<f64>>()
             .windows(2)
             .all(|val| (val[0] / val[1]).max(val[1] / val[0]) <= 1.0 + 8.0 * f64::EPSILON)
         {
