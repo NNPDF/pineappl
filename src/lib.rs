@@ -5,3 +5,4 @@
 pub mod bin;
 pub mod grid;
 pub mod lumi;
+pub mod ntuple_grid;
