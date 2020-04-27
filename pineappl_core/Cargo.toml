@@ -1,0 +1,5 @@
+[package]
+name = "pineappl_core"
+version = "0.1.0"
+authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
+edition = "2018"

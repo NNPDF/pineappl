@@ -1,5 +1,5 @@
-[package]
-name = "pineappl"
-version = "0.1.0"
-authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
-edition = "2018"
+[workspace]
+
+members = [
+    "pineappl_core",
+]
