@@ -39,6 +39,7 @@ pub struct Grid {
 
 impl Grid {
     /// Constructor.
+    #[must_use]
     pub fn new(lumi: Lumi, subgrid_data: Vec<SubgridData>, bin_limits: Vec<f64>) -> Self {
         Self {
             subgrids: subgrid_data
@@ -65,7 +66,8 @@ impl Grid {
     }
 
     /// Returns the luminosity function.
-    pub fn lumi(&self) -> &Lumi {
+    #[must_use]
+    pub const fn lumi(&self) -> &Lumi {
         &self.lumi
     }
 
@@ -75,6 +77,7 @@ impl Grid {
     }
 
     /// Returns the subgrid parameters.
+    #[must_use]
     pub fn subgrids(&self) -> &[Box<dyn Subgrid>] {
         &self.subgrids
     }

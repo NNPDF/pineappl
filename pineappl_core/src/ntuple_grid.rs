@@ -11,8 +11,8 @@ struct Ntuple {
 }
 
 impl Ntuple {
-    fn new(x1: f64, x2: f64, q2: f64, weight: f64) -> Ntuple {
-        Ntuple { x1, x2, q2, weight }
+    const fn new(x1: f64, x2: f64, q2: f64, weight: f64) -> Self {
+        Self { x1, x2, q2, weight }
     }
 }
 
@@ -24,6 +24,7 @@ pub struct NtupleSubgrid {
 
 impl NtupleSubgrid {
     /// Constructor.
+    #[must_use]
     pub fn new(lumi_len: usize, bins: usize, subgrid_data: SubgridData) -> Self {
         assert!(lumi_len > 0);
         assert!(bins > 0);
@@ -45,7 +46,7 @@ impl Subgrid for NtupleSubgrid {
     }
 
     fn scale(&mut self, factor: f64) {
-        for i in self.ntuples.iter_mut() {
+        for i in &mut self.ntuples {
             for j in i.iter_mut() {
                 for k in j.iter_mut() {
                     k.weight *= factor;

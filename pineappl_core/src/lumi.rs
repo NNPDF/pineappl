@@ -10,8 +10,9 @@ pub struct LumiEntry {
 }
 
 impl LumiEntry {
-    /// Constructor for LumiEntry. Note that `entry` must be non-empty, otherwise this function
+    /// Constructor for `LumiEntry`. Note that `entry` must be non-empty, otherwise this function
     /// panics.
+    #[must_use]
     pub fn new(entry: Vec<(i32, i32, f64)>) -> Self {
         assert!(!entry.is_empty());
 
@@ -37,7 +38,7 @@ macro_rules! lumi_entry {
 }
 
 /// Structure implementing a luminosity function. Each luminosity function is collection of
-/// LumiEntries.
+/// `LumiEntries`.
 #[derive(Clone, Default)]
 pub struct Lumi {
     tuples: Vec<LumiEntry>,
@@ -45,6 +46,7 @@ pub struct Lumi {
 
 impl Lumi {
     /// Constructor for Lumi.
+    #[must_use]
     pub fn new(tuples: Vec<LumiEntry>) -> Self {
         Self { tuples }
     }
@@ -54,12 +56,14 @@ impl Lumi {
         self.tuples.push(entry);
     }
 
-    /// Returns the number of LumiEntries in the Lumi object.
+    /// Returns the number of `LumiEntries` in the Lumi object.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.tuples.len()
     }
 
-    /// Checks if there are no LumiEntries in this Lumi object.
+    /// Checks if there are no `LumiEntries` in this Lumi object.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.tuples.is_empty()
     }

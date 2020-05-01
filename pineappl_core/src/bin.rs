@@ -12,7 +12,8 @@ enum Limits {
 pub struct BinLimits(Limits);
 
 impl BinLimits {
-    /// Constructor for BinLimits.
+    /// Constructor for `BinLimits`.
+    #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
         limits.sort_by(|left, right| {
             if left < right {
@@ -28,7 +29,7 @@ impl BinLimits {
             .map(|(current, next)| next - current)
             .collect::<Vec<f64>>()
             .windows(2)
-            .all(|val| (val[0] / val[1]).max(val[1] / val[0]) <= 1.0 + 8.0 * f64::EPSILON)
+            .all(|val| (val[0] / val[1]).max(val[1] / val[0]) <= f64::EPSILON.mul_add(8.0, 1.0))
         {
             Self(Limits::Equal {
                 left: *limits.first().unwrap(),
@@ -42,13 +43,14 @@ impl BinLimits {
 
     /// Returns the bin index for observable `value`. If the value over- or underflows, the return
     /// value is `Option::None`.
+    #[must_use]
     pub fn index(&self, value: f64) -> Option<usize> {
         match &self.0 {
             Limits::Equal { left, right, bins } => {
-                if value < *left || value > *right {
+                if value < *left || value >= *right {
                     None
                 } else {
-                    Some(((value - left) / (right - left) * *bins as f64) as usize)
+                    Some(((value - left) / (right - left) * (*bins as f64)) as usize)
                 }
             }
             Limits::Unequal { limits } => {
@@ -72,6 +74,7 @@ impl BinLimits {
     }
 
     /// Returns the number of bins.
+    #[must_use]
     pub fn bins(&self) -> usize {
         match &self.0 {
             Limits::Equal { bins, .. } => *bins,
