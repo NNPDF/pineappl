@@ -22,6 +22,12 @@ pub trait Subgrid {
     /// and the observable at the `obs_index`. The events are stored in `weights` and must be
     /// ordered as the corresponding luminosity function was created.
     fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs_index: usize, weights: &[f64]);
+
+    /// Scale the subgrid by `factor`.
+    fn scale(&mut self, factor: f64);
+
+    /// Returns the subgrid data.
+    fn data(&self) -> &SubgridData;
 }
 
 /// A collection of subgrids.
@@ -46,5 +52,30 @@ impl Grid {
             lumi,
             bin_limits: BinLimits::new(bin_limits),
         }
+    }
+
+    /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
+    /// and the observable `obs`. The events are stored in `weights` and must be
+    /// ordered as the corresponding luminosity function was created. The weights are filled into
+    /// the subgrid with the given index.
+    pub fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs: f64, weights: &[f64], subgrid: usize) {
+        if let Some(obs_index) = self.bin_limits.index(obs) {
+            self.subgrids[subgrid].fill(x1, x2, q2, obs_index, weights);
+        }
+    }
+
+    /// Returns the luminosity function.
+    pub fn lumi(&self) -> &Lumi {
+        &self.lumi
+    }
+
+    /// Scale all subgrids by `factor`.
+    pub fn scale(&mut self, factor: f64) {
+        self.subgrids.iter_mut().for_each(|g| g.scale(factor));
+    }
+
+    /// Returns the subgrid parameters.
+    pub fn subgrids(&self) -> &[Box<dyn Subgrid>] {
+        &self.subgrids
     }
 }

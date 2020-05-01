@@ -43,6 +43,20 @@ impl Subgrid for NtupleSubgrid {
             self.ntuples[obs_index][lumi_index].push(Ntuple::new(x1, x2, q2, weight));
         }
     }
+
+    fn scale(&mut self, factor: f64) {
+        for i in self.ntuples.iter_mut() {
+            for j in i.iter_mut() {
+                for k in j.iter_mut() {
+                    k.weight *= factor;
+                }
+            }
+        }
+    }
+
+    fn data(&self) -> &SubgridData {
+        &self.subgrid_data
+    }
 }
 
 #[cfg(test)]
