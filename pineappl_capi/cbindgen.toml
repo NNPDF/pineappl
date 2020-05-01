@@ -30,7 +30,7 @@ cpp_compat = true
 [export.rename]
 "Grid" = "pineappl_grid"
 "Lumi" = "pineappl_lumi"
-"Storage" = "pineappl_storage"
+"KeyVal" = "pineappl_keyval"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 

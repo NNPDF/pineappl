@@ -78,7 +78,7 @@ pub extern "C" fn pineappl_grid_get_subgrids(grid: Option<*const Grid>) -> usize
 /// - Observable definition: `bins` and `bin_limits`. Each subgrid can store observables from a
 /// one-dimensional distribution. To this end `bins` specifies how many observables are stored and
 /// with `bins + 1` entries.
-/// - Storage information: `storage`.
+/// - More complex information can be given in a key-value storage `key_vals`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_new(
@@ -87,7 +87,7 @@ pub extern "C" fn pineappl_grid_new(
     subgrid_params: Option<*const u32>,
     bins: usize,
     bin_limits: Option<*const f64>,
-    storage: Option<*const Storage>,
+    key_vals: Option<*const KeyVal>,
 ) -> *mut Grid {
     let lumi = unsafe { &*lumi.unwrap() };
     let subgrid_params = unsafe { slice::from_raw_parts(subgrid_params.unwrap(), 4 * subgrids) };
@@ -101,7 +101,9 @@ pub extern "C" fn pineappl_grid_new(
         })
         .collect::<Vec<_>>();
     let bin_limits = unsafe { slice::from_raw_parts(bin_limits.unwrap(), bins + 1) };
-    let _storage = unsafe { &*storage.unwrap() };
+
+    // TODO: do something with the contents
+    let _keyval = unsafe { &*key_vals.unwrap() };
 
     Box::into_raw(Box::new(Grid::new(
         lumi.clone(),
@@ -188,9 +190,9 @@ pub extern "C" fn pineappl_lumi_new() -> *mut Lumi {
     Box::into_raw(Box::new(Lumi::default()))
 }
 
-/// Struct holding a definition how the events are stored in memory.
+/// Key-value storage.
 #[derive(Default)]
-pub struct Storage {
+pub struct KeyVal {
     _method: String,
     bools: HashMap<String, bool>,
     doubles: HashMap<String, f64>,
@@ -200,7 +202,7 @@ pub struct Storage {
 
 /// Delete the previously created object pointed to by `storage`.
 #[no_mangle]
-pub extern "C" fn pineappl_storage_delete(storage: Option<*mut Storage>) {
+pub extern "C" fn pineappl_keyval_delete(storage: Option<*mut KeyVal>) {
     unsafe {
         Box::from_raw(storage.unwrap());
     }
@@ -209,8 +211,8 @@ pub extern "C" fn pineappl_storage_delete(storage: Option<*mut Storage>) {
 /// Get the boolean-valued parameter with name `key` for `storage`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_storage_get_bool(
-    storage: Option<*const Storage>,
+pub extern "C" fn pineappl_keyval_get_bool(
+    storage: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> bool {
     let storage = unsafe { &*storage.unwrap() };
@@ -222,8 +224,8 @@ pub extern "C" fn pineappl_storage_get_bool(
 /// Get the double-valued parameter with name `key` for `storage`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_storage_get_double(
-    storage: Option<*const Storage>,
+pub extern "C" fn pineappl_keyval_get_double(
+    storage: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> f64 {
     let storage = unsafe { &*storage.unwrap() };
@@ -235,8 +237,8 @@ pub extern "C" fn pineappl_storage_get_double(
 /// Get the string-valued parameter with name `key` for `storage`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_storage_get_int(
-    storage: Option<*const Storage>,
+pub extern "C" fn pineappl_keyval_get_int(
+    storage: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> i32 {
     let storage = unsafe { &*storage.unwrap() };
@@ -248,8 +250,8 @@ pub extern "C" fn pineappl_storage_get_int(
 /// Get the int-valued parameter with name `key` for `storage`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_storage_get_string(
-    storage: Option<*const Storage>,
+pub extern "C" fn pineappl_keyval_get_string(
+    storage: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> *const c_char {
     let storage = unsafe { &*storage.unwrap() };
@@ -262,17 +264,17 @@ pub extern "C" fn pineappl_storage_get_string(
 /// storage layout.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_storage_new(method: Option<*const c_char>) -> *mut Storage {
-    Box::into_raw(Box::new(Storage {
+pub extern "C" fn pineappl_keyval_new(method: Option<*const c_char>) -> *mut KeyVal {
+    Box::into_raw(Box::new(KeyVal {
         _method: String::from(unsafe { CStr::from_ptr(method.unwrap()) }.to_str().unwrap()),
-        ..Storage::default()
+        ..KeyVal::default()
     }))
 }
 
 /// Set the double-valued parameter with name `key` to `value` for `storage`.
 #[no_mangle]
-pub extern "C" fn pineappl_storage_set_bool(
-    storage: Option<*mut Storage>,
+pub extern "C" fn pineappl_keyval_set_bool(
+    storage: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: bool,
 ) {
@@ -284,8 +286,8 @@ pub extern "C" fn pineappl_storage_set_bool(
 
 /// Set the double-valued parameter with name `key` to `value` for `storage`.
 #[no_mangle]
-pub extern "C" fn pineappl_storage_set_double(
-    storage: Option<*mut Storage>,
+pub extern "C" fn pineappl_keyval_set_double(
+    storage: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: f64,
 ) {
@@ -297,8 +299,8 @@ pub extern "C" fn pineappl_storage_set_double(
 
 /// Set the int-valued parameter with name `key` to `value` for `storage`.
 #[no_mangle]
-pub extern "C" fn pineappl_storage_set_int(
-    storage: Option<*mut Storage>,
+pub extern "C" fn pineappl_keyval_set_int(
+    storage: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: i32,
 ) {
@@ -310,8 +312,8 @@ pub extern "C" fn pineappl_storage_set_int(
 
 /// Set the string-valued parameter with name `key` to `value` for `storage`.
 #[no_mangle]
-pub extern "C" fn pineappl_storage_set_string(
-    storage: Option<*mut Storage>,
+pub extern "C" fn pineappl_keyval_set_string(
+    storage: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: Option<*const c_char>,
 ) {
