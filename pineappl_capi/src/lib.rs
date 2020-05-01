@@ -3,7 +3,7 @@
 
 //! C-language interface for `PineAPPL`.
 
-use pineappl_core::grid::{Grid, SubgridData};
+use pineappl_core::grid::{Grid, Order};
 use pineappl_core::lumi::{Lumi, LumiEntry};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -48,15 +48,15 @@ pub extern "C" fn pineappl_grid_get_subgrid_params(
     grid: Option<*const Grid>,
     subgrid_params: Option<*mut u32>,
 ) {
-    let subgrids = unsafe { &*grid.unwrap() }.subgrids();
+    let orders = unsafe { &*grid.unwrap() }.orders();
     let subgrid_params =
-        unsafe { slice::from_raw_parts_mut(subgrid_params.unwrap(), 4 * subgrids.len()) };
+        unsafe { slice::from_raw_parts_mut(subgrid_params.unwrap(), 4 * orders.len()) };
 
-    for (i, subgrid) in subgrids.iter().enumerate() {
-        subgrid_params[4 * i] = subgrid.data().alphas;
-        subgrid_params[4 * i + 1] = subgrid.data().alpha;
-        subgrid_params[4 * i + 2] = subgrid.data().logxir;
-        subgrid_params[4 * i + 3] = subgrid.data().logxif;
+    for (i, order) in orders.iter().enumerate() {
+        subgrid_params[4 * i] = order.alphas;
+        subgrid_params[4 * i + 1] = order.alpha;
+        subgrid_params[4 * i + 2] = order.logxir;
+        subgrid_params[4 * i + 3] = order.logxif;
     }
 }
 
@@ -64,7 +64,7 @@ pub extern "C" fn pineappl_grid_get_subgrid_params(
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_get_subgrids(grid: Option<*const Grid>) -> usize {
-    let subgrids = unsafe { &*grid.unwrap() }.subgrids();
+    let subgrids = unsafe { &*grid.unwrap() }.orders();
 
     subgrids.len()
 }
@@ -93,7 +93,7 @@ pub extern "C" fn pineappl_grid_new(
     let subgrid_params = unsafe { slice::from_raw_parts(subgrid_params.unwrap(), 4 * subgrids) };
     let subgrid_data = subgrid_params
         .chunks(4)
-        .map(|s| SubgridData {
+        .map(|s| Order {
             alphas: s[0],
             alpha: s[1],
             logxir: s[2],

@@ -5,9 +5,9 @@ use super::lumi::Lumi;
 use super::ntuple_grid::NtupleSubgrid;
 use serde::{Deserialize, Serialize};
 
-/// Structure for the metadata of a subgrid.
+/// Coupling powers for each grid.
 #[derive(Deserialize, Serialize)]
-pub struct SubgridData {
+pub struct Order {
     /// Exponent of the strong coupling.
     pub alphas: u32,
     /// Exponent of the electromagnetic coupling.
@@ -21,39 +21,46 @@ pub struct SubgridData {
 /// Trait each subgrid must implement.
 #[typetag::serde(tag = "type")]
 pub trait Subgrid {
-    /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
-    /// and the observable at the `obs_index`. The events are stored in `weights` and must be
-    /// ordered as the corresponding luminosity function was created.
-    fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs_index: usize, weights: &[f64]);
+    /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
+    /// scale `q2`.
+    fn fill(&mut self, x1: f64, x2: f64, q2: f64, weight: f64);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
-
-    /// Returns the subgrid data.
-    fn data(&self) -> &SubgridData;
 }
 
-/// A collection of subgrids.
+/// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
+/// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
 pub struct Grid {
-    subgrids: Vec<Box<dyn Subgrid>>,
+    // TODO: this should probably be rewritten using something like ndarray
+    subgrids: Vec<Vec<Vec<Box<dyn Subgrid>>>>,
     lumi: Lumi,
     bin_limits: BinLimits,
+    orders: Vec<Order>,
 }
 
 impl Grid {
     /// Constructor.
     #[must_use]
-    pub fn new(lumi: Lumi, subgrid_data: Vec<SubgridData>, bin_limits: Vec<f64>) -> Self {
+    pub fn new(lumi: Lumi, orders: Vec<Order>, bin_limits: Vec<f64>) -> Self {
+        assert!(!bin_limits.is_empty());
+
         Self {
-            subgrids: subgrid_data
-                .into_iter()
-                .map(|d| {
-                    let result: Box<dyn Subgrid> =
-                        Box::new(NtupleSubgrid::new(lumi.len(), bin_limits.len() - 1, d));
-                    result
+            // usually we would use vec!, but `Subgrid` does not implement `Clone` (and it probably
+            // cannot) so we can't use it in this instance
+            subgrids: (0..orders.len())
+                .map(|_| {
+                    (0..bin_limits.len() - 1)
+                        .map(|_| {
+                            (0..lumi.len())
+                                .map(|_| Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>)
+                                .collect::<Vec<_>>()
+                        })
+                        .collect::<Vec<_>>()
                 })
-                .collect::<Vec<Box<dyn Subgrid>>>(),
+                .collect::<Vec<_>>(),
+            orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
         }
@@ -64,8 +71,10 @@ impl Grid {
     /// ordered as the corresponding luminosity function was created. The weights are filled into
     /// the subgrid with the given index.
     pub fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs: f64, weights: &[f64], subgrid: usize) {
-        if let Some(obs_index) = self.bin_limits.index(obs) {
-            self.subgrids[subgrid].fill(x1, x2, q2, obs_index, weights);
+        if let Some(bin) = self.bin_limits.index(obs) {
+            for (lumi, weight) in weights.iter().enumerate() {
+                self.subgrids[subgrid][bin][lumi].fill(x1, x2, q2, *weight);
+            }
         }
     }
 
@@ -77,12 +86,18 @@ impl Grid {
 
     /// Scale all subgrids by `factor`.
     pub fn scale(&mut self, factor: f64) {
-        self.subgrids.iter_mut().for_each(|g| g.scale(factor));
+        for i in &mut self.subgrids {
+            for j in i {
+                for k in j {
+                    k.scale(factor);
+                }
+            }
+        }
     }
 
     /// Returns the subgrid parameters.
     #[must_use]
-    pub fn subgrids(&self) -> &[Box<dyn Subgrid>] {
-        &self.subgrids
+    pub fn orders(&self) -> &[Order] {
+        &self.orders
     }
 }
