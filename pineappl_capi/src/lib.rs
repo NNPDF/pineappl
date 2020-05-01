@@ -42,28 +42,28 @@ pub extern "C" fn pineappl_grid_fill(
     grid.fill(x1, x2, q2, observable, weights, subgrid);
 }
 
-/// Write the subgrid parameters of `grid` into `subgrid_params`.
+/// Write the order parameters of `grid` into `order_params`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_get_subgrid_params(
+pub extern "C" fn pineappl_grid_get_order_params(
     grid: Option<*const Grid>,
-    subgrid_params: Option<*mut u32>,
+    order_params: Option<*mut u32>,
 ) {
     let orders = unsafe { &*grid.unwrap() }.orders();
-    let subgrid_params =
-        unsafe { slice::from_raw_parts_mut(subgrid_params.unwrap(), 4 * orders.len()) };
+    let order_params =
+        unsafe { slice::from_raw_parts_mut(order_params.unwrap(), 4 * orders.len()) };
 
     for (i, order) in orders.iter().enumerate() {
-        subgrid_params[4 * i] = order.alphas;
-        subgrid_params[4 * i + 1] = order.alpha;
-        subgrid_params[4 * i + 2] = order.logxir;
-        subgrid_params[4 * i + 3] = order.logxif;
+        order_params[4 * i] = order.alphas;
+        order_params[4 * i + 1] = order.alpha;
+        order_params[4 * i + 2] = order.logxir;
+        order_params[4 * i + 3] = order.logxif;
     }
 }
 
-/// Return the number of subgrids in `grid`.
+/// Return the number of orders in `grid`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_get_subgrids(grid: Option<*const Grid>) -> usize {
+pub extern "C" fn pineappl_grid_get_order_count(grid: Option<*const Grid>) -> usize {
     let subgrids = unsafe { &*grid.unwrap() }.orders();
 
     subgrids.len()
@@ -71,10 +71,11 @@ pub extern "C" fn pineappl_grid_get_subgrids(grid: Option<*const Grid>) -> usize
 
 /// Create a new `pineappl_grid`. The creation requires four different sets of parameters:
 /// see `pineappl_lumi_new`.
-/// - Subgrid specification: `format`, `subgrids`, and `subgrids_params`. Each `PineAPPL` grid
-/// contains a number of subgrids, given as `subgrids`, which usually store the grids for each
-/// perturbative order separately. The concrete meaning of the subgrids is determined by `format`
-/// and `subgrids_params`.
+/// - Order specification: `orders` and `order_params`. Each `PineAPPL` grid contains a number of
+/// perturbative order, given by `orders`, which store the exponent of each perturbative order
+/// separately. The array `order_params` must contain, for each order, 4 integers denoting the
+/// exponent of the string coupling, of the electromagnetic coupling, of the logarithms of the
+/// renormalization scale, and finally of the logarithm of the factorization scale
 /// - Observable definition: `bins` and `bin_limits`. Each subgrid can store observables from a
 /// one-dimensional distribution. To this end `bins` specifies how many observables are stored and
 /// with `bins + 1` entries.
@@ -83,15 +84,15 @@ pub extern "C" fn pineappl_grid_get_subgrids(grid: Option<*const Grid>) -> usize
 #[must_use]
 pub extern "C" fn pineappl_grid_new(
     lumi: Option<*const Lumi>,
-    subgrids: usize,
-    subgrid_params: Option<*const u32>,
+    orders: usize,
+    order_params: Option<*const u32>,
     bins: usize,
     bin_limits: Option<*const f64>,
     key_vals: Option<*const KeyVal>,
 ) -> *mut Grid {
     let lumi = unsafe { &*lumi.unwrap() };
-    let subgrid_params = unsafe { slice::from_raw_parts(subgrid_params.unwrap(), 4 * subgrids) };
-    let subgrid_data = subgrid_params
+    let order_params = unsafe { slice::from_raw_parts(order_params.unwrap(), 4 * orders) };
+    let orders = order_params
         .chunks(4)
         .map(|s| Order {
             alphas: s[0],
@@ -107,7 +108,7 @@ pub extern "C" fn pineappl_grid_new(
 
     Box::into_raw(Box::new(Grid::new(
         lumi.clone(),
-        subgrid_data,
+        orders,
         bin_limits.to_vec(),
     )))
 }
