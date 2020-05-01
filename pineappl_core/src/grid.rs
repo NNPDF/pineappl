@@ -3,8 +3,10 @@
 use super::bin::BinLimits;
 use super::lumi::Lumi;
 use super::ntuple_grid::NtupleSubgrid;
+use serde::{Deserialize, Serialize};
 
 /// Structure for the metadata of a subgrid.
+#[derive(Deserialize, Serialize)]
 pub struct SubgridData {
     /// Exponent of the strong coupling.
     pub alphas: u32,
@@ -17,6 +19,7 @@ pub struct SubgridData {
 }
 
 /// Trait each subgrid must implement.
+#[typetag::serde(tag = "type")]
 pub trait Subgrid {
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
     /// and the observable at the `obs_index`. The events are stored in `weights` and must be
@@ -31,6 +34,7 @@ pub trait Subgrid {
 }
 
 /// A collection of subgrids.
+#[derive(Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Vec<Box<dyn Subgrid>>,
     lumi: Lumi,

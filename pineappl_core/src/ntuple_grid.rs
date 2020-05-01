@@ -1,8 +1,9 @@
 //! Provides an implementation of the `Grid` trait with n-tuples.
 
 use super::grid::{Subgrid, SubgridData};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 struct Ntuple {
     x1: f64,
     x2: f64,
@@ -17,6 +18,7 @@ impl Ntuple {
 }
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
+#[derive(Deserialize, Serialize)]
 pub struct NtupleSubgrid {
     ntuples: Vec<Vec<Vec<Ntuple>>>,
     subgrid_data: SubgridData,
@@ -36,6 +38,7 @@ impl NtupleSubgrid {
     }
 }
 
+#[typetag::serde]
 impl Subgrid for NtupleSubgrid {
     fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs_index: usize, weights: &[f64]) {
         assert!(weights.len() == self.ntuples[0].len());

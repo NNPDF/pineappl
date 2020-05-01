@@ -1,10 +1,12 @@
 //! Module for everything related to luminosity functions.
 
+use serde::{Deserialize, Serialize};
+
 /// This structure represens an entry of a luminosity function. Each entry consists of a tuple,
 /// which contains, in the following order, the PDG id of the first incoming parton, then the PDG
 /// id of the second parton, and finally a numerical factor that will multiply the result for this
 /// specific combination.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct LumiEntry {
     entry: Vec<(i32, i32, f64)>,
 }
@@ -39,7 +41,7 @@ macro_rules! lumi_entry {
 
 /// Structure implementing a luminosity function. Each luminosity function is collection of
 /// `LumiEntries`.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Lumi {
     tuples: Vec<LumiEntry>,
 }

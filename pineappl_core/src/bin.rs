@@ -1,14 +1,17 @@
 //! Module that contains helpers for binning observables
 
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::f64;
 
+#[derive(Deserialize, Serialize)]
 enum Limits {
     Equal { left: f64, right: f64, bins: usize },
     Unequal { limits: Vec<f64> },
 }
 
 /// Structure representing bin limits.
+#[derive(Deserialize, Serialize)]
 pub struct BinLimits(Limits);
 
 impl BinLimits {
