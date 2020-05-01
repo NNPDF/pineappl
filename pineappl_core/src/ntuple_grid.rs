@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn ntuple_subgrid_fill() {
-        let mut grid = NtupleSubgrid::new();
+        let mut grid = NtupleSubgrid::default();
 
         grid.fill(0.5, 0.75, 1.0, 2.0);
         assert_eq!(grid.ntuples[0], Ntuple::new(0.5, 0.75, 1.0, 2.0));
