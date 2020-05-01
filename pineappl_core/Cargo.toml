@@ -5,6 +5,7 @@ authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/N3PDF/pineappl"
+readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "PineAPPL is not an extension of APPLgrid"

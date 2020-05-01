@@ -1,16 +1,15 @@
-# PineAPPL
+# Introduction
 
-PineAPPL is a library for recording and storing phase-space weights
-independently of their parton distribution functions.
+This is a collection of libraries which constitute `PineAPPL`.
 
-# Building PineAPPL
+# Installation
 
-To build PineAPPL first install Rust by following the instructions from
-<https://www.rust-lang.org/learn/get-started>. This install the `cargo` command
-that will be needed to build PineAPPL.
+If you've already installed Rust, skip the next section.
 
-If `cargo` is available on your system, you can build PineAPPL by typing
+## Installation of Rust
 
-    $ cargo build
+Go to https://www.rust-lang.org/tools/install and follow the instructions.
 
-in the top-level folder of the repository.
+## Installation of `PineAPPL`
+
+TODO
