@@ -3,7 +3,7 @@
 
 //! C-language interface for `PineAPPL`.
 
-use pineappl_core::grid::{Grid, Order};
+use pineappl_core::grid::{Grid, Order, SubgridEntry};
 use pineappl_core::lumi::{Lumi, LumiEntry};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -23,23 +23,61 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<*mut Grid>) {
     }
 }
 
-/// long the corresponding luminosity function the grid was created with and contain the
-/// corresponding weights at each index. The value `grid_index` selects one of the subgrids whose
-/// meaning was specified during creation with `grid_parameters` in `pineappl_grid_new`.
+/// Fill `grid` at the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
+/// value of the `order`, `observable`, and `lumi` with `weight`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_fill(
     grid: Option<*mut Grid>,
     x1: f64,
     x2: f64,
     q2: f64,
+    order: usize,
+    observable: f64,
+    lumi: usize,
+    weight: f64,
+) {
+    let grid = unsafe { &mut *grid.unwrap() };
+
+    grid.fill(
+        order,
+        observable,
+        lumi,
+        SubgridEntry {
+            x1,
+            x2,
+            q2,
+            entry: weight,
+        },
+    );
+}
+
+/// Fill `grid` at the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
+/// value of the `order` and `observable` with `weights`. The contents of weight must match the
+/// definition of the luminosity function the grid was created with.
+#[no_mangle]
+pub extern "C" fn pineappl_grid_fill_all(
+    grid: Option<*mut Grid>,
+    x1: f64,
+    x2: f64,
+    q2: f64,
+    order: usize,
     observable: f64,
     weights: Option<*const f64>,
-    subgrid: usize,
 ) {
     let grid = unsafe { &mut *grid.unwrap() };
     let weights = unsafe { slice::from_raw_parts(weights.unwrap(), grid.lumi().len()) };
 
-    grid.fill(x1, x2, q2, observable, weights, subgrid);
+    grid.fill_all(
+        order,
+        observable,
+        SubgridEntry {
+            x1,
+            x2,
+            q2,
+            entry: (),
+        },
+        weights,
+    );
 }
 
 /// Write the order parameters of `grid` into `order_params`.

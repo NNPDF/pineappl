@@ -4,6 +4,7 @@ use super::bin::BinLimits;
 use super::lumi::Lumi;
 use super::ntuple_grid::NtupleSubgrid;
 use serde::{Deserialize, Serialize};
+use std::ops::MulAssign;
 
 /// Coupling powers for each grid.
 #[derive(Deserialize, Serialize)]
@@ -23,10 +24,31 @@ pub struct Order {
 pub trait Subgrid {
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`.
-    fn fill(&mut self, x1: f64, x2: f64, q2: f64, weight: f64);
+    fn fill(&mut self, ntuple: SubgridEntry<f64>);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
+}
+
+/// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
+/// corresponding `entry`. The type `W` can either be a `f64` or `()`, which is used when multiple
+/// weights should be signaled.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct SubgridEntry<W> {
+    /// Momentum fraction of the first parton.
+    pub x1: f64,
+    /// Momentum fraction of the second parton.
+    pub x2: f64,
+    /// Squared scale.
+    pub q2: f64,
+    /// Weight of this entry.
+    pub entry: W,
+}
+
+impl MulAssign<f64> for SubgridEntry<f64> {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.entry *= rhs;
+    }
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -67,14 +89,31 @@ impl Grid {
     }
 
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
-    /// and the observable `obs`. The events are stored in `weights` and must be
-    /// ordered as the corresponding luminosity function was created. The weights are filled into
-    /// the subgrid with the given index.
-    pub fn fill(&mut self, x1: f64, x2: f64, q2: f64, obs: f64, weights: &[f64], subgrid: usize) {
-        if let Some(bin) = self.bin_limits.index(obs) {
+    /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
+    /// the corresponding luminosity function was created.
+    pub fn fill_all(
+        &mut self,
+        order: usize,
+        observable: f64,
+        ntuple: SubgridEntry<()>,
+        weights: &[f64],
+    ) {
+        if let Some(bin) = self.bin_limits.index(observable) {
             for (lumi, weight) in weights.iter().enumerate() {
-                self.subgrids[subgrid][bin][lumi].fill(x1, x2, q2, *weight);
+                self.subgrids[order][bin][lumi].fill(SubgridEntry {
+                    x1: ntuple.x1,
+                    x2: ntuple.x2,
+                    q2: ntuple.q2,
+                    entry: *weight,
+                });
             }
+        }
+    }
+
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
+    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: SubgridEntry<f64>) {
+        if let Some(bin) = self.bin_limits.index(observable) {
+            self.subgrids[order][bin][lumi].fill(ntuple);
         }
     }
 
