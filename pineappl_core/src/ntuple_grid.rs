@@ -18,4 +18,14 @@ impl Subgrid for NtupleSubgrid {
     fn scale(&mut self, factor: f64) {
         self.entries.iter_mut().for_each(|t| *t *= factor);
     }
+
+    fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
+        let mut result = 0.0;
+
+        for entry in &self.entries {
+            result += lumi(entry.x1, entry.x2, entry.q2) * entry.entry;
+        }
+
+        result
+    }
 }

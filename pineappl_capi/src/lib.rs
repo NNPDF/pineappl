@@ -9,11 +9,58 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 use std::slice;
 
 // TODO: change raw pointer and Option of pointer to Box if possible, as soon as cbindgen supports
 // this; see github issue: https://github.com/eqrion/cbindgen/issues/474
+
+/// Convolutes the specified grid with the PDFs `pdf1` and `pdf2` and strong coupling `alphas`.
+/// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
+/// partons into `pdfs`. The value of `state` provideded to these functions is the same one given
+/// to this function. The parameter `mask` must be as long the perturbative orders contained in
+/// `grid` and is used to selectively disable (`false`) or enable (`true`) individual orders. If
+/// `state` is set to `NULL`, then all orders are active. The values `xi_ren` and `xi_fac` can be
+/// used to vary the renormalization and factorization from its central value, which corresponds to
+/// `1.0`. The value of the observable for all bins are written into `results`.
+#[no_mangle]
+pub extern "C" fn pineappl_grid_convolute(
+    grid: Option<*const Grid>,
+    pdf1: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
+    pdf2: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: Option<*const bool>,
+    lumi_mask: Option<*const bool>,
+    xi_ren: f64,
+    xi_fac: f64,
+    results: Option<*mut f64>,
+) {
+    let grid = unsafe { &*grid.unwrap() };
+    let pdf1 = |x, q2, id| pdf1(x, q2, id, state);
+    let pdf2 = |x, q2, id| pdf2(x, q2, id, state);
+    let alphas = |q2| alphas(q2, state);
+    let order_mask = if let Some(order_mask) = order_mask {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
+    } else {
+        vec![]
+    };
+    let lumi_mask = if let Some(lumi_mask) = lumi_mask {
+        unsafe { slice::from_raw_parts(lumi_mask, grid.lumi().len()) }.to_vec()
+    } else {
+        vec![]
+    };
+    let results = unsafe { slice::from_raw_parts_mut(results.unwrap(), grid.bin_limits().bins()) };
+
+    results.copy_from_slice(&grid.convolute(
+        &pdf1,
+        &pdf2,
+        &alphas,
+        &order_mask,
+        &lumi_mask,
+        &(xi_ren, xi_fac),
+    ));
+}
 
 /// Delete a grid previously created with `pineappl_grid_new`.
 #[no_mangle]

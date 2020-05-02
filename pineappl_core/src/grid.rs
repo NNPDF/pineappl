@@ -28,6 +28,9 @@ pub trait Subgrid {
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
+
+    /// Convolute the subgrid with a luminosity function
+    fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64;
 }
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
@@ -88,6 +91,78 @@ impl Grid {
         }
     }
 
+    /// Returns the bin limits of the observables.
+    #[must_use]
+    pub const fn bin_limits(&self) -> &BinLimits {
+        &self.bin_limits
+    }
+
+    /// Performs a convolution of the contained subgrids with the given PDFs, `pdf1` for the first
+    /// parton and `pdf2` for the second parton, `alphas` for the evaluation of the strong
+    /// coupling. The parameters `order_mask` and `lumi_mask` can be used to selectively enable
+    /// perturbative orders and luminosities; they must either be empty (everything enabled) or as
+    /// large as the orders and luminosity function, respectively. If the corresponding entry is
+    /// `true` the order/luminosity is enable, `false` disables the entry. The tuple `xi` can be
+    /// used to independently vary the renormalization (first element) and factorization scale
+    /// (second element) from their central value `(1.0, 1.0)`.
+    pub fn convolute(
+        &self,
+        pdf1: &dyn Fn(f64, f64, i32) -> f64,
+        pdf2: &dyn Fn(f64, f64, i32) -> f64,
+        alphas: &dyn Fn(f64) -> f64,
+        order_mask: &[bool],
+        lumi_mask: &[bool],
+        xi: &(f64, f64),
+    ) -> Vec<f64> {
+        let mut bins: Vec<f64> = vec![0.0; self.bin_limits.bins()];
+
+        for (i, order) in self.orders.iter().enumerate() {
+            if (!order_mask.is_empty() && !order_mask[i])
+                || ((order.logxir > 0) && (xi.0 == 1.0))
+                || ((order.logxif > 0) && (xi.1 == 1.0))
+            {
+                continue;
+            }
+
+            for bin in 0..self.bin_limits.bins() {
+                for (j, lumi_entry) in self.lumi.entries().iter().enumerate() {
+                    if !lumi_mask.is_empty() && !lumi_mask[j] {
+                        continue;
+                    }
+
+                    let mut value = self.subgrids[i][bin][j].convolute(&|x1, x2, q2| {
+                        let mut lumi = 0.0;
+
+                        for entry in lumi_entry.entry() {
+                            lumi += pdf1(x1, q2, entry.0) * pdf2(x2, q2, entry.1) * entry.2;
+                        }
+
+                        lumi *= alphas(q2).powi(order.alphas as i32);
+                        lumi
+                    });
+
+                    if order.logxir > 0 {
+                        value *= xi.0.ln().powi(order.logxir as i32);
+                    }
+                    if order.logxif > 0 {
+                        value *= xi.1.ln().powi(order.logxif as i32);
+                    }
+
+                    bins[bin] += value;
+                }
+            }
+        }
+
+        bins
+    }
+
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
+    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: SubgridEntry<f64>) {
+        if let Some(bin) = self.bin_limits.index(observable) {
+            self.subgrids[order][bin][lumi].fill(ntuple);
+        }
+    }
+
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
     /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
     /// the corresponding luminosity function was created.
@@ -107,13 +182,6 @@ impl Grid {
                     entry: *weight,
                 });
             }
-        }
-    }
-
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
-    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: SubgridEntry<f64>) {
-        if let Some(bin) = self.bin_limits.index(observable) {
-            self.subgrids[order][bin][lumi].fill(ntuple);
         }
     }
 

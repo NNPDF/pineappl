@@ -20,6 +20,12 @@ impl LumiEntry {
 
         Self { entry }
     }
+
+    /// Returns a tuple representation of this entry.
+    #[must_use]
+    pub fn entry(&self) -> &[(i32, i32, f64)] {
+        &self.entry
+    }
 }
 
 /// Helper macro to quickly generate a LumiEntry at compile time. In the following example `entry1`
@@ -43,31 +49,37 @@ macro_rules! lumi_entry {
 /// `LumiEntries`.
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Lumi {
-    tuples: Vec<LumiEntry>,
+    entries: Vec<LumiEntry>,
 }
 
 impl Lumi {
     /// Constructor for Lumi.
     #[must_use]
-    pub fn new(tuples: Vec<LumiEntry>) -> Self {
-        Self { tuples }
+    pub fn new(entries: Vec<LumiEntry>) -> Self {
+        Self { entries }
     }
 
     /// Add a new `LumiEntry` to the luminosity function.
     pub fn add(&mut self, entry: LumiEntry) {
-        self.tuples.push(entry);
+        self.entries.push(entry);
+    }
+
+    /// Returns all entries of this luminosity function.
+    #[must_use]
+    pub fn entries(&self) -> &[LumiEntry] {
+        &self.entries
     }
 
     /// Returns the number of `LumiEntries` in the Lumi object.
     #[must_use]
     pub fn len(&self) -> usize {
-        self.tuples.len()
+        self.entries.len()
     }
 
     /// Checks if there are no `LumiEntries` in this Lumi object.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.tuples.is_empty()
+        self.entries.is_empty()
     }
 }
 
