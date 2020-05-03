@@ -12,7 +12,6 @@ description = "C language interface to PineAPPL"
 
 [lib]
 crate-type = ["cdylib"]
-name = "pineappl"
 
 [dependencies]
 pineappl_core = { path = "../pineappl_core", version = "0.1.0" }

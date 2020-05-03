@@ -3,3 +3,6 @@ members = [
     "pineappl_capi",
     "pineappl_core",
 ]
+
+[profile.release]
+lto = true
