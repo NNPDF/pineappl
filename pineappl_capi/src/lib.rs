@@ -15,7 +15,7 @@ use std::slice;
 // TODO: change raw pointer and Option of pointer to Box if possible, as soon as cbindgen supports
 // this; see github issue: https://github.com/eqrion/cbindgen/issues/474
 
-/// Convolutes the specified grid with the PDFs `pdf1` and `pdf2` and strong coupling `alphas`.
+/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
 /// partons into `pdfs`. The value of `state` provideded to these functions is the same one given
 /// to this function. The parameter `mask` must be as long the perturbative orders contained in
@@ -26,8 +26,8 @@ use std::slice;
 #[no_mangle]
 pub extern "C" fn pineappl_grid_convolute(
     grid: Option<*const Grid>,
-    pdf1: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
-    pdf2: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
+    xfx1: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
+    xfx2: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: Option<*const bool>,
@@ -37,8 +37,8 @@ pub extern "C" fn pineappl_grid_convolute(
     results: Option<*mut f64>,
 ) {
     let grid = unsafe { &*grid.unwrap() };
-    let pdf1 = |x, q2, id| pdf1(x, q2, id, state);
-    let pdf2 = |x, q2, id| pdf2(x, q2, id, state);
+    let xfx1 = |x, q2, id| xfx1(x, q2, id, state);
+    let xfx2 = |x, q2, id| xfx2(x, q2, id, state);
     let alphas = |q2| alphas(q2, state);
     let order_mask = if let Some(order_mask) = order_mask {
         unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
@@ -53,8 +53,8 @@ pub extern "C" fn pineappl_grid_convolute(
     let results = unsafe { slice::from_raw_parts_mut(results.unwrap(), grid.bin_limits().bins()) };
 
     results.copy_from_slice(&grid.convolute(
-        &pdf1,
-        &pdf2,
+        &xfx1,
+        &xfx2,
         &alphas,
         &order_mask,
         &lumi_mask,
