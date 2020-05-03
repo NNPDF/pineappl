@@ -3,8 +3,8 @@
 
 //! C-language interface for `PineAPPL`.
 
-use pineappl_core::grid::{Grid, Ntuple, Order};
-use pineappl_core::lumi::{Lumi, LumiEntry};
+use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::lumi::{Lumi, LumiEntry};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;

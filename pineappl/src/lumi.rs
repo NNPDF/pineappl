@@ -32,8 +32,8 @@ impl LumiEntry {
 /// and `entry2` represent the same values:
 ///
 /// ```
-/// # use pineappl_core::lumi_entry;
-/// # use pineappl_core::lumi::LumiEntry;
+/// # use pineappl::lumi_entry;
+/// # use pineappl::lumi::LumiEntry;
 /// let entry1 = lumi_entry![2, 2, 1.0; 4, 4, 1.0];
 /// let entry2 = LumiEntry::new(vec![(2, 2, 1.0), (4, 4, 1.0)]);
 /// assert_eq!(entry1, entry2);

@@ -36,4 +36,4 @@ cpp_compat = true
 
 [parse]
 parse_deps = true
-include = ["pineappl_core"]
+include = ["pineappl"]

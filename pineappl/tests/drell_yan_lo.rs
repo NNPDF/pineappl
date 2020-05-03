@@ -1,7 +1,7 @@
 use num_complex::Complex64;
-use pineappl_core::grid::{Grid, Ntuple, Order};
-use pineappl_core::lumi::Lumi;
-use pineappl_core::lumi_entry;
+use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::lumi::Lumi;
+use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
 //use std::fs::File;
