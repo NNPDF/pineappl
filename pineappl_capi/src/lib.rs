@@ -184,8 +184,10 @@ pub extern "C" fn pineappl_grid_new(
         .collect::<Vec<_>>();
     let bin_limits = unsafe { slice::from_raw_parts(bin_limits.unwrap(), bins + 1) };
 
-    // TODO: do something with the contents
-    let _keyval = unsafe { &*key_vals.unwrap() };
+    if let Some(key_vals) = key_vals {
+        // TODO: do something with the contents
+        let _keyval = unsafe { &*key_vals };
+    }
 
     Box::into_raw(Box::new(Grid::new(
         lumi.clone(),
