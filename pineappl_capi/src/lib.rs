@@ -3,7 +3,7 @@
 
 //! C-language interface for `PineAPPL`.
 
-use pineappl_core::grid::{Grid, Order, SubgridEntry};
+use pineappl_core::grid::{Grid, Ntuple, Order};
 use pineappl_core::lumi::{Lumi, LumiEntry};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -85,17 +85,7 @@ pub extern "C" fn pineappl_grid_fill(
 ) {
     let grid = unsafe { &mut *grid.unwrap() };
 
-    grid.fill(
-        order,
-        observable,
-        lumi,
-        SubgridEntry {
-            x1,
-            x2,
-            q2,
-            entry: weight,
-        },
-    );
+    grid.fill(order, observable, lumi, Ntuple { x1, x2, q2, weight });
 }
 
 /// Fill `grid` at the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -117,11 +107,11 @@ pub extern "C" fn pineappl_grid_fill_all(
     grid.fill_all(
         order,
         observable,
-        SubgridEntry {
+        Ntuple {
             x1,
             x2,
             q2,
-            entry: (),
+            weight: (),
         },
         weights,
     );
