@@ -269,7 +269,6 @@ pub extern "C" fn pineappl_lumi_new() -> *mut Lumi {
 /// Key-value storage.
 #[derive(Default)]
 pub struct KeyVal {
-    _method: String,
     bools: HashMap<String, bool>,
     doubles: HashMap<String, f64>,
     ints: HashMap<String, i32>,
@@ -336,15 +335,11 @@ pub extern "C" fn pineappl_keyval_get_string(
     storage.strings[&key].as_ptr()
 }
 
-/// Return a pointer to newly-created `pineappl_storage` object. The parameter method determines the
-/// storage layout.
+/// Return a pointer to newly-created `pineappl_storage` object.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_new(method: Option<*const c_char>) -> *mut KeyVal {
-    Box::into_raw(Box::new(KeyVal {
-        _method: String::from(unsafe { CStr::from_ptr(method.unwrap()) }.to_str().unwrap()),
-        ..KeyVal::default()
-    }))
+pub extern "C" fn pineappl_keyval_new() -> *mut KeyVal {
+    Box::into_raw(Box::new(KeyVal::default()))
 }
 
 /// Set the double-valued parameter with name `key` to `value` for `storage`.
