@@ -17,12 +17,15 @@ use std::slice;
 
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
-/// partons into `pdfs`. The value of `state` provideded to these functions is the same one given
-/// to this function. The parameter `mask` must be as long the perturbative orders contained in
-/// `grid` and is used to selectively disable (`false`) or enable (`true`) individual orders. If
-/// `state` is set to `NULL`, then all orders are active. The values `xi_ren` and `xi_fac` can be
-/// used to vary the renormalization and factorization from its central value, which corresponds to
-/// `1.0`. The value of the observable for all bins are written into `results`.
+/// partons into `pdfs`. Note that the value must be the PDF for the given `pdg_id` multiplied with
+/// `x`. The value of the pointer `state` provided to these functions is the same one given to this
+/// function. The parameter `order_mask` must be as long as there are perturbative orders contained
+/// in `grid` and is used to selectively disable (`false`) or enable (`true`) individual orders. If
+/// `order_mask` is set to `NULL`, all orders are active. The parameter `lumi_mask` can be used
+/// similarly, but must be as long as the luminosity function `grid` was created with has entries,
+/// or `NULL`. The values `xi_ren` and `xi_fac` can be used to vary the renormalization and
+/// factorization from its central value, which corresponds to `1.0`. After convolution of the grid
+/// with the PDFS value of the observable for each bin is written into `results`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_convolute(
     grid: Option<*const Grid>,
@@ -70,7 +73,7 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<*mut Grid>) {
     }
 }
 
-/// Fill `grid` at the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
+/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_fill(
@@ -88,9 +91,9 @@ pub extern "C" fn pineappl_grid_fill(
     grid.fill(order, observable, lumi, Ntuple { x1, x2, q2, weight });
 }
 
-/// Fill `grid` at the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
-/// value of the `order` and `observable` with `weights`. The contents of weight must match the
-/// definition of the luminosity function the grid was created with.
+/// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
+/// value of the `order` and `observable` with `weights`. The parameter of weight must contain a
+/// result for entry of the luminosity function the grid was created with.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_fill_all(
     grid: Option<*mut Grid>,
@@ -144,17 +147,20 @@ pub extern "C" fn pineappl_grid_get_order_count(grid: Option<*const Grid>) -> us
     subgrids.len()
 }
 
-/// Create a new `pineappl_grid`. The creation requires four different sets of parameters:
-/// see `pineappl_lumi_new`.
-/// - Order specification: `orders` and `order_params`. Each `PineAPPL` grid contains a number of
-/// perturbative order, given by `orders`, which store the exponent of each perturbative order
-/// separately. The array `order_params` must contain, for each order, 4 integers denoting the
-/// exponent of the string coupling, of the electromagnetic coupling, of the logarithms of the
-/// renormalization scale, and finally of the logarithm of the factorization scale
-/// - Observable definition: `bins` and `bin_limits`. Each subgrid can store observables from a
-/// one-dimensional distribution. To this end `bins` specifies how many observables are stored and
-/// with `bins + 1` entries.
-/// - More complex information can be given in a key-value storage `key_vals`.
+/// Creates a new and empty grid. The creation requires four different sets of parameters:
+/// - The luminosity function `lumi`: A pointer to the luminosity function that specifies how the
+/// cross section should be reconstructed.
+/// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
+/// different perturbative orders, specified by `orders`. The array `order_params` stores the
+/// exponent of each perturbative order and must contain 4 integers denoting the exponent of the
+/// string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+/// scale, and finally of the logarithm of the factorization scale.
+/// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
+/// from a one-dimensional distribution. To this end `bins` specifies how many observables are
+/// stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
+/// each bin.
+/// - More (optional) information can be given in a key-value storage `key_vals`, which might be
+/// a null pointer, to signal there are no further parameters that need to be set.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_new(
@@ -188,7 +194,7 @@ pub extern "C" fn pineappl_grid_new(
     )))
 }
 
-/// Read a `pineappl_grid` from a file with name `filename`.
+/// Read a `PineAPPL` grid from a file with name `filename`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_read(filename: Option<*const c_char>) -> *mut Grid {
@@ -266,7 +272,8 @@ pub extern "C" fn pineappl_lumi_new() -> *mut Lumi {
     Box::into_raw(Box::new(Lumi::default()))
 }
 
-/// Key-value storage.
+/// Key-value storage for passing optional information during grid creation with
+/// `pineappl_grid_new`.
 #[derive(Default)]
 pub struct KeyVal {
     bools: HashMap<String, bool>,
@@ -275,122 +282,122 @@ pub struct KeyVal {
     strings: HashMap<String, CString>,
 }
 
-/// Delete the previously created object pointed to by `storage`.
+/// Delete the previously created object pointed to by `key_vals`.
 #[no_mangle]
-pub extern "C" fn pineappl_keyval_delete(storage: Option<*mut KeyVal>) {
+pub extern "C" fn pineappl_keyval_delete(key_vals: Option<*mut KeyVal>) {
     unsafe {
-        Box::from_raw(storage.unwrap());
+        Box::from_raw(key_vals.unwrap());
     }
 }
 
-/// Get the boolean-valued parameter with name `key` for `storage`.
+/// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_get_bool(
-    storage: Option<*const KeyVal>,
+    key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> bool {
-    let storage = unsafe { &*storage.unwrap() };
+    let key_vals = unsafe { &*key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.bools[&key]
+    key_vals.bools[&key]
 }
 
-/// Get the double-valued parameter with name `key` for `storage`.
+/// Get the double-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_get_double(
-    storage: Option<*const KeyVal>,
+    key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> f64 {
-    let storage = unsafe { &*storage.unwrap() };
+    let key_vals = unsafe { &*key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.doubles[&key]
+    key_vals.doubles[&key]
 }
 
-/// Get the string-valued parameter with name `key` for `storage`.
+/// Get the string-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_get_int(
-    storage: Option<*const KeyVal>,
+    key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> i32 {
-    let storage = unsafe { &*storage.unwrap() };
+    let key_vals = unsafe { &*key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.ints[&key]
+    key_vals.ints[&key]
 }
 
-/// Get the int-valued parameter with name `key` for `storage`.
+/// Get the int-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_get_string(
-    storage: Option<*const KeyVal>,
+    key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> *const c_char {
-    let storage = unsafe { &*storage.unwrap() };
+    let key_vals = unsafe { &*key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.strings[&key].as_ptr()
+    key_vals.strings[&key].as_ptr()
 }
 
-/// Return a pointer to newly-created `pineappl_storage` object.
+/// Return a pointer to newly-created `pineappl_keyval` object.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_new() -> *mut KeyVal {
     Box::into_raw(Box::new(KeyVal::default()))
 }
 
-/// Set the double-valued parameter with name `key` to `value` for `storage`.
+/// Set the double-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_bool(
-    storage: Option<*mut KeyVal>,
+    key_vals: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: bool,
 ) {
-    let storage = unsafe { &mut *storage.unwrap() };
+    let key_vals = unsafe { &mut *key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.bools.insert(key, value);
+    key_vals.bools.insert(key, value);
 }
 
-/// Set the double-valued parameter with name `key` to `value` for `storage`.
+/// Set the double-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_double(
-    storage: Option<*mut KeyVal>,
+    key_vals: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: f64,
 ) {
-    let storage = unsafe { &mut *storage.unwrap() };
+    let key_vals = unsafe { &mut *key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.doubles.insert(key, value);
+    key_vals.doubles.insert(key, value);
 }
 
-/// Set the int-valued parameter with name `key` to `value` for `storage`.
+/// Set the int-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_int(
-    storage: Option<*mut KeyVal>,
+    key_vals: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: i32,
 ) {
-    let storage = unsafe { &mut *storage.unwrap() };
+    let key_vals = unsafe { &mut *key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
 
-    storage.ints.insert(key, value);
+    key_vals.ints.insert(key, value);
 }
 
-/// Set the string-valued parameter with name `key` to `value` for `storage`.
+/// Set the string-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_string(
-    storage: Option<*mut KeyVal>,
+    key_vals: Option<*mut KeyVal>,
     key: Option<*const c_char>,
     value: Option<*const c_char>,
 ) {
-    let storage = unsafe { &mut *storage.unwrap() };
+    let key_vals = unsafe { &mut *key_vals.unwrap() };
     let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
     let value = CString::from(unsafe { CStr::from_ptr(value.unwrap()) });
 
-    storage.strings.insert(key, value);
+    key_vals.strings.insert(key, value);
 }
