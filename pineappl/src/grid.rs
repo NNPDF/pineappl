@@ -3,6 +3,7 @@
 use super::bin::BinLimits;
 use super::lumi::LumiEntry;
 use super::ntuple_grid::NtupleSubgrid;
+use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::ops::MulAssign;
 
@@ -58,8 +59,7 @@ impl MulAssign<f64> for Ntuple<f64> {
 /// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
 pub struct Grid {
-    // TODO: this should probably be rewritten using something like ndarray
-    subgrids: Vec<Vec<Vec<Box<dyn Subgrid>>>>,
+    subgrids: Array3<Box<dyn Subgrid>>,
     lumi: Vec<LumiEntry>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
@@ -69,22 +69,11 @@ impl Grid {
     /// Constructor.
     #[must_use]
     pub fn new(lumi: Vec<LumiEntry>, orders: Vec<Order>, bin_limits: Vec<f64>) -> Self {
-        assert!(!bin_limits.is_empty());
-
         Self {
-            // usually we would use vec!, but `Subgrid` does not implement `Clone` (and it probably
-            // cannot) so we can't use it in this instance
-            subgrids: (0..orders.len())
-                .map(|_| {
-                    (0..bin_limits.len() - 1)
-                        .map(|_| {
-                            (0..lumi.len())
-                                .map(|_| Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>)
-                                .collect::<Vec<_>>()
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>(),
+            subgrids: Array3::from_shape_simple_fn(
+                (orders.len(), bin_limits.len() - 1, lumi.len()),
+                || Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>,
+            ),
             orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
@@ -116,41 +105,39 @@ impl Grid {
     ) -> Vec<f64> {
         let mut bins: Vec<f64> = vec![0.0; self.bin_limits.bins()];
 
-        for (i, order) in self.orders.iter().enumerate() {
+        for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
+            let order = &self.orders[i];
+
             if (!order_mask.is_empty() && !order_mask[i])
                 || ((order.logxir > 0) && (xi.0 == 1.0))
                 || ((order.logxif > 0) && (xi.1 == 1.0))
+                || (!lumi_mask.is_empty() && !lumi_mask[k])
             {
                 continue;
             }
 
-            for bin in 0..self.bin_limits.bins() {
-                for (j, lumi_entry) in self.lumi.iter().enumerate() {
-                    if !lumi_mask.is_empty() && !lumi_mask[j] {
-                        continue;
-                    }
+            let lumi_entry = &self.lumi[k];
 
-                    let mut value = self.subgrids[i][bin][j].convolute(&|x1, x2, q2| {
-                        let mut lumi = 0.0;
+            let mut value = subgrid.convolute(&|x1, x2, q2| {
+                let mut lumi = 0.0;
 
-                        for entry in lumi_entry.entry() {
-                            lumi += xfx1(x1, q2, entry.0) * xfx2(x2, q2, entry.1) * entry.2;
-                        }
-
-                        lumi *= alphas(q2).powi(order.alphas as i32);
-                        lumi
-                    });
-
-                    if order.logxir > 0 {
-                        value *= xi.0.ln().powi(order.logxir as i32);
-                    }
-                    if order.logxif > 0 {
-                        value *= xi.1.ln().powi(order.logxif as i32);
-                    }
-
-                    bins[bin] += value;
+                for entry in lumi_entry.entry() {
+                    lumi += xfx1(x1, q2, entry.0) * xfx2(x2, q2, entry.1) * entry.2;
                 }
+
+                lumi *= alphas(q2).powi(order.alphas as i32);
+                lumi
+            });
+
+            if order.logxir > 0 {
+                value *= xi.0.ln().powi(order.logxir as i32);
             }
+
+            if order.logxif > 0 {
+                value *= xi.1.ln().powi(order.logxif as i32);
+            }
+
+            bins[j] += value;
         }
 
         bins
@@ -159,7 +146,7 @@ impl Grid {
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
     pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: Ntuple<f64>) {
         if let Some(bin) = self.bin_limits.index(observable) {
-            self.subgrids[order][bin][lumi].fill(ntuple);
+            self.subgrids[[order, bin, lumi]].fill(ntuple);
         }
     }
 
@@ -169,7 +156,7 @@ impl Grid {
     pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Ntuple<()>, weights: &[f64]) {
         if let Some(bin) = self.bin_limits.index(observable) {
             for (lumi, weight) in weights.iter().enumerate() {
-                self.subgrids[order][bin][lumi].fill(Ntuple {
+                self.subgrids[[order, bin, lumi]].fill(Ntuple {
                     x1: ntuple.x1,
                     x2: ntuple.x2,
                     q2: ntuple.q2,
@@ -187,13 +174,9 @@ impl Grid {
 
     /// Scale all subgrids by `factor`.
     pub fn scale(&mut self, factor: f64) {
-        for i in &mut self.subgrids {
-            for j in i {
-                for k in j {
-                    k.scale(factor);
-                }
-            }
-        }
+        self.subgrids
+            .iter_mut()
+            .for_each(|subgrid| subgrid.scale(factor));
     }
 
     /// Returns the subgrid parameters.

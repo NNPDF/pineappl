@@ -11,6 +11,7 @@ categories = ["science"]
 description = "PineAPPL is not an extension of APPLgrid"
 
 [dependencies]
+ndarray = { features = ["serde"], version = "0.13.1" }
 noisy_float = { features = ["serde-1"], version = "0.1" }
 serde = { features = ["derive"], version = "1.0" }
 typetag = "0.1"
