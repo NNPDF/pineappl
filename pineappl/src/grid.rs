@@ -23,15 +23,18 @@ pub struct Order {
 /// Trait each subgrid must implement.
 #[typetag::serde(tag = "type")]
 pub trait Subgrid {
+    /// Convolute the subgrid with a luminosity function
+    fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64;
+
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`.
     fn fill(&mut self, ntuple: Ntuple<f64>);
 
+    /// Returns true if `fill` was never called for this grid.
+    fn is_empty(&self) -> bool;
+
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
-
-    /// Convolute the subgrid with a luminosity function
-    fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64;
 }
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a

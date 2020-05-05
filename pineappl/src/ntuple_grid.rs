@@ -11,14 +11,6 @@ pub struct NtupleSubgrid {
 
 #[typetag::serde]
 impl Subgrid for NtupleSubgrid {
-    fn fill(&mut self, ntuple: Ntuple<f64>) {
-        self.ntuples.push(ntuple);
-    }
-
-    fn scale(&mut self, factor: f64) {
-        self.ntuples.iter_mut().for_each(|t| *t *= factor);
-    }
-
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
         let mut result = 0.0;
 
@@ -27,5 +19,17 @@ impl Subgrid for NtupleSubgrid {
         }
 
         result
+    }
+
+    fn fill(&mut self, ntuple: Ntuple<f64>) {
+        self.ntuples.push(ntuple);
+    }
+
+    fn is_empty(&self) -> bool {
+        self.ntuples.is_empty()
+    }
+
+    fn scale(&mut self, factor: f64) {
+        self.ntuples.iter_mut().for_each(|t| *t *= factor);
     }
 }
