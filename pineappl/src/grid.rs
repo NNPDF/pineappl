@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::BinLimits;
-use super::lumi::Lumi;
+use super::lumi::LumiEntry;
 use super::ntuple_grid::NtupleSubgrid;
 use serde::{Deserialize, Serialize};
 use std::ops::MulAssign;
@@ -60,7 +60,7 @@ impl MulAssign<f64> for Ntuple<f64> {
 pub struct Grid {
     // TODO: this should probably be rewritten using something like ndarray
     subgrids: Vec<Vec<Vec<Box<dyn Subgrid>>>>,
-    lumi: Lumi,
+    lumi: Vec<LumiEntry>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
 }
@@ -68,7 +68,7 @@ pub struct Grid {
 impl Grid {
     /// Constructor.
     #[must_use]
-    pub fn new(lumi: Lumi, orders: Vec<Order>, bin_limits: Vec<f64>) -> Self {
+    pub fn new(lumi: Vec<LumiEntry>, orders: Vec<Order>, bin_limits: Vec<f64>) -> Self {
         assert!(!bin_limits.is_empty());
 
         Self {
@@ -125,7 +125,7 @@ impl Grid {
             }
 
             for bin in 0..self.bin_limits.bins() {
-                for (j, lumi_entry) in self.lumi.entries().iter().enumerate() {
+                for (j, lumi_entry) in self.lumi.iter().enumerate() {
                     if !lumi_mask.is_empty() && !lumi_mask[j] {
                         continue;
                     }
@@ -181,7 +181,7 @@ impl Grid {
 
     /// Returns the luminosity function.
     #[must_use]
-    pub const fn lumi(&self) -> &Lumi {
+    pub fn lumi(&self) -> &[LumiEntry] {
         &self.lumi
     }
 

@@ -4,7 +4,7 @@
 //! C-language interface for `PineAPPL`.
 
 use pineappl::grid::{Grid, Ntuple, Order};
-use pineappl::lumi::{Lumi, LumiEntry};
+use pineappl::lumi::LumiEntry;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -14,6 +14,9 @@ use std::slice;
 
 // TODO: change raw pointer and Option of pointer to Box if possible, as soon as cbindgen supports
 // this; see github issue: https://github.com/eqrion/cbindgen/issues/474
+
+/// Type for defining a luminosity function.
+pub type Lumi = Vec<LumiEntry>;
 
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
@@ -250,7 +253,7 @@ pub extern "C" fn pineappl_lumi_add(
         vec![1.0; combinations]
     };
 
-    lumi.add(LumiEntry::new(
+    lumi.push(LumiEntry::new(
         ids.chunks(2)
             .zip(factors)
             .map(|x| (x.0[0], x.0[1], x.1))

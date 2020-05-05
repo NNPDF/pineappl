@@ -1,6 +1,5 @@
 use num_complex::Complex64;
 use pineappl::grid::{Grid, Ntuple, Order};
-use pineappl::lumi::Lumi;
 use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -136,7 +135,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, smin: f64, smax: f64) -> Psp2to2 {
 fn drell_yan_lo() {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
 
-    let lumi = Lumi::new(vec![
+    let lumi = vec![
         // down-pair flavors
         lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
         lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
@@ -145,7 +144,7 @@ fn drell_yan_lo() {
         lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
         // photons
         lumi_entry![22, 22, 1.0],
-    ]);
+    ];
 
     // only LO alpha^2
     let orders = vec![Order {
