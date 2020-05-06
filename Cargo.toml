@@ -2,6 +2,7 @@
 members = [
     "pineappl",
     "pineappl_capi",
+    "pineappl_lhapdf",
 ]
 
 [profile.release]
