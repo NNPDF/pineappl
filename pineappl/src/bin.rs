@@ -2,15 +2,31 @@
 
 use serde::{Deserialize, Serialize};
 use std::f64;
+use std::mem;
 
-#[derive(Deserialize, Serialize)]
+fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
+    // TODO: only works well enough if the numbers are far enough from zero or exacly zero
+    if (lhs != 0.0) && (rhs != 0.0) {
+        (lhs / rhs).max(rhs / lhs) < f64::EPSILON.mul_add(ulps as f64, 1.0)
+    } else if lhs == rhs {
+        true
+    } else {
+        false
+    }
+}
+
+#[derive(Deserialize, PartialEq, Serialize)]
 enum Limits {
     Equal { left: f64, right: f64, bins: usize },
     Unequal { limits: Vec<f64> },
 }
 
+/// Error type which is returned when two `BinLimits` objects are merged which are not
+/// connected/non-consecutive.
+pub struct MergeBinError {}
+
 /// Structure representing bin limits.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, PartialEq, Serialize)]
 pub struct BinLimits(Limits);
 
 impl BinLimits {
@@ -25,7 +41,7 @@ impl BinLimits {
             .map(|(current, next)| next - current)
             .collect::<Vec<f64>>()
             .windows(2)
-            .all(|val| (val[0] / val[1]).max(val[1] / val[0]) <= f64::EPSILON.mul_add(8.0, 1.0))
+            .all(|val| float_eq_within(val[0], val[1], 8))
         {
             Self(Limits::Equal {
                 left: *limits.first().unwrap(),
@@ -37,8 +53,17 @@ impl BinLimits {
         }
     }
 
+    /// Returns the number of bins.
+    #[must_use]
+    pub fn bins(&self) -> usize {
+        match &self.0 {
+            Limits::Equal { bins, .. } => *bins,
+            Limits::Unequal { limits } => limits.len() - 1,
+        }
+    }
+
     /// Returns the bin index for observable `value`. If the value over- or underflows, the return
-    /// value is `Option::None`.
+    /// value is `None`.
     #[must_use]
     pub fn index(&self, value: f64) -> Option<usize> {
         match &self.0 {
@@ -63,12 +88,54 @@ impl BinLimits {
         }
     }
 
-    /// Returns the number of bins.
-    #[must_use]
-    pub fn bins(&self) -> usize {
+    /// Returns the left-most bin limit
+    pub fn left(&self) -> f64 {
         match &self.0 {
-            Limits::Equal { bins, .. } => *bins,
-            Limits::Unequal { limits } => limits.len() - 1,
+            Limits::Unequal { limits } => *limits.first().unwrap(),
+            Limits::Equal { left, .. } => *left,
+        }
+    }
+
+    /// Returns the limits in a `Vec`.
+    fn limits(&mut self) -> Vec<f64> {
+        match &self.0 {
+            Limits::Equal { left, right, bins } => (0..=*bins)
+                .map(|b| *left + (*right - *left) * ((b as f64) / (*bins as f64)))
+                .collect(),
+            Limits::Unequal { limits } => limits.clone(),
+        }
+    }
+
+    /// Merge the limits of `other` into `self`. If both limits are non-consecutive, an error is
+    /// returned.
+    pub fn merge(&mut self, mut other: BinLimits) -> Result<(), MergeBinError> {
+        // if the bins would merged as (other, self), swap them to treat both cases as (self, other)
+        if float_eq_within(other.right(), self.left(), 8) {
+            mem::swap(self, &mut other);
+        } else if !float_eq_within(self.right(), other.left(), 8) {
+            return Err(MergeBinError {});
+        }
+
+        let mut limits = self.limits();
+        let add_limits = other.limits();
+
+        // average over the shared limit
+        *limits.last_mut().unwrap() =
+            0.5 * (*limits.last().unwrap() + *add_limits.first().unwrap());
+        // add the new limits
+        limits.extend_from_slice(&add_limits[1..]);
+
+        // use the constructor to get a valid state
+        *self = Self::new(limits);
+
+        Ok(())
+    }
+
+    /// Returns the right-most bin limit
+    pub fn right(&self) -> f64 {
+        match &self.0 {
+            Limits::Unequal { limits } => *limits.last().unwrap(),
+            Limits::Equal { right, .. } => *right,
         }
     }
 }
@@ -76,6 +143,43 @@ impl BinLimits {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn bin_limits_merge() {
+        let mut limits = BinLimits::new(vec![0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]);
+
+        // right merge
+        assert!(limits
+            .merge(BinLimits::new(vec![
+                1.0,
+                1.0 + 1.0 / 3.0,
+                1.0 + 2.0 / 3.0,
+                2.0
+            ]))
+            .is_ok());
+
+        assert_eq!(limits.left(), 0.0);
+        assert_eq!(limits.right(), 2.0);
+        assert_eq!(limits.bins(), 6);
+
+        let non_consecutive_bins = BinLimits::new(vec![3.0, 4.0]);
+
+        assert!(limits.merge(non_consecutive_bins).is_err());
+
+        // left merge
+        assert!(limits
+            .merge(BinLimits::new(vec![
+                -1.0,
+                -1.0 + 1.0 / 3.0,
+                -1.0 + 2.0 / 3.0,
+                0.0
+            ]))
+            .is_ok());
+
+        assert_eq!(limits.left(), -1.0);
+        assert_eq!(limits.right(), 2.0);
+        assert_eq!(limits.bins(), 9);
+    }
 
     #[test]
     fn test() {
