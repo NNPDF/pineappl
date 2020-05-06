@@ -1,7 +1,6 @@
 //! Module that contains helpers for binning observables
 
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::f64;
 
 #[derive(Deserialize, Serialize)]
@@ -18,13 +17,7 @@ impl BinLimits {
     /// Constructor for `BinLimits`.
     #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
-        limits.sort_by(|left, right| {
-            if left < right {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            }
-        });
+        limits.sort_by(|left, right| left.partial_cmp(&right).unwrap());
 
         if limits
             .iter()
@@ -58,13 +51,7 @@ impl BinLimits {
             }
             Limits::Unequal { limits } => {
                 let index = limits
-                    .binary_search_by(|left| {
-                        if left < &value {
-                            Ordering::Less
-                        } else {
-                            Ordering::Greater
-                        }
-                    })
+                    .binary_search_by(|left| left.partial_cmp(&value).unwrap())
                     .unwrap_or_else(|e| e);
 
                 if index == 0 || index == limits.len() {
