@@ -18,5 +18,5 @@ typetag = "0.1"
 [dev-dependencies]
 #bincode = "1.0"
 num-complex = "0.2"
-rand = "0.7"
+rand = { default-features = false, version = "0.7" }
 rand_pcg = "0.2"
