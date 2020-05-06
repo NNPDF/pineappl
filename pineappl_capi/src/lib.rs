@@ -16,7 +16,8 @@ use std::slice;
 // this; see github issue: https://github.com/eqrion/cbindgen/issues/474
 
 /// Type for defining a luminosity function.
-pub type Lumi = Vec<LumiEntry>;
+#[derive(Default)]
+pub struct Lumi(Vec<LumiEntry>);
 
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
@@ -193,7 +194,7 @@ pub extern "C" fn pineappl_grid_new(
     }
 
     Box::into_raw(Box::new(Grid::new(
-        lumi.clone(),
+        lumi.0.clone(),
         orders,
         bin_limits.to_vec(),
     )))
@@ -262,7 +263,7 @@ pub extern "C" fn pineappl_lumi_add(
         vec![1.0; combinations]
     };
 
-    lumi.push(LumiEntry::new(
+    lumi.0.push(LumiEntry::new(
         ids.chunks(2)
             .zip(factors)
             .map(|x| (x.0[0], x.0[1], x.1))
