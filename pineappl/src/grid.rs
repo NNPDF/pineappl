@@ -84,6 +84,7 @@ impl MulAssign<f64> for Ntuple<f64> {
 }
 
 /// Error returned when merging two grids fails.
+#[derive(Debug)]
 pub struct GridMergeError {}
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,

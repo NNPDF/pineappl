@@ -214,6 +214,15 @@ pub extern "C" fn pineappl_grid_read(filename: Option<*const c_char>) -> *mut Gr
     Box::into_raw(grid)
 }
 
+/// Merges `other` into `grid` and subsequently deletes `other`.
+#[no_mangle]
+pub extern "C" fn pineappl_grid_merge_and_delete(grid: Option<*mut Grid>, other: Option<*mut Grid>) {
+    let grid = unsafe { &mut *grid.unwrap() };
+    let other = unsafe { Box::from_raw(other.unwrap()) };
+
+    grid.merge(*other).unwrap();
+}
+
 /// Scale all grids in `grid` by `factor`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_scale(grid: Option<*mut Grid>, factor: f64) {
