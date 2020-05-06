@@ -3,8 +3,9 @@
 use super::bin::BinLimits;
 use super::lumi::LumiEntry;
 use super::ntuple_grid::NtupleSubgrid;
-use ndarray::Array3;
+use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
+use std::mem;
 use std::ops::MulAssign;
 
 /// Coupling powers for each grid.
@@ -21,6 +22,17 @@ pub struct Order {
 }
 
 impl Order {
+    /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
+    /// verbose.
+    pub fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
+        Self {
+            alphas,
+            alpha,
+            logxir,
+            logxif,
+        }
+    }
+
     /// Compares two vectors of `Order` for equality after sorting them.
     pub fn equal_after_sort(lhs: &Vec<Order>, rhs: &Vec<Order>) -> bool {
         let mut lhs = lhs.clone();
@@ -70,6 +82,9 @@ impl MulAssign<f64> for Ntuple<f64> {
         self.weight *= rhs;
     }
 }
+
+/// Error returned when merging two grids fails.
+pub struct GridMergeError {}
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
@@ -188,6 +203,118 @@ impl Grid {
         &self.lumi
     }
 
+    /// Merges the non-empty `Subgrid`s contained in `other` into `self`. This performs one of two
+    /// possible operations:
+    /// 1. If the bin limits of `self` and `other` are different and can be concatenated with each
+    ///    other the bins are merged. In this case both grids are assumed to have the same orders
+    ///    and the same luminosity functions. If this is not the case, an error is returned.
+    /// 2. If the bin limits of `self` and `other` are the same, the luminosity functions and
+    ///    perturbative orders of `self` and `other` may be different, if the ones that are the
+    ///    same have empty grids in at least one of the grids. Otherwise an error is returned.
+    pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
+        if self.bin_limits != other.bin_limits {
+            if !Order::equal_after_sort(&self.orders, &other.orders)
+                || !LumiEntry::equal_after_sort(&self.lumi, &other.lumi)
+            {
+                return Err(GridMergeError {});
+            } else {
+                let new_bins = other.bin_limits.bins();
+
+                if self.bin_limits.merge(other.bin_limits).is_err() {
+                    return Err(GridMergeError {});
+                }
+
+                self.increase_shape(&(0, new_bins, 0));
+            }
+        } else {
+            let mut new_orders: Vec<Order> = Vec::new();
+            let mut new_entries: Vec<LumiEntry> = Vec::new();
+
+            // check if `other` can be merged into `self`. If this is not the case, we return an
+            // error before modifying `self`.
+            for ((i, j, k), _) in other
+                .subgrids
+                .indexed_iter_mut()
+                .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+            {
+                let other_order = &other.orders[i];
+                let other_entry = &other.lumi[k];
+
+                let self_i = self
+                    .orders
+                    .iter()
+                    .chain(new_orders.iter())
+                    .position(|x| x == other_order);
+
+                if self_i.is_none() {
+                    new_orders.push(other_order.clone());
+                }
+
+                let self_k = self
+                    .lumi
+                    .iter()
+                    .chain(new_entries.iter())
+                    .position(|y| y == other_entry);
+
+                if let Some(self_k) = self_k {
+                    if let Some(self_i) = self_i {
+                        let (len_i, _, len_k) = self.subgrids.raw_dim().into_pattern();
+
+                        if (self_i < len_i)
+                            && (self_k < len_k)
+                            && !self.subgrids[[self_i, j, self_k]].is_empty()
+                        {
+                            return Err(GridMergeError {});
+                        }
+                    }
+                } else {
+                    new_entries.push(other_entry.clone());
+                }
+            }
+
+            if !new_orders.is_empty() || !new_entries.is_empty() {
+                self.increase_shape(&(new_orders.len(), 0, new_entries.len()));
+            }
+
+            self.orders.append(&mut new_orders);
+            self.lumi.append(&mut new_entries);
+        }
+
+        for ((i, j, k), subgrid) in other
+            .subgrids
+            .indexed_iter_mut()
+            .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+        {
+            let other_order = &other.orders[i];
+            let other_entry = &other.lumi[k];
+
+            let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
+            let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
+
+            mem::swap(&mut self.subgrids[[self_i, j, self_k]], subgrid);
+        }
+
+        Ok(())
+    }
+
+    fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
+        let old_dim = self.subgrids.raw_dim().into_pattern();
+        let mut new_subgrids = Array3::from_shape_simple_fn(
+            (
+                old_dim.0 + new_dim.0,
+                old_dim.1 + new_dim.1,
+                old_dim.2 + new_dim.2,
+            ),
+            || Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>,
+        );
+
+        for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
+            mem::swap(&mut new_subgrids[[i, j, k]], subgrid);
+        }
+
+        mem::swap(&mut self.subgrids, &mut new_subgrids);
+    }
+
     /// Scale all subgrids by `factor`.
     pub fn scale(&mut self, factor: f64) {
         self.subgrids
@@ -199,5 +326,188 @@ impl Grid {
     #[must_use]
     pub fn orders(&self) -> &[Order] {
         &self.orders
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lumi_entry;
+
+    #[test]
+    fn grid_merge_empty_subgrids() {
+        let mut grid = Grid::new(
+            vec![
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
+
+        let other = Grid::new(
+            vec![
+                // differently ordered than `grid`
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+            ],
+            vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        // merging with empty subgrids should not change the grid
+        assert!(grid.merge(other).is_ok());
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
+    }
+
+    #[test]
+    fn grid_merge_orders() {
+        let mut grid = Grid::new(
+            vec![
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
+
+        let mut other = Grid::new(
+            vec![
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![
+                Order::new(1, 2, 0, 0),
+                Order::new(1, 2, 0, 1),
+                Order::new(0, 2, 0, 0),
+            ],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        other.fill_all(
+            0,
+            0.1,
+            Ntuple {
+                x1: 0.1,
+                x2: 0.2,
+                q2: 90.0_f64.powi(2),
+                weight: (),
+            },
+            &[1.0, 2.0],
+        );
+        other.fill_all(
+            1,
+            0.1,
+            Ntuple {
+                x1: 0.1,
+                x2: 0.2,
+                q2: 90.0_f64.powi(2),
+                weight: (),
+            },
+            &[1.0, 2.0],
+        );
+
+        // merge with four non-empty subgrids
+        assert!(grid.merge(other).is_ok());
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 3);
+    }
+
+    #[test]
+    fn grid_merge_lumi_entries() {
+        let mut grid = Grid::new(
+            vec![
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
+
+        let mut other = Grid::new(
+            vec![lumi_entry![22, 22, 1.0], lumi_entry![2, 2, 1.0; 4, 4, 1.0]],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+        );
+
+        // fill the photon-photon entry
+        other.fill(
+            0,
+            0.1,
+            0,
+            Ntuple {
+                x1: 0.1,
+                x2: 0.2,
+                q2: 90.0_f64.powi(2),
+                weight: 3.0,
+            },
+        );
+
+        assert!(grid.merge(other).is_ok());
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 3);
+        assert_eq!(grid.orders().len(), 1);
+    }
+
+    #[test]
+    fn grid_merge_bins() {
+        let mut grid = Grid::new(
+            vec![
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.0, 0.25, 0.5],
+        );
+
+        assert_eq!(grid.bin_limits().bins(), 2);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
+
+        let mut other = Grid::new(
+            vec![
+                // luminosity function is differently sorted
+                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0)],
+            vec![0.5, 0.75, 1.0],
+        );
+
+        other.fill_all(
+            0,
+            0.1,
+            Ntuple {
+                x1: 0.1,
+                x2: 0.2,
+                q2: 90.0_f64.powi(2),
+                weight: (),
+            },
+            &[2.0, 3.0]
+        );
+
+        assert!(grid.merge(other).is_ok());
+
+        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.orders().len(), 1);
     }
 }
