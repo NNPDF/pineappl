@@ -502,7 +502,7 @@ mod tests {
                 q2: 90.0_f64.powi(2),
                 weight: (),
             },
-            &[2.0, 3.0]
+            &[2.0, 3.0],
         );
 
         assert!(grid.merge(other).is_ok());

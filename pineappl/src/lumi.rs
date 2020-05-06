@@ -63,7 +63,7 @@ macro_rules! lumi_entry {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn lumi_entry() {
+    fn lumi_entry_blind_to_ordering() {
         let entry1 = lumi_entry![2, 2, 1.0; 4, 4, 1.0];
         let entry2 = lumi_entry![4, 4, 1.0; 2, 2, 1.0];
 
