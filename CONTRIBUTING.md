@@ -1,10 +1,11 @@
 # Contribution guide
 
-- Before you commit, make sure to first run the following commands and fix all
-  warnings and errors, in each step, before running the next command:
-    - `cargo build`, to build the project,
-    - `cargo clippy`, to see whether the linter has any good suggestions,
+- Before you commit, first make sure that the whole project including
+  libraries, programs, documentation, and tests compile. Use
+    - `cargo doc --no-deps --open`, to generate and check the documentation,
     - `cargo test`, to make sure all tests and doctests are still passing,
-    - `cargo fmt`, to format your code properly,
-    - `cargo doc --open`, to generate the documentation. Make sure the
-      documentation is formatted properly.
+    - `cargo clippy`, to run the linter and to fix important warnings,
+    - and finally `cargo fmt`, to format your code properly.
+
+- when you commit, make sure the commit message is written properly. This
+  blogpost explains it nicely: https://chris.beams.io/posts/git-commit/
