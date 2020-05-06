@@ -126,7 +126,7 @@ pub extern "C" fn pineappl_grid_fill_all(
 
 /// Write the order parameters of `grid` into `order_params`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_get_order_params(
+pub extern "C" fn pineappl_grid_order_params(
     grid: Option<*const Grid>,
     order_params: Option<*mut u32>,
 ) {
@@ -145,7 +145,7 @@ pub extern "C" fn pineappl_grid_get_order_params(
 /// Return the number of orders in `grid`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_get_order_count(grid: Option<*const Grid>) -> usize {
+pub extern "C" fn pineappl_grid_order_count(grid: Option<*const Grid>) -> usize {
     let subgrids = unsafe { &*grid.unwrap() }.orders();
 
     subgrids.len()
@@ -311,7 +311,7 @@ pub extern "C" fn pineappl_keyval_delete(key_vals: Option<*mut KeyVal>) {
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_get_bool(
+pub extern "C" fn pineappl_keyval_bool(
     key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> bool {
@@ -324,7 +324,7 @@ pub extern "C" fn pineappl_keyval_get_bool(
 /// Get the double-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_get_double(
+pub extern "C" fn pineappl_keyval_double(
     key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> f64 {
@@ -337,7 +337,7 @@ pub extern "C" fn pineappl_keyval_get_double(
 /// Get the string-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_get_int(
+pub extern "C" fn pineappl_keyval_int(
     key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> i32 {
@@ -350,7 +350,7 @@ pub extern "C" fn pineappl_keyval_get_int(
 /// Get the int-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_get_string(
+pub extern "C" fn pineappl_keyval_string(
     key_vals: Option<*const KeyVal>,
     key: Option<*const c_char>,
 ) -> *const c_char {
