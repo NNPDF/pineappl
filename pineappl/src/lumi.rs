@@ -1,6 +1,5 @@
 //! Module for everything related to luminosity functions.
 
-use noisy_float::types::R64;
 use serde::{Deserialize, Serialize};
 
 /// This structure represens an entry of a luminosity function. Each entry consists of a tuple,
@@ -21,7 +20,7 @@ impl LumiEntry {
 
         // sort `entry` because the ordering doesn't matter and because it makes it easier to
         // compare `LumiEntry` objects with each other
-        entry.sort_by(|x, y| (x.0, x.1, R64::new(x.2)).cmp(&(y.0, y.1, R64::new(y.2))));
+        entry.sort_by(|x, y| (x.0, x.1, x.2).partial_cmp(&(y.0, y.1, y.2)).unwrap());
 
         Self { entry }
     }
