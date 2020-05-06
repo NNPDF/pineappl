@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// which contains, in the following order, the PDG id of the first incoming parton, then the PDG
 /// id of the second parton, and finally a numerical factor that will multiply the result for this
 /// specific combination.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, PartialOrd, Serialize)]
 pub struct LumiEntry {
     entry: Vec<(i32, i32, f64)>,
 }
@@ -23,6 +23,17 @@ impl LumiEntry {
         entry.sort_by(|x, y| (x.0, x.1, x.2).partial_cmp(&(y.0, y.1, y.2)).unwrap());
 
         Self { entry }
+    }
+
+    /// Compares two vectors of `LumiEntry` for equality after sorting them.
+    pub fn equal_after_sort(lhs: &Vec<LumiEntry>, rhs: &Vec<LumiEntry>) -> bool {
+        let mut lhs = lhs.clone();
+        let mut rhs = rhs.clone();
+
+        lhs.sort_by(|x, y| x.partial_cmp(&y).unwrap());
+        rhs.sort_by(|x, y| x.partial_cmp(&y).unwrap());
+
+        lhs == rhs
     }
 
     /// Returns a tuple representation of this entry.

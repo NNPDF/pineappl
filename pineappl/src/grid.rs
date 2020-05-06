@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::MulAssign;
 
 /// Coupling powers for each grid.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
     pub alphas: u32,
@@ -18,6 +18,19 @@ pub struct Order {
     pub logxir: u32,
     /// Exponent of the logarithm of the scale factor of the factorization scale.
     pub logxif: u32,
+}
+
+impl Order {
+    /// Compares two vectors of `Order` for equality after sorting them.
+    pub fn equal_after_sort(lhs: &Vec<Order>, rhs: &Vec<Order>) -> bool {
+        let mut lhs = lhs.clone();
+        let mut rhs = rhs.clone();
+
+        lhs.sort();
+        rhs.sort();
+
+        lhs == rhs
+    }
 }
 
 /// Trait each subgrid must implement.
