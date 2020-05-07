@@ -33,8 +33,8 @@ pub struct Lumi(Vec<LumiEntry>);
 #[no_mangle]
 pub extern "C" fn pineappl_grid_convolute(
     grid: Option<*const Grid>,
-    xfx1: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
-    xfx2: extern "C" fn(x: f64, q2: f64, pdg_id: i32, state: *mut c_void) -> f64,
+    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: Option<*const bool>,
@@ -44,8 +44,8 @@ pub extern "C" fn pineappl_grid_convolute(
     results: Option<*mut f64>,
 ) {
     let grid = unsafe { &*grid.unwrap() };
-    let xfx1 = |x, q2, id| xfx1(x, q2, id, state);
-    let xfx2 = |x, q2, id| xfx2(x, q2, id, state);
+    let xfx1 = |id, x, q2| xfx1(id, x, q2, state);
+    let xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let alphas = |q2| alphas(q2, state);
     let order_mask = if let Some(order_mask) = order_mask {
         unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()

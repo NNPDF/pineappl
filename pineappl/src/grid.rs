@@ -128,8 +128,8 @@ impl Grid {
     /// (second element) from their central value `(1.0, 1.0)`.
     pub fn convolute(
         &self,
-        xfx1: &dyn Fn(f64, f64, i32) -> f64,
-        xfx2: &dyn Fn(f64, f64, i32) -> f64,
+        xfx1: &dyn Fn(i32, f64, f64) -> f64,
+        xfx2: &dyn Fn(i32, f64, f64) -> f64,
         alphas: &dyn Fn(f64) -> f64,
         order_mask: &[bool],
         lumi_mask: &[bool],
@@ -154,7 +154,7 @@ impl Grid {
                 let mut lumi = 0.0;
 
                 for entry in lumi_entry.entry() {
-                    lumi += xfx1(x1, q2, entry.0) * xfx2(x2, q2, entry.1) * entry.2;
+                    lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2;
                 }
 
                 lumi *= alphas(q2).powi(order.alphas as i32);
