@@ -1,11 +1,29 @@
 #[macro_use]
 extern crate cpp;
 
-use std::ffi::{c_void, CString};
+use std::ffi::{c_void, CStr, CString};
+use std::os::raw::c_char;
 
 cpp! {{
     #include <LHAPDF/LHAPDF.h>
 }}
+
+pub fn available_pdf_sets() -> Vec<String> {
+    let pdfs = unsafe { cpp!([] -> usize as "size_t" {
+        return static_cast<unsigned> (LHAPDF::availablePDFSets().size());
+    })};
+
+    let mut pdf_sets: Vec<String> = Vec::with_capacity(pdfs);
+
+    for i in 0..pdfs {
+        let cstr_ptr = unsafe { cpp!([i as "size_t"] -> *const c_char as "const char *" {
+            return LHAPDF::availablePDFSets().at(i).c_str();
+        })};
+        pdf_sets.push(unsafe { CStr::from_ptr(cstr_ptr) }.to_str().unwrap().to_string());
+    }
+
+    pdf_sets
+}
 
 pub struct Pdf {
     ptr: *mut c_void,
