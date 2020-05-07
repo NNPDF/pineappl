@@ -3,10 +3,9 @@ use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
-//use std::fs::File;
-//use std::io::BufWriter;
+use std::f64::consts::{PI, SQRT_2};
 
-// If equation numbers are given they are from Max Huber's PhD thesis:
+// If equation numbers are given, they are from Max Huber's PhD thesis:
 //   'Radiative corrections to the neutral-current Drell-Yan process'
 
 // Eq. (2.8)
@@ -29,8 +28,7 @@ fn int_qqbar(s: f64, t: f64, u: f64, qq: f64, i3wq: f64) -> f64 {
     let sw2 = 1.0 - cw2;
     let cw = cw2.sqrt();
     let sw = sw2.sqrt();
-    let alphagf =
-        std::f64::consts::SQRT_2 / std::f64::consts::PI * gf * mw * mw * (1.0 - (mw / mz).powi(2));
+    let alphagf = SQRT_2 / PI * gf * mw * mw * (1.0 - (mw / mz).powi(2));
 
     // couplings and abbreviations
     let gqqzp = -sw / cw * qq;
@@ -71,7 +69,10 @@ struct Psp2to2 {
     jacobian: f64,
 }
 
-fn hadronic_pspgen(rng: &mut impl Rng, smin: f64, smax: f64) -> Psp2to2 {
+fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
+    let smin = mmin * mmin;
+    let smax = mmax * mmax;
+
     let mz = 91.1876;
     let gz = 2.4952;
 
@@ -109,7 +110,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, smin: f64, smax: f64) -> Psp2to2 {
     assert!(u >= -s);
 
     // phi integration
-    jacobian *= 2.0 * std::f64::consts::PI;
+    jacobian *= 2.0 * PI;
 
     let ptl = (t * u / s).sqrt();
     let mll = s.sqrt();
@@ -131,10 +132,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, smin: f64, smax: f64) -> Psp2to2 {
     }
 }
 
-#[test]
-fn drell_yan_lo() {
-    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-
+fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
     let lumi = vec![
         // down-pair flavors
         lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
@@ -160,7 +158,7 @@ fn drell_yan_lo() {
     // create the PineAPPL grid
     let mut grid = Grid::new(lumi, orders, bin_limits);
 
-    for _ in 0..100_000 {
+    for _ in 0..calls {
         // generate a phase-space point
         let Psp2to2 {
             s,
@@ -172,7 +170,7 @@ fn drell_yan_lo() {
             x1,
             x2,
             jacobian,
-        } = hadronic_pspgen(&mut rng, 60.0_f64.powi(2), 120.0_f64.powi(2));
+        } = hadronic_pspgen(rng, 60.0, 120.0);
 
         // these cuts should always be fulfilled by the choice of `smin` and `smax` above
         assert!(mll >= 60.0);
@@ -209,14 +207,18 @@ fn drell_yan_lo() {
         );
     }
 
+    grid
+}
+
+#[test]
+fn dy_fill_speed_1000() {
+    fill_drell_yan_lo_grid(
+        &mut Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96),
+        1000,
+    );
+
     // TODO:
     // - check if the output is meaningful
     // - compare against mg5_aMC
     // - add more tests
-
-    //bincode::serialize_into(
-    //    BufWriter::new(File::create("DY-LO.pineappl").unwrap()),
-    //    &grid,
-    //)
-    //.unwrap();
 }
