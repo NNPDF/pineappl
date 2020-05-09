@@ -19,6 +19,24 @@ use std::slice;
 #[derive(Default)]
 pub struct Lumi(Vec<LumiEntry>);
 
+/// Returns the number of bins in `grid`.
+#[no_mangle]
+#[must_use]
+pub extern "C" fn pineappl_grid_bin_count(grid: Option<*const Grid>) -> usize {
+    unsafe { &*grid.unwrap() }.bin_limits().bins()
+}
+
+/// Stores the bin sizes of `grid` in `bin_sizes`.
+#[no_mangle]
+pub extern "C" fn pineappl_grid_bin_sizes(grid: Option<*const Grid>, bin_sizes: Option<*mut f64>) {
+    let sizes = &unsafe { &*grid.unwrap() }.bin_limits().bin_sizes();
+    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes.unwrap(), sizes.len()) };
+
+    for (i, size) in sizes.iter().enumerate() {
+        bin_sizes[i] = *size;
+    }
+}
+
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
 /// partons into `pdfs`. Note that the value must be the PDF for the given `pdg_id` multiplied with

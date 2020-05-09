@@ -106,6 +106,15 @@ impl BinLimits {
         }
     }
 
+    /// Returns the size for each bin.
+    #[must_use]
+    pub fn bin_sizes(&self) -> Vec<f64> {
+        match &self.0 {
+            Limits::Equal { left, right, bins } => vec![(*right - *left) / (*bins as f64); *bins],
+            Limits::Unequal { limits } => limits.windows(2).map(|x| x[1] - x[0]).collect(),
+        }
+    }
+
     /// Merge the limits of `other` into `self`. If both limits are non-consecutive, an error is
     /// returned.
     pub fn merge(&mut self, mut other: BinLimits) -> Result<(), MergeBinError> {
