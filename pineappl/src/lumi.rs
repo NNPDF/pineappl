@@ -26,12 +26,13 @@ impl LumiEntry {
     }
 
     /// Compares two vectors of `LumiEntry` for equality after sorting them.
-    pub fn equal_after_sort(lhs: &Vec<LumiEntry>, rhs: &Vec<LumiEntry>) -> bool {
-        let mut lhs = lhs.clone();
-        let mut rhs = rhs.clone();
+    #[must_use]
+    pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
+        let mut lhs = lhs.to_vec();
+        let mut rhs = rhs.to_vec();
 
-        lhs.sort_by(|x, y| x.partial_cmp(&y).unwrap());
-        rhs.sort_by(|x, y| x.partial_cmp(&y).unwrap());
+        lhs.sort_by(|x, y| x.partial_cmp(y).unwrap());
+        rhs.sort_by(|x, y| x.partial_cmp(y).unwrap());
 
         lhs == rhs
     }

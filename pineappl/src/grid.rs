@@ -24,7 +24,8 @@ pub struct Order {
 impl Order {
     /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
     /// verbose.
-    pub fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
+    #[must_use]
+    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
         Self {
             alphas,
             alpha,
@@ -34,9 +35,10 @@ impl Order {
     }
 
     /// Compares two vectors of `Order` for equality after sorting them.
-    pub fn equal_after_sort(lhs: &Vec<Order>, rhs: &Vec<Order>) -> bool {
-        let mut lhs = lhs.clone();
-        let mut rhs = rhs.clone();
+    #[must_use]
+    pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
+        let mut lhs = lhs.to_vec();
+        let mut rhs = rhs.to_vec();
 
         lhs.sort();
         rhs.sort();
@@ -213,21 +215,7 @@ impl Grid {
     ///    perturbative orders of `self` and `other` may be different, if the ones that are the
     ///    same have empty grids in at least one of the grids. Otherwise an error is returned.
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
-        if self.bin_limits != other.bin_limits {
-            if !Order::equal_after_sort(&self.orders, &other.orders)
-                || !LumiEntry::equal_after_sort(&self.lumi, &other.lumi)
-            {
-                return Err(GridMergeError {});
-            } else {
-                let new_bins = other.bin_limits.bins();
-
-                if self.bin_limits.merge(other.bin_limits).is_err() {
-                    return Err(GridMergeError {});
-                }
-
-                self.increase_shape(&(0, new_bins, 0));
-            }
-        } else {
+        if self.bin_limits == other.bin_limits {
             let mut new_orders: Vec<Order> = Vec::new();
             let mut new_entries: Vec<LumiEntry> = Vec::new();
 
@@ -279,6 +267,20 @@ impl Grid {
 
             self.orders.append(&mut new_orders);
             self.lumi.append(&mut new_entries);
+        } else {
+            if !Order::equal_after_sort(&self.orders, &other.orders)
+                || !LumiEntry::equal_after_sort(&self.lumi, &other.lumi)
+            {
+                return Err(GridMergeError {});
+            }
+
+            let new_bins = other.bin_limits.bins();
+
+            if self.bin_limits.merge(other.bin_limits).is_err() {
+                return Err(GridMergeError {});
+            }
+
+            self.increase_shape(&(0, new_bins, 0));
         }
 
         for ((i, j, k), subgrid) in other
