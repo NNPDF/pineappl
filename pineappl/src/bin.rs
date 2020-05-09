@@ -8,10 +8,8 @@ fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
     if (lhs != 0.0) && (rhs != 0.0) {
         (lhs / rhs).max(rhs / lhs) < f64::EPSILON.mul_add(ulps as f64, 1.0)
-    } else if lhs == rhs {
-        true
     } else {
-        false
+        lhs == rhs
     }
 }
 
@@ -33,7 +31,7 @@ impl BinLimits {
     /// Constructor for `BinLimits`.
     #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
-        limits.sort_by(|left, right| left.partial_cmp(&right).unwrap());
+        limits.sort_by(|left, right| left.partial_cmp(right).unwrap());
 
         if limits
             .iter()
@@ -89,6 +87,7 @@ impl BinLimits {
     }
 
     /// Returns the left-most bin limit
+    #[must_use]
     pub fn left(&self) -> f64 {
         match &self.0 {
             Limits::Unequal { limits } => *limits.first().unwrap(),
@@ -97,10 +96,11 @@ impl BinLimits {
     }
 
     /// Returns the limits in a `Vec`.
-    fn limits(&mut self) -> Vec<f64> {
+    #[must_use]
+    pub fn limits(&self) -> Vec<f64> {
         match &self.0 {
             Limits::Equal { left, right, bins } => (0..=*bins)
-                .map(|b| *left + (*right - *left) * ((b as f64) / (*bins as f64)))
+                .map(|b| (*right - *left).mul_add((b as f64) / (*bins as f64), *left))
                 .collect(),
             Limits::Unequal { limits } => limits.clone(),
         }
@@ -117,7 +117,7 @@ impl BinLimits {
 
     /// Merge the limits of `other` into `self`. If both limits are non-consecutive, an error is
     /// returned.
-    pub fn merge(&mut self, mut other: BinLimits) -> Result<(), MergeBinError> {
+    pub fn merge(&mut self, mut other: Self) -> Result<(), MergeBinError> {
         // if the bins would merged as (other, self), swap them to treat both cases as (self, other)
         if float_eq_within(other.right(), self.left(), 8) {
             mem::swap(self, &mut other);
@@ -141,6 +141,7 @@ impl BinLimits {
     }
 
     /// Returns the right-most bin limit
+    #[must_use]
     pub fn right(&self) -> f64 {
         match &self.0 {
             Limits::Unequal { limits } => *limits.last().unwrap(),
