@@ -95,6 +95,20 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<*mut Grid>) {
     }
 }
 
+/// Performs an operation `name` on `grid` using as input or output parameters `key_vals`. This is
+/// used to get access to functions that are otherwise not available through other functions. If
+/// the operation was successful, returns `true`. Otherwise, or if the `name` wasn't recognized
+/// `false` is returned.
+#[no_mangle]
+#[must_use]
+pub extern "C" fn pineappl_grid_ext(
+    _grid: Option<*mut Grid>,
+    _name: Option<*const c_char>,
+    _key_vals: Option<*mut KeyVal>,
+) -> bool {
+    false
+}
+
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
 #[no_mangle]
