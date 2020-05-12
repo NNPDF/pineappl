@@ -5,6 +5,7 @@ use super::lumi::LumiEntry;
 use super::ntuple_grid::NtupleSubgrid;
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 use std::mem;
 use std::ops::MulAssign;
 
@@ -50,6 +51,9 @@ impl Order {
 /// Trait each subgrid must implement.
 #[typetag::serde(tag = "type")]
 pub trait Subgrid {
+    /// Returns `self` as an `Any` type.
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+
     /// Convolute the subgrid with a luminosity function
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64;
 
@@ -59,6 +63,9 @@ pub trait Subgrid {
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;
+
+    /// Merges `other` into this subgrid.
+    fn merge(&mut self, other: &mut Box<dyn Subgrid>);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
@@ -221,7 +228,7 @@ impl Grid {
 
             // check if `other` can be merged into `self`. If this is not the case, we return an
             // error before modifying `self`.
-            for ((i, j, k), _) in other
+            for ((i, _, k), _) in other
                 .subgrids
                 .indexed_iter_mut()
                 .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
@@ -245,18 +252,7 @@ impl Grid {
                     .chain(new_entries.iter())
                     .position(|y| y == other_entry);
 
-                if let Some(self_k) = self_k {
-                    if let Some(self_i) = self_i {
-                        let (len_i, _, len_k) = self.subgrids.raw_dim().into_pattern();
-
-                        if (self_i < len_i)
-                            && (self_k < len_k)
-                            && !self.subgrids[[self_i, j, self_k]].is_empty()
-                        {
-                            return Err(GridMergeError {});
-                        }
-                    }
-                } else {
+                if self_k.is_none() {
                     new_entries.push(other_entry.clone());
                 }
             }
@@ -283,7 +279,7 @@ impl Grid {
             self.increase_shape(&(0, new_bins, 0));
         }
 
-        for ((i, j, k), subgrid) in other
+        for ((i, j, k), mut subgrid) in other
             .subgrids
             .indexed_iter_mut()
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
@@ -294,7 +290,11 @@ impl Grid {
             let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
             let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
 
-            mem::swap(&mut self.subgrids[[self_i, j, self_k]], subgrid);
+            if self.subgrids[[self_i, j, self_k]].is_empty() {
+                mem::swap(&mut self.subgrids[[self_i, j, self_k]], subgrid);
+            } else {
+                self.subgrids[[self_i, j, self_k]].merge(&mut subgrid);
+            }
         }
 
         Ok(())

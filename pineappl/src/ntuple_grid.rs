@@ -2,6 +2,7 @@
 
 use super::grid::{Ntuple, Subgrid};
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
@@ -11,6 +12,10 @@ pub struct NtupleSubgrid {
 
 #[typetag::serde]
 impl Subgrid for NtupleSubgrid {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
         let mut result = 0.0;
 
@@ -27,6 +32,14 @@ impl Subgrid for NtupleSubgrid {
 
     fn is_empty(&self) -> bool {
         self.ntuples.is_empty()
+    }
+
+    fn merge(&mut self, other: &mut Box<dyn Subgrid>) {
+        if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
+            self.ntuples.append(&mut other_grid.ntuples);
+        } else {
+            todo!();
+        }
     }
 
     fn scale(&mut self, factor: f64) {
