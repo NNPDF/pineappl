@@ -226,8 +226,6 @@ impl Grid {
             let mut new_orders: Vec<Order> = Vec::new();
             let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-            // check if `other` can be merged into `self`. If this is not the case, we return an
-            // error before modifying `self`.
             for ((i, _, k), _) in other
                 .subgrids
                 .indexed_iter_mut()
@@ -236,23 +234,21 @@ impl Grid {
                 let other_order = &other.orders[i];
                 let other_entry = &other.lumi[k];
 
-                let self_i = self
+                if !self
                     .orders
                     .iter()
                     .chain(new_orders.iter())
-                    .position(|x| x == other_order);
-
-                if self_i.is_none() {
+                    .any(|x| x == other_order)
+                {
                     new_orders.push(other_order.clone());
                 }
 
-                let self_k = self
+                if !self
                     .lumi
                     .iter()
                     .chain(new_entries.iter())
-                    .position(|y| y == other_entry);
-
-                if self_k.is_none() {
+                    .any(|y| y == other_entry)
+                {
                     new_entries.push(other_entry.clone());
                 }
             }
