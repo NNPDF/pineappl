@@ -34,7 +34,7 @@ impl Subgrid for NtupleSubgrid {
         self.ntuples.is_empty()
     }
 
-    fn merge(&mut self, other: &mut Box<dyn Subgrid>) {
+    fn merge(&mut self, other: &mut dyn Subgrid) {
         if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
             self.ntuples.append(&mut other_grid.ntuples);
         } else {

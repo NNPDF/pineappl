@@ -65,7 +65,7 @@ pub trait Subgrid {
     fn is_empty(&self) -> bool;
 
     /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut Box<dyn Subgrid>);
+    fn merge(&mut self, other: &mut dyn Subgrid);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
@@ -279,7 +279,7 @@ impl Grid {
             self.increase_shape(&(0, new_bins, 0));
         }
 
-        for ((i, j, k), mut subgrid) in other
+        for ((i, j, k), subgrid) in other
             .subgrids
             .indexed_iter_mut()
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
@@ -293,7 +293,7 @@ impl Grid {
             if self.subgrids[[self_i, j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, j, self_k]].merge(&mut subgrid);
+                self.subgrids[[self_i, j, self_k]].merge(&mut **subgrid);
             }
         }
 
