@@ -22,15 +22,15 @@ pub struct Lumi(Vec<LumiEntry>);
 /// Returns the number of bins in `grid`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_bin_count(grid: Option<*const Grid>) -> usize {
-    unsafe { &*grid.unwrap() }.bin_limits().bins()
+pub extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
+    unsafe { &*grid }.bin_limits().bins()
 }
 
 /// Stores the bin sizes of `grid` in `bin_sizes`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_bin_sizes(grid: Option<*const Grid>, bin_sizes: Option<*mut f64>) {
-    let sizes = &unsafe { &*grid.unwrap() }.bin_limits().bin_sizes();
-    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes.unwrap(), sizes.len()) };
+pub extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *mut f64) {
+    let sizes = &unsafe { &*grid }.bin_limits().bin_sizes();
+    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes, sizes.len()) };
 
     for (i, size) in sizes.iter().enumerate() {
         bin_sizes[i] = *size;
@@ -50,32 +50,32 @@ pub extern "C" fn pineappl_grid_bin_sizes(grid: Option<*const Grid>, bin_sizes: 
 /// with the PDFS value of the observable for each bin is written into `results`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_convolute(
-    grid: Option<*const Grid>,
+    grid: *const Grid,
     xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
-    order_mask: Option<*const bool>,
-    lumi_mask: Option<*const bool>,
+    order_mask: *const bool,
+    lumi_mask: *const bool,
     xi_ren: f64,
     xi_fac: f64,
-    results: Option<*mut f64>,
+    results: *mut f64,
 ) {
-    let grid = unsafe { &*grid.unwrap() };
+    let grid = unsafe { &*grid };
     let xfx1 = |id, x, q2| xfx1(id, x, q2, state);
     let xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let alphas = |q2| alphas(q2, state);
-    let order_mask = if let Some(order_mask) = order_mask {
+    let order_mask = if order_mask.is_null() {
+        vec![]
+    } else {
         unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
-    } else {
-        vec![]
     };
-    let lumi_mask = if let Some(lumi_mask) = lumi_mask {
+    let lumi_mask = if lumi_mask.is_null() {
+        vec![]
+    } else {
         unsafe { slice::from_raw_parts(lumi_mask, grid.lumi().len()) }.to_vec()
-    } else {
-        vec![]
     };
-    let results = unsafe { slice::from_raw_parts_mut(results.unwrap(), grid.bin_limits().bins()) };
+    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_limits().bins()) };
 
     results.copy_from_slice(&grid.convolute(
         &xfx1,
@@ -89,9 +89,9 @@ pub extern "C" fn pineappl_grid_convolute(
 
 /// Delete a grid previously created with `pineappl_grid_new`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_delete(grid: Option<*mut Grid>) {
+pub extern "C" fn pineappl_grid_delete(grid: *mut Grid) {
     unsafe {
-        Box::from_raw(grid.unwrap());
+        Box::from_raw(grid);
     }
 }
 
@@ -102,9 +102,9 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<*mut Grid>) {
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_ext(
-    _grid: Option<*mut Grid>,
-    _name: Option<*const c_char>,
-    _key_vals: Option<*mut KeyVal>,
+    _grid: *mut Grid,
+    _name: *const c_char,
+    _key_vals: *mut KeyVal,
 ) -> bool {
     false
 }
@@ -113,7 +113,7 @@ pub extern "C" fn pineappl_grid_ext(
 /// value of the `order`, `observable`, and `lumi` with `weight`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_fill(
-    grid: Option<*mut Grid>,
+    grid: *mut Grid,
     x1: f64,
     x2: f64,
     q2: f64,
@@ -122,7 +122,7 @@ pub extern "C" fn pineappl_grid_fill(
     lumi: usize,
     weight: f64,
 ) {
-    let grid = unsafe { &mut *grid.unwrap() };
+    let grid = unsafe { &mut *grid };
 
     grid.fill(order, observable, lumi, Ntuple { x1, x2, q2, weight });
 }
@@ -132,16 +132,16 @@ pub extern "C" fn pineappl_grid_fill(
 /// result for entry of the luminosity function the grid was created with.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_fill_all(
-    grid: Option<*mut Grid>,
+    grid: *mut Grid,
     x1: f64,
     x2: f64,
     q2: f64,
     order: usize,
     observable: f64,
-    weights: Option<*const f64>,
+    weights: *const f64,
 ) {
-    let grid = unsafe { &mut *grid.unwrap() };
-    let weights = unsafe { slice::from_raw_parts(weights.unwrap(), grid.lumi().len()) };
+    let grid = unsafe { &mut *grid };
+    let weights = unsafe { slice::from_raw_parts(weights, grid.lumi().len()) };
 
     grid.fill_all(
         order,
@@ -158,13 +158,9 @@ pub extern "C" fn pineappl_grid_fill_all(
 
 /// Write the order parameters of `grid` into `order_params`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_order_params(
-    grid: Option<*const Grid>,
-    order_params: Option<*mut u32>,
-) {
-    let orders = unsafe { &*grid.unwrap() }.orders();
-    let order_params =
-        unsafe { slice::from_raw_parts_mut(order_params.unwrap(), 4 * orders.len()) };
+pub extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_params: *mut u32) {
+    let orders = unsafe { &*grid }.orders();
+    let order_params = unsafe { slice::from_raw_parts_mut(order_params, 4 * orders.len()) };
 
     for (i, order) in orders.iter().enumerate() {
         order_params[4 * i] = order.alphas;
@@ -177,8 +173,8 @@ pub extern "C" fn pineappl_grid_order_params(
 /// Return the number of orders in `grid`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_order_count(grid: Option<*const Grid>) -> usize {
-    let subgrids = unsafe { &*grid.unwrap() }.orders();
+pub extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
+    let subgrids = unsafe { &*grid }.orders();
 
     subgrids.len()
 }
@@ -200,15 +196,15 @@ pub extern "C" fn pineappl_grid_order_count(grid: Option<*const Grid>) -> usize 
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_grid_new(
-    lumi: Option<*const Lumi>,
+    lumi: *const Lumi,
     orders: usize,
-    order_params: Option<*const u32>,
+    order_params: *const u32,
     bins: usize,
-    bin_limits: Option<*const f64>,
-    key_vals: Option<*const KeyVal>,
+    bin_limits: *const f64,
+    key_vals: *const KeyVal,
 ) -> *mut Grid {
-    let lumi = unsafe { &*lumi.unwrap() };
-    let order_params = unsafe { slice::from_raw_parts(order_params.unwrap(), 4 * orders) };
+    let lumi = unsafe { &*lumi };
+    let order_params = unsafe { slice::from_raw_parts(order_params, 4 * orders) };
     let orders = order_params
         .chunks(4)
         .map(|s| Order {
@@ -218,9 +214,9 @@ pub extern "C" fn pineappl_grid_new(
             logxif: s[3],
         })
         .collect::<Vec<_>>();
-    let bin_limits = unsafe { slice::from_raw_parts(bin_limits.unwrap(), bins + 1) };
+    let bin_limits = unsafe { slice::from_raw_parts(bin_limits, bins + 1) };
 
-    if let Some(key_vals) = key_vals {
+    if !key_vals.is_null() {
         // TODO: do something with the contents
         let _keyval = unsafe { &*key_vals };
     }
@@ -235,12 +231,8 @@ pub extern "C" fn pineappl_grid_new(
 /// Read a `PineAPPL` grid from a file with name `filename`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_read(filename: Option<*const c_char>) -> *mut Grid {
-    let filename = String::from(
-        unsafe { CStr::from_ptr(filename.unwrap()) }
-            .to_str()
-            .unwrap(),
-    );
+pub extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Grid {
+    let filename = String::from(unsafe { CStr::from_ptr(filename) }.to_str().unwrap());
     let reader = BufReader::new(File::open(filename).unwrap());
     let grid = Box::new(bincode::deserialize_from(reader).unwrap());
 
@@ -249,33 +241,26 @@ pub extern "C" fn pineappl_grid_read(filename: Option<*const c_char>) -> *mut Gr
 
 /// Merges `other` into `grid` and subsequently deletes `other`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_merge_and_delete(
-    grid: Option<*mut Grid>,
-    other: Option<*mut Grid>,
-) {
-    let grid = unsafe { &mut *grid.unwrap() };
-    let other = unsafe { Box::from_raw(other.unwrap()) };
+pub extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: *mut Grid) {
+    let grid = unsafe { &mut *grid };
+    let other = unsafe { Box::from_raw(other) };
 
     grid.merge(*other).unwrap();
 }
 
 /// Scale all grids in `grid` by `factor`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_scale(grid: Option<*mut Grid>, factor: f64) {
-    let grid = unsafe { &mut *grid.unwrap() };
+pub extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
+    let grid = unsafe { &mut *grid };
 
     grid.scale(factor);
 }
 
 /// Write `grid` to a file with name `filename`.
 #[no_mangle]
-pub extern "C" fn pineappl_grid_write(grid: Option<*const Grid>, filename: Option<*const c_char>) {
-    let grid = unsafe { &*grid.unwrap() };
-    let filename = String::from(
-        unsafe { CStr::from_ptr(filename.unwrap()) }
-            .to_str()
-            .unwrap(),
-    );
+pub extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
+    let grid = unsafe { &*grid };
+    let filename = String::from(unsafe { CStr::from_ptr(filename) }.to_str().unwrap());
     let writer = BufWriter::new(File::create(filename).unwrap());
 
     bincode::serialize_into(writer, &grid).unwrap();
@@ -284,18 +269,18 @@ pub extern "C" fn pineappl_grid_write(grid: Option<*const Grid>, filename: Optio
 /// Adds a linear combination of initial states to the luminosity function `lumi`.
 #[no_mangle]
 pub extern "C" fn pineappl_lumi_add(
-    lumi: Option<*mut Lumi>,
+    lumi: *mut Lumi,
     combinations: usize,
-    pdg_id_pairs: Option<*const i32>,
-    factors: Option<*const f64>,
+    pdg_id_pairs: *const i32,
+    factors: *const f64,
 ) {
-    let lumi = unsafe { &mut *lumi.unwrap() };
-    let ids = unsafe { slice::from_raw_parts(pdg_id_pairs.unwrap(), 2 * combinations) };
+    let lumi = unsafe { &mut *lumi };
+    let ids = unsafe { slice::from_raw_parts(pdg_id_pairs, 2 * combinations) };
 
-    let factors = if let Some(factors) = factors {
-        unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
-    } else {
+    let factors = if factors.is_null() {
         vec![1.0; combinations]
+    } else {
+        unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
     };
 
     lumi.0.push(LumiEntry::new(
@@ -308,9 +293,9 @@ pub extern "C" fn pineappl_lumi_add(
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
 #[no_mangle]
-pub extern "C" fn pineappl_lumi_delete(lumi: Option<*mut Lumi>) {
+pub extern "C" fn pineappl_lumi_delete(lumi: *mut Lumi) {
     unsafe {
-        Box::from_raw(lumi.unwrap());
+        Box::from_raw(lumi);
     }
 }
 
@@ -334,21 +319,18 @@ pub struct KeyVal {
 
 /// Delete the previously created object pointed to by `key_vals`.
 #[no_mangle]
-pub extern "C" fn pineappl_keyval_delete(key_vals: Option<*mut KeyVal>) {
+pub extern "C" fn pineappl_keyval_delete(key_vals: *mut KeyVal) {
     unsafe {
-        Box::from_raw(key_vals.unwrap());
+        Box::from_raw(key_vals);
     }
 }
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_bool(
-    key_vals: Option<*const KeyVal>,
-    key: Option<*const c_char>,
-) -> bool {
-    let key_vals = unsafe { &*key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+pub extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
+    let key_vals = unsafe { &*key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.bools[&key]
 }
@@ -356,12 +338,9 @@ pub extern "C" fn pineappl_keyval_bool(
 /// Get the double-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_double(
-    key_vals: Option<*const KeyVal>,
-    key: Option<*const c_char>,
-) -> f64 {
-    let key_vals = unsafe { &*key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+pub extern "C" fn pineappl_keyval_double(key_vals: *const KeyVal, key: *const c_char) -> f64 {
+    let key_vals = unsafe { &*key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.doubles[&key]
 }
@@ -369,12 +348,9 @@ pub extern "C" fn pineappl_keyval_double(
 /// Get the string-valued parameter with name `key` stored in `key_vals`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_int(
-    key_vals: Option<*const KeyVal>,
-    key: Option<*const c_char>,
-) -> i32 {
-    let key_vals = unsafe { &*key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+pub extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
+    let key_vals = unsafe { &*key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.ints[&key]
 }
@@ -383,11 +359,11 @@ pub extern "C" fn pineappl_keyval_int(
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_string(
-    key_vals: Option<*const KeyVal>,
-    key: Option<*const c_char>,
+    key_vals: *const KeyVal,
+    key: *const c_char,
 ) -> *const c_char {
-    let key_vals = unsafe { &*key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+    let key_vals = unsafe { &*key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.strings[&key].as_ptr()
 }
@@ -401,13 +377,9 @@ pub extern "C" fn pineappl_keyval_new() -> *mut KeyVal {
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
-pub extern "C" fn pineappl_keyval_set_bool(
-    key_vals: Option<*mut KeyVal>,
-    key: Option<*const c_char>,
-    value: bool,
-) {
-    let key_vals = unsafe { &mut *key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+pub extern "C" fn pineappl_keyval_set_bool(key_vals: *mut KeyVal, key: *const c_char, value: bool) {
+    let key_vals = unsafe { &mut *key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.bools.insert(key, value);
 }
@@ -415,25 +387,21 @@ pub extern "C" fn pineappl_keyval_set_bool(
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_double(
-    key_vals: Option<*mut KeyVal>,
-    key: Option<*const c_char>,
+    key_vals: *mut KeyVal,
+    key: *const c_char,
     value: f64,
 ) {
-    let key_vals = unsafe { &mut *key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+    let key_vals = unsafe { &mut *key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.doubles.insert(key, value);
 }
 
 /// Set the int-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
-pub extern "C" fn pineappl_keyval_set_int(
-    key_vals: Option<*mut KeyVal>,
-    key: Option<*const c_char>,
-    value: i32,
-) {
-    let key_vals = unsafe { &mut *key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
+pub extern "C" fn pineappl_keyval_set_int(key_vals: *mut KeyVal, key: *const c_char, value: i32) {
+    let key_vals = unsafe { &mut *key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
 
     key_vals.ints.insert(key, value);
 }
@@ -441,13 +409,13 @@ pub extern "C" fn pineappl_keyval_set_int(
 /// Set the string-valued parameter with name `key` to `value` in `key_vals`.
 #[no_mangle]
 pub extern "C" fn pineappl_keyval_set_string(
-    key_vals: Option<*mut KeyVal>,
-    key: Option<*const c_char>,
-    value: Option<*const c_char>,
+    key_vals: *mut KeyVal,
+    key: *const c_char,
+    value: *const c_char,
 ) {
-    let key_vals = unsafe { &mut *key_vals.unwrap() };
-    let key = String::from(unsafe { CStr::from_ptr(key.unwrap()) }.to_str().unwrap());
-    let value = CString::from(unsafe { CStr::from_ptr(value.unwrap()) });
+    let key_vals = unsafe { &mut *key_vals };
+    let key = String::from(unsafe { CStr::from_ptr(key) }.to_str().unwrap());
+    let value = CString::from(unsafe { CStr::from_ptr(value) });
 
     key_vals.strings.insert(key, value);
 }
