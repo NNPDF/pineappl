@@ -58,7 +58,7 @@ pub trait Subgrid {
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`.
-    fn fill(&mut self, ntuple: Ntuple<f64>);
+    fn fill(&mut self, ntuple: &Ntuple<f64>);
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;
@@ -316,7 +316,7 @@ impl Grid {
     }
 
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
-    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: Ntuple<f64>) {
+    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: &Ntuple<f64>) {
         if let Some(bin) = self.bin_limits.index(observable) {
             self.subgrids[[order, bin, lumi]].fill(ntuple);
         }
@@ -325,13 +325,13 @@ impl Grid {
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
     /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
     /// the corresponding luminosity function was created.
-    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Ntuple<()>, weights: &[f64]) {
+    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: &Ntuple<()>, weights: &[f64]) {
         for (lumi, weight) in weights.iter().enumerate() {
             self.fill(
                 order,
                 observable,
                 lumi,
-                Ntuple {
+                &Ntuple {
                     x1: ntuple.x1,
                     x2: ntuple.x2,
                     q2: ntuple.q2,
@@ -535,7 +535,7 @@ mod tests {
         other.fill_all(
             0,
             0.1,
-            Ntuple {
+            &Ntuple {
                 x1: 0.1,
                 x2: 0.2,
                 q2: 90.0_f64.powi(2),
@@ -546,7 +546,7 @@ mod tests {
         other.fill_all(
             1,
             0.1,
-            Ntuple {
+            &Ntuple {
                 x1: 0.1,
                 x2: 0.2,
                 q2: 90.0_f64.powi(2),
@@ -591,7 +591,7 @@ mod tests {
             0,
             0.1,
             0,
-            Ntuple {
+            &Ntuple {
                 x1: 0.1,
                 x2: 0.2,
                 q2: 90.0_f64.powi(2),
@@ -636,7 +636,7 @@ mod tests {
         other.fill_all(
             0,
             0.1,
-            Ntuple {
+            &Ntuple {
                 x1: 0.1,
                 x2: 0.2,
                 q2: 90.0_f64.powi(2),

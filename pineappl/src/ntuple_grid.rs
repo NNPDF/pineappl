@@ -26,8 +26,8 @@ impl Subgrid for NtupleSubgrid {
         result
     }
 
-    fn fill(&mut self, ntuple: Ntuple<f64>) {
-        self.ntuples.push(ntuple);
+    fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        self.ntuples.push(ntuple.clone());
     }
 
     fn is_empty(&self) -> bool {

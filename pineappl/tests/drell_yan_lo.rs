@@ -197,7 +197,7 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
         grid.fill_all(
             0,
             yll,
-            Ntuple {
+            &Ntuple {
                 x1,
                 x2,
                 q2: 91.1876_f64.powi(2),

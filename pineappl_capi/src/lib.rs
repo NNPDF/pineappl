@@ -125,7 +125,7 @@ pub extern "C" fn pineappl_grid_fill(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.fill(order, observable, lumi, Ntuple { x1, x2, q2, weight });
+    grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
 }
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -147,7 +147,7 @@ pub extern "C" fn pineappl_grid_fill_all(
     grid.fill_all(
         order,
         observable,
-        Ntuple {
+        &Ntuple {
             x1,
             x2,
             q2,
