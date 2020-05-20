@@ -7,7 +7,6 @@ use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::mem;
-use std::ops::MulAssign;
 
 /// Coupling powers for each grid.
 #[derive(Clone, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
@@ -84,12 +83,6 @@ pub struct Ntuple<W> {
     pub q2: f64,
     /// Weight of this entry.
     pub weight: W,
-}
-
-impl MulAssign<f64> for Ntuple<f64> {
-    fn mul_assign(&mut self, rhs: f64) {
-        self.weight *= rhs;
-    }
 }
 
 /// Error returned when merging two grids fails.

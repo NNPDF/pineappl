@@ -43,6 +43,6 @@ impl Subgrid for NtupleSubgrid {
     }
 
     fn scale(&mut self, factor: f64) {
-        self.ntuples.iter_mut().for_each(|t| *t *= factor);
+        self.ntuples.iter_mut().for_each(|t| t.weight *= factor);
     }
 }
