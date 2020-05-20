@@ -326,15 +326,18 @@ impl Grid {
     /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
     /// the corresponding luminosity function was created.
     pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Ntuple<()>, weights: &[f64]) {
-        if let Some(bin) = self.bin_limits.index(observable) {
-            for (lumi, weight) in weights.iter().enumerate() {
-                self.subgrids[[order, bin, lumi]].fill(Ntuple {
+        for (lumi, weight) in weights.iter().enumerate() {
+            self.fill(
+                order,
+                observable,
+                lumi,
+                Ntuple {
                     x1: ntuple.x1,
                     x2: ntuple.x2,
                     q2: ntuple.q2,
                     weight: *weight,
-                });
-            }
+                },
+            );
         }
     }
 
