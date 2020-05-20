@@ -1,5 +1,5 @@
 use num_complex::Complex64;
-use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::grid::{Grid, Ntuple, Order, SubgridParams};
 use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -156,7 +156,7 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
     let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
     // create the PineAPPL grid
-    let mut grid = Grid::new(lumi, orders, bin_limits);
+    let mut grid = Grid::new(lumi, orders, bin_limits, SubgridParams::default());
 
     for _ in 0..calls {
         // generate a phase-space point

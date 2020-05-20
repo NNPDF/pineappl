@@ -3,9 +3,10 @@
 
 //! C-language interface for `PineAPPL`.
 
-use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::grid::{Grid, Ntuple, Order, SubgridParams};
 use pineappl::lumi::LumiEntry;
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -216,15 +217,53 @@ pub extern "C" fn pineappl_grid_new(
         .collect::<Vec<_>>();
     let bin_limits = unsafe { slice::from_raw_parts(bin_limits, bins + 1) };
 
+    let mut subgrid_params = SubgridParams::default();
+
     if !key_vals.is_null() {
-        // TODO: do something with the contents
-        let _keyval = unsafe { &*key_vals };
+        let keyval = unsafe { &*key_vals };
+
+        if let Some(value) = keyval.ints.get("q2_bins") {
+            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.doubles.get("q2_max") {
+            subgrid_params.set_q2_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("q2_min") {
+            subgrid_params.set_q2_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("q2_order") {
+            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.bools.get("reweight") {
+            subgrid_params.set_reweight(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x_bins") {
+            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.doubles.get("x_max") {
+            subgrid_params.set_x_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("x_min") {
+            subgrid_params.set_x_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x_order") {
+            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
+        }
     }
 
     Box::into_raw(Box::new(Grid::new(
         lumi.0.clone(),
         orders,
         bin_limits.to_vec(),
+        subgrid_params,
     )))
 }
 

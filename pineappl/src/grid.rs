@@ -70,6 +70,137 @@ pub trait Subgrid {
     fn scale(&mut self, factor: f64);
 }
 
+/// Subgrid creation parameters for subgrids that perform interpolation.
+#[derive(Deserialize, Serialize)]
+pub struct SubgridParams {
+    q2_bins: usize,
+    q2_max: f64,
+    q2_min: f64,
+    q2_order: usize,
+    reweight: bool,
+    x_bins: usize,
+    x_max: f64,
+    x_min: f64,
+    x_order: usize,
+}
+
+impl Default for SubgridParams {
+    fn default() -> Self {
+        Self {
+            q2_bins: 30,
+            q2_max: 1000000.0,
+            q2_min: 100.0,
+            q2_order: 3,
+            reweight: false,
+            x_bins: 50,
+            x_max: 1.0,
+            x_min: 2e-7,
+            x_order: 3,
+        }
+    }
+}
+
+impl SubgridParams {
+    /// Returns the number of bins for the $Q^2$ axis.
+    #[must_use]
+    pub const fn q2_bins(&self) -> usize {
+        self.q2_bins
+    }
+
+    /// Returns the upper limit of the $Q^2$ axis.
+    #[must_use]
+    pub const fn q2_max(&self) -> f64 {
+        self.q2_max
+    }
+
+    /// Returns the lower limit of the $Q^2$ axis.
+    #[must_use]
+    pub const fn q2_min(&self) -> f64 {
+        self.q2_min
+    }
+
+    /// Returns the interpolation order for the $Q^2$ axis.
+    #[must_use]
+    pub const fn q2_order(&self) -> usize {
+        self.q2_order
+    }
+
+    /// Returns whether reweighting is enabled or not.
+    #[must_use]
+    pub const fn reweight(&self) -> bool {
+        self.reweight
+    }
+
+    /// Sets the number of bins for the $Q^2$ axis.
+    pub fn set_q2_bins(&mut self, q2_bins: usize) {
+        self.q2_bins = q2_bins
+    }
+
+    /// Sets the upper limit of the $Q^2$ axis.
+    pub fn set_q2_max(&mut self, q2_max: f64) {
+        self.q2_max = q2_max
+    }
+
+    /// Sets the lower limit of the $Q^2$ axis.
+    pub fn set_q2_min(&mut self, q2_min: f64) {
+        self.q2_min = q2_min
+    }
+
+    /// Sets the interpolation order for the $Q^2$ axis.
+    pub fn set_q2_order(&mut self, q2_order: usize) {
+        self.q2_order = q2_order
+    }
+
+    /// Sets the reweighting parameter.
+    pub fn set_reweight(&mut self, reweight: bool) {
+        self.reweight = reweight
+    }
+
+    /// Sets the number of bins for the $x$ axes.
+    pub fn set_x_bins(&mut self, x_bins: usize) {
+        self.x_bins = x_bins
+    }
+
+    /// Sets the upper limit of the $x$ axes.
+    pub fn set_x_max(&mut self, x_max: f64) {
+        self.x_max = x_max
+    }
+
+    /// Sets the lower limit of the $x$ axes.
+    pub fn set_x_min(&mut self, x_min: f64) {
+        self.x_min = x_min
+    }
+
+    /// Sets the interpolation order for the $x$ axes.
+    pub fn set_x_order(&mut self, x_order: usize) {
+        self.x_order = x_order
+    }
+
+    /// Returns the number of bins for the $x$ axes.
+    #[must_use]
+    pub const fn x_bins(&self) -> usize {
+        self.x_bins
+    }
+
+    /// Returns the upper limit of the $x$ axes.
+    #[must_use]
+    pub const fn x_max(&self) -> f64 {
+        self.x_max
+    }
+
+    /// Returns the lower limit of the $x$ axes.
+    #[must_use]
+    pub const fn x_min(&self) -> f64 {
+        self.x_min
+    }
+
+    /// Returns the interpolation order for the $x$ axes.
+    #[must_use]
+    pub const fn x_order(&self) -> usize {
+        self.x_order
+    }
+}
+
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
 /// corresponding `weight`. The type `W` can either be a `f64` or `()`, which is used when multiple
 /// weights should be signaled.
@@ -97,12 +228,18 @@ pub struct Grid {
     lumi: Vec<LumiEntry>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
+    subgrid_params: SubgridParams,
 }
 
 impl Grid {
     /// Constructor.
     #[must_use]
-    pub fn new(lumi: Vec<LumiEntry>, orders: Vec<Order>, bin_limits: Vec<f64>) -> Self {
+    pub fn new(
+        lumi: Vec<LumiEntry>,
+        orders: Vec<Order>,
+        bin_limits: Vec<f64>,
+        subgrid_params: SubgridParams,
+    ) -> Self {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
@@ -111,6 +248,7 @@ impl Grid {
             orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
+            subgrid_params,
         }
     }
 
@@ -335,6 +473,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         assert_eq!(grid.bin_limits().bins(), 4);
@@ -349,6 +488,7 @@ mod tests {
             ],
             vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         // merging with empty subgrids should not change the grid
@@ -368,6 +508,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         assert_eq!(grid.bin_limits().bins(), 4);
@@ -385,6 +526,7 @@ mod tests {
                 Order::new(0, 2, 0, 0),
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         other.fill_all(
@@ -427,6 +569,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         assert_eq!(grid.bin_limits().bins(), 4);
@@ -437,6 +580,7 @@ mod tests {
             vec![lumi_entry![22, 22, 1.0], lumi_entry![2, 2, 1.0; 4, 4, 1.0]],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         // fill the photon-photon entry
@@ -468,6 +612,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5],
+            SubgridParams::default(),
         );
 
         assert_eq!(grid.bin_limits().bins(), 2);
@@ -482,6 +627,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.5, 0.75, 1.0],
+            SubgridParams::default(),
         );
 
         other.fill_all(
