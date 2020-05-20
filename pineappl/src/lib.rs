@@ -5,5 +5,6 @@
 
 pub mod bin;
 pub mod grid;
+pub mod lagrange_subgrid;
 pub mod lumi;
 pub mod ntuple_grid;
