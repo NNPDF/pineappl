@@ -183,15 +183,15 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
 
         let weights = [
             // down-pair flavors
-            jacobian / x1 / x2 * int_qqbar(s, t, u, -0.5, -1.0 / 3.0),
+            jacobian * int_qqbar(s, t, u, -0.5, -1.0 / 3.0),
             // down-pair flavors with quarks swapped (t <-> u)
-            jacobian / x1 / x2 * int_qqbar(s, u, t, -0.5, -1.0 / 3.0),
+            jacobian * int_qqbar(s, u, t, -0.5, -1.0 / 3.0),
             // up-pair flavors
-            jacobian / x1 / x2 * int_qqbar(s, t, u, 0.5, 2.0 / 3.0),
+            jacobian * int_qqbar(s, t, u, 0.5, 2.0 / 3.0),
             // up-pair flavors with quarks swapped (t <-> u)
-            jacobian / x1 / x2 * int_qqbar(s, u, t, 0.5, 2.0 / 3.0),
+            jacobian * int_qqbar(s, u, t, 0.5, 2.0 / 3.0),
             // photon pair
-            jacobian / x1 / x2 * int_photo(s, u, t),
+            jacobian * int_photo(s, u, t),
         ];
 
         grid.fill_all(

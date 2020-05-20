@@ -294,7 +294,7 @@ impl Grid {
                 let mut lumi = 0.0;
 
                 for entry in lumi_entry.entry() {
-                    lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2;
+                    lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
                 }
 
                 lumi *= alphas(q2).powi(order.alphas as i32);
