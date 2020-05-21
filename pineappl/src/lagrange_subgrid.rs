@@ -1,6 +1,6 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
-use super::grid::{Ntuple, Subgrid};
+use super::grid::{Ntuple, Subgrid, SubgridParams};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -75,27 +75,25 @@ pub struct LagrangeSubgrid {
     q2max: f64,
 }
 
-impl Default for LagrangeSubgrid {
-    fn default() -> Self {
-        let nq2 = 30;
-        let nx = 50;
-        let xorder = 3;
-        let q2order = 3;
-
+impl LagrangeSubgrid {
+    /// Constructor.
+    pub fn new(subgrid_params: &SubgridParams) -> Self {
         Self {
-            grid: Array3::zeros((nq2, nx, nx)),
-            m_yorder: xorder,
-            m_tauorder: q2order,
-            m_reweight: false,
-            xmin: 2e-7,
-            xmax: 1.0,
-            q2min: 100.0,
-            q2max: 1_000_000.0,
+            grid: Array3::zeros((
+                subgrid_params.q2_bins(),
+                subgrid_params.x_bins(),
+                subgrid_params.x_bins(),
+            )),
+            m_yorder: subgrid_params.x_order(),
+            m_tauorder: subgrid_params.q2_order(),
+            m_reweight: subgrid_params.reweight(),
+            xmin: subgrid_params.x_min(),
+            xmax: subgrid_params.x_max(),
+            q2min: subgrid_params.q2_min(),
+            q2max: subgrid_params.q2_max(),
         }
     }
-}
 
-impl LagrangeSubgrid {
     fn ny1(&self) -> usize {
         self.grid.raw_dim().into_pattern().1
     }
