@@ -109,7 +109,7 @@ impl LagrangeSubgrid {
     }
 
     fn deltay1(&self) -> f64 {
-        self.y1max() - self.y1min() / ((self.ny1() - 1) as f64)
+        (self.y1max() - self.y1min()) / ((self.ny1() - 1) as f64)
     }
 
     fn ny2(&self) -> usize {
