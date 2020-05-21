@@ -1,7 +1,7 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::grid::{Ntuple, Subgrid, SubgridParams};
-use ndarray::{Array3, Dimension};
+use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 
@@ -65,7 +65,10 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Deserialize, Serialize)]
 pub struct LagrangeSubgrid {
-    grid: Array3<f64>,
+    grid: Option<Array3<f64>>,
+    ntau: usize,
+    ny1: usize,
+    ny2: usize,
     m_yorder: usize,
     m_tauorder: usize,
     m_reweight: bool,
@@ -79,11 +82,10 @@ impl LagrangeSubgrid {
     /// Constructor.
     pub fn new(subgrid_params: &SubgridParams) -> Self {
         Self {
-            grid: Array3::zeros((
-                subgrid_params.q2_bins(),
-                subgrid_params.x_bins(),
-                subgrid_params.x_bins(),
-            )),
+            grid: None,
+            ntau: subgrid_params.q2_bins(),
+            ny1: subgrid_params.x_bins(),
+            ny2: subgrid_params.x_bins(),
             m_yorder: subgrid_params.x_order(),
             m_tauorder: subgrid_params.q2_order(),
             m_reweight: subgrid_params.reweight(),
@@ -95,7 +97,7 @@ impl LagrangeSubgrid {
     }
 
     fn ny1(&self) -> usize {
-        self.grid.raw_dim().into_pattern().1
+        self.ny1
     }
 
     fn y1min(&self) -> f64 {
@@ -111,7 +113,7 @@ impl LagrangeSubgrid {
     }
 
     fn ny2(&self) -> usize {
-        self.grid.raw_dim().into_pattern().2
+        self.ny2
     }
 
     fn y2min(&self) -> f64 {
@@ -127,7 +129,7 @@ impl LagrangeSubgrid {
     }
 
     fn ntau(&self) -> usize {
-        self.grid.raw_dim().into_pattern().0
+        self.ntau
     }
 
     fn taumin(&self) -> f64 {
@@ -207,33 +209,37 @@ impl Subgrid for LagrangeSubgrid {
     }
 
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
-        let mut dsigma = 0.0;
+        if let Some(self_grid) = &self.grid {
+            let mut dsigma = 0.0;
 
-        for itau in 0..self.ntau() {
-            for iy1 in (0..self.ny1()).rev() {
-                for iy2 in (0..self.ny2()).rev() {
-                    let sig = self.grid[[itau, iy1, iy2]];
+            for itau in 0..self.ntau() {
+                for iy1 in (0..self.ny1()).rev() {
+                    for iy2 in (0..self.ny2()).rev() {
+                        let sig = self_grid[[itau, iy1, iy2]];
 
-                    if sig != 0.0 {
-                        let tau = self.gettau(itau);
-                        let q2 = fq2(tau);
-                        let y1 = self.gety1(iy1);
-                        let x1 = fx(y1);
-                        let y2 = self.gety2(iy2);
-                        let x2 = fx(y2);
-                        let mut lumi_val = lumi(x1, x2, q2);
+                        if sig != 0.0 {
+                            let tau = self.gettau(itau);
+                            let q2 = fq2(tau);
+                            let y1 = self.gety1(iy1);
+                            let x1 = fx(y1);
+                            let y2 = self.gety2(iy2);
+                            let x2 = fx(y2);
+                            let mut lumi_val = lumi(x1, x2, q2);
 
-                        if self.m_reweight {
-                            lumi_val *= weightfun(x1) * weightfun(x2);
+                            if self.m_reweight {
+                                lumi_val *= weightfun(x1) * weightfun(x2);
+                            }
+
+                            dsigma += sig * lumi_val;
                         }
-
-                        dsigma += sig * lumi_val;
                     }
                 }
             }
-        }
 
-        dsigma
+            dsigma
+        } else {
+            0.0
+        }
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -267,25 +273,36 @@ impl Subgrid for LagrangeSubgrid {
                     }
 
                     let fillweight = ntuple.weight * fi_factor;
-                    self.grid[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
+                    let grid = self.grid.get_or_insert(Array3::zeros((self.ntau, self.ny1, self.ny2)));
+                    grid[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
                 }
             }
         }
     }
 
     fn is_empty(&self) -> bool {
-        !self.grid.iter().any(|x| *x != 0.0)
+        self.grid.is_none()
     }
 
     fn merge(&mut self, other: &mut dyn Subgrid) {
         if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
-            self.grid.scaled_add(1.0, &other_grid.grid);
+            if let Some(self_grid) = &mut self.grid {
+                if let Some(other_grid_grid) = &mut other_grid.grid {
+                    self_grid.scaled_add(1.0, other_grid_grid);
+                }
+            } else {
+                self.grid = other_grid.grid.take();
+            }
         } else {
             todo!();
         }
     }
 
     fn scale(&mut self, factor: f64) {
-        self.grid.iter_mut().for_each(|x| *x *= factor);
+        if factor == 0.0 {
+            self.grid = None;
+        } else if let Some(self_grid) = &mut self.grid {
+            self_grid.iter_mut().for_each(|x| *x *= factor);
+        }
     }
 }
