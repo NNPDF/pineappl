@@ -1,6 +1,7 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::grid::{Ntuple, Subgrid, SubgridParams};
+use arrayvec::ArrayVec;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -264,16 +265,12 @@ impl Subgrid for LagrangeSubgrid {
 
         let u_y1 = (fy(ntuple.x1) - self.gety1(k1)) / self.deltay1();
         let u_y2 = (fy(ntuple.x2) - self.gety2(k2)) / self.deltay2();
-        let u_tau = (ftau(ntuple.q2) - self.gettau(k3)) / self.deltatau();
 
-        let fi1: Vec<f64> = (0..=self.m_yorder)
+        let fi1: ArrayVec<[_; 8]> = (0..=self.m_yorder)
             .map(|i| fi(i, self.m_yorder, u_y1))
             .collect();
-        let fi2: Vec<f64> = (0..=self.m_yorder)
+        let fi2: ArrayVec<[_; 8]> = (0..=self.m_yorder)
             .map(|i| fi(i, self.m_yorder, u_y2))
-            .collect();
-        let fi3: Vec<f64> = (0..=self.m_tauorder)
-            .map(|i| fi(i, self.m_tauorder, u_tau))
             .collect();
 
         let invwfun = 1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2));
@@ -282,7 +279,11 @@ impl Subgrid for LagrangeSubgrid {
         let ny1 = self.ny1;
         let ny2 = self.ny2;
 
-        for (i3, fi3i3) in fi3.iter().enumerate() {
+        let u_tau = (ftau(ntuple.q2) - self.gettau(k3)) / self.deltatau();
+
+        for i3 in 0..=self.m_tauorder {
+            let fi3i3 = fi(i3, self.m_tauorder, u_tau);
+
             for (i1, fi1i1) in fi1.iter().enumerate() {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
                     let mut fi_factor = fi1i1 * fi2i2 * fi3i3;
