@@ -263,6 +263,10 @@ impl Subgrid for LagrangeSubgrid {
 
         let invwfun = 1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2));
 
+        let ntau = self.ntau;
+        let ny1 = self.ny1;
+        let ny2 = self.ny2;
+
         for (i3, fi3i3) in fi3.iter().enumerate() {
             for (i1, fi1i1) in fi1.iter().enumerate() {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
@@ -273,7 +277,9 @@ impl Subgrid for LagrangeSubgrid {
                     }
 
                     let fillweight = ntuple.weight * fi_factor;
-                    let grid = self.grid.get_or_insert(Array3::zeros((self.ntau, self.ny1, self.ny2)));
+                    let grid = self
+                        .grid
+                        .get_or_insert_with(|| Array3::zeros((ntau, ny1, ny2)));
                     grid[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
                 }
             }
