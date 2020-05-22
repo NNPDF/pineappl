@@ -156,9 +156,11 @@ impl LagrangeSubgrid {
         (iy as f64).mul_add(self.deltatau(), self.taumin())
     }
 
-    fn fk1(&self, x: f64) -> usize {
+    fn fk1(&self, x: f64) -> Option<usize> {
         let y = fy(x);
-        assert!((y > self.y1min()) && (y < self.y1max()));
+        if (y < self.y1min()) || (y > self.y1max()) {
+            return None;
+        }
         let mut k = ((y - self.y1min()) / self.deltay1() - ((self.m_yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
@@ -168,12 +170,14 @@ impl LagrangeSubgrid {
             k = self.ny1() - 1 - self.m_yorder;
         }
 
-        k
+        Some(k)
     }
 
-    fn fk2(&self, x: f64) -> usize {
+    fn fk2(&self, x: f64) -> Option<usize> {
         let y = fy(x);
-        assert!((y > self.y2min()) && (y < self.y2max()));
+        if (y < self.y2min()) || (y > self.y2max()) {
+            return None;
+        }
         let mut k = ((y - self.y2min()) / self.deltay2() - ((self.m_yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
@@ -183,12 +187,14 @@ impl LagrangeSubgrid {
             k = self.ny2() - 1 - self.m_yorder;
         }
 
-        k
+        Some(k)
     }
 
-    fn fkappa(&self, q2: f64) -> usize {
+    fn fkappa(&self, q2: f64) -> Option<usize> {
         let tau = ftau(q2);
-        assert!((tau > self.taumin()) && (tau < self.taumax()));
+        if (tau < self.taumin()) || (tau > self.taumax()) {
+            return None;
+        }
         let mut kappa =
             ((tau - self.taumin()) / self.deltatau() - ((self.m_tauorder >> 1) as f64)) as i32;
         if kappa + (self.m_tauorder as i32) >= (self.ntau() as i32) {
@@ -198,7 +204,7 @@ impl LagrangeSubgrid {
             kappa = 0;
         }
 
-        kappa as usize
+        Some(kappa as usize)
     }
 }
 
@@ -243,9 +249,18 @@ impl Subgrid for LagrangeSubgrid {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        let k1 = self.fk1(ntuple.x1);
-        let k2 = self.fk2(ntuple.x2);
-        let k3 = self.fkappa(ntuple.q2);
+        let k1 = match self.fk1(ntuple.x1) {
+            Some(k) => k,
+            None => return,
+        };
+        let k2 = match self.fk2(ntuple.x2) {
+            Some(k) => k,
+            None => return,
+        };
+        let k3 = match self.fkappa(ntuple.q2) {
+            Some(k) => k,
+            None => return,
+        };
 
         let u_y1 = (fy(ntuple.x1) - self.gety1(k1)) / self.deltay1();
         let u_y2 = (fy(ntuple.x2) - self.gety2(k2)) / self.deltay2();
