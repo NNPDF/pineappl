@@ -70,9 +70,9 @@ pub struct LagrangeSubgrid {
     ntau: usize,
     ny1: usize,
     ny2: usize,
-    m_yorder: usize,
-    m_tauorder: usize,
-    m_reweight: bool,
+    yorder: usize,
+    tauorder: usize,
+    reweight: bool,
     xmin: f64,
     xmax: f64,
     q2min: f64,
@@ -87,9 +87,9 @@ impl LagrangeSubgrid {
             ntau: subgrid_params.q2_bins(),
             ny1: subgrid_params.x_bins(),
             ny2: subgrid_params.x_bins(),
-            m_yorder: subgrid_params.x_order(),
-            m_tauorder: subgrid_params.q2_order(),
-            m_reweight: subgrid_params.reweight(),
+            yorder: subgrid_params.x_order(),
+            tauorder: subgrid_params.q2_order(),
+            reweight: subgrid_params.reweight(),
             xmin: subgrid_params.x_min(),
             xmax: subgrid_params.x_max(),
             q2min: subgrid_params.q2_min(),
@@ -162,13 +162,13 @@ impl LagrangeSubgrid {
         if (y < self.y1min()) || (y > self.y1max()) {
             return None;
         }
-        let mut k = ((y - self.y1min()) / self.deltay1() - ((self.m_yorder >> 1) as f64)) as i32;
+        let mut k = ((y - self.y1min()) / self.deltay1() - ((self.yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
         }
         let mut k = k as usize;
-        if k + self.m_yorder >= self.ny1() {
-            k = self.ny1() - 1 - self.m_yorder;
+        if k + self.yorder >= self.ny1() {
+            k = self.ny1() - 1 - self.yorder;
         }
 
         Some(k)
@@ -179,13 +179,13 @@ impl LagrangeSubgrid {
         if (y < self.y2min()) || (y > self.y2max()) {
             return None;
         }
-        let mut k = ((y - self.y2min()) / self.deltay2() - ((self.m_yorder >> 1) as f64)) as i32;
+        let mut k = ((y - self.y2min()) / self.deltay2() - ((self.yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
         }
         let mut k = k as usize;
-        if k + self.m_yorder >= self.ny2() {
-            k = self.ny2() - 1 - self.m_yorder;
+        if k + self.yorder >= self.ny2() {
+            k = self.ny2() - 1 - self.yorder;
         }
 
         Some(k)
@@ -197,9 +197,9 @@ impl LagrangeSubgrid {
             return None;
         }
         let mut kappa =
-            ((tau - self.taumin()) / self.deltatau() - ((self.m_tauorder >> 1) as f64)) as i32;
-        if kappa + (self.m_tauorder as i32) >= (self.ntau() as i32) {
-            kappa = (self.ntau() - 1 - self.m_tauorder) as i32;
+            ((tau - self.taumin()) / self.deltatau() - ((self.tauorder >> 1) as f64)) as i32;
+        if kappa + (self.tauorder as i32) >= (self.ntau() as i32) {
+            kappa = (self.ntau() - 1 - self.tauorder) as i32;
         }
         if kappa < 0 {
             kappa = 0;
@@ -229,7 +229,7 @@ impl Subgrid for LagrangeSubgrid {
                     let x2 = fx(y2);
                     let mut lumi_val = lumi(x1, x2, q2);
 
-                    if self.m_reweight {
+                    if self.reweight {
                         lumi_val *= weightfun(x1) * weightfun(x2);
                     }
 
@@ -260,11 +260,11 @@ impl Subgrid for LagrangeSubgrid {
         let u_y1 = (fy(ntuple.x1) - self.gety1(k1)) / self.deltay1();
         let u_y2 = (fy(ntuple.x2) - self.gety2(k2)) / self.deltay2();
 
-        let fi1: ArrayVec<[_; 8]> = (0..=self.m_yorder)
-            .map(|i| fi(i, self.m_yorder, u_y1))
+        let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
+            .map(|i| fi(i, self.yorder, u_y1))
             .collect();
-        let fi2: ArrayVec<[_; 8]> = (0..=self.m_yorder)
-            .map(|i| fi(i, self.m_yorder, u_y2))
+        let fi2: ArrayVec<[_; 8]> = (0..=self.yorder)
+            .map(|i| fi(i, self.yorder, u_y2))
             .collect();
 
         let invwfun = 1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2));
@@ -275,14 +275,14 @@ impl Subgrid for LagrangeSubgrid {
 
         let u_tau = (ftau(ntuple.q2) - self.gettau(k3)) / self.deltatau();
 
-        for i3 in 0..=self.m_tauorder {
-            let fi3i3 = fi(i3, self.m_tauorder, u_tau);
+        for i3 in 0..=self.tauorder {
+            let fi3i3 = fi(i3, self.tauorder, u_tau);
 
             for (i1, fi1i1) in fi1.iter().enumerate() {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
                     let mut fi_factor = fi1i1 * fi2i2 * fi3i3;
 
-                    if self.m_reweight {
+                    if self.reweight {
                         fi_factor *= invwfun;
                     }
 
