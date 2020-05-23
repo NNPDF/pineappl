@@ -116,46 +116,6 @@ impl LagrangeSubgrid {
     fn gettau(&self, iy: usize) -> f64 {
         (iy as f64).mul_add(self.deltatau(), self.taumin)
     }
-
-    fn fk1(&self, x: f64) -> Option<usize> {
-        let y = fy(x);
-        if (y < self.y1min) || (y > self.y1max) {
-            return None;
-        }
-
-        let k = (((y - self.y1min) / self.deltay1() - ((self.yorder / 2) as f64)).max(0.0)
-            as usize)
-            .min(self.ny1 - 1 - self.yorder);
-
-        Some(k)
-    }
-
-    fn fk2(&self, x: f64) -> Option<usize> {
-        let y = fy(x);
-        if (y < self.y2min) || (y > self.y2max) {
-            return None;
-        }
-
-        let k = (((y - self.y2min) / self.deltay2() - ((self.yorder / 2) as f64)).max(0.0)
-            as usize)
-            .min(self.ny2 - 1 - self.yorder);
-
-        Some(k)
-    }
-
-    fn fkappa(&self, q2: f64) -> Option<usize> {
-        let tau = ftau(q2);
-        if (tau < self.taumin) || (tau > self.taumax) {
-            return None;
-        }
-
-        let kappa =
-            (((tau - self.taumin) / self.deltatau() - ((self.tauorder / 2) as f64)).max(0.0)
-                as usize)
-                .min(self.ntau - 1 - self.tauorder);
-
-        Some(kappa)
-    }
 }
 
 #[typetag::serde]
@@ -193,21 +153,30 @@ impl Subgrid for LagrangeSubgrid {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        let k1 = match self.fk1(ntuple.x1) {
-            Some(k) => k,
-            None => return,
-        };
-        let k2 = match self.fk2(ntuple.x2) {
-            Some(k) => k,
-            None => return,
-        };
-        let k3 = match self.fkappa(ntuple.q2) {
-            Some(k) => k,
-            None => return,
-        };
+        let y1 = fy(ntuple.x1);
+        let y2 = fy(ntuple.x2);
+        let tau = ftau(ntuple.q2);
 
-        let u_y1 = (fy(ntuple.x1) - self.gety1(k1)) / self.deltay1();
-        let u_y2 = (fy(ntuple.x2) - self.gety2(k2)) / self.deltay2();
+        if (y2 < self.y2min)
+            || (y2 > self.y2max)
+            || (y1 < self.y1min)
+            || (y1 > self.y1max)
+            || (tau < self.taumin)
+            || (tau > self.taumax)
+        {
+            return;
+        }
+
+        let k1 = (((y1 - self.y1min) / self.deltay1() - ((self.yorder / 2) as f64)).max(0.0)
+            as usize)
+            .min(self.ny1 - 1 - self.yorder);
+
+        let k2 = (((y2 - self.y2min) / self.deltay2() - ((self.yorder / 2) as f64)).max(0.0)
+            as usize)
+            .min(self.ny2 - 1 - self.yorder);
+
+        let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
+        let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
 
         let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y1))
@@ -215,6 +184,12 @@ impl Subgrid for LagrangeSubgrid {
         let fi2: ArrayVec<[_; 8]> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y2))
             .collect();
+
+        let k3 = (((tau - self.taumin) / self.deltatau() - ((self.tauorder / 2) as f64)).max(0.0)
+            as usize)
+            .min(self.ntau - 1 - self.tauorder);
+
+        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
 
         let factor = if self.reweight {
             1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2))
@@ -225,8 +200,6 @@ impl Subgrid for LagrangeSubgrid {
         let ntau = self.ntau;
         let ny1 = self.ny1;
         let ny2 = self.ny2;
-
-        let u_tau = (ftau(ntuple.q2) - self.gettau(k3)) / self.deltatau();
 
         for i3 in 0..=self.tauorder {
             let fi3i3 = fi(i3, self.tauorder, u_tau);
