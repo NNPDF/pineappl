@@ -219,27 +219,21 @@ impl Subgrid for LagrangeSubgrid {
         if let Some(self_grid) = &self.grid {
             let mut dsigma = 0.0;
 
-            for itau in 0..self.ntau() {
-                for iy1 in (0..self.ny1()).rev() {
-                    for iy2 in (0..self.ny2()).rev() {
-                        let sig = self_grid[[itau, iy1, iy2]];
+            for ((itau, iy1, iy2), &sigma) in self_grid.indexed_iter() {
+                if sigma != 0.0 {
+                    let tau = self.gettau(itau);
+                    let q2 = fq2(tau);
+                    let y1 = self.gety1(iy1);
+                    let x1 = fx(y1);
+                    let y2 = self.gety2(iy2);
+                    let x2 = fx(y2);
+                    let mut lumi_val = lumi(x1, x2, q2);
 
-                        if sig != 0.0 {
-                            let tau = self.gettau(itau);
-                            let q2 = fq2(tau);
-                            let y1 = self.gety1(iy1);
-                            let x1 = fx(y1);
-                            let y2 = self.gety2(iy2);
-                            let x2 = fx(y2);
-                            let mut lumi_val = lumi(x1, x2, q2);
-
-                            if self.m_reweight {
-                                lumi_val *= weightfun(x1) * weightfun(x2);
-                            }
-
-                            dsigma += sig * lumi_val;
-                        }
+                    if self.m_reweight {
+                        lumi_val *= weightfun(x1) * weightfun(x2);
                     }
+
+                    dsigma += sigma * lumi_val;
                 }
             }
 
