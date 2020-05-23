@@ -130,14 +130,10 @@ impl LagrangeSubgrid {
         if (y < self.y1min) || (y > self.y1max) {
             return None;
         }
-        let mut k = ((y - self.y1min) / self.deltay1() - ((self.yorder >> 1) as f64)) as i32;
-        if k < 0 {
-            k = 0;
-        }
-        let mut k = k as usize;
-        if k + self.yorder >= self.ny1 {
-            k = self.ny1 - 1 - self.yorder;
-        }
+
+        let k = (((y - self.y1min) / self.deltay1() - ((self.yorder / 2) as f64)).max(0.0)
+            as usize)
+            .min(self.ny1 - 1 - self.yorder);
 
         Some(k)
     }
@@ -147,14 +143,10 @@ impl LagrangeSubgrid {
         if (y < self.y2min) || (y > self.y2max) {
             return None;
         }
-        let mut k = ((y - self.y2min) / self.deltay2() - ((self.yorder >> 1) as f64)) as i32;
-        if k < 0 {
-            k = 0;
-        }
-        let mut k = k as usize;
-        if k + self.yorder >= self.ny2 {
-            k = self.ny2 - 1 - self.yorder;
-        }
+
+        let k = (((y - self.y2min) / self.deltay2() - ((self.yorder / 2) as f64)).max(0.0)
+            as usize)
+            .min(self.ny2 - 1 - self.yorder);
 
         Some(k)
     }
@@ -164,16 +156,13 @@ impl LagrangeSubgrid {
         if (tau < self.taumin) || (tau > self.taumax) {
             return None;
         }
-        let mut kappa =
-            ((tau - self.taumin) / self.deltatau() - ((self.tauorder >> 1) as f64)) as i32;
-        if kappa + (self.tauorder as i32) >= (self.ntau as i32) {
-            kappa = (self.ntau - 1 - self.tauorder) as i32;
-        }
-        if kappa < 0 {
-            kappa = 0;
-        }
 
-        Some(kappa as usize)
+        let kappa =
+            (((tau - self.taumin) / self.deltatau() - ((self.tauorder / 2) as f64)).max(0.0)
+                as usize)
+                .min(self.ntau - 1 - self.tauorder);
+
+        Some(kappa)
     }
 }
 
