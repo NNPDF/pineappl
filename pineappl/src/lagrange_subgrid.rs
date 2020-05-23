@@ -29,14 +29,6 @@ fn fx(y: f64) -> f64 {
     panic!("");
 }
 
-fn fac(i: usize) -> f64 {
-    if i == 0 {
-        1.0
-    } else {
-        (i as f64) * fac(i - 1)
-    }
-}
-
 fn fy(x: f64) -> f64 {
     -x.ln() + 5.0 * (1.0 - x)
 }
@@ -50,17 +42,17 @@ fn fq2(tau: f64) -> f64 {
 }
 
 fn fi(i: usize, n: usize, u: f64) -> f64 {
-    if n == 0 && i == 0 {
-        return 1.0;
-    }
-    if (u - i as f64).abs() < 1e-8 {
-        return 1.0;
-    }
-    let mut product = (-1.0_f64).powi((n - i) as i32) / (fac(i) * fac(n - i) * (u - i as f64));
-    for z in 0..=n {
+    let mut factorials = 1;
+    let mut product = if (n - i) % 2 == 0 { 1.0 } else { -1.0 };
+    for z in 0..i {
         product *= u - (z as f64);
+        factorials *= z + 1;
     }
-    product
+    for z in i + 1..=n {
+        product *= u - (z as f64);
+        factorials *= z - i;
+    }
+    product / (factorials as f64)
 }
 
 /// Subgrid which uses Lagrange-interpolation.
