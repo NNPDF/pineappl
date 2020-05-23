@@ -73,10 +73,12 @@ pub struct LagrangeSubgrid {
     yorder: usize,
     tauorder: usize,
     reweight: bool,
-    xmin: f64,
-    xmax: f64,
-    q2min: f64,
-    q2max: f64,
+    y1min: f64,
+    y1max: f64,
+    y2min: f64,
+    y2max: f64,
+    taumin: f64,
+    taumax: f64,
 }
 
 impl LagrangeSubgrid {
@@ -90,85 +92,51 @@ impl LagrangeSubgrid {
             yorder: subgrid_params.x_order(),
             tauorder: subgrid_params.q2_order(),
             reweight: subgrid_params.reweight(),
-            xmin: subgrid_params.x_min(),
-            xmax: subgrid_params.x_max(),
-            q2min: subgrid_params.q2_min(),
-            q2max: subgrid_params.q2_max(),
+            y1min: fy(subgrid_params.x_max()),
+            y1max: fy(subgrid_params.x_min()),
+            y2min: fy(subgrid_params.x_max()),
+            y2max: fy(subgrid_params.x_min()),
+            taumin: ftau(subgrid_params.q2_min()),
+            taumax: ftau(subgrid_params.q2_max()),
         }
     }
 
-    fn ny1(&self) -> usize {
-        self.ny1
-    }
-
-    fn y1min(&self) -> f64 {
-        fy(self.xmax)
-    }
-
-    fn y1max(&self) -> f64 {
-        fy(self.xmin)
-    }
-
     fn deltay1(&self) -> f64 {
-        (self.y1max() - self.y1min()) / ((self.ny1() - 1) as f64)
-    }
-
-    fn ny2(&self) -> usize {
-        self.ny2
-    }
-
-    fn y2min(&self) -> f64 {
-        fy(self.xmax)
-    }
-
-    fn y2max(&self) -> f64 {
-        fy(self.xmin)
+        (self.y1max - self.y1min) / ((self.ny1 - 1) as f64)
     }
 
     fn deltay2(&self) -> f64 {
-        (self.y2max() - self.y2min()) / ((self.ny2() - 1) as f64)
-    }
-
-    fn ntau(&self) -> usize {
-        self.ntau
-    }
-
-    fn taumin(&self) -> f64 {
-        ftau(self.q2min)
-    }
-
-    fn taumax(&self) -> f64 {
-        ftau(self.q2max)
+        (self.y2max - self.y2min) / ((self.ny2 - 1) as f64)
     }
 
     fn deltatau(&self) -> f64 {
-        (self.taumax() - self.taumin()) / ((self.ntau() - 1) as f64)
+        (self.taumax - self.taumin) / ((self.ntau - 1) as f64)
     }
 
     fn gety1(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltay1(), self.y1min())
+        (iy as f64).mul_add(self.deltay1(), self.y1min)
     }
 
     fn gety2(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltay2(), self.y2min())
+        (iy as f64).mul_add(self.deltay2(), self.y2min)
     }
 
     fn gettau(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltatau(), self.taumin())
+        (iy as f64).mul_add(self.deltatau(), self.taumin)
     }
 
     fn fk1(&self, x: f64) -> Option<usize> {
         let y = fy(x);
-        if (y < self.y1min()) || (y > self.y1max()) {
+        if (y < self.y1min) || (y > self.y1max) {
             return None;
         }
-        let mut k = ((y - self.y1min()) / self.deltay1() - ((self.yorder >> 1) as f64)) as i32;
+        let mut k = ((y - self.y1min) / self.deltay1() - ((self.yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
         }
         let mut k = k as usize;
-        if k + self.yorder >= self.ny1() {
-            k = self.ny1() - 1 - self.yorder;
+        if k + self.yorder >= self.ny1 {
+            k = self.ny1 - 1 - self.yorder;
         }
 
         Some(k)
@@ -176,16 +144,16 @@ impl LagrangeSubgrid {
 
     fn fk2(&self, x: f64) -> Option<usize> {
         let y = fy(x);
-        if (y < self.y2min()) || (y > self.y2max()) {
+        if (y < self.y2min) || (y > self.y2max) {
             return None;
         }
-        let mut k = ((y - self.y2min()) / self.deltay2() - ((self.yorder >> 1) as f64)) as i32;
+        let mut k = ((y - self.y2min) / self.deltay2() - ((self.yorder >> 1) as f64)) as i32;
         if k < 0 {
             k = 0;
         }
         let mut k = k as usize;
-        if k + self.yorder >= self.ny2() {
-            k = self.ny2() - 1 - self.yorder;
+        if k + self.yorder >= self.ny2 {
+            k = self.ny2 - 1 - self.yorder;
         }
 
         Some(k)
@@ -193,13 +161,13 @@ impl LagrangeSubgrid {
 
     fn fkappa(&self, q2: f64) -> Option<usize> {
         let tau = ftau(q2);
-        if (tau < self.taumin()) || (tau > self.taumax()) {
+        if (tau < self.taumin) || (tau > self.taumax) {
             return None;
         }
         let mut kappa =
-            ((tau - self.taumin()) / self.deltatau() - ((self.tauorder >> 1) as f64)) as i32;
-        if kappa + (self.tauorder as i32) >= (self.ntau() as i32) {
-            kappa = (self.ntau() - 1 - self.tauorder) as i32;
+            ((tau - self.taumin) / self.deltatau() - ((self.tauorder >> 1) as f64)) as i32;
+        if kappa + (self.tauorder as i32) >= (self.ntau as i32) {
+            kappa = (self.ntau - 1 - self.tauorder) as i32;
         }
         if kappa < 0 {
             kappa = 0;
