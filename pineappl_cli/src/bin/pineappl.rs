@@ -3,7 +3,7 @@ extern crate clap;
 
 use pineappl::grid::Grid;
 use std::error::Error;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 
 fn merge(
@@ -13,7 +13,7 @@ fn merge(
     scale: Option<f64>,
     scale_by_order: &[f64],
 ) -> Result<(), Box<dyn Error>> {
-    let output = File::create(output)?;
+    let output = OpenOptions::new().write(true).create_new(true).open(output)?;
     let input0 = File::open(input0)?;
     let input_rest = input_rest
         .iter()
