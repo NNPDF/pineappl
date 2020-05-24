@@ -63,6 +63,8 @@ pub struct LagrangeSubgrid {
     ny: usize,
     yorder: usize,
     tauorder: usize,
+    itaumin: usize,
+    itaumax: usize,
     reweight: bool,
     ymin: f64,
     ymax: f64,
@@ -80,6 +82,8 @@ impl LagrangeSubgrid {
             ny: subgrid_params.x_bins(),
             yorder: subgrid_params.x_order(),
             tauorder: subgrid_params.q2_order(),
+            itaumin: 0,
+            itaumax: 0,
             reweight: subgrid_params.reweight(),
             ymin: fy(subgrid_params.x_max()),
             ymax: fy(subgrid_params.x_min()),
@@ -117,7 +121,7 @@ impl Subgrid for LagrangeSubgrid {
 
             for ((itau, iy1, iy2), &sigma) in self_grid.indexed_iter() {
                 if sigma != 0.0 {
-                    let tau = self.gettau(itau);
+                    let tau = self.gettau(itau + self.itaumin);
                     let q2 = fq2(tau);
                     let y1 = self.gety(iy1);
                     let x1 = fx(y1);
@@ -184,8 +188,17 @@ impl Subgrid for LagrangeSubgrid {
             1.0
         };
 
-        let ntau = self.ntau;
+        let size = self.tauorder + 1;
         let ny = self.ny;
+
+        if self.grid.is_none() {
+            self.itaumin = k3;
+            self.itaumax = k3 + size;
+        }
+
+        if k3 < self.itaumin || k3 + size > self.itaumax {
+            todo!();
+        }
 
         for i3 in 0..=self.tauorder {
             let fi3i3 = fi(i3, self.tauorder, u_tau);
@@ -193,11 +206,10 @@ impl Subgrid for LagrangeSubgrid {
             for (i1, fi1i1) in fi1.iter().enumerate() {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
                     let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
-                    let grid = self
-                        .grid
-                        .get_or_insert_with(|| Array3::zeros((ntau, ny, ny)));
 
-                    grid[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
+                    let grid = self.grid.get_or_insert_with(|| Array3::zeros((size, ny, ny)));
+
+                    grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
                 }
             }
         }
