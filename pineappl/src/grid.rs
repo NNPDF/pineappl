@@ -462,6 +462,29 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
+    /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
+    /// addition, every subgrid is scaled by a factor `global` independently of its order.
+    pub fn scale_by_order(
+        &mut self,
+        alphas: f64,
+        alpha: f64,
+        logxir: f64,
+        logxif: f64,
+        global: f64,
+    ) {
+        for ((i, _, _), subgrid) in self.subgrids.indexed_iter_mut() {
+            let order = &self.orders[i];
+            let factor = global
+                * alphas.powi(order.alphas as i32)
+                * alpha.powi(order.alpha as i32)
+                * logxir.powi(order.logxir as i32)
+                * logxif.powi(order.logxif as i32);
+
+            subgrid.scale(factor);
+        }
+    }
+
     /// Returns the subgrid parameters.
     #[must_use]
     pub fn orders(&self) -> &[Order] {

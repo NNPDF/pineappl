@@ -304,6 +304,23 @@ pub extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
     grid.scale(factor);
 }
 
+/// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
+/// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
+/// every subgrid is scaled by a factor `global` independently of its order.
+#[no_mangle]
+pub extern "C" fn pineappl_grid_scale_by_order(
+    grid: *mut Grid,
+    alphas: f64,
+    alpha: f64,
+    logxir: f64,
+    logxif: f64,
+    global: f64,
+) {
+    let grid = unsafe { &mut *grid };
+
+    grid.scale_by_order(alphas, alpha, logxir, logxif, global);
+}
+
 /// Write `grid` to a file with name `filename`.
 #[no_mangle]
 pub extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
