@@ -7,7 +7,7 @@ use std::mem;
 fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
     if (lhs != 0.0) && (rhs != 0.0) {
-        (lhs / rhs).max(rhs / lhs) < f64::EPSILON.mul_add(ulps as f64, 1.0)
+        (lhs / rhs).abs().max((rhs / lhs).abs()) < f64::EPSILON.mul_add(ulps as f64, 1.0)
     } else {
         lhs == rhs
     }
