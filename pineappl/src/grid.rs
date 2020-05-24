@@ -312,6 +312,10 @@ impl Grid {
             bins[j] += value;
         }
 
+        bins.iter_mut()
+            .zip(self.bin_limits.bin_sizes().iter())
+            .for_each(|(x, w)| *x /= *w);
+
         bins
     }
 
