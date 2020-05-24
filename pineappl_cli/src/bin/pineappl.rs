@@ -44,7 +44,7 @@ fn merge(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = clap_app!(pineappl_cli =>
+    let matches = clap_app!(pineappl =>
         (version: crate_version!())
         (author: crate_authors!())
         (about: crate_description!())
