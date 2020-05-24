@@ -60,57 +60,44 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 pub struct LagrangeSubgrid {
     grid: Option<Array3<f64>>,
     ntau: usize,
-    ny1: usize,
-    ny2: usize,
+    ny: usize,
     yorder: usize,
     tauorder: usize,
     reweight: bool,
-    y1min: f64,
-    y1max: f64,
-    y2min: f64,
-    y2max: f64,
+    ymin: f64,
+    ymax: f64,
     taumin: f64,
     taumax: f64,
 }
 
 impl LagrangeSubgrid {
     /// Constructor.
+    #[must_use]
     pub fn new(subgrid_params: &SubgridParams) -> Self {
         Self {
             grid: None,
             ntau: subgrid_params.q2_bins(),
-            ny1: subgrid_params.x_bins(),
-            ny2: subgrid_params.x_bins(),
+            ny: subgrid_params.x_bins(),
             yorder: subgrid_params.x_order(),
             tauorder: subgrid_params.q2_order(),
             reweight: subgrid_params.reweight(),
-            y1min: fy(subgrid_params.x_max()),
-            y1max: fy(subgrid_params.x_min()),
-            y2min: fy(subgrid_params.x_max()),
-            y2max: fy(subgrid_params.x_min()),
+            ymin: fy(subgrid_params.x_max()),
+            ymax: fy(subgrid_params.x_min()),
             taumin: ftau(subgrid_params.q2_min()),
             taumax: ftau(subgrid_params.q2_max()),
         }
     }
 
-    fn deltay1(&self) -> f64 {
-        (self.y1max - self.y1min) / ((self.ny1 - 1) as f64)
-    }
-
-    fn deltay2(&self) -> f64 {
-        (self.y2max - self.y2min) / ((self.ny2 - 1) as f64)
+    fn deltay(&self) -> f64 {
+        (self.ymax - self.ymin) / ((self.ny - 1) as f64)
     }
 
     fn deltatau(&self) -> f64 {
         (self.taumax - self.taumin) / ((self.ntau - 1) as f64)
     }
 
-    fn gety1(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltay1(), self.y1min)
-    }
-
-    fn gety2(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltay2(), self.y2min)
+    fn gety(&self, iy: usize) -> f64 {
+        (iy as f64).mul_add(self.deltay(), self.ymin)
     }
 
     fn gettau(&self, iy: usize) -> f64 {
@@ -132,9 +119,9 @@ impl Subgrid for LagrangeSubgrid {
                 if sigma != 0.0 {
                     let tau = self.gettau(itau);
                     let q2 = fq2(tau);
-                    let y1 = self.gety1(iy1);
+                    let y1 = self.gety(iy1);
                     let x1 = fx(y1);
-                    let y2 = self.gety2(iy2);
+                    let y2 = self.gety(iy2);
                     let x2 = fx(y2);
                     let mut lumi_val = lumi(x1, x2, q2);
 
@@ -157,26 +144,26 @@ impl Subgrid for LagrangeSubgrid {
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
 
-        if (y2 < self.y2min)
-            || (y2 > self.y2max)
-            || (y1 < self.y1min)
-            || (y1 > self.y1max)
+        if (y2 < self.ymin)
+            || (y2 > self.ymax)
+            || (y1 < self.ymin)
+            || (y1 > self.ymax)
             || (tau < self.taumin)
             || (tau > self.taumax)
         {
             return;
         }
 
-        let k1 = (((y1 - self.y1min) / self.deltay1() - ((self.yorder / 2) as f64)).max(0.0)
+        let k1 = (((y1 - self.ymin) / self.deltay() - ((self.yorder / 2) as f64)).max(0.0)
             as usize)
-            .min(self.ny1 - 1 - self.yorder);
+            .min(self.ny - 1 - self.yorder);
 
-        let k2 = (((y2 - self.y2min) / self.deltay2() - ((self.yorder / 2) as f64)).max(0.0)
+        let k2 = (((y2 - self.ymin) / self.deltay() - ((self.yorder / 2) as f64)).max(0.0)
             as usize)
-            .min(self.ny2 - 1 - self.yorder);
+            .min(self.ny - 1 - self.yorder);
 
-        let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
-        let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
+        let u_y1 = (y1 - self.gety(k1)) / self.deltay();
+        let u_y2 = (y2 - self.gety(k2)) / self.deltay();
 
         let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y1))
@@ -198,8 +185,7 @@ impl Subgrid for LagrangeSubgrid {
         };
 
         let ntau = self.ntau;
-        let ny1 = self.ny1;
-        let ny2 = self.ny2;
+        let ny = self.ny;
 
         for i3 in 0..=self.tauorder {
             let fi3i3 = fi(i3, self.tauorder, u_tau);
@@ -209,7 +195,7 @@ impl Subgrid for LagrangeSubgrid {
                     let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
                     let grid = self
                         .grid
-                        .get_or_insert_with(|| Array3::zeros((ntau, ny1, ny2)));
+                        .get_or_insert_with(|| Array3::zeros((ntau, ny, ny)));
 
                     grid[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
                 }
