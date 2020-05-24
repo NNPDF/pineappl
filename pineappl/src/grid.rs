@@ -415,15 +415,22 @@ impl Grid {
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
+            let other_bin = other.bin_limits.limits()[j];
             let other_entry = &other.lumi[k];
 
             let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
+            let self_j = self
+                .bin_limits
+                .limits()
+                .iter()
+                .position(|x| *x == other_bin)
+                .unwrap();
             let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
 
-            if self.subgrids[[self_i, j, self_k]].is_empty() {
-                mem::swap(&mut self.subgrids[[self_i, j, self_k]], subgrid);
+            if self.subgrids[[self_i, self_j, self_k]].is_empty() {
+                mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, j, self_k]].merge(&mut **subgrid);
+                self.subgrids[[self_i, self_j, self_k]].merge(&mut **subgrid);
             }
         }
 
