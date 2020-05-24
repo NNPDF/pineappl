@@ -282,7 +282,7 @@ pub extern "C" fn pineappl_grid_new(
 pub extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Grid {
     let filename = String::from(unsafe { CStr::from_ptr(filename) }.to_str().unwrap());
     let reader = BufReader::new(File::open(filename).unwrap());
-    let grid = Box::new(bincode::deserialize_from(reader).unwrap());
+    let grid = Box::new(Grid::read(reader).unwrap());
 
     Box::into_raw(grid)
 }
@@ -328,7 +328,7 @@ pub extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char
     let filename = String::from(unsafe { CStr::from_ptr(filename) }.to_str().unwrap());
     let writer = BufWriter::new(File::create(filename).unwrap());
 
-    bincode::serialize_into(writer, &grid).unwrap();
+    grid.write(writer).unwrap();
 }
 
 /// Adds a linear combination of initial states to the luminosity function `lumi`.

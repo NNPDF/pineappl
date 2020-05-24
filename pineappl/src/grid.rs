@@ -1,5 +1,6 @@
 //! Module containing all traits and supporting structures for grids.
 
+use bincode;
 use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgrid;
 use super::lumi::LumiEntry;
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::io::{Read, Write};
 use std::mem;
 
 /// Coupling powers for each grid.
@@ -334,6 +336,16 @@ impl Grid {
         if let Some(bin) = self.bin_limits.index(observable) {
             self.subgrids[[order, bin, lumi]].fill(ntuple);
         }
+    }
+
+    /// Constructs a `Grid` by deserializing it from `reader`. Reading is not buffered.
+    pub fn read(reader: impl Read) -> Result<Self, Box<dyn Error>> {
+        Ok(bincode::deserialize_from(reader)?)
+    }
+
+    /// Serializes `self` into `writer`. Writing is not buffered.
+    pub fn write(&self, writer: impl Write) -> Result<(), Box<dyn Error>> {
+        Ok(bincode::serialize_into(writer, self)?)
     }
 
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,

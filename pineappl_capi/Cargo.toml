@@ -15,4 +15,3 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.1.0" }
-bincode = "1.0"
