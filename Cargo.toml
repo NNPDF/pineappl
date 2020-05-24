@@ -2,6 +2,7 @@
 members = [
     "pineappl",
     "pineappl_capi",
+    "pineappl_cli",
 ]
 
 [profile.release]
