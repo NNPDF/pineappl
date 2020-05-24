@@ -102,12 +102,21 @@ pub extern "C" fn pineappl_grid_delete(grid: *mut Grid) {
 /// `false` is returned.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_grid_ext(
-    _grid: *mut Grid,
-    _name: *const c_char,
+pub unsafe extern "C" fn pineappl_grid_ext(
+    grid: *mut Grid,
+    name: *const c_char,
     _key_vals: *mut KeyVal,
 ) -> bool {
-    false
+    let grid = &mut *grid;
+    let name = CStr::from_ptr(name).to_str().unwrap();
+
+    if name == "optimise" {
+        grid.scale(0.0);
+
+        true
+    } else {
+        false
+    }
 }
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
