@@ -43,7 +43,7 @@ fn merge(
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl_cli =>
         (version: crate_version!())
         (author: crate_authors!())
@@ -72,13 +72,14 @@ fn main() {
             .map(|s| s.map(str_to_f64).collect())
             .unwrap_or(Vec::new());
 
-        merge(
+        return merge(
             output,
             input.first().unwrap(),
             &input[1..],
             scale,
             &scale_by_order,
-        )
-        .expect("Merging failed");
+        );
     }
+
+    Ok(())
 }
