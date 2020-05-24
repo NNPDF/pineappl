@@ -30,6 +30,7 @@ fn main() {
         (version: crate_version!())
         (author: crate_authors!())
         (about: crate_description!())
+        (@setting SubcommandRequiredElseHelp)
         (@subcommand merge =>
             (about: "Merges one or more PineAPPL grids together")
             (@arg output: +required "Path of the merged PineAPPL file")
