@@ -402,7 +402,7 @@ impl Grid {
 
             let new_bins = other.bin_limits.bins();
 
-            if self.bin_limits.merge(other.bin_limits).is_err() {
+            if self.bin_limits.merge(&other.bin_limits).is_err() {
                 return Err(GridMergeError {});
             }
 

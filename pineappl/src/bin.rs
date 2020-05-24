@@ -2,7 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use std::f64;
-use std::mem;
 
 fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
@@ -115,13 +114,10 @@ impl BinLimits {
         }
     }
 
-    /// Merge the limits of `other` into `self`. If both limits are non-consecutive, an error is
-    /// returned.
-    pub fn merge(&mut self, mut other: Self) -> Result<(), MergeBinError> {
-        // if the bins would merged as (other, self), swap them to treat both cases as (self, other)
-        if float_eq_within(other.right(), self.left(), 8) {
-            mem::swap(self, &mut other);
-        } else if !float_eq_within(self.right(), other.left(), 8) {
+    /// Merge the limits of `other` into `self` on the right-hand-side. If both limits are
+    /// non-consecutive, an error is returned.
+    pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
+        if !float_eq_within(self.right(), other.left(), 8) {
             return Err(MergeBinError {});
         }
 
@@ -160,7 +156,7 @@ mod test {
 
         // right merge
         assert!(limits
-            .merge(BinLimits::new(vec![
+            .merge(&BinLimits::new(vec![
                 1.0,
                 1.0 + 1.0 / 3.0,
                 1.0 + 2.0 / 3.0,
@@ -174,21 +170,25 @@ mod test {
 
         let non_consecutive_bins = BinLimits::new(vec![3.0, 4.0]);
 
-        assert!(limits.merge(non_consecutive_bins).is_err());
+        assert!(limits.merge(&non_consecutive_bins).is_err());
+
+        assert_eq!(limits.left(), 0.0);
+        assert_eq!(limits.right(), 2.0);
+        assert_eq!(limits.bins(), 6);
 
         // left merge
         assert!(limits
-            .merge(BinLimits::new(vec![
+            .merge(&BinLimits::new(vec![
                 -1.0,
                 -1.0 + 1.0 / 3.0,
                 -1.0 + 2.0 / 3.0,
                 0.0
             ]))
-            .is_ok());
+            .is_err());
 
-        assert_eq!(limits.left(), -1.0);
+        assert_eq!(limits.left(), 0.0);
         assert_eq!(limits.right(), 2.0);
-        assert_eq!(limits.bins(), 9);
+        assert_eq!(limits.bins(), 6);
     }
 
     #[test]
