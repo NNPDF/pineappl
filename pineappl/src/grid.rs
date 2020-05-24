@@ -1,8 +1,8 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::BinLimits;
+use super::lagrange_subgrid::LagrangeSubgrid;
 use super::lumi::LumiEntry;
-use super::ntuple_grid::NtupleSubgrid;
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -243,7 +243,7 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>,
+                || Box::new(LagrangeSubgrid::new(&subgrid_params)) as Box<dyn Subgrid>,
             ),
             orders,
             lumi,
@@ -449,7 +449,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || Box::new(NtupleSubgrid::default()) as Box<dyn Subgrid>,
+            || Box::new(LagrangeSubgrid::new(&self.subgrid_params)) as Box<dyn Subgrid>,
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
