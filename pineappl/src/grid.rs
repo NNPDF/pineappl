@@ -6,6 +6,8 @@ use super::lumi::LumiEntry;
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 use std::mem;
 
 /// Coupling powers for each grid.
@@ -220,6 +222,14 @@ pub struct Ntuple<W> {
 #[derive(Debug)]
 pub struct GridMergeError {}
 
+impl Display for GridMergeError {
+    fn fmt(&self, _: &mut Formatter) -> Result<(), std::fmt::Error> {
+        todo!();
+    }
+}
+
+impl Error for GridMergeError {}
+
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
@@ -406,6 +416,7 @@ impl Grid {
 
             let new_bins = other.bin_limits.bins();
 
+            // TODO: improve error handling
             if self.bin_limits.merge(&other.bin_limits).is_err() {
                 return Err(GridMergeError {});
             }

@@ -1,7 +1,9 @@
 //! Module that contains helpers for binning observables
 
 use serde::{Deserialize, Serialize};
+use std::error::Error;
 use std::f64;
+use std::fmt::{Display, Formatter};
 
 fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
@@ -20,7 +22,16 @@ enum Limits {
 
 /// Error type which is returned when two `BinLimits` objects are merged which are not
 /// connected/non-consecutive.
+#[derive(Debug)]
 pub struct MergeBinError {}
+
+impl Display for MergeBinError {
+    fn fmt(&self, _: &mut Formatter) -> Result<(), std::fmt::Error> {
+        todo!();
+    }
+}
+
+impl Error for MergeBinError {}
 
 /// Structure representing bin limits.
 #[derive(Deserialize, PartialEq, Serialize)]
