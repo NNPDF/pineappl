@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 
+use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::error::Error;
 use std::fs::{File, OpenOptions};
@@ -43,6 +44,33 @@ fn merge(
     Ok(())
 }
 
+fn convolute(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    let pdf = Pdf::new(pdfset, 0);
+
+    let results = grid.convolute(
+        &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
+        &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
+        &|q2| pdf.alphas_q2(q2),
+        &[],
+        &[],
+        &(1.0, 1.0),
+    );
+
+    let bin_sizes = grid.bin_limits().bin_sizes();
+
+    for (bin, value) in results.iter().enumerate() {
+        println!(
+            "{:<3}  {:>12.7e}  {:>12.7e}",
+            bin,
+            value,
+            value * bin_sizes[bin],
+        );
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
         (version: crate_version!())
@@ -56,6 +84,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
             (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
                 number_of_values(5) "Scales all grids with order-dependent factors")
+        )
+        (@subcommand convolute =>
+            (about: "Convolutes a PineAPPL grid with a PDF set")
+            (@arg input: +required "Path of the input grid")
+            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
         )
     )
     .get_matches();
@@ -79,6 +112,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             scale,
             &scale_by_order,
         );
+    } else if let Some(matches) = matches.subcommand_matches("convolute") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset = matches.value_of("pdfset").unwrap();
+
+        return convolute(input, pdfset);
     }
 
     Ok(())
