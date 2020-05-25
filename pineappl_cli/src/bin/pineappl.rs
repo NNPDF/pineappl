@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg output: +required "Path of the merged PineAPPL file")
             (@arg input: ... +required "Path(s) of the files that should be merged")
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
-            (@arg scale_by_order: -b --scale_by_order +takes_value conflicts_with[scale]
+            (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
                 number_of_values(5) "Scales all grids with order-dependent factors")
         )
     )
