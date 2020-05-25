@@ -83,6 +83,7 @@ pub extern "C" fn pineappl_grid_convolute(
         &xfx2,
         &alphas,
         &order_mask,
+        &[],
         &lumi_mask,
         &(xi_ren, xi_fac),
     ));

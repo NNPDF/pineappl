@@ -284,10 +284,13 @@ impl Grid {
         xfx2: &dyn Fn(i32, f64, f64) -> f64,
         alphas: &dyn Fn(f64) -> f64,
         order_mask: &[bool],
+        bin_indices: &[usize],
         lumi_mask: &[bool],
         xi: &(f64, f64),
     ) -> Vec<f64> {
-        let mut bins: Vec<f64> = vec![0.0; self.bin_limits.bins()];
+        let bin_indices = if bin_indices.is_empty() { (0..self.bin_limits.bins()).collect() } else { bin_indices.to_vec() };
+        let mut bins: Vec<f64> = vec![0.0; bin_indices.len()];
+        let bin_sizes = self.bin_limits.bin_sizes();
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
             let order = &self.orders[i];
@@ -299,6 +302,8 @@ impl Grid {
             {
                 continue;
             }
+
+            let bin_index = match bin_indices.iter().position(|&index| index == j) { Some(i) => i, None => continue };
 
             let lumi_entry = &self.lumi[k];
 
@@ -321,12 +326,8 @@ impl Grid {
                 value *= xi.1.ln().powi(order.logxif as i32);
             }
 
-            bins[j] += value;
+            bins[bin_index] += value / bin_sizes[j];
         }
-
-        bins.iter_mut()
-            .zip(self.bin_limits.bin_sizes().iter())
-            .for_each(|(x, w)| *x /= *w);
 
         bins
     }

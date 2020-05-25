@@ -7,6 +7,21 @@ use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 
+fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+    let mut integers = Vec::new();
+
+    for s in list.split_terminator(',') {
+        if let Some(at) = s.find('-') {
+            let (left, right) = s.split_at(at);
+            integers.extend(str::parse::<usize>(left)?..=str::parse::<usize>(&right[1..])?);
+        } else {
+            integers.push(str::parse::<usize>(s)?);
+        }
+    }
+
+    Ok(integers)
+}
+
 fn merge(
     output: &str,
     input0: &str,
@@ -44,8 +59,13 @@ fn merge(
     Ok(())
 }
 
-fn convolute(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
+fn convolute(input: &str, pdfset: &str, show_bins: &[usize]) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    let show_bins = if show_bins.is_empty() {
+        (0..grid.bin_limits().bins()).collect()
+    } else {
+        show_bins.to_vec()
+    };
     let pdf = Pdf::new(pdfset, 0);
 
     let results = grid.convolute(
@@ -53,13 +73,14 @@ fn convolute(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
         &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
         &|q2| pdf.alphas_q2(q2),
         &[],
+        &show_bins,
         &[],
         &(1.0, 1.0),
     );
 
     let bin_sizes = grid.bin_limits().bin_sizes();
 
-    for (bin, value) in results.iter().enumerate() {
+    for (bin, value) in results.iter().enumerate().map(|(i, v)| (show_bins[i], v)) {
         println!(
             "{:<3}  {:>12.7e}  {:>12.7e}",
             bin,
@@ -89,6 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (about: "Convolutes a PineAPPL grid with a PDF set")
             (@arg input: +required "Path of the input grid")
             (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+            (@arg bins: -b --bins +takes_value "Selects a subset of bins")
         )
     )
     .get_matches();
@@ -115,8 +137,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
+        let mut bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
 
-        return convolute(input, pdfset);
+        return convolute(input, pdfset, &bins);
     }
 
     Ok(())
