@@ -59,7 +59,12 @@ fn merge(
     Ok(())
 }
 
-fn convolute(input: &str, pdfset: &str, show_bins: &[usize]) -> Result<(), Box<dyn Error>> {
+fn convolute(
+    input: &str,
+    pdfset: &str,
+    other_pdfsets: &[&str],
+    show_bins: &[usize],
+) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
         (0..grid.bin_limits().bins()).collect()
