@@ -309,6 +309,7 @@ impl Grid {
 
             let mut value = subgrid.convolute(&|x1, x2, q2| {
                 let mut lumi = 0.0;
+                let q2 = xi.1 * q2;
 
                 for entry in lumi_entry.entry() {
                     lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
