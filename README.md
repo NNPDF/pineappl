@@ -1,15 +1,13 @@
 # Introduction
 
-This is a collection of libraries which constitute `PineAPPL`.
+This repository contains libraries, tools, and interfaces to generate
+`PineAPPL` grids.
 
 # Installation
 
-If you've already installed Rust, skip the next section.
+`PineAPPL` needs `Rust`; if it's not already installed, go to
+<https://www.rust-lang.org/tools/install> and follow the instructions.
 
-## Installation of Rust
-
-Go to https://www.rust-lang.org/tools/install and follow the instructions.
-
-## Installation of `PineAPPL`
-
-TODO
+Next, run `cargo build --release` in the top-level directory of this
+repository. To install the program `pineappl` run `cargo install --path
+pineappl_cli`.
