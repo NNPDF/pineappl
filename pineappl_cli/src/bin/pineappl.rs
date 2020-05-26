@@ -78,15 +78,38 @@ fn convolute(input: &str, pdfset: &str, show_bins: &[usize]) -> Result<(), Box<d
         &(1.0, 1.0),
     );
 
+    let other_results: Vec<f64> = other_pdfsets
+        .iter()
+        .map(|pdfset| {
+            let pdf = Pdf::new(pdfset, 0);
+            grid.convolute(
+                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
+                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
+                &|q2| pdf.alphas_q2(q2),
+                &[],
+                &show_bins,
+                &[],
+                &(1.0, 1.0),
+            )
+        })
+        .flatten()
+        .collect();
+
     let bin_sizes = grid.bin_limits().bin_sizes();
 
-    for (bin, value) in results.iter().enumerate().map(|(i, v)| (show_bins[i], v)) {
-        println!(
+    for (bin, value) in results.iter().enumerate() {
+        print!(
             "{:<3}  {:>12.7e}  {:>12.7e}",
-            bin,
+            show_bins[bin],
             value,
-            value * bin_sizes[bin],
+            value * bin_sizes[show_bins[bin]],
         );
+
+        for other in other_results.iter().skip(bin).step_by(show_bins.len()) {
+            print!("  {:+6.2}%", (other / value - 1.0) * 100.0);
+        }
+
+        println!("");
     }
 
     Ok(())
@@ -109,7 +132,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
             (@arg input: +required "Path of the input grid")
-            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+            (@arg pdfset: ... +required "LHAPDF id(s) or name(s) of the PDF set(s)")
             (@arg bins: -b --bins +takes_value "Selects a subset of bins")
         )
     )
@@ -136,10 +159,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
-        let pdfset = matches.value_of("pdfset").unwrap();
+        let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let mut bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
 
-        return convolute(input, pdfset, &bins);
+        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins);
     }
 
     Ok(())
