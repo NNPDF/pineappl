@@ -12,5 +12,5 @@ description = "Read, write, and query PineAPPL grids"
 
 [dependencies]
 clap = "~2.33.0"
+lhapdf = "0.1"
 pineappl = { path = "../pineappl", version = "0.1" }
-lhapdf = { path = "../lhapdf", version = "0.1" }
