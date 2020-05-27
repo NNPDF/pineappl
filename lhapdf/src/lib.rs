@@ -53,6 +53,16 @@ impl Pdf {
         }
     }
 
+    pub fn with_lhaid(lhaid: i32) -> Self {
+        Self {
+            ptr: unsafe {
+                cpp!([lhaid as "int"] -> *mut c_void as "LHAPDF::PDF*" {
+                    return LHAPDF::mkPDF(lhaid);
+                })
+            },
+        }
+    }
+
     pub fn xfx_q2(&self, id: i32, x: f64, q2: f64) -> f64 {
         let self_ptr = self.ptr;
 
