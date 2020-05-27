@@ -74,7 +74,7 @@ fn convolute(
     } else {
         show_bins.to_vec()
     };
-    let pdf = Pdf::new(pdfset, 0);
+    let pdf = Pdf::with_setname_and_member(pdfset, 0);
 
     let results = grid.convolute(
         &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
@@ -89,7 +89,7 @@ fn convolute(
     let other_results: Vec<f64> = other_pdfsets
         .iter()
         .map(|pdfset| {
-            let pdf = Pdf::new(pdfset, 0);
+            let pdf = Pdf::with_setname_and_member(pdfset, 0);
             grid.convolute(
                 &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
                 &|id, x2, q2| pdf.xfx_q2(id, x2, q2),

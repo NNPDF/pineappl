@@ -39,7 +39,7 @@ pub struct Pdf {
 }
 
 impl Pdf {
-    pub fn new(setname: &str, member: i32) -> Self {
+    pub fn with_setname_and_member(setname: &str, member: i32) -> Self {
         let setname = CString::new(setname).unwrap();
         let setname_ptr = setname.as_ptr();
 
