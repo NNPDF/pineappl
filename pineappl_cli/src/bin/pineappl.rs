@@ -168,7 +168,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
-        let mut bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
+        let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
 
         return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins);
     }
