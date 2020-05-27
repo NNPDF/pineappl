@@ -207,7 +207,9 @@ impl Subgrid for LagrangeSubgrid {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
                     let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
 
-                    let grid = self.grid.get_or_insert_with(|| Array3::zeros((size, ny, ny)));
+                    let grid = self
+                        .grid
+                        .get_or_insert_with(|| Array3::zeros((size, ny, ny)));
 
                     grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
                 }

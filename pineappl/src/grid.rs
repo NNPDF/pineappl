@@ -1,9 +1,9 @@
 //! Module containing all traits and supporting structures for grids.
 
-use bincode;
 use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgrid;
 use super::lumi::LumiEntry;
+use bincode;
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -288,7 +288,11 @@ impl Grid {
         lumi_mask: &[bool],
         xi: &(f64, f64),
     ) -> Vec<f64> {
-        let bin_indices = if bin_indices.is_empty() { (0..self.bin_limits.bins()).collect() } else { bin_indices.to_vec() };
+        let bin_indices = if bin_indices.is_empty() {
+            (0..self.bin_limits.bins()).collect()
+        } else {
+            bin_indices.to_vec()
+        };
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len()];
         let bin_sizes = self.bin_limits.bin_sizes();
 
@@ -303,7 +307,10 @@ impl Grid {
                 continue;
             }
 
-            let bin_index = match bin_indices.iter().position(|&index| index == j) { Some(i) => i, None => continue };
+            let bin_index = match bin_indices.iter().position(|&index| index == j) {
+                Some(i) => i,
+                None => continue,
+            };
 
             let lumi_entry = &self.lumi[k];
 
@@ -353,7 +360,13 @@ impl Grid {
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
     /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
     /// the corresponding luminosity function was created.
-    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: &Ntuple<()>, weights: &[f64]) {
+    pub fn fill_all(
+        &mut self,
+        order: usize,
+        observable: f64,
+        ntuple: &Ntuple<()>,
+        weights: &[f64],
+    ) {
         for (lumi, weight) in weights.iter().enumerate() {
             self.fill(
                 order,
