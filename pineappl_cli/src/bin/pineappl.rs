@@ -75,7 +75,7 @@ fn convolute(
         show_bins.to_vec()
     };
     let pdf = str::parse::<i32>(pdfset)
-        .map(|lhaid| Pdf::with_lhaid(lhaid))
+        .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
 
     let results = grid.convolute(
@@ -85,14 +85,14 @@ fn convolute(
         &[],
         &show_bins,
         &[],
-        &(1.0, 1.0),
+        &[(1.0, 1.0)],
     );
 
     let other_results: Vec<f64> = other_pdfsets
         .iter()
         .map(|pdfset| {
             let pdf = str::parse::<i32>(pdfset)
-                .map(|lhaid| Pdf::with_lhaid(lhaid))
+                .map(Pdf::with_lhaid)
                 .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
             grid.convolute(
                 &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
@@ -121,7 +121,7 @@ fn convolute(
             print!("  {:+6.2}%", (other / value - 1.0) * 100.0);
         }
 
-        println!("");
+        println!();
     }
 
     Ok(())
@@ -160,7 +160,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let scale_by_order: Vec<_> = matches
             .values_of("scale_by_order")
             .map(|s| s.map(str_to_f64).collect())
-            .unwrap_or(Vec::new());
+            .unwrap_or_default();
 
         return merge(
             output,
