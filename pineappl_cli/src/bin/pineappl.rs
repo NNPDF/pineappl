@@ -67,6 +67,7 @@ fn convolute(
     pdfset: &str,
     other_pdfsets: &[&str],
     show_bins: &[usize],
+    scales: usize,
 ) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
@@ -77,6 +78,17 @@ fn convolute(
     let pdf = str::parse::<i32>(pdfset)
         .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+    let scales_vector = vec![
+        (1.0, 1.0),
+        (2.0, 2.0),
+        (0.5, 0.5),
+        (2.0, 1.0),
+        (1.0, 2.0),
+        (0.5, 1.0),
+        (1.0, 0.5),
+        (2.0, 0.5),
+        (0.5, 2.0),
+    ];
 
     let results = grid.convolute(
         &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
@@ -85,7 +97,7 @@ fn convolute(
         &[],
         &show_bins,
         &[],
-        &[(1.0, 1.0)],
+        &scales_vector[0..scales],
     );
 
     let other_results: Vec<f64> = other_pdfsets
@@ -101,7 +113,7 @@ fn convolute(
                 &[],
                 &show_bins,
                 &[],
-                &(1.0, 1.0),
+                &scales_vector[0..scales],
             )
         })
         .flatten()
@@ -109,16 +121,27 @@ fn convolute(
 
     let bin_sizes = grid.bin_limits().bin_sizes();
 
-    for (bin, value) in results.iter().enumerate() {
+    for (bin, values) in results.chunks_exact(scales).enumerate() {
+        let min_value = values
+            .iter()
+            .min_by(|left, right| left.partial_cmp(right).unwrap())
+            .unwrap();
+        let max_value = values
+            .iter()
+            .max_by(|left, right| left.partial_cmp(right).unwrap())
+            .unwrap();
+
         print!(
-            "{:<3}  {:>12.7e}  {:>12.7e}",
+            "{:<3}  {:>12.7e}  {:>12.7e}  {:+5.2}% {:+5.2}%",
             show_bins[bin],
-            value,
-            value * bin_sizes[show_bins[bin]],
+            values[0],
+            values[0] * bin_sizes[show_bins[bin]],
+            (min_value / values[0] - 1.0) * 100.0,
+            (max_value / values[0] - 1.0) * 100.0,
         );
 
         for other in other_results.iter().skip(bin).step_by(show_bins.len()) {
-            print!("  {:+6.2}%", (other / value - 1.0) * 100.0);
+            print!("  {:+6.2}%", (other / values[0] - 1.0) * 100.0);
         }
 
         println!();
@@ -146,6 +169,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: +required "Path of the input grid")
             (@arg pdfset: ... +required "LHAPDF id(s) or name(s) of the PDF set(s)")
             (@arg bins: -b --bins +takes_value "Selects a subset of bins")
+            (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
+                "Set the number of scale variations")
         )
     )
     .get_matches();
@@ -173,8 +198,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
+        let scales = str::parse::<usize>(matches.value_of("scales").unwrap())
+            .expect("Could not convert string to integer");
 
-        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins);
+        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins, scales);
     }
 
     Ok(())

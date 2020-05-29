@@ -286,22 +286,20 @@ impl Grid {
         order_mask: &[bool],
         bin_indices: &[usize],
         lumi_mask: &[bool],
-        xi: &(f64, f64),
+        xi: &[(f64, f64)],
     ) -> Vec<f64> {
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_limits.bins()).collect()
         } else {
             bin_indices.to_vec()
         };
-        let mut bins: Vec<f64> = vec![0.0; bin_indices.len()];
+        let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_limits.bin_sizes();
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
             let order = &self.orders[i];
 
             if (!order_mask.is_empty() && !order_mask[i])
-                || ((order.logxir > 0) && (xi.0 == 1.0))
-                || ((order.logxif > 0) && (xi.1 == 1.0))
                 || (!lumi_mask.is_empty() && !lumi_mask[k])
             {
                 continue;
@@ -314,27 +312,33 @@ impl Grid {
 
             let lumi_entry = &self.lumi[k];
 
-            let mut value = subgrid.convolute(&|x1, x2, q2| {
-                let mut lumi = 0.0;
-                let q2 = xi.1 * q2;
-
-                for entry in lumi_entry.entry() {
-                    lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
+            for (l, &(xir, xif)) in xi.iter().enumerate() {
+                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                    continue;
                 }
 
-                lumi *= alphas(q2).powi(order.alphas as i32);
-                lumi
-            });
+                let mut value = subgrid.convolute(&|x1, x2, q2| {
+                    let mut lumi = 0.0;
+                    let q2 = xif * q2;
 
-            if order.logxir > 0 {
-                value *= xi.0.ln().powi(order.logxir as i32);
+                    for entry in lumi_entry.entry() {
+                        lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
+                    }
+
+                    lumi *= alphas(q2).powi(order.alphas as i32);
+                    lumi
+                });
+
+                if order.logxir > 0 {
+                    value *= xir.ln().powi(order.logxir as i32);
+                }
+
+                if order.logxif > 0 {
+                    value *= xif.ln().powi(order.logxif as i32);
+                }
+
+                bins[l + xi.len() * bin_index] += value / bin_sizes[j];
             }
-
-            if order.logxif > 0 {
-                value *= xi.1.ln().powi(order.logxif as i32);
-            }
-
-            bins[bin_index] += value / bin_sizes[j];
         }
 
         bins
