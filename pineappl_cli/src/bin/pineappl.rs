@@ -113,7 +113,7 @@ fn convolute(
                 &[],
                 &show_bins,
                 &[],
-                &scales_vector[0..scales],
+                &[(1.0, 1.0)],
             )
         })
         .flatten()
