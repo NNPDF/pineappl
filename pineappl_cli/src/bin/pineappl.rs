@@ -150,6 +150,68 @@ fn convolute(
     Ok(())
 }
 
+fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    let pdf = str::parse::<i32>(pdfset)
+        .map(Pdf::with_lhaid)
+        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+
+    let grid_orders = grid.orders();
+    let results = grid.convolute(
+        &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
+        &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
+        &|q2| pdf.alphas_q2(q2),
+        &[],
+        &[],
+        &[],
+        &[(1.0, 1.0)],
+    );
+
+    let order_results: Vec<Vec<f64>> = (0..grid_orders.len())
+        .map(|order| {
+            let mut order_mask = vec![false; grid_orders.len()];
+            order_mask[order] = true;
+            grid.convolute(
+                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
+                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
+                &|q2| pdf.alphas_q2(q2),
+                &order_mask,
+                &[],
+                &[],
+                &[(1.0, 1.0)],
+            )
+        })
+        .collect();
+
+    for (index, order) in grid_orders.iter().enumerate() {
+        if (order.logxir != 0) || (order.logxif != 0) {
+            continue;
+        }
+
+        println!("{:<2}: O(as^{} a^{})", index, order.alphas, order.alpha);
+    }
+
+    println!();
+
+    for (bin, value) in results.iter().enumerate() {
+        print!("{:<3}  {:>12.7e}", bin, value);
+
+        for index in 0..grid_orders.len() {
+            if (grid_orders[index].logxir != 0) || (grid_orders[index].logxif != 0) {
+                continue;
+            }
+
+            let order_value = order_results[index][bin];
+
+            print!(" {:>6.2}%", order_value / order_results[0][bin] * 100.0);
+        }
+
+        println!();
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
         (version: crate_version!())
@@ -171,6 +233,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg bins: -b --bins +takes_value "Selects a subset of bins")
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
+        )
+        (@subcommand orders =>
+            (about: "Shows thw predictions for all bin for each order separately")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
         )
     )
     .get_matches();
@@ -202,6 +269,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             .expect("Could not convert string to integer");
 
         return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins, scales);
+    } else if let Some(matches) = matches.subcommand_matches("orders") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset = matches.value_of("pdfset").unwrap();
+
+        return orders(input, pdfset);
     }
 
     Ok(())
