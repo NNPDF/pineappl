@@ -2,6 +2,7 @@
 
 use super::grid::{Ntuple, Subgrid, SubgridParams};
 use arrayvec::ArrayVec;
+use itertools::iproduct;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -117,27 +118,26 @@ impl Subgrid for LagrangeSubgrid {
 
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
         if let Some(self_grid) = &self.grid {
-            let mut dsigma = 0.0;
+            let qs: Vec<_> = (self.itaumin..self.itaumax)
+                .map(|itau| fq2(self.gettau(itau)))
+                .collect();
+            let x: Vec<_> = (0..self.ny).map(|iy| fx(self.gety(iy))).collect();
 
-            for ((itau, iy1, iy2), &sigma) in self_grid.indexed_iter() {
-                if sigma != 0.0 {
-                    let tau = self.gettau(itau + self.itaumin);
-                    let q2 = fq2(tau);
-                    let y1 = self.gety(iy1);
-                    let x1 = fx(y1);
-                    let y2 = self.gety(iy2);
-                    let x2 = fx(y2);
-                    let mut lumi_val = lumi(x1, x2, q2);
-
-                    if self.reweight {
-                        lumi_val *= weightfun(x1) * weightfun(x2);
+            self_grid
+                .iter()
+                .zip(iproduct!(qs, &x, &x))
+                .map(|(&sigma, (q2, &x1, &x2))| {
+                    if sigma != 0.0 {
+                        let mut value = sigma * lumi(x1, x2, q2);
+                        if self.reweight {
+                            value *= weightfun(x1) * weightfun(x2);
+                        }
+                        value
+                    } else {
+                        0.0
                     }
-
-                    dsigma += sigma * lumi_val;
-                }
-            }
-
-            dsigma
+                })
+                .sum()
         } else {
             0.0
         }
