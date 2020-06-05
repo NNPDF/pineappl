@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 
+use itertools::Itertools;
 use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::error::Error;
@@ -212,6 +213,24 @@ fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn luminosity(input: &str) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    for (index, entry) in grid.lumi().iter().enumerate() {
+        print!("{:>2}: ", index);
+        println!(
+            "{}",
+            entry
+                .entry()
+                .iter()
+                .map(|(id1, id2, factor)| format!("{} × ({}, {})", factor, id1, id2))
+                .join(" + ")
+        );
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
         (version: crate_version!())
@@ -238,6 +257,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             (about: "Shows thw predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+        )
+        (@subcommand luminosity =>
+            (about: "Shows the luminosity function")
+            (@arg input: +required "Path to the input grid")
         )
     )
     .get_matches();
@@ -274,6 +297,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let pdfset = matches.value_of("pdfset").unwrap();
 
         return orders(input, pdfset);
+    } else if let Some(matches) = matches.subcommand_matches("luminosity") {
+        let input = matches.value_of("input").unwrap();
+
+        return luminosity(input);
     }
 
     Ok(())
