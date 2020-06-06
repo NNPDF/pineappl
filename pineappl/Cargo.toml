@@ -14,6 +14,7 @@ description = "PineAPPL is not an extension of APPLgrid"
 arrayvec = "0.5"
 bincode = "1.0"
 itertools = "0.9"
+lz-fear = "0.1"
 ndarray = { features = ["serde"], version = "0.13.1" }
 serde = { features = ["derive"], version = "1.0" }
 typetag = "0.1"

@@ -4,12 +4,13 @@ use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgrid;
 use super::lumi::LumiEntry;
 use bincode;
+use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
 
 /// Coupling powers for each grid.
@@ -352,8 +353,15 @@ impl Grid {
     }
 
     /// Constructs a `Grid` by deserializing it from `reader`. Reading is not buffered.
-    pub fn read(reader: impl Read) -> Result<Self, Box<dyn Error>> {
-        Ok(bincode::deserialize_from(reader)?)
+    pub fn read(mut reader: impl Read + Seek) -> Result<Self, Box<dyn Error>> {
+        match LZ4FrameReader::new(&mut reader) {
+            Ok(reader) => Ok(bincode::deserialize_from(reader.into_read())?),
+            Err(WrongMagic(_)) => {
+                reader.seek(SeekFrom::Start(0))?;
+                Ok(bincode::deserialize_from(reader)?)
+            }
+            Err(e) => Err(Box::new(e)),
+        }
     }
 
     /// Serializes `self` into `writer`. Writing is not buffered.
