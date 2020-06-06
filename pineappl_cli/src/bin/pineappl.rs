@@ -23,6 +23,30 @@ fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(integers)
 }
 
+// TODO: improve error handling and parsing
+fn parse_order(order: &str) -> (u32, u32) {
+    let mut alphas = 0;
+    let mut alpha = 0;
+
+    let matches: Vec<_> = order.match_indices("a").collect();
+
+    if matches.len() > 2 {
+        todo!();
+    } else {
+        for (index, _) in matches {
+            if &order[index..index+2] == "as" {
+                let len = order[index+2..].chars().take_while(|c| c.is_numeric()).count();
+                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len]).unwrap();
+            } else {
+                let len = order[index+1..].chars().take_while(|c| c.is_numeric()).count();
+                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len]).unwrap();
+            }
+        }
+    }
+
+    (alphas, alpha)
+}
+
 fn merge(
     output: &str,
     input0: &str,
@@ -69,6 +93,7 @@ fn convolute(
     other_pdfsets: &[&str],
     show_bins: &[usize],
     scales: usize,
+    orders: &[(u32, u32)],
 ) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
@@ -91,11 +116,15 @@ fn convolute(
         (0.5, 2.0),
     ];
 
+    let orders: Vec<_> = grid.orders().iter().map(|order| {
+        orders.is_empty() || orders.iter().any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+    }).collect();
+
     let results = grid.convolute(
         &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
         &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
         &|q2| pdf.alphas_q2(q2),
-        &[],
+        &orders,
         &show_bins,
         &[],
         &scales_vector[0..scales],
@@ -298,6 +327,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg bins: -b --bins +takes_value "Selects a subset of bins")
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
+            (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
         )
         (@subcommand orders =>
             (about: "Shows thw predictions for all bin for each order separately")
@@ -342,8 +372,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
         let scales = str::parse::<usize>(matches.value_of("scales").unwrap())
             .expect("Could not convert string to integer");
+        let orders = matches.values_of("orders").map_or(vec![], |values| values.map(parse_order).collect());
 
-        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins, scales);
+        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins, scales, &orders);
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
