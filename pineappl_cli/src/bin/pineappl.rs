@@ -231,6 +231,52 @@ fn luminosity(input: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    let pdf = str::parse::<i32>(pdfset)
+        .map(Pdf::with_lhaid)
+        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+
+    let results: Vec<_> = (0..grid.lumi().len())
+        .map(|lumi| {
+            let mut lumi_mask = vec![false; grid.lumi().len()];
+            lumi_mask[lumi] = true;
+            grid.convolute(
+                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
+                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
+                &|q2| pdf.alphas_q2(q2),
+                &[],
+                &[],
+                &lumi_mask,
+                &[(1.0, 1.0)],
+            )
+        })
+        .collect();
+
+    for bin in 0..grid.bin_limits().bins() {
+        print!("{:>3}:", bin);
+
+        let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
+        let mut percentages: Vec<_> = results
+            .iter()
+            .enumerate()
+            .map(|(lumi, vec)| (lumi, vec[bin] / sum * 100.0))
+            .collect();
+
+        // sort using the absolute value in descending order
+        percentages.sort_unstable_by(|(_, left), (_, right)| {
+            right.abs().partial_cmp(&left.abs()).unwrap()
+        });
+
+        for (lumi, percentage) in percentages.iter().take(limit) {
+            print!("  #{:<3} {:5.1}%", lumi, percentage);
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
         (version: crate_version!())
@@ -261,6 +307,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         (@subcommand luminosity =>
             (about: "Shows the luminosity function")
             (@arg input: +required "Path to the input grid")
+        )
+        (@subcommand channels =>
+            (about: "Shows the contribution for each partonic channel")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+            (@arg limit: -l --limit default_value("10") "The maximum number of channels displayed")
         )
     )
     .get_matches();
@@ -301,6 +353,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
 
         return luminosity(input);
+    } else if let Some(matches) = matches.subcommand_matches("channels") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset = matches.value_of("pdfset").unwrap();
+        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())
+            .expect("Could not convert string to integer");
+
+        return channels(input, pdfset, limit);
     }
 
     Ok(())
