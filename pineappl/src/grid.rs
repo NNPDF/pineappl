@@ -2,10 +2,8 @@
 
 use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgrid;
-use super::ntuple_grid::NtupleSubgrid;
 use super::lumi::LumiEntry;
 use bincode;
-use enum_dispatch::enum_dispatch;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
@@ -54,15 +52,8 @@ impl Order {
     }
 }
 
-#[enum_dispatch(Subgrid)]
-#[derive(Deserialize, Serialize)]
-enum SubgridEnum {
-    LagrangeSubgrid,
-    NtupleSubgrid,
-}
-
 /// Trait each subgrid must implement.
-#[enum_dispatch]
+#[typetag::serde(tag = "type")]
 pub trait Subgrid {
     /// Returns `self` as an `Any` type.
     fn as_any_mut(&mut self) -> &mut dyn Any;
@@ -246,7 +237,7 @@ impl Error for GridMergeError {}
 /// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
 pub struct Grid {
-    subgrids: Array3<SubgridEnum>,
+    subgrids: Array3<Box<dyn Subgrid>>,
     lumi: Vec<LumiEntry>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
@@ -265,7 +256,7 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || LagrangeSubgrid::new(&subgrid_params).into(),
+                || Box::new(LagrangeSubgrid::new(&subgrid_params)) as Box<dyn Subgrid>,
             ),
             orders,
             lumi,
@@ -493,7 +484,7 @@ impl Grid {
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid);
+                self.subgrids[[self_i, self_j, self_k]].merge(&mut **subgrid);
             }
         }
 
@@ -508,7 +499,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || LagrangeSubgrid::new(&self.subgrid_params).into(),
+            || Box::new(LagrangeSubgrid::new(&self.subgrid_params)) as Box<dyn Subgrid>,
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
