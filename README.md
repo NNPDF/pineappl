@@ -1,3 +1,5 @@
+[![Rust](https://github.com/N3PDF/pineappl/workflows/Rust/badge.svg)](https://github.com/N3PDF/pineappl/actions?query=workflow%3ARust)
+
 # Introduction
 
 This repository contains libraries, tools, and interfaces to read and write
