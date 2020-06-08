@@ -16,6 +16,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install LHAPDF 6.2.3
+      run: |
+        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.2.3.tar.gz' -O LHAPDF-6.2.3.tar.gz
+        tar xzf LHAPDF-6.2.3.tar.gz
+        cd LHAPDF-6.2.3
+        ./configure --prefix=/usr
+        make -j
+        sudo make install
     - name: Build
       run: cargo build --verbose
     - name: Run tests
