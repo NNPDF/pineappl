@@ -15,3 +15,6 @@ clap = "~2.33.0"
 itertools = "0.9"
 lhapdf = "0.1"
 pineappl = { path = "../pineappl", version = "0.1" }
+
+[package.metadata.docs.rs]
+rustc-args = [ "--cfg feature=\"docs-only\"" ]
