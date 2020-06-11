@@ -2,7 +2,7 @@
 
 use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgrid;
-use super::ntuple_grid::NtupleSubgrid;
+use super::ntuple_subgrid::NtupleSubgrid;
 use super::lumi::LumiEntry;
 use bincode;
 use enum_dispatch::enum_dispatch;
