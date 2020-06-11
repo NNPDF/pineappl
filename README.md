@@ -1,6 +1,7 @@
 [![Rust](https://github.com/N3PDF/pineappl/workflows/Rust/badge.svg)](https://github.com/N3PDF/pineappl/actions?query=workflow%3ARust)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
+[![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
 
 # Introduction
 
