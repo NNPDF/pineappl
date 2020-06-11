@@ -242,6 +242,14 @@ impl Display for GridMergeError {
 
 impl Error for GridMergeError {}
 
+#[derive(Deserialize, Serialize)]
+struct Mmv1 {}
+
+#[derive(Deserialize, Serialize)]
+enum MoreMembers {
+    V1(Mmv1),
+}
+
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
@@ -251,6 +259,7 @@ pub struct Grid {
     bin_limits: BinLimits,
     orders: Vec<Order>,
     subgrid_params: SubgridParams,
+    more_members: MoreMembers,
 }
 
 impl Grid {
@@ -271,6 +280,7 @@ impl Grid {
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
+            more_members: MoreMembers::V1(Mmv1 {}),
         }
     }
 
