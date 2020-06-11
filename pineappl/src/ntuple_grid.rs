@@ -10,7 +10,6 @@ pub struct NtupleSubgrid {
     ntuples: Vec<Ntuple<f64>>,
 }
 
-#[typetag::serde]
 impl Subgrid for NtupleSubgrid {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
