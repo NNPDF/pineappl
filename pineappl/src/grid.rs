@@ -1,8 +1,8 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::BinLimits;
-use super::lagrange_subgrid::LagrangeSubgrid;
-use super::ntuple_subgrid::NtupleSubgrid;
+use super::lagrange_subgrid::LagrangeSubgridV1;
+use super::ntuple_subgrid::NtupleSubgridV1;
 use super::lumi::LumiEntry;
 use bincode;
 use enum_dispatch::enum_dispatch;
@@ -57,8 +57,8 @@ impl Order {
 #[enum_dispatch(Subgrid)]
 #[derive(Deserialize, Serialize)]
 enum SubgridEnum {
-    LagrangeSubgrid,
-    NtupleSubgrid,
+    LagrangeSubgridV1,
+    NtupleSubgridV1,
 }
 
 /// Trait each subgrid must implement.
@@ -274,7 +274,7 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || LagrangeSubgrid::new(&subgrid_params).into(),
+                || LagrangeSubgridV1::new(&subgrid_params).into(),
             ),
             orders,
             lumi,
@@ -518,7 +518,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || LagrangeSubgrid::new(&self.subgrid_params).into(),
+            || LagrangeSubgridV1::new(&self.subgrid_params).into(),
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {

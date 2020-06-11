@@ -6,11 +6,11 @@ use std::any::Any;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
-pub struct NtupleSubgrid {
+pub struct NtupleSubgridV1 {
     ntuples: Vec<Ntuple<f64>>,
 }
 
-impl Subgrid for NtupleSubgrid {
+impl Subgrid for NtupleSubgridV1 {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }

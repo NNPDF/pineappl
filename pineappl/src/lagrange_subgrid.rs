@@ -58,7 +58,7 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Deserialize, Serialize)]
-pub struct LagrangeSubgrid {
+pub struct LagrangeSubgridV1 {
     grid: Option<Array3<f64>>,
     ntau: usize,
     ny: usize,
@@ -73,7 +73,7 @@ pub struct LagrangeSubgrid {
     taumax: f64,
 }
 
-impl LagrangeSubgrid {
+impl LagrangeSubgridV1 {
     /// Constructor.
     #[must_use]
     pub fn new(subgrid_params: &SubgridParams) -> Self {
@@ -110,7 +110,7 @@ impl LagrangeSubgrid {
     }
 }
 
-impl Subgrid for LagrangeSubgrid {
+impl Subgrid for LagrangeSubgridV1 {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
