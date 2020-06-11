@@ -8,23 +8,17 @@
 This repository contains libraries, tools, and interfaces to read and write
 `PineAPPL` grids.
 
+There are three crates in this repository:
+
+- [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
+  main functionality
+- [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
+  C header, to use PineAPPL inside a C program.
+- [`pineappl_cli`](https://crates.io/crates/pineappl) installs a program to use
+  PineAPPL from the command line.
+
 # Installation
 
-`PineAPPL` needs `Rust`. If it's not already available on your system, go to
-<https://www.rust-lang.org/tools/install> and follow the instructions.
-
-Next, run `cargo build --release` in the top-level directory of this
-repository. To install the program `pineappl` run `cargo install --path
-pineappl_cli`.
-
-## C API
-
-To use `PineAPPL` via the `C` API, you need `cbindgen` to generate the C
-header. First run `cargo install cbindgen` to install it, then run
-
-    cbindgen -c pineappl_capi/cbindgen.toml pineappl_capi/ > pineappl_capi.h
-
-This will create the header in the top-level directory of the repository. The
-corresponding library can be found after building the project in
-
-    target/release/pineappl_capi.{so,dylib,dll}
+`PineAPPL` depends on [`Rust`](https://www.rust-lang.org/). If it's not already
+installed on your system, use your favourite package manager to install it, or
+go to <https://www.rust-lang.org/tools/install> and follow the instructions there.
