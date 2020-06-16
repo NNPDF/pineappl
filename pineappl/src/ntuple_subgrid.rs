@@ -10,6 +10,13 @@ pub struct NtupleSubgridV1 {
     ntuples: Vec<Ntuple<f64>>,
 }
 
+impl NtupleSubgridV1 {
+    /// Constructor.
+    pub fn new() -> Self {
+        Self { ntuples: vec![] }
+    }
+}
+
 impl Subgrid for NtupleSubgridV1 {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
