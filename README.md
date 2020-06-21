@@ -14,9 +14,9 @@ There are three crates in this repository:
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
   main functionality
 - [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
-  C header, to use PineAPPL inside a C program.
+  C header, to use PineAPPL inside a C program
 - [`pineappl_cli`](https://crates.io/crates/pineappl) installs a program to use
-  PineAPPL from the command line.
+  PineAPPL from the command line
 
 # Installation
 

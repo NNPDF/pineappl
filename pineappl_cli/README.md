@@ -5,3 +5,7 @@
 
 This is the command-line interface (CLI) to
 [`pineappl`](https://crates.io/crates/pineappl).
+
+# Installation
+
+Run `cargo install pineappl_cli` to install the `pineappl` binary.
