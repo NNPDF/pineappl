@@ -6,6 +6,7 @@ use itertools::iproduct;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
+use std::mem;
 
 fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
@@ -110,6 +111,23 @@ impl LagrangeSubgridV1 {
     }
 }
 
+impl LagrangeSubgridV1 {
+    fn increase_tau(&mut self, new_itaumin: usize, new_itaumax: usize) {
+        let min_diff = self.itaumin - new_itaumin;
+
+        let mut new_grid = Array3::zeros((new_itaumax - new_itaumin, self.ny, self.ny));
+
+        for ((i, j, k), value) in self.grid.as_ref().unwrap().indexed_iter() {
+            new_grid[[i + min_diff, j, k]] = *value;
+        }
+
+        self.itaumin = new_itaumin;
+        self.itaumax = new_itaumax;
+
+        mem::swap(&mut self.grid, &mut Some(new_grid));
+    }
+}
+
 impl Subgrid for LagrangeSubgridV1 {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
@@ -193,10 +211,8 @@ impl Subgrid for LagrangeSubgridV1 {
         if self.grid.is_none() {
             self.itaumin = k3;
             self.itaumax = k3 + size;
-        }
-
-        if k3 < self.itaumin || k3 + size > self.itaumax {
-            todo!();
+        } else if k3 < self.itaumin || k3 + size > self.itaumax {
+            self.increase_tau(self.itaumin.min(k3), self.itaumax.max(k3 + size));
         }
 
         for i3 in 0..=self.tauorder {
@@ -222,12 +238,26 @@ impl Subgrid for LagrangeSubgridV1 {
 
     fn merge(&mut self, other: &mut dyn Subgrid) {
         if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
-            if let Some(self_grid) = &mut self.grid {
-                if let Some(other_grid_grid) = &mut other_grid.grid {
-                    self_grid.scaled_add(1.0, other_grid_grid);
+            if let Some(other_grid_grid) = &mut other_grid.grid {
+                if self.grid.is_some() {
+                    let new_itaumin = self.itaumin.min(other_grid.itaumin);
+                    let new_itaumax = self.itaumax.max(other_grid.itaumax);
+                    let offset = other_grid.itaumin.saturating_sub(self.itaumin);
+
+                    // TODO: we need much more checks here if there subgrids are compatible at all
+
+                    if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
+                        self.increase_tau(new_itaumin, new_itaumax);
+                    }
+
+                    let self_grid = self.grid.as_mut().unwrap();
+
+                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                        self_grid[[i + offset, j, k]] += value;
+                    }
+                } else {
+                    self.grid = other_grid.grid.take();
                 }
-            } else {
-                self.grid = other_grid.grid.take();
             }
         } else {
             todo!();

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- the Lagrange-interpolation grid of PineAPPL now supports fully dynamic
+  factorisation/renormalisation scales
+
 ## [0.1.0] - 11/06/2020
 
 - first release
