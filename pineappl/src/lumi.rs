@@ -14,6 +14,30 @@ pub struct LumiEntry {
 impl LumiEntry {
     /// Constructor for `LumiEntry`. Note that `entry` must be non-empty, otherwise this function
     /// panics.
+    ///
+    /// # Examples
+    ///
+    /// Ordering of the arguments doesn't matter:
+    ///
+    /// ```rust
+    /// use pineappl::lumi::LumiEntry;
+    ///
+    /// let entry1 = LumiEntry::new(vec![(2, 2, 1.0), (4, 4, 1.0)]);
+    /// let entry2 = LumiEntry::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
+    ///
+    /// // checks that the ordering doesn't matter
+    /// assert_eq!(entry1, entry2);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Creating an entry with content panics:
+    ///
+    /// ```rust,should_panic
+    /// use pineappl::lumi::LumiEntry;
+    ///
+    /// let _ = LumiEntry::new(vec![]);
+    /// ```
     #[must_use]
     pub fn new(mut entry: Vec<(i32, i32, f64)>) -> Self {
         assert!(!entry.is_empty());
@@ -38,20 +62,35 @@ impl LumiEntry {
     }
 
     /// Returns a tuple representation of this entry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pineappl::lumi_entry;
+    /// use pineappl::lumi::LumiEntry;
+    ///
+    /// let entry = lumi_entry![4, 4, 1.0; 2, 2, 1.0];
+    ///
+    /// assert_eq!(entry.entry(), [(2, 2, 1.0), (4, 4, 1.0)]);
+    /// ```
     #[must_use]
     pub fn entry(&self) -> &[(i32, i32, f64)] {
         &self.entry
     }
 }
 
-/// Helper macro to quickly generate a LumiEntry at compile time. In the following example `entry1`
-/// and `entry2` represent the same values:
+/// Helper macro to quickly generate a LumiEntry at compile time.
+///
+/// # Examples
+///
+/// In the following example `entry1` and `entry2` represent the same values:
 ///
 /// ```
-/// # use pineappl::lumi_entry;
-/// # use pineappl::lumi::LumiEntry;
+/// use pineappl::lumi_entry;
+///
 /// let entry1 = lumi_entry![2, 2, 1.0; 4, 4, 1.0];
-/// let entry2 = LumiEntry::new(vec![(2, 2, 1.0), (4, 4, 1.0)]);
+/// let entry2 = lumi_entry![4, 4, 1.0; 2, 2, 1.0];
+///
 /// assert_eq!(entry1, entry2);
 /// ```
 #[macro_export]
@@ -59,16 +98,4 @@ macro_rules! lumi_entry {
     ($a:expr, $b:expr, $factor:expr $(; $c:expr, $d:expr, $fac:expr)*) => {
         $crate::lumi::LumiEntry::new(vec![($a, $b, $factor), $(($c, $d, $fac)),*])
     };
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn lumi_entry_blind_to_ordering() {
-        let entry1 = lumi_entry![2, 2, 1.0; 4, 4, 1.0];
-        let entry2 = lumi_entry![4, 4, 1.0; 2, 2, 1.0];
-
-        // checks that the ordering doesn't matter
-        assert_eq!(entry1, entry2);
-    }
 }

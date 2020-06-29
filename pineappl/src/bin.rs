@@ -106,6 +106,20 @@ impl BinLimits {
     }
 
     /// Returns the limits in a `Vec`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::bin::BinLimits;
+    ///
+    /// // example with equally sized bins
+    /// let equal_bins = BinLimits::new(vec![0.25, 0.5, 0.75, 1.0]);
+    /// assert_eq!(equal_bins.limits(), vec![0.25, 0.5, 0.75, 1.0]);
+    ///
+    /// // example with unequally sized bins
+    /// let unequal_bins = BinLimits::new(vec![0.125, 0.25, 1.0, 1.5]);
+    /// assert_eq!(unequal_bins.limits(), vec![0.125, 0.25, 1.0, 1.5]);
+    /// ```
     #[must_use]
     pub fn limits(&self) -> Vec<f64> {
         match &self.0 {
@@ -117,6 +131,20 @@ impl BinLimits {
     }
 
     /// Returns the size for each bin.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::bin::BinLimits;
+    ///
+    /// // example with equally sized bins
+    /// let equal_bins = BinLimits::new(vec![0.25, 0.5, 0.75, 1.0]);
+    /// assert_eq!(equal_bins.bin_sizes(), vec![0.25, 0.25, 0.25]);
+    ///
+    /// // example with unequally sized bins
+    /// let unequal_bins = BinLimits::new(vec![0.125, 0.25, 1.0, 1.5]);
+    /// assert_eq!(unequal_bins.bin_sizes(), vec![0.125, 0.75, 0.5]);
+    /// ```
     #[must_use]
     pub fn bin_sizes(&self) -> Vec<f64> {
         match &self.0 {
