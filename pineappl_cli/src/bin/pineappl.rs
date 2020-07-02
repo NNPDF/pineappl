@@ -34,11 +34,17 @@ fn parse_order(order: &str) -> (u32, u32) {
         todo!();
     } else {
         for (index, _) in matches {
-            if &order[index..index+2] == "as" {
-                let len = order[index+2..].chars().take_while(|c| c.is_numeric()).count();
+            if &order[index..index + 2] == "as" {
+                let len = order[index + 2..]
+                    .chars()
+                    .take_while(|c| c.is_numeric())
+                    .count();
                 alphas = str::parse::<u32>(&order[index + 2..index + 2 + len]).unwrap();
             } else {
-                let len = order[index+1..].chars().take_while(|c| c.is_numeric()).count();
+                let len = order[index + 1..]
+                    .chars()
+                    .take_while(|c| c.is_numeric())
+                    .count();
                 alpha = str::parse::<u32>(&order[index + 1..index + 1 + len]).unwrap();
             }
         }
@@ -116,9 +122,16 @@ fn convolute(
         (0.5, 2.0),
     ];
 
-    let orders: Vec<_> = grid.orders().iter().map(|order| {
-        orders.is_empty() || orders.iter().any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-    }).collect();
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
 
     let results = grid.convolute(
         &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
@@ -372,9 +385,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
         let scales = str::parse::<usize>(matches.value_of("scales").unwrap())
             .expect("Could not convert string to integer");
-        let orders = matches.values_of("orders").map_or(vec![], |values| values.map(parse_order).collect());
+        let orders = matches
+            .values_of("orders")
+            .map_or(vec![], |values| values.map(parse_order).collect());
 
-        return convolute(input, pdfset.first().unwrap(), &pdfset[1..], &bins, scales, &orders);
+        return convolute(
+            input,
+            pdfset.first().unwrap(),
+            &pdfset[1..],
+            &bins,
+            scales,
+            &orders,
+        );
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();

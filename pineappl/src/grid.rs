@@ -2,8 +2,8 @@
 
 use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgridV1;
-use super::ntuple_subgrid::NtupleSubgridV1;
 use super::lumi::LumiEntry;
+use super::ntuple_subgrid::NtupleSubgridV1;
 use bincode;
 use enum_dispatch::enum_dispatch;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
