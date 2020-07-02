@@ -320,17 +320,15 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
-        (version: crate_version!())
         (author: crate_authors!())
         (about: crate_description!())
+        (version: crate_version!())
         (@setting SubcommandRequiredElseHelp)
-        (@subcommand merge =>
-            (about: "Merges one or more PineAPPL grids together")
-            (@arg output: +required "Path of the merged PineAPPL file")
-            (@arg input: ... +required "Path(s) of the files that should be merged")
-            (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
-            (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
-                number_of_values(5) "Scales all grids with order-dependent factors")
+        (@subcommand channels =>
+            (about: "Shows the contribution for each partonic channel")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+            (@arg limit: -l --limit default_value("10") "The maximum number of channels displayed")
         )
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
@@ -341,44 +339,32 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "Set the number of scale variations")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
         )
+        (@subcommand luminosity =>
+            (about: "Shows the luminosity function")
+            (@arg input: +required "Path to the input grid")
+        )
+        (@subcommand merge =>
+            (about: "Merges one or more PineAPPL grids together")
+            (@arg output: +required "Path of the merged PineAPPL file")
+            (@arg input: ... +required "Path(s) of the files that should be merged")
+            (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
+            (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
+                number_of_values(5) "Scales all grids with order-dependent factors")
+        )
         (@subcommand orders =>
             (about: "Shows thw predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required "LHAPDF id or name of the PDF set")
         )
-        (@subcommand luminosity =>
-            (about: "Shows the luminosity function")
-            (@arg input: +required "Path to the input grid")
-        )
-        (@subcommand channels =>
-            (about: "Shows the contribution for each partonic channel")
-            (@arg input: +required "Path to the input grid")
-            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
-            (@arg limit: -l --limit default_value("10") "The maximum number of channels displayed")
-        )
     )
     .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("merge") {
-        let output = matches.value_of("output").unwrap();
-        let input: Vec<_> = matches.values_of("input").unwrap().collect();
-        let scale = matches
-            .value_of("scale")
-            .map(str::parse::<f64>)
-            .transpose()?;
-        let scale_by_order: Vec<_> = matches
-            .values_of("scale_by_order")
-            .map_or(vec![], |s| s.map(str::parse::<f64>).collect())
-            .into_iter()
-            .collect::<Result<_, _>>()?;
+    if let Some(matches) = matches.subcommand_matches("channels") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset = matches.value_of("pdfset").unwrap();
+        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())?;
 
-        return merge(
-            output,
-            input.first().unwrap(),
-            &input[1..],
-            scale,
-            &scale_by_order,
-        );
+        return channels(input, pdfset, limit);
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
@@ -398,21 +384,35 @@ fn main() -> Result<(), Box<dyn Error>> {
             scales,
             &orders,
         );
+    } else if let Some(matches) = matches.subcommand_matches("luminosity") {
+        let input = matches.value_of("input").unwrap();
+
+        return luminosity(input);
+    } else if let Some(matches) = matches.subcommand_matches("merge") {
+        let output = matches.value_of("output").unwrap();
+        let input: Vec<_> = matches.values_of("input").unwrap().collect();
+        let scale = matches
+            .value_of("scale")
+            .map(str::parse::<f64>)
+            .transpose()?;
+        let scale_by_order: Vec<_> = matches
+            .values_of("scale_by_order")
+            .map_or(vec![], |s| s.map(str::parse::<f64>).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
+
+        return merge(
+            output,
+            input.first().unwrap(),
+            &input[1..],
+            scale,
+            &scale_by_order,
+        );
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
 
         return orders(input, pdfset);
-    } else if let Some(matches) = matches.subcommand_matches("luminosity") {
-        let input = matches.value_of("input").unwrap();
-
-        return luminosity(input);
-    } else if let Some(matches) = matches.subcommand_matches("channels") {
-        let input = matches.value_of("input").unwrap();
-        let pdfset = matches.value_of("pdfset").unwrap();
-        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())?;
-
-        return channels(input, pdfset, limit);
     }
 
     Ok(())
