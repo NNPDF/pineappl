@@ -20,9 +20,11 @@ There are three crates in this repository:
 
 # Installation
 
-`PineAPPL` depends on [`Rust`](https://www.rust-lang.org/). If it's not already
-installed on your system, use your favourite package manager to install it, or
-go to <https://www.rust-lang.org/tools/install> and follow the instructions there.
+`PineAPPL` depends on [`Rust`](https://www.rust-lang.org/). If it's already
+installed make sure that you have a recent version, otherwise the following
+steps might break during compilations. If it's not installed yet, use your
+favourite package manager to install it, or go to
+<https://www.rust-lang.org/tools/install> and follow the instructions there.
 
 Proceed by installing `cargo-c`, which is required by `pineappl_capi`:
 
