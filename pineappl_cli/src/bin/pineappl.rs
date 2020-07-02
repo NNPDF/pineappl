@@ -23,8 +23,7 @@ fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     Ok(integers)
 }
 
-// TODO: improve error handling and parsing
-fn parse_order(order: &str) -> (u32, u32) {
+fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
     let mut alphas = 0;
     let mut alpha = 0;
 
@@ -39,18 +38,18 @@ fn parse_order(order: &str) -> (u32, u32) {
                     .chars()
                     .take_while(|c| c.is_numeric())
                     .count();
-                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len]).unwrap();
+                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])?;
             } else {
                 let len = order[index + 1..]
                     .chars()
                     .take_while(|c| c.is_numeric())
                     .count();
-                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len]).unwrap();
+                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])?;
             }
         }
     }
 
-    (alphas, alpha)
+    Ok((alphas, alpha))
 }
 
 fn merge(
@@ -361,16 +360,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("merge") {
-        let str_to_f64 =
-            |s| str::parse::<f64>(s).expect("Could not convert string to floating point number");
-
         let output = matches.value_of("output").unwrap();
         let input: Vec<_> = matches.values_of("input").unwrap().collect();
-        let scale = matches.value_of("scale").map(str_to_f64);
+        let scale = matches
+            .value_of("scale")
+            .map(str::parse::<f64>)
+            .transpose()?;
         let scale_by_order: Vec<_> = matches
             .values_of("scale_by_order")
-            .map(|s| s.map(str_to_f64).collect())
-            .unwrap_or_default();
+            .map_or(vec![], |s| s.map(str::parse::<f64>).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
         return merge(
             output,
@@ -383,11 +383,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
-        let scales = str::parse::<usize>(matches.value_of("scales").unwrap())
-            .expect("Could not convert string to integer");
-        let orders = matches
+        let scales = str::parse::<usize>(matches.value_of("scales").unwrap())?;
+        let orders: Vec<_> = matches
             .values_of("orders")
-            .map_or(vec![], |values| values.map(parse_order).collect());
+            .map_or(vec![], |values| values.map(parse_order).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
         return convolute(
             input,
@@ -409,8 +410,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("channels") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
-        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())
-            .expect("Could not convert string to integer");
+        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())?;
 
         return channels(input, pdfset, limit);
     }
