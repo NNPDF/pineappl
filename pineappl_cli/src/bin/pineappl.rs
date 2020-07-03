@@ -8,6 +8,39 @@ use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 
+fn validate_pos_non_zero(argument: String) -> Result<(), String> {
+    if let Ok(number) = argument.parse::<usize>() {
+        if number != 0 {
+            return Ok(());
+        }
+    }
+
+    Err(format!(
+        "The value `{}` is not positive and non-zero",
+        argument
+    ))
+}
+
+fn validate_pdfset(argument: String) -> Result<(), String> {
+    if let Ok(lhaid) = argument.parse() {
+        if lhapdf::lookup_pdf(lhaid).is_some() {
+            return Ok(());
+        }
+
+        return Err(format!(
+            "The PDF set for the LHAPDF ID `{}` was not found",
+            argument
+        ));
+    } else if lhapdf::available_pdf_sets()
+        .iter()
+        .any(|set| *set == argument)
+    {
+        return Ok(());
+    }
+
+    Err(format!("The PDF set `{}` was not found", argument))
+}
+
 fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     let mut integers = Vec::new();
 
@@ -327,13 +360,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         (@subcommand channels =>
             (about: "Shows the contribution for each partonic channel")
             (@arg input: +required "Path to the input grid")
-            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
-            (@arg limit: -l --limit default_value("10") "The maximum number of channels displayed")
+            (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
+            (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero)
+                "The maximum number of channels displayed")
         )
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
             (@arg input: +required "Path of the input grid")
-            (@arg pdfset: ... +required "LHAPDF id(s) or name(s) of the PDF set(s)")
+            (@arg pdfset: ... +required validator(validate_pdfset)
+                "LHAPDF id(s) or name of the PDF set(s)")
             (@arg bins: -b --bins +takes_value "Selects a subset of bins")
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
@@ -354,7 +389,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         (@subcommand orders =>
             (about: "Shows thw predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
-            (@arg pdfset: +required "LHAPDF id or name of the PDF set")
+            (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
         )
     )
     .get_matches();
