@@ -140,7 +140,8 @@ fn convolute(
     } else {
         show_bins.to_vec()
     };
-    let pdf = str::parse::<i32>(pdfset)
+    let pdf = pdfset
+        .parse()
         .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
     let scales_vector = vec![
@@ -179,7 +180,8 @@ fn convolute(
     let other_results: Vec<f64> = other_pdfsets
         .iter()
         .map(|pdfset| {
-            let pdf = str::parse::<i32>(pdfset)
+            let pdf = pdfset
+                .parse()
                 .map(Pdf::with_lhaid)
                 .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
             grid.convolute(
@@ -228,7 +230,8 @@ fn convolute(
 
 fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
-    let pdf = str::parse::<i32>(pdfset)
+    let pdf = pdfset
+        .parse()
         .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
 
@@ -308,7 +311,8 @@ fn luminosity(input: &str) -> Result<(), Box<dyn Error>> {
 
 fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
-    let pdf = str::parse::<i32>(pdfset)
+    let pdf = pdfset
+        .parse()
         .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
 
@@ -448,14 +452,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(matches) = matches.subcommand_matches("channels") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
-        let limit = str::parse::<usize>(matches.value_of("limit").unwrap())?;
+        let limit = matches.value_of("limit").unwrap().parse()?;
 
         return channels(input, pdfset, limit);
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
-        let scales = str::parse::<usize>(matches.value_of("scales").unwrap())?;
+        let scales = matches.value_of("scales").unwrap().parse()?;
         let orders: Vec<_> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
