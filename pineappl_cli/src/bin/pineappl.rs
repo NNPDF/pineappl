@@ -436,7 +436,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 number_of_values(5) "Scales all grids with order-dependent factors")
         )
         (@subcommand orders =>
-            (about: "Shows thw predictions for all bin for each order separately")
+            (about: "Shows the predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
         )
