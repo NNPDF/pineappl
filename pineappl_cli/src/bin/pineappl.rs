@@ -2,11 +2,12 @@
 extern crate clap;
 
 use itertools::Itertools;
-use lhapdf::Pdf;
+use lhapdf::{Pdf, PdfSet};
 use pineappl::grid::Grid;
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
+use std::rc::Rc;
 
 fn validate_pos_non_zero(argument: String) -> Result<(), String> {
     if let Ok(number) = argument.parse::<usize>() {
@@ -351,6 +352,50 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error
     Ok(())
 }
 
+fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    let set = PdfSet::new(pdfset);
+    let pdfs: Vec<_> = set.mk_pdfs().into_iter().map(|pdf| Rc::new(pdf)).collect();
+
+    let xfx_array: Vec<_> = pdfs
+        .iter()
+        .map(|pdf| pdf.clone())
+        .map(|pdf| {
+            Box::new(move |id, x, q2| pdf.xfx_q2(id, x, q2)) as Box<dyn Fn(i32, f64, f64) -> f64>
+        })
+        .collect();
+    let alphas_array: Vec<_> = pdfs
+        .iter()
+        .map(|pdf| pdf.clone())
+        .map(|pdf| Box::new(move |q2| pdf.alphas_q2(q2)) as Box<dyn Fn(f64) -> f64>)
+        .collect();
+
+    let results = grid.convolute_multiple(
+        &xfx_array,
+        &xfx_array,
+        &alphas_array,
+        &[],
+        &[],
+        &[],
+        &[(1.0, 1.0)],
+    );
+
+    for (bin, values) in results.iter().enumerate() {
+        let uncertainty = set.uncertainty(values, cl, false);
+
+        println!(
+            "{:<3}  {:>12.7e}  {:>12.7e}  {:+5.2}% {:+5.2}%",
+            bin,
+            uncertainty.central,
+            uncertainty.central,
+            (-uncertainty.errminus / uncertainty.central) * 100.0,
+            (uncertainty.errplus / uncertainty.central) * 100.0,
+        );
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap_app!(pineappl =>
         (author: crate_authors!())
@@ -388,6 +433,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         (@subcommand orders =>
             (about: "Shows thw predictions for all bin for each order separately")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
+        )
+        (@subcommand pdf_uncertainty =>
+            (about: "Calculates PDF uncertainties")
+            (@arg cl: --cl default_value("68.268949213708581") "Confidence level in per cent")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
         )
@@ -448,6 +499,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let pdfset = matches.value_of("pdfset").unwrap();
 
         return orders(input, pdfset);
+    } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset = matches.value_of("pdfset").unwrap();
+        let cl = matches.value_of("cl").unwrap().parse()?;
+
+        return pdf_uncertainty(input, pdfset, cl);
     }
 
     Ok(())

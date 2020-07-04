@@ -6,6 +6,7 @@ use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use bincode;
 use enum_dispatch::enum_dispatch;
+use itertools::izip;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
@@ -358,6 +359,80 @@ impl Grid {
                 }
 
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
+            }
+        }
+
+        bins
+    }
+
+    /// Similar to `convolute`, this method allows to convolute using multiple PDFs, for example
+    /// for evaluating PDF uncertainties.
+    pub fn convolute_multiple(
+        &self,
+        xfx1_array: &[Box<dyn Fn(i32, f64, f64) -> f64>],
+        xfx2_array: &[Box<dyn Fn(i32, f64, f64) -> f64>],
+        alphas_array: &[Box<dyn Fn(f64) -> f64>],
+        order_mask: &[bool],
+        bin_indices: &[usize],
+        lumi_mask: &[bool],
+        xi: &[(f64, f64)],
+    ) -> Vec<Vec<f64>> {
+        let bin_indices = if bin_indices.is_empty() {
+            (0..self.bin_limits.bins()).collect()
+        } else {
+            bin_indices.to_vec()
+        };
+        let mut bins: Vec<Vec<f64>> =
+            vec![vec![0.0; alphas_array.len()]; bin_indices.len() * xi.len()];
+        let bin_sizes = self.bin_limits.bin_sizes();
+
+        for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
+            let order = &self.orders[i];
+
+            if (!order_mask.is_empty() && !order_mask[i])
+                || (!lumi_mask.is_empty() && !lumi_mask[k])
+            {
+                continue;
+            }
+
+            let bin_index = match bin_indices.iter().position(|&index| index == j) {
+                Some(i) => i,
+                None => continue,
+            };
+
+            let lumi_entry = &self.lumi[k];
+
+            for (l, &(xir, xif)) in xi.iter().enumerate() {
+                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                    continue;
+                }
+
+                for (index, (xfx1, xfx2, alphas)) in
+                    izip!(xfx1_array, xfx2_array, alphas_array).enumerate()
+                {
+                    let mut value = subgrid.convolute(&|x1, x2, q2| {
+                        let mut lumi = 0.0;
+                        let q2 = xif * q2;
+
+                        for entry in lumi_entry.entry() {
+                            lumi +=
+                                xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
+                        }
+
+                        lumi *= alphas(q2).powi(order.alphas as i32);
+                        lumi
+                    });
+
+                    if order.logxir > 0 {
+                        value *= xir.ln().powi(order.logxir as i32);
+                    }
+
+                    if order.logxif > 0 {
+                        value *= xif.ln().powi(order.logxif as i32);
+                    }
+
+                    bins[l + xi.len() * bin_index][index] += value / bin_sizes[j];
+                }
             }
         }
 
