@@ -40,8 +40,8 @@ jobs:
         command: test
         args: --verbose
     - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
+      uses: actions-rs/tarpaulin@v0.1
+      with:
         args: --workspace --exclude pineappl_cli --exclude pineappl_capi
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1
