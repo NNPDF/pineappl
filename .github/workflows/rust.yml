@@ -39,16 +39,10 @@ jobs:
       with:
         command: test
         args: --verbose
-    - name: Install cargo-tarpaulin
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: cargo-tarpaulin
-    - name: Generate code coverage
-      uses: actions-rs/cargo@v1
-      with:
-        command: tarpaulin
-        args: --workspace --exclude pineappl_cli --exclude pineappl_capi --all-targets --out Xml
+    - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+        args: --workspace --exclude pineappl_cli --exclude pineappl_capi
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1
       with:
