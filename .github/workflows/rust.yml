@@ -28,7 +28,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
-		  default: true
+          default: true
     - name: Run cargo build
       uses: actions-rs/cargo@v1
       with:
