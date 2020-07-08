@@ -88,8 +88,7 @@ fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
 
 fn merge(
     output: &str,
-    input0: &str,
-    input_rest: &[&str],
+    input: &[&str],
     scale: Option<f64>,
     scale_by_order: &[f64],
 ) -> Result<(), Box<dyn Error>> {
@@ -97,16 +96,27 @@ fn merge(
         .write(true)
         .create_new(true)
         .open(output)?;
-    let input0 = File::open(input0)?;
-    let input_rest = input_rest
+    let input = input
         .iter()
         .map(File::open)
         .collect::<Result<Vec<_>, std::io::Error>>()?;
 
-    let mut grid0 = Grid::read(BufReader::new(input0))?;
+    let mut grids = input
+        .iter()
+        .map(|i| Grid::read(BufReader::new(i)))
+        .collect::<Result<Vec<_>, _>>()?;
 
-    for i in input_rest {
-        grid0.merge(Grid::read(BufReader::new(i))?)?;
+    grids.sort_by(|lhs, rhs| {
+        lhs.bin_limits()
+            .left()
+            .partial_cmp(&rhs.bin_limits().left())
+            .unwrap()
+    });
+
+    let mut grid0 = grids.remove(0);
+
+    for grid in grids {
+        grid0.merge(grid)?;
     }
 
     if let Some(scale) = scale {
@@ -491,13 +501,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .into_iter()
             .collect::<Result<_, _>>()?;
 
-        return merge(
-            output,
-            input.first().unwrap(),
-            &input[1..],
-            scale,
-            &scale_by_order,
-        );
+        return merge(output, &input, scale, &scale_by_order);
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
