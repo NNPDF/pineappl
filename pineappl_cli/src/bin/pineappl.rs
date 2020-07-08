@@ -272,11 +272,27 @@ fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
         })
         .collect();
 
-    for (index, order) in grid_orders.iter().enumerate() {
-        if (order.logxir != 0) || (order.logxif != 0) {
-            continue;
-        }
+    let mut sorted_grid_orders: Vec<_> = grid_orders
+        .iter()
+        .filter(|order| (order.logxir == 0) && (order.logxif == 0))
+        .collect();
+    sorted_grid_orders.sort();
 
+    let unsorted_indices: Vec<_> = sorted_grid_orders
+        .iter()
+        .map(|sorted| {
+            grid_orders
+                .iter()
+                .position(|unsorted| unsorted == *sorted)
+                .unwrap()
+        })
+        .collect();
+    let lo_power = {
+        let order = sorted_grid_orders.first().unwrap();
+        order.alphas + order.alpha
+    };
+
+    for (index, order) in sorted_grid_orders.iter().enumerate() {
         println!("{:<2}: O(as^{} a^{})", index, order.alphas, order.alpha);
     }
 
@@ -285,14 +301,20 @@ fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
     for (bin, value) in results.iter().enumerate() {
         print!("{:<3}  {:>12.7e}", bin, value);
 
-        for index in 0..grid_orders.len() {
-            if (grid_orders[index].logxir != 0) || (grid_orders[index].logxif != 0) {
-                continue;
+        let mut leading_order = 0.0;
+
+        // calculate the sum of all leading orders
+        for (index, order) in sorted_grid_orders.iter().enumerate() {
+            if (order.alphas + order.alpha) == lo_power {
+                leading_order += order_results[unsorted_indices[index]][bin];
             }
+        }
 
-            let order_value = order_results[index][bin];
+        // print each order normalized to the sum of all leading orders
+        for index in 0..sorted_grid_orders.len() {
+            let result = order_results[unsorted_indices[index]][bin];
 
-            print!(" {:>6.2}%", order_value / order_results[0][bin] * 100.0);
+            print!(" {:>6.2}%", result / leading_order * 100.0);
         }
 
         println!();
