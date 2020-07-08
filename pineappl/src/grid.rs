@@ -11,13 +11,14 @@ use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
+use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
 
 /// Coupling powers for each grid.
-#[derive(Clone, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
     pub alphas: u32,
@@ -27,6 +28,26 @@ pub struct Order {
     pub logxir: u32,
     /// Exponent of the logarithm of the scale factor of the factorization scale.
     pub logxif: u32,
+}
+
+impl Ord for Order {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // sort leading orders before next-to-leading orders, then the lowest power in alpha, the
+        // rest lexicographically
+        (self.alphas + self.alpha)
+            .cmp(&(other.alphas + other.alpha))
+            .then((self.alpha, self.logxir, self.logxif).cmp(&(
+                other.alpha,
+                other.logxir,
+                other.logxif,
+            )))
+    }
+}
+
+impl PartialOrd for Order {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Order {
