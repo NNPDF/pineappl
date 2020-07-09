@@ -32,7 +32,7 @@ fn fx(y: f64) -> f64 {
 }
 
 fn fy(x: f64) -> f64 {
-    -x.ln() + 5.0 * (1.0 - x)
+    (1.0 - x).mul_add(5.0, -x.ln())
 }
 
 fn ftau(q2: f64) -> f64 {
@@ -144,14 +144,14 @@ impl Subgrid for LagrangeSubgridV1 {
                 .iter()
                 .zip(iproduct!(qs, &x, &x))
                 .map(|(&sigma, (q2, &x1, &x2))| {
-                    if sigma != 0.0 {
+                    if sigma == 0.0 {
+                        0.0
+                    } else {
                         let mut value = sigma * lumi(x1, x2, q2);
                         if self.reweight {
                             value *= weightfun(x1) * weightfun(x2);
                         }
                         value
-                    } else {
-                        0.0
                     }
                 })
                 .sum()

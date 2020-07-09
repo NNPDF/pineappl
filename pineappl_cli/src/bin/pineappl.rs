@@ -61,7 +61,7 @@ fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
     let mut alphas = 0;
     let mut alpha = 0;
 
-    let matches: Vec<_> = order.match_indices("a").collect();
+    let matches: Vec<_> = order.match_indices('a').collect();
 
     if matches.len() > 2 {
         todo!();
@@ -381,18 +381,18 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error
 fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let set = PdfSet::new(pdfset);
-    let pdfs: Vec<_> = set.mk_pdfs().into_iter().map(|pdf| Rc::new(pdf)).collect();
+    let pdfs: Vec<_> = set.mk_pdfs().into_iter().map(Rc::new).collect();
 
     let xfx_array: Vec<_> = pdfs
         .iter()
-        .map(|pdf| pdf.clone())
+        .cloned()
         .map(|pdf| {
             Box::new(move |id, x, q2| pdf.xfx_q2(id, x, q2)) as Box<dyn Fn(i32, f64, f64) -> f64>
         })
         .collect();
     let alphas_array: Vec<_> = pdfs
         .iter()
-        .map(|pdf| pdf.clone())
+        .cloned()
         .map(|pdf| Box::new(move |q2| pdf.alphas_q2(q2)) as Box<dyn Fn(f64) -> f64>)
         .collect();
 

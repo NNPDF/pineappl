@@ -157,6 +157,11 @@ impl BinLimits {
 
     /// Merge the limits of `other` into `self` on the right-hand-side. If both limits are
     /// non-consecutive, an error is returned.
+    ///
+    /// # Errors
+    ///
+    /// If the right-most limit of `self` is different from the left-most limit of `other`, the
+    /// bins are non-consecutive and an error is returned.
     pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
         if !float_eq_within(self.right(), other.left(), 8) {
             return Err(MergeBinError::NonConsecutiveBins {

@@ -4,7 +4,6 @@ use super::bin::BinLimits;
 use super::lagrange_subgrid::LagrangeSubgridV1;
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use bincode;
 use enum_dispatch::enum_dispatch;
 use itertools::izip;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
@@ -123,8 +122,8 @@ impl Default for SubgridParams {
     fn default() -> Self {
         Self {
             q2_bins: 30,
-            q2_max: 1000000.0,
-            q2_min: 100.0,
+            q2_max: 1e6,
+            q2_min: 1e2,
             q2_order: 3,
             reweight: false,
             x_bins: 50,
@@ -391,6 +390,7 @@ impl Grid {
 
     /// Similar to `convolute`, this method allows to convolute using multiple PDFs, for example
     /// for evaluating PDF uncertainties.
+    #[must_use]
     pub fn convolute_multiple(
         &self,
         xfx1_array: &[Box<dyn Fn(i32, f64, f64) -> f64>],
@@ -471,6 +471,10 @@ impl Grid {
     }
 
     /// Constructs a `Grid` by deserializing it from `reader`. Reading is not buffered.
+    ///
+    /// # Errors
+    ///
+    /// If reading from the compressed or uncompressed stream fails an error is returned.
     pub fn read(mut reader: impl Read + Seek) -> anyhow::Result<Self> {
         match LZ4FrameReader::new(&mut reader) {
             Ok(reader) => Ok(bincode::deserialize_from(reader.into_read())?),
@@ -483,6 +487,10 @@ impl Grid {
     }
 
     /// Serializes `self` into `writer`. Writing is not buffered.
+    ///
+    /// # Errors
+    ///
+    /// If writing fails an error is returned.
     pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
         Ok(bincode::serialize_into(writer, self)?)
     }
@@ -524,8 +532,12 @@ impl Grid {
     ///    other the bins are merged. In this case both grids are assumed to have the same orders
     ///    and the same luminosity functions. If this is not the case, an error is returned.
     /// 2. If the bin limits of `self` and `other` are the same, the luminosity functions and
-    ///    perturbative orders of `self` and `other` may be different, if the ones that are the
-    ///    same have empty grids in at least one of the grids. Otherwise an error is returned.
+    ///    perturbative orders of `self` and `other` may be different.
+    ///
+    /// # Errors
+    ///
+    /// If in the first case describe above the perturbative orders or the luminosity function is
+    /// different an error is returned.
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
         if self.bin_limits == other.bin_limits {
             let mut new_orders: Vec<Order> = Vec::new();

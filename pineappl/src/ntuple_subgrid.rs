@@ -12,6 +12,7 @@ pub struct NtupleSubgridV1 {
 
 impl NtupleSubgridV1 {
     /// Constructor.
+    #[must_use]
     pub fn new() -> Self {
         Self { ntuples: vec![] }
     }
