@@ -12,10 +12,9 @@ use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::cmp::Ordering;
-use std::error::Error;
-use std::fmt::{Display, Formatter};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
+use thiserror::Error;
 
 /// Coupling powers for each grid.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -253,16 +252,20 @@ pub struct Ntuple<W> {
 }
 
 /// Error returned when merging two grids fails.
-#[derive(Debug)]
-pub struct GridMergeError {}
-
-impl Display for GridMergeError {
-    fn fmt(&self, _: &mut Formatter) -> Result<(), std::fmt::Error> {
-        todo!();
-    }
+#[derive(Debug, Error)]
+pub enum GridMergeError {
+    /// Returned when trying to merge two `Grid` objects with different bin limits and different
+    /// orders.
+    #[error("the merged grid has different orders")]
+    DifferentOrders,
+    /// Returned when trying to merge two `Grid` Objects with different bin limits and different
+    /// luminosity functions.
+    #[error("the merged grid has a different luminosity function")]
+    DifferentLumi,
+    /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
+    #[error(transparent)]
+    DifferentBins(super::bin::MergeBinError),
 }
-
-impl Error for GridMergeError {}
 
 #[derive(Deserialize, Serialize)]
 struct Mmv1 {}
@@ -468,19 +471,19 @@ impl Grid {
     }
 
     /// Constructs a `Grid` by deserializing it from `reader`. Reading is not buffered.
-    pub fn read(mut reader: impl Read + Seek) -> Result<Self, Box<dyn Error>> {
+    pub fn read(mut reader: impl Read + Seek) -> anyhow::Result<Self> {
         match LZ4FrameReader::new(&mut reader) {
             Ok(reader) => Ok(bincode::deserialize_from(reader.into_read())?),
             Err(WrongMagic(_)) => {
                 reader.seek(SeekFrom::Start(0))?;
                 Ok(bincode::deserialize_from(reader)?)
             }
-            Err(e) => Err(Box::new(e)),
+            Err(e) => Err(anyhow::Error::new(e)),
         }
     }
 
     /// Serializes `self` into `writer`. Writing is not buffered.
-    pub fn write(&self, writer: impl Write) -> Result<(), Box<dyn Error>> {
+    pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
         Ok(bincode::serialize_into(writer, self)?)
     }
 
@@ -562,18 +565,19 @@ impl Grid {
             self.orders.append(&mut new_orders);
             self.lumi.append(&mut new_entries);
         } else {
-            if !Order::equal_after_sort(&self.orders, &other.orders)
-                || !LumiEntry::equal_after_sort(&self.lumi, &other.lumi)
-            {
-                return Err(GridMergeError {});
+            if !Order::equal_after_sort(&self.orders, &other.orders) {
+                return Err(GridMergeError::DifferentOrders);
+            }
+
+            if !LumiEntry::equal_after_sort(&self.lumi, &other.lumi) {
+                return Err(GridMergeError::DifferentLumi);
+            }
+
+            if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
+                return Err(GridMergeError::DifferentBins(e));
             }
 
             let new_bins = other.bin_limits.bins();
-
-            // TODO: improve error handling
-            if self.bin_limits.merge(&other.bin_limits).is_err() {
-                return Err(GridMergeError {});
-            }
 
             self.increase_shape(&(0, new_bins, 0));
         }

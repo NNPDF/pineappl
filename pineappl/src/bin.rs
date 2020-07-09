@@ -1,9 +1,8 @@
 //! Module that contains helpers for binning observables
 
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use std::f64;
-use std::fmt::{Display, Formatter};
+use thiserror::Error;
 
 fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
@@ -22,16 +21,19 @@ enum Limits {
 
 /// Error type which is returned when two `BinLimits` objects are merged which are not
 /// connected/non-consecutive.
-#[derive(Debug)]
-pub struct MergeBinError {}
-
-impl Display for MergeBinError {
-    fn fmt(&self, _: &mut Formatter) -> Result<(), std::fmt::Error> {
-        todo!();
-    }
+#[derive(Debug, Error)]
+pub enum MergeBinError {
+    /// Returned when two `BinLimits` objects `a` and `b` were tried to be merged using
+    /// `a.merge(b)`, but when the right-most limit of `a` does not match the left-most limit of
+    /// `b`.
+    #[error("can not merge bins which end at {lhs} with bins that start at {rhs}")]
+    NonConsecutiveBins {
+        /// right-most limit of the `BinLimits` object that is being merged into.
+        lhs: f64,
+        /// left-most limit of the `BinLimits` object that is being merged.
+        rhs: f64,
+    },
 }
-
-impl Error for MergeBinError {}
 
 /// Structure representing bin limits.
 #[derive(Deserialize, PartialEq, Serialize)]
@@ -157,7 +159,10 @@ impl BinLimits {
     /// non-consecutive, an error is returned.
     pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
         if !float_eq_within(self.right(), other.left(), 8) {
-            return Err(MergeBinError {});
+            return Err(MergeBinError::NonConsecutiveBins {
+                lhs: self.right(),
+                rhs: other.left(),
+            });
         }
 
         let mut limits = self.limits();
