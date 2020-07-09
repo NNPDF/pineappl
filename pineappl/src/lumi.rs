@@ -65,7 +65,7 @@ impl LumiEntry {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```
     /// use pineappl::lumi_entry;
     /// use pineappl::lumi::LumiEntry;
     ///
@@ -85,7 +85,7 @@ impl LumiEntry {
 ///
 /// In the following example `entry1` and `entry2` represent the same values:
 ///
-/// ```rust
+/// ```
 /// use pineappl::lumi_entry;
 ///
 /// let entry1 = lumi_entry![2, 2, 1.0; 4, 4, 1.0];
