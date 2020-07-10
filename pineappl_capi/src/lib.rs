@@ -21,6 +21,11 @@ use std::slice;
 pub struct Lumi(Vec<LumiEntry>);
 
 /// Returns the number of bins in `grid`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
@@ -28,6 +33,12 @@ pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
 }
 
 /// Stores the bin sizes of `grid` in `bin_sizes`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `bin_sizes` must point to an array that is as
+/// long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *mut f64) {
     let sizes = (*grid).bin_limits().bin_sizes();
@@ -39,16 +50,25 @@ pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *
 }
 
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
-/// These functions must evaluate the PDFs for the given `x` and `q2` and write the results for all
-/// partons into `pdfs`. Note that the value must be the PDF for the given `pdg_id` multiplied with
-/// `x`. The value of the pointer `state` provided to these functions is the same one given to this
-/// function. The parameter `order_mask` must be as long as there are perturbative orders contained
-/// in `grid` and is used to selectively disable (`false`) or enable (`true`) individual orders. If
-/// `order_mask` is set to `NULL`, all orders are active. The parameter `lumi_mask` can be used
-/// similarly, but must be as long as the luminosity function `grid` was created with has entries,
-/// or `NULL`. The values `xi_ren` and `xi_fac` can be used to vary the renormalization and
-/// factorization from its central value, which corresponds to `1.0`. After convolution of the grid
-/// with the PDFS value of the observable for each bin is written into `results`.
+/// These functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given
+/// PDG id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with
+/// its argument `x`. The value of the pointer `state` provided to these functions is the same one
+/// given to this function. The parameter `order_mask` must be as long as there are perturbative
+/// orders contained in `grid` and is used to selectively disable (`false`) or enable (`true`)
+/// individual orders. If `order_mask` is set to `NULL`, all orders are active. The parameter
+/// `lumi_mask` can be used similarly, but must be as long as the luminosity function `grid` was
+/// created with has entries, or `NULL` to enable all luminosities. The values `xi_ren` and
+/// `xi_fac` can be used to vary the renormalization and factorization from its central value,
+/// which corresponds to `1.0`. After convolution of the grid with the PDFs the differential cross
+/// section for each bin is written into `results`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must be
+/// null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
+/// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
+/// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolute(
     grid: *const Grid,
@@ -90,6 +110,11 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
 }
 
 /// Delete a grid previously created with `pineappl_grid_new`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_delete(grid: *mut Grid) {
     Box::from_raw(grid);
@@ -98,7 +123,13 @@ pub unsafe extern "C" fn pineappl_grid_delete(grid: *mut Grid) {
 /// Performs an operation `name` on `grid` using as input or output parameters `key_vals`. This is
 /// used to get access to functions that are otherwise not available through other functions. If
 /// the operation was successful, returns `true`. Otherwise, or if the `name` wasn't recognized
-/// `false` is returned.
+/// `false` is returned. The parameter `_key_vals` is currently ignored.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `name` must be a valid and non-`NULL` C
+/// string.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_ext(
@@ -120,6 +151,11 @@ pub unsafe extern "C" fn pineappl_grid_ext(
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill(
     grid: *mut Grid,
@@ -137,6 +173,11 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order` and `observable` with `weights`. The parameter of weight must contain a
 /// result for entry of the luminosity function the grid was created with.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill_all(
     grid: *mut Grid,
@@ -163,6 +204,12 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
 }
 
 /// Write the order parameters of `grid` into `order_params`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The pointer `order_params` must point to an array as large
+/// as four times the number of orders in `grid`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_params: *mut u32) {
     let orders = (*grid).orders();
@@ -177,6 +224,11 @@ pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_par
 }
 
 /// Return the number of orders in `grid`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
@@ -197,6 +249,12 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 /// each bin.
 /// - More (optional) information can be given in a key-value storage `key_vals`, which might be
 /// a null pointer, to signal there are no further parameters that need to be set.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point a valid luminosity function created by `pineappl_lumi_new`.
+/// `order_params` must be an array with a length of `4 * orders`, and `bin_limits` an array with
+/// length `bins + 1`. `key_vals` must be a valid `KeyVal` object created by `pineappl_keyval_new`.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new(
@@ -269,6 +327,10 @@ pub unsafe extern "C" fn pineappl_grid_new(
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
+///
+/// # Safety
+///
+/// The parameter `filename` must be a C string pointing to an existing grid file.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Grid {
@@ -280,12 +342,22 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Gri
 }
 
 /// Merges `other` into `grid` and subsequently deletes `other`.
+///
+/// # Safety
+///
+/// Both `grid` and `other` must be valid `Grid` objects created by either `pineappl_grid_new` or
+/// `pineappl_grid_read`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: *mut Grid) {
     (*grid).merge(*Box::from_raw(other)).unwrap();
 }
 
 /// Scale all grids in `grid` by `factor`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
     (&mut *grid).scale(factor);
@@ -294,6 +366,11 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
 /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
 /// every subgrid is scaled by a factor `global` independently of its order.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     grid: *mut Grid,
@@ -307,6 +384,12 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 }
 
 /// Write `grid` to a file with name `filename`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter must be a non-`NULL`, non-empty, and valid C
+/// string pointing to a non-existing, but writable file.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let filename = CStr::from_ptr(filename).to_str().unwrap();
@@ -316,6 +399,12 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
 }
 
 /// Adds a linear combination of initial states to the luminosity function `lumi`.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
+/// `pdg_id_pairs` must be an array with length `2 * combinations`, and `factors` with length of
+/// `combinations`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_add(
     lumi: *mut Lumi,
@@ -339,6 +428,10 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_delete(lumi: *mut Lumi) {
     Box::from_raw(lumi);
@@ -363,12 +456,22 @@ pub struct KeyVal {
 }
 
 /// Delete the previously created object pointed to by `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_delete(key_vals: *mut KeyVal) {
     Box::from_raw(key_vals);
 }
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
@@ -376,6 +479,11 @@ pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *con
 }
 
 /// Get the double-valued parameter with name `key` stored in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_double(
@@ -386,6 +494,11 @@ pub unsafe extern "C" fn pineappl_keyval_double(
 }
 
 /// Get the string-valued parameter with name `key` stored in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
@@ -393,6 +506,11 @@ pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *cons
 }
 
 /// Get the int-valued parameter with name `key` stored in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_string(
@@ -410,6 +528,11 @@ pub extern "C" fn pineappl_keyval_new() -> *mut KeyVal {
 }
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_bool(
     key_vals: *mut KeyVal,
@@ -422,6 +545,11 @@ pub unsafe extern "C" fn pineappl_keyval_set_bool(
 }
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_double(
     key_vals: *mut KeyVal,
@@ -434,6 +562,11 @@ pub unsafe extern "C" fn pineappl_keyval_set_double(
 }
 
 /// Set the int-valued parameter with name `key` to `value` in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_int(
     key_vals: *mut KeyVal,
@@ -446,6 +579,11 @@ pub unsafe extern "C" fn pineappl_keyval_set_int(
 }
 
 /// Set the string-valued parameter with name `key` to `value` in `key_vals`.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must point to a valid `KeyVal` object created by
+/// `pineappl_keyval_new`. `key` must be a valid C string.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_string(
     key_vals: *mut KeyVal,
