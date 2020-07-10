@@ -11,9 +11,12 @@ use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::cmp::Ordering;
+use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
 use thiserror::Error;
+
+// TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
 
 /// Coupling powers for each grid.
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -369,16 +372,16 @@ impl Grid {
                         lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
                     }
 
-                    lumi *= alphas(q2).powi(order.alphas as i32);
+                    lumi *= alphas(q2).powi(order.alphas.try_into().unwrap());
                     lumi
                 });
 
                 if order.logxir > 0 {
-                    value *= xir.ln().powi(order.logxir as i32);
+                    value *= xir.ln().powi(order.logxir.try_into().unwrap());
                 }
 
                 if order.logxif > 0 {
-                    value *= xif.ln().powi(order.logxif as i32);
+                    value *= xif.ln().powi(order.logxif.try_into().unwrap());
                 }
 
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
@@ -443,16 +446,16 @@ impl Grid {
                                 xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
                         }
 
-                        lumi *= alphas(q2).powi(order.alphas as i32);
+                        lumi *= alphas(q2).powi(order.alphas.try_into().unwrap());
                         lumi
                     });
 
                     if order.logxir > 0 {
-                        value *= xir.ln().powi(order.logxir as i32);
+                        value *= xir.ln().powi(order.logxir.try_into().unwrap());
                     }
 
                     if order.logxif > 0 {
-                        value *= xif.ln().powi(order.logxif as i32);
+                        value *= xif.ln().powi(order.logxif.try_into().unwrap());
                     }
 
                     bins[l + xi.len() * bin_index][index] += value / bin_sizes[j];
@@ -661,10 +664,10 @@ impl Grid {
         for ((i, _, _), subgrid) in self.subgrids.indexed_iter_mut() {
             let order = &self.orders[i];
             let factor = global
-                * alphas.powi(order.alphas as i32)
-                * alpha.powi(order.alpha as i32)
-                * logxir.powi(order.logxir as i32)
-                * logxif.powi(order.logxif as i32);
+                * alphas.powi(order.alphas.try_into().unwrap())
+                * alpha.powi(order.alpha.try_into().unwrap())
+                * logxir.powi(order.logxir.try_into().unwrap())
+                * logxif.powi(order.logxif.try_into().unwrap());
 
             subgrid.scale(factor);
         }

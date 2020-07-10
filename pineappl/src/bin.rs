@@ -1,5 +1,6 @@
 //! Module that contains helpers for binning observables
 
+use super::convert::{f64_from_usize, usize_from_f64};
 use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
@@ -7,7 +8,7 @@ use thiserror::Error;
 fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
     // TODO: only works well enough if the numbers are far enough from zero or exacly zero
     if (lhs != 0.0) && (rhs != 0.0) {
-        (lhs / rhs).abs().max((rhs / lhs).abs()) < f64::EPSILON.mul_add(ulps as f64, 1.0)
+        (lhs / rhs).abs().max((rhs / lhs).abs()) < f64::EPSILON.mul_add(f64_from_usize(ulps), 1.0)
     } else {
         lhs == rhs
     }
@@ -81,7 +82,9 @@ impl BinLimits {
                 if value < *left || value >= *right {
                     None
                 } else {
-                    Some(((value - left) / (right - left) * (*bins as f64)) as usize)
+                    Some(usize_from_f64(
+                        (value - left) / (right - left) * f64_from_usize(*bins),
+                    ))
                 }
             }
             Limits::Unequal { limits } => {
@@ -126,7 +129,7 @@ impl BinLimits {
     pub fn limits(&self) -> Vec<f64> {
         match &self.0 {
             Limits::Equal { left, right, bins } => (0..=*bins)
-                .map(|b| (*right - *left).mul_add((b as f64) / (*bins as f64), *left))
+                .map(|b| (*right - *left).mul_add(f64_from_usize(b) / f64_from_usize(*bins), *left))
                 .collect(),
             Limits::Unequal { limits } => limits.clone(),
         }
@@ -150,7 +153,9 @@ impl BinLimits {
     #[must_use]
     pub fn bin_sizes(&self) -> Vec<f64> {
         match &self.0 {
-            Limits::Equal { left, right, bins } => vec![(*right - *left) / (*bins as f64); *bins],
+            Limits::Equal { left, right, bins } => {
+                vec![(*right - *left) / f64_from_usize(*bins); *bins]
+            }
             Limits::Unequal { limits } => limits.windows(2).map(|x| x[1] - x[0]).collect(),
         }
     }

@@ -1,7 +1,10 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
 #![warn(missing_docs)]
+#![allow(clippy::module_name_repetitions)]
 
 //! `PineAPPL` is not an extension of `APPLgrid`.
+
+mod convert;
 
 pub mod bin;
 pub mod grid;

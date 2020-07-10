@@ -1,5 +1,6 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
+use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::{Ntuple, Subgrid, SubgridParams};
 use arrayvec::ArrayVec;
 use itertools::iproduct;
@@ -47,14 +48,14 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
     let mut factorials = 1;
     let mut product = if (n - i) % 2 == 0 { 1.0 } else { -1.0 };
     for z in 0..i {
-        product *= u - (z as f64);
+        product *= u - f64_from_usize(z);
         factorials *= z + 1;
     }
     for z in i + 1..=n {
-        product *= u - (z as f64);
+        product *= u - f64_from_usize(z);
         factorials *= z - i;
     }
-    product / (factorials as f64)
+    product / f64_from_usize(factorials)
 }
 
 /// Subgrid which uses Lagrange-interpolation.
@@ -95,19 +96,19 @@ impl LagrangeSubgridV1 {
     }
 
     fn deltay(&self) -> f64 {
-        (self.ymax - self.ymin) / ((self.ny - 1) as f64)
+        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
     }
 
     fn deltatau(&self) -> f64 {
-        (self.taumax - self.taumin) / ((self.ntau - 1) as f64)
+        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
     }
 
     fn gety(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltay(), self.ymin)
+        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
     }
 
     fn gettau(&self, iy: usize) -> f64 {
-        (iy as f64).mul_add(self.deltatau(), self.taumin)
+        f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
     }
 }
 
@@ -175,12 +176,9 @@ impl Subgrid for LagrangeSubgridV1 {
             return;
         }
 
-        let k1 = (((y1 - self.ymin) / self.deltay() - ((self.yorder / 2) as f64)).max(0.0)
-            as usize)
+        let k1 = usize_from_f64((y1 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
             .min(self.ny - 1 - self.yorder);
-
-        let k2 = (((y2 - self.ymin) / self.deltay() - ((self.yorder / 2) as f64)).max(0.0)
-            as usize)
+        let k2 = usize_from_f64((y2 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
             .min(self.ny - 1 - self.yorder);
 
         let u_y1 = (y1 - self.gety(k1)) / self.deltay();
@@ -193,9 +191,10 @@ impl Subgrid for LagrangeSubgridV1 {
             .map(|i| fi(i, self.yorder, u_y2))
             .collect();
 
-        let k3 = (((tau - self.taumin) / self.deltatau() - ((self.tauorder / 2) as f64)).max(0.0)
-            as usize)
-            .min(self.ntau - 1 - self.tauorder);
+        let k3 = usize_from_f64(
+            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
+        )
+        .min(self.ntau - 1 - self.tauorder);
 
         let u_tau = (tau - self.gettau(k3)) / self.deltatau();
 
