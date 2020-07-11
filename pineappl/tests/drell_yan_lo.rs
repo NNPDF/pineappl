@@ -60,7 +60,11 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     }
 }
 
-fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
+fn fill_drell_yan_lo_grid(
+    rng: &mut impl Rng,
+    calls: usize,
+    subgrid_type: &str,
+) -> anyhow::Result<Grid> {
     let lumi = vec![
         // photons
         lumi_entry![22, 22, 1.0],
@@ -78,7 +82,13 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
     let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
     // create the PineAPPL grid
-    let mut grid = Grid::new(lumi, orders, bin_limits, SubgridParams::default());
+    let mut grid = Grid::with_subgrid_type(
+        lumi,
+        orders,
+        bin_limits,
+        SubgridParams::default(),
+        subgrid_type,
+    )?;
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;
@@ -128,16 +138,17 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
         );
     }
 
-    grid
+    Ok(grid)
 }
 
 #[test]
-fn dy_aa_convolute_with_nnpdf31_luxqed() {
+fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000);
+    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000, "LagrangeSubgrid")?;
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
     let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let alphas = |_| 0.0;
@@ -173,4 +184,53 @@ fn dy_aa_convolute_with_nnpdf31_luxqed() {
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
     }
+
+    Ok(())
+}
+
+#[test]
+fn dy_aa_ntuple_subgrid() -> anyhow::Result<()> {
+    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000, "NtupleSubgrid")?;
+    let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
+
+    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+
+    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
+    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let alphas = |_| 0.0;
+
+    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let reference = vec![
+        5.294102629460027e-1,
+        5.407462109703145e-1,
+        5.696654765115949e-1,
+        5.028229825084712e-1,
+        4.917145014197304e-1,
+        4.94698595872653e-1,
+        4.9190141387427233e-1,
+        4.486371523100685e-1,
+        4.507732384369339e-1,
+        4.1060709945028706e-1,
+        3.6024761439304853e-1,
+        3.2757335386076103e-1,
+        2.7928032956476956e-1,
+        2.4983016484405093e-1,
+        2.1077131839702393e-1,
+        1.7797159986885916e-1,
+        1.541103341646812e-1,
+        1.195781437556192e-1,
+        9.39928943589368e-2,
+        6.718800239822122e-2,
+        5.13639097541644e-2,
+        3.571458571056351e-2,
+        2.0671050816841553e-2,
+        7.299744833167185e-3,
+    ];
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
+    Ok(())
 }

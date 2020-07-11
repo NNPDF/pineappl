@@ -269,6 +269,11 @@ pub enum GridMergeError {
     DifferentBins(super::bin::MergeBinError),
 }
 
+/// Error returned when trying to construct a `Grid` using an unknown subgrid type.
+#[derive(Debug, Error)]
+#[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
+pub struct UnknownSubgrid(String);
+
 #[derive(Deserialize, Serialize)]
 struct Mmv1 {}
 
@@ -309,6 +314,41 @@ impl Grid {
             subgrid_params,
             more_members: MoreMembers::V1(Mmv1 {}),
         }
+    }
+
+    /// Constructor. This function can be used like `new`, but the additional parameter
+    /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
+    /// - `LagrangeSubgrid`
+    /// - `NtupleSubgrid`
+    ///
+    /// # Errors
+    ///
+    /// If `subgrid_type` is none of the values listed above, an error is returned.
+    #[must_use]
+    pub fn with_subgrid_type(
+        lumi: Vec<LumiEntry>,
+        orders: Vec<Order>,
+        bin_limits: Vec<f64>,
+        subgrid_params: SubgridParams,
+        subgrid_type: &str,
+    ) -> Result<Self, UnknownSubgrid> {
+        let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
+            "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
+            "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
+            _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
+        };
+
+        Ok(Self {
+            subgrids: Array3::from_shape_simple_fn(
+                (orders.len(), bin_limits.len() - 1, lumi.len()),
+                subgrid_maker,
+            ),
+            orders,
+            lumi,
+            bin_limits: BinLimits::new(bin_limits),
+            subgrid_params,
+            more_members: MoreMembers::V1(Mmv1 {}),
+        })
     }
 
     /// Returns the bin limits of the observables.

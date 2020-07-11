@@ -277,6 +277,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         .collect();
 
     let mut subgrid_params = SubgridParams::default();
+    let mut subgrid_type = "LagrangeSubgrid";
 
     if !key_vals.is_null() {
         let keyval = &*key_vals;
@@ -316,14 +317,22 @@ pub unsafe extern "C" fn pineappl_grid_new(
         if let Some(value) = keyval.ints.get("x_order") {
             subgrid_params.set_x_order(usize::try_from(*value).unwrap());
         }
+
+        if let Some(value) = keyval.strings.get("subgrid_type") {
+            subgrid_type = value.to_str().unwrap();
+        }
     }
 
-    Box::into_raw(Box::new(Grid::new(
-        (*lumi).0.clone(),
-        orders,
-        slice::from_raw_parts(bin_limits, bins + 1).to_vec(),
-        subgrid_params,
-    )))
+    Box::into_raw(Box::new(
+        Grid::with_subgrid_type(
+            (*lumi).0.clone(),
+            orders,
+            slice::from_raw_parts(bin_limits, bins + 1).to_vec(),
+            subgrid_params,
+            &subgrid_type,
+        )
+        .unwrap(),
+    ))
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
