@@ -30,7 +30,7 @@ jobs:
         sudo make install
     - name: Install NNPDF31_nlo_as_0118_luxqed
       run: |
-        PYTHON=$(which python) sudo ${PYTHON} /usr/bin/lhapdf install NNPDF31_nlo_as_0118_luxqed
+        PYTHON=$(which python) sudo PYTHONPATH=/usr/lib/${PYTHON}/site-packages ${PYTHON} /usr/bin/lhapdf install NNPDF31_nlo_as_0118_luxqed
     - name: Install latest nightly
       uses: actions-rs/toolchain@v1
       with:
