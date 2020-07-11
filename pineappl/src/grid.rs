@@ -128,7 +128,7 @@ impl Default for SubgridParams {
             q2_max: 1e6,
             q2_min: 1e2,
             q2_order: 3,
-            reweight: false,
+            reweight: true,
             x_bins: 50,
             x_max: 1.0,
             x_min: 2e-7,
