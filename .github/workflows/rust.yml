@@ -28,9 +28,9 @@ jobs:
         make -j
         make install
         echo "::add-path::${HOME}/prefix/bin"
-        echo "::set-env LD_LIBRARY_PATH::${HOME}/prefix/lib"
-        echo "::set-env PKG_CONFIG_PATH::${HOME}/prefix/lib/pkgconfig"
-        echo "::set-env PYTHONPATH::${HOME}/prefix/lib/python3.7/site-packages"
+        echo "::set-env name=LD_LIBRARY_PATH::${HOME}/prefix/lib"
+        echo "::set-env name=PKG_CONFIG_PATH::${HOME}/prefix/lib/pkgconfig"
+        echo "::set-env name=PYTHONPATH::${HOME}/prefix/lib/python3.7/site-packages"
     - name: Install NNPDF31_nlo_as_0118_luxqed
       run: |
         lhapdf install NNPDF31_nlo_as_0118_luxqed
