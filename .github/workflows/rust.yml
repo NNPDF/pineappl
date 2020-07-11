@@ -20,11 +20,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Install LHAPDF 6.2.3
+    - name: Install LHAPDF 6.3.0
       run: |
-        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.2.3.tar.gz' -O LHAPDF-6.2.3.tar.gz
-        tar xzf LHAPDF-6.2.3.tar.gz
-        cd LHAPDF-6.2.3
+        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.3.0.tar.gz' -O LHAPDF-6.3.0.tar.gz
+        tar xzf LHAPDF-6.3.0.tar.gz
+        cd LHAPDF-6.3.0
         ./configure --prefix=/usr
         make -j
         sudo make install
