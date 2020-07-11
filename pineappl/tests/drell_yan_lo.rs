@@ -1,57 +1,15 @@
-use num_complex::Complex64;
+use float_cmp::approx_eq;
+use lhapdf::Pdf;
 use pineappl::grid::{Grid, Ntuple, Order, SubgridParams};
 use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
-use std::f64::consts::{PI, SQRT_2};
+use std::f64::consts::PI;
 
 // If equation numbers are given, they are from Max Huber's PhD thesis:
 //   'Radiative corrections to the neutral-current Drell-Yan process'
 
-// Eq. (2.8)
-fn int_qqbar(s: f64, t: f64, u: f64, qq: f64, i3wq: f64) -> f64 {
-    // lepton charges
-    let ql = -1.0;
-    let i3wl = -0.5;
-
-    // input parameters
-    let gf = 1.16637e-5;
-    let mw = 80.403;
-    let mz = 91.1876;
-    let gw = 2.141;
-    let gz = 2.4952;
-
-    // derived quantities
-    let muw2 = Complex64::new(mw * mw, -gw * mw);
-    let muz2 = Complex64::new(mz * mz, -gz * mz);
-    let cw2 = muw2 / muz2;
-    let sw2 = 1.0 - cw2;
-    let cw = cw2.sqrt();
-    let sw = sw2.sqrt();
-    let alphagf = SQRT_2 / PI * gf * mw * mw * (1.0 - (mw / mz).powi(2));
-
-    // couplings and abbreviations
-    let gqqzp = -sw / cw * qq;
-    let gllzp = -sw / cw * ql;
-    let gqqzm = (i3wq - sw * sw * qq) / (sw * cw);
-    let gllzm = (i3wl - sw * sw * ql) / (sw * cw);
-    let chiz = s / (s - muz2);
-
-    alphagf.powi(2) / 12.0 / s.powi(3)
-        * (2.0 * qq * qq * ql * ql * (t * t + u * u)
-            + 2.0
-                * qq
-                * ql
-                * (((gqqzp * gllzp + gqqzm * gllzm) * u * u
-                    + (gqqzp * gllzm + gqqzm * gllzp) * t * t)
-                    * chiz)
-                    .re
-            + (((gqqzp * gllzp).norm_sqr() + (gqqzm * gllzm).norm_sqr()) * u * u
-                + ((gqqzp * gllzm).norm_sqr() + (gqqzm * gllzp).norm_sqr()) * t * t)
-                * chiz.norm_sqr())
-}
-
-// Eq. (2.9)
+// Eq. (2.9) - gamma-gamma contribution to DY pair production
 fn int_photo(s: f64, t: f64, u: f64) -> f64 {
     let alpha0: f64 = 1.0 / 137.03599911;
     alpha0.powi(2) / 2.0 / s * (t / u + u / t)
@@ -61,9 +19,6 @@ struct Psp2to2 {
     s: f64,
     t: f64,
     u: f64,
-    ptl: f64,
-    mll: f64,
-    yll: f64,
     x1: f64,
     x2: f64,
     jacobian: f64,
@@ -73,30 +28,17 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     let smin = mmin * mmin;
     let smax = mmax * mmax;
 
-    let mz = 91.1876;
-    let gz = 2.4952;
-
     let mut jacobian = 1.0;
 
-    // Eq. (D.8)
-    let gmin = ((smin - mz * mz) / (gz * mz)).atan();
-    let gmax = ((smax - mz * mz) / (gz * mz)).atan();
-    // Eq. (D.7)
-    let s = mz * mz + gz * mz * (gmin + (gmax - gmin) * rng.gen::<f64>()).tan();
-    // Eq. (D.9)
-    jacobian *= (gmin - gmax) / (gz * mz) * ((s - mz * mz).powi(2) + gz * gz * mz * mz);
-
-    // transformation of variables from (x1,x2) to (s,x2)
-    let x2 = (s / smax).powf(rng.gen::<f64>());
-    let x1 = s / (smax * x2);
-    jacobian *= x2 * (smax / s).ln();
-
-    // self-consistency checks
-    assert!(x1 >= 0.0);
-    assert!(x1 < 1.0);
-    assert!(x2 >= 0.0);
-    assert!(x2 < 1.0);
-    assert!((smax * x1 * x2 / s).max(s / (smax * x1 * x2)) <= 1.0 + 8.0 * std::f64::EPSILON);
+    let r1 = rng.gen::<f64>();
+    let r2 = rng.gen::<f64>();
+    let tau0 = smin / smax;
+    let tau = tau0.powf(r1);
+    let y = tau.powf(1.0 - r2);
+    let x1 = y;
+    let x2 = tau / y;
+    let s = tau * smax;
+    jacobian *= tau * tau0.ln().powi(2) * r1;
 
     // theta integration (in the CMS)
     let cos_theta = 2.0 * rng.gen::<f64>() - 1.0;
@@ -105,27 +47,13 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     let t = -0.5 * s * (1.0 - cos_theta);
     let u = -0.5 * s * (1.0 + cos_theta);
 
-    // self-consistency checks
-    assert!(t >= -s);
-    assert!(u >= -s);
-
     // phi integration
     jacobian *= 2.0 * PI;
-
-    let ptl = (t * u / s).sqrt();
-    let mll = s.sqrt();
-    let yll = (x1 / x2).ln();
-
-    // self-consistency check
-    assert!(ptl <= 0.5 * s.sqrt());
 
     Psp2to2 {
         s,
         t,
         u,
-        ptl,
-        mll,
-        yll,
         x1,
         x2,
         jacobian,
@@ -134,12 +62,6 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 
 fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
     let lumi = vec![
-        // down-pair flavors
-        lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
-        lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
-        // up-pair flavor
-        lumi_entry![2, -2, 1.0; 4, -4, 1.0],
-        lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
         // photons
         lumi_entry![22, 22, 1.0],
     ];
@@ -158,52 +80,51 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
     // create the PineAPPL grid
     let mut grid = Grid::new(lumi, orders, bin_limits, SubgridParams::default());
 
+    // in GeV^2 pbarn
+    let hbarc2 = 3.893793721e8;
+
     for _ in 0..calls {
         // generate a phase-space point
         let Psp2to2 {
             s,
             t,
             u,
-            ptl,
-            mll,
-            yll,
             x1,
             x2,
-            jacobian,
-        } = hadronic_pspgen(rng, 60.0, 120.0);
+            mut jacobian,
+        } = hadronic_pspgen(rng, 10.0, 7000.0);
 
-        // these cuts should always be fulfilled by the choice of `smin` and `smax` above
-        assert!(mll >= 60.0);
-        assert!(mll <= 120.0);
+        let ptl = (t * u / s).sqrt();
+        let mll = s.sqrt();
+        let yll = 0.5 * (x1 / x2).ln();
+        let ylp = (yll + (0.5 * mll / ptl).acosh()).abs();
+        let ylm = (yll - (0.5 * mll / ptl).acosh()).abs();
+
+        jacobian *= hbarc2 / (calls as f64);
 
         // cuts for LO for the invariant-mass slice containing the Z-peak from CMSDY2D11
-        if (ptl < 14.0) || (yll > 2.4) {
+        if (ptl < 14.0)
+            || (yll.abs() > 2.4)
+            || (ylp > 2.4)
+            || (ylm > 2.4)
+            || (mll < 60.0)
+            || (mll > 120.0)
+        {
             continue;
         }
 
-        let weights = [
-            // down-pair flavors
-            jacobian * int_qqbar(s, t, u, -0.5, -1.0 / 3.0),
-            // down-pair flavors with quarks swapped (t <-> u)
-            jacobian * int_qqbar(s, u, t, -0.5, -1.0 / 3.0),
-            // up-pair flavors
-            jacobian * int_qqbar(s, t, u, 0.5, 2.0 / 3.0),
-            // up-pair flavors with quarks swapped (t <-> u)
-            jacobian * int_qqbar(s, u, t, 0.5, 2.0 / 3.0),
-            // photon pair
-            jacobian * int_photo(s, u, t),
-        ];
+        let weight = jacobian * int_photo(s, u, t);
 
-        grid.fill_all(
+        grid.fill(
             0,
-            yll,
+            yll.abs(),
+            0,
             &Ntuple {
                 x1,
                 x2,
-                q2: 91.1876_f64.powi(2),
-                weight: (),
+                q2: 90.0_f64.powi(2),
+                weight: weight,
             },
-            &weights,
         );
     }
 
@@ -211,14 +132,45 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: usize) -> Grid {
 }
 
 #[test]
-fn dy_fill_speed_1000() {
-    fill_drell_yan_lo_grid(
-        &mut Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96),
-        1000,
-    );
+fn dy_aa_convolute_with_nnpdf31_luxqed() {
+    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000);
+    let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
-    // TODO:
-    // - check if the output is meaningful
-    // - compare against mg5_aMC
-    // - add more tests
+    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
+    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let alphas = |_| 0.0;
+
+    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let reference = vec![
+        5.279171684656772e-1,
+        5.390429345674902e-1,
+        5.678642509809768e-1,
+        5.013919472729697e-1,
+        4.90315459341301e-1,
+        4.930991418324766e-1,
+        4.9031523058660703e-1,
+        4.473911555096199e-1,
+        4.4948130313360196e-1,
+        4.092807117343194e-1,
+        3.591135225778676e-1,
+        3.266887202413869e-1,
+        2.7850659808559064e-1,
+        2.4902890147317383e-1,
+        2.1012250445479977e-1,
+        1.7751910054649375e-1,
+        1.5366372491678373e-1,
+        1.1919102476022085e-1,
+        9.370244098781093e-2,
+        6.700596617428176e-2,
+        5.1216211477073045e-2,
+        3.560765252853136e-2,
+        2.0610595970607874e-2,
+        7.278729457396478e-3,
+    ];
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
 }
