@@ -63,21 +63,42 @@ mod tests {
         let mut subgrid = NtupleSubgridV1::new();
         assert!(subgrid.is_empty());
 
-        subgrid.fill(&Ntuple { x1: 0.5, x2: 0.5, q2: 10.0, weight: 1.0 });
+        subgrid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 10.0,
+            weight: 1.0,
+        });
         assert!(!subgrid.is_empty());
 
-        subgrid.fill(&Ntuple { x1: 0.25, x2: 0.75, q2: 100.0, weight: 3.0 });
+        subgrid.fill(&Ntuple {
+            x1: 0.25,
+            x2: 0.75,
+            q2: 100.0,
+            weight: 3.0,
+        });
         assert_eq!(subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2), 2.5 + 56.25);
 
         let mut other_subgrid = NtupleSubgridV1::new();
 
-        other_subgrid.fill(&Ntuple { x1: 0.25, x2: 0.5, q2: 20.0, weight: 2.0 });
+        other_subgrid.fill(&Ntuple {
+            x1: 0.25,
+            x2: 0.5,
+            q2: 20.0,
+            weight: 2.0,
+        });
         assert_eq!(other_subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2), 5.0);
 
         subgrid.merge(&mut other_subgrid);
-        assert_eq!(subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2), 2.5 + 56.25 + 5.0);
+        assert_eq!(
+            subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2),
+            2.5 + 56.25 + 5.0
+        );
 
         subgrid.scale(0.5);
-        assert_eq!(subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2), 1.25 + 28.125 + 2.5);
+        assert_eq!(
+            subgrid.convolute(&|x1, x2, q2| x1 * x2 * q2),
+            1.25 + 28.125 + 2.5
+        );
     }
 }
