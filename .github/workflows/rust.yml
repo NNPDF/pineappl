@@ -24,6 +24,8 @@ jobs:
         ./configure --prefix=/usr
         make -j
         sudo make install
+    - name: Install NNPDF31_nlo_as_0118_luxqed
+        sudo lhapdf install NNPDF31_nlo_as_0118_luxqed
     - name: Install latest nightly
       uses: actions-rs/toolchain@v1
       with:
