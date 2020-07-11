@@ -13,12 +13,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      LD_LIBRARY_PATH: ${HOME}/prefix/lib
-      PATH: ${HOME}/prefix:${PATH}
-      PKG_CONFIG_PATH: ${HOME}/prefix/lib/pkgconfig
-      PYTHONPATH: ${HOME}/prefix/lib/python3.7/site-packages
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.7
@@ -33,6 +27,10 @@ jobs:
         ./configure --prefix=${HOME}/prefix
         make -j
         make install
+        echo "::add-path::${HOME}/prefix/bin"
+        echo "::set-env LD_LIBRARY_PATH=${HOME}/prefix/lib"
+        echo "::set-env PKG_CONFIG_PATH=${HOME}/prefix/lib/pkgconfig"
+        echo "::set-env PYTHONPATH=${HOME}/prefix/lib/python3.7/site-packages"
     - name: Install NNPDF31_nlo_as_0118_luxqed
       run: |
         lhapdf install NNPDF31_nlo_as_0118_luxqed
