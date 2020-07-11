@@ -1,18 +1,10 @@
 //! Module that contains helpers for binning observables
 
 use super::convert::{f64_from_usize, usize_from_f64};
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
-
-fn float_eq_within(lhs: f64, rhs: f64, ulps: usize) -> bool {
-    // TODO: only works well enough if the numbers are far enough from zero or exacly zero
-    if (lhs != 0.0) && (rhs != 0.0) {
-        (lhs / rhs).abs().max((rhs / lhs).abs()) < f64::EPSILON.mul_add(f64_from_usize(ulps), 1.0)
-    } else {
-        lhs == rhs
-    }
-}
 
 #[derive(Deserialize, PartialEq, Serialize)]
 enum Limits {
@@ -52,7 +44,7 @@ impl BinLimits {
             .map(|(current, next)| next - current)
             .collect::<Vec<f64>>()
             .windows(2)
-            .all(|val| float_eq_within(val[0], val[1], 8))
+            .all(|val| approx_eq!(f64, val[0], val[1], ulps = 8))
         {
             Self(Limits::Equal {
                 left: *limits.first().unwrap(),
@@ -168,7 +160,7 @@ impl BinLimits {
     /// If the right-most limit of `self` is different from the left-most limit of `other`, the
     /// bins are non-consecutive and an error is returned.
     pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
-        if !float_eq_within(self.right(), other.left(), 8) {
+        if !approx_eq!(f64, self.right(), other.left(), ulps = 8) {
             return Err(MergeBinError::NonConsecutiveBins {
                 lhs: self.right(),
                 rhs: other.left(),

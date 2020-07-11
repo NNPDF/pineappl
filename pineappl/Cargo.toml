@@ -15,6 +15,7 @@ anyhow = "1.0"
 arrayvec = "0.5"
 bincode = "1.0"
 enum_dispatch = "0.3"
+float-cmp = "0.8"
 itertools = "0.9"
 lz-fear = "0.1"
 ndarray = { features = ["serde"], version = "0.13.1" }
