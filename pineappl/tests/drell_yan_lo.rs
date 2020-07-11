@@ -81,12 +81,24 @@ fn fill_drell_yan_lo_grid(
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
+    let mut subgrid_params = SubgridParams::default();
+
+    subgrid_params.set_q2_bins(30);
+    subgrid_params.set_q2_max(1e6);
+    subgrid_params.set_q2_min(1e2);
+    subgrid_params.set_q2_order(3);
+    subgrid_params.set_reweight(false);
+    subgrid_params.set_x_bins(50);
+    subgrid_params.set_x_max(1.0);
+    subgrid_params.set_x_min(2e-7);
+    subgrid_params.set_x_order(3);
+
     // create the PineAPPL grid
     let mut grid = Grid::with_subgrid_type(
         lumi,
         orders,
         bin_limits,
-        SubgridParams::default(),
+        subgrid_params,
         subgrid_type,
     )?;
 
