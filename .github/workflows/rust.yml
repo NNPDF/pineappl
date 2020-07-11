@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LD_LIBRARY_PATH: ${HOME}/prefix/lib
-      PATH: ${HOME}/prefix
+      PATH: ${HOME}/prefix:${PATH}
       PKG_CONFIG_PATH: ${HOME}/prefix/lib/pkgconfig
       PYTHONPATH: ${HOME}/prefix/lib/python3.7/site-packages
 
