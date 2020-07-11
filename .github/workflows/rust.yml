@@ -13,6 +13,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: ${HOME}/prefix/lib
+      PATH: ${HOME}/prefix
+      PKG_CONFIG_PATH: ${HOME}/prefix/lib/pkgconfig
+      PYTHONPATH: ${HOME}/prefix/lib/python3.7/site-packages
 
     steps:
     - uses: actions/checkout@v2
@@ -29,8 +34,6 @@ jobs:
         make -j
         make install
     - name: Install NNPDF31_nlo_as_0118_luxqed
-      env:
-        PYTHONPATH: ${HOME}/prefix/lib/python3.7/site-packages
       run: |
         lhapdf install NNPDF31_nlo_as_0118_luxqed
     - name: Install latest nightly
