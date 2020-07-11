@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pineappl` has a new subcommand `pdf_uncertainty` to calculate PDF
   uncertainties
 - in `examples/capi-dy-aa` one can find an example how to use the C API
+- added method `Grid::with_subgrid_type` that allows the selection of a custom
+  Subgrid type
 
 ## [0.1.0] - 11/06/2020
 
