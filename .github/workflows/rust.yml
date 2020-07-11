@@ -25,12 +25,14 @@ jobs:
         wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.3.0.tar.gz' -O LHAPDF-6.3.0.tar.gz
         tar xzf LHAPDF-6.3.0.tar.gz
         cd LHAPDF-6.3.0
-        ./configure --prefix=/usr
+        ./configure --prefix=${HOME}/prefix
         make -j
-        sudo make install
+        make install
     - name: Install NNPDF31_nlo_as_0118_luxqed
+      env:
+        PYTHONPATH: ${HOME}/prefix/lib/python3.7/site-packages
       run: |
-        PYTHON=$(which python) sudo PYTHONPATH=/usr/lib/${PYTHON}/site-packages ${PYTHON} /usr/bin/lhapdf install NNPDF31_nlo_as_0118_luxqed
+        lhapdf install NNPDF31_nlo_as_0118_luxqed
     - name: Install latest nightly
       uses: actions-rs/toolchain@v1
       with:
