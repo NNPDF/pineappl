@@ -170,47 +170,47 @@ impl SubgridParams {
 
     /// Sets the number of bins for the $Q^2$ axis.
     pub fn set_q2_bins(&mut self, q2_bins: usize) {
-        self.q2_bins = q2_bins
+        self.q2_bins = q2_bins;
     }
 
     /// Sets the upper limit of the $Q^2$ axis.
     pub fn set_q2_max(&mut self, q2_max: f64) {
-        self.q2_max = q2_max
+        self.q2_max = q2_max;
     }
 
     /// Sets the lower limit of the $Q^2$ axis.
     pub fn set_q2_min(&mut self, q2_min: f64) {
-        self.q2_min = q2_min
+        self.q2_min = q2_min;
     }
 
     /// Sets the interpolation order for the $Q^2$ axis.
     pub fn set_q2_order(&mut self, q2_order: usize) {
-        self.q2_order = q2_order
+        self.q2_order = q2_order;
     }
 
     /// Sets the reweighting parameter.
     pub fn set_reweight(&mut self, reweight: bool) {
-        self.reweight = reweight
+        self.reweight = reweight;
     }
 
     /// Sets the number of bins for the $x$ axes.
     pub fn set_x_bins(&mut self, x_bins: usize) {
-        self.x_bins = x_bins
+        self.x_bins = x_bins;
     }
 
     /// Sets the upper limit of the $x$ axes.
     pub fn set_x_max(&mut self, x_max: f64) {
-        self.x_max = x_max
+        self.x_max = x_max;
     }
 
     /// Sets the lower limit of the $x$ axes.
     pub fn set_x_min(&mut self, x_min: f64) {
-        self.x_min = x_min
+        self.x_min = x_min;
     }
 
     /// Sets the interpolation order for the $x$ axes.
     pub fn set_x_order(&mut self, x_order: usize) {
-        self.x_order = x_order
+        self.x_order = x_order;
     }
 
     /// Returns the number of bins for the $x$ axes.
