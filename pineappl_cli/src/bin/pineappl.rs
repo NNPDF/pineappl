@@ -446,10 +446,10 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn 
         &[(1.0, 1.0)],
     );
 
+    let bin_sizes = grid.bin_limits().bin_sizes();
+
     let mut table = create_table();
     table.set_titles(row![c => "bin", "diff", "integ", "neg unc", "pos unc"]);
-
-    // TODO: one of integ or diff is wrong
 
     for (bin, values) in results.iter().enumerate() {
         let uncertainty = set.uncertainty(values, cl, false);
@@ -457,7 +457,7 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn 
         table.add_row(row![r =>
             &format!("{}", bin),
             &format!("{:.7e}", uncertainty.central),
-            &format!("{:.7e}", uncertainty.central),
+            &format!("{:.7e}", uncertainty.central * bin_sizes[bin]),
             &format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0),
             &format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0),
         ]);
