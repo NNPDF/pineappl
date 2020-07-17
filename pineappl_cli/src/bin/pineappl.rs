@@ -1,13 +1,25 @@
 #[macro_use]
 extern crate clap;
 
-use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::grid::Grid;
+use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
+use prettytable::{cell, row, Row, Table};
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 use std::rc::Rc;
+
+fn create_table() -> Table {
+    let mut table = Table::new();
+    table.set_format(
+        FormatBuilder::new()
+            .column_separator(' ')
+            .separator(LinePosition::Title, LineSeparator::new('-', '+', ' ', ' '))
+            .build(),
+    );
+    table
+}
 
 fn validate_pos_non_zero(argument: String) -> Result<(), String> {
     if let Ok(number) = argument.parse::<usize>() {
@@ -133,7 +145,7 @@ fn convolute(
     show_bins: &[usize],
     scales: usize,
     orders: &[(u32, u32)],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
         (0..grid.bin_limits().bins()).collect()
@@ -199,6 +211,22 @@ fn convolute(
 
     let bin_sizes = grid.bin_limits().bin_sizes();
 
+    let mut table = create_table();
+    let mut title = Row::empty();
+    title.add_cell(cell!(c->"bin"));
+    title.add_cell(cell!(c->"diff"));
+    title.add_cell(cell!(c->"integ"));
+    title.add_cell(cell!(c->"neg unc"));
+    title.add_cell(cell!(c->"pos unc"));
+
+    for other in other_pdfsets.iter() {
+        let mut cell = cell!(c->other);
+        cell.set_hspan(2);
+        title.add_cell(cell);
+    }
+
+    table.set_titles(title);
+
     for (bin, values) in results.chunks_exact(scales).enumerate() {
         let min_value = values
             .iter()
@@ -209,26 +237,24 @@ fn convolute(
             .max_by(|left, right| left.partial_cmp(right).unwrap())
             .unwrap();
 
-        print!(
-            "{:<3}  {:>12.7e}  {:>12.7e}  {:+5.2}% {:+5.2}%",
-            show_bins[bin],
-            values[0],
-            values[0] * bin_sizes[show_bins[bin]],
-            (min_value / values[0] - 1.0) * 100.0,
-            (max_value / values[0] - 1.0) * 100.0,
-        );
+        let row = table.add_empty_row();
+
+        row.add_cell(cell!(r->&format!("{}", show_bins[bin])));
+        row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
+        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * bin_sizes[show_bins[bin]])));
+        row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
+        row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
 
         for other in other_results.iter().skip(bin).step_by(show_bins.len()) {
-            print!("  {:+6.2}%", (other / values[0] - 1.0) * 100.0);
+            row.add_cell(cell!(r->&format!("{:.7e}", other)));
+            row.add_cell(cell!(r->&format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
         }
-
-        println!();
     }
 
-    Ok(())
+    Ok(table)
 }
 
-fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
+fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
@@ -282,14 +308,22 @@ fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
         order.alphas + order.alpha
     };
 
-    for (index, order) in sorted_grid_orders.iter().enumerate() {
-        println!("{:<2}: O(as^{} a^{})", index, order.alphas, order.alpha);
+    let mut table = create_table();
+    let mut title = Row::empty();
+    title.add_cell(cell!(c->"bin"));
+    title.add_cell(cell!(c->"diff"));
+
+    for order in sorted_grid_orders.iter() {
+        title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
     }
 
-    println!();
+    table.set_titles(title);
 
     for (bin, value) in results.iter().enumerate() {
-        print!("{:<3}  {:>12.7e}", bin, value);
+        let row = table.add_empty_row();
+
+        row.add_cell(cell!(r->&format!("{}", bin)));
+        row.add_cell(cell!(r->&format!("{:.7e}", value)));
 
         let mut leading_order = 0.0;
 
@@ -304,34 +338,33 @@ fn orders(input: &str, pdfset: &str) -> Result<(), Box<dyn Error>> {
         for index in 0..sorted_grid_orders.len() {
             let result = order_results[unsorted_indices[index]][bin];
 
-            print!(" {:>6.2}%", result / leading_order * 100.0);
+            row.add_cell(cell!(r->&format!("{:.2}%", result / leading_order * 100.0)));
         }
-
-        println!();
     }
 
-    Ok(())
+    Ok(table)
 }
 
-fn luminosity(input: &str) -> Result<(), Box<dyn Error>> {
+fn luminosity(input: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
+    let mut table = create_table();
+    table.set_titles(row![c => "id", "entry"]);
+
     for (index, entry) in grid.lumi().iter().enumerate() {
-        print!("{:>2}: ", index);
-        println!(
-            "{}",
-            entry
-                .entry()
-                .iter()
-                .map(|(id1, id2, factor)| format!("{} × ({}, {})", factor, id1, id2))
-                .join(" + ")
-        );
+        let row = table.add_empty_row();
+
+        row.add_cell(cell!(&format!("{}", index)));
+
+        for (id1, id2, factor) in entry.entry().iter() {
+            row.add_cell(cell!(&format!("{} × ({:2.}, {:2.})", factor, id1, id2)));
+        }
     }
 
-    Ok(())
+    Ok(table)
 }
 
-fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error>> {
+fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
@@ -354,8 +387,15 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error
         })
         .collect();
 
+    let mut table = create_table();
+    table.set_titles(row![c => "bin", "lumi", "size"]);
+
+    // TODO: add more titles
+
     for bin in 0..grid.bin_limits().bins() {
-        print!("{:>3}:", bin);
+        let row = table.add_empty_row();
+
+        row.add_cell(cell!(r->&format!("{}", bin)));
 
         let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
         let mut percentages: Vec<_> = results
@@ -370,15 +410,15 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<(), Box<dyn Error
         });
 
         for (lumi, percentage) in percentages.iter().take(limit) {
-            print!("  #{:<3} {:5.1}%", lumi, percentage);
+            row.add_cell(cell!(r->&format!("#{}", lumi)));
+            row.add_cell(cell!(r->&format!("{:.2}%", percentage)));
         }
-        println!();
     }
 
-    Ok(())
+    Ok(table)
 }
 
-fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<(), Box<dyn Error>> {
+fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let set = PdfSet::new(pdfset);
     let pdfs: Vec<_> = set.mk_pdfs().into_iter().map(Rc::new).collect();
@@ -406,20 +446,24 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<(), Box<dyn Err
         &[(1.0, 1.0)],
     );
 
+    let mut table = create_table();
+    table.set_titles(row![c => "bin", "diff", "integ", "neg unc", "pos unc"]);
+
+    // TODO: one of integ or diff is wrong
+
     for (bin, values) in results.iter().enumerate() {
         let uncertainty = set.uncertainty(values, cl, false);
 
-        println!(
-            "{:<3}  {:>12.7e}  {:>12.7e}  {:+5.2}% {:+5.2}%",
-            bin,
-            uncertainty.central,
-            uncertainty.central,
-            (-uncertainty.errminus / uncertainty.central) * 100.0,
-            (uncertainty.errplus / uncertainty.central) * 100.0,
-        );
+        table.add_row(row![r =>
+            &format!("{}", bin),
+            &format!("{:.7e}", uncertainty.central),
+            &format!("{:.7e}", uncertainty.central),
+            &format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0),
+            &format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0),
+        ]);
     }
 
-    Ok(())
+    Ok(table)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -476,7 +520,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let pdfset = matches.value_of("pdfset").unwrap();
         let limit = matches.value_of("limit").unwrap().parse()?;
 
-        return channels(input, pdfset, limit);
+        channels(input, pdfset, limit)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
@@ -488,18 +532,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             .into_iter()
             .collect::<Result<_, _>>()?;
 
-        return convolute(
+        convolute(
             input,
             pdfset.first().unwrap(),
             &pdfset[1..],
             &bins,
             scales,
             &orders,
-        );
+        )?
+        .printstd();
     } else if let Some(matches) = matches.subcommand_matches("luminosity") {
         let input = matches.value_of("input").unwrap();
 
-        return luminosity(input);
+        luminosity(input)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("merge") {
         let output = matches.value_of("output").unwrap();
         let input: Vec<_> = matches.values_of("input").unwrap().collect();
@@ -524,13 +569,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
 
-        return orders(input, pdfset);
+        orders(input, pdfset)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let cl = matches.value_of("cl").unwrap().parse()?;
 
-        return pdf_uncertainty(input, pdfset, cl);
+        pdf_uncertainty(input, pdfset, cl)?.printstd();
     }
 
     Ok(())
