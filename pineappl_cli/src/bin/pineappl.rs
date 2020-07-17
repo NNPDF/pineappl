@@ -210,10 +210,13 @@ fn convolute(
         .collect();
 
     let bin_sizes = grid.bin_limits().bin_sizes();
+    let bin_limits = grid.bin_limits().limits();
 
     let mut table = create_table();
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
+    title.add_cell(cell!(c->"xmin"));
+    title.add_cell(cell!(c->"xmax"));
     title.add_cell(cell!(c->"diff"));
     title.add_cell(cell!(c->"integ"));
     title.add_cell(cell!(c->"neg unc"));
@@ -240,6 +243,8 @@ fn convolute(
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", show_bins[bin])));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[show_bins[bin]])));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[show_bins[bin] + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0] * bin_sizes[show_bins[bin]])));
         row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
@@ -308,9 +313,13 @@ fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
         order.alphas + order.alpha
     };
 
+    let bin_limits = grid.bin_limits().limits();
+
     let mut table = create_table();
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
+    title.add_cell(cell!(c->"xmin"));
+    title.add_cell(cell!(c->"xmax"));
     title.add_cell(cell!(c->"diff"));
 
     for order in sorted_grid_orders.iter() {
@@ -323,6 +332,8 @@ fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin])));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", value)));
 
         let mut leading_order = 0.0;
@@ -387,8 +398,10 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
         })
         .collect();
 
+    let bin_limits = grid.bin_limits().limits();
+
     let mut table = create_table();
-    table.set_titles(row![c => "bin", "lumi", "size"]);
+    table.set_titles(row![c => "bin", "xmin", "xmax", "lumi", "size"]);
 
     // TODO: add more titles
 
@@ -396,6 +409,8 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin])));
+        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin + 1])));
 
         let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
         let mut percentages: Vec<_> = results
@@ -447,15 +462,18 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn 
     );
 
     let bin_sizes = grid.bin_limits().bin_sizes();
+    let bin_limits = grid.bin_limits().limits();
 
     let mut table = create_table();
-    table.set_titles(row![c => "bin", "diff", "integ", "neg unc", "pos unc"]);
+    table.set_titles(row![c => "bin", "xmin", "xmax", "diff", "integ", "neg unc", "pos unc"]);
 
     for (bin, values) in results.iter().enumerate() {
         let uncertainty = set.uncertainty(values, cl, false);
 
         table.add_row(row![r =>
             &format!("{}", bin),
+            &format!("{}", bin_limits[bin]),
+            &format!("{}", bin_limits[bin + 1]),
             &format!("{:.7e}", uncertainty.central),
             &format!("{:.7e}", uncertainty.central * bin_sizes[bin]),
             &format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0),
