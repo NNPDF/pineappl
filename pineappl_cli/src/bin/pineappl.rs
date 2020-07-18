@@ -8,7 +8,6 @@ use prettytable::{cell, row, Row, Table};
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
-use std::rc::Rc;
 
 fn create_table() -> Table {
     let mut table = Table::new();
@@ -436,30 +435,22 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
 fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let set = PdfSet::new(pdfset);
-    let pdfs: Vec<_> = set.mk_pdfs().into_iter().map(Rc::new).collect();
+    let pdfs = set.mk_pdfs();
 
-    let xfx_array: Vec<_> = pdfs
-        .iter()
-        .cloned()
-        .map(|pdf| {
-            Box::new(move |id, x, q2| pdf.xfx_q2(id, x, q2)) as Box<dyn Fn(i32, f64, f64) -> f64>
+    let results: Vec<f64> = pdfs
+        .into_iter()
+        .flat_map(|pdf| {
+            grid.convolute(
+                &|id, x, q2| pdf.xfx_q2(id, x, q2),
+                &|id, x, q2| pdf.xfx_q2(id, x, q2),
+                &|q2| pdf.alphas_q2(q2),
+                &[],
+                &[],
+                &[],
+                &[(1.0, 1.0)],
+            )
         })
         .collect();
-    let alphas_array: Vec<_> = pdfs
-        .iter()
-        .cloned()
-        .map(|pdf| Box::new(move |q2| pdf.alphas_q2(q2)) as Box<dyn Fn(f64) -> f64>)
-        .collect();
-
-    let results = grid.convolute_multiple(
-        &xfx_array,
-        &xfx_array,
-        &alphas_array,
-        &[],
-        &[],
-        &[],
-        &[(1.0, 1.0)],
-    );
 
     let bin_sizes = grid.bin_limits().bin_sizes();
     let bin_limits = grid.bin_limits().limits();
@@ -467,8 +458,14 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn 
     let mut table = create_table();
     table.set_titles(row![c => "bin", "xmin", "xmax", "diff", "integ", "neg unc", "pos unc"]);
 
-    for (bin, values) in results.iter().enumerate() {
-        let uncertainty = set.uncertainty(values, cl, false);
+    for bin in 0..bin_sizes.len() {
+        let values: Vec<_> = results
+            .iter()
+            .skip(bin)
+            .step_by(bin_sizes.len())
+            .cloned()
+            .collect();
+        let uncertainty = set.uncertainty(&values, cl, false);
 
         table.add_row(row![r =>
             &format!("{}", bin),
