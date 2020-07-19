@@ -244,8 +244,8 @@ fn convolute(
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", show_bins[bin])));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[show_bins[bin]])));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[show_bins[bin] + 1])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[show_bins[bin]])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[show_bins[bin] + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0] * bin_sizes[show_bins[bin]])));
         row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
@@ -333,8 +333,8 @@ fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin])));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin + 1])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[bin])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", value)));
 
         let mut leading_order = 0.0;
@@ -410,8 +410,8 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin])));
-        row.add_cell(cell!(r->&format!("{:.2}", bin_limits[bin + 1])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[bin])));
+        row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
 
         let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
         let mut percentages: Vec<_> = results
