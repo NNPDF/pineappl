@@ -12,9 +12,11 @@ description = "Read, write, and query PineAPPL grids"
 
 [dependencies]
 clap = { default-features = false, features = ["suggestions"], version = "~2.33.0" }
-lhapdf = "0.1.4"
+lhapdf = "0.1.6"
+num_cpus = "1.0"
 pineappl = { path = "../pineappl", version = "0.1" }
 prettytable-rs = "^0.8"
+rayon = "1.3"
 
 [package.metadata.docs.rs]
 rustc-args = [ "--cfg feature=\"docs-only\"" ]

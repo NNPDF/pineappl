@@ -5,6 +5,8 @@ use lhapdf::{Pdf, PdfSet};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::{cell, row, Row, Table};
+use rayon::prelude::*;
+use rayon::ThreadPoolBuilder;
 use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
@@ -432,13 +434,15 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
     Ok(table)
 }
 
-fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn Error>> {
+fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64, threads: usize) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let set = PdfSet::new(pdfset);
     let pdfs = set.mk_pdfs();
 
+    ThreadPoolBuilder::new().num_threads(threads).build_global().unwrap();
+
     let results: Vec<f64> = pdfs
-        .into_iter()
+        .into_par_iter()
         .flat_map(|pdf| {
             grid.convolute(
                 &|id, x, q2| pdf.xfx_q2(id, x, q2),
@@ -482,6 +486,7 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64) -> Result<Table, Box<dyn 
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let num_cpus = num_cpus::get().to_string();
     let matches = clap_app!(pineappl =>
         (author: crate_authors!())
         (about: crate_description!())
@@ -526,6 +531,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg cl: --cl default_value("68.268949213708581") "Confidence level in per cent")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
+            (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
         )
     )
     .get_matches();
@@ -589,8 +595,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let cl = matches.value_of("cl").unwrap().parse()?;
+        let threads = matches.value_of("threads").unwrap().parse()?;
 
-        pdf_uncertainty(input, pdfset, cl)?.printstd();
+        pdf_uncertainty(input, pdfset, cl, threads)?.printstd();
     }
 
     Ok(())
