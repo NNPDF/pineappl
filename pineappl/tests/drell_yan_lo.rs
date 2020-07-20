@@ -5,6 +5,8 @@ use pineappl::lumi_entry;
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
+use std::io::Cursor;
+use std::mem;
 
 // If equation numbers are given, they are from Max Huber's PhD thesis:
 //   'Radiative corrections to the neutral-current Drell-Yan process'
@@ -156,7 +158,15 @@ fn fill_drell_yan_lo_grid(
 #[test]
 fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000, "LagrangeSubgrid")?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid")?;
+
+    grid.merge(fill_drell_yan_lo_grid(
+        &mut rng,
+        500_000,
+        "LagrangeSubgrid",
+    )?)?;
+    grid.scale(0.5);
+
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
@@ -164,6 +174,17 @@ fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
     let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let alphas = |_| 0.0;
+
+    // check `read` and `write`
+    let mut file = Cursor::new(Vec::new());
+    grid.write(&mut file)?;
+    file.set_position(0);
+    mem::drop(grid);
+    let mut grid = Grid::read(&mut file)?;
+
+    // some useless scalings
+    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
+    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
@@ -203,7 +224,11 @@ fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
 #[test]
 fn dy_aa_ntuple_subgrid() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let grid = fill_drell_yan_lo_grid(&mut rng, 1_000_000, "NtupleSubgrid")?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid")?;
+
+    grid.merge(fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid")?)?;
+    grid.scale(0.5);
+
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
@@ -211,6 +236,17 @@ fn dy_aa_ntuple_subgrid() -> anyhow::Result<()> {
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
     let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let alphas = |_| 0.0;
+
+    // check `read` and `write`
+    let mut file = Cursor::new(Vec::new());
+    grid.write(&mut file)?;
+    file.set_position(0);
+    mem::drop(grid);
+    let mut grid = Grid::read(&mut file)?;
+
+    // some useless scalings
+    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
+    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
