@@ -146,6 +146,7 @@ fn convolute(
     show_bins: &[usize],
     scales: usize,
     orders: &[(u32, u32)],
+    absolute: bool,
 ) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
@@ -220,8 +221,15 @@ fn convolute(
     title.add_cell(cell!(c->"xmax"));
     title.add_cell(cell!(c->"diff"));
     title.add_cell(cell!(c->"integ"));
-    title.add_cell(cell!(c->"neg unc"));
-    title.add_cell(cell!(c->"pos unc"));
+
+    if absolute {
+        for scale in &scales_vector[0..scales] {
+            title.add_cell(cell!(c->&format!("({},{})", scale.0, scale.1)));
+        }
+    } else {
+        title.add_cell(cell!(c->"neg unc"));
+        title.add_cell(cell!(c->"pos unc"));
+    }
 
     for other in other_pdfsets.iter() {
         let mut cell = cell!(c->other);
@@ -248,8 +256,15 @@ fn convolute(
         row.add_cell(cell!(r->&format!("{}", bin_limits[show_bins[bin] + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
         row.add_cell(cell!(r->&format!("{:.7e}", values[0] * bin_sizes[show_bins[bin]])));
-        row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
-        row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
+
+        if absolute {
+            for value in values.iter() {
+                row.add_cell(cell!(r->&format!("{:.7e}", value * bin_sizes[show_bins[bin]])));
+            }
+        } else {
+            row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
+            row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
+        }
 
         for other in other_results.iter().skip(bin).step_by(show_bins.len()) {
             row.add_cell(cell!(r->&format!("{:.7e}", other)));
@@ -508,6 +523,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
+            (@arg absolute: -a --absolute "Show absolute numbers of the scale variation")
         )
         (@subcommand luminosity =>
             (about: "Shows the luminosity function")
@@ -552,6 +568,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
             .collect::<Result<_, _>>()?;
+        let absolute = matches.is_present("absolute");
 
         convolute(
             input,
@@ -560,6 +577,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             &bins,
             scales,
             &orders,
+            absolute,
         )?
         .printstd();
     } else if let Some(matches) = matches.subcommand_matches("luminosity") {
