@@ -405,22 +405,24 @@ impl Grid {
 
                 let mut value = subgrid.convolute(&|x1, x2, q2| {
                     let mut lumi = 0.0;
-                    let q2 = xif * q2;
+                    let q2f = xif.powi(2) * q2;
 
                     for entry in lumi_entry.entry() {
-                        lumi += xfx1(entry.0, x1, q2) * xfx2(entry.1, x2, q2) * entry.2 / (x1 * x2);
+                        let xfx1 = xfx1(entry.0, x1, q2f);
+                        let xfx2 = xfx2(entry.1, x2, q2f);
+                        lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                     }
 
-                    lumi *= alphas(q2).powi(order.alphas.try_into().unwrap());
+                    lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
                     lumi
                 });
 
                 if order.logxir > 0 {
-                    value *= xir.ln().powi(order.logxir.try_into().unwrap());
+                    value *= xir.powi(2).ln().powi(order.logxir.try_into().unwrap());
                 }
 
                 if order.logxif > 0 {
-                    value *= xif.ln().powi(order.logxif.try_into().unwrap());
+                    value *= xif.powi(2).ln().powi(order.logxif.try_into().unwrap());
                 }
 
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
