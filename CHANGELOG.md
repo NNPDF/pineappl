@@ -16,11 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - in `examples/capi-dy-aa` one can find an example how to use the C API
 - added method `Grid::with_subgrid_type` that allows the selection of a custom
   Subgrid type
+- added `--absolute` switch to the subcommand `convolute` of `pineappl`, which
+  shows all values of the scale variation as absolute numbers
 
 ### Changed
 
 - the parameter `reweight` of `SubgridParams` is set to `true` by default now
   (was `false` before)
+- the Subgrid parameter `reweight` is now `true` by default (was `false`)
+- improved the output of `pineappl`, bin widths are printed now
+
+### Fixed
+
+- fixed subcommand `orders` of `pineappl` to normalise each leading order to
+  the sum of all leading orders, not only the first
+- fixed subcommand `pdf_uncertainty` of `pineappl` to show the correct
+  integrated results (bin width was missing)
+- fixed calculation of the scale variation
 
 ## [0.1.0] - 11/06/2020
 

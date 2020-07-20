@@ -6,6 +6,6 @@
     - `cargo test`, to make sure all tests and doctests are still passing,
     - `cargo clippy`, to run the linter and to fix important warnings,
     - and finally `cargo fmt`, to format your code properly.
-
-- when you commit, make sure the commit message is written properly. This
-  blogpost explains it nicely: https://chris.beams.io/posts/git-commit/
+- Make sure to keep `CHANGELOG.md` up-to-date.
+- When you commit, make sure the commit message is written properly. This
+  blogpost explains it nicely: https://chris.beams.io/posts/git-commit/.
