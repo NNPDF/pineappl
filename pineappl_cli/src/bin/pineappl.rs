@@ -275,7 +275,7 @@ fn convolute(
     Ok(table)
 }
 
-fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
+fn orders(input: &str, pdfset: &str, absolute: bool) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
@@ -365,7 +365,11 @@ fn orders(input: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
         for index in 0..sorted_grid_orders.len() {
             let result = order_results[unsorted_indices[index]][bin];
 
-            row.add_cell(cell!(r->&format!("{:.2}%", result / leading_order * 100.0)));
+            if absolute {
+                row.add_cell(cell!(r->&format!("{:.7e}", result)));
+            } else {
+                row.add_cell(cell!(r->&format!("{:.2}%", result / leading_order * 100.0)));
+            }
         }
     }
 
@@ -541,6 +545,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (about: "Shows the predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
+            (@arg absolute: -a --absolute "Show absolute numbers of each perturbative order")
         )
         (@subcommand pdf_uncertainty =>
             (about: "Calculates PDF uncertainties")
@@ -607,8 +612,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
+        let absolute = matches.is_present("absolute");
 
-        orders(input, pdfset)?.printstd();
+        orders(input, pdfset, absolute)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
