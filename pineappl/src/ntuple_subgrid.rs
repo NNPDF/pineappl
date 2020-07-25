@@ -33,8 +33,20 @@ impl Subgrid for NtupleSubgridV1 {
         result
     }
 
+    fn convolute_with_points(&self, _: &dyn Fn(usize, usize, usize) -> f64) -> f64 {
+        0.0
+    }
+
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
         self.ntuples.push(ntuple.clone());
+    }
+
+    fn grid_q2(&self) -> Vec<f64> {
+        vec![]
+    }
+
+    fn grid_x(&self) -> Vec<f64> {
+        vec![]
     }
 
     fn is_empty(&self) -> bool {

@@ -5,11 +5,14 @@ use super::lagrange_subgrid::LagrangeSubgridV1;
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use enum_dispatch::enum_dispatch;
+use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
+use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
@@ -91,6 +94,19 @@ pub trait Subgrid {
 
     /// Convolute the subgrid with a luminosity function
     fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64;
+
+    /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
+    /// return an empty `Vec`.
+    fn grid_q2(&self) -> Vec<f64>;
+
+    /// Return a `Vec` of values of `x`. If the subgrid does not use a grid, this method should
+    /// return an empty `Vec`.
+    fn grid_x(&self) -> Vec<f64>;
+
+    /// Convolute the subgrid with a luminosity function, which instead of values for `x1`, `x2`,
+    /// and `q2` accepts indices corresponding to the values returned by `grid_x` and `grid_q2`. If
+    /// the subgrid does not use a grid, this function should return zero.
+    fn convolute_with_points(&self, lumi: &dyn Fn(usize, usize, usize) -> f64) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`.
@@ -382,40 +398,90 @@ impl Grid {
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_limits.bin_sizes();
 
-        for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
-            let order = &self.orders[i];
+        let pdf_cache = RefCell::new(HashMap::new());
+        let mut last_xif = 0.0;
 
-            if (!order_mask.is_empty() && !order_mask[i])
-                || (!lumi_mask.is_empty() && !lumi_mask[k])
-            {
-                continue;
+        // TODO: using the first subgrid is a bit arbitrary
+        let grid_q2 = self.subgrids[[0, 0, 0]].grid_q2();
+        let grid_x = self.subgrids[[0, 0, 0]].grid_x();
+        let use_pdf_cache = !grid_q2.is_empty() && !grid_x.is_empty();
+
+        // iterate over the elements of `xi` and a corresponding index, but sorted using the
+        // factorisation value of `xi`
+        for (l, &(xir, xif)) in xi
+            .iter()
+            .enumerate()
+            .sorted_by(|lhs, rhs| (lhs.1).1.partial_cmp(&(rhs.1).1).unwrap())
+        {
+            // whenever the value `xif` changes we can clear the PDF cache
+            if xif != last_xif {
+                pdf_cache.borrow_mut().clear();
+                last_xif = xif;
             }
 
-            let bin_index = match bin_indices.iter().position(|&index| index == j) {
-                Some(i) => i,
-                None => continue,
-            };
+            for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
+                let order = &self.orders[i];
 
-            let lumi_entry = &self.lumi[k];
-
-            for (l, &(xir, xif)) in xi.iter().enumerate() {
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
                     continue;
                 }
 
-                let mut value = subgrid.convolute(&|x1, x2, q2| {
-                    let mut lumi = 0.0;
-                    let q2f = xif.powi(2) * q2;
+                if (!order_mask.is_empty() && !order_mask[i])
+                    || (!lumi_mask.is_empty() && !lumi_mask[k])
+                {
+                    continue;
+                }
 
-                    for entry in lumi_entry.entry() {
-                        let xfx1 = xfx1(entry.0, x1, q2f);
-                        let xfx2 = xfx2(entry.1, x2, q2f);
-                        lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                    }
+                let bin_index = match bin_indices.iter().position(|&index| index == j) {
+                    Some(i) => i,
+                    None => continue,
+                };
 
-                    lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
-                    lumi
-                });
+                let lumi_entry = &self.lumi[k];
+
+                // TODO: this value should basically always be the value it shadows
+                let use_pdf_cache = use_pdf_cache
+                    && (subgrid.grid_q2() == grid_q2)
+                    && (subgrid.grid_x() == grid_x);
+
+                let mut value = if use_pdf_cache {
+                    subgrid.convolute_with_points(&|ix1, ix2, iq2| {
+                        let mut pdf_cache = pdf_cache.borrow_mut();
+                        let x1 = grid_x[ix1];
+                        let x2 = grid_x[ix2];
+                        let q2 = grid_q2[iq2];
+                        let q2f = xif.powi(2) * q2;
+
+                        let mut lumi = 0.0;
+
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = *pdf_cache
+                                .entry((entry.0, ix1, iq2))
+                                .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                            let xfx2 = *pdf_cache
+                                .entry((entry.1, ix2, iq2))
+                                .or_insert_with(|| xfx2(entry.1, x2, q2f));
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
+
+                        lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
+                        lumi
+                    })
+                } else {
+                    subgrid.convolute(&|x1, x2, q2| {
+                        let mut lumi = 0.0;
+                        let q2f = xif.powi(2) * q2;
+
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = xfx1(entry.0, x1, q2f);
+                            let xfx2 = xfx2(entry.1, x2, q2f);
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
+
+                        lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
+                        lumi
+                    })
+                };
 
                 if order.logxir > 0 {
                     value *= xir.powi(2).ln().powi(order.logxir.try_into().unwrap());
