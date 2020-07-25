@@ -18,7 +18,7 @@ use thiserror::Error;
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
 
 /// Coupling powers for each grid.
-#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
     pub alphas: u32,
@@ -650,6 +650,120 @@ impl Grid {
 mod tests {
     use super::*;
     use crate::lumi_entry;
+
+    #[test]
+    fn order_cmp() {
+        let mut orders = vec![
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 1,
+                logxif: 0,
+            },
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 0,
+                logxif: 1,
+            },
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 0,
+                logxif: 0,
+            },
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 1,
+                logxif: 0,
+            },
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 0,
+                logxif: 1,
+            },
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 0,
+                logxif: 0,
+            },
+            Order {
+                alphas: 0,
+                alpha: 2,
+                logxir: 0,
+                logxif: 0,
+            },
+        ];
+
+        orders.sort();
+
+        assert_eq!(
+            orders[0],
+            Order {
+                alphas: 0,
+                alpha: 2,
+                logxir: 0,
+                logxif: 0
+            }
+        );
+        assert_eq!(
+            orders[1],
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 0,
+                logxif: 0
+            }
+        );
+        assert_eq!(
+            orders[2],
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 0,
+                logxif: 1
+            }
+        );
+        assert_eq!(
+            orders[3],
+            Order {
+                alphas: 1,
+                alpha: 2,
+                logxir: 1,
+                logxif: 0
+            }
+        );
+        assert_eq!(
+            orders[4],
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 0,
+                logxif: 0
+            }
+        );
+        assert_eq!(
+            orders[5],
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 0,
+                logxif: 1
+            }
+        );
+        assert_eq!(
+            orders[6],
+            Order {
+                alphas: 0,
+                alpha: 3,
+                logxir: 1,
+                logxif: 0
+            }
+        );
+    }
 
     #[test]
     fn grid_merge_empty_subgrids() {
