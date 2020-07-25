@@ -33,7 +33,12 @@ impl Subgrid for NtupleSubgridV1 {
         result
     }
 
-    fn convolute_with_points(&self, _: &dyn Fn(usize, usize, usize) -> f64) -> f64 {
+    fn convolute_with_points(
+        &self,
+        _: &Vec<f64>,
+        _: &Vec<f64>,
+        _: &dyn Fn(usize, usize, usize) -> f64,
+    ) -> f64 {
         0.0
     }
 

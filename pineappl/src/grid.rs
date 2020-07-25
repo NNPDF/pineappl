@@ -106,7 +106,12 @@ pub trait Subgrid {
     /// Convolute the subgrid with a luminosity function, which instead of values for `x1`, `x2`,
     /// and `q2` accepts indices corresponding to the values returned by `grid_x` and `grid_q2`. If
     /// the subgrid does not use a grid, this function should return zero.
-    fn convolute_with_points(&self, lumi: &dyn Fn(usize, usize, usize) -> f64) -> f64;
+    fn convolute_with_points(
+        &self,
+        x: &Vec<f64>,
+        q2: &Vec<f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
+    ) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`.
@@ -440,12 +445,11 @@ impl Grid {
                 let lumi_entry = &self.lumi[k];
 
                 // TODO: this value should basically always be the value it shadows
-                let use_pdf_cache = use_pdf_cache
-                    && (subgrid.grid_q2() == grid_q2)
-                    && (subgrid.grid_x() == grid_x);
+                let use_pdf_cache =
+                    use_pdf_cache && (subgrid.grid_q2() == grid_q2) && (subgrid.grid_x() == grid_x);
 
                 let mut value = if use_pdf_cache {
-                    subgrid.convolute_with_points(&|ix1, ix2, iq2| {
+                    subgrid.convolute_with_points(&grid_x, &grid_q2, &|ix1, ix2, iq2| {
                         let mut pdf_cache = pdf_cache.borrow_mut();
                         let x1 = grid_x[ix1];
                         let x2 = grid_x[ix2];

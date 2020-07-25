@@ -161,21 +161,26 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn convolute_with_points(&self, lumi: &dyn Fn(usize, usize, usize) -> f64) -> f64 {
+    fn convolute_with_points(
+        &self,
+        x: &Vec<f64>,
+        _: &Vec<f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
+    ) -> f64 {
         if let Some(self_grid) = &self.grid {
             let qs: Vec<_> = (self.itaumin..self.itaumax).collect();
-            let x: Vec<_> = (0..self.ny).collect();
+            let y: Vec<_> = (0..self.ny).collect();
 
             self_grid
                 .iter()
-                .zip(iproduct!(qs, &x, &x))
+                .zip(iproduct!(qs, &y, &y))
                 .map(|(&sigma, (q2, &x1, &x2))| {
                     if sigma == 0.0 {
                         0.0
                     } else {
                         let mut value = sigma * lumi(x1, x2, q2);
                         if self.reweight {
-                            value *= weightfun(fx(self.gety(x1))) * weightfun(fx(self.gety(x2)));
+                            value *= weightfun(x[x1]) * weightfun(x[x2]);
                         }
                         value
                     }
