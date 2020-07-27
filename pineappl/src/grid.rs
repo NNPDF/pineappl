@@ -8,11 +8,11 @@ use enum_dispatch::enum_dispatch;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
@@ -403,7 +403,7 @@ impl Grid {
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_limits.bin_sizes();
 
-        let pdf_cache = RefCell::new(HashMap::new());
+        let pdf_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
         // TODO: using the first subgrid is a bit arbitrary
