@@ -404,17 +404,27 @@ impl Grid {
         let bin_sizes = self.bin_limits.bin_sizes();
 
         let pdf_cache = RefCell::new(FxHashMap::default());
+        let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
         // TODO: using the first subgrid is a bit arbitrary
         let grid_q2 = self.subgrids[[0, 0, 0]].grid_q2();
         let grid_x = self.subgrids[[0, 0, 0]].grid_x();
-        let use_pdf_cache = !grid_q2.is_empty() && !grid_x.is_empty();
+        let use_cache = !grid_q2.is_empty() && !grid_x.is_empty();
+
+        let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
+        xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(&rhs).unwrap());
+        xir_values.dedup();
+        let xir_indices: Vec<_> = xi
+            .iter()
+            .map(|xi| xir_values.iter().position(|xir| xi.0 == *xir).unwrap())
+            .collect();
 
         // iterate over the elements of `xi` and a corresponding index, but sorted using the
         // factorisation value of `xi`
-        for (l, &(xir, xif)) in xi
+        for (l, (&(xir, xif), &xir_index)) in xi
             .iter()
+            .zip(xir_indices.iter())
             .enumerate()
             .sorted_by(|lhs, rhs| (lhs.1).1.partial_cmp(&(rhs.1).1).unwrap())
         {
@@ -445,10 +455,10 @@ impl Grid {
                 let lumi_entry = &self.lumi[k];
 
                 // TODO: this value should basically always be the value it shadows
-                let use_pdf_cache =
-                    use_pdf_cache && (subgrid.grid_q2() == grid_q2) && (subgrid.grid_x() == grid_x);
+                let use_cache =
+                    use_cache && (subgrid.grid_q2() == grid_q2) && (subgrid.grid_x() == grid_x);
 
-                let mut value = if use_pdf_cache {
+                let mut value = if use_cache {
                     subgrid.convolute_with_points(&grid_x, &grid_q2, &|ix1, ix2, iq2| {
                         let mut pdf_cache = pdf_cache.borrow_mut();
                         let x1 = grid_x[ix1];
@@ -468,7 +478,12 @@ impl Grid {
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
-                        lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
+                        let mut alphas_cache = alphas_cache.borrow_mut();
+                        let alphas = alphas_cache
+                            .entry(xir_values.len() * iq2 + xir_index)
+                            .or_insert_with(|| alphas(xir.powi(2) * q2));
+
+                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
                         lumi
                     })
                 } else {
