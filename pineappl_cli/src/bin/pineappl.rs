@@ -453,10 +453,27 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
     Ok(table)
 }
 
-fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64, threads: usize) -> Result<Table, Box<dyn Error>> {
+fn pdf_uncertainty(
+    input: &str,
+    pdfset: &str,
+    cl: f64,
+    threads: usize,
+    orders: &[(u32, u32)],
+) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let set = PdfSet::new(pdfset);
     let pdfs = set.mk_pdfs();
+
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
 
     ThreadPoolBuilder::new().num_threads(threads).build_global().unwrap();
 
@@ -467,7 +484,7 @@ fn pdf_uncertainty(input: &str, pdfset: &str, cl: f64, threads: usize) -> Result
                 &|id, x, q2| pdf.xfx_q2(id, x, q2),
                 &|id, x, q2| pdf.xfx_q2(id, x, q2),
                 &|q2| pdf.alphas_q2(q2),
-                &[],
+                &orders,
                 &[],
                 &[],
                 &[(1.0, 1.0)],
@@ -553,6 +570,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
             (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
+            (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
         )
     )
     .get_matches();
@@ -620,8 +638,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let pdfset = matches.value_of("pdfset").unwrap();
         let cl = matches.value_of("cl").unwrap().parse()?;
         let threads = matches.value_of("threads").unwrap().parse()?;
+        let orders: Vec<_> = matches
+            .values_of("orders")
+            .map_or(vec![], |values| values.map(parse_order).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
-        pdf_uncertainty(input, pdfset, cl, threads)?.printstd();
+        pdf_uncertainty(input, pdfset, cl, threads, &orders)?.printstd();
     }
 
     Ok(())
