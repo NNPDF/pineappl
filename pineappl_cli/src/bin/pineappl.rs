@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 
+use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
@@ -376,6 +377,42 @@ fn orders(input: &str, pdfset: &str, absolute: bool) -> Result<Table, Box<dyn Er
     Ok(table)
 }
 
+fn info(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
+    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    let mut sorted_grid_orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .filter(|order| (order.logxir == 0) && (order.logxif == 0))
+        .collect();
+    sorted_grid_orders.sort();
+
+    let orders = sorted_grid_orders
+        .into_iter()
+        .group_by(|order| order.alphas + order.alpha)
+        .into_iter()
+        .map(|mut iter| match mode {
+            "qcd" => iter.1.next().unwrap(),
+            "ew" => iter.1.last().unwrap(),
+            _ => unreachable!(),
+        })
+        .map(|order| {
+            if order.alphas == 0 {
+                format!("a{}", order.alpha)
+            } else if order.alpha == 0 {
+                format!("as{}", order.alphas)
+            } else {
+                format!("as{}a{}", order.alphas, order.alpha)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    println!("{}", orders);
+
+    Ok(())
+}
+
 fn luminosity(input: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
@@ -546,6 +583,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
             (@arg absolute: -a --absolute "Show absolute numbers of the scale variation")
         )
+        (@subcommand info =>
+            (about: "Shows information about the grid")
+            (@arg input: +required "Path to the input grid")
+            (@group mode +required =>
+                (@arg qcd: --qcd "For each order print a list of the largest QCD order")
+                (@arg ew: --ew "For each order print a list of the largest EW order")
+            )
+        )
         (@subcommand luminosity =>
             (about: "Shows the luminosity function")
             (@arg input: +required "Path to the input grid")
@@ -603,6 +648,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             absolute,
         )?
         .printstd();
+    } else if let Some(matches) = matches.subcommand_matches("info") {
+        let input = matches.value_of("input").unwrap();
+
+        info(
+            input,
+            if matches.is_present("qcd") {
+                "qcd"
+            } else if matches.is_present("ew") {
+                "ew"
+            } else {
+                unreachable!()
+            },
+        )?;
     } else if let Some(matches) = matches.subcommand_matches("luminosity") {
         let input = matches.value_of("input").unwrap();
 
