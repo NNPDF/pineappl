@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PDF uncertainty only with the specified perturbative orders
 - added new subcommand `info` which shows the highest orders in alphas and
   alpha
+- added new subcommand `diff` which compares two grids with each other
 
 ### Changed
 
