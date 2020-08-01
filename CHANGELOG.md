@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Subgrid type
 - added `--absolute` switch to the subcommand `convolute` of `pineappl`, which
   shows all values of the scale variation as absolute numbers
+- added a PDF and alphas to `Grid::convolute` to speed up convolutions
+- added `--orders` switch to the subcommand `pdf_uncertainty`, to caclulate the
+  PDF uncertainty only with the specified perturbative orders
+- added new subcommand `info` which shows the highest orders in alphas and
+  alpha
 
 ### Changed
 

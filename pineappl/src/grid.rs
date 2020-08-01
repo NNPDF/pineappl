@@ -21,7 +21,7 @@ use thiserror::Error;
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
 
 /// Coupling powers for each grid.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
     pub alphas: u32,
