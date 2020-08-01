@@ -28,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - the parameter `reweight` of `SubgridParams` is set to `true` by default now
   (was `false` before)
-- the Subgrid parameter `reweight` is now `true` by default (was `false`)
 - improved the output of `pineappl`, bin widths are printed now
 
 ### Fixed
