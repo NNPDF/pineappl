@@ -693,7 +693,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         (author: crate_authors!())
         (about: crate_description!())
         (version: crate_version!())
+        (@setting DisableHelpSubcommand)
         (@setting SubcommandRequiredElseHelp)
+        (@setting VersionlessSubcommands)
         (@subcommand channels =>
             (about: "Shows the contribution for each partonic channel")
             (@arg input: +required "Path to the input grid")
