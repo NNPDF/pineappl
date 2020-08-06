@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
 
+- added the options `--absolute`, `--orders`, and `--lumis` to the subcommand
+  `channels`
 
 ## [0.2.0] - 02/08/2020
 

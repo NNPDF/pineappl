@@ -561,12 +561,30 @@ fn luminosity(input: &str) -> Result<Table, Box<dyn Error>> {
     Ok(table)
 }
 
-fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Error>> {
+fn channels(
+    input: &str,
+    pdfset: &str,
+    limit: usize,
+    orders: &[(u32, u32)],
+    absolute: bool,
+    lumis: &[usize],
+) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
         .map(Pdf::with_lhaid)
         .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+    let limit = if lumis.is_empty() { limit } else { usize::MAX };
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
 
     let results: Vec<_> = (0..grid.lumi().len())
         .map(|lumi| {
@@ -576,7 +594,7 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
                 &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
                 &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
                 &|q2| pdf.alphas_q2(q2),
-                &[],
+                &orders,
                 &[],
                 &lumi_mask,
                 &[(1.0, 1.0)],
@@ -598,21 +616,47 @@ fn channels(input: &str, pdfset: &str, limit: usize) -> Result<Table, Box<dyn Er
         row.add_cell(cell!(r->&format!("{}", bin_limits[bin])));
         row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
 
-        let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
-        let mut percentages: Vec<_> = results
-            .iter()
-            .enumerate()
-            .map(|(lumi, vec)| (lumi, vec[bin] / sum * 100.0))
-            .collect();
+        if absolute {
+            let mut values: Vec<_> = results
+                .iter()
+                .enumerate()
+                .map(|(lumi, vec)| (lumi, vec[bin]))
+                .collect();
 
-        // sort using the absolute value in descending order
-        percentages.sort_unstable_by(|(_, left), (_, right)| {
-            right.abs().partial_cmp(&left.abs()).unwrap()
-        });
+            // sort using the absolute value in descending order
+            values.sort_unstable_by(|(_, left), (_, right)| {
+                right.abs().partial_cmp(&left.abs()).unwrap()
+            });
 
-        for (lumi, percentage) in percentages.iter().take(limit) {
-            row.add_cell(cell!(r->&format!("#{}", lumi)));
-            row.add_cell(cell!(r->&format!("{:.2}%", percentage)));
+            for (lumi, value) in values
+                .iter()
+                .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
+                .take(limit)
+            {
+                row.add_cell(cell!(r->&format!("#{}", lumi)));
+                row.add_cell(cell!(r->&format!("{:.7e}", value)));
+            }
+        } else {
+            let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
+            let mut percentages: Vec<_> = results
+                .iter()
+                .enumerate()
+                .map(|(lumi, vec)| (lumi, vec[bin] / sum * 100.0))
+                .collect();
+
+            // sort using the absolute value in descending order
+            percentages.sort_unstable_by(|(_, left), (_, right)| {
+                right.abs().partial_cmp(&left.abs()).unwrap()
+            });
+
+            for (lumi, percentage) in percentages
+                .iter()
+                .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
+                .take(limit)
+            {
+                row.add_cell(cell!(r->&format!("#{}", lumi)));
+                row.add_cell(cell!(r->&format!("{:.2}%", percentage)));
+            }
         }
     }
 
@@ -705,6 +749,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
             (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero)
                 "The maximum number of channels displayed")
+            (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
+            (@arg absolute: -a --absolute "Show absolute numbers of each contribution")
+            (@arg lumis: --lumis +takes_value conflicts_with("limit")
+                "Show only the listed channels")
         )
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
@@ -765,8 +813,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let limit = matches.value_of("limit").unwrap().parse()?;
+        let orders: Vec<_> = matches
+            .values_of("orders")
+            .map_or(vec![], |values| values.map(parse_order).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
+        let absolute = matches.is_present("absolute");
+        let lumis = parse_integer_list(matches.value_of("lumis").unwrap_or(""))?;
 
-        channels(input, pdfset, limit)?.printstd();
+        channels(input, pdfset, limit, &orders, absolute, &lumis)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
