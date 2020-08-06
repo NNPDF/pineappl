@@ -163,8 +163,8 @@ impl Subgrid for LagrangeSubgridV1 {
 
     fn convolute_with_points(
         &self,
-        x: &Vec<f64>,
-        _: &Vec<f64>,
+        x: &[f64],
+        _: &[f64],
         lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
         if let Some(self_grid) = &self.grid {

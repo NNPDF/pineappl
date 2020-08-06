@@ -108,8 +108,8 @@ pub trait Subgrid {
     /// the subgrid does not use a grid, this function should return zero.
     fn convolute_with_points(
         &self,
-        x: &Vec<f64>,
-        q2: &Vec<f64>,
+        x: &[f64],
+        q2: &[f64],
         lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64;
 
