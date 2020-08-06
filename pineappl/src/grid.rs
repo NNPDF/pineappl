@@ -344,7 +344,6 @@ impl Grid {
     /// # Errors
     ///
     /// If `subgrid_type` is none of the values listed above, an error is returned.
-    #[must_use]
     pub fn with_subgrid_type(
         lumi: Vec<LumiEntry>,
         orders: Vec<Order>,
@@ -413,7 +412,7 @@ impl Grid {
         let use_cache = !grid_q2.is_empty() && !grid_x.is_empty();
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
-        xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(&rhs).unwrap());
+        xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
         xir_values.dedup();
         let xir_indices: Vec<_> = xi
             .iter()
@@ -426,7 +425,7 @@ impl Grid {
             .iter()
             .zip(xir_indices.iter())
             .enumerate()
-            .sorted_by(|lhs, rhs| (lhs.1).1.partial_cmp(&(rhs.1).1).unwrap())
+            .sorted_by(|lhs, rhs| (lhs.1).1.partial_cmp((rhs.1).1).unwrap())
         {
             // whenever the value `xif` changes we can clear the PDF cache
             if xif != last_xif {

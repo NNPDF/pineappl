@@ -641,7 +641,10 @@ fn pdf_uncertainty(
         })
         .collect();
 
-    ThreadPoolBuilder::new().num_threads(threads).build_global().unwrap();
+    ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build_global()
+        .unwrap();
 
     let results: Vec<f64> = pdfs
         .into_par_iter()

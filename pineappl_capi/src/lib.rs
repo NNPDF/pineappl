@@ -329,7 +329,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             orders,
             slice::from_raw_parts(bin_limits, bins + 1).to_vec(),
             subgrid_params,
-            &subgrid_type,
+            subgrid_type,
         )
         .unwrap(),
     ))

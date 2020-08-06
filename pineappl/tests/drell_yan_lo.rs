@@ -96,13 +96,7 @@ fn fill_drell_yan_lo_grid(
     subgrid_params.set_x_order(3);
 
     // create the PineAPPL grid
-    let mut grid = Grid::with_subgrid_type(
-        lumi,
-        orders,
-        bin_limits,
-        subgrid_params,
-        subgrid_type,
-    )?;
+    let mut grid = Grid::with_subgrid_type(lumi, orders, bin_limits, subgrid_params, subgrid_type)?;
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;
@@ -211,7 +205,7 @@ fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
         5.136619446064035e-2,
         3.5716156871884834e-2,
         2.067251421406746e-2,
-        7.300411258011377e-3
+        7.300411258011377e-3,
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
