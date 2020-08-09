@@ -104,13 +104,14 @@ int main() {
     auto* lumi = pineappl_lumi_new();
     int32_t pdg_ids[] = { 22, 22 };
     double ckm_factors[] = { 1.0 };
-    pineappl_lumi_add(lumi, 2, pdg_ids, ckm_factors);
+    pineappl_lumi_add(lumi, 1, pdg_ids, ckm_factors);
 
     // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
     uint32_t orders[] = { 0, 2, 0, 0 };
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     double bins[] = {
+        0.0,
         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
         1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4
     };
