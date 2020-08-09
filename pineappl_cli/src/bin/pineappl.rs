@@ -671,7 +671,12 @@ fn pdf_uncertainty(
     orders: &[(u32, u32)],
 ) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
-    let set = PdfSet::new(pdfset);
+    let set = PdfSet::new(
+        &pdfset
+            .parse()
+            .map(|lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0)
+            .unwrap_or_else(|_| pdfset.to_string()),
+    );
     let pdfs = set.mk_pdfs();
 
     let orders: Vec<_> = grid

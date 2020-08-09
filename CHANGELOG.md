@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added the options `--absolute`, `--orders`, and `--lumis` to the subcommand
   `channels`
 
+### Fixed
+
+- added missing support for LHAIDs for `pdf_uncertainty`
+
 ## [0.2.0] - 02/08/2020
 
 ### Added
