@@ -34,21 +34,21 @@ pineappl.pineappl_grid_fill.argtypes = [
 
 
 # refers to CAPI documentation
-def pineappl_lumi_new():
+def lumi_new():
     return pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
 
 
-def pineappl_lumi_add(lumi, combinations, pdg_id_pairs, factors):
+def lumi_add(lumi, combinations, pdg_id_pairs, factors):
     type1 = ctypes.c_int32 * len(pdg_id_pairs)
     type2 = ctypes.c_double * len(factors)
     pineappl.pineappl_lumi_add(ctypes.byref(lumi), 2, type1(*pdg_id_pairs), type2(*factors))
 
 
-def pineappl_keyval_new():
+def keyval_new():
     return pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
 
 
-def pineappl_grid_new(lumi, orders, order_params, bins, bin_limits, key_vals):
+def grid_new(lumi, orders, order_params, bins, bin_limits, key_vals):
     type1 = ctypes.c_uint32 * len(order_params)
     type2 = ctypes.c_double * len(bin_limits)
     return pineappl_grid.from_address(pineappl.pineappl_grid_new(
@@ -57,22 +57,22 @@ def pineappl_grid_new(lumi, orders, order_params, bins, bin_limits, key_vals):
     ))
 
 
-def pineappl_grid_fill(grid, x1, x2, q2, order, observable, lumi, weight):
+def grid_fill(grid, x1, x2, q2, order, observable, lumi, weight):
     pineappl.pineappl_grid_fill(ctypes.byref(grid),
                                  x1, x2, q2, order, observable, lumi, weight)
 
 
-def pineappl_grid_write(grid, filename):
+def grid_write(grid, filename):
     pineappl.pineappl_grid_write(ctypes.byref(grid), filename.encode('utf-8'))
 
 
-def pineappl_keyval_delete(keyval):
+def keyval_delete(keyval):
     pineappl.pineappl_keyval_delete(ctypes.byref(keyval))
 
 
-def pineappl_lumi_delete(lumi):
+def lumi_delete(lumi):
     pineappl.pineappl_lumi_delete(ctypes.byref(lumi))
 
 
-def pineappl_grid_delete(grid):
+def grid_delete(grid):
     pineappl.pineappl_grid_delete(ctypes.byref(grid))

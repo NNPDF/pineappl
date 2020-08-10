@@ -63,33 +63,33 @@ def fill_grid(grid, calls):
         weight = jacobian * int_photo(s, u, t)
         q2 = 90.0 * 90.0
 
-        pineappl.pineappl_grid_fill(grid, x1, x2, q2, 0, np.abs(yll), 0, weight)
+        pineappl.grid_fill(grid, x1, x2, q2, 0, np.abs(yll), 0, weight)
 
 
 def main():
     # create a new luminosity function for the $\gamma\gamma$ initial state
-    lumi = pineappl.pineappl_lumi_new()
+    lumi = pineappl.lumi_new()
     pdg_ids = [22, 22]
     ckm_factors = [1.0]
-    pineappl.pineappl_lumi_add(lumi, 2, pdg_ids, ckm_factors)
+    pineappl.lumi_add(lumi, 1, pdg_ids, ckm_factors)
 
     # only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
     orders = [0, 2, 0, 0]
     bins = [ 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
              1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
-    keyval = pineappl.pineappl_keyval_new()
-    grid = pineappl.pineappl_grid_new(lumi, 1, orders, 24, bins, keyval)
+    keyval = pineappl.keyval_new()
+    grid = pineappl.grid_new(lumi, 1, orders, 24, bins, keyval)
 
     # now we no longer need keyval and lumi
-    pineappl.pineappl_keyval_delete(keyval)
-    pineappl.pineappl_lumi_delete(lumi)
+    pineappl.keyval_delete(keyval)
+    pineappl.lumi_delete(lumi)
 
     # fill the grid with phase-space points
-    fill_grid(grid, 10000000)
+    fill_grid(grid, 1000)
 
     # write the grid to disk
-    pineappl.pineappl_grid_write(grid, "DY-LO-AA.pineappl")
-    pineappl.pineappl_grid_delete(grid)
+    pineappl.grid_write(grid, "DY-LO-AA.pineappl")
+    pineappl.grid_delete(grid)
 
 
 if __name__ == '__main__':
