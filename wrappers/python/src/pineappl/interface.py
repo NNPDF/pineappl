@@ -6,6 +6,10 @@ import pkgconfig
 
 
 # loading pineppl library
+if not pkgconfig.exists('pineappl_capi'):
+    raise RuntimeError('Cannot find the PineAPPL C-API, please make' \
+                       'sure pkgconfig is able to access the pineappl')
+
 paths = pkgconfig.libs('pineappl_capi').split(' ')
 libdir = f'{paths[0][2:]}/lib{paths[1][2:]}.so'
 pineappl = ctypes.CDLL(libdir)
