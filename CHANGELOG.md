@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - added missing support for LHAIDs for `pdf_uncertainty`
+- fixed a case where merging two grids fails, because the bin limits are
+  numerically not exactly the same
 
 ## [0.2.0] - 02/08/2020
 
