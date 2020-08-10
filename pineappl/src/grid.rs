@@ -5,6 +5,7 @@ use super::lagrange_subgrid::LagrangeSubgridV1;
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use enum_dispatch::enum_dispatch;
+use float_cmp::approx_eq;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
@@ -661,7 +662,7 @@ impl Grid {
                 .bin_limits
                 .limits()
                 .iter()
-                .position(|x| *x == other_bin)
+                .position(|x| approx_eq!(f64, *x, other_bin, ulps = 4))
                 .unwrap();
             let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
 
