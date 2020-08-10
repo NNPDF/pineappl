@@ -85,7 +85,7 @@ def main():
     pineappl.lumi_delete(lumi)
 
     # fill the grid with phase-space points
-    fill_grid(grid, 1000)
+    fill_grid(grid, 10000000)
 
     # write the grid to disk
     pineappl.grid_write(grid, "DY-LO-AA.pineappl")
