@@ -857,6 +857,20 @@ mod tests {
     }
 
     #[test]
+    fn grid_with_subgrid_type() {
+        let subgrid_type = String::from("Idontexist");
+        let result = Grid::with_subgrid_type(
+            vec![],
+            vec![],
+            vec![],
+            SubgridParams::default(),
+            &subgrid_type,
+        );
+
+        matches!(result, Err(UnknownSubgrid(x)) if x == subgrid_type);
+    }
+
+    #[test]
     fn grid_merge_empty_subgrids() {
         let mut grid = Grid::new(
             vec![

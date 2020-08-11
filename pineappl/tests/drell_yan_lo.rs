@@ -135,17 +135,7 @@ fn fill_drell_yan_lo_grid(
         let weight = jacobian * int_photo(s, u, t);
         let q2 = if dynamic { mll * mll } else { 90.0 * 90.0 };
 
-        grid.fill(
-            0,
-            yll.abs(),
-            0,
-            &Ntuple {
-                x1,
-                x2,
-                q2,
-                weight,
-            },
-        );
+        grid.fill(0, yll.abs(), 0, &Ntuple { x1, x2, q2, weight });
     }
 
     Ok(grid)
@@ -223,7 +213,12 @@ fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid", true)?;
 
-    grid.merge(fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid", true)?)?;
+    grid.merge(fill_drell_yan_lo_grid(
+        &mut rng,
+        500_000,
+        "NtupleSubgrid",
+        true,
+    )?)?;
     grid.scale(0.5);
 
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
@@ -246,6 +241,7 @@ fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+
     let reference = vec![
         5.092821448721474e-1,
         5.191357484865172e-1,
@@ -276,6 +272,18 @@ fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
     }
+
+    // check with `bin_indices` non-empty
+    let other = grid.convolute(
+        &xfx,
+        &xfx,
+        &alphas,
+        &[],
+        &(0..24).collect::<Vec<_>>(),
+        &[],
+        &[(1.0, 1.0)],
+    );
+    assert_eq!(bins, other);
 
     Ok(())
 }

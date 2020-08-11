@@ -15,22 +15,19 @@ fn weightfun(x: f64) -> f64 {
 }
 
 fn fx(y: f64) -> f64 {
-    let eps = 1e-12;
-    let imax = 100;
-
     let mut yp = y;
 
-    for _ in 0..imax {
+    for _ in 0..100 {
         let x = (-yp).exp();
         let delta = y - yp - 5.0 * (1.0 - x);
-        if (delta).abs() < eps {
+        if (delta).abs() < 1e-12 {
             return x;
         }
         let deriv = -1.0 - 5.0 * x;
         yp -= delta / deriv;
     }
 
-    panic!("");
+    unreachable!();
 }
 
 fn fy(x: f64) -> f64 {
