@@ -63,3 +63,8 @@ jobs:
         python -m pip install --upgrade pip
         cd wrappers/python
         pip install .
+        cd ../../
+    - name: Test examples
+      run: |
+        cd examples/python-dy-aa/
+        python main.py
