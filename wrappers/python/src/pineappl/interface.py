@@ -37,46 +37,56 @@ pineappl.pineappl_grid_fill.argtypes = [
     ]
 
 
-# refers to CAPI documentation
-def lumi_new():
-    return pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
+class lumi:
+
+    def __init__(self):
+        self._lumi = ctypes.byref(
+            pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
+        )
+
+    def __del__(self):
+        pineappl.pineappl_lumi_delete(self._lumi)
+
+    def add(self, combinations, pdg_id_pairs, factors):
+        type1 = ctypes.c_int32 * len(pdg_id_pairs)
+        type2 = ctypes.c_double * len(factors)
+        pineappl.pineappl_lumi_add(self._lumi, 2, type1(*pdg_id_pairs), type2(*factors))
 
 
-def lumi_add(lumi, combinations, pdg_id_pairs, factors):
-    type1 = ctypes.c_int32 * len(pdg_id_pairs)
-    type2 = ctypes.c_double * len(factors)
-    pineappl.pineappl_lumi_add(ctypes.byref(lumi), 2, type1(*pdg_id_pairs), type2(*factors))
+class keyval:
+
+    def __init__(self):
+        self._keyval = ctypes.byref(
+            pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
+        )
+
+    def __del__(self):
+        pineappl.pineappl_keyval_delete(self._keyval)
 
 
-def keyval_new():
-    return pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
+class grid:
 
+    def __init__(self, luminosity, orders, order_params,
+                 bins, bin_limits, key_vals):
+        type1 = ctypes.c_uint32 * len(order_params)
+        type2 = ctypes.c_double * len(bin_limits)
+        self._grid = ctypes.byref(
+            pineappl_grid.from_address(
+                pineappl.pineappl_grid_new(
+                    luminosity._lumi, orders, type1(*order_params),
+                    bins, type2(*bin_limits),
+                    key_vals._keyval)
+            )
+        )
 
-def grid_new(lumi, orders, order_params, bins, bin_limits, key_vals):
-    type1 = ctypes.c_uint32 * len(order_params)
-    type2 = ctypes.c_double * len(bin_limits)
-    return pineappl_grid.from_address(pineappl.pineappl_grid_new(
-        ctypes.byref(lumi), orders, type1(*order_params), bins, type2(*bin_limits),
-        ctypes.byref(key_vals)
-    ))
+    def __del__(self):
+        pineappl.pineappl_grid_delete(self._grid)
 
+    def fill(self, x1, x2, q2, order, observable, lumi, weight):
+        pineappl.pineappl_grid_fill(self._grid,
+                                    x1, x2, q2,
+                                    order, observable,
+                                    lumi, weight)
 
-def grid_fill(grid, x1, x2, q2, order, observable, lumi, weight):
-    pineappl.pineappl_grid_fill(ctypes.byref(grid),
-                                 x1, x2, q2, order, observable, lumi, weight)
-
-
-def grid_write(grid, filename):
-    pineappl.pineappl_grid_write(ctypes.byref(grid), filename.encode('utf-8'))
-
-
-def keyval_delete(keyval):
-    pineappl.pineappl_keyval_delete(ctypes.byref(keyval))
-
-
-def lumi_delete(lumi):
-    pineappl.pineappl_lumi_delete(ctypes.byref(lumi))
-
-
-def grid_delete(grid):
-    pineappl.pineappl_grid_delete(ctypes.byref(grid))
+    def write(self, filename):
+        pineappl.pineappl_grid_write(self._grid, filename.encode('utf-8'))
