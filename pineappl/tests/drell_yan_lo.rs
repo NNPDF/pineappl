@@ -66,6 +66,7 @@ fn fill_drell_yan_lo_grid(
     rng: &mut impl Rng,
     calls: usize,
     subgrid_type: &str,
+    dynamic: bool,
 ) -> anyhow::Result<Grid> {
     let lumi = vec![
         // photons
@@ -132,6 +133,7 @@ fn fill_drell_yan_lo_grid(
         }
 
         let weight = jacobian * int_photo(s, u, t);
+        let q2 = if dynamic { mll * mll } else { 90.0 * 90.0 };
 
         grid.fill(
             0,
@@ -140,8 +142,8 @@ fn fill_drell_yan_lo_grid(
             &Ntuple {
                 x1,
                 x2,
-                q2: 90.0_f64.powi(2),
-                weight: weight,
+                q2,
+                weight,
             },
         );
     }
@@ -150,14 +152,15 @@ fn fill_drell_yan_lo_grid(
 }
 
 #[test]
-fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
+fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid")?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid", false)?;
 
     grid.merge(fill_drell_yan_lo_grid(
         &mut rng,
         500_000,
         "LagrangeSubgrid",
+        false,
     )?)?;
     grid.scale(0.5);
 
@@ -216,11 +219,11 @@ fn dy_aa_lagrange_subgrid() -> anyhow::Result<()> {
 }
 
 #[test]
-fn dy_aa_ntuple_subgrid() -> anyhow::Result<()> {
+fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid")?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid", true)?;
 
-    grid.merge(fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid")?)?;
+    grid.merge(fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid", true)?)?;
     grid.scale(0.5);
 
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
@@ -244,30 +247,97 @@ fn dy_aa_ntuple_subgrid() -> anyhow::Result<()> {
 
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
-        5.294102629460027e-1,
-        5.407462109703145e-1,
-        5.696654765115949e-1,
-        5.028229825084712e-1,
-        4.917145014197304e-1,
-        4.94698595872653e-1,
-        4.9190141387427233e-1,
-        4.486371523100685e-1,
-        4.507732384369339e-1,
-        4.1060709945028706e-1,
-        3.6024761439304853e-1,
-        3.2757335386076103e-1,
-        2.7928032956476956e-1,
-        2.4983016484405093e-1,
-        2.1077131839702393e-1,
-        1.7797159986885916e-1,
-        1.541103341646812e-1,
-        1.195781437556192e-1,
-        9.39928943589368e-2,
-        6.718800239822122e-2,
-        5.13639097541644e-2,
-        3.571458571056351e-2,
-        2.0671050816841553e-2,
-        7.299744833167185e-3,
+        5.092821448721474e-1,
+        5.191357484865172e-1,
+        5.467704217708133e-1,
+        4.8449484658306824e-1,
+        4.728103049569273e-1,
+        4.7483201886317034e-1,
+        4.7061057035280723e-1,
+        4.286036078931531e-1,
+        4.2996760624782815e-1,
+        3.9109949286253315e-1,
+        3.430394818023909e-1,
+        3.120393419396954e-1,
+        2.6655870331253384e-1,
+        2.3743619413745756e-1,
+        2.005254408709319e-1,
+        1.692014203393251e-1,
+        1.463479865019976e-1,
+        1.1348576426013411e-1,
+        8.934108471882579e-2,
+        6.385392511321722e-2,
+        4.866767294756674e-2,
+        3.379145451842768e-2,
+        1.9493436557281443e-2,
+        6.879891831200007e-3,
+    ];
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
+    Ok(())
+}
+
+#[test]
+fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
+    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid", true)?;
+
+    grid.merge(fill_drell_yan_lo_grid(
+        &mut rng,
+        500_000,
+        "LagrangeSubgrid",
+        true,
+    )?)?;
+    grid.scale(0.5);
+
+    let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
+
+    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+
+    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
+    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let alphas = |_| 0.0;
+
+    // check `read` and `write`
+    let mut file = Cursor::new(Vec::new());
+    grid.write(&mut file)?;
+    file.set_position(0);
+    mem::drop(grid);
+    let mut grid = Grid::read(&mut file)?;
+
+    // some useless scalings
+    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
+    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
+
+    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let reference = vec![
+        5.093090431949207e-1,
+        5.191668797562395e-1,
+        5.467930909144878e-1,
+        4.845000146366871e-1,
+        4.7279670245192884e-1,
+        4.7481525429115445e-1,
+        4.7060007393610065e-1,
+        4.286009571276975e-1,
+        4.2997427448811987e-1,
+        3.911121604214181e-1,
+        3.430494924416351e-1,
+        3.1204501485640446e-1,
+        2.6656633773109056e-1,
+        2.3745772514449243e-1,
+        2.0055415662593068e-1,
+        1.692229208614707e-1,
+        1.4635749293124972e-1,
+        1.1348804559115269e-1,
+        8.934261002200886e-2,
+        6.385631160399488e-2,
+        4.866968827833745e-2,
+        3.379282482821324e-2,
+        1.9494720220040448e-2,
+        6.880478270711603e-3,
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
