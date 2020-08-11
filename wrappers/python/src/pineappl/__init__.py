@@ -2,4 +2,4 @@
 
 __version__ = "0.0.1"
 
-from pineappl.interface import lumi, keyval, grid
+from pineappl.interface import lumi, grid

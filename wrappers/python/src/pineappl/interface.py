@@ -32,10 +32,42 @@ pineappl.pineappl_lumi_new.restype = ctypes.c_void_p
 pineappl.pineappl_keyval_new.restype = ctypes.c_void_p
 pineappl.pineappl_grid_new.restype = ctypes.c_void_p
 pineappl.pineappl_grid_fill.argtypes = [
-        ctypes.POINTER(pineappl_grid),
-        ctypes.c_double, ctypes.c_double, ctypes.c_double,
-        ctypes.c_uint, ctypes.c_double, ctypes.c_uint, ctypes.c_double
-    ]
+    ctypes.POINTER(pineappl_grid),
+    ctypes.c_double, ctypes.c_double, ctypes.c_double,
+    ctypes.c_uint, ctypes.c_double, ctypes.c_uint, ctypes.c_double
+]
+pineappl.pineappl_keyval_set_double.argtypes = [
+    ctypes.POINTER(pineappl_keyval),
+    ctypes.c_char_p,
+    ctypes.c_double
+]
+pineappl.pineappl_keyval_set_int.argtypes = [
+    ctypes.POINTER(pineappl_keyval),
+    ctypes.c_char_p,
+    ctypes.c_int
+]
+pineappl.pineappl_keyval_set_bool.argtypes= [
+    ctypes.POINTER(pineappl_keyval),
+    ctypes.c_char_p,
+    ctypes.c_bool
+]
+pineappl.pineappl_keyval_set_string.argtypes = [
+    ctypes.POINTER(pineappl_keyval),
+    ctypes.c_char_p,
+    ctypes.c_char_p
+]
+AVAILABLE_KEYS = {
+    'q2_bins': pineappl.pineappl_keyval_set_int,
+    'q2_max': pineappl.pineappl_keyval_set_double,
+    'q2_min': pineappl.pineappl_keyval_set_double,
+    'q2_order': pineappl.pineappl_keyval_set_int,
+    'reweight': pineappl.pineappl_keyval_set_bool,
+    'x_bins': pineappl.pineappl_keyval_set_int,
+    'x_max': pineappl.pineappl_keyval_set_double,
+    'x_min': pineappl.pineappl_keyval_set_double,
+    'x_order': pineappl.pineappl_keyval_set_int,
+    'subgrid_type': pineappl.pineappl_keyval_set_string,
+}
 
 
 class lumi:
@@ -63,7 +95,8 @@ class lumi:
 
     def __del__(self):
         """The luminosity destructor method."""
-        pineappl.pineappl_lumi_delete(self._lumi)
+        if self._lumi is not None:
+            pineappl.pineappl_lumi_delete(self._lumi)
 
     def add(self, pdg_id_pairs, factors):
         """Adds a linear combination of initial states to the
@@ -82,19 +115,6 @@ class lumi:
         pineappl.pineappl_lumi_add(self._lumi, combinations, type1(*pdg_id_pairs), type2(*factors))
 
 
-class keyval:
-    """Auxiliary key values object."""
-
-    def __init__(self):
-        self._keyval = ctypes.byref(
-            pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
-        )
-
-    def __del__(self):
-        """The key vals destructor method."""
-        pineappl.pineappl_keyval_delete(self._keyval)
-
-
 class grid:
     """The PineAPPL grid object. Creates a new and empty grid.
        The creation requires four different sets of parameters.
@@ -105,7 +125,7 @@ class grid:
         order_params (list): number of different perturbative orders.
         bin_limits (list): entries denoting the left and right limit
             for each bin.
-        key_vals (pineappl.interface.keyval): a key-value storage object.
+        key_vals (pineappl.keyval): a key-value storage object.
 
     Example:
         ::
@@ -127,11 +147,34 @@ class grid:
             grid.write('my_grid.pineappl')
     """
 
-    def __init__(self, luminosity, order_params, bin_limits, key_vals):
+    def __init__(self, luminosity, order_params, bin_limits, key_vals=None):
+        # initialize
+        self._keyval = None
+        self._grid = None
+
+        # basic checks
         if len(bin_limits) < 2:
             raise RuntimeError("bin_limits lenght must be larger than 2.")
         if len(order_params) % 4 != 0:
             raise RuntimeError("order_params lenght must be a multiple of four.")
+        if key_vals is not None:
+            if not isinstance(key_vals, dict):
+                raise ValueError("key_vals must be a dictionnary.")
+
+        # allocating keyvals
+        self._keyval = ctypes.byref(
+            pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
+        )
+
+        if key_vals is not None:
+            for key, value in key_vals.items():
+                if key in AVAILABLE_KEYS:
+                    if isinstance(value, str):
+                        value = value.encode('utf-8')
+                    AVAILABLE_KEYS.get(key)(self._keyval,
+                                            key.encode('utf-8'),
+                                            value)
+
         orders = len(order_params) // 4
         bins = len(bin_limits) - 1
         type1 = ctypes.c_uint32 * len(order_params)
@@ -141,13 +184,16 @@ class grid:
                 pineappl.pineappl_grid_new(
                     luminosity._lumi, orders, type1(*order_params),
                     bins, type2(*bin_limits),
-                    key_vals._keyval)
+                    self._keyval)
             )
         )
 
     def __del__(self):
         """The grid destructor method."""
-        pineappl.pineappl_grid_delete(self._grid)
+        if self._keyval is not None:
+            pineappl.pineappl_keyval_delete(self._keyval)
+        if self._grid is not None:
+            pineappl.pineappl_grid_delete(self._grid)
 
     def fill(self, x1, x2, q2, order, observable, lumi, weight):
         """Fills the grid for a specific kinematics.
