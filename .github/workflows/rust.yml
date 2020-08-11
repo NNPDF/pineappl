@@ -58,3 +58,8 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         token: ${{secrets.CODECOV_TOKEN}}
+    - name: Install python wrapper
+      run: |
+        python -m pip install --upgrade pip
+        cd wrappers/python
+        pip install .
