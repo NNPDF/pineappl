@@ -4,7 +4,7 @@ import os
 import re
 
 
-requirements = ['pkgconfig']
+requirements = ['pkgconfig', 'numpy']
 PACKAGE = 'pineappl'
 
 def get_version():
