@@ -67,5 +67,5 @@ jobs:
     - name: Test examples
       run: |
         cd examples/python-dy-aa/
-        export PKG_CONFIG_CONFIG=/home/runner/prefix/lib/pkgconfig/:$PKG_CONFIG_PATH
+        export PKG_CONFIG_PATH=/home/runner/prefix/lib/pkgconfig/:$PKG_CONFIG_PATH
         python main.py
