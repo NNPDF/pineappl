@@ -67,13 +67,19 @@ jobs:
       run: |
         ls -alR $HOME/prefix
         cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+    - name: Test C example
+      run: |
+        cd examples/capi-dy-aa
+        make
+        ./dyaa
+        cd ../../
     - name: Install python wrapper
       run: |
         python -m pip install --upgrade pip
         cd wrappers/python
         pip install .
         cd ../../
-    - name: Test examples
+    - name: Test python example
       run: |
-        cd examples/python-dy-aa/
+        cd examples/python-dy-aa
         python main.py
