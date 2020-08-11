@@ -64,10 +64,8 @@ jobs:
         command: install
         args: cargo-c
     - name: Install PineAPPL's C API
-      uses: actions-rs/cargo@v1
-      with:
-        command: cinstall
-        args: -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+      run: |
+        sudo cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
     - name: Install python wrapper
       run: |
         python -m pip install --upgrade pip
