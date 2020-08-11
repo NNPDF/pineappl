@@ -47,10 +47,13 @@ class lumi:
     def __del__(self):
         pineappl.pineappl_lumi_delete(self._lumi)
 
-    def add(self, combinations, pdg_id_pairs, factors):
+    def add(self, pdg_id_pairs, factors):
+        combinations = len(factors)
+        if len(pdg_id_pairs) != 2 * combinations:
+            raise RuntimeError("pdg_id_pairs and factors size mismatch")
         type1 = ctypes.c_int32 * len(pdg_id_pairs)
         type2 = ctypes.c_double * len(factors)
-        pineappl.pineappl_lumi_add(self._lumi, 2, type1(*pdg_id_pairs), type2(*factors))
+        pineappl.pineappl_lumi_add(self._lumi, combinations, type1(*pdg_id_pairs), type2(*factors))
 
 
 class keyval:
@@ -66,8 +69,13 @@ class keyval:
 
 class grid:
 
-    def __init__(self, luminosity, orders, order_params,
-                 bins, bin_limits, key_vals):
+    def __init__(self, luminosity, order_params, bin_limits, key_vals):
+        if len(bin_limits) < 2:
+            raise RuntimeError("bin_limits lenght must be larger than 2.")
+        if len(order_params) % 4 != 0:
+            raise RuntimeError("order_params lenght must be a multiple of four.")
+        orders = len(order_params) // 4
+        bins = len(bin_limits) - 1
         type1 = ctypes.c_uint32 * len(order_params)
         type2 = ctypes.c_double * len(bin_limits)
         self._grid = ctypes.byref(
