@@ -65,7 +65,7 @@ jobs:
         args: cargo-c
     - name: Install PineAPPL's C API
       run: |
-        sudo cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+        strace cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
     - name: Install python wrapper
       run: |
         python -m pip install --upgrade pip
