@@ -67,7 +67,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: cinstall
-        args: --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+        args: -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
     - name: Install python wrapper
       run: |
         python -m pip install --upgrade pip
