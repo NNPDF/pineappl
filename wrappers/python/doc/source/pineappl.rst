@@ -1,25 +1,7 @@
 Components
 ==========
 
-lumi
-----
-
-.. automodule:: pineappl.interface.lumi
+.. automodule:: pineappl.interface
    :members:
    :member-order: bysource
-
-
-keyval
-------
-
-.. automodule:: pineappl.interface.keyval
-   :members:
-   :member-order: bysource
-
-
-grid
-----
-
-.. automodule:: pineappl.interface.grid
-   :members:
-   :member-order: bysource
+   :exclude-members: pineappl_lumi, pineappl_keyval, pineappl_grid

@@ -100,12 +100,12 @@ class grid:
        The creation requires four different sets of parameters.
 
     Args:
-        luminosity (pineappl.lumi): the luminosity function that
+        luminosity (pineappl.interface.lumi): the luminosity function that
             specifies how the cross section should be reconstructed.
         order_params (list): number of different perturbative orders.
         bin_limits (list): entries denoting the left and right limit
             for each bin.
-        key_vals (pineappl.keyval): a key-value storage object.
+        key_vals (pineappl.interface.keyval): a key-value storage object.
 
     Example:
         ::
@@ -153,13 +153,13 @@ class grid:
         """Fills the grid for a specific kinematics.
 
         Args:
-            x1 (double): the partonic momentum fraction.
-            x2 (double): the partonic momentum fraction.
-            q2 (double) the event energy scale.
+            x1 (float): the partonic momentum fraction.
+            x2 (float): the partonic momentum fraction.
+            q2 (float) the event energy scale.
             order (int): the order value.
-            observable (double): the observable value.
+            observable (float): the observable value.
             lumi (int): the luminosity channel value.
-            weight (double): the event weight.
+            weight (float): the event weight.
         """
         pineappl.pineappl_grid_fill(self._grid,
                                     x1, x2, q2,
