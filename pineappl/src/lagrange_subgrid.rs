@@ -3,6 +3,7 @@
 use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::{Ntuple, Subgrid, SubgridParams};
 use arrayvec::ArrayVec;
+use either::Either;
 use itertools::iproduct;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
@@ -134,40 +135,14 @@ impl Subgrid for LagrangeSubgridV1 {
         self
     }
 
-    fn convolute(&self, lumi: &dyn Fn(f64, f64, f64) -> f64) -> f64 {
-        if let Some(self_grid) = &self.grid {
-            let qs: Vec<_> = (self.itaumin..self.itaumax)
-                .map(|itau| fq2(self.gettau(itau)))
-                .collect();
-            let x: Vec<_> = (0..self.ny).map(|iy| fx(self.gety(iy))).collect();
-
-            self_grid
-                .iter()
-                .zip(iproduct!(qs, &x, &x))
-                .map(|(&sigma, (q2, &x1, &x2))| {
-                    if sigma == 0.0 {
-                        0.0
-                    } else {
-                        let mut value = sigma * lumi(x1, x2, q2);
-                        if self.reweight {
-                            value *= weightfun(x1) * weightfun(x2);
-                        }
-                        value
-                    }
-                })
-                .sum()
-        } else {
-            0.0
-        }
-    }
-
-    fn convolute_with_points(
+    fn convolute(
         &self,
         x: &[f64],
         _: &[f64],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
         if let Some(self_grid) = &self.grid {
+            let lumi = lumi.left().unwrap();
             let qs: Vec<_> = (self.itaumin..self.itaumax).collect();
             let y: Vec<_> = (0..self.ny).collect();
 
