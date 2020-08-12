@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added the options `--absolute`, `--orders`, and `--lumis` to the subcommand
   `channels`
+- added Python interface to the C API, the the folder `wrappers/python` and the
+  example in `examples/python-dy-aa`
 
 ### Fixed
 
