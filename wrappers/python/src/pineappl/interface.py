@@ -2,7 +2,9 @@
 PineAPPL interface using ctypes
 """
 import ctypes
-from pineappl.loader import pineappl
+from pineappl.loader import pineappl_lib, AVAILABLE_KEYS
+from pineappl.loader import pineappl_lumi, pineappl_keyval, pineappl_grid
+
 
 class lumi:
     """Luminosity object, creates a new luminosity function.
@@ -24,13 +26,13 @@ class lumi:
 
     def __init__(self):
         self._lumi = ctypes.byref(
-            pineappl.pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
+            pineappl_lumi.from_address(pineappl_lib.pineappl_lumi_new())
         )
 
     def __del__(self):
         """The luminosity destructor method."""
         if self._lumi is not None:
-            pineappl.pineappl_lumi_delete(self._lumi)
+            pineappl_lib.pineappl_lumi_delete(self._lumi)
 
     def add(self, pdg_id_pairs, factors):
         """Adds a linear combination of initial states to the
@@ -46,7 +48,8 @@ class lumi:
             raise RuntimeError("pdg_id_pairs and factors size mismatch")
         type1 = ctypes.c_int32 * len(pdg_id_pairs)
         type2 = ctypes.c_double * len(factors)
-        pineappl.pineappl_lumi_add(self._lumi, combinations, type1(*pdg_id_pairs), type2(*factors))
+        pineappl_lib.pineappl_lumi_add(
+            self._lumi, combinations, type1(*pdg_id_pairs), type2(*factors))
 
 
 class grid:
@@ -89,22 +92,23 @@ class grid:
         if len(bin_limits) < 2:
             raise RuntimeError("bin_limits lenght must be larger than 2.")
         if len(order_params) % 4 != 0:
-            raise RuntimeError("order_params lenght must be a multiple of four.")
+            raise RuntimeError(
+                "order_params lenght must be a multiple of four.")
         if key_vals is not None:
             if not isinstance(key_vals, dict):
                 raise ValueError("key_vals must be a dictionnary.")
 
         # allocating keyvals
         self._keyval = ctypes.byref(
-            pineappl.pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
+            pineappl_keyval.from_address(pineappl_lib.pineappl_keyval_new())
         )
 
         if key_vals is not None:
             for key, value in key_vals.items():
-                if key in pineappl.AVAILABLE_KEYS:
+                if key in AVAILABLE_KEYS:
                     if isinstance(value, str):
                         value = value.encode('utf-8')
-                    pineappl.AVAILABLE_KEYS.get(key)(self._keyval,
+                    AVAILABLE_KEYS.get(key)(self._keyval,
                                             key.encode('utf-8'),
                                             value)
 
@@ -113,8 +117,8 @@ class grid:
         type1 = ctypes.c_uint32 * len(order_params)
         type2 = ctypes.c_double * len(bin_limits)
         self._grid = ctypes.byref(
-            pineappl.pineappl_grid.from_address(
-                pineappl.pineappl_grid_new(
+            pineappl_grid.from_address(
+                pineappl_lib.pineappl_grid_new(
                     luminosity._lumi, orders, type1(*order_params),
                     bins, type2(*bin_limits),
                     self._keyval)
@@ -124,9 +128,9 @@ class grid:
     def __del__(self):
         """The grid destructor method."""
         if self._keyval is not None:
-            pineappl.pineappl_keyval_delete(self._keyval)
+            pineappl_lib.pineappl_keyval_delete(self._keyval)
         if self._grid is not None:
-            pineappl.pineappl_grid_delete(self._grid)
+            pineappl_lib.pineappl_grid_delete(self._grid)
 
     def fill(self, x1, x2, q2, order, observable, lumi, weight):
         """Fills the grid for a specific kinematics.
@@ -140,7 +144,7 @@ class grid:
             lumi (int): the luminosity channel value.
             weight (float): the event weight.
         """
-        pineappl.pineappl_grid_fill(self._grid,
+        pineappl_lib.pineappl_grid_fill(self._grid,
                                     x1, x2, q2,
                                     order, observable,
                                     lumi, weight)
@@ -151,4 +155,4 @@ class grid:
         Args:
             filename (str): the filename for the grid storage.
         """
-        pineappl.pineappl_grid_write(self._grid, filename.encode('utf-8'))
+        pineappl_lib.pineappl_grid_write(self._grid, filename.encode('utf-8'))
