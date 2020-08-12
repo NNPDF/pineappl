@@ -12,10 +12,16 @@
 #
 import os
 import sys
+import re
 from recommonmark.transform import AutoStructify
 
-sys.path.insert(0, os.path.abspath(".."))
-import pineappl
+versionfile = '../../src/pineappl/__init__.py'
+initfile_lines = open(versionfile, 'rt').readlines()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+for line in initfile_lines:
+    mo = re.search(VSRE, line, re.M)
+    if mo:
+        version = mo.group(1)
 
 
 # -- Project information -----------------------------------------------------
@@ -25,7 +31,7 @@ copyright = "2020 by PineAPPL team"
 author = "The PineAPPL team"
 
 # The full version, including alpha/beta/rc tags
-release = pineappl.__version__
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -90,6 +96,7 @@ doctest_path = [os.path.abspath("../examples")]
 # -- Autodoc ------------------------------------------------------------------
 #
 autodoc_member_order = "bysource"
+autodoc_mock_imports = ["pineappl.loader"]
 
 # Adapted this from
 # https://github.com/readthedocs/recommonmark/blob/ddd56e7717e9745f11300059e4268e204138a6b1/docs/conf.py

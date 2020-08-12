@@ -2,73 +2,7 @@
 PineAPPL interface using ctypes
 """
 import ctypes
-import pkgconfig
-
-
-# Loading pineppl library.
-if not pkgconfig.exists('pineappl_capi'):
-    raise RuntimeError('Cannot find the PineAPPL C-API, please make' \
-                       'sure pkgconfig is able to access the pineappl')
-
-paths = pkgconfig.libs('pineappl_capi').split(' ')
-libdir = f'{paths[0][2:]}/lib{paths[1][2:]}.so'
-pineappl = ctypes.CDLL(libdir)
-
-# Mirror C structures in python.
-class pineappl_lumi(ctypes.Structure):
-    pass
-
-
-class pineappl_keyval(ctypes.Structure):
-    pass
-
-
-class pineappl_grid(ctypes.Structure):
-    pass
-
-
-# Specify the return and argument types.
-pineappl.pineappl_lumi_new.restype = ctypes.c_void_p
-pineappl.pineappl_keyval_new.restype = ctypes.c_void_p
-pineappl.pineappl_grid_new.restype = ctypes.c_void_p
-pineappl.pineappl_grid_fill.argtypes = [
-    ctypes.POINTER(pineappl_grid),
-    ctypes.c_double, ctypes.c_double, ctypes.c_double,
-    ctypes.c_uint, ctypes.c_double, ctypes.c_uint, ctypes.c_double
-]
-pineappl.pineappl_keyval_set_double.argtypes = [
-    ctypes.POINTER(pineappl_keyval),
-    ctypes.c_char_p,
-    ctypes.c_double
-]
-pineappl.pineappl_keyval_set_int.argtypes = [
-    ctypes.POINTER(pineappl_keyval),
-    ctypes.c_char_p,
-    ctypes.c_int
-]
-pineappl.pineappl_keyval_set_bool.argtypes= [
-    ctypes.POINTER(pineappl_keyval),
-    ctypes.c_char_p,
-    ctypes.c_bool
-]
-pineappl.pineappl_keyval_set_string.argtypes = [
-    ctypes.POINTER(pineappl_keyval),
-    ctypes.c_char_p,
-    ctypes.c_char_p
-]
-AVAILABLE_KEYS = {
-    'q2_bins': pineappl.pineappl_keyval_set_int,
-    'q2_max': pineappl.pineappl_keyval_set_double,
-    'q2_min': pineappl.pineappl_keyval_set_double,
-    'q2_order': pineappl.pineappl_keyval_set_int,
-    'reweight': pineappl.pineappl_keyval_set_bool,
-    'x_bins': pineappl.pineappl_keyval_set_int,
-    'x_max': pineappl.pineappl_keyval_set_double,
-    'x_min': pineappl.pineappl_keyval_set_double,
-    'x_order': pineappl.pineappl_keyval_set_int,
-    'subgrid_type': pineappl.pineappl_keyval_set_string,
-}
-
+from pineappl.loader import pineappl
 
 class lumi:
     """Luminosity object, creates a new luminosity function.
@@ -90,7 +24,7 @@ class lumi:
 
     def __init__(self):
         self._lumi = ctypes.byref(
-            pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
+            pineappl.pineappl_lumi.from_address(pineappl.pineappl_lumi_new())
         )
 
     def __del__(self):
@@ -135,10 +69,9 @@ class grid:
             # create luminosity and key val objects
             lumi = pineappl.lumi()
             lumi.add(pdg_ids, factors)
-            keyval = pineappl.keyval()
 
             # create grid
-            grid = pineappl.grid(lumi, orders, bins, keyval)
+            grid = pineappl.grid(lumi, orders, bins)
 
             # fill grid
             grid.fill(x1, x2, q2, orders, observable, lumi, weight)
@@ -163,15 +96,15 @@ class grid:
 
         # allocating keyvals
         self._keyval = ctypes.byref(
-            pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
+            pineappl.pineappl_keyval.from_address(pineappl.pineappl_keyval_new())
         )
 
         if key_vals is not None:
             for key, value in key_vals.items():
-                if key in AVAILABLE_KEYS:
+                if key in pineappl.AVAILABLE_KEYS:
                     if isinstance(value, str):
                         value = value.encode('utf-8')
-                    AVAILABLE_KEYS.get(key)(self._keyval,
+                    pineappl.AVAILABLE_KEYS.get(key)(self._keyval,
                                             key.encode('utf-8'),
                                             value)
 
@@ -180,7 +113,7 @@ class grid:
         type1 = ctypes.c_uint32 * len(order_params)
         type2 = ctypes.c_double * len(bin_limits)
         self._grid = ctypes.byref(
-            pineappl_grid.from_address(
+            pineappl.pineappl_grid.from_address(
                 pineappl.pineappl_grid_new(
                     luminosity._lumi, orders, type1(*order_params),
                     bins, type2(*bin_limits),
