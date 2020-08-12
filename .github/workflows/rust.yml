@@ -34,22 +34,17 @@ jobs:
     - name: Install NNPDF31_nlo_as_0118_luxqed
       run: |
         lhapdf install NNPDF31_nlo_as_0118_luxqed
-    - name: Install latest nightly
+    - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
           default: true
-    - name: Run cargo build
+    - name: Run cargo check
       uses: actions-rs/cargo@v1
       with:
-        command: build
+        command: check
         args: --verbose
-    - name: Run cargo test
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --verbose
-    - name: Run cargo-tarpaulin
+    - name: Generate doctest coverage
       uses: actions-rs/tarpaulin@v0.1
       with:
         args: --workspace --exclude pineappl_cli --exclude pineappl_capi --ignore-tests
@@ -67,19 +62,19 @@ jobs:
       run: |
         ls -alR $HOME/prefix
         cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
-    - name: Test C example
+    - name: Test C++ example
       run: |
         cd examples/capi-dy-aa
         make
         ./dyaa
         cd ../../
-    - name: Install python wrapper
+    - name: Install Python wrapper
       run: |
         python -m pip install --upgrade pip
         cd wrappers/python
         pip install .
         cd ../../
-    - name: Test python example
+    - name: Test Python example
       run: |
         cd examples/python-dy-aa
         python main.py
