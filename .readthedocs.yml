@@ -1,0 +1,14 @@
+version: 2
+
+sphinx:
+    builder: html
+    configuration: wrappers/python/doc/source/conf.py
+
+python:
+    version: 3.7
+    install:
+        - method: pip
+          path: wrappers/python
+          extra_requirements:
+              - docs
+    system_packages: true
