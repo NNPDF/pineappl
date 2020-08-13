@@ -93,8 +93,7 @@ def fill_grid(grid, calls):
         grid.fill(x1, x2, q2, 0, np.abs(yll), 0, weight)
 
 
-def test_sanity():
-    """Check that pineappl is consistent."""
+def simulate():
     # create a new luminosity function for the $\gamma\gamma$ initial state
     np.random.seed(0)
 
@@ -112,17 +111,35 @@ def test_sanity():
     # fill the grid with phase-space points
     fill_grid(grid, 100000)
 
+    return grid
+
+
+def convolute(grid):
     def xfx(id, x, q2, p):
         return 1
-
     def alphas(q2, p):
         return 1
+    return grid.convolute(xfx, xfx, alphas, None, None, 1.0, 1.0)
+
+
+def test_sanity():
+    """Check that pineappl is consistent."""
+    grid = simulate()
 
     # perform convolution
-    dxsec = grid.convolute(xfx, xfx, alphas, None, None, 1.0, 1.0)
+    dxsec = convolute(grid)
     assert_regression_fixture(dxsec, REGRESSION_FOLDER/'dxsec.out')
 
+
+def test_read_and_write(filename='DY-LO-AA.pineappl'):
+    """Check that read/write works"""
+    original_grid = simulate()
+
     # write the grid to disk
-    filename = 'DY-LO-AA.pineappl'
-    print(f'Writing PineAPPL grid to disk: {filename}')
-    grid.write(filename)
+    original_grid.write(filename)
+    original_dxsec = convolute(original_grid)
+
+    # read and check consistency
+    read_grid = pineappl.grid.read(filename)
+    read_dxsec = convolute(read_grid)
+    np.testing.assert_allclose(original_dxsec, read_dxsec)
