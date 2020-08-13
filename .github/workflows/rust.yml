@@ -71,10 +71,13 @@ jobs:
     - name: Install Python wrapper
       run: |
         python -m pip install --upgrade pip
+        pip install pylint
+        pip install pytest
         cd wrappers/python
         pip install .
-        cd ../../
-    - name: Test Python example
+    - name: Test with pylint
       run: |
-        cd examples/python-dy-aa
-        python main.py
+        pylint src -E -d E1123,E1120
+    - name: Test with pytest
+      run: |
+        pytest --pyargs pineappl
