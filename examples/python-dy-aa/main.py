@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import pineappl
+import lhapdf
 import numpy as np
 
 
@@ -82,6 +83,20 @@ def main():
     # fill the grid with phase-space points
     print('Generating events, please wait...')
     fill_grid(grid, 100000)
+
+    # load pdf for testing
+    pdf = lhapdf.mkPDF('NNPDF31_nlo_as_0118_luxqed', 0)
+
+    def xfx(id, x, q2, p):
+        return pdf.xfxQ2(id, x, q2)
+
+    def alphas(q2, p):
+        return pdf.alphasQ2(q2)
+
+    # perform convolution
+    dxsec = grid.convolute(xfx, xfx, alphas, None, None, 1.0, 1.0)
+    for i in range(len(dxsec)):
+        print(f'{bins[i]:.1f} {bins[i + 1]:.1f} {dxsec[i]:.3e}')
 
     # write the grid to disk
     filename = 'DY-LO-AA.pineappl'
