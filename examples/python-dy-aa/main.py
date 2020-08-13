@@ -44,7 +44,7 @@ def fill_grid(grid, calls):
     # in GeV^2 pbarn
     hbarc2 = 389379372.1
 
-    for i in range(calls):
+    for _ in range(calls):
         s, t, u, x1, x2, jacobian = hadronic_pspgen(10.0, 7000.0)
 
         ptl = np.sqrt((t * u / s))
