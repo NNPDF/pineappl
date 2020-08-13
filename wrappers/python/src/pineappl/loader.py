@@ -53,6 +53,11 @@ pineappl_lib.pineappl_keyval_set_string.argtypes = [
     ctypes.c_char_p,
     ctypes.c_char_p
 ]
+xfx_callback_prototype = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_int32,
+                                          ctypes.c_double, ctypes.c_double,
+                                          ctypes.c_void_p)
+as_callback_prototype = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double,
+                                         ctypes.c_void_p)
 AVAILABLE_KEYS = {
     'q2_bins': pineappl_lib.pineappl_keyval_set_int,
     'q2_max': pineappl_lib.pineappl_keyval_set_double,
