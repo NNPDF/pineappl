@@ -2,8 +2,10 @@
 PineAPPL interface using ctypes
 """
 import ctypes
+import numpy as np
 from pineappl.loader import pineappl_lib, AVAILABLE_KEYS
 from pineappl.loader import pineappl_lumi, pineappl_keyval, pineappl_grid
+from pineappl.loader import xfx_callback_prototype, as_callback_prototype
 
 
 class lumi:
@@ -79,6 +81,18 @@ class grid:
             # fill grid
             grid.fill(x1, x2, q2, orders, observable, lumi, weight)
 
+            # load pdf for testing
+            pdf = lhapdf.mkPDF('NNPDF31_nlo_as_0118_luxqed', 0)
+
+            def xfx(id, x, q2, p):
+                return pdf.xfxQ2(id, x, q2)
+
+            def alphas(q2, p):
+                return pdf.alphasQ2(q2)
+
+            # perform convolution
+            result = grid.convolute(xfx, xfx, alphas, None, None, None, 1.0, 1.0)
+
             # write grid to file
             grid.write('my_grid.pineappl')
     """
@@ -113,14 +127,14 @@ class grid:
                                             value)
 
         orders = len(order_params) // 4
-        bins = len(bin_limits) - 1
+        self._bins = len(bin_limits) - 1
         type1 = ctypes.c_uint32 * len(order_params)
         type2 = ctypes.c_double * len(bin_limits)
         self._grid = ctypes.byref(
             pineappl_grid.from_address(
                 pineappl_lib.pineappl_grid_new(
                     luminosity._lumi, orders, type1(*order_params),
-                    bins, type2(*bin_limits),
+                    self._bins, type2(*bin_limits),
                     self._keyval)
             )
         )
@@ -148,6 +162,41 @@ class grid:
                                     x1, x2, q2,
                                     order, observable,
                                     lumi, weight)
+
+    def convolute(self, xfx1, xfx2, alphas, order_mask, lumi_mask, xi_ren, xi_fac):
+        """Convolutes the grid with the PDFs and strong coupling.
+
+        Args:
+            xfx1 (function): xfxQ2 function of (id, x, q2, p) for parton 1.
+            xfx2 (function): xfxQ2 function of (id, x, q2, p) for parton 2.
+            alphas (function): alphasQ2 function of (q2, p).
+            order_mask (array): must be provided as long as there are perturbative orders.
+            lumi_mask (array): specify the luminosity mask.
+            xi_ren (float): renomarlization scale.
+            xi_fac (floag): factorization scale.
+
+        Return:
+            A numpy array with the convolution output for each bin.
+        """
+        cxfx1 = xfx_callback_prototype(xfx1)
+        cxfx2 = xfx_callback_prototype(xfx2)
+        calphas = as_callback_prototype(alphas)
+
+        if order_mask is not None:
+            type1 = ctypes.c_bool * len(order_mask)
+            order_mask = type1(*order_mask)
+        if lumi_mask is not None:
+            type2 = ctypes.c_bool * len(lumi_mask)
+            lumi_mask = type2(*lumi_mask)
+
+        result = np.ones(self._bins, dtype=np.float64)
+        pineappl_lib.pineappl_grid_convolute(
+            self._grid, cxfx1, cxfx2, calphas, None,
+            order_mask, lumi_mask,
+            ctypes.c_double(xi_ren), ctypes.c_double(xi_fac),
+            ctypes.c_void_p(result.ctypes.data)
+        )
+        return result
 
     def write(self, filename):
         """Write grid to disk.
