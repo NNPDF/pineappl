@@ -28,6 +28,7 @@ class pineappl_grid(ctypes.Structure):
 pineappl_lib.pineappl_lumi_new.restype = ctypes.c_void_p
 pineappl_lib.pineappl_keyval_new.restype = ctypes.c_void_p
 pineappl_lib.pineappl_grid_new.restype = ctypes.c_void_p
+pineappl_lib.pineappl_grid_read.restype = ctypes.c_void_p
 pineappl_lib.pineappl_grid_fill.argtypes = [
     ctypes.POINTER(pineappl_grid),
     ctypes.c_double, ctypes.c_double, ctypes.c_double,

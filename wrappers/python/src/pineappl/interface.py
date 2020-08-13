@@ -57,6 +57,7 @@ class lumi:
 class grid:
     """The PineAPPL grid object. Creates a new and empty grid.
        The creation requires four different sets of parameters.
+       You can load the pineappl grid from file using the `grid.read` method.
 
     Args:
         luminosity (pineappl.interface.lumi): the luminosity function that
@@ -97,47 +98,48 @@ class grid:
             grid.write('my_grid.pineappl')
     """
 
-    def __init__(self, luminosity, order_params, bin_limits, key_vals=None):
+    def __init__(self, luminosity=None, order_params=None, bin_limits=None, key_vals=None):
         # initialize
         self._keyval = None
         self._grid = None
 
-        # basic checks
-        if len(bin_limits) < 2:
-            raise RuntimeError("bin_limits lenght must be larger than 2.")
-        if len(order_params) % 4 != 0:
-            raise RuntimeError(
-                "order_params lenght must be a multiple of four.")
-        if key_vals is not None:
-            if not isinstance(key_vals, dict):
-                raise ValueError("key_vals must be a dictionnary.")
+        if None not in [luminosity, order_params, bin_limits]:
+            # basic checks
+            if len(bin_limits) < 2:
+                raise RuntimeError("bin_limits lenght must be larger than 2.")
+            if len(order_params) % 4 != 0:
+                raise RuntimeError(
+                    "order_params lenght must be a multiple of four.")
+            if key_vals is not None:
+                if not isinstance(key_vals, dict):
+                    raise ValueError("key_vals must be a dictionnary.")
 
-        # allocating keyvals
-        self._keyval = ctypes.byref(
-            pineappl_keyval.from_address(pineappl_lib.pineappl_keyval_new())
-        )
-
-        if key_vals is not None:
-            for key, value in key_vals.items():
-                if key in AVAILABLE_KEYS:
-                    if isinstance(value, str):
-                        value = value.encode('utf-8')
-                    AVAILABLE_KEYS.get(key)(self._keyval,
-                                            key.encode('utf-8'),
-                                            value)
-
-        orders = len(order_params) // 4
-        self._bins = len(bin_limits) - 1
-        type1 = ctypes.c_uint32 * len(order_params)
-        type2 = ctypes.c_double * len(bin_limits)
-        self._grid = ctypes.byref(
-            pineappl_grid.from_address(
-                pineappl_lib.pineappl_grid_new(
-                    luminosity._lumi, orders, type1(*order_params),
-                    self._bins, type2(*bin_limits),
-                    self._keyval)
+            # allocating keyvals
+            self._keyval = ctypes.byref(
+                pineappl_keyval.from_address(pineappl_lib.pineappl_keyval_new())
             )
-        )
+
+            if key_vals is not None:
+                for key, value in key_vals.items():
+                    if key in AVAILABLE_KEYS:
+                        if isinstance(value, str):
+                            value = value.encode('utf-8')
+                        AVAILABLE_KEYS.get(key)(self._keyval,
+                                                key.encode('utf-8'),
+                                                value)
+
+            orders = len(order_params) // 4
+            bins = len(bin_limits) - 1
+            type1 = ctypes.c_uint32 * len(order_params)
+            type2 = ctypes.c_double * len(bin_limits)
+            self._grid = ctypes.byref(
+                pineappl_grid.from_address(
+                    pineappl_lib.pineappl_grid_new(
+                        luminosity._lumi, orders, type1(*order_params),
+                        bins, type2(*bin_limits),
+                        self._keyval)
+                )
+            )
 
     def __del__(self):
         """The grid destructor method."""
@@ -189,7 +191,7 @@ class grid:
             type2 = ctypes.c_bool * len(lumi_mask)
             lumi_mask = type2(*lumi_mask)
 
-        result = np.ones(self._bins, dtype=np.float64)
+        result = np.ones(self.bin_count(), dtype=np.float64)
         pineappl_lib.pineappl_grid_convolute(
             self._grid, cxfx1, cxfx2, calphas, None,
             order_mask, lumi_mask,
@@ -205,3 +207,23 @@ class grid:
             filename (str): the filename for the grid storage.
         """
         pineappl_lib.pineappl_grid_write(self._grid, filename.encode('utf-8'))
+
+    def bin_count(self):
+        """Return bin count."""
+        return pineappl_lib.pineappl_grid_bin_count(self._grid)
+
+    @classmethod
+    def read(cls, filename):
+        """Read grid from file.
+
+        Args:
+            filename (str): the filename for the pineappl grid.
+
+        Returns:
+            A pineappl grid object.
+        """
+        obj = cls()
+        obj._grid = ctypes.byref(
+            pineappl_grid.from_address(pineappl_lib.pineappl_grid_read(filename.encode('utf-8')))
+            )
+        return obj
