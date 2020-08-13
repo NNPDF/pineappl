@@ -27,7 +27,7 @@ def assert_regression_fixture(array, filename):
     except: # pragma: no cover
         np.savetxt(filename, array)
         array_fixture = load(filename)
-    np.testing.assert_allclose(array, array_fixture, rtol=1e-5)
+    np.testing.assert_allclose(array, array_fixture, rtol=1e-12)
 
 
 def int_photo(s, t, u):
