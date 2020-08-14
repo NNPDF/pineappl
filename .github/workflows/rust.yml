@@ -67,6 +67,7 @@ jobs:
         cd examples/capi-dy-aa
         make
         ./dyaa
+        test -f ./DY-LO-AA.pineappl
         cd ../../
     - name: Install Python wrapper
       run: |
