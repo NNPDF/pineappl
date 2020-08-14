@@ -75,9 +75,7 @@ jobs:
         pip install pytest
         cd wrappers/python
         pip install .
-    - name: Test with pylint
-      run: |
-        pylint wrappers/python/src -E -d E1123,E1120
+        pylint src -E -d E1123,E1120
     - name: Test with pytest
       run: |
         pytest --pyargs pineappl
