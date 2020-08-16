@@ -4,8 +4,9 @@ import pkgconfig
 
 # Loading pineppl library.
 if not pkgconfig.exists('pineappl_capi'):
-    raise RuntimeError('Cannot find the PineAPPL C-API, please make' \
-                       'sure pkgconfig is able to access the pineappl')
+    raise RuntimeError('Cannot find the PineAPPL C-API, please make sure ' \
+                       'the PineAPPL Rust library is properly installed and ' \
+                       'that pkgconfig is able to access the pineappl.pc file.')
 
 paths = pkgconfig.libs('pineappl_capi').split(' ')
 libdir = f'{paths[0][2:]}/lib{paths[1][2:]}.so'
