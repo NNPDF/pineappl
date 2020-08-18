@@ -277,7 +277,12 @@ fn convolute(
     Ok(table)
 }
 
-fn orders(input: &str, pdfset: &str, absolute: bool) -> Result<Table, Box<dyn Error>> {
+fn orders(
+    input: &str,
+    pdfset: &str,
+    absolute: bool,
+    normalize: &[(u32, u32)],
+) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
@@ -354,12 +359,16 @@ fn orders(input: &str, pdfset: &str, absolute: bool) -> Result<Table, Box<dyn Er
         row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
         row.add_cell(cell!(r->&format!("{:.7e}", value)));
 
-        let mut leading_order = 0.0;
+        let mut normalization = 0.0;
 
         // calculate the sum of all leading orders
         for (index, order) in sorted_grid_orders.iter().enumerate() {
-            if (order.alphas + order.alpha) == lo_power {
-                leading_order += order_results[unsorted_indices[index]][bin];
+            if (normalize.is_empty() && ((order.alphas + order.alpha) == lo_power))
+                || (normalize
+                    .iter()
+                    .any(|o| *o == (order.alphas, order.alpha)))
+            {
+                normalization += order_results[unsorted_indices[index]][bin];
             }
         }
 
@@ -370,7 +379,7 @@ fn orders(input: &str, pdfset: &str, absolute: bool) -> Result<Table, Box<dyn Er
             if absolute {
                 row.add_cell(cell!(r->&format!("{:.7e}", result)));
             } else {
-                row.add_cell(cell!(r->&format!("{:.2}%", result / leading_order * 100.0)));
+                row.add_cell(cell!(r->&format!("{:.2}%", result / normalization * 100.0)));
             }
         }
     }
@@ -802,6 +811,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
             (@arg absolute: -a --absolute "Show absolute numbers of each perturbative order")
+            (@arg normalize: -n --normalize +use_delimiter min_values(1) conflicts_with("absolute")
+                "Normalize contributions to the specified orders")
         )
         (@subcommand pdf_uncertainty =>
             (about: "Calculates PDF uncertainties")
@@ -896,8 +907,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let absolute = matches.is_present("absolute");
+        let normalize: Vec<_> = matches
+            .values_of("normalize")
+            .map_or(vec![], |values| values.map(parse_order).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
-        orders(input, pdfset, absolute)?.printstd();
+        orders(input, pdfset, absolute, &normalize)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();

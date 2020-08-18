@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `channels`
 - added Python interface to the C API, the the folder `wrappers/python` and the
   example in `examples/python-dy-aa`
+- added the option `--normalize` to the subcommand `orders`, which can be used
+  to specify the orders that should be used to normalize to.
 
 ### Fixed
 
