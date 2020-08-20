@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_capi"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -14,4 +14,4 @@ description = "C language interface to PineAPPL"
 crate-type = ["cdylib"]
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.2.0" }
+pineappl = { path = "../pineappl", version = "0.3.0" }
