@@ -9,7 +9,7 @@ The PineAPPL package comes with the following modules:
 
 _______________________
 
-. _installing-with-conda:
+.. _installing-with-conda:
 
 Installing with conda
 ---------------------
