@@ -6,7 +6,17 @@ This package implements the Python interface to the Rust library.
 
 ## Installation
 
-The installation using `pip` is the recommended approach to install PineAPPL.
+### Using conda
+
+The installation using `conda` is the recommended approach to install PineAPPL.
+The conda package provides the python interface and a precompiled version of the PineAPPL library.
+
+Make sure you have working conda environment and then perform a:
+```
+conda install -c conda-forge pineappl
+```
+
+### Using pip
 
 Make sure you have Python 3.6 or greater, then use `pip` to install PineAPPL with:
 
@@ -17,7 +27,6 @@ pip install pineappl
 The `pip` program will download and install all the required dependencies for the PineAPPL python wrapper.
 
 **Note that** the `pip` packages install just the python wrapper for the Rust PineAPPL library. Before using the python wrapper make sure you have installed the Rust PineAPPL library properly.
-
 
 ## Documentation
 
