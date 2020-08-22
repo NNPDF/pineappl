@@ -3,17 +3,33 @@ Installing PineAPPL
 
 The PineAPPL package comes with the following modules:
 
+* :ref:`installing-with-conda`
 * :ref:`installing-with-pip`
 * :ref:`installing-from-source`
 
 _______________________
 
+. _installing-with-conda:
+
+Installing with conda
+---------------------
+
+The installation using ``conda`` is the recommended approach to install PineAPPL.
+
+Make sure you have a working conda environment and then use the `conda` program to install
+``pineappl`` with:
+
+.. code-block:: bash
+
+      conda install -c conda-forge pineappl
+
+The ``conda`` program will download and install all the required
+dependencies for the PineAPPL (precompiled library) and the python interface.
+
 .. _installing-with-pip:
 
 Installing with pip
 -------------------
-
-The installation using ``pip`` is the recommended approach to install PineAPPL.
 
 Make sure you have Python 3.6 or greater, then use ``pip`` to install
 ``pineappl`` with:
