@@ -12,7 +12,6 @@ use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::convert::TryInto;
@@ -81,19 +80,19 @@ impl Order {
     }
 }
 
+/// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
 #[derive(Deserialize, Serialize)]
-enum SubgridEnum {
+pub enum SubgridEnum {
+    /// Lagrange-interpolation subgrid.
     LagrangeSubgridV1,
+    /// N-tuple subgrid.
     NtupleSubgridV1,
 }
 
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// Returns `self` as an `Any` type.
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-
     /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
     fn grid_q2(&self) -> Vec<f64>;
@@ -121,7 +120,7 @@ pub trait Subgrid {
     fn is_empty(&self) -> bool;
 
     /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut dyn Subgrid);
+    fn merge(&mut self, other: &mut SubgridEnum);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);

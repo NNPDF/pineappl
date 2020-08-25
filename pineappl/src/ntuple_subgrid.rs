@@ -1,9 +1,8 @@
 //! Provides an implementation of the `Grid` trait with n-tuples.
 
-use super::grid::{Ntuple, Subgrid};
+use super::grid::{Ntuple, Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
@@ -20,10 +19,6 @@ impl NtupleSubgridV1 {
 }
 
 impl Subgrid for NtupleSubgridV1 {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn convolute(
         &self,
         _: &[f64],
@@ -56,11 +51,12 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.is_empty()
     }
 
-    fn merge(&mut self, other: &mut dyn Subgrid) {
-        if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
-            self.ntuples.append(&mut other_grid.ntuples);
-        } else {
-            todo!();
+    fn merge(&mut self, other: &mut SubgridEnum) {
+        match other {
+            SubgridEnum::NtupleSubgridV1(other_grid) => {
+                self.ntuples.append(&mut other_grid.ntuples);
+            }
+            _ => todo!(),
         }
     }
 
@@ -76,7 +72,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut subgrid = NtupleSubgridV1::new();
+        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
         assert!(subgrid.is_empty());
 
         subgrid.fill(&Ntuple {
@@ -98,7 +94,7 @@ mod tests {
             2.5 + 56.25
         );
 
-        let mut other_subgrid = NtupleSubgridV1::new();
+        let mut other_subgrid: SubgridEnum = NtupleSubgridV1::new().into();
 
         other_subgrid.fill(&Ntuple {
             x1: 0.25,

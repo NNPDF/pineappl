@@ -1,13 +1,12 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::convert::{f64_from_usize, usize_from_f64};
-use super::grid::{Ntuple, Subgrid, SubgridParams};
+use super::grid::{Ntuple, Subgrid, SubgridEnum, SubgridParams};
 use arrayvec::ArrayVec;
 use either::Either;
 use itertools::iproduct;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 use std::mem;
 
 fn weightfun(x: f64) -> f64 {
@@ -128,10 +127,6 @@ impl LagrangeSubgridV1 {
 }
 
 impl Subgrid for LagrangeSubgridV1 {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn convolute(
         &self,
         x: &[f64],
@@ -245,31 +240,32 @@ impl Subgrid for LagrangeSubgridV1 {
         self.grid.is_none()
     }
 
-    fn merge(&mut self, other: &mut dyn Subgrid) {
-        if let Some(other_grid) = other.as_any_mut().downcast_mut::<Self>() {
-            if let Some(other_grid_grid) = &mut other_grid.grid {
-                if self.grid.is_some() {
-                    let new_itaumin = self.itaumin.min(other_grid.itaumin);
-                    let new_itaumax = self.itaumax.max(other_grid.itaumax);
-                    let offset = other_grid.itaumin.saturating_sub(self.itaumin);
+    fn merge(&mut self, other: &mut SubgridEnum) {
+        match other {
+            SubgridEnum::LagrangeSubgridV1(other_grid) => {
+                if let Some(other_grid_grid) = &mut other_grid.grid {
+                    if self.grid.is_some() {
+                        let new_itaumin = self.itaumin.min(other_grid.itaumin);
+                        let new_itaumax = self.itaumax.max(other_grid.itaumax);
+                        let offset = other_grid.itaumin.saturating_sub(self.itaumin);
 
-                    // TODO: we need much more checks here if there subgrids are compatible at all
+                        // TODO: we need much more checks here if there subgrids are compatible at all
 
-                    if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
-                        self.increase_tau(new_itaumin, new_itaumax);
+                        if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
+                            self.increase_tau(new_itaumin, new_itaumax);
+                        }
+
+                        let self_grid = self.grid.as_mut().unwrap();
+
+                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
+                    } else {
+                        self.grid = other_grid.grid.take();
                     }
-
-                    let self_grid = self.grid.as_mut().unwrap();
-
-                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                        self_grid[[i + offset, j, k]] += value;
-                    }
-                } else {
-                    self.grid = other_grid.grid.take();
                 }
             }
-        } else {
-            todo!();
+            _ => todo!(),
         }
     }
 
