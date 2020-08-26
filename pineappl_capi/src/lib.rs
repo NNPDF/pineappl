@@ -49,6 +49,21 @@ pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *
     }
 }
 
+/// Stores the bin limits of `grid` in `bin_limits`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `bin_limits` must point to an array that is
+/// one element longer as `grid` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits: *mut f64) {
+    let limits = (*grid).bin_limits();
+    let bin_limits = slice::from_raw_parts_mut(bin_limits, limits.bins() + 1);
+
+    bin_limits.copy_from_slice(&limits.limits());
+}
+
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
 /// These functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given
 /// PDG id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with
@@ -201,6 +216,17 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
         },
         slice::from_raw_parts(weights, grid.lumi().len()),
     );
+}
+
+/// Return the luminosity function of `grid`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> *mut Lumi {
+    Box::into_raw(Box::new(Lumi((*grid).lumi().to_vec())))
 }
 
 /// Write the order parameters of `grid` into `order_params`.
@@ -436,6 +462,28 @@ pub unsafe extern "C" fn pineappl_lumi_add(
     ));
 }
 
+/// Returns the number of combinations of the luminosity function `lumi` for the specified entry.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
+/// `pineappl_grid_lumi`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *mut Lumi, entry: usize) -> usize {
+    (*lumi).0[entry].entry().len()
+}
+
+/// Returns the number of channel for the luminosity function `lumi`.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
+/// `pineappl_grid_lumi`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_lumi_count(lumi: *mut Lumi) -> usize {
+    (*lumi).0.len()
+}
+
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
 ///
 /// # Safety
@@ -444,6 +492,38 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_delete(lumi: *mut Lumi) {
     Box::from_raw(lumi);
+}
+
+/// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
+/// factors will be copied into `pdg_ids` and `factors`.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
+/// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
+/// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
+/// long.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_lumi_entry(
+    lumi: *mut Lumi,
+    entry: usize,
+    pdg_ids: *mut i32,
+    factors: *mut f64,
+) {
+    let entry = (*lumi).0[entry].entry();
+    let pdg_ids = slice::from_raw_parts_mut(pdg_ids, 2 * entry.len());
+    let factors = slice::from_raw_parts_mut(factors, entry.len());
+
+    entry
+        .iter()
+        .flat_map(|(id1, id2, _)| vec![id1, id2])
+        .zip(pdg_ids.iter_mut())
+        .for_each(|(from, to)| *to = *from);
+    entry
+        .iter()
+        .map(|(_, _, factor)| factor)
+        .zip(factors.iter_mut())
+        .for_each(|(from, to)| *to = *from);
 }
 
 /// Creates a new luminosity function and returns a pointer to it. If no longer needed, the object
