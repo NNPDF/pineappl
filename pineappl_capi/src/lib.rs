@@ -418,98 +418,6 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     (&mut *grid).scale_by_order(alphas, alpha, logxir, logxif, global);
 }
 
-/// Fills `buffer` with the q2-slice for the index `q2_slice` of the grid for the specified
-/// `order`, `bin`, and `lumi`.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. `buffer` must be as large as the square of the return value
-/// of `pineappl_grid_subgrid_x_grid_count`.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_q2_slice(
-    grid: *const Grid,
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    q2_slice: usize,
-    buffer: *mut f64,
-) {
-    let size = pineappl_grid_subgrid_x_grid_count(grid).pow(2);
-    (*grid)
-        .subgrid(order, bin, lumi)
-        .fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
-}
-
-/// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
-/// specified indices. The last slice that is filled is one minus the upper limit.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. `tuple` must point to an array with two elements.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_filled_q2_slices(
-    grid: *const Grid,
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    tuple: *mut usize,
-) {
-    let tuple = slice::from_raw_parts_mut(tuple, 2);
-    let slice = (*grid).subgrid(order, bin, lumi).q2_slice();
-    tuple[0] = slice.0;
-    tuple[1] = slice.1;
-}
-
-/// Writes into `buffer` the q2 values that the grid spans.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `buffer` must point to an array which is as
-/// large as the value returned by `pineappl_grid_subgrid_q2_grid_count`.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_q2_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_grid_subgrid_q2_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_q2());
-}
-
-/// Returns the number grid values in q2 direction.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_q2_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).grid_q2().len()
-}
-
-/// Writes into `buffer` the x values that the grid spans.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `buffer` must point to an array which is as
-/// large as the value returned by `pineappl_grid_subgrid_x_grid_count`.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_x_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_grid_subgrid_x_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_x());
-}
-
-/// Returns the number grid values in x direction.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_subgrid_x_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).grid_x().len()
-}
-
 /// Write `grid` to a file with name `filename`.
 ///
 /// # Safety
@@ -624,6 +532,98 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 #[must_use]
 pub extern "C" fn pineappl_lumi_new() -> *mut Lumi {
     Box::into_raw(Box::new(Lumi::default()))
+}
+
+/// Fills `buffer` with the q2-slice for the index `q2_slice` of the grid for the specified
+/// `order`, `bin`, and `lumi`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. `buffer` must be as large as the square of the return value
+/// of `pineappl_subgrid_x_grid_count`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
+    grid: *const Grid,
+    order: usize,
+    bin: usize,
+    lumi: usize,
+    q2_slice: usize,
+    buffer: *mut f64,
+) {
+    let size = pineappl_subgrid_x_grid_count(grid).pow(2);
+    (*grid)
+        .subgrid(order, bin, lumi)
+        .fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
+}
+
+/// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
+/// specified indices. The last slice that is filled is one minus the upper limit.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. `tuple` must point to an array with two elements.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
+    grid: *const Grid,
+    order: usize,
+    bin: usize,
+    lumi: usize,
+    tuple: *mut usize,
+) {
+    let tuple = slice::from_raw_parts_mut(tuple, 2);
+    let slice = (*grid).subgrid(order, bin, lumi).q2_slice();
+    tuple[0] = slice.0;
+    tuple[1] = slice.1;
+}
+
+/// Writes into `buffer` the q2 values that the grid spans.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `buffer` must point to an array which is as
+/// large as the value returned by `pineappl_subgrid_q2_grid_count`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_q2_grid(grid: *const Grid, buffer: *mut f64) {
+    let size = pineappl_subgrid_q2_grid_count(grid);
+    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_q2());
+}
+
+/// Returns the number grid values in q2 direction.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_q2_grid_count(grid: *const Grid) -> usize {
+    (*grid).subgrid(0, 0, 0).grid_q2().len()
+}
+
+/// Writes into `buffer` the x values that the grid spans.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `buffer` must point to an array which is as
+/// large as the value returned by `pineappl_subgrid_x_grid_count`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_x_grid(grid: *const Grid, buffer: *mut f64) {
+    let size = pineappl_subgrid_x_grid_count(grid);
+    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_x());
+}
+
+/// Returns the number grid values in x direction.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usize {
+    (*grid).subgrid(0, 0, 0).grid_x().len()
 }
 
 /// Key-value storage for passing optional information during grid creation with
