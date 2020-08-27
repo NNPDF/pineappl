@@ -124,6 +124,12 @@ pub trait Subgrid {
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
+
+    /// Returns the half-open interval of indices of filled q2 slices.
+    fn q2_slice(&self) -> (usize, usize);
+
+    /// Fill the q2-slice with index `q2_slice` into `grid`.
+    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
@@ -733,6 +739,12 @@ impl Grid {
     #[must_use]
     pub fn orders(&self) -> &[Order] {
         &self.orders
+    }
+
+    /// Returns the subgrid with the specified indices `order`, `bin`, and `lumi`.
+    #[must_use]
+    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
+        &self.subgrids[[order, bin, lumi]]
     }
 }
 

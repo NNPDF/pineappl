@@ -276,4 +276,18 @@ impl Subgrid for LagrangeSubgridV1 {
             self_grid.iter_mut().for_each(|x| *x *= factor);
         }
     }
+
+    fn q2_slice(&self) -> (usize, usize) {
+        (self.itaumin, self.itaumax)
+    }
+
+    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
+        if let Some(self_grid) = &self.grid {
+            grid.iter_mut().enumerate().for_each(|(index, value)| {
+                *value = self_grid[[q2_slice - self.itaumin, index / self.ny, index % self.ny]]
+            });
+        } else {
+            todo!();
+        }
+    }
 }

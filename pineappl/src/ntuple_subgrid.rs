@@ -52,16 +52,23 @@ impl Subgrid for NtupleSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum) {
-        match other {
-            SubgridEnum::NtupleSubgridV1(other_grid) => {
-                self.ntuples.append(&mut other_grid.ntuples);
-            }
-            _ => todo!(),
+        if let SubgridEnum::NtupleSubgridV1(other_grid) = other {
+            self.ntuples.append(&mut other_grid.ntuples);
+        } else {
+            todo!();
         }
     }
 
     fn scale(&mut self, factor: f64) {
         self.ntuples.iter_mut().for_each(|t| t.weight *= factor);
+    }
+
+    fn q2_slice(&self) -> (usize, usize) {
+        unimplemented!();
+    }
+
+    fn fill_q2_slice(&self, _: usize, _: &mut [f64]) {
+        unimplemented!();
     }
 }
 
