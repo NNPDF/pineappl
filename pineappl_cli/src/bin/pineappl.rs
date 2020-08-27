@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
 #[macro_use]
 extern crate clap;
 
@@ -158,8 +159,7 @@ fn convolute(
     };
     let pdf = pdfset
         .parse()
-        .map(Pdf::with_lhaid)
-        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+        .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
     let scales_vector = vec![
         (1.0, 1.0),
         (2.0, 2.0),
@@ -195,11 +195,10 @@ fn convolute(
 
     let other_results: Vec<f64> = other_pdfsets
         .iter()
-        .map(|pdfset| {
+        .flat_map(|pdfset| {
             let pdf = pdfset
                 .parse()
-                .map(Pdf::with_lhaid)
-                .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+                .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
             grid.convolute(
                 &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
                 &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
@@ -210,7 +209,6 @@ fn convolute(
                 &[(1.0, 1.0)],
             )
         })
-        .flatten()
         .collect();
 
     let bin_sizes = grid.bin_limits().bin_sizes();
@@ -286,8 +284,7 @@ fn orders(
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
-        .map(Pdf::with_lhaid)
-        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+        .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
     let grid_orders = grid.orders();
     let results = grid.convolute(
@@ -345,7 +342,7 @@ fn orders(
     title.add_cell(cell!(c->"xmax"));
     title.add_cell(cell!(c->"diff"));
 
-    for order in sorted_grid_orders.iter() {
+    for order in &sorted_grid_orders {
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
     }
 
@@ -392,23 +389,11 @@ fn diff(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box<dyn Error
     let grid2 = Grid::read(BufReader::new(File::open(input2)?))?;
     let pdf = pdfset
         .parse()
-        .map(Pdf::with_lhaid)
-        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+        .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
     let mut table = create_table();
 
-    if grid1.bin_limits() != grid2.bin_limits() {
-        print!("--- Bin limits: ");
-        for limit in grid1.bin_limits().limits() {
-            print!("{} ", limit);
-        }
-        println!();
-        print!("+++ Bin limits: ");
-        for limit in grid2.bin_limits().limits() {
-            print!("{} ", limit);
-        }
-        println!();
-    } else {
+    if grid1.bin_limits() == grid2.bin_limits() {
         let orders1: HashSet<_> = grid1
             .orders()
             .iter()
@@ -510,6 +495,17 @@ fn diff(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box<dyn Error
                     if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
             }
         }
+    } else {
+        print!("--- Bin limits: ");
+        for limit in grid1.bin_limits().limits() {
+            print!("{} ", limit);
+        }
+        println!();
+        print!("+++ Bin limits: ");
+        for limit in grid2.bin_limits().limits() {
+            print!("{} ", limit);
+        }
+        println!();
     }
 
     Ok(table)
@@ -563,7 +559,7 @@ fn luminosity(input: &str) -> Result<Table, Box<dyn Error>> {
         row.add_cell(cell!(&format!("{}", index)));
 
         for (id1, id2, factor) in entry.entry().iter() {
-            row.add_cell(cell!(&format!("{} × ({:2.}, {:2.})", factor, id1, id2)));
+            row.add_cell(cell!(&format!("{} \u{d7} ({:2.}, {:2.})", factor, id1, id2)));
         }
     }
 
@@ -581,8 +577,7 @@ fn channels(
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let pdf = pdfset
         .parse()
-        .map(Pdf::with_lhaid)
-        .unwrap_or_else(|_| Pdf::with_setname_and_member(pdfset, 0));
+        .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
     let limit = if lumis.is_empty() { limit } else { usize::MAX };
     let orders: Vec<_> = grid
         .orders()
@@ -683,8 +678,7 @@ fn pdf_uncertainty(
     let set = PdfSet::new(
         &pdfset
             .parse()
-            .map(|lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0)
-            .unwrap_or_else(|_| pdfset.to_string()),
+            .map_or_else(|_| pdfset.to_string(), |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0),
     );
     let pdfs = set.mk_pdfs();
 
