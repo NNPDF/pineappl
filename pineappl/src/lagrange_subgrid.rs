@@ -283,11 +283,75 @@ impl Subgrid for LagrangeSubgridV1 {
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
         if let Some(self_grid) = &self.grid {
+            let grid_x: Vec<_> = self
+                .grid_x()
+                .iter()
+                .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
+                .collect();
+
             grid.iter_mut().enumerate().for_each(|(index, value)| {
-                *value = self_grid[[q2_slice - self.itaumin, index / self.ny, index % self.ny]]
+                let ix1 = index / self.ny;
+                let ix2 = index % self.ny;
+                *value = self_grid[[q2_slice - self.itaumin, ix1, ix2]] * grid_x[ix1] * grid_x[ix2]
             });
         } else {
             todo!();
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use float_cmp::approx_eq;
+
+    #[test]
+    fn test_q2_slice() {
+        let mut grid = LagrangeSubgridV1::new(&SubgridParams::default());
+
+        grid.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.2,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid.fill(&Ntuple {
+            x1: 0.9,
+            x2: 0.1,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.01,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.5,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+
+        let x = grid.grid_x();
+        let q2 = grid.grid_x();
+
+        let reference = grid.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        let mut buffer = vec![0.0; x.len() * x.len()];
+        let mut test = 0.0;
+
+        for i in grid.q2_slice().0..grid.q2_slice().1 {
+            grid.fill_q2_slice(i, &mut buffer);
+
+            test += buffer.iter().sum::<f64>();
+        }
+
+        assert!(approx_eq!(f64, test, reference, ulps = 4));
     }
 }
