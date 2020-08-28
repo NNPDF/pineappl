@@ -469,7 +469,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *mut Lumi, entry: usize) -> usize {
+pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: usize) -> usize {
     (*lumi).0[entry].entry().len()
 }
 
