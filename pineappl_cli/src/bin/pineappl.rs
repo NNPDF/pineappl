@@ -1,7 +1,6 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
-#[macro_use]
-extern crate clap;
 
+use clap::{clap_app, crate_authors, crate_description, crate_version};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::grid::Grid;
