@@ -241,31 +241,30 @@ impl Subgrid for LagrangeSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum) {
-        match other {
-            SubgridEnum::LagrangeSubgridV1(other_grid) => {
-                if let Some(other_grid_grid) = &mut other_grid.grid {
-                    if self.grid.is_some() {
-                        let new_itaumin = self.itaumin.min(other_grid.itaumin);
-                        let new_itaumax = self.itaumax.max(other_grid.itaumax);
-                        let offset = other_grid.itaumin.saturating_sub(self.itaumin);
+        if let SubgridEnum::LagrangeSubgridV1(other_grid) = other {
+            if let Some(other_grid_grid) = &mut other_grid.grid {
+                if self.grid.is_some() {
+                    let new_itaumin = self.itaumin.min(other_grid.itaumin);
+                    let new_itaumax = self.itaumax.max(other_grid.itaumax);
+                    let offset = other_grid.itaumin.saturating_sub(self.itaumin);
 
-                        // TODO: we need much more checks here if there subgrids are compatible at all
+                    // TODO: we need much more checks here if there subgrids are compatible at all
 
-                        if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
-                            self.increase_tau(new_itaumin, new_itaumax);
-                        }
-
-                        let self_grid = self.grid.as_mut().unwrap();
-
-                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                            self_grid[[i + offset, j, k]] += value;
-                        }
-                    } else {
-                        self.grid = other_grid.grid.take();
+                    if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
+                        self.increase_tau(new_itaumin, new_itaumax);
                     }
+
+                    let self_grid = self.grid.as_mut().unwrap();
+
+                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                        self_grid[[i + offset, j, k]] += value;
+                    }
+                } else {
+                    self.grid = other_grid.grid.take();
                 }
             }
-            _ => todo!(),
+        } else {
+            todo!();
         }
     }
 
