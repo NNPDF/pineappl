@@ -360,9 +360,7 @@ fn orders(
         // calculate the sum of all leading orders
         for (index, order) in sorted_grid_orders.iter().enumerate() {
             if (normalize.is_empty() && ((order.alphas + order.alpha) == lo_power))
-                || (normalize
-                    .iter()
-                    .any(|o| *o == (order.alphas, order.alpha)))
+                || (normalize.iter().any(|o| *o == (order.alphas, order.alpha)))
             {
                 normalization += order_results[unsorted_indices[index]][bin];
             }
@@ -558,7 +556,10 @@ fn luminosity(input: &str) -> Result<Table, Box<dyn Error>> {
         row.add_cell(cell!(&format!("{}", index)));
 
         for (id1, id2, factor) in entry.entry().iter() {
-            row.add_cell(cell!(&format!("{} \u{d7} ({:2.}, {:2.})", factor, id1, id2)));
+            row.add_cell(cell!(&format!(
+                "{} \u{d7} ({:2.}, {:2.})",
+                factor, id1, id2
+            )));
         }
     }
 
@@ -674,11 +675,10 @@ fn pdf_uncertainty(
     orders: &[(u32, u32)],
 ) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
-    let set = PdfSet::new(
-        &pdfset
-            .parse()
-            .map_or_else(|_| pdfset.to_string(), |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0),
-    );
+    let set = PdfSet::new(&pdfset.parse().map_or_else(
+        |_| pdfset.to_string(),
+        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+    ));
     let pdfs = set.mk_pdfs();
 
     let orders: Vec<_> = grid
