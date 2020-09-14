@@ -5,9 +5,6 @@
 [![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
 [![Documentation Status](https://readthedocs.org/projects/pineappl/badge/?version=latest)](https://pineappl.readthedocs.io/en/latest/?badge=latest)
 
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
-[![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
-
 # Introduction
 
 This repository contains libraries, tools, and interfaces to read and write
@@ -23,6 +20,9 @@ There are three crates in this repository:
   PineAPPL from the command line
 
 # Installation
+
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
+[![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
 `PineAPPL` depends on [`Rust`](https://www.rust-lang.org/). If it's already
 installed make sure that you have a recent version, otherwise the following
