@@ -8,9 +8,8 @@ if not pkgconfig.exists('pineappl_capi'):
                        'the PineAPPL Rust library is properly installed and ' \
                        'that pkgconfig is able to access the pineappl.pc file.')
 
-paths = pkgconfig.libs('pineappl_capi').split(' ')
-libdir = f'{paths[0][2:]}/lib{paths[1][2:]}.so'
-pineappl_lib = ctypes.CDLL(libdir)
+lib = pkgconfig.variables('pineappl_capi')['libdir'] + '/libpineappl_capi.so'
+pineappl_lib = ctypes.CDLL(lib)
 
 # Mirror C structures in python.
 class pineappl_lumi(ctypes.Structure):
