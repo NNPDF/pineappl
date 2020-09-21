@@ -120,7 +120,7 @@ pub(crate) fn subcommand(
                 row.add_cell(cell!(r->&format!("{:.3e}", result1)));
                 row.add_cell(cell!(r->&format!("{:.3e}", result2)));
                 row.add_cell(cell!(r->&format!("{:.2}%",
-                    if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                    if result1 == result2 { 0.0 } else { (result1 / result2 - 1.0) * 100.0 })));
             }
         }
     } else {
