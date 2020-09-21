@@ -3,6 +3,7 @@
 
 //! C-language interface for `PineAPPL`.
 
+use itertools::izip;
 use pineappl::grid::{Grid, Ntuple, Order, SubgridParams};
 use pineappl::lumi::LumiEntry;
 use std::collections::HashMap;
@@ -216,6 +217,32 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
         },
         slice::from_raw_parts(weights, grid.lumi().len()),
     );
+}
+
+pub unsafe extern "C" fn pineappl_grid_fill_array(
+    grid: *mut Grid,
+    x1: *const f64,
+    x2: *const f64,
+    q2: *const f64,
+    orders: *const usize,
+    observables: *const f64,
+    lumis: *const usize,
+    weights: *const f64,
+    size: usize,
+) {
+    let x1 = slice::from_raw_parts(x1, size);
+    let x2 = slice::from_raw_parts(x2, size);
+    let q2 = slice::from_raw_parts(q2, size);
+    let orders = slice::from_raw_parts(orders, size);
+    let observables = slice::from_raw_parts(observables, size);
+    let lumis = slice::from_raw_parts(lumis, size);
+    let weights = slice::from_raw_parts(weights, size);
+
+    for (&x1, &x2, &q2, &order, &observable, &lumi, &weight) in
+        izip!(x1, x2, q2, orders, observables, lumis, weights)
+    {
+        (*grid).fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+    }
 }
 
 /// Return the luminosity function of `grid`.
