@@ -165,6 +165,28 @@ class grid:
                                     order, observable,
                                     lumi, weight)
 
+    def fill_array(self, x1, x2, q2, orders, observables, lumis, weights):
+        """Fills the grid for arrays of kinematics, observables and weights.
+
+        Args:
+            x1 (np.array(dtype=np.float)): the partonic momentum fraction.
+            x2 (np.array(dtype=np.float)): the partonic momentum fraction.
+            q2 (np.array(dtype=np.float)) the event energy scale.
+            orders (np.array(dtype=np.uintp)): the order value.
+            observables (np.array(dtype=np.float)): the observable value.
+            lumis (np.array(dtype=np.uintp)): the luminosity channel value.
+            weights (np.array(dtype=np.float)): the event weight.
+        """
+        pineappl_lib.pineappl_grid_fill_array(self._grid,
+                                    ctypes.c_void_p(x1.ctypes.data),
+                                    ctypes.c_void_p(x2.ctypes.data),
+                                    ctypes.c_void_p(q2.ctypes.data),
+                                    ctypes.c_void_p(orders.ctypes.data),
+                                    ctypes.c_void_p(observables.ctypes.data),
+                                    ctypes.c_void_p(lumis.ctypes.data),
+                                    ctypes.c_void_p(weights.ctypes.data),
+                                    len(weights))
+
     def convolute(self, xfx1, xfx2, alphas, order_mask, lumi_mask, xi_ren, xi_fac):
         """Convolutes the grid with the PDFs and strong coupling.
 
