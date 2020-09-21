@@ -219,6 +219,13 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
     );
 }
 
+/// Fill `grid` with as many points as indicated by `size`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. Additionally, all remaining pointer parameters must be
+/// arrays as long as specified by `size`.
 pub unsafe extern "C" fn pineappl_grid_fill_array(
     grid: *mut Grid,
     x1: *const f64,
