@@ -126,10 +126,10 @@ pub(crate) fn subcommand(
             for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                 let result1 = result1[bin];
                 let result2 = result2[bin];
-                row.add_cell(cell!(r->&format!("{:.3e}", result1)));
-                row.add_cell(cell!(r->&format!("{:.3e}", result2)));
-                row.add_cell(cell!(r->&format!("{:.2}%",
-                    if result1 == result2 { 0.0 } else { (result1 / result2 - 1.0) * 100.0 })));
+                row.add_cell(cell!(r->&format!("{:.7e}", result1)));
+                row.add_cell(cell!(r->&format!("{:.7e}", result2)));
+                row.add_cell(cell!(r->&format!("{:.3e}",
+                    if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
             }
         }
     } else {

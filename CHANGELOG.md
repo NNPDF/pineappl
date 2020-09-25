@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - the order columns of the subcommand `diff` are now properly sorted and do not
   change randomly.
+- the subcommand `diff` now shows the differential cross sections of both grids
+  with the same number of digits as the subcommands `convolute` and similar.
+
+### Fixed
+
+- the subcommand `diff`, did not show differences in per cent, although it
+  printed a per cent sign. Now it shows relative differences, which is always
+  useful, even when the differences are smaller than sub-per mille.
 
 ## [0.3.0] - 20/08/2020
 
