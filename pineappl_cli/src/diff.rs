@@ -33,11 +33,16 @@ pub(crate) fn subcommand(
             .filter(|order| (order.logxir == 0) && (order.logxif == 0))
             .collect();
 
-        let mut diff1 = orders1.difference(&orders2).peekable();
-        let mut diff2 = orders2.difference(&orders1).peekable();
-        if diff1.peek().is_some() || diff2.peek().is_some() {
+        let mut diff1: Vec<_> = orders1.difference(&orders2).collect();
+        diff1.sort();
+        let diff1 = diff1;
+        let mut diff2: Vec<_> = orders2.difference(&orders1).collect();
+        diff2.sort();
+        let diff2 = diff2;
+
+        if !diff1.is_empty() || !diff2.is_empty() {
             print!("--- Orders: ");
-            for order in diff1 {
+            for order in diff1.iter() {
                 if order.alphas == 0 {
                     print!("O(a^{}) ", order.alpha);
                 } else if order.alpha == 0 {
@@ -48,7 +53,7 @@ pub(crate) fn subcommand(
             }
             println!();
             print!("+++ Orders: ");
-            for order in diff2 {
+            for order in diff2.iter() {
                 if order.alphas == 0 {
                     print!("O(a^{}) ", order.alpha);
                 } else if order.alpha == 0 {
@@ -66,7 +71,11 @@ pub(crate) fn subcommand(
         title.add_cell(cell!(c->"xmin"));
         title.add_cell(cell!(c->"xmax"));
 
-        for order in orders1.intersection(&orders2) {
+        let mut orders: Vec<_> = orders1.intersection(&orders2).collect();
+        orders.sort();
+        let orders = orders;
+
+        for order in orders.iter() {
             let mut cell = cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha));
             cell.set_hspan(3);
             title.add_cell(cell);
@@ -74,11 +83,11 @@ pub(crate) fn subcommand(
 
         table.set_titles(title);
 
-        let order_results1: Vec<Vec<f64>> = orders1
-            .intersection(&orders2)
+        let order_results1: Vec<Vec<f64>> = orders
+            .iter()
             .map(|order| {
                 let mut order_mask = vec![false; grid1.orders().len()];
-                order_mask[grid1.orders().iter().position(|o| o == *order).unwrap()] = true;
+                order_mask[grid1.orders().iter().position(|o| o == **order).unwrap()] = true;
                 grid1.convolute(
                     &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
                     &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
@@ -90,11 +99,11 @@ pub(crate) fn subcommand(
                 )
             })
             .collect();
-        let order_results2: Vec<Vec<f64>> = orders1
-            .intersection(&orders2)
+        let order_results2: Vec<Vec<f64>> = orders
+            .iter()
             .map(|order| {
                 let mut order_mask = vec![false; grid2.orders().len()];
-                order_mask[grid2.orders().iter().position(|o| o == *order).unwrap()] = true;
+                order_mask[grid2.orders().iter().position(|o| o == **order).unwrap()] = true;
                 grid2.convolute(
                     &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
                     &|id, x2, q2| pdf.xfx_q2(id, x2, q2),

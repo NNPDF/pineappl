@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- the order columns of the subcommand `diff` are now properly sorted and do not
+  change randomly.
+
 ## [0.3.0] - 20/08/2020
 
 ### Added
