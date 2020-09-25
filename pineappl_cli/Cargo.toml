@@ -19,5 +19,9 @@ pineappl = { path = "../pineappl", version = "0.3" }
 prettytable-rs = "^0.8"
 rayon = "1.3"
 
+[[bin]]
+name = "pineappl"
+path = "src/main.rs"
+
 [package.metadata.docs.rs]
 rustc-args = [ "--cfg feature=\"docs-only\"" ]
