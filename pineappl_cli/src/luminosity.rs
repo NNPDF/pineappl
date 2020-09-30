@@ -6,7 +6,7 @@ use std::io::BufReader;
 
 use super::helpers::create_table;
 
-pub(crate) fn subcommand(input: &str) -> Result<Table, Box<dyn Error>> {
+pub fn subcommand(input: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
     let mut table = create_table();

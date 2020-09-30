@@ -4,7 +4,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-pub(crate) fn subcommand(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
+pub fn subcommand(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
     let mut sorted_grid_orders: Vec<_> = grid

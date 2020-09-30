@@ -8,7 +8,7 @@ use std::io::BufReader;
 
 use super::helpers::create_table;
 
-pub(crate) fn subcommand(
+pub fn subcommand(
     input1: &str,
     input2: &str,
     pdfset: &str,

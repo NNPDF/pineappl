@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 
-pub(crate) fn subcommand(
+pub fn subcommand(
     output: &str,
     input0: &str,
     input_rest: &[&str],
