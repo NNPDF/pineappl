@@ -53,30 +53,54 @@ pub fn subcommand(
         })
         .collect();
 
-    let bin_sizes = grid.bin_limits().bin_sizes();
-    let bin_limits = grid.bin_limits().limits();
+    let bin_info = grid.bin_info();
+    let left_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.left(i))
+        .collect();
+    let right_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.right(i))
+        .collect();
+    let normalizations = bin_info.normalizations();
+
+    let mut title = row![];
+    title.add_cell(cell!(c->"bin"));
+    for i in 0..bin_info.dimensions() {
+        let mut cell = cell!(c->&format!("x{}", i + 1));
+        cell.set_hspan(2);
+        title.add_cell(cell);
+    }
+    title.add_cell(cell!(c->"diff"));
+    title.add_cell(cell!(c->"integ"));
+    title.add_cell(cell!(c->"neg unc"));
+    title.add_cell(cell!(c->"pos unc"));
 
     let mut table = create_table();
-    table.set_titles(row![c => "bin", "xmin", "xmax", "diff", "integ", "neg unc", "pos unc"]);
+    table.set_titles(title);
 
-    for bin in 0..bin_sizes.len() {
+    for bin in 0..bin_info.bins() {
         let values: Vec<_> = results
             .iter()
             .skip(bin)
-            .step_by(bin_sizes.len())
+            .step_by(bin_info.bins())
             .cloned()
             .collect();
         let uncertainty = set.uncertainty(&values, cl, false);
 
-        table.add_row(row![r =>
-            &format!("{}", bin),
-            &format!("{}", bin_limits[bin]),
-            &format!("{}", bin_limits[bin + 1]),
-            &format!("{:.7e}", uncertainty.central),
-            &format!("{:.7e}", uncertainty.central * bin_sizes[bin]),
-            &format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0),
-            &format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0),
-        ]);
+        let row = table.add_empty_row();
+
+        row.add_cell(cell!(r->&format!("{}", bin)));
+        for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+            row.add_cell(cell!(r->&format!("{}", left[bin])));
+            row.add_cell(cell!(r->&format!("{}", right[bin])));
+        }
+        row.add_cell(cell!(r->&format!("{:.7e}", uncertainty.central)));
+        row.add_cell(cell!(r->&format!("{:.7e}", uncertainty.central * normalizations[bin])));
+        row.add_cell(
+            cell!(r->&format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0)),
+        );
+        row.add_cell(
+            cell!(r->&format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0)),
+        );
     }
 
     Ok(table)
