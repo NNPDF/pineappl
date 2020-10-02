@@ -30,7 +30,18 @@ pub struct Lumi(Vec<LumiEntry>);
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
-    (*grid).bin_limits().bins()
+    (*grid).bin_info().bins()
+}
+
+/// Returns the number of dimensions of the bins this grid has.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usize {
+    (*grid).bin_info().dimensions()
 }
 
 /// Stores the bin sizes of `grid` in `bin_sizes`.
@@ -42,7 +53,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
 /// long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *mut f64) {
-    let sizes = (*grid).bin_limits().bin_sizes();
+    let sizes = (*grid).bin_info().normalizations();
     let bin_sizes = slice::from_raw_parts_mut(bin_sizes, sizes.len());
 
     for (i, size) in sizes.iter().enumerate() {
@@ -57,12 +68,49 @@ pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `bin_limits` must point to an array that is
 /// one element longer as `grid` has bins.
+#[deprecated(
+    since = "0.4.0",
+    note = "this function only returns the limits for the zeroth dimension"
+)]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits: *mut f64) {
-    let limits = (*grid).bin_limits();
-    let bin_limits = slice::from_raw_parts_mut(bin_limits, limits.bins() + 1);
+    let mut limits = (*grid).bin_info().left(0);
+    limits.push(*(*grid).bin_info().right(0).last().unwrap());
+    slice::from_raw_parts_mut(bin_limits, limits.len()).copy_from_slice(&limits);
+}
 
-    bin_limits.copy_from_slice(&limits.limits());
+/// Write the left limits for the specified dimension into `left`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `left` must point to an array that is one
+/// element longer as `grid` has bins. If `dimension` is larger or equal the number of dimensions
+/// for this grid, nothing is written into `left`, the result is undefined.
+pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
+    grid: *const Grid,
+    dimension: usize,
+    left: *mut f64,
+) {
+    let limits = (*grid).bin_info().left(dimension);
+    slice::from_raw_parts_mut(left, limits.len()).copy_from_slice(&limits);
+}
+
+/// Write the right limits for the specified dimension into `right`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameter `right` must point to an array that is one
+/// element longer as `grid` has bins. If `dimension` is larger or equal the number of dimensions
+/// for this grid, nothing is written into `right`, the result is undefined.
+pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
+    grid: *const Grid,
+    dimension: usize,
+    right: *mut f64,
+) {
+    let limits = (*grid).bin_info().right(dimension);
+    slice::from_raw_parts_mut(right, limits.len()).copy_from_slice(&limits);
 }
 
 /// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
@@ -112,7 +160,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
     } else {
         slice::from_raw_parts(lumi_mask, grid.lumi().len()).to_vec()
     };
-    let results = slice::from_raw_parts_mut(results, grid.bin_limits().bins());
+    let results = slice::from_raw_parts_mut(results, grid.bin_info().bins());
 
     results.copy_from_slice(&grid.convolute(
         &pdf1,
