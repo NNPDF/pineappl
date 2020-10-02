@@ -8,11 +8,7 @@ use std::io::BufReader;
 
 use super::helpers::create_table;
 
-pub fn subcommand(
-    input1: &str,
-    input2: &str,
-    pdfset: &str,
-) -> Result<Table, Box<dyn Error>> {
+pub fn subcommand(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
     let grid1 = Grid::read(BufReader::new(File::open(input1)?))?;
     let grid2 = Grid::read(BufReader::new(File::open(input2)?))?;
     let pdf = pdfset
@@ -21,7 +17,7 @@ pub fn subcommand(
 
     let mut table = create_table();
 
-    if grid1.bin_limits() == grid2.bin_limits() {
+    if grid1.bin_info() == grid2.bin_info() {
         let orders1: HashSet<_> = grid1
             .orders()
             .iter()
@@ -42,7 +38,7 @@ pub fn subcommand(
 
         if !diff1.is_empty() || !diff2.is_empty() {
             print!("--- Orders: ");
-            for order in diff1.iter() {
+            for order in &diff1 {
                 if order.alphas == 0 {
                     print!("O(a^{}) ", order.alpha);
                 } else if order.alpha == 0 {
@@ -53,7 +49,7 @@ pub fn subcommand(
             }
             println!();
             print!("+++ Orders: ");
-            for order in diff2.iter() {
+            for order in &diff2 {
                 if order.alphas == 0 {
                     print!("O(a^{}) ", order.alpha);
                 } else if order.alpha == 0 {
@@ -66,16 +62,27 @@ pub fn subcommand(
             println!();
         }
 
+        let bin_info = grid1.bin_info();
+        let left_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.left(i))
+            .collect();
+        let right_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.right(i))
+            .collect();
+
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
-        title.add_cell(cell!(c->"xmin"));
-        title.add_cell(cell!(c->"xmax"));
+        for i in 0..bin_info.dimensions() {
+            let mut cell = cell!(c->&format!("x{}", i + 1));
+            cell.set_hspan(2);
+            title.add_cell(cell);
+        }
 
         let mut orders: Vec<_> = orders1.intersection(&orders2).collect();
         orders.sort();
         let orders = orders;
 
-        for order in orders.iter() {
+        for order in &orders {
             let mut cell = cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha));
             cell.set_hspan(3);
             title.add_cell(cell);
@@ -116,12 +123,14 @@ pub fn subcommand(
             })
             .collect();
 
-        for (bin, limits) in grid1.bin_limits().limits().windows(2).enumerate() {
+        for bin in 0..bin_info.bins() {
             let row = table.add_empty_row();
 
             row.add_cell(cell!(r->bin));
-            row.add_cell(cell!(r->limits[0]));
-            row.add_cell(cell!(r->limits[1]));
+            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+                row.add_cell(cell!(r->&format!("{}", left[bin])));
+                row.add_cell(cell!(r->&format!("{}", right[bin])));
+            }
 
             for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                 let result1 = result1[bin];
@@ -133,16 +142,39 @@ pub fn subcommand(
             }
         }
     } else {
-        print!("--- Bin limits: ");
-        for limit in grid1.bin_limits().limits() {
-            print!("{} ", limit);
+        let bin_info = grid1.bin_info();
+        let left_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.left(i))
+            .collect();
+        let right_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.right(i))
+            .collect();
+
+        println!("--- Bin limits:");
+        for bin in 0..bin_info.bins() {
+            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+                print!("{} ", left[bin]);
+                print!("{} ", right[bin]);
+            }
+            println!();
         }
-        println!();
-        print!("+++ Bin limits: ");
-        for limit in grid2.bin_limits().limits() {
-            print!("{} ", limit);
+
+        let bin_info = grid2.bin_info();
+        let left_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.left(i))
+            .collect();
+        let right_limits: Vec<_> = (0..bin_info.dimensions())
+            .map(|i| bin_info.right(i))
+            .collect();
+
+        println!("+++ Bin limits:");
+        for bin in 0..bin_info.bins() {
+            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+                print!("{} ", left[bin]);
+                print!("{} ", right[bin]);
+            }
+            println!();
         }
-        println!();
     }
 
     Ok(table)
