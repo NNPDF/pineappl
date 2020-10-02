@@ -12,10 +12,11 @@ mod pdf_uncertainty;
 
 use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
+use std::str::FromStr;
 
-fn validate_pos_non_zero(argument: String) -> Result<(), String> {
-    if let Ok(number) = argument.parse::<usize>() {
-        if number != 0 {
+fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: String) -> Result<(), String> {
+    if let Ok(number) = argument.parse::<T>() {
+        if number != T::default() {
             return Ok(());
         }
     }
@@ -103,7 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (about: "Shows the contribution for each partonic channel")
             (@arg input: +required "Path to the input grid")
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
-            (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero)
+            (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero::<usize>)
                 "The maximum number of channels displayed")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
             (@arg absolute: -a --absolute "Show absolute numbers of each contribution")
