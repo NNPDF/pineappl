@@ -80,14 +80,12 @@ impl BinLimits {
                 }
             }
             Limits::Unequal { limits } => {
-                let index = limits
-                    .binary_search_by(|left| left.partial_cmp(&value).unwrap())
-                    .unwrap_or_else(|e| e);
-
-                if index == 0 || index == limits.len() {
-                    None
-                } else {
-                    Some(index - 1)
+                match limits.binary_search_by(|left| left.partial_cmp(&value).unwrap()) {
+                    Err(0) => None,
+                    Err(index) if index == limits.len() => None,
+                    Ok(index) if index == (limits.len() - 1) => None,
+                    Ok(index) => Some(index),
+                    Err(index) => Some(index - 1),
                 }
             }
         }
@@ -254,6 +252,18 @@ mod test {
         assert_eq!(limits.index(0.9), Some(7));
         assert_eq!(limits.index(1.1), None);
 
+        // check bin limits that are equally sized, with values on the limits
+        let limits = BinLimits::new(vec![0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]);
+        assert_eq!(limits.index(0.0), Some(0));
+        assert_eq!(limits.index(0.125), Some(1));
+        assert_eq!(limits.index(0.25), Some(2));
+        assert_eq!(limits.index(0.375), Some(3));
+        assert_eq!(limits.index(0.5), Some(4));
+        assert_eq!(limits.index(0.625), Some(5));
+        assert_eq!(limits.index(0.75), Some(6));
+        assert_eq!(limits.index(0.875), Some(7));
+        assert_eq!(limits.index(1.0), None);
+
         // now, check with bin sizes that are not exactly representable
         let limits = BinLimits::new(vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.5]);
 
@@ -282,6 +292,14 @@ mod test {
         assert_eq!(limits.index(0.4), Some(2));
         assert_eq!(limits.index(0.9), Some(3));
         assert_eq!(limits.index(1.3), None);
+
+        // check bin limits that are unequally sized, with values on the limits
+        let limits = BinLimits::new(vec![0.0, 0.25, 0.75, 0.875, 1.0]);
+        assert_eq!(limits.index(0.0), Some(0));
+        assert_eq!(limits.index(0.25), Some(1));
+        assert_eq!(limits.index(0.75), Some(2));
+        assert_eq!(limits.index(0.875), Some(3));
+        assert_eq!(limits.index(1.0), None);
 
         // check bin limits that are unequally sized, with descending bin sizes
         let limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
