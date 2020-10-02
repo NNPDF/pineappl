@@ -47,19 +47,38 @@ pub fn subcommand(
         })
         .collect();
 
-    let bin_limits = grid.bin_limits().limits();
+    let bin_info = grid.bin_info();
+    let left_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.left(i))
+        .collect();
+    let right_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.right(i))
+        .collect();
+
+    let mut title_row = row![];
+    title_row.add_cell(cell!(c->"bin"));
+    for i in 0..bin_info.dimensions() {
+        let mut cell = cell!(c->&format!("x{}", i + 1));
+        cell.set_hspan(2);
+        title_row.add_cell(cell);
+    }
+    title_row.add_cell(cell!(c->"lumi"));
+    title_row.add_cell(cell!(c->"size"));
 
     let mut table = create_table();
-    table.set_titles(row![c => "bin", "xmin", "xmax", "lumi", "size"]);
+    table.set_titles(title_row);
 
     // TODO: add more titles
 
-    for bin in 0..grid.bin_limits().bins() {
+    for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[bin])));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
+
+        for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+            row.add_cell(cell!(r->&format!("{}", left[bin])));
+            row.add_cell(cell!(r->&format!("{}", right[bin])));
+        }
 
         if absolute {
             let mut values: Vec<_> = results
