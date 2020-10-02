@@ -65,27 +65,38 @@ pub fn subcommand(
         order.alphas + order.alpha
     };
 
-    let bin_limits = grid.bin_limits().limits();
+    let bin_info = grid.bin_info();
+    let left_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.left(i))
+        .collect();
+    let right_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.right(i))
+        .collect();
 
-    let mut table = create_table();
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
-    title.add_cell(cell!(c->"xmin"));
-    title.add_cell(cell!(c->"xmax"));
+    for i in 0..bin_info.dimensions() {
+        let mut cell = cell!(c->&format!("x{}", i + 1));
+        cell.set_hspan(2);
+        title.add_cell(cell);
+    }
     title.add_cell(cell!(c->"diff"));
 
     for order in &sorted_grid_orders {
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
     }
 
+    let mut table = create_table();
     table.set_titles(title);
 
     for (bin, value) in results.iter().enumerate() {
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[bin])));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[bin + 1])));
+        for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+            row.add_cell(cell!(r->&format!("{}", left[bin])));
+            row.add_cell(cell!(r->&format!("{}", right[bin])));
+        }
         row.add_cell(cell!(r->&format!("{:.7e}", value)));
 
         let mut normalization = 0.0;
