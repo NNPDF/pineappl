@@ -427,12 +427,6 @@ impl Grid {
         })
     }
 
-    /// Returns the bin limits of the observables.
-    #[must_use]
-    pub const fn bin_limits(&self) -> &BinLimits {
-        &self.bin_limits
-    }
-
     /// Performs a convolution of the contained subgrids with the given PDFs, `xfx1` for the first
     /// parton and `xfx2` for the second parton, `alphas` for the evaluation of the strong
     /// coupling. The parameters `order_mask` and `lumi_mask` can be used to selectively enable
