@@ -1,6 +1,6 @@
 //! Module containing all traits and supporting structures for grids.
 
-use super::bin::BinLimits;
+use super::bin::{BinLimits, BinRemapper};
 use super::lagrange_subgrid::LagrangeSubgridV1;
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
@@ -14,6 +14,7 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
@@ -303,8 +304,15 @@ pub struct UnknownSubgrid(String);
 struct Mmv1 {}
 
 #[derive(Deserialize, Serialize)]
+struct Mmv2 {
+    remapper: Option<BinRemapper>,
+    key_value_db: HashMap<String, String>,
+}
+
+#[derive(Deserialize, Serialize)]
 enum MoreMembers {
     V1(Mmv1),
+    V2(Mmv2),
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,

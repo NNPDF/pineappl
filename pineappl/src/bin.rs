@@ -32,6 +32,77 @@ pub enum MergeBinError {
 #[derive(Deserialize, PartialEq, Serialize)]
 pub struct BinLimits(Limits);
 
+/// Error type that is returned by the constructor of `BinRemapper`.
+#[derive(Debug, Error)]
+pub enum BinRemapperNewError {
+    /// Returned if the lengths of the normalization and limits vectors do not allow to determine a
+    /// well-defined number of dimensions.
+    #[error("could not determine the dimensions from a normalization vector with length {normalizations_len} and limits vector with length {limits_len}")]
+    DimensionUnknown {
+        /// Length of the normalization vector.
+        normalizations_len: usize,
+        /// Length of the limits vector.
+        limits_len: usize,
+    },
+}
+
+/// Structure for remapping bin limits.
+#[derive(Deserialize, Serialize)]
+pub struct BinRemapper {
+    normalizations: Vec<f64>,
+    limits: Vec<(f64, f64)>,
+}
+
+impl BinRemapper {
+    /// Create a new `BinRemapper` object with the specified number of bins and dimensions and
+    /// limits.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the length of `limits` is not a multiple of the length of
+    /// `normalizations`.
+    pub fn new(
+        normalizations: Vec<f64>,
+        limits: Vec<(f64, f64)>,
+    ) -> Result<Self, BinRemapperNewError> {
+        if limits.len() % normalizations.len() == 0 {
+            Ok(Self {
+                normalizations,
+                limits,
+            })
+        } else {
+            Err(BinRemapperNewError::DimensionUnknown {
+                normalizations_len: normalizations.len(),
+                limits_len: limits.len(),
+            })
+        }
+    }
+
+    /// Return the number of bins.
+    #[must_use]
+    pub fn bins(&self) -> usize {
+        self.normalizations.len()
+    }
+
+    /// Return the number of dimensions.
+    #[must_use]
+    pub fn dimensions(&self) -> usize {
+        self.limits.len() / self.normalizations.len()
+    }
+
+    /// Return tuples of left and right bin limits for all dimensions and all bins.
+    #[must_use]
+    pub fn limits(&self) -> &[(f64, f64)] {
+        &self.limits
+    }
+
+    /// Return the normalization factors for all bins.
+    #[must_use]
+    pub fn normalizations(&self) -> &[f64] {
+        &self.normalizations
+    }
+}
+
 impl BinLimits {
     /// Constructor for `BinLimits`.
     #[must_use]
