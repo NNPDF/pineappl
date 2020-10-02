@@ -309,10 +309,54 @@ struct Mmv2 {
     key_value_db: HashMap<String, String>,
 }
 
+impl Default for Mmv2 {
+    fn default() -> Self {
+        Self {
+            remapper: None,
+            key_value_db: [
+                (
+                    String::from("version"),
+                    String::from(env!("CARGO_PKG_VERSION")),
+                ),
+                // by default we assume there are protons in the initial state
+                (String::from("initial_state_1"), String::from("2212")),
+                (String::from("initial_state_2"), String::from("2212")),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 enum MoreMembers {
     V1(Mmv1),
     V2(Mmv2),
+}
+
+impl MoreMembers {
+    fn upgrade(&mut self) {
+        match self {
+            Self::V1(_) => {
+                *self = Self::V2(Mmv2::default());
+            }
+            Self::V2(_) => {}
+        }
+    }
+}
+
+/// Error type returned by `Grid::set_remapper`.
+#[derive(Debug, Error)]
+pub enum GridSetBinRemapperError {
+    /// Returned if the number of bins in the grid and in the remapper do not agree.
+    #[error("the number of bins in the remapper, {remapper_bins}, does not agree with the number of bins in the grid: {grid_bins}")]
+    BinMismatch {
+        /// Number of bins in the grid.
+        grid_bins: usize,
+        /// Number of bins in the remapper.
+        remapper_bins: usize,
+    },
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -753,6 +797,34 @@ impl Grid {
     #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
         &self.subgrids[[order, bin, lumi]]
+    }
+
+    /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
+    /// This is useful because many Monte Carlo integrators and also PineAPPL do not support
+    /// multi-dimensional bins. To work around the problem the multi-dimensional bins can be
+    /// projected to one-dimensional bins, and the remapper can be used to restore the multi
+    /// dimensionality. Furthermore, it allows to normalize each bin separately, and independently
+    /// of the bin widths.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the number of bins in the grid and in the remapper do not agree.
+    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridSetBinRemapperError> {
+        if remapper.bins() != self.bin_limits.bins() {
+            return Err(GridSetBinRemapperError::BinMismatch {
+                grid_bins: self.bin_limits.bins(),
+                remapper_bins: remapper.bins(),
+            });
+        }
+
+        self.more_members.upgrade();
+
+        match &mut self.more_members {
+            MoreMembers::V1(_) => unreachable!(),
+            MoreMembers::V2(mmv2) => mmv2.remapper = Some(remapper),
+        }
+
+        Ok(())
     }
 
     /// Returns all information about the bins in this grid.
