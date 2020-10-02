@@ -9,6 +9,7 @@ mod luminosity;
 mod merge;
 mod orders;
 mod pdf_uncertainty;
+mod remap;
 
 use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
@@ -165,6 +166,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
         )
+        (@subcommand remap =>
+            (about: "Modifies the bin dimensions, widths and normalizations")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path of the modified PineAPPL file")
+            (@arg remapping: +required "Remapping string")
+            (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
+                "Normalization factor in addition to the given bin widths")
+        )
     )
     .get_matches();
 
@@ -269,6 +278,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             .collect::<Result<_, _>>()?;
 
         pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders)?.printstd();
+    } else if let Some(matches) = matches.subcommand_matches("remap") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+        let remapping = matches.value_of("remapping").unwrap();
+        let norm = matches.value_of("norm").unwrap().parse()?;
+
+        remap::subcommand(input, output, remapping, norm)?;
     }
 
     Ok(())
