@@ -1,6 +1,6 @@
 //! Module containing all traits and supporting structures for grids.
 
-use super::bin::{BinLimits, BinRemapper};
+use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::lagrange_subgrid::LagrangeSubgridV1;
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
@@ -753,6 +753,18 @@ impl Grid {
     #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
         &self.subgrids[[order, bin, lumi]]
+    }
+
+    /// Returns all information about the bins in this grid.
+    #[must_use]
+    pub fn bin_info(&self) -> BinInfo {
+        BinInfo::new(
+            &self.bin_limits,
+            match &self.more_members {
+                MoreMembers::V1(_) => None,
+                MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
+            },
+        )
     }
 }
 

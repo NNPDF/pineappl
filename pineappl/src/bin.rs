@@ -53,6 +53,98 @@ pub struct BinRemapper {
     limits: Vec<(f64, f64)>,
 }
 
+/// Captures all information about the bins in a grid.
+pub struct BinInfo<'a> {
+    limits: &'a BinLimits,
+    remapper: Option<&'a BinRemapper>,
+}
+
+impl<'a> BinInfo<'a> {
+    /// Constructor.
+    #[must_use]
+    pub const fn new(limits: &'a BinLimits, remapper: Option<&'a BinRemapper>) -> Self {
+        Self { limits, remapper }
+    }
+
+    /// Returns the number of bins.
+    #[must_use]
+    pub fn bins(&self) -> usize {
+        self.limits.bins()
+    }
+
+    /// Returns the number of dimensions.
+    #[must_use]
+    pub fn dimensions(&self) -> usize {
+        self.remapper.map_or(1, BinRemapper::dimensions)
+    }
+
+    /// Returns all left-limits for the specified dimension. If the dimension does not exist, an
+    /// empty vector is returned.
+    #[must_use]
+    pub fn left(&self, dimension: usize) -> Vec<f64> {
+        if let Some(remapper) = self.remapper {
+            remapper
+                .limits()
+                .iter()
+                .skip(dimension)
+                .step_by(self.dimensions())
+                .map(|tuple| tuple.0)
+                .collect()
+        } else if self.dimensions() == 1 {
+            self.limits.limits().iter().copied().collect()
+        } else {
+            vec![]
+        }
+    }
+
+    /// Returns all right-limits for the specified dimension. If the dimension does not exist, an
+    /// empty vector is returned.
+    #[must_use]
+    pub fn right(&self, dimension: usize) -> Vec<f64> {
+        if let Some(remapper) = self.remapper {
+            remapper
+                .limits()
+                .iter()
+                .skip(dimension)
+                .step_by(self.dimensions())
+                .map(|tuple| tuple.1)
+                .collect()
+        } else if self.dimensions() == 1 {
+            self.limits.limits().iter().skip(1).copied().collect()
+        } else {
+            vec![]
+        }
+    }
+
+    /// Returns all normalization factors.
+    #[must_use]
+    pub fn normalizations(&self) -> Vec<f64> {
+        if let Some(remapper) = self.remapper {
+            remapper.normalizations().to_vec()
+        } else {
+            self.limits.bin_sizes()
+        }
+    }
+}
+
+impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
+    fn eq(&self, other: &BinInfo) -> bool {
+        if self.dimensions() == other.dimensions() {
+            // once it's stable, use `eq_by` instead of `zip` and `fold`
+            (0..self.dimensions()).all(|dim| {
+                self.left(dim)
+                    .iter()
+                    .zip(other.left(dim).iter())
+                    .fold(true, |previous, (lhs, rhs)| {
+                        previous && approx_eq!(f64, *lhs, *rhs, ulps = 8)
+                    })
+            })
+        } else {
+            false
+        }
+    }
+}
+
 impl BinRemapper {
     /// Create a new `BinRemapper` object with the specified number of bins and dimensions and
     /// limits.
