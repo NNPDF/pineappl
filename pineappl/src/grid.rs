@@ -457,7 +457,7 @@ impl Grid {
             bin_indices.to_vec()
         };
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
-        let bin_sizes = self.bin_limits.bin_sizes();
+        let bin_sizes = self.bin_info().normalizations();
 
         let pdf_cache = RefCell::new(FxHashMap::default());
         let alphas_cache = RefCell::new(FxHashMap::default());
@@ -709,6 +709,14 @@ impl Grid {
             let new_bins = other.bin_limits.bins();
 
             self.increase_shape(&(0, new_bins, 0));
+
+            // TODO: figure out a better strategy than removing the remapper
+            match &mut self.more_members {
+                MoreMembers::V1(_) => {}
+                MoreMembers::V2(mmv2) => {
+                    mmv2.remapper = None;
+                }
+            }
         }
 
         for ((i, j, k), subgrid) in other
@@ -985,7 +993,7 @@ mod tests {
             SubgridParams::default(),
         );
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
@@ -1003,7 +1011,7 @@ mod tests {
         // merging with empty subgrids should not change the grid
         assert!(grid.merge(other).is_ok());
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -1020,7 +1028,7 @@ mod tests {
             SubgridParams::default(),
         );
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
@@ -1064,7 +1072,7 @@ mod tests {
         // merge with four non-empty subgrids
         assert!(grid.merge(other).is_ok());
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 3);
     }
@@ -1081,7 +1089,7 @@ mod tests {
             SubgridParams::default(),
         );
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
@@ -1107,7 +1115,7 @@ mod tests {
 
         assert!(grid.merge(other).is_ok());
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 3);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -1124,7 +1132,7 @@ mod tests {
             SubgridParams::default(),
         );
 
-        assert_eq!(grid.bin_limits().bins(), 2);
+        assert_eq!(grid.bin_info().bins(), 2);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
@@ -1153,7 +1161,7 @@ mod tests {
 
         assert!(grid.merge(other).is_ok());
 
-        assert_eq!(grid.bin_limits().bins(), 4);
+        assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
