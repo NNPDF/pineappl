@@ -18,7 +18,7 @@ pub fn subcommand(
 ) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
     let show_bins = if show_bins.is_empty() {
-        (0..grid.bin_limits().bins()).collect()
+        (0..grid.bin_info().bins()).collect()
     } else {
         show_bins.to_vec()
     };
@@ -76,14 +76,22 @@ pub fn subcommand(
         })
         .collect();
 
-    let bin_sizes = grid.bin_limits().bin_sizes();
-    let bin_limits = grid.bin_limits().limits();
+    let bin_info = grid.bin_info();
+    let left_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.left(i))
+        .collect();
+    let right_limits: Vec<_> = (0..bin_info.dimensions())
+        .map(|i| bin_info.right(i))
+        .collect();
+    let normalizations = bin_info.normalizations();
 
-    let mut table = create_table();
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
-    title.add_cell(cell!(c->"xmin"));
-    title.add_cell(cell!(c->"xmax"));
+    for i in 0..bin_info.dimensions() {
+        let mut cell = cell!(c->&format!("x{}", i + 1));
+        cell.set_hspan(2);
+        title.add_cell(cell);
+    }
     title.add_cell(cell!(c->"diff"));
     title.add_cell(cell!(c->"integ"));
 
@@ -102,6 +110,7 @@ pub fn subcommand(
         title.add_cell(cell);
     }
 
+    let mut table = create_table();
     table.set_titles(title);
 
     for (bin, values) in results.chunks_exact(scales).enumerate() {
@@ -117,14 +126,16 @@ pub fn subcommand(
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", show_bins[bin])));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[show_bins[bin]])));
-        row.add_cell(cell!(r->&format!("{}", bin_limits[show_bins[bin] + 1])));
+        for (left, right) in left_limits.iter().zip(right_limits.iter()) {
+            row.add_cell(cell!(r->&format!("{}", left[show_bins[bin]])));
+            row.add_cell(cell!(r->&format!("{}", right[show_bins[bin]])));
+        }
         row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
-        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * bin_sizes[show_bins[bin]])));
+        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * normalizations[show_bins[bin]])));
 
         if absolute {
             for value in values.iter() {
-                row.add_cell(cell!(r->&format!("{:.7e}", value * bin_sizes[show_bins[bin]])));
+                row.add_cell(cell!(r->&format!("{:.7e}", value * normalizations[show_bins[bin]])));
             }
         } else {
             row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
