@@ -14,9 +14,6 @@ use std::io::{BufReader, BufWriter};
 use std::os::raw::{c_char, c_void};
 use std::slice;
 
-// TODO: change raw pointer and Option of pointer to Box if possible, as soon as cbindgen supports
-// this; see github issue: https://github.com/eqrion/cbindgen/issues/474
-
 /// Type for defining a luminosity function.
 #[derive(Default)]
 pub struct Lumi(Vec<LumiEntry>);
@@ -177,12 +174,11 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
 ///
 /// # Safety
 ///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
+/// If `grid` does not point to a valid `Grid` object, this function is not safe to call. If `grid`
+/// is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_delete(grid: *mut Grid) {
-    Box::from_raw(grid);
-}
+#[allow(unused_variables)]
+pub unsafe extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
 /// Performs an operation `name` on `grid` using as input or output parameters `key_vals`. This is
 /// used to get access to functions that are otherwise not available through other functions. If
@@ -308,8 +304,8 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> *mut Lumi {
-    Box::into_raw(Box::new(Lumi((*grid).lumi().to_vec())))
+pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
+    Box::new(Lumi((*grid).lumi().to_vec()))
 }
 
 /// Write the order parameters of `grid` into `order_params`.
@@ -373,7 +369,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
     bins: usize,
     bin_limits: *const f64,
     key_vals: *const KeyVal,
-) -> *mut Grid {
+) -> Box<Grid> {
     let order_params = slice::from_raw_parts(order_params, 4 * orders);
     let orders: Vec<_> = order_params
         .chunks(4)
@@ -432,7 +428,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         }
     }
 
-    Box::into_raw(Box::new(
+    Box::new(
         Grid::with_subgrid_type(
             (*lumi).0.clone(),
             orders,
@@ -441,7 +437,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             subgrid_type,
         )
         .unwrap(),
-    ))
+    )
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
@@ -451,12 +447,11 @@ pub unsafe extern "C" fn pineappl_grid_new(
 /// The parameter `filename` must be a C string pointing to an existing grid file.
 #[no_mangle]
 #[must_use]
-pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Grid {
+pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
     let filename = CStr::from_ptr(filename).to_str().unwrap();
     let reader = BufReader::new(File::open(filename).unwrap());
-    let grid = Box::new(Grid::read(reader).unwrap());
 
-    Box::into_raw(grid)
+    Box::new(Grid::read(reader).unwrap())
 }
 
 /// Merges `other` into `grid` and subsequently deletes `other`.
@@ -464,10 +459,12 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> *mut Gri
 /// # Safety
 ///
 /// Both `grid` and `other` must be valid `Grid` objects created by either `pineappl_grid_new` or
-/// `pineappl_grid_read`.
+/// `pineappl_grid_read`. If `other` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: *mut Grid) {
-    (*grid).merge(*Box::from_raw(other)).unwrap();
+pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
+    if let Some(other) = other {
+        (*grid).merge(*other).unwrap();
+    }
 }
 
 /// Scale all grids in `grid` by `factor`.
@@ -571,11 +568,11 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *mut Lumi) -> usize {
 ///
 /// # Safety
 ///
-/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`. If
+/// `lumi` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_lumi_delete(lumi: *mut Lumi) {
-    Box::from_raw(lumi);
-}
+#[allow(unused_variables)]
+pub unsafe extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
 /// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
 /// factors will be copied into `pdg_ids` and `factors`.
@@ -613,8 +610,8 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 /// should be deleted using `pineappl_lumi_delete`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_lumi_new() -> *mut Lumi {
-    Box::into_raw(Box::new(Lumi::default()))
+pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
+    Box::new(Lumi::default())
 }
 
 /// Fills `buffer` with the q2-slice for the index `q2_slice` of the grid for the specified
@@ -724,11 +721,10 @@ pub struct KeyVal {
 /// # Safety
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
-/// `pineappl_keyval_new`.
+/// `pineappl_keyval_new`. If `key_vals` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_keyval_delete(key_vals: *mut KeyVal) {
-    Box::from_raw(key_vals);
-}
+#[allow(unused_variables)]
+pub unsafe extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 ///
@@ -787,8 +783,8 @@ pub unsafe extern "C" fn pineappl_keyval_string(
 /// Return a pointer to newly-created `pineappl_keyval` object.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_keyval_new() -> *mut KeyVal {
-    Box::into_raw(Box::new(KeyVal::default()))
+pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
+    Box::new(KeyVal::default())
 }
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.

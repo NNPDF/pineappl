@@ -10,9 +10,9 @@ keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "C language interface to PineAPPL"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.3.0" }
 itertools = "0.9"
+
+[package.metadata.capi]
+min_version = "0.6.14"
