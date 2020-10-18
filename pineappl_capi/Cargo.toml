@@ -15,4 +15,4 @@ pineappl = { path = "../pineappl", version = "0.3.0" }
 itertools = "0.9"
 
 [package.metadata.capi]
-min_version = "0.6.14"
+min_version = "0.6.16+cargo-0.45"
