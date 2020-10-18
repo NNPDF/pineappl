@@ -150,8 +150,8 @@ pub struct SubgridParams {
 impl Default for SubgridParams {
     fn default() -> Self {
         Self {
-            q2_bins: 30,
-            q2_max: 1e6,
+            q2_bins: 40,
+            q2_max: 1e8,
             q2_min: 1e2,
             q2_order: 3,
             reweight: true,
