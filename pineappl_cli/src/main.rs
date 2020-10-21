@@ -98,6 +98,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         (author: crate_authors!())
         (about: crate_description!())
         (version: crate_version!())
+        (@arg silence_lhapdf: --silence_lhapdf "Prevents LHAPDF from printing banners")
         (@setting DisableHelpSubcommand)
         (@setting SubcommandRequiredElseHelp)
         (@setting VersionlessSubcommands)
@@ -176,6 +177,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
     )
     .get_matches();
+
+    if matches.is_present("silence_lhapdf") {
+        lhapdf::set_verbosity(0);
+    }
 
     if let Some(matches) = matches.subcommand_matches("channels") {
         let input = matches.value_of("input").unwrap();

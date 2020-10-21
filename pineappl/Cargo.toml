@@ -25,6 +25,6 @@ serde = { features = ["derive"], version = "1.0" }
 thiserror = "1.0"
 
 [dev-dependencies]
-lhapdf = "0.1"
+lhapdf = "0.1.8"
 rand = { default-features = false, version = "0.7" }
 rand_pcg = { default-features = false, version = "0.2" }

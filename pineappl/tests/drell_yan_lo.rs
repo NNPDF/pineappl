@@ -143,6 +143,9 @@ fn fill_drell_yan_lo_grid(
 
 #[test]
 fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
+    // suppress LHAPDF banners
+    lhapdf::set_verbosity(0);
+
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid", false)?;
 
@@ -210,6 +213,9 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
 
 #[test]
 fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
+    // suppress LHAPDF banners
+    lhapdf::set_verbosity(0);
+
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "NtupleSubgrid", true)?;
 
@@ -290,6 +296,9 @@ fn dy_aa_ntuple_subgrid_dynamic() -> anyhow::Result<()> {
 
 #[test]
 fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
+    // suppress LHAPDF banners
+    lhapdf::set_verbosity(0);
+
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgrid", true)?;
 
