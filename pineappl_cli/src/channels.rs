@@ -19,7 +19,11 @@ pub fn subcommand(
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-    let limit = if lumis.is_empty() { limit } else { usize::MAX };
+    let limit = if lumis.is_empty() {
+        grid.lumi().len().min(limit)
+    } else {
+        lumis.iter().filter(|lumi| **lumi < lumis.len()).count()
+    };
     let orders: Vec<_> = grid
         .orders()
         .iter()
@@ -62,13 +66,13 @@ pub fn subcommand(
         cell.set_hspan(2);
         title_row.add_cell(cell);
     }
-    title_row.add_cell(cell!(c->"lumi"));
-    title_row.add_cell(cell!(c->"size"));
+    for _ in 0..limit {
+        title_row.add_cell(cell!(c->"lumi"));
+        title_row.add_cell(cell!(c->"size"));
+    }
 
     let mut table = create_table();
     table.set_titles(title_row);
-
-    // TODO: add more titles
 
     for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
