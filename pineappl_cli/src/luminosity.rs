@@ -10,7 +10,11 @@ pub fn subcommand(input: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
     let mut table = create_table();
-    table.set_titles(row![c => "id", "entry"]);
+    let mut titles = row![c => "id"];
+    for _ in 0..grid.lumi().iter().map(|lumi| lumi.entry().len()).max().unwrap() {
+        titles.add_cell(cell!(c->"entry"));
+    }
+    table.set_titles(titles);
 
     for (index, entry) in grid.lumi().iter().enumerate() {
         let row = table.add_empty_row();
