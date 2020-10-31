@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added access to the contents of Lagrange-interpolation grids
+- added more C functions previously missing: `pineappl_grid_bin_limits`,
+  `pineappl_grid_lumi`, `pineappl_lumi_combinations`, `pineappl_lumi_count`,
+  `pineappl_lumi_entry`
+- added `remap` subcommand which allows to change the binning and dimensions of
+  a distribution
+- added global `--silence_lhapdf` switch to suppress the output of LHAPDF
+
 ### Changed
 
 - the order columns of the subcommand `diff` are now properly sorted and do not
   change randomly.
 - the subcommand `diff` now shows the differential cross sections of both grids
   with the same number of digits as the subcommands `convolute` and similar.
+- changed the default maximum value of Q from 1 TeV to 10 TeV and the number of
+  grid points in Q^2 from 30 to 40
+- Removed `Grid::bin_limit` and replaced it with `Grid::bin_info`
 
 ### Fixed
 
