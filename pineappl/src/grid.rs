@@ -131,6 +131,8 @@ pub trait Subgrid {
 
     /// Fill the q2-slice with index `q2_slice` into `grid`.
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
+
+    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
@@ -799,6 +801,11 @@ impl Grid {
     #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
         &self.subgrids[[order, bin, lumi]]
+    }
+
+    /// Replaces the subgrid for the specified indices `order`, `bin`, and `lumi` with `subgrid`.
+    pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: SubgridEnum) {
+        self.subgrids[[order, bin, lumi]] = subgrid;
     }
 
     /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.

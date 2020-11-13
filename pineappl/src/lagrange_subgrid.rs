@@ -297,6 +297,27 @@ impl Subgrid for LagrangeSubgridV1 {
             todo!();
         }
     }
+
+    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
+        if self.grid.is_none() {
+            self.itaumin = q2_slice;
+            self.itaumax = q2_slice + 1;
+            self.grid = Some(Array3::zeros((1, self.ny, self.ny)));
+        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
+            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
+        }
+
+        let self_grid = &mut self.grid.as_mut().unwrap();
+
+        let self_ny = self.ny;
+        let self_itaumin = self.itaumin;
+
+        grid.iter().enumerate().for_each(|(index, value)| {
+            let ix1 = index / self_ny;
+            let ix2 = index % self_ny;
+            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
+        });
+    }
 }
 
 #[cfg(test)]

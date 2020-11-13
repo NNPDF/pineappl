@@ -70,6 +70,10 @@ impl Subgrid for NtupleSubgridV1 {
     fn fill_q2_slice(&self, _: usize, _: &mut [f64]) {
         unimplemented!();
     }
+
+    fn write_q2_slice(&mut self, _: usize, _: &[f64]) {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]
