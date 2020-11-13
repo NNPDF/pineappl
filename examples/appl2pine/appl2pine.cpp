@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -16,7 +17,7 @@ int error_exit(std::string const& message)
     return EXIT_FAILURE;
 }
 
-bool is_reweighting_enabled(appl::igrid const& igrid)
+bool is_reweighting_enabled(appl::igrid const& /*igrid*/)
 {
     // TODO: that is just a guess
     return true;
@@ -137,9 +138,9 @@ int main(int argc, char* argv[])
 
         std::vector<double> slice;
 
-        for (int j = 0; j != grid.Nobs_internal(); ++j)
+        for (int bin = 0; bin != grid.Nobs_internal(); ++bin)
         {
-            auto const* igrid = grid.weightgrid(i, j);
+            auto const* igrid = grid.weightgrid(i, bin);
 
             if (igrid->transform() != "f2")
             {
@@ -156,23 +157,42 @@ int main(int argc, char* argv[])
                 return error_exit("`igrid.isDISgrid == true` not supported");
             }
 
-            double const q2min = appl::igrid::fQ2(igrid->taumin());
-            double const q2max = appl::igrid::fQ2(igrid->taumax());
-            double const x1min = igrid->fx(igrid->y1min());
-            double const x1max = igrid->fx(igrid->y1max());
-            double const x2min = igrid->fx(igrid->y2min());
-            double const x2max = igrid->fx(igrid->y2max());
+            if (igrid->y2min() != igrid->y1min())
+            {
+                return error_exit("`igrid.y2min != igrid.y1min` not supported");
+            }
 
-            int const q2order = igrid->tauorder();
-            int const xorder = igrid->yorder();
-            int const nq2 = igrid->Ntau();
-            int const nx = igrid->Ny1();
+            if (igrid->y2max() != igrid->y1max())
+            {
+                return error_exit("`igrid.y2max != igrid.y1max` not supported");
+            }
+
+            double const q2_min = appl::igrid::fQ2(igrid->taumin());
+            double const q2_max = appl::igrid::fQ2(igrid->taumax());
+            double const x_min = igrid->fx(igrid->y1min());
+            double const x_max = igrid->fx(igrid->y1max());
+
+            int const q2_order = igrid->tauorder();
+            int const x_order = igrid->yorder();
+            int const q2_bins = igrid->Ntau();
+            int const x_bins = igrid->Ny1();
 
             bool const reweight = is_reweighting_enabled(*igrid);
 
-            for (std::size_t k = 0; k != (*lumi_ptr).size(); ++k)
+            auto* keyvals = pineappl_keyval_new();
+            pineappl_keyval_set_double(keyvals, "q2_min", q2_min);
+            pineappl_keyval_set_double(keyvals, "q2_max", q2_max);
+            pineappl_keyval_set_double(keyvals, "x_min", x_min);
+            pineappl_keyval_set_double(keyvals, "x_max", x_max);
+            pineappl_keyval_set_int(keyvals, "q2_order", q2_order);
+            pineappl_keyval_set_int(keyvals, "x_order", x_order);
+            pineappl_keyval_set_int(keyvals, "q2_bins", q2_bins);
+            pineappl_keyval_set_int(keyvals, "x_bins", x_bins);
+            pineappl_keyval_set_bool(keyvals, "reweight", reweight);
+
+            for (std::size_t lumi = 0; lumi != (*lumi_ptr).size(); ++lumi)
             {
-                auto const* matrix = const_cast <appl::igrid*> (igrid)->weightgrid(k);
+                auto const* matrix = const_cast <appl::igrid*> (igrid)->weightgrid(lumi);
 
                 if (matrix == nullptr)
                 {
@@ -210,6 +230,8 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
+                auto* subgrid = pineappl_subgrid_new(keyvals);
+
                 for (int itau = itau_min; itau != itau_max; ++itau)
                 {
                     slice.assign(igrid->Ny1() * igrid->Ny2(), 0.0);
@@ -218,14 +240,17 @@ int main(int argc, char* argv[])
                     {
                         for (int ix2 = ix2_min; ix2 != ix2_max; ++ix2)
                         {
-                            // TODO: fix indices
-                            slice.at(0) = (*matrix)(itau, ix1, ix2);
+                            slice.at(igrid->Ny1() * ix1 + ix2) = (*matrix)(itau, ix1, ix2);
                         }
                     }
 
-                    // TODO: create a new PineAPPL subgrid
+                    pineappl_subgrid_fill_q2_slice(subgrid, itau, slice.data());
                 }
+
+                pineappl_subgrid_replace_and_delete(pgrid, subgrid, 0, bin, lumi);
             }
+
+            pineappl_keyval_delete(keyvals);
         }
     }
 
@@ -233,6 +258,8 @@ int main(int argc, char* argv[])
     {
         pineappl_grid_merge_and_delete(grids.at(0), grids.at(i));
     }
+
+    pineappl_grid_scale_by_order(grids.at(0), 4.0 * std::acos(-1.0), 1.0, 1.0, 1.0, 1.0);
 
     if (!grid.getNormalised())
     {
