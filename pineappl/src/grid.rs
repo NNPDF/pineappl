@@ -459,9 +459,8 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        // TODO: using the first subgrid is a bit arbitrary
-        let grid_q2 = self.subgrids[[0, 0, 0]].grid_q2();
-        let grid_x = self.subgrids[[0, 0, 0]].grid_x();
+        let mut grid_q2 = self.subgrids[[0, 0, 0]].grid_q2();
+        let mut grid_x = self.subgrids[[0, 0, 0]].grid_x();
         let use_cache = !grid_q2.is_empty() && !grid_x.is_empty();
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
@@ -507,8 +506,14 @@ impl Grid {
                 let lumi_entry = &self.lumi[k];
 
                 let mut value = if use_cache {
-                    assert_eq!(subgrid.grid_q2(), grid_q2);
-                    assert_eq!(subgrid.grid_x(), grid_x);
+                    let new_grid_q2 = subgrid.grid_q2();
+                    let new_grid_x = subgrid.grid_x();
+
+                    if (new_grid_q2 != grid_q2) || (new_grid_x != grid_x) {
+                        grid_q2 = new_grid_q2;
+                        grid_x = new_grid_x;
+                        pdf_cache.borrow_mut().clear();
+                    }
 
                     subgrid.convolute(
                         &grid_x,
