@@ -413,7 +413,59 @@ mod test {
     }
 
     #[test]
-    fn test() {
+    fn bin_info_without_remapper() {
+        let limits = BinLimits::new(vec![0.0, 0.125, 0.25, 0.375, 0.5]);
+        let info = BinInfo::new(&limits, None);
+
+        assert_eq!(info.bins(), 4);
+        assert_eq!(info.dimensions(), 1);
+        assert_eq!(info.left(0), vec![0.0, 0.125, 0.25, 0.375]);
+        assert_eq!(info.right(0), vec![0.125, 0.25, 0.375, 0.5]);
+        assert_eq!(info.normalizations(), vec![0.125; 4]);
+
+        assert_eq!(info.left(1), vec![]);
+        assert_eq!(info.right(1), vec![]);
+    }
+
+    #[test]
+    fn bin_info_with_remapper() {
+        let limits = BinLimits::new(vec![0.0, 0.125, 0.25, 0.375, 0.5]);
+        let remapper = BinRemapper::new(
+            vec![1.0; 4],
+            vec![
+                (0.0, 0.5),
+                (0.25, 0.75),
+                (1.0, 2.0),
+                (0.5, 1.0),
+                (0.75, 1.0),
+                (2.0, 5.0),
+                (1.0, 2.0),
+                (1.75, 2.0),
+                (5.0, 5.5),
+                (2.5, 3.0),
+                (2.0, 2.5),
+                (6.0, 8.0),
+            ],
+        )
+        .unwrap();
+        let info = BinInfo::new(&limits, Some(&remapper));
+
+        assert_eq!(info.bins(), 4);
+        assert_eq!(info.dimensions(), 3);
+        assert_eq!(info.left(0), vec![0.0, 0.5, 1.0, 2.5]);
+        assert_eq!(info.left(1), vec![0.25, 0.75, 1.75, 2.0]);
+        assert_eq!(info.left(2), vec![1.0, 2.0, 5.0, 6.0]);
+        assert_eq!(info.right(0), vec![0.5, 1.0, 2.0, 3.0]);
+        assert_eq!(info.right(1), vec![0.75, 1.0, 2.0, 2.5]);
+        assert_eq!(info.right(2), vec![2.0, 5.0, 5.5, 8.0]);
+        assert_eq!(info.normalizations(), vec![1.0; 4]);
+
+        assert_eq!(info.left(3), vec![]);
+        assert_eq!(info.right(3), vec![]);
+    }
+
+    #[test]
+    fn bin_limits() {
         // first check BinLimits with exactly representable bin sizes
         let limits = BinLimits::new(vec![0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]);
 
