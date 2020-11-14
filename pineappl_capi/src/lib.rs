@@ -84,9 +84,9 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits:
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `left` must point to an array that is one
-/// element longer as `grid` has bins. If `dimension` is larger or equal the number of dimensions
-/// for this grid, nothing is written into `left`, the result is undefined.
+/// this function is not safe to call. The parameter `left` must point to an array that is as large
+/// as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this grid,
+/// nothing is written into `left`, the result is undefined.
 pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
     grid: *const Grid,
     dimension: usize,
@@ -101,9 +101,9 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `right` must point to an array that is one
-/// element longer as `grid` has bins. If `dimension` is larger or equal the number of dimensions
-/// for this grid, nothing is written into `right`, the result is undefined.
+/// this function is not safe to call. The parameter `right` must point to an array that is as
+/// large as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this
+/// grid, nothing is written into `right`, the result is undefined.
 pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     grid: *const Grid,
     dimension: usize,

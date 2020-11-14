@@ -82,18 +82,25 @@ impl<'a> BinInfo<'a> {
     /// empty vector is returned.
     #[must_use]
     pub fn left(&self, dimension: usize) -> Vec<f64> {
-        if let Some(remapper) = self.remapper {
+        if dimension >= self.dimensions() {
+            vec![]
+        } else if let Some(remapper) = self.remapper {
             remapper
                 .limits()
                 .iter()
                 .skip(dimension)
                 .step_by(self.dimensions())
+                .take(self.bins())
                 .map(|tuple| tuple.0)
                 .collect()
-        } else if self.dimensions() == 1 {
-            self.limits.limits().iter().copied().collect()
         } else {
-            vec![]
+            self.limits
+                .limits()
+                .iter()
+                .skip(0)
+                .take(self.bins())
+                .copied()
+                .collect()
         }
     }
 
@@ -101,18 +108,25 @@ impl<'a> BinInfo<'a> {
     /// empty vector is returned.
     #[must_use]
     pub fn right(&self, dimension: usize) -> Vec<f64> {
-        if let Some(remapper) = self.remapper {
+        if dimension >= self.dimensions() {
+            vec![]
+        } else if let Some(remapper) = self.remapper {
             remapper
                 .limits()
                 .iter()
                 .skip(dimension)
                 .step_by(self.dimensions())
+                .take(self.bins())
                 .map(|tuple| tuple.1)
                 .collect()
-        } else if self.dimensions() == 1 {
-            self.limits.limits().iter().skip(1).copied().collect()
         } else {
-            vec![]
+            self.limits
+                .limits()
+                .iter()
+                .skip(1)
+                .take(self.bins())
+                .copied()
+                .collect()
         }
     }
 
