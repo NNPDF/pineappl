@@ -143,19 +143,7 @@ impl<'a> BinInfo<'a> {
 
 impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
     fn eq(&self, other: &BinInfo) -> bool {
-        if self.dimensions() == other.dimensions() {
-            // once it's stable, use `eq_by` instead of `zip` and `fold`
-            (0..self.dimensions()).all(|dim| {
-                self.left(dim)
-                    .iter()
-                    .zip(other.left(dim).iter())
-                    .fold(true, |previous, (lhs, rhs)| {
-                        previous && approx_eq!(f64, *lhs, *rhs, ulps = 8)
-                    })
-            })
-        } else {
-            false
-        }
+        (self.limits == other.limits) && (self.remapper == other.remapper)
     }
 }
 
@@ -206,6 +194,12 @@ impl BinRemapper {
     #[must_use]
     pub fn normalizations(&self) -> &[f64] {
         &self.normalizations
+    }
+}
+
+impl PartialEq<BinRemapper> for BinRemapper {
+    fn eq(&self, other: &BinRemapper) -> bool {
+        (self.limits == other.limits) && (self.normalizations == other.normalizations)
     }
 }
 
