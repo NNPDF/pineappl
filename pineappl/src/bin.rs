@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
 
-#[derive(Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 enum Limits {
     Equal { left: f64, right: f64, bins: usize },
     Unequal { limits: Vec<f64> },
@@ -29,7 +29,7 @@ pub enum MergeBinError {
 }
 
 /// Structure representing bin limits.
-#[derive(Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct BinLimits(Limits);
 
 /// Error type that is returned by the constructor of `BinRemapper`.
@@ -47,13 +47,14 @@ pub enum BinRemapperNewError {
 }
 
 /// Structure for remapping bin limits.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BinRemapper {
     normalizations: Vec<f64>,
     limits: Vec<(f64, f64)>,
 }
 
 /// Captures all information about the bins in a grid.
+#[derive(Debug)]
 pub struct BinInfo<'a> {
     limits: &'a BinLimits,
     remapper: Option<&'a BinRemapper>,
@@ -444,6 +445,9 @@ mod test {
         .unwrap();
         let info = BinInfo::new(&limits, Some(&remapper));
 
+        assert_ne!(info, BinInfo::new(&limits, None));
+        assert_eq!(info, BinInfo::new(&limits, Some(&remapper)));
+
         assert_eq!(info.bins(), 4);
         assert_eq!(info.dimensions(), 3);
         assert_eq!(info.left(0), vec![0.0, 0.5, 1.0, 2.5]);
@@ -533,5 +537,48 @@ mod test {
         assert_eq!(limits.index(0.8), Some(2));
         assert_eq!(limits.index(0.95), Some(3));
         assert_eq!(limits.index(1.3), None);
+    }
+
+    #[test]
+    fn bin_remapper() {
+        let remapper = BinRemapper::new(
+            vec![1.0; 4],
+            vec![
+                (0.0, 0.5),
+                (0.25, 0.75),
+                (0.5, 1.0),
+                (0.75, 1.0),
+                (1.0, 2.0),
+                (1.75, 2.0),
+                (2.5, 3.0),
+                (2.0, 2.5),
+            ],
+        )
+        .unwrap();
+
+        assert_ne!(remapper, BinRemapper::new(vec![1.0; 4], vec![(0.0, 1.0), (1.0, 2.0), (2.0, 3.0), (4.0, 5.0)]).unwrap());
+
+        assert!(matches!(
+            BinRemapper::new(vec![1.0; 8], vec![(0.0, 1.0); 2]),
+            Err(BinRemapperNewError::DimensionUnknown{normalizations_len, limits_len})
+                if (normalizations_len == 8) && (limits_len == 2)
+        ));
+
+        assert_eq!(remapper.bins(), 4);
+        assert_eq!(remapper.dimensions(), 2);
+        assert_eq!(
+            remapper.limits(),
+            &[
+                (0.0, 0.5),
+                (0.25, 0.75),
+                (0.5, 1.0),
+                (0.75, 1.0),
+                (1.0, 2.0),
+                (1.75, 2.0),
+                (2.5, 3.0),
+                (2.0, 2.5)
+            ]
+        );
+        assert_eq!(remapper.normalizations(), vec![1.0; 4]);
     }
 }
