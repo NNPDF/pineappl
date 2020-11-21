@@ -199,7 +199,7 @@ impl BinRemapper {
 }
 
 impl PartialEq<BinRemapper> for BinRemapper {
-    fn eq(&self, other: &BinRemapper) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         (self.limits == other.limits) && (self.normalizations == other.normalizations)
     }
 }
@@ -556,7 +556,14 @@ mod test {
         )
         .unwrap();
 
-        assert_ne!(remapper, BinRemapper::new(vec![1.0; 4], vec![(0.0, 1.0), (1.0, 2.0), (2.0, 3.0), (4.0, 5.0)]).unwrap());
+        assert_ne!(
+            remapper,
+            BinRemapper::new(
+                vec![1.0; 4],
+                vec![(0.0, 1.0), (1.0, 2.0), (2.0, 3.0), (4.0, 5.0)]
+            )
+            .unwrap()
+        );
 
         assert!(matches!(
             BinRemapper::new(vec![1.0; 8], vec![(0.0, 1.0); 2]),

@@ -307,7 +307,7 @@ impl Subgrid for LagrangeSubgridV1 {
             self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
         }
 
-        let self_grid = &mut self.grid.as_mut().unwrap();
+        let self_grid = self.grid.as_mut().unwrap();
 
         let self_ny = self.ny;
         let self_itaumin = self.itaumin;
