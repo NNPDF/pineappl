@@ -362,4 +362,78 @@ mod tests {
         assert_eq!(array[[1, 10, 8]], 0.0);
         assert_eq!(array.zeros(), 9);
     }
+
+    #[test]
+    #[should_panic]
+    fn index_mut_panic_dim0() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[40, 0, 50]] = 1.0;
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_mut_panic_dim1() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[0, 50, 0]] = 1.0;
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_mut_panic_dim2() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[0, 0, 50]] = 1.0;
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_panic_dim0_0() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[1, 0, 0]] = 1.0;
+
+        assert_eq!(array[[0, 0, 0]], 0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_panic_dim0_1() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[1, 0, 0]] = 1.0;
+
+        assert_eq!(array[[2, 0, 0]], 0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_panic_dim1() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[1, 0, 0]] = 1.0;
+
+        assert_eq!(array[[0, 50, 0]], 0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_panic_dim2_0() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[0, 0, 1]] = 1.0;
+
+        assert_eq!(array[[0, 0, 0]], 0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_panic_dim2_1() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[0, 0, 1]] = 1.0;
+
+        assert_eq!(array[[0, 0, 2]], 0.0);
+    }
 }
