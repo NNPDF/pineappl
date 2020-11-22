@@ -418,7 +418,7 @@ mod tests {
 
         array[[1, 0, 0]] = 1.0;
 
-        assert_eq!(array[[0, 50, 0]], 0.0);
+        assert_eq!(array[[1, 50, 0]], 0.0);
     }
 
     #[test]
