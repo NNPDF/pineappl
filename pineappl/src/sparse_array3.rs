@@ -72,7 +72,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
                 })
                 .take(elements * self.dimensions.1),
             );
-        } else if index[0] >= self.dimensions.1 {
+        } else if index[0] >= self.dimensions.0 {
             panic!();
         } else if self.entries.is_empty() || (index[0] >= max_index0) {
             if self.entries.is_empty() {
