@@ -1,33 +1,17 @@
 use std::iter;
 use std::ops::{Index, IndexMut};
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 struct Offset {
     space: usize,
     offset: usize,
 }
 
-#[derive(Clone)]
-struct SparseArray2<T> {
-    entries: Vec<T>,
-    indices: Vec<Offset>,
-}
-
-impl<T> SparseArray2<T> {
-    fn new(ny: usize) -> Self {
-        Self {
-            entries: vec![],
-            indices: vec![Offset::default(); ny + 1],
-        }
-    }
-}
-
-// TODO: merge SparseArray2 into SparseArray3
-
 /// Struct for a sparse three-dimensional array, which is optimized for the sparsity of
 /// interpolation grids.
 pub struct SparseArray3<T> {
-    entries: Vec<SparseArray2<T>>,
+    entries: Vec<T>,
+    indices: Vec<Offset>,
     start: usize,
     dimensions: (usize, usize, usize),
 }
@@ -36,9 +20,24 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
     type Output = T;
 
     fn index(&self, index: [usize; 3]) -> &Self::Output {
-        let array2 = &self.entries[index[0] - self.start];
-        let indices_a = &array2.indices[index[1]];
-        let indices_b = &array2.indices[index[1] + 1];
+        // index too small
+        if index[0] < self.start {
+            panic!();
+        }
+
+        // index too large
+        if index[0] >= (self.start + (self.indices.len() - 1) / self.dimensions.1) {
+            panic!();
+        }
+
+        // index too large
+        if index[1] >= self.dimensions.1 {
+            panic!();
+        }
+
+        let forward = self.dimensions.1 * (index[0] - self.start) + index[1];
+        let indices_a = &self.indices[forward];
+        let indices_b = &self.indices[forward + 1];
 
         let zeros_left = indices_a.space;
         let offset = indices_a.offset;
@@ -54,75 +53,85 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
             panic!();
         }
 
-        &array2.entries[(offset + index[2]) - zeros_left]
+        &self.entries[offset + (index[2] - zeros_left)]
     }
 }
 
 impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
     fn index_mut(&mut self, index: [usize; 3]) -> &mut Self::Output {
-        if index[0] >= self.dimensions.0 {
+        let max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
+
+        if index[0] < self.start {
+            let elements = self.start - index[0];
+            self.start = index[0];
+            self.indices.splice(
+                0..0,
+                iter::repeat(Offset {
+                    space: 0,
+                    offset: 0,
+                })
+                .take(elements * self.dimensions.1),
+            );
+        } else if index[0] >= self.dimensions.1 {
             panic!();
-        }
-
-        if (index[0] < self.start) || (index[0] >= (self.start + self.entries.len())) {
-            let mut count = 1;
-            let mut range = 0..0;
-
+        } else if self.entries.is_empty() || (index[0] >= max_index0) {
             if self.entries.is_empty() {
                 self.start = index[0];
-            } else {
-                let new_start = self.start.min(index[0]);
-
-                if new_start == self.start {
-                    range = self.entries.len()..self.entries.len();
-                    count = (index[0] + 1) - (self.start + self.entries.len());
-                } else {
-                    count = self.start - new_start;
-                }
-
-                self.start = new_start;
             }
 
-            self.entries.splice(
-                range,
-                iter::repeat(SparseArray2::new(self.dimensions.1)).take(count),
+            let elements = index[0] - max_index0 + 1;
+            let insert = self.indices.len() - 1;
+            self.indices.splice(
+                insert..insert,
+                iter::repeat(Offset {
+                    space: 0,
+                    offset: self.indices.last().unwrap().offset,
+                })
+                .take(elements * self.dimensions.1),
             );
         }
 
-        let array2 = &mut self.entries[index[0] - self.start];
-        let mut zeros_left = array2.indices[index[1]].space;
-        let mut offset = array2.indices[index[1]].offset;
-        let non_zeros = array2.indices[index[1] + 1].offset - offset;
-
-        let elements;
-        let mut splice = offset;
-
-        if non_zeros == 0 {
-            elements = 1;
-            array2.indices[index[1]].space = index[2];
-        } else if index[2] < zeros_left {
-            elements = zeros_left - index[2];
-            array2.indices[index[1]].space -= elements;
-        } else if index[2] >= (non_zeros + zeros_left) {
-            splice += non_zeros;
-            elements = index[2] - zeros_left;
-        } else {
-            return &mut array2.entries[(offset + index[2]) - zeros_left];
+        // index too large
+        if index[1] >= self.dimensions.1 {
+            panic!();
         }
 
-        array2
-            .entries
-            .splice(splice..splice, iter::repeat(T::default()).take(elements));
-        array2
-            .indices
+        let forward = self.dimensions.1 * (index[0] - self.start) + index[1];
+        let indices_a = &self.indices[forward];
+        let indices_b = &self.indices[forward + 1];
+
+        let zeros_left = indices_a.space;
+        let offset = indices_a.offset;
+        let non_zeros = indices_b.offset - offset;
+
+        let elements;
+        let insert;
+
+        if index[2] < zeros_left {
+            elements = zeros_left - index[2];
+            insert = offset;
+            self.indices[forward].space -= elements;
+        } else if index[2] >= self.dimensions.2 {
+            panic!();
+        } else if non_zeros == 0 {
+            elements = 1;
+            insert = offset;
+            self.indices[forward].space = index[2];
+        } else if index[2] >= (zeros_left + non_zeros) {
+            elements = index[2] - (zeros_left + non_zeros) + 1;
+            insert = offset + non_zeros;
+        } else {
+            return &mut self.entries[offset + (index[2] - zeros_left)];
+        }
+
+        self.entries
+            .splice(insert..insert, iter::repeat(T::default()).take(elements));
+        self.indices
             .iter_mut()
-            .skip(index[1] + 1)
-            .for_each(|i| i.offset += elements);
+            .skip(forward + 1)
+            .for_each(|ix| ix.offset += elements);
 
-        zeros_left = array2.indices[index[1]].space;
-        offset = array2.indices[index[1]].offset;
-
-        &mut array2.entries[(offset + index[2]) - zeros_left]
+        &mut self.entries[offset + (index[2] - self.indices[forward].space)]
     }
 }
 
@@ -147,11 +156,15 @@ impl<'a, T> SparseArray3Iter<'a, T> {
 // TODO: implement conversion from Array3 to SparseArray3
 
 impl<T: Default + PartialEq> SparseArray3<T> {
-    /// Returns a new array with the specified dimensions for the three dimensions.
-    #[must_use]
+    /// Constructs a new and empty `SparseArray3` with the specified dimensions `nx`, `ny` and
+    /// `nz`.
     pub fn new(nx: usize, ny: usize, nz: usize) -> Self {
         Self {
             entries: vec![],
+            indices: vec![Offset {
+                space: 0,
+                offset: 0,
+            }],
             start: 0,
             dimensions: (nx, ny, nz),
         }
@@ -160,33 +173,13 @@ impl<T: Default + PartialEq> SparseArray3<T> {
     /// Returns the number of default (zero) elements in this array.
     #[must_use]
     pub fn zeros(&self) -> usize {
-        let mut zeros = 0;
-
-        for array2 in &self.entries {
-            zeros += array2
-                .entries
-                .iter()
-                .filter(|x| **x == T::default())
-                .count();
-        }
-
-        zeros
+        self.entries.iter().filter(|x| **x == T::default()).count()
     }
 
     /// Returns the number of non-default (non-zero) elements in this array.
     #[must_use]
     pub fn len(&self) -> usize {
-        let mut len = 0;
-
-        for array2 in &self.entries {
-            len += array2
-                .entries
-                .iter()
-                .filter(|x| **x != T::default())
-                .count();
-        }
-
-        len
+        self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
     /// Returns `true` if the array contains no element.
@@ -195,9 +188,9 @@ impl<T: Default + PartialEq> SparseArray3<T> {
         self.entries.is_empty()
     }
 
-    pub fn iter<'a>(&'a self) -> SparseArray3Iter<'a, T> {
-        SparseArray3Iter { array: self }
-    }
+    //pub fn iter<'a>(&'a self) -> SparseArray3Iter<'a, T> {
+    //    SparseArray3Iter { array: self }
+    //}
 }
 
 #[cfg(test)]
