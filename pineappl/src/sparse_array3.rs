@@ -59,7 +59,7 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
 
 impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
     fn index_mut(&mut self, index: [usize; 3]) -> &mut Self::Output {
-        let max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
+        let mut max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
 
         if index[0] < self.start {
             let elements = self.start - index[0];
@@ -75,11 +75,15 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         } else if index[0] >= self.dimensions.0 {
             panic!();
         } else if self.entries.is_empty() || (index[0] >= max_index0) {
+            let elements;
+
             if self.entries.is_empty() {
                 self.start = index[0];
+                elements = 1;
+            } else {
+                elements = index[0] - max_index0 + 1;
             }
 
-            let elements = index[0] - max_index0 + 1;
             let insert = self.indices.len() - 1;
             self.indices.splice(
                 insert..insert,
