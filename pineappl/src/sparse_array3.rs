@@ -1,5 +1,6 @@
 use std::iter;
 use std::ops::{Index, IndexMut};
+use std::slice::Iter;
 
 #[derive(Clone)]
 struct Offset {
@@ -142,20 +143,70 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
 }
 
 pub struct SparseArray3Iter<'a, T> {
-    array: &'a SparseArray3<T>,
+    entry_iter: Iter<'a, T>,
+    index_iter: Iter<'a, Offset>,
+    offset_a: Option<&'a Offset>,
+    offset_b: Option<&'a Offset>,
+    tuple: (usize, usize, usize),
+    dimensions: (usize, usize, usize),
 }
 
 impl<'a, T> Iterator for SparseArray3Iter<'a, T> {
     type Item = ((usize, usize, usize), &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!();
+        if let Some(element) = self.entry_iter.next() {
+            self.tuple.2 += 1;
+
+            let offset_a = self.offset_a.unwrap();
+            let offset_b = self.offset_b.unwrap();
+
+            if self.tuple.2 >= (offset_b.offset - offset_a.offset + offset_a.space) {
+                loop {
+                    self.offset_a = self.offset_b;
+                    self.offset_b = self.index_iter.next();
+
+                    let offset_a = self.offset_a.unwrap();
+                    let offset_b = self.offset_b?;
+
+                    self.tuple.1 += 1;
+
+                    if self.tuple.1 >= self.dimensions.1 {
+                        self.tuple.0 += 1;
+                        self.tuple.1 = 0;
+                    }
+
+                    if (offset_b.offset - offset_a.offset) != 0 {
+                        self.tuple.2 = offset_a.space;
+                        break;
+                    }
+                }
+            }
+
+            // TODO: skip ahead until first non-zero element is reached
+
+            Some((self.tuple, element))
+        } else {
+            None
+        }
     }
 }
 
 impl<'a, T> SparseArray3Iter<'a, T> {
     fn new(array: &'a SparseArray3<T>) -> Self {
-        todo!();
+        let mut result = Self {
+            entry_iter: array.entries.iter(),
+            index_iter: array.indices.iter(),
+            offset_a: None,
+            offset_b: None,
+            tuple: (array.start, 0, 0),
+            dimensions: array.dimensions,
+        };
+
+        result.offset_a = result.index_iter.next();
+        result.offset_b = result.index_iter.next();
+
+        result
     }
 }
 
@@ -194,9 +245,10 @@ impl<T: Default + PartialEq> SparseArray3<T> {
         self.entries.is_empty()
     }
 
-    //pub fn iter<'a>(&'a self) -> SparseArray3Iter<'a, T> {
-    //    SparseArray3Iter { array: self }
-    //}
+    /// Return an `Iterator` over the elements of this array.
+    pub fn iter<'a>(&'a self) -> SparseArray3Iter<'a, T> {
+        SparseArray3Iter::new(&self)
+    }
 }
 
 #[cfg(test)]
@@ -441,5 +493,43 @@ mod tests {
         array[[0, 0, 1]] = 1.0;
 
         assert_eq!(array[[0, 0, 2]], 0.0);
+    }
+
+    #[test]
+    fn iterator() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        // check empty iterator
+        assert_eq!(array.iter().next(), None);
+
+        // insert an element
+        array[[2, 3, 4]] = 1.0;
+
+        let mut iter = array.iter();
+
+        // check iterator with one element
+        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
+        assert_eq!(iter.next(), None);
+
+        // insert another element
+        array[[2, 3, 6]] = 2.0;
+
+        let mut iter = array.iter();
+
+        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 5), &0.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
+        assert_eq!(iter.next(), None);
+
+        // insert yet another element
+        array[[4, 5, 7]] = 3.0;
+
+        let mut iter = array.iter();
+
+        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 5), &0.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
+        assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
+        assert_eq!(iter.next(), None);
     }
 }
