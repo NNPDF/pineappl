@@ -16,6 +16,8 @@ pub struct SparseArray3<T> {
     dimensions: (usize, usize, usize),
 }
 
+// TODO: write panic messages
+
 impl<T> Index<[usize; 3]> for SparseArray3<T> {
     type Output = T;
 
@@ -59,7 +61,7 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
 
 impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
     fn index_mut(&mut self, index: [usize; 3]) -> &mut Self::Output {
-        let mut max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
+        let max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
 
         if index[0] < self.start {
             let elements = self.start - index[0];
@@ -202,7 +204,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn sparse_array3() {
+    fn index_access() {
         let mut array = SparseArray3::new(40, 50, 50);
 
         // after creation the array must be empty
