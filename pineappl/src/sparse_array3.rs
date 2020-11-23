@@ -151,7 +151,7 @@ pub struct SparseArray3Iter<'a, T> {
     dimensions: (usize, usize, usize),
 }
 
-impl<'a, T> Iterator for SparseArray3Iter<'a, T> {
+impl<'a, T: Default + PartialEq> Iterator for SparseArray3Iter<'a, T> {
     type Item = ((usize, usize, usize), &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -183,9 +183,11 @@ impl<'a, T> Iterator for SparseArray3Iter<'a, T> {
                 }
             }
 
-            // TODO: skip ahead until first non-zero element is reached
-
-            Some((self.tuple, element))
+            if *element == T::default() {
+                self.next()
+            } else {
+                Some((self.tuple, element))
+            }
         } else {
             None
         }
@@ -517,7 +519,6 @@ mod tests {
         let mut iter = array.iter();
 
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 5), &0.0)));
         assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
         assert_eq!(iter.next(), None);
 
@@ -527,7 +528,6 @@ mod tests {
         let mut iter = array.iter();
 
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 5), &0.0)));
         assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
         assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
         assert_eq!(iter.next(), None);
