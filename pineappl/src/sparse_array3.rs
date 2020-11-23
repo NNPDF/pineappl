@@ -142,7 +142,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
     }
 }
 
-pub struct SparseArray3Iter<'a, T> {
+pub struct IndexedIter<'a, T> {
     entry_iter: Iter<'a, T>,
     index_iter: Iter<'a, Offset>,
     offset_a: Option<&'a Offset>,
@@ -151,7 +151,7 @@ pub struct SparseArray3Iter<'a, T> {
     dimensions: (usize, usize, usize),
 }
 
-impl<'a, T: Default + PartialEq> Iterator for SparseArray3Iter<'a, T> {
+impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
     type Item = ((usize, usize, usize), &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -194,7 +194,7 @@ impl<'a, T: Default + PartialEq> Iterator for SparseArray3Iter<'a, T> {
     }
 }
 
-impl<'a, T> SparseArray3Iter<'a, T> {
+impl<'a, T> IndexedIter<'a, T> {
     fn new(array: &'a SparseArray3<T>) -> Self {
         let mut result = Self {
             entry_iter: array.entries.iter(),
@@ -247,9 +247,10 @@ impl<T: Default + PartialEq> SparseArray3<T> {
         self.entries.is_empty()
     }
 
-    /// Return an `Iterator` over the elements of this array.
-    pub fn iter<'a>(&'a self) -> SparseArray3Iter<'a, T> {
-        SparseArray3Iter::new(&self)
+    /// Return an indexed `Iterator` over the non-zero elements of this array. The iterator element
+    /// type is `((usize, usize, usize), &T)`.
+    pub fn indexed_iter<'a>(&'a self) -> IndexedIter<'a, T> {
+        IndexedIter::new(&self)
     }
 }
 
@@ -498,16 +499,16 @@ mod tests {
     }
 
     #[test]
-    fn iterator() {
+    fn indexed_iter() {
         let mut array = SparseArray3::new(40, 50, 50);
 
         // check empty iterator
-        assert_eq!(array.iter().next(), None);
+        assert_eq!(array.indexed_iter().next(), None);
 
         // insert an element
         array[[2, 3, 4]] = 1.0;
 
-        let mut iter = array.iter();
+        let mut iter = array.indexed_iter();
 
         // check iterator with one element
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
@@ -516,7 +517,7 @@ mod tests {
         // insert another element
         array[[2, 3, 6]] = 2.0;
 
-        let mut iter = array.iter();
+        let mut iter = array.indexed_iter();
 
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
         assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
@@ -525,7 +526,7 @@ mod tests {
         // insert yet another element
         array[[4, 5, 7]] = 3.0;
 
-        let mut iter = array.iter();
+        let mut iter = array.indexed_iter();
 
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
         assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
