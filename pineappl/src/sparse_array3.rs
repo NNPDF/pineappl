@@ -80,14 +80,12 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         } else if index[0] >= self.dimensions.0 {
             panic!();
         } else if self.entries.is_empty() || (index[0] >= max_index0) {
-            let elements;
-
-            if self.entries.is_empty() {
+            let elements = if self.entries.is_empty() {
                 self.start = index[0];
-                elements = 1;
+                1
             } else {
-                elements = index[0] - max_index0 + 1;
-            }
+                index[0] - max_index0 + 1
+            };
 
             let insert = self.indices.len() - 1;
             self.indices.splice(
@@ -219,6 +217,7 @@ impl<'a, T> IndexedIter<'a, T> {
 impl<T: Default + PartialEq> SparseArray3<T> {
     /// Constructs a new and empty `SparseArray3` with the specified dimensions `nx`, `ny` and
     /// `nz`.
+    #[must_use]
     pub fn new(nx: usize, ny: usize, nz: usize) -> Self {
         Self {
             entries: vec![],
@@ -259,16 +258,18 @@ impl<T: Default + PartialEq> SparseArray3<T> {
 
     /// Return an indexed `Iterator` over the non-zero elements of this array. The iterator element
     /// type is `((usize, usize, usize), &T)`.
-    pub fn indexed_iter<'a>(&'a self) -> IndexedIter<'a, T> {
-        IndexedIter::new(&self)
+    #[must_use]
+    pub fn indexed_iter(&self) -> IndexedIter<'_, T> {
+        IndexedIter::new(self)
     }
 
     /// Return an iterator over the elements, including zero elements.
-    pub fn iter_mut<'a>(&'a mut self) -> IterMut<'a, T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.entries.iter_mut()
     }
 
     /// Return a half-open interval of indices that are filled for the first dimension.
+    #[must_use]
     pub fn x_range(&self) -> Range<usize> {
         self.start..(self.start + (self.indices.len() - 1) / self.dimensions.1)
     }
