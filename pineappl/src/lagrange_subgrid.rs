@@ -4,7 +4,6 @@ use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::{Ntuple, Subgrid, SubgridEnum, SubgridParams};
 use arrayvec::ArrayVec;
 use either::Either;
-use itertools::iproduct;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -135,22 +134,16 @@ impl Subgrid for LagrangeSubgridV1 {
     ) -> f64 {
         if let Some(self_grid) = &self.grid {
             let lumi = lumi.left().unwrap();
-            let qs: Vec<_> = (self.itaumin..self.itaumax).collect();
-            let y: Vec<_> = (0..self.ny).collect();
 
             self_grid
-                .iter()
-                .zip(iproduct!(qs, &y, &y))
-                .map(|(&sigma, (q2, &x1, &x2))| {
-                    if sigma == 0.0 {
-                        0.0
-                    } else {
-                        let mut value = sigma * lumi(x1, x2, q2);
-                        if self.reweight {
-                            value *= weightfun(x[x1]) * weightfun(x[x2]);
-                        }
-                        value
+                .indexed_iter()
+                .filter(|(_, &value)| value != 0.0)
+                .map(|((q2, x1, x2), &sigma)| {
+                    let mut value = sigma * lumi(x1, x2, q2 + self.itaumin);
+                    if self.reweight {
+                        value *= weightfun(x[x1]) * weightfun(x[x2]);
                     }
+                    value
                 })
                 .sum()
         } else {
