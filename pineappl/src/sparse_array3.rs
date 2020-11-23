@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::iter;
 use std::ops::{Index, IndexMut};
 use std::slice::Iter;
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 struct Offset {
     space: usize,
     offset: usize,
@@ -10,6 +11,7 @@ struct Offset {
 
 /// Struct for a sparse three-dimensional array, which is optimized for the sparsity of
 /// interpolation grids.
+#[derive(Deserialize, Serialize)]
 pub struct SparseArray3<T> {
     entries: Vec<T>,
     indices: Vec<Offset>,
