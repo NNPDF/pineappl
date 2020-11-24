@@ -3,18 +3,13 @@ use std::iter;
 use std::ops::{Index, IndexMut, Range};
 use std::slice::{Iter, IterMut};
 
-#[derive(Clone, Deserialize, Serialize)]
-struct Offset {
-    space: usize,
-    offset: usize,
-}
-
 /// Struct for a sparse three-dimensional array, which is optimized for the sparsity of
 /// interpolation grids.
 #[derive(Deserialize, Serialize)]
 pub struct SparseArray3<T> {
     entries: Vec<T>,
-    indices: Vec<Offset>,
+    // TODO: change usize to u16 if possible
+    indices: Vec<(usize, usize)>,
     start: usize,
     dimensions: (usize, usize, usize),
 }
@@ -44,9 +39,9 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
         let indices_a = &self.indices[forward];
         let indices_b = &self.indices[forward + 1];
 
-        let zeros_left = indices_a.space;
-        let offset = indices_a.offset;
-        let non_zeros = indices_b.offset - offset;
+        let zeros_left = indices_a.0;
+        let offset = indices_a.1;
+        let non_zeros = indices_b.1 - offset;
 
         // index too small
         if index[2] < zeros_left {
@@ -71,11 +66,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
             self.start = index[0];
             self.indices.splice(
                 0..0,
-                iter::repeat(Offset {
-                    space: 0,
-                    offset: 0,
-                })
-                .take(elements * self.dimensions.1),
+                iter::repeat((0, 0)).take(elements * self.dimensions.1),
             );
         } else if index[0] >= self.dimensions.0 {
             panic!();
@@ -90,11 +81,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
             let insert = self.indices.len() - 1;
             self.indices.splice(
                 insert..insert,
-                iter::repeat(Offset {
-                    space: 0,
-                    offset: self.indices.last().unwrap().offset,
-                })
-                .take(elements * self.dimensions.1),
+                iter::repeat((0, self.indices.last().unwrap().1)).take(elements * self.dimensions.1),
             );
         }
 
@@ -107,9 +94,9 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         let indices_a = &self.indices[forward];
         let indices_b = &self.indices[forward + 1];
 
-        let zeros_left = indices_a.space;
-        let offset = indices_a.offset;
-        let non_zeros = indices_b.offset - offset;
+        let zeros_left = indices_a.0;
+        let offset = indices_a.1;
+        let non_zeros = indices_b.1 - offset;
 
         let elements;
         let insert;
@@ -117,13 +104,13 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         if index[2] < zeros_left {
             elements = zeros_left - index[2];
             insert = offset;
-            self.indices[forward].space -= elements;
+            self.indices[forward].0 -= elements;
         } else if index[2] >= self.dimensions.2 {
             panic!();
         } else if non_zeros == 0 {
             elements = 1;
             insert = offset;
-            self.indices[forward].space = index[2];
+            self.indices[forward].0 = index[2];
         } else if index[2] >= (zeros_left + non_zeros) {
             elements = index[2] - (zeros_left + non_zeros) + 1;
             insert = offset + non_zeros;
@@ -136,17 +123,17 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         self.indices
             .iter_mut()
             .skip(forward + 1)
-            .for_each(|ix| ix.offset += elements);
+            .for_each(|ix| ix.1 += elements);
 
-        &mut self.entries[offset + (index[2] - self.indices[forward].space)]
+        &mut self.entries[offset + (index[2] - self.indices[forward].0)]
     }
 }
 
 pub struct IndexedIter<'a, T> {
     entry_iter: Iter<'a, T>,
-    index_iter: Iter<'a, Offset>,
-    offset_a: Option<&'a Offset>,
-    offset_b: Option<&'a Offset>,
+    index_iter: Iter<'a, (usize, usize)>,
+    offset_a: Option<&'a (usize, usize)>,
+    offset_b: Option<&'a (usize, usize)>,
     tuple: (usize, usize, usize),
     dimensions: (usize, usize, usize),
 }
@@ -161,7 +148,7 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
             let offset_a = self.offset_a.unwrap();
             let offset_b = self.offset_b.unwrap();
 
-            if self.tuple.2 >= (offset_b.offset - offset_a.offset + offset_a.space) {
+            if self.tuple.2 >= (offset_b.1 - offset_a.1 + offset_a.0) {
                 loop {
                     self.offset_a = self.offset_b;
                     self.offset_b = self.index_iter.next();
@@ -176,8 +163,8 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
                         self.tuple.1 = 0;
                     }
 
-                    if (offset_b.offset - offset_a.offset) != 0 {
-                        self.tuple.2 = offset_a.space;
+                    if (offset_b.1 - offset_a.1) != 0 {
+                        self.tuple.2 = offset_a.0;
                         break;
                     }
                 }
@@ -221,10 +208,7 @@ impl<T: Default + PartialEq> SparseArray3<T> {
     pub fn new(nx: usize, ny: usize, nz: usize) -> Self {
         Self {
             entries: vec![],
-            indices: vec![Offset {
-                space: 0,
-                offset: 0,
-            }],
+            indices: vec![(0, 0)],
             start: 0,
             dimensions: (nx, ny, nz),
         }
@@ -234,10 +218,7 @@ impl<T: Default + PartialEq> SparseArray3<T> {
     pub fn clear(&mut self) {
         self.entries.clear();
         self.indices.clear();
-        self.indices.push(Offset {
-            space: 0,
-            offset: 0,
-        });
+        self.indices.push((0, 0));
         self.start = 0;
     }
 
@@ -287,23 +268,19 @@ impl<T: Default + PartialEq> SparseArray3<T> {
 
         let index_a = (x - self.start) * self.dimensions.1;
         let index_b = (x - self.start + 1) * self.dimensions.1;
-        let offset_a = self.indices[index_a].offset;
-        let offset_b = self.indices[index_b].offset;
+        let offset_a = self.indices[index_a].1;
+        let offset_b = self.indices[index_b].1;
 
         self.entries.drain(offset_a..offset_b);
         self.indices
             .iter_mut()
             .skip(index_b)
-            .for_each(|o| o.offset -= offset_b - offset_a);
+            .for_each(|o| o.1 -= offset_b - offset_a);
 
         if (x != self.start) && (x != (self.start + nx - 1)) {
             self.indices.splice(
                 index_a..index_b,
-                iter::repeat(Offset {
-                    space: 0,
-                    offset: offset_a,
-                })
-                .take(self.dimensions.1),
+                iter::repeat((0, offset_a)).take(self.dimensions.1),
             );
         } else {
             if nx == 1 {
