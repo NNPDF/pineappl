@@ -11,7 +11,6 @@ use std::slice::{Iter, IterMut};
 #[derive(Deserialize, Serialize)]
 pub struct SparseArray3<T> {
     entries: Vec<T>,
-    // TODO: change usize to u16 if possible
     indices: Vec<(usize, usize)>,
     start: usize,
     dimensions: (usize, usize, usize),
