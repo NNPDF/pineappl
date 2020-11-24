@@ -234,7 +234,10 @@ impl<T: Default + PartialEq> SparseArray3<T> {
     pub fn clear(&mut self) {
         self.entries.clear();
         self.indices.clear();
-        self.indices.push(Offset { space: 0, offset: 0 });
+        self.indices.push(Offset {
+            space: 0,
+            offset: 0,
+        });
         self.start = 0;
     }
 
