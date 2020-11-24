@@ -1,5 +1,6 @@
 //! Module containing the `SparseArray3` struct.
 
+use ndarray::{Array3, Axis};
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::ops::{Index, IndexMut, Range};
@@ -206,9 +207,7 @@ impl<'a, T> IndexedIter<'a, T> {
     }
 }
 
-// TODO: implement conversion from Array3 to SparseArray3
-
-impl<T: Default + PartialEq> SparseArray3<T> {
+impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     /// Constructs a new and empty `SparseArray3` with the specified dimensions `nx`, `ny` and
     /// `nz`.
     #[must_use]
@@ -218,6 +217,52 @@ impl<T: Default + PartialEq> SparseArray3<T> {
             indices: vec![(0, 0)],
             start: 0,
             dimensions: (nx, ny, nz),
+        }
+    }
+
+    /// Converts `array` into a `SparseArray3`.
+    pub fn from_ndarray(array: &Array3<T>, xstart: usize, xsize: usize) -> Self {
+        let (_, ny, nz) = array.dim();
+        let dimensions = (xsize, ny, nz);
+        let mut entries = vec![];
+        let mut indices = vec![];
+
+        let mut offset = 0;
+
+        for array2 in array.axis_iter(Axis(0)) {
+            for array1 in array2.axis_iter(Axis(0)) {
+                let start = array1.iter().position(|x| *x != T::default());
+
+                if let Some(start) = start {
+                    let end = array1.iter().enumerate().skip(start).fold(
+                        start,
+                        |last_non_zero, (index, x)| {
+                            if *x != T::default() {
+                                index
+                            } else {
+                                last_non_zero
+                            }
+                        },
+                    ) + 1;
+                    indices.push((start, offset));
+                    offset += end - start;
+                    entries.splice(
+                        entries.len()..entries.len(),
+                        array1.iter().skip(start).take(end - start).cloned(),
+                    );
+                } else {
+                    indices.push((0, offset));
+                }
+            }
+        }
+
+        indices.push((0, offset));
+
+        Self {
+            entries,
+            indices,
+            start: xstart,
+            dimensions,
         }
     }
 
@@ -705,5 +750,35 @@ mod tests {
         let mut array = SparseArray3::<f64>::new(40, 50, 50);
 
         array.remove_x(0);
+    }
+
+    #[test]
+    fn from_ndarray() {
+        let mut ndarray = Array3::zeros((2, 50, 50));
+
+        ndarray[[0, 4, 3]] = 1.0;
+        ndarray[[0, 4, 4]] = 2.0;
+        ndarray[[0, 4, 6]] = 3.0;
+        ndarray[[0, 5, 1]] = 4.0;
+        ndarray[[0, 5, 7]] = 5.0;
+        ndarray[[1, 3, 9]] = 6.0;
+
+        let mut array = SparseArray3::from_ndarray(&ndarray, 3, 40);
+
+        assert_eq!(array[[3, 4, 3]], 1.0);
+        assert_eq!(array[[3, 4, 4]], 2.0);
+        assert_eq!(array[[3, 4, 5]], 0.0);
+        assert_eq!(array[[3, 4, 6]], 3.0);
+        assert_eq!(array[[3, 5, 1]], 4.0);
+        assert_eq!(array[[3, 5, 2]], 0.0);
+        assert_eq!(array[[3, 5, 3]], 0.0);
+        assert_eq!(array[[3, 5, 4]], 0.0);
+        assert_eq!(array[[3, 5, 5]], 0.0);
+        assert_eq!(array[[3, 5, 6]], 0.0);
+        assert_eq!(array[[3, 5, 7]], 5.0);
+        assert_eq!(array[[4, 3, 9]], 6.0);
+
+        assert_eq!(array.len(), 6);
+        assert_eq!(array.zeros(), 6);
     }
 }
