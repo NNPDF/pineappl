@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::lagrange_subgrid::LagrangeSubgridV1;
+use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use either::Either::{self, Left, Right};
@@ -85,6 +85,8 @@ impl Order {
 #[enum_dispatch(Subgrid)]
 #[derive(Deserialize, Serialize)]
 pub enum SubgridEnum {
+    /// Lagrange-interpolation subgrid.
+    LagrangeSparseSubgridV1,
     /// Lagrange-interpolation subgrid.
     LagrangeSubgridV1,
     /// N-tuple subgrid.
@@ -412,6 +414,9 @@ impl Grid {
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
             "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
+            "LagrangeSparseSubgrid" => {
+                Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
+            }
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
         };

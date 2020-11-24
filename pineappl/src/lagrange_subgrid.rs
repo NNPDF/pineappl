@@ -2,6 +2,7 @@
 
 use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::{Ntuple, Subgrid, SubgridEnum, SubgridParams};
+use super::sparse_array3::SparseArray3;
 use arrayvec::ArrayVec;
 use either::Either;
 use itertools::iproduct;
@@ -320,15 +321,218 @@ impl Subgrid for LagrangeSubgridV1 {
     }
 }
 
+/// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
+/// structure.
+#[derive(Deserialize, Serialize)]
+pub struct LagrangeSparseSubgridV1 {
+    array: SparseArray3<f64>,
+    ntau: usize,
+    ny: usize,
+    yorder: usize,
+    tauorder: usize,
+    reweight: bool,
+    ymin: f64,
+    ymax: f64,
+    taumin: f64,
+    taumax: f64,
+}
+
+impl LagrangeSparseSubgridV1 {
+    /// Constructor.
+    #[must_use]
+    pub fn new(subgrid_params: &SubgridParams) -> Self {
+        Self {
+            array: SparseArray3::new(
+                subgrid_params.q2_bins(),
+                subgrid_params.x_bins(),
+                subgrid_params.x_bins(),
+            ),
+            ntau: subgrid_params.q2_bins(),
+            ny: subgrid_params.x_bins(),
+            yorder: subgrid_params.x_order(),
+            tauorder: subgrid_params.q2_order(),
+            reweight: subgrid_params.reweight(),
+            ymin: fy(subgrid_params.x_max()),
+            ymax: fy(subgrid_params.x_min()),
+            taumin: ftau(subgrid_params.q2_min()),
+            taumax: ftau(subgrid_params.q2_max()),
+        }
+    }
+
+    fn deltay(&self) -> f64 {
+        (self.ymax - self.ymin) / f64_from_usize(self.ny - 1)
+    }
+
+    fn deltatau(&self) -> f64 {
+        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
+    }
+
+    fn gety(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltay(), self.ymin)
+    }
+
+    fn gettau(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
+    }
+}
+
+impl Subgrid for LagrangeSparseSubgridV1 {
+    fn convolute(
+        &self,
+        x: &[f64],
+        _: &[f64],
+        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+    ) -> f64 {
+        let lumi = lumi.left().unwrap();
+
+        self.array
+            .indexed_iter()
+            .map(|((iq2, ix1, ix2), sigma)| {
+                let mut value = sigma * lumi(ix1, ix2, iq2);
+                if self.reweight {
+                    value *= weightfun(x[ix1]) * weightfun(x[ix2]);
+                }
+                value
+            })
+            .sum()
+    }
+
+    fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        let y1 = fy(ntuple.x1);
+        let y2 = fy(ntuple.x2);
+        let tau = ftau(ntuple.q2);
+
+        if (y2 < self.ymin)
+            || (y2 > self.ymax)
+            || (y1 < self.ymin)
+            || (y1 > self.ymax)
+            || (tau < self.taumin)
+            || (tau > self.taumax)
+        {
+            return;
+        }
+
+        let k1 = usize_from_f64((y1 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
+            .min(self.ny - 1 - self.yorder);
+        let k2 = usize_from_f64((y2 - self.ymin) / self.deltay() - f64_from_usize(self.yorder / 2))
+            .min(self.ny - 1 - self.yorder);
+
+        let u_y1 = (y1 - self.gety(k1)) / self.deltay();
+        let u_y2 = (y2 - self.gety(k2)) / self.deltay();
+
+        let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
+            .map(|i| fi(i, self.yorder, u_y1))
+            .collect();
+        let fi2: ArrayVec<[_; 8]> = (0..=self.yorder)
+            .map(|i| fi(i, self.yorder, u_y2))
+            .collect();
+
+        let k3 = usize_from_f64(
+            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
+        )
+        .min(self.ntau - 1 - self.tauorder);
+
+        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
+
+        let factor = if self.reweight {
+            1.0 / (weightfun(ntuple.x1) * weightfun(ntuple.x2))
+        } else {
+            1.0
+        };
+
+        for i3 in 0..=self.tauorder {
+            let fi3i3 = fi(i3, self.tauorder, u_tau);
+
+            for (i1, fi1i1) in fi1.iter().enumerate() {
+                for (i2, fi2i2) in fi2.iter().enumerate() {
+                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
+
+                    self.array[[k3 + i3, k1 + i1, k2 + i2]] += fillweight;
+                }
+            }
+        }
+    }
+
+    fn grid_q2(&self) -> Vec<f64> {
+        (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect()
+    }
+
+    fn grid_x(&self) -> Vec<f64> {
+        (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.array.is_empty()
+    }
+
+    fn merge(&mut self, other: &mut SubgridEnum) {
+        if let SubgridEnum::LagrangeSparseSubgridV1(other_grid) = other {
+            if self.array.is_empty() {
+                mem::swap(&mut self.array, &mut other_grid.array);
+            } else {
+                // TODO: we need much more checks here if there subgrids are compatible at all
+
+                for ((i, j, k), value) in other_grid.array.indexed_iter() {
+                    self.array[[i, j, k]] += value;
+                }
+            }
+        } else {
+            todo!();
+        }
+    }
+
+    fn scale(&mut self, factor: f64) {
+        if factor == 0.0 {
+            self.array.clear();
+        } else {
+            self.array.iter_mut().for_each(|x| *x *= factor);
+        }
+    }
+
+    fn q2_slice(&self) -> (usize, usize) {
+        let range = self.array.x_range();
+
+        (range.start, range.end)
+    }
+
+    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
+        let grid_x: Vec<_> = self
+            .grid_x()
+            .iter()
+            .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
+            .collect();
+
+        for value in grid.iter_mut() {
+            *value = 0.0;
+        }
+
+        for ((_, ix1, ix2), value) in self
+            .array
+            .indexed_iter()
+            .filter(|((iq2, _, _), _)| *iq2 == q2_slice)
+        {
+            grid[ix1 * self.ny + ix2] = value * grid_x[ix1] * grid_x[ix2];
+        }
+    }
+
+    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
+        self.array.remove_x(q2_slice);
+
+        grid.iter()
+            .enumerate()
+            .filter(|(_, &value)| value != 0.0)
+            .for_each(|(index, &value)| {
+                self.array[[q2_slice, index / self.ny, index % self.ny]] = value;
+            });
+    }
+}
+
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use float_cmp::approx_eq;
 
-    #[test]
-    fn test_q2_slice() {
-        let mut grid = LagrangeSubgridV1::new(&SubgridParams::default());
-
+    fn test_q2_slice_methods<G: Subgrid>(mut grid: G) {
         grid.fill(&Ntuple {
             x1: 0.1,
             x2: 0.2,
@@ -355,7 +559,7 @@ mod test {
         });
 
         let x = grid.grid_x();
-        let q2 = grid.grid_x();
+        let q2 = grid.grid_q2();
 
         let reference = grid.convolute(
             &x,
@@ -366,12 +570,46 @@ mod test {
         let mut buffer = vec![0.0; x.len() * x.len()];
         let mut test = 0.0;
 
+        // check `reference` against manually calculated result from q2 slices
         for i in grid.q2_slice().0..grid.q2_slice().1 {
             grid.fill_q2_slice(i, &mut buffer);
 
             test += buffer.iter().sum::<f64>();
         }
 
-        assert!(approx_eq!(f64, test, reference, ulps = 4));
+        assert!(approx_eq!(f64, test, reference, ulps = 8));
+
+        for i in grid.q2_slice().0..grid.q2_slice().1 {
+            grid.fill_q2_slice(i, &mut buffer);
+
+            buffer
+                .iter_mut()
+                .enumerate()
+                .filter(|(_, value)| **value != 0.0)
+                .for_each(|(index, value)| {
+                    let x1 = x[index / x.len()];
+                    let x2 = x[index % x.len()];
+                    *value *= (x1 / weightfun(x1)) * (x2 / weightfun(x2))
+                });
+            grid.write_q2_slice(i, &buffer);
+        }
+
+        let reference = grid.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        assert!(approx_eq!(f64, reference, test, ulps = 8));
+    }
+
+    #[test]
+    fn q2_slice() {
+        test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
+    }
+
+    #[test]
+    fn sparse_q2_slice() {
+        test_q2_slice_methods(LagrangeSparseSubgridV1::new(&SubgridParams::default()));
     }
 }
