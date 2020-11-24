@@ -287,13 +287,15 @@ impl<T: Default + PartialEq> SparseArray3<T> {
                 iter::repeat((0, offset_a)).take(self.dimensions.1),
             );
         } else {
-            if nx == 1 {
-                self.start = 0;
-            } else if x == self.start {
+            if x == self.start {
                 self.start += 1;
             }
 
             self.indices.drain(index_a..index_b);
+        }
+
+        if self.indices.last().unwrap().1 == 0 {
+            self.clear();
         }
     }
 }
@@ -684,5 +686,21 @@ mod tests {
         assert_eq!(array.x_range(), 2..5);
         assert_eq!(array.len(), 3);
         assert_eq!(array.zeros(), 0);
+
+        // remove also the rest
+        array.remove_x(4);
+        array.remove_x(2);
+
+        assert_eq!(array.x_range(), 0..0);
+        assert_eq!(array.len(), 0);
+        assert_eq!(array.zeros(), 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn remove_x_panic() {
+        let mut array = SparseArray3::<f64>::new(40, 50, 50);
+
+        array.remove_x(0);
     }
 }
