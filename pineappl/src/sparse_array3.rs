@@ -276,6 +276,45 @@ impl<T: Default + PartialEq> SparseArray3<T> {
     pub fn x_range(&self) -> Range<usize> {
         self.start..(self.start + (self.indices.len() - 1) / self.dimensions.1)
     }
+
+    /// Removes all elements with the specified x coordinate.
+    pub fn remove_x(&mut self, x: usize) {
+        let nx = (self.indices.len() - 1) / self.dimensions.1;
+
+        if (x < self.start) || (x >= self.start + nx) {
+            panic!();
+        }
+
+        let index_a = (x - self.start) * self.dimensions.1;
+        let index_b = (x - self.start + 1) * self.dimensions.1;
+        let offset_a = self.indices[index_a].offset;
+        let offset_b = self.indices[index_b].offset;
+
+        self.entries.drain(offset_a..offset_b);
+        self.indices
+            .iter_mut()
+            .skip(index_b)
+            .for_each(|o| o.offset -= offset_b - offset_a);
+
+        if (x != self.start) && (x != (self.start + nx - 1)) {
+            self.indices.splice(
+                index_a..index_b,
+                iter::repeat(Offset {
+                    space: 0,
+                    offset: offset_a,
+                })
+                .take(self.dimensions.1),
+            );
+        } else {
+            if nx == 1 {
+                self.start = 0;
+            } else if x == self.start {
+                self.start += 1;
+            }
+
+            self.indices.drain(index_a..index_b);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -609,5 +648,49 @@ mod tests {
         assert_eq!(array.len(), 0);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 0..0);
+    }
+
+    #[test]
+    fn remove_x() {
+        let mut array = SparseArray3::new(40, 50, 50);
+
+        array[[1, 5, 6]] = 1.0;
+        array[[1, 6, 5]] = 2.0;
+        array[[1, 2, 3]] = 3.0;
+        array[[1, 9, 3]] = 4.0;
+        array[[1, 8, 4]] = 5.0;
+        array[[2, 0, 0]] = 6.0;
+        array[[3, 4, 5]] = 7.0;
+        array[[3, 4, 6]] = 8.0;
+        array[[3, 4, 7]] = 9.0;
+        array[[4, 0, 2]] = 10.0;
+        array[[4, 0, 3]] = 11.0;
+        array[[5, 0, 1]] = 12.0;
+        array[[5, 0, 2]] = 13.0;
+
+        assert_eq!(array.x_range(), 1..6);
+        assert_eq!(array.len(), 13);
+        assert_eq!(array.zeros(), 0);
+
+        // remove the first five entries
+        array.remove_x(1);
+
+        assert_eq!(array.x_range(), 2..6);
+        assert_eq!(array.len(), 8);
+        assert_eq!(array.zeros(), 0);
+
+        // remove the last two entries
+        array.remove_x(5);
+
+        assert_eq!(array.x_range(), 2..5);
+        assert_eq!(array.len(), 6);
+        assert_eq!(array.zeros(), 0);
+
+        // remove the from the middle
+        array.remove_x(3);
+
+        assert_eq!(array.x_range(), 2..5);
+        assert_eq!(array.len(), 3);
+        assert_eq!(array.zeros(), 0);
     }
 }
