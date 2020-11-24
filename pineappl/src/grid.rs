@@ -126,11 +126,17 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
+    // TODO: the following should be a Range
+
     /// Returns the half-open interval of indices of filled q2 slices.
     fn q2_slice(&self) -> (usize, usize);
 
+    // TODO: rename the function to export_q2_slice
+
     /// Fill the q2-slice with index `q2_slice` into `grid`.
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
+
+    // TODO: rename the function to import_applgrid_f2_q2_slice
 
     fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
 }
