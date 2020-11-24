@@ -5,7 +5,7 @@
 
 use itertools::izip;
 use pineappl::grid::{Grid, Ntuple, Order, Subgrid, SubgridEnum, SubgridParams};
-use pineappl::lagrange_subgrid::LagrangeSubgridV1;
+use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
 use pineappl::lumi::LumiEntry;
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -767,6 +767,9 @@ pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<Su
 
     match subgrid_type {
         "LagrangeSubgrid" => Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into())),
+        "LagrangeSparseSubgrid" => Box::new(SubGrid(
+            LagrangeSparseSubgridV1::new(&subgrid_params).into(),
+        )),
         _ => {
             panic!();
         }
