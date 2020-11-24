@@ -85,12 +85,13 @@ impl Order {
 #[enum_dispatch(Subgrid)]
 #[derive(Deserialize, Serialize)]
 pub enum SubgridEnum {
-    /// Lagrange-interpolation subgrid.
-    LagrangeSparseSubgridV1,
+    // WARNING: never change the order or content of this enum, only add to the end of it
     /// Lagrange-interpolation subgrid.
     LagrangeSubgridV1,
     /// N-tuple subgrid.
     NtupleSubgridV1,
+    /// Lagrange-interpolation subgrid.
+    LagrangeSparseSubgridV1,
 }
 
 /// Trait each subgrid must implement.
@@ -414,10 +415,10 @@ impl Grid {
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
             "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
+            "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
             }
-            "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
         };
 
