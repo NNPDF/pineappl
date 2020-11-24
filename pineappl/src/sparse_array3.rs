@@ -1,3 +1,5 @@
+//! Module containing the `SparseArray3` struct.
+
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::ops::{Index, IndexMut, Range};
@@ -130,6 +132,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
     }
 }
 
+/// Immutable iterator over the elements of a `SparseArray3`.
 pub struct IndexedIter<'a, T> {
     entry_iter: Iter<'a, T>,
     index_iter: Iter<'a, (usize, usize)>,
