@@ -143,10 +143,10 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(element) = self.entry_iter.next() {
-            self.tuple.2 += 1;
-
             let offset_a = self.offset_a.unwrap();
             let offset_b = self.offset_b.unwrap();
+
+            self.tuple.2 = self.tuple.2.max(offset_a.0);
 
             if self.tuple.2 >= (offset_b.1 - offset_a.1 + offset_a.0) {
                 loop {
@@ -171,9 +171,12 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
             }
 
             if *element == T::default() {
+                self.tuple.2 += 1;
                 self.next()
             } else {
-                Some((self.tuple, element))
+                let result = Some((self.tuple, element));
+                self.tuple.2 += 1;
+                result
             }
         } else {
             None
@@ -579,6 +582,17 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
+        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
+        assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
+        assert_eq!(iter.next(), None);
+
+        // insert at the very first position
+        array[[2, 0, 0]] = 4.0;
+
+        let mut iter = array.indexed_iter();
+
+        assert_eq!(iter.next(), Some(((2, 0, 0), &4.0)));
         assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
         assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
         assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
