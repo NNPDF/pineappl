@@ -7,6 +7,7 @@ mod helpers;
 mod info;
 mod luminosity;
 mod merge;
+mod optimize;
 mod orders;
 mod pdf_uncertainty;
 mod remap;
@@ -151,6 +152,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
                 number_of_values(5) "Scales all grids with order-dependent factors")
         )
+        (@subcommand optimize =>
+            (about: "Optimizes the internal data structure to minimize memory usage")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path to the optimized PineAPPL file")
+        )
         (@subcommand orders =>
             (about: "Shows the predictions for all bin for each order separately")
             (@arg input: +required "Path to the input grid")
@@ -260,6 +266,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             scale,
             &scale_by_order,
         );
+    } else if let Some(matches) = matches.subcommand_matches("optimize") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        optimize::subcommand(input, output)?;
     } else if let Some(matches) = matches.subcommand_matches("orders") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();

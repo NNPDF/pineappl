@@ -520,6 +520,26 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     }
 }
 
+impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
+    fn from(subgrid: &LagrangeSubgridV1) -> Self {
+        Self {
+            array: subgrid.grid.as_ref().map_or_else(
+                || SparseArray3::new(subgrid.ntau, subgrid.ny, subgrid.ny),
+                |grid| SparseArray3::from_ndarray(grid, subgrid.itaumin, subgrid.ntau),
+            ),
+            ntau: subgrid.ntau,
+            ny: subgrid.ny,
+            yorder: subgrid.yorder,
+            tauorder: subgrid.tauorder,
+            reweight: subgrid.reweight,
+            ymin: subgrid.ymin,
+            ymax: subgrid.ymax,
+            taumin: subgrid.taumin,
+            taumax: subgrid.taumax,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `remap` subcommand which allows to change the binning and dimensions of
   a distribution
 - added global `--silence_lhapdf` switch to suppress the output of LHAPDF
+- added new subgrid type: `LagrangeSparseGrid`, which can be generated using
+  the new subcommand `optimize` from existing grids; this data structure is
+  less memory intense and a bit faster
 
 ### Changed
 
