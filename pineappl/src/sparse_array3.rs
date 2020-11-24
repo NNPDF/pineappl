@@ -81,7 +81,8 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
             let insert = self.indices.len() - 1;
             self.indices.splice(
                 insert..insert,
-                iter::repeat((0, self.indices.last().unwrap().1)).take(elements * self.dimensions.1),
+                iter::repeat((0, self.indices.last().unwrap().1))
+                    .take(elements * self.dimensions.1),
             );
         }
 
