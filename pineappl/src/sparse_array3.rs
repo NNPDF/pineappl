@@ -220,6 +220,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Converts `array` into a `SparseArray3`.
+    #[must_use]
     pub fn from_ndarray(array: &Array3<T>, xstart: usize, xsize: usize) -> Self {
         let (_, ny, nz) = array.dim();
         let dimensions = (xsize, ny, nz);
@@ -236,10 +237,10 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
                     let end = array1.iter().enumerate().skip(start).fold(
                         start,
                         |last_non_zero, (index, x)| {
-                            if *x != T::default() {
-                                index
-                            } else {
+                            if *x == T::default() {
                                 last_non_zero
+                            } else {
+                                index
                             }
                         },
                     ) + 1;
@@ -762,7 +763,7 @@ mod tests {
         ndarray[[0, 5, 7]] = 5.0;
         ndarray[[1, 3, 9]] = 6.0;
 
-        let mut array = SparseArray3::from_ndarray(&ndarray, 3, 40);
+        let array = SparseArray3::from_ndarray(&ndarray, 3, 40);
 
         assert_eq!(array[[3, 4, 3]], 1.0);
         assert_eq!(array[[3, 4, 4]], 2.0);
