@@ -262,6 +262,8 @@ impl Subgrid for LagrangeSubgridV1 {
                     }
                 } else {
                     self.grid = other_grid.grid.take();
+                    self.itaumin = other_grid.itaumin;
+                    self.itaumax = other_grid.itaumax;
                 }
             }
         } else {
