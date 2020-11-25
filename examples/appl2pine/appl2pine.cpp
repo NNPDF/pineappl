@@ -169,8 +169,8 @@ int main(int argc, char* argv[])
 
             double const q2_min = appl::igrid::fQ2(igrid->taumin());
             double const q2_max = appl::igrid::fQ2(igrid->taumax());
-            double const x_min = igrid->fx(igrid->y1min());
-            double const x_max = igrid->fx(igrid->y1max());
+            double const x_min = igrid->fx(igrid->y1max());
+            double const x_max = igrid->fx(igrid->y1min());
 
             int const q2_order = igrid->tauorder();
             int const x_order = igrid->yorder();
@@ -190,6 +190,21 @@ int main(int argc, char* argv[])
             pineappl_keyval_set_int(keyvals, "x_bins", x_bins);
             pineappl_keyval_set_bool(keyvals, "reweight", reweight);
 
+            std::cout << "Parameters for order O(as^" << order_params.at(4 * i + 0) << " a^"
+                << order_params.at(4 * i + 1) << " logmur^" << order_params.at(4 * i + 2)
+                << " logmuf^" << order_params.at(4 * i + 3) << " bin: " << bin << '\n'
+                << "  q2_min   = " << q2_min << '\n'
+                << "  q2_max   = " << q2_max << '\n'
+                << "  x_min    = " << x_min << '\n'
+                << "  x_max    = " << x_max << '\n'
+                << "  q2_order = " << q2_order << '\n'
+                << "  x_order  = " << x_order << '\n'
+                << "  q2_bins  = " << q2_bins << '\n'
+                << "  x_bins   = " << x_bins << '\n'
+                << "  reweight = " << reweight << " WARNING: this parameter is guessed\n";
+
+            slice.resize(x_bins * x_bins);
+
             for (std::size_t lumi = 0; lumi != (*lumi_ptr).size(); ++lumi)
             {
                 auto const* matrix = const_cast <appl::igrid*> (igrid)->weightgrid(lumi);
@@ -199,52 +214,22 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                int itau_min = 0;
-                int itau_max = 0;
-                int ix1_min = 0;
-                int ix1_max = 0;
-                int ix2_min = 0;
-                int ix2_max = 0;
-
-                for (int itau = 0; itau != igrid->Ntau(); ++itau)
-                {
-                    for (int ix1 = 0; ix1 != igrid->Ny1(); ++ix1)
-                    {
-                        for (int ix2 = 0; ix2 != igrid->Ny2(); ++ix2)
-                        {
-                            if ((*matrix)(itau, ix1, ix2) != 0.0)
-                            {
-                                itau_min = std::min(itau_min, itau);
-                                itau_max = std::max(itau_max, itau + 1);
-                                ix1_min = std::min(ix1_min, ix1);
-                                ix1_max = std::max(ix1_max, ix1 + 1);
-                                ix2_min = std::min(ix2_min, ix2);
-                                ix2_max = std::max(ix2_max, ix2 + 1);
-                            }
-                        }
-                    }
-                }
-
-                if (itau_min == itau_max)
-                {
-                    continue;
-                }
-
                 auto* subgrid = pineappl_subgrid_new(keyvals);
 
-                for (int itau = itau_min; itau != itau_max; ++itau)
+                for (int itau = 0; itau != q2_bins; ++itau)
                 {
-                    slice.assign(igrid->Ny1() * igrid->Ny2(), 0.0);
-
-                    for (int ix1 = ix1_min; ix1 != ix1_max; ++ix1)
+                    for (int ix1 = 0; ix1 != x_bins; ++ix1)
                     {
-                        for (int ix2 = ix2_min; ix2 != ix2_max; ++ix2)
+                        for (int ix2 = 0; ix2 != x_bins; ++ix2)
                         {
-                            slice.at(igrid->Ny1() * ix1 + ix2) = (*matrix)(itau, ix1, ix2);
+                            slice.at(x_bins * ix1 + ix2) = (*matrix)(itau, ix1, ix2);
                         }
                     }
 
-                    pineappl_subgrid_fill_q2_slice(subgrid, itau, slice.data());
+                    if (std::any_of(slice.begin(), slice.end(), [](double x) { return x != 0.0; }))
+                    {
+                        pineappl_subgrid_fill_q2_slice(subgrid, itau, slice.data());
+                    }
                 }
 
                 pineappl_subgrid_replace_and_delete(pgrid, subgrid, 0, bin, lumi);
@@ -270,6 +255,8 @@ int main(int argc, char* argv[])
             pineappl_grid_scale(grids.at(0), 1.0 / factor);
         }
     }
+
+    // TODO: optimize the grid
 
     pineappl_grid_write(grids.at(0), out.c_str());
     pineappl_grid_delete(grids.at(0));
