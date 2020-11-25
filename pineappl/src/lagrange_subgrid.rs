@@ -579,6 +579,16 @@ mod tests {
             q2: 90.0_f64.powi(2),
             weight: 1.0,
         });
+        // this event should be sorted out becaues q2 is large than q2_max
+        grid.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.1,
+            q2: 1e+10,
+            weight: 10.0,
+        });
+
+        // the grid must not be empty
+        assert!(!grid.is_empty());
 
         let x = grid.grid_x();
         let q2 = grid.grid_q2();
@@ -625,6 +635,95 @@ mod tests {
         assert!(approx_eq!(f64, reference, test, ulps = 8));
     }
 
+    fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)
+    where
+        SubgridEnum: From<G>,
+    {
+        grid1.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.2,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid1.fill(&Ntuple {
+            x1: 0.9,
+            x2: 0.1,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid1.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.01,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid1.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.5,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+
+        assert!(!grid1.is_empty());
+        assert!(grid2.is_empty());
+
+        let q2 = grid1.grid_q2();
+        let x = grid1.grid_x();
+
+        let reference = grid1.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        // merge filled grid into empty one
+        grid2.merge(&mut grid1.into());
+        assert!(!grid2.is_empty());
+
+        let merged = grid2.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        //assert!(approx_eq!(f64, reference, merged, ulps = 8));
+
+        grid3.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.2,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid3.fill(&Ntuple {
+            x1: 0.9,
+            x2: 0.1,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid3.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.01,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        grid3.fill(&Ntuple {
+            x1: 0.009,
+            x2: 0.5,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+
+        grid2.merge(&mut grid3.into());
+
+        let merged = grid2.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        assert!(approx_eq!(f64, 2.0 * reference, merged, ulps = 8));
+    }
+
     #[test]
     fn q2_slice() {
         test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
@@ -633,5 +732,88 @@ mod tests {
     #[test]
     fn sparse_q2_slice() {
         test_q2_slice_methods(LagrangeSparseSubgridV1::new(&SubgridParams::default()));
+    }
+
+    #[test]
+    fn from() {
+        // check conversion of empty grids
+        let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
+        assert!(dense.is_empty());
+        let sparse = LagrangeSparseSubgridV1::from(&dense);
+        assert!(sparse.is_empty());
+
+        let q2 = dense.grid_q2();
+        let x = dense.grid_x();
+
+        assert_eq!(q2, sparse.grid_q2());
+        assert_eq!(x, sparse.grid_x());
+
+        // check conversion of a filled grid
+        dense.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.2,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+        dense.fill(&Ntuple {
+            x1: 0.9,
+            x2: 0.1,
+            q2: 90.0_f64.powi(2),
+            weight: 1.0,
+        });
+
+        assert!(!dense.is_empty());
+
+        let sparse = LagrangeSparseSubgridV1::from(&dense);
+        assert!(!sparse.is_empty());
+
+        let reference = dense.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+        let converted = sparse.convolute(
+            &x,
+            &q2,
+            Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
+        );
+
+        assert!(approx_eq!(f64, reference, converted, ulps = 8));
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_dense_with_sparse() {
+        let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
+        let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
+
+        dense.merge(&mut sparse.into());
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_sparse_with_dense() {
+        let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
+        let dense = LagrangeSubgridV1::new(&SubgridParams::default());
+
+        sparse.merge(&mut dense.into());
+    }
+
+    #[test]
+    fn merge_dense() {
+        test_merge_method(
+            LagrangeSubgridV1::new(&SubgridParams::default()),
+            LagrangeSubgridV1::new(&SubgridParams::default()),
+            LagrangeSubgridV1::new(&SubgridParams::default()),
+        );
+    }
+
+    #[test]
+    fn merge_sparse() {
+        test_merge_method(
+            LagrangeSparseSubgridV1::new(&SubgridParams::default()),
+            LagrangeSparseSubgridV1::new(&SubgridParams::default()),
+            LagrangeSparseSubgridV1::new(&SubgridParams::default()),
+        );
     }
 }
