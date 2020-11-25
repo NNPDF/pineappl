@@ -138,6 +138,7 @@ pub trait Subgrid {
 
     // TODO: rename the function to import_applgrid_f2_q2_slice
 
+    /// Writes into subgrid.
     fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
 }
 
@@ -820,7 +821,7 @@ impl Grid {
     }
 
     /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
-    /// This is useful because many Monte Carlo integrators and also PineAPPL do not support
+    /// This is useful because many Monte Carlo integrators and also `PineAPPL` do not support
     /// multi-dimensional bins. To work around the problem the multi-dimensional bins can be
     /// projected to one-dimensional bins, and the remapper can be used to restore the multi
     /// dimensionality. Furthermore, it allows to normalize each bin separately, and independently

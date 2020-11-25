@@ -19,6 +19,7 @@ use std::slice;
 #[derive(Default)]
 pub struct Lumi(Vec<LumiEntry>);
 
+/// Type for reading and accessing subgrids.
 pub struct SubGrid(SubgridEnum);
 
 /// Returns the number of bins in `grid`.
@@ -709,6 +710,12 @@ pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usi
     (*grid).subgrid(0, 0, 0).grid_x().len()
 }
 
+/// Creates a new subgrid, using the paramters stored in `keyvals`. If `key_vals` is the null
+/// pointer, default parameters are chosen.
+///
+/// # Safety
+///
+/// The parameter `key_vals` must be either the null pointer, or point to a valid `KeyVal` object.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<SubGrid> {
     let mut subgrid_params = SubgridParams::default();
@@ -766,10 +773,25 @@ pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<Su
     }
 }
 
+/// Deletes a subgrid created with `pineappl_subgrid_new`. If `subgrid` is the null pointer,
+/// nothing is done.
+///
+/// # Safety
+///
+/// The parameter `subgrid` must point to a valid `Subgrid` object created by
+/// `pineappl_subgrid_new` or be the null pointer.
 #[no_mangle]
 #[allow(unused_variables)]
 pub unsafe extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
 
+/// This function takes replaces the subgrid in `grid` with the corresponding indices `order`,
+/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, nothing is
+/// done.
+///
+/// # Safety
+///
+/// Both `grid` and `subgrid` must point to valid objects. The parameter `subgrid` can be the null
+/// pointer.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_replace_and_delete(
     grid: *mut Grid,
@@ -783,6 +805,14 @@ pub unsafe extern "C" fn pineappl_subgrid_replace_and_delete(
     }
 }
 
+/// Fills the slice with the given `index` of `subgrid` with the contents of `slice`.
+///
+/// # Safety
+///
+/// The parameter `subgrid` must point to a valid `SubGrid` object and be non-null, `index` must be
+/// an index smaller than the parameter `q2_bins` the `SubGrid` was created with, and `slice` must
+/// be an array at least as large as the square of the parameter `x_bins` the `SubGrid` was
+/// created with.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_fill_q2_slice(
     subgrid: *mut SubGrid,
