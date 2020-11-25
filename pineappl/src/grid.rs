@@ -861,21 +861,18 @@ impl Grid {
 
     /// Optimize the internal datastructures for space efficiency.
     pub fn optimize(&mut self) {
-        let mut vector: Vec<SubgridEnum> = vec![];
-
-        for subgrid in self.subgrids.iter() {
-            if let SubgridEnum::LagrangeSubgridV1(grid) = subgrid {
-                vector.push(LagrangeSparseSubgridV1::from(grid).into());
-            } else {
-                todo!();
+        for subgrid in self.subgrids.iter_mut() {
+            match subgrid {
+                SubgridEnum::LagrangeSubgridV1(grid) => {
+                    let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
+                    mem::swap(subgrid, &mut new_subgrid);
+                }
+                SubgridEnum::LagrangeSparseSubgridV1(_) => {
+                    // nothing to optimize here
+                }
+                SubgridEnum::NtupleSubgridV1(_) => todo!(),
             }
         }
-
-        let shape = self.subgrids.dim();
-        mem::swap(
-            &mut self.subgrids,
-            &mut Array3::from_shape_vec(shape, vector).unwrap(),
-        );
     }
 }
 
