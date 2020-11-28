@@ -213,6 +213,7 @@ impl Grid {
     /// Constructor. This function can be used like `new`, but the additional parameter
     /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
     /// - `LagrangeSubgrid`
+    /// - `LagrangeSparseSubgrid`
     /// - `NtupleSubgrid`
     ///
     /// # Errors
@@ -671,7 +672,8 @@ impl Grid {
         )
     }
 
-    /// Optimize the internal datastructures for space efficiency.
+    /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
+    /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
     pub fn optimize(&mut self) {
         for subgrid in self.subgrids.iter_mut() {
             match subgrid {
