@@ -131,13 +131,10 @@ impl Default for Mmv2 {
         Self {
             remapper: None,
             key_value_db: [
-                (
-                    String::from("version"),
-                    String::from(env!("CARGO_PKG_VERSION")),
-                ),
+                ("version".to_owned(), env!("CARGO_PKG_VERSION").to_owned()),
                 // by default we assume there are protons in the initial state
-                (String::from("initial_state_1"), String::from("2212")),
-                (String::from("initial_state_2"), String::from("2212")),
+                ("initial_state_1".to_owned(), "2212".to_owned()),
+                ("initial_state_2".to_owned(), "2212".to_owned()),
             ]
             .iter()
             .cloned()
@@ -698,115 +695,24 @@ mod tests {
     #[test]
     fn order_cmp() {
         let mut orders = vec![
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 1,
-                logxif: 0,
-            },
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 0,
-                logxif: 1,
-            },
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 0,
-                logxif: 0,
-            },
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 1,
-                logxif: 0,
-            },
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 0,
-                logxif: 1,
-            },
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 0,
-                logxif: 0,
-            },
-            Order {
-                alphas: 0,
-                alpha: 2,
-                logxir: 0,
-                logxif: 0,
-            },
+            Order::new(1, 2, 1, 0),
+            Order::new(1, 2, 0, 1),
+            Order::new(1, 2, 0, 0),
+            Order::new(0, 3, 1, 0),
+            Order::new(0, 3, 0, 1),
+            Order::new(0, 3, 0, 0),
+            Order::new(0, 2, 0, 0),
         ];
 
         orders.sort();
 
-        assert_eq!(
-            orders[0],
-            Order {
-                alphas: 0,
-                alpha: 2,
-                logxir: 0,
-                logxif: 0
-            }
-        );
-        assert_eq!(
-            orders[1],
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 0,
-                logxif: 0
-            }
-        );
-        assert_eq!(
-            orders[2],
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 0,
-                logxif: 1
-            }
-        );
-        assert_eq!(
-            orders[3],
-            Order {
-                alphas: 1,
-                alpha: 2,
-                logxir: 1,
-                logxif: 0
-            }
-        );
-        assert_eq!(
-            orders[4],
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 0,
-                logxif: 0
-            }
-        );
-        assert_eq!(
-            orders[5],
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 0,
-                logxif: 1
-            }
-        );
-        assert_eq!(
-            orders[6],
-            Order {
-                alphas: 0,
-                alpha: 3,
-                logxir: 1,
-                logxif: 0
-            }
-        );
+        assert_eq!(orders[0], Order::new(0, 2, 0, 0));
+        assert_eq!(orders[1], Order::new(1, 2, 0, 0));
+        assert_eq!(orders[2], Order::new(1, 2, 0, 1));
+        assert_eq!(orders[3], Order::new(1, 2, 1, 0));
+        assert_eq!(orders[4], Order::new(0, 3, 0, 0));
+        assert_eq!(orders[5], Order::new(0, 3, 0, 1));
+        assert_eq!(orders[6], Order::new(0, 3, 1, 0));
     }
 
     #[test]
