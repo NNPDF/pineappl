@@ -573,13 +573,6 @@ mod tests {
             q2: 90.0_f64.powi(2),
             weight: 1.0,
         });
-        // this event should be sorted out becaues q2 is large than q2_max
-        grid.fill(&Ntuple {
-            x1: 0.1,
-            x2: 0.1,
-            q2: 1e+10,
-            weight: 10.0,
-        });
 
         // the grid must not be empty
         assert!(!grid.is_empty());
@@ -718,6 +711,60 @@ mod tests {
         assert!(approx_eq!(f64, 2.0 * reference, merged, ulps = 8));
     }
 
+    fn test_empty_subgrid<G: Subgrid>(mut grid: G) {
+        // this following events should be skipped
+
+        // q2 is too large
+        grid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 2e+8,
+            weight: 1.0,
+        });
+        // q2 is too small
+        grid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 5e+1,
+            weight: 1.0,
+        });
+        // x1 is too large
+        grid.fill(&Ntuple {
+            x1: 1.1,
+            x2: 0.5,
+            q2: 1e+3,
+            weight: 1.0,
+        });
+        // x1 is too small
+        grid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 1e-7,
+            q2: 1e+3,
+            weight: 1.0,
+        });
+        // x1 is too large
+        grid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 1.1,
+            q2: 1e+3,
+            weight: 1.0,
+        });
+        // x1 is too small
+        grid.fill(&Ntuple {
+            x1: 1e-7,
+            x2: 0.5,
+            q2: 1e+3,
+            weight: 1.0,
+        });
+
+        let x = grid.grid_x();
+        let q2 = grid.grid_x();
+
+        let result = grid.convolute(&x, &q2, Either::Left(&|_, _, _| 1.0));
+
+        assert_eq!(result, 0.0);
+    }
+
     #[test]
     fn q2_slice() {
         test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
@@ -809,5 +856,15 @@ mod tests {
             LagrangeSparseSubgridV1::new(&SubgridParams::default()),
             LagrangeSparseSubgridV1::new(&SubgridParams::default()),
         );
+    }
+
+    #[test]
+    fn empty() {
+        test_empty_subgrid(LagrangeSubgridV1::new(&SubgridParams::default()));
+    }
+
+    #[test]
+    fn empty_sparse() {
+        test_empty_subgrid(LagrangeSparseSubgridV1::new(&SubgridParams::default()));
     }
 }

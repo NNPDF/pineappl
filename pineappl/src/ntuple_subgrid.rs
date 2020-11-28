@@ -131,4 +131,28 @@ mod tests {
             1.25 + 28.125 + 2.5
         );
     }
+
+    #[test]
+    #[should_panic]
+    fn q2_slice() {
+        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
+
+        subgrid.q2_slice();
+    }
+
+    #[test]
+    #[should_panic]
+    fn fill_q2_slice() {
+        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
+
+        subgrid.fill_q2_slice(0, &mut []);
+    }
+
+    #[test]
+    #[should_panic]
+    fn write_q2_slice() {
+        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
+
+        subgrid.write_q2_slice(0, &[]);
+    }
 }
