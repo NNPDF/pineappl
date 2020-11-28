@@ -1,6 +1,7 @@
 //! Provides an implementation of the `Grid` trait with n-tuples.
 
-use super::grid::{Ntuple, Subgrid, SubgridEnum};
+use super::grid::Ntuple;
+use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
 

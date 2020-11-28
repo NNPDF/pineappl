@@ -12,3 +12,4 @@ pub mod lagrange_subgrid;
 pub mod lumi;
 pub mod ntuple_subgrid;
 pub mod sparse_array3;
+pub mod subgrid;

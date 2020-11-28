@@ -4,9 +4,10 @@
 //! C-language interface for `PineAPPL`.
 
 use itertools::izip;
-use pineappl::grid::{Grid, Ntuple, Order, Subgrid, SubgridEnum, SubgridParams};
+use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
 use pineappl::lumi::LumiEntry;
+use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};

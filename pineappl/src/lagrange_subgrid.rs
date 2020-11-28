@@ -1,8 +1,9 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::convert::{f64_from_usize, usize_from_f64};
-use super::grid::{Ntuple, Subgrid, SubgridEnum, SubgridParams};
+use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
+use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use arrayvec::ArrayVec;
 use either::Either;
 use ndarray::Array3;

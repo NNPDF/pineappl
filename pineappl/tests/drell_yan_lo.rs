@@ -1,7 +1,8 @@
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
-use pineappl::grid::{Grid, Ntuple, Order, SubgridParams};
+use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi_entry;
+use pineappl::subgrid::SubgridParams;
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
