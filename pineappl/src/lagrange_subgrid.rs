@@ -680,7 +680,7 @@ mod tests {
             Either::Left(&|ix1, ix2, _| 1.0 / (x[ix1] * x[ix2])),
         );
 
-        //assert!(approx_eq!(f64, reference, merged, ulps = 8));
+        assert!(approx_eq!(f64, reference, merged, ulps = 8));
 
         grid3.fill(&Ntuple {
             x1: 0.1,
