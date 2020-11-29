@@ -673,7 +673,7 @@ pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_q2_grid(grid: *const Grid, buffer: *mut f64) {
     let size = pineappl_subgrid_q2_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_q2());
+    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).q2_grid());
 }
 
 /// Returns the number grid values in q2 direction.
@@ -684,7 +684,7 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_grid(grid: *const Grid, buffer: *mu
 /// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_q2_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).grid_q2().len()
+    (*grid).subgrid(0, 0, 0).q2_grid().len()
 }
 
 /// Writes into `buffer` the x values that the grid spans.
@@ -697,7 +697,7 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_grid_count(grid: *const Grid) -> us
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_x_grid(grid: *const Grid, buffer: *mut f64) {
     let size = pineappl_subgrid_x_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).grid_x());
+    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).x1_grid());
 }
 
 /// Returns the number grid values in x direction.
@@ -708,7 +708,7 @@ pub unsafe extern "C" fn pineappl_subgrid_x_grid(grid: *const Grid, buffer: *mut
 /// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).grid_x().len()
+    (*grid).subgrid(0, 0, 0).x1_grid().len()
 }
 
 /// Creates a new subgrid, using the paramters stored in `keyvals`. If `key_vals` is the null
@@ -825,7 +825,7 @@ pub unsafe extern "C" fn pineappl_subgrid_fill_q2_slice(
 ) {
     (*subgrid).0.write_q2_slice(
         index,
-        slice::from_raw_parts(slice, (*subgrid).0.grid_x().len().pow(2)),
+        slice::from_raw_parts(slice, (*subgrid).0.x1_grid().len().pow(2)),
     );
 }
 

@@ -24,6 +24,7 @@ impl Subgrid for NtupleSubgridV1 {
         &self,
         _: &[f64],
         _: &[f64],
+        _: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
         let lumi = lumi.right().unwrap();
@@ -40,11 +41,15 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.push(ntuple.clone());
     }
 
-    fn grid_q2(&self) -> Vec<f64> {
+    fn q2_grid(&self) -> Vec<f64> {
         vec![]
     }
 
-    fn grid_x(&self) -> Vec<f64> {
+    fn x1_grid(&self) -> Vec<f64> {
+        vec![]
+    }
+
+    fn x2_grid(&self) -> Vec<f64> {
         vec![]
     }
 
@@ -102,7 +107,7 @@ mod tests {
             weight: 3.0,
         });
         assert_eq!(
-            subgrid.convolute(&[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
+            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
             2.5 + 56.25
         );
 
@@ -115,19 +120,19 @@ mod tests {
             weight: 2.0,
         });
         assert_eq!(
-            other_subgrid.convolute(&[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
+            other_subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
             5.0
         );
 
         subgrid.merge(&mut other_subgrid);
         assert_eq!(
-            subgrid.convolute(&[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
+            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
             2.5 + 56.25 + 5.0
         );
 
         subgrid.scale(0.5);
         assert_eq!(
-            subgrid.convolute(&[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
+            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
             1.25 + 28.125 + 2.5
         );
     }

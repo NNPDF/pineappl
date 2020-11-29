@@ -25,19 +25,24 @@ pub enum SubgridEnum {
 pub trait Subgrid {
     /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn grid_q2(&self) -> Vec<f64>;
+    fn q2_grid(&self) -> Vec<f64>;
 
-    /// Return a `Vec` of values of `x`. If the subgrid does not use a grid, this method should
+    /// Return a `Vec` of values of `x1`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn grid_x(&self) -> Vec<f64>;
+    fn x1_grid(&self) -> Vec<f64>;
 
-    /// Convolute the subgrid with a luminosity function, which is either takes indices as
-    /// arguments, in which case the `x` and `q2` values can be read from the given slices, or
-    /// takes the usual values `x1`, `x2`, and `q2`. If the method `grid_x` returns a non-empty
-    /// vector, this method must use the indexed luminosity function.
+    /// Return a `Vec` of values of `x2`. If the subgrid does not use a grid, this method should
+    /// return an empty `Vec`.
+    fn x2_grid(&self) -> Vec<f64>;
+
+    /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
+    /// in which case the `x1`, `x2` and `q2` values can be read from the given slices, or takes
+    /// the usual values `x1`, `x2`, and `q2`. If the method `x1_grid` and `x2_grid` return a
+    /// non-empty vector, this method must use the indexed luminosity function.
     fn convolute(
         &self,
-        x: &[f64],
+        x1: &[f64],
+        x2: &[f64],
         q2: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64;
