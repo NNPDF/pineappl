@@ -275,9 +275,10 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        let mut grid_q2 = self.subgrids[[0, 0, 0]].grid_q2();
-        let mut grid_x = self.subgrids[[0, 0, 0]].grid_x();
-        let use_cache = !grid_q2.is_empty() && !grid_x.is_empty();
+        let mut q2_grid = self.subgrids[[0, 0, 0]].q2_grid();
+        let mut x1_grid = self.subgrids[[0, 0, 0]].x1_grid();
+        let mut x2_grid = self.subgrids[[0, 0, 0]].x2_grid();
+        let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
         xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
@@ -322,23 +323,29 @@ impl Grid {
                 let lumi_entry = &self.lumi[k];
 
                 let mut value = if use_cache {
-                    let new_grid_q2 = subgrid.grid_q2();
-                    let new_grid_x = subgrid.grid_x();
+                    let new_q2_grid = subgrid.q2_grid();
+                    let new_x1_grid = subgrid.x1_grid();
+                    let new_x2_grid = subgrid.x2_grid();
 
-                    if (new_grid_q2 != grid_q2) || (new_grid_x != grid_x) {
-                        grid_q2 = new_grid_q2;
-                        grid_x = new_grid_x;
+                    if (new_q2_grid != q2_grid)
+                        || (new_x1_grid != x1_grid)
+                        || (new_x2_grid != x2_grid)
+                    {
+                        q2_grid = new_q2_grid;
+                        x1_grid = new_x1_grid;
+                        x2_grid = new_x2_grid;
                         pdf_cache.borrow_mut().clear();
                     }
 
                     subgrid.convolute(
-                        &grid_x,
-                        &grid_q2,
+                        &x1_grid,
+                        &x2_grid,
+                        &q2_grid,
                         Left(&|ix1, ix2, iq2| {
                             let mut pdf_cache = pdf_cache.borrow_mut();
-                            let x1 = grid_x[ix1];
-                            let x2 = grid_x[ix2];
-                            let q2 = grid_q2[iq2];
+                            let x1 = x1_grid[ix1];
+                            let x2 = x2_grid[ix2];
+                            let q2 = q2_grid[iq2];
                             let q2f = xif.powi(2) * q2;
 
                             let mut lumi = 0.0;
@@ -364,8 +371,9 @@ impl Grid {
                     )
                 } else {
                     subgrid.convolute(
-                        &grid_x,
-                        &grid_q2,
+                        &x1_grid,
+                        &x2_grid,
+                        &q2_grid,
                         Right(&|x1, x2, q2| {
                             let mut lumi = 0.0;
                             let q2f = xif.powi(2) * q2;
