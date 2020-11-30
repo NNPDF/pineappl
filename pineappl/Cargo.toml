@@ -28,3 +28,7 @@ thiserror = "1.0"
 lhapdf = "0.1.8"
 rand = { default-features = false, version = "0.7" }
 rand_pcg = { default-features = false, version = "0.2" }
+yaml-rust = "0.4"
+
+[[example]]
+name = "import-yadism-yaml"
