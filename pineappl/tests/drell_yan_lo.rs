@@ -398,6 +398,86 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
 }
 
 #[test]
+fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
+    // suppress LHAPDF banners
+    lhapdf::set_verbosity(0);
+
+    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, "LagrangeSubgridV2", true)?;
+
+    grid.merge(fill_drell_yan_lo_grid(
+        &mut rng,
+        500_000,
+        "LagrangeSubgridV2",
+        true,
+    )?)?;
+    grid.scale(0.5);
+
+    let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
+
+    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+
+    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
+    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let alphas = |_| 0.0;
+
+    // check `read` and `write`
+    let mut file = Cursor::new(Vec::new());
+    grid.write(&mut file)?;
+    file.set_position(0);
+    mem::drop(grid);
+    let mut grid = Grid::read(&mut file)?;
+
+    // some useless scalings
+    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
+    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
+
+    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let reference = vec![
+        5.093090431949207e-1,
+        5.191668797562395e-1,
+        5.467930909144878e-1,
+        4.845000146366871e-1,
+        4.7279670245192884e-1,
+        4.7481525429115445e-1,
+        4.7060007393610065e-1,
+        4.286009571276975e-1,
+        4.2997427448811987e-1,
+        3.911121604214181e-1,
+        3.430494924416351e-1,
+        3.1204501485640446e-1,
+        2.6656633773109056e-1,
+        2.3745772514449243e-1,
+        2.0055415662593068e-1,
+        1.692229208614707e-1,
+        1.4635749293124972e-1,
+        1.1348804559115269e-1,
+        8.934261002200886e-2,
+        6.385631160399488e-2,
+        4.866968827833745e-2,
+        3.379282482821324e-2,
+        1.9494720220040448e-2,
+        6.880478270711603e-3,
+    ];
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
+    // optimize the grid
+    //grid.optimize();
+
+    // check that the results are still the same
+    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
+    Ok(())
+}
+
+#[test]
 fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     // suppress LHAPDF banners
     lhapdf::set_verbosity(0);
