@@ -3,7 +3,7 @@
 use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use arrayvec::ArrayVec;
 use either::Either;
 use ndarray::Array3;
@@ -352,23 +352,23 @@ pub struct LagrangeSubgridV2 {
 impl LagrangeSubgridV2 {
     /// Constructor.
     #[must_use]
-    pub fn new(subgrid_params: &SubgridParams) -> Self {
+    pub fn new(subgrid_params: &SubgridParams, extra_params: &ExtraSubgridParams) -> Self {
         Self {
             grid: None,
             ntau: subgrid_params.q2_bins(),
             ny1: subgrid_params.x_bins(),
-            ny2: subgrid_params.x_bins(),
+            ny2: extra_params.x2_bins(),
             y1order: subgrid_params.x_order(),
-            y2order: subgrid_params.x_order(),
+            y2order: extra_params.x2_order(),
             tauorder: subgrid_params.q2_order(),
             itaumin: 0,
             itaumax: 0,
             reweight1: subgrid_params.reweight(),
-            reweight2: subgrid_params.reweight(),
+            reweight2: extra_params.reweight2(),
             y1min: fy(subgrid_params.x_max()),
             y1max: fy(subgrid_params.x_min()),
-            y2min: fy(subgrid_params.x_max()),
-            y2max: fy(subgrid_params.x_min()),
+            y2min: fy(extra_params.x2_max()),
+            y2max: fy(extra_params.x2_min()),
             taumin: ftau(subgrid_params.q2_min()),
             taumax: ftau(subgrid_params.q2_max()),
         }
@@ -1113,7 +1113,10 @@ mod tests {
 
     #[test]
     fn q2_slice_v2() {
-        test_q2_slice_methods(LagrangeSubgridV2::new(&SubgridParams::default()));
+        test_q2_slice_methods(LagrangeSubgridV2::new(
+            &SubgridParams::default(),
+            &ExtraSubgridParams::default(),
+        ));
     }
 
     #[test]
@@ -1185,7 +1188,7 @@ mod tests {
     #[should_panic]
     fn merge_dense_v1_with_dense_v2() {
         let mut one = LagrangeSubgridV1::new(&SubgridParams::default());
-        let two = LagrangeSubgridV2::new(&SubgridParams::default());
+        let two = LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
         one.merge(&mut two.into());
     }
@@ -1193,7 +1196,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn merge_dense_v2_with_dense_v1() {
-        let mut two = LagrangeSubgridV2::new(&SubgridParams::default());
+        let mut two =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let one = LagrangeSubgridV1::new(&SubgridParams::default());
 
         two.merge(&mut one.into());
@@ -1202,7 +1206,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn merge_dense_v2_with_sparse() {
-        let mut dense = LagrangeSubgridV2::new(&SubgridParams::default());
+        let mut dense =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
         dense.merge(&mut sparse.into());
@@ -1221,7 +1226,8 @@ mod tests {
     #[should_panic]
     fn merge_sparse_with_dense_v2() {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
-        let dense = LagrangeSubgridV2::new(&SubgridParams::default());
+        let dense =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
         sparse.merge(&mut dense.into());
     }
@@ -1238,9 +1244,9 @@ mod tests {
     #[test]
     fn merge_dense_v2() {
         test_merge_method(
-            LagrangeSubgridV2::new(&SubgridParams::default()),
-            LagrangeSubgridV2::new(&SubgridParams::default()),
-            LagrangeSubgridV2::new(&SubgridParams::default()),
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
         );
     }
 
@@ -1260,7 +1266,10 @@ mod tests {
 
     #[test]
     fn empty_v2() {
-        test_empty_subgrid(LagrangeSubgridV2::new(&SubgridParams::default()));
+        test_empty_subgrid(LagrangeSubgridV2::new(
+            &SubgridParams::default(),
+            &ExtraSubgridParams::default(),
+        ));
     }
 
     #[test]

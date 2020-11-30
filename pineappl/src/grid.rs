@@ -4,7 +4,7 @@ use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
 use itertools::Itertools;
@@ -225,7 +225,15 @@ impl Grid {
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
             "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
-            "LagrangeSubgridV2" => Box::new(|| LagrangeSubgridV2::new(&subgrid_params).into()),
+            "LagrangeSubgridV2" => Box::new(|| {
+                let mut extra = ExtraSubgridParams::default();
+                extra.set_reweight2(subgrid_params.reweight());
+                extra.set_x2_bins(subgrid_params.x_bins());
+                extra.set_x2_max(subgrid_params.x_max());
+                extra.set_x2_min(subgrid_params.x_min());
+                extra.set_x2_order(subgrid_params.x_order());
+                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
+            }),
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
