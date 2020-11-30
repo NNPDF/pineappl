@@ -208,3 +208,82 @@ impl SubgridParams {
         self.x_order
     }
 }
+
+/// Extra grid creation parameters when the limits for `x1` and `x2` are different.
+#[derive(Deserialize, Serialize)]
+pub struct ExtraSubgridParams {
+    reweight2: bool,
+    x2_bins: usize,
+    x2_max: f64,
+    x2_min: f64,
+    x2_order: usize,
+}
+
+impl Default for ExtraSubgridParams {
+    fn default() -> Self {
+        Self {
+            reweight2: true,
+            x2_bins: 50,
+            x2_max: 1.0,
+            x2_min: 2e-7,
+            x2_order: 3,
+        }
+    }
+}
+
+impl ExtraSubgridParams {
+    /// Returns whether reweighting is enabled for the $x_2$ axis or not.
+    #[must_use]
+    pub const fn reweight2(&self) -> bool {
+        self.reweight2
+    }
+
+    /// Sets the reweighting parameter for the $x_2$ axis.
+    pub fn set_reweight2(&mut self, reweight2: bool) {
+        self.reweight2 = reweight2;
+    }
+
+    /// Sets the number of bins for the $x_2$ axes.
+    pub fn set_x2_bins(&mut self, x_bins: usize) {
+        self.x2_bins = x_bins;
+    }
+
+    /// Sets the upper limit of the $x_2$ axes.
+    pub fn set_x2_max(&mut self, x_max: f64) {
+        self.x2_max = x_max;
+    }
+
+    /// Sets the lower limit of the $x_2$ axes.
+    pub fn set_x2_min(&mut self, x_min: f64) {
+        self.x2_min = x_min;
+    }
+
+    /// Sets the interpolation order for the $x_2$ axes.
+    pub fn set_x2_order(&mut self, x_order: usize) {
+        self.x2_order = x_order;
+    }
+
+    /// Returns the number of bins for the $x_2$ axes.
+    #[must_use]
+    pub const fn x2_bins(&self) -> usize {
+        self.x2_bins
+    }
+
+    /// Returns the upper limit of the $x_2$ axes.
+    #[must_use]
+    pub const fn x2_max(&self) -> f64 {
+        self.x2_max
+    }
+
+    /// Returns the lower limit of the $x_2$ axes.
+    #[must_use]
+    pub const fn x2_min(&self) -> f64 {
+        self.x2_min
+    }
+
+    /// Returns the interpolation order for the $x_2$ axes.
+    #[must_use]
+    pub const fn x2_order(&self) -> usize {
+        self.x2_order
+    }
+}
