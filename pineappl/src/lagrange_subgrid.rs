@@ -327,6 +327,305 @@ impl Subgrid for LagrangeSubgridV1 {
     }
 }
 
+/// Subgrid which uses Lagrange-interpolation.
+#[derive(Deserialize, Serialize)]
+pub struct LagrangeSubgridV2 {
+    grid: Option<Array3<f64>>,
+    ntau: usize,
+    ny1: usize,
+    ny2: usize,
+    y1order: usize,
+    y2order: usize,
+    tauorder: usize,
+    itaumin: usize,
+    itaumax: usize,
+    reweight1: bool,
+    reweight2: bool,
+    y1min: f64,
+    y1max: f64,
+    y2min: f64,
+    y2max: f64,
+    taumin: f64,
+    taumax: f64,
+}
+
+impl LagrangeSubgridV2 {
+    /// Constructor.
+    #[must_use]
+    pub fn new(subgrid_params: &SubgridParams) -> Self {
+        Self {
+            grid: None,
+            ntau: subgrid_params.q2_bins(),
+            ny1: subgrid_params.x_bins(),
+            ny2: subgrid_params.x_bins(),
+            y1order: subgrid_params.x_order(),
+            y2order: subgrid_params.x_order(),
+            tauorder: subgrid_params.q2_order(),
+            itaumin: 0,
+            itaumax: 0,
+            reweight1: subgrid_params.reweight(),
+            reweight2: subgrid_params.reweight(),
+            y1min: fy(subgrid_params.x_max()),
+            y1max: fy(subgrid_params.x_min()),
+            y2min: fy(subgrid_params.x_max()),
+            y2max: fy(subgrid_params.x_min()),
+            taumin: ftau(subgrid_params.q2_min()),
+            taumax: ftau(subgrid_params.q2_max()),
+        }
+    }
+
+    fn deltay1(&self) -> f64 {
+        (self.y1max - self.y1min) / f64_from_usize(self.ny1 - 1)
+    }
+
+    fn deltay2(&self) -> f64 {
+        (self.y1max - self.y2min) / f64_from_usize(self.ny2 - 1)
+    }
+
+    fn deltatau(&self) -> f64 {
+        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
+    }
+
+    fn gety1(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltay1(), self.y1min)
+    }
+
+    fn gety2(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltay2(), self.y2min)
+    }
+
+    fn gettau(&self, iy: usize) -> f64 {
+        f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
+    }
+
+    fn increase_tau(&mut self, new_itaumin: usize, new_itaumax: usize) {
+        let min_diff = self.itaumin - new_itaumin;
+
+        let mut new_grid = Array3::zeros((new_itaumax - new_itaumin, self.ny1, self.ny2));
+
+        for ((i, j, k), value) in self.grid.as_ref().unwrap().indexed_iter() {
+            new_grid[[i + min_diff, j, k]] = *value;
+        }
+
+        self.itaumin = new_itaumin;
+        self.itaumax = new_itaumax;
+
+        mem::swap(&mut self.grid, &mut Some(new_grid));
+    }
+}
+
+impl Subgrid for LagrangeSubgridV2 {
+    fn convolute(
+        &self,
+        x1: &[f64],
+        x2: &[f64],
+        _: &[f64],
+        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+    ) -> f64 {
+        if let Some(self_grid) = &self.grid {
+            let lumi = lumi.left().unwrap();
+
+            self_grid
+                .indexed_iter()
+                .filter(|(_, &value)| value != 0.0)
+                .map(|((q2, ix1, ix2), &sigma)| {
+                    let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
+                    if self.reweight1 {
+                        value *= weightfun(x1[ix1]);
+                    }
+                    if self.reweight2 {
+                        value *= weightfun(x2[ix2]);
+                    }
+                    value
+                })
+                .sum()
+        } else {
+            0.0
+        }
+    }
+
+    fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        let y1 = fy(ntuple.x1);
+        let y2 = fy(ntuple.x2);
+        let tau = ftau(ntuple.q2);
+
+        if (y2 < self.y2min)
+            || (y2 > self.y2max)
+            || (y1 < self.y1min)
+            || (y1 > self.y1max)
+            || (tau < self.taumin)
+            || (tau > self.taumax)
+        {
+            return;
+        }
+
+        let k1 =
+            usize_from_f64((y1 - self.y1min) / self.deltay1() - f64_from_usize(self.y1order / 2))
+                .min(self.ny1 - 1 - self.y1order);
+        let k2 =
+            usize_from_f64((y2 - self.y2min) / self.deltay2() - f64_from_usize(self.y2order / 2))
+                .min(self.ny2 - 1 - self.y2order);
+
+        let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
+        let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
+
+        let fi1: ArrayVec<[_; 8]> = (0..=self.y1order)
+            .map(|i| fi(i, self.y1order, u_y1))
+            .collect();
+        let fi2: ArrayVec<[_; 8]> = (0..=self.y2order)
+            .map(|i| fi(i, self.y2order, u_y2))
+            .collect();
+
+        let k3 = usize_from_f64(
+            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
+        )
+        .min(self.ntau - 1 - self.tauorder);
+
+        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
+
+        let factor = 1.0
+            / (if self.reweight1 {
+                weightfun(ntuple.x1)
+            } else {
+                1.0
+            } * if self.reweight2 {
+                weightfun(ntuple.x2)
+            } else {
+                1.0
+            });
+
+        let size = self.tauorder + 1;
+        let ny1 = self.ny1;
+        let ny2 = self.ny2;
+
+        if self.grid.is_none() {
+            self.itaumin = k3;
+            self.itaumax = k3 + size;
+        } else if k3 < self.itaumin || k3 + size > self.itaumax {
+            self.increase_tau(self.itaumin.min(k3), self.itaumax.max(k3 + size));
+        }
+
+        for i3 in 0..=self.tauorder {
+            let fi3i3 = fi(i3, self.tauorder, u_tau);
+
+            for (i1, fi1i1) in fi1.iter().enumerate() {
+                for (i2, fi2i2) in fi2.iter().enumerate() {
+                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
+
+                    let grid = self
+                        .grid
+                        .get_or_insert_with(|| Array3::zeros((size, ny1, ny2)));
+
+                    grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
+                }
+            }
+        }
+    }
+
+    fn q2_grid(&self) -> Vec<f64> {
+        (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect()
+    }
+
+    fn x1_grid(&self) -> Vec<f64> {
+        (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
+    }
+
+    fn x2_grid(&self) -> Vec<f64> {
+        (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.grid.is_none()
+    }
+
+    fn merge(&mut self, other: &mut SubgridEnum) {
+        if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
+            if let Some(other_grid_grid) = &mut other_grid.grid {
+                if self.grid.is_some() {
+                    let new_itaumin = self.itaumin.min(other_grid.itaumin);
+                    let new_itaumax = self.itaumax.max(other_grid.itaumax);
+                    let offset = other_grid.itaumin.saturating_sub(self.itaumin);
+
+                    // TODO: we need much more checks here if there subgrids are compatible at all
+
+                    if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
+                        self.increase_tau(new_itaumin, new_itaumax);
+                    }
+
+                    let self_grid = self.grid.as_mut().unwrap();
+
+                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                        self_grid[[i + offset, j, k]] += value;
+                    }
+                } else {
+                    self.grid = other_grid.grid.take();
+                    self.itaumin = other_grid.itaumin;
+                    self.itaumax = other_grid.itaumax;
+                }
+            }
+        } else {
+            todo!();
+        }
+    }
+
+    fn scale(&mut self, factor: f64) {
+        if factor == 0.0 {
+            self.grid = None;
+        } else if let Some(self_grid) = &mut self.grid {
+            self_grid.iter_mut().for_each(|x| *x *= factor);
+        }
+    }
+
+    fn q2_slice(&self) -> (usize, usize) {
+        (self.itaumin, self.itaumax)
+    }
+
+    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
+        if let Some(self_grid) = &self.grid {
+            let x1: Vec<_> = self
+                .x1_grid()
+                .iter()
+                .map(|&x| if self.reweight1 { weightfun(x) } else { 1.0 } / x)
+                .collect();
+            let x2: Vec<_> = self
+                .x2_grid()
+                .iter()
+                .map(|&x| if self.reweight2 { weightfun(x) } else { 1.0 } / x)
+                .collect();
+
+            grid.iter_mut().enumerate().for_each(|(index, value)| {
+                let ix1 = index / self.ny1;
+                let ix2 = index % self.ny2;
+                *value = self_grid[[q2_slice - self.itaumin, ix1, ix2]] * x1[ix1] * x2[ix2]
+            });
+        } else {
+            todo!();
+        }
+    }
+
+    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
+        if self.grid.is_none() {
+            self.itaumin = q2_slice;
+            self.itaumax = q2_slice + 1;
+            self.grid = Some(Array3::zeros((1, self.ny1, self.ny2)));
+        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
+            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
+        }
+
+        let self_grid = self.grid.as_mut().unwrap();
+
+        let self_ny1 = self.ny1;
+        let self_ny2 = self.ny2;
+        let self_itaumin = self.itaumin;
+
+        grid.iter().enumerate().for_each(|(index, value)| {
+            let ix1 = index / self_ny1;
+            let ix2 = index % self_ny2;
+            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
+        });
+    }
+}
+
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
 /// structure.
 #[derive(Deserialize, Serialize)]
@@ -794,8 +1093,13 @@ mod tests {
     }
 
     #[test]
-    fn q2_slice() {
+    fn q2_slice_v1() {
         test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
+    }
+
+    #[test]
+    fn q2_slice_v2() {
+        test_q2_slice_methods(LagrangeSubgridV2::new(&SubgridParams::default()));
     }
 
     #[test]
@@ -856,7 +1160,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn merge_dense_with_sparse() {
+    fn merge_dense_v1_with_sparse() {
         let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
@@ -865,7 +1169,34 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn merge_sparse_with_dense() {
+    fn merge_dense_v1_with_dense_v2() {
+        let mut one = LagrangeSubgridV1::new(&SubgridParams::default());
+        let two = LagrangeSubgridV2::new(&SubgridParams::default());
+
+        one.merge(&mut two.into());
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_dense_v2_with_dense_v1() {
+        let mut two = LagrangeSubgridV2::new(&SubgridParams::default());
+        let one = LagrangeSubgridV1::new(&SubgridParams::default());
+
+        two.merge(&mut one.into());
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_dense_v2_with_sparse() {
+        let mut dense = LagrangeSubgridV2::new(&SubgridParams::default());
+        let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
+
+        dense.merge(&mut sparse.into());
+    }
+
+    #[test]
+    #[should_panic]
+    fn merge_sparse_with_dense_v1() {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
         let dense = LagrangeSubgridV1::new(&SubgridParams::default());
 
@@ -873,11 +1204,29 @@ mod tests {
     }
 
     #[test]
-    fn merge_dense() {
+    #[should_panic]
+    fn merge_sparse_with_dense_v2() {
+        let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
+        let dense = LagrangeSubgridV2::new(&SubgridParams::default());
+
+        sparse.merge(&mut dense.into());
+    }
+
+    #[test]
+    fn merge_dense_v1() {
         test_merge_method(
             LagrangeSubgridV1::new(&SubgridParams::default()),
             LagrangeSubgridV1::new(&SubgridParams::default()),
             LagrangeSubgridV1::new(&SubgridParams::default()),
+        );
+    }
+
+    #[test]
+    fn merge_dense_v2() {
+        test_merge_method(
+            LagrangeSubgridV2::new(&SubgridParams::default()),
+            LagrangeSubgridV2::new(&SubgridParams::default()),
+            LagrangeSubgridV2::new(&SubgridParams::default()),
         );
     }
 
@@ -891,8 +1240,13 @@ mod tests {
     }
 
     #[test]
-    fn empty() {
+    fn empty_v1() {
         test_empty_subgrid(LagrangeSubgridV1::new(&SubgridParams::default()));
+    }
+
+    #[test]
+    fn empty_v2() {
+        test_empty_subgrid(LagrangeSubgridV2::new(&SubgridParams::default()));
     }
 
     #[test]

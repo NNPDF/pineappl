@@ -1,7 +1,7 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::grid::Ntuple;
-use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
+use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
 use either::Either;
 use enum_dispatch::enum_dispatch;
@@ -18,6 +18,8 @@ pub enum SubgridEnum {
     NtupleSubgridV1,
     /// Lagrange-interpolation subgrid.
     LagrangeSparseSubgridV1,
+    /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
+    LagrangeSubgridV2,
 }
 
 /// Trait each subgrid must implement.

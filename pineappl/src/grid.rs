@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
+use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::subgrid::{Subgrid, SubgridEnum, SubgridParams};
@@ -225,6 +225,7 @@ impl Grid {
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
             "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
+            "LagrangeSubgridV2" => Box::new(|| LagrangeSubgridV2::new(&subgrid_params).into()),
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
@@ -686,6 +687,7 @@ impl Grid {
                     let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
                     mem::swap(subgrid, &mut new_subgrid);
                 }
+                SubgridEnum::LagrangeSubgridV2(_) => todo!(),
                 SubgridEnum::LagrangeSparseSubgridV1(_) => {
                     // nothing to optimize here
                 }
