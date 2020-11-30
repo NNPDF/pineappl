@@ -594,7 +594,7 @@ impl Subgrid for LagrangeSubgridV2 {
                 .collect();
 
             grid.iter_mut().enumerate().for_each(|(index, value)| {
-                let ix1 = index / self.ny1;
+                let ix1 = index / self.ny2;
                 let ix2 = index % self.ny2;
                 *value = self_grid[[q2_slice - self.itaumin, ix1, ix2]] * x1[ix1] * x2[ix2]
             });
@@ -614,12 +614,11 @@ impl Subgrid for LagrangeSubgridV2 {
 
         let self_grid = self.grid.as_mut().unwrap();
 
-        let self_ny1 = self.ny1;
         let self_ny2 = self.ny2;
         let self_itaumin = self.itaumin;
 
         grid.iter().enumerate().for_each(|(index, value)| {
-            let ix1 = index / self_ny1;
+            let ix1 = index / self_ny2;
             let ix2 = index % self_ny2;
             self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
         });
