@@ -387,15 +387,30 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety1(&self, iy: usize) -> f64 {
-        f64_from_usize(iy).mul_add(self.deltay1(), self.y1min)
+        if self.y1min == self.y1max {
+            debug_assert_eq!(iy, 0);
+            self.y1min
+        } else {
+            f64_from_usize(iy).mul_add(self.deltay1(), self.y1min)
+        }
     }
 
     fn gety2(&self, iy: usize) -> f64 {
-        f64_from_usize(iy).mul_add(self.deltay2(), self.y2min)
+        if self.y2min == self.y2max {
+            debug_assert_eq!(iy, 0);
+            self.y2min
+        } else {
+            f64_from_usize(iy).mul_add(self.deltay2(), self.y2min)
+        }
     }
 
     fn gettau(&self, iy: usize) -> f64 {
-        f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
+        if self.taumin == self.taumax {
+            debug_assert_eq!(iy, 0);
+            self.taumin
+        } else {
+            f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
+        }
     }
 
     fn increase_tau(&mut self, new_itaumin: usize, new_itaumax: usize) {
