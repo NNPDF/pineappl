@@ -63,15 +63,7 @@ pub fn subcommand(
             let pdf = pdfset
                 .parse()
                 .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-            grid.convolute(
-                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-                &|q2| pdf.alphas_q2(q2),
-                &[],
-                &show_bins,
-                &[],
-                &[(1.0, 1.0)],
-            )
+            helpers::convolute(&grid, &pdf, &[], &show_bins, &[], &[(1.0, 1.0)])
         })
         .collect();
 
