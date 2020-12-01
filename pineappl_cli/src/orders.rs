@@ -19,15 +19,7 @@ pub fn subcommand(
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
     let grid_orders = grid.orders();
-    let results = grid.convolute(
-        &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-        &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-        &|q2| pdf.alphas_q2(q2),
-        &[],
-        &[],
-        &[],
-        &[(1.0, 1.0)],
-    );
+    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
 
     let order_results: Vec<Vec<f64>> = (0..grid_orders.len())
         .map(|order| {
