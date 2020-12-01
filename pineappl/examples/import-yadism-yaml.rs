@@ -1,4 +1,3 @@
-use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Order};
 use pineappl::lagrange_subgrid::LagrangeSubgridV2;
@@ -36,7 +35,6 @@ fn main() {
         .map(|x| x.as_f64().unwrap())
         .collect::<Vec<_>>();
     let pids = doc["pids"].as_vec().unwrap();
-    let xif = doc["xiF"].as_f64().unwrap();
 
     assert_eq!(interpolation_is_log, false);
 
@@ -117,24 +115,9 @@ fn main() {
     let remapper = BinRemapper::new(normalizations, limits).unwrap();
     grid.set_remapper(remapper).unwrap();
 
-    // suppress LHAPDF banners
-    lhapdf::set_verbosity(0);
-    let pdf_set = "CT14llo_NF6";
-
-    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
-
-    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
-    // PDF of the proton
-    let xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    // 'PDF' of the electron
-    let xfx2 = |_, x, _| x;
-    let alphas = |q2| pdf.alphas_q2(q2);
-
-    let results = grid.convolute(&xfx1, &xfx2, &alphas, &[], &[], &[], &[(1.0, xif)]);
-
-    for (bin, result) in results.iter().enumerate() {
-        println!("{} {}", bin, result);
-    }
+    // set the initial state PDG ids for the grid
+    grid.set_key_value("initial_state_1", "2212");
+    grid.set_key_value("initial_state_2", &lepton_pid.to_string());
 
     grid.write(File::create(output).unwrap()).unwrap();
 }
