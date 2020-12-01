@@ -1,11 +1,12 @@
 use lhapdf::Pdf;
+use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Order};
 use pineappl::lagrange_subgrid::LagrangeSubgridV2;
 use pineappl::lumi_entry;
 use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridParams};
 use std::convert::TryFrom;
 use std::env;
-use std::fs;
+use std::fs::{self, File};
 use yaml_rust::YamlLoader;
 
 fn main() {
@@ -17,7 +18,7 @@ fn main() {
     }
 
     let input = &args[1];
-    //let output = &args[2];
+    let output = &args[2];
 
     let yaml = YamlLoader::load_from_str(&fs::read_to_string(input).unwrap()).unwrap();
 
@@ -73,10 +74,15 @@ fn main() {
     // TODO: check that the x-grid points are the really the same generated from the f2 function
 
     let mut grid = Grid::new(lumi, orders, bin_limits, SubgridParams::default());
+    let mut limits = vec![];
 
     // TODO: loop over observables and create subgrids
     for (bin, obs) in doc["F2total"].as_vec().unwrap().iter().enumerate() {
         let q2 = obs["Q2"].as_f64().unwrap();
+        let x = obs["x"].as_f64().unwrap();
+
+        limits.push((q2, q2));
+        limits.push((x, x));
 
         // no interpolation in the factorization scale
         params.set_q2_bins(1);
@@ -84,15 +90,9 @@ fn main() {
         params.set_q2_min(q2);
         params.set_q2_order(0);
 
-        // TODO: implement functionality in LagrangeSubgridV2 to handle q2_min == q2_max
-
         let order = 0;
 
         for (lumi, values) in obs["values"].as_vec().unwrap().iter().enumerate() {
-            if lumi != 9 {
-                continue;
-            }
-
             let values: Vec<_> = values
                 .as_vec()
                 .unwrap()
@@ -112,7 +112,10 @@ fn main() {
         }
     }
 
-    // TODO: write a BinRemapper to set the correct values of the observables
+    // set the correct observables
+    let normalizations = vec![1.0; bins];
+    let remapper = BinRemapper::new(normalizations, limits).unwrap();
+    grid.set_remapper(remapper).unwrap();
 
     // suppress LHAPDF banners
     lhapdf::set_verbosity(0);
@@ -122,11 +125,7 @@ fn main() {
 
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
     // PDF of the proton
-    let xfx1 = |id, x, q2| {
-        let xfx = pdf.xfx_q2(id, x, q2);
-        println!("{} {} {} = {}", id, x, q2, xfx);
-        xfx
-    };
+    let xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     // 'PDF' of the electron
     let xfx2 = |_, x, _| x;
     let alphas = |q2| pdf.alphas_q2(q2);
@@ -137,7 +136,5 @@ fn main() {
         println!("{} {}", bin, result);
     }
 
-    // TODO: write the grid to `output`
-
-    //grid.write();
+    grid.write(File::create(output).unwrap()).unwrap();
 }
