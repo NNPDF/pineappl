@@ -48,10 +48,9 @@ pub fn subcommand(
         })
         .collect();
 
-    let results = grid.convolute(
-        &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-        &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-        &|q2| pdf.alphas_q2(q2),
+    let results = helpers::convolute(
+        &grid,
+        &pdf,
         &orders,
         &show_bins,
         &[],

@@ -39,15 +39,7 @@ pub fn subcommand(
         .map(|lumi| {
             let mut lumi_mask = vec![false; grid.lumi().len()];
             lumi_mask[lumi] = true;
-            grid.convolute(
-                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-                &|q2| pdf.alphas_q2(q2),
-                &orders,
-                &[],
-                &lumi_mask,
-                &[(1.0, 1.0)],
-            )
+            helpers::convolute(&grid, &pdf, &orders, &[], &lumi_mask, &[(1.0, 1.0)])
         })
         .collect();
 

@@ -33,15 +33,7 @@ pub fn subcommand(
         .map(|order| {
             let mut order_mask = vec![false; grid_orders.len()];
             order_mask[order] = true;
-            grid.convolute(
-                &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-                &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-                &|q2| pdf.alphas_q2(q2),
-                &order_mask,
-                &[],
-                &[],
-                &[(1.0, 1.0)],
-            )
+            helpers::convolute(&grid, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
         })
         .collect();
 
