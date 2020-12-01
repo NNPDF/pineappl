@@ -4,12 +4,12 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::helpers::create_table;
+use super::helpers;
 
 pub fn subcommand(input: &str) -> Result<Table, Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
-    let mut table = create_table();
+    let mut table = helpers::create_table();
     let mut titles = row![c => "id"];
     for _ in 0..grid
         .lumi()
