@@ -703,6 +703,27 @@ impl Grid {
             }
         }
     }
+
+    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    #[must_use]
+    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
+        match &self.more_members {
+            MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
+            MoreMembers::V1(_) => None,
+        }
+    }
+
+    /// Sets a specific key-value pair in this grid.
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.more_members.upgrade();
+
+        let mmv2 = match &mut self.more_members {
+            MoreMembers::V1(_) => unreachable!(),
+            MoreMembers::V2(mmv2) => mmv2,
+        };
+
+        mmv2.key_value_db.insert(key.to_owned(), value.to_owned());
+    }
 }
 
 #[cfg(test)]

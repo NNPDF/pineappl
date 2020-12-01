@@ -95,15 +95,7 @@ pub fn subcommand(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box
             .map(|order| {
                 let mut order_mask = vec![false; grid1.orders().len()];
                 order_mask[grid1.orders().iter().position(|o| o == **order).unwrap()] = true;
-                grid1.convolute(
-                    &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-                    &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-                    &|q2| pdf.alphas_q2(q2),
-                    &order_mask,
-                    &[],
-                    &[],
-                    &[(1.0, 1.0)],
-                )
+                helpers::convolute(&grid1, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
             })
             .collect();
         let order_results2: Vec<Vec<f64>> = orders
@@ -111,15 +103,7 @@ pub fn subcommand(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box
             .map(|order| {
                 let mut order_mask = vec![false; grid2.orders().len()];
                 order_mask[grid2.orders().iter().position(|o| o == **order).unwrap()] = true;
-                grid2.convolute(
-                    &|id, x1, q2| pdf.xfx_q2(id, x1, q2),
-                    &|id, x2, q2| pdf.xfx_q2(id, x2, q2),
-                    &|q2| pdf.alphas_q2(q2),
-                    &order_mask,
-                    &[],
-                    &[],
-                    &[(1.0, 1.0)],
-                )
+                helpers::convolute(&grid2, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
             })
             .collect();
 
