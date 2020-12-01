@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::helpers::create_table;
+use super::helpers;
 
 pub fn subcommand(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box<dyn Error>> {
     let grid1 = Grid::read(BufReader::new(File::open(input1)?))?;
@@ -15,7 +15,7 @@ pub fn subcommand(input1: &str, input2: &str, pdfset: &str) -> Result<Table, Box
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
-    let mut table = create_table();
+    let mut table = helpers::create_table();
 
     if grid1.bin_info() == grid2.bin_info() {
         let orders1: HashSet<_> = grid1

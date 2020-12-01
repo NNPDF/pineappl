@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::helpers::create_table;
+use super::helpers;
 
 pub fn subcommand(
     input: &str,
@@ -71,7 +71,7 @@ pub fn subcommand(
         title_row.add_cell(cell!(c->"size"));
     }
 
-    let mut table = create_table();
+    let mut table = helpers::create_table();
     table.set_titles(title_row);
 
     for bin in 0..bin_info.bins() {

@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::helpers::create_table;
+use super::helpers;
 
 pub fn subcommand(
     input: &str,
@@ -86,7 +86,7 @@ pub fn subcommand(
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
     }
 
-    let mut table = create_table();
+    let mut table = helpers::create_table();
     table.set_titles(title);
 
     for (bin, value) in results.iter().enumerate() {
