@@ -1,5 +1,6 @@
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
+use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi_entry;
 use pineappl::subgrid::SubgridParams;
@@ -212,11 +213,22 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     // optimize the grid
     grid.optimize();
 
+    // make a two-dimensional distribution out of it
+    grid.set_remapper(BinRemapper::new(
+        vec![0.1; 24],
+        (0..24)
+            .flat_map(|index| {
+                let index = f64::from(index);
+                vec![(60.0, 120.0), (index * 0.1, (index + 1.0) * 0.1)]
+            })
+            .collect::<Vec<(f64, f64)>>(),
+    )?)?;
+
     // check that the results are still the same
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert!(approx_eq!(f64, *result, *reference, ulps = 24));
     }
 
     Ok(())
