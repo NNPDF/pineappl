@@ -13,7 +13,7 @@ description = "Read, write, and query PineAPPL grids"
 [dependencies]
 clap = { default-features = false, features = ["suggestions"], version = "~2.33.0" }
 itertools = "0.9"
-lhapdf = "0.1.8"
+lhapdf = "0.1.9"
 num_cpus = "1.0"
 pineappl = { path = "../pineappl", version = "0.3" }
 prettytable-rs = "^0.8"
