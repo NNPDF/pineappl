@@ -24,6 +24,11 @@ pip install maturin
 maturin develop
 ```
 
+**NOTE:** the packaged built and installed with `maturin` will contain not
+only the compiled of `src/*.rs`, but also the python package in `pineappl/`
+(i.e. `<root>/pineappl_py/pineappl`, to disambiguate a little the
+name-clashing).
+
 ## And for deploying?
 
 The very same way, `maturin` it's also able to deploy to PyPI:
