@@ -11,7 +11,7 @@ categories = ["science"]
 description = "Python bindings to PineAPPL"
 
 [lib]
-name = "pineappl_py"
+name = "pineappl"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -21,4 +21,3 @@ itertools = "0.9"
 [dependencies.pyo3]
 version = "0.12.4"
 features = ["extension-module"]
-
