@@ -11,6 +11,7 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 }
 
 /// A Python module implemented in Rust.
+/// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
 fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
