@@ -15,7 +15,7 @@ impl PyLumiEntry {
 }
 
 #[pymethods]
-impl PyGrid {
+impl PyLumiEntry {
     #[new]
     pub fn new_lumi_entry(mut entry: Vec<(i32, i32, f64)>) -> Self {
         Self::new(LumiEntry::new(entry))
