@@ -3,6 +3,9 @@ use pyo3::wrap_pyfunction;
 
 pub mod bin;
 pub mod grid;
+pub mod lagrange_subgrid;
+pub mod lumi;
+pub mod subgrid;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
