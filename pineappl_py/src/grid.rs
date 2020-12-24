@@ -1,4 +1,5 @@
 use pineappl::grid::{Grid, Order};
+//use pineappl::lumi::LumiEntry;
 
 use super::lumi::PyLumiEntry;
 use super::subgrid::PySubgridParams;
@@ -41,14 +42,17 @@ impl PyGrid {
 impl PyGrid {
     #[new]
     pub fn new_grid(
-        lumi: Vec<&PyLumiEntry>,
-        orders: Vec<&PyOrder>,
+        lumi: Vec<PyRef<PyLumiEntry>>,
+        orders: Vec<PyRef<PyOrder>>,
         bin_limits: Vec<f64>,
-        subgrid_params: &PySubgridParams,
+        subgrid_params: PySubgridParams,
     ) -> Self {
         Self::new(Grid::new(
-            lumi.iter().map(|pyl| pyl.lumi_entry).collect(),
-            orders.iter().map(|pyo| pyo.order).collect(),
+            lumi.iter()
+                .map(|pyl| pyl.lumi_entry.clone())
+                //.collect::<Vec<LumiEntry>>(),
+                .collect(),
+            orders.iter().map(|pyo| pyo.order.clone()).collect(),
             bin_limits,
             subgrid_params.subgrid_params,
         ))
