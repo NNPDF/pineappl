@@ -5,7 +5,9 @@ except:
 
     warnings.warn("binary files missing")
 
+from .utils import PyWrapper
 
-class BinRemapper:
+
+class BinRemapper(PyWrapper):
     def __init__(self, normalization, limits):
-        self._br = PyBinRemapper(normalization, limits)
+        self._raw = PyBinRemapper(normalization, limits)

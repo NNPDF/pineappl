@@ -36,7 +36,7 @@ impl PySubgridParams {
     pub fn default() -> Self {
         let subgrid_params = SubgridParams::default();
 
-        Self { subgrid_params }
+        Self::new(subgrid_params)
     }
 }
 
@@ -60,8 +60,6 @@ impl PyExtraSubgridParams {
     pub fn default() -> Self {
         let extra_subgrid_params = ExtraSubgridParams::default();
 
-        Self {
-            extra_subgrid_params,
-        }
+        Self::new(extra_subgrid_params)
     }
 }
