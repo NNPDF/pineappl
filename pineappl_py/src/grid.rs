@@ -1,5 +1,4 @@
 use pineappl::grid::{Grid, Order};
-//use pineappl::lumi::LumiEntry;
 
 use super::lumi::PyLumiEntry;
 use super::subgrid::PySubgridParams;
@@ -48,10 +47,7 @@ impl PyGrid {
         subgrid_params: PySubgridParams,
     ) -> Self {
         Self::new(Grid::new(
-            lumi.iter()
-                .map(|pyl| pyl.lumi_entry.clone())
-                //.collect::<Vec<LumiEntry>>(),
-                .collect(),
+            lumi.iter().map(|pyl| pyl.lumi_entry.clone()).collect(),
             orders.iter().map(|pyo| pyo.order.clone()).collect(),
             bin_limits,
             subgrid_params.subgrid_params,

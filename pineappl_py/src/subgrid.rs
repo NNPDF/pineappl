@@ -14,6 +14,22 @@ impl PySubgridParams {
     }
 }
 
+impl Clone for PySubgridParams {
+    fn clone(&self) -> Self {
+        let mut subgrid_params = SubgridParams::default();
+        subgrid_params.set_q2_bins(self.subgrid_params.q2_bins());
+        subgrid_params.set_q2_max(self.subgrid_params.q2_max());
+        subgrid_params.set_q2_min(self.subgrid_params.q2_min());
+        subgrid_params.set_q2_order(self.subgrid_params.q2_order());
+        subgrid_params.set_reweight(self.subgrid_params.reweight());
+        subgrid_params.set_x_bins(self.subgrid_params.x_bins());
+        subgrid_params.set_x_max(self.subgrid_params.x_max());
+        subgrid_params.set_x_min(self.subgrid_params.x_min());
+        subgrid_params.set_x_order(self.subgrid_params.x_order());
+        Self { subgrid_params }
+    }
+}
+
 #[pymethods]
 impl PySubgridParams {
     #[new]
