@@ -889,9 +889,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     fn symmetrize(&mut self) {
         let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k > j) {
             new_array[[i, j, k]] = sigma;
         }
+        // do not change the diagonal entries (k==j)
         for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
             new_array[[i, k, j]] += sigma;
         }
