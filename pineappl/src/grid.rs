@@ -574,7 +574,7 @@ impl Grid {
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid);
+                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, false);
             }
         }
 
@@ -689,6 +689,14 @@ impl Grid {
     /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
     /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
     pub fn optimize(&mut self) {
+        if if let Some(map) = self.key_values() {
+            map["initial_state_1"] == map["initial_state_2"]
+        } else {
+            true
+        } {
+            self.symmetrize();
+        }
+
         for subgrid in self.subgrids.iter_mut() {
             match subgrid {
                 SubgridEnum::LagrangeSubgridV1(grid) => {
@@ -702,6 +710,77 @@ impl Grid {
                 SubgridEnum::NtupleSubgridV1(_) => todo!(),
             }
         }
+    }
+
+    fn symmetrize(&mut self) {
+        let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+
+        while let Some(index) = indices.pop() {
+            let lumi_entry = &self.lumi[index];
+
+            if *lumi_entry == lumi_entry.transpose() {
+                pairs.push((index, index));
+            } else {
+                let (j, &other_index) = indices
+                    .iter()
+                    .enumerate()
+                    .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
+                    .unwrap();
+
+                pairs.push((index, other_index));
+                indices.remove(j);
+            }
+        }
+
+        let i_size = self.orders.len();
+        let j_size = self.bin_limits.bins();
+        let k_size = self.lumi.len();
+
+        let subgrids = mem::replace(
+            &mut self.subgrids,
+            Array3::from_shape_vec((0, 0, 0), vec![]).unwrap(),
+        );
+        let mut subgrids = Array3::from_shape_vec(
+            (i_size, j_size, k_size),
+            subgrids
+                .into_raw_vec()
+                .into_iter()
+                .map(|x| Some(x))
+                .collect(),
+        )
+        .unwrap();
+
+        for i in 0..i_size {
+            for j in 0..j_size {
+                for &(k1, k2) in &pairs {
+                    if k1 == k2 {
+                        subgrids[[i, j, k1]].as_mut().unwrap().symmetrize();
+                    } else {
+                        let subgrid = mem::replace(&mut subgrids[[i, j, k2]], None);
+                        subgrids[[i, j, k1]]
+                            .as_mut()
+                            .unwrap()
+                            .merge(&mut subgrid.unwrap(), true);
+                    }
+                }
+            }
+        }
+
+        self.subgrids = Array3::from_shape_vec(
+            (i_size, j_size, pairs.len()),
+            subgrids
+                .into_raw_vec()
+                .into_iter()
+                .filter_map(|s| s)
+                .collect(),
+        )
+        .unwrap();
+
+        self.lumi = pairs
+            .iter()
+            .map(|(index, _)| self.lumi[*index].clone())
+            .collect();
     }
 
     /// Returns a map with key-value pairs, if there are any stored in this grid.

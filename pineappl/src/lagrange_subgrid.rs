@@ -240,7 +240,7 @@ impl Subgrid for LagrangeSubgridV1 {
         self.grid.is_none()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::LagrangeSubgridV1(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
@@ -256,10 +256,18 @@ impl Subgrid for LagrangeSubgridV1 {
 
                     let self_grid = self.grid.as_mut().unwrap();
 
-                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                        self_grid[[i + offset, j, k]] += value;
+                    if transpose {
+                        for ((i, k, j), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
                     }
                 } else {
+                    assert!(!transpose);
+
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
@@ -324,6 +332,21 @@ impl Subgrid for LagrangeSubgridV1 {
             let ix2 = index % self_ny;
             self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
         });
+    }
+
+    fn symmetrize(&mut self) {
+        if let Some(grid) = self.grid.as_mut() {
+            let (i_size, j_size, k_size) = grid.dim();
+
+            for i in 0..i_size {
+                for j in 0..j_size {
+                    for k in j + 1..k_size {
+                        grid[[i, j, k]] += grid[[i, k, j]];
+                        grid[[i, k, j]] = 0.0;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -553,7 +576,9 @@ impl Subgrid for LagrangeSubgridV2 {
         self.grid.is_none()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+        assert!(!transpose);
+
         if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
@@ -637,6 +662,10 @@ impl Subgrid for LagrangeSubgridV2 {
             let ix2 = index % self_ny2;
             self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
         });
+    }
+
+    fn symmetrize(&mut self) {
+        todo!();
     }
 }
 
@@ -789,7 +818,9 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+        assert!(!transpose);
+
         if let SubgridEnum::LagrangeSparseSubgridV1(other_grid) = other {
             if self.array.is_empty() {
                 mem::swap(&mut self.array, &mut other_grid.array);
@@ -853,6 +884,19 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             .for_each(|(index, &value)| {
                 self.array[[q2_slice, index / self.ny, index % self.ny]] = value;
             });
+    }
+
+    fn symmetrize(&mut self) {
+        let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
+
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+            new_array[[i, j, k]] = sigma;
+        }
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
+            new_array[[i, k, j]] += sigma;
+        }
+
+        mem::swap(&mut self.array, &mut new_array);
     }
 }
 
@@ -1002,7 +1046,7 @@ mod tests {
         );
 
         // merge filled grid into empty one
-        grid2.merge(&mut grid1.into());
+        grid2.merge(&mut grid1.into(), false);
         assert!(!grid2.is_empty());
 
         let merged = grid2.convolute(
@@ -1039,7 +1083,7 @@ mod tests {
             weight: 1.0,
         });
 
-        grid2.merge(&mut grid3.into());
+        grid2.merge(&mut grid3.into(), false);
 
         let merged = grid2.convolute(
             &x1,
@@ -1181,7 +1225,7 @@ mod tests {
         let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
-        dense.merge(&mut sparse.into());
+        dense.merge(&mut sparse.into(), false);
     }
 
     #[test]
@@ -1190,7 +1234,7 @@ mod tests {
         let mut one = LagrangeSubgridV1::new(&SubgridParams::default());
         let two = LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
-        one.merge(&mut two.into());
+        one.merge(&mut two.into(), false);
     }
 
     #[test]
@@ -1200,7 +1244,7 @@ mod tests {
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let one = LagrangeSubgridV1::new(&SubgridParams::default());
 
-        two.merge(&mut one.into());
+        two.merge(&mut one.into(), false);
     }
 
     #[test]
@@ -1210,7 +1254,7 @@ mod tests {
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
-        dense.merge(&mut sparse.into());
+        dense.merge(&mut sparse.into(), false);
     }
 
     #[test]
@@ -1219,7 +1263,7 @@ mod tests {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
         let dense = LagrangeSubgridV1::new(&SubgridParams::default());
 
-        sparse.merge(&mut dense.into());
+        sparse.merge(&mut dense.into(), false);
     }
 
     #[test]
@@ -1229,7 +1273,7 @@ mod tests {
         let dense =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
-        sparse.merge(&mut dense.into());
+        sparse.merge(&mut dense.into(), false);
     }
 
     #[test]

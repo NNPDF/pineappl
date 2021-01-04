@@ -57,7 +57,9 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.is_empty()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+        assert!(!transpose);
+
         if let SubgridEnum::NtupleSubgridV1(other_grid) = other {
             self.ntuples.append(&mut other_grid.ntuples);
         } else {
@@ -80,6 +82,8 @@ impl Subgrid for NtupleSubgridV1 {
     fn write_q2_slice(&mut self, _: usize, _: &[f64]) {
         unimplemented!();
     }
+
+    fn symmetrize(&mut self) {}
 }
 
 #[cfg(test)]
@@ -124,7 +128,7 @@ mod tests {
             5.0
         );
 
-        subgrid.merge(&mut other_subgrid);
+        subgrid.merge(&mut other_subgrid, false);
         assert_eq!(
             subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
             2.5 + 56.25 + 5.0

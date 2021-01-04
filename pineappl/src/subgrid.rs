@@ -57,7 +57,7 @@ pub trait Subgrid {
     fn is_empty(&self) -> bool;
 
     /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut SubgridEnum);
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
@@ -76,6 +76,10 @@ pub trait Subgrid {
 
     /// Writes into subgrid.
     fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
+
+    /// Assumes that the initial states for this grid are the same and uses this to optimize the
+    /// grid by getting rid of almost half of the entries.
+    fn symmetrize(&mut self);
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.

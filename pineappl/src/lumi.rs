@@ -77,6 +77,11 @@ impl LumiEntry {
     pub fn entry(&self) -> &[(i32, i32, f64)] {
         &self.entry
     }
+
+    /// Creates a new object with the initial states transposed.
+    pub fn transpose(&self) -> Self {
+        Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
+    }
 }
 
 /// Helper macro to quickly generate a LumiEntry at compile time.
