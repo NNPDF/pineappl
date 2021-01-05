@@ -2,7 +2,7 @@ use itertools::Itertools;
 use pineappl::grid::Grid;
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::io::BufReader;
 
 pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
@@ -36,15 +36,6 @@ pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<(), Box<dyn Error>> 
         .join(",");
 
     println!("{}", orders);
-
-    Ok(())
-}
-
-pub fn subcommand_set(input: &str, arguments: Vec<&str>) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
-
-    grid.set_key_value(arguments[0], arguments[1]);
-    grid.write(BufWriter::new(File::create(arguments[2])?))?;
 
     Ok(())
 }

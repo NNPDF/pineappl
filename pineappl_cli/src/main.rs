@@ -11,6 +11,7 @@ mod optimize;
 mod orders;
 mod pdf_uncertainty;
 mod remap;
+mod set;
 
 use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
@@ -138,8 +139,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +required =>
                 (@arg qcd: --qcd "For each order print a list of the largest QCD order")
                 (@arg ew: --ew "For each order print a list of the largest EW order")
-                (@arg set: --set allow_hyphen_values(true) number_of_values(3)
-                    value_names(&["key", "value", "output"]) "Sets an internal key-value pair")
                 (@arg get: --get +takes_value value_name("key") "Gets an internal key-value pair")
                 (@arg show: --show "Shows all key-value pairs stored in the grid")
             )
@@ -185,6 +184,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg remapping: +required "Remapping string")
             (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
                 "Normalization factor in addition to the given bin widths")
+        )
+        (@subcommand set =>
+            (about: "Modifies the internal key-value storage")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path of the modified PineAPPL file")
+            (@group mode +multiple =>
+                (@arg entry: --entry +allow_hyphen_values number_of_values(2)
+                    value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
+            )
         )
     )
     .get_matches();
@@ -246,8 +254,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                     "qcd"
                 },
             )?;
-        } else if matches.is_present("set") {
-            info::subcommand_set(input, matches.values_of("set").unwrap().collect())?;
         } else if matches.is_present("get") {
             info::subcommand_get(input, matches.value_of("get").unwrap())?;
         } else if matches.is_present("show") {
@@ -314,6 +320,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let norm = matches.value_of("norm").unwrap().parse()?;
 
         remap::subcommand(input, output, remapping, norm)?;
+    } else if let Some(matches) = matches.subcommand_matches("set") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        let entries = matches.values_of("entry").map_or(vec![], |s| s.collect());
+
+        set::subcommand(input, output, entries)?;
     }
 
     Ok(())

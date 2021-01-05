@@ -23,9 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in memory and when written as a file
 - added new subgrid type `LagrangeSubgridV2`, which allows for different `x1`
   and `x2` limits, for example for DIS processes
-- added new switches to the subcommand `info`: `--get`, `--set`, `--show`,
-  which lets one get, set, and show the key-values pairs of each grid file.
-  This can be used to set, for instance, the hadronic/leptonic initial states
+- added new switches to the subcommand `info`: `--get`, `--show`,
+  which lets one read a single or all key-values pairs of each grid file.
+- added new subcommand `set` which allows to modify the key-value storage
 
 ### Changed
 
