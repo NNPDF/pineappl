@@ -29,10 +29,11 @@ pub fn convolute(
         map.get("initial_state_2").unwrap().parse::<i32>().unwrap()
     });
 
+    // if the field 'Particle' is missing we assume it's a proton PDF
     let pdf_pdg_id = lhapdf
         .set()
         .entry("Particle")
-        .unwrap()
+        .unwrap_or("2212".to_string())
         .parse::<i32>()
         .unwrap();
 
