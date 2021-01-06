@@ -79,6 +79,7 @@ impl LumiEntry {
     }
 
     /// Creates a new object with the initial states transposed.
+    #[must_use]
     pub fn transpose(&self) -> Self {
         Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
     }

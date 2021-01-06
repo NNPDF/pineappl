@@ -69,5 +69,5 @@ pub fn convolute(
     };
     let alphas = |q2| lhapdf.alphas_q2(q2);
 
-    grid.convolute(&xfx1, &xfx2, &alphas, &orders, &bins, &lumis, &scales)
+    grid.convolute(&xfx1, &xfx2, &alphas, orders, bins, lumis, scales)
 }

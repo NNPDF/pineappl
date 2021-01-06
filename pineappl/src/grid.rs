@@ -355,7 +355,7 @@ impl Grid {
                             let x1 = x1_grid[ix1];
                             let x2 = x2_grid[ix2];
                             let q2 = q2_grid[iq2];
-                            let q2f = xif.powi(2) * q2;
+                            let q2f = xif * xif * q2;
 
                             let mut lumi = 0.0;
 
@@ -372,7 +372,7 @@ impl Grid {
                             let mut alphas_cache = alphas_cache.borrow_mut();
                             let alphas = alphas_cache
                                 .entry(xir_values.len() * iq2 + xir_index)
-                                .or_insert_with(|| alphas(xir.powi(2) * q2));
+                                .or_insert_with(|| alphas(xir * xir * q2));
 
                             lumi *= alphas.powi(order.alphas.try_into().unwrap());
                             lumi
@@ -385,7 +385,7 @@ impl Grid {
                         &q2_grid,
                         Right(&|x1, x2, q2| {
                             let mut lumi = 0.0;
-                            let q2f = xif.powi(2) * q2;
+                            let q2f = xif * xif * q2;
 
                             for entry in lumi_entry.entry() {
                                 let xfx1 = xfx1(entry.0, x1, q2f);
@@ -393,18 +393,18 @@ impl Grid {
                                 lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                             }
 
-                            lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
+                            lumi *= alphas(xir * xir * q2).powi(order.alphas.try_into().unwrap());
                             lumi
                         }),
                     )
                 };
 
                 if order.logxir > 0 {
-                    value *= xir.powi(2).ln().powi(order.logxir.try_into().unwrap());
+                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
                 }
 
                 if order.logxif > 0 {
-                    value *= xif.powi(2).ln().powi(order.logxif.try_into().unwrap());
+                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
                 }
 
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
@@ -676,7 +676,7 @@ impl Grid {
 
     /// Returns all information about the bins in this grid.
     #[must_use]
-    pub fn bin_info(&self) -> BinInfo {
+    pub const fn bin_info(&self) -> BinInfo {
         BinInfo::new(
             &self.bin_limits,
             match &self.more_members {
@@ -689,11 +689,10 @@ impl Grid {
     /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
     /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
     pub fn optimize(&mut self) {
-        if if let Some(map) = self.key_values() {
-            map["initial_state_1"] == map["initial_state_2"]
-        } else {
-            true
-        } {
+        if self
+            .key_values()
+            .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
+        {
             self.symmetrize();
         }
 
@@ -703,11 +702,10 @@ impl Grid {
                     let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
                     mem::swap(subgrid, &mut new_subgrid);
                 }
-                SubgridEnum::LagrangeSubgridV2(_) => todo!(),
                 SubgridEnum::LagrangeSparseSubgridV1(_) => {
                     // nothing to optimize here
                 }
-                SubgridEnum::NtupleSubgridV1(_) => todo!(),
+                SubgridEnum::NtupleSubgridV1(_) | SubgridEnum::LagrangeSubgridV2(_) => todo!(),
             }
         }
     }
@@ -743,11 +741,7 @@ impl Grid {
         );
         let mut subgrids = Array3::from_shape_vec(
             (i_size, j_size, k_size),
-            subgrids
-                .into_raw_vec()
-                .into_iter()
-                .map(|x| Some(x))
-                .collect(),
+            subgrids.into_raw_vec().into_iter().map(Some).collect(),
         )
         .unwrap();
 

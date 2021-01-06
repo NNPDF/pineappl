@@ -85,23 +85,28 @@ impl<'a> BinInfo<'a> {
     pub fn left(&self, dimension: usize) -> Vec<f64> {
         if dimension >= self.dimensions() {
             vec![]
-        } else if let Some(remapper) = self.remapper {
-            remapper
-                .limits()
-                .iter()
-                .skip(dimension)
-                .step_by(self.dimensions())
-                .take(self.bins())
-                .map(|tuple| tuple.0)
-                .collect()
         } else {
-            self.limits
-                .limits()
-                .iter()
-                .skip(0)
-                .take(self.bins())
-                .copied()
-                .collect()
+            self.remapper.map_or_else(
+                || {
+                    self.limits
+                        .limits()
+                        .iter()
+                        .skip(0)
+                        .take(self.bins())
+                        .copied()
+                        .collect()
+                },
+                |remapper| {
+                    remapper
+                        .limits()
+                        .iter()
+                        .skip(dimension)
+                        .step_by(self.dimensions())
+                        .take(self.bins())
+                        .map(|tuple| tuple.0)
+                        .collect()
+                },
+            )
         }
     }
 
@@ -111,34 +116,38 @@ impl<'a> BinInfo<'a> {
     pub fn right(&self, dimension: usize) -> Vec<f64> {
         if dimension >= self.dimensions() {
             vec![]
-        } else if let Some(remapper) = self.remapper {
-            remapper
-                .limits()
-                .iter()
-                .skip(dimension)
-                .step_by(self.dimensions())
-                .take(self.bins())
-                .map(|tuple| tuple.1)
-                .collect()
         } else {
-            self.limits
-                .limits()
-                .iter()
-                .skip(1)
-                .take(self.bins())
-                .copied()
-                .collect()
+            self.remapper.map_or_else(
+                || {
+                    self.limits
+                        .limits()
+                        .iter()
+                        .skip(1)
+                        .take(self.bins())
+                        .copied()
+                        .collect()
+                },
+                |remapper| {
+                    remapper
+                        .limits()
+                        .iter()
+                        .skip(dimension)
+                        .step_by(self.dimensions())
+                        .take(self.bins())
+                        .map(|tuple| tuple.1)
+                        .collect()
+                },
+            )
         }
     }
 
     /// Returns all normalization factors.
     #[must_use]
     pub fn normalizations(&self) -> Vec<f64> {
-        if let Some(remapper) = self.remapper {
-            remapper.normalizations().to_vec()
-        } else {
-            self.limits.bin_sizes()
-        }
+        self.remapper.map_or_else(
+            || self.limits.bin_sizes(),
+            |remapper| remapper.normalizations().to_vec(),
+        )
     }
 }
 

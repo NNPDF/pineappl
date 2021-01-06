@@ -135,23 +135,23 @@ impl Subgrid for LagrangeSubgridV1 {
         _: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
-        if let Some(self_grid) = &self.grid {
+        self.grid.as_ref().map_or(0.0, |grid| {
             let lumi = lumi.left().unwrap();
 
-            self_grid
-                .indexed_iter()
-                .filter(|(_, &value)| value != 0.0)
+            grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
-                    let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
-                    if self.reweight {
-                        value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
+                    if sigma == 0.0 {
+                        0.0
+                    } else {
+                        let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
+                        if self.reweight {
+                            value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
+                        }
+                        value
                     }
-                    value
                 })
                 .sum()
-        } else {
-            0.0
-        }
+        })
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -460,26 +460,26 @@ impl Subgrid for LagrangeSubgridV2 {
         _: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
-        if let Some(self_grid) = &self.grid {
+        self.grid.as_ref().map_or(0.0, |grid| {
             let lumi = lumi.left().unwrap();
 
-            self_grid
-                .indexed_iter()
-                .filter(|(_, &value)| value != 0.0)
+            grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
-                    let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
-                    if self.reweight1 {
-                        value *= weightfun(x1[ix1]);
+                    if sigma == 0.0 {
+                        0.0
+                    } else {
+                        let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
+                        if self.reweight1 {
+                            value *= weightfun(x1[ix1]);
+                        }
+                        if self.reweight2 {
+                            value *= weightfun(x2[ix2]);
+                        }
+                        value
                     }
-                    if self.reweight2 {
-                        value *= weightfun(x2[ix2]);
-                    }
-                    value
                 })
                 .sum()
-        } else {
-            0.0
-        }
+        })
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
