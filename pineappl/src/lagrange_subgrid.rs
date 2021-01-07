@@ -266,11 +266,15 @@ impl Subgrid for LagrangeSubgridV1 {
                         }
                     }
                 } else {
-                    assert!(!transpose);
-
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
+
+                    if transpose {
+                        if let Some(grid) = &mut self.grid {
+                            grid.swap_axes(1, 2);
+                        }
+                    }
                 }
             }
         } else {
