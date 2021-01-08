@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subgrid type: `LagrangeSparseGrid`, which can be generated using
   the new subcommand `optimize` from existing grids; this data structure is
   less memory intense and a bit faster
+- added new subcommand `optimize`, which optimizes the size for each grid, both
+  in memory and when written as a file
+- added new subgrid type `LagrangeSubgridV2`, which allows for different `x1`
+  and `x2` limits, for example for DIS processes
 - added new switches to the subcommand `info`: `--get`, `--set`, `--show`,
   which lets one get, set, and show the key-values pairs of each grid file.
   This can be used to set, for instance, the hadronic/leptonic initial states
