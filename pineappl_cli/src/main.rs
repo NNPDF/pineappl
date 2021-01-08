@@ -154,7 +154,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: ... +required "Path(s) of the files that should be merged")
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
             (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
-                number_of_values(5) "Scales all grids with order-dependent factors")
+                number_of_values(5) value_names(&["alphas", "alpha", "logxir", "logxif", "global"])
+                "Scales all grids with order-dependent factors")
         )
         (@subcommand optimize =>
             (about: "Optimizes the internal data structure to minimize memory usage")
