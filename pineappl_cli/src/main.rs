@@ -138,6 +138,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +required =>
                 (@arg qcd: --qcd "For each order print a list of the largest QCD order")
                 (@arg ew: --ew "For each order print a list of the largest EW order")
+                (@arg set: --set allow_hyphen_values(true) number_of_values(3)
+                    value_names(&["key", "value", "output"]) "Sets an internal key-value pair")
+                (@arg get: --get +takes_value value_name("key") "Gets an internal key-value pair")
+                (@arg show: --show "Shows all key-value pairs stored in the grid")
             )
         )
         (@subcommand luminosity =>
@@ -232,16 +236,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("info") {
         let input = matches.value_of("input").unwrap();
 
-        info::subcommand(
-            input,
-            if matches.is_present("qcd") {
-                "qcd"
-            } else if matches.is_present("ew") {
-                "ew"
-            } else {
-                unreachable!()
-            },
-        )?;
+        if matches.is_present("ew") || matches.is_present("qcd") {
+            info::subcommand_qcd_ew(
+                input,
+                if matches.is_present("ew") {
+                    "ew"
+                } else {
+                    "qcd"
+                },
+            )?;
+        } else if matches.is_present("set") {
+            info::subcommand_set(input, matches.values_of("set").unwrap().collect())?;
+        } else if matches.is_present("get") {
+            info::subcommand_get(input, matches.value_of("get").unwrap())?;
+        } else if matches.is_present("show") {
+            info::subcommand_show(input)?;
+        } else {
+            unreachable!();
+        }
     } else if let Some(matches) = matches.subcommand_matches("luminosity") {
         let input = matches.value_of("input").unwrap();
 

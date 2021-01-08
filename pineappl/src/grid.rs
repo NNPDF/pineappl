@@ -777,6 +777,11 @@ impl Grid {
             .collect();
     }
 
+    /// Upgrades the internal data structures to their latest versions.
+    pub fn upgrade(&mut self) {
+        self.more_members.upgrade();
+    }
+
     /// Returns a map with key-value pairs, if there are any stored in this grid.
     #[must_use]
     pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
