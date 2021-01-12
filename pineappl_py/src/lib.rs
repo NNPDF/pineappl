@@ -14,6 +14,7 @@ fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<grid::PyGrid>()?;
     m.add_class::<grid::PyOrder>()?;
     m.add_class::<lagrange_subgrid::PyLagrangeSubgridV2>()?;
+    m.add_class::<lumi::PyLumiEntry>()?;
     m.add_class::<subgrid::PyExtraSubgridParams>()?;
     m.add_class::<subgrid::PySubgridParams>()?;
 
