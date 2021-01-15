@@ -4,3 +4,13 @@ class PyWrapper:
     @property
     def raw(self):
         return self._raw
+
+    def __getattr__(self, name):
+        if name[:3] == "set":
+            return self._raw.__getattribute__(name)
+        else:
+            raise AttributeError
+
+    # def __getattribute__(self, name):
+    # print(">>>", name)
+    # return super().__getattribute__(name)

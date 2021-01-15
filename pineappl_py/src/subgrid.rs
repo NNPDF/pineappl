@@ -38,6 +38,18 @@ impl PySubgridParams {
 
         Self::new(subgrid_params)
     }
+
+    pub fn set_x_bins(&mut self, x_bins: usize) {
+        self.subgrid_params.set_x_bins(x_bins);
+    }
+
+    pub fn set_x_max(&mut self, x_max: f64) {
+        self.subgrid_params.set_x_max(x_max);
+    }
+
+    pub fn set_x_min(&mut self, x_min: f64) {
+        self.subgrid_params.set_x_min(x_min);
+    }
 }
 
 #[pyclass]
