@@ -433,7 +433,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         }
     }
 
-    Box::new(
+    let mut grid = Box::new(
         Grid::with_subgrid_type(
             (*lumi).0.clone(),
             orders,
@@ -442,7 +442,21 @@ pub unsafe extern "C" fn pineappl_grid_new(
             subgrid_type,
         )
         .unwrap(),
-    )
+    );
+
+    if !key_vals.is_null() {
+        let keyval = &*key_vals;
+
+        if let Some(value) = keyval.strings.get("initial_state_1") {
+            grid.set_key_value("initial_state_1", value.to_str().unwrap());
+        }
+
+        if let Some(value) = keyval.strings.get("initial_state_2") {
+            grid.set_key_value("initial_state_2", value.to_str().unwrap());
+        }
+    }
+
+    grid
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
