@@ -69,6 +69,10 @@ impl PySubgridParams {
     pub fn set_q2_order(&mut self, q2_order: usize) {
         self.subgrid_params.set_q2_order(q2_order);
     }
+
+    pub fn x_bins(&self) -> usize {
+        self.subgrid_params.x_bins()
+    }
 }
 
 #[pyclass]

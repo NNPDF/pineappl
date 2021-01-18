@@ -1,7 +1,11 @@
 use pineappl::grid::{Grid, Order};
 
+use super::bin::PyBinRemapper;
+use super::lagrange_subgrid::PyLagrangeSubgridV2;
 use super::lumi::PyLumiEntry;
 use super::subgrid::PySubgridParams;
+
+use std::fs::File;
 
 use pyo3::prelude::*;
 
@@ -52,5 +56,28 @@ impl PyGrid {
             bin_limits,
             subgrid_params.subgrid_params,
         ))
+    }
+
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.grid.set_key_value(key, value);
+    }
+
+    pub fn set_subgrid(
+        &mut self,
+        order: usize,
+        bin: usize,
+        lumi: usize,
+        subgrid: PyLagrangeSubgridV2,
+    ) {
+        self.grid
+            .set_subgrid(order, bin, lumi, subgrid.lagrange_subgrid.into());
+    }
+
+    pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
+        self.grid.set_remapper(remapper.bin_remapper).unwrap();
+    }
+
+    pub fn write(&self, path: &str) {
+        self.grid.write(File::create(path).unwrap()).unwrap();
     }
 }

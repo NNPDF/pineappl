@@ -47,7 +47,7 @@ pub enum BinRemapperNewError {
 }
 
 /// Structure for remapping bin limits.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BinRemapper {
     normalizations: Vec<f64>,
     limits: Vec<(f64, f64)>,

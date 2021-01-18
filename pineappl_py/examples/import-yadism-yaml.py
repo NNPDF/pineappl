@@ -1,6 +1,8 @@
 import argparse
+import pathlib
 
 import yaml
+import numpy as np
 
 import pineappl
 
@@ -57,7 +59,32 @@ def make_pineappl(input_yaml, output_pineappl):
 
         order = 0
 
-    print("\nI'm doing something")
+        for lumi, values in enumerate(obs["values"]):
+            values = list(reversed(values))
+
+            assert len(values) == params.x_bins()
+
+            if any(np.array(values) != 0):
+                subgrid = pineappl.lagrange_subgrid.LagrangeSubgridV2(params, extra)
+                subgrid.write_q2_slice(0, values)
+                # TODO: move _raw in the 'pineappl' python package
+                grid.set_subgrid(order, bin_, lumi, subgrid._raw)
+
+    # set the correct observables
+    normalizations = [1.0] * bins
+    remapper = pineappl.bin.BinRemapper(normalizations, limits)
+    # TODO: move _raw in the 'pineappl' python package
+    grid.set_remapper(remapper._raw)
+
+    # set the initial state PDF ids for the grid
+    grid.set_key_value("initial_state_1", "2212")
+    grid.set_key_value("initial_state_2", str(lepton_pid))
+
+    # TODO: find a way to open file in python
+    # with open(output_pineappl, "wb") as f:
+    grid.write(output_pineappl)
+
+    print(f"\nI wrote the file '{pathlib.Path(output_pineappl).absolute()}'")
 
 
 if __name__ == "__main__":

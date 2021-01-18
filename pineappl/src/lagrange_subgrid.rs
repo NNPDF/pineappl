@@ -328,7 +328,7 @@ impl Subgrid for LagrangeSubgridV1 {
 }
 
 /// Subgrid which uses Lagrange-interpolation.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct LagrangeSubgridV2 {
     grid: Option<Array3<f64>>,
     ntau: usize,

@@ -1,10 +1,12 @@
 use pineappl::lagrange_subgrid::LagrangeSubgridV2;
+use pineappl::subgrid::Subgrid;
 
 use super::subgrid::{PyExtraSubgridParams, PySubgridParams};
 
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct PyLagrangeSubgridV2 {
     pub lagrange_subgrid: LagrangeSubgridV2,
@@ -27,5 +29,10 @@ impl PyLagrangeSubgridV2 {
             &subgrid_params.subgrid_params,
             &extra_params.extra_subgrid_params,
         ))
+    }
+
+    fn write_q2_slice(&mut self, q2_slice: usize, grid: Vec<f64>) {
+        self.lagrange_subgrid
+            .write_q2_slice(q2_slice, grid.as_slice());
     }
 }

@@ -6,7 +6,7 @@ class PyWrapper:
         return self._raw
 
     def __getattr__(self, name):
-        if name[:3] == "set":
+        if name[0] != "_":
             return self._raw.__getattribute__(name)
         else:
             raise AttributeError
