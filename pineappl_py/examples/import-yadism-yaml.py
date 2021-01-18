@@ -10,7 +10,6 @@ import pineappl
 def make_pineappl(input_yaml, output_pineappl):
     with open(input_yaml) as f:
         yad_out = yaml.safe_load(f)
-    # print(yad_out)
 
     # extract output objects
     interpolation_is_log = yad_out["interpolation_is_log"]
@@ -67,14 +66,12 @@ def make_pineappl(input_yaml, output_pineappl):
             if any(np.array(values) != 0):
                 subgrid = pineappl.lagrange_subgrid.LagrangeSubgridV2(params, extra)
                 subgrid.write_q2_slice(0, values)
-                # TODO: move _raw in the 'pineappl' python package
-                grid.set_subgrid(order, bin_, lumi, subgrid._raw)
+                grid.set_subgrid(order, bin_, lumi, subgrid)
 
     # set the correct observables
     normalizations = [1.0] * bins
     remapper = pineappl.bin.BinRemapper(normalizations, limits)
-    # TODO: move _raw in the 'pineappl' python package
-    grid.set_remapper(remapper._raw)
+    grid.set_remapper(remapper)
 
     # set the initial state PDF ids for the grid
     grid.set_key_value("initial_state_1", "2212")

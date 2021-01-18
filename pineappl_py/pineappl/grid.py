@@ -18,3 +18,9 @@ class Grid(PyWrapper):
         lumi = [l.raw for l in lumi]
         orders = [o.raw for o in orders]
         self._raw = PyGrid(lumi, orders, bin_limits, subgrid_params.raw)
+
+    def set_subgrid(self, order, bin_, lumi, subgrid):
+        self.raw.set_subgrid(order, bin_, lumi, subgrid.raw)
+
+    def set_remapper(self, remapper):
+        self.raw.set_remapper(remapper.raw)
