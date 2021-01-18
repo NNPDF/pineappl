@@ -50,6 +50,25 @@ impl PySubgridParams {
     pub fn set_x_min(&mut self, x_min: f64) {
         self.subgrid_params.set_x_min(x_min);
     }
+    pub fn set_x_order(&mut self, x_order: usize) {
+        self.subgrid_params.set_x_order(x_order);
+    }
+
+    pub fn set_q2_bins(&mut self, q2_bins: usize) {
+        self.subgrid_params.set_q2_bins(q2_bins);
+    }
+
+    pub fn set_q2_max(&mut self, q2_max: f64) {
+        self.subgrid_params.set_q2_max(q2_max);
+    }
+
+    pub fn set_q2_min(&mut self, q2_min: f64) {
+        self.subgrid_params.set_q2_min(q2_min);
+    }
+
+    pub fn set_q2_order(&mut self, q2_order: usize) {
+        self.subgrid_params.set_q2_order(q2_order);
+    }
 }
 
 #[pyclass]
@@ -73,5 +92,25 @@ impl PyExtraSubgridParams {
         let extra_subgrid_params = ExtraSubgridParams::default();
 
         Self::new(extra_subgrid_params)
+    }
+
+    pub fn set_reweight2(&mut self, reweight2: bool) {
+        self.extra_subgrid_params.set_reweight2(reweight2);
+    }
+
+    pub fn set_x2_bins(&mut self, x_bins: usize) {
+        self.extra_subgrid_params.set_x2_bins(x_bins);
+    }
+
+    pub fn set_x2_max(&mut self, x_max: f64) {
+        self.extra_subgrid_params.set_x2_max(x_max);
+    }
+
+    pub fn set_x2_min(&mut self, x_min: f64) {
+        self.extra_subgrid_params.set_x2_min(x_min);
+    }
+
+    pub fn set_x2_order(&mut self, x_order: usize) {
+        self.extra_subgrid_params.set_x2_order(x_order);
     }
 }

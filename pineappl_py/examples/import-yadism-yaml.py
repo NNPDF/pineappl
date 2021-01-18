@@ -38,6 +38,25 @@ def make_pineappl(input_yaml, output_pineappl):
     extra.set_x2_min(1.0)
     extra.set_x2_order(0)
 
+    grid = pineappl.grid.Grid(
+        lumi, orders, bin_limits, pineappl.subgrid.SubgridParams()
+    )
+    limits = []
+
+    for bin_, obs in enumerate(yad_out["F2total"]):
+        q2 = obs["Q2"]
+        x = obs["x"]
+
+        limits.append((q2, q2))
+        limits.append((x, x))
+
+        params.set_q2_bins(1)
+        params.set_q2_max(q2)
+        params.set_q2_min(q2)
+        params.set_q2_order(0)
+
+        order = 0
+
     print("\nI'm doing something")
 
 
