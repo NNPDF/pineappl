@@ -823,16 +823,20 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        assert!(!transpose);
-
         if let SubgridEnum::LagrangeSparseSubgridV1(other_grid) = other {
-            if self.array.is_empty() {
+            if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
                 // TODO: we need much more checks here if there subgrids are compatible at all
 
-                for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                    self.array[[i, j, k]] += value;
+                if transpose {
+                    for ((i, k, j), value) in other_grid.array.indexed_iter() {
+                        self.array[[i, j, k]] += value;
+                    }
+                } else {
+                    for ((i, j, k), value) in other_grid.array.indexed_iter() {
+                        self.array[[i, j, k]] += value;
+                    }
                 }
             }
         } else {
