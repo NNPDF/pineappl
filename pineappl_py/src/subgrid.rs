@@ -39,6 +39,10 @@ impl PySubgridParams {
         Self::new(subgrid_params)
     }
 
+    pub fn set_reweight(&mut self, reweight: bool) {
+        self.subgrid_params.set_reweight(reweight);
+    }
+
     pub fn set_x_bins(&mut self, x_bins: usize) {
         self.subgrid_params.set_x_bins(x_bins);
     }

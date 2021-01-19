@@ -27,6 +27,7 @@ def make_pineappl(input_yaml, output_pineappl):
     bin_limits = list(map(float, range(0, bins + 1)))
     # subgrid params
     params = pineappl.subgrid.SubgridParams()
+    params.set_reweight(False)
     params.set_x_bins(len(interpolation_xgrid))
     params.set_x_max(interpolation_xgrid[-1])
     params.set_x_min(interpolation_xgrid[0])
