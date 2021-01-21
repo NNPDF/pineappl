@@ -290,7 +290,7 @@ impl Grid {
         let mut x1_grid = self.subgrids[[0, 0, 0]].x1_grid();
         let mut x2_grid = self.subgrids[[0, 0, 0]].x2_grid();
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
-        let two_caches = ptr::eq(&xfx1, &xfx2);
+        let two_caches = !ptr::eq(&xfx1, &xfx2);
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
         xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
