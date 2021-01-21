@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
+use std::ptr;
 use thiserror::Error;
 
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
@@ -280,7 +281,8 @@ impl Grid {
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_info().normalizations();
 
-        let pdf_cache = RefCell::new(FxHashMap::default());
+        let pdf_cache1 = RefCell::new(FxHashMap::default());
+        let pdf_cache2 = RefCell::new(FxHashMap::default());
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
@@ -288,6 +290,7 @@ impl Grid {
         let mut x1_grid = self.subgrids[[0, 0, 0]].x1_grid();
         let mut x2_grid = self.subgrids[[0, 0, 0]].x2_grid();
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+        let two_caches = ptr::eq(&xfx1, &xfx2);
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
         xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
@@ -307,7 +310,8 @@ impl Grid {
         {
             // whenever the value `xif` changes we can clear the PDF cache
             if xif != last_xif {
-                pdf_cache.borrow_mut().clear();
+                pdf_cache1.borrow_mut().clear();
+                pdf_cache2.borrow_mut().clear();
                 last_xif = xif;
             }
 
@@ -343,7 +347,8 @@ impl Grid {
                         q2_grid = new_q2_grid;
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
-                        pdf_cache.borrow_mut().clear();
+                        pdf_cache1.borrow_mut().clear();
+                        pdf_cache2.borrow_mut().clear();
                     }
 
                     subgrid.convolute(
@@ -351,7 +356,8 @@ impl Grid {
                         &x2_grid,
                         &q2_grid,
                         Left(&|ix1, ix2, iq2| {
-                            let mut pdf_cache = pdf_cache.borrow_mut();
+                            let mut pdf_cache1 = pdf_cache1.borrow_mut();
+                            let mut pdf_cache2 = pdf_cache2.borrow_mut();
                             let x1 = x1_grid[ix1];
                             let x2 = x2_grid[ix2];
                             let q2 = q2_grid[iq2];
@@ -360,12 +366,18 @@ impl Grid {
                             let mut lumi = 0.0;
 
                             for entry in lumi_entry.entry() {
-                                let xfx1 = *pdf_cache
+                                let xfx1 = *pdf_cache1
                                     .entry((entry.0, ix1, iq2))
                                     .or_insert_with(|| xfx1(entry.0, x1, q2f));
-                                let xfx2 = *pdf_cache
-                                    .entry((entry.1, ix2, iq2))
-                                    .or_insert_with(|| xfx2(entry.1, x2, q2f));
+                                let xfx2 = if two_caches {
+                                    *pdf_cache2
+                                        .entry((entry.1, ix2, iq2))
+                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                } else {
+                                    *pdf_cache1
+                                        .entry((entry.1, ix2, iq2))
+                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                };
                                 lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                             }
 
