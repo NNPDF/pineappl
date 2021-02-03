@@ -803,6 +803,17 @@ impl Grid {
         }
     }
 
+    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    #[must_use]
+    pub fn key_values_mut(&mut self) -> &mut HashMap<String, String> {
+        self.more_members.upgrade();
+
+        match &mut self.more_members {
+            MoreMembers::V1(_) => unreachable!(),
+            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
+        }
+    }
+
     /// Sets a specific key-value pair in this grid.
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.more_members.upgrade();

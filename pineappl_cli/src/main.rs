@@ -192,6 +192,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +multiple =>
                 (@arg entry: --entry +allow_hyphen_values number_of_values(2)
                     value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
+                (@arg delete: --delete value_name("key") +multiple
+                    "Deletes an internal key-value pair")
             )
         )
     )
@@ -325,8 +327,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let output = matches.value_of("output").unwrap();
 
         let entries = matches.values_of("entry").map_or(vec![], |s| s.collect());
+        let deletes = matches.values_of("delete").map_or(vec![], |d| d.collect());
 
-        set::subcommand(input, output, entries)?;
+        set::subcommand(input, output, entries, deletes)?;
     }
 
     Ok(())
