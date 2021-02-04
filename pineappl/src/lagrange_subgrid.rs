@@ -374,6 +374,7 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
+    static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
@@ -398,6 +399,7 @@ impl LagrangeSubgridV2 {
             y2max: fy(extra_params.x2_min()),
             taumin: ftau(subgrid_params.q2_min()),
             taumax: ftau(subgrid_params.q2_max()),
+            static_q2: 0.0,
         }
     }
 
@@ -490,6 +492,12 @@ impl Subgrid for LagrangeSubgridV2 {
         let y1 = fy(ntuple.x1);
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
+
+        if ntuple.q2 == 0.0 {
+            self.static_q2 = ntuple.q2;
+        } else if self.static_q2 != ntuple.q2 {
+            self.static_q2 = -1.0;
+        }
 
         if (y2 < self.y2min)
             || (y2 > self.y2max)
