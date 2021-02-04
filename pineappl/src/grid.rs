@@ -222,19 +222,16 @@ impl Grid {
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
         subgrid_params: SubgridParams,
+        extra: ExtraSubgridParams,
         subgrid_type: &str,
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
-            "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
-            "LagrangeSubgridV2" => Box::new(|| {
-                let mut extra = ExtraSubgridParams::default();
-                extra.set_reweight2(subgrid_params.reweight());
-                extra.set_x2_bins(subgrid_params.x_bins());
-                extra.set_x2_max(subgrid_params.x_max());
-                extra.set_x2_min(subgrid_params.x_min());
-                extra.set_x2_order(subgrid_params.x_order());
-                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
-            }),
+            "LagrangeSubgrid" | "LagrangeSubgridV1" => {
+                Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into())
+            }
+            "LagrangeSubgridV2" => {
+                Box::new(|| LagrangeSubgridV2::new(&subgrid_params, &extra).into())
+            }
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())

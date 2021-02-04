@@ -476,7 +476,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         })
         .collect();
 
-    let (subgrid_type, subgrid_params, _) = grid_params(key_vals);
+    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
 
     let mut grid = Box::new(
         Grid::with_subgrid_type(
@@ -484,6 +484,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             orders,
             slice::from_raw_parts(bin_limits, bins + 1).to_vec(),
             subgrid_params,
+            extra,
             &subgrid_type,
         )
         .unwrap(),
