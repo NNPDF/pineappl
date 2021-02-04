@@ -5,9 +5,9 @@
 
 use itertools::izip;
 use pineappl::grid::{Grid, Ntuple, Order};
-use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1};
+use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use pineappl::lumi::LumiEntry;
-use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
@@ -15,6 +15,96 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::os::raw::{c_char, c_void};
 use std::slice;
+
+unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraSubgridParams) {
+    let mut subgrid_type = "LagrangeSubgrid".to_string();
+    let mut subgrid_params = SubgridParams::default();
+    let mut extra = ExtraSubgridParams::default();
+
+    if !key_vals.is_null() {
+        let keyval = &*key_vals;
+
+        if let Some(value) = keyval.ints.get("q2_bins") {
+            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.doubles.get("q2_max") {
+            subgrid_params.set_q2_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("q2_min") {
+            subgrid_params.set_q2_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("q2_order") {
+            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.bools.get("reweight") {
+            subgrid_params.set_reweight(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x_bins") {
+            let value = usize::try_from(*value).unwrap();
+            subgrid_params.set_x_bins(value);
+            extra.set_x2_bins(value);
+        }
+
+        if let Some(value) = keyval.doubles.get("x_max") {
+            subgrid_params.set_x_max(*value);
+            extra.set_x2_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("x_min") {
+            subgrid_params.set_x_min(*value);
+            extra.set_x2_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x_order") {
+            let value = usize::try_from(*value).unwrap();
+            subgrid_params.set_x_order(value);
+            extra.set_x2_order(value);
+        }
+
+        if let Some(value) = keyval.ints.get("x1_bins") {
+            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.doubles.get("x1_max") {
+            subgrid_params.set_x_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("x1_min") {
+            subgrid_params.set_x_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x1_order") {
+            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.ints.get("x2_bins") {
+            extra.set_x2_bins(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.doubles.get("x2_max") {
+            extra.set_x2_max(*value);
+        }
+
+        if let Some(value) = keyval.doubles.get("x2_min") {
+            extra.set_x2_min(*value);
+        }
+
+        if let Some(value) = keyval.ints.get("x2_order") {
+            extra.set_x2_order(usize::try_from(*value).unwrap());
+        }
+
+        if let Some(value) = keyval.strings.get("subgrid_type") {
+            subgrid_type = value.to_str().unwrap().to_string();
+        }
+    }
+
+    (subgrid_type, subgrid_params, extra)
+}
 
 /// Type for defining a luminosity function.
 #[derive(Default)]
@@ -386,52 +476,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         })
         .collect();
 
-    let mut subgrid_params = SubgridParams::default();
-    let mut subgrid_type = "LagrangeSubgrid";
-
-    if !key_vals.is_null() {
-        let keyval = &*key_vals;
-
-        if let Some(value) = keyval.ints.get("q2_bins") {
-            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.doubles.get("q2_max") {
-            subgrid_params.set_q2_max(*value);
-        }
-
-        if let Some(value) = keyval.doubles.get("q2_min") {
-            subgrid_params.set_q2_min(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("q2_order") {
-            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.bools.get("reweight") {
-            subgrid_params.set_reweight(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("x_bins") {
-            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.doubles.get("x_max") {
-            subgrid_params.set_x_max(*value);
-        }
-
-        if let Some(value) = keyval.doubles.get("x_min") {
-            subgrid_params.set_x_min(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("x_order") {
-            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.strings.get("subgrid_type") {
-            subgrid_type = value.to_str().unwrap();
-        }
-    }
+    let (subgrid_type, subgrid_params, _) = grid_params(key_vals);
 
     let mut grid = Box::new(
         Grid::with_subgrid_type(
@@ -439,7 +484,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             orders,
             slice::from_raw_parts(bin_limits, bins + 1).to_vec(),
             subgrid_params,
-            subgrid_type,
+            &subgrid_type,
         )
         .unwrap(),
     );
@@ -733,55 +778,15 @@ pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usi
 /// The parameter `key_vals` must be either the null pointer, or point to a valid `KeyVal` object.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<SubGrid> {
-    let mut subgrid_params = SubgridParams::default();
-    let mut subgrid_type = "LagrangeSubgrid";
+    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
 
-    if !key_vals.is_null() {
-        let keyval = &*key_vals;
-
-        if let Some(value) = keyval.ints.get("q2_bins") {
-            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+    match subgrid_type.as_str() {
+        "LagrangeSubgrid" | "LagrangeSubgridV1" => {
+            Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into()))
         }
-
-        if let Some(value) = keyval.doubles.get("q2_max") {
-            subgrid_params.set_q2_max(*value);
-        }
-
-        if let Some(value) = keyval.doubles.get("q2_min") {
-            subgrid_params.set_q2_min(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("q2_order") {
-            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.bools.get("reweight") {
-            subgrid_params.set_reweight(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("x_bins") {
-            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.doubles.get("x_max") {
-            subgrid_params.set_x_max(*value);
-        }
-
-        if let Some(value) = keyval.doubles.get("x_min") {
-            subgrid_params.set_x_min(*value);
-        }
-
-        if let Some(value) = keyval.ints.get("x_order") {
-            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.strings.get("subgrid_type") {
-            subgrid_type = value.to_str().unwrap();
-        }
-    }
-
-    match subgrid_type {
-        "LagrangeSubgrid" => Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into())),
+        "LagrangeSubgridV2" => Box::new(SubGrid(
+            LagrangeSubgridV2::new(&subgrid_params, &extra).into(),
+        )),
         "LagrangeSparseSubgrid" => Box::new(SubGrid(
             LagrangeSparseSubgridV1::new(&subgrid_params).into(),
         )),
