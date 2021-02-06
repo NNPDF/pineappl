@@ -3,7 +3,7 @@ use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi_entry;
-use pineappl::subgrid::SubgridParams;
+use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
@@ -87,6 +87,7 @@ fn fill_drell_yan_lo_grid(
     let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
     let mut subgrid_params = SubgridParams::default();
+    let mut extra = ExtraSubgridParams::default();
 
     subgrid_params.set_q2_bins(30);
     subgrid_params.set_q2_max(1e6);
@@ -97,9 +98,20 @@ fn fill_drell_yan_lo_grid(
     subgrid_params.set_x_max(1.0);
     subgrid_params.set_x_min(2e-7);
     subgrid_params.set_x_order(3);
+    extra.set_x2_bins(50);
+    extra.set_x2_max(1.0);
+    extra.set_x2_min(2e-7);
+    extra.set_x2_order(3);
 
     // create the PineAPPL grid
-    let mut grid = Grid::with_subgrid_type(lumi, orders, bin_limits, subgrid_params, subgrid_type)?;
+    let mut grid = Grid::with_subgrid_type(
+        lumi,
+        orders,
+        bin_limits,
+        subgrid_params,
+        extra,
+        subgrid_type,
+    )?;
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;

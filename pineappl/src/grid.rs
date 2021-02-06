@@ -860,6 +860,7 @@ mod tests {
             vec![],
             vec![],
             SubgridParams::default(),
+            ExtraSubgridParams::default(),
             &subgrid_type,
         );
 
