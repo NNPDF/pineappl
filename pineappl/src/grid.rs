@@ -4,6 +4,7 @@ use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
@@ -711,10 +712,17 @@ impl Grid {
                     let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
                     mem::swap(subgrid, &mut new_subgrid);
                 }
-                SubgridEnum::LagrangeSparseSubgridV1(_) => {
+                SubgridEnum::LagrangeSubgridV2(grid) => {
+                    let mut new_subgrid = ReadOnlySparseSubgridV1::from(&*grid).into();
+                    mem::swap(subgrid, &mut new_subgrid);
+                }
+                SubgridEnum::LagrangeSparseSubgridV1(_)
+                | SubgridEnum::ReadOnlySparseSubgridV1(_) => {
                     // nothing to optimize here
                 }
-                SubgridEnum::NtupleSubgridV1(_) | SubgridEnum::LagrangeSubgridV2(_) => todo!(),
+                SubgridEnum::NtupleSubgridV1(_) => {
+                    todo!()
+                }
             }
         }
     }

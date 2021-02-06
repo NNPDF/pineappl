@@ -10,7 +10,7 @@ use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::mem;
 
-fn weightfun(x: f64) -> f64 {
+pub(crate) fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
@@ -357,14 +357,14 @@ impl Subgrid for LagrangeSubgridV1 {
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
-    grid: Option<Array3<f64>>,
-    ntau: usize,
-    ny1: usize,
-    ny2: usize,
+    pub(crate) grid: Option<Array3<f64>>,
+    pub(crate) ntau: usize,
+    pub(crate) ny1: usize,
+    pub(crate) ny2: usize,
     y1order: usize,
     y2order: usize,
     tauorder: usize,
-    itaumin: usize,
+    pub(crate) itaumin: usize,
     itaumax: usize,
     reweight1: bool,
     reweight2: bool,
@@ -374,7 +374,7 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
-    static_q2: f64,
+    pub(crate) static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
