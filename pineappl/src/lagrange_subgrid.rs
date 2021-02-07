@@ -606,8 +606,6 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        assert!(!transpose);
-
         if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
@@ -623,13 +621,25 @@ impl Subgrid for LagrangeSubgridV2 {
 
                     let self_grid = self.grid.as_mut().unwrap();
 
-                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                        self_grid[[i + offset, j, k]] += value;
+                    if transpose {
+                        for ((i, k, j), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
                     }
                 } else {
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
+
+                    if transpose {
+                        if let Some(grid) = &mut self.grid {
+                            grid.swap_axes(1, 2);
+                        }
+                    }
                 }
             }
         } else {
