@@ -704,7 +704,18 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn symmetrize(&mut self) {
-        todo!();
+        if let Some(grid) = self.grid.as_mut() {
+            let (i_size, j_size, k_size) = grid.dim();
+
+            for i in 0..i_size {
+                for j in 0..j_size {
+                    for k in j + 1..k_size {
+                        grid[[i, j, k]] += grid[[i, k, j]];
+                        grid[[i, k, j]] = 0.0;
+                    }
+                }
+            }
+        }
     }
 
     fn clone_empty(&self) -> SubgridEnum {
