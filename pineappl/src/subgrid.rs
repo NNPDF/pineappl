@@ -83,6 +83,9 @@ pub trait Subgrid {
     /// Assumes that the initial states for this grid are the same and uses this to optimize the
     /// grid by getting rid of almost half of the entries.
     fn symmetrize(&mut self);
+
+    /// Returns an empty copy of the current subgrid.
+    fn clone_empty(&self) -> SubgridEnum;
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.

@@ -352,6 +352,23 @@ impl Subgrid for LagrangeSubgridV1 {
             }
         }
     }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            grid: None,
+            ntau: self.ntau,
+            ny: self.ny,
+            yorder: self.yorder,
+            tauorder: self.tauorder,
+            itaumin: 0,
+            itaumax: 0,
+            reweight: self.reweight,
+            ymin: self.ymin,
+            ymax: self.ymax,
+            taumin: self.taumin,
+            taumax: self.taumax,
+        }.into()
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation.
@@ -679,6 +696,29 @@ impl Subgrid for LagrangeSubgridV2 {
     fn symmetrize(&mut self) {
         todo!();
     }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            grid: None,
+            ntau: self.ntau,
+            ny1: self.ny1,
+            ny2: self.ny2,
+            y1order: self.y1order,
+            y2order: self.y2order,
+            tauorder: self.tauorder,
+            itaumin: 0,
+            itaumax: 0,
+            reweight1: self.reweight1,
+            reweight2: self.reweight2,
+            y1min: self.y1min,
+            y1max: self.y1max,
+            y2min: self.y2min,
+            y2max: self.y2max,
+            taumin: self.taumin,
+            taumax: self.taumax,
+            static_q2: 0.0,
+        }.into()
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -913,6 +953,21 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
 
         mem::swap(&mut self.array, &mut new_array);
+    }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            array: SparseArray3::new(self.ntau, self.ny, self.ny),
+            ntau: self.ntau,
+            ny: self.ny,
+            yorder: self.yorder,
+            tauorder: self.tauorder,
+            reweight: self.reweight,
+            ymin: self.ymin,
+            ymax: self.ymax,
+            taumin: self.taumin,
+            taumax: self.taumax,
+        }.into()
     }
 }
 

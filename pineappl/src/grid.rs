@@ -599,7 +599,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || LagrangeSubgridV1::new(&self.subgrid_params).into(),
+            || self.subgrids[[0, 0, 0]].clone_empty()
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {

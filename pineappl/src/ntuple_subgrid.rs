@@ -84,6 +84,10 @@ impl Subgrid for NtupleSubgridV1 {
     }
 
     fn symmetrize(&mut self) {}
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self::new().into()
+    }
 }
 
 #[cfg(test)]
