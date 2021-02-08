@@ -367,7 +367,8 @@ impl Subgrid for LagrangeSubgridV1 {
             ymax: self.ymax,
             taumin: self.taumin,
             taumax: self.taumax,
-        }.into()
+        }
+        .into()
     }
 }
 
@@ -738,7 +739,8 @@ impl Subgrid for LagrangeSubgridV2 {
             taumin: self.taumin,
             taumax: self.taumax,
             static_q2: 0.0,
-        }.into()
+        }
+        .into()
     }
 }
 
@@ -988,7 +990,8 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             ymax: self.ymax,
             taumin: self.taumin,
             taumax: self.taumax,
-        }.into()
+        }
+        .into()
     }
 }
 

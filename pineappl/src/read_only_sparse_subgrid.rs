@@ -187,17 +187,14 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
 
     fn clone_empty(&self) -> SubgridEnum {
         Self {
-            array: SparseArray3::new(
-                self.q2_grid.len(),
-                self.x1_grid.len(),
-                self.x2_grid.len(),
-            ),
+            array: SparseArray3::new(self.q2_grid.len(), self.x1_grid.len(), self.x2_grid.len()),
             q2_grid: self.q2_grid.clone(),
             x1_grid: self.x1_grid.clone(),
             x2_grid: self.x2_grid.clone(),
-            reweight_x1 : self.reweight_x1.clone(),
-            reweight_x2 : self.reweight_x2.clone(),
-        }.into()
+            reweight_x1: self.reweight_x1.clone(),
+            reweight_x2: self.reweight_x2.clone(),
+        }
+        .into()
     }
 }
 
