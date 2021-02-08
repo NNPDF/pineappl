@@ -20,17 +20,17 @@ float-cmp = "0.8"
 itertools = "0.9"
 lz-fear = "0.1"
 ndarray = { features = ["serde"], version = "0.13.1" }
+pyo3 = { features = ["extension-module"], optional = true, version = "0.12.4" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0" }
 thiserror = "1.0"
 
 [lib]
 name = "pineappl"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 
-[dependencies.pyo3]
-version = "0.12.4"
-features = ["extension-module"]
+[features]
+python = ["pyo3"]
 
 [dev-dependencies]
 lhapdf = "0.1.8"

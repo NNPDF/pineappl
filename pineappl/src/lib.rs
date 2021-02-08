@@ -4,8 +4,6 @@
 
 //! `PineAPPL` is not an extension of `APPLgrid`.
 
-use pyo3::prelude::*;
-
 mod convert;
 
 pub mod bin;
@@ -18,6 +16,10 @@ pub mod subgrid;
 
 /// A Python module implemented in Rust.
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bin::BinRemapper>()?;
