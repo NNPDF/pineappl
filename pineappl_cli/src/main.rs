@@ -12,6 +12,7 @@ mod orders;
 mod pdf_uncertainty;
 mod remap;
 mod set;
+mod subgrids;
 
 use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
@@ -196,6 +197,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     "Deletes an internal key-value pair")
             )
         )
+        (@subcommand subgrids =>
+            (about: "Print information about the internal subgrid types")
+            (@arg input: +required "Path to the input grid")
+        )
     )
     .get_matches();
 
@@ -330,6 +335,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let deletes = matches.values_of("delete").map_or(vec![], |d| d.collect());
 
         set::subcommand(input, output, entries, deletes)?;
+    } else if let Some(matches) = matches.subcommand_matches("subgrids") {
+        let input = matches.value_of("input").unwrap();
+
+        subgrids::subcommand(input)?;
     }
 
     Ok(())
