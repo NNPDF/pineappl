@@ -647,7 +647,7 @@ impl Grid {
 
     /// Returns the subgrid with the specified indices `order`, `bin`, and `lumi`.
     #[must_use]
-    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
+    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &SubgridEnum {
         &self.subgrids[[order, bin, lumi]]
     }
 
