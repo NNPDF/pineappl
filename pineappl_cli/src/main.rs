@@ -193,6 +193,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +multiple =>
                 (@arg entry: --entry +allow_hyphen_values number_of_values(2)
                     value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
+                (@arg entry_from_file: --entry_from_file number_of_values(2)
+                    value_names(&["key", "file"]) +multiple
+                    "Sets an internal key-value pair, with value being read from a file")
                 (@arg delete: --delete value_name("key") +multiple
                     "Deletes an internal key-value pair")
             )
@@ -332,9 +335,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let output = matches.value_of("output").unwrap();
 
         let entries = matches.values_of("entry").map_or(vec![], |s| s.collect());
+        let entries_from_file = matches
+            .values_of("entry_from_file")
+            .map_or(vec![], |s| s.collect());
         let deletes = matches.values_of("delete").map_or(vec![], |d| d.collect());
 
-        set::subcommand(input, output, entries, deletes)?;
+        set::subcommand(input, output, entries, entries_from_file, deletes)?;
     } else if let Some(matches) = matches.subcommand_matches("subgrids") {
         let input = matches.value_of("input").unwrap();
 
