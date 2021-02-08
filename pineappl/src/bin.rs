@@ -2,6 +2,7 @@
 
 use super::convert::{f64_from_usize, usize_from_f64};
 use float_cmp::approx_eq;
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
@@ -47,6 +48,7 @@ pub enum BinRemapperNewError {
 }
 
 /// Structure for remapping bin limits.
+#[pyclass]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BinRemapper {
     normalizations: Vec<f64>,
@@ -148,6 +150,7 @@ impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
     }
 }
 
+#[pymethods]
 impl BinRemapper {
     /// Create a new `BinRemapper` object with the specified number of bins and dimensions and
     /// limits.
@@ -156,6 +159,7 @@ impl BinRemapper {
     ///
     /// Returns an error if the length of `limits` is not a multiple of the length of
     /// `normalizations`.
+    #[new]
     pub fn new(
         normalizations: Vec<f64>,
         limits: Vec<(f64, f64)>,

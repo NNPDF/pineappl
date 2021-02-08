@@ -24,6 +24,14 @@ rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0" }
 thiserror = "1.0"
 
+[lib]
+name = "pineappl"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.12.4"
+features = ["extension-module"]
+
 [dev-dependencies]
 lhapdf = "0.1.8"
 rand = { default-features = false, version = "0.7" }

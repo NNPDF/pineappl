@@ -1,11 +1,8 @@
 use pineappl::bin::BinRemapper;
 
-use pyo3::prelude::*;
 //use pyo3::types::{PyList, PyTuple};
 //use pyo3::{exceptions::PyRuntimeError, Python};
 
-#[pyclass]
-#[derive(Clone)]
 #[repr(transparent)]
 pub struct PyBinRemapper {
     pub bin_remapper: BinRemapper,

@@ -1,10 +1,5 @@
 [workspace]
-members = [
-    "pineappl",
-    "pineappl_capi",
-    "pineappl_py",
-    "pineappl_cli",
-]
+members = ["pineappl", "pineappl_capi", "pineappl_cli"]
 
 [profile.release]
 lto = true
