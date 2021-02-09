@@ -175,6 +175,7 @@ pub enum GridSetBinRemapperError {
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
+#[cfg_attr(feature = "python", pyclass)]
 #[derive(Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
@@ -185,8 +186,10 @@ pub struct Grid {
     more_members: MoreMembers,
 }
 
+#[cfg_attr(feature = "python", pymethods)]
 impl Grid {
     /// Constructor.
+    #[cfg_attr(feature = "python", new)]
     #[must_use]
     pub fn new(
         lumi: Vec<LumiEntry>,
