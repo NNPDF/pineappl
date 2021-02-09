@@ -335,12 +335,14 @@ impl Grid {
                     let new_q2_grid = subgrid.q2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
+                    let q2_grid_changed = new_q2_grid != q2_grid;
 
-                    if (new_q2_grid != q2_grid)
-                        || (new_x1_grid != x1_grid)
-                        || (new_x2_grid != x2_grid)
-                    {
+                    if q2_grid_changed {
                         q2_grid = new_q2_grid;
+                        alphas_cache.borrow_mut().clear();
+                    }
+
+                    if q2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
                         pdf_cache.borrow_mut().clear();
