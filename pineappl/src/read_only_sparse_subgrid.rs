@@ -204,9 +204,7 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
             || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
             // in the following case we should optimize when ny2 > ny1
             |grid| {
-                if subgrid.static_q2 == -1.0 {
-                    SparseArray3::from_ndarray(grid, subgrid.itaumin, subgrid.ntau)
-                } else {
+                if subgrid.static_q2 > 0.0 {
                     // in this case we've detected a static scale for this bin and we can collapse
                     // the Q^2 axis into a single bin
                     SparseArray3::from_ndarray(
@@ -217,13 +215,15 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
                         0,
                         1,
                     )
+                } else {
+                    SparseArray3::from_ndarray(grid, subgrid.itaumin, subgrid.ntau)
                 }
             },
         );
-        let q2_grid = if subgrid.static_q2 == -1.0 {
-            subgrid.q2_grid()
-        } else {
+        let q2_grid = if subgrid.static_q2 > 0.0 {
             vec![subgrid.static_q2]
+        } else {
+            subgrid.q2_grid()
         };
         let x1_grid = subgrid.x1_grid();
         let x2_grid = subgrid.x2_grid();

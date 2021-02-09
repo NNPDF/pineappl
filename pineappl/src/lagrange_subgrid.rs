@@ -513,7 +513,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
         if self.static_q2 == 0.0 {
             self.static_q2 = ntuple.q2;
-        } else if (self.static_q2 != 1.0) && (self.static_q2 != ntuple.q2) {
+        } else if (self.static_q2 != -1.0) && (self.static_q2 != ntuple.q2) {
             self.static_q2 = -1.0;
         }
 
