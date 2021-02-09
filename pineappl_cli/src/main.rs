@@ -185,6 +185,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg remapping: +required "Remapping string")
             (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
                 "Normalization factor in addition to the given bin widths")
+            (@arg ignore_obs_norm: --ignore_obs_norm +use_delimiter
+                "Ignore the given observables for differential normalization")
         )
         (@subcommand set =>
             (about: "Modifies the internal key-value storage")
@@ -328,8 +330,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let output = matches.value_of("output").unwrap();
         let remapping = matches.value_of("remapping").unwrap();
         let norm = matches.value_of("norm").unwrap().parse()?;
+        let ignore_obs_norm: Vec<_> = matches
+            .values_of("ignore_obs_norm")
+            .map_or(vec![], |values| values.map(str::parse::<usize>).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
-        remap::subcommand(input, output, remapping, norm)?;
+        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm)?;
     } else if let Some(matches) = matches.subcommand_matches("set") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();

@@ -10,6 +10,7 @@ pub fn subcommand(
     output: &str,
     remapping: &str,
     norm: f64,
+    ignore_obs_norm: &[usize],
 ) -> Result<(), Box<dyn Error>> {
     let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
     let remaps = remapping
@@ -39,7 +40,9 @@ pub fn subcommand(
             let right = remaps[d][indices[d] + 1];
 
             limits.push((left, right));
-            normalization *= right - left;
+            if !ignore_obs_norm.iter().any(|dim| *dim == (d + 1)) {
+                normalization *= right - left;
+            }
         }
         normalizations.push(norm * normalization);
     }
