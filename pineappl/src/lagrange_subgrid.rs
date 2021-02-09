@@ -620,6 +620,10 @@ impl Subgrid for LagrangeSubgridV2 {
                         self.increase_tau(new_itaumin, new_itaumax);
                     }
 
+                    if (other_grid.static_q2 == -1.0) || (self.static_q2 != other_grid.static_q2) {
+                        self.static_q2 = -1.0;
+                    }
+
                     let self_grid = self.grid.as_mut().unwrap();
 
                     if transpose {
@@ -635,6 +639,7 @@ impl Subgrid for LagrangeSubgridV2 {
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
+                    self.static_q2 = other_grid.static_q2;
 
                     if transpose {
                         if let Some(grid) = &mut self.grid {
