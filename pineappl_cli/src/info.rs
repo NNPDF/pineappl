@@ -56,6 +56,25 @@ pub fn subcommand_get(input: &str, key: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+pub fn subcommand_keys(input: &str) -> Result<(), Box<dyn Error>> {
+    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    grid.upgrade();
+
+    if let Some(key_values) = grid.key_values() {
+        let mut vector = key_values.iter().collect::<Vec<_>>();
+        vector.sort();
+
+        for (key, _) in &vector {
+            println!("{}", key);
+        }
+    } else {
+        unreachable!();
+    }
+
+    Ok(())
+}
+
 pub fn subcommand_show(input: &str) -> Result<(), Box<dyn Error>> {
     let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
 

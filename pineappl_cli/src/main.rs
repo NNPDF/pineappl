@@ -141,6 +141,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 (@arg qcd: --qcd "For each order print a list of the largest QCD order")
                 (@arg ew: --ew "For each order print a list of the largest EW order")
                 (@arg get: --get +takes_value value_name("key") "Gets an internal key-value pair")
+                (@arg keys: --keys "Show all keys stored in the grid")
                 (@arg show: --show "Shows all key-value pairs stored in the grid")
             )
         )
@@ -268,6 +269,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             )?;
         } else if matches.is_present("get") {
             info::subcommand_get(input, matches.value_of("get").unwrap())?;
+        } else if matches.is_present("keys") {
+            info::subcommand_keys(input)?;
         } else if matches.is_present("show") {
             info::subcommand_show(input)?;
         } else {
