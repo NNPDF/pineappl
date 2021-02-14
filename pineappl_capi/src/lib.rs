@@ -179,6 +179,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits:
 /// this function is not safe to call. The parameter `left` must point to an array that is as large
 /// as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this grid,
 /// nothing is written into `left`, the result is undefined.
+#[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
     grid: *const Grid,
     dimension: usize,
@@ -196,6 +197,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
 /// this function is not safe to call. The parameter `right` must point to an array that is as
 /// large as `grid` has bins. If `dimension` is larger or equal the number of dimensions for this
 /// grid, nothing is written into `right`, the result is undefined.
+#[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     grid: *const Grid,
     dimension: usize,
