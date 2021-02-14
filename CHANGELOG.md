@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed the default maximum value of Q from 1 TeV to 10 TeV and the number of
   grid points in Q^2 from 30 to 40
 - Removed `Grid::bin_limit` and replaced it with `Grid::bin_info`
+- in the C API the type `uintptr_t` has been changed to the more common
+  `size_t`
 
 ### Fixed
 
