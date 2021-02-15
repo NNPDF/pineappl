@@ -6,9 +6,9 @@ use std::io::{BufReader, BufWriter};
 pub fn subcommand(
     input: &str,
     output: &str,
-    entries: Vec<&str>,
-    entries_from_file: Vec<&str>,
-    deletes: Vec<&str>,
+    entries: &[&str],
+    entries_from_file: &[&str],
+    deletes: &[&str],
 ) -> Result<(), Box<dyn Error>> {
     let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
 
@@ -20,7 +20,7 @@ pub fn subcommand(
         grid.set_key_value(key_file[0], &fs::read_to_string(key_file[1])?);
     }
 
-    for delete in &deletes {
+    for delete in deletes {
         grid.key_values_mut().remove(*delete);
     }
 

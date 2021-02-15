@@ -344,13 +344,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
 
-        let entries = matches.values_of("entry").map_or(vec![], |s| s.collect());
-        let entries_from_file = matches
+        let entries: Vec<_> = matches.values_of("entry").map_or(vec![], Iterator::collect);
+        let entries_from_file: Vec<_> = matches
             .values_of("entry_from_file")
-            .map_or(vec![], |s| s.collect());
-        let deletes = matches.values_of("delete").map_or(vec![], |d| d.collect());
+            .map_or(vec![], Iterator::collect);
+        let deletes: Vec<_> = matches
+            .values_of("delete")
+            .map_or(vec![], Iterator::collect);
 
-        set::subcommand(input, output, entries, entries_from_file, deletes)?;
+        set::subcommand(input, output, &entries, &entries_from_file, &deletes)?;
     } else if let Some(matches) = matches.subcommand_matches("subgrids") {
         let input = matches.value_of("input").unwrap();
 

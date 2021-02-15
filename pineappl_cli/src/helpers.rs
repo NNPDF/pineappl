@@ -33,7 +33,7 @@ pub fn convolute(
     let pdf_pdg_id = lhapdf
         .set()
         .entry("Particle")
-        .unwrap_or("2212".to_string())
+        .unwrap_or_else(|| "2212".to_string())
         .parse::<i32>()
         .unwrap();
 
