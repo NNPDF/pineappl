@@ -333,7 +333,9 @@ impl Grid {
 
                 let lumi_entry = &self.lumi[k];
 
-                let mut value = if subgrid.is_empty() { 0.0 } else if use_cache {
+                let mut value = if subgrid.is_empty() {
+                    0.0
+                } else if use_cache {
                     let new_q2_grid = subgrid.q2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
@@ -722,9 +724,7 @@ impl Grid {
                 | SubgridEnum::ReadOnlySparseSubgridV1(_) => {
                     // nothing to optimize here
                 }
-                SubgridEnum::NtupleSubgridV1(_) => {
-                    todo!()
-                }
+                SubgridEnum::NtupleSubgridV1(_) => todo!(),
             }
         }
     }

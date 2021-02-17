@@ -63,7 +63,11 @@ pub fn subcommand(
     {
         let mut normalization = 1.0;
         for d in 0..dimensions {
-            let index = if remaps[d].len() == 1 { 0 } else { indices[d - 1] };
+            let index = if remaps[d].len() == 1 {
+                0
+            } else {
+                indices[d - 1]
+            };
 
             if remaps[d][index].len() <= (indices[d] + 1) {
                 buffer.clear();
