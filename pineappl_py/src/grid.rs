@@ -6,6 +6,7 @@ use super::lumi::PyLumiEntry;
 use super::subgrid::PySubgridParams;
 
 use std::fs::File;
+use std::io::BufReader;
 
 use pyo3::prelude::*;
 
@@ -75,6 +76,11 @@ impl PyGrid {
 
     pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
+    }
+
+    #[staticmethod]
+    pub fn read(path: &str) -> Self {
+        Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())
     }
 
     pub fn write(&self, path: &str) {

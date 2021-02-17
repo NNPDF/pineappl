@@ -14,13 +14,21 @@ class Order(PyWrapper):
 
 
 class Grid(PyWrapper):
-    def __init__(self, lumi, orders, bin_limits, subgrid_params):
+    def __init__(self, pygrid):
+        self._raw = pygrid
+
+    @classmethod
+    def create(cls, lumi, orders, bin_limits, subgrid_params):
         lumi = [l.raw for l in lumi]
         orders = [o.raw for o in orders]
-        self._raw = PyGrid(lumi, orders, bin_limits, subgrid_params.raw)
+        return cls(PyGrid(lumi, orders, bin_limits, subgrid_params.raw))
 
     def set_subgrid(self, order, bin_, lumi, subgrid):
         self.raw.set_subgrid(order, bin_, lumi, subgrid.raw)
 
     def set_remapper(self, remapper):
         self.raw.set_remapper(remapper.raw)
+
+    @classmethod
+    def read(cls, path):
+        return cls(PyGrid.read(path))
