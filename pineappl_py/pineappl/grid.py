@@ -7,6 +7,8 @@ except:
 
 from .utils import PyWrapper
 
+import numpy as np
+
 
 class Order(PyWrapper):
     def __init__(self, alphas, alpha, logxir, logxif):
@@ -22,6 +24,9 @@ class Grid(PyWrapper):
         lumi = [l.raw for l in lumi]
         orders = [o.raw for o in orders]
         return cls(PyGrid(lumi, orders, bin_limits, subgrid_params.raw))
+
+    def subgrid_q2s(self, order, bin_, lumi):
+        return np.array(self.raw.subgrid_q2s(order, bin_, lumi))
 
     def set_subgrid(self, order, bin_, lumi, subgrid):
         self.raw.set_subgrid(order, bin_, lumi, subgrid.raw)

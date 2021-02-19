@@ -1,7 +1,10 @@
 [package]
 name = "pineappl_py"
 version = "0.3.0"
-authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>", "Alessandro Candido <candido.ale@gmail.com>"]
+authors = [
+    "Christopher Schwan <handgranaten-herbert@posteo.de>",
+    "Alessandro Candido <candido.ale@gmail.com>"
+]
 edition = "2018"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/N3PDF/pineappl"
@@ -16,6 +19,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.3.0" }
+lhapdf = "0.1.8"
 itertools = "0.9"
 
 [dependencies.pyo3]
