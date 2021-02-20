@@ -8,6 +8,7 @@ use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
+use git_version::git_version;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
@@ -133,7 +134,10 @@ impl Default for Mmv2 {
         Self {
             remapper: None,
             key_value_db: [
-                ("version".to_owned(), env!("CARGO_PKG_VERSION").to_owned()),
+                (
+                    "pineappl_gitversion".to_owned(),
+                    git_version!(args = ["--always", "--dirty", "--long", "--tags"]).to_owned(),
+                ),
                 // by default we assume there are protons in the initial state
                 ("initial_state_1".to_owned(), "2212".to_owned()),
                 ("initial_state_2".to_owned(), "2212".to_owned()),
@@ -205,7 +209,7 @@ impl Grid {
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
-            more_members: MoreMembers::V1(Mmv1 {}),
+            more_members: MoreMembers::V2(Mmv2::default()),
         }
     }
 
@@ -249,7 +253,7 @@ impl Grid {
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
-            more_members: MoreMembers::V1(Mmv1 {}),
+            more_members: MoreMembers::V2(Mmv2::default()),
         })
     }
 

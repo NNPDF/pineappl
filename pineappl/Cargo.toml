@@ -17,6 +17,7 @@ bincode = "1.0"
 either = "1.6"
 enum_dispatch = "0.3"
 float-cmp = "0.8"
+git-version = "0.3"
 itertools = "0.9"
 lz-fear = "0.1"
 ndarray = { features = ["serde"], version = "0.13.1" }
