@@ -236,8 +236,36 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
             .collect::<Vec<(f64, f64)>>(),
     )?)?;
 
-    // check that the results are still the same
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+
+    // results are slightly different because of the static scale detection - the interpolation
+    // error in the Q^2 dimension is removed
+    let reference = vec![
+        5.2943850298637385e-1,
+        5.4077949153675209e-1,
+        5.6969021381443985e-1,
+        5.0282932188764318e-1,
+        4.9170002525140877e-1,
+        4.9468018558433052e-1,
+        4.918898576307103e-1,
+        4.4863432083118493e-1,
+        4.5078099648970371e-1,
+        4.1062102518688581e-1,
+        3.602583146986339e-1,
+        3.2757945699703028e-1,
+        2.7928892704491243e-1,
+        2.4985464964922635e-1,
+        2.1080278995465099e-1,
+        1.7799409692247298e-1,
+        1.5411880069615053e-1,
+        1.1957881962307169e-1,
+        9.3993565751843353e-2,
+        6.7190377322845676e-2,
+        5.1366217946639786e-2,
+        3.5716174780312381e-2,
+        2.0672525560241309e-2,
+        7.3004155738883077e-3,
+    ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 24));
