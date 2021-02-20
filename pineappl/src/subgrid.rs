@@ -241,6 +241,18 @@ impl Default for ExtraSubgridParams {
     }
 }
 
+impl From<&SubgridParams> for ExtraSubgridParams {
+    fn from(subgrid_params: &SubgridParams) -> Self {
+        Self {
+            reweight2: subgrid_params.reweight(),
+            x2_bins: subgrid_params.x_bins(),
+            x2_max: subgrid_params.x_max(),
+            x2_min: subgrid_params.x_min(),
+            x2_order: subgrid_params.x_order(),
+        }
+    }
+}
+
 impl ExtraSubgridParams {
     /// Returns whether reweighting is enabled for the $x_2$ axis or not.
     #[must_use]

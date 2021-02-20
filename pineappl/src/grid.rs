@@ -203,7 +203,13 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || LagrangeSubgridV1::new(&subgrid_params).into(),
+                || {
+                    LagrangeSubgridV2::new(
+                        &subgrid_params,
+                        &ExtraSubgridParams::from(&subgrid_params),
+                    )
+                    .into()
+                },
             ),
             orders,
             lumi,
@@ -231,12 +237,10 @@ impl Grid {
         subgrid_type: &str,
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
-            "LagrangeSubgrid" | "LagrangeSubgridV1" => {
-                Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into())
-            }
-            "LagrangeSubgridV2" => {
+            "LagrangeSubgrid" | "LagrangeSubgridV2" => {
                 Box::new(|| LagrangeSubgridV2::new(&subgrid_params, &extra).into())
             }
+            "LagrangeSubgridV1" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())

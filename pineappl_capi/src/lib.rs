@@ -784,12 +784,10 @@ pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<Su
     let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
 
     match subgrid_type.as_str() {
-        "LagrangeSubgrid" | "LagrangeSubgridV1" => {
-            Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into()))
-        }
-        "LagrangeSubgridV2" => Box::new(SubGrid(
+        "LagrangeSubgrid" | "LagrangeSubgridV2" => Box::new(SubGrid(
             LagrangeSubgridV2::new(&subgrid_params, &extra).into(),
         )),
+        "LagrangeSubgridV1" => Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into())),
         "LagrangeSparseSubgrid" => Box::new(SubGrid(
             LagrangeSparseSubgridV1::new(&subgrid_params).into(),
         )),
