@@ -3,7 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
@@ -16,33 +16,22 @@ pub struct ReadOnlySparseSubgridV1 {
     q2_grid: Vec<f64>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
-    reweight_x1: Vec<f64>,
-    reweight_x2: Vec<f64>,
 }
 
 impl ReadOnlySparseSubgridV1 {
     /// Constructor.
     #[must_use]
     pub fn new(
-        subgrid_params: &SubgridParams,
-        extra_subgrid_params: &ExtraSubgridParams,
+        array: SparseArray3<f64>,
         q2_grid: Vec<f64>,
         x1_grid: Vec<f64>,
         x2_grid: Vec<f64>,
-        reweight_x1: Vec<f64>,
-        reweight_x2: Vec<f64>,
     ) -> Self {
         Self {
-            array: SparseArray3::new(
-                subgrid_params.q2_bins(),
-                subgrid_params.x_bins(),
-                extra_subgrid_params.x2_bins(),
-            ),
+            array,
             q2_grid,
             x1_grid,
             x2_grid,
-            reweight_x1,
-            reweight_x2,
         }
     }
 }
@@ -59,16 +48,7 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
 
         self.array
             .indexed_iter()
-            .map(|((iq2, ix1, ix2), sigma)| {
-                let mut value = sigma * lumi(ix1, ix2, iq2);
-                if !self.reweight_x1.is_empty() {
-                    value *= self.reweight_x1[ix1];
-                }
-                if !self.reweight_x2.is_empty() {
-                    value *= self.reweight_x2[ix2];
-                }
-                value
-            })
+            .map(|((iq2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, iq2))
             .sum()
     }
 
@@ -129,18 +109,8 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        let x1: Vec<_> = self
-            .x1_grid
-            .iter()
-            .enumerate()
-            .map(|(i, &x)| if self.reweight_x1.is_empty() { 1.0 } else { self.reweight_x1[i] } / x)
-            .collect();
-        let x2: Vec<_> = self
-            .x2_grid
-            .iter()
-            .enumerate()
-            .map(|(i, &x)| if self.reweight_x2.is_empty() { 1.0 } else { self.reweight_x2[i] } / x)
-            .collect();
+        let x1: Vec<_> = self.x1_grid.iter().map(|&x| 1.0 / x).collect();
+        let x2: Vec<_> = self.x2_grid.iter().map(|&x| 1.0 / x).collect();
 
         for value in grid.iter_mut() {
             *value = 0.0;
@@ -191,8 +161,6 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
             q2_grid: self.q2_grid.clone(),
             x1_grid: self.x1_grid.clone(),
             x2_grid: self.x2_grid.clone(),
-            reweight_x1: self.reweight_x1.clone(),
-            reweight_x2: self.reweight_x2.clone(),
         }
         .into()
     }
@@ -203,20 +171,36 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
         let array = subgrid.grid.as_ref().map_or_else(
             || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
             // in the following case we should optimize when ny2 > ny1
-            |grid| {
+            |array| {
+                let reweight_x1: Vec<_> = subgrid
+                    .x1_grid()
+                    .iter()
+                    .map(|x| lagrange_subgrid::weightfun(*x))
+                    .collect();
+                let reweight_x2: Vec<_> = subgrid
+                    .x2_grid()
+                    .iter()
+                    .map(|x| lagrange_subgrid::weightfun(*x))
+                    .collect();
+
                 if subgrid.static_q2 > 0.0 {
                     // in this case we've detected a static scale for this bin and we can collapse
                     // the Q^2 axis into a single bin
-                    SparseArray3::from_ndarray(
-                        &grid
-                            .sum_axis(Axis(0))
-                            .into_shape((1, subgrid.ny1, subgrid.ny2))
-                            .unwrap(),
-                        0,
-                        1,
-                    )
+
+                    let mut array = array
+                        .sum_axis(Axis(0))
+                        .into_shape((1, subgrid.ny1, subgrid.ny2))
+                        .unwrap();
+                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
+                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
+                    }
+                    SparseArray3::from_ndarray(&array, 0, 1)
                 } else {
-                    SparseArray3::from_ndarray(grid, subgrid.itaumin, subgrid.ntau)
+                    let mut array = array.clone();
+                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
+                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
+                    }
+                    SparseArray3::from_ndarray(&array, subgrid.itaumin, subgrid.ntau)
                 }
             },
         );
@@ -227,22 +211,12 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
         };
         let x1_grid = subgrid.x1_grid();
         let x2_grid = subgrid.x2_grid();
-        let reweight_x1 = x1_grid
-            .iter()
-            .map(|x| lagrange_subgrid::weightfun(*x))
-            .collect();
-        let reweight_x2 = x2_grid
-            .iter()
-            .map(|x| lagrange_subgrid::weightfun(*x))
-            .collect();
 
         Self {
             array,
             q2_grid,
             x1_grid,
             x2_grid,
-            reweight_x1,
-            reweight_x2,
         }
     }
 }
