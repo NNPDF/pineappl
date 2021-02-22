@@ -21,23 +21,30 @@ pub struct SparseArray3<T> {
 impl<T> Index<[usize; 3]> for SparseArray3<T> {
     type Output = T;
 
-    fn index(&self, index: [usize; 3]) -> &Self::Output {
+    fn index(&self, mut index: [usize; 3]) -> &Self::Output {
         // index too small
         if index[0] < self.start {
             panic!();
         }
 
+        let dim1 = if self.dimensions.1 > self.dimensions.2 {
+            index.swap(1, 2);
+            self.dimensions.2
+        } else {
+            self.dimensions.1
+        };
+
         // index too large
-        if index[0] >= (self.start + (self.indices.len() - 1) / self.dimensions.1) {
+        if index[0] >= (self.start + (self.indices.len() - 1) / dim1) {
             panic!();
         }
 
         // index too large
-        if index[1] >= self.dimensions.1 {
+        if index[1] >= dim1 {
             panic!();
         }
 
-        let forward = self.dimensions.1 * (index[0] - self.start) + index[1];
+        let forward = dim1 * (index[0] - self.start) + index[1];
         let indices_a = &self.indices[forward];
         let indices_b = &self.indices[forward + 1];
 
@@ -60,16 +67,21 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
 }
 
 impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
-    fn index_mut(&mut self, index: [usize; 3]) -> &mut Self::Output {
-        let max_index0 = self.start + (self.indices.len() - 1) / self.dimensions.1;
+    fn index_mut(&mut self, mut index: [usize; 3]) -> &mut Self::Output {
+        let dim1 = if self.dimensions.1 > self.dimensions.2 {
+            index.swap(1, 2);
+            self.dimensions.2
+        } else {
+            self.dimensions.1
+        };
+
+        let max_index0 = self.start + (self.indices.len() - 1) / dim1;
 
         if index[0] < self.start {
             let elements = self.start - index[0];
             self.start = index[0];
-            self.indices.splice(
-                0..0,
-                iter::repeat((0, 0)).take(elements * self.dimensions.1),
-            );
+            self.indices
+                .splice(0..0, iter::repeat((0, 0)).take(elements * dim1));
         } else if index[0] >= self.dimensions.0 {
             panic!();
         } else if self.entries.is_empty() || (index[0] >= max_index0) {
@@ -83,17 +95,16 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
             let insert = self.indices.len() - 1;
             self.indices.splice(
                 insert..insert,
-                iter::repeat((0, self.indices.last().unwrap().1))
-                    .take(elements * self.dimensions.1),
+                iter::repeat((0, self.indices.last().unwrap().1)).take(elements * dim1),
             );
         }
 
         // index too large
-        if index[1] >= self.dimensions.1 {
+        if index[1] >= dim1 {
             panic!();
         }
 
-        let forward = self.dimensions.1 * (index[0] - self.start) + index[1];
+        let forward = dim1 * (index[0] - self.start) + index[1];
         let indices_a = &self.indices[forward];
         let indices_b = &self.indices[forward + 1];
 
@@ -108,7 +119,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
             elements = zeros_left - index[2];
             insert = offset;
             self.indices[forward].0 -= elements;
-        } else if index[2] >= self.dimensions.2 {
+        } else if index[2] >= self.dimensions.2.max(self.dimensions.1) {
             panic!();
         } else if non_zeros == 0 {
             elements = 1;
@@ -150,37 +161,72 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
             let offset_a = self.offset_a.unwrap();
             let offset_b = self.offset_b.unwrap();
 
-            self.tuple.2 = self.tuple.2.max(offset_a.0);
+            if self.dimensions.1 > self.dimensions.2 {
+                self.tuple.1 = self.tuple.1.max(offset_a.0);
 
-            if self.tuple.2 >= (offset_b.1 - offset_a.1 + offset_a.0) {
-                loop {
-                    self.offset_a = self.offset_b;
-                    self.offset_b = self.index_iter.next();
+                if self.tuple.1 >= (offset_b.1 - offset_a.1 + offset_a.0) {
+                    loop {
+                        self.offset_a = self.offset_b;
+                        self.offset_b = self.index_iter.next();
 
-                    let offset_a = self.offset_a.unwrap();
-                    let offset_b = self.offset_b?;
+                        let offset_a = self.offset_a.unwrap();
+                        let offset_b = self.offset_b?;
 
-                    self.tuple.1 += 1;
+                        self.tuple.2 += 1;
 
-                    if self.tuple.1 >= self.dimensions.1 {
-                        self.tuple.0 += 1;
-                        self.tuple.1 = 0;
-                    }
+                        if self.tuple.2 >= self.dimensions.2 {
+                            self.tuple.0 += 1;
+                            self.tuple.2 = 0;
+                        }
 
-                    if (offset_b.1 - offset_a.1) != 0 {
-                        self.tuple.2 = offset_a.0;
-                        break;
+                        if (offset_b.1 - offset_a.1) != 0 {
+                            self.tuple.1 = offset_a.0;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if *element == T::default() {
-                self.tuple.2 += 1;
-                self.next()
+                if *element == T::default() {
+                    self.tuple.1 += 1;
+                    self.next()
+                } else {
+                    let result = Some((self.tuple, element));
+                    self.tuple.1 += 1;
+                    result
+                }
             } else {
-                let result = Some((self.tuple, element));
-                self.tuple.2 += 1;
-                result
+                self.tuple.2 = self.tuple.2.max(offset_a.0);
+
+                if self.tuple.2 >= (offset_b.1 - offset_a.1 + offset_a.0) {
+                    loop {
+                        self.offset_a = self.offset_b;
+                        self.offset_b = self.index_iter.next();
+
+                        let offset_a = self.offset_a.unwrap();
+                        let offset_b = self.offset_b?;
+
+                        self.tuple.1 += 1;
+
+                        if self.tuple.1 >= self.dimensions.1 {
+                            self.tuple.0 += 1;
+                            self.tuple.1 = 0;
+                        }
+
+                        if (offset_b.1 - offset_a.1) != 0 {
+                            self.tuple.2 = offset_a.0;
+                            break;
+                        }
+                    }
+                }
+
+                if *element == T::default() {
+                    self.tuple.2 += 1;
+                    self.next()
+                } else {
+                    let result = Some((self.tuple, element));
+                    self.tuple.2 += 1;
+                    result
+                }
             }
         } else {
             None
@@ -223,6 +269,14 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     #[must_use]
     pub fn from_ndarray(array: &Array3<T>, xstart: usize, xsize: usize) -> Self {
         let (_, ny, nz) = array.dim();
+        let array = if ny > nz {
+            let mut array = array.clone();
+            array.swap_axes(1, 2);
+            array
+        } else {
+            array.clone()
+        };
+
         let dimensions = (xsize, ny, nz);
         let mut entries = vec![];
         let mut indices = vec![];
@@ -307,19 +361,21 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     /// Return a half-open interval of indices that are filled for the first dimension.
     #[must_use]
     pub fn x_range(&self) -> Range<usize> {
-        self.start..(self.start + (self.indices.len() - 1) / self.dimensions.1)
+        self.start
+            ..(self.start + (self.indices.len() - 1) / self.dimensions.1.min(self.dimensions.2))
     }
 
     /// Removes all elements with the specified x coordinate.
     pub fn remove_x(&mut self, x: usize) {
-        let nx = (self.indices.len() - 1) / self.dimensions.1;
+        let dim1 = self.dimensions.1.min(self.dimensions.2);
+        let nx = (self.indices.len() - 1) / dim1;
 
         if (x < self.start) || (x >= self.start + nx) {
             panic!();
         }
 
-        let index_a = (x - self.start) * self.dimensions.1;
-        let index_b = (x - self.start + 1) * self.dimensions.1;
+        let index_a = (x - self.start) * dim1;
+        let index_b = (x - self.start + 1) * dim1;
         let offset_a = self.indices[index_a].1;
         let offset_b = self.indices[index_b].1;
 
@@ -330,10 +386,8 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
             .for_each(|o| o.1 -= offset_b - offset_a);
 
         if (x != self.start) && (x != (self.start + nx - 1)) {
-            self.indices.splice(
-                index_a..index_b,
-                iter::repeat((0, offset_a)).take(self.dimensions.1),
-            );
+            self.indices
+                .splice(index_a..index_b, iter::repeat((0, offset_a)).take(dim1));
         } else {
             if x == self.start {
                 self.start += 1;
@@ -780,5 +834,125 @@ mod tests {
 
         assert_eq!(array.len(), 6);
         assert_eq!(array.zeros(), 6);
+    }
+
+    #[test]
+    fn test_index_swap() {
+        let mut array = SparseArray3::new(5, 50, 2);
+
+        array[[0, 0, 0]] = 1.0;
+        array[[0, 0, 1]] = 2.0;
+        array[[1, 2, 1]] = 3.0;
+        array[[1, 5, 1]] = 4.0;
+        array[[1, 6, 0]] = 5.0;
+        array[[1, 8, 0]] = 6.0;
+        array[[1, 9, 0]] = 7.0;
+        array[[2, 0, 0]] = 8.0;
+        array[[3, 2, 1]] = 9.0;
+        array[[3, 4, 0]] = 10.0;
+        array[[3, 4, 1]] = 11.0;
+        array[[4, 0, 0]] = 12.0;
+        array[[4, 0, 1]] = 13.0;
+
+        assert_eq!(array[[0, 0, 0]], 1.0);
+        assert_eq!(array[[0, 0, 1]], 2.0);
+        assert_eq!(array[[1, 2, 1]], 3.0);
+        assert_eq!(array[[1, 5, 1]], 4.0);
+        assert_eq!(array[[1, 6, 0]], 5.0);
+        assert_eq!(array[[1, 8, 0]], 6.0);
+        assert_eq!(array[[1, 9, 0]], 7.0);
+        assert_eq!(array[[2, 0, 0]], 8.0);
+        assert_eq!(array[[3, 2, 1]], 9.0);
+        assert_eq!(array[[3, 4, 0]], 10.0);
+        assert_eq!(array[[3, 4, 1]], 11.0);
+        assert_eq!(array[[4, 0, 0]], 12.0);
+        assert_eq!(array[[4, 0, 1]], 13.0);
+
+        assert_eq!(array.x_range(), 0..5);
+
+        let mut iter = array.indexed_iter();
+
+        assert_eq!(iter.next(), Some(((0, 0, 0), &1.0)));
+        assert_eq!(iter.next(), Some(((0, 0, 1), &2.0)));
+        assert_eq!(iter.next(), Some(((1, 6, 0), &5.0)));
+        assert_eq!(iter.next(), Some(((1, 8, 0), &6.0)));
+        assert_eq!(iter.next(), Some(((1, 9, 0), &7.0)));
+        assert_eq!(iter.next(), Some(((1, 2, 1), &3.0)));
+        assert_eq!(iter.next(), Some(((1, 5, 1), &4.0)));
+        assert_eq!(iter.next(), Some(((2, 0, 0), &8.0)));
+        assert_eq!(iter.next(), Some(((3, 4, 0), &10.0)));
+        assert_eq!(iter.next(), Some(((3, 2, 1), &9.0)));
+        assert_eq!(iter.next(), Some(((3, 4, 1), &11.0)));
+        assert_eq!(iter.next(), Some(((4, 0, 0), &12.0)));
+        assert_eq!(iter.next(), Some(((4, 0, 1), &13.0)));
+        assert_eq!(iter.next(), None);
+
+        let mut ndarray = Array3::zeros((5, 50, 2));
+
+        ndarray[[0, 0, 0]] = 1.0;
+        ndarray[[0, 0, 1]] = 2.0;
+        ndarray[[1, 2, 1]] = 3.0;
+        ndarray[[1, 5, 1]] = 4.0;
+        ndarray[[1, 6, 0]] = 5.0;
+        ndarray[[1, 8, 0]] = 6.0;
+        ndarray[[1, 9, 0]] = 7.0;
+        ndarray[[2, 0, 0]] = 8.0;
+        ndarray[[3, 2, 1]] = 9.0;
+        ndarray[[3, 4, 0]] = 10.0;
+        ndarray[[3, 4, 1]] = 11.0;
+        ndarray[[4, 0, 0]] = 12.0;
+        ndarray[[4, 0, 1]] = 13.0;
+
+        let mut other = SparseArray3::from_ndarray(&ndarray, 0, 5);
+
+        assert_eq!(other[[0, 0, 0]], 1.0);
+        assert_eq!(other[[0, 0, 1]], 2.0);
+        assert_eq!(other[[1, 2, 1]], 3.0);
+        assert_eq!(other[[1, 5, 1]], 4.0);
+        assert_eq!(other[[1, 6, 0]], 5.0);
+        assert_eq!(other[[1, 8, 0]], 6.0);
+        assert_eq!(other[[1, 9, 0]], 7.0);
+        assert_eq!(other[[2, 0, 0]], 8.0);
+        assert_eq!(other[[3, 2, 1]], 9.0);
+        assert_eq!(other[[3, 4, 0]], 10.0);
+        assert_eq!(other[[3, 4, 1]], 11.0);
+        assert_eq!(other[[4, 0, 0]], 12.0);
+        assert_eq!(other[[4, 0, 1]], 13.0);
+
+        assert_eq!(other.x_range(), 0..5);
+
+        other.remove_x(0);
+
+        assert_eq!(other[[1, 2, 1]], 3.0);
+        assert_eq!(other[[1, 5, 1]], 4.0);
+        assert_eq!(other[[1, 6, 0]], 5.0);
+        assert_eq!(other[[1, 8, 0]], 6.0);
+        assert_eq!(other[[1, 9, 0]], 7.0);
+        assert_eq!(other[[2, 0, 0]], 8.0);
+        assert_eq!(other[[3, 2, 1]], 9.0);
+        assert_eq!(other[[3, 4, 0]], 10.0);
+        assert_eq!(other[[3, 4, 1]], 11.0);
+        assert_eq!(other[[4, 0, 0]], 12.0);
+        assert_eq!(other[[4, 0, 1]], 13.0);
+
+        other.remove_x(3);
+
+        assert_eq!(other[[1, 2, 1]], 3.0);
+        assert_eq!(other[[1, 5, 1]], 4.0);
+        assert_eq!(other[[1, 6, 0]], 5.0);
+        assert_eq!(other[[1, 8, 0]], 6.0);
+        assert_eq!(other[[1, 9, 0]], 7.0);
+        assert_eq!(other[[2, 0, 0]], 8.0);
+        assert_eq!(other[[4, 0, 0]], 12.0);
+        assert_eq!(other[[4, 0, 1]], 13.0);
+
+        other.remove_x(4);
+
+        assert_eq!(other[[1, 2, 1]], 3.0);
+        assert_eq!(other[[1, 5, 1]], 4.0);
+        assert_eq!(other[[1, 6, 0]], 5.0);
+        assert_eq!(other[[1, 8, 0]], 6.0);
+        assert_eq!(other[[1, 9, 0]], 7.0);
+        assert_eq!(other[[2, 0, 0]], 8.0);
     }
 }
