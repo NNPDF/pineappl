@@ -92,7 +92,7 @@ void fill_grid(pineappl_grid* grid, std::size_t calls) {
             continue;
         }
 
-        auto weight = jacobian * int_photo(s, u, t);
+        auto weight = jacobian * int_photo(s, t, u);
         double  q2 = 90.0 * 90.0;
 
         pineappl_grid_fill(grid, x1, x2, q2, 0, fabs(yll), 0, weight);
