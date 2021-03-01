@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new switches to the subcommand `info`: `--get`, `--keys`, `--show`,
   which lets one read a single or all key-values pairs of each grid file.
 - added new subcommand `set` which allows to modify the key-value storage
+- added new C functions `pineappl_grid_set_key_value` and
+  `pineappl_grid_optimize`
 
 ### Changed
 

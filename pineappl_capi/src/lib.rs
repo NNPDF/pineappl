@@ -545,6 +545,17 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
     (&mut *grid).scale(factor);
 }
 
+/// Optimizes the grid representation for space efficiency.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
+    (&mut *grid).optimize();
+}
+
 /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
 /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
 /// every subgrid is scaled by a factor `global` independently of its order.
@@ -563,6 +574,25 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     global: f64,
 ) {
     (&mut *grid).scale_by_order(alphas, alpha, logxir, logxif, global);
+}
+
+/// Sets an internal key-value pair for the grid.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The parameters `key` and `value` must be non-`NULL` and
+/// valid C strings.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_key_value(
+    grid: *mut Grid,
+    key: *const c_char,
+    value: *const c_char,
+) {
+    (*grid).set_key_value(
+        CStr::from_ptr(key).to_str().unwrap(),
+        CStr::from_ptr(value).to_str().unwrap(),
+    );
 }
 
 /// Write `grid` to a file with name `filename`.
