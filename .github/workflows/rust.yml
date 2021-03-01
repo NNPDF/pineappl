@@ -64,7 +64,7 @@ jobs:
         cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
     - name: Test C++ example
       run: |
-        cd examples/capi-dy-aa
+        cd examples/cpp
         make
         ./dyaa
         test -f ./DY-LO-AA.pineappl
