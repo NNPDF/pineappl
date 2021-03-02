@@ -805,7 +805,8 @@ impl Grid {
         // TODO: take care of DIS
 
         for ((bin, _, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
-            let mut array = SparseArray3::<f64>::new(1, x_grid.len(), x_grid.len());
+            let mut array =
+                Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
 
             let a_out = pids
                 .iter()
@@ -866,9 +867,11 @@ impl Grid {
                 }
             }
 
-            //*subgrid =
-            //    ReadOnlySparseSubgridV1::new(array, vec![q2], x_grid.clone(), x_grid.clone())
-            //        .into();
+            if let SubgridEnum::LagrangeSubgridV1(subgrid) = subgrid {
+                subgrid.grid = Some(array);
+            } else {
+                panic!();
+            }
         }
 
         Some(result)

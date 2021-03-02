@@ -59,7 +59,7 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Deserialize, Serialize)]
 pub struct LagrangeSubgridV1 {
-    grid: Option<Array3<f64>>,
+    pub(crate) grid: Option<Array3<f64>>,
     ntau: usize,
     ny: usize,
     yorder: usize,
