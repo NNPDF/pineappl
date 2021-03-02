@@ -744,14 +744,15 @@ impl Grid {
                     q2_grid = subgrid.q2_grid();
                     let x = subgrid.x1_grid();
 
-                    if subgrid.x2_grid() != x {
-                        return None;
-                    }
+                    // if subgrid.x2_grid() != x {
+                    // return None;
+                    // }
 
                     x_grid = x;
-                } else if (subgrid.x1_grid() != x_grid) || (subgrid.x2_grid() != x_grid) {
-                    return None;
                 }
+                // } else if (subgrid.x1_grid() != x_grid) || (subgrid.x2_grid() != x_grid) {
+                // return None;
+                // }
 
                 q2_grid.append(&mut subgrid.q2_grid());
                 q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -780,13 +781,25 @@ impl Grid {
         };
         let lumi: Vec<_> = pids
             .iter()
-            .cartesian_product(pids.iter())
-            .map(|(a, b)| lumi_entry![*a, *b, 1.0])
+            // .cartesian_product(pids.iter())
+            // .map(|(a, b)| lumi_entry![*a, *b, 1.0])
+            .map(|a| lumi_entry![*a, 11, 1.0])
             .collect();
 
+        let mut subgrid_params = self.subgrid_params.clone();
+        subgrid_params.set_q2_bins(1);
+        subgrid_params.set_q2_max(q2);
+        subgrid_params.set_q2_min(q2);
+        subgrid_params.set_q2_order(0);
+        let mut extra_params = ExtraSubgridParams::default();
+        extra_params.set_reweight2(false);
+        extra_params.set_x2_bins(1);
+        extra_params.set_x2_max(1.0);
+        extra_params.set_x2_min(1.0);
+        extra_params.set_x2_order(0);
         let mut result = Self {
             subgrids: Array3::from_shape_simple_fn(self.subgrids.dim(), || {
-                LagrangeSubgridV1::new(&self.subgrid_params).into()
+                LagrangeSubgridV2::new(&subgrid_params, &extra_params).into()
             }),
             lumi: lumi.clone(),
             bin_limits: self.bin_limits.clone(),
@@ -796,7 +809,7 @@ impl Grid {
                 logxir: 0,
                 logxif: 0,
             }],
-            subgrid_params: self.subgrid_params.clone(),
+            subgrid_params,
             more_members: self.more_members.clone(),
         };
 
@@ -806,16 +819,17 @@ impl Grid {
 
         for ((bin, _, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
             let mut array =
-                Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
+                // Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
+                Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), 1), || 0.0);
 
             let a_out = pids
                 .iter()
                 .position(|pid| *pid == lumi[low_lumi].entry()[0].0)
                 .unwrap();
-            let b_out = pids
-                .iter()
-                .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
-                .unwrap();
+            // let b_out = pids
+            // .iter()
+            // .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
+            // .unwrap();
 
             for (pert_order, order) in self.orders.iter().enumerate() {
                 // skip log grids if we don't want the scale varied from the central choice
@@ -826,23 +840,26 @@ impl Grid {
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     for (pid_high1, pid_high2, factor) in high_lumi.entry() {
                         let pid_idx_high1 = pids.iter().position(|pid| pid == pid_high1).unwrap();
-                        let pid_idx_high2 = pids.iter().position(|pid| pid == pid_high2).unwrap();
+                        // let pid_idx_high2 = pids.iter().position(|pid| pid == pid_high2).unwrap();
 
-                        for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..x_grid.len())
-                        {
+                        // for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..x_grid.len())
+                        for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..1) {
                             array[[0, x1_low, x2_low]] += factor
                                 * self.subgrids[[bin, pert_order, high_lumi_idx]].convolute(
                                     &x_grid,
-                                    &x_grid,
+                                    // &x_grid,
+                                    &[1.],
                                     &q2_grid,
                                     Left(&|ixhigh1, ixhigh2, q2_index| {
                                         // TODO: translate `q2_index` from the grid to the `q2`
                                         // index for the EK operator
                                         let op1 = operator[q2_index][pid_idx_high1][ixhigh1][a_out]
                                             [x1_low];
-                                        let op2 = operator[q2_index][pid_idx_high2][ixhigh2][b_out]
-                                            [x2_low];
-                                        let mut value = alphas[q2_index]
+                                        // let op2 = operator[q2_index][pid_idx_high2][ixhigh2][b_out]
+                                        // [x2_low];
+                                        let op2 = 1.;
+                                        // let mut value = alphas[q2_index]
+                                        let value = alphas[q2_index]
                                             .powi(order.alphas.try_into().unwrap())
                                             * op1
                                             * op2;
@@ -867,7 +884,7 @@ impl Grid {
                 }
             }
 
-            if let SubgridEnum::LagrangeSubgridV1(subgrid) = subgrid {
+            if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
                 subgrid.grid = Some(array);
             } else {
                 panic!();

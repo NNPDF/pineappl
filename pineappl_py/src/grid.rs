@@ -1,5 +1,5 @@
 use lhapdf::Pdf;
-use pineappl::grid::{Grid, Order};
+use pineappl::grid::{EkoInfo, Grid, Order};
 
 use super::bin::PyBinRemapper;
 use super::lagrange_subgrid::PyLagrangeSubgridV2;
@@ -148,6 +148,25 @@ impl PyGrid {
             &lumis[..],
             &scales,
         )
+    }
+
+    pub fn eko_info(&self) -> (Vec<f64>, Vec<f64>) {
+        let EkoInfo { x_grid, q2_grid } = self.grid.eko_info().unwrap();
+        (x_grid, q2_grid)
+    }
+
+    pub fn convolute_eko(
+        &self,
+        q2: f64,
+        alphas: Vec<f64>,
+        pids: Vec<i32>,
+        operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
+    ) -> Self {
+        let evolved_grid = self
+            .grid
+            .convolute_eko(q2, &alphas, (1., 1.), &pids, operator)
+            .unwrap();
+        Self::new(evolved_grid)
     }
 
     #[staticmethod]
