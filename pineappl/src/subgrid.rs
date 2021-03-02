@@ -79,7 +79,7 @@ pub trait Subgrid {
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct SubgridParams {
     q2_bins: usize,
     q2_max: f64,

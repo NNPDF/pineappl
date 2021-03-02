@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 enum Limits {
     Equal { left: f64, right: f64, bins: usize },
     Unequal { limits: Vec<f64> },
@@ -29,7 +29,7 @@ pub enum MergeBinError {
 }
 
 /// Structure representing bin limits.
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct BinLimits(Limits);
 
 /// Error type that is returned by the constructor of `BinRemapper`.

@@ -3,7 +3,9 @@
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
+use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
@@ -117,10 +119,10 @@ pub enum GridMergeError {
 #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
 pub struct UnknownSubgrid(String);
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 struct Mmv1 {}
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 struct Mmv2 {
     remapper: Option<BinRemapper>,
     key_value_db: HashMap<String, String>,
@@ -143,7 +145,7 @@ impl Default for Mmv2 {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 enum MoreMembers {
     V1(Mmv1),
     V2(Mmv2),
@@ -171,6 +173,11 @@ pub enum GridSetBinRemapperError {
         /// Number of bins in the remapper.
         remapper_bins: usize,
     },
+}
+
+pub struct EkoInfo {
+    pub x_grid: Vec<f64>,
+    pub q2_grid: Vec<f64>,
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -725,6 +732,146 @@ impl Grid {
         };
 
         mmv2.key_value_db.insert(key.to_owned(), value.to_owned());
+    }
+
+    pub fn eko_info(&self) -> Option<EkoInfo> {
+        let mut q2_grid = Vec::<f64>::new();
+        let mut x_grid = Vec::<f64>::new();
+
+        for subgrid in &self.subgrids {
+            if !subgrid.is_empty() {
+                if q2_grid.is_empty() {
+                    q2_grid = subgrid.q2_grid();
+                    let x = subgrid.x1_grid();
+
+                    if subgrid.x2_grid() != x {
+                        return None;
+                    }
+
+                    x_grid = x;
+                } else if (subgrid.x1_grid() != x_grid) || (subgrid.x2_grid() != x_grid) {
+                    return None;
+                }
+
+                q2_grid.append(&mut subgrid.q2_grid());
+                q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                q2_grid.dedup();
+            }
+        }
+
+        Some(EkoInfo { x_grid, q2_grid })
+    }
+
+    /// Applies an evolution kernel operator (EKO) to the grids to evolve them from different
+    /// values of the factorization scale to a single one given by the parameter `q2`.
+    #[must_use]
+    pub fn convolute_eko(
+        &self,
+        q2: f64,
+        alphas: &[f64],
+        (xir, xif): (f64, f64),
+        pids: &[i32],
+        operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
+    ) -> Option<Self> {
+        let EkoInfo { x_grid, q2_grid } = if let Some(eko_info) = self.eko_info() {
+            eko_info
+        } else {
+            return None;
+        };
+        let lumi: Vec<_> = pids
+            .iter()
+            .cartesian_product(pids.iter())
+            .map(|(a, b)| lumi_entry![*a, *b, 1.0])
+            .collect();
+
+        let mut result = Self {
+            subgrids: Array3::from_shape_simple_fn(self.subgrids.dim(), || {
+                LagrangeSubgridV1::new(&self.subgrid_params).into()
+            }),
+            lumi: lumi.clone(),
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order {
+                alphas: 0,
+                alpha: 0,
+                logxir: 0,
+                logxif: 0,
+            }],
+            subgrid_params: self.subgrid_params.clone(),
+            more_members: self.more_members.clone(),
+        };
+
+        // TODO: put original perturbative orders and order of the EKO inside new metadata
+
+        // TODO: take care of DIS
+
+        for ((bin, _, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
+            let mut array = SparseArray3::<f64>::new(1, x_grid.len(), x_grid.len());
+
+            let a_out = pids
+                .iter()
+                .position(|pid| *pid == lumi[low_lumi].entry()[0].0)
+                .unwrap();
+            let b_out = pids
+                .iter()
+                .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
+                .unwrap();
+
+            for (pert_order, order) in self.orders.iter().enumerate() {
+                // skip log grids if we don't want the scale varied from the central choice
+                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                    continue;
+                }
+
+                for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
+                    for (pid_high1, pid_high2, factor) in high_lumi.entry() {
+                        let pid_idx_high1 = pids.iter().position(|pid| pid == pid_high1).unwrap();
+                        let pid_idx_high2 = pids.iter().position(|pid| pid == pid_high2).unwrap();
+
+                        for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..x_grid.len())
+                        {
+                            array[[0, x1_low, x2_low]] += factor
+                                * self.subgrids[[bin, pert_order, high_lumi_idx]].convolute(
+                                    &x_grid,
+                                    &x_grid,
+                                    &q2_grid,
+                                    Left(&|ixhigh1, ixhigh2, q2_index| {
+                                        // TODO: translate `q2_index` from the grid to the `q2`
+                                        // index for the EK operator
+                                        let op1 = operator[q2_index][pid_idx_high1][ixhigh1][a_out]
+                                            [x1_low];
+                                        let op2 = operator[q2_index][pid_idx_high2][ixhigh2][b_out]
+                                            [x2_low];
+                                        let mut value = alphas[q2_index]
+                                            .powi(order.alphas.try_into().unwrap())
+                                            * op1
+                                            * op2;
+
+                                        //if order.logxir > 0 {
+                                        //    value *= (xir * xir)
+                                        //        .ln()
+                                        //        .powi(order.logxir.try_into().unwrap());
+                                        //}
+
+                                        //if order.logxif > 0 {
+                                        //    value *= (xif * xif)
+                                        //        .ln()
+                                        //        .powi(order.logxif.try_into().unwrap());
+                                        //}
+
+                                        value
+                                    }),
+                                );
+                        }
+                    }
+                }
+            }
+
+            //*subgrid =
+            //    ReadOnlySparseSubgridV1::new(array, vec![q2], x_grid.clone(), x_grid.clone())
+            //        .into();
+        }
+
+        Some(result)
     }
 }
 
