@@ -338,6 +338,7 @@ impl Grid {
 
                 let lumi_entry = &self.lumi[k];
 
+                println!("--- {:?}", (i, j, k));
                 let mut value = if use_cache {
                     let new_q2_grid = subgrid.q2_grid();
                     let new_x1_grid = subgrid.x1_grid();
@@ -786,6 +787,8 @@ impl Grid {
             .map(|a| lumi_entry![*a, 11, 1.0])
             .collect();
 
+        assert_eq!(lumi, self.lumi);
+
         let mut subgrid_params = self.subgrid_params.clone();
         subgrid_params.set_q2_bins(1);
         subgrid_params.set_q2_max(q2);
@@ -822,7 +825,7 @@ impl Grid {
                 // Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
                 Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), 1), || 0.0);
 
-            let a_out = pids
+            let pid_low1_idx = pids
                 .iter()
                 .position(|pid| *pid == lumi[low_lumi].entry()[0].0)
                 .unwrap();
@@ -831,7 +834,7 @@ impl Grid {
             // .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
             // .unwrap();
 
-            for (pert_order, order) in self.orders.iter().enumerate() {
+            for (order_idx, order) in self.orders.iter().enumerate() {
                 // skip log grids if we don't want the scale varied from the central choice
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
                     continue;
@@ -839,13 +842,13 @@ impl Grid {
 
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     for (pid_high1, pid_high2, factor) in high_lumi.entry() {
-                        let pid_idx_high1 = pids.iter().position(|pid| pid == pid_high1).unwrap();
-                        // let pid_idx_high2 = pids.iter().position(|pid| pid == pid_high2).unwrap();
+                        let pid_high1_idx = pids.iter().position(|pid| pid == pid_high1).unwrap();
+                        // let pid_high2_idx = pids.iter().position(|pid| pid == pid_high2).unwrap();
 
                         // for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..x_grid.len())
                         for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..1) {
-                            array[[0, x1_low, x2_low]] += factor
-                                * self.subgrids[[bin, pert_order, high_lumi_idx]].convolute(
+                            let convoluted = self.subgrids[[bin, order_idx, high_lumi_idx]]
+                                .convolute(
                                     &x_grid,
                                     // &x_grid,
                                     &[1.],
@@ -853,9 +856,12 @@ impl Grid {
                                     Left(&|ixhigh1, ixhigh2, q2_index| {
                                         // TODO: translate `q2_index` from the grid to the `q2`
                                         // index for the EK operator
-                                        let op1 = operator[q2_index][pid_idx_high1][ixhigh1][a_out]
-                                            [x1_low];
-                                        // let op2 = operator[q2_index][pid_idx_high2][ixhigh2][b_out]
+                                        let op1 = operator[q2_index][pid_high1_idx]
+                                            [x_grid.len() - ixhigh1 - 1][pid_low1_idx]
+                                            [x_grid.len() - x1_low - 1];
+                                        // [ixhigh1][pid_low1_idx]
+                                        // [x1_low];
+                                        // let op2 = operator[q2_index][pid_high2_idx][ixhigh2][b_out]
                                         // [x2_low];
                                         let op2 = 1.;
                                         // let mut value = alphas[q2_index]
@@ -879,6 +885,7 @@ impl Grid {
                                         value
                                     }),
                                 );
+                            array[[0, x1_low, x2_low]] += factor * convoluted;
                         }
                     }
                 }
