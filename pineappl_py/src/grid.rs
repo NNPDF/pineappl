@@ -160,11 +160,13 @@ impl PyGrid {
         q2: f64,
         alphas: Vec<f64>,
         pids: Vec<i32>,
+        x_grid: Vec<f64>,
+        q2_grid: Vec<f64>,
         operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
     ) -> Self {
         let evolved_grid = self
             .grid
-            .convolute_eko(q2, &alphas, (1., 1.), &pids, operator)
+            .convolute_eko(q2, &alphas, (1., 1.), &pids, x_grid, q2_grid, operator)
             .unwrap();
         Self::new(evolved_grid)
     }
