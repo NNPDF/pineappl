@@ -773,6 +773,7 @@ impl Grid {
         (xir, xif): (f64, f64),
         pids: &[i32],
         operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
+        // eko_x_grid: Vec<f64>,
     ) -> Option<Self> {
         let EkoInfo { x_grid, q2_grid } = if let Some(eko_info) = self.eko_info() {
             eko_info
@@ -819,7 +820,7 @@ impl Grid {
         // TODO: take care of DIS
 
         // Iterate over RESULT = LOW
-        for ((bin, _, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
+        for ((_, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
             let mut array =
                 // Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
                 Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), 1), || 0.0);
@@ -851,25 +852,30 @@ impl Grid {
                         // for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..x_grid.len())
                         for (x1_low, x2_low) in (0..x_grid.len()).cartesian_product(0..1) {
                             // Iterate over SELF = HIGH
-                            let convoluted = self.subgrids[[bin, order_idx, high_lumi_idx]]
+                            let q2high_grid =
+                                self.subgrids[[order_idx, bin, high_lumi_idx]].q2_grid();
+                            let convoluted = self.subgrids[[order_idx, bin, high_lumi_idx]]
                                 .convolute(
-                                    &x_grid,
+                                    &[],
                                     // &x_grid,
-                                    &[1.],
-                                    &q2_grid,
+                                    &[],
+                                    &[],
                                     Left(&|ixhigh1, ixhigh2, q2_index| {
-                                        // TODO: translate `q2_index` from the grid to the `q2`
                                         // index for the EK operator
-                                        let op1 = operator[q2_index][pid_high1_idx]
-                                            [x_grid.len() - ixhigh1 - 1][pid_low1_idx]
-                                            [x_grid.len() - x1_low - 1];
+                                        let eko_q2_index = q2_grid
+                                            .iter()
+                                            .position(|q2| q2 == &q2high_grid[q2_index])
+                                            .unwrap();
+                                        let op1 = operator[eko_q2_index][pid_high1_idx]
+                                            [x_grid.len() - 1 - ixhigh1][pid_low1_idx]
+                                            [x_grid.len() - 1 - x1_low];
                                         // [ixhigh1][pid_low1_idx]
                                         // [x1_low];
                                         // let op2 = operator[q2_index][pid_high2_idx][ixhigh2][b_out]
                                         // [x2_low];
                                         let op2 = 1.;
                                         // let mut value = alphas[q2_index]
-                                        let value = alphas[q2_index]
+                                        let value = alphas[eko_q2_index]
                                             .powi(order.alphas.try_into().unwrap())
                                             * op1
                                             * op2;
@@ -897,6 +903,12 @@ impl Grid {
             }
 
             if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
+                // println!(
+                // "pid: {}, bin: {} - {}",
+                // pid_low1_idx,
+                // bin,
+                // array[[0, 16, 0]]
+                // );
                 subgrid.grid = Some(array);
             } else {
                 panic!();
