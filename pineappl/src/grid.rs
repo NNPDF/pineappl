@@ -866,9 +866,14 @@ impl Grid {
                 .iter()
                 .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
                 .unwrap();
+            let x1low_grid = subgrid.x1_grid();
+            let x2low_grid = subgrid.x2_grid();
 
             // Iterate over SELF = HIGH
             for (order_idx, order) in self.orders.iter().enumerate() {
+                if order_idx > 0 {
+                    continue;
+                }
                 // skip log grids if we don't want the scale varied from the central choice
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
                     continue;
@@ -877,6 +882,9 @@ impl Grid {
                 // Iterate over SELF = HIGH
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     println!("ll: {}, o: {}, hl: {}", low_lumi, order_idx, high_lumi_idx);
+                    let x1high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].x1_grid();
+                    let x2high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].x2_grid();
+                    let q2high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].q2_grid();
                     // Iterate over SELF = HIGH
                     for (pid_high1, pid_high2, factor) in high_lumi.entry() {
                         if pid_high1 == &0 || pid_high2 == &0 {
@@ -887,31 +895,44 @@ impl Grid {
 
                         // Iterate over RESULT = LOW
                         for (x1_low, x2_low) in (0..x1_len).cartesian_product(0..x2_len) {
+                            let eko_x1_low_idx = x_grid
+                                .iter()
+                                .position(|x| x == &x1low_grid[x1_low])
+                                .unwrap();
+                            let eko_x2_low_idx = x_grid
+                                .iter()
+                                .position(|x| x == &x2low_grid[x2_low])
+                                .unwrap();
+
                             // Iterate over SELF = HIGH
-                            let q2high_grid =
-                                self.subgrids[[order_idx, bin, high_lumi_idx]].q2_grid();
                             let convoluted = self.subgrids[[order_idx, bin, high_lumi_idx]]
                                 .convolute(
-                                    &self.subgrids[[order_idx, bin, high_lumi_idx]].x1_grid(),
-                                    &self.subgrids[[order_idx, bin, high_lumi_idx]].x2_grid(),
+                                    &x1high_grid,
+                                    &x2high_grid,
                                     &[],
-                                    Left(&|ixhigh1, ixhigh2, q2_index| {
+                                    Left(&|x1_high_idx, x2_high_idx, q2_index| {
                                         // index for the EK operator
+                                        let eko_x1_high_idx = x_grid
+                                            .iter()
+                                            .position(|x| x == &x1high_grid[x1_high_idx])
+                                            .unwrap();
+                                        let eko_x2_high_idx = x_grid
+                                            .iter()
+                                            .position(|x| x == &x2high_grid[x2_high_idx])
+                                            .unwrap();
                                         let eko_q2_index = q2_grid
                                             .iter()
                                             .position(|q2| q2 == &q2high_grid[q2_index])
                                             .unwrap();
                                         let op1 = if has_pdf1 {
-                                            operator[eko_q2_index][pid_high1_idx]
-                                                [x_grid.len() - 1 - ixhigh1][pid_low1_idx]
-                                                [x_grid.len() - 1 - x1_low]
+                                            operator[eko_q2_index][pid_high1_idx][eko_x1_high_idx]
+                                                [pid_low1_idx][eko_x1_low_idx]
                                         } else {
                                             1.
                                         };
                                         let op2 = if has_pdf2 {
-                                            operator[eko_q2_index][pid_high2_idx]
-                                                [x_grid.len() - 1 - ixhigh2][pid_low2_idx]
-                                                [x_grid.len() - 1 - x2_low]
+                                            operator[eko_q2_index][pid_high2_idx][eko_x2_high_idx]
+                                                [pid_low2_idx][eko_x2_low_idx]
                                         } else {
                                             1.
                                         };
