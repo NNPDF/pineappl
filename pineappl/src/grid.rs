@@ -790,6 +790,7 @@ impl Grid {
         assert_eq!(lumi, self.lumi);
 
         let mut subgrid_params = self.subgrid_params.clone();
+        subgrid_params.set_reweight(false);
         subgrid_params.set_q2_bins(1);
         subgrid_params.set_q2_max(q2);
         subgrid_params.set_q2_min(q2);
