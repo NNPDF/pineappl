@@ -451,10 +451,6 @@ impl Subgrid for LagrangeSubgridV2 {
                     if self.reweight2 {
                         value *= weightfun(x2[ix2]);
                     }
-                    // DEBUG
-                    // if value != 0. {
-                    // println!("{:?}: {}", (ix1, ix2, q2), value);
-                    // }
                     value
                 })
                 .sum()

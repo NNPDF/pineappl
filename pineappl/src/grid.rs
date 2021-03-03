@@ -338,7 +338,6 @@ impl Grid {
 
                 let lumi_entry = &self.lumi[k];
 
-                println!("--- {:?}", (i, j, k));
                 let mut value = if use_cache {
                     let new_q2_grid = subgrid.q2_grid();
                     let new_x1_grid = subgrid.x1_grid();
@@ -787,8 +786,6 @@ impl Grid {
             .map(|a| lumi_entry![*a, 11, 1.0])
             .collect();
 
-        assert_eq!(lumi, self.lumi);
-
         let mut subgrid_params = self.subgrid_params.clone();
         subgrid_params.set_reweight(false);
         subgrid_params.set_q2_bins(1);
@@ -823,7 +820,6 @@ impl Grid {
 
         // Iterate over RESULT = LOW
         for ((bin, _, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
-            println!("> low_lumi: {}", lumi[low_lumi].entry()[0].0);
             let mut array =
                 // Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), x_grid.len()), || 0.0);
                 Array3::<f64>::from_shape_simple_fn((1, x_grid.len(), 1), || 0.0);
@@ -878,10 +874,6 @@ impl Grid {
                                             * op1
                                             * op2;
 
-                                        assert_eq!(
-                                            alphas[q2_index].powi(order.alpha.try_into().unwrap()),
-                                            1.
-                                        );
                                         //if order.logxir > 0 {
                                         //    value *= (xir * xir)
                                         //        .ln()
@@ -898,11 +890,6 @@ impl Grid {
                                     }),
                                 );
 
-                            // test that eko_identity is diagonal
-                            if convoluted != 0. {
-                                assert_eq!(high_lumi.entry()[0].0, lumi[low_lumi].entry()[0].0);
-                            }
-                            assert!(array[[0, x1_low, x2_low]] == 0. || convoluted == 0.);
                             array[[0, x1_low, x2_low]] += factor * convoluted;
                         }
                     }
@@ -910,11 +897,6 @@ impl Grid {
             }
 
             if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
-                for (i, w) in array.slice(ndarray::s![0, .., 0]).iter().enumerate() {
-                    if w != &0. {
-                        println!("  x{}: {}", i, w);
-                    }
-                }
                 subgrid.grid = Some(array);
             } else {
                 panic!();
