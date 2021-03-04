@@ -17,8 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a distribution
 - added global `--silence_lhapdf` switch to suppress the output of LHAPDF
 - added new subgrid type: `LagrangeSparseGrid`, which can be generated using
-  the new subcommand `optimize` from existing grids; this data structure is
-  less memory intense and a bit faster
+  the new subcommand `optimize` from existing grids; this data structure uses
+  less memory and is a bit faster
+- added new subcommand `optimize`, which optimizes the size for each grid, both
+  in memory and when written as a file
+- added new subgrid type `LagrangeSubgridV2`, which allows for different `x1`
+  and `x2` limits, for example for DIS processes
+- added new switches to the subcommand `info`: `--get`, `--keys`, `--show`,
+  which lets one read a single or all key-values pairs of each grid file.
+- added new subcommand `set` which allows to modify the key-value storage
+- added new C functions `pineappl_grid_set_key_value` and
+  `pineappl_grid_optimize`
 
 ### Changed
 
@@ -29,10 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed the default maximum value of Q from 1 TeV to 10 TeV and the number of
   grid points in Q^2 from 30 to 40
 - Removed `Grid::bin_limit` and replaced it with `Grid::bin_info`
+- in the C API the type `uintptr_t` has been changed to the more common type
+  `size_t`
+- changed the default `LagrangeSubgrid` type from `V1` to `V2`. This subgrid
+  type supports DIS and allows to reconstruct static scales. If a static scale
+  has been detected, `optimize` can remove the interpolation in the Q^2
+  dimension.
 
 ### Fixed
 
-- the subcommand `diff`, did not show differences in per cent, although it
+- the subcommand `diff` did not show differences in per cent, although it
   printed a per cent sign. Now it shows relative differences, which is always
   useful, even when the differences are smaller than sub-per mille.
 

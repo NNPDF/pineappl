@@ -5,10 +5,11 @@ use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, Lagran
 use super::lumi::LumiEntry;
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::sparse_array3::SparseArray3;
+use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
+use git_version::git_version;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Dimension};
@@ -20,6 +21,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
+use std::ptr;
 use thiserror::Error;
 
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
@@ -133,7 +135,10 @@ impl Default for Mmv2 {
         Self {
             remapper: None,
             key_value_db: [
-                ("version".to_owned(), env!("CARGO_PKG_VERSION").to_owned()),
+                (
+                    "pineappl_gitversion".to_owned(),
+                    git_version!(args = ["--always", "--dirty", "--long", "--tags"]).to_owned(),
+                ),
                 // by default we assume there are protons in the initial state
                 ("initial_state_1".to_owned(), "2212".to_owned()),
                 ("initial_state_2".to_owned(), "2212".to_owned()),
@@ -204,13 +209,19 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || LagrangeSubgridV1::new(&subgrid_params).into(),
+                || {
+                    LagrangeSubgridV2::new(
+                        &subgrid_params,
+                        &ExtraSubgridParams::from(&subgrid_params),
+                    )
+                    .into()
+                },
             ),
             orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
-            more_members: MoreMembers::V1(Mmv1 {}),
+            more_members: MoreMembers::V2(Mmv2::default()),
         }
     }
 
@@ -228,19 +239,14 @@ impl Grid {
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
         subgrid_params: SubgridParams,
+        extra: ExtraSubgridParams,
         subgrid_type: &str,
     ) -> Result<Self, UnknownSubgrid> {
         let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
-            "LagrangeSubgrid" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
-            "LagrangeSubgridV2" => Box::new(|| {
-                let mut extra = ExtraSubgridParams::default();
-                extra.set_reweight2(subgrid_params.reweight());
-                extra.set_x2_bins(subgrid_params.x_bins());
-                extra.set_x2_max(subgrid_params.x_max());
-                extra.set_x2_min(subgrid_params.x_min());
-                extra.set_x2_order(subgrid_params.x_order());
-                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
-            }),
+            "LagrangeSubgrid" | "LagrangeSubgridV2" => {
+                Box::new(|| LagrangeSubgridV2::new(&subgrid_params, &extra).into())
+            }
+            "LagrangeSubgridV1" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
             "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
             "LagrangeSparseSubgrid" => {
                 Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
@@ -257,7 +263,7 @@ impl Grid {
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
-            more_members: MoreMembers::V1(Mmv1 {}),
+            more_members: MoreMembers::V2(Mmv2::default()),
         })
     }
 
@@ -287,7 +293,8 @@ impl Grid {
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_info().normalizations();
 
-        let pdf_cache = RefCell::new(FxHashMap::default());
+        let pdf_cache1 = RefCell::new(FxHashMap::default());
+        let pdf_cache2 = RefCell::new(FxHashMap::default());
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
@@ -295,6 +302,7 @@ impl Grid {
         let mut x1_grid = self.subgrids[[0, 0, 0]].x1_grid();
         let mut x2_grid = self.subgrids[[0, 0, 0]].x2_grid();
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+        let two_caches = !ptr::eq(&xfx1, &xfx2);
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
         xir_values.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
@@ -314,7 +322,8 @@ impl Grid {
         {
             // whenever the value `xif` changes we can clear the PDF cache
             if xif != last_xif {
-                pdf_cache.borrow_mut().clear();
+                pdf_cache1.borrow_mut().clear();
+                pdf_cache2.borrow_mut().clear();
                 last_xif = xif;
             }
 
@@ -338,7 +347,9 @@ impl Grid {
 
                 let lumi_entry = &self.lumi[k];
 
-                let mut value = if use_cache {
+                let mut value = if subgrid.is_empty() {
+                    0.0
+                } else if use_cache {
                     let new_q2_grid = subgrid.q2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
@@ -352,7 +363,8 @@ impl Grid {
                     if q2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
-                        pdf_cache.borrow_mut().clear();
+                        pdf_cache1.borrow_mut().clear();
+                        pdf_cache2.borrow_mut().clear();
                     }
 
                     subgrid.convolute(
@@ -360,28 +372,35 @@ impl Grid {
                         &x2_grid,
                         &q2_grid,
                         Left(&|ix1, ix2, iq2| {
-                            let mut pdf_cache = pdf_cache.borrow_mut();
+                            let mut pdf_cache1 = pdf_cache1.borrow_mut();
+                            let mut pdf_cache2 = pdf_cache2.borrow_mut();
                             let x1 = x1_grid[ix1];
                             let x2 = x2_grid[ix2];
                             let q2 = q2_grid[iq2];
-                            let q2f = xif.powi(2) * q2;
+                            let q2f = xif * xif * q2;
 
                             let mut lumi = 0.0;
 
                             for entry in lumi_entry.entry() {
-                                let xfx1 = *pdf_cache
+                                let xfx1 = *pdf_cache1
                                     .entry((entry.0, ix1, iq2))
                                     .or_insert_with(|| xfx1(entry.0, x1, q2f));
-                                let xfx2 = *pdf_cache
-                                    .entry((entry.1, ix2, iq2))
-                                    .or_insert_with(|| xfx2(entry.1, x2, q2f));
+                                let xfx2 = if two_caches {
+                                    *pdf_cache2
+                                        .entry((entry.1, ix2, iq2))
+                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                } else {
+                                    *pdf_cache1
+                                        .entry((entry.1, ix2, iq2))
+                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                };
                                 lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                             }
 
                             let mut alphas_cache = alphas_cache.borrow_mut();
                             let alphas = alphas_cache
                                 .entry(xir_values.len() * iq2 + xir_index)
-                                .or_insert_with(|| alphas(xir.powi(2) * q2));
+                                .or_insert_with(|| alphas(xir * xir * q2));
 
                             lumi *= alphas.powi(order.alphas.try_into().unwrap());
                             lumi
@@ -394,7 +413,7 @@ impl Grid {
                         &q2_grid,
                         Right(&|x1, x2, q2| {
                             let mut lumi = 0.0;
-                            let q2f = xif.powi(2) * q2;
+                            let q2f = xif * xif * q2;
 
                             for entry in lumi_entry.entry() {
                                 let xfx1 = xfx1(entry.0, x1, q2f);
@@ -402,18 +421,18 @@ impl Grid {
                                 lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                             }
 
-                            lumi *= alphas(xir.powi(2) * q2).powi(order.alphas.try_into().unwrap());
+                            lumi *= alphas(xir * xir * q2).powi(order.alphas.try_into().unwrap());
                             lumi
                         }),
                     )
                 };
 
                 if order.logxir > 0 {
-                    value *= xir.powi(2).ln().powi(order.logxir.try_into().unwrap());
+                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
                 }
 
                 if order.logxif > 0 {
-                    value *= xif.powi(2).ln().powi(order.logxif.try_into().unwrap());
+                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
                 }
 
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
@@ -583,7 +602,7 @@ impl Grid {
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid);
+                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, false);
             }
         }
 
@@ -598,7 +617,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || LagrangeSubgridV1::new(&self.subgrid_params).into(),
+            || self.subgrids[[0, 0, 0]].clone_empty(),
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
@@ -646,7 +665,7 @@ impl Grid {
 
     /// Returns the subgrid with the specified indices `order`, `bin`, and `lumi`.
     #[must_use]
-    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &dyn Subgrid {
+    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &SubgridEnum {
         &self.subgrids[[order, bin, lumi]]
     }
 
@@ -685,7 +704,7 @@ impl Grid {
 
     /// Returns all information about the bins in this grid.
     #[must_use]
-    pub fn bin_info(&self) -> BinInfo {
+    pub const fn bin_info(&self) -> BinInfo {
         BinInfo::new(
             &self.bin_limits,
             match &self.more_members {
@@ -698,19 +717,102 @@ impl Grid {
     /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
     /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
     pub fn optimize(&mut self) {
+        if self
+            .key_values()
+            .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
+        {
+            self.symmetrize();
+        }
+
         for subgrid in self.subgrids.iter_mut() {
             match subgrid {
                 SubgridEnum::LagrangeSubgridV1(grid) => {
                     let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
                     mem::swap(subgrid, &mut new_subgrid);
                 }
-                SubgridEnum::LagrangeSubgridV2(_) => todo!(),
-                SubgridEnum::LagrangeSparseSubgridV1(_) => {
+                SubgridEnum::LagrangeSubgridV2(grid) => {
+                    let mut new_subgrid = ReadOnlySparseSubgridV1::from(&*grid).into();
+                    mem::swap(subgrid, &mut new_subgrid);
+                }
+                SubgridEnum::LagrangeSparseSubgridV1(_)
+                | SubgridEnum::ReadOnlySparseSubgridV1(_) => {
                     // nothing to optimize here
                 }
                 SubgridEnum::NtupleSubgridV1(_) => todo!(),
             }
         }
+    }
+
+    fn symmetrize(&mut self) {
+        let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+
+        while let Some(index) = indices.pop() {
+            let lumi_entry = &self.lumi[index];
+
+            if *lumi_entry == lumi_entry.transpose() {
+                pairs.push((index, index));
+            } else {
+                let (j, &other_index) = indices
+                    .iter()
+                    .enumerate()
+                    .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
+                    .unwrap();
+
+                pairs.push((index, other_index));
+                indices.remove(j);
+            }
+        }
+
+        let i_size = self.orders.len();
+        let j_size = self.bin_limits.bins();
+        let k_size = self.lumi.len();
+
+        let subgrids = mem::replace(
+            &mut self.subgrids,
+            Array3::from_shape_vec((0, 0, 0), vec![]).unwrap(),
+        );
+        let mut subgrids = Array3::from_shape_vec(
+            (i_size, j_size, k_size),
+            subgrids.into_raw_vec().into_iter().map(Some).collect(),
+        )
+        .unwrap();
+
+        for i in 0..i_size {
+            for j in 0..j_size {
+                for &(k1, k2) in &pairs {
+                    if k1 == k2 {
+                        subgrids[[i, j, k1]].as_mut().unwrap().symmetrize();
+                    } else {
+                        let subgrid = mem::replace(&mut subgrids[[i, j, k2]], None);
+                        subgrids[[i, j, k1]]
+                            .as_mut()
+                            .unwrap()
+                            .merge(&mut subgrid.unwrap(), true);
+                    }
+                }
+            }
+        }
+
+        self.subgrids = Array3::from_shape_vec(
+            (i_size, j_size, pairs.len()),
+            subgrids
+                .into_raw_vec()
+                .into_iter()
+                .filter_map(|s| s)
+                .collect(),
+        )
+        .unwrap();
+
+        self.lumi = pairs
+            .iter()
+            .map(|(index, _)| self.lumi[*index].clone())
+            .collect();
+    }
+
+    /// Upgrades the internal data structures to their latest versions.
+    pub fn upgrade(&mut self) {
+        self.more_members.upgrade();
     }
 
     /// Returns a map with key-value pairs, if there are any stored in this grid.
@@ -719,6 +821,17 @@ impl Grid {
         match &self.more_members {
             MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
             MoreMembers::V1(_) => None,
+        }
+    }
+
+    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    #[must_use]
+    pub fn key_values_mut(&mut self) -> &mut HashMap<String, String> {
+        self.more_members.upgrade();
+
+        match &mut self.more_members {
+            MoreMembers::V1(_) => unreachable!(),
+            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
         }
     }
 
@@ -1013,6 +1126,7 @@ mod tests {
             vec![],
             vec![],
             SubgridParams::default(),
+            ExtraSubgridParams::default(),
             &subgrid_type,
         );
 

@@ -2,11 +2,29 @@ language = "C"
 
 ############## Options for Wrapping the Contents of the Header #################
 
+header = """/*
+ * PineAPPL - PDF-independent binning of phase space weights
+ * Copyright (C) 2020-2021  Christopher Schwan
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */"""
 include_guard = "PINEAPPL_H"
 include_version = true
-sys_includes = ["stdbool.h", "stdint.h"]
+sys_includes = ["stdbool.h", "stddef.h", "stdint.h"]
 no_includes = true
 cpp_compat = true
+usize_is_size_t = true
 
 ############################## Codegen Options ##################################
 
@@ -14,6 +32,7 @@ cpp_compat = true
 "Grid" = "pineappl_grid"
 "Lumi" = "pineappl_lumi"
 "KeyVal" = "pineappl_keyval"
+"SubGrid" = "pineappl_subgrid"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 

@@ -10,7 +10,7 @@ use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::mem;
 
-fn weightfun(x: f64) -> f64 {
+pub(crate) fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
@@ -135,23 +135,23 @@ impl Subgrid for LagrangeSubgridV1 {
         _: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
-        if let Some(self_grid) = &self.grid {
+        self.grid.as_ref().map_or(0.0, |grid| {
             let lumi = lumi.left().unwrap();
 
-            self_grid
-                .indexed_iter()
-                .filter(|(_, &value)| value != 0.0)
+            grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
-                    let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
-                    if self.reweight {
-                        value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
+                    if sigma == 0.0 {
+                        0.0
+                    } else {
+                        let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
+                        if self.reweight {
+                            value *= weightfun(x1[ix1]) * weightfun(x2[ix2]);
+                        }
+                        value
                     }
-                    value
                 })
                 .sum()
-        } else {
-            0.0
-        }
+        })
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -240,7 +240,7 @@ impl Subgrid for LagrangeSubgridV1 {
         self.grid.is_none()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::LagrangeSubgridV1(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
@@ -256,13 +256,25 @@ impl Subgrid for LagrangeSubgridV1 {
 
                     let self_grid = self.grid.as_mut().unwrap();
 
-                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                        self_grid[[i + offset, j, k]] += value;
+                    if transpose {
+                        for ((i, k, j), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
                     }
                 } else {
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
+
+                    if transpose {
+                        if let Some(grid) = &mut self.grid {
+                            grid.swap_axes(1, 2);
+                        }
+                    }
                 }
             }
         } else {
@@ -325,19 +337,52 @@ impl Subgrid for LagrangeSubgridV1 {
             self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
         });
     }
+
+    fn symmetrize(&mut self) {
+        if let Some(grid) = self.grid.as_mut() {
+            let (i_size, j_size, k_size) = grid.dim();
+
+            for i in 0..i_size {
+                for j in 0..j_size {
+                    for k in j + 1..k_size {
+                        grid[[i, j, k]] += grid[[i, k, j]];
+                        grid[[i, k, j]] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            grid: None,
+            ntau: self.ntau,
+            ny: self.ny,
+            yorder: self.yorder,
+            tauorder: self.tauorder,
+            itaumin: 0,
+            itaumax: 0,
+            reweight: self.reweight,
+            ymin: self.ymin,
+            ymax: self.ymax,
+            taumin: self.taumin,
+            taumax: self.taumax,
+        }
+        .into()
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation.
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
     pub(crate) grid: Option<Array3<f64>>,
-    ntau: usize,
-    ny1: usize,
-    ny2: usize,
+    pub(crate) ntau: usize,
+    pub(crate) ny1: usize,
+    pub(crate) ny2: usize,
     y1order: usize,
     y2order: usize,
     tauorder: usize,
-    itaumin: usize,
+    pub(crate) itaumin: usize,
     itaumax: usize,
     reweight1: bool,
     reweight2: bool,
@@ -347,6 +392,7 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
+    pub(crate) static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
@@ -371,6 +417,7 @@ impl LagrangeSubgridV2 {
             y2max: fy(extra_params.x2_min()),
             taumin: ftau(subgrid_params.q2_min()),
             taumax: ftau(subgrid_params.q2_max()),
+            static_q2: 0.0,
         }
     }
 
@@ -437,32 +484,38 @@ impl Subgrid for LagrangeSubgridV2 {
         _: &[f64],
         lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
     ) -> f64 {
-        if let Some(self_grid) = &self.grid {
+        self.grid.as_ref().map_or(0.0, |grid| {
             let lumi = lumi.left().unwrap();
 
-            self_grid
-                .indexed_iter()
-                .filter(|(_, &value)| value != 0.0)
+            grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
-                    let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
-                    if self.reweight1 {
-                        value *= weightfun(x1[ix1]);
+                    if sigma == 0.0 {
+                        0.0
+                    } else {
+                        let mut value = sigma * lumi(ix1, ix2, q2 + self.itaumin);
+                        if self.reweight1 {
+                            value *= weightfun(x1[ix1]);
+                        }
+                        if self.reweight2 {
+                            value *= weightfun(x2[ix2]);
+                        }
+                        value
                     }
-                    if self.reweight2 {
-                        value *= weightfun(x2[ix2]);
-                    }
-                    value
                 })
                 .sum()
-        } else {
-            0.0
-        }
+        })
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
         let y1 = fy(ntuple.x1);
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
+
+        if self.static_q2 == 0.0 {
+            self.static_q2 = ntuple.q2;
+        } else if (self.static_q2 != -1.0) && (self.static_q2 != ntuple.q2) {
+            self.static_q2 = -1.0;
+        }
 
         if (y2 < self.y2min)
             || (y2 > self.y2max)
@@ -553,7 +606,7 @@ impl Subgrid for LagrangeSubgridV2 {
         self.grid.is_none()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
@@ -567,15 +620,32 @@ impl Subgrid for LagrangeSubgridV2 {
                         self.increase_tau(new_itaumin, new_itaumax);
                     }
 
+                    if (other_grid.static_q2 == -1.0) || (self.static_q2 != other_grid.static_q2) {
+                        self.static_q2 = -1.0;
+                    }
+
                     let self_grid = self.grid.as_mut().unwrap();
 
-                    for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                        self_grid[[i + offset, j, k]] += value;
+                    if transpose {
+                        for ((i, k, j), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
+                            self_grid[[i + offset, j, k]] += value;
+                        }
                     }
                 } else {
                     self.grid = other_grid.grid.take();
                     self.itaumin = other_grid.itaumin;
                     self.itaumax = other_grid.itaumax;
+                    self.static_q2 = other_grid.static_q2;
+
+                    if transpose {
+                        if let Some(grid) = &mut self.grid {
+                            grid.swap_axes(1, 2);
+                        }
+                    }
                 }
             }
         } else {
@@ -637,6 +707,45 @@ impl Subgrid for LagrangeSubgridV2 {
             let ix2 = index % self_ny2;
             self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
         });
+    }
+
+    fn symmetrize(&mut self) {
+        if let Some(grid) = self.grid.as_mut() {
+            let (i_size, j_size, k_size) = grid.dim();
+
+            for i in 0..i_size {
+                for j in 0..j_size {
+                    for k in j + 1..k_size {
+                        grid[[i, j, k]] += grid[[i, k, j]];
+                        grid[[i, k, j]] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            grid: None,
+            ntau: self.ntau,
+            ny1: self.ny1,
+            ny2: self.ny2,
+            y1order: self.y1order,
+            y2order: self.y2order,
+            tauorder: self.tauorder,
+            itaumin: 0,
+            itaumax: 0,
+            reweight1: self.reweight1,
+            reweight2: self.reweight2,
+            y1min: self.y1min,
+            y1max: self.y1max,
+            y2min: self.y2min,
+            y2max: self.y2max,
+            taumin: self.taumin,
+            taumax: self.taumax,
+            static_q2: 0.0,
+        }
+        .into()
     }
 }
 
@@ -789,15 +898,21 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum) {
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::LagrangeSparseSubgridV1(other_grid) = other {
-            if self.array.is_empty() {
+            if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
                 // TODO: we need much more checks here if there subgrids are compatible at all
 
-                for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                    self.array[[i, j, k]] += value;
+                if transpose {
+                    for ((i, k, j), value) in other_grid.array.indexed_iter() {
+                        self.array[[i, j, k]] += value;
+                    }
+                } else {
+                    for ((i, j, k), value) in other_grid.array.indexed_iter() {
+                        self.array[[i, j, k]] += value;
+                    }
                 }
             }
         } else {
@@ -853,6 +968,35 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             .for_each(|(index, &value)| {
                 self.array[[q2_slice, index / self.ny, index % self.ny]] = value;
             });
+    }
+
+    fn symmetrize(&mut self) {
+        let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
+
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+            new_array[[i, j, k]] = sigma;
+        }
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
+            new_array[[i, k, j]] += sigma;
+        }
+
+        mem::swap(&mut self.array, &mut new_array);
+    }
+
+    fn clone_empty(&self) -> SubgridEnum {
+        Self {
+            array: SparseArray3::new(self.ntau, self.ny, self.ny),
+            ntau: self.ntau,
+            ny: self.ny,
+            yorder: self.yorder,
+            tauorder: self.tauorder,
+            reweight: self.reweight,
+            ymin: self.ymin,
+            ymax: self.ymax,
+            taumin: self.taumin,
+            taumax: self.taumax,
+        }
+        .into()
     }
 }
 
@@ -1002,7 +1146,7 @@ mod tests {
         );
 
         // merge filled grid into empty one
-        grid2.merge(&mut grid1.into());
+        grid2.merge(&mut grid1.into(), false);
         assert!(!grid2.is_empty());
 
         let merged = grid2.convolute(
@@ -1039,7 +1183,7 @@ mod tests {
             weight: 1.0,
         });
 
-        grid2.merge(&mut grid3.into());
+        grid2.merge(&mut grid3.into(), false);
 
         let merged = grid2.convolute(
             &x1,
@@ -1181,7 +1325,7 @@ mod tests {
         let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
-        dense.merge(&mut sparse.into());
+        dense.merge(&mut sparse.into(), false);
     }
 
     #[test]
@@ -1190,7 +1334,7 @@ mod tests {
         let mut one = LagrangeSubgridV1::new(&SubgridParams::default());
         let two = LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
-        one.merge(&mut two.into());
+        one.merge(&mut two.into(), false);
     }
 
     #[test]
@@ -1200,7 +1344,7 @@ mod tests {
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let one = LagrangeSubgridV1::new(&SubgridParams::default());
 
-        two.merge(&mut one.into());
+        two.merge(&mut one.into(), false);
     }
 
     #[test]
@@ -1210,7 +1354,7 @@ mod tests {
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
 
-        dense.merge(&mut sparse.into());
+        dense.merge(&mut sparse.into(), false);
     }
 
     #[test]
@@ -1219,7 +1363,7 @@ mod tests {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
         let dense = LagrangeSubgridV1::new(&SubgridParams::default());
 
-        sparse.merge(&mut dense.into());
+        sparse.merge(&mut dense.into(), false);
     }
 
     #[test]
@@ -1229,7 +1373,7 @@ mod tests {
         let dense =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
-        sparse.merge(&mut dense.into());
+        sparse.merge(&mut dense.into(), false);
     }
 
     #[test]

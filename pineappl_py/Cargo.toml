@@ -18,7 +18,7 @@ name = "pineappl"
 crate-type = ["cdylib"]
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.3.0" }
+pineappl = { path = "../pineappl", version = "0.4.0-alpha" }
 lhapdf = "0.1.8"
 itertools = "0.9"
 

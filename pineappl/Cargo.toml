@@ -1,6 +1,6 @@
 [package]
 name = "pineappl"
-version = "0.3.0"
+version = "0.4.0-alpha"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -17,6 +17,7 @@ bincode = "1.0"
 either = "1.6"
 enum_dispatch = "0.3"
 float-cmp = "0.8"
+git-version = "0.3"
 itertools = "0.9"
 lz-fear = "0.1"
 ndarray = { features = ["serde"], version = "0.13.1" }

@@ -11,6 +11,8 @@ mod optimize;
 mod orders;
 mod pdf_uncertainty;
 mod remap;
+mod set;
+mod subgrids;
 
 use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
@@ -138,6 +140,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +required =>
                 (@arg qcd: --qcd "For each order print a list of the largest QCD order")
                 (@arg ew: --ew "For each order print a list of the largest EW order")
+                (@arg get: --get +takes_value value_name("key") "Gets an internal key-value pair")
+                (@arg keys: --keys "Show all keys stored in the grid")
+                (@arg show: --show "Shows all key-value pairs stored in the grid")
             )
         )
         (@subcommand luminosity =>
@@ -150,7 +155,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: ... +required "Path(s) of the files that should be merged")
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
             (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
-                number_of_values(5) "Scales all grids with order-dependent factors")
+                number_of_values(5) value_names(&["alphas", "alpha", "logxir", "logxif", "global"])
+                "Scales all grids with order-dependent factors")
         )
         (@subcommand optimize =>
             (about: "Optimizes the internal data structure to minimize memory usage")
@@ -180,6 +186,26 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg remapping: +required "Remapping string")
             (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
                 "Normalization factor in addition to the given bin widths")
+            (@arg ignore_obs_norm: --ignore_obs_norm +use_delimiter
+                "Ignore the given observables for differential normalization")
+        )
+        (@subcommand set =>
+            (about: "Modifies the internal key-value storage")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path of the modified PineAPPL file")
+            (@group mode +multiple =>
+                (@arg entry: --entry +allow_hyphen_values number_of_values(2)
+                    value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
+                (@arg entry_from_file: --entry_from_file number_of_values(2)
+                    value_names(&["key", "file"]) +multiple
+                    "Sets an internal key-value pair, with value being read from a file")
+                (@arg delete: --delete value_name("key") +multiple
+                    "Deletes an internal key-value pair")
+            )
+        )
+        (@subcommand subgrids =>
+            (about: "Print information about the internal subgrid types")
+            (@arg input: +required "Path to the input grid")
         )
     )
     .get_matches();
@@ -232,16 +258,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(matches) = matches.subcommand_matches("info") {
         let input = matches.value_of("input").unwrap();
 
-        info::subcommand(
-            input,
-            if matches.is_present("qcd") {
-                "qcd"
-            } else if matches.is_present("ew") {
-                "ew"
-            } else {
-                unreachable!()
-            },
-        )?;
+        if matches.is_present("ew") || matches.is_present("qcd") {
+            info::subcommand_qcd_ew(
+                input,
+                if matches.is_present("ew") {
+                    "ew"
+                } else {
+                    "qcd"
+                },
+            )?;
+        } else if matches.is_present("get") {
+            info::subcommand_get(input, matches.value_of("get").unwrap())?;
+        } else if matches.is_present("keys") {
+            info::subcommand_keys(input)?;
+        } else if matches.is_present("show") {
+            info::subcommand_show(input)?;
+        } else {
+            unreachable!();
+        }
     } else if let Some(matches) = matches.subcommand_matches("luminosity") {
         let input = matches.value_of("input").unwrap();
 
@@ -299,8 +333,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         let output = matches.value_of("output").unwrap();
         let remapping = matches.value_of("remapping").unwrap();
         let norm = matches.value_of("norm").unwrap().parse()?;
+        let ignore_obs_norm: Vec<_> = matches
+            .values_of("ignore_obs_norm")
+            .map_or(vec![], |values| values.map(str::parse::<usize>).collect())
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
-        remap::subcommand(input, output, remapping, norm)?;
+        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm)?;
+    } else if let Some(matches) = matches.subcommand_matches("set") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        let entries: Vec<_> = matches.values_of("entry").map_or(vec![], Iterator::collect);
+        let entries_from_file: Vec<_> = matches
+            .values_of("entry_from_file")
+            .map_or(vec![], Iterator::collect);
+        let deletes: Vec<_> = matches
+            .values_of("delete")
+            .map_or(vec![], Iterator::collect);
+
+        set::subcommand(input, output, &entries, &entries_from_file, &deletes)?;
+    } else if let Some(matches) = matches.subcommand_matches("subgrids") {
+        let input = matches.value_of("input").unwrap();
+
+        subgrids::subcommand(input)?;
     }
 
     Ok(())

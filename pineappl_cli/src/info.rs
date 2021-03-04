@@ -4,7 +4,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-pub fn subcommand(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
+pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
     let grid = Grid::read(BufReader::new(File::open(input)?))?;
 
     let mut sorted_grid_orders: Vec<_> = grid
@@ -36,6 +36,60 @@ pub fn subcommand(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
         .join(",");
 
     println!("{}", orders);
+
+    Ok(())
+}
+
+pub fn subcommand_get(input: &str, key: &str) -> Result<(), Box<dyn Error>> {
+    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    grid.upgrade();
+
+    if let Some(key_values) = grid.key_values() {
+        if let Some(value) = key_values.get(key) {
+            println!("{}", value);
+        }
+    } else {
+        unreachable!();
+    }
+
+    Ok(())
+}
+
+pub fn subcommand_keys(input: &str) -> Result<(), Box<dyn Error>> {
+    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    grid.upgrade();
+
+    if let Some(key_values) = grid.key_values() {
+        let mut vector = key_values.iter().collect::<Vec<_>>();
+        vector.sort();
+
+        for (key, _) in &vector {
+            println!("{}", key);
+        }
+    } else {
+        unreachable!();
+    }
+
+    Ok(())
+}
+
+pub fn subcommand_show(input: &str) -> Result<(), Box<dyn Error>> {
+    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+
+    grid.upgrade();
+
+    if let Some(key_values) = grid.key_values() {
+        let mut vector = key_values.iter().collect::<Vec<_>>();
+        vector.sort();
+
+        for (key, value) in &vector {
+            println!("{}: {}", key, value);
+        }
+    } else {
+        unreachable!();
+    }
 
     Ok(())
 }

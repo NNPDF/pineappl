@@ -3,6 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,8 @@ pub enum SubgridEnum {
     LagrangeSparseSubgridV1,
     /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
     LagrangeSubgridV2,
+    /// Read-only sparse subgrid with possibly different x1 and x2 bins.
+    ReadOnlySparseSubgridV1,
 }
 
 /// Trait each subgrid must implement.
@@ -57,7 +60,7 @@ pub trait Subgrid {
     fn is_empty(&self) -> bool;
 
     /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut SubgridEnum);
+    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
@@ -76,6 +79,13 @@ pub trait Subgrid {
 
     /// Writes into subgrid.
     fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
+
+    /// Assumes that the initial states for this grid are the same and uses this to optimize the
+    /// grid by getting rid of almost half of the entries.
+    fn symmetrize(&mut self);
+
+    /// Returns an empty copy of the current subgrid.
+    fn clone_empty(&self) -> SubgridEnum;
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
@@ -227,6 +237,18 @@ impl Default for ExtraSubgridParams {
             x2_max: 1.0,
             x2_min: 2e-7,
             x2_order: 3,
+        }
+    }
+}
+
+impl From<&SubgridParams> for ExtraSubgridParams {
+    fn from(subgrid_params: &SubgridParams) -> Self {
+        Self {
+            reweight2: subgrid_params.reweight(),
+            x2_bins: subgrid_params.x_bins(),
+            x2_max: subgrid_params.x_max(),
+            x2_min: subgrid_params.x_min(),
+            x2_order: subgrid_params.x_order(),
         }
     }
 }

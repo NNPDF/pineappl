@@ -1,8 +1,9 @@
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
+use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi_entry;
-use pineappl::subgrid::SubgridParams;
+use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
@@ -86,6 +87,7 @@ fn fill_drell_yan_lo_grid(
     let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
     let mut subgrid_params = SubgridParams::default();
+    let mut extra = ExtraSubgridParams::default();
 
     subgrid_params.set_q2_bins(30);
     subgrid_params.set_q2_max(1e6);
@@ -96,9 +98,20 @@ fn fill_drell_yan_lo_grid(
     subgrid_params.set_x_max(1.0);
     subgrid_params.set_x_min(2e-7);
     subgrid_params.set_x_order(3);
+    extra.set_x2_bins(50);
+    extra.set_x2_max(1.0);
+    extra.set_x2_min(2e-7);
+    extra.set_x2_order(3);
 
     // create the PineAPPL grid
-    let mut grid = Grid::with_subgrid_type(lumi, orders, bin_limits, subgrid_params, subgrid_type)?;
+    let mut grid = Grid::with_subgrid_type(
+        lumi,
+        orders,
+        bin_limits,
+        subgrid_params,
+        extra,
+        subgrid_type,
+    )?;
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;
@@ -212,11 +225,50 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     // optimize the grid
     grid.optimize();
 
-    // check that the results are still the same
+    // make a two-dimensional distribution out of it
+    grid.set_remapper(BinRemapper::new(
+        vec![0.1; 24],
+        (0..24)
+            .flat_map(|index| {
+                let index = f64::from(index);
+                vec![(60.0, 120.0), (index * 0.1, (index + 1.0) * 0.1)]
+            })
+            .collect::<Vec<(f64, f64)>>(),
+    )?)?;
+
     let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
 
+    // results are slightly different because of the static scale detection - the interpolation
+    // error in the Q^2 dimension is removed
+    let reference = vec![
+        5.2943850298637385e-1,
+        5.4077949153675209e-1,
+        5.6969021381443985e-1,
+        5.0282932188764318e-1,
+        4.9170002525140877e-1,
+        4.9468018558433052e-1,
+        4.918898576307103e-1,
+        4.4863432083118493e-1,
+        4.5078099648970371e-1,
+        4.1062102518688581e-1,
+        3.602583146986339e-1,
+        3.2757945699703028e-1,
+        2.7928892704491243e-1,
+        2.4985464964922635e-1,
+        2.1080278995465099e-1,
+        1.7799409692247298e-1,
+        1.5411880069615053e-1,
+        1.1957881962307169e-1,
+        9.3993565751843353e-2,
+        6.7190377322845676e-2,
+        5.1366217946639786e-2,
+        3.5716174780312381e-2,
+        2.0672525560241309e-2,
+        7.3004155738883077e-3,
+    ];
+
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert!(approx_eq!(f64, *result, *reference, ulps = 24));
     }
 
     Ok(())
