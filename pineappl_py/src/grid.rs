@@ -64,10 +64,6 @@ impl PyGrid {
         self.grid.set_key_value(key, value);
     }
 
-    pub fn subgrid_q2s(&self, order: usize, bin: usize, lumi: usize) -> Vec<f64> {
-        self.grid.subgrid(order, bin, lumi).q2_grid()
-    }
-
     pub fn set_subgrid(
         &mut self,
         order: usize,
