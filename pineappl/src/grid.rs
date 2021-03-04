@@ -967,11 +967,11 @@ impl Grid {
         for ((_, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
             let mut array = SparseArray3::<f64>::new(1, x1_len, x2_len);
 
-            let pid_low1_idx = pids1
+            let eko_pid_low1_idx = pids1
                 .iter()
                 .position(|pid| *pid == lumi[low_lumi].entry()[0].0)
                 .unwrap();
-            let pid_low2_idx = pids2
+            let eko_pid_low2_idx = pids2
                 .iter()
                 .position(|pid| *pid == lumi[low_lumi].entry()[0].1)
                 .unwrap();
@@ -1004,19 +1004,15 @@ impl Grid {
                         if pid_high1 == &0 || pid_high2 == &0 {
                             continue;
                         }
-                        let pid_high1_idx = pids1.iter().position(|pid| pid == pid_high1).unwrap();
-                        let pid_high2_idx = pids2.iter().position(|pid| pid == pid_high2).unwrap();
+                        let eko_pid_high1_idx =
+                            pids1.iter().position(|pid| pid == pid_high1).unwrap();
+                        let eko_pid_high2_idx =
+                            pids2.iter().position(|pid| pid == pid_high2).unwrap();
 
                         // Iterate over RESULT = LOW
+                        // Note that the grid iterated is intended to be the eko one, since
+                        // x1low_grid is already set to the grid passed as input
                         for (x1_low, x2_low) in (0..x1_len).cartesian_product(0..x2_len) {
-                            let eko_x1_low_idx = x_grid
-                                .iter()
-                                .position(|x| x == &x1low_grid[x1_low])
-                                .unwrap();
-                            let eko_x2_low_idx = x_grid
-                                .iter()
-                                .position(|x| x == &x2low_grid[x2_low])
-                                .unwrap();
                             // Iterate over SELF = HIGH
                             let convoluted = subgrid_high.convolute(
                                 &x1high_grid,
@@ -1039,25 +1035,19 @@ impl Grid {
                                             eprintln!("{}: {}", q2_index, q2high_grid[q2_index]);
                                             panic!();
                                         });
-                                    // assert_eq!(eko_x1_high_idx + x1_high_idx, x_grid.len() - 1);
-                                    // assert_eq!(eko_x1_low_idx + x1_low, x_grid.len() - 1);
-                                    // assert_eq!(eko_x2_high_idx + x2_high_idx, x_grid.len() - 1);
-                                    // assert_eq!(eko_x2_low_idx + x2_low_idx, x_grid.len() - 1);
                                     let op1 = if has_pdf1 {
-                                        operator[eko_q2_index][pid_high1_idx]
-                                            [x_grid.len() - 1 - x1_high_idx][pid_low1_idx]
-                                            [x_grid.len() - 1 - x1_low]
+                                        operator[eko_q2_index][eko_pid_high1_idx][eko_x1_high_idx]
+                                            [eko_pid_low1_idx][x1_low]
                                     } else {
                                         1.
                                     };
                                     let op2 = if has_pdf2 {
-                                        operator[eko_q2_index][pid_high2_idx][eko_x2_high_idx]
-                                            [pid_low2_idx][eko_x2_low_idx]
+                                        operator[eko_q2_index][eko_pid_high2_idx][eko_x2_high_idx]
+                                            [eko_pid_low2_idx][x2_low]
                                     } else {
                                         1.
                                     };
-                                    assert_eq!(op2, 1.);
-                                    // let mut value = alphas[q2_index]
+
                                     let value = alphas[eko_q2_index]
                                         .powi(order.alphas.try_into().unwrap())
                                         * op1
