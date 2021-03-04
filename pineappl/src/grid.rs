@@ -1039,9 +1039,14 @@ impl Grid {
                                             eprintln!("{}: {}", q2_index, q2high_grid[q2_index]);
                                             panic!();
                                         });
+                                    // assert_eq!(eko_x1_high_idx + x1_high_idx, x_grid.len() - 1);
+                                    // assert_eq!(eko_x1_low_idx + x1_low, x_grid.len() - 1);
+                                    // assert_eq!(eko_x2_high_idx + x2_high_idx, x_grid.len() - 1);
+                                    // assert_eq!(eko_x2_low_idx + x2_low_idx, x_grid.len() - 1);
                                     let op1 = if has_pdf1 {
-                                        operator[eko_q2_index][pid_high1_idx][eko_x1_high_idx]
-                                            [pid_low1_idx][eko_x1_low_idx]
+                                        operator[eko_q2_index][pid_high1_idx]
+                                            [x_grid.len() - 1 - x1_high_idx][pid_low1_idx]
+                                            [x_grid.len() - 1 - x1_low]
                                     } else {
                                         1.
                                     };
