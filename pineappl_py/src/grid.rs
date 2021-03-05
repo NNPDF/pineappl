@@ -6,6 +6,8 @@ use super::lagrange_subgrid::PyLagrangeSubgridV2;
 use super::lumi::PyLumiEntry;
 use super::subgrid::PySubgridParams;
 
+use ndarray::{Array, Ix5};
+
 use std::fs::File;
 use std::io::BufReader;
 
@@ -158,11 +160,21 @@ impl PyGrid {
         pids: Vec<i32>,
         x_grid: Vec<f64>,
         q2_grid: Vec<f64>,
-        operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
+        operator_flattened: Vec<f64>,
+        operator_shape: Vec<usize>,
     ) -> Self {
+        let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let evolved_grid = self
             .grid
-            .convolute_eko(q2, &alphas, (1., 1.), &pids, x_grid, q2_grid, operator)
+            .convolute_eko(
+                q2,
+                &alphas,
+                (1., 1.),
+                &pids,
+                x_grid,
+                q2_grid,
+                operator.into_dimensionality::<Ix5>().unwrap(),
+            )
             .unwrap();
         Self::new(evolved_grid)
     }

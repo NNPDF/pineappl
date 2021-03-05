@@ -20,6 +20,7 @@ crate-type = ["cdylib"]
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.4.0-alpha" }
 lhapdf = "0.1.8"
+ndarray = "0.13.1"
 itertools = "0.9"
 
 [dependencies.pyo3]

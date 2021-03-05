@@ -13,7 +13,7 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
-use ndarray::{Array3, Dimension};
+use ndarray::{Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -888,7 +888,7 @@ impl Grid {
         pids: &[i32],
         x_grid: Vec<f64>,
         q2_grid: Vec<f64>,
-        operator: Vec<Vec<Vec<Vec<Vec<f64>>>>>,
+        operator: Array5<f64>,
     ) -> Option<Self> {
         // let EkoInfo { x_grid, q2_grid } = if let Some(eko_info) = self.eko_info() {
         // eko_info
@@ -1036,14 +1036,24 @@ impl Grid {
                                             panic!();
                                         });
                                     let op1 = if has_pdf1 {
-                                        operator[eko_q2_index][eko_pid_high1_idx][eko_x1_high_idx]
-                                            [eko_pid_low1_idx][x1_low]
+                                        operator[[
+                                            eko_q2_index,
+                                            eko_pid_high1_idx,
+                                            eko_x1_high_idx,
+                                            eko_pid_low1_idx,
+                                            x1_low,
+                                        ]]
                                     } else {
                                         1.
                                     };
                                     let op2 = if has_pdf2 {
-                                        operator[eko_q2_index][eko_pid_high2_idx][eko_x2_high_idx]
-                                            [eko_pid_low2_idx][x2_low]
+                                        operator[[
+                                            eko_q2_index,
+                                            eko_pid_high2_idx,
+                                            eko_x2_high_idx,
+                                            eko_pid_low2_idx,
+                                            x2_low,
+                                        ]]
                                     } else {
                                         1.
                                     };
