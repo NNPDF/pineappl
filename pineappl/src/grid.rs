@@ -11,6 +11,7 @@ use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
 use float_cmp::approx_eq;
 use git_version::git_version;
+use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Array5, Dimension};
@@ -965,6 +966,30 @@ impl Grid {
         };
 
         // TODO: put original perturbative orders and order of the EKO inside new metadata
+        fn compute_eko_high_index(
+            eko_grid: &Vec<f64>,
+            high_grid: &Vec<f64>,
+        ) -> HashMap<usize, usize> {
+            let mut eko_map = HashMap::new();
+            for (i, el) in high_grid.iter().enumerate() {
+                let eko_i = eko_grid.iter().position(|x| x == el).unwrap_or_else(|| {
+                    // panic!("while looking for: '{}' in:\n{:?}", el, eko_grid)
+                    // TODO: we're slicing q2grid in eko, to skip the full operator calculation so
+                    // it's returning a stupid index, just to say that is not computed
+                    999999
+                });
+                eko_map.insert(i, eko_i);
+            }
+            eko_map
+        }
+
+        let bar = ProgressBar::new(
+            (result.subgrids.iter().len() * self.orders.iter().len() * self.lumi.iter().len())
+                as u64,
+        );
+        bar.set_style(ProgressStyle::default_bar().template(
+            "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} - ETA: {eta_precise} {msg}",
+        ));
 
         // println!("{:?}, {:?}", pids1, pids2);
 
@@ -990,10 +1015,15 @@ impl Grid {
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
                     continue;
                 }
+                let mut eko_mapping_done = false;
+                let mut eko_x1_high_idx = HashMap::new();
+                let mut eko_x2_high_idx = HashMap::new();
+                let mut eko_q2_high_idx = HashMap::new();
 
                 // Iterate over SELF = HIGH
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     // println!("ll: {}, o: {}, hl: {}", low_lumi, order_idx, high_lumi_idx);
+                    bar.inc(1);
 
                     let subgrid_high = &self.subgrids[[order_idx, bin, high_lumi_idx]];
                     if subgrid_high.is_empty() {
@@ -1002,6 +1032,16 @@ impl Grid {
                     let x1high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].x1_grid();
                     let x2high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].x2_grid();
                     let q2high_grid = self.subgrids[[order_idx, bin, high_lumi_idx]].q2_grid();
+
+                    // TODO: for the time being compute the mapping only for the first non-empty
+                    // subgrid, assuming that from that on the interpolation grids are not going to
+                    // change
+                    if !eko_mapping_done {
+                        eko_x1_high_idx = compute_eko_high_index(&x_grid, &x1high_grid);
+                        eko_x2_high_idx = compute_eko_high_index(&x_grid, &x2high_grid);
+                        eko_q2_high_idx = compute_eko_high_index(&q2_grid, &q2high_grid);
+                        eko_mapping_done = true;
+                    }
 
                     // Iterate over SELF = HIGH
                     for (pid_high1, pid_high2, factor) in high_lumi.entry() {
@@ -1025,26 +1065,26 @@ impl Grid {
                                 &[],
                                 Left(&|x1_high_idx, x2_high_idx, q2_index| {
                                     // index for the EK operator
-                                    let eko_x1_high_idx = x_grid
-                                        .iter()
-                                        .position(|x| x == &x1high_grid[x1_high_idx])
-                                        .unwrap();
-                                    let eko_x2_high_idx = x_grid
-                                        .iter()
-                                        .position(|x| x == &x2high_grid[x2_high_idx])
-                                        .unwrap();
-                                    let eko_q2_index = q2_grid
-                                        .iter()
-                                        .position(|q2| q2 == &q2high_grid[q2_index])
-                                        .unwrap_or_else(|| {
-                                            eprintln!("{}: {}", q2_index, q2high_grid[q2_index]);
-                                            panic!();
-                                        });
+                                    // let eko_x1_high_idx = x_grid
+                                    // .iter()
+                                    // .position(|x| x == &x1high_grid[x1_high_idx])
+                                    // .unwrap();
+                                    // let eko_x2_high_idx = x_grid
+                                    // .iter()
+                                    // .position(|x| x == &x2high_grid[x2_high_idx])
+                                    // .unwrap();
+                                    // let eko_q2_index = q2_grid
+                                    // .iter()
+                                    // .position(|q2| q2 == &q2high_grid[q2_index])
+                                    // .unwrap_or_else(|| {
+                                    // eprintln!("{}: {}", q2_index, q2high_grid[q2_index]);
+                                    // panic!();
+                                    // });
                                     let op1 = if has_pdf1 {
                                         operator[[
-                                            eko_q2_index,
+                                            eko_q2_high_idx[&q2_index],
                                             eko_pid_high1_idx,
-                                            eko_x1_high_idx,
+                                            eko_x1_high_idx[&x1_high_idx],
                                             eko_pid_low1_idx,
                                             x1_low,
                                         ]]
@@ -1053,9 +1093,9 @@ impl Grid {
                                     };
                                     let op2 = if has_pdf2 {
                                         operator[[
-                                            eko_q2_index,
+                                            eko_q2_high_idx[&q2_index],
                                             eko_pid_high2_idx,
-                                            eko_x2_high_idx,
+                                            eko_x2_high_idx[&x2_high_idx],
                                             eko_pid_low2_idx,
                                             x2_low,
                                         ]]
@@ -1063,7 +1103,7 @@ impl Grid {
                                         1.
                                     };
 
-                                    let value = alphas[eko_q2_index]
+                                    let value = alphas[eko_q2_high_idx[&q2_index]]
                                         .powi(order.alphas.try_into().unwrap())
                                         * op1
                                         * op2;
@@ -1103,6 +1143,7 @@ impl Grid {
             )
             .into();
         }
+        bar.finish();
 
         Some(result)
     }

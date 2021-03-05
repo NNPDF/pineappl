@@ -24,6 +24,7 @@ ndarray = { features = ["serde"], version = "0.13.1" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0" }
 thiserror = "1.0"
+indicatif = "0.15.0"
 
 [dev-dependencies]
 lhapdf = "0.1.8"
