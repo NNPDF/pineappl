@@ -181,8 +181,12 @@ pub enum GridSetBinRemapperError {
     },
 }
 
+/// Information required to compute a compatible EKO.
+/// Members spell out specific characteristic of a suitable EKO.
 pub struct EkoInfo {
+    /// is the interpolation grid in x used at the process scale
     pub x_grid: Vec<f64>,
+    /// is the intepolation grid in q2, spanning the q2 range covered by the process data
     pub q2_grid: Vec<f64>,
 }
 
@@ -848,6 +852,7 @@ impl Grid {
         mmv2.key_value_db.insert(key.to_owned(), value.to_owned());
     }
 
+    /// Provide information used to compute a suitable EKO for the current grid.
     pub fn eko_info(&self) -> Option<EkoInfo> {
         let mut q2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
