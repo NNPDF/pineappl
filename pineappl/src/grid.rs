@@ -896,6 +896,13 @@ impl Grid {
         q2_grid: Vec<f64>,
         operator: Array5<f64>,
     ) -> Option<Self> {
+        let dim = operator.shape();
+        let mut operator_new = Array5::zeros((dim[3], dim[1], dim[4], dim[0], dim[2]));
+        operator_new.assign(&operator.permuted_axes([3, 1, 4, 0, 2]));
+        let operator = operator_new;
+
+        //operator[q2h, ph, xh, pl, xl];
+        //operator_new[pl, ph, xl, q2h, xh];
         // let EkoInfo { x_grid, q2_grid } = if let Some(eko_info) = self.eko_info() {
         // eko_info
         // } else {
@@ -1081,23 +1088,37 @@ impl Grid {
                                     // panic!();
                                     // });
                                     let op1 = if has_pdf1 {
+                                        //operator[[
+                                        //    eko_q2_high_idx[&q2_index],
+                                        //    eko_pid_high1_idx,
+                                        //    eko_x1_high_idx[&x1_high_idx],
+                                        //    eko_pid_low1_idx,
+                                        //    x1_low,
+                                        //]]
                                         operator[[
-                                            eko_q2_high_idx[&q2_index],
-                                            eko_pid_high1_idx,
-                                            eko_x1_high_idx[&x1_high_idx],
                                             eko_pid_low1_idx,
+                                            eko_pid_high1_idx,
                                             x1_low,
+                                            eko_q2_high_idx[&q2_index],
+                                            eko_x1_high_idx[&x1_high_idx],
                                         ]]
                                     } else {
                                         1.
                                     };
                                     let op2 = if has_pdf2 {
+                                        //operator[[
+                                        //    eko_q2_high_idx[&q2_index],
+                                        //    eko_pid_high2_idx,
+                                        //    eko_x2_high_idx[&x2_high_idx],
+                                        //    eko_pid_low2_idx,
+                                        //    x2_low,
+                                        //]]
                                         operator[[
-                                            eko_q2_high_idx[&q2_index],
-                                            eko_pid_high2_idx,
-                                            eko_x2_high_idx[&x2_high_idx],
                                             eko_pid_low2_idx,
+                                            eko_pid_high2_idx,
                                             x2_low,
+                                            eko_q2_high_idx[&q2_index],
+                                            eko_x2_high_idx[&x2_high_idx],
                                         ]]
                                     } else {
                                         1.
