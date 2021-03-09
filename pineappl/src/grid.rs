@@ -971,6 +971,10 @@ impl Grid {
             subgrid_params: SubgridParams::default(),
             more_members: self.more_members.clone(),
         };
+        println!(
+            "lumi: {:?}, bin: {:?}, order: {:?}",
+            result.lumi, result.bin_limits, result.orders
+        );
 
         // TODO: put original perturbative orders and order of the EKO inside new metadata
         fn compute_eko_high_index(
@@ -1001,7 +1005,10 @@ impl Grid {
         // println!("{:?}, {:?}", pids1, pids2);
 
         // Iterate over RESULT = LOW
-        for ((_, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
+        for ((low_order, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
+            // if bin > 0 {
+            // continue;
+            // }
             let mut array = SparseArray3::<f64>::new(1, x1_len, x2_len);
 
             let eko_pid_low1_idx = pids1
@@ -1030,7 +1037,7 @@ impl Grid {
                 // Iterate over SELF = HIGH
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     // println!("ll: {}, o: {}, hl: {}", low_lumi, order_idx, high_lumi_idx);
-                    bar.inc(1);
+                    // bar.inc(1);
 
                     let subgrid_high = &self.subgrids[[order_idx, bin, high_lumi_idx]];
                     if subgrid_high.is_empty() {
@@ -1156,6 +1163,10 @@ impl Grid {
                 }
             }
 
+            println!(
+                "order: {:?} - {:?}, bin: {:?}, low_lumi: {:?} - {:?}",
+                low_order, result.orders[low_order], bin, low_lumi, result.lumi[low_lumi]
+            );
             *subgrid = ReadOnlySparseSubgridV1::new(
                 array,
                 q2low_grid.clone(),
@@ -1165,6 +1176,7 @@ impl Grid {
             .into();
         }
         bar.finish();
+        println!("orders: {:?}", result.orders());
 
         Some(result)
     }
