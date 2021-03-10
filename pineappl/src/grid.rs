@@ -897,6 +897,13 @@ impl Grid {
         operator: Array5<f64>,
     ) -> Option<Self> {
         let dim = operator.shape();
+
+        assert_eq!(dim[0], q2_grid.len());
+        assert_eq!(dim[1], pids.len());
+        assert_eq!(dim[2], x_grid.len());
+        assert_eq!(dim[3], pids.len());
+        assert_eq!(dim[4], x_grid.len());
+
         let mut operator_new = Array5::zeros((dim[3], dim[1], dim[4], dim[0], dim[2]));
         operator_new.assign(&operator.permuted_axes([3, 1, 4, 0, 2]));
         let operator = operator_new;
@@ -950,8 +957,9 @@ impl Grid {
         let x1_len = x1low_grid.len();
         let x2_len = x2low_grid.len();
 
+        // TODO: extend `with_subgrid_type` constructor and use it!
         let mut result = Self {
-            subgrids: Array3::from_shape_simple_fn(self.subgrids.dim(), || {
+            subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
                 ReadOnlySparseSubgridV1::new(
                     SparseArray3::new(1, x1_len, x2_len),
                     q2low_grid.clone(),
