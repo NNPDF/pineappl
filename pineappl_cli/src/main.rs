@@ -133,6 +133,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input2: +required "Path to the second grid")
             (@arg pdfset: +required validator(validate_pdfset)
                 "LHAPDF id(s) or name of the PDF set(s)")
+            (@arg ignore_orders: --ignore_orders "Sums over all orders")
         )
         (@subcommand info =>
             (about: "Shows information about the grid")
@@ -253,8 +254,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input1 = matches.value_of("input1").unwrap();
         let input2 = matches.value_of("input2").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
+        let ignore_orders = matches.is_present("ignore_orders");
 
-        diff::subcommand(input1, input2, pdfset)?.printstd();
+        diff::subcommand(input1, input2, pdfset, ignore_orders)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("info") {
         let input = matches.value_of("input").unwrap();
 
