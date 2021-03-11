@@ -101,7 +101,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         (author: crate_authors!())
         (about: crate_description!())
         (version: crate_version!())
-        (@arg silence_lhapdf: --silence_lhapdf "Prevents LHAPDF from printing banners")
+        (@arg silence_lhapdf: alias("silence_lhapdf") long("silence-lhapdf")
+            "Prevents LHAPDF from printing banners")
         (@setting DisableHelpSubcommand)
         (@setting SubcommandRequiredElseHelp)
         (@setting VersionlessSubcommands)
@@ -133,7 +134,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input2: +required "Path to the second grid")
             (@arg pdfset: +required validator(validate_pdfset)
                 "LHAPDF id(s) or name of the PDF set(s)")
-            (@arg ignore_orders: --ignore_orders "Sums over all orders")
+            (@arg ignore_orders: alias("ignore_orders") long("ignore-orders")
+                "Sums over all orders")
         )
         (@subcommand info =>
             (about: "Shows information about the grid")
@@ -155,9 +157,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg output: +required "Path of the merged PineAPPL file")
             (@arg input: ... +required "Path(s) of the files that should be merged")
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
-            (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
-                number_of_values(5) value_names(&["alphas", "alpha", "logxir", "logxif", "global"])
-                "Scales all grids with order-dependent factors")
+            (@arg scale_by_order: alias("scale_by_order") long("scale-by-order") +takes_value
+                conflicts_with[scale] number_of_values(5) value_names(&["alphas", "alpha",
+                "logxir", "logxif", "global"]) "Scales all grids with order-dependent factors")
         )
         (@subcommand optimize =>
             (about: "Optimizes the internal data structure to minimize memory usage")
@@ -187,7 +189,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg remapping: +required "Remapping string")
             (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
                 "Normalization factor in addition to the given bin widths")
-            (@arg ignore_obs_norm: --ignore_obs_norm +use_delimiter
+            (@arg ignore_obs_norm: alias("ignore_obs_norm") long("ignore-obs-norm") +use_delimiter
                 "Ignore the given observables for differential normalization")
         )
         (@subcommand set =>
@@ -197,8 +199,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@group mode +multiple =>
                 (@arg entry: --entry +allow_hyphen_values number_of_values(2)
                     value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
-                (@arg entry_from_file: --entry_from_file number_of_values(2)
-                    value_names(&["key", "file"]) +multiple
+                (@arg entry_from_file: alias("entry_from_file") long("entry-from-file")
+                    number_of_values(2) value_names(&["key", "file"]) +multiple
                     "Sets an internal key-value pair, with value being read from a file")
                 (@arg delete: --delete value_name("key") +multiple
                     "Deletes an internal key-value pair")
