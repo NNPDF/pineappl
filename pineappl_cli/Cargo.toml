@@ -11,7 +11,7 @@ categories = ["science"]
 description = "Read, write, and query PineAPPL grids"
 
 [dependencies]
-clap = { default-features = false, features = ["suggestions"], version = "~2.33.0" }
+clap = { default-features = false, features = ["cargo", "std", "suggestions"], version = "~3.0.0-beta.2" }
 itertools = "0.9"
 lhapdf = "0.1.9"
 num_cpus = "1.0"

@@ -18,7 +18,7 @@ use clap::{clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
 use std::str::FromStr;
 
-fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: String) -> Result<(), String> {
+fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: &str) -> Result<(), String> {
     if let Ok(number) = argument.parse::<T>() {
         if number != T::default() {
             return Ok(());
@@ -31,7 +31,7 @@ fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: String) -> 
     ))
 }
 
-fn validate_pdfset(argument: String) -> Result<(), String> {
+fn validate_pdfset(argument: &str) -> Result<(), String> {
     if let Ok(lhaid) = argument.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
             return Ok(());
