@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subcommand `set` which allows to modify the key-value storage
 - added new C functions `pineappl_grid_set_key_value` and
   `pineappl_grid_optimize`
+- added a new switch `--ignore_orders` to the diff subcommand, which sums over
+  all orders and is therefore useful if two grids are compared that should have
+  the same contents in principle, but in practice have different orders
 
 ### Changed
 
