@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added a new switch `--ignore_orders` to the diff subcommand, which sums over
   all orders and is therefore useful if two grids are compared that should have
   the same contents in principle, but in practice have different orders
+- added new subcommand `plot`, which allows to plot the information contained
+  in a grid
 
 ### Changed
 

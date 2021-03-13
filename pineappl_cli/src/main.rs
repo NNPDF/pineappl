@@ -10,6 +10,7 @@ mod merge;
 mod optimize;
 mod orders;
 mod pdf_uncertainty;
+mod plot;
 mod remap;
 mod set;
 mod subgrids;
@@ -182,6 +183,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
         )
+        (@subcommand plot =>
+            (about: "Creates a matplotlib script plotting the contents of the grid")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: ... +required validator(validate_pdfset)
+                "LHAPDF id(s) or name of the PDF set(s)")
+            (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
+                "Set the number of scale variations")
+        )
         (@subcommand remap =>
             (about: "Modifies the bin dimensions, widths and normalizations")
             (@arg input: +required "Path to the input grid")
@@ -332,6 +341,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             .collect::<Result<_, _>>()?;
 
         pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders)?.printstd();
+    } else if let Some(matches) = matches.subcommand_matches("plot") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
+        let scales = matches.value_of("scales").unwrap().parse()?;
+
+        plot::subcommand(input, &pdfset[0], &pdfset[1..], scales)?;
     } else if let Some(matches) = matches.subcommand_matches("remap") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
