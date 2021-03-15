@@ -979,10 +979,10 @@ impl Grid {
             subgrid_params: SubgridParams::default(),
             more_members: self.more_members.clone(),
         };
-        println!(
-            "lumi: {:?}, bin: {:?}, order: {:?}",
-            result.lumi, result.bin_limits, result.orders
-        );
+        // println!(
+        // "lumi: {:?}, bin: {:?}, order: {:?}",
+        // result.lumi, result.bin_limits, result.orders
+        // );
 
         // TODO: put original perturbative orders and order of the EKO inside new metadata
         fn compute_eko_high_index(
@@ -1002,10 +1002,15 @@ impl Grid {
             eko_map
         }
 
-        let bar = ProgressBar::new(
-            (result.subgrids.iter().len() * self.orders.iter().len() * self.lumi.iter().len())
-                as u64,
-        );
+        let mut orders_len = 0;
+        for order in &self.orders {
+            if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                continue;
+            }
+            orders_len += 1;
+        }
+
+        let bar = ProgressBar::new((result.subgrids.len() * orders_len * self.lumi.len()) as u64);
         bar.set_style(ProgressStyle::default_bar().template(
             "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} - ETA: {eta_precise} {msg}",
         ));
@@ -1045,7 +1050,7 @@ impl Grid {
                 // Iterate over SELF = HIGH
                 for (high_lumi_idx, high_lumi) in self.lumi.iter().enumerate() {
                     // println!("ll: {}, o: {}, hl: {}", low_lumi, order_idx, high_lumi_idx);
-                    // bar.inc(1);
+                    bar.inc(1);
 
                     let subgrid_high = &self.subgrids[[order_idx, bin, high_lumi_idx]];
                     if subgrid_high.is_empty() {
@@ -1067,10 +1072,10 @@ impl Grid {
 
                     // Iterate over SELF = HIGH
                     for (pid_high1, pid_high2, factor) in high_lumi.entry() {
-                        // TODO: call the gluon 21 instead of 0
-                        if pid_high1 == &0 || pid_high2 == &0 {
-                            continue;
-                        }
+                        // TODO: check all PIDs in self if EKOs are available
+                        let pid_high1 = if pid_high1 == &0 { &21 } else { pid_high1 };
+                        let pid_high2 = if pid_high2 == &0 { &21 } else { pid_high2 };
+
                         let eko_pid_high1_idx =
                             pids1.iter().position(|pid| pid == pid_high1).unwrap();
                         let eko_pid_high2_idx =
@@ -1171,10 +1176,10 @@ impl Grid {
                 }
             }
 
-            println!(
-                "order: {:?} - {:?}, bin: {:?}, low_lumi: {:?} - {:?}",
-                low_order, result.orders[low_order], bin, low_lumi, result.lumi[low_lumi]
-            );
+            // println!(
+            // "order: {:?} - {:?}, bin: {:?}, low_lumi: {:?} - {:?}",
+            // low_order, result.orders[low_order], bin, low_lumi, result.lumi[low_lumi]
+            // );
             *subgrid = ReadOnlySparseSubgridV1::new(
                 array,
                 q2low_grid.clone(),
