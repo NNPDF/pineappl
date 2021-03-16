@@ -129,8 +129,6 @@ pub fn subcommand(
             limits.append(&mut buffer);
             normalizations.push(norm * normalization);
 
-            println!("{:?} , {:?} -> {:?}", last_indices, indices, indices1);
-
             for d in 0..dimensions - 1 {
                 if indices[d] > last_indices[d] {
                     for dp in d + 1..dimensions {
