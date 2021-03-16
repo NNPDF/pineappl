@@ -19,13 +19,13 @@ pub fn subcommand(
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
     let grid_orders = grid.orders();
-    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
+    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
 
     let order_results: Vec<Vec<f64>> = (0..grid_orders.len())
         .map(|order| {
             let mut order_mask = vec![false; grid_orders.len()];
             order_mask[order] = true;
-            helpers::convolute(&grid, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
+            helpers::convolute(&grid, &pdf, &order_mask, &[], &[], 1)
         })
         .collect();
 

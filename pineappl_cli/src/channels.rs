@@ -39,7 +39,7 @@ pub fn subcommand(
         .map(|lumi| {
             let mut lumi_mask = vec![false; grid.lumi().len()];
             lumi_mask[lumi] = true;
-            helpers::convolute(&grid, &pdf, &orders, &[], &lumi_mask, &[(1.0, 1.0)])
+            helpers::convolute(&grid, &pdf, &orders, &[], &lumi_mask, 1)
         })
         .collect();
 

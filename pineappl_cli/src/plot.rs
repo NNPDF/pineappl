@@ -19,19 +19,8 @@ pub fn subcommand(
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-    let scales_vector = vec![
-        (1.0, 1.0),
-        (2.0, 2.0),
-        (0.5, 0.5),
-        (2.0, 1.0),
-        (1.0, 2.0),
-        (0.5, 1.0),
-        (1.0, 0.5),
-        (2.0, 0.5),
-        (0.5, 2.0),
-    ];
 
-    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], &scales_vector[0..scales]);
+    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], scales);
 
     let qcd_results = {
         let mut orders = grid.orders().to_vec();
@@ -54,14 +43,7 @@ pub fn subcommand(
             })
             .collect();
 
-        helpers::convolute(
-            &grid,
-            &pdf,
-            &qcd_order_mask,
-            &[],
-            &[],
-            &scales_vector[0..scales],
-        )
+        helpers::convolute(&grid, &pdf, &qcd_order_mask, &[], &[], scales)
     };
 
     let bin_info = grid.bin_info();
@@ -79,7 +61,7 @@ pub fn subcommand(
                 &[],
                 &[],
                 &[],
-                &[(1.0, 1.0)],
+                1,
             ));
 
             let set = PdfSet::new(&pdfset.parse().map_or_else(
@@ -90,7 +72,7 @@ pub fn subcommand(
             let pdf_results: Vec<_> = set
                 .mk_pdfs()
                 .into_par_iter()
-                .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], &[(1.0, 1.0)]))
+                .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
                 .collect();
 
             let mut min = vec![];
@@ -124,7 +106,7 @@ pub fn subcommand(
     let pdf_results: Vec<_> = pdfs
         .into_par_iter()
         //.iter()
-        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], &[(1.0, 1.0)]))
+        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
         .collect();
 
     let left_limits: Vec<_> = (0..bin_info.dimensions())

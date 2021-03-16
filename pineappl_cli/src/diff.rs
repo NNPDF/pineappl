@@ -42,8 +42,8 @@ pub fn subcommand(
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(&grid1, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
-            let results2 = helpers::convolute(&grid2, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
+            let results1 = helpers::convolute(&grid1, &pdf, &[], &[], &[], 1);
+            let results2 = helpers::convolute(&grid2, &pdf, &[], &[], &[], 1);
 
             for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
                 let row = table.add_empty_row();
@@ -137,7 +137,7 @@ pub fn subcommand(
                 .map(|order| {
                     let mut order_mask = vec![false; grid1.orders().len()];
                     order_mask[grid1.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid1, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
+                    helpers::convolute(&grid1, &pdf, &order_mask, &[], &[], 1)
                 })
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
@@ -145,7 +145,7 @@ pub fn subcommand(
                 .map(|order| {
                     let mut order_mask = vec![false; grid2.orders().len()];
                     order_mask[grid2.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid2, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
+                    helpers::convolute(&grid2, &pdf, &order_mask, &[], &[], 1)
                 })
                 .collect();
 

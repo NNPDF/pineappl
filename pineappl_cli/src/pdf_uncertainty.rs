@@ -40,7 +40,7 @@ pub fn subcommand(
 
     let results: Vec<f64> = pdfs
         .into_par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &orders, &[], &[], &[(1.0, 1.0)]))
+        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &orders, &[], &[], 1))
         .collect();
 
     let bin_info = grid.bin_info();

@@ -14,13 +14,25 @@ pub fn create_table() -> Table {
     table
 }
 
+pub const SCALES_VECTOR: [(f64, f64); 9] = [
+    (1.0, 1.0),
+    (2.0, 2.0),
+    (0.5, 0.5),
+    (2.0, 1.0),
+    (1.0, 2.0),
+    (0.5, 1.0),
+    (1.0, 0.5),
+    (2.0, 0.5),
+    (0.5, 2.0),
+];
+
 pub fn convolute(
     grid: &Grid,
     lhapdf: &Pdf,
     orders: &[bool],
     bins: &[usize],
     lumis: &[bool],
-    scales: &[(f64, f64)],
+    scales: usize,
 ) -> Vec<f64> {
     let initial_state_1 = grid.key_values().map_or(2212, |map| {
         map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
@@ -70,5 +82,13 @@ pub fn convolute(
     };
     let alphas = |q2| lhapdf.alphas_q2(q2);
 
-    grid.convolute(&xfx1, &xfx2, &alphas, orders, bins, lumis, scales)
+    grid.convolute(
+        &xfx1,
+        &xfx2,
+        &alphas,
+        orders,
+        bins,
+        lumis,
+        &SCALES_VECTOR[0..scales],
+    )
 }

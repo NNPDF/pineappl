@@ -25,17 +25,6 @@ pub fn subcommand(
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-    let scales_vector = vec![
-        (1.0, 1.0),
-        (2.0, 2.0),
-        (0.5, 0.5),
-        (2.0, 1.0),
-        (1.0, 2.0),
-        (0.5, 1.0),
-        (1.0, 0.5),
-        (2.0, 0.5),
-        (0.5, 2.0),
-    ];
 
     let orders: Vec<_> = grid
         .orders()
@@ -48,14 +37,7 @@ pub fn subcommand(
         })
         .collect();
 
-    let results = helpers::convolute(
-        &grid,
-        &pdf,
-        &orders,
-        &show_bins,
-        &[],
-        &scales_vector[0..scales],
-    );
+    let results = helpers::convolute(&grid, &pdf, &orders, &show_bins, &[], scales);
 
     let other_results: Vec<f64> = other_pdfsets
         .iter()
@@ -63,7 +45,7 @@ pub fn subcommand(
             let pdf = pdfset
                 .parse()
                 .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-            helpers::convolute(&grid, &pdf, &[], &show_bins, &[], &[(1.0, 1.0)])
+            helpers::convolute(&grid, &pdf, &[], &show_bins, &[], 1)
         })
         .collect();
 
@@ -87,7 +69,7 @@ pub fn subcommand(
     title.add_cell(cell!(c->"integ"));
 
     if absolute {
-        for scale in &scales_vector[0..scales] {
+        for scale in &helpers::SCALES_VECTOR[0..scales] {
             title.add_cell(cell!(c->&format!("({},{})", scale.0, scale.1)));
         }
     } else {
