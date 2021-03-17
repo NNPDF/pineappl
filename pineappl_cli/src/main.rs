@@ -346,7 +346,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let scales = matches.value_of("scales").unwrap().parse()?;
 
-        plot::subcommand(input, &pdfset[0], &pdfset[1..], scales)?;
+        plot::subcommand(input, &pdfset, scales)?;
     } else if let Some(matches) = matches.subcommand_matches("remap") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
