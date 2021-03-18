@@ -600,8 +600,8 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter must be a non-`NULL`, non-empty, and valid C
-/// string pointing to a non-existing, but writable file.
+/// this function is not safe to call. The parameter `filename` must be a non-`NULL`, non-empty,
+/// and valid C string pointing to a non-existing, but writable file.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let filename = CStr::from_ptr(filename).to_str().unwrap();
