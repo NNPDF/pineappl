@@ -68,3 +68,10 @@ There are three crates in this repository:
 
 - For the python interface (optional) please refer to the documentation
   [here](https://pineappl.readthedocs.io/).
+
+# Citation
+
+If you use PineAPPL, please cite all of the following references:
+
+[![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
+[![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
