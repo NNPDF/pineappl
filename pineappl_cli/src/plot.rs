@@ -195,7 +195,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
     println!("");
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple']");
+    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
     println!();
     println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
@@ -224,7 +224,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
     println!("");
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple']");
+    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
     println!("");
     println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
@@ -259,7 +259,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
     println!("");
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple']");
+    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
     println!("");
     println!("    axis.grid(linestyle='dotted')");
     println!("");
