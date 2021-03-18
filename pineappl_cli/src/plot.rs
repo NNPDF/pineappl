@@ -283,9 +283,17 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("");
 
     println!("def main():");
+    println!("    panels = [");
+    println!("        plot_abs,");
+    println!("        plot_rel_ewonoff,");
+    println!("        plot_rel_pdfunc,");
+    println!("        #plot_rel_pdfdiff,");
+    println!("        plot_rel_pdfpull,");
+    println!("    ]");
+    println!();
     println!("    plt.rc('text', usetex=True)");
     println!("    plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}')");
-    println!("    plt.rc('figure', figsize=(6.4,12))");
+    println!("    plt.rc('figure', figsize=(6.4,len(panels)*2.4))");
     println!("    plt.rc('font', family='serif', size=14.0)");
     println!("    plt.rc('axes', labelsize='small')");
     println!("    plt.rc('pdf', compression=0)");
@@ -293,15 +301,14 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + metadata()['x1_unit'] + r'}}]' if metadata()['x1_unit'] != '' else '')");
     println!();
     println!("    with PdfPages('output.pdf') as pp:");
-    println!("        figure, axis = plt.subplots(5, 1, sharex=True, gridspec_kw={{'height_ratios' : [1, 1, 1, 1, 1]}})");
+    println!("        figure, axis = plt.subplots(len(panels), 1, sharex=True)");
     println!(
         "        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))"
     );
-    println!("        plot_abs(axis[0])");
-    println!("        plot_rel_ewonoff(axis[1])");
-    println!("        plot_rel_pdfunc(axis[2])");
-    println!("        plot_rel_pdfdiff(axis[3])");
-    println!("        plot_rel_pdfpull(axis[4])");
+    println!();
+    println!("        for index, plot in enumerate(panels):");
+    println!("            plot(axis[index])");
+    println!();
     println!("        axis[-1].set_xlabel(xlabel)");
     println!("        figure.savefig(pp, format='pdf')");
     println!("        plt.close()");
