@@ -47,19 +47,6 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     let pdf_uncertainties: Vec<Vec<Vec<f64>>> = pdfsets
         .iter()
         .map(|pdfset| {
-            let mut results = vec![];
-
-            results.push(helpers::convolute(
-                &grid,
-                &pdfset
-                    .parse()
-                    .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid),
-                &[],
-                &[],
-                &[],
-                1,
-            ));
-
             let set = PdfSet::new(&pdfset.parse().map_or_else(
                 |_| pdfset.to_string(),
                 |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
@@ -71,8 +58,9 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
                 .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
                 .collect();
 
-            let mut min = vec![];
-            let mut max = vec![];
+            let mut central = Vec::with_capacity(bin_info.bins());
+            let mut min = Vec::with_capacity(bin_info.bins());
+            let mut max = Vec::with_capacity(bin_info.bins());
 
             for bin in 0..bin_info.bins() {
                 let values: Vec<_> = pdf_results
@@ -81,15 +69,14 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
                     .step_by(bin_info.bins())
                     .cloned()
                     .collect();
+
                 let uncertainty = set.uncertainty(&values, 68.268949213708581, false);
+                central.push(uncertainty.central);
                 min.push(uncertainty.central - uncertainty.errminus);
                 max.push(uncertainty.central + uncertainty.errplus);
             }
 
-            results.push(min);
-            results.push(max);
-
-            results
+            vec![central, min, max]
         })
         .collect();
 
