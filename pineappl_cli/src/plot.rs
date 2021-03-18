@@ -236,7 +236,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    for index, i in enumerate(pdf_uncertainties):");
     println!("        label, y, ymin, ymax = i");
     println!("        diff = y - central_y");
-    println!("        yerr = np.where(diff > 0.0, ymax - y, y - ymin)");
+    println!("        yerr = np.where(diff > 0.0, y - ymin, ymax - y)");
     println!("        #pull_avg = (y - central_y) / np.sqrt(np.power(0.5 * (ymax - ymin), 2) + np.power(0.5 * (central_ymax - central_ymin), 2))");
     println!("        pull = (y - central_y) / np.sqrt(np.power(yerr, 2) + np.power(0.5 * (central_ymax - central_ymin), 2))");
     println!();
