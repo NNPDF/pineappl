@@ -234,9 +234,6 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    central_ymax = pdf_uncertainties[0][3]");
     println!("");
     println!("    for index, i in enumerate(pdf_uncertainties):");
-    println!("        if index == 0:");
-    println!("            continue");
-    println!("");
     println!("        label, y, ymin, ymax = i");
     println!("        diff = y - central_y");
     println!("        yerr = np.where(diff > 0.0, ymax - y, y - ymin)");
@@ -250,7 +247,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    minmax = axis.get_ylim()");
     println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))");
     println!("    axis.set_ylabel('Pull [$\\sigma$]')");
-    println!("    axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
+    println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
     println!("");
     println!("def plot_rel_pdfdiff(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
@@ -268,9 +265,6 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    central_ymax = pdf_uncertainties[0][3]");
     println!("");
     println!("    for index, i in enumerate(pdf_uncertainties):");
-    println!("        if index == 0:");
-    println!("            continue");
-    println!("");
     println!("        label, y, ymin, ymax = i");
     println!("        pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))");
     println!("        pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))");
@@ -285,7 +279,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    minmax = axis.get_ylim()");
     println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 2.0))");
     println!("    axis.set_ylabel('Difference [\\si{{\\percent}}]')");
-    println!("    axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
+    println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
     println!("");
 
     println!("def main():");
