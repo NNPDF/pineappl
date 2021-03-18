@@ -154,6 +154,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("");
     println!("    axis.set_yscale('log')");
     println!("    axis.set_xscale('log')");
+    println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
     println!("    axis.step(x, y, 'royalblue', linewidth=1.0, where='post')");
     println!("    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')");
@@ -176,6 +177,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    pdf_max = (abs(data()['pdf_results'][0][3] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]");
     println!("    mid = 0.5 * (data()['left'][:-1] + data()['right'])");
     println!();
+    println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
     println!("    axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')");
     println!("    axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\\ scale var.', linewidth=0.5, step='post')");
@@ -195,6 +197,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("");
     println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple']");
     println!();
+    println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
     println!();
     println!("    #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])");
@@ -223,6 +226,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("");
     println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple']");
     println!("");
+    println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
     println!("");
     println!("    central_y = pdf_uncertainties[0][1]");
