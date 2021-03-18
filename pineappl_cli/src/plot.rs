@@ -147,13 +147,14 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    y = data()['pdf_results'][0][1]");
     println!("    ymin = data()['min']");
     println!("    ymax = data()['max']");
+    println!("    x1_unit = metadata().get('x1_unit', '')");
     println!(
         "    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'"
     );
     println!("    description = metadata()['description']");
     println!("");
-    println!("    axis.set_yscale('log')");
-    println!("    axis.set_xscale('log')");
+    println!("    if x1_unit != '':");
+    println!("        axis.set_yscale('log')");
     println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
     println!("    axis.step(x, y, 'royalblue', linewidth=1.0, where='post')");
@@ -298,13 +299,17 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     println!("    plt.rc('axes', labelsize='small')");
     println!("    plt.rc('pdf', compression=0)");
     println!();
-    println!("    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + metadata()['x1_unit'] + r'}}]' if metadata()['x1_unit'] != '' else '')");
+    println!("    x1_unit = metadata().get('x1_unit', '')");
+    println!("    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')");
     println!();
     println!("    with PdfPages('output.pdf') as pp:");
     println!("        figure, axis = plt.subplots(len(panels), 1, sharex=True)");
     println!(
         "        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))"
     );
+    println!();
+    println!("        if x1_unit != '':");
+    println!("            axis[0].set_xscale('log')");
     println!();
     println!("        for index, plot in enumerate(panels):");
     println!("            plot(axis[index])");
