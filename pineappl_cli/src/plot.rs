@@ -45,7 +45,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Bo
     let bin_info = grid.bin_info();
 
     let pdf_uncertainties: Vec<Vec<Vec<f64>>> = pdfsets
-        .iter()
+        .par_iter()
         .map(|pdfset| {
             let set = PdfSet::new(&pdfset.parse().map_or_else(
                 |_| pdfset.to_string(),
