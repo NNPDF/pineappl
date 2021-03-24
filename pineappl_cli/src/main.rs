@@ -15,7 +15,7 @@ mod remap;
 mod set;
 mod subgrids;
 
-use clap::{clap_app, crate_authors, crate_description, crate_version};
+use clap::{ArgSettings, clap_app, crate_authors, crate_description, crate_version};
 use std::error::Error;
 use std::str::FromStr;
 
@@ -206,8 +206,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: +required "Path to the input grid")
             (@arg output: +required "Path of the modified PineAPPL file")
             (@group mode +multiple =>
-                (@arg entry: --entry +allow_hyphen_values number_of_values(2)
-                    value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
+                (@arg entry: --entry +allow_hyphen_values setting(ArgSettings::AllowEmptyValues)
+                    number_of_values(2) value_names(&["key", "value"]) +multiple
+                    "Sets an internal key-value pair")
                 (@arg entry_from_file: alias("entry_from_file") long("entry-from-file")
                     number_of_values(2) value_names(&["key", "file"]) +multiple
                     "Sets an internal key-value pair, with value being read from a file")
