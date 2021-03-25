@@ -15,11 +15,14 @@ mod remap;
 mod set;
 mod subgrids;
 
-use clap::{ArgSettings, clap_app, crate_authors, crate_description, crate_version};
-use std::error::Error;
+use anyhow::{bail, Context, Result};
+use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
+use std::result;
 use std::str::FromStr;
 
-fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: &str) -> Result<(), String> {
+fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
+    argument: &str,
+) -> result::Result<(), String> {
     if let Ok(number) = argument.parse::<T>() {
         if number != T::default() {
             return Ok(());
@@ -32,7 +35,7 @@ fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: &str) -> Re
     ))
 }
 
-fn validate_pdfset(argument: &str) -> Result<(), String> {
+fn validate_pdfset(argument: &str) -> result::Result<(), String> {
     if let Ok(lhaid) = argument.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
             return Ok(());
@@ -52,29 +55,41 @@ fn validate_pdfset(argument: &str) -> Result<(), String> {
     Err(format!("The PDF set `{}` was not found", argument))
 }
 
-fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+fn parse_integer_list(list: &str) -> Result<Vec<usize>> {
     let mut integers = Vec::new();
 
     for s in list.split_terminator(',') {
         if let Some(at) = s.find('-') {
             let (left, right) = s.split_at(at);
-            integers.extend(str::parse::<usize>(left)?..=str::parse::<usize>(&right[1..])?);
+            integers.extend(
+                str::parse::<usize>(left).context(format!(
+                    "unable to parse integer list '{}'; couldn't convert '{}'",
+                    list, left
+                ))?
+                    ..=str::parse::<usize>(&right[1..]).context(format!(
+                        "unable to parse integer list '{}'; couldn't convert '{}'",
+                        list, left
+                    ))?,
+            );
         } else {
-            integers.push(str::parse::<usize>(s)?);
+            integers.push(str::parse::<usize>(s).context(format!(
+                "unable to parse integer list '{}'; couldn't convert '{}'",
+                list, s
+            ))?);
         }
     }
 
     Ok(integers)
 }
 
-fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
+fn parse_order(order: &str) -> Result<(u32, u32)> {
     let mut alphas = 0;
     let mut alpha = 0;
 
     let matches: Vec<_> = order.match_indices('a').collect();
 
     if matches.len() > 2 {
-        todo!();
+        bail!("unable to parse order; too many couplings in '{}'", order);
     } else {
         for (index, _) in matches {
             if &order[index..index + 2] == "as" {
@@ -82,13 +97,15 @@ fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
                     .chars()
                     .take_while(|c| c.is_numeric())
                     .count();
-                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])?;
+                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
+                    .context(format!("unable to parse order '{}'", order))?;
             } else {
                 let len = order[index + 1..]
                     .chars()
                     .take_while(|c| c.is_numeric())
                     .count();
-                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])?;
+                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
+                    .context(format!("unable to parse order '{}'", order))?;
             }
         }
     }
@@ -96,7 +113,7 @@ fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
     Ok((alphas, alpha))
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let num_cpus = num_cpus::get().to_string();
     let matches = clap_app!(pineappl =>
         (author: crate_authors!())
@@ -235,7 +252,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
         let absolute = matches.is_present("absolute");
         let lumis = parse_integer_list(matches.value_of("lumis").unwrap_or(""))?;
 
@@ -249,7 +266,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
         let absolute = matches.is_present("absolute");
 
         convolute::subcommand(
@@ -303,9 +320,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             .transpose()?;
         let scale_by_order: Vec<_> = matches
             .values_of("scale_by_order")
-            .map_or(vec![], |s| s.map(str::parse::<f64>).collect())
+            .map_or(vec![], |s| {
+                s.map(|s| str::parse::<f64>(s).context(format!("unable to parse '{}'", s)))
+                    .collect()
+            })
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
 
         merge::subcommand(
             output,
@@ -327,7 +347,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .values_of("normalize")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
 
         orders::subcommand(input, pdfset, absolute, &normalize)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
@@ -339,7 +359,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
 
         pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("plot") {
@@ -355,9 +375,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         let norm = matches.value_of("norm").unwrap().parse()?;
         let ignore_obs_norm: Vec<_> = matches
             .values_of("ignore_obs_norm")
-            .map_or(vec![], |values| values.map(str::parse::<usize>).collect())
+            .map_or(vec![], |values| {
+                values
+                    .map(|obs| {
+                        str::parse::<usize>(obs).context(format!("unable to parse index '{}'", obs))
+                    })
+                    .collect()
+            })
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
 
         remap::subcommand(input, output, remapping, norm, &ignore_obs_norm)?;
     } else if let Some(matches) = matches.subcommand_matches("set") {
