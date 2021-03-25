@@ -307,13 +307,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             .into_iter()
             .collect::<Result<_, _>>()?;
 
-        return merge::subcommand(
+        merge::subcommand(
             output,
             input.first().unwrap(),
             &input[1..],
             scale,
             &scale_by_order,
-        );
+        )?;
     } else if let Some(matches) = matches.subcommand_matches("optimize") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();

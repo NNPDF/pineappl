@@ -1,12 +1,8 @@
+use super::helpers;
+use anyhow::Result;
 use lhapdf::PdfSet;
-use pineappl::grid::Grid;
 use prettytable::{cell, row, Table};
 use rayon::{prelude::*, ThreadPoolBuilder};
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-
-use super::helpers;
 
 pub fn subcommand(
     input: &str,
@@ -14,8 +10,8 @@ pub fn subcommand(
     cl: f64,
     threads: usize,
     orders: &[(u32, u32)],
-) -> Result<Table, Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+) -> Result<Table> {
+    let grid = helpers::read_grid(input)?;
     let set = PdfSet::new(&pdfset.parse().map_or_else(
         |_| pdfset.to_string(),
         |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,

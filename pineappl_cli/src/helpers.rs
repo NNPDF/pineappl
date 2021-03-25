@@ -1,7 +1,27 @@
+use anyhow::{Context, Result};
 use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, BufWriter};
+
+pub fn read_grid(input: &str) -> Result<Grid> {
+    Grid::read(BufReader::new(
+        File::open(input).context(format!("unable to open '{}'", input))?,
+    ))
+    .context(format!("unable to read '{}'", input))
+}
+
+pub fn write_grid(output: &str, grid: &Grid) -> Result<()> {
+    grid.write(BufWriter::new(
+        OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(output)
+            .context(format!("unable to write '{}'", output))?,
+    ))
+}
 
 pub fn create_table() -> Table {
     let mut table = Table::new();

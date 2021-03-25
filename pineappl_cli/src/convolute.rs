@@ -1,11 +1,7 @@
-use lhapdf::Pdf;
-use pineappl::grid::Grid;
-use prettytable::{cell, Row, Table};
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-
 use super::helpers;
+use anyhow::Result;
+use lhapdf::Pdf;
+use prettytable::{cell, Row, Table};
 
 pub fn subcommand(
     input: &str,
@@ -15,8 +11,8 @@ pub fn subcommand(
     scales: usize,
     orders: &[(u32, u32)],
     absolute: bool,
-) -> Result<Table, Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+) -> Result<Table> {
+    let grid = helpers::read_grid(input)?;
     let show_bins = if show_bins.is_empty() {
         (0..grid.bin_info().bins()).collect()
     } else {

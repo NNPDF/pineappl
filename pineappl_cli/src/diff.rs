@@ -1,21 +1,12 @@
+use super::helpers;
+use anyhow::Result;
 use lhapdf::Pdf;
-use pineappl::grid::Grid;
 use prettytable::{cell, Row, Table};
 use std::collections::HashSet;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
 
-use super::helpers;
-
-pub fn subcommand(
-    input1: &str,
-    input2: &str,
-    pdfset: &str,
-    ignore_orders: bool,
-) -> Result<Table, Box<dyn Error>> {
-    let grid1 = Grid::read(BufReader::new(File::open(input1)?))?;
-    let grid2 = Grid::read(BufReader::new(File::open(input2)?))?;
+pub fn subcommand(input1: &str, input2: &str, pdfset: &str, ignore_orders: bool) -> Result<Table> {
+    let grid1 = helpers::read_grid(input1)?;
+    let grid2 = helpers::read_grid(input2)?;
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);

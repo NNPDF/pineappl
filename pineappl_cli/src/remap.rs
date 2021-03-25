@@ -1,9 +1,7 @@
+use super::helpers;
+use anyhow::Result;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::Grid;
-use std::error::Error;
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter};
 
 pub fn subcommand(
     input: &str,
@@ -11,8 +9,8 @@ pub fn subcommand(
     remapping: &str,
     norm: f64,
     ignore_obs_norm: &[usize],
-) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+) -> Result<()> {
+    let mut grid = helpers::read_grid(input)?;
     let mut remaps = remapping
         .split(';')
         .map(|string| {
@@ -147,12 +145,5 @@ pub fn subcommand(
     limits.shrink_to_fit();
 
     grid.set_remapper(BinRemapper::new(normalizations, limits).unwrap())?;
-    grid.write(BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(output)?,
-    ))?;
-
-    Ok(())
+    helpers::write_grid(output, &grid)
 }

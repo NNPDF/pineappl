@@ -1,11 +1,9 @@
-use pineappl::grid::Grid;
+use super::helpers;
+use anyhow::Result;
 use pineappl::subgrid::SubgridEnum;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
 
-pub fn subcommand(input: &str) -> Result<(), Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand(input: &str) -> Result<()> {
+    let grid = helpers::read_grid(input)?;
 
     for order in 0..grid.orders().len() {
         for bin in 0..grid.bin_info().bins() {

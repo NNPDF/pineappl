@@ -1,16 +1,12 @@
+use super::helpers;
+use anyhow::Result;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
-use pineappl::grid::Grid;
 use rayon::prelude::*;
 use std::collections::HashMap;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
 
-use super::helpers;
-
-pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<(), Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
+    let grid = helpers::read_grid(input)?;
     let pdf = pdfsets[0].parse().map_or_else(
         |_| Pdf::with_setname_and_member(pdfsets[0], 0),
         Pdf::with_lhaid,

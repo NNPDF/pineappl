@@ -1,13 +1,9 @@
-use pineappl::grid::Grid;
-use prettytable::{cell, row, Table};
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-
 use super::helpers;
+use anyhow::Result;
+use prettytable::{cell, row, Table};
 
-pub fn subcommand(input: &str) -> Result<Table, Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand(input: &str) -> Result<Table> {
+    let grid = helpers::read_grid(input)?;
 
     let mut table = helpers::create_table();
     let mut titles = row![c => "id"];
