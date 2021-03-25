@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- added fallback options to `git_version` that prevented uploading
+  `pineappl_capi` and `pineappl_cli` to crates.io
+
 ## [0.4.0] - 25/03/2021
 
 ### Added

@@ -136,7 +136,12 @@ impl Default for Mmv2 {
             key_value_db: [
                 (
                     "pineappl_gitversion".to_owned(),
-                    git_version!(args = ["--always", "--dirty", "--long", "--tags"]).to_owned(),
+                    git_version!(
+                        args = ["--always", "--dirty", "--long", "--tags"],
+                        cargo_prefix = "cargo:",
+                        fallback = "unknown"
+                    )
+                    .to_owned(),
                 ),
                 // by default we assume there are protons in the initial state
                 ("initial_state_1".to_owned(), "2212".to_owned()),
