@@ -13,16 +13,11 @@ pub fn subcommand(
     absolute: bool,
 ) -> Result<Table> {
     let grid = helpers::read_grid(input)?;
-    let show_bins = if show_bins.is_empty() {
-        (0..grid.bin_info().bins()).collect()
-    } else {
-        show_bins.to_vec()
-    };
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
-    let results = helpers::convolute(&grid, &pdf, orders, &show_bins, &[], scales);
+    let results = helpers::convolute(&grid, &pdf, orders, show_bins, &[], scales);
 
     let other_results: Vec<f64> = other_pdfsets
         .iter()
@@ -30,7 +25,7 @@ pub fn subcommand(
             let pdf = pdfset
                 .parse()
                 .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-            helpers::convolute(&grid, &pdf, &[], &show_bins, &[], 1)
+            helpers::convolute(&grid, &pdf, &[], show_bins, &[], 1)
         })
         .collect();
 
