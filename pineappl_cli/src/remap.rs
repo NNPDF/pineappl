@@ -1,5 +1,5 @@
 use super::helpers;
-use anyhow::Result;
+use anyhow::{bail, ensure, Context, Result};
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
 
@@ -11,7 +11,7 @@ pub fn subcommand(
     ignore_obs_norm: &[usize],
 ) -> Result<()> {
     let mut grid = helpers::read_grid(input)?;
-    let mut remaps = remapping
+    let remaps: Result<Vec<Vec<Vec<_>>>> = remapping
         .split(';')
         .map(|string| {
             string
@@ -33,27 +33,30 @@ pub fn subcommand(
                             if string.is_empty() {
                                 None
                             } else {
-                                Some(string.parse::<f64>())
+                                Some(
+                                    string
+                                        .parse::<f64>()
+                                        .context(format!("unable to parse limit '{}'", string)),
+                                )
                             }
                         })
-                        .collect::<Result<Vec<_>, _>>()
+                        .collect()
                 })
-                .collect::<Result<Vec<_>, _>>()
+                .collect()
         })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect();
+    let mut remaps = remaps?;
 
-    if remaps[0].len() != 1 {
-        todo!();
-    }
+    ensure!(
+        remaps[0].len() == 1,
+        "'|' syntax not meaningful for first dimension"
+    );
 
     // go over `remaps` again, and repeat previous entries as requested with the `||` syntax
     for vec in &mut remaps {
         for i in 1..vec.len() {
             if vec[i].is_empty() {
-                if vec[i - 1].is_empty() {
-                    todo!();
-                }
-
+                ensure!(!vec[i - 1].is_empty(), "empty repetition with '|'");
                 vec[i] = vec[i - 1].clone();
             }
         }
@@ -68,19 +71,32 @@ pub fn subcommand(
                 if split.len() == 1 {
                     // there's no colon
                     continue;
-                } else if split.len() != 2 {
-                    todo!();
-                } else {
-                    (split[0], split[1])
                 }
+
+                ensure!(split.len() == 2, "too many ':' found: '{}'", string);
+
+                (split[0], split[1])
             };
 
-            if let Ok(remove_from_left) = lhs.parse::<usize>() {
+            let lhs = lhs.parse::<usize>();
+            let rhs = rhs.parse::<usize>();
+
+            if let Ok(remove_from_left) = lhs {
+                ensure!(
+                    rhs.is_err(),
+                    "ambiguity in parsing ':' syntax from: '{}'",
+                    string
+                );
                 vec.drain(0..remove_from_left);
-            } else if let Ok(remove_from_right) = rhs.parse::<usize>() {
+            } else if let Ok(remove_from_right) = rhs {
+                ensure!(
+                    lhs.is_err(),
+                    "ambiguity in parsing ':' syntax from: '{}'",
+                    string
+                );
                 vec.truncate(vec.len() - remove_from_right);
             } else {
-                todo!();
+                bail!("unable to parse ':' syntax from: '{}'", string);
             }
         }
     }
