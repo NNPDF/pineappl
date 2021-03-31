@@ -38,7 +38,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         .par_iter()
         .map(|pdfset| {
             let set = PdfSet::new(&pdfset.parse().map_or_else(
-                |_| pdfset.to_string(),
+                |_| (*pdfset).to_string(),
                 |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
             ));
 
@@ -121,18 +121,18 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     assert_eq!(right_limits.len(), 1);
 
     println!("#!/usr/bin/env python3");
-    println!("");
+    println!();
 
     println!("import matplotlib.pyplot as plt");
     println!("import numpy as np");
     println!("from matplotlib.transforms import ScaledTranslation");
     println!("from matplotlib.backends.backend_pdf import PdfPages");
-    println!("");
+    println!();
 
     println!("def plot_abs(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
     println!("    axis.minorticks_on()");
-    println!("");
+    println!();
     println!("    x = data()['left']");
     println!("    y = data()['pdf_results'][0][1]");
     println!("    ymin = data()['min']");
@@ -142,7 +142,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         "    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'"
     );
     println!("    description = metadata()['description']");
-    println!("");
+    println!();
     println!("    if x1_unit != '':");
     println!("        axis.set_yscale('log')");
     println!("    axis.set_axisbelow(True)");
@@ -151,12 +151,12 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!("    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')");
     println!("    axis.set_ylabel(ylabel)");
     println!("    axis.set_title(description)");
-    println!("");
+    println!();
 
     println!("def plot_rel_ewonoff(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
     println!("    axis.minorticks_on()");
-    println!("");
+    println!();
     println!("    qcd_y = (data()['qcd_central'] / data()['qcd_central'] - 1.0) * 100.0");
     println!("    qcd_ymin = (data()['qcd_min'] / data()['qcd_central'] - 1.0) * 100.0");
     println!("    qcd_ymax = (data()['qcd_max'] / data()['qcd_central'] - 1.0) * 100.0");
@@ -177,7 +177,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!("    axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)");
     println!("    axis.set_ylabel('NLO EW on/off [\\si{{\\percent}}]')");
     println!("    axis.legend(fontsize='xx-small', frameon=False)");
-    println!("");
+    println!();
 
     println!("def plot_rel_pdfunc(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
@@ -185,7 +185,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!();
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
-    println!("");
+    println!();
     println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
     println!();
     println!("    axis.set_axisbelow(True)");
@@ -207,23 +207,23 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!("    minmax = axis.get_ylim()");
     println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))");
     println!("    axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')");
-    println!("");
+    println!();
     println!("def plot_rel_pdfpull(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
     println!("    axis.minorticks_on()");
-    println!("");
+    println!();
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
-    println!("");
+    println!();
     println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
-    println!("");
+    println!();
     println!("    axis.set_axisbelow(True)");
     println!("    axis.grid(linestyle='dotted')");
-    println!("");
+    println!();
     println!("    central_y = pdf_uncertainties[0][1]");
     println!("    central_ymin = pdf_uncertainties[0][2]");
     println!("    central_ymax = pdf_uncertainties[0][3]");
-    println!("");
+    println!();
     println!("    for index, i in enumerate(pdf_uncertainties):");
     println!("        label, y, ymin, ymax = i");
     println!("        diff = y - central_y");
@@ -233,45 +233,45 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!();
     println!("        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\\ pull', linewidth=0.5, step='post', zorder=2 * index)");
     println!("        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)");
-    println!("");
+    println!();
     println!("    axis.legend(fontsize='xx-small', frameon=False, ncol=2)");
     println!("    minmax = axis.get_ylim()");
     println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))");
     println!("    axis.set_ylabel('Pull [$\\sigma$]')");
     println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
-    println!("");
+    println!();
     println!("def plot_rel_pdfdiff(axis):");
     println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
     println!("    axis.minorticks_on()");
-    println!("");
+    println!();
     println!("    x = data()['left']");
     println!("    pdf_uncertainties = data()['pdf_results']");
-    println!("");
+    println!();
     println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
-    println!("");
+    println!();
     println!("    axis.grid(linestyle='dotted')");
-    println!("");
+    println!();
     println!("    central_y = pdf_uncertainties[0][1]");
     println!("    central_ymin = pdf_uncertainties[0][2]");
     println!("    central_ymax = pdf_uncertainties[0][3]");
-    println!("");
+    println!();
     println!("    for index, i in enumerate(pdf_uncertainties):");
     println!("        label, y, ymin, ymax = i");
     println!("        pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))");
     println!("        pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))");
     println!("        diff = (y / central_y - 1.0) * 100.0");
-    println!("");
+    println!();
     println!("        #axis.fill_between(x, pull_min, pull_max, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')");
     println!(
         "        axis.step(x, diff, color=colors[index], label=label, linewidth=1, where='post')"
     );
-    println!("");
+    println!();
     println!("    axis.legend(fontsize='xx-small', frameon=False, ncol=2)");
     println!("    minmax = axis.get_ylim()");
     println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 2.0))");
     println!("    axis.set_ylabel('Difference [\\si{{\\percent}}]')");
     println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
-    println!("");
+    println!();
 
     println!("def main():");
     println!("    panels = [");
@@ -307,7 +307,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!("        axis[-1].set_xlabel(xlabel)");
     println!("        figure.savefig(pp, format='pdf')");
     println!("        plt.close()");
-    println!("");
+    println!();
 
     println!("def data():");
     print!("    left = np.array([");
@@ -395,7 +395,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
 
     println!("    ]");
 
-    println!("");
+    println!();
     println!("    return {{ 'left': left,");
     println!("             'right': right,");
     println!("             'min': min,");
@@ -405,7 +405,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     println!("             'qcd_max': qcd_max,");
     println!("             'pdf_results': pdf_results,");
     println!("    }}");
-    println!("");
+    println!();
 
     println!("def metadata():");
     println!("    return {{");
@@ -420,7 +420,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
             "description" => println!(
                 "        '{}': r'{}',",
                 key,
-                value.replace("–", "--").replace("—", "---")
+                value.replace("\u{2013}", "--").replace("\u{2014}", "---")
             ),
             "x1_unit" | "x2_unit" | "x3_unit" | "y_unit" => println!(
                 "        '{}': r'{}',",
@@ -435,7 +435,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     }
 
     println!("    }}");
-    println!("");
+    println!();
     println!("if __name__ == '__main__':");
     println!("    main()");
 

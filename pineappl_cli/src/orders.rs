@@ -79,9 +79,7 @@ pub fn subcommand(
         }
 
         // print each order normalized to the sum of all leading orders
-        for index in 0..orders.len() {
-            let result = results[index][bin];
-
+        for result in results.iter().map(|vec| vec[bin]) {
             if absolute {
                 row.add_cell(cell!(r->&format!("{:.7e}", result)));
             } else {

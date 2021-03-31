@@ -15,7 +15,7 @@ mod remap;
 mod set;
 mod subgrids;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{ensure, Context, Result};
 use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
 use std::result;
 use std::str::FromStr;
@@ -88,25 +88,27 @@ fn parse_order(order: &str) -> Result<(u32, u32)> {
 
     let matches: Vec<_> = order.match_indices('a').collect();
 
-    if matches.len() > 2 {
-        bail!("unable to parse order; too many couplings in '{}'", order);
-    } else {
-        for (index, _) in matches {
-            if &order[index..index + 2] == "as" {
-                let len = order[index + 2..]
-                    .chars()
-                    .take_while(|c| c.is_numeric())
-                    .count();
-                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
-                    .context(format!("unable to parse order '{}'", order))?;
-            } else {
-                let len = order[index + 1..]
-                    .chars()
-                    .take_while(|c| c.is_numeric())
-                    .count();
-                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
-                    .context(format!("unable to parse order '{}'", order))?;
-            }
+    ensure!(
+        matches.len() > 2,
+        "unable to parse order; too many couplings in '{}'",
+        order
+    );
+
+    for (index, _) in matches {
+        if &order[index..index + 2] == "as" {
+            let len = order[index + 2..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
+                .context(format!("unable to parse order '{}'", order))?;
+        } else {
+            let len = order[index + 1..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
+                .context(format!("unable to parse order '{}'", order))?;
         }
     }
 
