@@ -49,11 +49,22 @@ pub const SCALES_VECTOR: [(f64, f64); 9] = [
 pub fn convolute(
     grid: &Grid,
     lhapdf: &Pdf,
-    orders: &[bool],
+    orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
 ) -> Vec<f64> {
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
+
     let initial_state_1 = grid.key_values().map_or(2212, |map| {
         map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
     });
@@ -106,7 +117,7 @@ pub fn convolute(
         &xfx1,
         &xfx2,
         &alphas,
-        orders,
+        &orders,
         bins,
         lumis,
         &SCALES_VECTOR[0..scales],

@@ -126,17 +126,13 @@ pub fn subcommand(input1: &str, input2: &str, pdfset: &str, ignore_orders: bool)
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|order| {
-                    let mut order_mask = vec![false; grid1.orders().len()];
-                    order_mask[grid1.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid1, &pdf, &order_mask, &[], &[], 1)
+                    helpers::convolute(&grid1, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1)
                 })
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|order| {
-                    let mut order_mask = vec![false; grid2.orders().len()];
-                    order_mask[grid2.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid2, &pdf, &order_mask, &[], &[], 1)
+                    helpers::convolute(&grid1, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1)
                 })
                 .collect();
 

@@ -20,22 +20,12 @@ pub fn subcommand(
     } else {
         lumis.iter().filter(|lumi| **lumi < lumis.len()).count()
     };
-    let orders: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
 
     let results: Vec<_> = (0..grid.lumi().len())
         .map(|lumi| {
             let mut lumi_mask = vec![false; grid.lumi().len()];
             lumi_mask[lumi] = true;
-            helpers::convolute(&grid, &pdf, &orders, &[], &lumi_mask, 1)
+            helpers::convolute(&grid, &pdf, orders, &[], &lumi_mask, 1)
         })
         .collect();
 

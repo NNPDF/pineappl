@@ -23,19 +23,13 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
             .iter()
             .group_by(|order| order.alphas + order.alpha)
             .into_iter()
-            .map(|mut group| group.1.next().unwrap())
-            .collect();
-        let qcd_order_mask: Vec<_> = grid
-            .orders()
-            .iter()
-            .map(|order| {
-                qcd_orders
-                    .iter()
-                    .any(|o| (order.alphas == o.alphas) && (order.alpha == o.alpha))
+            .map(|mut group| {
+                let order = group.1.next().unwrap();
+                (order.alphas, order.alpha)
             })
             .collect();
 
-        helpers::convolute(&grid, &pdf, &qcd_order_mask, &[], &[], scales)
+        helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], scales)
     };
 
     let bin_info = grid.bin_info();

@@ -22,18 +22,7 @@ pub fn subcommand(
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
-    let orders: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
-
-    let results = helpers::convolute(&grid, &pdf, &orders, &show_bins, &[], scales);
+    let results = helpers::convolute(&grid, &pdf, orders, &show_bins, &[], scales);
 
     let other_results: Vec<f64> = other_pdfsets
         .iter()

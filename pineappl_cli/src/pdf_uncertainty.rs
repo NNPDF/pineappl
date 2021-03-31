@@ -18,17 +18,6 @@ pub fn subcommand(
     ));
     let pdfs = set.mk_pdfs();
 
-    let orders: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
-
     ThreadPoolBuilder::new()
         .num_threads(threads)
         .build_global()
@@ -36,7 +25,7 @@ pub fn subcommand(
 
     let results: Vec<f64> = pdfs
         .into_par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &orders, &[], &[], 1))
+        .flat_map(|pdf| helpers::convolute(&grid, &pdf, orders, &[], &[], 1))
         .collect();
 
     let bin_info = grid.bin_info();

@@ -14,34 +14,21 @@ pub fn subcommand(
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
 
-    let grid_orders = grid.orders();
-    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
-
-    let order_results: Vec<Vec<f64>> = (0..grid_orders.len())
-        .map(|order| {
-            let mut order_mask = vec![false; grid_orders.len()];
-            order_mask[order] = true;
-            helpers::convolute(&grid, &pdf, &order_mask, &[], &[], 1)
-        })
-        .collect();
-
-    let mut sorted_grid_orders: Vec<_> = grid_orders
+    let mut orders: Vec<_> = grid
+        .orders()
         .iter()
         .filter(|order| (order.logxir == 0) && (order.logxif == 0))
         .collect();
-    sorted_grid_orders.sort();
+    orders.sort();
+    let orders = orders;
 
-    let unsorted_indices: Vec<_> = sorted_grid_orders
+    let results: Vec<Vec<f64>> = orders
         .iter()
-        .map(|sorted| {
-            grid_orders
-                .iter()
-                .position(|unsorted| unsorted == *sorted)
-                .unwrap()
-        })
+        .map(|order| helpers::convolute(&grid, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1))
         .collect();
+
     let lo_power = {
-        let order = sorted_grid_orders.first().unwrap();
+        let order = orders.first().unwrap();
         order.alphas + order.alpha
     };
 
@@ -62,14 +49,14 @@ pub fn subcommand(
     }
     title.add_cell(cell!(c->"diff"));
 
-    for order in &sorted_grid_orders {
+    for order in &orders {
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
     }
 
     let mut table = helpers::create_table();
     table.set_titles(title);
 
-    for (bin, value) in results.iter().enumerate() {
+    for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
 
         row.add_cell(cell!(r->&format!("{}", bin)));
@@ -77,22 +64,23 @@ pub fn subcommand(
             row.add_cell(cell!(r->&format!("{}", left[bin])));
             row.add_cell(cell!(r->&format!("{}", right[bin])));
         }
-        row.add_cell(cell!(r->&format!("{:.7e}", value)));
+        row.add_cell(cell!(r->&format!("{:.7e}",
+            results.iter().fold(0.0, |value, results| value + results[bin]))));
 
         let mut normalization = 0.0;
 
         // calculate the sum of all leading orders
-        for (index, order) in sorted_grid_orders.iter().enumerate() {
+        for (index, order) in orders.iter().enumerate() {
             if (normalize.is_empty() && ((order.alphas + order.alpha) == lo_power))
                 || (normalize.iter().any(|o| *o == (order.alphas, order.alpha)))
             {
-                normalization += order_results[unsorted_indices[index]][bin];
+                normalization += results[index][bin];
             }
         }
 
         // print each order normalized to the sum of all leading orders
-        for index in 0..sorted_grid_orders.len() {
-            let result = order_results[unsorted_indices[index]][bin];
+        for index in 0..orders.len() {
+            let result = results[index][bin];
 
             if absolute {
                 row.add_cell(cell!(r->&format!("{:.7e}", result)));
