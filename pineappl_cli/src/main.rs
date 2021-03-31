@@ -250,25 +250,25 @@ fn main() -> Result<()> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let limit = matches.value_of("limit").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
         let absolute = matches.is_present("absolute");
         let lumis = parse_integer_list(matches.value_of("lumis").unwrap_or(""))?;
 
-        channels::subcommand(input, pdfset, limit, &orders, absolute, &lumis)?.printstd();
+        channels::subcommand(input, pdfset, limit, &orders?, absolute, &lumis)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
         let scales = matches.value_of("scales").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
         let absolute = matches.is_present("absolute");
 
         convolute::subcommand(
@@ -277,7 +277,7 @@ fn main() -> Result<()> {
             &pdfset[1..],
             &bins,
             scales,
-            &orders,
+            &orders?,
             absolute,
         )?
         .printstd();
@@ -320,22 +320,16 @@ fn main() -> Result<()> {
             .value_of("scale")
             .map(str::parse::<f64>)
             .transpose()?;
-        let scale_by_order: Vec<_> = matches
+        let scale_by_order: Result<Vec<_>> = matches
             .values_of("scale_by_order")
             .map_or(vec![], |s| {
                 s.map(|s| str::parse::<f64>(s).context(format!("unable to parse '{}'", s)))
                     .collect()
             })
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
 
-        merge::subcommand(
-            output,
-            input.first().unwrap(),
-            &input[1..],
-            scale,
-            &scale_by_order,
-        )?;
+        merge::subcommand(output, input[0], &input[1..], scale, &scale_by_order?)?;
     } else if let Some(matches) = matches.subcommand_matches("optimize") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
@@ -345,25 +339,25 @@ fn main() -> Result<()> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let absolute = matches.is_present("absolute");
-        let normalize: Vec<_> = matches
+        let normalize: Result<Vec<_>> = matches
             .values_of("normalize")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
 
-        orders::subcommand(input, pdfset, absolute, &normalize)?.printstd();
+        orders::subcommand(input, pdfset, absolute, &normalize?)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let cl = matches.value_of("cl").unwrap().parse()?;
         let threads = matches.value_of("threads").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
 
-        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders)?.printstd();
+        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders?)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("plot") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
@@ -375,7 +369,7 @@ fn main() -> Result<()> {
         let output = matches.value_of("output").unwrap();
         let remapping = matches.value_of("remapping").unwrap();
         let norm = matches.value_of("norm").unwrap().parse()?;
-        let ignore_obs_norm: Vec<_> = matches
+        let ignore_obs_norm: Result<Vec<_>> = matches
             .values_of("ignore_obs_norm")
             .map_or(vec![], |values| {
                 values
@@ -385,18 +379,18 @@ fn main() -> Result<()> {
                     .collect()
             })
             .into_iter()
-            .collect::<Result<_>>()?;
+            .collect();
 
-        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm)?;
+        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm?)?;
     } else if let Some(matches) = matches.subcommand_matches("set") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
 
-        let entries: Vec<_> = matches.values_of("entry").map_or(vec![], Iterator::collect);
-        let entries_from_file: Vec<_> = matches
+        let entries = matches.values_of("entry").map_or(vec![], Iterator::collect);
+        let entries_from_file = matches
             .values_of("entry_from_file")
             .map_or(vec![], Iterator::collect);
-        let deletes: Vec<_> = matches
+        let deletes = matches
             .values_of("delete")
             .map_or(vec![], Iterator::collect);
 
