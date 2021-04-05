@@ -66,7 +66,7 @@ pub fn subcommand(
     let mut table = helpers::create_table();
     table.set_titles(title);
 
-    for (bin, values) in results.chunks_exact(scales).enumerate() {
+    for (index, values) in results.chunks_exact(scales).enumerate() {
         let min_value = values
             .iter()
             .min_by(|left, right| left.partial_cmp(right).unwrap())
@@ -75,27 +75,30 @@ pub fn subcommand(
             .iter()
             .max_by(|left, right| left.partial_cmp(right).unwrap())
             .unwrap();
+        let bin = if show_bins.is_empty() { index } else { show_bins[index] };
 
         let row = table.add_empty_row();
 
-        row.add_cell(cell!(r->&format!("{}", show_bins[bin])));
+        row.add_cell(cell!(r->&format!("{}", bin)));
         for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-            row.add_cell(cell!(r->&format!("{}", left[show_bins[bin]])));
-            row.add_cell(cell!(r->&format!("{}", right[show_bins[bin]])));
+            row.add_cell(cell!(r->&format!("{}", left[bin])));
+            row.add_cell(cell!(r->&format!("{}", right[bin])));
         }
         row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
-        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * normalizations[show_bins[bin]])));
+        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * normalizations[bin])));
 
         if absolute {
             for value in values.iter() {
-                row.add_cell(cell!(r->&format!("{:.7e}", value * normalizations[show_bins[bin]])));
+                row.add_cell(cell!(r->&format!("{:.7e}", value * normalizations[bin])));
             }
         } else {
             row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
             row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
         }
 
-        for other in other_results.iter().skip(bin).step_by(show_bins.len()) {
+        let bins = if show_bins.is_empty() { bin_info.bins() } else { show_bins.len() };
+
+        for other in other_results.iter().skip(index).step_by(bins) {
             row.add_cell(cell!(r->&format!("{:.7e}", other)));
             row.add_cell(cell!(r->&format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
         }
