@@ -3,7 +3,6 @@ use anyhow::Result;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use rayon::prelude::*;
-use std::collections::HashMap;
 
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     let grid = helpers::read_grid(input)?;
@@ -396,7 +395,18 @@ def data():
     println!("def metadata():");
     println!("    return {{");
 
-    for (key, value) in grid.key_values().unwrap_or(&HashMap::new()) {
+    let mut key_values = grid.key_values().cloned().unwrap_or_default();
+    key_values.entry("description".to_string()).or_default();
+    key_values.entry("x1_label_tex".to_string()).or_default();
+    key_values.entry("x1_unit".to_string()).or_default();
+    key_values.entry("y_label_tex".to_string()).or_default();
+    key_values.entry("y_unit".to_string()).or_default();
+
+    let mut vector: Vec<_> = key_values.iter().collect();
+    vector.sort();
+    let vector = vector;
+
+    for (key, value) in &vector {
         // skip multi-line entries
         if value.contains('\n') {
             continue;
