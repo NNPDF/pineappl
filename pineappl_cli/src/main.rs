@@ -318,12 +318,12 @@ fn main() -> Result<()> {
         let input: Vec<_> = matches.values_of("input").unwrap().collect();
         let scale = matches
             .value_of("scale")
-            .map(str::parse::<f64>)
+            .map(|s| str::parse(s).context(format!("unable to parse '{}'", s)))
             .transpose()?;
         let scale_by_order: Result<Vec<_>> = matches
             .values_of("scale_by_order")
             .map_or(vec![], |s| {
-                s.map(|s| str::parse::<f64>(s).context(format!("unable to parse '{}'", s)))
+                s.map(|s| str::parse(s).context(format!("unable to parse '{}'", s)))
                     .collect()
             })
             .into_iter()

@@ -120,197 +120,183 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     assert_eq!(left_limits.len(), 1);
     assert_eq!(right_limits.len(), 1);
 
-    println!("#!/usr/bin/env python3");
-    println!();
+    print!("#!/usr/bin/env python3
 
-    println!("import matplotlib.pyplot as plt");
-    println!("import numpy as np");
-    println!("from matplotlib.transforms import ScaledTranslation");
-    println!("from matplotlib.backends.backend_pdf import PdfPages");
-    println!();
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.transforms import ScaledTranslation
+from matplotlib.backends.backend_pdf import PdfPages
 
-    println!("def plot_abs(axis):");
-    println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
-    println!("    axis.minorticks_on()");
-    println!();
-    println!("    x = data()['left']");
-    println!("    y = data()['pdf_results'][0][1]");
-    println!("    ymin = data()['min']");
-    println!("    ymax = data()['max']");
-    println!("    x1_unit = metadata().get('x1_unit', '')");
-    println!(
-        "    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'"
-    );
-    println!("    description = metadata()['description']");
-    println!();
-    println!("    if x1_unit != '':");
-    println!("        axis.set_yscale('log')");
-    println!("    axis.set_axisbelow(True)");
-    println!("    axis.grid(linestyle='dotted')");
-    println!("    axis.step(x, y, 'royalblue', linewidth=1.0, where='post')");
-    println!("    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')");
-    println!("    axis.set_ylabel(ylabel)");
-    println!("    axis.set_title(description)");
-    println!();
+def plot_abs(axis):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
 
-    println!("def plot_rel_ewonoff(axis):");
-    println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
-    println!("    axis.minorticks_on()");
-    println!();
-    println!("    qcd_y = (data()['qcd_central'] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    qcd_ymin = (data()['qcd_min'] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    qcd_ymax = (data()['qcd_max'] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    x = data()['left']");
-    println!("    y = (data()['pdf_results'][0][1] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    ymin = (data()['min'] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    ymax = (data()['max'] / data()['qcd_central'] - 1.0) * 100.0");
-    println!("    pdf_min = (abs(data()['pdf_results'][0][2] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]");
-    println!("    pdf_max = (abs(data()['pdf_results'][0][3] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]");
-    println!("    mid = 0.5 * (data()['left'][:-1] + data()['right'])");
-    println!();
-    println!("    axis.set_axisbelow(True)");
-    println!("    axis.grid(linestyle='dotted')");
-    println!("    axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')");
-    println!("    axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\\ scale var.', linewidth=0.5, step='post')");
-    println!("    axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')");
-    println!("    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\\ scale var.', linewidth=0.5, step='post')");
-    println!("    axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)");
-    println!("    axis.set_ylabel('NLO EW on/off [\\si{{\\percent}}]')");
-    println!("    axis.legend(fontsize='xx-small', frameon=False)");
-    println!();
+    x = data()['left']
+    y = data()['pdf_results'][0][1]
+    ymin = data()['min']
+    ymax = data()['max']
+    x1_unit = metadata().get('x1_unit', '')
+    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
+    description = metadata()['description']
 
-    println!("def plot_rel_pdfunc(axis):");
-    println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
-    println!("    axis.minorticks_on()");
-    println!();
-    println!("    x = data()['left']");
-    println!("    pdf_uncertainties = data()['pdf_results']");
-    println!();
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
-    println!();
-    println!("    axis.set_axisbelow(True)");
-    println!("    axis.grid(linestyle='dotted')");
-    println!();
-    println!("    #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])");
-    println!("    #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])");
-    println!();
-    println!("    for index, i in enumerate(pdf_uncertainties):");
-    println!("        label, y, ymin, ymax = i");
-    println!("        ymin = (ymin / y - 1.0) * 100.0");
-    println!("        ymax = (ymax / y - 1.0) * 100.0");
-    println!(
-        "        axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')"
-    );
-    println!("        axis.step(x, ymin, color=colors[index], linewidth=1, where='post')");
-    println!();
-    println!("    axis.legend(fontsize='xx-small', frameon=False, ncol=2)");
-    println!("    minmax = axis.get_ylim()");
-    println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))");
-    println!("    axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')");
-    println!();
-    println!("def plot_rel_pdfpull(axis):");
-    println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
-    println!("    axis.minorticks_on()");
-    println!();
-    println!("    x = data()['left']");
-    println!("    pdf_uncertainties = data()['pdf_results']");
-    println!();
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
-    println!();
-    println!("    axis.set_axisbelow(True)");
-    println!("    axis.grid(linestyle='dotted')");
-    println!();
-    println!("    central_y = pdf_uncertainties[0][1]");
-    println!("    central_ymin = pdf_uncertainties[0][2]");
-    println!("    central_ymax = pdf_uncertainties[0][3]");
-    println!();
-    println!("    for index, i in enumerate(pdf_uncertainties):");
-    println!("        label, y, ymin, ymax = i");
-    println!("        diff = y - central_y");
-    println!("        yerr = np.where(diff > 0.0, y - ymin, ymax - y)");
-    println!("        #pull_avg = (y - central_y) / np.sqrt(np.power(0.5 * (ymax - ymin), 2) + np.power(0.5 * (central_ymax - central_ymin), 2))");
-    println!("        pull = (y - central_y) / np.sqrt(np.power(yerr, 2) + np.power(0.5 * (central_ymax - central_ymin), 2))");
-    println!();
-    println!("        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\\ pull', linewidth=0.5, step='post', zorder=2 * index)");
-    println!("        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)");
-    println!();
-    println!("    axis.legend(fontsize='xx-small', frameon=False, ncol=2)");
-    println!("    minmax = axis.get_ylim()");
-    println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))");
-    println!("    axis.set_ylabel('Pull [$\\sigma$]')");
-    println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
-    println!();
-    println!("def plot_rel_pdfdiff(axis):");
-    println!("    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)");
-    println!("    axis.minorticks_on()");
-    println!();
-    println!("    x = data()['left']");
-    println!("    pdf_uncertainties = data()['pdf_results']");
-    println!();
-    println!("    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']");
-    println!();
-    println!("    axis.grid(linestyle='dotted')");
-    println!();
-    println!("    central_y = pdf_uncertainties[0][1]");
-    println!("    central_ymin = pdf_uncertainties[0][2]");
-    println!("    central_ymax = pdf_uncertainties[0][3]");
-    println!();
-    println!("    for index, i in enumerate(pdf_uncertainties):");
-    println!("        label, y, ymin, ymax = i");
-    println!("        pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))");
-    println!("        pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))");
-    println!("        diff = (y / central_y - 1.0) * 100.0");
-    println!();
-    println!("        #axis.fill_between(x, pull_min, pull_max, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')");
-    println!(
-        "        axis.step(x, diff, color=colors[index], label=label, linewidth=1, where='post')"
-    );
-    println!();
-    println!("    axis.legend(fontsize='xx-small', frameon=False, ncol=2)");
-    println!("    minmax = axis.get_ylim()");
-    println!("    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 2.0))");
-    println!("    axis.set_ylabel('Difference [\\si{{\\percent}}]')");
-    println!("    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')");
-    println!();
+    if x1_unit != '':
+        axis.set_yscale('log')
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+    axis.step(x, y, 'royalblue', linewidth=1.0, where='post')
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
+    axis.set_ylabel(ylabel)
+    axis.set_title(description)
 
-    println!("def main():");
-    println!("    panels = [");
-    println!("        plot_abs,");
-    println!("        plot_rel_ewonoff,");
-    println!("        plot_rel_pdfunc,");
-    println!("        #plot_rel_pdfdiff,");
-    println!("        plot_rel_pdfpull,");
-    println!("    ]");
-    println!();
-    println!("    plt.rc('text', usetex=True)");
-    println!("    plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}')");
-    println!("    plt.rc('figure', figsize=(6.4,len(panels)*2.4))");
-    println!("    plt.rc('font', family='serif', size=14.0)");
-    println!("    plt.rc('axes', labelsize='small')");
-    println!("    plt.rc('pdf', compression=0)");
-    println!();
-    println!("    x1_unit = metadata().get('x1_unit', '')");
-    println!("    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')");
-    println!();
-    println!("    with PdfPages('output.pdf') as pp:");
-    println!("        figure, axis = plt.subplots(len(panels), 1, sharex=True)");
-    println!(
-        "        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))"
-    );
-    println!();
-    println!("        if x1_unit != '':");
-    println!("            axis[0].set_xscale('log')");
-    println!();
-    println!("        for index, plot in enumerate(panels):");
-    println!("            plot(axis[index])");
-    println!();
-    println!("        axis[-1].set_xlabel(xlabel)");
-    println!("        figure.savefig(pp, format='pdf')");
-    println!("        plt.close()");
-    println!();
+def plot_rel_ewonoff(axis):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
 
-    println!("def data():");
-    print!("    left = np.array([");
+    qcd_y = (data()['qcd_central'] / data()['qcd_central'] - 1.0) * 100.0
+    qcd_ymin = (data()['qcd_min'] / data()['qcd_central'] - 1.0) * 100.0
+    qcd_ymax = (data()['qcd_max'] / data()['qcd_central'] - 1.0) * 100.0
+    x = data()['left']
+    y = (data()['pdf_results'][0][1] / data()['qcd_central'] - 1.0) * 100.0
+    ymin = (data()['min'] / data()['qcd_central'] - 1.0) * 100.0
+    ymax = (data()['max'] / data()['qcd_central'] - 1.0) * 100.0
+    pdf_min = (abs(data()['pdf_results'][0][2] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]
+    pdf_max = (abs(data()['pdf_results'][0][3] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]
+    mid = 0.5 * (data()['left'][:-1] + data()['right'])
+
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+    axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
+    axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\\ scale var.', linewidth=0.5, step='post')
+    axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\\ scale var.', linewidth=0.5, step='post')
+    axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
+    axis.set_ylabel('NLO EW on/off [\\si{{\\percent}}]')
+    axis.legend(fontsize='xx-small', frameon=False)
+
+def plot_rel_pdfunc(axis):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+
+    x = data()['left']
+    pdf_uncertainties = data()['pdf_results']
+
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+
+    #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
+    #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
+
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        ymin = (ymin / y - 1.0) * 100.0
+        ymax = (ymax / y - 1.0) * 100.0
+        axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
+        axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
+
+    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    minmax = axis.get_ylim()
+    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
+    axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
+
+def plot_rel_pdfpull(axis):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+
+    x = data()['left']
+    pdf_uncertainties = data()['pdf_results']
+
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+
+    central_y = pdf_uncertainties[0][1]
+    central_ymin = pdf_uncertainties[0][2]
+    central_ymax = pdf_uncertainties[0][3]
+
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        diff = y - central_y
+        yerr = np.where(diff > 0.0, y - ymin, ymax - y)
+        #pull_avg = (y - central_y) / np.sqrt(np.power(0.5 * (ymax - ymin), 2) + np.power(0.5 * (central_ymax - central_ymin), 2))
+        pull = (y - central_y) / np.sqrt(np.power(yerr, 2) + np.power(0.5 * (central_ymax - central_ymin), 2))
+
+        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\\ pull', linewidth=0.5, step='post', zorder=2 * index)
+        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
+
+    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    minmax = axis.get_ylim()
+    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
+    axis.set_ylabel('Pull [$\\sigma$]')
+    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
+
+def plot_rel_pdfdiff(axis):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+
+    x = data()['left']
+    pdf_uncertainties = data()['pdf_results']
+
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+
+    axis.grid(linestyle='dotted')
+
+    central_y = pdf_uncertainties[0][1]
+    central_ymin = pdf_uncertainties[0][2]
+    central_ymax = pdf_uncertainties[0][3]
+
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))
+        pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))
+        diff = (y / central_y - 1.0) * 100.0
+
+        #axis.fill_between(x, pull_min, pull_max, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+        axis.step(x, diff, color=colors[index], label=label, linewidth=1, where='post')
+
+    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    minmax = axis.get_ylim()
+    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 2.0))
+    axis.set_ylabel('Difference [\\si{{\\percent}}]')
+    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
+
+def main():
+    panels = [
+        plot_abs,
+        plot_rel_ewonoff,
+        plot_rel_pdfunc,
+        #plot_rel_pdfdiff,
+        plot_rel_pdfpull,
+    ]
+
+    plt.rc('text', usetex=True)
+    plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}')
+    plt.rc('figure', figsize=(6.4,len(panels)*2.4))
+    plt.rc('font', family='serif', size=14.0)
+    plt.rc('axes', labelsize='small')
+    plt.rc('pdf', compression=0)
+
+    x1_unit = metadata().get('x1_unit', '')
+    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')
+
+    with PdfPages('output.pdf') as pp:
+        figure, axis = plt.subplots(len(panels), 1, sharex=True)
+        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
+
+        if x1_unit != '':
+            axis[0].set_xscale('log')
+
+        for index, plot in enumerate(panels):
+            plot(axis[index])
+
+        axis[-1].set_xlabel(xlabel)
+        figure.savefig(pp, format='pdf')
+        plt.close()
+
+def data():
+    left = np.array([");
 
     left_limits[0]
         .iter()
