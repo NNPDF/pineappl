@@ -1,6 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
+use super::empty_subgrid::EmptySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
@@ -129,6 +130,13 @@ struct Mmv2 {
     key_value_db: HashMap<String, String>,
 }
 
+#[derive(Deserialize, Serialize)]
+struct Mmv3 {
+    remapper: Option<BinRemapper>,
+    key_value_db: HashMap<String, String>,
+    subgrid_template: SubgridEnum,
+}
+
 impl Default for Mmv2 {
     fn default() -> Self {
         Self {
@@ -154,10 +162,37 @@ impl Default for Mmv2 {
     }
 }
 
+impl Mmv3 {
+    fn new(subgrid_template: SubgridEnum) -> Self {
+        Self {
+            remapper: None,
+            key_value_db: [
+                (
+                    "pineappl_gitversion".to_owned(),
+                    git_version!(
+                        args = ["--always", "--dirty", "--long", "--tags"],
+                        cargo_prefix = "cargo:",
+                        fallback = "unknown"
+                    )
+                    .to_owned(),
+                ),
+                // by default we assume there are protons in the initial state
+                ("initial_state_1".to_owned(), "2212".to_owned()),
+                ("initial_state_2".to_owned(), "2212".to_owned()),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+            subgrid_template,
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 enum MoreMembers {
     V1(Mmv1),
     V2(Mmv2),
+    V3(Mmv3),
 }
 
 impl MoreMembers {
@@ -166,7 +201,7 @@ impl MoreMembers {
             Self::V1(_) => {
                 *self = Self::V2(Mmv2::default());
             }
-            Self::V2(_) => {}
+            Self::V2(_) | Self::V3(_) => {}
         }
     }
 }
@@ -208,19 +243,16 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || {
-                    LagrangeSubgridV2::new(
-                        &subgrid_params,
-                        &ExtraSubgridParams::from(&subgrid_params),
-                    )
-                    .into()
-                },
+                || EmptySubgridV1::default().into(),
             ),
             orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
+            more_members: MoreMembers::V3(Mmv3::new(
+                LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
+                    .into(),
+            )),
             subgrid_params,
-            more_members: MoreMembers::V2(Mmv2::default()),
         }
     }
 
@@ -241,28 +273,26 @@ impl Grid {
         extra: ExtraSubgridParams,
         subgrid_type: &str,
     ) -> Result<Self, UnknownSubgrid> {
-        let subgrid_maker: Box<dyn Fn() -> SubgridEnum> = match subgrid_type {
+        let subgrid_template: SubgridEnum = match subgrid_type {
             "LagrangeSubgrid" | "LagrangeSubgridV2" => {
-                Box::new(|| LagrangeSubgridV2::new(&subgrid_params, &extra).into())
+                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
             }
-            "LagrangeSubgridV1" => Box::new(|| LagrangeSubgridV1::new(&subgrid_params).into()),
-            "NtupleSubgrid" => Box::new(|| NtupleSubgridV1::new().into()),
-            "LagrangeSparseSubgrid" => {
-                Box::new(|| LagrangeSparseSubgridV1::new(&subgrid_params).into())
-            }
+            "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
+            "NtupleSubgrid" => NtupleSubgridV1::new().into(),
+            "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
             _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
         };
 
         Ok(Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                subgrid_maker,
+                || EmptySubgridV1::default().into(),
             ),
             orders,
             lumi,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
-            more_members: MoreMembers::V2(Mmv2::default()),
+            more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
         })
     }
 
@@ -444,7 +474,16 @@ impl Grid {
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
     pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: &Ntuple<f64>) {
         if let Some(bin) = self.bin_limits.index(observable) {
-            self.subgrids[[order, bin, lumi]].fill(ntuple);
+            let subgrid = &mut self.subgrids[[order, bin, lumi]];
+            if let SubgridEnum::EmptySubgridV1(_) = subgrid {
+                if let MoreMembers::V3(mmv3) = &self.more_members {
+                    *subgrid = mmv3.subgrid_template.clone_empty();
+                } else {
+                    unreachable!();
+                }
+            }
+
+            subgrid.fill(ntuple);
         }
     }
 
@@ -577,6 +616,9 @@ impl Grid {
                 MoreMembers::V2(mmv2) => {
                     mmv2.remapper = None;
                 }
+                MoreMembers::V3(mmv3) => {
+                    mmv3.remapper = None;
+                }
             }
         }
 
@@ -696,6 +738,7 @@ impl Grid {
         match &mut self.more_members {
             MoreMembers::V1(_) => unreachable!(),
             MoreMembers::V2(mmv2) => mmv2.remapper = Some(remapper),
+            MoreMembers::V3(mmv3) => mmv3.remapper = Some(remapper),
         }
 
         Ok(())
@@ -709,6 +752,7 @@ impl Grid {
             match &self.more_members {
                 MoreMembers::V1(_) => None,
                 MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
+                MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
             },
         )
     }
@@ -724,20 +768,25 @@ impl Grid {
         }
 
         for subgrid in self.subgrids.iter_mut() {
-            match subgrid {
-                SubgridEnum::LagrangeSubgridV1(grid) => {
-                    let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
-                    mem::swap(subgrid, &mut new_subgrid);
+            if subgrid.is_empty() {
+                *subgrid = EmptySubgridV1::default().into();
+            } else {
+                match subgrid {
+                    SubgridEnum::LagrangeSubgridV1(grid) => {
+                        let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
+                        mem::swap(subgrid, &mut new_subgrid);
+                    }
+                    SubgridEnum::LagrangeSubgridV2(grid) => {
+                        let mut new_subgrid = ReadOnlySparseSubgridV1::from(&*grid).into();
+                        mem::swap(subgrid, &mut new_subgrid);
+                    }
+                    SubgridEnum::EmptySubgridV1(_)
+                    | SubgridEnum::LagrangeSparseSubgridV1(_)
+                    | SubgridEnum::ReadOnlySparseSubgridV1(_) => {
+                        // nothing to optimize here
+                    }
+                    SubgridEnum::NtupleSubgridV1(_) => todo!(),
                 }
-                SubgridEnum::LagrangeSubgridV2(grid) => {
-                    let mut new_subgrid = ReadOnlySparseSubgridV1::from(&*grid).into();
-                    mem::swap(subgrid, &mut new_subgrid);
-                }
-                SubgridEnum::LagrangeSparseSubgridV1(_)
-                | SubgridEnum::ReadOnlySparseSubgridV1(_) => {
-                    // nothing to optimize here
-                }
-                SubgridEnum::NtupleSubgridV1(_) => todo!(),
             }
         }
     }
@@ -783,11 +832,21 @@ impl Grid {
                     if k1 == k2 {
                         subgrids[[i, j, k1]].as_mut().unwrap().symmetrize();
                     } else {
-                        let subgrid = mem::replace(&mut subgrids[[i, j, k2]], None);
-                        subgrids[[i, j, k1]]
-                            .as_mut()
-                            .unwrap()
-                            .merge(&mut subgrid.unwrap(), true);
+                        let mut lhs = mem::replace(&mut subgrids[[i, j, k1]], None).unwrap();
+                        let mut rhs = mem::replace(&mut subgrids[[i, j, k2]], None).unwrap();
+
+                        subgrids[[i, j, k1]] = Some(if !rhs.is_empty() {
+                            if lhs.is_empty() {
+                                let mut new_lhs = rhs.clone_empty();
+                                new_lhs.merge(&mut rhs, true);
+                                new_lhs
+                            } else {
+                                lhs.merge(&mut rhs, true);
+                                lhs
+                            }
+                        } else {
+                            lhs
+                        });
                     }
                 }
             }
@@ -818,6 +877,7 @@ impl Grid {
     #[must_use]
     pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
         match &self.more_members {
+            MoreMembers::V3(mmv3) => Some(&mmv3.key_value_db),
             MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
             MoreMembers::V1(_) => None,
         }
@@ -831,6 +891,7 @@ impl Grid {
         match &mut self.more_members {
             MoreMembers::V1(_) => unreachable!(),
             MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
+            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
         }
     }
 
@@ -838,12 +899,13 @@ impl Grid {
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.more_members.upgrade();
 
-        let mmv2 = match &mut self.more_members {
+        let key_value_db = match &mut self.more_members {
             MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => mmv2,
+            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
+            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
         };
 
-        mmv2.key_value_db.insert(key.to_owned(), value.to_owned());
+        key_value_db.insert(key.to_owned(), value.to_owned());
     }
 }
 

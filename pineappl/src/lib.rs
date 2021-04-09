@@ -7,6 +7,7 @@
 mod convert;
 
 pub mod bin;
+pub mod empty_subgrid;
 pub mod grid;
 pub mod lagrange_subgrid;
 pub mod lumi;

@@ -1,5 +1,6 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
+use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
@@ -23,6 +24,8 @@ pub enum SubgridEnum {
     LagrangeSubgridV2,
     /// Read-only sparse subgrid with possibly different x1 and x2 bins.
     ReadOnlySparseSubgridV1,
+    /// Empty subgrid.
+    EmptySubgridV1,
 }
 
 /// Trait each subgrid must implement.
