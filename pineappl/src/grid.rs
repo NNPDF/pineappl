@@ -327,9 +327,18 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        let mut q2_grid = self.subgrids[[0, 0, 0]].q2_grid();
-        let mut x1_grid = self.subgrids[[0, 0, 0]].x1_grid();
-        let mut x2_grid = self.subgrids[[0, 0, 0]].x2_grid();
+        let (mut q2_grid, mut x1_grid, mut x2_grid) = {
+            if let Some(grid) = self
+                .subgrids
+                .iter()
+                .filter(|subgrid| !subgrid.is_empty())
+                .next()
+            {
+                (grid.q2_grid(), grid.x1_grid(), grid.x2_grid())
+            } else {
+                return bins;
+            }
+        };
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
         let two_caches = !ptr::eq(&xfx1, &xfx2);
 
