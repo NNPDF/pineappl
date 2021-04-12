@@ -75,7 +75,11 @@ pub fn subcommand(
             .iter()
             .max_by(|left, right| left.partial_cmp(right).unwrap())
             .unwrap();
-        let bin = if show_bins.is_empty() { index } else { show_bins[index] };
+        let bin = if show_bins.is_empty() {
+            index
+        } else {
+            show_bins[index]
+        };
 
         let row = table.add_empty_row();
 
@@ -96,7 +100,11 @@ pub fn subcommand(
             row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
         }
 
-        let bins = if show_bins.is_empty() { bin_info.bins() } else { show_bins.len() };
+        let bins = if show_bins.is_empty() {
+            bin_info.bins()
+        } else {
+            show_bins.len()
+        };
 
         for other in other_results.iter().skip(index).step_by(bins) {
             row.add_cell(cell!(r->&format!("{:.7e}", other)));

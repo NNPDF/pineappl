@@ -89,7 +89,7 @@ fn parse_order(order: &str) -> Result<(u32, u32)> {
     let matches: Vec<_> = order.match_indices('a').collect();
 
     ensure!(
-        matches.len() > 2,
+        matches.len() <= 2,
         "unable to parse order; too many couplings in '{}'",
         order
     );
