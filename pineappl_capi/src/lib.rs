@@ -162,7 +162,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *
 /// one element longer as `grid` has bins.
 #[deprecated(
     since = "0.4.0",
-    note = "this function only returns the limits for the zeroth dimension"
+    note = "use 'pineappl_grid_bin_limits_left' and 'pineappl_grid_bin_limits_right' instead"
 )]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits: *mut f64) {
