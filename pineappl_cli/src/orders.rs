@@ -8,6 +8,7 @@ pub fn subcommand(
     pdfset: &str,
     absolute: bool,
     normalize: &[(u32, u32)],
+    integrated: bool,
 ) -> Result<Table> {
     let grid = helpers::read_grid(input)?;
     let pdf = pdfset
@@ -39,6 +40,7 @@ pub fn subcommand(
     let right_limits: Vec<_> = (0..bin_info.dimensions())
         .map(|i| bin_info.right(i))
         .collect();
+    let normalizations = bin_info.normalizations();
 
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
@@ -47,7 +49,7 @@ pub fn subcommand(
         cell.set_hspan(2);
         title.add_cell(cell);
     }
-    title.add_cell(cell!(c->"diff"));
+    title.add_cell(cell!(c->if integrated { "integ" } else { "diff" }));
 
     for order in &orders {
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
@@ -58,6 +60,7 @@ pub fn subcommand(
 
     for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
+        let bin_norm = if integrated { normalizations[bin] } else { 1.0 };
 
         row.add_cell(cell!(r->&format!("{}", bin)));
         for (left, right) in left_limits.iter().zip(right_limits.iter()) {
@@ -65,7 +68,7 @@ pub fn subcommand(
             row.add_cell(cell!(r->&format!("{}", right[bin])));
         }
         row.add_cell(cell!(r->&format!("{:.7e}",
-            results.iter().fold(0.0, |value, results| value + results[bin]))));
+            bin_norm * results.iter().fold(0.0, |value, results| value + results[bin]))));
 
         let mut normalization = 0.0;
 
@@ -81,7 +84,7 @@ pub fn subcommand(
         // print each order normalized to the sum of all leading orders
         for result in results.iter().map(|vec| vec[bin]) {
             if absolute {
-                row.add_cell(cell!(r->&format!("{:.7e}", result)));
+                row.add_cell(cell!(r->&format!("{:.7e}", result * bin_norm)));
             } else {
                 row.add_cell(cell!(r->&format!("{:.2}%", result / normalization * 100.0)));
             }

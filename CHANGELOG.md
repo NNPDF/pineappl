@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The command-line interface `pineappl` no longer prints both the differential
+  and integrated cross sections. Instead it either prints the differential
+  cross sections, or, if the switch `-i` or `--integrated` is given, the
+  integrated cross sections (without bin limits and/or normalizations) are
+  printed
+
 ## [0.4.1] - 25/03/2021
 
 ### Fixed

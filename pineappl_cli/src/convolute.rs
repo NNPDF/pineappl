@@ -11,6 +11,7 @@ pub fn subcommand(
     scales: usize,
     orders: &[(u32, u32)],
     absolute: bool,
+    integrated: bool,
 ) -> Result<Table> {
     let grid = helpers::read_grid(input)?;
     let pdf = pdfset
@@ -45,8 +46,7 @@ pub fn subcommand(
         cell.set_hspan(2);
         title.add_cell(cell);
     }
-    title.add_cell(cell!(c->"diff"));
-    title.add_cell(cell!(c->"integ"));
+    title.add_cell(cell!(c->if integrated { "integ" } else { "diff" }));
 
     if absolute {
         for scale in &helpers::SCALES_VECTOR[0..scales] {
@@ -88,12 +88,11 @@ pub fn subcommand(
             row.add_cell(cell!(r->&format!("{}", left[bin])));
             row.add_cell(cell!(r->&format!("{}", right[bin])));
         }
-        row.add_cell(cell!(r->&format!("{:.7e}", values[0])));
-        row.add_cell(cell!(r->&format!("{:.7e}", values[0] * normalizations[bin])));
+        row.add_cell(cell!(r->&format!("{:.7e}", if integrated { values[0] * normalizations[bin] } else { values[0] })));
 
         if absolute {
-            for value in values.iter() {
-                row.add_cell(cell!(r->&format!("{:.7e}", value * normalizations[bin])));
+            for &value in values.iter() {
+                row.add_cell(cell!(r->&format!("{:.7e}", if integrated { value * normalizations[bin] } else { value })));
             }
         } else {
             row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
@@ -106,8 +105,8 @@ pub fn subcommand(
             show_bins.len()
         };
 
-        for other in other_results.iter().skip(index).step_by(bins) {
-            row.add_cell(cell!(r->&format!("{:.7e}", other)));
+        for &other in other_results.iter().skip(index).step_by(bins) {
+            row.add_cell(cell!(r->&format!("{:.7e}", if integrated { other * normalizations[bin] } else { other })));
             row.add_cell(cell!(r->&format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
         }
     }

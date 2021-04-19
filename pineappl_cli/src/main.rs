@@ -136,6 +136,8 @@ fn main() -> Result<()> {
             (@arg absolute: -a --absolute "Show absolute numbers of each contribution")
             (@arg lumis: --lumis +takes_value conflicts_with("limit")
                 "Show only the listed channels")
+            (@arg integrated: -i --integrated requires("absolute")
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
@@ -147,6 +149,8 @@ fn main() -> Result<()> {
                 "Set the number of scale variations")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
             (@arg absolute: -a --absolute "Show absolute numbers of the scale variation")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand diff =>
             (about: "Compares the contents of two grids with each other")
@@ -193,6 +197,8 @@ fn main() -> Result<()> {
             (@arg absolute: -a --absolute "Show absolute numbers of each perturbative order")
             (@arg normalize: -n --normalize +use_delimiter min_values(1) conflicts_with("absolute")
                 "Normalize contributions to the specified orders")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand pdf_uncertainty =>
             (about: "Calculates PDF uncertainties")
@@ -201,6 +207,8 @@ fn main() -> Result<()> {
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
             (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand plot =>
             (about: "Creates a matplotlib script plotting the contents of the grid")
@@ -257,8 +265,10 @@ fn main() -> Result<()> {
             .collect();
         let absolute = matches.is_present("absolute");
         let lumis = parse_integer_list(matches.value_of("lumis").unwrap_or(""))?;
+        let integrated = matches.is_present("integrated");
 
-        channels::subcommand(input, pdfset, limit, &orders?, absolute, &lumis)?.printstd();
+        channels::subcommand(input, pdfset, limit, &orders?, absolute, &lumis, integrated)?
+            .printstd();
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
@@ -270,6 +280,7 @@ fn main() -> Result<()> {
             .into_iter()
             .collect();
         let absolute = matches.is_present("absolute");
+        let integrated = matches.is_present("integrated");
 
         convolute::subcommand(
             input,
@@ -279,6 +290,7 @@ fn main() -> Result<()> {
             scales,
             &orders?,
             absolute,
+            integrated,
         )?
         .printstd();
     } else if let Some(matches) = matches.subcommand_matches("diff") {
@@ -344,8 +356,9 @@ fn main() -> Result<()> {
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
             .collect();
+        let integrated = matches.is_present("integrated");
 
-        orders::subcommand(input, pdfset, absolute, &normalize?)?.printstd();
+        orders::subcommand(input, pdfset, absolute, &normalize?, integrated)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
@@ -356,8 +369,9 @@ fn main() -> Result<()> {
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
             .collect();
+        let integrated = matches.is_present("integrated");
 
-        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders?)?.printstd();
+        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders?, integrated)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("plot") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();

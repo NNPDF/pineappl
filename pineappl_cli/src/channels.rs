@@ -10,6 +10,7 @@ pub fn subcommand(
     orders: &[(u32, u32)],
     absolute: bool,
     lumis: &[usize],
+    integrated: bool,
 ) -> Result<Table> {
     let grid = helpers::read_grid(input)?;
     let pdf = pdfset
@@ -36,6 +37,7 @@ pub fn subcommand(
     let right_limits: Vec<_> = (0..bin_info.dimensions())
         .map(|i| bin_info.right(i))
         .collect();
+    let normalizations = bin_info.normalizations();
 
     let mut title_row = row![];
     title_row.add_cell(cell!(c->"bin"));
@@ -46,7 +48,7 @@ pub fn subcommand(
     }
     for _ in 0..limit {
         title_row.add_cell(cell!(c->"lumi"));
-        title_row.add_cell(cell!(c->"size"));
+        title_row.add_cell(cell!(c->if integrated { "integ" } else { "size" }));
     }
 
     let mut table = helpers::create_table();
@@ -66,7 +68,16 @@ pub fn subcommand(
             let mut values: Vec<_> = results
                 .iter()
                 .enumerate()
-                .map(|(lumi, vec)| (lumi, vec[bin]))
+                .map(|(lumi, vec)| {
+                    (
+                        lumi,
+                        if integrated {
+                            normalizations[bin] * vec[bin]
+                        } else {
+                            vec[bin]
+                        },
+                    )
+                })
                 .collect();
 
             // sort using the absolute value in descending order
