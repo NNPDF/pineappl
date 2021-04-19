@@ -287,6 +287,7 @@ pub unsafe extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `name` must be a valid and non-`NULL` C
 /// string.
+#[deprecated(since = "0.5.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_ext(
@@ -728,10 +729,9 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
     q2_slice: usize,
     buffer: *mut f64,
 ) {
-    let size = pineappl_subgrid_x_grid_count(grid).pow(2);
-    (*grid)
-        .subgrid(order, bin, lumi)
-        .fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
+    let subgrid = (*grid).subgrid(order, bin, lumi);
+    let size = subgrid.x1_grid().len() * subgrid.x2_grid().len();
+    subgrid.fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
 }
 
 /// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
@@ -755,49 +755,53 @@ pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
     tuple[1] = slice.1;
 }
 
-/// Writes into `buffer` the q2 values that the grid spans.
+/// Writes the `q2` values of the subgrid with indices `0, 0, 0` into `buffer`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `buffer` must point to an array which is as
 /// large as the value returned by `pineappl_subgrid_q2_grid_count`.
+#[deprecated(since = "0.5.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_q2_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_subgrid_q2_grid_count(grid);
+    let size = (*grid).subgrid(0, 0, 0).q2_grid().len();
     slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).q2_grid());
 }
 
-/// Returns the number grid values in q2 direction.
+/// Returns the number grid values in `q2` direction for the subgrid with indices `0, 0, 0`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "0.5.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_q2_grid_count(grid: *const Grid) -> usize {
     (*grid).subgrid(0, 0, 0).q2_grid().len()
 }
 
-/// Writes into `buffer` the x values that the grid spans.
+/// Writes the `x1` values of the subgrid with indicies `0, 0, 0` spans into `buffer`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `buffer` must point to an array which is as
 /// large as the value returned by `pineappl_subgrid_x_grid_count`.
+#[deprecated(since = "0.5.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_x_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_subgrid_x_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).x1_grid());
+    let x_grid = (*grid).subgrid(0, 0, 0).x1_grid();
+    slice::from_raw_parts_mut(buffer, x_grid.len()).copy_from_slice(&x_grid);
 }
 
-/// Returns the number grid values in x direction.
+/// Returns the number of grid values in `x1` direction of the subgrid with indices `0, 0, 0`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "0.5.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usize {
     (*grid).subgrid(0, 0, 0).x1_grid().len()
