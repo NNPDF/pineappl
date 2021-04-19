@@ -46,6 +46,28 @@ pub const SCALES_VECTOR: [(f64, f64); 9] = [
     (0.5, 2.0),
 ];
 
+pub fn labels(grid: &Grid) -> Vec<String> {
+    let mut labels = vec![];
+    let key_values = grid.key_values().cloned().unwrap_or_default();
+
+    for d in 0..grid.bin_info().dimensions() {
+        labels.push(
+            key_values
+                .get(&format!("x{}_label", d + 1))
+                .unwrap_or(&format!("x{}", d))
+                .clone(),
+        );
+    }
+
+    labels.push(
+        key_values
+            .get("y_label")
+            .unwrap_or(&"diff".to_owned())
+            .clone(),
+    );
+    labels
+}
+
 pub fn convolute(
     grid: &Grid,
     lhapdf: &Pdf,

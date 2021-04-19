@@ -42,14 +42,16 @@ pub fn subcommand(
         .collect();
     let normalizations = bin_info.normalizations();
 
+    let labels = helpers::labels(&grid);
+    let (y_label, x_labels) = labels.split_last().unwrap();
     let mut title = Row::empty();
     title.add_cell(cell!(c->"bin"));
-    for i in 0..bin_info.dimensions() {
-        let mut cell = cell!(c->&format!("x{}", i + 1));
+    for x_label in x_labels {
+        let mut cell = cell!(c->&x_label);
         cell.set_hspan(2);
         title.add_cell(cell);
     }
-    title.add_cell(cell!(c->if integrated { "integ" } else { "diff" }));
+    title.add_cell(cell!(c->if integrated { "integ" } else { y_label }));
 
     for order in &orders {
         title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));

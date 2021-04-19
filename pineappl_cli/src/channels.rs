@@ -1,7 +1,7 @@
 use super::helpers;
 use anyhow::Result;
 use lhapdf::Pdf;
-use prettytable::{cell, row, Table};
+use prettytable::{cell, Row, Table};
 
 pub fn subcommand(
     input: &str,
@@ -39,20 +39,24 @@ pub fn subcommand(
         .collect();
     let normalizations = bin_info.normalizations();
 
-    let mut title_row = row![];
-    title_row.add_cell(cell!(c->"bin"));
-    for i in 0..bin_info.dimensions() {
-        let mut cell = cell!(c->&format!("x{}", i + 1));
+    let labels = helpers::labels(&grid);
+    let (y_label, x_labels) = labels.split_last().unwrap();
+    let mut title = Row::empty();
+    title.add_cell(cell!(c->"bin"));
+    for x_label in x_labels {
+        let mut cell = cell!(c->&x_label);
         cell.set_hspan(2);
-        title_row.add_cell(cell);
+        title.add_cell(cell);
     }
     for _ in 0..limit {
-        title_row.add_cell(cell!(c->"lumi"));
-        title_row.add_cell(cell!(c->if integrated { "integ" } else { "size" }));
+        title.add_cell(cell!(c->"lumi"));
+        title.add_cell(
+            cell!(c->if absolute { if integrated { "integ" } else { y_label } } else { "size" }),
+        );
     }
 
     let mut table = helpers::create_table();
-    table.set_titles(title_row);
+    table.set_titles(title);
 
     for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
