@@ -165,7 +165,7 @@ def plot_rel_ewonoff(axis):
     axis.set_axisbelow(True)
     axis.grid(linestyle='dotted')
     axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
-    axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\\ scale var.', linewidth=0.5, step='post')
+    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\\ scale var.', linewidth=0.5, step='post')
     axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\\ scale var.', linewidth=0.5, step='post')
     axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
