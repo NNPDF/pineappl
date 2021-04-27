@@ -225,38 +225,11 @@ def plot_rel_pdfpull(axis, **kwargs):
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
-def plot_rel_pdfdiff(axis, **kwargs):
-    central_ymax = kwargs['pdf_results'][0][3]
-    central_ymin = kwargs['pdf_results'][0][2]
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
-    x = kwargs['x']
-    y = kwargs['y']
-
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-    axis.grid(linestyle='dotted')
-
-    for index, i in enumerate(kwargs['pdf_results']):
-        label, y, ymin, ymax = i
-        pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))
-        pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))
-        diff = (y / central_y - 1.0) * 100.0
-
-        #axis.fill_between(x, pull_min, pull_max, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
-        axis.step(x, diff, color=colors[index], label=label, linewidth=1, where='post')
-
-    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
-    minmax = axis.get_ylim()
-    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 2.0))
-    axis.set_ylabel('Difference [\\si{{\\percent}}]')
-    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
-
 def main():
     panels = [
         plot_abs,
         plot_rel_ewonoff,
         plot_rel_pdfunc,
-        #plot_rel_pdfdiff,
         plot_rel_pdfpull,
     ]
 
