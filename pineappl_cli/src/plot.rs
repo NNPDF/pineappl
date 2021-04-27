@@ -126,42 +126,40 @@ import numpy as np
 from matplotlib.transforms import ScaledTranslation
 from matplotlib.backends.backend_pdf import PdfPages
 
-def plot_abs(axis):
+def percent_diff(a, b):
+    return (a / b - 1.0) * 100.0
+
+def plot_abs(axis, **kwargs):
+    x = kwargs['x']
+    y = kwargs['y']
+    ymin = kwargs['ymin']
+    ymax = kwargs['ymax']
+    ylog = kwargs['ylog']
+    ylabel = kwargs['ylabel']
+
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
-
-    x = data()['left']
-    y = data()['pdf_results'][0][1]
-    ymin = data()['min']
-    ymax = data()['max']
-    x1_unit = metadata().get('x1_unit', '')
-    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
-    description = metadata()['description']
-
-    if x1_unit != '':
-        axis.set_yscale('log')
+    axis.set_yscale('log' if ylog else 'linear')
     axis.set_axisbelow(True)
     axis.grid(linestyle='dotted')
     axis.step(x, y, 'royalblue', linewidth=1.0, where='post')
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
     axis.set_ylabel(ylabel)
-    axis.set_title(description)
 
-def plot_rel_ewonoff(axis):
+def plot_rel_ewonoff(axis, **kwargs):
+    x = kwargs['x']
+    y = percent_diff(kwargs['y'], kwargs['qcd_y'])
+    qcd_y = percent_diff(kwargs['qcd_y'], kwargs['qcd_y'])
+    qcd_ymin = percent_diff(kwargs['qcd_min'], kwargs['qcd_y'])
+    qcd_ymax = percent_diff(kwargs['qcd_max'], kwargs['qcd_y'])
+    ymin = percent_diff(kwargs['ymin'], kwargs['qcd_y'])
+    ymax = percent_diff(kwargs['ymax'], kwargs['qcd_y'])
+    pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
+    pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
+    mid = kwargs['mid']
+
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
-
-    qcd_y = (data()['qcd_central'] / data()['qcd_central'] - 1.0) * 100.0
-    qcd_ymin = (data()['qcd_min'] / data()['qcd_central'] - 1.0) * 100.0
-    qcd_ymax = (data()['qcd_max'] / data()['qcd_central'] - 1.0) * 100.0
-    x = data()['left']
-    y = (data()['pdf_results'][0][1] / data()['qcd_central'] - 1.0) * 100.0
-    ymin = (data()['min'] / data()['qcd_central'] - 1.0) * 100.0
-    ymax = (data()['max'] / data()['qcd_central'] - 1.0) * 100.0
-    pdf_min = (abs(data()['pdf_results'][0][2] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]
-    pdf_max = (abs(data()['pdf_results'][0][3] / data()['pdf_results'][0][1] - 1.0) * 100.0)[:-1]
-    mid = 0.5 * (data()['left'][:-1] + data()['right'])
-
     axis.set_axisbelow(True)
     axis.grid(linestyle='dotted')
     axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
@@ -172,20 +170,18 @@ def plot_rel_ewonoff(axis):
     axis.set_ylabel('NLO EW on/off [\\si{{\\percent}}]')
     axis.legend(fontsize='xx-small', frameon=False)
 
-def plot_rel_pdfunc(axis):
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-
-    x = data()['left']
-    pdf_uncertainties = data()['pdf_results']
-
+def plot_rel_pdfunc(axis, **kwargs):
+    x = kwargs['x']
+    pdf_uncertainties = kwargs['pdf_results']
     colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
-
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
 
     #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
     #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
+
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -199,21 +195,19 @@ def plot_rel_pdfunc(axis):
     axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
     axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
 
-def plot_rel_pdfpull(axis):
+def plot_rel_pdfpull(axis, **kwargs):
+    central_y = kwargs['pdf_results'][0][1]
+    central_ymin = kwargs['pdf_results'][0][2]
+    central_ymax = kwargs['pdf_results'][0][3]
+    pdf_uncertainties = kwargs['pdf_results']
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    x = kwargs['x']
+    y = kwargs['y']
+
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
-
-    x = data()['left']
-    pdf_uncertainties = data()['pdf_results']
-
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
-
     axis.set_axisbelow(True)
     axis.grid(linestyle='dotted')
-
-    central_y = pdf_uncertainties[0][1]
-    central_ymin = pdf_uncertainties[0][2]
-    central_ymax = pdf_uncertainties[0][3]
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -231,22 +225,18 @@ def plot_rel_pdfpull(axis):
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
-def plot_rel_pdfdiff(axis):
+def plot_rel_pdfdiff(axis, **kwargs):
+    central_ymax = kwargs['pdf_results'][0][3]
+    central_ymin = kwargs['pdf_results'][0][2]
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    x = kwargs['x']
+    y = kwargs['y']
+
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
-
-    x = data()['left']
-    pdf_uncertainties = data()['pdf_results']
-
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
-
     axis.grid(linestyle='dotted')
 
-    central_y = pdf_uncertainties[0][1]
-    central_ymin = pdf_uncertainties[0][2]
-    central_ymax = pdf_uncertainties[0][3]
-
-    for index, i in enumerate(pdf_uncertainties):
+    for index, i in enumerate(kwargs['pdf_results']):
         label, y, ymin, ymax = i
         pull_max = (y - central_y) / np.sqrt(np.power(np.minimum(ymax - y, y - ymin), 2) + np.power(np.minimum(central_ymax - central_y, central_y - central_ymin), 2))
         pull_min = (y - central_y) / np.sqrt(np.power(np.maximum(ymax - y, y - ymin), 2) + np.power(np.maximum(central_ymax - central_y, central_y - central_ymin), 2))
@@ -277,18 +267,35 @@ def main():
     plt.rc('axes', labelsize='small')
     plt.rc('pdf', compression=0)
 
-    x1_unit = metadata().get('x1_unit', '')
-    xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')
-
     with PdfPages('output.pdf') as pp:
+        dict = {{
+            'mid': 0.5 * (data()['left'][:-1] + data()['right']),
+            'pdf_results': data()['pdf_results'],
+            'qcd_max': data()['qcd_max'],
+            'qcd_min': data()['qcd_min'],
+            'qcd_y': data()['qcd_central'],
+            'x': data()['left'],
+            'y': data()['pdf_results'][0][1],
+            'ylabel': metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]',
+            'ylog': metadata().get('x1_unit', '') != '',
+            'ymax': data()['max'],
+            'ymin': data()['min'],
+        }}
+
+        x1_unit = metadata().get('x1_unit', '')
+        xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')
+
         figure, axis = plt.subplots(len(panels), 1, sharex=True)
         figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
+
+        description = metadata()['description']
+        axis[0].set_title(description)
 
         if x1_unit != '':
             axis[0].set_xscale('log')
 
         for index, plot in enumerate(panels):
-            plot(axis[index])
+            plot(axis[index], **dict)
 
         axis[-1].set_xlabel(xlabel)
         figure.savefig(pp, format='pdf')
