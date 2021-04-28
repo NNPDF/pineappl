@@ -241,26 +241,25 @@ def main():
     plt.rc('pdf', compression=0)
 
     with PdfPages('output.pdf') as pp:
-        dict = data()
+        for dict in data():
+            xunit = metadata().get('x1_unit', '')
+            xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
 
-        x1_unit = metadata().get('x1_unit', '')
-        xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')
+            figure, axis = plt.subplots(len(panels), 1, sharex=True)
+            figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
 
-        figure, axis = plt.subplots(len(panels), 1, sharex=True)
-        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
+            description = metadata()['description']
+            axis[0].set_title(description)
 
-        description = metadata()['description']
-        axis[0].set_title(description)
+            if xunit != '':
+                axis[0].set_xscale('log')
 
-        if x1_unit != '':
-            axis[0].set_xscale('log')
+            for index, plot in enumerate(panels):
+                plot(axis[index], **dict)
 
-        for index, plot in enumerate(panels):
-            plot(axis[index], **dict)
-
-        axis[-1].set_xlabel(xlabel)
-        figure.savefig(pp, format='pdf')
-        plt.close()
+            axis[-1].set_xlabel(xlabel)
+            figure.savefig(pp, format='pdf')
+            plt.close()
 
 def data():
     left = np.array([{}])
@@ -269,9 +268,10 @@ def data():
     max = np.array([{}])
     qcd_central = np.array([{}])
     qcd_min = np.array([{}])
-    qcd_max = np.array([{}])",
-        left_limits[0].iter().map(|x| format!("{}", x)).join(", "),
-        right_limits[0].iter().map(|x| format!("{}", x)).join(", "),
+    qcd_max = np.array([{}])
+    slices = [[0, len(left)]]",
+        left_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
+        right_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
         min.iter().map(|x| format!("{:e}", x)).join(", "),
         max.iter().map(|x| format!("{:e}", x)).join(", "),
         qcd_central.iter().map(|x| format!("{:e}", x)).join(", "),
@@ -316,19 +316,24 @@ def data():
     println!();
     println!(
         "
-    return {{
-        'mid': 0.5 * (left + right),
-        'pdf_results': pdf_results,
-        'qcd_max': np.append(qcd_max, qcd_max[-1]),
-        'qcd_min': np.append(qcd_min, qcd_min[-1]),
-        'qcd_y': np.append(qcd_central, qcd_central[-1]),
-        'x': np.append(left, right[-1]),
-        'y': pdf_results[0][1],
+    return [{{
+        'mid': 0.5 * (left[slice[0]:slice[1]] + right[slice[0]:slice[1]]),
+        'pdf_results': [(
+            res[0],
+            np.append(res[1][slice[0]:slice[1]], res[1][slice[1]-1]),
+            np.append(res[2][slice[0]:slice[1]], res[2][slice[1]-1]),
+            np.append(res[3][slice[0]:slice[1]], res[3][slice[1]-1])
+            ) for res in pdf_results],
+        'qcd_max': np.append(qcd_max[slice[0]:slice[1]], qcd_max[slice[1]-1]),
+        'qcd_min': np.append(qcd_min[slice[0]:slice[1]], qcd_min[slice[1]-1]),
+        'qcd_y': np.append(qcd_central[slice[0]:slice[1]], qcd_central[slice[1]-1]),
+        'x': np.append(left[slice[0]:slice[1]], right[slice[1]-1]),
+        'y': np.append(pdf_results[0][1][slice[0]:slice[1]], pdf_results[0][1][slice[1]-1]),
         'ylabel': metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]',
         'ylog': metadata().get('x1_unit', '') != '',
-        'ymax': np.append(max, max[-1]),
-        'ymin': np.append(min, min[-1]),
-    }}"
+        'ymax': np.append(max[slice[0]:slice[1]], max[slice[1]-1]),
+        'ymin': np.append(min[slice[0]:slice[1]], min[slice[1]-1]),
+    }} for slice in slices]"
     );
 
     println!("def metadata():");
