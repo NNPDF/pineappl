@@ -253,15 +253,21 @@ def main():
     plt.rc('pdf', compression=0)
 
     with PdfPages('output.pdf') as pp:
-        for dict in data():
-            xunit = metadata().get('x1_unit', '')
-            xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
+        xunit = metadata().get('x1_unit', '')
+        xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
+        ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
+        ylog = metadata().get('x1_unit', '') != ''
+        description = metadata()['description']
 
+        for dict in data():
+            dict['xlabel'] = xlabel
+            dict['ylabel'] = ylabel
+            dict['ylog'] = ylog
             figure, axis = plt.subplots(len(panels), 1, sharex=True)
             figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
 
-            description = metadata()['description']
             axis[0].set_title(description)
+            axis[-1].set_xlabel(xlabel)
 
             if xunit != '':
                 axis[0].set_xscale('log')
@@ -269,7 +275,6 @@ def main():
             for index, plot in enumerate(panels):
                 plot(axis[index], **dict)
 
-            axis[-1].set_xlabel(xlabel)
             figure.savefig(pp, format='pdf')
             plt.close()
 
@@ -323,8 +328,6 @@ def data():
         'qcd_y': np.append(qcd_central[slice[0]:slice[1]], qcd_central[slice[1]-1]),
         'x': np.append(left[slice[0]:slice[1]], right[slice[1]-1]),
         'y': np.append(pdf_results[0][1][slice[0]:slice[1]], pdf_results[0][1][slice[1]-1]),
-        'ylabel': metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]',
-        'ylog': metadata().get('x1_unit', '') != '',
         'ymax': np.append(max[slice[0]:slice[1]], max[slice[1]-1]),
         'ymin': np.append(min[slice[0]:slice[1]], min[slice[1]-1]),
     }} for slice in slices]
@@ -350,22 +353,20 @@ def metadata():
             continue;
         }
 
-        match key.as_str() {
-            "description" => println!(
-                "        '{}': r'{}',",
-                key,
+        println!(
+            "        '{}': r'{}',",
+            key,
+            if *key == "description" {
                 value.replace("\u{2013}", "--").replace("\u{2014}", "---")
-            ),
-            "x1_unit" | "x2_unit" | "x3_unit" | "y_unit" => println!(
-                "        '{}': r'{}',",
-                key,
+            } else if key.ends_with("_unit") {
                 value
                     .replace("GeV", r#"\giga\electronvolt"#)
                     .replace("/", r#"\per"#)
                     .replace("pb", r#"\pico\barn"#)
-            ),
-            _ => println!("        '{}': r'{}',", key, value),
-        }
+            } else {
+                (*value).clone()
+            }
+        );
     }
 
     println!("    }}");
