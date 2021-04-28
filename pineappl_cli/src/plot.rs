@@ -269,7 +269,8 @@ def data():
     qcd_central = np.array([{}])
     qcd_min = np.array([{}])
     qcd_max = np.array([{}])
-    slices = [[0, len(left)]]",
+    slices = [[0, len(left)]]
+    pdf_results = [",
         left_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
         right_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
         min.iter().map(|x| format!("{:e}", x)).join(", "),
@@ -279,43 +280,24 @@ def data():
         qcd_max.iter().map(|x| format!("{:e}", x)).join(", "),
     );
 
-    println!("    pdf_results = [");
-
     for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
-        println!("        (");
-        println!("            '{}',", pdfset.replace('_', "\\_"));
-        print!("            np.array([");
-
-        values[0]
-            .iter()
-            .chain(values[0].last().iter().copied())
-            .for_each(|x| print!("{:e}, ", x));
-
-        println!("]),");
-        print!("            np.array([");
-
-        values[1]
-            .iter()
-            .chain(values[1].last().iter().copied())
-            .for_each(|x| print!("{:e}, ", x));
-
-        println!("]),");
-        print!("            np.array([");
-
-        values[2]
-            .iter()
-            .chain(values[2].last().iter().copied())
-            .for_each(|x| print!("{:e}, ", x));
-
-        println!("]),");
-        println!("        ),");
+        println!(
+            "        (
+            '{}',
+            np.array([{}]),
+            np.array([{}]),
+            np.array([{}]),
+        ),",
+            pdfset.replace('_', "\\_"),
+            values[0].iter().map(|x| format!("{:e}", x)).join(", "),
+            values[1].iter().map(|x| format!("{:e}", x)).join(", "),
+            values[2].iter().map(|x| format!("{:e}", x)).join(", "),
+        );
     }
 
-    println!("    ]");
-
-    println!();
     println!(
-        "
+        "    ]
+
     return [{{
         'mid': 0.5 * (left[slice[0]:slice[1]] + right[slice[0]:slice[1]]),
         'pdf_results': [(
@@ -333,11 +315,11 @@ def data():
         'ylog': metadata().get('x1_unit', '') != '',
         'ymax': np.append(max[slice[0]:slice[1]], max[slice[1]-1]),
         'ymin': np.append(min[slice[0]:slice[1]], min[slice[1]-1]),
-    }} for slice in slices]"
-    );
+    }} for slice in slices]
 
-    println!("def metadata():");
-    println!("    return {{");
+def metadata():
+    return {{"
+    );
 
     let mut key_values = grid.key_values().cloned().unwrap_or_default();
     key_values.entry("description".to_string()).or_default();
