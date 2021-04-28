@@ -119,7 +119,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     assert_eq!(left_limits.len(), 1);
     assert_eq!(right_limits.len(), 1);
 
-    print!("#!/usr/bin/env python3
+    println!("#!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -263,57 +263,22 @@ def main():
         plt.close()
 
 def data():
-    left = np.array([");
+    left = np.array([{}])
+    right = np.array([{}])
+    min = np.array([{}])
+    max = np.array([{}])
+    qcd_central = np.array([{}])
+    qcd_min = np.array([{}])
+    qcd_max = np.array([{}])",
+        left_limits[0].iter().map(|x| format!("{}", x)).join(", "),
+        right_limits[0].iter().map(|x| format!("{}", x)).join(", "),
+        min.iter().map(|x| format!("{:e}", x)).join(", "),
+        max.iter().map(|x| format!("{:e}", x)).join(", "),
+        qcd_central.iter().map(|x| format!("{:e}", x)).join(", "),
+        qcd_min.iter().map(|x| format!("{:e}", x)).join(", "),
+        qcd_max.iter().map(|x| format!("{:e}", x)).join(", "),
+    );
 
-    left_limits[0]
-        .iter()
-        .chain(right_limits[0].last().iter().copied())
-        .for_each(|x| print!("{}, ", x));
-
-    println!("])");
-    print!("    right = np.array([");
-
-    right_limits[0].iter().for_each(|x| print!("{}, ", x));
-
-    println!("])");
-    print!("    min = np.array([");
-
-    min.iter()
-        .chain(min.last().iter().copied())
-        .for_each(|x| print!("{:e}, ", x));
-
-    println!("])");
-    print!("    max = np.array([");
-
-    max.iter()
-        .chain(max.last().iter().copied())
-        .for_each(|x| print!("{:e}, ", x));
-
-    println!("])");
-    print!("    qcd_central = np.array([");
-
-    qcd_central
-        .iter()
-        .chain(qcd_central.last().iter().copied())
-        .for_each(|x| print!("{:e}, ", x));
-
-    println!("])");
-    print!("    qcd_min = np.array([");
-
-    qcd_min
-        .iter()
-        .chain(qcd_min.last().iter().copied())
-        .for_each(|x| print!("{:e}, ", x));
-
-    println!("])");
-    print!("    qcd_max = np.array([");
-
-    qcd_max
-        .iter()
-        .chain(qcd_max.last().iter().copied())
-        .for_each(|x| print!("{:e}, ", x));
-
-    println!("])");
     println!("    pdf_results = [");
 
     for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
