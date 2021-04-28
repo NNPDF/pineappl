@@ -4,6 +4,14 @@ use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use rayon::prelude::*;
 
+fn map_format_join(slice: &[f64]) -> String {
+    slice.iter().map(|x| format!("{}", x)).join(", ")
+}
+
+fn map_format_e_join(slice: &[f64]) -> String {
+    slice.iter().map(|x| format!("{:e}", x)).join(", ")
+}
+
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     let grid = helpers::read_grid(input)?;
     let pdf = pdfsets[0].parse().map_or_else(
@@ -82,6 +90,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
             variations
                 .iter()
                 .min_by(|a, b| a.partial_cmp(b).unwrap())
+                .copied()
                 .unwrap()
         })
         .collect();
@@ -91,17 +100,19 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
             variations
                 .iter()
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
+                .copied()
                 .unwrap()
         })
         .collect();
 
-    let qcd_central: Vec<_> = qcd_results.iter().step_by(scales).collect();
+    let qcd_central: Vec<_> = qcd_results.iter().step_by(scales).copied().collect();
     let qcd_min: Vec<_> = qcd_results
         .chunks_exact(scales)
         .map(|variations| {
             variations
                 .iter()
                 .min_by(|a, b| a.partial_cmp(b).unwrap())
+                .copied()
                 .unwrap()
         })
         .collect();
@@ -111,6 +122,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
             variations
                 .iter()
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
+                .copied()
                 .unwrap()
         })
         .collect();
@@ -271,13 +283,13 @@ def data():
     qcd_max = np.array([{}])
     slices = [[0, len(left)]]
     pdf_results = [",
-        left_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
-        right_limits.last().unwrap().iter().map(|x| format!("{}", x)).join(", "),
-        min.iter().map(|x| format!("{:e}", x)).join(", "),
-        max.iter().map(|x| format!("{:e}", x)).join(", "),
-        qcd_central.iter().map(|x| format!("{:e}", x)).join(", "),
-        qcd_min.iter().map(|x| format!("{:e}", x)).join(", "),
-        qcd_max.iter().map(|x| format!("{:e}", x)).join(", "),
+        map_format_join(left_limits.last().unwrap()),
+        map_format_join(right_limits.last().unwrap()),
+        map_format_e_join(&min),
+        map_format_e_join(&max),
+        map_format_e_join(&qcd_central),
+        map_format_e_join(&qcd_min),
+        map_format_e_join(&qcd_max),
     );
 
     for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
@@ -289,9 +301,9 @@ def data():
             np.array([{}]),
         ),",
             pdfset.replace('_', "\\_"),
-            values[0].iter().map(|x| format!("{:e}", x)).join(", "),
-            values[1].iter().map(|x| format!("{:e}", x)).join(", "),
-            values[2].iter().map(|x| format!("{:e}", x)).join(", "),
+            map_format_e_join(&values[0]),
+            map_format_e_join(&values[1]),
+            map_format_e_join(&values[2]),
         );
     }
 
