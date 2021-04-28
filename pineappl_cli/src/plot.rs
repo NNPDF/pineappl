@@ -2,6 +2,7 @@ use super::helpers;
 use anyhow::Result;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
+use pineappl::bin::BinInfo;
 use rayon::prelude::*;
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -10,6 +11,27 @@ fn map_format_join(slice: &[f64]) -> String {
 
 fn map_format_e_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{:e}", x)).join(", ")
+}
+
+fn detect_slices(bin_info: &BinInfo) -> Vec<(usize, usize)> {
+    if bin_info.dimensions() == 1 {
+        return vec![(0, bin_info.bins())];
+    }
+
+    let left_limits = bin_info.left(bin_info.dimensions() - 2);
+    let mut last_index = 0;
+    let mut slices = vec![];
+
+    // TODO: check if the following algorithm is always correct
+
+    for i in 1..bin_info.bins() {
+        if left_limits[last_index] != left_limits[i] {
+            slices.push((last_index, i));
+            last_index = i;
+        }
+    }
+
+    slices
 }
 
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
@@ -127,9 +149,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         })
         .collect();
 
-    // the following implementation only works for 1D distributions
-    assert_eq!(left_limits.len(), 1);
-    assert_eq!(right_limits.len(), 1);
+    let slices = detect_slices(&bin_info);
 
     println!("#!/usr/bin/env python3
 
@@ -253,10 +273,11 @@ def main():
     plt.rc('pdf', compression=0)
 
     with PdfPages('output.pdf') as pp:
-        xunit = metadata().get('x1_unit', '')
-        xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
+        xaxis = '{}'
+        xunit = metadata().get(xaxis + '_unit', '')
+        xlabel = metadata()[xaxis + '_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
         ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
-        ylog = metadata().get('x1_unit', '') != ''
+        ylog = xunit != ''
         description = metadata()['description']
 
         for dict in data():
@@ -286,8 +307,9 @@ def data():
     qcd_central = np.array([{}])
     qcd_min = np.array([{}])
     qcd_max = np.array([{}])
-    slices = [[0, len(left)]]
+    slices = {:?}
     pdf_results = [",
+        format!("x{}", bin_info.dimensions()),
         map_format_join(left_limits.last().unwrap()),
         map_format_join(right_limits.last().unwrap()),
         map_format_e_join(&min),
@@ -295,6 +317,7 @@ def data():
         map_format_e_join(&qcd_central),
         map_format_e_join(&qcd_min),
         map_format_e_join(&qcd_max),
+        slices,
     );
 
     for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
