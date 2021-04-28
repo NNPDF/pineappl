@@ -261,9 +261,15 @@ def main():
     panels = [
         plot_abs,
         plot_rel_ewonoff,
-        plot_rel_pdfunc,
-        plot_rel_pdfpull,
     ]
+
+    data_slices = data()
+
+    if len(data_slices[0]['pdf_results']) > 1:
+        panels.extend([
+            plot_rel_pdfunc,
+            plot_rel_pdfpull,
+        ])
 
     plt.rc('text', usetex=True)
     plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}')
