@@ -241,19 +241,7 @@ def main():
     plt.rc('pdf', compression=0)
 
     with PdfPages('output.pdf') as pp:
-        dict = {{
-            'mid': 0.5 * (data()['left'][:-1] + data()['right']),
-            'pdf_results': data()['pdf_results'],
-            'qcd_max': data()['qcd_max'],
-            'qcd_min': data()['qcd_min'],
-            'qcd_y': data()['qcd_central'],
-            'x': data()['left'],
-            'y': data()['pdf_results'][0][1],
-            'ylabel': metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]',
-            'ylog': metadata().get('x1_unit', '') != '',
-            'ymax': data()['max'],
-            'ymin': data()['min'],
-        }}
+        dict = data()
 
         x1_unit = metadata().get('x1_unit', '')
         xlabel = metadata()['x1_label_tex'] + (r' [\\si{{' + x1_unit + r'}}]' if x1_unit != '' else '')
@@ -361,16 +349,22 @@ def data():
     println!("    ]");
 
     println!();
-    println!("    return {{ 'left': left,");
-    println!("             'right': right,");
-    println!("             'min': min,");
-    println!("             'max': max,");
-    println!("             'qcd_central': qcd_central,");
-    println!("             'qcd_min': qcd_min,");
-    println!("             'qcd_max': qcd_max,");
-    println!("             'pdf_results': pdf_results,");
-    println!("    }}");
-    println!();
+    println!(
+        "
+    return {{
+        'mid': 0.5 * (left + right),
+        'pdf_results': pdf_results,
+        'qcd_max': np.append(qcd_max, qcd_max[-1]),
+        'qcd_min': np.append(qcd_min, qcd_min[-1]),
+        'qcd_y': np.append(qcd_central, qcd_central[-1]),
+        'x': np.append(left, right[-1]),
+        'y': pdf_results[0][1],
+        'ylabel': metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]',
+        'ylog': metadata().get('x1_unit', '') != '',
+        'ymax': np.append(max, max[-1]),
+        'ymin': np.append(min, min[-1]),
+    }}"
+    );
 
     println!("def metadata():");
     println!("    return {{");
