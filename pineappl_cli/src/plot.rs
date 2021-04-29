@@ -155,8 +155,6 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.transforms import ScaledTranslation
-from matplotlib.backends.backend_pdf import PdfPages
 
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
@@ -278,32 +276,31 @@ def main():
     plt.rc('axes', labelsize='small')
     plt.rc('pdf', compression=0)
 
-    with PdfPages('output.pdf') as pp:
-        xaxis = '{}'
-        xunit = metadata().get(xaxis + '_unit', '')
-        xlabel = metadata()[xaxis + '_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
-        ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
-        ylog = xunit != ''
-        description = metadata()['description']
+    xaxis = '{}'
+    xunit = metadata().get(xaxis + '_unit', '')
+    xlabel = metadata()[xaxis + '_label_tex'] + (r' [\\si{{' + xunit + r'}}]' if xunit != '' else '')
+    ylabel = metadata()['y_label_tex'] + r' [\\si{{' + metadata()['y_unit'] + r'}}]'
+    ylog = xunit != ''
+    description = metadata()['description']
 
-        for dict in data():
-            dict['xlabel'] = xlabel
-            dict['ylabel'] = ylabel
-            dict['ylog'] = ylog
-            figure, axis = plt.subplots(len(panels), 1, sharex=True)
-            figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.0475,0.03,1.01,0.975))
+    for index, dict in enumerate(data_slices):
+        dict['xlabel'] = xlabel
+        dict['ylabel'] = ylabel
+        dict['ylog'] = ylog
+        figure, axes = plt.subplots(len(panels), 1, sharex=True)
+        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.06,0.03,1.0,0.975))
 
-            axis[0].set_title(description)
-            axis[-1].set_xlabel(xlabel)
+        axes[0].set_title(description)
+        axes[-1].set_xlabel(xlabel)
 
-            if xunit != '':
-                axis[0].set_xscale('log')
+        if xunit != '':
+            axes[0].set_xscale('log')
 
-            for index, plot in enumerate(panels):
-                plot(axis[index], **dict)
+        for plot, axis in zip(panels, axes):
+            plot(axis, **dict)
 
-            figure.savefig(pp, format='pdf')
-            plt.close()
+        name = 'output' if len(data_slices) == 1 else 'output-{{}}'.format(index)
+        figure.savefig(name + '.pdf')
 
 def data():
     left = np.array([{}])
