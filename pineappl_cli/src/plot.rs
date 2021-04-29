@@ -270,7 +270,7 @@ def main():
         ])
 
     plt.rc('text', usetex=True)
-    plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}')
+    plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}\\usepackage{{lmodern}}')
     plt.rc('figure', figsize=(6.4,len(panels)*2.4))
     plt.rc('font', family='serif', size=14.0)
     plt.rc('axes', labelsize='small')
