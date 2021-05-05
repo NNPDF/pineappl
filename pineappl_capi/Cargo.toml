@@ -12,7 +12,7 @@ description = "C language interface to PineAPPL"
 
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.5.0-alpha" }
-itertools = "0.9"
+itertools = "0.10"
 
 [package.metadata.capi]
 min_version = "0.6.16+cargo-0.45"

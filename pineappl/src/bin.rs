@@ -2,6 +2,7 @@
 
 use super::convert::{f64_from_usize, usize_from_f64};
 use float_cmp::approx_eq;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::f64;
 use thiserror::Error;
@@ -147,6 +148,34 @@ impl<'a> BinInfo<'a> {
         self.remapper.map_or_else(
             || self.limits.bin_sizes(),
             |remapper| remapper.normalizations().to_vec(),
+        )
+    }
+
+    /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
+    /// efficiently sliced into one-dimensional histograms.
+    pub fn slices(&self) -> Vec<(usize, usize)> {
+        self.remapper.map_or_else(
+            || vec![(0, self.limits.bins())],
+            |remapper| {
+                if remapper.dimensions() == 1 {
+                    vec![(0, self.limits.bins())]
+                } else {
+                    remapper
+                        .limits()
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(index, x)| {
+                            ((index % remapper.dimensions()) != (remapper.dimensions() - 1))
+                                .then(|| x)
+                        })
+                        .collect::<Vec<_>>()
+                        .chunks_exact(remapper.dimensions() - 1)
+                        .enumerate()
+                        .dedup_by_with_count(|(_, x), (_, y)| x == y)
+                        .map(|(count, (index, _))| (index, index + count))
+                        .collect()
+                }
+            },
         )
     }
 }
@@ -374,6 +403,7 @@ impl BinLimits {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::iter;
 
     #[test]
     fn bin_limits_merge() {
@@ -429,6 +459,8 @@ mod test {
 
         assert_eq!(info.left(1), vec![]);
         assert_eq!(info.right(1), vec![]);
+
+        assert_eq!(info.slices(), [(0, 4)]);
     }
 
     #[test]
@@ -469,6 +501,75 @@ mod test {
 
         assert_eq!(info.left(3), vec![]);
         assert_eq!(info.right(3), vec![]);
+
+        assert_eq!(info.slices(), [(0, 1), (1, 2), (2, 3), (3, 4)]);
+    }
+
+    #[test]
+    fn bin_info_slices() {
+        let limits = BinLimits::new(
+            iter::successors(Some(0.0), |n| Some(n + 1.0))
+                .take(11)
+                .collect(),
+        );
+        let remapper = BinRemapper::new(
+            vec![1.0; 10],
+            vec![
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (2.0, 3.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (2.0, 3.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (2.0, 3.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (3.0, 4.0),
+            ],
+        )
+        .unwrap();
+        let info = BinInfo::new(&limits, Some(&remapper));
+
+        assert_eq!(info.slices(), [(0, 3), (3, 6), (6, 10)]);
+    }
+
+    #[test]
+    fn bin_info_trivial_slices() {
+        let limits = BinLimits::new(
+            iter::successors(Some(0.0), |x| Some(x + 1.0))
+                .take(11)
+                .collect(),
+        );
+        let remapper = BinRemapper::new(
+            vec![1.0; 10],
+            iter::successors(Some((0.0, 1.0)), |x| Some((x.0 + 1.0, x.1 + 1.0)))
+                .take(10)
+                .collect(),
+        )
+        .unwrap();
+        let info = BinInfo::new(&limits, Some(&remapper));
+
+        assert_eq!(info.slices(), [(0, 10)]);
     }
 
     #[test]
