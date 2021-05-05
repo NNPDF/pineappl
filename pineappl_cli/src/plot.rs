@@ -2,7 +2,6 @@ use super::helpers;
 use anyhow::Result;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
-use pineappl::bin::BinInfo;
 use rayon::prelude::*;
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -11,27 +10,6 @@ fn map_format_join(slice: &[f64]) -> String {
 
 fn map_format_e_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{:e}", x)).join(", ")
-}
-
-fn detect_slices(bin_info: &BinInfo) -> Vec<(usize, usize)> {
-    if bin_info.dimensions() == 1 {
-        return vec![(0, bin_info.bins())];
-    }
-
-    let left_limits = bin_info.left(bin_info.dimensions() - 2);
-    let mut last_index = 0;
-    let mut slices = vec![];
-
-    // TODO: check if the following algorithm is always correct
-
-    for i in 1..bin_info.bins() {
-        if left_limits[last_index] != left_limits[i] {
-            slices.push((last_index, i));
-            last_index = i;
-        }
-    }
-
-    slices
 }
 
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
@@ -149,7 +127,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         })
         .collect();
 
-    let slices = detect_slices(&bin_info);
+    let slices = bin_info.slices();
 
     println!("#!/usr/bin/env python3
 
