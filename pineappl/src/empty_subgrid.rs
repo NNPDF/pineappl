@@ -64,3 +64,75 @@ impl Subgrid for EmptySubgridV1 {
         Self::default().into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_empty() {
+        let mut subgrid = EmptySubgridV1::default();
+        assert_eq!(
+            subgrid.convolute(&[], &[], &[], Either::Left(&|_, _, _| 0.0)),
+            0.0,
+        );
+        assert!(subgrid.is_empty());
+        subgrid.merge(&mut EmptySubgridV1::default().into(), false);
+        subgrid.symmetrize();
+        assert!(subgrid.clone_empty().is_empty());
+    }
+
+    #[test]
+    #[should_panic]
+    fn fill() {
+        let mut subgrid = EmptySubgridV1::default();
+        subgrid.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 0.0,
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn q2_grid() {
+        let subgrid = EmptySubgridV1::default();
+        subgrid.q2_grid();
+    }
+
+    #[test]
+    #[should_panic]
+    fn x1_grid() {
+        let subgrid = EmptySubgridV1::default();
+        subgrid.x1_grid();
+    }
+
+    #[test]
+    #[should_panic]
+    fn x2_grid() {
+        let subgrid = EmptySubgridV1::default();
+        subgrid.x2_grid();
+    }
+
+    #[test]
+    #[should_panic]
+    fn q2_slice() {
+        let subgrid = EmptySubgridV1::default();
+        subgrid.q2_slice();
+    }
+
+    #[test]
+    #[should_panic]
+    fn fill_q2_slice() {
+        let subgrid = EmptySubgridV1::default();
+        subgrid.fill_q2_slice(0, &mut []);
+    }
+
+    #[test]
+    #[should_panic]
+    fn write_q2_slice() {
+        let mut subgrid = EmptySubgridV1::default();
+        subgrid.write_q2_slice(0, &[]);
+    }
+}
