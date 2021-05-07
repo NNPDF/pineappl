@@ -78,6 +78,7 @@ mod tests {
         );
         assert!(subgrid.is_empty());
         subgrid.merge(&mut EmptySubgridV1::default().into(), false);
+        subgrid.scale(2.0);
         subgrid.symmetrize();
         assert!(subgrid.clone_empty().is_empty());
     }
