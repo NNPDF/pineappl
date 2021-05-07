@@ -144,7 +144,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usiz
 /// this function is not safe to call. The parameter `bin_sizes` must point to an array that is as
 /// long as `grid` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *mut f64) {
+pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin_sizes: *mut f64) {
     let sizes = (*grid).bin_info().normalizations();
     let bin_sizes = slice::from_raw_parts_mut(bin_sizes, sizes.len());
 
