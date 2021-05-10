@@ -87,16 +87,10 @@ extern "C" double alphas(double q2, void* state)
     return static_cast <LHAPDF::PDF*> (state)->alphasQ2(q2);
 }
 
-int error_exit(std::string const& message)
+void error_exit(std::string const& message)
 {
     std::cerr << "Error: " << message << '\n';
-    return EXIT_FAILURE;
-}
-
-bool is_reweighting_enabled(appl::igrid const& /*igrid*/)
-{
-    // TODO: that is just a guess
-    return true;
+    std::exit(EXIT_FAILURE);
 }
 
 int32_t convert_to_pdg_id(int id)
@@ -109,6 +103,10 @@ int32_t convert_to_pdg_id(int id)
     {
         // applgridphoton extension
         return 22;
+    }
+    else
+    {
+        assert( false );
     }
 }
 
@@ -159,18 +157,8 @@ double ckm_factors(
     }
 }
 
-int main(int argc, char* argv[])
+pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
 {
-    if (argc != 3)
-    {
-        return EXIT_FAILURE;
-    }
-
-    std::string in(argv[1]);
-    std::string out(argv[2]);
-
-    appl::grid grid(in);
-
     std::vector<double> bin_limits(grid.Nobs_internal() + 1);
     for (std::size_t i = 0; i != bin_limits.size(); ++i)
     {
@@ -203,7 +191,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            return error_exit("`grid.nloops` not supported");
+            error_exit("`grid.nloops` not supported");
         }
 
         alphas_factor = 4.0 * std::acos(-1.0);
@@ -224,13 +212,18 @@ int main(int argc, char* argv[])
     }
     else
     {
-        return error_exit("`grid.calculation = " +
+        error_exit("`grid.calculation = " +
             appl::grid::_calculation(grid.calculation()) + "` not supported");
     }
 
     if (grid.getApplyCorrections())
     {
-        return error_exit("`grid.getApplyCorrections() = true` not supported");
+        error_exit("`grid.getApplyCorrections() = true` not supported");
+    }
+
+    if (grid.getDynamicScale() != 0.0)
+    {
+        error_exit("`grid.getDynamicScale() != 1.0` not supported");
     }
 
     std::vector<pineappl_grid*> grids;
@@ -243,7 +236,7 @@ int main(int argc, char* argv[])
 
         if (lumi_ptr == nullptr)
         {
-            return error_exit("could not cast into `lumi_pdf`");
+            error_exit("could not cast into `lumi_pdf`");
         }
 
         auto* lumi = pineappl_lumi_new();
@@ -302,15 +295,13 @@ int main(int argc, char* argv[])
             for (std::size_t i = 0; i != x1_values.size(); ++i)
             {
                 x1_values[i] = std::clamp(igrid->fx(igrid->gety1(i)), 0.0, 1.0);
-                x1_weights[i] = is_reweighting_enabled(*igrid) ?
-                    appl::igrid::weightfun(x1_values[i]) : 1.0;
+                x1_weights[i] = reweight ? appl::igrid::weightfun(x1_values[i]) : 1.0;
             }
 
             for (std::size_t i = 0; i != x2_values.size(); ++i)
             {
                 x2_values[i] = std::clamp(igrid->fx(igrid->gety2(i)), 0.0, 1.0);
-                x2_weights[i] = is_reweighting_enabled(*igrid) ?
-                    appl::igrid::weightfun(x2_values[i]) : 1.0;
+                x2_weights[i] = reweight ? appl::igrid::weightfun(x2_values[i]) : 1.0;
 
                 if ((x1_values[i] / x2_values[i]) - 1.0 > 1e-10)
                 {
@@ -393,6 +384,8 @@ int main(int argc, char* argv[])
 
     pineappl_grid_scale_by_order(grids.at(0), alphas_factor, 1.0, 1.0, 1.0, global);
 
+    // TODO: figure out when we can optimize
+
     LHAPDF::setVerbosity(0);
     pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 1));
 
@@ -442,11 +435,41 @@ int main(int argc, char* argv[])
 
     if (different)
     {
-        return error_exit("grids are different");
+        pineappl_grid_delete(grids.at(0));
+
+        return nullptr;
     }
 
-    // TODO: optimize the grid
+    return grids.at(0);
+}
 
-    pineappl_grid_write(grids.at(0), out.c_str());
-    pineappl_grid_delete(grids.at(0));
+int main(int argc, char* argv[])
+{
+    if (argc != 3)
+    {
+        return EXIT_FAILURE;
+    }
+
+    std::string in(argv[1]);
+    std::string out(argv[2]);
+
+    appl::grid grid(in);
+
+    auto* pgrid = convert_grid(grid, true);
+
+    std::cout << ">>> Trying `reweight = true`. This may fail.\n";
+
+    if (pgrid == nullptr)
+    {
+        std::cout << ">>> `reweight = false` didn't work. Trying `reweight = false`.\n";
+
+        pgrid = convert_grid(grid, false);
+    }
+
+    if (pgrid == nullptr)
+    {
+        error_exit("grids are different");
+    }
+
+    pineappl_grid_write(pgrid, out.c_str());
 }
