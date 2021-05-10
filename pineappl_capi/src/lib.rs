@@ -4,6 +4,7 @@
 //! C-language interface for `PineAPPL`.
 
 use itertools::izip;
+use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use pineappl::lumi::LumiEntry;
@@ -743,8 +744,8 @@ pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<Su
 pub unsafe extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
 
 /// This function takes replaces the subgrid in `grid` with the corresponding indices `order`,
-/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, nothing is
-/// done.
+/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, the specied
+/// subgrid is replaced with an empty one.
 ///
 /// # Safety
 ///
@@ -758,9 +759,15 @@ pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
     bin: usize,
     lumi: usize,
 ) {
-    if let Some(subgrid) = subgrid {
-        (*grid).set_subgrid(order, bin, lumi, (*subgrid).0);
-    }
+    (*grid).set_subgrid(
+        order,
+        bin,
+        lumi,
+        subgrid.map_or_else(
+            || EmptySubgridV1::default().into(),
+            |subgrid| subgrid.0.into(),
+        ),
+    );
 }
 
 /// Key-value storage for passing optional information during grid creation with
