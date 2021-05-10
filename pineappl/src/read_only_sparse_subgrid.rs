@@ -36,6 +36,13 @@ impl ReadOnlySparseSubgridV1 {
     }
 }
 
+impl ReadOnlySparseSubgridV1 {
+    /// Return the array containing the numerical values of the grid.
+    pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
+        &mut self.array
+    }
+}
+
 impl Subgrid for ReadOnlySparseSubgridV1 {
     fn convolute(
         &self,

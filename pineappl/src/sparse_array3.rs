@@ -328,6 +328,11 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         self.start = 0;
     }
 
+    /// Returns the dimensions of this array.
+    pub fn dimensions(&self) -> (usize, usize, usize) {
+        self.dimensions
+    }
+
     /// Returns the number of default (zero) elements in this array.
     #[must_use]
     pub fn zeros(&self) -> usize {

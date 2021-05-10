@@ -774,6 +774,31 @@ pub unsafe extern "C" fn pineappl_subgrid_new(
     )))
 }
 
+/// Imports `slice` for the given index into `subgrid`.
+///
+/// # Safety
+///
+/// The parameter `subgrid` and the array `slice` must be non-`NULL` and `slice` must be at least
+/// as long as the product `x1_grid_len * x2_grid_len` that were used to create the subgrid with.
+/// The index `q2_slice` must be smaller than `q2_grid_len`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_import_q2_slice(
+    subgrid: *mut SubGrid,
+    q2_slice: usize,
+    slice: *const f64,
+) {
+    let array = (*subgrid).0.array_mut();
+    let (_, nx1, nx2) = array.dimensions();
+    let slice = slice::from_raw_parts(slice, nx1 * nx2);
+
+    for (index, &value) in slice.iter().enumerate().filter(|(_, &value)| value != 0.0) {
+        let ix1 = index / nx1;
+        let ix2 = index % nx1;
+
+        array[[q2_slice, ix1, ix2]] = value;
+    }
+}
+
 /// Key-value storage for passing optional information during grid creation with
 /// `pineappl_grid_new`.
 #[derive(Default)]
