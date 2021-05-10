@@ -63,7 +63,7 @@ extern "C" void evolvepdf(double const& x, double const& q, double* xfx)
     {
         if (flavour_map.at(i))
         {
-            xfx[i] = pdf->xfxQ(index_to_pdg_id(i), x, q);
+            xfx[i] = pdf->xfxQ(index_to_pdg_id(i), std::clamp(x, 0.0, 1.0), q);
         }
         else
         {
@@ -301,14 +301,14 @@ int main(int argc, char* argv[])
 
             for (std::size_t i = 0; i != x1_values.size(); ++i)
             {
-                x1_values[i] = igrid->fx(igrid->gety1(i));
+                x1_values[i] = std::clamp(igrid->fx(igrid->gety1(i)), 0.0, 1.0);
                 x1_weights[i] = is_reweighting_enabled(*igrid) ?
                     appl::igrid::weightfun(x1_values[i]) : 1.0;
             }
 
             for (std::size_t i = 0; i != x2_values.size(); ++i)
             {
-                x2_values[i] = igrid->fx(igrid->gety2(i));
+                x2_values[i] = std::clamp(igrid->fx(igrid->gety2(i)), 0.0, 1.0);
                 x2_weights[i] = is_reweighting_enabled(*igrid) ?
                     appl::igrid::weightfun(x2_values[i]) : 1.0;
 
