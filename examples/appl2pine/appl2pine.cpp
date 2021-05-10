@@ -455,9 +455,9 @@ int main(int argc, char* argv[])
 
     appl::grid grid(in);
 
-    auto* pgrid = convert_grid(grid, true);
-
     std::cout << ">>> Trying `reweight = true`. This may fail.\n";
+
+    auto* pgrid = convert_grid(grid, true);
 
     if (pgrid == nullptr)
     {
