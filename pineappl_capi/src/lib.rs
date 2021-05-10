@@ -673,7 +673,7 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
 /// this function is not safe to call. `buffer` must be as large as the square of the return value
 /// of `pineappl_subgrid_x_grid_count`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
+pub unsafe extern "C" fn pineappl_grid_export_q2_slice(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -694,7 +694,7 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. `tuple` must point to an array with two elements.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
+pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -751,7 +751,7 @@ pub unsafe extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) 
 /// Both `grid` and `subgrid` must point to valid objects. The parameter `subgrid` can be the null
 /// pointer.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_replace_and_delete(
+pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
     grid: *mut Grid,
     subgrid: Option<Box<SubGrid>>,
     order: usize,

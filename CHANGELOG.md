@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   integrated cross sections (without bin limits and/or normalizations) are
   printed
 - the C API function `pineappl_subgrid_fill_q2_slice` has been removed
+- the C API functions `pineappl_subgrid_q2_slice`,
+  `pineappl_subgrid_filled_q2_slices` and `pineappl_subgrid_replace_and_delete`
+  have been replaced by `pineappl_grid_export_q2_slice`,
+  `pineappl_grid_nonzero_q2_slices` and `pineappl_grid_replace_and_delete`,
+  respectively.
 
 ## [0.4.1] - 25/03/2021
 
