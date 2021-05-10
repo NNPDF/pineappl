@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   have been replaced by `pineappl_grid_export_q2_slice`,
   `pineappl_grid_nonzero_q2_slices` and `pineappl_grid_replace_and_delete`,
   respectively.
+- the C API function `pineappl_subgrid_new` has been replaced by a function
+  with the similar name but different arguments
 
 ## [0.4.1] - 25/03/2021
 
