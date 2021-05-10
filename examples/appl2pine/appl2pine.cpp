@@ -4,12 +4,88 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <appl_grid/appl_grid.h>
 #include <appl_grid/appl_igrid.h>
 #include <appl_grid/lumi_pdf.h>
+#include <LHAPDF/LHAPDF.h>
 #include <pineappl_capi.h>
+
+std::unique_ptr<LHAPDF::PDF> pdf;
+
+enum flavour_map_index : std::size_t
+{
+    anti_top,      // -6: anti-top
+    anti_bottom,   // -5: anti-bottom
+    anti_charm,    // -4: anti-charm
+    anti_strange,  // -3: anti-strange
+    anti_up,       // -2: anti-up
+    anti_down,     // -1: anti-down
+    gluon,         // 21: gluon
+    down,          //  1: down
+    up,            //  2: up
+    strange,       //  3: strange
+    charm,         //  4: charm
+    bottom,        //  5: bottom
+    top,           //  6: top
+    photon,        // 22: photon
+};
+
+std::array<bool, 14> flavour_map = {
+//std::array<bool, 13> flavour_map = {
+    true,  // -6: anti-top
+    true,  // -5: anti-bottom
+    true,  // -4: anti-charm
+    true,  // -3: anti-strange
+    true,  // -2: anti-up
+    true,  // -1: anti-down
+    true,  // 21: gluon
+    true,  //  1: down
+    true,  //  2: up
+    true,  //  3: strange
+    true,  //  4: charm
+    true,  //  5: bottom
+    true,  //  6: top
+    true,  // 22: photon
+};
+
+constexpr int index_to_pdg_id(std::size_t index)
+{
+    return (index == gluon) ? 21 : ((index == photon) ? 22 : (static_cast <int> (index) - 6));
+//    return (index == gluon) ? 21 : static_cast <int> (index) - 6;
+}
+
+extern "C" void evolvepdf(double const& x, double const& q, double* xfx)
+{
+    for (std::size_t i = 0; i != flavour_map.size(); ++i)
+    {
+        if (flavour_map.at(i))
+        {
+            xfx[i] = pdf->xfxQ(index_to_pdg_id(i), x, q);
+        }
+        else
+        {
+            xfx[i] = 0.0;
+        }
+    }
+}
+
+extern "C" double alphaspdf(double const& q)
+{
+    return pdf->alphasQ(q);
+}
+
+extern "C" double xfx(int32_t pdg_id, double x, double q2, void* state)
+{
+    return static_cast <LHAPDF::PDF*> (state)->xfxQ2(pdg_id, x, q2);
+}
+
+extern "C" double alphas(double q2, void* state)
+{
+    return static_cast <LHAPDF::PDF*> (state)->alphasQ2(q2);
+}
 
 int error_exit(std::string const& message)
 {
@@ -23,6 +99,66 @@ bool is_reweighting_enabled(appl::igrid const& /*igrid*/)
     return true;
 }
 
+int32_t convert_to_pdg_id(int id)
+{
+    if ((id >= -5) && (id <= 5))
+    {
+        return (id == 0) ? 21 : id;
+    }
+    else if (id == 7)
+    {
+        // applgridphoton extension
+        return 22;
+    }
+}
+
+double ckm_factors(
+    int a,
+    int b,
+    std::vector<std::vector<double>> const& ckm2,
+    std::vector<double> const& ckm_sum
+) {
+    if (ckm_sum.empty())
+    {
+        return 1.0;
+    }
+
+    if (a == 0)
+    {
+        if (b == 0)
+        {
+            return 1.0;
+        }
+        else if (b == 7)
+        {
+            return 1.0;
+        }
+        else
+        {
+            return ckm_sum.at(b + 6);
+        }
+    }
+    else if (a == 7)
+    {
+        return 1.0;
+    }
+    else
+    {
+        if (b == 0)
+        {
+            return ckm_sum.at(a + 6);
+        }
+        else if (b == 7)
+        {
+            return 1.0;
+        }
+        else
+        {
+            return ckm2.at(a + 6).at(b + 6);
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     if (argc != 3)
@@ -33,12 +169,7 @@ int main(int argc, char* argv[])
     std::string in(argv[1]);
     std::string out(argv[2]);
 
-    if (appl::igrid::transformvar() != 5.0)
-    {
-        return error_exit("`appl::igrid::transformvar != 5` not supported");
-    }
-
-    appl::grid const grid(in);
+    appl::grid grid(in);
 
     std::vector<double> bin_limits(grid.Nobs_internal() + 1);
     for (std::size_t i = 0; i != bin_limits.size(); ++i)
@@ -49,6 +180,7 @@ int main(int argc, char* argv[])
     std::vector<uint32_t> order_params;
     uint32_t const leading_order = grid.leadingOrder();
     int orders;
+    double alphas_factor;
 
     if (grid.calculation() == appl::grid::AMCATNLO)
     {
@@ -73,6 +205,8 @@ int main(int argc, char* argv[])
         {
             return error_exit("`grid.nloops` not supported");
         }
+
+        alphas_factor = 4.0 * std::acos(-1.0);
     }
     else if (grid.calculation() == appl::grid::STANDARD)
     {
@@ -85,6 +219,8 @@ int main(int argc, char* argv[])
             order_params.push_back(0);
             order_params.push_back(0);
         }
+
+        alphas_factor = 0.5 / std::acos(-1.0);
     }
     else
     {
@@ -92,18 +228,20 @@ int main(int argc, char* argv[])
             appl::grid::_calculation(grid.calculation()) + "` not supported");
     }
 
+    if (grid.getApplyCorrections())
+    {
+        return error_exit("`grid.getApplyCorrections() = true` not supported");
+    }
+
     std::vector<pineappl_grid*> grids;
     grids.reserve(orders);
 
     for (int i = 0; i != orders; ++i)
     {
-        lumi_pdf const* lumi_ptr = nullptr;
+        lumi_pdf const* lumi_ptr =
+            dynamic_cast <lumi_pdf const*> (static_cast <appl::grid const&> (grid).genpdf(i));
 
-        try
-        {
-            lumi_ptr = dynamic_cast <lumi_pdf const*> (grid.genpdf(i));
-        }
-        catch (std::bad_cast const&)
+        if (lumi_ptr == nullptr)
         {
             return error_exit("could not cast into `lumi_pdf`");
         }
@@ -119,9 +257,15 @@ int main(int argc, char* argv[])
 
             for (unsigned k = 0; k != combination.size(); ++k)
             {
-                combinations.push_back(combination[k].first);
-                combinations.push_back(combination[k].second);
-                factors.push_back(1.0);
+                auto const a = combination[k].first;
+                auto const b = combination[k].second;
+
+                combinations.push_back(convert_to_pdg_id(a));
+                combinations.push_back(convert_to_pdg_id(b));
+
+                auto const factor = ckm_factors(a, b, lumi_ptr->getckm2(), lumi_ptr->getckmsum());
+
+                factors.push_back(factor);
             }
 
             pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
@@ -142,68 +286,44 @@ int main(int argc, char* argv[])
         {
             auto const* igrid = grid.weightgrid(i, bin);
 
-            if (igrid->transform() != "f2")
+            std::vector<double> q2_values(igrid->Ntau());
+            std::vector<double> x1_values(igrid->Ny1());
+            std::vector<double> x1_weights(igrid->Ny1());
+            std::vector<double> x2_values(igrid->Ny2());
+            std::vector<double> x2_weights(igrid->Ny2());
+
+            for (std::size_t i = 0; i != q2_values.size(); ++i)
             {
-                return error_exit("`igrid.transform` not supported");
+                q2_values[i] = appl::igrid::fQ2(igrid->gettau(i));
             }
 
-            if (igrid->Ny1() != igrid->Ny2())
+            bool different_x_grids = false;
+
+            for (std::size_t i = 0; i != x1_values.size(); ++i)
             {
-                return error_exit("`igrid.Ny1 != igrid.Ny2`");
+                x1_values[i] = igrid->fx(igrid->gety1(i));
+                x1_weights[i] = is_reweighting_enabled(*igrid) ?
+                    appl::igrid::weightfun(x1_values[i]) : 1.0;
             }
 
-            if (igrid->isDISgrid())
+            for (std::size_t i = 0; i != x2_values.size(); ++i)
             {
-                return error_exit("`igrid.isDISgrid == true` not supported");
+                x2_values[i] = igrid->fx(igrid->gety2(i));
+                x2_weights[i] = is_reweighting_enabled(*igrid) ?
+                    appl::igrid::weightfun(x2_values[i]) : 1.0;
+
+                if ((x1_values[i] / x2_values[i]) - 1.0 > 1e-10)
+                {
+                    different_x_grids = true;
+                }
             }
 
-            if (igrid->y2min() != igrid->y1min())
+            if (different_x_grids)
             {
-                return error_exit("`igrid.y2min != igrid.y1min` not supported");
+                std::cout << ">>> Different x1 and x2 grids!\n";
             }
 
-            if (igrid->y2max() != igrid->y1max())
-            {
-                return error_exit("`igrid.y2max != igrid.y1max` not supported");
-            }
-
-            double const q2_min = appl::igrid::fQ2(igrid->taumin());
-            double const q2_max = appl::igrid::fQ2(igrid->taumax());
-            double const x_min = igrid->fx(igrid->y1max());
-            double const x_max = igrid->fx(igrid->y1min());
-
-            int const q2_order = igrid->tauorder();
-            int const x_order = igrid->yorder();
-            int const q2_bins = igrid->Ntau();
-            int const x_bins = igrid->Ny1();
-
-            bool const reweight = is_reweighting_enabled(*igrid);
-
-            auto* keyvals = pineappl_keyval_new();
-            pineappl_keyval_set_double(keyvals, "q2_min", q2_min);
-            pineappl_keyval_set_double(keyvals, "q2_max", q2_max);
-            pineappl_keyval_set_double(keyvals, "x_min", x_min);
-            pineappl_keyval_set_double(keyvals, "x_max", x_max);
-            pineappl_keyval_set_int(keyvals, "q2_order", q2_order);
-            pineappl_keyval_set_int(keyvals, "x_order", x_order);
-            pineappl_keyval_set_int(keyvals, "q2_bins", q2_bins);
-            pineappl_keyval_set_int(keyvals, "x_bins", x_bins);
-            pineappl_keyval_set_bool(keyvals, "reweight", reweight);
-
-            std::cout << "Parameters for order O(as^" << order_params.at(4 * i + 0) << " a^"
-                << order_params.at(4 * i + 1) << " logmur^" << order_params.at(4 * i + 2)
-                << " logmuf^" << order_params.at(4 * i + 3) << " bin: " << bin << '\n'
-                << "  q2_min   = " << q2_min << '\n'
-                << "  q2_max   = " << q2_max << '\n'
-                << "  x_min    = " << x_min << '\n'
-                << "  x_max    = " << x_max << '\n'
-                << "  q2_order = " << q2_order << '\n'
-                << "  x_order  = " << x_order << '\n'
-                << "  q2_bins  = " << q2_bins << '\n'
-                << "  x_bins   = " << x_bins << '\n'
-                << "  reweight = " << reweight << " WARNING: this parameter is guessed\n";
-
-            slice.resize(x_bins * x_bins);
+            slice.resize(x1_values.size() * x2_values.size());
 
             for (std::size_t lumi = 0; lumi != (*lumi_ptr).size(); ++lumi)
             {
@@ -214,28 +334,43 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                auto* subgrid = pineappl_subgrid_new(keyvals);
+                auto* subgrid = pineappl_subgrid_new(q2_values.size(), q2_values.data(),
+                    x1_values.size(), x1_values.data(), x2_values.size(), x2_values.data());
 
-                for (int itau = 0; itau != q2_bins; ++itau)
+                bool non_zero_subgrid = false;
+
+                for (std::size_t itau = 0; itau != q2_values.size(); ++itau)
                 {
-                    for (int ix1 = 0; ix1 != x_bins; ++ix1)
+                    bool non_zero = false;
+
+                    for (std::size_t ix1 = 0; ix1 != x1_values.size(); ++ix1)
                     {
-                        for (int ix2 = 0; ix2 != x_bins; ++ix2)
+                        for (std::size_t ix2 = 0; ix2 != x2_values.size(); ++ix2)
                         {
-                            slice.at(x_bins * ix1 + ix2) = (*matrix)(itau, ix1, ix2);
+                            double const value = (*matrix)(itau, ix1, ix2);
+
+                            if (value != 0.0)
+                            {
+                                non_zero = true;
+                            }
+
+                            slice.at(x2_values.size() * ix1 + ix2) =
+                                value * x1_weights[ix1] * x2_weights[ix2];
                         }
                     }
 
-                    if (std::any_of(slice.begin(), slice.end(), [](double x) { return x != 0.0; }))
+                    if (non_zero)
                     {
-                        pineappl_subgrid_fill_q2_slice(subgrid, itau, slice.data());
+                        non_zero_subgrid = true;
+                        pineappl_subgrid_import_q2_slice(subgrid, itau, slice.data());
                     }
                 }
 
-                pineappl_subgrid_replace_and_delete(pgrid, subgrid, 0, bin, lumi);
+                if (non_zero_subgrid)
+                {
+                    pineappl_grid_replace_and_delete(pgrid, subgrid, 0, bin, lumi);
+                }
             }
-
-            pineappl_keyval_delete(keyvals);
         }
     }
 
@@ -244,16 +379,70 @@ int main(int argc, char* argv[])
         pineappl_grid_merge_and_delete(grids.at(0), grids.at(i));
     }
 
-    pineappl_grid_scale_by_order(grids.at(0), 4.0 * std::acos(-1.0), 1.0, 1.0, 1.0, 1.0);
+    double global = 1.0;
 
     if (!grid.getNormalised())
     {
-        double const factor = const_cast <appl::grid&> (grid).run();
+        double const factor = grid.run();
 
         if (factor != 0.0)
         {
-            pineappl_grid_scale(grids.at(0), 1.0 / factor);
+            global = 1.0 / factor;
         }
+    }
+
+    pineappl_grid_scale_by_order(grids.at(0), alphas_factor, 1.0, 1.0, 1.0, global);
+
+    LHAPDF::setVerbosity(0);
+    pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 1));
+
+    auto const& results = grid.vconvolute(evolvepdf, evolvepdf, alphaspdf, 1);
+    std::vector<double> other_results(results.size());
+
+    pineappl_grid_convolute(
+        grids.at(0),
+        xfx,
+        xfx,
+        alphas,
+        pdf.get(),
+        nullptr,
+        nullptr,
+        1.0,
+        1.0,
+        other_results.data()
+    );
+
+    std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    std::cout.precision(16);
+
+    bool different = false;
+
+    for (std::size_t i = 0; i != results.size(); ++i)
+    {
+        auto const one = results.at(i);
+        auto const two = other_results.at(i);
+
+        // catches the case where both results are zero
+        if (one == two)
+        {
+            continue;
+        }
+
+        if (std::fabs(two / one - 1.0) > 1e-10)
+        {
+            std::cout << ">>> APPLgrid: " << one << " PineAPPL: " << two << " A/P: " << (one / two)
+                << " P/A: " << (two / one) << '\n';
+            different = true;
+        }
+        else
+        {
+            std::cout << ">>> Success!\n";
+        }
+    }
+
+    if (different)
+    {
+        return error_exit("grids are different");
     }
 
     // TODO: optimize the grid
