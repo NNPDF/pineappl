@@ -763,26 +763,6 @@ pub unsafe extern "C" fn pineappl_subgrid_replace_and_delete(
     }
 }
 
-/// Fills the slice with the given `index` of `subgrid` with the contents of `slice`.
-///
-/// # Safety
-///
-/// The parameter `subgrid` must point to a valid `SubGrid` object and be non-null, `index` must be
-/// an index smaller than the parameter `q2_bins` the `SubGrid` was created with, and `slice` must
-/// be an array at least as large as the square of the parameter `x_bins` the `SubGrid` was
-/// created with.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_fill_q2_slice(
-    subgrid: *mut SubGrid,
-    index: usize,
-    slice: *const f64,
-) {
-    (*subgrid).0.write_q2_slice(
-        index,
-        slice::from_raw_parts(slice, (*subgrid).0.x1_grid().len().pow(2)),
-    );
-}
-
 /// Key-value storage for passing optional information during grid creation with
 /// `pineappl_grid_new`.
 #[derive(Default)]

@@ -78,11 +78,6 @@ pub trait Subgrid {
     /// Fill the q2-slice with index `q2_slice` into `grid`.
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
 
-    // TODO: rename the function to import_applgrid_f2_q2_slice
-
-    /// Writes into subgrid.
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
-
     /// Assumes that the initial states for this grid are the same and uses this to optimize the
     /// grid by getting rid of almost half of the entries.
     fn symmetrize(&mut self);

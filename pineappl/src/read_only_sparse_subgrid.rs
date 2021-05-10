@@ -125,21 +125,6 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         }
     }
 
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        self.array.remove_x(q2_slice);
-
-        grid.iter()
-            .enumerate()
-            .filter(|(_, &value)| value != 0.0)
-            .for_each(|(index, &value)| {
-                self.array[[
-                    q2_slice,
-                    index / self.x2_grid.len(),
-                    index % self.x2_grid.len(),
-                ]] = value;
-            });
-    }
-
     fn symmetrize(&mut self) {
         let mut new_array =
             SparseArray3::new(self.q2_grid.len(), self.x1_grid.len(), self.x2_grid.len());

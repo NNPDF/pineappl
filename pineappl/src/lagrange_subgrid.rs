@@ -317,27 +317,6 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        if self.grid.is_none() {
-            self.itaumin = q2_slice;
-            self.itaumax = q2_slice + 1;
-            self.grid = Some(Array3::zeros((1, self.ny, self.ny)));
-        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
-            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
-        }
-
-        let self_grid = self.grid.as_mut().unwrap();
-
-        let self_ny = self.ny;
-        let self_itaumin = self.itaumin;
-
-        grid.iter().enumerate().for_each(|(index, value)| {
-            let ix1 = index / self_ny;
-            let ix2 = index % self_ny;
-            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
-        });
-    }
-
     fn symmetrize(&mut self) {
         if let Some(grid) = self.grid.as_mut() {
             let (i_size, j_size, k_size) = grid.dim();
@@ -688,27 +667,6 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        if self.grid.is_none() {
-            self.itaumin = q2_slice;
-            self.itaumax = q2_slice + 1;
-            self.grid = Some(Array3::zeros((1, self.ny1, self.ny2)));
-        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
-            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
-        }
-
-        let self_grid = self.grid.as_mut().unwrap();
-
-        let self_ny2 = self.ny2;
-        let self_itaumin = self.itaumin;
-
-        grid.iter().enumerate().for_each(|(index, value)| {
-            let ix1 = index / self_ny2;
-            let ix2 = index % self_ny2;
-            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
-        });
-    }
-
     fn symmetrize(&mut self) {
         if let Some(grid) = self.grid.as_mut() {
             let (i_size, j_size, k_size) = grid.dim();
@@ -959,17 +917,6 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        self.array.remove_x(q2_slice);
-
-        grid.iter()
-            .enumerate()
-            .filter(|(_, &value)| value != 0.0)
-            .for_each(|(index, &value)| {
-                self.array[[q2_slice, index / self.ny, index % self.ny]] = value;
-            });
-    }
-
     fn symmetrize(&mut self) {
         let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
 
@@ -1076,30 +1023,6 @@ mod tests {
         }
 
         assert!(approx_eq!(f64, test, reference, ulps = 8));
-
-        for i in grid.q2_slice().0..grid.q2_slice().1 {
-            grid.fill_q2_slice(i, &mut buffer);
-
-            buffer
-                .iter_mut()
-                .enumerate()
-                .filter(|(_, value)| **value != 0.0)
-                .for_each(|(index, value)| {
-                    let x1 = x1[index / x1.len()];
-                    let x2 = x2[index % x2.len()];
-                    *value *= (x1 / weightfun(x1)) * (x2 / weightfun(x2))
-                });
-            grid.write_q2_slice(i, &buffer);
-        }
-
-        let reference = grid.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
-
-        assert!(approx_eq!(f64, reference, test, ulps = 8));
     }
 
     fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)

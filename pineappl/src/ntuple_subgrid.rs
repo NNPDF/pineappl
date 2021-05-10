@@ -79,10 +79,6 @@ impl Subgrid for NtupleSubgridV1 {
         unimplemented!();
     }
 
-    fn write_q2_slice(&mut self, _: usize, _: &[f64]) {
-        unimplemented!();
-    }
-
     fn symmetrize(&mut self) {}
 
     fn clone_empty(&self) -> SubgridEnum {
@@ -159,13 +155,5 @@ mod tests {
         let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
 
         subgrid.fill_q2_slice(0, &mut []);
-    }
-
-    #[test]
-    #[should_panic]
-    fn write_q2_slice() {
-        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        subgrid.write_q2_slice(0, &[]);
     }
 }

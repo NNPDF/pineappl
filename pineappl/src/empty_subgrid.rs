@@ -54,10 +54,6 @@ impl Subgrid for EmptySubgridV1 {
         unreachable!();
     }
 
-    fn write_q2_slice(&mut self, _: usize, _: &[f64]) {
-        unreachable!();
-    }
-
     fn symmetrize(&mut self) {}
 
     fn clone_empty(&self) -> SubgridEnum {
@@ -128,12 +124,5 @@ mod tests {
     fn fill_q2_slice() {
         let subgrid = EmptySubgridV1::default();
         subgrid.fill_q2_slice(0, &mut []);
-    }
-
-    #[test]
-    #[should_panic]
-    fn write_q2_slice() {
-        let mut subgrid = EmptySubgridV1::default();
-        subgrid.write_q2_slice(0, &[]);
     }
 }
