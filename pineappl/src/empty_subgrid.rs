@@ -4,6 +4,7 @@ use super::grid::Ntuple;
 use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 /// A subgrid type that is always empty.
 #[derive(Default, Deserialize, Serialize)]
@@ -24,15 +25,15 @@ impl Subgrid for EmptySubgridV1 {
         unreachable!();
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
+    fn q2_grid(&self) -> Cow<[f64]> {
         unreachable!();
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
+    fn x1_grid(&self) -> Cow<[f64]> {
         unreachable!();
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
+    fn x2_grid(&self) -> Cow<[f64]> {
         unreachable!();
     }
 

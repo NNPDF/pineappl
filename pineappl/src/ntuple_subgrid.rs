@@ -4,6 +4,7 @@ use super::grid::Ntuple;
 use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
@@ -41,16 +42,16 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.push(ntuple.clone());
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
-        vec![]
+    fn q2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
-        vec![]
+    fn x1_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
-        vec![]
+    fn x2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
     fn is_empty(&self) -> bool {

@@ -7,6 +7,7 @@ use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::mem;
 
 /// TODO
@@ -63,16 +64,16 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         panic!("this grid doesn't support the fill operation");
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
-        self.q2_grid.clone()
+    fn q2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.q2_grid)
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
-        self.x1_grid.clone()
+    fn x1_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.x1_grid)
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
-        self.x2_grid.clone()
+    fn x2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.x2_grid)
     }
 
     fn is_empty(&self) -> bool {
@@ -199,10 +200,10 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
         let q2_grid = if subgrid.static_q2 > 0.0 {
             vec![subgrid.static_q2]
         } else {
-            subgrid.q2_grid()
+            subgrid.q2_grid().into_owned()
         };
-        let x1_grid = subgrid.x1_grid();
-        let x2_grid = subgrid.x2_grid();
+        let x1_grid = subgrid.x1_grid().into_owned();
+        let x2_grid = subgrid.x2_grid().into_owned();
 
         Self {
             array,

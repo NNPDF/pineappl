@@ -8,6 +8,7 @@ use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -33,15 +34,15 @@ pub enum SubgridEnum {
 pub trait Subgrid {
     /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn q2_grid(&self) -> Vec<f64>;
+    fn q2_grid(&self) -> Cow<[f64]>;
 
     /// Return a `Vec` of values of `x1`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn x1_grid(&self) -> Vec<f64>;
+    fn x1_grid(&self) -> Cow<[f64]>;
 
     /// Return a `Vec` of values of `x2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn x2_grid(&self) -> Vec<f64>;
+    fn x2_grid(&self) -> Cow<[f64]>;
 
     /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
     /// in which case the `x1`, `x2` and `q2` values can be read from the given slices, or takes
