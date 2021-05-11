@@ -137,7 +137,7 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         let mut new_array =
             SparseArray3::new(self.q2_grid.len(), self.x1_grid.len(), self.x2_grid.len());
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k > j) {
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
         // do not change the diagonal entries (k==j)
