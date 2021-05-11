@@ -431,6 +431,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
     }
 
     pineappl_grid_scale_by_order(grids.at(0), alphas_factor, 1.0, 1.0, 1.0, global);
+    pineappl_grid_optimize(grids.at(0));
 
     // TODO: figure out when we can optimize
 
