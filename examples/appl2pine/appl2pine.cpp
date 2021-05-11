@@ -95,7 +95,7 @@ void error_exit(std::string const& message)
 
 int32_t convert_to_pdg_id(int id)
 {
-    if ((id >= -5) && (id <= 5))
+    if ((id >= -6) && (id <= 6))
     {
         return (id == 0) ? 21 : id;
     }
@@ -154,6 +154,52 @@ double ckm_factors(
         {
             return ckm2.at(a + 6).at(b + 6);
         }
+    }
+}
+
+void reconstruct_luminosity_function(appl::grid& grid, int order, pineappl_lumi* lumi)
+{
+    auto* pdf = const_cast <appl::appl_pdf*> (static_cast <appl::grid const&> (grid).genpdf(order));
+
+    std::vector<std::vector<int32_t>> combinations(pdf->Nproc());
+    std::vector<std::vector<double>> factors(pdf->Nproc());
+    std::vector<double> xfx1(14);
+    std::vector<double> xfx2(14);
+    std::vector<double> results(pdf->Nproc());
+
+    for (int a = -6; a != 8; ++a)
+    {
+        xfx1.at(a + 6) = 1.0;
+
+        for (int b = -6; b != 8; ++b)
+        {
+            xfx2.at(b + 6) = 1.0;
+
+            pdf->evaluate(xfx1.data(), xfx2.data(), results.data());
+
+            for (std::size_t i = 0; i != results.size(); ++i)
+            {
+                if (results.at(i) != 0.0)
+                {
+                    combinations.at(i).push_back(convert_to_pdg_id(a));
+                    combinations.at(i).push_back(convert_to_pdg_id(b));
+                    factors.at(i).push_back(results.at(i));
+                }
+            }
+
+            xfx2.at(b + 6) = 0.0;
+        }
+
+        xfx1.at(a + 6) = 0.0;
+    }
+
+    for (std::size_t i = 0; i != combinations.size(); ++i)
+    {
+        assert( !factors.at(i).empty() );
+        assert( !combinations.at(i).empty() );
+
+        pineappl_lumi_add(lumi, factors.at(i).size(), combinations.at(i).data(),
+            factors.at(i).data());
     }
 }
 
@@ -234,40 +280,42 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
         lumi_pdf const* lumi_ptr =
             dynamic_cast <lumi_pdf const*> (static_cast <appl::grid const&> (grid).genpdf(i));
 
-        if (lumi_ptr == nullptr)
-        {
-            error_exit("could not cast into `lumi_pdf`");
-        }
-
         auto* lumi = pineappl_lumi_new();
 
-        for (unsigned j = 0; j != (*lumi_ptr).size(); ++j)
+        if (lumi_ptr == nullptr)
         {
-            auto const& combination = (*lumi_ptr)[j];
-
-            std::vector<int32_t> combinations;
-            std::vector<double> factors;
-
-            for (unsigned k = 0; k != combination.size(); ++k)
+            reconstruct_luminosity_function(grid, i, lumi);
+        }
+        else
+        {
+            for (unsigned j = 0; j != (*lumi_ptr).size(); ++j)
             {
-                auto const a = combination[k].first;
-                auto const b = combination[k].second;
+                auto const& combination = (*lumi_ptr)[j];
 
-                combinations.push_back(convert_to_pdg_id(a));
-                combinations.push_back(convert_to_pdg_id(b));
+                std::vector<int32_t> combinations;
+                std::vector<double> factors;
 
-                auto const factor = ckm_factors(a, b, lumi_ptr->getckm2(), lumi_ptr->getckmsum());
+                for (unsigned k = 0; k != combination.size(); ++k)
+                {
+                    auto const a = combination[k].first;
+                    auto const b = combination[k].second;
 
-                factors.push_back(factor);
+                    combinations.push_back(convert_to_pdg_id(a));
+                    combinations.push_back(convert_to_pdg_id(b));
+
+                    auto const factor = ckm_factors(a, b, lumi_ptr->getckm2(), lumi_ptr->getckmsum());
+
+                    factors.push_back(factor);
+                }
+
+                pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
             }
-
-            pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
         }
 
         auto* key_vals = pineappl_keyval_new();
-
         auto* pgrid = pineappl_grid_new(lumi, 1, order_params.data() + 4 * i,
             bin_limits.size() - 1, bin_limits.data(), key_vals);
+        auto const lumi_size = pineappl_lumi_count(lumi);
         pineappl_keyval_delete(key_vals);
         pineappl_lumi_delete(lumi);
 
@@ -316,7 +364,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
 
             slice.resize(x1_values.size() * x2_values.size());
 
-            for (std::size_t lumi = 0; lumi != (*lumi_ptr).size(); ++lumi)
+            for (std::size_t lumi = 0; lumi != lumi_size; ++lumi)
             {
                 auto const* matrix = const_cast <appl::igrid*> (igrid)->weightgrid(lumi);
 
@@ -464,11 +512,11 @@ int main(int argc, char* argv[])
         std::cout << ">>> `reweight = false` didn't work. Trying `reweight = false`.\n";
 
         pgrid = convert_grid(grid, false);
-    }
 
-    if (pgrid == nullptr)
-    {
-        error_exit("grids are different");
+        if (pgrid == nullptr)
+        {
+            error_exit("grids are different");
+        }
     }
 
     pineappl_grid_write(pgrid, out.c_str());
