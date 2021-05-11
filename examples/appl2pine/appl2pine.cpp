@@ -509,7 +509,7 @@ int main(int argc, char* argv[])
 
     if (pgrid == nullptr)
     {
-        std::cout << ">>> `reweight = false` didn't work. Trying `reweight = false`.\n";
+        std::cout << ">>> `reweight = true` didn't work. Trying `reweight = false`.\n";
 
         pgrid = convert_grid(grid, false);
 
