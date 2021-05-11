@@ -803,11 +803,25 @@ impl Grid {
     fn symmetrize(&mut self) {
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
         let mut pairs: Vec<(usize, usize)> = Vec::new();
+        let mut not_symmetrized: Vec<usize> = Vec::new();
 
-        while let Some(index) = indices.pop() {
+        'looop: while let Some(index) = indices.pop() {
             let lumi_entry = &self.lumi[index];
 
             if *lumi_entry == lumi_entry.transpose() {
+                for order in 0..self.orders.len() {
+                    for bin in 0..self.bin_limits.bins() {
+                        let subgrid = &self.subgrids[[order, bin, index]];
+
+                        // check if in all cases the limits are compatible with merging
+                        if !subgrid.is_empty() && (subgrid.x1_grid() != subgrid.x2_grid()) {
+                            not_symmetrized.push(index);
+
+                            continue 'looop;
+                        }
+                    }
+                }
+
                 pairs.push((index, index));
             } else {
                 let (j, &other_index) = indices
@@ -815,6 +829,26 @@ impl Grid {
                     .enumerate()
                     .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
                     .unwrap();
+
+                for order in 0..self.orders.len() {
+                    for bin in 0..self.bin_limits.bins() {
+                        let lhs = &self.subgrids[[order, bin, index]];
+                        let rhs = &self.subgrids[[order, bin, other_index]];
+
+                        // check if in all cases the limits are compatible with merging
+                        if !lhs.is_empty()
+                            && !rhs.is_empty()
+                            && ((lhs.x1_grid() != rhs.x2_grid())
+                                || (lhs.x2_grid() != rhs.x1_grid()))
+                        {
+                            not_symmetrized.push(index);
+                            not_symmetrized.push(other_index);
+                            indices.remove(j);
+
+                            continue 'looop;
+                        }
+                    }
+                }
 
                 pairs.push((index, other_index));
                 indices.remove(j);
@@ -862,7 +896,7 @@ impl Grid {
         }
 
         self.subgrids = Array3::from_shape_vec(
-            (i_size, j_size, pairs.len()),
+            (i_size, j_size, pairs.len() + not_symmetrized.len()),
             subgrids
                 .into_raw_vec()
                 .into_iter()
@@ -871,9 +905,17 @@ impl Grid {
         )
         .unwrap();
 
-        self.lumi = pairs
+        let mut new_lumi_indices: Vec<_> = pairs
             .iter()
-            .map(|(index, _)| self.lumi[*index].clone())
+            .map(|(index, _)| index)
+            .chain(not_symmetrized.iter())
+            .copied()
+            .collect();
+        new_lumi_indices.sort();
+
+        self.lumi = new_lumi_indices
+            .iter()
+            .map(|i| self.lumi[*i].clone())
             .collect();
     }
 
