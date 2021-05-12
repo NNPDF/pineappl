@@ -409,6 +409,10 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
                 {
                     pineappl_grid_replace_and_delete(pgrid, subgrid, 0, bin, lumi);
                 }
+                else
+                {
+                    pineappl_subgrid_delete(subgrid);
+                }
             }
         }
     }
@@ -432,8 +436,6 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
 
     pineappl_grid_scale_by_order(grids.at(0), alphas_factor, 1.0, 1.0, 1.0, global);
     pineappl_grid_optimize(grids.at(0));
-
-    // TODO: figure out when we can optimize
 
     LHAPDF::setVerbosity(0);
     pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 1));
@@ -521,4 +523,5 @@ int main(int argc, char* argv[])
     }
 
     pineappl_grid_write(pgrid, out.c_str());
+    pineappl_grid_delete(pgrid);
 }
