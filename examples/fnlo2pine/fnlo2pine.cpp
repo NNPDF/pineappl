@@ -212,8 +212,18 @@ int main(int argc, char* argv[])
         }
         else
         {
-            // TODO: NYI
-            assert( false );
+            auto converted = dynamic_cast <fastNLOCoeffAddFlex*> (coeff_table);
+
+            if (converted != nullptr)
+            {
+                // TODO: NYI
+                assert( false );
+            }
+            else
+            {
+                // TODO: NYI
+                assert( false );
+            }
         }
     }
 
