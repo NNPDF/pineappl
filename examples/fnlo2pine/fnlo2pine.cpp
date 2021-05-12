@@ -113,7 +113,7 @@ pineappl_grid* convert_coeff_add_fix(
                             non_zero = true;
 
                             auto const ix1 = ix % x1_values.size();
-                            auto const ix2 = ix / x2_values.size();
+                            auto const ix2 = ix / x1_values.size();
                             assert( table->GetXIndex(obs, ix1, ix2) == ix );
 
                             slice.at(x2_values.size() * ix1 + ix2) = value / factor;
