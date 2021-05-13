@@ -77,6 +77,11 @@ pineappl_grid* convert_coeff_add_fix(
 
         for (std::size_t subproc = 0; subproc != n_subproc; ++subproc)
         {
+            //if ((pdf[subproc][0].first != 0) || (pdf[subproc][0].second != 0))
+            //{
+            //    continue;
+            //}
+
             double const factor = table->GetNevt(obs, subproc);
 
             for (std::size_t j = 0; j != total_scalevars; ++j)
@@ -104,19 +109,22 @@ pineappl_grid* convert_coeff_add_fix(
                     std::vector<double> slice(x1_values.size() * x2_values.size());
                     bool non_zero = false;
 
-                    for (std::size_t ix = 0; ix != n_xmax; ++ix)
+                    for (std::size_t ix2 = 0; ix2 != table->GetNxtot2(obs); ++ix2)
                     {
-                        auto const value = table->GetSigmaTilde(obs, j, k, ix, subproc);
-
-                        if (value != 0.0)
+                        for (std::size_t ix1 = 0; ix1 != table->GetNxtot1(obs); ++ix1)
                         {
-                            non_zero = true;
+                            auto const ix = table->GetXIndex(obs, ix1, ix2);
+                            auto const value = table->GetSigmaTilde(obs, j, k, ix, subproc);
 
-                            auto const ix1 = ix % x1_values.size();
-                            auto const ix2 = ix / x1_values.size();
-                            assert( table->GetXIndex(obs, ix1, ix2) == ix );
+                            assert( x1_values.at(ix1) == table->GetX1(obs, ix) );
+                            assert( x2_values.at(ix2) == table->GetX2(obs, ix) );
 
-                            slice.at(x2_values.size() * ix1 + ix2) = value / factor;
+                            if (value != 0.0)
+                            {
+                                non_zero = true;
+                                slice.at(x2_values.size() * ix1 + ix2) = value / factor
+                                    * x1_values.at(ix1) * x2_values.at(ix2);
+                            }
                         }
                     }
 
@@ -156,9 +164,13 @@ int main(int argc, char* argv[])
     uint32_t alpha = 0;
 
     LHAPDF::setVerbosity(0);
-    pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 1));
+    pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
 
     auto file = fastNLOLHAPDF(in, "NNPDF31_nlo_as_0118_luxqed");
+
+    //file.SelectProcesses({ std::make_pair(0, 0) });
+    //file.ActivateContribution(fastNLO::kFixedOrder, fastNLO::kNextToLeading, false);
+    //file.ActivateContribution(fastNLO::kFixedOrder, fastNLO::kNextToNextToLeading, false);
 
     // TODO: for the time being only one-dimensional distributions are supported
     auto dim = file.GetNumDiffBin();
@@ -259,7 +271,7 @@ int main(int argc, char* argv[])
     for (std::size_t i = 0; i != results.size(); ++i)
     {
         auto const one = results.at(i);
-        auto const two = other_results.at(i);
+        auto const two = other_results.at(i) * (pine_bin_limits.at(i + 1) - pine_bin_limits.at(i));
 
         // catches the case where both results are zero
         if (one == two)
@@ -281,4 +293,9 @@ int main(int argc, char* argv[])
 
     pineappl_grid_write(grids.at(0), out.c_str());
     pineappl_grid_delete(grids.at(0));
+
+    if (different)
+    {
+        return 1;
+    }
 }
