@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
     }
 
     pineappl_grid_scale_by_order(grids.at(0), 0.5 / std::acos(-1.0), 1.0, 1.0, 1.0, 1.0);
-    //pineappl_grid_optimize(grids.at(0));
+    pineappl_grid_optimize(grids.at(0));
 
     auto const& results = file.GetCrossSection();
     std::vector<double> other_results(results.size());
