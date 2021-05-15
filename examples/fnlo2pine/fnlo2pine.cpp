@@ -86,6 +86,12 @@ pineappl_grid* convert_coeff_add_fix(
 
             for (std::size_t j = 0; j != total_scalevars; ++j)
             {
+                // TODO: for the time being we only extract the central scale result
+                if (table->GetScaleFactor(j) != 1.0)
+                {
+                    continue;
+                }
+
                 auto q2_values = table->GetScaleNodes(obs, j);
 
                 // the values are the unsquared q values, correct that
