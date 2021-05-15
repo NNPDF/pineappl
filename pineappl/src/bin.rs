@@ -153,6 +153,7 @@ impl<'a> BinInfo<'a> {
 
     /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
     /// efficiently sliced into one-dimensional histograms.
+    #[must_use]
     pub fn slices(&self) -> Vec<(usize, usize)> {
         self.remapper.map_or_else(
             || vec![(0, self.limits.bins())],
@@ -236,7 +237,7 @@ impl BinRemapper {
     }
 }
 
-impl PartialEq<BinRemapper> for BinRemapper {
+impl PartialEq<Self> for BinRemapper {
     fn eq(&self, other: &Self) -> bool {
         (self.limits == other.limits) && (self.normalizations == other.normalizations)
     }
@@ -244,6 +245,10 @@ impl PartialEq<BinRemapper> for BinRemapper {
 
 impl BinLimits {
     /// Constructor for `BinLimits`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
         limits.sort_by(|left, right| left.partial_cmp(right).unwrap());
@@ -277,6 +282,10 @@ impl BinLimits {
 
     /// Returns the bin index for observable `value`. If the value over- or underflows, the return
     /// value is `None`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn index(&self, value: f64) -> Option<usize> {
         match &self.0 {
@@ -302,6 +311,10 @@ impl BinLimits {
     }
 
     /// Returns the left-most bin limit
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn left(&self) -> f64 {
         match &self.0 {
@@ -367,6 +380,10 @@ impl BinLimits {
     ///
     /// If the right-most limit of `self` is different from the left-most limit of `other`, the
     /// bins are non-consecutive and an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
         if !approx_eq!(f64, self.right(), other.left(), ulps = 8) {
             return Err(MergeBinError::NonConsecutiveBins {
@@ -391,6 +408,10 @@ impl BinLimits {
     }
 
     /// Returns the right-most bin limit
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn right(&self) -> f64 {
         match &self.0 {

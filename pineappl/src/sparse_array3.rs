@@ -329,6 +329,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Returns the dimensions of this array.
+    #[must_use]
     pub fn dimensions(&self) -> (usize, usize, usize) {
         self.dimensions
     }
@@ -371,6 +372,10 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Removes all elements with the specified x coordinate.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn remove_x(&mut self, x: usize) {
         let dim1 = self.dimensions.1.min(self.dimensions.2);
         let nx = (self.indices.len() - 1) / dim1;

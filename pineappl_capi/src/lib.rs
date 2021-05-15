@@ -253,14 +253,9 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
 }
 
 /// Delete a grid previously created with `pineappl_grid_new`.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, this function is not safe to call. If `grid`
-/// is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
+pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
@@ -650,14 +645,9 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *mut Lumi) -> usize {
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
-///
-/// # Safety
-///
-/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`. If
-/// `lumi` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
+pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
 /// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
 /// factors will be copied into `pdg_ids` and `factors`.
@@ -744,14 +734,9 @@ pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
 
 /// Deletes a subgrid created with `pineappl_subgrid_new`. If `subgrid` is the null pointer,
 /// nothing is done.
-///
-/// # Safety
-///
-/// The parameter `subgrid` must point to a valid `Subgrid` object created by
-/// `pineappl_subgrid_new` or be the null pointer.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
+pub extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
 
 /// This function takes replaces the subgrid in `grid` with the corresponding indices `order`,
 /// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, the specied
@@ -843,14 +828,9 @@ pub struct KeyVal {
 }
 
 /// Delete the previously created object pointed to by `key_vals`.
-///
-/// # Safety
-///
-/// The parameter `key_vals` must point to a valid `KeyVal` object created by
-/// `pineappl_keyval_new`. If `key_vals` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
+pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 ///

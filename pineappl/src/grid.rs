@@ -304,6 +304,10 @@ impl Grid {
     /// `true` the order/luminosity is enable, `false` disables the entry. The tuple `xi` can be
     /// used to independently vary the renormalization (first element) and factorization scale
     /// (second element) from their central value `(1.0, 1.0)`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn convolute(
         &self,
         xfx1: &dyn Fn(i32, f64, f64) -> f64,
@@ -328,12 +332,7 @@ impl Grid {
         let mut last_xif = 0.0;
 
         let (mut q2_grid, mut x1_grid, mut x2_grid) = {
-            if let Some(grid) = self
-                .subgrids
-                .iter()
-                .filter(|subgrid| !subgrid.is_empty())
-                .next()
-            {
+            if let Some(grid) = self.subgrids.iter().find(|subgrid| !subgrid.is_empty()) {
                 (grid.q2_grid(), grid.x1_grid(), grid.x2_grid())
             } else {
                 return bins;
@@ -481,6 +480,10 @@ impl Grid {
     }
 
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: &Ntuple<f64>) {
         if let Some(bin) = self.bin_limits.index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, lumi]];
@@ -564,6 +567,10 @@ impl Grid {
     ///
     /// If in the first case describe above the perturbative orders or the luminosity function is
     /// different an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
         if self.bin_limits == other.bin_limits {
             let mut new_orders: Vec<Order> = Vec::new();
@@ -687,6 +694,10 @@ impl Grid {
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn scale_by_order(
         &mut self,
         alphas: f64,
@@ -734,6 +745,10 @@ impl Grid {
     /// # Errors
     ///
     /// Returns an error if the number of bins in the grid and in the remapper do not agree.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridSetBinRemapperError> {
         if remapper.bins() != self.bin_limits.bins() {
             return Err(GridSetBinRemapperError::BinMismatch {
@@ -768,6 +783,10 @@ impl Grid {
 
     /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
     /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn optimize(&mut self) {
         if self
             .key_values()
@@ -878,16 +897,14 @@ impl Grid {
                         let mut lhs = mem::replace(&mut subgrids[[i, j, k1]], None).unwrap();
                         let mut rhs = mem::replace(&mut subgrids[[i, j, k2]], None).unwrap();
 
-                        subgrids[[i, j, k1]] = Some(if !rhs.is_empty() {
-                            if lhs.is_empty() {
-                                let mut new_lhs = rhs.clone_empty();
-                                new_lhs.merge(&mut rhs, true);
-                                new_lhs
-                            } else {
-                                lhs.merge(&mut rhs, true);
-                                lhs
-                            }
+                        subgrids[[i, j, k1]] = Some(if rhs.is_empty() {
+                            lhs
+                        } else if lhs.is_empty() {
+                            let mut new_lhs = rhs.clone_empty();
+                            new_lhs.merge(&mut rhs, true);
+                            new_lhs
                         } else {
+                            lhs.merge(&mut rhs, true);
                             lhs
                         });
                     }
@@ -897,11 +914,7 @@ impl Grid {
 
         self.subgrids = Array3::from_shape_vec(
             (i_size, j_size, pairs.len() + not_symmetrized.len()),
-            subgrids
-                .into_raw_vec()
-                .into_iter()
-                .filter_map(|s| s)
-                .collect(),
+            subgrids.into_raw_vec().into_iter().flatten().collect(),
         )
         .unwrap();
 
@@ -911,7 +924,7 @@ impl Grid {
             .chain(not_symmetrized.iter())
             .copied()
             .collect();
-        new_lumi_indices.sort();
+        new_lumi_indices.sort_unstable();
 
         self.lumi = new_lumi_indices
             .iter()
@@ -935,6 +948,10 @@ impl Grid {
     }
 
     /// Returns a map with key-value pairs, if there are any stored in this grid.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn key_values_mut(&mut self) -> &mut HashMap<String, String> {
         self.more_members.upgrade();
@@ -947,6 +964,10 @@ impl Grid {
     }
 
     /// Sets a specific key-value pair in this grid.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.more_members.upgrade();
 
