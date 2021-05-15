@@ -4,6 +4,7 @@
 //! C-language interface for `PineAPPL`.
 
 use itertools::izip;
+use pineappl::bin::BinRemapper;
 use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::lumi::LumiEntry;
@@ -548,6 +549,38 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
         CStr::from_ptr(key).to_str().unwrap(),
         CStr::from_ptr(value).to_str().unwrap(),
     );
+}
+
+/// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
+/// N-dimensional ones. The new bin limits must be given in the form of tuples giving the left and
+/// right limits, and a tuple for each dimension.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The arrays `normalizations` and `limits` must be at least as
+/// long as the number of bins of the grid and `2 * dimensions * bins`, respectively.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_remapper(
+    grid: *mut Grid,
+    dimensions: usize,
+    normalizations: *const f64,
+    limits: *const f64,
+) {
+    let grid = &mut *grid;
+    let bins = grid.bin_info().bins();
+
+    grid.set_remapper(
+        BinRemapper::new(
+            slice::from_raw_parts(normalizations, bins).to_vec(),
+            slice::from_raw_parts(limits, 2 * dimensions * bins)
+                .chunks_exact(2)
+                .map(|chunk| (chunk[0], chunk[1]))
+                .collect(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
 }
 
 /// Write `grid` to a file with name `filename`.
