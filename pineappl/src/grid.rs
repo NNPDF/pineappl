@@ -842,12 +842,12 @@ impl Grid {
                 }
 
                 pairs.push((index, index));
-            } else {
-                let (j, &other_index) = indices
-                    .iter()
-                    .enumerate()
-                    .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
-                    .unwrap();
+            } else if let Some((j, &other_index)) = indices
+                .iter()
+                .enumerate()
+                .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
+            {
+                indices.remove(j);
 
                 for order in 0..self.orders.len() {
                     for bin in 0..self.bin_limits.bins() {
@@ -862,7 +862,6 @@ impl Grid {
                         {
                             not_symmetrized.push(index);
                             not_symmetrized.push(other_index);
-                            indices.remove(j);
 
                             continue 'looop;
                         }
@@ -870,7 +869,8 @@ impl Grid {
                 }
 
                 pairs.push((index, other_index));
-                indices.remove(j);
+            } else {
+                not_symmetrized.push(index);
             }
         }
 
