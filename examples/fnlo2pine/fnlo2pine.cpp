@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdlib>
+#include <numeric>
 #include <string>
 
 #include <fastnlotk/fastNLOLHAPDF.h>
@@ -19,7 +20,7 @@ extern "C" double alphas(double q2, void* state)
 
 pineappl_grid* convert_coeff_add_fix(
     fastNLOCoeffAddFix* table,
-    std::vector<double> const& bin_limits,
+    std::size_t bins,
     uint32_t alpha
 ) {
     std::vector<uint32_t> order_params = { table->GetNpow(), alpha, 0, 0 };
@@ -42,9 +43,11 @@ pineappl_grid* convert_coeff_add_fix(
         pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
     }
 
+    std::vector<double> bin_limits(bins + 1);
+    std::iota(bin_limits.begin(), bin_limits.end(), 0.0);
     auto* key_vals = pineappl_keyval_new();
-    auto* pgrid = pineappl_grid_new(lumi, 1, order_params.data(), bin_limits.size() - 1,
-        bin_limits.data(), key_vals);
+    auto* pgrid = pineappl_grid_new(lumi, 1, order_params.data(), bins, bin_limits.data(),
+        key_vals);
     pineappl_keyval_delete(key_vals);
     pineappl_lumi_delete(lumi);
 
@@ -178,22 +181,6 @@ int main(int argc, char* argv[])
     //file.ActivateContribution(fastNLO::kFixedOrder, fastNLO::kNextToLeading, false);
     //file.ActivateContribution(fastNLO::kFixedOrder, fastNLO::kNextToNextToLeading, false);
 
-    // TODO: for the time being only one-dimensional distributions are supported
-    auto dim = file.GetNumDiffBin();
-    assert( dim == 1 );
-
-    auto const& bin_limits = file.GetDim0BinBounds();
-    std::vector<double> pine_bin_limits(bin_limits.size() + 1);
-    pine_bin_limits.at(0) = bin_limits.at(0).first;
-
-    for (std::size_t i = 0; i != bin_limits.size(); ++i)
-    {
-        pine_bin_limits.at(i + 1) = bin_limits.at(i).second;
-
-        // TODO: for the time being we only support consecutive bin limits
-        assert( bin_limits.at(i).first == pine_bin_limits.at(i) );
-    }
-
     auto const id_lo = file.ContrId(fastNLO::kFixedOrder, fastNLO::kLeading);
     auto const id_nlo = file.ContrId(fastNLO::kFixedOrder, fastNLO::kNextToLeading);
     auto const id_nnlo = file.ContrId(fastNLO::kFixedOrder, fastNLO::kNextToNextToLeading);
@@ -215,6 +202,9 @@ int main(int argc, char* argv[])
         ids.push_back(id_nnlo);
     }
 
+    auto const& normalizations = file.GetBinSize();
+    std::size_t const bins = normalizations.size();
+
     std::vector<pineappl_grid*> grids;
 
     for (auto const id : ids)
@@ -226,7 +216,7 @@ int main(int argc, char* argv[])
 
         if (converted != nullptr)
         {
-            grids.push_back(convert_coeff_add_fix(converted, pine_bin_limits, alpha));
+            grids.push_back(convert_coeff_add_fix(converted, bins, alpha));
         }
         else
         {
@@ -253,6 +243,22 @@ int main(int argc, char* argv[])
     pineappl_grid_scale_by_order(grids.at(0), 0.5 / std::acos(-1.0), 1.0, 1.0, 1.0, 1.0);
     pineappl_grid_optimize(grids.at(0));
 
+    auto const dimensions = file.GetNumDiffBin();
+    std::vector<double> limits(2 * dimensions * bins);
+
+    for (std::size_t i = 0; i != bins; ++i)
+    {
+        for (std::size_t j = 0; j != dimensions; ++j)
+        {
+            auto const& pair = file.GetObsBinDimBounds(i, j);
+
+            limits.at(2 * (i * dimensions + j) + 0) = pair.first;
+            limits.at(2 * (i * dimensions + j) + 1) = pair.second;
+        }
+    }
+
+    pineappl_grid_set_remapper(grids.at(0), dimensions, normalizations.data(), limits.data());
+
     auto const& results = file.GetCrossSection();
     std::vector<double> other_results(results.size());
 
@@ -277,7 +283,7 @@ int main(int argc, char* argv[])
     for (std::size_t i = 0; i != results.size(); ++i)
     {
         auto const one = results.at(i);
-        auto const two = other_results.at(i) * (pine_bin_limits.at(i + 1) - pine_bin_limits.at(i));
+        auto const two = other_results.at(i) * normalizations.at(i);
 
         // catches the case where both results are zero
         if (one == two)
