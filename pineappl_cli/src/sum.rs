@@ -19,7 +19,7 @@ pub fn subcommand_integrated(input: &str, output: &str) -> Result<()> {
         key_values.remove(&format!("x{}_label_tex", dim));
         key_values.remove(&format!("x{}_unit", dim));
     }
-    key_vales.remove("y_label");
+    key_values.remove("y_label");
     key_values.remove("y_label_tex");
     key_values.remove("y_unit");
 
