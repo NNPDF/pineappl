@@ -155,28 +155,10 @@ impl<'a> BinInfo<'a> {
     /// efficiently sliced into one-dimensional histograms.
     #[must_use]
     pub fn slices(&self) -> Vec<(usize, usize)> {
+        // TODO: convert this to Vec<Range<usize>>
         self.remapper.map_or_else(
             || vec![(0, self.limits.bins())],
-            |remapper| {
-                if remapper.dimensions() == 1 {
-                    vec![(0, self.limits.bins())]
-                } else {
-                    remapper
-                        .limits()
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(index, x)| {
-                            ((index % remapper.dimensions()) != (remapper.dimensions() - 1))
-                                .then(|| x)
-                        })
-                        .collect::<Vec<_>>()
-                        .chunks_exact(remapper.dimensions() - 1)
-                        .enumerate()
-                        .dedup_by_with_count(|(_, x), (_, y)| x == y)
-                        .map(|(count, (index, _))| (index, index + count))
-                        .collect()
-                }
-            },
+            |remapper| remapper.slices(),
         )
     }
 }
@@ -234,6 +216,27 @@ impl BinRemapper {
     #[must_use]
     pub fn normalizations(&self) -> &[f64] {
         &self.normalizations
+    }
+
+    /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
+    /// efficiently sliced into one-dimensional histograms.
+    pub fn slices(&self) -> Vec<(usize, usize)> {
+        if self.dimensions() == 1 {
+            vec![(0, self.bins())]
+        } else {
+            self.limits()
+                .iter()
+                .enumerate()
+                .filter_map(|(index, x)| {
+                    ((index % self.dimensions()) != (self.dimensions() - 1)).then(|| x)
+                })
+                .collect::<Vec<_>>()
+                .chunks_exact(self.dimensions() - 1)
+                .enumerate()
+                .dedup_by_with_count(|(_, x), (_, y)| x == y)
+                .map(|(count, (index, _))| (index, index + count))
+                .collect()
+        }
     }
 }
 
