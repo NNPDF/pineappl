@@ -5,6 +5,7 @@ use float_cmp::approx_eq;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::f64;
+use std::ops::Range;
 use thiserror::Error;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -212,6 +213,29 @@ impl BinRemapper {
         &self.limits
     }
 
+    /// Merges the bins for the corresponding range together in a single one.
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), ()> {
+        if self
+            .slices()
+            .iter()
+            .any(|&(start, end)| (start >= range.start) && (range.end <= end))
+        {
+            for bin in range.start + 1..range.end {
+                self.normalizations[range.start] += self.normalizations[bin];
+            }
+
+            let dim = self.dimensions();
+
+            self.normalizations.drain(range.start + 1..range.end);
+            self.limits[dim * (range.start + 1) - 1].1 = self.limits[dim * range.end - 1].1;
+            self.limits.drain(dim * (range.start + 1)..dim * range.end);
+
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     /// Return the normalization factors for all bins.
     #[must_use]
     pub fn normalizations(&self) -> &[f64] {
@@ -349,6 +373,13 @@ impl BinLimits {
                 .collect(),
             Limits::Unequal { limits } => limits.clone(),
         }
+    }
+
+    /// Merges the bins for the corresponding range together in a single one.
+    pub fn merge_bins(&mut self, bins: Range<usize>) {
+        let mut new_limits = self.limits();
+        new_limits.drain(bins.start + 1..bins.end);
+        *self = BinLimits::new(new_limits);
     }
 
     /// Returns the size for each bin.

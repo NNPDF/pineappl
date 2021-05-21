@@ -21,6 +21,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
+use std::ops::Range;
 use std::ptr;
 use thiserror::Error;
 
@@ -553,6 +554,59 @@ impl Grid {
     #[must_use]
     pub fn lumi(&self) -> &[LumiEntry] {
         &self.lumi
+    }
+
+    /// Merges the bins for the corresponding range together in a single one.
+    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), ()> {
+        if (bins.start >= self.bin_limits.bins()) || (bins.end > self.bin_limits.bins()) {
+            return Err(());
+        }
+
+        self.bin_limits.merge_bins(bins.clone());
+
+        match &mut self.more_members {
+            MoreMembers::V1(_) => {}
+            MoreMembers::V2(mmv2) => {
+                if let Some(remapper) = &mut mmv2.remapper {
+                    remapper.merge_bins(bins.clone())?;
+                }
+            }
+            MoreMembers::V3(mmv3) => {
+                if let Some(remapper) = &mut mmv3.remapper {
+                    remapper.merge_bins(bins.clone())?;
+                }
+            }
+        }
+
+        let mut old_subgrids = mem::replace(
+            &mut self.subgrids,
+            Array3::from_shape_simple_fn(
+                (self.orders.len(), self.bin_limits.bins(), self.lumi.len()),
+                || EmptySubgridV1::default().into(),
+            ),
+        );
+
+        for ((order, bin, lumi), subgrid) in old_subgrids.indexed_iter_mut() {
+            if bins.contains(&bin) {
+                let new_subgrid = &mut self.subgrids[[order, bins.start, lumi]];
+
+                if new_subgrid.is_empty() {
+                    mem::swap(new_subgrid, subgrid);
+                } else {
+                    new_subgrid.merge(subgrid, false);
+                }
+            } else {
+                let new_bin = if bin > bins.start {
+                    bin - (bins.end - bins.start) + 1
+                } else {
+                    bin
+                };
+
+                mem::swap(&mut self.subgrids[[order, new_bin, lumi]], subgrid);
+            }
+        }
+
+        Ok(())
     }
 
     /// Merges the non-empty `Subgrid`s contained in `other` into `self`. This performs one of two
