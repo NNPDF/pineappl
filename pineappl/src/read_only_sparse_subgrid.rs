@@ -85,15 +85,42 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
-                // TODO: we need much more checks here if the subgrids are compatible at all
+                // TODO: the general case isn't implemented
+                assert!(self.x1_grid() == other_grid.x1_grid());
+                assert!(self.x2_grid() == other_grid.x2_grid());
 
-                if transpose {
-                    for ((i, k, j), value) in other_grid.array.indexed_iter() {
-                        self.array[[i, j, k]] += value;
+                if self.q2_grid() == other_grid.q2_grid() {
+                    if transpose {
+                        for ((i, k, j), value) in other_grid.array.indexed_iter() {
+                            self.array[[i, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid.array.indexed_iter() {
+                            self.array[[i, j, k]] += value;
+                        }
                     }
                 } else {
-                    for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                        self.array[[i, j, k]] += value;
+                    for (other_index, q2) in other_grid.q2_grid().iter().enumerate() {
+                        let index = match self
+                            .q2_grid
+                            .binary_search_by(|val| val.partial_cmp(q2).unwrap())
+                        {
+                            Ok(index) => index,
+                            Err(index) => {
+                                self.q2_grid.insert(index, *q2);
+                                self.array.increase_x_at(index);
+                                index
+                            }
+                        };
+
+                        for ((_, j, k), value) in other_grid
+                            .array
+                            .indexed_iter()
+                            .filter(|&((i, _, _), _)| i == other_index)
+                        {
+                            let (j, k) = if transpose { (k, j) } else { (j, k) };
+                            self.array[[index, j, k]] += value;
+                        }
                     }
                 }
             }
