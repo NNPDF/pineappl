@@ -14,6 +14,7 @@ mod plot;
 mod remap;
 mod set;
 mod subgrids;
+mod sum;
 
 use anyhow::{ensure, Context, Result};
 use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
@@ -247,6 +248,14 @@ fn main() -> Result<()> {
             (about: "Print information about the internal subgrid types")
             (@arg input: +required "Path to the input grid")
         )
+        (@subcommand sum =>
+            (about: "Sums two or more bins of a grid together")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path to the modified PineAPPL file")
+            (@group mode +required =>
+                (@arg integrated: --integrated "Sums all bins into a single bin")
+            )
+        )
     )
     .get_matches();
 
@@ -413,6 +422,15 @@ fn main() -> Result<()> {
         let input = matches.value_of("input").unwrap();
 
         subgrids::subcommand(input)?;
+    } else if let Some(matches) = matches.subcommand_matches("sum") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        if matches.is_present("integrated") {
+            sum::subcommand_integrated(input, output)?;
+        } else {
+            unreachable!();
+        }
     }
 
     Ok(())
