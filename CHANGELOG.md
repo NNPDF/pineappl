@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added new C API function `pineappl_grid_set_remapper`
+- added new subcommand `sum` to sum over bins of a grid
 
 ### Changed
 
