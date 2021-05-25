@@ -265,8 +265,8 @@ def main():
         dict['xlabel'] = xlabel
         dict['ylabel'] = ylabel
         dict['ylog'] = ylog
-        figure, axes = plt.subplots(len(panels), 1, sharex=True)
-        figure.tight_layout(pad=0.0, w_pad=0.0, h_pad=0.6, rect=(0.06,0.03,1.0,0.975))
+        figure, axes = plt.subplots(len(panels), 1, sharex=True, constrained_layout=True)
+        figure.set_constraid_layout_pads(h_pad=1.0 / 72, w_pad=1 / 72, hspace=0, wspace=0)
 
         axes[0].set_title(description)
         axes[-1].set_xlabel(xlabel)
