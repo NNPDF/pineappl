@@ -84,6 +84,26 @@ import numpy as np
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
 
+def plot_int(axis, **kwargs):
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+
+    xmin = np.array([])
+    xmax = np.array([])
+    x = np.array([])
+    y = np.array([])
+
+    for index, i in enumerate(kwargs['pdf_results']):
+        label, ycentral, ymin, ymax = i
+        x = np.append(x, ycentral[:-1])
+        xmin = np.append(xmin, ymin[:-1])
+        xmax = np.append(xmax, ymax[:-1])
+        y = np.append(y, label)
+
+    axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
+
 def plot_abs(axis, **kwargs):
     x = kwargs['x']
     y = kwargs['y']
@@ -196,7 +216,6 @@ def main():
 
     plt.rc('text', usetex=True)
     plt.rc('text.latex', preamble=r'\\usepackage{{siunitx}}\\usepackage{{lmodern}}')
-    plt.rc('figure', figsize=(6.4,len(panels)*2.4))
     plt.rc('font', family='serif', size=14.0)
     plt.rc('axes', labelsize='small')
     plt.rc('pdf', compression=0)
@@ -208,20 +227,28 @@ def main():
     ylog = xunit != ''
     description = metadata()['description']
 
+    if len(data_slices[0]['x']) == 2:
+        panels = [ plot_int ]
+        xlabel = ylabel
+        plt.rc('figure', figsize=(4.2,2.6))
+    else:
+        plt.rc('figure', figsize=(6.4,len(panels)*2.4))
+
     for index, dict in enumerate(data_slices):
         dict['xlabel'] = xlabel
         dict['ylabel'] = ylabel
         dict['ylog'] = ylog
-        figure, axes = plt.subplots(len(panels), 1, sharex=True, constrained_layout=True)
-        figure.set_constraid_layout_pads(h_pad=1.0 / 72, w_pad=1 / 72, hspace=0, wspace=0)
 
-        axes[0].set_title(description)
-        axes[-1].set_xlabel(xlabel)
+        figure, axes = plt.subplots(len(panels), 1, constrained_layout=True, sharex=True, squeeze=False)
+        figure.set_constrained_layout_pads(h_pad=1.0 / 72, w_pad=1 / 72, hspace=0, wspace=0)
 
-        if xunit != '':
-            axes[0].set_xscale('log')
+        if len(dict['x']) != 2 and xunit != '':
+            axes[0, 0].set_xscale('log')
 
-        for plot, axis in zip(panels, axes):
+        axes[ 0, 0].set_title(description)
+        axes[-1, 0].set_xlabel(xlabel)
+
+        for plot, axis in zip(panels, axes[:, 0]):
             plot(axis, **dict)
 
         name = 'output' if len(data_slices) == 1 else 'output-{{}}'.format(index)
