@@ -72,6 +72,7 @@ fn format_script(
     qcd_min: &[f64],
     qcd_max: &[f64],
     slices: &[(usize, usize)],
+    slice_labels: &[String],
     pdf_uncertainties: &[Vec<Vec<f64>>],
     pdfsets: &[&str],
     metadata: &[(&String, &String)],
@@ -111,15 +112,17 @@ def plot_abs(axis, **kwargs):
     ymax = kwargs['ymax']
     ylog = kwargs['ylog']
     ylabel = kwargs['ylabel']
+    slice_label = kwargs['slice_label']
 
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
     axis.set_yscale('log' if ylog else 'linear')
     axis.set_axisbelow(True)
     axis.grid(linestyle='dotted')
-    axis.step(x, y, 'royalblue', linewidth=1.0, where='post')
+    axis.step(x, y, 'royalblue', linewidth=1.0, where='post', label=slice_label)
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
     axis.set_ylabel(ylabel)
+    axis.legend(fontsize='xx-small', frameon=False)
 
 def plot_rel_ewonoff(axis, **kwargs):
     x = kwargs['x']
@@ -263,6 +266,7 @@ def data():
     qcd_min = np.array([{qcd_min}])
     qcd_max = np.array([{qcd_max}])
     slices = {slices}
+    slice_labels = {slice_labels}
     pdf_results = [
 {pdf_results}    ]
 
@@ -281,7 +285,8 @@ def data():
         'y': np.append(pdf_results[0][1][slice[0]:slice[1]], pdf_results[0][1][slice[1]-1]),
         'ymax': np.append(max[slice[0]:slice[1]], max[slice[1]-1]),
         'ymin': np.append(min[slice[0]:slice[1]], min[slice[1]-1]),
-    }} for slice in slices]
+        'slice_label': slice_labels[index],
+    }} for (index, slice) in enumerate(slices)]
 
 def metadata():
     return {{
@@ -298,6 +303,7 @@ if __name__ == '__main__':
         qcd_min=map_format_e_join(qcd_min),
         qcd_max=map_format_e_join(qcd_max),
         slices=format!("{:?}", slices),
+        slice_labels=format!("[{}]", slice_labels.iter().map(|string| format!("r'{}'", string)).join(", ")),
         pdf_results=format_pdf_results(pdf_uncertainties, pdfsets),
         metadata=format_metadata(metadata),
     );
@@ -419,6 +425,25 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         .collect();
 
     let slices = bin_info.slices();
+    let slice_labels: Vec<_> = slices
+        .iter()
+        .map(|&(begin, end)| {
+            (0..bin_info.dimensions() - 1)
+                .map(|d| {
+                    format!(
+                        "${} < {} < {}$",
+                        bin_info.left(d)[begin],
+                        grid.key_values()
+                            .map(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
+                            .flatten()
+                            .unwrap_or_else(|| format!("x{}", d + 1))
+                            .replace("$", ""),
+                        bin_info.right(d)[end - 1]
+                    )
+                })
+                .join(r#"\\"#)
+        })
+        .collect();
 
     let mut key_values = grid.key_values().cloned().unwrap_or_default();
     key_values.entry("description".to_string()).or_default();
@@ -441,6 +466,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         &qcd_min,
         &qcd_max,
         &slices,
+        &slice_labels,
         &pdf_uncertainties,
         &pdfsets,
         &vector,
