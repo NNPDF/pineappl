@@ -113,11 +113,23 @@ pub fn subcommand(
     let mut indices1 = vec![0; dimensions];
     let mut last_indices = vec![0; dimensions];
 
-    for indices in remaps
+    'looop: for indices in remaps
         .iter()
         .map(|vec| 0..vec.iter().map(|vec| vec.len() - 1).max().unwrap())
         .multi_cartesian_product()
     {
+        for d in 0..dimensions - 1 {
+            if indices[d] > last_indices[d] {
+                for dp in d + 1..dimensions {
+                    if remaps[dp].len() != 1 {
+                        indices1[dp] += 1;
+                    }
+                }
+            }
+        }
+
+        last_indices = indices.clone();
+
         let mut normalization = 1.0;
         for d in 0..dimensions {
             let index = indices1[d];
@@ -126,7 +138,7 @@ pub fn subcommand(
                 buffer.clear();
 
                 // this index doesn't exist
-                break;
+                continue 'looop;
             }
 
             let left = remaps[d][index][indices[d]];
@@ -139,22 +151,8 @@ pub fn subcommand(
             }
         }
 
-        if !buffer.is_empty() {
-            limits.append(&mut buffer);
-            normalizations.push(norm * normalization);
-
-            for d in 0..dimensions - 1 {
-                if indices[d] > last_indices[d] {
-                    for dp in d + 1..dimensions {
-                        if remaps[dp].len() != 1 {
-                            indices1[dp] += 1;
-                        }
-                    }
-                }
-            }
-
-            last_indices = indices;
-        }
+        limits.append(&mut buffer);
+        normalizations.push(norm * normalization);
     }
 
     normalizations.shrink_to_fit();
