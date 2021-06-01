@@ -122,7 +122,9 @@ def plot_abs(axis, **kwargs):
     axis.step(x, y, 'royalblue', linewidth=1.0, where='post', label=slice_label)
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
     axis.set_ylabel(ylabel)
-    axis.legend(fontsize='xx-small', frameon=False)
+
+    if slice_label != '':
+        axis.legend(fontsize='xx-small', frameon=False)
 
 def plot_rel_ewonoff(axis, **kwargs):
     x = kwargs['x']
