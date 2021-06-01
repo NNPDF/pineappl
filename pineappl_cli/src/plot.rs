@@ -245,7 +245,7 @@ def main():
         dict['ylog'] = ylog
 
         figure, axes = plt.subplots(len(panels), 1, constrained_layout=True, sharex=True, squeeze=False)
-        figure.set_constrained_layout_pads(h_pad=1.0 / 72, w_pad=1 / 72, hspace=0, wspace=0)
+        figure.set_constrained_layout_pads(hspace=0, wspace=0)
 
         if len(dict['x']) != 2 and xunit != '':
             axes[0, 0].set_xscale('log')
