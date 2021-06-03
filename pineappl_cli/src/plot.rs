@@ -4,6 +4,7 @@ use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::bin::BinInfo;
 use rayon::prelude::*;
+use std::path::Path;
 
 fn map_format_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{}", x)).join(", ")
@@ -64,6 +65,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
 
 fn format_script(
     bin_info: &BinInfo,
+    output: &str,
     left: &[f64],
     right: &[f64],
     min: &[f64],
@@ -263,7 +265,7 @@ def main():
         for plot, axis in zip(panels, axes[:, 0]):
             plot(axis, **dict)
 
-        name = 'output' if len(data_slices) == 1 else 'output-{{}}'.format(index)
+        name = '{output}' if len(data_slices) == 1 else '{output}-{{}}'.format(index)
         figure.savefig(name + '.pdf')
 
 def data():
@@ -304,6 +306,7 @@ def metadata():
 if __name__ == '__main__':
     main()",
         xaxis=format!("x{}", bin_info.dimensions()),
+        output=output,
         left=map_format_join(left),
         right=map_format_join(right),
         min=map_format_e_join(min),
@@ -465,8 +468,21 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     vector.sort();
     let vector = vector;
 
+    let mut output = Path::new(input);
+
+    // remove ".lz4" and ".pineappl" extension
+    match output.extension() {
+        Some(x) if x == "lz4" => output = Path::new(output.file_stem().unwrap()),
+        _ => {}
+    }
+    match output.extension() {
+        Some(x) if x == "pineappl" => output = Path::new(output.file_stem().unwrap()),
+        _ => {}
+    }
+
     format_script(
         &bin_info,
+        output.to_str().unwrap(),
         left_limits.last().unwrap(),
         right_limits.last().unwrap(),
         &min,
