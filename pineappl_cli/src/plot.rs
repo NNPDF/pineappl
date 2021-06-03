@@ -110,6 +110,7 @@ def plot_int(axis, **kwargs):
             axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color='royalblue', linewidth=0)
 
     axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
+    axis.margins(x=0.1, y=0.1)
 
 def plot_abs(axis, **kwargs):
     x = kwargs['x']
