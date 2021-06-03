@@ -103,6 +103,12 @@ def plot_int(axis, **kwargs):
         xmax = np.append(xmax, ymax[:-1])
         y = np.append(y, label)
 
+        # draw one- and two-sigma bands
+        if label == 'CENTRAL-PDF':
+            axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color='royalblue', linewidth=0)
+            # TODO: this is only correct for MC PDF uncertainties
+            axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color='royalblue', linewidth=0)
+
     axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
 
 def plot_abs(axis, **kwargs):
