@@ -83,6 +83,7 @@ fn format_script(
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
@@ -180,9 +181,32 @@ def plot_rel_pdfunc(axis, **kwargs):
         axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
 
     axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
+
+    if False:#SAVE-YLIM-PDFUNC
+        with open('ylim-pdfunc', 'wb') as f:
+            pickle.dump(axis.get_ylim(), f)
+
+    if False:#LOAD-YLIM-PDFUNC
+        this_ylim = axis.get_ylim()
+        resave = False
+
+        with open('ylim-pdfunc', 'rb') as f:
+            ylim = pickle.load(f)
+
+            if this_ylim[0] < ylim[0]:
+                ylim = (this_ylim[0], ylim[1])
+
+            if this_ylim[1] > ylim[1]:
+                ylim = (ylim[0], this_ylim[1])
+
+            axis.set_ylim(ylim)
+
+        with open('ylim-pdfunc', 'wb') as f:
+            pickle.dump(axis.get_ylim(), f)
+
     minmax = axis.get_ylim()
     axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
-    axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
 
 def plot_rel_pdfpull(axis, **kwargs):
     central_y = kwargs['pdf_results'][0][1]
@@ -209,10 +233,33 @@ def plot_rel_pdfpull(axis, **kwargs):
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
 
     axis.legend(fontsize='xx-small', frameon=False, ncol=2)
-    minmax = axis.get_ylim()
-    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
+
+    if False:#SAVE-YLIM-PDFPULL
+        with open('ylim-pdfpull', 'wb') as f:
+            pickle.dump(axis.get_ylim(), f)
+
+    if False:#LOAD-YLIM-PDFPULL
+        this_ylim = axis.get_ylim()
+        resave = False
+
+        with open('ylim-pdfpull', 'rb') as f:
+            ylim = pickle.load(f)
+
+            if this_ylim[0] < ylim[0]:
+                ylim = (this_ylim[0], ylim[1])
+
+            if this_ylim[1] > ylim[1]:
+                ylim = (ylim[0], this_ylim[1])
+
+            axis.set_ylim(ylim)
+
+        with open('ylim-pdfpull', 'wb') as f:
+            pickle.dump(axis.get_ylim(), f)
+
+    minmax = axis.get_ylim()
+    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
 
 def main():
     panels = [
