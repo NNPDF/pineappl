@@ -48,8 +48,8 @@ pineappl_grid* convert_coeff_add_fix(
 
         for (auto const& entry : pdf_entries)
         {
-            combinations.push_back(entry.first);
-            combinations.push_back(entry.second);
+            combinations.push_back(convert_to_pdg_id(entry.first));
+            combinations.push_back(convert_to_pdg_id(entry.second));
             factors.push_back(1.0);
         }
 
