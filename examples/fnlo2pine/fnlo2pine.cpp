@@ -18,8 +18,21 @@ extern "C" double alphas(double q2, void* state)
     return static_cast <LHAPDF::PDF*> (state)->alphasQ2(q2);
 }
 
+int32_t convert_to_pdg_id(int id)
+{
+    if ((id >= -6) && (id <= 6))
+    {
+        return (id == 0) ? 21 : id;
+    }
+    else
+    {
+        assert( false );
+    }
+}
+
 pineappl_grid* convert_coeff_add_fix(
     fastNLOCoeffAddFix* table,
+    fastNLOPDFLinearCombinations const& comb,
     std::size_t bins,
     uint32_t alpha
 ) {
@@ -41,6 +54,55 @@ pineappl_grid* convert_coeff_add_fix(
         }
 
         pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
+    }
+
+    // if there is no luminosity definition, we have to become creative
+    if (pdf.empty())
+    {
+        std::vector<double> xfx1(13);
+        std::vector<double> xfx2(13);
+
+        std::vector<std::vector<int32_t>> combinations(table->GetNSubproc());
+        std::vector<std::vector<double>> factors(table->GetNSubproc());
+
+        for (int a = 0; a != 13; ++a)
+        {
+            xfx1.at(a) = 1.0;
+
+            for (int b = 0; b != 13; ++b)
+            {
+                xfx2.at(b) = 1.0;
+
+                auto const& lumi = comb.CalcPDFLinearCombination(table, xfx1, xfx2, false);
+
+                assert( lumi.size() == table->GetNSubproc() );
+
+                for (std::size_t i = 0; i != lumi.size(); ++i)
+                {
+                    if (lumi.at(i) == 0.0)
+                    {
+                        continue;
+                    }
+
+                    auto const ap = convert_to_pdg_id(a - 6);
+                    auto const bp = convert_to_pdg_id(b - 6);
+
+                    combinations.at(i).push_back(ap);
+                    combinations.at(i).push_back(bp);
+                    factors.at(i).push_back(lumi.at(i));
+                }
+
+                xfx2.at(b) = 0.0;
+            }
+
+            xfx1.at(a) = 0.0;
+        }
+
+        for (std::size_t i = 0; i != combinations.size(); ++i)
+        {
+            pineappl_lumi_add(lumi, factors.at(i).size(), combinations.at(i).data(),
+                factors.at(i).data());
+        }
     }
 
     std::vector<double> bin_limits(bins + 1);
@@ -216,7 +278,7 @@ int main(int argc, char* argv[])
 
         if (converted != nullptr)
         {
-            grids.push_back(convert_coeff_add_fix(converted, bins, alpha));
+            grids.push_back(convert_coeff_add_fix(converted, file, bins, alpha));
         }
         else
         {
