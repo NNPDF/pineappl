@@ -138,7 +138,9 @@ pineappl_grid* convert_coeff_add_fix(
         std::size_t n_xmax = table->GetNxmax(obs);
 
         auto const& x1_values = table->GetXNodes1(obs);
-        auto const& x2_values = table->GetXNodes2(obs);
+
+        // TODO: is this the correct assumption?
+        auto const x2_values = (table->GetNxtot2(0) == -1) ? x1_values : table->GetXNodes2(obs);
 
         for (std::size_t subproc = 0; subproc != n_subproc; ++subproc)
         {
@@ -180,22 +182,45 @@ pineappl_grid* convert_coeff_add_fix(
                     std::vector<double> slice(x1_values.size() * x2_values.size());
                     bool non_zero = false;
 
-                    for (std::size_t ix2 = 0; ix2 != table->GetNxtot2(obs); ++ix2)
+                    std::size_t ix1 = 0;
+                    std::size_t ix2 = 0;
+
+                    for (std::size_t ix = 0; ix != static_cast <std::size_t> (table->GetNxmax(obs)); ++ix)
                     {
-                        for (std::size_t ix1 = 0; ix1 != table->GetNxtot1(obs); ++ix1)
+                        assert( table->GetXIndex(obs, ix1, ix2) == ix );
+
+                        auto const value = table->GetSigmaTilde(obs, j, k, ix, subproc);
+
+                        if (value != 0.0)
                         {
-                            auto const ix = table->GetXIndex(obs, ix1, ix2);
-                            auto const value = table->GetSigmaTilde(obs, j, k, ix, subproc);
+                            non_zero = true;
+                            slice.at(x2_values.size() * ix2 + ix1) = value / factor
+                                * x1_values.at(ix1) * x2_values.at(ix2);
+                        }
 
-                            assert( x1_values.at(ix1) == table->GetX1(obs, ix) );
-                            assert( x2_values.at(ix2) == table->GetX2(obs, ix) );
+                        ++ix1;
 
-                            if (value != 0.0)
+                        switch (table->GetNPDFDim())
+                        {
+                        case 2:
+                            if (ix1 == x1_values.size())
                             {
-                                non_zero = true;
-                                slice.at(x2_values.size() * ix1 + ix2) = value / factor
-                                    * x1_values.at(ix1) * x2_values.at(ix2);
+                                ix1 = 0;
+                                ++ix2;
                             }
+                            break;
+
+                        case 1:
+                            if (ix1 > ix2)
+                            {
+                                ix1 = 0;
+                                ++ix2;
+                            }
+                            break;
+
+                        default:
+                            // TODO: NYI
+                            assert( false );
                         }
                     }
 
