@@ -5,6 +5,7 @@ use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::ops::Range;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
@@ -72,7 +73,7 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.iter_mut().for_each(|t| t.weight *= factor);
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
+    fn q2_slice(&self) -> Range<usize> {
         unimplemented!();
     }
 

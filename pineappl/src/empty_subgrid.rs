@@ -5,6 +5,7 @@ use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::ops::Range;
 
 /// A subgrid type that is always empty.
 #[derive(Default, Deserialize, Serialize)]
@@ -47,7 +48,7 @@ impl Subgrid for EmptySubgridV1 {
 
     fn scale(&mut self, _: f64) {}
 
-    fn q2_slice(&self) -> (usize, usize) {
+    fn q2_slice(&self) -> Range<usize> {
         unreachable!();
     }
 

@@ -9,6 +9,7 @@ use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::ops::Range;
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -69,10 +70,8 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
-    // TODO: the following should be a Range
-
     /// Returns the half-open interval of indices of filled q2 slices.
-    fn q2_slice(&self) -> (usize, usize);
+    fn q2_slice(&self) -> Range<usize>;
 
     // TODO: rename the function to export_q2_slice
 

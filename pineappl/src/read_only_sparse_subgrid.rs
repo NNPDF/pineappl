@@ -9,6 +9,7 @@ use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
+use std::ops::Range;
 
 /// TODO
 #[derive(Deserialize, Serialize)]
@@ -137,10 +138,8 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        let range = self.array.x_range();
-
-        (range.start, range.end)
+    fn q2_slice(&self) -> Range<usize> {
+        self.array.x_range()
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {

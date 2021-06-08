@@ -10,6 +10,7 @@ use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
+use std::ops::Range;
 
 pub(crate) fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
@@ -291,8 +292,8 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        (self.itaumin, self.itaumax)
+    fn q2_slice(&self) -> Range<usize> {
+        self.itaumin..self.itaumax
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -641,8 +642,8 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        (self.itaumin, self.itaumax)
+    fn q2_slice(&self) -> Range<usize> {
+        self.itaumin..self.itaumax
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -887,10 +888,8 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        let range = self.array.x_range();
-
-        (range.start, range.end)
+    fn q2_slice(&self) -> Range<usize> {
+        self.array.x_range()
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -1017,7 +1016,7 @@ mod tests {
         let mut test = 0.0;
 
         // check `reference` against manually calculated result from q2 slices
-        for i in grid.q2_slice().0..grid.q2_slice().1 {
+        for i in grid.q2_slice() {
             grid.fill_q2_slice(i, &mut buffer);
 
             test += buffer.iter().sum::<f64>();

@@ -728,8 +728,8 @@ pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
 ) {
     let tuple = slice::from_raw_parts_mut(tuple, 2);
     let slice = (*grid).subgrid(order, bin, lumi).q2_slice();
-    tuple[0] = slice.0;
-    tuple[1] = slice.1;
+    tuple[0] = slice.start;
+    tuple[1] = slice.end;
 }
 
 /// Deletes a subgrid created with `pineappl_subgrid_new`. If `subgrid` is the null pointer,
