@@ -7,8 +7,8 @@ use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::lumi::LumiEntry;
-use pineappl::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridParams};
 use std::collections::HashMap;
@@ -114,7 +114,7 @@ unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraS
 pub struct Lumi(Vec<LumiEntry>);
 
 /// Type for reading and accessing subgrids.
-pub struct SubGrid(ReadOnlySparseSubgridV1);
+pub struct SubGrid(ImportOnlySubgridV1);
 
 /// Returns the number of bins in `grid`.
 ///
@@ -784,7 +784,7 @@ pub unsafe extern "C" fn pineappl_subgrid_new(
     let x1 = slice::from_raw_parts(x1_grid, x1_grid_len);
     let x2 = slice::from_raw_parts(x2_grid, x2_grid_len);
 
-    Box::new(SubGrid(ReadOnlySparseSubgridV1::new(
+    Box::new(SubGrid(ImportOnlySubgridV1::new(
         SparseArray3::new(q2.len(), x1.len(), x2.len()),
         q2.to_vec(),
         x1.to_vec(),

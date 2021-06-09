@@ -2,9 +2,9 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
+use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
@@ -24,8 +24,8 @@ pub enum SubgridEnum {
     LagrangeSparseSubgridV1,
     /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
     LagrangeSubgridV2,
-    /// Read-only sparse subgrid with possibly different x1 and x2 bins.
-    ReadOnlySparseSubgridV1,
+    /// Import-only sparse subgrid with possibly different x1 and x2 bins.
+    ImportOnlySubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
 }

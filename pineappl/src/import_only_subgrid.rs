@@ -13,14 +13,14 @@ use std::ops::Range;
 
 /// TODO
 #[derive(Deserialize, Serialize)]
-pub struct ReadOnlySparseSubgridV1 {
+pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
     q2_grid: Vec<f64>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
 }
 
-impl ReadOnlySparseSubgridV1 {
+impl ImportOnlySubgridV1 {
     /// Constructor.
     #[must_use]
     pub fn new(
@@ -38,14 +38,14 @@ impl ReadOnlySparseSubgridV1 {
     }
 }
 
-impl ReadOnlySparseSubgridV1 {
+impl ImportOnlySubgridV1 {
     /// Return the array containing the numerical values of the grid.
     pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
         &mut self.array
     }
 }
 
-impl Subgrid for ReadOnlySparseSubgridV1 {
+impl Subgrid for ImportOnlySubgridV1 {
     fn convolute(
         &self,
         _: &[f64],
@@ -82,7 +82,7 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        if let SubgridEnum::ReadOnlySparseSubgridV1(other_grid) = other {
+        if let SubgridEnum::ImportOnlySubgridV1(other_grid) = other {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
@@ -185,7 +185,7 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
     }
 }
 
-impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
+impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
     fn from(subgrid: &LagrangeSubgridV2) -> Self {
         let array = subgrid.grid.as_ref().map_or_else(
             || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),

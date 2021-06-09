@@ -18,7 +18,7 @@ pub fn subcommand(input: &str) -> Result<()> {
                         SubgridEnum::NtupleSubgridV1(_) => "NtupleSubgridV1",
                         SubgridEnum::LagrangeSparseSubgridV1(_) => "LagrangeSparseSubgridV1",
                         SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
-                        SubgridEnum::ReadOnlySparseSubgridV1(_) => "ReadOnlySparseSubgridV1",
+                        SubgridEnum::ImportOnlySubgridV1(_) => "ImportOnlySubgridV1",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
                     }
                 );
