@@ -81,12 +81,34 @@ fn format_script(
 ) {
     println!("#!/usr/bin/env python3
 
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
+
+def ylimits(axis):
+    # extract the y limits *not* considering margins
+    margins = axis.margins()
+    axis.margins(y=0.0)
+    min, max = axis.get_ylim()
+    axis.margins(y=margins[1])
+
+    inc = 1.0
+
+    if (max - min) > 10.5:
+        inc = 2.0
+    elif (max - min) < 3.0:
+        inc = 0.5
+
+    print(min, max)
+
+    min = math.floor(min / inc) * inc
+    max = math.ceil(max / inc) * inc
+
+    return [min, max, inc]
 
 def plot_int(axis, **kwargs):
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
@@ -183,30 +205,37 @@ def plot_rel_pdfunc(axis, **kwargs):
     axis.legend(fontsize='xx-small', frameon=False, ncol=2)
     axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
 
+    this_ylim = ylimits(axis)
+
     if False:#SAVE-YLIM-PDFUNC
         with open('ylim-pdfunc', 'wb') as f:
-            pickle.dump(axis.get_ylim(), f)
+            pickle.dump(this_ylim, f)
 
     if False:#LOAD-YLIM-PDFUNC
-        this_ylim = axis.get_ylim()
         resave = False
 
         with open('ylim-pdfunc', 'rb') as f:
             ylim = pickle.load(f)
 
-            if this_ylim[0] < ylim[0]:
-                ylim = (this_ylim[0], ylim[1])
+        if ylim[0] < this_ylim[0]:
+            this_ylim[0] = ylim[0]
+            resave = True
 
-            if this_ylim[1] > ylim[1]:
-                ylim = (ylim[0], this_ylim[1])
+        if ylim[1] > this_ylim[1]:
+            this_ylim[1] = ylim[1]
+            resave = True
 
-            axis.set_ylim(ylim)
+        if ylim[2] > this_ylim[2]:
+            this_ylim[2] = ylim[2]
+            resave = True
 
-        with open('ylim-pdfunc', 'wb') as f:
-            pickle.dump(axis.get_ylim(), f)
+        if resave:
+            with open('ylim-pdfunc', 'wb') as f:
+                pickle.dump(this_ylim, f)
 
-    minmax = axis.get_ylim()
-    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
+    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
+    space = 0.05 * (this_ylim[1] - this_ylim[0])
+    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
 
 def plot_rel_pdfpull(axis, **kwargs):
     central_y = kwargs['pdf_results'][0][1]
@@ -236,30 +265,37 @@ def plot_rel_pdfpull(axis, **kwargs):
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
+    this_ylim = ylimits(axis)
+
     if False:#SAVE-YLIM-PDFPULL
         with open('ylim-pdfpull', 'wb') as f:
-            pickle.dump(axis.get_ylim(), f)
+            pickle.dump(this_ylim, f)
 
     if False:#LOAD-YLIM-PDFPULL
-        this_ylim = axis.get_ylim()
         resave = False
 
         with open('ylim-pdfpull', 'rb') as f:
             ylim = pickle.load(f)
 
-            if this_ylim[0] < ylim[0]:
-                ylim = (this_ylim[0], ylim[1])
+        if ylim[0] < this_ylim[0]:
+            this_ylim[0] = ylim[0]
+            resave = True
 
-            if this_ylim[1] > ylim[1]:
-                ylim = (ylim[0], this_ylim[1])
+        if ylim[1] > this_ylim[1]:
+            this_ylim[1] = ylim[1]
+            resave = True
 
-            axis.set_ylim(ylim)
+        if ylim[2] > this_ylim[2]:
+            this_ylim[2] = ylim[2]
+            resave = True
 
-        with open('ylim-pdfpull', 'wb') as f:
-            pickle.dump(axis.get_ylim(), f)
+        if resave:
+            with open('ylim-pdfpull', 'wb') as f:
+                pickle.dump(this_ylim, f)
 
-    minmax = axis.get_ylim()
-    axis.set_yticks(np.arange(np.rint(minmax[0]), np.rint(minmax[1]) + 1.0, 1.0))
+    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
+    space = 0.05 * (this_ylim[1] - this_ylim[0])
+    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
 
 def main():
     panels = [
