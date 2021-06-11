@@ -11,6 +11,7 @@ mod optimize;
 mod orders;
 mod pdf_uncertainty;
 mod plot;
+mod pull;
 mod remap;
 mod set;
 mod subgrids;
@@ -219,6 +220,18 @@ fn main() -> Result<()> {
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
         )
+        (@subcommand pull =>
+            (about: "Calculates the pull between two different PDF sets")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset1: +required validator(validate_pdfset)
+                "LHAPDF id or name of the first PDF set")
+            (@arg pdfset2: +required validator(validate_pdfset)
+                "LHAPDF id or name of the second PDF set")
+            (@arg cl: --cl default_value("68.268949213708581") "Confidence level in per cent")
+            (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero::<usize>)
+                "The maximum number of luminosities displayed")
+            (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
+        )
         (@subcommand remap =>
             (about: "Modifies the bin dimensions, widths and normalizations")
             (@arg input: +required "Path to the input grid")
@@ -387,6 +400,15 @@ fn main() -> Result<()> {
         let scales = matches.value_of("scales").unwrap().parse()?;
 
         plot::subcommand(input, &pdfset, scales)?;
+    } else if let Some(matches) = matches.subcommand_matches("pull") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset1 = matches.value_of("pdfset1").unwrap();
+        let pdfset2 = matches.value_of("pdfset2").unwrap();
+        let cl = matches.value_of("cl").unwrap().parse()?;
+        let limit = matches.value_of("limit").unwrap().parse()?;
+        let threads = matches.value_of("threads").unwrap().parse()?;
+
+        pull::subcommand(input, pdfset1, pdfset2, cl, limit, threads)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("remap") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
