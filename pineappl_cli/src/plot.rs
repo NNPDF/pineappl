@@ -103,8 +103,6 @@ def ylimits(axis):
     elif (max - min) < 3.0:
         inc = 0.5
 
-    print(min, max)
-
     min = math.floor(min / inc) * inc
     max = math.ceil(max / inc) * inc
 
