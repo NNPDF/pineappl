@@ -443,7 +443,7 @@ fn main() -> Result<()> {
     } else if let Some(matches) = matches.subcommand_matches("subgrids") {
         let input = matches.value_of("input").unwrap();
 
-        subgrids::subcommand(input)?;
+        subgrids::subcommand(input)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("sum") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
