@@ -85,14 +85,22 @@ pub fn subcommand(
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(&grid, &pdfset1[0], &[], &[bin], &lumi_mask, 1)[0]
+                let central: Vec<f64> = pdfset1
+                    .par_iter()
+                    .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &lumi_mask, 1))
+                    .collect();
+                set1.uncertainty(&central, cl, false).central
             })
             .collect();
         let lumi_results2: Vec<_> = (0..grid.lumi().len())
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(&grid, &pdfset2[0], &[], &[bin], &lumi_mask, 1)[0]
+                let central: Vec<f64> = pdfset2
+                    .par_iter()
+                    .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &lumi_mask, 1))
+                    .collect();
+                set1.uncertainty(&central, cl, false).central
             })
             .collect();
 
