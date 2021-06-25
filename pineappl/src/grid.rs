@@ -349,7 +349,7 @@ impl Grid {
             if let Some(grid) = self.subgrids.iter().find(|subgrid| !subgrid.is_empty()) {
                 (grid.q2_grid(), grid.x1_grid(), grid.x2_grid())
             } else {
-                return bins;
+                (Cow::default(), Cow::default(), Cow::default())
             }
         };
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
