@@ -84,6 +84,9 @@ pub trait Subgrid {
 
     /// Returns an empty copy of the current subgrid.
     fn clone_empty(&self) -> SubgridEnum;
+
+    /// Return an iterator over all non-zero elements of the subgrid.
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_>;
 }
 
 /// Subgrid creation parameters for subgrids that perform interpolation.

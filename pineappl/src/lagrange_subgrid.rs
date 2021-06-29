@@ -9,6 +9,7 @@ use either::Either;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::iter;
 use std::mem;
 use std::ops::Range;
 
@@ -350,6 +351,18 @@ impl Subgrid for LagrangeSubgridV1 {
             taumax: self.taumax,
         }
         .into()
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+        self.grid.as_ref().map_or_else(
+            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
+            |grid| {
+                Box::new(
+                    grid.indexed_iter()
+                        .filter(|&((_, _, _), value)| *value != 0.0),
+                )
+            },
+        )
     }
 }
 
@@ -707,6 +720,18 @@ impl Subgrid for LagrangeSubgridV2 {
         }
         .into()
     }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+        self.grid.as_ref().map_or_else(
+            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
+            |grid| {
+                Box::new(
+                    grid.indexed_iter()
+                        .filter(|&((_, _, _), value)| *value != 0.0),
+                )
+            },
+        )
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -944,6 +969,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             taumax: self.taumax,
         }
         .into()
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+        Box::new(self.array.indexed_iter())
     }
 }
 

@@ -86,6 +86,10 @@ impl Subgrid for NtupleSubgridV1 {
     fn clone_empty(&self) -> SubgridEnum {
         Self::new().into()
     }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>> {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]

@@ -183,6 +183,10 @@ impl Subgrid for ImportOnlySubgridV1 {
         }
         .into()
     }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+        Box::new(self.array.indexed_iter())
+    }
 }
 
 impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
