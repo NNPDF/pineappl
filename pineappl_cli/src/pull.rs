@@ -32,11 +32,11 @@ pub fn subcommand(
 
     let results1: Vec<f64> = pdfset1
         .par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
+        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
         .collect();
     let results2: Vec<f64> = pdfset2
         .par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
+        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
         .collect();
 
     let bin_info = grid.bin_info();
@@ -70,13 +70,13 @@ pub fn subcommand(
             .iter()
             .skip(bin)
             .step_by(bin_info.bins())
-            .cloned()
+            .copied()
             .collect();
         let values2: Vec<_> = results2
             .iter()
             .skip(bin)
             .step_by(bin_info.bins())
-            .cloned()
+            .copied()
             .collect();
         let uncertainty1 = set1.uncertainty(&values1, cl, false);
         let uncertainty2 = set2.uncertainty(&values2, cl, false);
@@ -87,7 +87,7 @@ pub fn subcommand(
                 lumi_mask[lumi] = true;
                 let central: Vec<f64> = pdfset1
                     .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &lumi_mask, 1))
+                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &lumi_mask, 1))
                     .collect();
                 set1.uncertainty(&central, cl, false).central
             })
@@ -98,7 +98,7 @@ pub fn subcommand(
                 lumi_mask[lumi] = true;
                 let central: Vec<f64> = pdfset2
                     .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &lumi_mask, 1))
+                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &lumi_mask, 1))
                     .collect();
                 set1.uncertainty(&central, cl, false).central
             })
@@ -119,7 +119,7 @@ pub fn subcommand(
                 } else {
                     uncertainty2.errplus
                 };
-                (res2 - res1) / (unc1.powi(2) + unc2.powi(2)).sqrt()
+                (res2 - res1) / unc1.hypot(unc2)
             })
             .enumerate()
             .collect();

@@ -157,10 +157,8 @@ impl<'a> BinInfo<'a> {
     #[must_use]
     pub fn slices(&self) -> Vec<(usize, usize)> {
         // TODO: convert this to Vec<Range<usize>>
-        self.remapper.map_or_else(
-            || vec![(0, self.limits.bins())],
-            |remapper| remapper.slices(),
-        )
+        self.remapper
+            .map_or_else(|| vec![(0, self.limits.bins())], BinRemapper::slices)
     }
 }
 
@@ -244,6 +242,7 @@ impl BinRemapper {
 
     /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
     /// efficiently sliced into one-dimensional histograms.
+    #[must_use]
     pub fn slices(&self) -> Vec<(usize, usize)> {
         if self.dimensions() == 1 {
             vec![(0, self.bins())]
@@ -379,7 +378,7 @@ impl BinLimits {
     pub fn merge_bins(&mut self, bins: Range<usize>) {
         let mut new_limits = self.limits();
         new_limits.drain(bins.start + 1..bins.end);
-        *self = BinLimits::new(new_limits);
+        *self = Self::new(new_limits);
     }
 
     /// Returns the size for each bin.
