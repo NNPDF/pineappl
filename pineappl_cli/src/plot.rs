@@ -454,7 +454,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
                     .iter()
                     .skip(bin)
                     .step_by(bin_info.bins())
-                    .cloned()
+                    .copied()
                     .collect();
 
                 let uncertainty = set.uncertainty(&values, 68.268949213708581, false);
@@ -527,8 +527,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
                         "${} < {} < {}$",
                         bin_info.left(d)[begin],
                         grid.key_values()
-                            .map(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
-                            .flatten()
+                            .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
                             .unwrap_or_else(|| format!("x{}", d + 1))
                             .replace("$", ""),
                         bin_info.right(d)[end - 1]

@@ -345,13 +345,14 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        let (mut q2_grid, mut x1_grid, mut x2_grid) = {
-            if let Some(grid) = self.subgrids.iter().find(|subgrid| !subgrid.is_empty()) {
-                (grid.q2_grid(), grid.x1_grid(), grid.x2_grid())
-            } else {
-                (Cow::default(), Cow::default(), Cow::default())
-            }
-        };
+        let (mut q2_grid, mut x1_grid, mut x2_grid) = self
+            .subgrids
+            .iter()
+            .find(|subgrid| !subgrid.is_empty())
+            .map_or_else(
+                || (Cow::default(), Cow::default(), Cow::default()),
+                |grid| (grid.q2_grid(), grid.x1_grid(), grid.x2_grid()),
+            );
         let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
         let two_caches = !ptr::eq(&xfx1, &xfx2);
 
