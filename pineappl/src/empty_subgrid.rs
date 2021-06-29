@@ -5,6 +5,7 @@ use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::iter;
 use std::ops::Range;
 
 /// A subgrid type that is always empty.
@@ -60,6 +61,10 @@ impl Subgrid for EmptySubgridV1 {
 
     fn clone_empty(&self) -> SubgridEnum {
         Self::default().into()
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+        Box::new(iter::empty())
     }
 }
 
