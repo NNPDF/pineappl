@@ -69,6 +69,12 @@ impl PyGrid {
         self.grid.bin_info().bins()
     }
 
+    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
+        PySubgridEnum {
+            subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
+        }
+    }
+
     pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
         self.grid
             .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
