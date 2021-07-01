@@ -87,7 +87,7 @@ pub fn subcommand(
                 lumi_mask[lumi] = true;
                 let central: Vec<f64> = pdfset1
                     .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &lumi_mask, 1))
+                    .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
                     .collect();
                 set1.uncertainty(&central, cl, false).central
             })
@@ -98,7 +98,7 @@ pub fn subcommand(
                 lumi_mask[lumi] = true;
                 let central: Vec<f64> = pdfset2
                     .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &lumi_mask, 1))
+                    .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
                     .collect();
                 set1.uncertainty(&central, cl, false).central
             })
