@@ -12,7 +12,7 @@ use std::mem;
 use std::ops::Range;
 
 /// TODO
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
     q2_grid: Vec<f64>,

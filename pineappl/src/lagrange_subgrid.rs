@@ -59,7 +59,7 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 }
 
 /// Subgrid which uses Lagrange-interpolation.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV1 {
     pub(crate) grid: Option<Array3<f64>>,
     ntau: usize,
@@ -711,7 +711,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
 /// structure.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSparseSubgridV1 {
     array: SparseArray3<f64>,
     ntau: usize,

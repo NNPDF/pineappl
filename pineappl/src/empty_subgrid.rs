@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::ops::Range;
 
 /// A subgrid type that is always empty.
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct EmptySubgridV1 {}
 
 impl Subgrid for EmptySubgridV1 {

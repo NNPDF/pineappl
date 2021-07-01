@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::ops::Range;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct NtupleSubgridV1 {
     ntuples: Vec<Ntuple<f64>>,
 }
