@@ -1,4 +1,4 @@
-use pineappl::subgrid::{ExtraSubgridParams, SubgridEnum, SubgridParams};
+use pineappl::subgrid::{SubgridEnum, SubgridParams};
 
 use pyo3::prelude::*;
 
@@ -76,50 +76,6 @@ impl PySubgridParams {
 
     pub fn x_bins(&self) -> usize {
         self.subgrid_params.x_bins()
-    }
-}
-
-#[pyclass]
-#[repr(transparent)]
-pub struct PyExtraSubgridParams {
-    pub extra_subgrid_params: ExtraSubgridParams,
-}
-
-impl PyExtraSubgridParams {
-    pub(crate) fn new(extra_subgrid_params: ExtraSubgridParams) -> Self {
-        Self {
-            extra_subgrid_params,
-        }
-    }
-}
-
-#[pymethods]
-impl PyExtraSubgridParams {
-    #[new]
-    pub fn default() -> Self {
-        let extra_subgrid_params = ExtraSubgridParams::default();
-
-        Self::new(extra_subgrid_params)
-    }
-
-    pub fn set_reweight2(&mut self, reweight2: bool) {
-        self.extra_subgrid_params.set_reweight2(reweight2);
-    }
-
-    pub fn set_x2_bins(&mut self, x_bins: usize) {
-        self.extra_subgrid_params.set_x2_bins(x_bins);
-    }
-
-    pub fn set_x2_max(&mut self, x_max: f64) {
-        self.extra_subgrid_params.set_x2_max(x_max);
-    }
-
-    pub fn set_x2_min(&mut self, x_min: f64) {
-        self.extra_subgrid_params.set_x2_min(x_min);
-    }
-
-    pub fn set_x2_order(&mut self, x_order: usize) {
-        self.extra_subgrid_params.set_x2_order(x_order);
     }
 }
 

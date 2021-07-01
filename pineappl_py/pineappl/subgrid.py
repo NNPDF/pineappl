@@ -1,5 +1,5 @@
 try:
-    from .pineappl import PyExtraSubgridParams, PySubgridParams
+    from .pineappl import PySubgridParams
 except:
     import warnings
 
@@ -16,8 +16,3 @@ class SubgridEnum(PyWrapper):
 class SubgridParams(PyWrapper):
     def __init__(self):
         self._raw = PySubgridParams()
-
-
-class ExtraSubgridParams(PyWrapper):
-    def __init__(self):
-        self._raw = PyExtraSubgridParams()
