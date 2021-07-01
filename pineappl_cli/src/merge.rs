@@ -1,7 +1,5 @@
-use pineappl::grid::Grid;
-use std::error::Error;
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter};
+use super::helpers;
+use anyhow::Result;
 
 pub fn subcommand(
     output: &str,
@@ -9,21 +7,11 @@ pub fn subcommand(
     input_rest: &[&str],
     scale: Option<f64>,
     scale_by_order: &[f64],
-) -> Result<(), Box<dyn Error>> {
-    let output = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(output)?;
-    let input0 = File::open(input0)?;
-    let input_rest = input_rest
-        .iter()
-        .map(File::open)
-        .collect::<Result<Vec<_>, std::io::Error>>()?;
-
-    let mut grid0 = Grid::read(BufReader::new(input0))?;
+) -> Result<()> {
+    let mut grid0 = helpers::read_grid(input0)?;
 
     for i in input_rest {
-        grid0.merge(Grid::read(BufReader::new(i))?)?;
+        grid0.merge(helpers::read_grid(i)?)?;
     }
 
     if let Some(scale) = scale {
@@ -38,7 +26,5 @@ pub fn subcommand(
         );
     }
 
-    grid0.write(BufWriter::new(output))?;
-
-    Ok(())
+    helpers::write_grid(output, &grid0)
 }

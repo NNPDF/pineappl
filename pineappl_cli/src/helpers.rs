@@ -1,7 +1,27 @@
+use anyhow::{Context, Result};
 use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, BufWriter};
+
+pub fn read_grid(input: &str) -> Result<Grid> {
+    Grid::read(BufReader::new(
+        File::open(input).context(format!("unable to open '{}'", input))?,
+    ))
+    .context(format!("unable to read '{}'", input))
+}
+
+pub fn write_grid(output: &str, grid: &Grid) -> Result<()> {
+    grid.write(BufWriter::new(
+        OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(output)
+            .context(format!("unable to write '{}'", output))?,
+    ))
+}
 
 pub fn create_table() -> Table {
     let mut table = Table::new();
@@ -14,14 +34,59 @@ pub fn create_table() -> Table {
     table
 }
 
+pub const SCALES_VECTOR: [(f64, f64); 9] = [
+    (1.0, 1.0),
+    (2.0, 2.0),
+    (0.5, 0.5),
+    (2.0, 1.0),
+    (1.0, 2.0),
+    (0.5, 1.0),
+    (1.0, 0.5),
+    (2.0, 0.5),
+    (0.5, 2.0),
+];
+
+pub fn labels(grid: &Grid) -> Vec<String> {
+    let mut labels = vec![];
+    let key_values = grid.key_values().cloned().unwrap_or_default();
+
+    for d in 0..grid.bin_info().dimensions() {
+        labels.push(
+            key_values
+                .get(&format!("x{}_label", d + 1))
+                .unwrap_or(&format!("x{}", d))
+                .clone(),
+        );
+    }
+
+    labels.push(
+        key_values
+            .get("y_label")
+            .unwrap_or(&"diff".to_owned())
+            .clone(),
+    );
+    labels
+}
+
 pub fn convolute(
     grid: &Grid,
     lhapdf: &Pdf,
-    orders: &[bool],
+    orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
-    scales: &[(f64, f64)],
+    scales: usize,
 ) -> Vec<f64> {
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
+
     let initial_state_1 = grid.key_values().map_or(2212, |map| {
         map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
     });
@@ -70,5 +135,13 @@ pub fn convolute(
     };
     let alphas = |q2| lhapdf.alphas_q2(q2);
 
-    grid.convolute(&xfx1, &xfx2, &alphas, orders, bins, lumis, scales)
+    grid.convolute(
+        &xfx1,
+        &xfx2,
+        &alphas,
+        &orders,
+        bins,
+        lumis,
+        &SCALES_VECTOR[0..scales],
+    )
 }

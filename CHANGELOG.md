@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added new C API function `pineappl_grid_set_remapper`
+- added new subcommand `sum` to sum over bins of a grid
+
+### Changed
+
+- The command-line interface `pineappl` no longer prints both the differential
+  and integrated cross sections. Instead it either prints the differential
+  cross sections, or, if the switch `-i` or `--integrated` is given, the
+  integrated cross sections (without bin limits and/or normalizations) are
+  printed
+- the C API functions `pineappl_subgrid_q2_slice`,
+  `pineappl_subgrid_filled_q2_slices` and `pineappl_subgrid_replace_and_delete`
+  have been replaced by `pineappl_grid_export_q2_slice`,
+  `pineappl_grid_nonzero_q2_slices` and `pineappl_grid_replace_and_delete`,
+  respectively.
+- the C API function `pineappl_subgrid_fill_q2_slice` has been replaced by
+  function `pineappl_subgrid_import_q2_slice`
+- the C API function `pineappl_subgrid_new` has been replaced by a function
+  with the similar name but different arguments
+
+## [0.4.1] - 25/03/2021
+
+### Fixed
+
+- added fallback options to `git_version` that prevented uploading
+  `pineappl_capi` and `pineappl_cli` to crates.io
+
+## [0.4.0] - 25/03/2021
+
+### Added
+
 - added access to the contents of Lagrange-interpolation grids
 - added more C functions previously missing: `pineappl_grid_bin_limits`,
   `pineappl_grid_lumi`, `pineappl_lumi_combinations`, `pineappl_lumi_count`,
@@ -28,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subcommand `set` which allows to modify the key-value storage
 - added new C functions `pineappl_grid_set_key_value` and
   `pineappl_grid_optimize`
+- added a new switch `--ignore_orders` to the diff subcommand, which sums over
+  all orders and is therefore useful if two grids are compared that should have
+  the same contents in principle, but in practice have different orders
+- added new subcommand `plot`, which allows to plot the information contained
+  in a grid
 
 ### Changed
 
@@ -106,7 +142,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/N3PDF/pineappl/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/N3PDF/pineappl/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/N3PDF/pineappl/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/N3PDF/pineappl/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/N3PDF/pineappl/compare/v0.0.0...v0.1.0

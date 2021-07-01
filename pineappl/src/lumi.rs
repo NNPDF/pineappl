@@ -50,6 +50,10 @@ impl LumiEntry {
     }
 
     /// Compares two vectors of `LumiEntry` for equality after sorting them.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
         let mut lhs = lhs.to_vec();

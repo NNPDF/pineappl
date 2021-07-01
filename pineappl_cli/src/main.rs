@@ -10,15 +10,21 @@ mod merge;
 mod optimize;
 mod orders;
 mod pdf_uncertainty;
+mod plot;
+mod pull;
 mod remap;
 mod set;
 mod subgrids;
+mod sum;
 
-use clap::{clap_app, crate_authors, crate_description, crate_version};
-use std::error::Error;
+use anyhow::{ensure, Context, Result};
+use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
+use std::result;
 use std::str::FromStr;
 
-fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: String) -> Result<(), String> {
+fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
+    argument: &str,
+) -> result::Result<(), String> {
     if let Ok(number) = argument.parse::<T>() {
         if number != T::default() {
             return Ok(());
@@ -31,7 +37,7 @@ fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(argument: String) -> 
     ))
 }
 
-fn validate_pdfset(argument: String) -> Result<(), String> {
+fn validate_pdfset(argument: &str) -> result::Result<(), String> {
     if let Ok(lhaid) = argument.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
             return Ok(());
@@ -51,57 +57,74 @@ fn validate_pdfset(argument: String) -> Result<(), String> {
     Err(format!("The PDF set `{}` was not found", argument))
 }
 
-fn parse_integer_list(list: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+fn parse_integer_list(list: &str) -> Result<Vec<usize>> {
     let mut integers = Vec::new();
 
     for s in list.split_terminator(',') {
         if let Some(at) = s.find('-') {
             let (left, right) = s.split_at(at);
-            integers.extend(str::parse::<usize>(left)?..=str::parse::<usize>(&right[1..])?);
+            integers.extend(
+                str::parse::<usize>(left).context(format!(
+                    "unable to parse integer list '{}'; couldn't convert '{}'",
+                    list, left
+                ))?
+                    ..=str::parse::<usize>(&right[1..]).context(format!(
+                        "unable to parse integer list '{}'; couldn't convert '{}'",
+                        list, left
+                    ))?,
+            );
         } else {
-            integers.push(str::parse::<usize>(s)?);
+            integers.push(str::parse::<usize>(s).context(format!(
+                "unable to parse integer list '{}'; couldn't convert '{}'",
+                list, s
+            ))?);
         }
     }
 
     Ok(integers)
 }
 
-fn parse_order(order: &str) -> Result<(u32, u32), Box<dyn Error>> {
+fn parse_order(order: &str) -> Result<(u32, u32)> {
     let mut alphas = 0;
     let mut alpha = 0;
 
     let matches: Vec<_> = order.match_indices('a').collect();
 
-    if matches.len() > 2 {
-        todo!();
-    } else {
-        for (index, _) in matches {
-            if &order[index..index + 2] == "as" {
-                let len = order[index + 2..]
-                    .chars()
-                    .take_while(|c| c.is_numeric())
-                    .count();
-                alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])?;
-            } else {
-                let len = order[index + 1..]
-                    .chars()
-                    .take_while(|c| c.is_numeric())
-                    .count();
-                alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])?;
-            }
+    ensure!(
+        matches.len() <= 2,
+        "unable to parse order; too many couplings in '{}'",
+        order
+    );
+
+    for (index, _) in matches {
+        if &order[index..index + 2] == "as" {
+            let len = order[index + 2..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
+                .context(format!("unable to parse order '{}'", order))?;
+        } else {
+            let len = order[index + 1..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
+                .context(format!("unable to parse order '{}'", order))?;
         }
     }
 
     Ok((alphas, alpha))
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let num_cpus = num_cpus::get().to_string();
     let matches = clap_app!(pineappl =>
         (author: crate_authors!())
         (about: crate_description!())
         (version: crate_version!())
-        (@arg silence_lhapdf: --silence_lhapdf "Prevents LHAPDF from printing banners")
+        (@arg silence_lhapdf: alias("silence_lhapdf") long("silence-lhapdf")
+            "Prevents LHAPDF from printing banners")
         (@setting DisableHelpSubcommand)
         (@setting SubcommandRequiredElseHelp)
         (@setting VersionlessSubcommands)
@@ -115,6 +138,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg absolute: -a --absolute "Show absolute numbers of each contribution")
             (@arg lumis: --lumis +takes_value conflicts_with("limit")
                 "Show only the listed channels")
+            (@arg integrated: -i --integrated requires("absolute")
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand convolute =>
             (about: "Convolutes a PineAPPL grid with a PDF set")
@@ -126,6 +151,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "Set the number of scale variations")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
             (@arg absolute: -a --absolute "Show absolute numbers of the scale variation")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand diff =>
             (about: "Compares the contents of two grids with each other")
@@ -133,7 +160,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input2: +required "Path to the second grid")
             (@arg pdfset: +required validator(validate_pdfset)
                 "LHAPDF id(s) or name of the PDF set(s)")
-            (@arg ignore_orders: --ignore_orders "Sums over all orders")
+            (@arg ignore_orders: alias("ignore_orders") long("ignore-orders")
+                "Sums over all orders")
         )
         (@subcommand info =>
             (about: "Shows information about the grid")
@@ -155,9 +183,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg output: +required "Path of the merged PineAPPL file")
             (@arg input: ... +required "Path(s) of the files that should be merged")
             (@arg scale: -s --scale +takes_value "Scales all grids with the given factor")
-            (@arg scale_by_order: --scale_by_order +takes_value conflicts_with[scale]
-                number_of_values(5) value_names(&["alphas", "alpha", "logxir", "logxif", "global"])
-                "Scales all grids with order-dependent factors")
+            (@arg scale_by_order: alias("scale_by_order") long("scale-by-order") +takes_value
+                conflicts_with[scale] number_of_values(5) value_names(&["alphas", "alpha",
+                "logxir", "logxif", "global"]) "Scales all grids with order-dependent factors")
         )
         (@subcommand optimize =>
             (about: "Optimizes the internal data structure to minimize memory usage")
@@ -171,6 +199,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg absolute: -a --absolute "Show absolute numbers of each perturbative order")
             (@arg normalize: -n --normalize +use_delimiter min_values(1) conflicts_with("absolute")
                 "Normalize contributions to the specified orders")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
         )
         (@subcommand pdf_uncertainty =>
             (about: "Calculates PDF uncertainties")
@@ -179,6 +209,28 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg pdfset: +required validator(validate_pdfset) "LHAPDF id or name of the PDF set")
             (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
             (@arg orders: -o --orders +use_delimiter min_values(1) "Select orders manually")
+            (@arg integrated: -i --integrated
+                "Show integrated numbers (without bin widths) instead of differential ones")
+        )
+        (@subcommand plot =>
+            (about: "Creates a matplotlib script plotting the contents of the grid")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset: ... +required validator(validate_pdfset)
+                "LHAPDF id(s) or name of the PDF set(s)")
+            (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
+                "Set the number of scale variations")
+        )
+        (@subcommand pull =>
+            (about: "Calculates the pull between two different PDF sets")
+            (@arg input: +required "Path to the input grid")
+            (@arg pdfset1: +required validator(validate_pdfset)
+                "LHAPDF id or name of the first PDF set")
+            (@arg pdfset2: +required validator(validate_pdfset)
+                "LHAPDF id or name of the second PDF set")
+            (@arg cl: --cl default_value("68.268949213708581") "Confidence level in per cent")
+            (@arg limit: -l --limit default_value("10") validator(validate_pos_non_zero::<usize>)
+                "The maximum number of luminosities displayed")
+            (@arg threads: --threads default_value(&num_cpus) "Number of threads to utilize")
         )
         (@subcommand remap =>
             (about: "Modifies the bin dimensions, widths and normalizations")
@@ -187,7 +239,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg remapping: +required "Remapping string")
             (@arg norm: --norm default_value("1.0") validator(validate_pos_non_zero::<f64>)
                 "Normalization factor in addition to the given bin widths")
-            (@arg ignore_obs_norm: --ignore_obs_norm +use_delimiter
+            (@arg ignore_obs_norm: alias("ignore_obs_norm") long("ignore-obs-norm") +use_delimiter
                 "Ignore the given observables for differential normalization")
         )
         (@subcommand set =>
@@ -195,10 +247,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             (@arg input: +required "Path to the input grid")
             (@arg output: +required "Path of the modified PineAPPL file")
             (@group mode +multiple =>
-                (@arg entry: --entry +allow_hyphen_values number_of_values(2)
-                    value_names(&["key", "value"]) +multiple "Sets an internal key-value pair")
-                (@arg entry_from_file: --entry_from_file number_of_values(2)
-                    value_names(&["key", "file"]) +multiple
+                (@arg entry: --entry +allow_hyphen_values setting(ArgSettings::AllowEmptyValues)
+                    number_of_values(2) value_names(&["key", "value"]) +multiple
+                    "Sets an internal key-value pair")
+                (@arg entry_from_file: alias("entry_from_file") long("entry-from-file")
+                    number_of_values(2) value_names(&["key", "file"]) +multiple
                     "Sets an internal key-value pair, with value being read from a file")
                 (@arg delete: --delete value_name("key") +multiple
                     "Deletes an internal key-value pair")
@@ -207,6 +260,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         (@subcommand subgrids =>
             (about: "Print information about the internal subgrid types")
             (@arg input: +required "Path to the input grid")
+        )
+        (@subcommand sum =>
+            (about: "Sums two or more bins of a grid together")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path to the modified PineAPPL file")
+            (@group mode +required =>
+                (@arg integrated: --integrated "Sums all bins into a single bin")
+            )
         )
     )
     .get_matches();
@@ -219,26 +280,29 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let limit = matches.value_of("limit").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
         let absolute = matches.is_present("absolute");
         let lumis = parse_integer_list(matches.value_of("lumis").unwrap_or(""))?;
+        let integrated = matches.is_present("integrated");
 
-        channels::subcommand(input, pdfset, limit, &orders, absolute, &lumis)?.printstd();
+        channels::subcommand(input, pdfset, limit, &orders?, absolute, &lumis, integrated)?
+            .printstd();
     } else if let Some(matches) = matches.subcommand_matches("convolute") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
         let bins = parse_integer_list(matches.value_of("bins").unwrap_or(""))?;
         let scales = matches.value_of("scales").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
         let absolute = matches.is_present("absolute");
+        let integrated = matches.is_present("integrated");
 
         convolute::subcommand(
             input,
@@ -246,8 +310,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             &pdfset[1..],
             &bins,
             scales,
-            &orders,
+            &orders?,
             absolute,
+            integrated,
         )?
         .printstd();
     } else if let Some(matches) = matches.subcommand_matches("diff") {
@@ -287,21 +352,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input: Vec<_> = matches.values_of("input").unwrap().collect();
         let scale = matches
             .value_of("scale")
-            .map(str::parse::<f64>)
+            .map(|s| str::parse(s).context(format!("unable to parse '{}'", s)))
             .transpose()?;
-        let scale_by_order: Vec<_> = matches
+        let scale_by_order: Result<Vec<_>> = matches
             .values_of("scale_by_order")
-            .map_or(vec![], |s| s.map(str::parse::<f64>).collect())
+            .map_or(vec![], |s| {
+                s.map(|s| str::parse(s).context(format!("unable to parse '{}'", s)))
+                    .collect()
+            })
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
 
-        return merge::subcommand(
-            output,
-            input.first().unwrap(),
-            &input[1..],
-            scale,
-            &scale_by_order,
-        );
+        merge::subcommand(output, input[0], &input[1..], scale, &scale_by_order?)?;
     } else if let Some(matches) = matches.subcommand_matches("optimize") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
@@ -311,46 +373,69 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let absolute = matches.is_present("absolute");
-        let normalize: Vec<_> = matches
+        let normalize: Result<Vec<_>> = matches
             .values_of("normalize")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
+        let integrated = matches.is_present("integrated");
 
-        orders::subcommand(input, pdfset, absolute, &normalize)?.printstd();
+        orders::subcommand(input, pdfset, absolute, &normalize?, integrated)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("pdf_uncertainty") {
         let input = matches.value_of("input").unwrap();
         let pdfset = matches.value_of("pdfset").unwrap();
         let cl = matches.value_of("cl").unwrap().parse()?;
         let threads = matches.value_of("threads").unwrap().parse()?;
-        let orders: Vec<_> = matches
+        let orders: Result<Vec<_>> = matches
             .values_of("orders")
             .map_or(vec![], |values| values.map(parse_order).collect())
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
+        let integrated = matches.is_present("integrated");
 
-        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders)?.printstd();
+        pdf_uncertainty::subcommand(input, pdfset, cl, threads, &orders?, integrated)?.printstd();
+    } else if let Some(matches) = matches.subcommand_matches("plot") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
+        let scales = matches.value_of("scales").unwrap().parse()?;
+
+        plot::subcommand(input, &pdfset, scales)?;
+    } else if let Some(matches) = matches.subcommand_matches("pull") {
+        let input = matches.value_of("input").unwrap();
+        let pdfset1 = matches.value_of("pdfset1").unwrap();
+        let pdfset2 = matches.value_of("pdfset2").unwrap();
+        let cl = matches.value_of("cl").unwrap().parse()?;
+        let limit = matches.value_of("limit").unwrap().parse()?;
+        let threads = matches.value_of("threads").unwrap().parse()?;
+
+        pull::subcommand(input, pdfset1, pdfset2, cl, limit, threads)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("remap") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
         let remapping = matches.value_of("remapping").unwrap();
         let norm = matches.value_of("norm").unwrap().parse()?;
-        let ignore_obs_norm: Vec<_> = matches
+        let ignore_obs_norm: Result<Vec<_>> = matches
             .values_of("ignore_obs_norm")
-            .map_or(vec![], |values| values.map(str::parse::<usize>).collect())
+            .map_or(vec![], |values| {
+                values
+                    .map(|obs| {
+                        str::parse::<usize>(obs).context(format!("unable to parse index '{}'", obs))
+                    })
+                    .collect()
+            })
             .into_iter()
-            .collect::<Result<_, _>>()?;
+            .collect();
 
-        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm)?;
+        remap::subcommand(input, output, remapping, norm, &ignore_obs_norm?)?;
     } else if let Some(matches) = matches.subcommand_matches("set") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();
 
-        let entries: Vec<_> = matches.values_of("entry").map_or(vec![], Iterator::collect);
-        let entries_from_file: Vec<_> = matches
+        let entries = matches.values_of("entry").map_or(vec![], Iterator::collect);
+        let entries_from_file = matches
             .values_of("entry_from_file")
             .map_or(vec![], Iterator::collect);
-        let deletes: Vec<_> = matches
+        let deletes = matches
             .values_of("delete")
             .map_or(vec![], Iterator::collect);
 
@@ -359,6 +444,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         let input = matches.value_of("input").unwrap();
 
         subgrids::subcommand(input)?;
+    } else if let Some(matches) = matches.subcommand_matches("sum") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        if matches.is_present("integrated") {
+            sum::subcommand_integrated(input, output)?;
+        } else {
+            unreachable!();
+        }
     }
 
     Ok(())

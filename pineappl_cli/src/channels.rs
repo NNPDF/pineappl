@@ -1,11 +1,7 @@
-use lhapdf::Pdf;
-use pineappl::grid::Grid;
-use prettytable::{cell, row, Table};
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-
 use super::helpers;
+use anyhow::Result;
+use lhapdf::Pdf;
+use prettytable::{cell, Row, Table};
 
 pub fn subcommand(
     input: &str,
@@ -14,8 +10,9 @@ pub fn subcommand(
     orders: &[(u32, u32)],
     absolute: bool,
     lumis: &[usize],
-) -> Result<Table, Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+    integrated: bool,
+) -> Result<Table> {
+    let grid = helpers::read_grid(input)?;
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
@@ -24,22 +21,12 @@ pub fn subcommand(
     } else {
         lumis.iter().filter(|lumi| **lumi < lumis.len()).count()
     };
-    let orders: Vec<_> = grid
-        .orders()
-        .iter()
-        .map(|order| {
-            orders.is_empty()
-                || orders
-                    .iter()
-                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
-        })
-        .collect();
 
     let results: Vec<_> = (0..grid.lumi().len())
         .map(|lumi| {
             let mut lumi_mask = vec![false; grid.lumi().len()];
             lumi_mask[lumi] = true;
-            helpers::convolute(&grid, &pdf, &orders, &[], &lumi_mask, &[(1.0, 1.0)])
+            helpers::convolute(&grid, &pdf, orders, &[], &lumi_mask, 1)
         })
         .collect();
 
@@ -50,21 +37,26 @@ pub fn subcommand(
     let right_limits: Vec<_> = (0..bin_info.dimensions())
         .map(|i| bin_info.right(i))
         .collect();
+    let normalizations = bin_info.normalizations();
 
-    let mut title_row = row![];
-    title_row.add_cell(cell!(c->"bin"));
-    for i in 0..bin_info.dimensions() {
-        let mut cell = cell!(c->&format!("x{}", i + 1));
+    let labels = helpers::labels(&grid);
+    let (y_label, x_labels) = labels.split_last().unwrap();
+    let mut title = Row::empty();
+    title.add_cell(cell!(c->"bin"));
+    for x_label in x_labels {
+        let mut cell = cell!(c->&x_label);
         cell.set_hspan(2);
-        title_row.add_cell(cell);
+        title.add_cell(cell);
     }
     for _ in 0..limit {
-        title_row.add_cell(cell!(c->"lumi"));
-        title_row.add_cell(cell!(c->"size"));
+        title.add_cell(cell!(c->"lumi"));
+        title.add_cell(
+            cell!(c->if absolute { if integrated { "integ" } else { y_label } } else { "size" }),
+        );
     }
 
     let mut table = helpers::create_table();
-    table.set_titles(title_row);
+    table.set_titles(title);
 
     for bin in 0..bin_info.bins() {
         let row = table.add_empty_row();
@@ -80,7 +72,16 @@ pub fn subcommand(
             let mut values: Vec<_> = results
                 .iter()
                 .enumerate()
-                .map(|(lumi, vec)| (lumi, vec[bin]))
+                .map(|(lumi, vec)| {
+                    (
+                        lumi,
+                        if integrated {
+                            normalizations[bin] * vec[bin]
+                        } else {
+                            vec[bin]
+                        },
+                    )
+                })
                 .collect();
 
             // sort using the absolute value in descending order

@@ -1,11 +1,9 @@
+use super::helpers;
+use anyhow::Result;
 use itertools::Itertools;
-use pineappl::grid::Grid;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
 
-pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<(), Box<dyn Error>> {
-    let grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<()> {
+    let grid = helpers::read_grid(input)?;
 
     let mut sorted_grid_orders: Vec<_> = grid
         .orders()
@@ -40,8 +38,8 @@ pub fn subcommand_qcd_ew(input: &str, mode: &str) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
-pub fn subcommand_get(input: &str, key: &str) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand_get(input: &str, key: &str) -> Result<()> {
+    let mut grid = helpers::read_grid(input)?;
 
     grid.upgrade();
 
@@ -56,8 +54,8 @@ pub fn subcommand_get(input: &str, key: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn subcommand_keys(input: &str) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand_keys(input: &str) -> Result<()> {
+    let mut grid = helpers::read_grid(input)?;
 
     grid.upgrade();
 
@@ -75,8 +73,8 @@ pub fn subcommand_keys(input: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn subcommand_show(input: &str) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+pub fn subcommand_show(input: &str) -> Result<()> {
+    let mut grid = helpers::read_grid(input)?;
 
     grid.upgrade();
 

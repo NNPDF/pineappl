@@ -1,7 +1,6 @@
-use pineappl::grid::Grid;
-use std::error::Error;
-use std::fs::{self, File};
-use std::io::{BufReader, BufWriter};
+use super::helpers;
+use anyhow::Result;
+use std::fs;
 
 pub fn subcommand(
     input: &str,
@@ -9,8 +8,8 @@ pub fn subcommand(
     entries: &[&str],
     entries_from_file: &[&str],
     deletes: &[&str],
-) -> Result<(), Box<dyn Error>> {
-    let mut grid = Grid::read(BufReader::new(File::open(input)?))?;
+) -> Result<()> {
+    let mut grid = helpers::read_grid(input)?;
 
     for key_value in entries.chunks(2) {
         grid.set_key_value(key_value[0], key_value[1]);
@@ -24,7 +23,5 @@ pub fn subcommand(
         grid.key_values_mut().remove(*delete);
     }
 
-    grid.write(BufWriter::new(File::create(output)?))?;
-
-    Ok(())
+    helpers::write_grid(output, &grid)
 }

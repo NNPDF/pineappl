@@ -2,8 +2,10 @@
 
 use super::convert::{f64_from_usize, usize_from_f64};
 use float_cmp::approx_eq;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::f64;
+use std::ops::Range;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -149,6 +151,17 @@ impl<'a> BinInfo<'a> {
             |remapper| remapper.normalizations().to_vec(),
         )
     }
+
+    /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
+    /// efficiently sliced into one-dimensional histograms.
+    #[must_use]
+    pub fn slices(&self) -> Vec<(usize, usize)> {
+        // TODO: convert this to Vec<Range<usize>>
+        self.remapper.map_or_else(
+            || vec![(0, self.limits.bins())],
+            |remapper| remapper.slices(),
+        )
+    }
 }
 
 impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
@@ -200,14 +213,58 @@ impl BinRemapper {
         &self.limits
     }
 
+    /// Merges the bins for the corresponding range together in a single one.
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), ()> {
+        if self
+            .slices()
+            .iter()
+            .any(|&(start, end)| (start >= range.start) && (range.end <= end))
+        {
+            for bin in range.start + 1..range.end {
+                self.normalizations[range.start] += self.normalizations[bin];
+            }
+
+            let dim = self.dimensions();
+
+            self.normalizations.drain(range.start + 1..range.end);
+            self.limits[dim * (range.start + 1) - 1].1 = self.limits[dim * range.end - 1].1;
+            self.limits.drain(dim * (range.start + 1)..dim * range.end);
+
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     /// Return the normalization factors for all bins.
     #[must_use]
     pub fn normalizations(&self) -> &[f64] {
         &self.normalizations
     }
+
+    /// Returns a vector of half-open intervals that show how multi-dimensional bins can be
+    /// efficiently sliced into one-dimensional histograms.
+    pub fn slices(&self) -> Vec<(usize, usize)> {
+        if self.dimensions() == 1 {
+            vec![(0, self.bins())]
+        } else {
+            self.limits()
+                .iter()
+                .enumerate()
+                .filter_map(|(index, x)| {
+                    ((index % self.dimensions()) != (self.dimensions() - 1)).then(|| x)
+                })
+                .collect::<Vec<_>>()
+                .chunks_exact(self.dimensions() - 1)
+                .enumerate()
+                .dedup_by_with_count(|(_, x), (_, y)| x == y)
+                .map(|(count, (index, _))| (index, index + count))
+                .collect()
+        }
+    }
 }
 
-impl PartialEq<BinRemapper> for BinRemapper {
+impl PartialEq<Self> for BinRemapper {
     fn eq(&self, other: &Self) -> bool {
         (self.limits == other.limits) && (self.normalizations == other.normalizations)
     }
@@ -215,6 +272,10 @@ impl PartialEq<BinRemapper> for BinRemapper {
 
 impl BinLimits {
     /// Constructor for `BinLimits`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
         limits.sort_by(|left, right| left.partial_cmp(right).unwrap());
@@ -248,6 +309,10 @@ impl BinLimits {
 
     /// Returns the bin index for observable `value`. If the value over- or underflows, the return
     /// value is `None`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn index(&self, value: f64) -> Option<usize> {
         match &self.0 {
@@ -273,6 +338,10 @@ impl BinLimits {
     }
 
     /// Returns the left-most bin limit
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn left(&self) -> f64 {
         match &self.0 {
@@ -304,6 +373,13 @@ impl BinLimits {
                 .collect(),
             Limits::Unequal { limits } => limits.clone(),
         }
+    }
+
+    /// Merges the bins for the corresponding range together in a single one.
+    pub fn merge_bins(&mut self, bins: Range<usize>) {
+        let mut new_limits = self.limits();
+        new_limits.drain(bins.start + 1..bins.end);
+        *self = BinLimits::new(new_limits);
     }
 
     /// Returns the size for each bin.
@@ -338,6 +414,10 @@ impl BinLimits {
     ///
     /// If the right-most limit of `self` is different from the left-most limit of `other`, the
     /// bins are non-consecutive and an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
         if !approx_eq!(f64, self.right(), other.left(), ulps = 8) {
             return Err(MergeBinError::NonConsecutiveBins {
@@ -362,6 +442,10 @@ impl BinLimits {
     }
 
     /// Returns the right-most bin limit
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn right(&self) -> f64 {
         match &self.0 {
@@ -374,6 +458,7 @@ impl BinLimits {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::iter;
 
     #[test]
     fn bin_limits_merge() {
@@ -429,6 +514,8 @@ mod test {
 
         assert_eq!(info.left(1), vec![]);
         assert_eq!(info.right(1), vec![]);
+
+        assert_eq!(info.slices(), [(0, 4)]);
     }
 
     #[test]
@@ -469,6 +556,75 @@ mod test {
 
         assert_eq!(info.left(3), vec![]);
         assert_eq!(info.right(3), vec![]);
+
+        assert_eq!(info.slices(), [(0, 1), (1, 2), (2, 3), (3, 4)]);
+    }
+
+    #[test]
+    fn bin_info_slices() {
+        let limits = BinLimits::new(
+            iter::successors(Some(0.0), |n| Some(n + 1.0))
+                .take(11)
+                .collect(),
+        );
+        let remapper = BinRemapper::new(
+            vec![1.0; 10],
+            vec![
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (2.0, 3.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (2.0, 3.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (0.0, 1.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (2.0, 3.0),
+                (1.0, 2.0),
+                (1.0, 2.0),
+                (3.0, 4.0),
+            ],
+        )
+        .unwrap();
+        let info = BinInfo::new(&limits, Some(&remapper));
+
+        assert_eq!(info.slices(), [(0, 3), (3, 6), (6, 10)]);
+    }
+
+    #[test]
+    fn bin_info_trivial_slices() {
+        let limits = BinLimits::new(
+            iter::successors(Some(0.0), |x| Some(x + 1.0))
+                .take(11)
+                .collect(),
+        );
+        let remapper = BinRemapper::new(
+            vec![1.0; 10],
+            iter::successors(Some((0.0, 1.0)), |x| Some((x.0 + 1.0, x.1 + 1.0)))
+                .take(10)
+                .collect(),
+        )
+        .unwrap();
+        let info = BinInfo::new(&limits, Some(&remapper));
+
+        assert_eq!(info.slices(), [(0, 10)]);
     }
 
     #[test]

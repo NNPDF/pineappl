@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_capi"
-version = "0.4.0-alpha"
+version = "0.5.0-alpha"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -11,8 +11,8 @@ categories = ["science"]
 description = "C language interface to PineAPPL"
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.4.0-alpha" }
-itertools = "0.9"
+pineappl = { path = "../pineappl", version = "0.5.0-alpha" }
+itertools = "0.10"
 
 [package.metadata.capi]
 min_version = "0.6.16+cargo-0.45"

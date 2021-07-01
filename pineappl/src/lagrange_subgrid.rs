@@ -8,7 +8,9 @@ use arrayvec::ArrayVec;
 use either::Either;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::mem;
+use std::ops::Range;
 
 pub(crate) fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
@@ -224,15 +226,15 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
+    fn q2_grid(&self) -> Cow<[f64]> {
         (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect()
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
+    fn x1_grid(&self) -> Cow<[f64]> {
         (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
+    fn x2_grid(&self) -> Cow<[f64]> {
         self.x1_grid()
     }
 
@@ -290,8 +292,8 @@ impl Subgrid for LagrangeSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        (self.itaumin, self.itaumax)
+    fn q2_slice(&self) -> Range<usize> {
+        self.itaumin..self.itaumax
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -315,27 +317,6 @@ impl Subgrid for LagrangeSubgridV1 {
         } else {
             todo!();
         }
-    }
-
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        if self.grid.is_none() {
-            self.itaumin = q2_slice;
-            self.itaumax = q2_slice + 1;
-            self.grid = Some(Array3::zeros((1, self.ny, self.ny)));
-        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
-            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
-        }
-
-        let self_grid = self.grid.as_mut().unwrap();
-
-        let self_ny = self.ny;
-        let self_itaumin = self.itaumin;
-
-        grid.iter().enumerate().for_each(|(index, value)| {
-            let ix1 = index / self_ny;
-            let ix2 = index % self_ny;
-            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
-        });
     }
 
     fn symmetrize(&mut self) {
@@ -590,15 +571,15 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
+    fn q2_grid(&self) -> Cow<[f64]> {
         (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect()
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
+    fn x1_grid(&self) -> Cow<[f64]> {
         (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
+    fn x2_grid(&self) -> Cow<[f64]> {
         (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
     }
 
@@ -661,8 +642,8 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        (self.itaumin, self.itaumax)
+    fn q2_slice(&self) -> Range<usize> {
+        self.itaumin..self.itaumax
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -686,27 +667,6 @@ impl Subgrid for LagrangeSubgridV2 {
         } else {
             todo!();
         }
-    }
-
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        if self.grid.is_none() {
-            self.itaumin = q2_slice;
-            self.itaumax = q2_slice + 1;
-            self.grid = Some(Array3::zeros((1, self.ny1, self.ny2)));
-        } else if q2_slice < self.itaumin || q2_slice >= self.itaumax {
-            self.increase_tau(self.itaumin.min(q2_slice), self.itaumax.max(q2_slice + 1));
-        }
-
-        let self_grid = self.grid.as_mut().unwrap();
-
-        let self_ny2 = self.ny2;
-        let self_itaumin = self.itaumin;
-
-        grid.iter().enumerate().for_each(|(index, value)| {
-            let ix1 = index / self_ny2;
-            let ix2 = index % self_ny2;
-            self_grid[[q2_slice - self_itaumin, ix1, ix2]] = *value;
-        });
     }
 
     fn symmetrize(&mut self) {
@@ -882,15 +842,15 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
+    fn q2_grid(&self) -> Cow<[f64]> {
         (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect()
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
+    fn x1_grid(&self) -> Cow<[f64]> {
         (0..self.ny).map(|iy| fx(self.gety(iy))).collect()
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
+    fn x2_grid(&self) -> Cow<[f64]> {
         self.x1_grid()
     }
 
@@ -928,10 +888,8 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        let range = self.array.x_range();
-
-        (range.start, range.end)
+    fn q2_slice(&self) -> Range<usize> {
+        self.array.x_range()
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -957,17 +915,6 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         {
             grid[ix1 * self.ny + ix2] = value * x1[ix1] * x2[ix2];
         }
-    }
-
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        self.array.remove_x(q2_slice);
-
-        grid.iter()
-            .enumerate()
-            .filter(|(_, &value)| value != 0.0)
-            .for_each(|(index, &value)| {
-                self.array[[q2_slice, index / self.ny, index % self.ny]] = value;
-            });
     }
 
     fn symmetrize(&mut self) {
@@ -1069,37 +1016,13 @@ mod tests {
         let mut test = 0.0;
 
         // check `reference` against manually calculated result from q2 slices
-        for i in grid.q2_slice().0..grid.q2_slice().1 {
+        for i in grid.q2_slice() {
             grid.fill_q2_slice(i, &mut buffer);
 
             test += buffer.iter().sum::<f64>();
         }
 
         assert!(approx_eq!(f64, test, reference, ulps = 8));
-
-        for i in grid.q2_slice().0..grid.q2_slice().1 {
-            grid.fill_q2_slice(i, &mut buffer);
-
-            buffer
-                .iter_mut()
-                .enumerate()
-                .filter(|(_, value)| **value != 0.0)
-                .for_each(|(index, value)| {
-                    let x1 = x1[index / x1.len()];
-                    let x2 = x2[index % x2.len()];
-                    *value *= (x1 / weightfun(x1)) * (x2 / weightfun(x2))
-                });
-            grid.write_q2_slice(i, &buffer);
-        }
-
-        let reference = grid.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
-
-        assert!(approx_eq!(f64, reference, test, ulps = 8));
     }
 
     fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)
@@ -1134,9 +1057,9 @@ mod tests {
         assert!(!grid1.is_empty());
         assert!(grid2.is_empty());
 
-        let x1 = grid1.x1_grid();
-        let x2 = grid1.x2_grid();
-        let q2 = grid1.q2_grid();
+        let x1 = grid1.x1_grid().into_owned();
+        let x2 = grid1.x2_grid().into_owned();
+        let q2 = grid1.q2_grid().into_owned();
 
         let reference = grid1.convolute(
             &x1,
@@ -1276,13 +1199,13 @@ mod tests {
         let sparse = LagrangeSparseSubgridV1::from(&dense);
         assert!(sparse.is_empty());
 
-        let q2 = dense.q2_grid();
-        let x1 = dense.x1_grid();
-        let x2 = dense.x2_grid();
+        let q2 = dense.q2_grid().into_owned();
+        let x1 = dense.x1_grid().into_owned();
+        let x2 = dense.x2_grid().into_owned();
 
-        assert_eq!(q2, sparse.q2_grid());
-        assert_eq!(x1, sparse.x1_grid());
-        assert_eq!(x2, sparse.x2_grid());
+        assert_eq!(q2, *sparse.q2_grid());
+        assert_eq!(x1, *sparse.x1_grid());
+        assert_eq!(x2, *sparse.x2_grid());
 
         // check conversion of a filled grid
         dense.fill(&Ntuple {

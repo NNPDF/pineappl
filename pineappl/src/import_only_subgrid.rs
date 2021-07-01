@@ -7,18 +7,20 @@ use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::mem;
+use std::ops::Range;
 
 /// TODO
 #[derive(Deserialize, Serialize)]
-pub struct ReadOnlySparseSubgridV1 {
+pub struct ImportOnlySubgridV1 {
     array: SparseArray3<f64>,
     q2_grid: Vec<f64>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
 }
 
-impl ReadOnlySparseSubgridV1 {
+impl ImportOnlySubgridV1 {
     /// Constructor.
     #[must_use]
     pub fn new(
@@ -36,7 +38,14 @@ impl ReadOnlySparseSubgridV1 {
     }
 }
 
-impl Subgrid for ReadOnlySparseSubgridV1 {
+impl ImportOnlySubgridV1 {
+    /// Return the array containing the numerical values of the grid.
+    pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
+        &mut self.array
+    }
+}
+
+impl Subgrid for ImportOnlySubgridV1 {
     fn convolute(
         &self,
         _: &[f64],
@@ -56,16 +65,16 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         panic!("this grid doesn't support the fill operation");
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
-        self.q2_grid.clone()
+    fn q2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.q2_grid)
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
-        self.x1_grid.clone()
+    fn x1_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.x1_grid)
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
-        self.x2_grid.clone()
+    fn x2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&self.x2_grid)
     }
 
     fn is_empty(&self) -> bool {
@@ -73,19 +82,46 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        if let SubgridEnum::ReadOnlySparseSubgridV1(other_grid) = other {
+        if let SubgridEnum::ImportOnlySubgridV1(other_grid) = other {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
-                // TODO: we need much more checks here if the subgrids are compatible at all
+                // TODO: the general case isn't implemented
+                assert!(self.x1_grid() == other_grid.x1_grid());
+                assert!(self.x2_grid() == other_grid.x2_grid());
 
-                if transpose {
-                    for ((i, k, j), value) in other_grid.array.indexed_iter() {
-                        self.array[[i, j, k]] += value;
+                if self.q2_grid() == other_grid.q2_grid() {
+                    if transpose {
+                        for ((i, k, j), value) in other_grid.array.indexed_iter() {
+                            self.array[[i, j, k]] += value;
+                        }
+                    } else {
+                        for ((i, j, k), value) in other_grid.array.indexed_iter() {
+                            self.array[[i, j, k]] += value;
+                        }
                     }
                 } else {
-                    for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                        self.array[[i, j, k]] += value;
+                    for (other_index, q2) in other_grid.q2_grid().iter().enumerate() {
+                        let index = match self
+                            .q2_grid
+                            .binary_search_by(|val| val.partial_cmp(q2).unwrap())
+                        {
+                            Ok(index) => index,
+                            Err(index) => {
+                                self.q2_grid.insert(index, *q2);
+                                self.array.increase_x_at(index);
+                                index
+                            }
+                        };
+
+                        for ((_, j, k), value) in other_grid
+                            .array
+                            .indexed_iter()
+                            .filter(|&((i, _, _), _)| i == other_index)
+                        {
+                            let (j, k) = if transpose { (k, j) } else { (j, k) };
+                            self.array[[index, j, k]] += value;
+                        }
                     }
                 }
             }
@@ -102,10 +138,8 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
-        let range = self.array.x_range();
-
-        (range.start, range.end)
+    fn q2_slice(&self) -> Range<usize> {
+        self.array.x_range()
     }
 
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
@@ -125,26 +159,11 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
         }
     }
 
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]) {
-        self.array.remove_x(q2_slice);
-
-        grid.iter()
-            .enumerate()
-            .filter(|(_, &value)| value != 0.0)
-            .for_each(|(index, &value)| {
-                self.array[[
-                    q2_slice,
-                    index / self.x2_grid.len(),
-                    index % self.x2_grid.len(),
-                ]] = value;
-            });
-    }
-
     fn symmetrize(&mut self) {
         let mut new_array =
             SparseArray3::new(self.q2_grid.len(), self.x1_grid.len(), self.x2_grid.len());
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k > j) {
+        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
         // do not change the diagonal entries (k==j)
@@ -166,7 +185,7 @@ impl Subgrid for ReadOnlySparseSubgridV1 {
     }
 }
 
-impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
+impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
     fn from(subgrid: &LagrangeSubgridV2) -> Self {
         let array = subgrid.grid.as_ref().map_or_else(
             || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
@@ -207,10 +226,10 @@ impl From<&LagrangeSubgridV2> for ReadOnlySparseSubgridV1 {
         let q2_grid = if subgrid.static_q2 > 0.0 {
             vec![subgrid.static_q2]
         } else {
-            subgrid.q2_grid()
+            subgrid.q2_grid().into_owned()
         };
-        let x1_grid = subgrid.x1_grid();
-        let x2_grid = subgrid.x2_grid();
+        let x1_grid = subgrid.x1_grid().into_owned();
+        let x2_grid = subgrid.x2_grid().into_owned();
 
         Self {
             array,

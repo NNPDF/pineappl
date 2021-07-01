@@ -1,21 +1,12 @@
+use super::helpers;
+use anyhow::Result;
 use lhapdf::Pdf;
-use pineappl::grid::Grid;
 use prettytable::{cell, Row, Table};
 use std::collections::HashSet;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
 
-use super::helpers;
-
-pub fn subcommand(
-    input1: &str,
-    input2: &str,
-    pdfset: &str,
-    ignore_orders: bool,
-) -> Result<Table, Box<dyn Error>> {
-    let grid1 = Grid::read(BufReader::new(File::open(input1)?))?;
-    let grid2 = Grid::read(BufReader::new(File::open(input2)?))?;
+pub fn subcommand(input1: &str, input2: &str, pdfset: &str, ignore_orders: bool) -> Result<Table> {
+    let grid1 = helpers::read_grid(input1)?;
+    let grid2 = helpers::read_grid(input2)?;
     let pdf = pdfset
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
@@ -42,8 +33,8 @@ pub fn subcommand(
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(&grid1, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
-            let results2 = helpers::convolute(&grid2, &pdf, &[], &[], &[], &[(1.0, 1.0)]);
+            let results1 = helpers::convolute(&grid1, &pdf, &[], &[], &[], 1);
+            let results2 = helpers::convolute(&grid2, &pdf, &[], &[], &[], 1);
 
             for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
                 let row = table.add_empty_row();
@@ -135,17 +126,13 @@ pub fn subcommand(
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|order| {
-                    let mut order_mask = vec![false; grid1.orders().len()];
-                    order_mask[grid1.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid1, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
+                    helpers::convolute(&grid1, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1)
                 })
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|order| {
-                    let mut order_mask = vec![false; grid2.orders().len()];
-                    order_mask[grid2.orders().iter().position(|o| o == **order).unwrap()] = true;
-                    helpers::convolute(&grid2, &pdf, &order_mask, &[], &[], &[(1.0, 1.0)])
+                    helpers::convolute(&grid1, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1)
                 })
                 .collect();
 

@@ -1,12 +1,15 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
+use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
+use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::ops::Range;
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -21,8 +24,10 @@ pub enum SubgridEnum {
     LagrangeSparseSubgridV1,
     /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
     LagrangeSubgridV2,
-    /// Read-only sparse subgrid with possibly different x1 and x2 bins.
-    ReadOnlySparseSubgridV1,
+    /// Import-only sparse subgrid with possibly different x1 and x2 bins.
+    ImportOnlySubgridV1,
+    /// Empty subgrid.
+    EmptySubgridV1,
 }
 
 /// Trait each subgrid must implement.
@@ -30,15 +35,15 @@ pub enum SubgridEnum {
 pub trait Subgrid {
     /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn q2_grid(&self) -> Vec<f64>;
+    fn q2_grid(&self) -> Cow<[f64]>;
 
     /// Return a `Vec` of values of `x1`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn x1_grid(&self) -> Vec<f64>;
+    fn x1_grid(&self) -> Cow<[f64]>;
 
     /// Return a `Vec` of values of `x2`. If the subgrid does not use a grid, this method should
     /// return an empty `Vec`.
-    fn x2_grid(&self) -> Vec<f64>;
+    fn x2_grid(&self) -> Cow<[f64]>;
 
     /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
     /// in which case the `x1`, `x2` and `q2` values can be read from the given slices, or takes
@@ -65,20 +70,13 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
-    // TODO: the following should be a Range
-
     /// Returns the half-open interval of indices of filled q2 slices.
-    fn q2_slice(&self) -> (usize, usize);
+    fn q2_slice(&self) -> Range<usize>;
 
     // TODO: rename the function to export_q2_slice
 
     /// Fill the q2-slice with index `q2_slice` into `grid`.
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
-
-    // TODO: rename the function to import_applgrid_f2_q2_slice
-
-    /// Writes into subgrid.
-    fn write_q2_slice(&mut self, q2_slice: usize, grid: &[f64]);
 
     /// Assumes that the initial states for this grid are the same and uses this to optimize the
     /// grid by getting rid of almost half of the entries.

@@ -328,6 +328,12 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         self.start = 0;
     }
 
+    /// Returns the dimensions of this array.
+    #[must_use]
+    pub fn dimensions(&self) -> (usize, usize, usize) {
+        self.dimensions
+    }
+
     /// Returns the number of default (zero) elements in this array.
     #[must_use]
     pub fn zeros(&self) -> usize {
@@ -365,7 +371,29 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
             ..(self.start + (self.indices.len() - 1) / self.dimensions.1.min(self.dimensions.2))
     }
 
+    /// Increase the number of entries of the x-axis by one by inserting zeros at `x`.
+    pub fn increase_x_at(&mut self, x: usize) {
+        let dim1 = self.dimensions.1.min(self.dimensions.2);
+        let nx = (self.indices.len() - 1) / dim1;
+
+        if x <= self.start {
+            self.start += 1
+        } else if x < self.start + nx {
+            todo!();
+        } else if x <= self.dimensions.0 {
+            // nothing to do here
+        } else {
+            self.dimensions.0 = x;
+        }
+
+        self.dimensions.0 += 1;
+    }
+
     /// Removes all elements with the specified x coordinate.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn remove_x(&mut self, x: usize) {
         let dim1 = self.dimensions.1.min(self.dimensions.2);
         let nx = (self.indices.len() - 1) / dim1;
@@ -804,6 +832,80 @@ mod tests {
         let mut array = SparseArray3::<f64>::new(40, 50, 50);
 
         array.remove_x(0);
+    }
+
+    #[test]
+    fn increase_at_x() {
+        let mut array = SparseArray3::new(1, 50, 50);
+
+        array[[0, 2, 3]] = 1.0;
+        array[[0, 2, 4]] = 2.0;
+        array[[0, 2, 5]] = 3.0;
+        array[[0, 3, 0]] = 4.0;
+
+        assert_eq!(array.dimensions(), (1, 50, 50));
+        assert_eq!(array[[0, 2, 3]], 1.0);
+        assert_eq!(array[[0, 2, 4]], 2.0);
+        assert_eq!(array[[0, 2, 5]], 3.0);
+        assert_eq!(array[[0, 3, 0]], 4.0);
+
+        array.increase_x_at(1);
+
+        assert_eq!(array.dimensions(), (2, 50, 50));
+        assert_eq!(array[[0, 2, 3]], 1.0);
+        assert_eq!(array[[0, 2, 4]], 2.0);
+        assert_eq!(array[[0, 2, 5]], 3.0);
+        assert_eq!(array[[0, 3, 0]], 4.0);
+
+        array[[1, 5, 0]] = 5.0;
+        array[[1, 5, 5]] = 7.0;
+        array[[1, 6, 3]] = 8.0;
+        array[[1, 6, 0]] = 9.0;
+
+        assert_eq!(array[[0, 2, 3]], 1.0);
+        assert_eq!(array[[0, 2, 4]], 2.0);
+        assert_eq!(array[[0, 2, 5]], 3.0);
+        assert_eq!(array[[0, 3, 0]], 4.0);
+        assert_eq!(array[[1, 5, 0]], 5.0);
+        assert_eq!(array[[1, 5, 5]], 7.0);
+        assert_eq!(array[[1, 6, 3]], 8.0);
+        assert_eq!(array[[1, 6, 0]], 9.0);
+
+        array.increase_x_at(0);
+
+        assert_eq!(array.dimensions(), (3, 50, 50));
+        assert_eq!(array[[1, 2, 3]], 1.0);
+        assert_eq!(array[[1, 2, 4]], 2.0);
+        assert_eq!(array[[1, 2, 5]], 3.0);
+        assert_eq!(array[[1, 3, 0]], 4.0);
+        assert_eq!(array[[2, 5, 0]], 5.0);
+        assert_eq!(array[[2, 5, 5]], 7.0);
+        assert_eq!(array[[2, 6, 3]], 8.0);
+        assert_eq!(array[[2, 6, 0]], 9.0);
+
+        array.increase_x_at(3);
+
+        assert_eq!(array.dimensions(), (4, 50, 50));
+        assert_eq!(array[[1, 2, 3]], 1.0);
+        assert_eq!(array[[1, 2, 4]], 2.0);
+        assert_eq!(array[[1, 2, 5]], 3.0);
+        assert_eq!(array[[1, 3, 0]], 4.0);
+        assert_eq!(array[[2, 5, 0]], 5.0);
+        assert_eq!(array[[2, 5, 5]], 7.0);
+        assert_eq!(array[[2, 6, 3]], 8.0);
+        assert_eq!(array[[2, 6, 0]], 9.0);
+
+        array.increase_x_at(5);
+
+        assert_eq!(array.dimensions(), (6, 50, 50));
+        assert_eq!(array[[1, 2, 3]], 1.0);
+        assert_eq!(array[[1, 2, 4]], 2.0);
+        assert_eq!(array[[1, 2, 5]], 3.0);
+        assert_eq!(array[[1, 3, 0]], 4.0);
+        assert_eq!(array[[2, 5, 0]], 5.0);
+        assert_eq!(array[[2, 5, 5]], 7.0);
+        assert_eq!(array[[2, 6, 3]], 8.0);
+        assert_eq!(array[[2, 6, 0]], 9.0);
     }
 
     #[test]

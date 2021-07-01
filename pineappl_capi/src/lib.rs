@@ -4,10 +4,13 @@
 //! C-language interface for `PineAPPL`.
 
 use itertools::izip;
+use pineappl::bin::BinRemapper;
+use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, Ntuple, Order};
-use pineappl::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
+use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::lumi::LumiEntry;
-use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
+use pineappl::sparse_array3::SparseArray3;
+use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridParams};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
@@ -111,7 +114,7 @@ unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraS
 pub struct Lumi(Vec<LumiEntry>);
 
 /// Type for reading and accessing subgrids.
-pub struct SubGrid(SubgridEnum);
+pub struct SubGrid(ImportOnlySubgridV1);
 
 /// Returns the number of bins in `grid`.
 ///
@@ -144,31 +147,13 @@ pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usiz
 /// this function is not safe to call. The parameter `bin_sizes` must point to an array that is as
 /// long as `grid` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_bin_sizes(grid: *const Grid, bin_sizes: *mut f64) {
+pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin_sizes: *mut f64) {
     let sizes = (*grid).bin_info().normalizations();
     let bin_sizes = slice::from_raw_parts_mut(bin_sizes, sizes.len());
 
     for (i, size) in sizes.iter().enumerate() {
         bin_sizes[i] = *size;
     }
-}
-
-/// Stores the bin limits of `grid` in `bin_limits`.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `bin_limits` must point to an array that is
-/// one element longer as `grid` has bins.
-#[deprecated(
-    since = "0.4.0",
-    note = "this function only returns the limits for the zeroth dimension"
-)]
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_bin_limits(grid: *const Grid, bin_limits: *mut f64) {
-    let mut limits = (*grid).bin_info().left(0);
-    limits.push(*(*grid).bin_info().right(0).last().unwrap());
-    slice::from_raw_parts_mut(bin_limits, limits.len()).copy_from_slice(&limits);
 }
 
 /// Write the left limits for the specified dimension into `left`.
@@ -268,43 +253,9 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
 }
 
 /// Delete a grid previously created with `pineappl_grid_new`.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, this function is not safe to call. If `grid`
-/// is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
-
-/// Performs an operation `name` on `grid` using as input or output parameters `key_vals`. This is
-/// used to get access to functions that are otherwise not available through other functions. If
-/// the operation was successful, returns `true`. Otherwise, or if the `name` wasn't recognized
-/// `false` is returned. The parameter `_key_vals` is currently ignored.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `name` must be a valid and non-`NULL` C
-/// string.
-#[no_mangle]
-#[must_use]
-pub unsafe extern "C" fn pineappl_grid_ext(
-    grid: *mut Grid,
-    name: *const c_char,
-    _key_vals: *mut KeyVal,
-) -> bool {
-    let grid = &mut *grid;
-    let name = CStr::from_ptr(name).to_str().unwrap();
-
-    if name == "optimise" {
-        grid.scale(0.0);
-
-        true
-    } else {
-        false
-    }
-}
+pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
 /// value of the `order`, `observable`, and `lumi` with `weight`.
@@ -595,13 +546,45 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     );
 }
 
+/// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
+/// N-dimensional ones. The new bin limits must be given in the form of tuples giving the left and
+/// right limits, and a tuple for each dimension.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The arrays `normalizations` and `limits` must be at least as
+/// long as the number of bins of the grid and `2 * dimensions * bins`, respectively.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_set_remapper(
+    grid: *mut Grid,
+    dimensions: usize,
+    normalizations: *const f64,
+    limits: *const f64,
+) {
+    let grid = &mut *grid;
+    let bins = grid.bin_info().bins();
+
+    grid.set_remapper(
+        BinRemapper::new(
+            slice::from_raw_parts(normalizations, bins).to_vec(),
+            slice::from_raw_parts(limits, 2 * dimensions * bins)
+                .chunks_exact(2)
+                .map(|chunk| (chunk[0], chunk[1]))
+                .collect(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+}
+
 /// Write `grid` to a file with name `filename`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter must be a non-`NULL`, non-empty, and valid C
-/// string pointing to a non-existing, but writable file.
+/// this function is not safe to call. The parameter `filename` must be a non-`NULL`, non-empty,
+/// and valid C string pointing to a non-existing, but writable file.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let filename = CStr::from_ptr(filename).to_str().unwrap();
@@ -662,14 +645,9 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *mut Lumi) -> usize {
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
-///
-/// # Safety
-///
-/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`. If
-/// `lumi` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
+pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 
 /// Read out the channel with index `entry` of the luminosity function `lumi`. The PDG ids and
 /// factors will be copied into `pdg_ids` and `factors`.
@@ -720,7 +698,7 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
 /// this function is not safe to call. `buffer` must be as large as the square of the return value
 /// of `pineappl_subgrid_x_grid_count`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
+pub unsafe extern "C" fn pineappl_grid_export_q2_slice(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -728,10 +706,9 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
     q2_slice: usize,
     buffer: *mut f64,
 ) {
-    let size = pineappl_subgrid_x_grid_count(grid).pow(2);
-    (*grid)
-        .subgrid(order, bin, lumi)
-        .fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
+    let subgrid = (*grid).subgrid(order, bin, lumi);
+    let size = subgrid.x1_grid().len() * subgrid.x2_grid().len();
+    subgrid.fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
 }
 
 /// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
@@ -742,7 +719,7 @@ pub unsafe extern "C" fn pineappl_subgrid_q2_slice(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. `tuple` must point to an array with two elements.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
+pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -751,132 +728,93 @@ pub unsafe extern "C" fn pineappl_subgrid_filled_q2_slices(
 ) {
     let tuple = slice::from_raw_parts_mut(tuple, 2);
     let slice = (*grid).subgrid(order, bin, lumi).q2_slice();
-    tuple[0] = slice.0;
-    tuple[1] = slice.1;
-}
-
-/// Writes into `buffer` the q2 values that the grid spans.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `buffer` must point to an array which is as
-/// large as the value returned by `pineappl_subgrid_q2_grid_count`.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_q2_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_subgrid_q2_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).q2_grid());
-}
-
-/// Returns the number grid values in q2 direction.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_q2_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).q2_grid().len()
-}
-
-/// Writes into `buffer` the x values that the grid spans.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The parameter `buffer` must point to an array which is as
-/// large as the value returned by `pineappl_subgrid_x_grid_count`.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_x_grid(grid: *const Grid, buffer: *mut f64) {
-    let size = pineappl_subgrid_x_grid_count(grid);
-    slice::from_raw_parts_mut(buffer, size).copy_from_slice(&(*grid).subgrid(0, 0, 0).x1_grid());
-}
-
-/// Returns the number grid values in x direction.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_x_grid_count(grid: *const Grid) -> usize {
-    (*grid).subgrid(0, 0, 0).x1_grid().len()
-}
-
-/// Creates a new subgrid, using the paramters stored in `keyvals`. If `key_vals` is the null
-/// pointer, default parameters are chosen.
-///
-/// # Safety
-///
-/// The parameter `key_vals` must be either the null pointer, or point to a valid `KeyVal` object.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_new(key_vals: *const KeyVal) -> Box<SubGrid> {
-    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
-
-    match subgrid_type.as_str() {
-        "LagrangeSubgrid" | "LagrangeSubgridV2" => Box::new(SubGrid(
-            LagrangeSubgridV2::new(&subgrid_params, &extra).into(),
-        )),
-        "LagrangeSubgridV1" => Box::new(SubGrid(LagrangeSubgridV1::new(&subgrid_params).into())),
-        "LagrangeSparseSubgrid" => Box::new(SubGrid(
-            LagrangeSparseSubgridV1::new(&subgrid_params).into(),
-        )),
-        _ => {
-            panic!();
-        }
-    }
+    tuple[0] = slice.start;
+    tuple[1] = slice.end;
 }
 
 /// Deletes a subgrid created with `pineappl_subgrid_new`. If `subgrid` is the null pointer,
 /// nothing is done.
-///
-/// # Safety
-///
-/// The parameter `subgrid` must point to a valid `Subgrid` object created by
-/// `pineappl_subgrid_new` or be the null pointer.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
+pub extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
 
 /// This function takes replaces the subgrid in `grid` with the corresponding indices `order`,
-/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, nothing is
-/// done.
+/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, the specied
+/// subgrid is replaced with an empty one.
 ///
 /// # Safety
 ///
 /// Both `grid` and `subgrid` must point to valid objects. The parameter `subgrid` can be the null
 /// pointer.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_replace_and_delete(
+pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
     grid: *mut Grid,
     subgrid: Option<Box<SubGrid>>,
     order: usize,
     bin: usize,
     lumi: usize,
 ) {
-    if let Some(subgrid) = subgrid {
-        (*grid).set_subgrid(order, bin, lumi, (*subgrid).0);
-    }
+    (*grid).set_subgrid(
+        order,
+        bin,
+        lumi,
+        subgrid.map_or_else(
+            || EmptySubgridV1::default().into(),
+            |subgrid| subgrid.0.into(),
+        ),
+    );
 }
 
-/// Fills the slice with the given `index` of `subgrid` with the contents of `slice`.
+/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_set_q2_slice`].
 ///
 /// # Safety
 ///
-/// The parameter `subgrid` must point to a valid `SubGrid` object and be non-null, `index` must be
-/// an index smaller than the parameter `q2_bins` the `SubGrid` was created with, and `slice` must
-/// be an array at least as large as the square of the parameter `x_bins` the `SubGrid` was
-/// created with.
+/// The arrays `q2_grid`, `x1_grid`, and `x2_grid` must be non-`NULL` and at least as long as
+/// specified by `q2_grid_len`, `x1_grid_len` and `x2_grid_len`, respectively.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_fill_q2_slice(
+pub unsafe extern "C" fn pineappl_subgrid_new(
+    q2_grid_len: usize,
+    q2_grid: *const f64,
+    x1_grid_len: usize,
+    x1_grid: *const f64,
+    x2_grid_len: usize,
+    x2_grid: *const f64,
+) -> Box<SubGrid> {
+    let q2 = slice::from_raw_parts(q2_grid, q2_grid_len);
+    let x1 = slice::from_raw_parts(x1_grid, x1_grid_len);
+    let x2 = slice::from_raw_parts(x2_grid, x2_grid_len);
+
+    Box::new(SubGrid(ImportOnlySubgridV1::new(
+        SparseArray3::new(q2.len(), x1.len(), x2.len()),
+        q2.to_vec(),
+        x1.to_vec(),
+        x2.to_vec(),
+    )))
+}
+
+/// Imports `slice` for the given index into `subgrid`.
+///
+/// # Safety
+///
+/// The parameter `subgrid` and the array `slice` must be non-`NULL` and `slice` must be at least
+/// as long as the product `x1_grid_len * x2_grid_len` that were used to create the subgrid with.
+/// The index `q2_slice` must be smaller than `q2_grid_len`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_subgrid_import_q2_slice(
     subgrid: *mut SubGrid,
-    index: usize,
+    q2_slice: usize,
     slice: *const f64,
 ) {
-    (*subgrid).0.write_q2_slice(
-        index,
-        slice::from_raw_parts(slice, (*subgrid).0.x1_grid().len().pow(2)),
-    );
+    let array = (*subgrid).0.array_mut();
+    let (_, nx1, nx2) = array.dimensions();
+    let slice = slice::from_raw_parts(slice, nx1 * nx2);
+
+    for (index, &value) in slice.iter().enumerate().filter(|(_, &value)| value != 0.0) {
+        let ix1 = index / nx1;
+        let ix2 = index % nx1;
+
+        array[[q2_slice, ix1, ix2]] = value;
+    }
 }
 
 /// Key-value storage for passing optional information during grid creation with
@@ -890,14 +828,9 @@ pub struct KeyVal {
 }
 
 /// Delete the previously created object pointed to by `key_vals`.
-///
-/// # Safety
-///
-/// The parameter `key_vals` must point to a valid `KeyVal` object created by
-/// `pineappl_keyval_new`. If `key_vals` is a `NULL` pointer, this function does not do anything.
 #[no_mangle]
 #[allow(unused_variables)]
-pub unsafe extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
+pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 
 /// Get the boolean-valued parameter with name `key` stored in `key_vals`.
 ///

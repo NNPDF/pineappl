@@ -4,6 +4,8 @@ use super::grid::Ntuple;
 use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::ops::Range;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Default, Deserialize, Serialize)]
@@ -41,16 +43,16 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.push(ntuple.clone());
     }
 
-    fn q2_grid(&self) -> Vec<f64> {
-        vec![]
+    fn q2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
-    fn x1_grid(&self) -> Vec<f64> {
-        vec![]
+    fn x1_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
-    fn x2_grid(&self) -> Vec<f64> {
-        vec![]
+    fn x2_grid(&self) -> Cow<[f64]> {
+        Cow::Borrowed(&[])
     }
 
     fn is_empty(&self) -> bool {
@@ -71,15 +73,11 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.iter_mut().for_each(|t| t.weight *= factor);
     }
 
-    fn q2_slice(&self) -> (usize, usize) {
+    fn q2_slice(&self) -> Range<usize> {
         unimplemented!();
     }
 
     fn fill_q2_slice(&self, _: usize, _: &mut [f64]) {
-        unimplemented!();
-    }
-
-    fn write_q2_slice(&mut self, _: usize, _: &[f64]) {
         unimplemented!();
     }
 
@@ -159,13 +157,5 @@ mod tests {
         let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
 
         subgrid.fill_q2_slice(0, &mut []);
-    }
-
-    #[test]
-    #[should_panic]
-    fn write_q2_slice() {
-        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        subgrid.write_q2_slice(0, &[]);
     }
 }
