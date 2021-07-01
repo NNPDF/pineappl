@@ -1,9 +1,5 @@
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::Subgrid;
-
-use super::subgrid::{PyExtraSubgridParams, PySubgridParams};
-
 use pyo3::prelude::*;
 
 #[pyclass]

@@ -18,13 +18,13 @@ use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
 use ndarray::{Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
-use std::borrow::Cow;
 use std::ops::Range;
 use std::ptr;
 use thiserror::Error;
@@ -1212,7 +1212,7 @@ impl Grid {
         // println!("{:?}, {:?}", pids1, pids2);
 
         // Iterate over RESULT = LOW
-        for ((low_order, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
+        for ((_, bin, low_lumi), subgrid) in result.subgrids.indexed_iter_mut() {
             // if bin > 0 {
             // continue;
             // }
