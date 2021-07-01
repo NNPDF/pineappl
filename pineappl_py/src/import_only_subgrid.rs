@@ -6,11 +6,11 @@ use pyo3::prelude::*;
 #[pyclass]
 #[derive(Clone)]
 #[repr(transparent)]
-pub struct PyImportOnlySubgrid {
+pub struct PyImportOnlySubgridV1 {
     pub import_only_subgrid: ImportOnlySubgridV1,
 }
 
-impl PyImportOnlySubgrid {
+impl PyImportOnlySubgridV1 {
     pub(crate) fn new(import_only_subgrid: ImportOnlySubgridV1) -> Self {
         Self {
             import_only_subgrid,
@@ -19,7 +19,7 @@ impl PyImportOnlySubgrid {
 }
 
 #[pymethods]
-impl PyImportOnlySubgrid {
+impl PyImportOnlySubgridV1 {
     #[new]
     pub fn new_import_only_subgrid(
         array: PyReadonlyArray3<f64>,
