@@ -139,7 +139,7 @@ struct Mmv2 {
 struct Mmv3 {
     remapper: Option<BinRemapper>,
     key_value_db: HashMap<String, String>,
-    //subgrid_template: SubgridEnum,
+    subgrid_template: SubgridEnum,
 }
 
 impl Default for Mmv2 {
@@ -188,7 +188,7 @@ impl Mmv3 {
             .iter()
             .cloned()
             .collect(),
-            //subgrid_template,
+            subgrid_template,
         }
     }
 }
@@ -503,7 +503,7 @@ impl Grid {
             let subgrid = &mut self.subgrids[[order, bin, lumi]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
                 if let MoreMembers::V3(mmv3) = &self.more_members {
-//                    *subgrid = mmv3.subgrid_template.clone_empty();
+                    *subgrid = mmv3.subgrid_template.clone_empty();
                 } else {
                     unreachable!();
                 }
