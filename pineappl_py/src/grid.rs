@@ -2,9 +2,8 @@ use lhapdf::Pdf;
 use pineappl::grid::{EkoInfo, Grid, Order};
 
 use super::bin::PyBinRemapper;
-use super::lagrange_subgrid::PyLagrangeSubgridV2;
 use super::lumi::PyLumiEntry;
-use super::subgrid::PySubgridParams;
+use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
 
@@ -70,15 +69,9 @@ impl PyGrid {
         self.grid.bin_info().bins();
     }
 
-    pub fn set_subgrid(
-        &mut self,
-        order: usize,
-        bin: usize,
-        lumi: usize,
-        subgrid: PyLagrangeSubgridV2,
-    ) {
+    pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
         self.grid
-            .set_subgrid(order, bin, lumi, subgrid.lagrange_subgrid.into());
+            .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
     }
 
     pub fn set_remapper(&mut self, remapper: PyBinRemapper) {

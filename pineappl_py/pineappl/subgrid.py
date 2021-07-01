@@ -8,6 +8,11 @@ except:
 from .utils import PyWrapper
 
 
+class SubgridEnum(PyWrapper):
+    def __init__(self):
+        self._raw = PySubgridEnum()
+
+
 class SubgridParams(PyWrapper):
     def __init__(self):
         self._raw = PySubgridParams()

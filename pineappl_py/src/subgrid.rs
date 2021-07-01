@@ -1,4 +1,4 @@
-use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
+use pineappl::subgrid::{ExtraSubgridParams, SubgridEnum, SubgridParams};
 
 use pyo3::prelude::*;
 
@@ -121,4 +121,11 @@ impl PyExtraSubgridParams {
     pub fn set_x2_order(&mut self, x_order: usize) {
         self.extra_subgrid_params.set_x2_order(x_order);
     }
+}
+
+#[pyclass]
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct PySubgridEnum {
+    pub(crate) subgrid_enum: SubgridEnum,
 }
