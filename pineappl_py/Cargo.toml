@@ -22,6 +22,7 @@ pineappl = { path = "../pineappl", version = "0.5.0-alpha" }
 lhapdf = "0.1.8"
 ndarray = "0.13.1"
 itertools = "0.9"
+numpy = "0.12"
 
 [dependencies.pyo3]
 version = "0.12.4"
