@@ -7,7 +7,6 @@ use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, Lagran
 use super::lumi::LumiEntry;
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::read_only_sparse_subgrid::ReadOnlySparseSubgridV1;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use either::Either::{Left, Right};
@@ -25,6 +24,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
+use std::borrow::Cow;
 use std::ops::Range;
 use std::ptr;
 use thiserror::Error;
@@ -135,11 +135,11 @@ struct Mmv2 {
     key_value_db: HashMap<String, String>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 struct Mmv3 {
     remapper: Option<BinRemapper>,
     key_value_db: HashMap<String, String>,
-    subgrid_template: SubgridEnum,
+    //subgrid_template: SubgridEnum,
 }
 
 impl Default for Mmv2 {
@@ -188,7 +188,7 @@ impl Mmv3 {
             .iter()
             .cloned()
             .collect(),
-            subgrid_template,
+            //subgrid_template,
         }
     }
 }
@@ -503,7 +503,7 @@ impl Grid {
             let subgrid = &mut self.subgrids[[order, bin, lumi]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
                 if let MoreMembers::V3(mmv3) = &self.more_members {
-                    *subgrid = mmv3.subgrid_template.clone_empty();
+//                    *subgrid = mmv3.subgrid_template.clone_empty();
                 } else {
                     unreachable!();
                 }
@@ -1055,8 +1055,8 @@ impl Grid {
         for subgrid in &self.subgrids {
             if !subgrid.is_empty() {
                 if q2_grid.is_empty() {
-                    q2_grid = subgrid.q2_grid();
-                    let x = subgrid.x1_grid();
+                    q2_grid = subgrid.q2_grid().into_owned();
+                    let x = subgrid.x1_grid().into_owned();
 
                     // if subgrid.x2_grid() != x {
                     // return None;
@@ -1068,7 +1068,7 @@ impl Grid {
                 // return None;
                 // }
 
-                q2_grid.append(&mut subgrid.q2_grid());
+                q2_grid.append(&mut subgrid.q2_grid().into_owned());
                 q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 q2_grid.dedup();
             }
@@ -1154,7 +1154,7 @@ impl Grid {
         // TODO: extend `with_subgrid_type` constructor and use it!
         let mut result = Self {
             subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
-                ReadOnlySparseSubgridV1::new(
+                ImportOnlySubgridV1::new(
                     SparseArray3::new(1, x1_len, x2_len),
                     q2low_grid.clone(),
                     x1low_grid.clone(),
@@ -1181,7 +1181,7 @@ impl Grid {
         // TODO: put original perturbative orders and order of the EKO inside new metadata
         fn compute_eko_high_index(
             eko_grid: &Vec<f64>,
-            high_grid: &Vec<f64>,
+            high_grid: &Cow<[f64]>,
         ) -> HashMap<usize, usize> {
             let mut eko_map = HashMap::new();
             for (i, el) in high_grid.iter().enumerate() {
@@ -1374,7 +1374,7 @@ impl Grid {
             // "order: {:?} - {:?}, bin: {:?}, low_lumi: {:?} - {:?}",
             // low_order, result.orders[low_order], bin, low_lumi, result.lumi[low_lumi]
             // );
-            *subgrid = ReadOnlySparseSubgridV1::new(
+            *subgrid = ImportOnlySubgridV1::new(
                 array,
                 q2low_grid.clone(),
                 x1low_grid.clone(),

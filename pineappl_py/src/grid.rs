@@ -66,6 +66,10 @@ impl PyGrid {
         self.grid.set_key_value(key, value);
     }
 
+    pub fn bins(&self) {
+        self.grid.bin_info().bins();
+    }
+
     pub fn set_subgrid(
         &mut self,
         order: usize,
