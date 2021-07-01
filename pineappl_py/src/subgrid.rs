@@ -1,5 +1,6 @@
-use pineappl::subgrid::{SubgridEnum, SubgridParams};
-
+use ndarray::Array2;
+use numpy::{IntoPyArray, PyArray2};
+use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -84,4 +85,22 @@ impl PySubgridParams {
 #[repr(transparent)]
 pub struct PySubgridEnum {
     pub(crate) subgrid_enum: SubgridEnum,
+}
+
+#[pymethods]
+impl PySubgridEnum {
+    pub fn fk_subgrid_array<'a>(&self, py: Python<'a>) -> &'a PyArray2<f64> {
+        let mut result = Array2::zeros((
+            self.subgrid_enum.x1_grid().len(),
+            self.subgrid_enum.x2_grid().len(),
+        ));
+
+        assert_eq!(self.subgrid_enum.q2_grid().len(), 1);
+
+        for ((_, ix1, ix2), &value) in self.subgrid_enum.iter() {
+            result[[ix1, ix2]] = value;
+        }
+
+        result.into_pyarray(py)
+    }
 }
