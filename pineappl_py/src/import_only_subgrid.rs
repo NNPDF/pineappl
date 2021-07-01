@@ -1,3 +1,4 @@
+use super::subgrid::PySubgridEnum;
 use numpy::PyReadonlyArray3;
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::sparse_array3::SparseArray3;
@@ -43,5 +44,11 @@ impl PyImportOnlySubgridV1 {
             x1_grid,
             x2_grid,
         ))
+    }
+
+    pub fn into(&self) -> PySubgridEnum {
+        PySubgridEnum {
+            subgrid_enum: self.import_only_subgrid.clone().into(),
+        }
     }
 }

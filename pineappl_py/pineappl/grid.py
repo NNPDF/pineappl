@@ -29,7 +29,7 @@ class Grid(PyWrapper):
         return np.array(self.raw.subgrid_q2s(order, bin_, lumi))
 
     def set_subgrid(self, order, bin_, lumi, subgrid):
-        self.raw.set_subgrid(order, bin_, lumi, subgrid.raw)
+        self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
 
     def set_remapper(self, remapper):
         self.raw.set_remapper(remapper.raw)
