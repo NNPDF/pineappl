@@ -28,7 +28,7 @@ class FKTable:
         # check xgrid
         x1_grid = g.subgrid(0, 0, 0).x1_grid()
         x2_grid = g.subgrid(0, 0, 0).x2_grid()
-        if np.isclose(x1_grid, x2_grid):
+        if np.isclose(x1_grid, x2_grid).all():
             xgrid = x1_grid
         else:
             if len(x2_grid) == 1:
