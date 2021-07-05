@@ -95,6 +95,10 @@ impl PySubgridEnum {
         self.subgrid_enum.x1_grid().into_owned().into_pyarray(py)
     }
 
+    pub fn x2_grid<'a>(&self, py: Python<'a>) -> &'a PyArray1<f64> {
+        self.subgrid_enum.x2_grid().into_owned().into_pyarray(py)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.subgrid_enum.is_empty()
     }
@@ -106,7 +110,7 @@ impl PySubgridEnum {
         ));
 
         if self.subgrid_enum.q2_grid().len() != 1 {
-            return Err(PyValueError::new_err("Error"))
+            return Err(PyValueError::new_err(format!("FK subgrid: only a single Q2 value is allowed, found:\n {:?}.", self.subgrid_enum.q2_grid())))
         }
         assert_eq!(self.subgrid_enum.q2_grid().len(), 1);
 
