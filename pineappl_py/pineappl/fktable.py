@@ -25,7 +25,18 @@ class FKTable:
     def load(cls, filename):
         g = grid.Grid.read(filename)
         obs = g.bins()
-        xgrid = np.array([.1,.2])
-        basis = np.array([21,200])
-        fktable = np.random.rand((obs,len(basis), len(basis), len(xgrid), len(xgrid)))
+        xgrid = g.subgrid(0,0,0).x1_grid()
+        # load lumis - they actually have to be single-valued
+        basis = []
+        for e in g.lumi():
+            le = e.into_array()
+            if len(le) != 1:
+                raise ValueError("Lumis in FKTables have to be a single element")
+            le = le[0]
+            if not np.isclose(le[-1],1.):
+                raise ValueError("All Lumis in a FKTables have to have weight 1.0")
+            basis.append(le[:2])
+        basis = np.array(basis)
+
+        fktable = np.random.rand(obs, len(basis), 1, len(xgrid))
         return cls(fktable, xgrid, basis)

@@ -20,4 +20,8 @@ impl PyLumiEntry {
     pub fn new_lumi_entry(entry: Vec<(i32, i32, f64)>) -> Self {
         Self::new(LumiEntry::new(entry))
     }
+
+    pub fn into_array(&self) -> Vec<(i32, i32,f64)> {
+        self.lumi_entry.entry().iter().map(|e| e.clone()).collect()
+    }
 }
