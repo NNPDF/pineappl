@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added new C API function `pineappl_grid_set_remapper`
 - added new subcommand `sum` to sum over bins of a grid
+- added new subcommand `pull` to view where the differences between two PDF
+  sets are coming from
+- added an example program using the C API to convert fastNLO tables (of type
+  `fastNLOCoeffAddFix`). Tables of type `fastNLOCoeffAddFlex` are not supported
+  yet
 
 ### Changed
 
@@ -28,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   function `pineappl_subgrid_import_q2_slice`
 - the C API function `pineappl_subgrid_new` has been replaced by a function
   with the similar name but different arguments
+- changed the output of the `pineappl` subcommand `channels`, `convolute` and
+  `pdf_uncertainty`. By default only the differential cross sections are shown
+  (integrated numbers divided by bin widths), but the flag `-i` or
+  `--integrated` can be given to switch to the integrated numbers, which are
+  not divided by bin widths.
+- slightly improved file sizes by introducing a type for empty subgrids:
+  `EmptySubgridV1`
+- vastly improved the output of the `plot` subcommand: bounding boxes are
+  properly calculated now, added support for higher-dimensional distributions
 
 ## [0.4.1] - 25/03/2021
 
