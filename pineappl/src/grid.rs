@@ -482,6 +482,98 @@ impl Grid {
         bins
     }
 
+    /// Convolutes a single subgrid `(order, bin, lumi)` with the PDFs strong coupling given by
+    /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
+    /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
+    /// values.
+    pub fn convolute_subgrid(
+        &self,
+        xfx1: &dyn Fn(i32, f64, f64) -> f64,
+        xfx2: &dyn Fn(i32, f64, f64) -> f64,
+        alphas: &dyn Fn(f64) -> f64,
+        order: usize,
+        bin: usize,
+        lumi: usize,
+        xir: f64,
+        xif: f64,
+    ) -> Array3<f64> {
+        let normalization = self.bin_info().normalizations()[bin];
+
+        let pdf_cache1 = RefCell::new(FxHashMap::default());
+        let pdf_cache2 = RefCell::new(FxHashMap::default());
+        let alphas_cache = RefCell::new(FxHashMap::default());
+
+        let subgrid = &self.subgrids[[order, bin, lumi]];
+        let order = &self.orders[order];
+
+        let mut array = if subgrid.is_empty() {
+            Array3::zeros((0, 0, 0))
+        } else {
+            let q2_grid = subgrid.q2_grid();
+            let x1_grid = subgrid.x1_grid();
+            let x2_grid = subgrid.x2_grid();
+
+            let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+            let two_caches = !ptr::eq(&xfx1, &xfx2);
+
+            let lumi_entry = &self.lumi[lumi];
+
+            if use_cache {
+                let mut array = Array3::zeros((q2_grid.len(), x1_grid.len(), x2_grid.len()));
+
+                for ((iq2, ix1, ix2), value) in subgrid.iter() {
+                    let mut pdf_cache1 = pdf_cache1.borrow_mut();
+                    let mut pdf_cache2 = pdf_cache2.borrow_mut();
+                    let x1 = x1_grid[ix1];
+                    let x2 = x2_grid[ix2];
+                    let q2 = q2_grid[iq2];
+                    let q2f = xif * xif * q2;
+
+                    let mut lumi = 0.0;
+
+                    for entry in lumi_entry.entry() {
+                        let xfx1 = *pdf_cache1
+                            .entry((entry.0, ix1, iq2))
+                            .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                        let xfx2 = if two_caches {
+                            *pdf_cache2
+                                .entry((entry.1, ix2, iq2))
+                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                        } else {
+                            *pdf_cache1
+                                .entry((entry.1, ix2, iq2))
+                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                        };
+                        lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                    }
+
+                    let mut alphas_cache = alphas_cache.borrow_mut();
+                    let alphas = alphas_cache
+                        .entry(iq2)
+                        .or_insert_with(|| alphas(xir * xir * q2));
+
+                    lumi *= alphas.powi(order.alphas.try_into().unwrap());
+                    array[[iq2, ix1, ix2]] = lumi * value;
+                }
+
+                array
+            } else {
+                todo!();
+            }
+        };
+
+        if order.logxir > 0 {
+            array *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+        }
+
+        if order.logxif > 0 {
+            array *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+        }
+
+        array /= normalization;
+        array
+    }
+
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
     ///
     /// # Panics
