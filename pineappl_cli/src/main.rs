@@ -219,6 +219,9 @@ fn main() -> Result<()> {
                 "LHAPDF id(s) or name of the PDF set(s)")
             (@arg scales: -s --scales default_value("7") possible_values(&["1", "3", "7", "9"])
                 "Set the number of scale variations")
+            (@arg subgrid_pull: conflicts_with("scales") long("subgrid-pull") number_of_values(3)
+                +use_delimiter value_names(&["order", "bin", "lumi"])
+                "Show the pull for a specific grid three-dimensionally")
         )
         (@subcommand pull =>
             (about: "Calculates the pull between two different PDF sets")
@@ -397,9 +400,21 @@ fn main() -> Result<()> {
     } else if let Some(matches) = matches.subcommand_matches("plot") {
         let input = matches.value_of("input").unwrap();
         let pdfset: Vec<_> = matches.values_of("pdfset").unwrap().collect();
-        let scales = matches.value_of("scales").unwrap().parse()?;
 
-        plot::subcommand(input, &pdfset, scales)?;
+        if matches.is_present("subgrid_pull") {
+            let diff: Vec<_> = matches.values_of("subgrid_pull").unwrap().collect();
+            let order = diff[0].parse()?;
+            let bin = diff[1].parse()?;
+            let lumi = diff[2].parse()?;
+            let pdfset1 = pdfset[0];
+            let pdfset2 = pdfset[1];
+
+            plot::subcommand_subgrid_pull(input, pdfset1, pdfset2, order, bin, lumi)?;
+        } else {
+            let scales = matches.value_of("scales").unwrap().parse()?;
+
+            plot::subcommand(input, &pdfset, scales)?;
+        }
     } else if let Some(matches) = matches.subcommand_matches("pull") {
         let input = matches.value_of("input").unwrap();
         let pdfset1 = matches.value_of("pdfset1").unwrap();
