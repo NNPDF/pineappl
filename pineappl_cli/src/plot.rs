@@ -3,6 +3,7 @@ use anyhow::Result;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::bin::BinInfo;
+use pineappl::subgrid::Subgrid;
 use rayon::prelude::*;
 use std::path::Path;
 
@@ -400,6 +401,164 @@ if __name__ == '__main__':
         pdf_results=format_pdf_results(pdf_uncertainties, pdfsets),
         metadata=format_metadata(metadata),
     );
+}
+
+pub fn subcommand_subgrid_pull(
+    input: &str,
+    pdfset1: &str,
+    pdfset2: &str,
+    order: usize,
+    bin: usize,
+    lumi: usize,
+) -> Result<()> {
+    let cl = 68.268949213708581;
+    let grid = helpers::read_grid(input)?;
+
+    let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
+        |_| pdfset1.to_string(),
+        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+    ));
+    let set2 = PdfSet::new(&pdfset2.parse().map_or_else(
+        |_| pdfset2.to_string(),
+        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+    ));
+    let pdfset1 = set1.mk_pdfs();
+    let pdfset2 = set2.mk_pdfs();
+
+    let values1: Vec<f64> = pdfset1
+        .par_iter()
+        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+        .collect();
+    let values2: Vec<f64> = pdfset2
+        .par_iter()
+        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+        .collect();
+
+    let uncertainty1 = set1.uncertainty(&values1, cl, false);
+    let uncertainty2 = set2.uncertainty(&values2, cl, false);
+
+    let full_res1 = {
+        let central: Vec<f64> = pdfset1
+            .iter()
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .collect();
+        set1.uncertainty(&central, cl, false).central
+    };
+    let full_res2 = {
+        let central: Vec<f64> = pdfset2
+            .iter()
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .collect();
+        set1.uncertainty(&central, cl, false).central
+    };
+
+    let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
+    let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
+
+    let denominator = {
+        // use the uncertainties in the direction in which the respective results differ
+        let unc1 = if full_res1 > full_res2 {
+            uncertainty1.errminus
+        } else {
+            uncertainty1.errplus
+        };
+        let unc2 = if full_res2 > full_res1 {
+            uncertainty2.errminus
+        } else {
+            uncertainty2.errplus
+        };
+
+        unc1.hypot(unc2)
+    };
+    let pull = (res2 - res1) / denominator;
+
+    let subgrid = grid.subgrid(order, bin, lumi);
+    //let q2 = subgrid.q2_grid();
+    let x1 = subgrid.x1_grid();
+    let x2 = subgrid.x2_grid();
+
+    let mut x1_vals = vec![];
+    let mut x2_vals = vec![];
+    let mut vals = vec![];
+
+    for ((_, ix1, ix2), value) in pull
+        .indexed_iter()
+        .filter(|((_, _, _), value)| **value != 0.0)
+    {
+        x1_vals.push(x1[ix1]);
+        x2_vals.push(x2[ix2]);
+        vals.push(*value);
+    }
+
+    println!(
+        "#!/usr/bin/env python3
+
+import matplotlib.pyplot as plt
+import numpy as np
+from math import fabs, log10
+from scipy.interpolate import griddata
+
+x1 = np.array([{}])
+x2 = np.array([{}])
+z = np.array([{}])
+x = 0.5 * np.log(x1 / x2)
+y = np.sqrt(x1 * x2)
+
+nrap = 50
+nmass = 50
+
+sym_min = -max(fabs(np.min(x)), fabs(np.max(x)))
+sym_max =  max(fabs(np.min(x)), fabs(np.max(x)))
+
+xi = np.linspace(sym_min, sym_max, (nrap // 2) * 2 + 1)
+yi = np.logspace(log10(np.min(y)), log10(np.max(y)), nmass)
+zi = griddata((x, y), z, (xi[None, :], yi[:, None]), method='linear', rescale=True)
+
+#print(xi.shape)
+#print(yi.shape)
+#print(zi.shape)
+
+# mask impossible kinematic values
+for iy, ix in np.ndindex(zi.shape):
+    #print(ix, iy)
+    x1v = yi[iy] * np.exp(xi[ix])
+    x2v = yi[iy] / np.exp(xi[ix])
+
+    #print('y = {{}} m/s = {{}} -> x1 = {{}} x2 = {{}}'.format(xi[ix], yi[iy], x1v, x2v))
+
+    if x1v > 1.0 or x2v > 1.0:
+        zi[iy, ix] = np.nan
+
+figure, axes = plt.subplots(1, 2, constrained_layout=True)
+figure.set_size_inches(10, 5)
+
+mesh = axes[0].pcolormesh(xi, yi, zi, shading='nearest', linewidth=0, snap=True)
+axes[0].scatter(x, y, marker='*', s=5)
+axes[0].set_yscale('log')
+axes[0].set_xlabel(r'$y = 1/2 \\log (x_1/x_2)$')
+axes[0].set_ylabel(r'$M/\\sqrt{{s}} = \\sqrt{{x_1 x_2}}$')
+#axes[0].set_aspect('equal', share=True)
+
+x1i = np.logspace(log10(np.min(x1)), log10(np.max(x1)), 50)
+x2i = np.logspace(log10(np.min(x2)), log10(np.max(x2)), 50)
+z12i = griddata((x1, x2), z, (x1i[None, :], x2i[:, None]), method='linear', rescale=True)
+
+mesh = axes[1].pcolormesh(x1i, x2i, z12i, shading='nearest', linewidth=0, snap=True)
+axes[1].set_xscale('log')
+axes[1].set_yscale('log')
+axes[1].scatter(x1, x2, marker='*', s=5)
+axes[1].set_aspect('equal', share=True)
+axes[1].set_xlabel(r'$x_1$')
+axes[1].set_ylabel(r'$x_2$')
+
+figure.colorbar(mesh, ax=axes, extend='min')
+figure.savefig('plot.pdf')",
+        map_format_e_join(&x1_vals),
+        map_format_e_join(&x2_vals),
+        map_format_e_join(&vals)
+    );
+
+    Ok(())
 }
 
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
