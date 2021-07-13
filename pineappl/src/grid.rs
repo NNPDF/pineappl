@@ -1236,13 +1236,7 @@ impl Grid {
 
         let mut result = Self {
             subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
-                ImportOnlySubgridV1::new(
-                    SparseArray3::new(1, tgt_x1_grid.len(), tgt_x2_grid.len()),
-                    tgt_q2_grid.clone(),
-                    tgt_x1_grid.clone(),
-                    tgt_x2_grid.clone(),
-                )
-                .into()
+                EmptySubgridV1::default().into()
             }),
             lumi: lumi.clone(),
             bin_limits: self.bin_limits.clone(),
