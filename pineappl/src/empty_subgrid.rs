@@ -28,15 +28,15 @@ impl Subgrid for EmptySubgridV1 {
     }
 
     fn q2_grid(&self) -> Cow<[f64]> {
-        unreachable!();
+        Cow::Borrowed(&[])
     }
 
     fn x1_grid(&self) -> Cow<[f64]> {
-        unreachable!();
+        Cow::Borrowed(&[])
     }
 
     fn x2_grid(&self) -> Cow<[f64]> {
-        unreachable!();
+        Cow::Borrowed(&[])
     }
 
     fn is_empty(&self) -> bool {

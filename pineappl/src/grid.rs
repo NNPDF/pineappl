@@ -1170,6 +1170,262 @@ impl Grid {
         Some(EkoInfo { x_grid, q2_grid })
     }
 
+    /// More efficient version of [`convolute_eko`].
+    #[must_use]
+    pub fn convolute_eko2(
+        &self,
+        q2: f64,
+        alphas: &[f64],
+        (xir, xif): (f64, f64),
+        pids: &[i32],
+        x_grid: Vec<f64>,
+        q2_grid: Vec<f64>,
+        operator: Array5<f64>,
+    ) -> Option<Self> {
+        let dim = operator.shape();
+
+        assert_eq!(dim[0], q2_grid.len());
+        assert_eq!(dim[1], pids.len());
+        assert_eq!(dim[2], x_grid.len());
+        assert_eq!(dim[3], pids.len());
+        assert_eq!(dim[4], x_grid.len());
+
+        let mut operator_new = Array5::zeros((dim[3], dim[1], dim[4], dim[0], dim[2]));
+        operator_new.assign(&operator.permuted_axes([3, 1, 4, 0, 2]));
+        let operator = operator_new;
+
+        let initial_state_1 = self.key_values().map_or(2212, |map| {
+            map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
+        });
+        let initial_state_2 = self.key_values().map_or(2212, |map| {
+            map.get("initial_state_2").unwrap().parse::<i32>().unwrap()
+        });
+
+        // TODO: determine the following by simply checking the x1 and x2 grid lengths
+        let has_pdf1 = match initial_state_1 {
+            2212 | -2212 => true,
+            11 | 13 | -11 | -13 => false,
+            _ => unimplemented!(),
+        };
+        let has_pdf2 = match initial_state_2 {
+            2212 | -2212 => true,
+            11 | 13 | -11 | -13 => false,
+            _ => unimplemented!(),
+        };
+
+        let pids1 = if has_pdf1 {
+            pids.to_vec()
+        } else {
+            vec![initial_state_1]
+        };
+        let pids2 = if has_pdf2 {
+            pids.to_vec()
+        } else {
+            vec![initial_state_2]
+        };
+
+        let lumi: Vec<_> = pids1
+            .iter()
+            .cartesian_product(pids2.iter())
+            .map(|(a, b)| lumi_entry![*a, *b, 1.0])
+            .collect();
+
+        let tgt_q2_grid = vec![q2];
+        let tgt_x1_grid = if has_pdf1 { x_grid.clone() } else { vec![1.0] };
+        let tgt_x2_grid = if has_pdf2 { x_grid.clone() } else { vec![1.0] };
+
+        let mut result = Self {
+            subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
+                ImportOnlySubgridV1::new(
+                    SparseArray3::new(1, tgt_x1_grid.len(), tgt_x2_grid.len()),
+                    tgt_q2_grid.clone(),
+                    tgt_x1_grid.clone(),
+                    tgt_x2_grid.clone(),
+                )
+                .into()
+            }),
+            lumi: lumi.clone(),
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order {
+                alphas: 0,
+                alpha: 0,
+                logxir: 0,
+                logxif: 0,
+            }],
+            subgrid_params: SubgridParams::default(),
+            more_members: self.more_members.clone(),
+        };
+
+        let eko_info = self.eko_info().unwrap();
+
+        // iterate over all bins, which are mapped one-to-one from the target to the source grid
+        for bin in 0..self.bin_info().bins() {
+            // iterate over the source grid luminosities
+            for (src_lumi, src_entries) in self.lumi.iter().enumerate() {
+                // create a sorted and unique vector with the `q2` for all orders
+                let mut src_array_q2_grid: Vec<f64> = (0..self.orders.len())
+                    .flat_map(|order| self.subgrids[[order, bin, src_lumi]].q2_grid().into_owned())
+                    .collect();
+                src_array_q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                src_array_q2_grid.dedup();
+                let src_array_q2_grid = src_array_q2_grid;
+
+                let mut src_array = SparseArray3::<f64>::new(
+                    src_array_q2_grid.len(),
+                    if has_pdf1 { eko_info.x_grid.len() } else { 1 },
+                    if has_pdf2 { eko_info.x_grid.len() } else { 1 },
+                );
+
+                // iterate over the source grid orders and add all of them together into
+                // `src_array`, using the right powers of alphas
+                for (order, powers) in self.orders.iter().enumerate() {
+                    let logs = if ((xir, xif) == (1.0, 1.0))
+                        && ((powers.logxir > 0) || (powers.logxif > 0))
+                    {
+                        continue;
+                    } else {
+                        (xir * xir).ln().powi(powers.logxir.try_into().unwrap())
+                            * (xif * xif).ln().powi(powers.logxif.try_into().unwrap())
+                    };
+
+                    let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
+                    for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
+                        let scale = src_subgrid.q2_grid()[iq2];
+                        let src_iq2 = src_array_q2_grid
+                            .iter()
+                            .position(|&q2| q2 == scale)
+                            .unwrap();
+                        let als_iq2 = q2_grid.iter().position(|&q2| q2 == scale).unwrap();
+
+                        // FIXME: evaluation of alphas is wrong if `xir != 1.0`
+                        src_array[[src_iq2, ix1, ix2]] +=
+                            alphas[als_iq2].powi(powers.alphas.try_into().unwrap()) * logs * value;
+                    }
+                }
+
+                let src_array = src_array;
+
+                if src_array.is_empty() {
+                    continue;
+                }
+
+                for (tgt_lumi, (tgt_pid1_idx, tgt_pid2_idx)) in (0..pids1.len())
+                    .cartesian_product(0..pids2.len())
+                    .enumerate()
+                {
+                    for (src_pid1, src_pid2, factor) in src_entries.entry().iter() {
+                        let src_pid1_idx = if has_pdf1 {
+                            pids.iter()
+                                .position(|x| {
+                                    // if `pid == 0` the gluon is meant
+                                    if *src_pid1 == 0 {
+                                        *x == 21
+                                    } else {
+                                        x == src_pid1
+                                    }
+                                })
+                                .unwrap()
+                        } else {
+                            0
+                        };
+                        let src_pid2_idx = if has_pdf2 {
+                            pids.iter()
+                                .position(|x| {
+                                    // `pid == 0` is the gluon exception, which might be 0 or 21
+                                    if *src_pid2 == 0 {
+                                        *x == 21
+                                    } else {
+                                        x == src_pid2
+                                    }
+                                })
+                                .unwrap()
+                        } else {
+                            0
+                        };
+
+                        let mut tgt_array =
+                            SparseArray3::new(1, tgt_x1_grid.len(), tgt_x2_grid.len());
+
+                        for (tgt_x1_idx, tgt_x2_idx) in
+                            (0..tgt_x1_grid.len()).cartesian_product(0..tgt_x2_grid.len())
+                        {
+                            for ((src_q2_idx, src_x1_idx, src_x2_idx), value) in
+                                src_array.indexed_iter()
+                            {
+                                let eko_src_q2_idx = q2_grid
+                                    .iter()
+                                    .position(|&q2| q2 == src_array_q2_grid[src_q2_idx])
+                                    .unwrap();
+
+                                let mut value = factor * value;
+
+                                if has_pdf1 {
+                                    value *= operator[[
+                                        tgt_pid1_idx,
+                                        src_pid1_idx,
+                                        tgt_x1_idx,
+                                        eko_src_q2_idx,
+                                        src_x1_idx,
+                                    ]];
+                                }
+
+                                if has_pdf2 {
+                                    value *= operator[[
+                                        tgt_pid2_idx,
+                                        src_pid2_idx,
+                                        tgt_x2_idx,
+                                        eko_src_q2_idx,
+                                        src_x2_idx,
+                                    ]];
+                                }
+
+                                // it's possible that at least one of the operators is zero
+                                if value == 0.0 {
+                                    continue;
+                                }
+
+                                tgt_array[[0, tgt_x1_idx, tgt_x2_idx]] = value;
+                            }
+                        }
+
+                        if !tgt_array.is_empty() {
+                            let mut tgt_subgrid = mem::replace(
+                                &mut result.subgrids[[0, bin, tgt_lumi]],
+                                EmptySubgridV1::default().into(),
+                            );
+
+                            let mut subgrid = match tgt_subgrid {
+                                SubgridEnum::EmptySubgridV1(_) => ImportOnlySubgridV1::new(
+                                    tgt_array,
+                                    tgt_q2_grid.clone(),
+                                    tgt_x1_grid.clone(),
+                                    tgt_x2_grid.clone(),
+                                )
+                                .into(),
+                                SubgridEnum::ImportOnlySubgridV1(ref mut array) => {
+                                    let array = array.array_mut();
+
+                                    for ((_, tgt_x1_idx, tgt_x2_idx), &value) in
+                                        tgt_array.indexed_iter()
+                                    {
+                                        array[[0, tgt_x1_idx, tgt_x2_idx]] += value;
+                                    }
+
+                                    tgt_subgrid
+                                }
+                                _ => unreachable!(),
+                            };
+
+                            mem::swap(&mut subgrid, &mut result.subgrids[[0, bin, tgt_lumi]]);
+                        }
+                    }
+                }
+            }
+        }
+
+        Some(result)
+    }
+
     /// Applies an evolution kernel operator (EKO) to the grids to evolve them from different
     /// values of the factorization scale to a single one given by the parameter `q2`.
     #[must_use]
