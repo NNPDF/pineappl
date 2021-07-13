@@ -1273,10 +1273,12 @@ impl Grid {
                 // iterate over the source grid orders and add all of them together into
                 // `src_array`, using the right powers of alphas
                 for (order, powers) in self.orders.iter().enumerate() {
-                    let logs = if ((xir, xif) == (1.0, 1.0))
-                        && ((powers.logxir > 0) || (powers.logxif > 0))
-                    {
-                        continue;
+                    let logs = if (xir, xif) == (1.0, 1.0) {
+                        if (powers.logxir > 0) || (powers.logxif > 0) {
+                            continue;
+                        } else {
+                            1.0
+                        }
                     } else {
                         (xir * xir).ln().powi(powers.logxir.try_into().unwrap())
                             * (xif * xif).ln().powi(powers.logxif.try_into().unwrap())
