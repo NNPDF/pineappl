@@ -1285,15 +1285,18 @@ impl Grid {
                     };
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
+
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
                         let scale = src_subgrid.q2_grid()[iq2];
                         let src_iq2 = src_array_q2_grid
                             .iter()
                             .position(|&q2| q2 == scale)
                             .unwrap();
-                        let als_iq2 = q2_grid.iter().position(|&q2| q2 == scale).unwrap();
+                        let als_iq2 = q2_grid
+                            .iter()
+                            .position(|&q2| q2 == xir * xir * scale)
+                            .unwrap();
 
-                        // FIXME: evaluation of alphas is wrong if `xir != 1.0`
                         src_array[[src_iq2, ix1, ix2]] +=
                             alphas[als_iq2].powi(powers.alphas.try_into().unwrap()) * logs * value;
                     }
