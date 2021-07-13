@@ -1384,7 +1384,7 @@ impl Grid {
                                     continue;
                                 }
 
-                                tgt_array[[0, tgt_x1_idx, tgt_x2_idx]] = value;
+                                tgt_array[[0, tgt_x1_idx, tgt_x2_idx]] += value;
                             }
                         }
 
