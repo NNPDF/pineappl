@@ -15,7 +15,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
-use ndarray::{Array3, Array5, Dimension};
+use ndarray::{s, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -1344,6 +1344,9 @@ impl Grid {
                         let mut tgt_array =
                             SparseArray3::new(1, tgt_x1_grid.len(), tgt_x2_grid.len());
 
+                        let op1 = operator.slice(s![tgt_pid1_idx, src_pid1_idx, .., .., ..]);
+                        let op2 = operator.slice(s![tgt_pid2_idx, src_pid2_idx, .., .., ..]);
+
                         for (tgt_x1_idx, tgt_x2_idx) in
                             (0..tgt_x1_grid.len()).cartesian_product(0..tgt_x2_grid.len())
                         {
@@ -1358,23 +1361,11 @@ impl Grid {
                                 let mut value = factor * value;
 
                                 if has_pdf1 {
-                                    value *= operator[[
-                                        tgt_pid1_idx,
-                                        src_pid1_idx,
-                                        tgt_x1_idx,
-                                        eko_src_q2_idx,
-                                        src_x1_idx,
-                                    ]];
+                                    value *= op1[[tgt_x1_idx, eko_src_q2_idx, src_x1_idx]];
                                 }
 
                                 if has_pdf2 {
-                                    value *= operator[[
-                                        tgt_pid2_idx,
-                                        src_pid2_idx,
-                                        tgt_x2_idx,
-                                        eko_src_q2_idx,
-                                        src_x2_idx,
-                                    ]];
+                                    value *= op2[[tgt_x2_idx, eko_src_q2_idx, src_x2_idx]];
                                 }
 
                                 // it's possible that at least one of the operators is zero
