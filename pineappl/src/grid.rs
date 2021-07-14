@@ -1190,9 +1190,8 @@ impl Grid {
         assert_eq!(dim[3], pids.len());
         assert_eq!(dim[4], x_grid.len());
 
-        let mut operator_new = Array5::zeros((dim[3], dim[1], dim[4], dim[0], dim[2]));
-        operator_new.assign(&operator.permuted_axes([3, 1, 4, 0, 2]));
-        let operator = operator_new;
+        let operator = operator.permuted_axes([3, 1, 4, 0, 2]);
+        let operator = operator.as_standard_layout();
 
         let initial_state_1 = self.key_values().map_or(2212, |map| {
             map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
