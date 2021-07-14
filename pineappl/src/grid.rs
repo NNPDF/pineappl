@@ -1251,6 +1251,13 @@ impl Grid {
 
         let eko_info = self.eko_info().unwrap();
 
+        let bar = ProgressBar::new(
+            (self.bin_info().bins() * self.lumi.len() * pids1.len() * pids2.len()) as u64,
+        );
+        bar.set_style(ProgressStyle::default_bar().template(
+            "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} - ETA: {eta_precise} {msg}",
+        ));
+
         // iterate over all bins, which are mapped one-to-one from the target to the source grid
         for bin in 0..self.bin_info().bins() {
             // iterate over the source grid luminosities
@@ -1304,6 +1311,7 @@ impl Grid {
                 let src_array = src_array;
 
                 if src_array.is_empty() {
+                    bar.inc((pids1.len() * pids2.len()) as u64);
                     continue;
                 }
 
@@ -1347,6 +1355,8 @@ impl Grid {
                         let op1 = operator.slice(s![tgt_pid1_idx, src_pid1_idx, .., .., ..]);
                         let op2 = operator.slice(s![tgt_pid2_idx, src_pid2_idx, .., .., ..]);
 
+                        // -- this is by far the slowest section, and has to be optimized
+
                         for (tgt_x1_idx, tgt_x2_idx) in
                             (0..tgt_x1_grid.len()).cartesian_product(0..tgt_x2_grid.len())
                         {
@@ -1376,6 +1386,8 @@ impl Grid {
                                 tgt_array[[0, tgt_x1_idx, tgt_x2_idx]] += value;
                             }
                         }
+
+                        // --
 
                         if !tgt_array.is_empty() {
                             let mut tgt_subgrid = mem::replace(
@@ -1408,9 +1420,13 @@ impl Grid {
                             mem::swap(&mut subgrid, &mut result.subgrids[[0, bin, tgt_lumi]]);
                         }
                     }
+
+                    bar.inc(1);
                 }
             }
         }
+
+        bar.finish();
 
         Some(result)
     }
