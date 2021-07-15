@@ -1151,6 +1151,9 @@ impl Grid {
                     q2_grid = subgrid.q2_grid().into_owned();
                     let x = subgrid.x1_grid().into_owned();
 
+                    // TODO: check that the grids are the same for the case of two pdfs (sorting, x
+                    // grid value points)
+
                     // if subgrid.x2_grid() != x {
                     // return None;
                     // }
@@ -1292,6 +1295,13 @@ impl Grid {
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
 
+                    // if the source x1 grid doesn't agree with `x_grid`, they're inverted
+                    let invert_x = !src_subgrid
+                        .x1_grid()
+                        .iter()
+                        .zip(x_grid.iter())
+                        .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128));
+
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
                         let scale = src_subgrid.q2_grid()[iq2];
                         let src_iq2 = src_array_q2_grid
@@ -1302,6 +1312,17 @@ impl Grid {
                             .iter()
                             .position(|&q2| q2 == xir * xir * scale)
                             .unwrap();
+
+                        let ix1 = if invert_x && has_pdf1 {
+                            eko_info.x_grid.len() - ix1 - 1
+                        } else {
+                            ix1
+                        };
+                        let ix2 = if invert_x && has_pdf2 {
+                            eko_info.x_grid.len() - ix2 - 1
+                        } else {
+                            ix2
+                        };
 
                         src_array[[src_iq2, ix1, ix2]] +=
                             alphas[als_iq2].powi(powers.alphas.try_into().unwrap()) * logs * value;
