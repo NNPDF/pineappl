@@ -1321,12 +1321,19 @@ impl Grid {
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
 
-                    // if the source x1 grid doesn't agree with `x_grid`, they're inverted
-                    let invert_x = !src_subgrid
-                        .x1_grid()
-                        .iter()
-                        .zip(x_grid.iter())
-                        .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128));
+                    // if the source x1/x2 grid doesn't agree with `x_grid`, they're inverted
+                    let invert_x = (has_pdf1
+                        && !src_subgrid
+                            .x1_grid()
+                            .iter()
+                            .zip(x_grid.iter())
+                            .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)))
+                        || (has_pdf2
+                            && !src_subgrid
+                                .x2_grid()
+                                .iter()
+                                .zip(x_grid.iter())
+                                .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)));
 
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
                         let scale = src_subgrid.q2_grid()[iq2];
