@@ -220,4 +220,8 @@ impl PyGrid {
     pub fn write(&self, path: &str) {
         self.grid.write(File::create(path).unwrap()).unwrap();
     }
+
+    pub fn optimize(&mut self) {
+        self.grid.optimize();
+    }
 }
