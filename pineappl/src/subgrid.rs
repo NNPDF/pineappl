@@ -5,7 +5,6 @@ use super::grid::Ntuple;
 use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::sparse_array3::SparseArray3;
 use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
@@ -78,9 +77,6 @@ pub trait Subgrid {
 
     /// Fill the q2-slice with index `q2_slice` into `grid`.
     fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
-
-    /// Export the subgrid as a [`SparseArray3`].
-    fn export(&self) -> Cow<SparseArray3<f64>>;
 
     /// Assumes that the initial states for this grid are the same and uses this to optimize the
     /// grid by getting rid of almost half of the entries.
