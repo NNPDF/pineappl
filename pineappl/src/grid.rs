@@ -1144,26 +1144,52 @@ impl Grid {
     pub fn eko_info(&self) -> Option<EkoInfo> {
         let mut q2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
+        let mut has_pdf1 = true;
+        let mut has_pdf2 = true;
 
         for subgrid in &self.subgrids {
             if !subgrid.is_empty() {
+                let x1 = subgrid.x1_grid();
+                let x2 = subgrid.x2_grid();
+
                 if q2_grid.is_empty() {
                     q2_grid = subgrid.q2_grid().into_owned();
-                    let x = subgrid.x1_grid().into_owned();
 
-                    // TODO: check that the grids are the same for the case of two pdfs (sorting, x
-                    // grid value points)
+                    // if the `x1` grid contains only one element, we assume that it's not a
+                    // hadronic initial state
+                    if x1.len() == 1 {
+                        has_pdf1 = false;
+                    } else {
+                        x_grid = x1.to_vec();
+                    }
 
-                    // if subgrid.x2_grid() != x {
-                    // return None;
-                    // }
+                    // same for `x2`
+                    if x2.len() == 1 {
+                        has_pdf2 = false;
+                    } else {
+                        x_grid = x2.to_vec();
+                    }
 
-                    x_grid = x;
+                    // why do we use PineAPPL if there aren't any hadrons in the initial state?
+                    assert!(!has_pdf1 && !has_pdf2);
+
+                    // for `convolute_eko` to work both grids have to be the same
+                    if has_pdf1 && has_pdf2 && x1 != x2 {
+                        return None;
+                    }
+                } else {
+                    // for `convolute_eko` to work in fact all subgrids must have the same `x1` ...
+                    if has_pdf1 && !x1.iter().eq(x_grid.iter()) {
+                        return None;
+                    }
+
+                    // and `x2` grids
+                    if has_pdf2 && !x2.iter().eq(x_grid.iter()) {
+                        return None;
+                    }
                 }
-                // } else if (subgrid.x1_grid() != x_grid) || (subgrid.x2_grid() != x_grid) {
-                // return None;
-                // }
 
+                // the `q2` grids (static vs. dynamic scales) can differ across bins/lumis
                 q2_grid.append(&mut subgrid.q2_grid().into_owned());
                 q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 q2_grid.dedup();
