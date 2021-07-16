@@ -1,6 +1,7 @@
 //! TODO
 
 use super::grid::Ntuple;
+use super::sparse_array3::SparseArray3;
 use super::subgrid::{Subgrid, SubgridEnum};
 use either::Either;
 use serde::{Deserialize, Serialize};
@@ -65,6 +66,10 @@ impl Subgrid for EmptySubgridV1 {
 
     fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
         Box::new(iter::empty())
+    }
+
+    fn export(&self) -> Cow<SparseArray3<f64>> {
+        unreachable!();
     }
 }
 

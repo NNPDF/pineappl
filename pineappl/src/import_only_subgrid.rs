@@ -187,6 +187,10 @@ impl Subgrid for ImportOnlySubgridV1 {
     fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
         Box::new(self.array.indexed_iter())
     }
+
+    fn export(&self) -> Cow<SparseArray3<f64>> {
+        Cow::Borrowed(&self.array)
+    }
 }
 
 impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
