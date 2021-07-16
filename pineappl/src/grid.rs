@@ -1203,8 +1203,8 @@ impl Grid {
                         x_grid = x2.to_vec();
                     }
 
-                    // why do we use PineAPPL if there aren't any hadrons in the initial state?
-                    assert!(!has_pdf1 && !has_pdf2);
+                    // PineAPPL assumes that there's at least one hadronic initial state
+                    assert!(has_pdf1 || has_pdf2);
 
                     // for `convolute_eko` to work both grids have to be the same
                     if has_pdf1 && has_pdf2 && x1 != x2 {
