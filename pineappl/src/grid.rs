@@ -1402,6 +1402,11 @@ impl Grid {
                     continue;
                 }
 
+                let eko_src_q2_indices: Vec<_> = src_array_q2_grid
+                    .iter()
+                    .map(|&src_q2| q2_grid.iter().position(|&q2| q2 == src_q2).unwrap())
+                    .collect();
+
                 for (tgt_lumi, (tgt_pid1_idx, tgt_pid2_idx)) in (0..pids1.len())
                     .cartesian_product(0..pids2.len())
                     .enumerate()
@@ -1450,12 +1455,8 @@ impl Grid {
                             for ((src_q2_idx, src_x1_idx, src_x2_idx), value) in
                                 src_array.indexed_iter()
                             {
-                                let eko_src_q2_idx = q2_grid
-                                    .iter()
-                                    .position(|&q2| q2 == src_array_q2_grid[src_q2_idx])
-                                    .unwrap();
-
                                 let mut value = factor * value;
+                                let eko_src_q2_idx = eko_src_q2_indices[src_q2_idx];
 
                                 if has_pdf1 {
                                     value *= op1[[tgt_x1_idx, eko_src_q2_idx, src_x1_idx]];
