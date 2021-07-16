@@ -353,10 +353,6 @@ impl Subgrid for LagrangeSubgridV1 {
         .into()
     }
 
-    fn export(&self) -> Cow<SparseArray3<f64>> {
-        todo!();
-    }
-
     fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
@@ -736,10 +732,6 @@ impl Subgrid for LagrangeSubgridV2 {
             },
         )
     }
-
-    fn export(&self) -> Cow<SparseArray3<f64>> {
-        todo!();
-    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -981,10 +973,6 @@ impl Subgrid for LagrangeSparseSubgridV1 {
 
     fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
         Box::new(self.array.indexed_iter())
-    }
-
-    fn export(&self) -> Cow<SparseArray3<f64>> {
-        Cow::Borrowed(&self.array)
     }
 }
 
