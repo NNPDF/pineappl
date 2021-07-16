@@ -12,7 +12,7 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
-use ndarray::{Array3, Dimension};
+use ndarray::{s, Array3, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -940,7 +940,8 @@ impl Grid {
             .key_values()
             .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
         {
-            self.symmetrize();
+            self.symmetrize_lumi();
+            self.optimize_lumi();
         }
 
         for subgrid in self.subgrids.iter_mut() {
@@ -967,7 +968,39 @@ impl Grid {
         }
     }
 
-    fn symmetrize(&mut self) {
+    fn optimize_lumi(&mut self) {
+        let mut keep_lumi_indices = vec![];
+        let mut new_lumi_entries = vec![];
+
+        for (lumi, entry) in self.lumi.iter().enumerate() {
+            let slice = self.subgrids.slice(s![.., .., lumi]);
+
+            if !slice.iter().all(|subgrid| subgrid.is_empty()) {
+                keep_lumi_indices.push(lumi);
+                new_lumi_entries.push(entry.clone());
+            }
+        }
+
+        let new_subgrids = Array3::from_shape_fn(
+            (
+                self.orders.len(),
+                self.bin_info().bins(),
+                keep_lumi_indices.len(),
+            ),
+            |(order, bin, new_lumi)| {
+                mem::replace(
+                    &mut self.subgrids[[order, bin, keep_lumi_indices[new_lumi]]],
+                    EmptySubgridV1::default().into(),
+                )
+            },
+        );
+
+        self.lumi = new_lumi_entries;
+        self.subgrids = new_subgrids;
+    }
+
+    // TODO: simplify the method, because `optimize_lumi` already removes empty entries
+    fn symmetrize_lumi(&mut self) {
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
         let mut pairs: Vec<(usize, usize)> = Vec::new();
         let mut not_symmetrized: Vec<usize> = Vec::new();
