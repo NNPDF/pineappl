@@ -8,7 +8,7 @@ use std::slice::{Iter, IterMut};
 
 /// Struct for a sparse three-dimensional array, which is optimized for the sparsity of
 /// interpolation grids.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct SparseArray3<T> {
     entries: Vec<T>,
     indices: Vec<(usize, usize)>,
