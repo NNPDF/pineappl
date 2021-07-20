@@ -372,6 +372,10 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Increase the number of entries of the x-axis by one by inserting zeros at `x`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn increase_x_at(&mut self, x: usize) {
         let dim1 = self.dimensions.1.min(self.dimensions.2);
         let nx = (self.indices.len() - 1) / dim1;

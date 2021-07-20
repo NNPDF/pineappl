@@ -651,6 +651,10 @@ impl Grid {
     }
 
     /// Merges the bins for the corresponding range together in a single one.
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), ()> {
         if (bins.start >= self.bin_limits.bins()) || (bins.end > self.bin_limits.bins()) {
             return Err(());

@@ -59,7 +59,7 @@ pub fn subcommand(
             .iter()
             .skip(bin)
             .step_by(bin_info.bins())
-            .cloned()
+            .copied()
             .collect();
         let uncertainty = set.uncertainty(&values, cl, false);
 
