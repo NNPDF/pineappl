@@ -40,7 +40,7 @@ class Grid(PyWrapper):
         )
         q2grid = list(operators["Q2grid"].keys())
         alphas_values = [alphas(q2) for q2 in q2grid]
-        return self.raw.convolute_eko2(
+        return self.raw.convolute_eko(
             operators["q2_ref"],
             alphas_values,
             operators["pids"],
