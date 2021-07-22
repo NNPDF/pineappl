@@ -99,24 +99,18 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn q2_grid() {
-        let subgrid = EmptySubgridV1::default();
-        subgrid.q2_grid();
+        assert!(EmptySubgridV1::default().q2_grid().is_empty());
     }
 
     #[test]
-    #[should_panic]
     fn x1_grid() {
-        let subgrid = EmptySubgridV1::default();
-        subgrid.x1_grid();
+        assert!(EmptySubgridV1::default().x1_grid().is_empty());
     }
 
     #[test]
-    #[should_panic]
     fn x2_grid() {
-        let subgrid = EmptySubgridV1::default();
-        subgrid.x2_grid();
+        assert!(EmptySubgridV1::default().x2_grid().is_empty());
     }
 
     #[test]
