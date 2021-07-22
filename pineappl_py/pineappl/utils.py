@@ -10,7 +10,3 @@ class PyWrapper:
             return self._raw.__getattribute__(name)
         else:
             raise AttributeError
-
-    # def __getattribute__(self, name):
-    # print(">>>", name)
-    # return super().__getattribute__(name)
