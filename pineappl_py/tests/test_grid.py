@@ -15,7 +15,7 @@ class TestGrid:
         orders = [pineappl.grid.Order(3, 0, 1, 0)]
         bin_limits = [1e-7, 1e-3, 1]
         subgrid_params = pineappl.subgrid.SubgridParams()
-        g = pineappl.grid.Grid(lumis, orders, bin_limits, subgrid_params)
+        g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
 
         assert isinstance(g, pineappl.grid.Grid)
         assert isinstance(g.raw, pineappl.pineappl.PyGrid)
