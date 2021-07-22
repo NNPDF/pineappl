@@ -1,4 +1,3 @@
-use lhapdf::Pdf;
 use pineappl::grid::{EkoInfo, Grid, Order};
 
 use super::bin::PyBinRemapper;
