@@ -1462,6 +1462,11 @@ impl Grid {
                                     value *= op1[[tgt_x1_idx, eko_src_q2_idx, src_x1_idx]];
                                 }
 
+                                // it's possible that at least one of the operators is zero
+                                if value == 0.0 {
+                                    continue;
+                                }
+
                                 if has_pdf2 {
                                     value *= op2[[tgt_x2_idx, eko_src_q2_idx, src_x2_idx]];
                                 }
