@@ -2,9 +2,9 @@
 members = [
     "pineappl",
     "pineappl_capi",
-    "pineappl_py",
     "pineappl_cli",
 ]
+exclude = ["pineappl_py"]
 
 [profile.release]
 lto = true
