@@ -212,6 +212,10 @@ impl BinRemapper {
     }
 
     /// Merges the bins for the corresponding range together in a single one.
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), ()> {
         if self
             .slices()

@@ -732,7 +732,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
         &slices,
         &slice_labels,
         &pdf_uncertainties,
-        &pdfsets,
+        pdfsets,
         &vector,
     );
 
