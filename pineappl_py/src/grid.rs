@@ -70,7 +70,13 @@ impl PyGrid {
     }
 
     pub fn lumi(&self) -> Vec<PyLumiEntry> {
-        self.grid.lumi().iter().map(|lumi_entry| { PyLumiEntry { lumi_entry: lumi_entry.clone() } }).collect()
+        self.grid
+            .lumi()
+            .iter()
+            .map(|lumi_entry| PyLumiEntry {
+                lumi_entry: lumi_entry.clone(),
+            })
+            .collect()
     }
 
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
