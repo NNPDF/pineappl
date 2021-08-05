@@ -950,9 +950,12 @@ impl Grid {
         let mut new_lumi_entries = vec![];
 
         for (lumi, entry) in self.lumi.iter().enumerate() {
-            let slice = self.subgrids.slice(s![.., .., lumi]);
-
-            if !slice.iter().all(|subgrid| subgrid.is_empty()) {
+            if !self
+                .subgrids
+                .slice(s![.., .., lumi])
+                .iter()
+                .all(|subgrid| subgrid.is_empty())
+            {
                 keep_lumi_indices.push(lumi);
                 new_lumi_entries.push(entry.clone());
             }
