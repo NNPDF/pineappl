@@ -377,7 +377,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         let nx = (self.indices.len() - 1) / dim1;
 
         if x <= self.start {
-            self.start += 1
+            self.start += 1;
         } else if x < self.start + nx {
             let at = (x - self.start) * dim1;
             let offset = self.indices[at].1;

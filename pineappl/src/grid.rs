@@ -478,6 +478,10 @@ impl Grid {
     /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
     /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
     /// values.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn convolute_subgrid(
         &self,
         xfx1: &dyn Fn(i32, f64, f64) -> f64,
