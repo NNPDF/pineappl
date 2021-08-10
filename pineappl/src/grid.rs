@@ -105,14 +105,6 @@ pub struct Ntuple<W> {
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
 pub enum GridMergeError {
-    /// Returned when trying to merge two `Grid` objects with different bin limits and different
-    /// orders.
-    #[error("the merged grid has different orders")]
-    DifferentOrders,
-    /// Returned when trying to merge two `Grid` Objects with different bin limits and different
-    /// luminosity functions.
-    #[error("the merged grid has a different luminosity function")]
-    DifferentLumi,
     /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
     #[error(transparent)]
     DifferentBins(super::bin::MergeBinError),
@@ -707,76 +699,50 @@ impl Grid {
         Ok(())
     }
 
-    /// Merges the non-empty `Subgrid`s contained in `other` into `self`. This performs one of two
-    /// possible operations:
-    /// 1. If the bin limits of `self` and `other` are different and can be concatenated with each
-    ///    other the bins are merged. In this case both grids are assumed to have the same orders
-    ///    and the same luminosity functions. If this is not the case, an error is returned.
-    /// 2. If the bin limits of `self` and `other` are the same, the luminosity functions and
-    ///    perturbative orders of `self` and `other` may be different.
+    /// Merges the non-empty `Subgrid`s contained in `other` into `self`.
     ///
     /// # Errors
     ///
-    /// If in the first case describe above the perturbative orders or the luminosity function is
-    /// different an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
+    /// not be merged with `self` an error is returned.
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
-        if self.bin_limits == other.bin_limits {
-            let mut new_orders: Vec<Order> = Vec::new();
-            let mut new_entries: Vec<LumiEntry> = Vec::new();
+        let mut new_orders: Vec<Order> = Vec::new();
+        let mut new_bins = 0;
+        let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-            for ((i, _, k), _) in other
-                .subgrids
-                .indexed_iter_mut()
-                .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+        for ((i, _, k), _) in other
+            .subgrids
+            .indexed_iter_mut()
+            .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+        {
+            let other_order = &other.orders[i];
+            let other_entry = &other.lumi[k];
+
+            if !self
+                .orders
+                .iter()
+                .chain(new_orders.iter())
+                .any(|x| x == other_order)
             {
-                let other_order = &other.orders[i];
-                let other_entry = &other.lumi[k];
-
-                if !self
-                    .orders
-                    .iter()
-                    .chain(new_orders.iter())
-                    .any(|x| x == other_order)
-                {
-                    new_orders.push(other_order.clone());
-                }
-
-                if !self
-                    .lumi
-                    .iter()
-                    .chain(new_entries.iter())
-                    .any(|y| y == other_entry)
-                {
-                    new_entries.push(other_entry.clone());
-                }
+                new_orders.push(other_order.clone());
             }
 
-            if !new_orders.is_empty() || !new_entries.is_empty() {
-                self.increase_shape(&(new_orders.len(), 0, new_entries.len()));
+            if !self
+                .lumi
+                .iter()
+                .chain(new_entries.iter())
+                .any(|y| y == other_entry)
+            {
+                new_entries.push(other_entry.clone());
             }
+        }
 
-            self.orders.append(&mut new_orders);
-            self.lumi.append(&mut new_entries);
-        } else {
-            if !Order::equal_after_sort(&self.orders, &other.orders) {
-                return Err(GridMergeError::DifferentOrders);
-            }
-
-            if !LumiEntry::equal_after_sort(&self.lumi, &other.lumi) {
-                return Err(GridMergeError::DifferentLumi);
-            }
-
+        if self.bin_limits != other.bin_limits {
             if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
                 return Err(GridMergeError::DifferentBins(e));
             }
 
-            let new_bins = other.bin_limits.bins();
-
-            self.increase_shape(&(0, new_bins, 0));
+            new_bins = other.bin_limits.bins();
 
             // TODO: figure out a better strategy than removing the remapper
             match &mut self.more_members {
@@ -789,6 +755,13 @@ impl Grid {
                 }
             }
         }
+
+        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
+            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
+        }
+
+        self.orders.append(&mut new_orders);
+        self.lumi.append(&mut new_entries);
 
         for ((i, j, k), subgrid) in other
             .subgrids
