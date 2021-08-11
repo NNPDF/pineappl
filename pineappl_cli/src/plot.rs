@@ -201,7 +201,7 @@ def plot_rel_pdfunc(axis, **kwargs):
         axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
         axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
 
-    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    axis.legend(fontsize='xx-small', frameon=False, ncol=2) #rel_pdfunc
     axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
 
     this_ylim = ylimits(axis)
@@ -260,7 +260,7 @@ def plot_rel_pdfpull(axis, **kwargs):
         #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\\ pull', linewidth=0.5, step='post', zorder=2 * index)
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
 
-    axis.legend(fontsize='xx-small', frameon=False, ncol=2)
+    axis.legend(fontsize='xx-small', frameon=False, ncol=2) #rel_pdfpull
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
