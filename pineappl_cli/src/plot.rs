@@ -155,7 +155,7 @@ def plot_abs(axis, **kwargs):
     axis.set_ylabel(ylabel)
 
     if slice_label != '':
-        axis.legend(fontsize='xx-small', frameon=False)
+        axis.legend(fontsize='xx-small')
 
 def plot_rel_ewonoff(axis, **kwargs):
     x = kwargs['x']
@@ -179,7 +179,7 @@ def plot_rel_ewonoff(axis, **kwargs):
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\\ scale var.', linewidth=0.5, step='post')
     axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
     axis.set_ylabel('NLO EW on/off [\\si{{\\percent}}]')
-    axis.legend(fontsize='xx-small', frameon=False)
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4, fontsize='x-small', frameon=False, borderpad=0)
 
 def plot_rel_pdfunc(axis, **kwargs):
     x = kwargs['x']
@@ -201,7 +201,7 @@ def plot_rel_pdfunc(axis, **kwargs):
         axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
         axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
 
-    axis.legend(fontsize='xx-small', frameon=False, ncol=2) #rel_pdfunc
+    #axis.legend(fontsize='xx-small') #rel_pdfunc
     axis.set_ylabel('PDF uncertainty [\\si{{\\percent}}]')
 
     this_ylim = ylimits(axis)
@@ -260,7 +260,7 @@ def plot_rel_pdfpull(axis, **kwargs):
         #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\\ pull', linewidth=0.5, step='post', zorder=2 * index)
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
 
-    axis.legend(fontsize='xx-small', frameon=False, ncol=2) #rel_pdfpull
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
     axis.set_ylabel('Pull [$\\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
