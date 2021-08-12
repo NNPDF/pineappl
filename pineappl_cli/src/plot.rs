@@ -155,7 +155,7 @@ def plot_abs(axis, **kwargs):
     axis.set_ylabel(ylabel)
 
     if slice_label != '':
-        axis.legend(fontsize='xx-small')
+        axis.legend(fontsize='xx-small', frameon=False)
 
 def plot_rel_ewonoff(axis, **kwargs):
     x = kwargs['x']
