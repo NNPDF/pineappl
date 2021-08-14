@@ -60,7 +60,7 @@ impl Subgrid for ImportOnlySubgridV1 {
     }
 
     fn fill(&mut self, _: &Ntuple<f64>) {
-        panic!("this grid doesn't support the fill operation");
+        panic!("ImportOnlySubgridV1 doesn't support the fill operation");
     }
 
     fn q2_grid(&self) -> Cow<[f64]> {
@@ -239,5 +239,88 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
             x1_grid,
             x2_grid,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let mut array = SparseArray3::new(1, 10, 10);
+
+        // only use exactly representable numbers here so that we can avoid using approx_eq
+        array[[0, 1, 2]] = 1.0;
+        array[[0, 1, 3]] = 2.0;
+        array[[0, 4, 3]] = 4.0;
+        array[[0, 7, 1]] = 8.0;
+
+        let q2 = vec![0.0; 1];
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        let mut grid = ImportOnlySubgridV1::new(array, q2.clone(), x.clone(), x.clone());
+
+        assert_eq!(grid.array_mut()[[0, 1, 2]], 1.0);
+        assert_eq!(grid.array_mut()[[0, 1, 3]], 2.0);
+        assert_eq!(grid.array_mut()[[0, 4, 3]], 4.0);
+        assert_eq!(grid.array_mut()[[0, 7, 1]], 8.0);
+
+        assert_eq!(grid.q2_grid().as_ref(), q2);
+        assert_eq!(grid.x1_grid().as_ref(), x);
+        assert_eq!(grid.x2_grid(), grid.x1_grid());
+
+        assert!(!grid.is_empty());
+
+        // symmetric luminosity function
+        let lumi = |ix1, ix2, _| x[ix1] * x[ix2];
+        let lumi = Either::Left(&lumi as &dyn Fn(usize, usize, usize) -> f64);
+
+        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 0.228515625);
+
+        // create grid with transposed entries
+        let mut other = grid.clone_empty();
+        if let SubgridEnum::ImportOnlySubgridV1(ref mut x) = other {
+            x.array_mut()[[0, 2, 1]] = 1.0;
+            x.array_mut()[[0, 3, 1]] = 2.0;
+            x.array_mut()[[0, 3, 4]] = 4.0;
+            x.array_mut()[[0, 1, 7]] = 8.0;
+        } else {
+            unreachable!();
+        }
+        assert_eq!(other.convolute(&x, &x, &q2, lumi), 0.228515625);
+        assert_eq!(
+            other
+                .iter()
+                .map(|((_, _, _), value)| *value)
+                .collect::<Vec<_>>(),
+            [8.0, 1.0, 2.0, 4.0]
+        );
+
+        grid.merge(&mut other, false);
+        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 2.0 * 0.228515625);
+
+        // the luminosity function is symmetric, so after symmetrization the result must be
+        // unchanged
+        grid.symmetrize();
+        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 2.0 * 0.228515625);
+
+        grid.scale(2.0);
+        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 4.0 * 0.228515625);
+    }
+
+    #[test]
+    #[should_panic(expected = "ImportOnlySubgridV1 doesn't support the fill operation")]
+    fn fill() {
+        let mut grid =
+            ImportOnlySubgridV1::new(SparseArray3::new(1, 1, 1), vec![1.0], vec![1.0], vec![1.0]);
+
+        grid.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 1.0,
+        });
     }
 }

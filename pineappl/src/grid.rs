@@ -1354,4 +1354,45 @@ mod tests {
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
+
+    // TODO: convolute_subgrid, merge_bins, subgrid, set_subgrid
+
+    #[test]
+    fn grid_key_value() {
+        let mut grid = Grid::new(
+            vec![lumi_entry![21, 21, 1.0]],
+            vec![Order {
+                alphas: 0,
+                alpha: 0,
+                logxir: 0,
+                logxif: 0,
+            }],
+            vec![0.0, 1.0],
+            SubgridParams::default(),
+        );
+
+        assert_eq!(
+            grid.key_values().unwrap().get("initial_state_1").unwrap(),
+            "2212"
+        );
+
+        grid.key_values_mut()
+            .insert("initial_state_1".into(), "-2212".into());
+        grid.set_key_value("initial_state_2", "-2212");
+
+        assert_eq!(
+            grid.key_values()
+                .unwrap()
+                .get("initial_state_1".into())
+                .unwrap(),
+            "-2212"
+        );
+        assert_eq!(
+            grid.key_values()
+                .unwrap()
+                .get("initial_state_2".into())
+                .unwrap(),
+            "-2212"
+        );
+    }
 }
