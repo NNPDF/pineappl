@@ -73,18 +73,6 @@ impl Order {
             logxif,
         }
     }
-
-    /// Compares two vectors of `Order` for equality after sorting them.
-    #[must_use]
-    pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
-        let mut lhs = lhs.to_vec();
-        let mut rhs = rhs.to_vec();
-
-        lhs.sort();
-        rhs.sort();
-
-        lhs == rhs
-    }
 }
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
