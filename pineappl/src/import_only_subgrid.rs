@@ -36,9 +36,7 @@ impl ImportOnlySubgridV1 {
             x2_grid,
         }
     }
-}
 
-impl ImportOnlySubgridV1 {
     /// Return the array containing the numerical values of the grid.
     pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
         &mut self.array

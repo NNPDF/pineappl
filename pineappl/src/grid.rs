@@ -1122,15 +1122,8 @@ impl Grid {
     ///
     /// TODO
     pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.more_members.upgrade();
-
-        let key_value_db = match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
-            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
-        };
-
-        key_value_db.insert(key.to_owned(), value.to_owned());
+        self.key_values_mut()
+            .insert(key.to_owned(), value.to_owned());
     }
 }
 
