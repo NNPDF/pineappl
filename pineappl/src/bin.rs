@@ -379,7 +379,14 @@ impl BinLimits {
     }
 
     /// Merges the bins for the corresponding range together in a single one.
+    ///
+    /// # Panics
+    ///
+    /// When `bins` contains any indices that do not correspond to bins this method panics.
     pub fn merge_bins(&mut self, bins: Range<usize>) {
+        if bins.end > self.bins() {
+            panic!("invalid bin index");
+        }
         let mut new_limits = self.limits();
         new_limits.drain(bins.start + 1..bins.end);
         *self = Self::new(new_limits);
