@@ -38,6 +38,8 @@ fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
 }
 
 fn validate_pdfset(argument: &str) -> result::Result<(), String> {
+    let argument = argument.rsplit_once('=').map_or(argument, |(name, _)| name);
+
     if let Ok(lhaid) = argument.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
             return Ok(());
