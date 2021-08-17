@@ -372,18 +372,18 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Increase the number of entries of the x-axis by one by inserting zeros at `x`.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn increase_x_at(&mut self, x: usize) {
         let dim1 = self.dimensions.1.min(self.dimensions.2);
         let nx = (self.indices.len() - 1) / dim1;
 
         if x <= self.start {
-            self.start += 1
+            self.start += 1;
         } else if x < self.start + nx {
-            todo!();
+            let at = (x - self.start) * dim1;
+            let offset = self.indices[at].1;
+            let dim2 = self.dimensions.1.max(self.dimensions.2);
+            self.indices
+                .splice(at..at, iter::repeat((0, offset)).take(dim2));
         } else if x <= self.dimensions.0 {
             // nothing to do here
         } else {
@@ -842,74 +842,107 @@ mod tests {
     fn increase_at_x() {
         let mut array = SparseArray3::new(1, 50, 50);
 
-        array[[0, 2, 3]] = 1.0;
-        array[[0, 2, 4]] = 2.0;
-        array[[0, 2, 5]] = 3.0;
-        array[[0, 3, 0]] = 4.0;
+        array[[0, 0, 0]] = 1.0;
+        array[[0, 2, 3]] = 2.0;
+        array[[0, 2, 4]] = 3.0;
+        array[[0, 2, 5]] = 4.0;
+        array[[0, 3, 0]] = 5.0;
+        array[[0, 49, 49]] = 6.0;
 
         assert_eq!(array.dimensions(), (1, 50, 50));
-        assert_eq!(array[[0, 2, 3]], 1.0);
-        assert_eq!(array[[0, 2, 4]], 2.0);
-        assert_eq!(array[[0, 2, 5]], 3.0);
-        assert_eq!(array[[0, 3, 0]], 4.0);
+        assert_eq!(array[[0, 0, 0]], 1.0);
+        assert_eq!(array[[0, 2, 3]], 2.0);
+        assert_eq!(array[[0, 2, 4]], 3.0);
+        assert_eq!(array[[0, 2, 5]], 4.0);
+        assert_eq!(array[[0, 3, 0]], 5.0);
+        assert_eq!(array[[0, 49, 49]], 6.0);
 
+        // increase at the end
         array.increase_x_at(1);
 
         assert_eq!(array.dimensions(), (2, 50, 50));
-        assert_eq!(array[[0, 2, 3]], 1.0);
-        assert_eq!(array[[0, 2, 4]], 2.0);
-        assert_eq!(array[[0, 2, 5]], 3.0);
-        assert_eq!(array[[0, 3, 0]], 4.0);
+        assert_eq!(array[[0, 0, 0]], 1.0);
+        assert_eq!(array[[0, 2, 3]], 2.0);
+        assert_eq!(array[[0, 2, 4]], 3.0);
+        assert_eq!(array[[0, 2, 5]], 4.0);
+        assert_eq!(array[[0, 3, 0]], 5.0);
+        assert_eq!(array[[0, 49, 49]], 6.0);
 
-        array[[1, 5, 0]] = 5.0;
-        array[[1, 5, 5]] = 7.0;
-        array[[1, 6, 3]] = 8.0;
-        array[[1, 6, 0]] = 9.0;
+        array[[1, 5, 0]] = 7.0;
+        array[[1, 5, 5]] = 8.0;
+        array[[1, 6, 3]] = 9.0;
+        array[[1, 6, 0]] = 10.0;
 
-        assert_eq!(array[[0, 2, 3]], 1.0);
-        assert_eq!(array[[0, 2, 4]], 2.0);
-        assert_eq!(array[[0, 2, 5]], 3.0);
-        assert_eq!(array[[0, 3, 0]], 4.0);
-        assert_eq!(array[[1, 5, 0]], 5.0);
-        assert_eq!(array[[1, 5, 5]], 7.0);
-        assert_eq!(array[[1, 6, 3]], 8.0);
-        assert_eq!(array[[1, 6, 0]], 9.0);
+        assert_eq!(array[[0, 0, 0]], 1.0);
+        assert_eq!(array[[0, 2, 3]], 2.0);
+        assert_eq!(array[[0, 2, 4]], 3.0);
+        assert_eq!(array[[0, 2, 5]], 4.0);
+        assert_eq!(array[[0, 3, 0]], 5.0);
+        assert_eq!(array[[0, 49, 49]], 6.0);
+        assert_eq!(array[[1, 5, 0]], 7.0);
+        assert_eq!(array[[1, 5, 5]], 8.0);
+        assert_eq!(array[[1, 6, 3]], 9.0);
+        assert_eq!(array[[1, 6, 0]], 10.0);
 
+        // increase at the start
         array.increase_x_at(0);
 
         assert_eq!(array.dimensions(), (3, 50, 50));
-        assert_eq!(array[[1, 2, 3]], 1.0);
-        assert_eq!(array[[1, 2, 4]], 2.0);
-        assert_eq!(array[[1, 2, 5]], 3.0);
-        assert_eq!(array[[1, 3, 0]], 4.0);
-        assert_eq!(array[[2, 5, 0]], 5.0);
-        assert_eq!(array[[2, 5, 5]], 7.0);
-        assert_eq!(array[[2, 6, 3]], 8.0);
-        assert_eq!(array[[2, 6, 0]], 9.0);
+        assert_eq!(array[[1, 0, 0]], 1.0);
+        assert_eq!(array[[1, 2, 3]], 2.0);
+        assert_eq!(array[[1, 2, 4]], 3.0);
+        assert_eq!(array[[1, 2, 5]], 4.0);
+        assert_eq!(array[[1, 3, 0]], 5.0);
+        assert_eq!(array[[1, 49, 49]], 6.0);
+        assert_eq!(array[[2, 5, 0]], 7.0);
+        assert_eq!(array[[2, 5, 5]], 8.0);
+        assert_eq!(array[[2, 6, 3]], 9.0);
+        assert_eq!(array[[2, 6, 0]], 10.0);
 
+        // increase at the end
         array.increase_x_at(3);
 
         assert_eq!(array.dimensions(), (4, 50, 50));
-        assert_eq!(array[[1, 2, 3]], 1.0);
-        assert_eq!(array[[1, 2, 4]], 2.0);
-        assert_eq!(array[[1, 2, 5]], 3.0);
-        assert_eq!(array[[1, 3, 0]], 4.0);
-        assert_eq!(array[[2, 5, 0]], 5.0);
-        assert_eq!(array[[2, 5, 5]], 7.0);
-        assert_eq!(array[[2, 6, 3]], 8.0);
-        assert_eq!(array[[2, 6, 0]], 9.0);
+        assert_eq!(array[[1, 0, 0]], 1.0);
+        assert_eq!(array[[1, 2, 3]], 2.0);
+        assert_eq!(array[[1, 2, 4]], 3.0);
+        assert_eq!(array[[1, 2, 5]], 4.0);
+        assert_eq!(array[[1, 3, 0]], 5.0);
+        assert_eq!(array[[1, 49, 49]], 6.0);
+        assert_eq!(array[[2, 5, 0]], 7.0);
+        assert_eq!(array[[2, 5, 5]], 8.0);
+        assert_eq!(array[[2, 6, 3]], 9.0);
+        assert_eq!(array[[2, 6, 0]], 10.0);
 
+        // increase after the end
         array.increase_x_at(5);
 
         assert_eq!(array.dimensions(), (6, 50, 50));
-        assert_eq!(array[[1, 2, 3]], 1.0);
-        assert_eq!(array[[1, 2, 4]], 2.0);
-        assert_eq!(array[[1, 2, 5]], 3.0);
-        assert_eq!(array[[1, 3, 0]], 4.0);
-        assert_eq!(array[[2, 5, 0]], 5.0);
-        assert_eq!(array[[2, 5, 5]], 7.0);
-        assert_eq!(array[[2, 6, 3]], 8.0);
-        assert_eq!(array[[2, 6, 0]], 9.0);
+        assert_eq!(array[[1, 0, 0]], 1.0);
+        assert_eq!(array[[1, 2, 3]], 2.0);
+        assert_eq!(array[[1, 2, 4]], 3.0);
+        assert_eq!(array[[1, 2, 5]], 4.0);
+        assert_eq!(array[[1, 3, 0]], 5.0);
+        assert_eq!(array[[1, 49, 49]], 6.0);
+        assert_eq!(array[[2, 5, 0]], 7.0);
+        assert_eq!(array[[2, 5, 5]], 8.0);
+        assert_eq!(array[[2, 6, 3]], 9.0);
+        assert_eq!(array[[2, 6, 0]], 10.0);
+
+        // increase in the middle
+        array.increase_x_at(2);
+
+        assert_eq!(array.dimensions(), (7, 50, 50));
+        assert_eq!(array[[1, 0, 0]], 1.0);
+        assert_eq!(array[[1, 2, 3]], 2.0);
+        assert_eq!(array[[1, 2, 4]], 3.0);
+        assert_eq!(array[[1, 2, 5]], 4.0);
+        assert_eq!(array[[1, 3, 0]], 5.0);
+        assert_eq!(array[[1, 49, 49]], 6.0);
+        assert_eq!(array[[3, 5, 0]], 7.0);
+        assert_eq!(array[[3, 5, 5]], 8.0);
+        assert_eq!(array[[3, 6, 3]], 9.0);
+        assert_eq!(array[[3, 6, 0]], 10.0);
     }
 
     #[test]

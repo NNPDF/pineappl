@@ -379,7 +379,14 @@ impl BinLimits {
     }
 
     /// Merges the bins for the corresponding range together in a single one.
+    ///
+    /// # Panics
+    ///
+    /// When `bins` contains any indices that do not correspond to bins this method panics.
     pub fn merge_bins(&mut self, bins: Range<usize>) {
+        if bins.end > self.bins() {
+            panic!("invalid bin index");
+        }
         let mut new_limits = self.limits();
         new_limits.drain(bins.start + 1..bins.end);
         *self = Self::new(new_limits);
@@ -708,6 +715,27 @@ mod test {
     }
 
     #[test]
+    fn merge_bins() {
+        let mut limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
+        limits.merge_bins(0..4);
+
+        assert_eq!(limits.bins(), 1);
+        assert_eq!(limits.index(-1.0), None);
+        assert_eq!(limits.index(0.2), Some(0));
+        assert_eq!(limits.index(0.5), Some(0));
+        assert_eq!(limits.index(0.8), Some(0));
+        assert_eq!(limits.index(0.95), Some(0));
+        assert_eq!(limits.index(1.3), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid bin index")]
+    fn merge_bins_panic() {
+        let mut limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
+        limits.merge_bins(0..5);
+    }
+
+    #[test]
     fn bin_remapper() {
         let remapper = BinRemapper::new(
             vec![1.0; 4],
@@ -755,5 +783,32 @@ mod test {
             ]
         );
         assert_eq!(remapper.normalizations(), vec![1.0; 4]);
+    }
+
+    #[test]
+    fn bin_remapper_merge_bins() {
+        let mut remapper = BinRemapper::new(
+            vec![1.0; 4],
+            vec![(0.0, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0)],
+        )
+        .unwrap();
+
+        remapper.merge_bins(0..4).unwrap();
+        assert_eq!(remapper.bins(), 1);
+        assert_eq!(remapper.dimensions(), 1);
+        assert_eq!(remapper.limits(), [(0.0, 1.0)]);
+        assert_eq!(remapper.normalizations(), [4.0]);
+        assert_eq!(remapper.slices(), [(0, 1)]);
+    }
+
+    #[test]
+    #[ignore] // FIXME: there's a bug in the `slices` method
+    #[should_panic]
+    fn bin_remapper_merge_bins_panic() {
+        let mut remapper =
+            BinRemapper::new(vec![1.0; 3], vec![(0.0, 0.25), (0.5, 0.75), (0.75, 1.0)]).unwrap();
+
+        //assert_eq!(remapper.slices(), [(0, 1), (1, 3)]);
+        remapper.merge_bins(0..3).unwrap();
     }
 }

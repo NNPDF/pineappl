@@ -49,22 +49,6 @@ impl LumiEntry {
         Self { entry }
     }
 
-    /// Compares two vectors of `LumiEntry` for equality after sorting them.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    #[must_use]
-    pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
-        let mut lhs = lhs.to_vec();
-        let mut rhs = rhs.to_vec();
-
-        lhs.sort_by(|x, y| x.partial_cmp(y).unwrap());
-        rhs.sort_by(|x, y| x.partial_cmp(y).unwrap());
-
-        lhs == rhs
-    }
-
     /// Returns a tuple representation of this entry.
     ///
     /// # Examples

@@ -76,18 +76,6 @@ impl Order {
             logxif,
         }
     }
-
-    /// Compares two vectors of `Order` for equality after sorting them.
-    #[must_use]
-    pub fn equal_after_sort(lhs: &[Self], rhs: &[Self]) -> bool {
-        let mut lhs = lhs.to_vec();
-        let mut rhs = rhs.to_vec();
-
-        lhs.sort();
-        rhs.sort();
-
-        lhs == rhs
-    }
 }
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
@@ -108,14 +96,6 @@ pub struct Ntuple<W> {
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
 pub enum GridMergeError {
-    /// Returned when trying to merge two `Grid` objects with different bin limits and different
-    /// orders.
-    #[error("the merged grid has different orders")]
-    DifferentOrders,
-    /// Returned when trying to merge two `Grid` Objects with different bin limits and different
-    /// luminosity functions.
-    #[error("the merged grid has a different luminosity function")]
-    DifferentLumi,
     /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
     #[error(transparent)]
     DifferentBins(super::bin::MergeBinError),
@@ -498,6 +478,10 @@ impl Grid {
     /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
     /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
     /// values.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn convolute_subgrid(
         &self,
         xfx1: &dyn Fn(i32, f64, f64) -> f64,
@@ -719,76 +703,50 @@ impl Grid {
         Ok(())
     }
 
-    /// Merges the non-empty `Subgrid`s contained in `other` into `self`. This performs one of two
-    /// possible operations:
-    /// 1. If the bin limits of `self` and `other` are different and can be concatenated with each
-    ///    other the bins are merged. In this case both grids are assumed to have the same orders
-    ///    and the same luminosity functions. If this is not the case, an error is returned.
-    /// 2. If the bin limits of `self` and `other` are the same, the luminosity functions and
-    ///    perturbative orders of `self` and `other` may be different.
+    /// Merges the non-empty `Subgrid`s contained in `other` into `self`.
     ///
     /// # Errors
     ///
-    /// If in the first case describe above the perturbative orders or the luminosity function is
-    /// different an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
+    /// not be merged with `self` an error is returned.
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
-        if self.bin_limits == other.bin_limits {
-            let mut new_orders: Vec<Order> = Vec::new();
-            let mut new_entries: Vec<LumiEntry> = Vec::new();
+        let mut new_orders: Vec<Order> = Vec::new();
+        let mut new_bins = 0;
+        let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-            for ((i, _, k), _) in other
-                .subgrids
-                .indexed_iter_mut()
-                .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+        for ((i, _, k), _) in other
+            .subgrids
+            .indexed_iter_mut()
+            .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
+        {
+            let other_order = &other.orders[i];
+            let other_entry = &other.lumi[k];
+
+            if !self
+                .orders
+                .iter()
+                .chain(new_orders.iter())
+                .any(|x| x == other_order)
             {
-                let other_order = &other.orders[i];
-                let other_entry = &other.lumi[k];
-
-                if !self
-                    .orders
-                    .iter()
-                    .chain(new_orders.iter())
-                    .any(|x| x == other_order)
-                {
-                    new_orders.push(other_order.clone());
-                }
-
-                if !self
-                    .lumi
-                    .iter()
-                    .chain(new_entries.iter())
-                    .any(|y| y == other_entry)
-                {
-                    new_entries.push(other_entry.clone());
-                }
+                new_orders.push(other_order.clone());
             }
 
-            if !new_orders.is_empty() || !new_entries.is_empty() {
-                self.increase_shape(&(new_orders.len(), 0, new_entries.len()));
+            if !self
+                .lumi
+                .iter()
+                .chain(new_entries.iter())
+                .any(|y| y == other_entry)
+            {
+                new_entries.push(other_entry.clone());
             }
+        }
 
-            self.orders.append(&mut new_orders);
-            self.lumi.append(&mut new_entries);
-        } else {
-            if !Order::equal_after_sort(&self.orders, &other.orders) {
-                return Err(GridMergeError::DifferentOrders);
-            }
-
-            if !LumiEntry::equal_after_sort(&self.lumi, &other.lumi) {
-                return Err(GridMergeError::DifferentLumi);
-            }
-
+        if self.bin_limits != other.bin_limits {
             if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
                 return Err(GridMergeError::DifferentBins(e));
             }
 
-            let new_bins = other.bin_limits.bins();
-
-            self.increase_shape(&(0, new_bins, 0));
+            new_bins = other.bin_limits.bins();
 
             // TODO: figure out a better strategy than removing the remapper
             match &mut self.more_members {
@@ -801,6 +759,13 @@ impl Grid {
                 }
             }
         }
+
+        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
+            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
+        }
+
+        self.orders.append(&mut new_orders);
+        self.lumi.append(&mut new_entries);
 
         for ((i, j, k), subgrid) in other
             .subgrids
@@ -989,9 +954,12 @@ impl Grid {
         let mut new_lumi_entries = vec![];
 
         for (lumi, entry) in self.lumi.iter().enumerate() {
-            let slice = self.subgrids.slice(s![.., .., lumi]);
-
-            if !slice.iter().all(|subgrid| subgrid.is_empty()) {
+            if !self
+                .subgrids
+                .slice(s![.., .., lumi])
+                .iter()
+                .all(|subgrid| subgrid.is_empty())
+            {
                 keep_lumi_indices.push(lumi);
                 new_lumi_entries.push(entry.clone());
             }
@@ -1166,15 +1134,8 @@ impl Grid {
     ///
     /// TODO
     pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.more_members.upgrade();
-
-        let key_value_db = match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
-            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
-        };
-
-        key_value_db.insert(key.to_owned(), value.to_owned());
+        self.key_values_mut()
+            .insert(key.to_owned(), value.to_owned());
     }
 
     /// Provide information used to compute a suitable EKO for the current grid.
@@ -1756,5 +1717,46 @@ mod tests {
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
         assert_eq!(grid.orders().len(), 1);
+    }
+
+    // TODO: convolute_subgrid, merge_bins, subgrid, set_subgrid
+
+    #[test]
+    fn grid_key_value() {
+        let mut grid = Grid::new(
+            vec![lumi_entry![21, 21, 1.0]],
+            vec![Order {
+                alphas: 0,
+                alpha: 0,
+                logxir: 0,
+                logxif: 0,
+            }],
+            vec![0.0, 1.0],
+            SubgridParams::default(),
+        );
+
+        assert_eq!(
+            grid.key_values().unwrap().get("initial_state_1").unwrap(),
+            "2212"
+        );
+
+        grid.key_values_mut()
+            .insert("initial_state_1".into(), "-2212".into());
+        grid.set_key_value("initial_state_2", "-2212");
+
+        assert_eq!(
+            grid.key_values()
+                .unwrap()
+                .get("initial_state_1".into())
+                .unwrap(),
+            "-2212"
+        );
+        assert_eq!(
+            grid.key_values()
+                .unwrap()
+                .get("initial_state_2".into())
+                .unwrap(),
+            "-2212"
+        );
     }
 }
