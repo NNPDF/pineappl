@@ -30,15 +30,11 @@ int32_t convert_to_pdg_id(int id)
     }
 }
 
-pineappl_grid* convert_coeff_add_fix(
-    fastNLOCoeffAddFix* table,
+void create_lumi(
+    fastNLOCoeffAddBase* table,
     fastNLOPDFLinearCombinations const& comb,
-    std::size_t bins,
-    uint32_t alpha
+    pineappl_lumi* lumi
 ) {
-    std::vector<uint32_t> order_params = { static_cast <uint32_t> (table->GetNpow()), alpha, 0, 0 };
-
-    auto* lumi = pineappl_lumi_new();
     auto const& pdf = table->GetPDFCoeff();
 
     for (auto const& pdf_entries : pdf)
@@ -104,6 +100,18 @@ pineappl_grid* convert_coeff_add_fix(
                 factors.at(i).data());
         }
     }
+}
+
+pineappl_grid* convert_coeff_add_fix(
+    fastNLOCoeffAddFix* table,
+    fastNLOPDFLinearCombinations const& comb,
+    std::size_t bins,
+    uint32_t alpha
+) {
+    std::vector<uint32_t> order_params = { static_cast <uint32_t> (table->GetNpow()), alpha, 0, 0 };
+
+    auto* lumi = pineappl_lumi_new();
+    create_lumi(table, comb, lumi);
 
     std::vector<double> bin_limits(bins + 1);
     std::iota(bin_limits.begin(), bin_limits.end(), 0.0);
@@ -142,11 +150,6 @@ pineappl_grid* convert_coeff_add_fix(
 
         for (std::size_t subproc = 0; subproc != n_subproc; ++subproc)
         {
-            //if ((pdf[subproc][0].first != 0) || (pdf[subproc][0].second != 0))
-            //{
-            //    continue;
-            //}
-
             double const factor = table->GetNevt(obs, subproc);
 
             for (std::size_t j = 0; j != total_scalevars; ++j)
