@@ -36,7 +36,7 @@ pineappl_grid* convert_coeff_add_fix(
     std::size_t bins,
     uint32_t alpha
 ) {
-    std::vector<uint32_t> order_params = { table->GetNpow(), alpha, 0, 0 };
+    std::vector<uint32_t> order_params = { static_cast <uint32_t> (table->GetNpow()), alpha, 0, 0 };
 
     auto* lumi = pineappl_lumi_new();
     auto const& pdf = table->GetPDFCoeff();
@@ -75,7 +75,7 @@ pineappl_grid* convert_coeff_add_fix(
 
                 auto const& lumi = comb.CalcPDFLinearCombination(table, xfx1, xfx2, false);
 
-                assert( lumi.size() == table->GetNSubproc() );
+                assert( static_cast <int> (lumi.size()) == table->GetNSubproc() );
 
                 for (std::size_t i = 0; i != lumi.size(); ++i)
                 {
@@ -135,8 +135,6 @@ pineappl_grid* convert_coeff_add_fix(
 
     for (std::size_t obs = 0; obs != n_obs_bin; ++obs)
     {
-        std::size_t n_xmax = table->GetNxmax(obs);
-
         auto const& x1_values = table->GetXNodes1(obs);
 
         // TODO: is this the correct assumption?
@@ -185,7 +183,7 @@ pineappl_grid* convert_coeff_add_fix(
                     std::size_t ix1 = 0;
                     std::size_t ix2 = 0;
 
-                    for (std::size_t ix = 0; ix != static_cast <std::size_t> (table->GetNxmax(obs)); ++ix)
+                    for (int ix = 0; ix != table->GetNxmax(obs); ++ix)
                     {
                         assert( table->GetXIndex(obs, ix1, ix2) == ix );
 
