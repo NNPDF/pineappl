@@ -1,7 +1,47 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
 #![warn(missing_docs)]
 
-//! C-language interface for `PineAPPL`.
+//! The C-language interface for `PineAPPL`.
+//!
+//! The `PineAPPL` Application Programming Interface for the C language (CAPI) defines types and
+//! functions that allow one to use [`PineAPPL`] without having to write Rust code, and instead
+//! using
+//!
+//! * C or C++.
+//! * Fortran can be used as well, using the `iso_c_binding` module to wrap the CAPI's functions
+//!   (see the [Fortran example] in the repository).
+//!
+//! Note that the CAPI only defines a subset of functionality available in the Rust module, which
+//! is extended on an as-needed basis. If you happen to miss a function please open a new [issue]
+//! on the github page.
+//!
+//! [`PineAPPL`]: https://docs.rs/pineappl
+//! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
+//! [issue]: https://github.com/N3PDF/pineappl/issues
+//!
+//! # Using and linking the CAPI
+//!
+//! To use `PineAPPL`'s CAPI you have to include its header `pineappl_capi.h`. To successfully
+//! build your program, you should rely on [`pkgconf`] or [`pkg-conf`], as follows:
+//!
+//! ```shell
+//! pkg-config --cflags pineappl_capi
+//! pkg-config --libs pineappl_capi
+//! ```
+//!
+//! This will read PineAPPL's `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and linker
+//! flags (`--libs`). This procedure is supported by many build systems, such as
+//!
+//! * Autotools (using the `PKG_CHECK_MODULES` macro, see the [Autotools mythobuster] page for
+//!   correct usage)
+//! * CMake, using [`FindPkgConfig`], and
+//! * meson, using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
+//!
+//! [`pkgconf`]: https://github.com/pkgconf/pkgconf
+//! [`pkg-conf`]: https://www.freedesktop.org/wiki/Software/pkg-config
+//! [Autotools mythbuster]: https://autotools.io/pkgconfig/pkg_check_modules.html
+//! [`FindPkgConfig`]: https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
+//! [`dependency`]: https://mesonbuild.com/Reference-manual.html#dependency
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
