@@ -19,6 +19,8 @@ use std::io::{BufReader, BufWriter};
 use std::os::raw::{c_char, c_void};
 use std::slice;
 
+// TODO: make sure no `panic` calls leave functions marked as `extern "C"`
+
 unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraSubgridParams) {
     let mut subgrid_type = "LagrangeSubgrid".to_string();
     let mut subgrid_params = SubgridParams::default();
@@ -408,6 +410,10 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 /// The parameter `lumi` must point a valid luminosity function created by `pineappl_lumi_new`.
 /// `order_params` must be an array with a length of `4 * orders`, and `bin_limits` an array with
 /// length `bins + 1`. `key_vals` must be a valid `KeyVal` object created by `pineappl_keyval_new`.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new(
@@ -463,11 +469,15 @@ pub unsafe extern "C" fn pineappl_grid_new(
 /// # Safety
 ///
 /// The parameter `filename` must be a C string pointing to an existing grid file.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
-    let filename = CStr::from_ptr(filename).to_str().unwrap();
-    let reader = BufReader::new(File::open(filename).unwrap());
+    let filename = CStr::from_ptr(filename).to_string_lossy();
+    let reader = BufReader::new(File::open(filename.as_ref()).unwrap());
 
     Box::new(Grid::read(reader).unwrap())
 }
@@ -478,6 +488,10 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
 ///
 /// Both `grid` and `other` must be valid `Grid` objects created by either `pineappl_grid_new` or
 /// `pineappl_grid_read`. If `other` is a `NULL` pointer, this function does not do anything.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
     if let Some(other) = other {
@@ -534,6 +548,10 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameters `key` and `value` must be non-`NULL` and
 /// valid C strings.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid: *mut Grid,
@@ -541,8 +559,8 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     value: *const c_char,
 ) {
     (*grid).set_key_value(
-        CStr::from_ptr(key).to_str().unwrap(),
-        CStr::from_ptr(value).to_str().unwrap(),
+        CStr::from_ptr(key).to_string_lossy().as_ref(),
+        CStr::from_ptr(value).to_string_lossy().as_ref(),
     );
 }
 
@@ -555,6 +573,10 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The arrays `normalizations` and `limits` must be at least as
 /// long as the number of bins of the grid and `2 * dimensions * bins`, respectively.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_set_remapper(
     grid: *mut Grid,
@@ -585,10 +607,14 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The parameter `filename` must be a non-`NULL`, non-empty,
 /// and valid C string pointing to a non-existing, but writable file.
+///
+/// # Panics
+///
+/// TODO
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
-    let filename = CStr::from_ptr(filename).to_str().unwrap();
-    let writer = BufWriter::new(File::create(filename).unwrap());
+    let filename = CStr::from_ptr(filename).to_string_lossy();
+    let writer = BufWriter::new(File::create(filename.as_ref()).unwrap());
 
     (*grid).write(writer).unwrap();
 }
@@ -841,7 +867,7 @@ pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
-    (*key_vals).bools[CStr::from_ptr(key).to_str().unwrap()]
+    (*key_vals).bools[CStr::from_ptr(key).to_string_lossy().as_ref()]
 }
 
 /// Get the double-valued parameter with name `key` stored in `key_vals`.
@@ -856,7 +882,7 @@ pub unsafe extern "C" fn pineappl_keyval_double(
     key_vals: *const KeyVal,
     key: *const c_char,
 ) -> f64 {
-    (*key_vals).doubles[CStr::from_ptr(key).to_str().unwrap()]
+    (*key_vals).doubles[CStr::from_ptr(key).to_string_lossy().as_ref()]
 }
 
 /// Get the string-valued parameter with name `key` stored in `key_vals`.
@@ -868,7 +894,7 @@ pub unsafe extern "C" fn pineappl_keyval_double(
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
-    (*key_vals).ints[CStr::from_ptr(key).to_str().unwrap()]
+    (*key_vals).ints[CStr::from_ptr(key).to_string_lossy().as_ref()]
 }
 
 /// Get the int-valued parameter with name `key` stored in `key_vals`.
@@ -883,7 +909,7 @@ pub unsafe extern "C" fn pineappl_keyval_string(
     key_vals: *const KeyVal,
     key: *const c_char,
 ) -> *const c_char {
-    (*key_vals).strings[CStr::from_ptr(key).to_str().unwrap()].as_ptr()
+    (*key_vals).strings[CStr::from_ptr(key).to_string_lossy().as_ref()].as_ptr()
 }
 
 /// Return a pointer to newly-created `pineappl_keyval` object.
@@ -907,7 +933,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_bool(
 ) {
     (*key_vals)
         .bools
-        .insert(CStr::from_ptr(key).to_str().unwrap().to_string(), value);
+        .insert(CStr::from_ptr(key).to_string_lossy().into_owned(), value);
 }
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.
@@ -924,7 +950,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_double(
 ) {
     (*key_vals)
         .doubles
-        .insert(CStr::from_ptr(key).to_str().unwrap().to_string(), value);
+        .insert(CStr::from_ptr(key).to_string_lossy().into_owned(), value);
 }
 
 /// Set the int-valued parameter with name `key` to `value` in `key_vals`.
@@ -941,7 +967,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_int(
 ) {
     (*key_vals)
         .ints
-        .insert(CStr::from_ptr(key).to_str().unwrap().to_string(), value);
+        .insert(CStr::from_ptr(key).to_string_lossy().into_owned(), value);
 }
 
 /// Set the string-valued parameter with name `key` to `value` in `key_vals`.
@@ -957,7 +983,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_string(
     value: *const c_char,
 ) {
     (*key_vals).strings.insert(
-        CStr::from_ptr(key).to_str().unwrap().to_string(),
+        CStr::from_ptr(key).to_string_lossy().into_owned(),
         CString::from(CStr::from_ptr(value)),
     );
 }

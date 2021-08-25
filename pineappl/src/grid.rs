@@ -674,6 +674,10 @@ impl Grid {
     ///
     /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
     /// not be merged with `self` an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
