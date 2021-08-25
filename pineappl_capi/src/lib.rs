@@ -7,15 +7,16 @@
 //! functions that allow one to use [`PineAPPL`] without having to write Rust code, and instead
 //! using
 //!
-//! * C or C++.
-//! * Fortran can be used as well, using the `iso_c_binding` module to wrap the CAPI's functions
-//!   (see the [Fortran example] in the repository).
+//! * C or C++ (see the [C++ example] in the repository).
+//! * Fortran can be used as well, using the `iso_c_binding` module to wrap CAPI's functions (see
+//!   the [Fortran example] in the repository).
 //!
 //! Note that the CAPI only defines a subset of functionality available in the Rust module, which
 //! is extended on an as-needed basis. If you happen to miss a function please open a new [issue]
 //! on the github page.
 //!
 //! [`PineAPPL`]: https://docs.rs/pineappl
+//! [C++ example]: https://github.com/N3PDF/pineappl/tree/master/examples/cpp
 //! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
 //! [issue]: https://github.com/N3PDF/pineappl/issues
 //!
@@ -42,6 +43,19 @@
 //! [Autotools mythbuster]: https://autotools.io/pkgconfig/pkg_check_modules.html
 //! [`FindPkgConfig`]: https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
 //! [`dependency`]: https://mesonbuild.com/Reference-manual.html#dependency
+//!
+//! # Strings and other types
+//!
+//! All strings used in this library, denoted with the Rust type `*const c_char` or `*mut c_char`,
+//! which correspond to the C types `const char*` and `char*`, respectively, are assumed to be
+//! encoded using UTF-8, which Rust uses internally. The conversions are performed using
+//! [`CStr::to_string_lossy`], which you can consult for how the strings are converted.
+//!
+//! All other built-in types in Rust (`f64`, `usize`, `i32`, `u32`, ...) correspond to types in C
+//! as defined by the [translation tables] of cbindgen. If in doubt, consult the generated header
+//! `pineappl_capi.h`.
+//!
+//! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
