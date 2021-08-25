@@ -32,7 +32,7 @@
 //! This will read PineAPPL's `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and linker
 //! flags (`--libs`). This procedure is supported by many build systems, such as
 //!
-//! * Autotools (using the `PKG_CHECK_MODULES` macro, see the [Autotools mythobuster] page for
+//! * Autotools (using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster] page for
 //!   correct usage)
 //! * CMake, using [`FindPkgConfig`], and
 //! * meson, using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
@@ -831,7 +831,7 @@ pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
     );
 }
 
-/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_set_q2_slice`].
+/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_import_q2_slice`].
 ///
 /// # Safety
 ///
