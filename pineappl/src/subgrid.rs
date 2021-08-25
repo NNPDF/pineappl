@@ -5,7 +5,6 @@ use super::grid::Ntuple;
 use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -54,7 +53,7 @@ pub trait Subgrid {
         x1: &[f64],
         x2: &[f64],
         q2: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the

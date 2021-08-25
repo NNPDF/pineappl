@@ -4,7 +4,6 @@ use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Subgrid, SubgridEnum};
-use either::Either;
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -49,10 +48,8 @@ impl Subgrid for ImportOnlySubgridV1 {
         _: &[f64],
         _: &[f64],
         _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
-        let lumi = lumi.left().unwrap();
-
         self.array
             .indexed_iter()
             .map(|((iq2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, iq2))
@@ -275,7 +272,7 @@ mod tests {
 
         // symmetric luminosity function
         let lumi = |ix1, ix2, _| x[ix1] * x[ix2];
-        let lumi = Either::Left(&lumi as &dyn Fn(usize, usize, usize) -> f64);
+        let lumi = &lumi as &dyn Fn(usize, usize, usize) -> f64;
 
         assert_eq!(grid.convolute(&x, &x, &q2, lumi), 0.228515625);
 

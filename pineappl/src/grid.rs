@@ -7,7 +7,6 @@ use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, Lagran
 use super::lumi::LumiEntry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
-use either::Either::{Left, Right};
 use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
@@ -387,64 +386,42 @@ impl Grid {
                         pdf_cache2.borrow_mut().clear();
                     }
 
-                    subgrid.convolute(
-                        &x1_grid,
-                        &x2_grid,
-                        &q2_grid,
-                        Left(&|ix1, ix2, iq2| {
-                            let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                            let mut pdf_cache2 = pdf_cache2.borrow_mut();
-                            let x1 = x1_grid[ix1];
-                            let x2 = x2_grid[ix2];
-                            let q2 = q2_grid[iq2];
-                            let q2f = xif * xif * q2;
+                    subgrid.convolute(&x1_grid, &x2_grid, &q2_grid, &|ix1, ix2, iq2| {
+                        let mut pdf_cache1 = pdf_cache1.borrow_mut();
+                        let mut pdf_cache2 = pdf_cache2.borrow_mut();
+                        let x1 = x1_grid[ix1];
+                        let x2 = x2_grid[ix2];
+                        let q2 = q2_grid[iq2];
+                        let q2f = xif * xif * q2;
 
-                            let mut lumi = 0.0;
+                        let mut lumi = 0.0;
 
-                            for entry in lumi_entry.entry() {
-                                let xfx1 = *pdf_cache1
-                                    .entry((entry.0, ix1, iq2))
-                                    .or_insert_with(|| xfx1(entry.0, x1, q2f));
-                                let xfx2 = if two_caches {
-                                    *pdf_cache2
-                                        .entry((entry.1, ix2, iq2))
-                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
-                                } else {
-                                    *pdf_cache1
-                                        .entry((entry.1, ix2, iq2))
-                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
-                                };
-                                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                            }
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = *pdf_cache1
+                                .entry((entry.0, ix1, iq2))
+                                .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                            let xfx2 = if two_caches {
+                                *pdf_cache2
+                                    .entry((entry.1, ix2, iq2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                            } else {
+                                *pdf_cache1
+                                    .entry((entry.1, ix2, iq2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                            };
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
 
-                            let mut alphas_cache = alphas_cache.borrow_mut();
-                            let alphas = alphas_cache
-                                .entry(xir_values.len() * iq2 + xir_index)
-                                .or_insert_with(|| alphas(xir * xir * q2));
+                        let mut alphas_cache = alphas_cache.borrow_mut();
+                        let alphas = alphas_cache
+                            .entry(xir_values.len() * iq2 + xir_index)
+                            .or_insert_with(|| alphas(xir * xir * q2));
 
-                            lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                            lumi
-                        }),
-                    )
+                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
+                        lumi
+                    })
                 } else {
-                    subgrid.convolute(
-                        &x1_grid,
-                        &x2_grid,
-                        &q2_grid,
-                        Right(&|x1, x2, q2| {
-                            let mut lumi = 0.0;
-                            let q2f = xif * xif * q2;
-
-                            for entry in lumi_entry.entry() {
-                                let xfx1 = xfx1(entry.0, x1, q2f);
-                                let xfx2 = xfx2(entry.1, x2, q2f);
-                                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                            }
-
-                            lumi *= alphas(xir * xir * q2).powi(order.alphas.try_into().unwrap());
-                            lumi
-                        }),
-                    )
+                    todo!();
                 };
 
                 if order.logxir > 0 {

@@ -2,7 +2,6 @@
 
 use super::grid::Ntuple;
 use super::subgrid::{Subgrid, SubgridEnum};
-use either::Either;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ops::Range;
@@ -27,16 +26,9 @@ impl Subgrid for NtupleSubgridV1 {
         _: &[f64],
         _: &[f64],
         _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        _: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
-        let lumi = lumi.right().unwrap();
-        let mut result = 0.0;
-
-        for ntuple in &self.ntuples {
-            result += lumi(ntuple.x1, ntuple.x2, ntuple.q2) * ntuple.weight;
-        }
-
-        result
+        todo!();
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -95,57 +87,6 @@ impl Subgrid for NtupleSubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use either::Either::Right;
-
-    #[test]
-    fn test() {
-        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-        assert!(subgrid.is_empty());
-
-        subgrid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 0.5,
-            q2: 10.0,
-            weight: 1.0,
-        });
-        assert!(!subgrid.is_empty());
-
-        subgrid.fill(&Ntuple {
-            x1: 0.25,
-            x2: 0.75,
-            q2: 100.0,
-            weight: 3.0,
-        });
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            2.5 + 56.25
-        );
-
-        let mut other_subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        other_subgrid.fill(&Ntuple {
-            x1: 0.25,
-            x2: 0.5,
-            q2: 20.0,
-            weight: 2.0,
-        });
-        assert_eq!(
-            other_subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            5.0
-        );
-
-        subgrid.merge(&mut other_subgrid, false);
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            2.5 + 56.25 + 5.0
-        );
-
-        subgrid.scale(0.5);
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            1.25 + 28.125 + 2.5
-        );
-    }
 
     #[test]
     #[should_panic]

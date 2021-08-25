@@ -5,7 +5,6 @@ use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use arrayvec::ArrayVec;
-use either::Either;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -136,11 +135,9 @@ impl Subgrid for LagrangeSubgridV1 {
         x1: &[f64],
         x2: &[f64],
         _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
         self.grid.as_ref().map_or(0.0, |grid| {
-            let lumi = lumi.left().unwrap();
-
             grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
                     if sigma == 0.0 {
@@ -476,11 +473,9 @@ impl Subgrid for LagrangeSubgridV2 {
         x1: &[f64],
         x2: &[f64],
         _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
         self.grid.as_ref().map_or(0.0, |grid| {
-            let lumi = lumi.left().unwrap();
-
             grid.indexed_iter()
                 .map(|((q2, ix1, ix2), &sigma)| {
                     if sigma == 0.0 {
@@ -795,10 +790,8 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         x1: &[f64],
         x2: &[f64],
         _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
-        let lumi = lumi.left().unwrap();
-
         self.array
             .indexed_iter()
             .map(|((iq2, ix1, ix2), sigma)| {
@@ -1034,12 +1027,7 @@ mod tests {
         let x2 = grid.x2_grid();
         let q2 = grid.q2_grid();
 
-        let reference = grid.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
+        let reference = grid.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         let mut buffer = vec![0.0; x1.len() * x2.len()];
         let mut test = 0.0;
@@ -1090,23 +1078,13 @@ mod tests {
         let x2 = grid1.x2_grid().into_owned();
         let q2 = grid1.q2_grid().into_owned();
 
-        let reference = grid1.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
+        let reference = grid1.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         // merge filled grid into empty one
         grid2.merge(&mut grid1.into(), false);
         assert!(!grid2.is_empty());
 
-        let merged = grid2.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
+        let merged = grid2.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, reference, merged, ulps = 8));
 
@@ -1137,12 +1115,7 @@ mod tests {
 
         grid2.merge(&mut grid3.into(), false);
 
-        let merged = grid2.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
+        let merged = grid2.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, 2.0 * reference, merged, ulps = 8));
     }
@@ -1197,7 +1170,7 @@ mod tests {
         let x2 = grid.x2_grid();
         let q2 = grid.q2_grid();
 
-        let result = grid.convolute(&x1, &x2, &q2, Either::Left(&|_, _, _| 1.0));
+        let result = grid.convolute(&x1, &x2, &q2, &|_, _, _| 1.0);
 
         assert_eq!(result, 0.0);
     }
@@ -1255,18 +1228,8 @@ mod tests {
         let sparse = LagrangeSparseSubgridV1::from(&dense);
         assert!(!sparse.is_empty());
 
-        let reference = dense.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
-        let converted = sparse.convolute(
-            &x1,
-            &x2,
-            &q2,
-            Either::Left(&|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2])),
-        );
+        let reference = dense.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let converted = sparse.convolute(&x1, &x2, &q2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, reference, converted, ulps = 8));
     }
