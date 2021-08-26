@@ -36,12 +36,12 @@ pub trait Subgrid {
     /// return an empty `Vec`.
     fn q2_grid(&self) -> Cow<[f64]>;
 
-    /// Return a `Vec` of values of `x1`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
+    /// Return a slice of values of `x1`. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
     fn x1_grid(&self) -> Cow<[f64]>;
 
-    /// Return a `Vec` of values of `x2`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
+    /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
     /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
