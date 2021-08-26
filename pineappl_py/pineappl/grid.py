@@ -31,16 +31,16 @@ class Grid(PyWrapper):
     def set_remapper(self, remapper):
         self.raw.set_remapper(remapper.raw)
 
-    def convolute_eko(self, alphas, operators):
+    def convolute_eko(self, operators):
         operator_grid = np.array(
             [op["operators"] for op in operators["Q2grid"].values()]
         )
         q2grid = list(operators["Q2grid"].keys())
-        alphas_values = [alphas(q2) for q2 in q2grid]
+        alphas_values = [op["alphas"] for op in operators["Q2grid"].values()]
         return self.raw.convolute_eko(
             operators["q2_ref"],
             alphas_values,
-            operators["pids"],
+            operators["targetpids"],
             operators["interpolation_xgrid"],
             q2grid,
             operator_grid.flatten(),
