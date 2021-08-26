@@ -772,7 +772,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || self.subgrids[[0, 0, 0]].clone_empty(),
+            || EmptySubgridV1::default().into(),
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
