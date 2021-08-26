@@ -91,16 +91,28 @@ pub struct Ntuple<W> {
 
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
-pub enum GridMergeError {
+pub enum GridError {
     /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
     #[error(transparent)]
-    DifferentBins(super::bin::MergeBinError),
+    InvalidBinLimits(super::bin::MergeBinError),
+    /// Returned if the number of bins in the grid and in the remapper do not agree.
+    #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
+    BinNumberMismatch {
+        /// Number of bins in the grid.
+        grid_bins: usize,
+        /// Number of bins in the remapper.
+        remapper_bins: usize,
+    },
+    /// Returned when trying to construct a `Grid` using an unknown subgrid type.
+    #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
+    UnknownSubgridType(String),
+    /// Returned when failed to read a Grid.
+    #[error(transparent)]
+    ReadFailure(bincode::Error),
+    /// Returned when failed to write a Grid.
+    #[error(transparent)]
+    WriteFailure(bincode::Error),
 }
-
-/// Error returned when trying to construct a `Grid` using an unknown subgrid type.
-#[derive(Debug, Error)]
-#[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
-pub struct UnknownSubgrid(String);
 
 #[derive(Deserialize, Serialize)]
 struct Mmv1 {}
@@ -187,19 +199,6 @@ impl MoreMembers {
     }
 }
 
-/// Error type returned by `Grid::set_remapper`.
-#[derive(Debug, Error)]
-pub enum GridSetBinRemapperError {
-    /// Returned if the number of bins in the grid and in the remapper do not agree.
-    #[error("the number of bins in the remapper, {remapper_bins}, does not agree with the number of bins in the grid: {grid_bins}")]
-    BinMismatch {
-        /// Number of bins in the grid.
-        grid_bins: usize,
-        /// Number of bins in the remapper.
-        remapper_bins: usize,
-    },
-}
-
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
 #[derive(Deserialize, Serialize)]
@@ -253,7 +252,7 @@ impl Grid {
         subgrid_params: SubgridParams,
         extra: ExtraSubgridParams,
         subgrid_type: &str,
-    ) -> Result<Self, UnknownSubgrid> {
+    ) -> Result<Self, GridError> {
         let subgrid_template: SubgridEnum = match subgrid_type {
             "LagrangeSubgrid" | "LagrangeSubgridV2" => {
                 LagrangeSubgridV2::new(&subgrid_params, &extra).into()
@@ -261,7 +260,7 @@ impl Grid {
             "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
             "NtupleSubgrid" => NtupleSubgridV1::new().into(),
             "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
-            _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
+            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_string())),
         };
 
         Ok(Self {
@@ -678,7 +677,7 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
+    pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
@@ -712,7 +711,7 @@ impl Grid {
 
         if self.bin_limits != other.bin_limits {
             if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
-                return Err(GridMergeError::DifferentBins(e));
+                return Err(GridError::InvalidBinLimits(e));
             }
 
             new_bins = other.bin_limits.bins();
@@ -847,9 +846,9 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridSetBinRemapperError> {
+    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridError> {
         if remapper.bins() != self.bin_limits.bins() {
-            return Err(GridSetBinRemapperError::BinMismatch {
+            return Err(GridError::BinNumberMismatch {
                 grid_bins: self.bin_limits.bins(),
                 remapper_bins: remapper.bins(),
             });
@@ -1148,7 +1147,7 @@ mod tests {
             &subgrid_type,
         );
 
-        matches!(result, Err(UnknownSubgrid(x)) if x == subgrid_type);
+        matches!(result, Err(GridError::UnknownSubgridType(x)) if x == subgrid_type);
     }
 
     #[test]
