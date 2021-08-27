@@ -908,7 +908,8 @@ impl Grid {
                     }
                     SubgridEnum::EmptySubgridV1(_)
                     | SubgridEnum::LagrangeSparseSubgridV1(_)
-                    | SubgridEnum::ImportOnlySubgridV1(_) => {
+                    | SubgridEnum::ImportOnlySubgridV1(_)
+                    | SubgridEnum::ImportOnlySubgridV2(_) => {
                         // nothing to optimize here
                     }
                     SubgridEnum::NtupleSubgridV1(_) => todo!(),

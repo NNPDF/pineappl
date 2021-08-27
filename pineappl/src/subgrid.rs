@@ -2,7 +2,7 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
-use super::import_only_subgrid::ImportOnlySubgridV1;
+use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
 use enum_dispatch::enum_dispatch;
@@ -27,10 +27,13 @@ pub enum SubgridEnum {
     ImportOnlySubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
+    /// Same as [`ImportOnlySubgridV1`], but with support for different renormalization and
+    /// factorization scales choices.
+    ImportOnlySubgridV2,
 }
 
 /// Structure denoting renormalization and factorization scale values.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, Serialize)]
 pub struct Mu2 {
     /// The (squared) renormalization scale value.
     pub ren: f64,
