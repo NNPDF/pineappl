@@ -14,7 +14,7 @@ meson.override_dependency('fnlo-tk', declare_dependency(
     version : run_command(applgrid_config, '--version').stdout(),
 ))
 
-applgrid_dep = dependency('fnlo-tk', version : '=2.3.1')
+applgrid_dep = dependency('fnlo-tk', version : '>=2.3.1')
 pineappl_capi_dep = dependency('pineappl_capi', version : '>=0.3')
 lhapdf_dep = dependency('lhapdf')
 
