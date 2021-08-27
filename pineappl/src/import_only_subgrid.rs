@@ -3,7 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -47,12 +47,12 @@ impl Subgrid for ImportOnlySubgridV1 {
         &self,
         _: &[f64],
         _: &[f64],
-        _: &[f64],
+        _: &[Mu2],
         lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
         self.array
             .indexed_iter()
-            .map(|((iq2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, iq2))
+            .map(|((imu2, ix1, ix2), sigma)| sigma * lumi(ix1, ix2, imu2))
             .sum()
     }
 
@@ -60,8 +60,12 @@ impl Subgrid for ImportOnlySubgridV1 {
         panic!("ImportOnlySubgridV1 doesn't support the fill operation");
     }
 
-    fn q2_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&self.q2_grid)
+    fn mu2_grid(&self) -> Cow<[Mu2]> {
+        self.q2_grid
+            .iter()
+            .copied()
+            .map(|q2| Mu2 { ren: q2, fac: q2 })
+            .collect()
     }
 
     fn x1_grid(&self) -> Cow<[f64]> {
@@ -85,7 +89,7 @@ impl Subgrid for ImportOnlySubgridV1 {
                 assert!(self.x1_grid() == other_grid.x1_grid());
                 assert!(self.x2_grid() == other_grid.x2_grid());
 
-                if self.q2_grid() == other_grid.q2_grid() {
+                if self.mu2_grid() == other_grid.mu2_grid() {
                     if transpose {
                         for ((i, k, j), value) in other_grid.array.indexed_iter() {
                             self.array[[i, j, k]] += value;
@@ -96,7 +100,11 @@ impl Subgrid for ImportOnlySubgridV1 {
                         }
                     }
                 } else {
-                    for (other_index, q2) in other_grid.q2_grid().iter().enumerate() {
+                    for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
+                        // the following should always be the case
+                        assert_eq!(mu2.ren, mu2.fac);
+                        let q2 = &mu2.ren;
+
                         let index = match self
                             .q2_grid
                             .binary_search_by(|val| val.partial_cmp(q2).unwrap())
@@ -225,7 +233,7 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
         let q2_grid = if subgrid.static_q2 > 0.0 {
             vec![subgrid.static_q2]
         } else {
-            subgrid.q2_grid().into_owned()
+            subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect()
         };
         let x1_grid = subgrid.x1_grid().into_owned();
         let x2_grid = subgrid.x2_grid().into_owned();
@@ -253,18 +261,18 @@ mod tests {
         array[[0, 4, 3]] = 4.0;
         array[[0, 7, 1]] = 8.0;
 
-        let q2 = vec![0.0; 1];
+        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0 }];
         let x = vec![
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
         ];
-        let mut grid = ImportOnlySubgridV1::new(array, q2.clone(), x.clone(), x.clone());
+        let mut grid = ImportOnlySubgridV1::new(array, vec![0.0], x.clone(), x.clone());
 
         assert_eq!(grid.array_mut()[[0, 1, 2]], 1.0);
         assert_eq!(grid.array_mut()[[0, 1, 3]], 2.0);
         assert_eq!(grid.array_mut()[[0, 4, 3]], 4.0);
         assert_eq!(grid.array_mut()[[0, 7, 1]], 8.0);
 
-        assert_eq!(grid.q2_grid().as_ref(), q2);
+        assert_eq!(grid.mu2_grid().as_ref(), mu2);
         assert_eq!(grid.x1_grid().as_ref(), x);
         assert_eq!(grid.x2_grid(), grid.x1_grid());
 
@@ -274,7 +282,7 @@ mod tests {
         let lumi = |ix1, ix2, _| x[ix1] * x[ix2];
         let lumi = &lumi as &dyn Fn(usize, usize, usize) -> f64;
 
-        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 0.228515625);
+        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
         // create grid with transposed entries
         let mut other = grid.clone_empty();
@@ -286,7 +294,7 @@ mod tests {
         } else {
             unreachable!();
         }
-        assert_eq!(other.convolute(&x, &x, &q2, lumi), 0.228515625);
+        assert_eq!(other.convolute(&x, &x, &mu2, lumi), 0.228515625);
         assert_eq!(
             other
                 .iter()
@@ -296,15 +304,15 @@ mod tests {
         );
 
         grid.merge(&mut other, false);
-        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
         grid.symmetrize();
-        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         grid.scale(2.0);
-        assert_eq!(grid.convolute(&x, &x, &q2, lumi), 4.0 * 0.228515625);
+        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
     }
 
     #[test]

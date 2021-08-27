@@ -311,15 +311,15 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        let (mut q2_grid, mut x1_grid, mut x2_grid) = self
+        let (mut mu2_grid, mut x1_grid, mut x2_grid) = self
             .subgrids
             .iter()
             .find(|subgrid| !subgrid.is_empty())
             .map_or_else(
                 || (Cow::default(), Cow::default(), Cow::default()),
-                |grid| (grid.q2_grid(), grid.x1_grid(), grid.x2_grid()),
+                |grid| (grid.mu2_grid(), grid.x1_grid(), grid.x2_grid()),
             );
-        let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+        let use_cache = !mu2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
         let two_caches = !ptr::eq(&xfx1, &xfx2);
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
@@ -368,53 +368,53 @@ impl Grid {
                 let mut value = if subgrid.is_empty() {
                     0.0
                 } else if use_cache {
-                    let new_q2_grid = subgrid.q2_grid();
+                    let new_mu2_grid = subgrid.mu2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
-                    let q2_grid_changed = new_q2_grid != q2_grid;
+                    let mu2_grid_changed = new_mu2_grid != mu2_grid;
 
-                    if q2_grid_changed {
-                        q2_grid = new_q2_grid;
+                    if mu2_grid_changed {
+                        mu2_grid = new_mu2_grid;
                         alphas_cache.borrow_mut().clear();
                     }
 
-                    if q2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
+                    if mu2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
                         pdf_cache1.borrow_mut().clear();
                         pdf_cache2.borrow_mut().clear();
                     }
 
-                    subgrid.convolute(&x1_grid, &x2_grid, &q2_grid, &|ix1, ix2, iq2| {
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &|ix1, ix2, imu2| {
                         let mut pdf_cache1 = pdf_cache1.borrow_mut();
                         let mut pdf_cache2 = pdf_cache2.borrow_mut();
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
-                        let q2 = q2_grid[iq2];
-                        let q2f = xif * xif * q2;
+                        let mu2 = &mu2_grid[imu2];
+                        let muf2 = xif * xif * mu2.fac;
 
                         let mut lumi = 0.0;
 
                         for entry in lumi_entry.entry() {
                             let xfx1 = *pdf_cache1
-                                .entry((entry.0, ix1, iq2))
-                                .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                                .entry((entry.0, ix1, imu2))
+                                .or_insert_with(|| xfx1(entry.0, x1, muf2));
                             let xfx2 = if two_caches {
                                 *pdf_cache2
-                                    .entry((entry.1, ix2, iq2))
-                                    .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                    .entry((entry.1, ix2, imu2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, muf2))
                             } else {
                                 *pdf_cache1
-                                    .entry((entry.1, ix2, iq2))
-                                    .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                    .entry((entry.1, ix2, imu2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, muf2))
                             };
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
                         let mut alphas_cache = alphas_cache.borrow_mut();
                         let alphas = alphas_cache
-                            .entry(xir_values.len() * iq2 + xir_index)
-                            .or_insert_with(|| alphas(xir * xir * q2));
+                            .entry(xir_values.len() * imu2 + xir_index)
+                            .or_insert_with(|| alphas(xir * xir * mu2.ren));
 
                         lumi *= alphas.powi(order.alphas.try_into().unwrap());
                         lumi
@@ -469,51 +469,51 @@ impl Grid {
         let mut array = if subgrid.is_empty() {
             Array3::zeros((0, 0, 0))
         } else {
-            let q2_grid = subgrid.q2_grid();
+            let mu2_grid = subgrid.mu2_grid();
             let x1_grid = subgrid.x1_grid();
             let x2_grid = subgrid.x2_grid();
 
-            let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+            let use_cache = !mu2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
             let two_caches = !ptr::eq(&xfx1, &xfx2);
 
             let lumi_entry = &self.lumi[lumi];
 
             if use_cache {
-                let mut array = Array3::zeros((q2_grid.len(), x1_grid.len(), x2_grid.len()));
+                let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
-                for ((iq2, ix1, ix2), value) in subgrid.iter() {
+                for ((imu2, ix1, ix2), value) in subgrid.iter() {
                     let mut pdf_cache1 = pdf_cache1.borrow_mut();
                     let mut pdf_cache2 = pdf_cache2.borrow_mut();
                     let x1 = x1_grid[ix1];
                     let x2 = x2_grid[ix2];
-                    let q2 = q2_grid[iq2];
-                    let q2f = xif * xif * q2;
+                    let mu2 = &mu2_grid[imu2];
+                    let muf2 = xif * xif * mu2.fac;
 
                     let mut lumi = 0.0;
 
                     for entry in lumi_entry.entry() {
                         let xfx1 = *pdf_cache1
-                            .entry((entry.0, ix1, iq2))
-                            .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                            .entry((entry.0, ix1, imu2))
+                            .or_insert_with(|| xfx1(entry.0, x1, muf2));
                         let xfx2 = if two_caches {
                             *pdf_cache2
-                                .entry((entry.1, ix2, iq2))
-                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                .entry((entry.1, ix2, imu2))
+                                .or_insert_with(|| xfx2(entry.1, x2, muf2))
                         } else {
                             *pdf_cache1
-                                .entry((entry.1, ix2, iq2))
-                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                .entry((entry.1, ix2, imu2))
+                                .or_insert_with(|| xfx2(entry.1, x2, muf2))
                         };
                         lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                     }
 
                     let mut alphas_cache = alphas_cache.borrow_mut();
                     let alphas = alphas_cache
-                        .entry(iq2)
-                        .or_insert_with(|| alphas(xir * xir * q2));
+                        .entry(imu2)
+                        .or_insert_with(|| alphas(xir * xir * mu2.ren));
 
                     lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                    array[[iq2, ix1, ix2]] = lumi * value;
+                    array[[imu2, ix1, ix2]] = lumi * value;
                 }
 
                 array

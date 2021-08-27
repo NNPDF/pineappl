@@ -29,12 +29,22 @@ pub enum SubgridEnum {
     EmptySubgridV1,
 }
 
+/// Structure denoting renormalization and factorization scale values.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Mu2 {
+    /// The (squared) renormalization scale value.
+    pub ren: f64,
+    /// The (squared) factorization scale value.
+    pub fac: f64,
+}
+
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
-    fn q2_grid(&self) -> Cow<[f64]>;
+    /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
+    /// factorization values of the grid. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
+    fn mu2_grid(&self) -> Cow<[Mu2]>;
 
     /// Return a slice of values of `x1`. If the subgrid does not use a grid, this method should
     /// return an empty slice.
@@ -44,20 +54,19 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
-    /// in which case the `x1`, `x2` and `q2` values can be read from the given slices, or takes
-    /// the usual values `x1`, `x2`, and `q2`. If the method `x1_grid` and `x2_grid` return a
-    /// non-empty vector, this method must use the indexed luminosity function.
+    /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
+    /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
     fn convolute(
         &self,
         x1: &[f64],
         x2: &[f64],
-        q2: &[f64],
+        mu2: &[Mu2],
         lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
-    /// scale `q2`.
+    /// scale `q2`. Filling is currently only support where both renormalization and factorization
+    /// scale have the same value.
     fn fill(&mut self, ntuple: &Ntuple<f64>);
 
     /// Returns true if `fill` was never called for this grid.

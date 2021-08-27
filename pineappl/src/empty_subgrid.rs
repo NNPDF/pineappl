@@ -1,7 +1,7 @@
 //! TODO
 
 use super::grid::Ntuple;
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
@@ -16,7 +16,7 @@ impl Subgrid for EmptySubgridV1 {
         &self,
         _: &[f64],
         _: &[f64],
-        _: &[f64],
+        _: &[Mu2],
         _: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
         0.0
@@ -26,7 +26,7 @@ impl Subgrid for EmptySubgridV1 {
         unreachable!();
     }
 
-    fn q2_grid(&self) -> Cow<[f64]> {
+    fn mu2_grid(&self) -> Cow<[Mu2]> {
         unreachable!();
     }
 
@@ -98,7 +98,7 @@ mod tests {
     #[should_panic]
     fn q2_grid() {
         let subgrid = EmptySubgridV1::default();
-        subgrid.q2_grid();
+        subgrid.mu2_grid();
     }
 
     #[test]
