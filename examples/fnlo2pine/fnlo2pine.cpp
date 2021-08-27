@@ -161,14 +161,16 @@ pineappl_grid* convert_coeff_add_fix(
                 }
 
                 auto q2_values = table->GetScaleNodes(obs, j);
+                std::vector<double> mu2_values;
 
                 // the values are the unsquared q values, correct that
                 for (auto& value : q2_values)
                 {
-                    value *= value;
+                    mu2_values.push_back(value);
+                    mu2_values.push_back(value);
                 }
 
-                auto* subgrid = pineappl_subgrid_new(q2_values.size(), q2_values.data(),
+                auto* subgrid = pineappl_subgrid_new2(mu2_values.size() / 2, mu2_values.data(),
                     x1_values.size(), x1_values.data(), x2_values.size(), x2_values.data());
 
                 // TODO: figure out what the general case is supposed to be
@@ -178,7 +180,7 @@ pineappl_grid* convert_coeff_add_fix(
 
                 bool non_zero_subgrid = false;
 
-                for (std::size_t k = 0; k != total_scalenodes; ++k)
+                for (std::size_t mu2_slice = 0; mu2_slice != total_scalenodes; ++mu2_slice)
                 {
                     std::vector<double> slice(x1_values.size() * x2_values.size());
                     bool non_zero = false;
@@ -190,7 +192,7 @@ pineappl_grid* convert_coeff_add_fix(
                     {
                         assert( table->GetXIndex(obs, ix1, ix2) == ix );
 
-                        auto const value = table->GetSigmaTilde(obs, j, k, ix, subproc);
+                        auto const value = table->GetSigmaTilde(obs, j, mu2_slice, ix, subproc);
 
                         if (value != 0.0)
                         {
@@ -228,7 +230,7 @@ pineappl_grid* convert_coeff_add_fix(
                     if (non_zero)
                     {
                         non_zero_subgrid = true;
-                        pineappl_subgrid_import_q2_slice(subgrid, k, slice.data());
+                        pineappl_subgrid_import_mu2_slice(subgrid, mu2_slice, slice.data());
                     }
                 }
 

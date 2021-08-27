@@ -327,15 +327,16 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
         {
             auto const* igrid = grid.weightgrid(i, bin);
 
-            std::vector<double> q2_values(igrid->Ntau());
+            std::vector<double> mu2_values(2 * igrid->Ntau());
             std::vector<double> x1_values(igrid->Ny1());
             std::vector<double> x1_weights(igrid->Ny1());
             std::vector<double> x2_values(igrid->Ny2());
             std::vector<double> x2_weights(igrid->Ny2());
 
-            for (std::size_t i = 0; i != q2_values.size(); ++i)
+            for (std::size_t i = 0; i != mu2_values.size() / 2; ++i)
             {
-                q2_values[i] = appl::igrid::fQ2(igrid->gettau(i));
+                mu2_values[2 * i + 0] = appl::igrid::fQ2(igrid->gettau(i));
+                mu2_values[2 * i + 1] = appl::igrid::fQ2(igrid->gettau(i));
             }
 
             bool different_x_grids = false;
@@ -373,12 +374,12 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
                     continue;
                 }
 
-                auto* subgrid = pineappl_subgrid_new(q2_values.size(), q2_values.data(),
+                auto* subgrid = pineappl_subgrid_new2(mu2_values.size() / 2, mu2_values.data(),
                     x1_values.size(), x1_values.data(), x2_values.size(), x2_values.data());
 
                 bool non_zero_subgrid = false;
 
-                for (std::size_t itau = 0; itau != q2_values.size(); ++itau)
+                for (std::size_t itau = 0; itau != mu2_values.size() / 2; ++itau)
                 {
                     bool non_zero = false;
 
@@ -401,7 +402,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
                     if (non_zero)
                     {
                         non_zero_subgrid = true;
-                        pineappl_subgrid_import_q2_slice(subgrid, itau, slice.data());
+                        pineappl_subgrid_import_mu2_slice(subgrid, itau, slice.data());
                     }
                 }
 

@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   properly calculated now, added support for higher-dimensional distributions
 - changed the `plot` subcommand such that the legend is put in between panels,
   thereby producing less overlapping elements
+- replaced the C API functions `pineappl_subgrid_new` and
+  `pineappl_subgrid_import_q2_slice` with `pineappl_subgrid_new2` and
+  `pineappl_subgrid_import_mu2_slice`, respectively. The latter support
+  independent renormalization and factorization scales
 
 ## [0.4.1] - 25/03/2021
 
