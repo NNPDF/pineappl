@@ -13,6 +13,12 @@ extern "C" double xfx(int32_t pdg_id, double x, double q2, void* state)
     return static_cast <LHAPDF::PDF*> (state)->xfxQ2(pdg_id, x, q2);
 }
 
+extern "C" double xfx2(int32_t pdg_id, double x, double, void*)
+{
+    assert( pdg_id == 11 );
+    return x;
+}
+
 extern "C" double alphas(double q2, void* state)
 {
     return static_cast <LHAPDF::PDF*> (state)->alphasQ2(q2);
@@ -37,6 +43,11 @@ void create_lumi(
 ) {
     auto const& pdf = table->GetPDFCoeff();
 
+    // TODO: set this to the right value if there's only one PDF
+    int32_t const lepton_id = (table->GetNPDF() == 2) ? 0 : 11;
+
+    // if there's a (non-empty) PDF coefficient vector reconstruct the luminosity function; the
+    // advantage is that we preserve the order of the lumi entries in the PineAPPL grid
     for (auto const& pdf_entries : pdf)
     {
         std::vector<int32_t> combinations;
@@ -45,14 +56,23 @@ void create_lumi(
         for (auto const& entry : pdf_entries)
         {
             combinations.push_back(convert_to_pdg_id(entry.first));
-            combinations.push_back(convert_to_pdg_id(entry.second));
+
+            if (lepton_id == 0)
+            {
+                combinations.push_back(convert_to_pdg_id(entry.second));
+            }
+            else
+            {
+                combinations.push_back(11);
+            }
+
             factors.push_back(1.0);
         }
 
         pineappl_lumi_add(lumi, factors.size(), combinations.data(), factors.data());
     }
 
-    // if there is no luminosity definition, we have to become creative
+    // if there's an empty PDF coefficient vector, we reconstruct the lumi function
     if (pdf.empty())
     {
         std::vector<double> xfx1(13);
@@ -249,6 +269,239 @@ pineappl_grid* convert_coeff_add_fix(
     return pgrid;
 }
 
+pineappl_grid* convert_coeff_add_flex(
+    fastNLOCoeffAddFlex* table,
+    fastNLOPDFLinearCombinations const& comb,
+    fastNLO::EScaleFunctionalForm mur_ff,
+    fastNLO::EScaleFunctionalForm muf_ff,
+    std::size_t bins,
+    uint32_t alpha,
+    int ipub_units
+) {
+    std::vector<uint32_t> order_params = { static_cast <uint32_t> (table->GetNpow()), alpha, 0, 0 };
+
+    auto* lumi = pineappl_lumi_new();
+    create_lumi(table, comb, lumi);
+
+    std::vector<double> bin_limits(bins + 1);
+    std::iota(bin_limits.begin(), bin_limits.end(), 0.0);
+    auto* key_vals = pineappl_keyval_new();
+
+    // flexible grids always have a hadron in initial state 1 ...
+    pineappl_keyval_set_string(key_vals, "initial_state_1",
+        std::to_string(table->GetPDFPDG(0)).c_str());
+    // and something else at 2
+    pineappl_keyval_set_string(key_vals, "initial_state_2", "11");
+
+    auto* pgrid = pineappl_grid_new(lumi, 1, order_params.data(), bins, bin_limits.data(),
+        key_vals);
+    pineappl_keyval_delete(key_vals);
+    pineappl_lumi_delete(lumi);
+
+    std::size_t n_obs_bin = table->GetNObsBin();
+    std::size_t n_subproc = table->GetNSubproc();
+
+    auto const& sigma_tildes = table->GetSigmaTildes();
+
+    auto const rescale = std::pow(0.1, table->GetIXsectUnits() - ipub_units);
+
+    for (std::size_t obs = 0; obs != n_obs_bin; ++obs)
+    {
+        auto const& scale_nodes1 = table->GetScaleNodes1(obs);
+        auto const& scale_nodes2 = table->GetScaleNodes2(obs);
+        auto const& x1_values = table->GetXNodes1(obs);
+
+        std::vector<double> mur2_values;
+
+        switch (mur_ff)
+        {
+        case fastNLO::kScale1:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (std::size_t i = 0; i != scale_nodes2.size(); ++i)
+                {
+                    mur2_values.push_back(s1 * s1);
+                }
+            }
+            break;
+
+        case fastNLO::kScale2:
+            for (std::size_t i = 0; i != scale_nodes1.size(); ++i)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    mur2_values.push_back(s2 * s2);
+                }
+            }
+            break;
+
+        case fastNLO::kQuadraticSum:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    mur2_values.push_back(s1 * s1 + s2 * s2);
+                }
+            }
+            break;
+
+        case fastNLO::kQuadraticMean:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    mur2_values.push_back(0.5 * (s1 * s1 + s2 * s2));
+                }
+            }
+            break;
+
+        default:
+            // TODO: NYI
+            assert( false );
+        }
+
+        std::vector<double> muf2_values;
+
+        switch (muf_ff)
+        {
+        case fastNLO::kScale1:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (std::size_t i = 0; i != scale_nodes2.size(); ++i)
+                {
+                    muf2_values.push_back(s1 * s1);
+                }
+            }
+            break;
+
+        case fastNLO::kScale2:
+            for (std::size_t i = 0; i != scale_nodes1.size(); ++i)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    muf2_values.push_back(s2 * s2);
+                }
+            }
+            break;
+
+        case fastNLO::kQuadraticSum:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    muf2_values.push_back(s1 * s1 + s2 * s2);
+                }
+            }
+            break;
+
+        case fastNLO::kQuadraticMean:
+            for (auto const s1 : scale_nodes1)
+            {
+                for (auto const s2 : scale_nodes2)
+                {
+                    muf2_values.push_back(0.5 * (s1 * s1 + s2 * s2));
+                }
+            }
+            break;
+
+        default:
+            // TODO: NYI
+            assert( false );
+        }
+
+        std::vector<double> mu2_values;
+
+        for (std::size_t i = 0; i != scale_nodes1.size() * scale_nodes2.size(); ++i)
+        {
+            mu2_values.push_back(mur2_values.at(i));
+            mu2_values.push_back(muf2_values.at(i));
+        }
+
+        std::vector<double> x2_values{1.0};
+
+        for (std::size_t subproc = 0; subproc != n_subproc; ++subproc)
+        {
+            auto* subgrid = pineappl_subgrid_new2(mu2_values.size() / 2, mu2_values.data(),
+                x1_values.size(), x1_values.data(), x2_values.size(), x2_values.data());
+
+            auto const factor = rescale / table->GetNevt(obs, subproc);
+            bool non_zero_subgrid = false;
+
+            std::size_t mu2_slice = 0;
+
+            for (std::size_t is1 = 0; is1 != scale_nodes1.size(); ++is1)
+            {
+                for (std::size_t is2 = 0; is2 != scale_nodes2.size(); ++is2)
+                {
+                    std::vector<double> slice(x1_values.size());
+                    bool non_zero = false;
+                    auto const logmur2 = std::log(mu2_values.at(2 * mu2_slice + 0));
+                    auto const logmuf2 = std::log(mu2_values.at(2 * mu2_slice + 1));
+
+                    // flexible scale grids only allow one initial-state hadron
+                    for (std::size_t ix = 0; ix != sigma_tildes.at(0)->at(obs).size(); ++ix)
+                    {
+                        double value = sigma_tildes.at(0)->at(obs).at(ix).at(is1).at(is2)
+                            .at(subproc);
+
+                        if (table->GetNScaleDep() >= 5)
+                        {
+                            // mur
+                            value += logmur2 *
+                                sigma_tildes.at(1)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+                            // muf
+                            value += logmuf2 *
+                                sigma_tildes.at(2)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+
+                            if (table->GetNScaleDep() >= 6)
+                            {
+                                // mur mur
+                                value += logmur2 * logmur2 *
+                                    sigma_tildes.at(3)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+                            }
+
+                            if (table->GetNScaleDep() >= 7)
+                            {
+                                // muf muf
+                                value += logmuf2 * logmuf2 *
+                                    sigma_tildes.at(4)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+                                // mur muf
+                                value += logmur2 * logmuf2 *
+                                    sigma_tildes.at(5)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+                            }
+                        }
+
+                        if (value != 0.0)
+                        {
+                            non_zero = true;
+                            slice.at(ix) = value * factor * x1_values.at(ix);
+                        }
+                    }
+
+                    if (non_zero)
+                    {
+                        non_zero_subgrid = true;
+                        pineappl_subgrid_import_mu2_slice(subgrid, mu2_slice, slice.data());
+                    }
+
+                    ++mu2_slice;
+                }
+            }
+
+            if (non_zero_subgrid)
+            {
+                pineappl_grid_replace_and_delete(pgrid, subgrid, 0, obs, subproc);
+            }
+            else
+            {
+                pineappl_subgrid_delete(subgrid);
+            }
+        }
+    }
+
+    return pgrid;
+}
+
 int main(int argc, char* argv[])
 {
     if (argc != 3)
@@ -297,6 +550,8 @@ int main(int argc, char* argv[])
 
     std::vector<pineappl_grid*> grids;
 
+    std::size_t pdfs = 0;
+
     for (auto const id : ids)
     {
         auto coeff_table = file.GetCoeffTable(id);
@@ -306,6 +561,7 @@ int main(int argc, char* argv[])
 
         if (converted != nullptr)
         {
+            pdfs = converted->GetNPDF();
             grids.push_back(convert_coeff_add_fix(converted, file, bins, alpha));
         }
         else
@@ -314,8 +570,12 @@ int main(int argc, char* argv[])
 
             if (converted != nullptr)
             {
-                // TODO: NYI
-                assert( false );
+                pdfs = converted->GetNPDF();
+                auto const mur_ff = file.GetMuRFunctionalForm();
+                auto const muf_ff = file.GetMuFFunctionalForm();
+
+                grids.push_back(convert_coeff_add_flex(converted, file, mur_ff, muf_ff, bins, alpha,
+                    file.GetIpublunits()));
             }
             else
             {
@@ -355,7 +615,7 @@ int main(int argc, char* argv[])
     pineappl_grid_convolute(
         grids.at(0),
         xfx,
-        xfx,
+        pdfs == 2 ? xfx : xfx2,
         alphas,
         pdf.get(),
         nullptr,
