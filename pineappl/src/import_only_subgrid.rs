@@ -294,7 +294,7 @@ impl Subgrid for ImportOnlySubgridV2 {
     }
 
     fn fill(&mut self, _: &Ntuple<f64>) {
-        panic!("ImportOnlySubgridV1 doesn't support the fill operation");
+        panic!("ImportOnlySubgridV2 doesn't support the fill operation");
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
