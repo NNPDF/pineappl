@@ -90,17 +90,59 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn q2_slice() {
-        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
+    fn convolute() {
+        let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &|_, _, _| 0.0);
+    }
 
-        subgrid.q2_slice();
+    #[test]
+    #[should_panic]
+    fn q2_slice() {
+        let _ = NtupleSubgridV1::new().q2_slice();
     }
 
     #[test]
     #[should_panic]
     fn fill_q2_slice() {
-        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
+        NtupleSubgridV1::new().fill_q2_slice(0, &mut []);
+    }
 
-        subgrid.fill_q2_slice(0, &mut []);
+    #[test]
+    #[should_panic]
+    fn iter() {
+        let _ = NtupleSubgridV1::new().iter();
+    }
+
+    #[test]
+    fn test() {
+        let mut subgrid1: SubgridEnum = NtupleSubgridV1::new().into();
+
+        assert!(subgrid1.is_empty());
+
+        subgrid1.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 0.0,
+        });
+
+        assert!(!subgrid1.is_empty());
+
+        assert_eq!(subgrid1.mu2_grid().as_ref(), []);
+        assert_eq!(subgrid1.x1_grid().as_ref(), []);
+        assert_eq!(subgrid1.x2_grid().as_ref(), []);
+
+        subgrid1.symmetrize();
+        subgrid1.scale(2.0);
+
+        let mut subgrid2: SubgridEnum = subgrid1.clone_empty().into();
+
+        subgrid2.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 0.0,
+        });
+
+        subgrid2.merge(&mut subgrid1, false);
     }
 }

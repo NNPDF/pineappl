@@ -402,41 +402,57 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        let mut array = SparseArray3::new(1, 10, 10);
-
-        // only use exactly representable numbers here so that we can avoid using approx_eq
-        array[[0, 1, 2]] = 1.0;
-        array[[0, 1, 3]] = 2.0;
-        array[[0, 4, 3]] = 4.0;
-        array[[0, 7, 1]] = 8.0;
-
-        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0 }];
+    fn test_v1() {
         let x = vec![
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
         ];
-        let mut grid = ImportOnlySubgridV1::new(array, vec![0.0], x.clone(), x.clone());
+        let mut grid1: SubgridEnum = ImportOnlySubgridV1::new(
+            SparseArray3::new(1, 10, 10),
+            vec![0.0],
+            x.clone(),
+            x.clone(),
+        )
+        .into();
 
-        assert_eq!(grid.array_mut()[[0, 1, 2]], 1.0);
-        assert_eq!(grid.array_mut()[[0, 1, 3]], 2.0);
-        assert_eq!(grid.array_mut()[[0, 4, 3]], 4.0);
-        assert_eq!(grid.array_mut()[[0, 7, 1]], 8.0);
+        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0 }];
 
-        assert_eq!(grid.mu2_grid().as_ref(), mu2);
-        assert_eq!(grid.x1_grid().as_ref(), x);
-        assert_eq!(grid.x2_grid(), grid.x1_grid());
+        assert_eq!(grid1.mu2_grid().as_ref(), mu2);
+        assert_eq!(grid1.x1_grid().as_ref(), x);
+        assert_eq!(grid1.x2_grid(), grid1.x1_grid());
 
-        assert!(!grid.is_empty());
+        assert!(grid1.is_empty());
+
+        // only use exactly representable numbers here so that we can avoid using approx_eq
+        if let SubgridEnum::ImportOnlySubgridV1(ref mut x) = grid1 {
+            x.array_mut()[[0, 1, 2]] = 1.0;
+            x.array_mut()[[0, 1, 3]] = 2.0;
+            x.array_mut()[[0, 4, 3]] = 4.0;
+            x.array_mut()[[0, 7, 1]] = 8.0;
+        } else {
+            unreachable!();
+        }
+
+        assert!(!grid1.is_empty());
+
+        assert_eq!(grid1.iter().nth(0), Some(((0, 1, 2), &1.0)));
+        assert_eq!(grid1.iter().nth(1), Some(((0, 1, 3), &2.0)));
+        assert_eq!(grid1.iter().nth(2), Some(((0, 4, 3), &4.0)));
+        assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
 
         // symmetric luminosity function
-        let lumi = |ix1, ix2, _| x[ix1] * x[ix2];
-        let lumi = &lumi as &dyn Fn(usize, usize, usize) -> f64;
+        let lumi = &(|ix1, ix2, _| x[ix1] * x[ix2]) as &dyn Fn(usize, usize, usize) -> f64;
 
-        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 0.228515625);
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        // create grid with transposed entries
-        let mut other = grid.clone_empty();
-        if let SubgridEnum::ImportOnlySubgridV1(ref mut x) = other {
+        // create grid with transposed entries, but different q2
+        let mut grid2: SubgridEnum = ImportOnlySubgridV1::new(
+            SparseArray3::new(1, 10, 10),
+            vec![1.0],
+            x.clone(),
+            x.clone(),
+        )
+        .into();
+        if let SubgridEnum::ImportOnlySubgridV1(ref mut x) = grid2 {
             x.array_mut()[[0, 2, 1]] = 1.0;
             x.array_mut()[[0, 3, 1]] = 2.0;
             x.array_mut()[[0, 3, 4]] = 4.0;
@@ -444,32 +460,140 @@ mod tests {
         } else {
             unreachable!();
         }
-        assert_eq!(other.convolute(&x, &x, &mu2, lumi), 0.228515625);
-        assert_eq!(
-            other
-                .iter()
-                .map(|((_, _, _), value)| *value)
-                .collect::<Vec<_>>(),
-            [8.0, 1.0, 2.0, 4.0]
-        );
+        assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        grid.merge(&mut other, false);
-        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid2.iter().nth(0), Some(((0, 1, 7), &8.0)));
+        assert_eq!(grid2.iter().nth(1), Some(((0, 2, 1), &1.0)));
+        assert_eq!(grid2.iter().nth(2), Some(((0, 3, 1), &2.0)));
+        assert_eq!(grid2.iter().nth(3), Some(((0, 3, 4), &4.0)));
+
+        grid1.merge(&mut grid2, false);
+
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+
+        let mut grid1 = {
+            let mut g = grid1.clone_empty();
+            g.merge(&mut grid1, false);
+            g
+        };
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
-        grid.symmetrize();
-        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        grid1.symmetrize();
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
-        grid.scale(2.0);
-        assert_eq!(grid.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+        grid1.scale(2.0);
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+    }
+
+    #[test]
+    fn test_v2() {
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        let mut grid1: SubgridEnum = ImportOnlySubgridV2::new(
+            SparseArray3::new(1, 10, 10),
+            vec![Mu2 { ren: 0.0, fac: 0.0 }],
+            x.clone(),
+            x.clone(),
+        )
+        .into();
+
+        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0 }];
+
+        assert_eq!(grid1.mu2_grid().as_ref(), mu2);
+        assert_eq!(grid1.x1_grid().as_ref(), x);
+        assert_eq!(grid1.x2_grid(), grid1.x1_grid());
+
+        assert!(grid1.is_empty());
+
+        // only use exactly representable numbers here so that we can avoid using approx_eq
+        if let SubgridEnum::ImportOnlySubgridV2(ref mut x) = grid1 {
+            x.array_mut()[[0, 1, 2]] = 1.0;
+            x.array_mut()[[0, 1, 3]] = 2.0;
+            x.array_mut()[[0, 4, 3]] = 4.0;
+            x.array_mut()[[0, 7, 1]] = 8.0;
+        } else {
+            unreachable!();
+        }
+
+        assert!(!grid1.is_empty());
+
+        assert_eq!(grid1.iter().nth(0), Some(((0, 1, 2), &1.0)));
+        assert_eq!(grid1.iter().nth(1), Some(((0, 1, 3), &2.0)));
+        assert_eq!(grid1.iter().nth(2), Some(((0, 4, 3), &4.0)));
+        assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
+
+        // symmetric luminosity function
+        let lumi = &(|ix1, ix2, _| x[ix1] * x[ix2]) as &dyn Fn(usize, usize, usize) -> f64;
+
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
+
+        // create grid with transposed entries, but different q2
+        let mut grid2: SubgridEnum = ImportOnlySubgridV2::new(
+            SparseArray3::new(1, 10, 10),
+            vec![Mu2 { ren: 1.0, fac: 1.0 }],
+            x.clone(),
+            x.clone(),
+        )
+        .into();
+        if let SubgridEnum::ImportOnlySubgridV2(ref mut x) = grid2 {
+            x.array_mut()[[0, 2, 1]] = 1.0;
+            x.array_mut()[[0, 3, 1]] = 2.0;
+            x.array_mut()[[0, 3, 4]] = 4.0;
+            x.array_mut()[[0, 1, 7]] = 8.0;
+        } else {
+            unreachable!();
+        }
+        assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
+
+        assert_eq!(grid2.iter().nth(0), Some(((0, 1, 7), &8.0)));
+        assert_eq!(grid2.iter().nth(1), Some(((0, 2, 1), &1.0)));
+        assert_eq!(grid2.iter().nth(2), Some(((0, 3, 1), &2.0)));
+        assert_eq!(grid2.iter().nth(3), Some(((0, 3, 4), &4.0)));
+
+        grid1.merge(&mut grid2, false);
+
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+
+        let mut grid1 = {
+            let mut g = grid1.clone_empty();
+            g.merge(&mut grid1, false);
+            g
+        };
+
+        // the luminosity function is symmetric, so after symmetrization the result must be
+        // unchanged
+        grid1.symmetrize();
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+
+        grid1.scale(2.0);
+        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
     }
 
     #[test]
     #[should_panic(expected = "ImportOnlySubgridV1 doesn't support the fill operation")]
-    fn fill() {
+    fn fill_panic_v1() {
         let mut grid =
             ImportOnlySubgridV1::new(SparseArray3::new(1, 1, 1), vec![1.0], vec![1.0], vec![1.0]);
+
+        grid.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 1.0,
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "ImportOnlySubgridV2 doesn't support the fill operation")]
+    fn fill_panic_v2() {
+        let mut grid = ImportOnlySubgridV2::new(
+            SparseArray3::new(1, 1, 1),
+            vec![Mu2 { ren: 1.0, fac: 1.0 }],
+            vec![1.0],
+            vec![1.0],
+        );
 
         grid.fill(&Ntuple {
             x1: 0.0,
