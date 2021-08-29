@@ -89,42 +89,30 @@ impl Subgrid for ImportOnlySubgridV1 {
                 assert!(self.x1_grid() == other_grid.x1_grid());
                 assert!(self.x2_grid() == other_grid.x2_grid());
 
-                if self.mu2_grid() == other_grid.mu2_grid() {
-                    if transpose {
-                        for ((i, k, j), value) in other_grid.array.indexed_iter() {
-                            self.array[[i, j, k]] += value;
-                        }
-                    } else {
-                        for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                            self.array[[i, j, k]] += value;
-                        }
-                    }
-                } else {
-                    for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
-                        // the following should always be the case
-                        assert_eq!(mu2.ren, mu2.fac);
-                        let q2 = &mu2.ren;
+                for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
+                    // the following should always be the case
+                    assert_eq!(mu2.ren, mu2.fac);
+                    let q2 = &mu2.ren;
 
-                        let index = match self
-                            .q2_grid
-                            .binary_search_by(|val| val.partial_cmp(q2).unwrap())
-                        {
-                            Ok(index) => index,
-                            Err(index) => {
-                                self.q2_grid.insert(index, *q2);
-                                self.array.increase_x_at(index);
-                                index
-                            }
-                        };
-
-                        for ((_, j, k), value) in other_grid
-                            .array
-                            .indexed_iter()
-                            .filter(|&((i, _, _), _)| i == other_index)
-                        {
-                            let (j, k) = if transpose { (k, j) } else { (j, k) };
-                            self.array[[index, j, k]] += value;
+                    let index = match self
+                        .q2_grid
+                        .binary_search_by(|val| val.partial_cmp(q2).unwrap())
+                    {
+                        Ok(index) => index,
+                        Err(index) => {
+                            self.q2_grid.insert(index, *q2);
+                            self.array.increase_x_at(index);
+                            index
                         }
+                    };
+
+                    for ((_, j, k), value) in other_grid
+                        .array
+                        .indexed_iter()
+                        .filter(|&((i, _, _), _)| i == other_index)
+                    {
+                        let (j, k) = if transpose { (k, j) } else { (j, k) };
+                        self.array[[index, j, k]] += value;
                     }
                 }
             }
@@ -322,38 +310,26 @@ impl Subgrid for ImportOnlySubgridV2 {
                 assert!(self.x1_grid() == other_grid.x1_grid());
                 assert!(self.x2_grid() == other_grid.x2_grid());
 
-                if self.mu2_grid() == other_grid.mu2_grid() {
-                    if transpose {
-                        for ((i, k, j), value) in other_grid.array.indexed_iter() {
-                            self.array[[i, j, k]] += value;
+                for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
+                    let index = match self
+                        .mu2_grid
+                        .binary_search_by(|val| val.partial_cmp(mu2).unwrap())
+                    {
+                        Ok(index) => index,
+                        Err(index) => {
+                            self.mu2_grid.insert(index, mu2.clone());
+                            self.array.increase_x_at(index);
+                            index
                         }
-                    } else {
-                        for ((i, j, k), value) in other_grid.array.indexed_iter() {
-                            self.array[[i, j, k]] += value;
-                        }
-                    }
-                } else {
-                    for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
-                        let index = match self
-                            .mu2_grid
-                            .binary_search_by(|val| val.partial_cmp(mu2).unwrap())
-                        {
-                            Ok(index) => index,
-                            Err(index) => {
-                                self.mu2_grid.insert(index, mu2.clone());
-                                self.array.increase_x_at(index);
-                                index
-                            }
-                        };
+                    };
 
-                        for ((_, j, k), value) in other_grid
-                            .array
-                            .indexed_iter()
-                            .filter(|&((i, _, _), _)| i == other_index)
-                        {
-                            let (j, k) = if transpose { (k, j) } else { (j, k) };
-                            self.array[[index, j, k]] += value;
-                        }
+                    for ((_, j, k), value) in other_grid
+                        .array
+                        .indexed_iter()
+                        .filter(|&((i, _, _), _)| i == other_index)
+                    {
+                        let (j, k) = if transpose { (k, j) } else { (j, k) };
+                        self.array[[index, j, k]] += value;
                     }
                 }
             }
