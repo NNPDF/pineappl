@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
 use std::mem;
-use std::ops::Range;
 
 pub(crate) fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
@@ -292,33 +291,6 @@ impl Subgrid for LagrangeSubgridV1 {
             self.grid = None;
         } else if let Some(self_grid) = &mut self.grid {
             self_grid.iter_mut().for_each(|x| *x *= factor);
-        }
-    }
-
-    fn q2_slice(&self) -> Range<usize> {
-        self.itaumin..self.itaumax
-    }
-
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        if let Some(self_grid) = &self.grid {
-            let x1: Vec<_> = self
-                .x1_grid()
-                .iter()
-                .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
-                .collect();
-            let x2: Vec<_> = self
-                .x2_grid()
-                .iter()
-                .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
-                .collect();
-
-            grid.iter_mut().enumerate().for_each(|(index, value)| {
-                let ix1 = index / self.ny;
-                let ix2 = index % self.ny;
-                *value = self_grid[[q2_slice - self.itaumin, ix1, ix2]] * x1[ix1] * x2[ix2];
-            });
-        } else {
-            todo!();
         }
     }
 
@@ -660,33 +632,6 @@ impl Subgrid for LagrangeSubgridV2 {
         }
     }
 
-    fn q2_slice(&self) -> Range<usize> {
-        self.itaumin..self.itaumax
-    }
-
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        if let Some(self_grid) = &self.grid {
-            let x1: Vec<_> = self
-                .x1_grid()
-                .iter()
-                .map(|&x| if self.reweight1 { weightfun(x) } else { 1.0 } / x)
-                .collect();
-            let x2: Vec<_> = self
-                .x2_grid()
-                .iter()
-                .map(|&x| if self.reweight2 { weightfun(x) } else { 1.0 } / x)
-                .collect();
-
-            grid.iter_mut().enumerate().for_each(|(index, value)| {
-                let ix1 = index / self.ny2;
-                let ix2 = index % self.ny2;
-                *value = self_grid[[q2_slice - self.itaumin, ix1, ix2]] * x1[ix1] * x2[ix2];
-            });
-        } else {
-            todo!();
-        }
-    }
-
     fn symmetrize(&mut self) {
         if let Some(grid) = self.grid.as_mut() {
             let (i_size, j_size, k_size) = grid.dim();
@@ -921,35 +866,6 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         }
     }
 
-    fn q2_slice(&self) -> Range<usize> {
-        self.array.x_range()
-    }
-
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        let x1: Vec<_> = self
-            .x1_grid()
-            .iter()
-            .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
-            .collect();
-        let x2: Vec<_> = self
-            .x2_grid()
-            .iter()
-            .map(|&x| if self.reweight { weightfun(x) } else { 1.0 } / x)
-            .collect();
-
-        for value in grid.iter_mut() {
-            *value = 0.0;
-        }
-
-        for ((_, ix1, ix2), value) in self
-            .array
-            .indexed_iter()
-            .filter(|((iq2, _, _), _)| *iq2 == q2_slice)
-        {
-            grid[ix1 * self.ny + ix2] = value * x1[ix1] * x2[ix2];
-        }
-    }
-
     fn symmetrize(&mut self) {
         let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
 
@@ -1044,15 +960,14 @@ mod tests {
 
         let reference = grid.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
-        let mut buffer = vec![0.0; x1.len() * x2.len()];
         let mut test = 0.0;
 
         // check `reference` against manually calculated result from q2 slices
-        for i in grid.q2_slice() {
-            grid.fill_q2_slice(i, &mut buffer);
-
-            test += buffer.iter().sum::<f64>();
+        for ((_, ix1, ix2), value) in grid.iter() {
+            test += value * weightfun(x1[ix1]) * weightfun(x2[ix2]) / (x1[ix1] * x2[ix2]);
         }
+
+        eprintln!("{} {}", test, reference);
 
         assert!(approx_eq!(f64, test, reference, ulps = 8));
     }

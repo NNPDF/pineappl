@@ -58,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl_subgrid_import_q2_slice` with `pineappl_subgrid_new2` and
   `pineappl_subgrid_import_mu2_slice`, respectively. The latter support
   independent renormalization and factorization scales
+- changed the names of `pineappl_grid_export_q2_slice` and
+  `pineappl_grid_nonzero_q2_slices` to `pineappl_grid_export_mu2_slice` and
+  `pineappl_grid_nonzero_mu2_slices`, respectively
 
 ## [0.4.1] - 25/03/2021
 

@@ -778,7 +778,7 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
 /// this function is not safe to call. `buffer` must be as large as the square of the return value
 /// of `pineappl_subgrid_x_grid_count`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_export_q2_slice(
+pub unsafe extern "C" fn pineappl_grid_export_mu2_slice(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -787,8 +787,12 @@ pub unsafe extern "C" fn pineappl_grid_export_q2_slice(
     buffer: *mut f64,
 ) {
     let subgrid = (*grid).subgrid(order, bin, lumi);
-    let size = subgrid.x1_grid().len() * subgrid.x2_grid().len();
-    subgrid.fill_q2_slice(q2_slice, slice::from_raw_parts_mut(buffer, size));
+    let x1_len = subgrid.x1_grid().len();
+    let slice = slice::from_raw_parts_mut(buffer, x1_len * subgrid.x2_grid().len());
+    subgrid
+        .iter()
+        .filter(|((imu2, _, _), _)| *imu2 == q2_slice)
+        .for_each(|((_, ix1, ix2), &value)| slice[ix1 + x1_len * ix2] = value);
 }
 
 /// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
@@ -799,7 +803,7 @@ pub unsafe extern "C" fn pineappl_grid_export_q2_slice(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. `tuple` must point to an array with two elements.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
+pub unsafe extern "C" fn pineappl_grid_nonzero_mu2_slices(
     grid: *const Grid,
     order: usize,
     bin: usize,
@@ -807,9 +811,20 @@ pub unsafe extern "C" fn pineappl_grid_nonzero_q2_slices(
     tuple: *mut usize,
 ) {
     let tuple = slice::from_raw_parts_mut(tuple, 2);
-    let slice = (*grid).subgrid(order, bin, lumi).q2_slice();
-    tuple[0] = slice.start;
-    tuple[1] = slice.end;
+    let mut iter = (*grid).subgrid(order, bin, lumi).iter();
+
+    if let Some(((first, _, _), _)) = iter.next() {
+        tuple[0] = first;
+
+        if let Some(((last, _, _), _)) = iter.last() {
+            tuple[1] = last + 1;
+        } else {
+            tuple[0] = first + 1;
+        }
+    } else {
+        tuple[0] = 0;
+        tuple[1] = 0;
+    }
 }
 
 /// Deletes a subgrid created with [`pineappl_subgrid_new2`]. If `subgrid` is the null pointer,

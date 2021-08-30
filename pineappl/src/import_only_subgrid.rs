@@ -8,7 +8,6 @@ use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
-use std::ops::Range;
 
 /// TODO
 #[derive(Deserialize, Serialize)]
@@ -126,27 +125,6 @@ impl Subgrid for ImportOnlySubgridV1 {
             self.array.clear();
         } else {
             self.array.iter_mut().for_each(|x| *x *= factor);
-        }
-    }
-
-    fn q2_slice(&self) -> Range<usize> {
-        self.array.x_range()
-    }
-
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        let x1: Vec<_> = self.x1_grid.iter().map(|&x| 1.0 / x).collect();
-        let x2: Vec<_> = self.x2_grid.iter().map(|&x| 1.0 / x).collect();
-
-        for value in grid.iter_mut() {
-            *value = 0.0;
-        }
-
-        for ((_, ix1, ix2), value) in self
-            .array
-            .indexed_iter()
-            .filter(|((iq2, _, _), _)| *iq2 == q2_slice)
-        {
-            grid[ix1 * self.x2_grid.len() + ix2] = value * x1[ix1] * x2[ix2];
         }
     }
 
@@ -343,27 +321,6 @@ impl Subgrid for ImportOnlySubgridV2 {
             self.array.clear();
         } else {
             self.array.iter_mut().for_each(|x| *x *= factor);
-        }
-    }
-
-    fn q2_slice(&self) -> Range<usize> {
-        self.array.x_range()
-    }
-
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]) {
-        let x1: Vec<_> = self.x1_grid.iter().map(|&x| 1.0 / x).collect();
-        let x2: Vec<_> = self.x2_grid.iter().map(|&x| 1.0 / x).collect();
-
-        for value in grid.iter_mut() {
-            *value = 0.0;
-        }
-
-        for ((_, ix1, ix2), value) in self
-            .array
-            .indexed_iter()
-            .filter(|((iq2, _, _), _)| *iq2 == q2_slice)
-        {
-            grid[ix1 * self.x2_grid.len() + ix2] = value * x1[ix1] * x2[ix2];
         }
     }
 
