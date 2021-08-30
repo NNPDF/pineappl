@@ -952,30 +952,22 @@ impl Grid {
         self.subgrids = new_subgrids;
     }
 
-    // TODO: simplify the method, because `optimize_lumi` already removes empty entries
     fn symmetrize_lumi(&mut self) {
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
-        let mut pairs: Vec<(usize, usize)> = Vec::new();
-        let mut not_symmetrized: Vec<usize> = Vec::new();
 
-        'looop: while let Some(index) = indices.pop() {
+        while let Some(index) = indices.pop() {
             let lumi_entry = &self.lumi[index];
 
             if *lumi_entry == lumi_entry.transpose() {
-                for order in 0..self.orders.len() {
-                    for bin in 0..self.bin_limits.bins() {
-                        let subgrid = &self.subgrids[[order, bin, index]];
-
-                        // check if in all cases the limits are compatible with merging
-                        if !subgrid.is_empty() && (subgrid.x1_grid() != subgrid.x2_grid()) {
-                            not_symmetrized.push(index);
-
-                            continue 'looop;
+                // check if in all cases the limits are compatible with merging
+                self.subgrids
+                    .slice_mut(s![.., .., index])
+                    .iter_mut()
+                    .for_each(|subgrid| {
+                        if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
+                            subgrid.symmetrize()
                         }
-                    }
-                }
-
-                pairs.push((index, index));
+                    })
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
@@ -983,87 +975,28 @@ impl Grid {
             {
                 indices.remove(j);
 
-                for order in 0..self.orders.len() {
-                    for bin in 0..self.bin_limits.bins() {
-                        let lhs = &self.subgrids[[order, bin, index]];
-                        let rhs = &self.subgrids[[order, bin, other_index]];
+                // check if in all cases the limits are compatible with merging
+                let (mut a, mut b) = self
+                    .subgrids
+                    .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
-                        // check if in all cases the limits are compatible with merging
-                        if !lhs.is_empty()
-                            && !rhs.is_empty()
-                            && ((lhs.x1_grid() != rhs.x2_grid())
-                                || (lhs.x2_grid() != rhs.x1_grid()))
+                a.iter_mut().zip(b.iter_mut()).for_each(|(lhs, rhs)| {
+                    if !rhs.is_empty() {
+                        if lhs.is_empty() {
+                            // we can't merge into an EmptySubgridV1
+                            *lhs = rhs.clone_empty();
+                            lhs.merge(rhs, true);
+                        } else if (lhs.x1_grid() == rhs.x2_grid())
+                            && (lhs.x2_grid() == rhs.x1_grid())
                         {
-                            not_symmetrized.push(index);
-                            not_symmetrized.push(other_index);
-
-                            continue 'looop;
+                            lhs.merge(rhs, true);
                         }
-                    }
-                }
 
-                pairs.push((index, other_index));
-            } else {
-                not_symmetrized.push(index);
+                        *rhs = EmptySubgridV1::default().into();
+                    }
+                });
             }
         }
-
-        let i_size = self.orders.len();
-        let j_size = self.bin_limits.bins();
-        let k_size = self.lumi.len();
-
-        let subgrids = mem::replace(
-            &mut self.subgrids,
-            Array3::from_shape_vec((0, 0, 0), vec![]).unwrap(),
-        );
-        let mut subgrids = Array3::from_shape_vec(
-            (i_size, j_size, k_size),
-            subgrids.into_raw_vec().into_iter().map(Some).collect(),
-        )
-        .unwrap();
-
-        for i in 0..i_size {
-            for j in 0..j_size {
-                for &(k1, k2) in &pairs {
-                    if k1 == k2 {
-                        subgrids[[i, j, k1]].as_mut().unwrap().symmetrize();
-                    } else {
-                        let mut lhs = mem::replace(&mut subgrids[[i, j, k1]], None).unwrap();
-                        let mut rhs = mem::replace(&mut subgrids[[i, j, k2]], None).unwrap();
-
-                        subgrids[[i, j, k1]] = Some(if rhs.is_empty() {
-                            lhs
-                        } else if lhs.is_empty() {
-                            let mut new_lhs = rhs.clone_empty();
-                            new_lhs.merge(&mut rhs, true);
-                            new_lhs
-                        } else {
-                            lhs.merge(&mut rhs, true);
-                            lhs
-                        });
-                    }
-                }
-            }
-        }
-
-        self.subgrids = Array3::from_shape_vec(
-            (i_size, j_size, pairs.len() + not_symmetrized.len()),
-            subgrids.into_raw_vec().into_iter().flatten().collect(),
-        )
-        .unwrap();
-
-        let mut new_lumi_indices: Vec<_> = pairs
-            .iter()
-            .map(|(index, _)| index)
-            .chain(not_symmetrized.iter())
-            .copied()
-            .collect();
-        new_lumi_indices.sort_unstable();
-
-        self.lumi = new_lumi_indices
-            .iter()
-            .map(|i| self.lumi[*i].clone())
-            .collect();
     }
 
     /// Upgrades the internal data structures to their latest versions.
