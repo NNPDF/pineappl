@@ -1139,6 +1139,7 @@ impl Grid {
     }
 
     /// Provide information used to compute a suitable EKO for the current grid.
+    /// More specific, the `x_grid` and `q2_grid` are extracted and checked.
     pub fn eko_info(&self) -> Option<EkoInfo> {
         let mut q2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
@@ -1199,6 +1200,8 @@ impl Grid {
 
     /// Applies an evolution kernel operator (EKO) to the grids to evolve them from different
     /// values of the factorization scale to a single one given by the parameter `q2`.
+    /// Using `xir` and `xif` you can trigger renormalization and factorization scale
+    /// variations respectively in the grid.
     #[must_use]
     pub fn convolute_eko(
         &self,
@@ -1210,6 +1213,7 @@ impl Grid {
         q2_grid: Vec<f64>,
         operator: Array5<f64>,
     ) -> Option<Self> {
+        // Check operator layout
         let dim = operator.shape();
 
         assert_eq!(dim[0], q2_grid.len());
@@ -1218,9 +1222,11 @@ impl Grid {
         assert_eq!(dim[3], pids.len());
         assert_eq!(dim[4], x_grid.len());
 
+        // swap axes around to optimize convolution
         let operator = operator.permuted_axes([3, 1, 4, 0, 2]);
         let operator = operator.as_standard_layout();
 
+        // determine what and how many hadrons are in the initial state
         let initial_state_1 = self.key_values().map_or(2212, |map| {
             map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
         });
@@ -1240,6 +1246,7 @@ impl Grid {
             _ => unimplemented!(),
         };
 
+        // create target luminosities
         let pids1 = if has_pdf1 {
             pids.to_vec()
         } else {
@@ -1250,17 +1257,18 @@ impl Grid {
         } else {
             vec![initial_state_2]
         };
-
         let lumi: Vec<_> = pids1
             .iter()
             .cartesian_product(pids2.iter())
             .map(|(a, b)| lumi_entry![*a, *b, 1.0])
             .collect();
 
+        // create target subgrid dimensions
         let tgt_q2_grid = vec![q2];
         let tgt_x1_grid = if has_pdf1 { x_grid.clone() } else { vec![1.0] };
         let tgt_x2_grid = if has_pdf2 { x_grid.clone() } else { vec![1.0] };
 
+        // create target grid
         let mut result = Self {
             subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
                 EmptySubgridV1::default().into()
@@ -1277,8 +1285,10 @@ impl Grid {
             more_members: self.more_members.clone(),
         };
 
+        // collect source grid informations
         let eko_info = self.eko_info().unwrap();
 
+        // Setup progress bar
         let bar = ProgressBar::new(
             (self.bin_info().bins() * self.lumi.len() * pids1.len() * pids2.len()) as u64,
         );
@@ -1361,6 +1371,7 @@ impl Grid {
                     }
                 }
 
+                // Now we have our final grid
                 let src_array = src_array;
 
                 if src_array.is_empty() {
@@ -1368,16 +1379,18 @@ impl Grid {
                     continue;
                 }
 
+                // Next we need to apply the tensor
                 let eko_src_q2_indices: Vec<_> = src_array_q2_grid
                     .iter()
                     .map(|&src_q2| q2_grid.iter().position(|&q2| q2 == src_q2).unwrap())
                     .collect();
-
+                // Iterate target lumis
                 for (tgt_lumi, (tgt_pid1_idx, tgt_pid2_idx)) in (0..pids1.len())
                     .cartesian_product(0..pids2.len())
                     .enumerate()
                 {
                     for (src_pid1, src_pid2, factor) in src_entries.entry().iter() {
+                        // find source lumi position
                         let src_pid1_idx = if has_pdf1 {
                             pids.iter()
                                 .position(|x| {
@@ -1407,20 +1420,24 @@ impl Grid {
                             0
                         };
 
+                        // create target subgrid
                         let mut tgt_array =
                             SparseArray3::new(1, tgt_x1_grid.len(), tgt_x2_grid.len());
 
+                        // slice the operater (which has already been reshuffled in the beginning)
                         let op1 = operator.slice(s![tgt_pid1_idx, src_pid1_idx, .., .., ..]);
                         let op2 = operator.slice(s![tgt_pid2_idx, src_pid2_idx, .., .., ..]);
 
                         // -- this is by far the slowest section, and has to be optimized
 
+                        // iterate the target x position
                         for (tgt_x1_idx, tgt_x2_idx) in
                             (0..tgt_x1_grid.len()).cartesian_product(0..tgt_x2_grid.len())
                         {
                             for ((src_q2_idx, src_x1_idx, src_x2_idx), value) in
                                 src_array.indexed_iter()
                             {
+                                // do the linear algebra
                                 let mut value = factor * value;
                                 let eko_src_q2_idx = eko_src_q2_indices[src_q2_idx];
 
@@ -1428,7 +1445,7 @@ impl Grid {
                                     value *= op1[[tgt_x1_idx, eko_src_q2_idx, src_x1_idx]];
                                 }
 
-                                // it's possible that at least one of the operators is zero
+                                // it's possible that at least one of the operators is zero - so skip, if possible
                                 if value == 0.0 {
                                     continue;
                                 }
@@ -1437,7 +1454,7 @@ impl Grid {
                                     value *= op2[[tgt_x2_idx, eko_src_q2_idx, src_x2_idx]];
                                 }
 
-                                // it's possible that at least one of the operators is zero
+                                // it's possible that at least one of the operators is zero - so skip, if possible
                                 if value == 0.0 {
                                     continue;
                                 }
@@ -1448,6 +1465,7 @@ impl Grid {
 
                         // --
 
+                        // Now transfer the computed subgrid into the target grid
                         if !tgt_array.is_empty() {
                             let mut tgt_subgrid = mem::replace(
                                 &mut result.subgrids[[0, bin, tgt_lumi]],

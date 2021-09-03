@@ -87,7 +87,8 @@ class Grid(PyWrapper):
         """
         Set the normalizations.
 
-        Parameter:
+        Parameters
+        ----------
             remapper: BinRemapper
                 Remapper object
         """
