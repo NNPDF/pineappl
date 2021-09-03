@@ -4,11 +4,14 @@ use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::sparse_array3::SparseArray3;
 use pyo3::prelude::*;
 
+/// PyO3 wrapper to [`pineappl::import_only_subgrid::ImportOnlySubgridV1`]
+///
+/// **Usage**: `yadism`
 #[pyclass]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV1 {
-    pub import_only_subgrid: ImportOnlySubgridV1,
+    pub(crate) import_only_subgrid: ImportOnlySubgridV1,
 }
 
 impl PyImportOnlySubgridV1 {
@@ -46,6 +49,7 @@ impl PyImportOnlySubgridV1 {
         ))
     }
 
+    /// Wrapper to match [`PyGrid::set_subgrid()`]
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.import_only_subgrid.clone().into(),

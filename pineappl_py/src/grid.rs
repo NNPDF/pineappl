@@ -11,10 +11,13 @@ use std::io::BufReader;
 
 use pyo3::prelude::*;
 
+/// PyO3 wrapper to [`pineappl::grid::Order`]
+///
+/// **Usage**: `yadism`
 #[pyclass]
 #[repr(transparent)]
 pub struct PyOrder {
-    pub order: Order,
+    pub(crate) order: Order,
 }
 
 impl PyOrder {
@@ -31,10 +34,13 @@ impl PyOrder {
     }
 }
 
+/// PyO3 wrapper to [`pineappl::grid::Grid`]
+///
+/// **Usage**: `yadism`, `pineko`, FKTable interface
 #[pyclass]
 #[repr(transparent)]
 pub struct PyGrid {
-    pub grid: Grid,
+    pub(crate) grid: Grid,
 }
 
 impl PyGrid {
@@ -60,14 +66,23 @@ impl PyGrid {
         ))
     }
 
+    /// Set meta data in the grid.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.grid.set_key_value(key, value);
     }
 
+    /// Load the number of bins.
+    ///
+    /// **Usage:** FKTable interface
     pub fn bins(&self) -> usize {
         self.grid.bin_info().bins()
     }
 
+    /// Load the luminosity entries.
+    ///
+    /// **Usage:** FKTable interface
     pub fn lumi(&self) -> Vec<PyLumiEntry> {
         self.grid
             .lumi()
@@ -78,26 +93,41 @@ impl PyGrid {
             .collect()
     }
 
+    /// Retrieve a subgrid.
+    ///
+    /// **Usage:** FKTable interface
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
         }
     }
 
+    /// Set a subgrid.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
         self.grid
             .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
     }
 
+    /// Set the bin remapper.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
     }
 
+    /// Get the eko specific informations.
+    ///
+    /// **Usage:** `pineko`
     pub fn eko_info(&self) -> (Vec<f64>, Vec<f64>) {
         let EkoInfo { x_grid, q2_grid } = self.grid.eko_info().unwrap();
         (x_grid, q2_grid)
     }
 
+    /// Convolute with eko.
+    ///
+    /// **Usage:** `pineko`
     pub fn convolute_eko(
         &self,
         q2: f64,
@@ -124,15 +154,24 @@ impl PyGrid {
         Self::new(evolved_grid)
     }
 
+    /// Load grid from file.
+    ///
+    /// **Usage:** `pineko`, FKTable generation
     #[staticmethod]
     pub fn read(path: &str) -> Self {
         Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())
     }
 
+    /// Write grid to file.
+    ///
+    /// **Usage:** `yadism`
     pub fn write(&self, path: &str) {
         self.grid.write(File::create(path).unwrap()).unwrap();
     }
 
+    /// Optimize grid content.
+    ///
+    /// **Usage:** `yadism`
     pub fn optimize(&mut self) {
         self.grid.optimize();
     }

@@ -47,7 +47,7 @@ class FKTable:
                 raise ValueError("Lumis in FKTables have to be a single element")
             le = le[0]
             if not np.isclose(le[-1], 1.0):
-                raise ValueError("All Lumis in a FKTables have to have weight 1.0")
+                raise ValueError("All Lumis in an FKTable have to have weight 1.0")
             basis.append(le[:2])
         basis = np.array(basis)
         # fill numpy representation

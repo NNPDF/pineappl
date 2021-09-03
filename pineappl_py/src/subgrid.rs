@@ -4,10 +4,13 @@ use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
 
+/// PyO3 wrapper to [`pineappl::subgrid::SubgridParams`]
+///
+/// **Usage**: `yadism`
 #[pyclass]
 #[repr(transparent)]
 pub struct PySubgridParams {
-    pub subgrid_params: SubgridParams,
+    pub(crate) subgrid_params: SubgridParams,
 }
 
 impl PySubgridParams {
@@ -41,46 +44,45 @@ impl PySubgridParams {
         Self::new(subgrid_params)
     }
 
+    /// Set reweighting.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_reweight(&mut self, reweight: bool) {
         self.subgrid_params.set_reweight(reweight);
     }
 
+    /// Set number of x bins.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_x_bins(&mut self, x_bins: usize) {
         self.subgrid_params.set_x_bins(x_bins);
     }
 
+    /// Set `x_max`.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_x_max(&mut self, x_max: f64) {
         self.subgrid_params.set_x_max(x_max);
     }
 
+    /// Set `x_min`.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_x_min(&mut self, x_min: f64) {
         self.subgrid_params.set_x_min(x_min);
     }
+
+    /// Set interpolation order for `x_grid`.
+    ///
+    /// **Usage:** `yadism`
     pub fn set_x_order(&mut self, x_order: usize) {
         self.subgrid_params.set_x_order(x_order);
     }
-
-    pub fn set_q2_bins(&mut self, q2_bins: usize) {
-        self.subgrid_params.set_q2_bins(q2_bins);
-    }
-
-    pub fn set_q2_max(&mut self, q2_max: f64) {
-        self.subgrid_params.set_q2_max(q2_max);
-    }
-
-    pub fn set_q2_min(&mut self, q2_min: f64) {
-        self.subgrid_params.set_q2_min(q2_min);
-    }
-
-    pub fn set_q2_order(&mut self, q2_order: usize) {
-        self.subgrid_params.set_q2_order(q2_order);
-    }
-
-    pub fn x_bins(&self) -> usize {
-        self.subgrid_params.x_bins()
-    }
 }
 
+/// PyO3 wrapper to [`pineappl::subgrid::SubgridEnum`]
+///
+/// **Usage**: `yadism`, FKTable interface
 #[pyclass]
 #[derive(Clone)]
 #[repr(transparent)]
@@ -91,18 +93,23 @@ pub struct PySubgridEnum {
 #[pymethods]
 impl PySubgridEnum {
 
+    /// Clone `x1_grid` to allow Python to access.
+    ///
+    /// **Usage:** FKTable interface
     pub fn x1_grid<'a>(&self, py: Python<'a>) -> &'a PyArray1<f64> {
         self.subgrid_enum.x1_grid().into_owned().into_pyarray(py)
     }
 
+    /// Clone `x2_grid` to allow Python to access.
+    ///
+    /// **Usage:** FKTable interface
     pub fn x2_grid<'a>(&self, py: Python<'a>) -> &'a PyArray1<f64> {
         self.subgrid_enum.x2_grid().into_owned().into_pyarray(py)
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.subgrid_enum.is_empty()
-    }
-
+    /// Export grid as FKTable array.
+    ///
+    /// **Usage:** FKTable interface
     pub fn fk_subgrid_array<'a>(&self, py: Python<'a>) -> PyResult<&'a PyArray2<f64>> {
         let mut result = Array2::zeros((
             self.subgrid_enum.x1_grid().len(),

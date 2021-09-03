@@ -2,11 +2,14 @@ use pineappl::bin::BinRemapper;
 
 use pyo3::prelude::*;
 
+/// PyO3 wrapper to [`pineappl::bin::BinRemapper`]
+///
+/// **Usage**: `yadism`
 #[pyclass]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyBinRemapper {
-    pub bin_remapper: BinRemapper,
+    pub(crate) bin_remapper: BinRemapper,
 }
 
 impl PyBinRemapper {
