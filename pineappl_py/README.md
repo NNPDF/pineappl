@@ -1,8 +1,16 @@
-# PyO3 bindings for PineAPPL
+# Python bindings for PineAPPL
 
-## How to..
+We're using [PyO3](https://pyo3.rs) to provide python binding to `pineappl` written in Rust.
+This package will superseed the former Python wrappers written with
+[ctypes](https://docs.python.org/3/library/ctypes.html).
 
-compile the bindings in a very easy way and immediately use from python:
+The layout consist of 2 layers:
+- a Rust layer (under `./src/`) that provides and declares the bridge from the original
+  `pineappl` library to PyO3 (e.g. casting Python-understable types to Rust types)
+- a Python layer (under `./pineappl/`) that hides the PyO3 objects with pure
+  Python objects and provides some convenience methods
+
+## How to compile (for development)
 
 1. Make a virtual environment in your favorite way (suggested: `virtualenv`)
 
@@ -31,34 +39,8 @@ name-clashing).
 
 ## And for deploying?
 
-The very same way, `maturin` it's also able to deploy to PyPI:
+The very same way, `maturin` is also able to deploy to [PyPI](https://pypi.org/):
 
 ```sh
 maturin publish
 ```
-
-## Getting Started (`->` carbon copying...)
-
-I'm using as an example the [`pypolars`](https://github.com/ritchie46/polars/blob/master/py-polars/) package.
-
-The reason is that it is very close to this use case, even if far more
-complicated (hopefully). In particular:
-
-- the main library it's developed in `rust` for `rust`
-- then python bindings are provided on top
-- it's using `pyo3` and `maturin`
-- it contains both functions and objects
-- it includes python tests with `pytest`
-
-I chose the following as prototypes for implementing `pineappl` ingredients:
-
-- **function**: the default `pyo3` example it's sufficient at the moment
-- **class**: I chose to follow `pypolars.Series` as a prototype
-  - binding definition: `src/series.rs`
-  - binding export: `src/lib.rs`
-  - python packaging: `pypolars/series.py` (and finally `pypolars/__init__.py`)
-  - usage: `example/small_intro.ipynb`
-- **packaging**: how to collect all the ingredients for the python package
-  - the basic workflows are in `tasks.sh`
-  - also `Dockerfile`s are available, for building with multiple python versions
-    in isolation

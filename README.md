@@ -41,7 +41,7 @@ There are three crates in this repository:
 
       cargo install cargo-c
 
-- Install `pineappl_capi` (the C API, needed if you plain to use PineAPPL in
+- Install `pineappl_capi` (the C API, needed if you plan to use PineAPPL in
   your C, C++, Fortran, or Python program):
 
       cd pineappl_capi
@@ -66,8 +66,7 @@ There are three crates in this repository:
   environment and that it points to a directory containing the
   `pineappl_capi.pc` file.
 
-- For the python interface (optional) please refer to the documentation
-  [here](https://pineappl.readthedocs.io/).
+- For the python interface (optional) please look into the subfolder `./pineappl_py`
 
 # Citation
 
