@@ -1,16 +1,13 @@
 # Python bindings for PineAPPL
 
-We're using [PyO3](https://pyo3.rs) to provide python binding to `pineappl` written in Rust.
-This package will superseed the former Python wrappers written with
-[ctypes](https://docs.python.org/3/library/ctypes.html).
+This crate uses [PyO3] to provide Python bindings to PineAPPL's [Rust API]. It
+will supersede the [Python wrapper] written with [ctypes].
 
-The layout consist of 2 layers:
-- a Rust layer (under `./src/`) that provides and declares the bridge from the original
-  `pineappl` library to PyO3 (e.g. casting Python-understable types to Rust types)
-- a Python layer (under `./pineappl/`) that hides the PyO3 objects with pure
-  Python objects and provides some convenience methods
+# Installation
 
-## How to compile (for development)
+TODO
+
+# Compilation (for development)
 
 1. Make a virtual environment in your favorite way (suggested: `virtualenv`)
 
@@ -32,15 +29,7 @@ pip install maturin
 maturin develop
 ```
 
-**NOTE:** the packaged built and installed with `maturin` will contain not
-only the compiled of `src/*.rs`, but also the python package in `pineappl/`
-(i.e. `<root>/pineappl_py/pineappl`, to disambiguate a little the
-name-clashing).
-
-## And for deploying?
-
-The very same way, `maturin` is also able to deploy to [PyPI](https://pypi.org/):
-
-```sh
-maturin publish
-```
+[PyO3]: https://pyo3.rs
+[Rust API]: https://docs.rs/pineappl
+[Python wrapper]: ../wrappers/python/README.md
+[ctypes]: https://docs.python.org/3/library/ctypes.html
