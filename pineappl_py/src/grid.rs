@@ -73,35 +73,6 @@ impl PyGrid {
         self.grid.set_key_value(key, value);
     }
 
-    /// Load the number of bins.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn bins(&self) -> usize {
-        self.grid.bin_info().bins()
-    }
-
-    /// Load the luminosity entries.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn lumi(&self) -> Vec<PyLumiEntry> {
-        self.grid
-            .lumi()
-            .iter()
-            .map(|lumi_entry| PyLumiEntry {
-                lumi_entry: lumi_entry.clone(),
-            })
-            .collect()
-    }
-
-    /// Retrieve a subgrid.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
-        PySubgridEnum {
-            subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
-        }
-    }
-
     /// Set a subgrid.
     ///
     /// **Usage:** `yadism`

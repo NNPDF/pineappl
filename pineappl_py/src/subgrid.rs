@@ -1,8 +1,5 @@
-use ndarray::Array2;
-use numpy::{IntoPyArray, PyArray1, PyArray2};
-use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use pineappl::subgrid::{SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
-use pyo3::exceptions::PyValueError;
 
 /// PyO3 wrapper to [`pineappl::subgrid::SubgridParams`]
 ///
@@ -88,43 +85,4 @@ impl PySubgridParams {
 #[repr(transparent)]
 pub struct PySubgridEnum {
     pub(crate) subgrid_enum: SubgridEnum,
-}
-
-#[pymethods]
-impl PySubgridEnum {
-
-    /// Clone `x1_grid` to allow Python to access.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn x1_grid<'a>(&self, py: Python<'a>) -> &'a PyArray1<f64> {
-        self.subgrid_enum.x1_grid().into_owned().into_pyarray(py)
-    }
-
-    /// Clone `x2_grid` to allow Python to access.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn x2_grid<'a>(&self, py: Python<'a>) -> &'a PyArray1<f64> {
-        self.subgrid_enum.x2_grid().into_owned().into_pyarray(py)
-    }
-
-    /// Export grid as FKTable array.
-    ///
-    /// **Usage:** FKTable interface
-    pub fn fk_subgrid_array<'a>(&self, py: Python<'a>) -> PyResult<&'a PyArray2<f64>> {
-        let mut result = Array2::zeros((
-            self.subgrid_enum.x1_grid().len(),
-            self.subgrid_enum.x2_grid().len(),
-        ));
-
-        if self.subgrid_enum.q2_grid().len() != 1 {
-            return Err(PyValueError::new_err(format!("FK subgrid: only a single Q2 value is allowed, found:\n {:?}.", self.subgrid_enum.q2_grid())))
-        }
-        assert_eq!(self.subgrid_enum.q2_grid().len(), 1);
-
-        for ((_, ix1, ix2), &value) in self.subgrid_enum.iter() {
-            result[[ix1, ix2]] = value;
-        }
-
-        Ok(result.into_pyarray(py))
-    }
 }

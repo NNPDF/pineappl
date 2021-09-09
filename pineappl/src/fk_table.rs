@@ -2,6 +2,7 @@
 
 use super::grid::{Grid, Order};
 use super::subgrid::Subgrid;
+use ndarray::Array4;
 use std::convert::TryFrom;
 use thiserror::Error;
 
@@ -15,10 +16,9 @@ use thiserror::Error;
 ///   partons with trivial factor `1.0`, and all tuples are distinct from each other. See
 ///   [`Grid::lumi`].
 /// - the FK table's grid contains only a single [`Order`], whose exponents are all zero.
+#[repr(transparent)]
 pub struct FkTable {
     grid: Grid,
-    q2: f64,
-    x_grid: Vec<f64>,
 }
 
 /// The error type returned when a conversion of a [`Grid`] to an [`FkTable`] fails.
@@ -47,6 +47,32 @@ impl FkTable {
         &self.grid
     }
 
+    /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `lumi`,
+    /// `x1` and `x2`, in this order.
+    pub fn table(&self) -> Array4<f64> {
+        let mut subgrid = Array4::zeros((
+            self.bins(),
+            self.grid.lumi().len(),
+            self.grid.subgrid(0, 0, 0).x1_grid().len(),
+            self.grid.subgrid(0, 0, 0).x2_grid().len(),
+        ));
+
+        for bin in 0..self.bins() {
+            for lumi in 0..self.grid.lumi().len() {
+                for ((_, ix1, ix2), value) in self.grid().subgrid(0, bin, lumi).iter() {
+                    subgrid[[bin, lumi, ix1, ix2]] = *value;
+                }
+            }
+        }
+
+        subgrid
+    }
+
+    /// Returns the number of bins for this `FkTable`.
+    pub fn bins(&self) -> usize {
+        self.grid.bin_info().bins()
+    }
+
     /// Returns the (simplified) luminosity function for this `FkTable`. All factors are `1.0`.
     pub fn lumi(&self) -> Vec<(i32, i32)> {
         self.grid
@@ -56,15 +82,15 @@ impl FkTable {
             .collect()
     }
 
-    /// Returns the single `q2` scale of this `FkTable`.
-    pub fn q2(&self) -> f64 {
-        self.q2
-    }
+    ///// Returns the single `q2` scale of this `FkTable`.
+    //pub fn q2(&self) -> f64 {
+    //    self.q2
+    //}
 
-    /// Returns the x grid that all subgrids for all hadronic initial states share.
-    pub fn x_grid(&self) -> &[f64] {
-        &self.x_grid
-    }
+    ///// Returns the x grid that all subgrids for all hadronic initial states share.
+    //pub fn x_grid(&self) -> &[f64] {
+    //    &self.x_grid
+    //}
 }
 
 impl TryFrom<Grid> for FkTable {
@@ -157,6 +183,8 @@ impl TryFrom<Grid> for FkTable {
             ));
         }
 
-        Ok(FkTable { grid, q2, x_grid })
+        Ok(FkTable {
+            grid, /*q2, x_grid*/
+        })
     }
 }
