@@ -30,11 +30,11 @@ impl PyFkTable {
         self.fk_table.lumi()
     }
 
-    //pub fn q2(&self) -> f64 {
-    //    self.fk_table.q2()
-    //}
+    pub fn muf2(&self) -> f64 {
+        self.fk_table.muf2()
+    }
 
-    //pub fn x_grid(&self) -> &[f64] {
-    //    self.fk_table.x_grid()
-    //}
+    pub fn x_grid(&self) -> Vec<f64> {
+        self.fk_table.x_grid()
+    }
 }

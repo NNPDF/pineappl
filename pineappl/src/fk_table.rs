@@ -82,15 +82,43 @@ impl FkTable {
             .collect()
     }
 
-    ///// Returns the single `muf2` scale of this `FkTable`.
-    //pub fn muf2(&self) -> f64 {
-    //    self.muf2
-    //}
+    /// Returns the single `muf2` scale of this `FkTable`.
+    pub fn muf2(&self) -> f64 {
+        for bin in 0..self.grid.bin_info().bins() {
+            for lumi in 0..self.grid.lumi().len() {
+                let subgrid = self.grid.subgrid(0, bin, lumi);
 
-    ///// Returns the x grid that all subgrids for all hadronic initial states share.
-    //pub fn x_grid(&self) -> &[f64] {
-    //    &self.x_grid
-    //}
+                if subgrid.is_empty() {
+                    continue;
+                }
+
+                return subgrid.mu2_grid()[0].fac;
+            }
+        }
+
+        unreachable!();
+    }
+
+    /// Returns the x grid that all subgrids for all hadronic initial states share.
+    pub fn x_grid(&self) -> Vec<f64> {
+        for bin in 0..self.grid.bin_info().bins() {
+            for lumi in 0..self.grid.lumi().len() {
+                let subgrid = self.grid.subgrid(0, bin, lumi);
+
+                if subgrid.is_empty() {
+                    continue;
+                }
+
+                if subgrid.x1_grid().is_empty() {
+                    return subgrid.x2_grid().into_owned();
+                } else {
+                    return subgrid.x1_grid().into_owned();
+                }
+            }
+        }
+
+        unreachable!();
+    }
 }
 
 impl TryFrom<Grid> for FkTable {
@@ -181,8 +209,6 @@ impl TryFrom<Grid> for FkTable {
             ));
         }
 
-        Ok(FkTable {
-            grid, /*muf2, x_grid*/
-        })
+        Ok(FkTable { grid })
     }
 }
