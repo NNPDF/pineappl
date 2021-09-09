@@ -111,43 +111,41 @@ impl TryFrom<Grid> for FkTable {
             return Err(TryFromGridError::NonTrivialOrder);
         }
 
-        for order in 0..grid.orders().len() {
-            for bin in 0..grid.bin_info().bins() {
-                for lumi in 0..grid.lumi().len() {
-                    let subgrid = grid.subgrid(order, bin, lumi);
+        for bin in 0..grid.bin_info().bins() {
+            for lumi in 0..grid.lumi().len() {
+                let subgrid = grid.subgrid(0, bin, lumi);
 
-                    if subgrid.is_empty() {
-                        continue;
+                if subgrid.is_empty() {
+                    continue;
+                }
+
+                let mu2_grid = subgrid.mu2_grid();
+                let x1_grid = subgrid.x1_grid();
+                let x2_grid = subgrid.x2_grid();
+
+                if mu2_grid.len() > 1 {
+                    return Err(TryFromGridError::MultipleScales);
+                }
+
+                if muf2 < 0.0 {
+                    muf2 = mu2_grid[0].fac;
+
+                    if x1_grid.len() == 1 {
+                        x_grid = x2_grid.into_owned();
+                    } else {
+                        x_grid = x1_grid.into_owned();
                     }
-
-                    let mu2_grid = subgrid.mu2_grid();
-                    let x1_grid = subgrid.x1_grid();
-                    let x2_grid = subgrid.x2_grid();
-
-                    if mu2_grid.len() > 1 {
+                } else {
+                    if muf2 != mu2_grid[0].fac {
                         return Err(TryFromGridError::MultipleScales);
                     }
 
-                    if muf2 < 0.0 {
-                        muf2 = mu2_grid[0].fac;
+                    if x1_grid.len() != 1 && x1_grid != x_grid {
+                        return Err(TryFromGridError::NonUniqueGrids);
+                    }
 
-                        if x1_grid.len() == 1 {
-                            x_grid = x2_grid.into_owned();
-                        } else {
-                            x_grid = x1_grid.into_owned();
-                        }
-                    } else {
-                        if muf2 != mu2_grid[0].fac {
-                            return Err(TryFromGridError::MultipleScales);
-                        }
-
-                        if x1_grid.len() != 1 && x1_grid != x_grid {
-                            return Err(TryFromGridError::NonUniqueGrids);
-                        }
-
-                        if x2_grid.len() != 1 && x2_grid != x_grid {
-                            return Err(TryFromGridError::NonUniqueGrids);
-                        }
+                    if x2_grid.len() != 1 && x2_grid != x_grid {
+                        return Err(TryFromGridError::NonUniqueGrids);
                     }
                 }
             }
