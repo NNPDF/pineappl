@@ -96,6 +96,18 @@ impl PyGrid {
         (x_grid, muf2_grid)
     }
 
+    pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
+        self.grid.convolute(
+            &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
+            &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
+            &|q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap(),
+            &[],
+            &[],
+            &[],
+            &[(1.0, 1.0)],
+        )
+    }
+
     /// Convolute with eko.
     ///
     /// **Usage:** `pineko`

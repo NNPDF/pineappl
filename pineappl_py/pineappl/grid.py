@@ -94,6 +94,9 @@ class Grid(PyWrapper):
         """
         self.raw.set_remapper(remapper.raw)
 
+    def convolute(self, xfx1, xfx2, alphas):
+        return self.raw.convolute(xfx1, xfx2, alphas)
+
     def convolute_eko(self, operators):
         """
         Create an FKTable with the EKO.
