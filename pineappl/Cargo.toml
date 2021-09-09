@@ -20,7 +20,7 @@ float-cmp = "0.8"
 git-version = "0.3"
 itertools = "0.10"
 lz-fear = "0.1"
-ndarray = { features = ["serde"], version = "0.13.1" }
+ndarray = { features = ["serde"], version = "0.15.3" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0" }
 thiserror = "1.0"
