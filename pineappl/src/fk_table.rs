@@ -9,7 +9,7 @@ use thiserror::Error;
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
 /// additional guarantees are given:
 ///
-/// - all subgrids of the grid evaluate the PDFs at a single scale `q2`. See [`FkTable::q2`].
+/// - all subgrids of the grid evaluate the PDFs at a single scale `muf2`.
 /// - all subgrids, for both hadronic initial states (if both initial states are hadronic), share
 ///   the same `x` grid. See [`FkTable::x_grid`].
 /// - the luminosity function is *simple*, meaning that every entry consists of a single pair of
@@ -82,9 +82,9 @@ impl FkTable {
             .collect()
     }
 
-    ///// Returns the single `q2` scale of this `FkTable`.
-    //pub fn q2(&self) -> f64 {
-    //    self.q2
+    ///// Returns the single `muf2` scale of this `FkTable`.
+    //pub fn muf2(&self) -> f64 {
+    //    self.muf2
     //}
 
     ///// Returns the x grid that all subgrids for all hadronic initial states share.
@@ -97,7 +97,7 @@ impl TryFrom<Grid> for FkTable {
     type Error = TryFromGridError;
 
     fn try_from(grid: Grid) -> Result<Self, Self::Error> {
-        let mut q2 = -1.0;
+        let mut muf2 = -1.0;
         let mut x_grid = Vec::new();
 
         if grid.orders()
@@ -120,16 +120,16 @@ impl TryFrom<Grid> for FkTable {
                         continue;
                     }
 
-                    let q2_grid = subgrid.q2_grid();
+                    let mu2_grid = subgrid.mu2_grid();
                     let x1_grid = subgrid.x1_grid();
                     let x2_grid = subgrid.x2_grid();
 
-                    if q2_grid.len() > 1 {
+                    if mu2_grid.len() > 1 {
                         return Err(TryFromGridError::MultipleScales);
                     }
 
-                    if q2 < 0.0 {
-                        q2 = q2_grid[0];
+                    if muf2 < 0.0 {
+                        muf2 = mu2_grid[0].fac;
 
                         if x1_grid.len() == 1 {
                             x_grid = x2_grid.into_owned();
@@ -137,7 +137,7 @@ impl TryFrom<Grid> for FkTable {
                             x_grid = x1_grid.into_owned();
                         }
                     } else {
-                        if q2 != q2_grid[0] {
+                        if muf2 != mu2_grid[0].fac {
                             return Err(TryFromGridError::MultipleScales);
                         }
 
@@ -184,7 +184,7 @@ impl TryFrom<Grid> for FkTable {
         }
 
         Ok(FkTable {
-            grid, /*q2, x_grid*/
+            grid, /*muf2, x_grid*/
         })
     }
 }

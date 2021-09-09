@@ -214,7 +214,7 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
 }
 
 /// TODO
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct ImportOnlySubgridV2 {
     array: SparseArray3<f64>,
     mu2_grid: Vec<Mu2>,

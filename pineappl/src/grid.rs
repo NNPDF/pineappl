@@ -208,7 +208,7 @@ pub struct EkoInfo {
     /// is the interpolation grid in x used at the process scale
     pub x_grid: Vec<f64>,
     /// is the intepolation grid in q2, spanning the q2 range covered by the process data
-    pub q2_grid: Vec<f64>,
+    pub muf2_grid: Vec<f64>,
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -1053,9 +1053,9 @@ impl Grid {
     }
 
     /// Provide information used to compute a suitable EKO for the current grid.
-    /// More specific, the `x_grid` and `q2_grid` are extracted and checked.
+    /// More specific, the `x_grid` and `muf2_grid` are extracted and checked.
     pub fn eko_info(&self) -> Option<EkoInfo> {
-        let mut q2_grid = Vec::<f64>::new();
+        let mut muf2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
         let mut has_pdf1 = true;
         let mut has_pdf2 = true;
@@ -1065,8 +1065,8 @@ impl Grid {
                 let x1 = subgrid.x1_grid();
                 let x2 = subgrid.x2_grid();
 
-                if q2_grid.is_empty() {
-                    q2_grid = subgrid.q2_grid().into_owned();
+                if muf2_grid.is_empty() {
+                    muf2_grid = subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect();
 
                     // if the `x1` grid contains only one element, we assume that it's not a
                     // hadronic initial state
@@ -1103,13 +1103,13 @@ impl Grid {
                 }
 
                 // the `q2` grids (static vs. dynamic scales) can differ across bins/lumis
-                q2_grid.append(&mut subgrid.q2_grid().into_owned());
-                q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                q2_grid.dedup();
+                muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
+                muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                muf2_grid.dedup();
             }
         }
 
-        Some(EkoInfo { x_grid, q2_grid })
+        Some(EkoInfo { x_grid, muf2_grid })
     }
 
     /// Applies an evolution kernel operator (EKO) to the grids to evolve them from different
@@ -1216,7 +1216,13 @@ impl Grid {
             for (src_lumi, src_entries) in self.lumi.iter().enumerate() {
                 // create a sorted and unique vector with the `q2` for all orders
                 let mut src_array_q2_grid: Vec<f64> = (0..self.orders.len())
-                    .flat_map(|order| self.subgrids[[order, bin, src_lumi]].q2_grid().into_owned())
+                    .flat_map(|order| {
+                        self.subgrids[[order, bin, src_lumi]]
+                            .mu2_grid()
+                            .iter()
+                            .map(|mu2| mu2.fac)
+                            .collect::<Vec<f64>>()
+                    })
                     .collect();
                 src_array_q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 src_array_q2_grid.dedup();
@@ -1259,7 +1265,7 @@ impl Grid {
                                 .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)));
 
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
-                        let scale = src_subgrid.q2_grid()[iq2];
+                        let scale = src_subgrid.mu2_grid()[iq2].fac;
                         let src_iq2 = src_array_q2_grid
                             .iter()
                             .position(|&q2| q2 == scale)
