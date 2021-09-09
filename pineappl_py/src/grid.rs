@@ -92,8 +92,8 @@ impl PyGrid {
     ///
     /// **Usage:** `pineko`
     pub fn eko_info(&self) -> (Vec<f64>, Vec<f64>) {
-        let EkoInfo { x_grid, q2_grid } = self.grid.eko_info().unwrap();
-        (x_grid, q2_grid)
+        let EkoInfo { x_grid, muf2_grid } = self.grid.eko_info().unwrap();
+        (x_grid, muf2_grid)
     }
 
     /// Convolute with eko.
