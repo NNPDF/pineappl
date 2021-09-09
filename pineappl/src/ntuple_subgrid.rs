@@ -1,11 +1,9 @@
 //! Provides an implementation of the `Grid` trait with n-tuples.
 
 use super::grid::Ntuple;
-use super::subgrid::{Subgrid, SubgridEnum};
-use either::Either;
+use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::ops::Range;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -26,24 +24,17 @@ impl Subgrid for NtupleSubgridV1 {
         &self,
         _: &[f64],
         _: &[f64],
-        _: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        _: &[Mu2],
+        _: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64 {
-        let lumi = lumi.right().unwrap();
-        let mut result = 0.0;
-
-        for ntuple in &self.ntuples {
-            result += lumi(ntuple.x1, ntuple.x2, ntuple.q2) * ntuple.weight;
-        }
-
-        result
+        todo!();
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
         self.ntuples.push(ntuple.clone());
     }
 
-    fn q2_grid(&self) -> Cow<[f64]> {
+    fn mu2_grid(&self) -> Cow<[Mu2]> {
         Cow::Borrowed(&[])
     }
 
@@ -73,14 +64,6 @@ impl Subgrid for NtupleSubgridV1 {
         self.ntuples.iter_mut().for_each(|t| t.weight *= factor);
     }
 
-    fn q2_slice(&self) -> Range<usize> {
-        unimplemented!();
-    }
-
-    fn fill_q2_slice(&self, _: usize, _: &mut [f64]) {
-        unimplemented!();
-    }
-
     fn symmetrize(&mut self) {}
 
     fn clone_empty(&self) -> SubgridEnum {
@@ -95,71 +78,50 @@ impl Subgrid for NtupleSubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use either::Either::Right;
+
+    #[test]
+    #[should_panic]
+    fn convolute() {
+        let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &|_, _, _| 0.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn iter() {
+        let _ = NtupleSubgridV1::new().iter();
+    }
 
     #[test]
     fn test() {
-        let mut subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-        assert!(subgrid.is_empty());
+        let mut subgrid1: SubgridEnum = NtupleSubgridV1::new().into();
 
-        subgrid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 0.5,
-            q2: 10.0,
-            weight: 1.0,
+        assert!(subgrid1.is_empty());
+
+        subgrid1.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 0.0,
         });
-        assert!(!subgrid.is_empty());
 
-        subgrid.fill(&Ntuple {
-            x1: 0.25,
-            x2: 0.75,
-            q2: 100.0,
-            weight: 3.0,
+        assert!(!subgrid1.is_empty());
+
+        assert_eq!(subgrid1.mu2_grid().as_ref(), []);
+        assert_eq!(subgrid1.x1_grid().as_ref(), []);
+        assert_eq!(subgrid1.x2_grid().as_ref(), []);
+
+        subgrid1.symmetrize();
+        subgrid1.scale(2.0);
+
+        let mut subgrid2: SubgridEnum = subgrid1.clone_empty().into();
+
+        subgrid2.fill(&Ntuple {
+            x1: 0.0,
+            x2: 0.0,
+            q2: 0.0,
+            weight: 0.0,
         });
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            2.5 + 56.25
-        );
 
-        let mut other_subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        other_subgrid.fill(&Ntuple {
-            x1: 0.25,
-            x2: 0.5,
-            q2: 20.0,
-            weight: 2.0,
-        });
-        assert_eq!(
-            other_subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            5.0
-        );
-
-        subgrid.merge(&mut other_subgrid, false);
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            2.5 + 56.25 + 5.0
-        );
-
-        subgrid.scale(0.5);
-        assert_eq!(
-            subgrid.convolute(&[], &[], &[], Right(&|x1, x2, q2| x1 * x2 * q2)),
-            1.25 + 28.125 + 2.5
-        );
-    }
-
-    #[test]
-    #[should_panic]
-    fn q2_slice() {
-        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        subgrid.q2_slice();
-    }
-
-    #[test]
-    #[should_panic]
-    fn fill_q2_slice() {
-        let subgrid: SubgridEnum = NtupleSubgridV1::new().into();
-
-        subgrid.fill_q2_slice(0, &mut []);
+        subgrid2.merge(&mut subgrid1, false);
     }
 }

@@ -9,7 +9,6 @@ use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
-use either::Either::{Left, Right};
 use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -95,16 +94,28 @@ pub struct Ntuple<W> {
 
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
-pub enum GridMergeError {
+pub enum GridError {
     /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
     #[error(transparent)]
-    DifferentBins(super::bin::MergeBinError),
+    InvalidBinLimits(super::bin::MergeBinError),
+    /// Returned if the number of bins in the grid and in the remapper do not agree.
+    #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
+    BinNumberMismatch {
+        /// Number of bins in the grid.
+        grid_bins: usize,
+        /// Number of bins in the remapper.
+        remapper_bins: usize,
+    },
+    /// Returned when trying to construct a `Grid` using an unknown subgrid type.
+    #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
+    UnknownSubgridType(String),
+    /// Returned when failed to read a Grid.
+    #[error(transparent)]
+    ReadFailure(bincode::Error),
+    /// Returned when failed to write a Grid.
+    #[error(transparent)]
+    WriteFailure(bincode::Error),
 }
-
-/// Error returned when trying to construct a `Grid` using an unknown subgrid type.
-#[derive(Debug, Error)]
-#[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
-pub struct UnknownSubgrid(String);
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv1 {}
@@ -191,19 +202,6 @@ impl MoreMembers {
     }
 }
 
-/// Error type returned by `Grid::set_remapper`.
-#[derive(Debug, Error)]
-pub enum GridSetBinRemapperError {
-    /// Returned if the number of bins in the grid and in the remapper do not agree.
-    #[error("the number of bins in the remapper, {remapper_bins}, does not agree with the number of bins in the grid: {grid_bins}")]
-    BinMismatch {
-        /// Number of bins in the grid.
-        grid_bins: usize,
-        /// Number of bins in the remapper.
-        remapper_bins: usize,
-    },
-}
-
 /// Information required to compute a compatible EKO.
 /// Members spell out specific characteristic of a suitable EKO.
 pub struct EkoInfo {
@@ -266,7 +264,7 @@ impl Grid {
         subgrid_params: SubgridParams,
         extra: ExtraSubgridParams,
         subgrid_type: &str,
-    ) -> Result<Self, UnknownSubgrid> {
+    ) -> Result<Self, GridError> {
         let subgrid_template: SubgridEnum = match subgrid_type {
             "LagrangeSubgrid" | "LagrangeSubgridV2" => {
                 LagrangeSubgridV2::new(&subgrid_params, &extra).into()
@@ -274,7 +272,7 @@ impl Grid {
             "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
             "NtupleSubgrid" => NtupleSubgridV1::new().into(),
             "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
-            _ => return Err(UnknownSubgrid(subgrid_type.to_string())),
+            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_string())),
         };
 
         Ok(Self {
@@ -325,15 +323,15 @@ impl Grid {
         let alphas_cache = RefCell::new(FxHashMap::default());
         let mut last_xif = 0.0;
 
-        let (mut q2_grid, mut x1_grid, mut x2_grid) = self
+        let (mut mu2_grid, mut x1_grid, mut x2_grid) = self
             .subgrids
             .iter()
             .find(|subgrid| !subgrid.is_empty())
             .map_or_else(
                 || (Cow::default(), Cow::default(), Cow::default()),
-                |grid| (grid.q2_grid(), grid.x1_grid(), grid.x2_grid()),
+                |grid| (grid.mu2_grid(), grid.x1_grid(), grid.x2_grid()),
             );
-        let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+        let use_cache = !mu2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
         let two_caches = !ptr::eq(&xfx1, &xfx2);
 
         let mut xir_values: Vec<_> = xi.iter().map(|xi| xi.0).collect();
@@ -382,81 +380,59 @@ impl Grid {
                 let mut value = if subgrid.is_empty() {
                     0.0
                 } else if use_cache {
-                    let new_q2_grid = subgrid.q2_grid();
+                    let new_mu2_grid = subgrid.mu2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
-                    let q2_grid_changed = new_q2_grid != q2_grid;
+                    let mu2_grid_changed = new_mu2_grid != mu2_grid;
 
-                    if q2_grid_changed {
-                        q2_grid = new_q2_grid;
+                    if mu2_grid_changed {
+                        mu2_grid = new_mu2_grid;
                         alphas_cache.borrow_mut().clear();
                     }
 
-                    if q2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
+                    if mu2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
                         pdf_cache1.borrow_mut().clear();
                         pdf_cache2.borrow_mut().clear();
                     }
 
-                    subgrid.convolute(
-                        &x1_grid,
-                        &x2_grid,
-                        &q2_grid,
-                        Left(&|ix1, ix2, iq2| {
-                            let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                            let mut pdf_cache2 = pdf_cache2.borrow_mut();
-                            let x1 = x1_grid[ix1];
-                            let x2 = x2_grid[ix2];
-                            let q2 = q2_grid[iq2];
-                            let q2f = xif * xif * q2;
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &|ix1, ix2, imu2| {
+                        let mut pdf_cache1 = pdf_cache1.borrow_mut();
+                        let mut pdf_cache2 = pdf_cache2.borrow_mut();
+                        let x1 = x1_grid[ix1];
+                        let x2 = x2_grid[ix2];
+                        let mu2 = &mu2_grid[imu2];
+                        let muf2 = xif * xif * mu2.fac;
 
-                            let mut lumi = 0.0;
+                        let mut lumi = 0.0;
 
-                            for entry in lumi_entry.entry() {
-                                let xfx1 = *pdf_cache1
-                                    .entry((entry.0, ix1, iq2))
-                                    .or_insert_with(|| xfx1(entry.0, x1, q2f));
-                                let xfx2 = if two_caches {
-                                    *pdf_cache2
-                                        .entry((entry.1, ix2, iq2))
-                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
-                                } else {
-                                    *pdf_cache1
-                                        .entry((entry.1, ix2, iq2))
-                                        .or_insert_with(|| xfx2(entry.1, x2, q2f))
-                                };
-                                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                            }
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = *pdf_cache1
+                                .entry((entry.0, ix1, imu2))
+                                .or_insert_with(|| xfx1(entry.0, x1, muf2));
+                            let xfx2 = if two_caches {
+                                *pdf_cache2
+                                    .entry((entry.1, ix2, imu2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, muf2))
+                            } else {
+                                *pdf_cache1
+                                    .entry((entry.1, ix2, imu2))
+                                    .or_insert_with(|| xfx2(entry.1, x2, muf2))
+                            };
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
 
-                            let mut alphas_cache = alphas_cache.borrow_mut();
-                            let alphas = alphas_cache
-                                .entry(xir_values.len() * iq2 + xir_index)
-                                .or_insert_with(|| alphas(xir * xir * q2));
+                        let mut alphas_cache = alphas_cache.borrow_mut();
+                        let alphas = alphas_cache
+                            .entry(xir_values.len() * imu2 + xir_index)
+                            .or_insert_with(|| alphas(xir * xir * mu2.ren));
 
-                            lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                            lumi
-                        }),
-                    )
+                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
+                        lumi
+                    })
                 } else {
-                    subgrid.convolute(
-                        &x1_grid,
-                        &x2_grid,
-                        &q2_grid,
-                        Right(&|x1, x2, q2| {
-                            let mut lumi = 0.0;
-                            let q2f = xif * xif * q2;
-
-                            for entry in lumi_entry.entry() {
-                                let xfx1 = xfx1(entry.0, x1, q2f);
-                                let xfx2 = xfx2(entry.1, x2, q2f);
-                                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
-                            }
-
-                            lumi *= alphas(xir * xir * q2).powi(order.alphas.try_into().unwrap());
-                            lumi
-                        }),
-                    )
+                    todo!();
                 };
 
                 if order.logxir > 0 {
@@ -505,51 +481,51 @@ impl Grid {
         let mut array = if subgrid.is_empty() {
             Array3::zeros((0, 0, 0))
         } else {
-            let q2_grid = subgrid.q2_grid();
+            let mu2_grid = subgrid.mu2_grid();
             let x1_grid = subgrid.x1_grid();
             let x2_grid = subgrid.x2_grid();
 
-            let use_cache = !q2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
+            let use_cache = !mu2_grid.is_empty() && !x1_grid.is_empty() && !x2_grid.is_empty();
             let two_caches = !ptr::eq(&xfx1, &xfx2);
 
             let lumi_entry = &self.lumi[lumi];
 
             if use_cache {
-                let mut array = Array3::zeros((q2_grid.len(), x1_grid.len(), x2_grid.len()));
+                let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
-                for ((iq2, ix1, ix2), value) in subgrid.iter() {
+                for ((imu2, ix1, ix2), value) in subgrid.iter() {
                     let mut pdf_cache1 = pdf_cache1.borrow_mut();
                     let mut pdf_cache2 = pdf_cache2.borrow_mut();
                     let x1 = x1_grid[ix1];
                     let x2 = x2_grid[ix2];
-                    let q2 = q2_grid[iq2];
-                    let q2f = xif * xif * q2;
+                    let mu2 = &mu2_grid[imu2];
+                    let muf2 = xif * xif * mu2.fac;
 
                     let mut lumi = 0.0;
 
                     for entry in lumi_entry.entry() {
                         let xfx1 = *pdf_cache1
-                            .entry((entry.0, ix1, iq2))
-                            .or_insert_with(|| xfx1(entry.0, x1, q2f));
+                            .entry((entry.0, ix1, imu2))
+                            .or_insert_with(|| xfx1(entry.0, x1, muf2));
                         let xfx2 = if two_caches {
                             *pdf_cache2
-                                .entry((entry.1, ix2, iq2))
-                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                .entry((entry.1, ix2, imu2))
+                                .or_insert_with(|| xfx2(entry.1, x2, muf2))
                         } else {
                             *pdf_cache1
-                                .entry((entry.1, ix2, iq2))
-                                .or_insert_with(|| xfx2(entry.1, x2, q2f))
+                                .entry((entry.1, ix2, imu2))
+                                .or_insert_with(|| xfx2(entry.1, x2, muf2))
                         };
                         lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                     }
 
                     let mut alphas_cache = alphas_cache.borrow_mut();
                     let alphas = alphas_cache
-                        .entry(iq2)
-                        .or_insert_with(|| alphas(xir * xir * q2));
+                        .entry(imu2)
+                        .or_insert_with(|| alphas(xir * xir * mu2.ren));
 
                     lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                    array[[iq2, ix1, ix2]] = lumi * value;
+                    array[[imu2, ix1, ix2]] = lumi * value;
                 }
 
                 array
@@ -709,7 +685,11 @@ impl Grid {
     ///
     /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
     /// not be merged with `self` an error is returned.
-    pub fn merge(&mut self, mut other: Self) -> Result<(), GridMergeError> {
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
@@ -743,7 +723,7 @@ impl Grid {
 
         if self.bin_limits != other.bin_limits {
             if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
-                return Err(GridMergeError::DifferentBins(e));
+                return Err(GridError::InvalidBinLimits(e));
             }
 
             new_bins = other.bin_limits.bins();
@@ -803,7 +783,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || self.subgrids[[0, 0, 0]].clone_empty(),
+            || EmptySubgridV1::default().into(),
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
@@ -878,9 +858,9 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridSetBinRemapperError> {
+    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridError> {
         if remapper.bins() != self.bin_limits.bins() {
-            return Err(GridSetBinRemapperError::BinMismatch {
+            return Err(GridError::BinNumberMismatch {
                 grid_bins: self.bin_limits.bins(),
                 remapper_bins: remapper.bins(),
             });
@@ -940,7 +920,8 @@ impl Grid {
                     }
                     SubgridEnum::EmptySubgridV1(_)
                     | SubgridEnum::LagrangeSparseSubgridV1(_)
-                    | SubgridEnum::ImportOnlySubgridV1(_) => {
+                    | SubgridEnum::ImportOnlySubgridV1(_)
+                    | SubgridEnum::ImportOnlySubgridV2(_) => {
                         // nothing to optimize here
                     }
                     SubgridEnum::NtupleSubgridV1(_) => todo!(),
@@ -983,30 +964,22 @@ impl Grid {
         self.subgrids = new_subgrids;
     }
 
-    // TODO: simplify the method, because `optimize_lumi` already removes empty entries
     fn symmetrize_lumi(&mut self) {
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
-        let mut pairs: Vec<(usize, usize)> = Vec::new();
-        let mut not_symmetrized: Vec<usize> = Vec::new();
 
-        'looop: while let Some(index) = indices.pop() {
+        while let Some(index) = indices.pop() {
             let lumi_entry = &self.lumi[index];
 
             if *lumi_entry == lumi_entry.transpose() {
-                for order in 0..self.orders.len() {
-                    for bin in 0..self.bin_limits.bins() {
-                        let subgrid = &self.subgrids[[order, bin, index]];
-
-                        // check if in all cases the limits are compatible with merging
-                        if !subgrid.is_empty() && (subgrid.x1_grid() != subgrid.x2_grid()) {
-                            not_symmetrized.push(index);
-
-                            continue 'looop;
+                // check if in all cases the limits are compatible with merging
+                self.subgrids
+                    .slice_mut(s![.., .., index])
+                    .iter_mut()
+                    .for_each(|subgrid| {
+                        if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
+                            subgrid.symmetrize()
                         }
-                    }
-                }
-
-                pairs.push((index, index));
+                    })
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
@@ -1014,87 +987,28 @@ impl Grid {
             {
                 indices.remove(j);
 
-                for order in 0..self.orders.len() {
-                    for bin in 0..self.bin_limits.bins() {
-                        let lhs = &self.subgrids[[order, bin, index]];
-                        let rhs = &self.subgrids[[order, bin, other_index]];
+                // check if in all cases the limits are compatible with merging
+                let (mut a, mut b) = self
+                    .subgrids
+                    .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
-                        // check if in all cases the limits are compatible with merging
-                        if !lhs.is_empty()
-                            && !rhs.is_empty()
-                            && ((lhs.x1_grid() != rhs.x2_grid())
-                                || (lhs.x2_grid() != rhs.x1_grid()))
+                a.iter_mut().zip(b.iter_mut()).for_each(|(lhs, rhs)| {
+                    if !rhs.is_empty() {
+                        if lhs.is_empty() {
+                            // we can't merge into an EmptySubgridV1
+                            *lhs = rhs.clone_empty();
+                            lhs.merge(rhs, true);
+                        } else if (lhs.x1_grid() == rhs.x2_grid())
+                            && (lhs.x2_grid() == rhs.x1_grid())
                         {
-                            not_symmetrized.push(index);
-                            not_symmetrized.push(other_index);
-
-                            continue 'looop;
+                            lhs.merge(rhs, true);
                         }
-                    }
-                }
 
-                pairs.push((index, other_index));
-            } else {
-                not_symmetrized.push(index);
+                        *rhs = EmptySubgridV1::default().into();
+                    }
+                });
             }
         }
-
-        let i_size = self.orders.len();
-        let j_size = self.bin_limits.bins();
-        let k_size = self.lumi.len();
-
-        let subgrids = mem::replace(
-            &mut self.subgrids,
-            Array3::from_shape_vec((0, 0, 0), vec![]).unwrap(),
-        );
-        let mut subgrids = Array3::from_shape_vec(
-            (i_size, j_size, k_size),
-            subgrids.into_raw_vec().into_iter().map(Some).collect(),
-        )
-        .unwrap();
-
-        for i in 0..i_size {
-            for j in 0..j_size {
-                for &(k1, k2) in &pairs {
-                    if k1 == k2 {
-                        subgrids[[i, j, k1]].as_mut().unwrap().symmetrize();
-                    } else {
-                        let mut lhs = mem::replace(&mut subgrids[[i, j, k1]], None).unwrap();
-                        let mut rhs = mem::replace(&mut subgrids[[i, j, k2]], None).unwrap();
-
-                        subgrids[[i, j, k1]] = Some(if rhs.is_empty() {
-                            lhs
-                        } else if lhs.is_empty() {
-                            let mut new_lhs = rhs.clone_empty();
-                            new_lhs.merge(&mut rhs, true);
-                            new_lhs
-                        } else {
-                            lhs.merge(&mut rhs, true);
-                            lhs
-                        });
-                    }
-                }
-            }
-        }
-
-        self.subgrids = Array3::from_shape_vec(
-            (i_size, j_size, pairs.len() + not_symmetrized.len()),
-            subgrids.into_raw_vec().into_iter().flatten().collect(),
-        )
-        .unwrap();
-
-        let mut new_lumi_indices: Vec<_> = pairs
-            .iter()
-            .map(|(index, _)| index)
-            .chain(not_symmetrized.iter())
-            .copied()
-            .collect();
-        new_lumi_indices.sort_unstable();
-
-        self.lumi = new_lumi_indices
-            .iter()
-            .map(|i| self.lumi[*i].clone())
-            .collect();
     }
 
     /// Upgrades the internal data structures to their latest versions.
@@ -1549,7 +1463,7 @@ mod tests {
             &subgrid_type,
         );
 
-        matches!(result, Err(UnknownSubgrid(x)) if x == subgrid_type);
+        matches!(result, Err(GridError::UnknownSubgridType(x)) if x == subgrid_type);
     }
 
     #[test]

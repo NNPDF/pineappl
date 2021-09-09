@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added an example program using the C API to convert fastNLO tables (of type
   `fastNLOCoeffAddFix`). Tables of type `fastNLOCoeffAddFlex` are not supported
   yet
+- added a new switch `--subgrid-pull` to the `plot` subcommand; this generates
+  several plots showing the where the pull between two PDFs comes from in `x1`
+  and `x2`, and also in rapidity `y` and invariant mass `M`
+- improved the `optimize` method such that it removes all entries of a
+  luminosity function that are empty across orders and bins. This required a
+  change in `merge`, which now allows the merge of grids with different
+  luminosities and orders
+- enabled relabeling PDF sets, which means that they can now specified as
+  `LHAPDF-set-name=label`, which uses the set `LHAPDF-set-name` to load it from
+  LHAPDF, but `label` is the name that appears in the plot legend
 
 ### Changed
 
@@ -42,6 +52,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `EmptySubgridV1`
 - vastly improved the output of the `plot` subcommand: bounding boxes are
   properly calculated now, added support for higher-dimensional distributions
+- changed the `plot` subcommand such that the legend is put in between panels,
+  thereby producing less overlapping elements
+- replaced the C API functions `pineappl_subgrid_new` and
+  `pineappl_subgrid_import_q2_slice` with `pineappl_subgrid_new2` and
+  `pineappl_subgrid_import_mu2_slice`, respectively. The latter support
+  independent renormalization and factorization scales
+- changed the names of `pineappl_grid_export_q2_slice` and
+  `pineappl_grid_nonzero_q2_slices` to `pineappl_grid_export_mu2_slice` and
+  `pineappl_grid_nonzero_mu2_slices`, respectively
 
 ## [0.4.1] - 25/03/2021
 

@@ -2,14 +2,12 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
-use super::import_only_subgrid::ImportOnlySubgridV1;
+use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use either::Either;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::ops::Range;
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -28,37 +26,49 @@ pub enum SubgridEnum {
     ImportOnlySubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
+    /// Same as [`ImportOnlySubgridV1`], but with support for different renormalization and
+    /// factorization scales choices.
+    ImportOnlySubgridV2,
+}
+
+/// Structure denoting renormalization and factorization scale values.
+#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, Serialize)]
+pub struct Mu2 {
+    /// The (squared) renormalization scale value.
+    pub ren: f64,
+    /// The (squared) factorization scale value.
+    pub fac: f64,
 }
 
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// Return a `Vec` of values of `q2`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
-    fn q2_grid(&self) -> Cow<[f64]>;
+    /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
+    /// factorization values of the grid. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
+    fn mu2_grid(&self) -> Cow<[Mu2]>;
 
-    /// Return a `Vec` of values of `x1`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
+    /// Return a slice of values of `x1`. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
     fn x1_grid(&self) -> Cow<[f64]>;
 
-    /// Return a `Vec` of values of `x2`. If the subgrid does not use a grid, this method should
-    /// return an empty `Vec`.
+    /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
+    /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Convolute the subgrid with a luminosity function, which either takes indices as arguments,
-    /// in which case the `x1`, `x2` and `q2` values can be read from the given slices, or takes
-    /// the usual values `x1`, `x2`, and `q2`. If the method `x1_grid` and `x2_grid` return a
-    /// non-empty vector, this method must use the indexed luminosity function.
+    /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
+    /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
     fn convolute(
         &self,
         x1: &[f64],
         x2: &[f64],
-        q2: &[f64],
-        lumi: Either<&dyn Fn(usize, usize, usize) -> f64, &dyn Fn(f64, f64, f64) -> f64>,
+        mu2: &[Mu2],
+        lumi: &dyn Fn(usize, usize, usize) -> f64,
     ) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
-    /// scale `q2`.
+    /// scale `q2`. Filling is currently only support where both renormalization and factorization
+    /// scale have the same value.
     fn fill(&mut self, ntuple: &Ntuple<f64>);
 
     /// Returns true if `fill` was never called for this grid.
@@ -69,14 +79,6 @@ pub trait Subgrid {
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
-
-    /// Returns the half-open interval of indices of filled q2 slices.
-    fn q2_slice(&self) -> Range<usize>;
-
-    // TODO: rename the function to export_q2_slice
-
-    /// Fill the q2-slice with index `q2_slice` into `grid`.
-    fn fill_q2_slice(&self, q2_slice: usize, grid: &mut [f64]);
 
     /// Assumes that the initial states for this grid are the same and uses this to optimize the
     /// grid by getting rid of almost half of the entries.
@@ -255,56 +257,56 @@ impl From<&SubgridParams> for ExtraSubgridParams {
 }
 
 impl ExtraSubgridParams {
-    /// Returns whether reweighting is enabled for the $x_2$ axis or not.
+    /// Returns whether reweighting is enabled for the `x2` axis or not.
     #[must_use]
     pub const fn reweight2(&self) -> bool {
         self.reweight2
     }
 
-    /// Sets the reweighting parameter for the $x_2$ axis.
+    /// Sets the reweighting parameter for the `x2` axis.
     pub fn set_reweight2(&mut self, reweight2: bool) {
         self.reweight2 = reweight2;
     }
 
-    /// Sets the number of bins for the $x_2$ axes.
+    /// Sets the number of bins for the `x2` axes.
     pub fn set_x2_bins(&mut self, x_bins: usize) {
         self.x2_bins = x_bins;
     }
 
-    /// Sets the upper limit of the $x_2$ axes.
+    /// Sets the upper limit of the `x2` axes.
     pub fn set_x2_max(&mut self, x_max: f64) {
         self.x2_max = x_max;
     }
 
-    /// Sets the lower limit of the $x_2$ axes.
+    /// Sets the lower limit of the `x2` axes.
     pub fn set_x2_min(&mut self, x_min: f64) {
         self.x2_min = x_min;
     }
 
-    /// Sets the interpolation order for the $x_2$ axes.
+    /// Sets the interpolation order for the `x2` axes.
     pub fn set_x2_order(&mut self, x_order: usize) {
         self.x2_order = x_order;
     }
 
-    /// Returns the number of bins for the $x_2$ axes.
+    /// Returns the number of bins for the `x2` axes.
     #[must_use]
     pub const fn x2_bins(&self) -> usize {
         self.x2_bins
     }
 
-    /// Returns the upper limit of the $x_2$ axes.
+    /// Returns the upper limit of the `x2` axes.
     #[must_use]
     pub const fn x2_max(&self) -> f64 {
         self.x2_max
     }
 
-    /// Returns the lower limit of the $x_2$ axes.
+    /// Returns the lower limit of the `x2` axes.
     #[must_use]
     pub const fn x2_min(&self) -> f64 {
         self.x2_min
     }
 
-    /// Returns the interpolation order for the $x_2$ axes.
+    /// Returns the interpolation order for the `x2` axes.
     #[must_use]
     pub const fn x2_order(&self) -> usize {
         self.x2_order

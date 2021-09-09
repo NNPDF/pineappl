@@ -7,6 +7,14 @@ use pineappl::subgrid::Subgrid;
 use rayon::prelude::*;
 use std::path::Path;
 
+fn pdfset_label(pdfset: &str) -> &str {
+    pdfset.rsplit_once('=').map_or(pdfset, |(_, label)| label)
+}
+
+fn pdfset_name(pdfset: &str) -> &str {
+    pdfset.rsplit_once('=').map_or(pdfset, |(name, _)| name)
+}
+
 fn map_format_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{}", x)).join(", ")
 }
@@ -26,7 +34,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[&str]) -> 
             np.array([{}]),
             np.array([{}]),
         ),\n",
-            pdfset.replace('_', "\\_"),
+            pdfset_label(pdfset).replace('_', "\\_"),
             map_format_e_join(&values[0]),
             map_format_e_join(&values[1]),
             map_format_e_join(&values[2]),
@@ -563,8 +571,9 @@ figure.savefig('plot.pdf')",
 
 pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     let grid = helpers::read_grid(input)?;
-    let pdf = pdfsets[0].parse().map_or_else(
-        |_| Pdf::with_setname_and_member(pdfsets[0], 0),
+    let lhapdf_name = pdfset_name(pdfsets[0]);
+    let pdf = lhapdf_name.parse().map_or_else(
+        |_| Pdf::with_setname_and_member(lhapdf_name, 0),
         Pdf::with_lhaid,
     );
 
@@ -593,8 +602,9 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
     let pdf_uncertainties: Vec<Vec<Vec<f64>>> = pdfsets
         .par_iter()
         .map(|pdfset| {
-            let set = PdfSet::new(&pdfset.parse().map_or_else(
-                |_| (*pdfset).to_string(),
+            let lhapdf_name = pdfset_name(pdfset);
+            let set = PdfSet::new(&lhapdf_name.parse().map_or_else(
+                |_| lhapdf_name.to_string(),
                 |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
             ));
 
