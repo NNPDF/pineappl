@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+testpaths = ['tests/']
+addopts = [
+  '--cov=pineappl',
+  '--cov-report=html',
+  '--cov-report=xml',
+  '--strict-markers',
+]
