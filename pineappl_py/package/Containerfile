@@ -3,6 +3,13 @@ FROM quay.io/pypa/manylinux2014_x86_64
 ARG MATURIN_TAR='maturin-x86_64-unknown-linux-musl.tar.gz'
 ARG MATURIN_TAG='v0.11.3'
 
+# install c compiler
+# create a dedicated user
+# useradd -m pineappl
+# su - pineappl
+# install dependencies
+# - rust
+# - maturin
 RUN /bin/bash -c "yum install gcc -y; \
                   cd /root; \
                   mkdir -p local/bin; \
