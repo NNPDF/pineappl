@@ -28,9 +28,13 @@ Here the explicit commands with `podman` [[1]](#docker)
 ```sh
 podman pull ghcr.io/n3pdf/maturin:latest
 podman run ghcr.io/n3pdf/maturin
+podman cp <container-id>:root/pineappl/pineappl_py/target/wheels/ .
 ```
 
 <a name="docker">[1]</a>: to use `docker` instead you can simply replace `podman -> docker`, they have compatible subcommands
+
+Now wheels are available outside the container and can be uploaded in your
+favorite way.
 
 ### Create a new `maturin` image
 
