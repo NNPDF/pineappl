@@ -12,8 +12,10 @@ jobs:
       - name: Compile and Publish wheels
         uses: docker://ghcr.io/n3pdf/maturin:latest
         with:
-          # args: publish --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
-          args: publish --skip-existing --username N3PDF-ac --password ${{ secrets.PYPI_PWD }} -r https://test.pypi.org/legacy/
+          # args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+          args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
   deploy-macos:
     runs-on: macos-10.15
@@ -28,5 +30,5 @@ jobs:
         with:
           maturin-version: latest
           command: publish
-          # args: --universal2 --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
-          args: --universal2 --skip-existing --username N3PDF-ac --password ${{ secrets.PYPI_PWD }} -r https://test.pypi.org/legacy/
+          # args: --universal2 --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+          args: --universal2 --skip-existing -r https://test.pypi.org/legacy/ --username __token__ -p ${{ secrets.PYPI_TEST_TOKEN }}
