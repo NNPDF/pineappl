@@ -13,12 +13,6 @@ pub struct PyFkTable {
 
 #[pymethods]
 impl PyFkTable {
-    //#[new]
-    //pub fn try_from(grid: PyGrid) -> PyFkTable {
-    //    Self {
-    //        fk_table: FkTable::try_from(grid.grid).unwrap(),
-    //    }
-    //}
 
     pub fn table<'a>(&self, py: Python<'a>) -> PyResult<&'a PyArray4<f64>> {
         Ok(self.fk_table.table().into_pyarray(py))
@@ -42,11 +36,14 @@ impl PyFkTable {
 
     /// Write grid to file.
     ///
-    /// **Usage:** FkTable interface
+    /// **Usage:** `pineko`
     pub fn write(&self, path: &str) {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
 
+    /// Convolute grid with pdf.
+    ///
+    /// **Usage:** `pineko`
     pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
         self.fk_table.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),

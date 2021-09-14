@@ -319,6 +319,7 @@ impl Grid {
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let bin_sizes = self.bin_info().normalizations();
 
+        // prepare pdf and alpha caches
         let pdf_cache1 = RefCell::new(FxHashMap::default());
         let pdf_cache2 = RefCell::new(FxHashMap::default());
         let alphas_cache = RefCell::new(FxHashMap::default());
@@ -357,17 +358,16 @@ impl Grid {
                 pdf_cache2.borrow_mut().clear();
                 last_xif = xif;
             }
-
+            // iterate subgrids
             for ((i, j, k), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[i];
-
+                // can we skip?
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
                     continue;
                 }
 
                 if (!order_mask.is_empty() && !order_mask[i])
-                    || (!lumi_mask.is_empty() && !lumi_mask[k])
-                {
+                    || (!lumi_mask.is_empty() && !lumi_mask[k]) {
                     continue;
                 }
 
@@ -381,6 +381,7 @@ impl Grid {
                 let mut value = if subgrid.is_empty() {
                     0.0
                 } else if use_cache {
+                    // Now we actually have to do something
                     let new_mu2_grid = subgrid.mu2_grid();
                     let new_x1_grid = subgrid.x1_grid();
                     let new_x2_grid = subgrid.x2_grid();
@@ -398,6 +399,7 @@ impl Grid {
                         pdf_cache2.borrow_mut().clear();
                     }
 
+                    // pass convolute down, using caching
                     subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &|ix1, ix2, imu2| {
                         let mut pdf_cache1 = pdf_cache1.borrow_mut();
                         let mut pdf_cache2 = pdf_cache2.borrow_mut();
@@ -436,6 +438,7 @@ impl Grid {
                     todo!();
                 };
 
+                // enhance with logarithms
                 if order.logxir > 0 {
                     value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
                 }
@@ -444,6 +447,7 @@ impl Grid {
                     value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
                 }
 
+                // fill in ...
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
             }
         }
