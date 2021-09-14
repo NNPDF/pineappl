@@ -4,6 +4,7 @@ build-backend = "maturin"
 
 [project]
 dependencies = ["numpy~=1.21.0"]
+name = "pineappl"
 
 [tool.pytest.ini_options]
 testpaths = ['tests/']
