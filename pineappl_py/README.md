@@ -1,11 +1,12 @@
 # Python bindings for PineAPPL
 
-This crate uses [PyO3] to provide Python bindings to PineAPPL's [Rust API]. It
-will supersede the [Python wrapper] written with [ctypes].
+This crate uses [PyO3] to provide Python bindings to PineAPPL's [Rust API].
 
 # Installation
 
-TODO
+```sh
+pip install pineappl
+```
 
 # Compilation (for development)
 
@@ -19,7 +20,7 @@ virtualenv env # --system-site-packages
 
 ```sh
 . env/bin/activate
-pip install maturin
+pip install -r dev.requirements.txt
 ```
 
 3. Run `maturin` to compile and install the library as a python package in the
@@ -31,5 +32,3 @@ maturin develop
 
 [PyO3]: https://pyo3.rs
 [Rust API]: https://docs.rs/pineappl
-[Python wrapper]: ../wrappers/python/README.md
-[ctypes]: https://docs.python.org/3/library/ctypes.html
