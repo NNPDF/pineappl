@@ -159,4 +159,25 @@ impl PyGrid {
     pub fn optimize(&mut self) {
         self.grid.optimize();
     }
+
+    /// Get number of bin dimensions
+    ///
+    /// **Usage:** `pineko`
+    pub fn bin_dimensions(&self) -> usize {
+        self.grid.bin_info().dimensions()
+    }
+
+    /// Get left bin bounds in given `dimension`
+    ///
+    /// **Usage:** `pineko`
+    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
+        self.grid.bin_info().left(dimension)
+    }
+
+    /// Get right bin bounds in given `dimension`
+    ///
+    /// **Usage:** `pineko`
+    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
+        self.grid.bin_info().right(dimension)
+    }
 }
