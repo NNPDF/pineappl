@@ -14,6 +14,9 @@ keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "Python bindings to PineAPPL"
 
+[package.metadata.maturin]
+name = "pineappl"
+
 [lib]
 name = "pineappl"
 crate-type = ["cdylib"]
