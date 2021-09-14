@@ -2,6 +2,7 @@ use pineappl::grid::{EkoInfo, Grid, Order};
 
 use super::bin::PyBinRemapper;
 use super::lumi::PyLumiEntry;
+use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
@@ -120,7 +121,7 @@ impl PyGrid {
         q2_grid: Vec<f64>,
         operator_flattened: Vec<f64>,
         operator_shape: Vec<usize>,
-    ) -> Self {
+    ) -> PyFkTable {
         let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let evolved_grid = self
             .grid
@@ -134,7 +135,7 @@ impl PyGrid {
                 operator.into_dimensionality::<Ix5>().unwrap(),
             )
             .unwrap();
-        Self::new(evolved_grid)
+        PyFkTable {fk_table: evolved_grid}
     }
 
     /// Load grid from file.

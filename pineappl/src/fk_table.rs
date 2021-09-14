@@ -4,6 +4,7 @@ use super::grid::{Grid, Order};
 use super::subgrid::Subgrid;
 use ndarray::Array4;
 use std::convert::TryFrom;
+use std::io::{Write};
 use thiserror::Error;
 
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
@@ -118,6 +119,25 @@ impl FkTable {
         }
 
         unreachable!();
+    }
+
+    /// Propagate write to grid
+    pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
+        self.grid.write(writer)
+    }
+
+    /// Propagate convolute to grid
+    pub fn convolute(
+        &self,
+        xfx1: &dyn Fn(i32, f64, f64) -> f64,
+        xfx2: &dyn Fn(i32, f64, f64) -> f64,
+        alphas: &dyn Fn(f64) -> f64,
+        order_mask: &[bool],
+        bin_indices: &[usize],
+        lumi_mask: &[bool],
+        xi: &[(f64, f64)],
+    ) -> Vec<f64> {
+        self.grid.convolute(xfx1,xfx2,alphas,order_mask,bin_indices,lumi_mask,xi)
     }
 }
 

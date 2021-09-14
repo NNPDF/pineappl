@@ -9,6 +9,7 @@ use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
+use super::fk_table::FkTable;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -21,7 +22,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::convert::TryInto;
+use std::convert::{TryInto,TryFrom};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::ops::Range;
@@ -1126,7 +1127,7 @@ impl Grid {
         x_grid: Vec<f64>,
         q2_grid: Vec<f64>,
         operator: Array5<f64>,
-    ) -> Option<Self> {
+    ) -> Option<FkTable> {
         // Check operator layout
         let dim = operator.shape();
 
@@ -1425,7 +1426,7 @@ impl Grid {
 
         bar.finish();
 
-        Some(result)
+        Some(FkTable::try_from(result).unwrap())
     }
 }
 
