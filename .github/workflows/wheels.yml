@@ -1,9 +1,9 @@
 name: Python publication
 
-on:
-  release:
+on: [workflow_dispatch]
+  # release:
     # run only on published, not for drafts
-    types: [published]
+    # types: [published]
 
 jobs:
   deploy-linux:
@@ -12,7 +12,8 @@ jobs:
       - name: Compile and Publish wheels
         uses: docker://ghcr.io/n3pdf/maturin:latest
         with:
-          args: publish --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
+          # args: publish --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
+          args: publish --skip-existing --username N3PDF-ac --password ${{ secrets.PYPI_PWD }} -r https://test.pypi.org/legacy/
 
   deploy-macos:
     runs-on: macos-10.15
@@ -27,4 +28,5 @@ jobs:
         with:
           maturin-version: latest
           command: publish
-          args: --universal2 --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
+          # args: --universal2 --skip-existing --username N3PDF --password ${{ secrets.PYPI_PWD }}
+          args: --universal2 --skip-existing --username N3PDF-ac --password ${{ secrets.PYPI_PWD }} -r https://test.pypi.org/legacy/
