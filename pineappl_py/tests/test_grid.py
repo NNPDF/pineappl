@@ -47,6 +47,7 @@ class TestGrid:
             np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
         )
         g.set_subgrid(0, 1, 0, subgrid)
+        g.optimize()
 
     def test_set_key_value(self):
         g = self.fake_grid()
@@ -54,12 +55,25 @@ class TestGrid:
         g.set_key_value("\"", "'")
         g.set_key_value("äöü", "ß\\")
 
-    def test_set_remapper(self):
+    def test_bins(self):
         g = self.fake_grid()
+        # 1D
         normalizations = [1.0] * 2
         limits = [(1,1),(2,2)]
         remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
+        assert g.bin_dimensions() == 1
+        np.testing.assert_allclose(g.bin_left(0), [1,2])
+        np.testing.assert_allclose(g.bin_right(0), [1,2])
+        # 2D
+        limits = [(1,2),(2,3),(2,4),(3,5)]
+        remapper = pineappl.bin.BinRemapper(normalizations, limits)
+        g.set_remapper(remapper)
+        assert g.bin_dimensions() == 2
+        np.testing.assert_allclose(g.bin_left(0), [1,2])
+        np.testing.assert_allclose(g.bin_right(0), [2,4])
+        np.testing.assert_allclose(g.bin_left(1), [2,3])
+        np.testing.assert_allclose(g.bin_right(1), [3,5])
 
     def test_convolute(self):
         g = self.fake_grid()
