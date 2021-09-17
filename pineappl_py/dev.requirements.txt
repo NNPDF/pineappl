@@ -1,4 +1,10 @@
 maturin
+numpy
+
+# Documentation
+sphinx_rtd_theme
+sphinxcontrib-bibtex
+
+# Tests
 pytest
 pytest-cov
-numpy

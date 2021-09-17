@@ -2,6 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::empty_subgrid::EmptySubgridV1;
+use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::LumiEntry;
@@ -9,7 +10,6 @@ use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
-use super::fk_table::FkTable;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -22,7 +22,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::convert::{TryInto,TryFrom};
+use std::convert::{TryFrom, TryInto};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::ops::Range;
@@ -367,7 +367,8 @@ impl Grid {
                 }
 
                 if (!order_mask.is_empty() && !order_mask[i])
-                    || (!lumi_mask.is_empty() && !lumi_mask[k]) {
+                    || (!lumi_mask.is_empty() && !lumi_mask[k])
+                {
                     continue;
                 }
 
