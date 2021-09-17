@@ -4,7 +4,7 @@ use super::grid::{Grid, Order};
 use super::subgrid::Subgrid;
 use ndarray::Array4;
 use std::convert::TryFrom;
-use std::io::{Write};
+use std::io::Write;
 use thiserror::Error;
 
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
@@ -137,7 +137,8 @@ impl FkTable {
         lumi_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
-        self.grid.convolute(xfx1,xfx2,alphas,order_mask,bin_indices,lumi_mask,xi)
+        self.grid
+            .convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
     }
 }
 
