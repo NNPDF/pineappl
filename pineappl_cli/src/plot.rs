@@ -357,6 +357,7 @@ def main():
 
         name = '{output}' if len(data_slices) == 1 else '{output}-{{}}'.format(index)
         figure.savefig(name + '.pdf')
+        plt.close(figure)
 
 def data():
     left = np.array([{left}])
