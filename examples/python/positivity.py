@@ -4,10 +4,9 @@ import pineappl
 import numpy as np
 
 
-def main(filename):
+def main(filename, Q2):
     # setup data
     xgrid = np.geomspace(5e-5, 0.7, 10)
-    Q2 = 1.5 ** 2
     lepton_pid = 11
     pid = 4
 
@@ -23,14 +22,13 @@ def main(filename):
     limits = []
     # add each point as a bin
     for bin_, x in enumerate(xgrid):
-        x = x
-
+        # keep DIS bins
         limits.append((Q2, Q2))
         limits.append((x, x))
-
+        # delta function
         array = np.zeros(len(xgrid))
         array[bin_] = 1
-
+        # create and set
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             array[np.newaxis, :, np.newaxis],
             [Q2],
@@ -58,4 +56,4 @@ def main(filename):
 
 
 if __name__ == "__main__":
-    main("charm-positivity.pineappl")
+    main("charm-positivity.pineappl", 1.5 ** 2)
