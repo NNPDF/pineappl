@@ -59,7 +59,7 @@ jobs:
     - name: Generate doctest coverage
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --workspace --exclude pineappl_cli --exclude pineappl_capi --ignore-tests
+        args: --workspace --exclude pineappl_cli --exclude pineappl_capi --exclude pineappl_py --ignore-tests
         run-types: Doctests,Tests
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1
