@@ -18,8 +18,7 @@ view:
 	$(BROWSER) $(BUILDDIR)/html/index.html
 
 server:
-	python3 -m http.server 8000 --bind 127.0.0.1 --directory build/html &
-	$(BROWSER) 127.0.0.1:8000/index.html
+	python3 -m http.server 8000 --bind 127.0.0.1 --directory build/html
 
 clean:
 	rm -rf build

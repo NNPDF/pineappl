@@ -12,7 +12,7 @@ from .utils import PyWrapper
 
 class Order(PyWrapper):
     r"""
-    Python wrapper object to interface `Order`.
+    Python wrapper object to interface :class:`~pineappl.pineappl.PyOrder`.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ class Order(PyWrapper):
 
 class Grid(PyWrapper):
     r"""
-    Python wrapper object to interface `Grid`.
+    Python wrapper object to interface :class:`~pineappl.pineappl.PyGrid`.
 
     To create an object, you should call either :meth:`create`
     or :meth:`read`.
@@ -82,6 +82,17 @@ class Grid(PyWrapper):
                 subgrid content
         """
         self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
+
+    def set_remapper(self, remapper):
+        """
+        Set the normalizations.
+
+        Parameters
+        ----------
+            remapper: BinRemapper
+                Remapper object
+        """
+        self.raw.set_remapper(remapper.raw)
 
     def convolute_eko(self, operators):
         """

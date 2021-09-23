@@ -1,8 +1,8 @@
 use pineappl::grid::{EkoInfo, Grid, Order};
 
 use super::bin::PyBinRemapper;
-use super::lumi::PyLumiEntry;
 use super::fk_table::PyFkTable;
+use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
@@ -70,7 +70,7 @@ impl PyGrid {
     /// Set a metadata key-value pair in the grid.
     ///
     /// **Usage:** `yadism`
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     key : str
@@ -92,7 +92,7 @@ impl PyGrid {
     /// Set the normalizations.
     ///
     /// **Usage:** `yadism`
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     remapper: BinRemapper
@@ -104,7 +104,7 @@ impl PyGrid {
     /// Extract the necessary informations for EKO.
     ///
     /// **Usage:** `pineko`
-    /// 
+    ///
     /// Returns
     /// -------
     ///     x_grid: list(float)
@@ -119,7 +119,7 @@ impl PyGrid {
     /// Convolute grid with pdf.
     ///
     /// **Usage:** `pineko`
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     xfx1 : callable
@@ -128,7 +128,7 @@ impl PyGrid {
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
     ///     alphas : callable
     ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-    /// 
+    ///
     /// Returns
     /// -------
     ///     list(float) :
@@ -171,7 +171,9 @@ impl PyGrid {
                 operator.into_dimensionality::<Ix5>().unwrap(),
             )
             .unwrap();
-        PyFkTable {fk_table: evolved_grid}
+        PyFkTable {
+            fk_table: evolved_grid,
+        }
     }
 
     /// Load grid from file.
@@ -204,9 +206,9 @@ impl PyGrid {
     /// Extract the number of dimensions for bins.
     ///
     /// **Usage:** `pineko`
-    /// 
+    ///
     /// E.g.: two differential cross-sections will return 2.
-    /// 
+    ///
     /// Returns
     /// -------
     ///     int :
@@ -216,14 +218,14 @@ impl PyGrid {
     }
 
     /// Extract the left edges of a specific bin dimension.
-    /// 
+    ///
     /// **Usage:** `pineko`
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     dimension : int
     ///         bin dimension
-    /// 
+    ///
     /// Returns
     /// -------
     ///     list(float) :
@@ -231,16 +233,16 @@ impl PyGrid {
     pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().left(dimension)
     }
-    
+
     /// Extract the right edges of a specific bin dimension.
-    /// 
+    ///
     /// **Usage:** `pineko`
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     dimension : int
     ///         bin dimension
-    /// 
+    ///
     /// Returns
     /// -------
     ///     list(float) :

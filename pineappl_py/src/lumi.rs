@@ -5,6 +5,12 @@ use pyo3::prelude::*;
 /// PyO3 wrapper to [`pineappl::lumi::LumiEntry`]
 ///
 /// **Usage**: `yadism`, FKTable interface
+///
+/// Each entry consists of a tuple, which contains, in the following order:
+///
+/// 1. the PDG id of the first incoming parton
+/// 2. the PDG id of the second parton
+/// 3. a numerical factor that will multiply the result for this specific combination.
 #[pyclass]
 #[repr(transparent)]
 pub struct PyLumiEntry {
@@ -24,10 +30,15 @@ impl PyLumiEntry {
         Self::new(LumiEntry::new(entry))
     }
 
-    /// Clone elements to allow Python to access.
+    /// Get list representation.
     ///
     /// **Usage:** FKTable interface
-    pub fn into_array(&self) -> Vec<(i32, i32,f64)> {
+    ///
+    /// Returns
+    /// -------
+    ///     list(tuple(int,int,float)) :
+    ///         list representation
+    pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
         self.lumi_entry.entry().iter().map(|e| e.clone()).collect()
     }
 }
