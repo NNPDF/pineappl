@@ -3,6 +3,7 @@ class PyWrapper:
     Python wrapper helper to delegate function calls to the underlying
     raw object.
     """
+
     _raw = None
 
     @property

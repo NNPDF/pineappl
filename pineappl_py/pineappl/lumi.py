@@ -1,10 +1,4 @@
-try:
-    from .pineappl import PyLumiEntry
-except:
-    import warnings
-
-    warnings.warn("binary files missing")
-
+from .pineappl import PyLumiEntry
 from .utils import PyWrapper
 
 

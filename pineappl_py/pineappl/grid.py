@@ -1,12 +1,6 @@
-try:
-    from .pineappl import PyGrid, PyOrder
-except:
-    import warnings
-
-    warnings.warn("binary files missing")
-
 import numpy as np
 
+from .pineappl import PyGrid, PyOrder
 from .utils import PyWrapper
 
 
@@ -139,4 +133,3 @@ class Grid(PyWrapper):
                 grid object
         """
         return cls(PyGrid.read(path))
-

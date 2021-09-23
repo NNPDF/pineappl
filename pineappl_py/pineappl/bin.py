@@ -1,10 +1,4 @@
-try:
-    from .pineappl import PyBinRemapper
-except:
-    import warnings
-
-    warnings.warn("binary files missing")
-
+from .pineappl import PyBinRemapper
 from .utils import PyWrapper
 
 
@@ -19,5 +13,6 @@ class BinRemapper(PyWrapper):
         limits : list(tuple(float,float))
             all bin limits as a flat list
     """
+
     def __init__(self, normalization, limits):
         self._raw = PyBinRemapper(normalization, limits)
