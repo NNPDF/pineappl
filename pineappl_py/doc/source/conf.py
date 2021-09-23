@@ -139,13 +139,11 @@ def run_apidoc(_):
     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
     sys.path.append(str(here.parent))
-    # 'eko'
-    docs_dest = here / "modules" / "eko"
+    # 'pineappl'
+    docs_dest = here / "modules" / "pineappl"
     package = here.parents[1] / "pineappl"
     main(["--module-first", "-o", str(docs_dest), str(package)])
     (docs_dest / "modules.rst").unlink()
-    # # 'ekomark'
-    # docs_dest = here / "development" / "ekomark"
-    # package = here.parents[1] / "benchmarks" / "ekomark"
-    # main(["--module-first", "-o", str(docs_dest), str(package)])
-    (docs_dest / "modules.rst").unlink()
+
+def setup(app):
+    app.connect("builder-inited", run_apidoc)

@@ -17,7 +17,7 @@ class Order(PyWrapper):
     Parameters
     ----------
         alphas : int
-            power of :math:`\alphas_s`
+            power of :math:`\alpha_s`
         alpha : int
             power of :math:`\alpha`
         logxir : int
@@ -83,63 +83,6 @@ class Grid(PyWrapper):
         """
         self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
 
-    def set_remapper(self, remapper):
-        """
-        Set the normalizations.
-
-        Parameters
-        ----------
-            remapper: BinRemapper
-                Remapper object
-        """
-        self.raw.set_remapper(remapper.raw)
-
-    def set_key_value(self, key, value):
-        """
-        Set a metadata key-value pair in the grid.
-
-        Parameters
-        ----------
-            key : str
-                key
-            value : str
-                value
-        """
-        self.raw.set_key_value(key, value)
-
-    def convolute(self, xfx1, xfx2, alphas):
-        """
-        Convolute grid with given PDF sets.
-
-        Parameters
-        ----------
-            xfx1 : callable
-                LHAPDF like callable for x1
-            xfx2 : callable
-                LHAPDF like callable for x2
-            alphas : float
-                value of strong coupling
-
-        Returns
-        -------
-            list(float) :
-                predictions for all bins
-        """
-        return self.raw.convolute(xfx1, xfx2, alphas)
-
-    def eko_info(self):
-        """
-        Extract the necessary informations for EKO.
-
-        Returns
-        -------
-            x_grid: list(float)
-                interpolation grid
-            muf2_grid : list(float)
-                factorization scale list
-        """
-        return self.raw.eko_info()
-
     def convolute_eko(self, operators):
         """
         Create an FKTable with the EKO.
@@ -151,7 +94,7 @@ class Grid(PyWrapper):
 
         Returns
         ------
-            PyGrid
+            PyFkTable :
                 raw Grid as an FKTable
         """
         operator_grid = np.array(
@@ -186,64 +129,3 @@ class Grid(PyWrapper):
         """
         return cls(PyGrid.read(path))
 
-    def write(self, path):
-        """
-        Write the grid to file.
-
-        Parameters
-        ----------
-            path : str
-                file path
-        """
-        self.raw.write(path)
-
-    def optimize(self):
-        """
-        Optimize grid content.
-        """
-        return self.raw.optimize()
-
-    def bin_dimensions(self):
-        """
-        Extract the number of dimensions for bins.
-
-        E.g.: two differential cross-sections will return 2.
-
-        Returns
-        -------
-            int :
-                bin dimension
-        """
-        return self.raw.bin_dimensions()
-
-    def bin_left(self, dimension):
-        """
-        Extract the left edges of a specific bin dimension.
-
-        Parameters
-        ----------
-            dimension : int
-                bin dimension
-
-        Returns
-        -------
-            list(float) :
-                left edges of bins
-        """
-        return self.raw.bin_left(dimension)
-
-    def bin_right(self, dimension):
-        """
-        Extract the right edges of a specific bin dimension.
-
-        Parameters
-        ----------
-            dimension : int
-                bin dimension
-
-        Returns
-        -------
-            list(float) :
-                right edges of bins
-        """
-        return self.raw.bin_right(dimension)

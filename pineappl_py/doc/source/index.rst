@@ -10,6 +10,8 @@ Welcome to pineappl's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   API <modules/pineappl/pineappl>
+
 
 
 Indices and tables

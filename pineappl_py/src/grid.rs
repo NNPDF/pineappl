@@ -67,9 +67,16 @@ impl PyGrid {
         ))
     }
 
-    /// Set meta data in the grid.
+    /// Set a metadata key-value pair in the grid.
     ///
     /// **Usage:** `yadism`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     key : str
+    ///         key
+    ///     value : str
+    ///         value
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.grid.set_key_value(key, value);
     }
@@ -82,21 +89,50 @@ impl PyGrid {
             .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
     }
 
-    /// Set the bin remapper.
+    /// Set the normalizations.
     ///
     /// **Usage:** `yadism`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     remapper: BinRemapper
+    ///         Remapper object
     pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
     }
 
-    /// Get the eko specific informations.
+    /// Extract the necessary informations for EKO.
     ///
     /// **Usage:** `pineko`
+    /// 
+    /// Returns
+    /// -------
+    ///     x_grid: list(float)
+    ///         interpolation grid
+    ///     muf2_grid : list(float)
+    ///         factorization scale list
     pub fn eko_info(&self) -> (Vec<f64>, Vec<f64>) {
         let EkoInfo { x_grid, muf2_grid } = self.grid.eko_info().unwrap();
         (x_grid, muf2_grid)
     }
 
+    /// Convolute grid with pdf.
+    ///
+    /// **Usage:** `pineko`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     xfx1 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
+    ///     xfx2 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+    ///     alphas : callable
+    ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+    /// 
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         cross sections for all bins
     pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
         self.grid.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
@@ -149,6 +185,11 @@ impl PyGrid {
     /// Write grid to file.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
     pub fn write(&self, path: &str) {
         self.grid.write(File::create(path).unwrap()).unwrap();
     }
@@ -160,23 +201,50 @@ impl PyGrid {
         self.grid.optimize();
     }
 
-    /// Get number of bin dimensions
+    /// Extract the number of dimensions for bins.
     ///
     /// **Usage:** `pineko`
+    /// 
+    /// E.g.: two differential cross-sections will return 2.
+    /// 
+    /// Returns
+    /// -------
+    ///     int :
+    ///         bin dimension
     pub fn bin_dimensions(&self) -> usize {
         self.grid.bin_info().dimensions()
     }
 
-    /// Get left bin bounds in given `dimension`
-    ///
+    /// Extract the left edges of a specific bin dimension.
+    /// 
     /// **Usage:** `pineko`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     dimension : int
+    ///         bin dimension
+    /// 
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         left edges of bins
     pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().left(dimension)
     }
-
-    /// Get right bin bounds in given `dimension`
-    ///
+    
+    /// Extract the right edges of a specific bin dimension.
+    /// 
     /// **Usage:** `pineko`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     dimension : int
+    ///         bin dimension
+    /// 
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         right edges of bins
     pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().right(dimension)
     }

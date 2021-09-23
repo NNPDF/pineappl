@@ -37,6 +37,11 @@ impl PyFkTable {
     /// Write grid to file.
     ///
     /// **Usage:** `pineko`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
     pub fn write(&self, path: &str) {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
@@ -44,6 +49,20 @@ impl PyFkTable {
     /// Convolute grid with pdf.
     ///
     /// **Usage:** `pineko`
+    /// 
+    /// Parameters
+    /// ----------
+    ///     xfx1 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
+    ///     xfx2 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+    ///     alphas : callable
+    ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+    /// 
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         cross sections for all bins
     pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
         self.fk_table.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
