@@ -22,7 +22,7 @@ here = pathlib.Path(__file__).absolute().parent
 # -- Project information -----------------------------------------------------
 
 project = 'pineappl'
-copyright = '2021, the PineAPPL team'
+copyright = '2020-2021, the PineAPPL team'
 author = 'the PineAPPL team'
 
 
@@ -87,10 +87,9 @@ shared = here / "shared"
 rst_prolog = "\n".join([open(x).read() for x in os.scandir(shared)])
 
 extlinks = {
-    # "yadism": ("https://n3pdf.github.io/yadism/%s", "yadism"),
-    # "banana": ("https://n3pdf.github.io/banana/%s", "banana"),
+    "yadism": ("https://n3pdf.github.io/yadism/%s", "yadism"),
     "rustdoc": ("https://docs.rs/pineappl/0.4.1/pineappl/%s", "pineappl"),
-    # "pineko": ("https://github.com/N3PDF/pineko/%s", "pineko"),
+    "pineko": ("https://github.com/N3PDF/pineko/%s", "pineko"),
 }
 
 # -- Options for HTML output -------------------------------------------------
