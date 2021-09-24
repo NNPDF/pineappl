@@ -1,7 +1,7 @@
 use pineappl::subgrid::{SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::subgrid::SubgridParams`]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
@@ -102,7 +102,7 @@ impl PySubgridParams {
     }
 }
 
-/// PyO3 wrapper to [`pineappl::subgrid::SubgridEnum`]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
 ///
 /// **Usage**: `yadism`, FKTable interface
 #[pyclass]

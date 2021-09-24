@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 use std::fs::File;
 
-/// PyO3 wrapper to [`pineappl.fk_table.FkTable`]
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
 /// *Usage*: `pineko`, `yadism`
 #[pyclass]

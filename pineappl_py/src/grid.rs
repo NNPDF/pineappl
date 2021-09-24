@@ -1,4 +1,4 @@
-use pineappl::grid::{EkoInfo, Grid, Order, Ntuple};
+use pineappl::grid::{EkoInfo, Grid, Ntuple, Order};
 
 use super::bin::PyBinRemapper;
 use super::fk_table::PyFkTable;
@@ -12,7 +12,7 @@ use std::io::BufReader;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::grid::Order`]
+/// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
@@ -35,7 +35,7 @@ impl PyOrder {
     }
 }
 
-/// PyO3 wrapper to [`pineappl::grid::Grid`]
+/// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`
 ///
 /// **Usage**: `yadism`, `pineko`, FKTable interface
 #[pyclass]
@@ -68,7 +68,7 @@ impl PyGrid {
     }
 
     /// Add a point to the grid.
-    /// 
+    ///
     /// Parameters
     /// ----------
     ///     x1 : float
@@ -85,8 +85,22 @@ impl PyGrid {
     ///         luminosity index
     ///     weight : float
     ///         cross section weight
-    pub fn fill(&mut self, x1: f64, x2: f64, q2: f64, order: usize, observable: f64, lumi: usize, weight: f64) {
-        self.grid.fill(order, observable, lumi, &Ntuple::<f64> {x1, x2, q2, weight});
+    pub fn fill(
+        &mut self,
+        x1: f64,
+        x2: f64,
+        q2: f64,
+        order: usize,
+        observable: f64,
+        lumi: usize,
+        weight: f64,
+    ) {
+        self.grid.fill(
+            order,
+            observable,
+            lumi,
+            &Ntuple::<f64> { x1, x2, q2, weight },
+        );
     }
 
     /// Set a metadata key-value pair in the grid.

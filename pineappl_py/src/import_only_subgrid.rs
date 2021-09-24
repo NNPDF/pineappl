@@ -4,7 +4,7 @@ use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::sparse_array3::SparseArray3;
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::import_only_subgrid::ImportOnlySubgridV1`]
+/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
