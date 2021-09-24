@@ -7,6 +7,8 @@ use prettytable::Table;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter};
 
+pub const ONE_SIGMA: f64 = 68.268_949_213_708_58;
+
 pub fn read_grid(input: &str) -> Result<Grid> {
     Grid::read(BufReader::new(
         File::open(input).context(format!("unable to open '{}'", input))?,

@@ -420,7 +420,7 @@ pub fn subcommand_subgrid_pull(
     bin: usize,
     lumi: usize,
 ) -> Result<()> {
-    let cl = 68.268949213708581;
+    let cl = helpers::ONE_SIGMA;
     let grid = helpers::read_grid(input)?;
 
     let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
@@ -627,7 +627,7 @@ pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
                     .copied()
                     .collect();
 
-                let uncertainty = set.uncertainty(&values, 68.268949213708581, false);
+                let uncertainty = set.uncertainty(&values, helpers::ONE_SIGMA, false);
                 central.push(uncertainty.central);
                 min.push(uncertainty.central - uncertainty.errminus);
                 max.push(uncertainty.central + uncertainty.errplus);
