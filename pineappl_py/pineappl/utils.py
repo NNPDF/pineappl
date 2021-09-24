@@ -8,9 +8,11 @@ class PyWrapper:
 
     @property
     def raw(self):
+        """Raw PyO3 object"""
         return self._raw
 
     def __getattr__(self, name):
+        """Delegate function calls down."""
         if name[0] != "_":
             return self._raw.__getattribute__(name)
         else:

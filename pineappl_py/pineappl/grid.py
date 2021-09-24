@@ -64,6 +64,8 @@ class Grid(PyWrapper):
         """
         Set the subgrid at the given position.
 
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
+
         Parameters
         ----------
             order : int
@@ -81,6 +83,8 @@ class Grid(PyWrapper):
         """
         Set the normalizations.
 
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_remapper()`.
+
         Parameters
         ----------
             remapper: BinRemapper
@@ -92,6 +96,8 @@ class Grid(PyWrapper):
         """
         Create an FKTable with the EKO.
 
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.convolute_eko()`.
+
         Parameters
         ----------
             operators : dict
@@ -100,7 +106,7 @@ class Grid(PyWrapper):
         Returns
         ------
             PyFkTable :
-                raw Grid as an FKTable
+                raw grid as an FKTable
         """
         operator_grid = np.array(
             [op["operators"] for op in operators["Q2grid"].values()]
@@ -121,6 +127,8 @@ class Grid(PyWrapper):
     def read(cls, path):
         """
         Load an existing grid from file.
+
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.read()`.
 
         Parameters
         ----------

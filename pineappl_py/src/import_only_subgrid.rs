@@ -49,7 +49,12 @@ impl PyImportOnlySubgridV1 {
         ))
     }
 
-    /// Wrapper to match [`PyGrid::set_subgrid()`]
+    /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`
+    ///
+    /// Returns
+    /// -------
+    ///     PySubgridEnum :
+    ///         casted object
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.import_only_subgrid.clone().into(),

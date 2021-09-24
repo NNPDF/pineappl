@@ -145,9 +145,31 @@ impl PyGrid {
         )
     }
 
-    /// Convolute with eko.
+    /// Convolute with with an evolution operator.
     ///
     /// **Usage:** `pineko`
+    ///
+    /// Parameters
+    /// ----------
+    ///     q2 : float
+    ///         reference scale
+    ///     alphas : list(float)
+    ///         list with :math:`\alpha_s(Q2)` for the process scales
+    ///     pids : list(int)
+    ///         sorting of the particles in the tensor
+    ///     x_grid : list(float)
+    ///         interpolation grid
+    ///     q2_grid : list(float)
+    ///         list of process scales
+    ///     operator_flattened : list(float)
+    ///         evolution tensor as a flat list
+    ///     operator_shape : list(int)
+    ///         shape of the evolution tensor
+    ///
+    /// Returns
+    /// -------
+    ///     PyFkTable :
+    ///         produced FK table
     pub fn convolute_eko(
         &self,
         q2: f64,
@@ -179,6 +201,16 @@ impl PyGrid {
     /// Load grid from file.
     ///
     /// **Usage:** `pineko`, FKTable generation
+    ///
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
+    ///
+    /// Returns
+    /// -------
+    ///     PyGrid :
+    ///         grid
     #[staticmethod]
     pub fn read(path: &str) -> Self {
         Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())

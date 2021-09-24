@@ -1,5 +1,5 @@
 import pineappl
-
+import pytest
 
 class TestBinRemapper:
     def test_init(self):
@@ -7,3 +7,6 @@ class TestBinRemapper:
 
         assert isinstance(br, pineappl.bin.BinRemapper)
         assert isinstance(br.raw, pineappl.pineappl.PyBinRemapper)
+        
+        with pytest.raises(AttributeError):
+            br._bla()

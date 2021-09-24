@@ -22,8 +22,8 @@ here = pathlib.Path(__file__).absolute().parent
 # -- Project information -----------------------------------------------------
 
 project = 'pineappl'
-copyright = '2021, A. Candido, F. Hekhorn, C. Schwan'
-author = 'A. Candido, F. Hekhorn, C. Schwan'
+copyright = '2021, the PineAPPL team'
+author = 'the PineAPPL team'
 
 
 # -- General configuration ---------------------------------------------------
