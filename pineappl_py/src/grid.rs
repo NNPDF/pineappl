@@ -1,4 +1,4 @@
-use pineappl::grid::{EkoInfo, Grid, Order};
+use pineappl::grid::{EkoInfo, Grid, Ntuple, Order};
 
 use super::bin::PyBinRemapper;
 use super::fk_table::PyFkTable;
@@ -12,7 +12,7 @@ use std::io::BufReader;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::grid::Order`]
+/// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
@@ -35,7 +35,7 @@ impl PyOrder {
     }
 }
 
-/// PyO3 wrapper to [`pineappl::grid::Grid`]
+/// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`
 ///
 /// **Usage**: `yadism`, `pineko`, FKTable interface
 #[pyclass]
@@ -65,6 +65,42 @@ impl PyGrid {
             bin_limits,
             subgrid_params.subgrid_params,
         ))
+    }
+
+    /// Add a point to the grid.
+    ///
+    /// Parameters
+    /// ----------
+    ///     x1 : float
+    ///         first momentum fraction
+    ///     x2 : float
+    ///         second momentum fraction
+    ///     q2 : float
+    ///         process scale
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     lumi : int
+    ///         luminosity index
+    ///     weight : float
+    ///         cross section weight
+    pub fn fill(
+        &mut self,
+        x1: f64,
+        x2: f64,
+        q2: f64,
+        order: usize,
+        observable: f64,
+        lumi: usize,
+        weight: f64,
+    ) {
+        self.grid.fill(
+            order,
+            observable,
+            lumi,
+            &Ntuple::<f64> { x1, x2, q2, weight },
+        );
     }
 
     /// Set a metadata key-value pair in the grid.
@@ -145,9 +181,31 @@ impl PyGrid {
         )
     }
 
-    /// Convolute with eko.
+    /// Convolute with with an evolution operator.
     ///
     /// **Usage:** `pineko`
+    ///
+    /// Parameters
+    /// ----------
+    ///     q2 : float
+    ///         reference scale
+    ///     alphas : list(float)
+    ///         list with :math:`\alpha_s(Q2)` for the process scales
+    ///     pids : list(int)
+    ///         sorting of the particles in the tensor
+    ///     x_grid : list(float)
+    ///         interpolation grid
+    ///     q2_grid : list(float)
+    ///         list of process scales
+    ///     operator_flattened : list(float)
+    ///         evolution tensor as a flat list
+    ///     operator_shape : list(int)
+    ///         shape of the evolution tensor
+    ///
+    /// Returns
+    /// -------
+    ///     PyFkTable :
+    ///         produced FK table
     pub fn convolute_eko(
         &self,
         q2: f64,
@@ -179,6 +237,16 @@ impl PyGrid {
     /// Load grid from file.
     ///
     /// **Usage:** `pineko`, FKTable generation
+    ///
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
+    ///
+    /// Returns
+    /// -------
+    ///     PyGrid :
+    ///         grid
     #[staticmethod]
     pub fn read(path: &str) -> Self {
         Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())

@@ -2,7 +2,7 @@ use pineappl::lumi::LumiEntry;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::lumi::LumiEntry`]
+/// PyO3 wrapper to :rustdoc:`pineappl::lumi::LumiEntry <lumi/struct.LumiEntry.html>`
 ///
 /// **Usage**: `yadism`, FKTable interface
 ///

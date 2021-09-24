@@ -1,7 +1,7 @@
 use pineappl::subgrid::{SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::subgrid::SubgridParams`]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
@@ -44,6 +44,11 @@ impl PySubgridParams {
     /// Set reweighting.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     reweight : bool
+    ///         apply reweighting?
     pub fn set_reweight(&mut self, reweight: bool) {
         self.subgrid_params.set_reweight(reweight);
     }
@@ -51,20 +56,35 @@ impl PySubgridParams {
     /// Set number of x bins.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     x_bins : int
+    ///         number of bins
     pub fn set_x_bins(&mut self, x_bins: usize) {
         self.subgrid_params.set_x_bins(x_bins);
     }
 
-    /// Set `x_max`.
+    /// Set :math:`x_{max}`.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     x_max : float
+    ///         new `x_max`
     pub fn set_x_max(&mut self, x_max: f64) {
         self.subgrid_params.set_x_max(x_max);
     }
 
-    /// Set `x_min`.
+    /// Set :math:`x_{min}`.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     x_min : float
+    ///         new `x_min`
     pub fn set_x_min(&mut self, x_min: f64) {
         self.subgrid_params.set_x_min(x_min);
     }
@@ -72,12 +92,17 @@ impl PySubgridParams {
     /// Set interpolation order for `x_grid`.
     ///
     /// **Usage:** `yadism`
+    ///
+    /// Parameters
+    /// ----------
+    ///     x_order : float
+    ///         new `x_order`
     pub fn set_x_order(&mut self, x_order: usize) {
         self.subgrid_params.set_x_order(x_order);
     }
 }
 
-/// PyO3 wrapper to [`pineappl::subgrid::SubgridEnum`]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
 ///
 /// **Usage**: `yadism`, FKTable interface
 #[pyclass]

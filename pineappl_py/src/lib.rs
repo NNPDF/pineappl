@@ -7,7 +7,8 @@ pub mod import_only_subgrid;
 pub mod lumi;
 pub mod subgrid;
 
-/// A Python module implemented in Rust.
+/// PyO3 Python module that contains all exposed classes from Rust.
+///
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
 fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {

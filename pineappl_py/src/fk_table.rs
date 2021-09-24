@@ -1,11 +1,12 @@
-//use super::grid::PyGrid;
 use numpy::{IntoPyArray, PyArray4};
 use pineappl::fk_table::FkTable;
 use pyo3::prelude::*;
 
 use std::fs::File;
 
-/// PyO3 wrapper to `FkTable`
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
+///
+/// *Usage*: `pineko`, `yadism`
 #[pyclass]
 #[repr(transparent)]
 pub struct PyFkTable {

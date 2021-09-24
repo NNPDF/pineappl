@@ -2,7 +2,7 @@ use pineappl::bin::BinRemapper;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to [`pineappl::bin::BinRemapper`]
+/// PyO3 wrapper to :rustdoc:`pineappl::bin::BinRemapper <bin/struct.BinRemapper.html>`
 ///
 /// **Usage**: `yadism`
 #[pyclass]
