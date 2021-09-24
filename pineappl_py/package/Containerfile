@@ -4,21 +4,24 @@ ARG MATURIN_TAR='maturin-x86_64-unknown-linux-musl.tar.gz'
 ARG MATURIN_TAG='v0.11.3'
 
 # install c compiler
-# create a dedicated user
-# useradd -m pineappl
-# su - pineappl
+# and create a dedicated user
+RUN /bin/bash -c "yum install gcc -y; \
+                  useradd -m pineappl;\
+                  su - pineappl"
+
+USER pineappl
+
 # install dependencies
 # - rust
 # - maturin
-RUN /bin/bash -c "yum install gcc -y; \
-                  cd /root; \
+RUN /bin/bash -c "cd ${HOME}; \
                   mkdir -p local/bin; \
                   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
                   curl --remote-name -L https://github.com/PyO3/maturin/releases/download/${MATURIN_TAG}/${MATURIN_TAR}; \
                   tar -xvzf ${MATURIN_TAR} --directory=local/bin/"
 
-COPY maturin /
+COPY maturin /home/pineappl
 
-ENTRYPOINT ["/maturin"]
+ENTRYPOINT ["/home/pineappl/maturin"]
 # To minimize the size of the wheel use '--strip'
 CMD ["build --release"]
