@@ -88,8 +88,12 @@ pub trait Subgrid {
     fn clone_empty(&self) -> SubgridEnum;
 
     /// Return an iterator over all non-zero elements of the subgrid.
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_>;
+    fn iter(&self) -> SubgridIter;
 }
+
+/// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
+/// `mu2_grid`, the `x1_grid` and finally the `x2_grid`.
+pub type SubgridIter<'a> = Box<dyn Iterator<Item = ((usize, usize, usize), &'a f64)> + 'a>;
 
 /// Subgrid creation parameters for subgrids that perform interpolation.
 #[derive(Clone, Debug, Deserialize, Serialize)]

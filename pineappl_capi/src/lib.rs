@@ -30,13 +30,13 @@
 //! pkg-config --libs pineappl_capi
 //! ```
 //!
-//! This will read PineAPPL's `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and linker
-//! flags (`--libs`). This procedure is supported by many build systems, such as
+//! This will read `PineAPPL`'s `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and
+//! linker flags (`--libs`). This procedure is supported by many build systems, such as
 //!
 //! * Autotools (using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster] page for
 //!   correct usage)
-//! * CMake, using [`FindPkgConfig`], and
-//! * meson, using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
+//! * `CMake`, using [`FindPkgConfig`], and
+//! * `meson`, using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
 //!
 //! [`pkgconf`]: https://github.com/pkgconf/pkgconf
 //! [`pkg-conf`]: https://www.freedesktop.org/wiki/Software/pkg-config

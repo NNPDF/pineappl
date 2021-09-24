@@ -15,13 +15,13 @@ pub fn read_grid(input: &str) -> Result<Grid> {
 }
 
 pub fn write_grid(output: &str, grid: &Grid) -> Result<()> {
-    Ok(grid.write(BufWriter::new(
+    grid.write(BufWriter::new(
         OpenOptions::new()
             .write(true)
             .create_new(true)
             .open(output)
             .context(format!("unable to write '{}'", output))?,
-    ))?)
+    ))
 }
 
 pub fn create_table() -> Table {

@@ -1,7 +1,7 @@
 //! TODO
 
 use super::grid::Ntuple;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum};
+use super::subgrid::{Mu2, Subgrid, SubgridEnum, SubgridIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
@@ -53,7 +53,7 @@ impl Subgrid for EmptySubgridV1 {
         Self::default().into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         Box::new(iter::empty())
     }
 }

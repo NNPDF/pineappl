@@ -44,12 +44,14 @@ pub enum TryFromGridError {
 
 impl FkTable {
     /// Returns the [`Grid`] object for this `FkTable`.
-    pub fn grid(&self) -> &Grid {
+    #[must_use]
+    pub const fn grid(&self) -> &Grid {
         &self.grid
     }
 
     /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `lumi`,
     /// `x1` and `x2`, in this order.
+    #[must_use]
     pub fn table(&self) -> Array4<f64> {
         let mut subgrid = Array4::zeros((
             self.bins(),
@@ -70,11 +72,13 @@ impl FkTable {
     }
 
     /// Returns the number of bins for this `FkTable`.
+    #[must_use]
     pub fn bins(&self) -> usize {
         self.grid.bin_info().bins()
     }
 
     /// Returns the (simplified) luminosity function for this `FkTable`. All factors are `1.0`.
+    #[must_use]
     pub fn lumi(&self) -> Vec<(i32, i32)> {
         self.grid
             .lumi()
@@ -84,6 +88,7 @@ impl FkTable {
     }
 
     /// Returns the single `muf2` scale of this `FkTable`.
+    #[must_use]
     pub fn muf2(&self) -> f64 {
         for bin in 0..self.grid.bin_info().bins() {
             for lumi in 0..self.grid.lumi().len() {
@@ -101,6 +106,7 @@ impl FkTable {
     }
 
     /// Returns the x grid that all subgrids for all hadronic initial states share.
+    #[must_use]
     pub fn x_grid(&self) -> Vec<f64> {
         for bin in 0..self.grid.bin_info().bins() {
             for lumi in 0..self.grid.lumi().len() {
@@ -112,9 +118,9 @@ impl FkTable {
 
                 if subgrid.x1_grid().is_empty() {
                     return subgrid.x2_grid().into_owned();
-                } else {
-                    return subgrid.x1_grid().into_owned();
                 }
+
+                return subgrid.x1_grid().into_owned();
             }
         }
 
@@ -122,6 +128,10 @@ impl FkTable {
     }
 
     /// Propagate write to grid
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
         self.grid.write(writer)
     }
@@ -219,7 +229,7 @@ impl TryFrom<Grid> for FkTable {
                 "lumi_id_types".to_string(),
             ];
 
-            for key in keys.into_iter() {
+            for key in keys {
                 if !key_values.contains_key(&key) {
                     return Err(TryFromGridError::MetadataMissing(key));
                 }
@@ -230,6 +240,6 @@ impl TryFrom<Grid> for FkTable {
             ));
         }
 
-        Ok(FkTable { grid })
+        Ok(Self { grid })
     }
 }

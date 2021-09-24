@@ -983,9 +983,9 @@ impl Grid {
                     .iter_mut()
                     .for_each(|subgrid| {
                         if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
-                            subgrid.symmetrize()
+                            subgrid.symmetrize();
                         }
-                    })
+                    });
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
@@ -1060,6 +1060,7 @@ impl Grid {
 
     /// Provide information used to compute a suitable EKO for the current grid.
     /// More specific, the `x_grid` and `muf2_grid` are extracted and checked.
+    #[must_use]
     pub fn eko_info(&self) -> Option<EkoInfo> {
         let mut muf2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
@@ -1090,7 +1091,9 @@ impl Grid {
                     }
 
                     // PineAPPL assumes that there's at least one hadronic initial state
-                    assert!(has_pdf1 || has_pdf2);
+                    if !has_pdf1 && !has_pdf2 {
+                        return None;
+                    }
 
                     // for `convolute_eko` to work both grids have to be the same
                     if has_pdf1 && has_pdf2 && x1 != x2 {
@@ -1110,7 +1113,7 @@ impl Grid {
 
                 // the `q2` grids (static vs. dynamic scales) can differ across bins/lumis
                 muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
-                muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
                 muf2_grid.dedup();
             }
         }
@@ -1122,6 +1125,10 @@ impl Grid {
     /// values of the factorization scale to a single one given by the parameter `q2`.
     /// Using `xir` and `xif` you can trigger renormalization and factorization scale
     /// variations respectively in the grid.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parameters do not match with the given grid.
     #[must_use]
     pub fn convolute_eko(
         &self,
@@ -1193,7 +1200,7 @@ impl Grid {
             subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
                 EmptySubgridV1::default().into()
             }),
-            lumi: lumi.clone(),
+            lumi,
             bin_limits: self.bin_limits.clone(),
             orders: vec![Order {
                 alphas: 0,
@@ -1246,9 +1253,9 @@ impl Grid {
                     let logs = if (xir, xif) == (1.0, 1.0) {
                         if (powers.logxir > 0) || (powers.logxif > 0) {
                             continue;
-                        } else {
-                            1.0
                         }
+
+                        1.0
                     } else {
                         (xir * xir).ln().powi(powers.logxir.try_into().unwrap())
                             * (xif * xif).ln().powi(powers.logxif.try_into().unwrap())

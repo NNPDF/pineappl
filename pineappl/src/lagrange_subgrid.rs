@@ -3,7 +3,7 @@
 use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridIter, SubgridParams};
 use arrayvec::ArrayVec;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
@@ -327,7 +327,7 @@ impl Subgrid for LagrangeSubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
             |grid| {
@@ -671,7 +671,7 @@ impl Subgrid for LagrangeSubgridV2 {
         .into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
             |grid| {
@@ -895,7 +895,7 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
     }
 }

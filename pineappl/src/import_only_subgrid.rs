@@ -3,7 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum};
+use super::subgrid::{Mu2, Subgrid, SubgridEnum, SubgridIter};
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -153,7 +153,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
     }
 }
@@ -349,7 +349,7 @@ impl Subgrid for ImportOnlySubgridV2 {
         .into()
     }
 
-    fn iter(&self) -> Box<dyn Iterator<Item = ((usize, usize, usize), &f64)> + '_> {
+    fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
     }
 }
