@@ -1,4 +1,4 @@
-use pineappl::grid::{EkoInfo, Grid, Order};
+use pineappl::grid::{EkoInfo, Grid, Order, Ntuple};
 
 use super::bin::PyBinRemapper;
 use super::fk_table::PyFkTable;
@@ -65,6 +65,28 @@ impl PyGrid {
             bin_limits,
             subgrid_params.subgrid_params,
         ))
+    }
+
+    /// Add a point to the grid.
+    /// 
+    /// Parameters
+    /// ----------
+    ///     x1 : float
+    ///         first momentum fraction
+    ///     x2 : float
+    ///         second momentum fraction
+    ///     q2 : float
+    ///         process scale
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     lumi : int
+    ///         luminosity index
+    ///     weight : float
+    ///         cross section weight
+    pub fn fill(&mut self, x1: f64, x2: f64, q2: f64, order: usize, observable: f64, lumi: usize, weight: f64) {
+        self.grid.fill(order, observable, lumi, &Ntuple::<f64> {x1, x2, q2, weight});
     }
 
     /// Set a metadata key-value pair in the grid.

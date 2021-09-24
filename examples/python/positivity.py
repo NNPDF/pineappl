@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import pineappl
 import numpy as np
+import pineappl
 
 
 def main(filename, Q2):
