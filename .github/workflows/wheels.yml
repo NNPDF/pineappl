@@ -15,7 +15,7 @@ jobs:
       - name: Compile and Publish wheels
         run:
           # args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-          maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
+          /maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
 
   deploy-macos:
     runs-on: macos-10.15
