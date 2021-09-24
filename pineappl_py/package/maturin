@@ -1,6 +1,8 @@
 #!/bin/bash
-export PATH=${HOME}/local/bin:${HOME}/.cargo/bin:${PATH}
-cd ${HOME}
+# export PATH=${HOME}/local/bin:${HOME}/.cargo/bin:${PATH}
+# cd ${HOME}
+export PATH=/root/local/bin:/root/.cargo/bin:${PATH}
+cd /root
 # clone pineappl code
 git clone https://github.com/N3PDF/pineappl.git
 # compile pineappl python package
