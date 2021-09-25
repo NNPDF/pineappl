@@ -10,9 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: docker://ghcr.io/n3pdf/maturin:latest
+      env:
+        HOME: /home/pineappl
     steps:
       - name: Compile and Publish wheels
-        run:
+        run: |
+          id
           # args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
           ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
 
