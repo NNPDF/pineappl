@@ -17,14 +17,19 @@ jobs:
         working-directory: /home/pineappl
         run: |
           id
-          echo $HOME
           # args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
           ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
 
   deploy-macos:
     runs-on: macos-10.15
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9']
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
