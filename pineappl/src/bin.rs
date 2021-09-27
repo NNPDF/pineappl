@@ -28,6 +28,19 @@ pub enum MergeBinError {
         /// left-most limit of the `BinLimits` object that is being merged.
         rhs: f64,
     },
+
+    /// Returned by [`BinRemapper::merge_bins`] whenever it can not merge bins.
+    #[error("can not merge bins with indices {0:?}")]
+    NonConsecutiveRange(Range<usize>),
+
+    /// Returned by [`BinLimits::merge_bins`] whenever the range is outside the available bins.
+    #[error("tried to merge bins with indices {range:?}, but there are only {bins} bins")]
+    InvalidRange {
+        /// Range given to [`BinLimits::merge_bins`].
+        range: Range<usize>,
+        /// Number of bins.
+        bins: usize,
+    },
 }
 
 /// Structure representing bin limits.
@@ -215,8 +228,8 @@ impl BinRemapper {
     ///
     /// # Errors
     ///
-    /// TODO
-    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), ()> {
+    /// When `range` refers to non-consecutive bins, an error is returned.
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), MergeBinError> {
         if self
             .slices()
             .iter()
@@ -234,7 +247,7 @@ impl BinRemapper {
 
             Ok(())
         } else {
-            Err(())
+            Err(MergeBinError::NonConsecutiveRange(range))
         }
     }
 
@@ -380,16 +393,23 @@ impl BinLimits {
 
     /// Merges the bins for the corresponding range together in a single one.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// When `bins` contains any indices that do not correspond to bins this method panics.
-    pub fn merge_bins(&mut self, bins: Range<usize>) {
-        if bins.end > self.bins() {
-            panic!("invalid bin index");
+    /// When `bins` contains any indices that do not correspond to bins this method returns an
+    /// error.
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), MergeBinError> {
+        if range.end > self.bins() {
+            return Err(MergeBinError::InvalidRange {
+                range,
+                bins: self.bins(),
+            });
         }
+
         let mut new_limits = self.limits();
-        new_limits.drain(bins.start + 1..bins.end);
+        new_limits.drain(range.start + 1..range.end);
         *self = Self::new(new_limits);
+
+        Ok(())
     }
 
     /// Returns the size for each bin.
@@ -717,7 +737,7 @@ mod test {
     #[test]
     fn merge_bins() {
         let mut limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
-        limits.merge_bins(0..4);
+        assert!(limits.merge_bins(0..4).is_ok());
 
         assert_eq!(limits.bins(), 1);
         assert_eq!(limits.index(-1.0), None);
@@ -729,10 +749,9 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "invalid bin index")]
-    fn merge_bins_panic() {
+    fn merge_bins_error() {
         let mut limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
-        limits.merge_bins(0..5);
+        assert!(limits.merge_bins(0..5).is_err());
     }
 
     #[test]

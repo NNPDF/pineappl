@@ -107,6 +107,9 @@ pub enum GridError {
         /// Number of bins in the remapper.
         remapper_bins: usize,
     },
+    /// Returned when it was tried to merge bins that are non-consecutive.
+    #[error(transparent)]
+    MergeBinError(super::bin::MergeBinError),
     /// Returned when trying to construct a `Grid` using an unknown subgrid type.
     #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
     UnknownSubgridType(String),
@@ -632,24 +635,26 @@ impl Grid {
     ///
     /// # Errors
     ///
-    /// TODO
-    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), ()> {
-        if (bins.start >= self.bin_limits.bins()) || (bins.end > self.bin_limits.bins()) {
-            return Err(());
-        }
-
-        self.bin_limits.merge_bins(bins.clone());
+    /// When the given bins are non-consecutive, an error is returned.
+    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), GridError> {
+        self.bin_limits
+            .merge_bins(bins.clone())
+            .map_err(GridError::MergeBinError)?;
 
         match &mut self.more_members {
             MoreMembers::V1(_) => {}
             MoreMembers::V2(mmv2) => {
                 if let Some(remapper) = &mut mmv2.remapper {
-                    remapper.merge_bins(bins.clone())?;
+                    remapper
+                        .merge_bins(bins.clone())
+                        .map_err(GridError::MergeBinError)?;
                 }
             }
             MoreMembers::V3(mmv3) => {
                 if let Some(remapper) = &mut mmv3.remapper {
-                    remapper.merge_bins(bins.clone())?;
+                    remapper
+                        .merge_bins(bins.clone())
+                        .map_err(GridError::MergeBinError)?;
                 }
             }
         }
