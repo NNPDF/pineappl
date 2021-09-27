@@ -39,6 +39,6 @@ impl PyLumiEntry {
     ///     list(tuple(int,int,float)) :
     ///         list representation
     pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
-        self.lumi_entry.entry().iter().map(|e| e.clone()).collect()
+        self.lumi_entry.entry().to_vec()
     }
 }
