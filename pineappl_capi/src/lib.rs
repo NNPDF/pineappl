@@ -860,9 +860,9 @@ pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
     );
 }
 
-/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_import_q2_slice`]. The array
-/// `mu2_grid` must contain the (squared) values of the renormalization and then the factorization
-/// scale, such that twice the value of `mu2_grid_len` gives the length of the array.
+/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_import_mu2_slice`]. The
+/// array `mu2_grid` must contain the (squared) values of the renormalization and then the
+/// factorization scale, such that twice the value of `mu2_grid_len` gives the length of the array.
 ///
 /// # Safety
 ///
