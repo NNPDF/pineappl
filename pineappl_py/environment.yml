@@ -4,3 +4,4 @@ channels:
 dependencies:
   - rust
   - sphinxcontrib-bibtex
+  - maturin
