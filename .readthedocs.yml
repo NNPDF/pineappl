@@ -7,11 +7,9 @@ sphinx:
 python:
     version: 3.7
     install:
+        - requirements: pineappl_py/devel-requirements.txt
         - method: pip
           path: pineappl_py
-#          extra_requirements:
-#              - docs
-        - requirements: pineappl_py/dev.requirements.txt
 
 conda:
     environment: pineappl_py/environment.yml
