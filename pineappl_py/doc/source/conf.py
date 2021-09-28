@@ -141,7 +141,7 @@ def run_apidoc(_):
     # run maturin
     pkg_root = here.parents[1]
     if shutil.which("conda"):
-        subprocess.run("conda activate latest")
+        subprocess.run("conda activate latest".split())
     subprocess.run(["maturin", "develop"], cwd=pkg_root)
 
     # analyse 'pineappl'
