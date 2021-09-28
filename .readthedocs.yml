@@ -12,3 +12,6 @@ python:
 #          extra_requirements:
 #              - docs
         - requirements: pineappl_py/dev.requirements.txt
+
+conda:
+    environment: pineappl_py/environment.yml
