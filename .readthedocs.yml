@@ -11,4 +11,4 @@ python:
           path: pineappl_py
 #          extra_requirements:
 #              - docs
-    requirements: pineappl_py/dev.requirements.txt
+    - requirements: pineappl_py/dev.requirements.txt
