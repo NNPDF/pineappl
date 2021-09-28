@@ -1,3 +1,5 @@
+--use-feature=in-tree-build
+
 maturin
 numpy
 
