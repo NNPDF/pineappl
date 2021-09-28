@@ -1,9 +1,9 @@
 name: Python publication
 
-on: [workflow_dispatch]
-  # release:
+on:
+  release:
     # run only on published, not for drafts
-    # types: [published]
+    types: [published]
 
 jobs:
   deploy-linux:
@@ -17,8 +17,7 @@ jobs:
         env:
           HOME: /home/pineappl
         run: |
-          # args: publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-          ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TEST_TOKEN }} -r https://test.pypi.org/legacy/
+          ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
 
   deploy-macos:
     runs-on: macos-latest
@@ -39,8 +38,7 @@ jobs:
         with:
           maturin-version: latest
           command: publish
-          # args: --manifest-path pineappl_py/Cargo.toml --universal2 --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-          args: --manifest-path pineappl_py/Cargo.toml --universal2 --skip-existing -r https://test.pypi.org/legacy/ --username __token__ -p ${{ secrets.PYPI_TEST_TOKEN }}
+          args: --manifest-path pineappl_py/Cargo.toml --universal2 --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
 
   deploy-windows:
     runs-on: windows-latest
@@ -55,5 +53,4 @@ jobs:
         with:
           maturin-version: latest
           command: publish
-          # args: --manifest-path pineappl_py/Cargo.toml --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-          args: --manifest-path pineappl_py/Cargo.toml --skip-existing -r https://test.pypi.org/legacy/ --username __token__ -p ${{ secrets.PYPI_TEST_TOKEN }}
+          args: --manifest-path pineappl_py/Cargo.toml --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
