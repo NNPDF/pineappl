@@ -2,3 +2,4 @@ channels:
   - defaults
 dependencies:
   - rust
+  - sphinxcontrib-bibtex
