@@ -134,11 +134,16 @@ mathjax3_config = {
 # https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
 def run_apidoc(_):
     import sys  # pylint: disable=import-outside-toplevel
+    import subprocess  # pylint: disable=import-outside-toplevel
 
     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
     sys.path.append(str(here.parent))
-    # 'pineappl'
+    # run maturin
+    pkg_root = here.parents[1]
+    subprocess.run(["maturin", "develop"], cwd=pkg_root)
+
+    # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
     package = here.parents[1] / "pineappl"
     main(["--module-first", "-o", str(docs_dest), str(package)])
