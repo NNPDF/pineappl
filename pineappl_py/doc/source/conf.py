@@ -133,20 +133,20 @@ mathjax3_config = {
 
 # https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
 def run_apidoc(_):
-    import sys, subprocess, shutil  # pylint: disable=import-outside-toplevel
+    import sys, subprocess  # pylint: disable=import-outside-toplevel
 
     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
     sys.path.append(str(here.parent))
     # run maturin
     pkg_root = here.parents[1]
-    #if shutil.which("conda"):
-    #    subprocess.run("conda activate latest".split())
     subprocess.run(["maturin", "build"], cwd=pkg_root)
     subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
     for wheel in wheels:
         subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
+    del sys.modules["pineappl"]
+    import pineappl
 
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
