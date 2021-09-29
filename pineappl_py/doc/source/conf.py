@@ -143,6 +143,7 @@ def run_apidoc(_):
     #if shutil.which("conda"):
     #    subprocess.run("conda activate latest".split())
     subprocess.run(["maturin", "build"], cwd=pkg_root)
+    subprocess.run(["pip", "uninstall", "pineappl"], cwd=pkg_root)
     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
     for wheel in wheels:
         subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
