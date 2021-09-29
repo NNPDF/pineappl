@@ -158,7 +158,7 @@ def main(calls, pdfname, filename):
     if pdfname:
         pdf = lhapdf.mkPDF(pdfname, 0)
         # perform convolution
-        dxsec = grid.convolute(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2)
+        dxsec = grid.convolute(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2, [], [], [], [(1.0, 1.0)])
         for i in range(len(dxsec)):
             print(f"{bins[i]:.1f} {bins[i + 1]:.1f} {dxsec[i]:.3e}")
 
