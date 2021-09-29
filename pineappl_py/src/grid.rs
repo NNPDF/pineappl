@@ -164,20 +164,46 @@ impl PyGrid {
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
     ///     alphas : callable
     ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+    ///     order_mask : list(bool)
+    ///         Mask for selecting specific orders. The value `True` means the corresponding order
+    ///         is included. An empty list corresponds to all orders being enabled.
+    ///     bin_indices : list(int)
+    ///         A list with the indices of the corresponding bins that should be calculated. An
+    ///         empty list means that all orders should be calculated.
+    ///     lumi_mask : list(bool)
+    ///         Mask for selecting specific luminosity channels. The value `True` means the
+    ///         corresponding channel is included. An empty list corresponds to all channels being
+    ///         enabled.
+    ///     xi : list((float, float))
+    ///         A list with the scale variation factors that should be used to calculate
+    ///         scale-varied results. The first entry of a tuple corresponds to the variation of
+    ///         the renormalization scale, the second entry to the variation of the factorization
+    ///         scale. An empty list only calculates the results for the central scale, `(1.0,
+    ///         1.0)`.
     ///
     /// Returns
     /// -------
     ///     list(float) :
-    ///         cross sections for all bins
-    pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
+    ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
+    ///         the scale variation)
+    pub fn convolute(
+        &self,
+        xfx1: &PyAny,
+        xfx2: &PyAny,
+        alphas: &PyAny,
+        order_mask: Vec<bool>,
+        bin_indices: Vec<usize>,
+        lumi_mask: Vec<bool>,
+        xi: Vec<(f64, f64)>,
+    ) -> Vec<f64> {
         self.grid.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
             &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
             &|q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap(),
-            &[],
-            &[],
-            &[],
-            &[(1.0, 1.0)],
+            &order_mask,
+            &bin_indices,
+            &lumi_mask,
+            &xi,
         )
     }
 
