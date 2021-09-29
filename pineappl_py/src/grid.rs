@@ -178,8 +178,8 @@ impl PyGrid {
     ///         A list with the scale variation factors that should be used to calculate
     ///         scale-varied results. The first entry of a tuple corresponds to the variation of
     ///         the renormalization scale, the second entry to the variation of the factorization
-    ///         scale. An empty list only calculates the results for the central scale, `(1.0,
-    ///         1.0)`.
+    ///         scale. If only results for the central scale are need the list should contain
+    ///         `(1.0, 1.0)`.
     ///
     /// Returns
     /// -------
