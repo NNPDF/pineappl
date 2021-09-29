@@ -142,7 +142,8 @@ def run_apidoc(_):
     pkg_root = here.parents[1]
     #if shutil.which("conda"):
     #    subprocess.run("conda activate latest".split())
-    subprocess.run(["maturin", "develop"], cwd=pkg_root)
+    subprocess.run(["maturin", "build"], cwd=pkg_root)
+    subprocess.run("pip install ./target/wheels/pineappl*.whl", cwd=pkg_root, shell=True)
 
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
