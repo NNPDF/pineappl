@@ -11,5 +11,10 @@ python:
         - method: pip
           path: pineappl_py
 
-conda:
-    environment: pineappl_py/environment.yml
+build:
+    apt_packages:
+        - rustc
+        - cargo
+
+#conda:
+#    environment: pineappl_py/environment.yml
