@@ -1,8 +1,10 @@
 use numpy::{IntoPyArray, PyArray4};
 use pineappl::fk_table::FkTable;
+use pineappl::grid::Grid;
 use pyo3::prelude::*;
-
+use std::convert::TryFrom;
 use std::fs::File;
+use std::io::BufReader;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
@@ -15,6 +17,16 @@ pub struct PyFkTable {
 
 #[pymethods]
 impl PyFkTable {
+    #[staticmethod]
+    pub fn read(path: &str) -> Self {
+        Self {
+            fk_table: FkTable::try_from(
+                Grid::read(BufReader::new(File::open(path).unwrap())).unwrap(),
+            )
+            .unwrap(),
+        }
+    }
+
     /// Get cross section tensor.
     ///
     /// Returns

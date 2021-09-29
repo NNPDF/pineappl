@@ -145,8 +145,6 @@ def run_apidoc(_):
     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
     for wheel in wheels:
         subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
-    del sys.modules["pineappl"]
-    import pineappl
 
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
