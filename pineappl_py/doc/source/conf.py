@@ -144,17 +144,13 @@ def run_apidoc(_):
     subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
     for wheel in wheels:
-        subprocess.run(["pip", "install", str(wheel.absolute()), "--force-reinstall"], cwd=pkg_root)
-    try:
-        import pineappl
-        print(dir(pineappl))
-    except Exception as e:
-        print(e)
-
-
+        subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
+    
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
-    package = here.parents[1] / "pineappl"
+    import pineappl
+    package = pathlib.Path(pineappl.__file__).parent
+    #package = here.parents[1] / "pineappl"
     main(["--module-first", "-o", str(docs_dest), str(package)])
     (docs_dest / "modules.rst").unlink()
 

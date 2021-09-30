@@ -16,9 +16,6 @@ The Python wrapper is also used in :yadism:`\ ` and :pineko:`\ `.
    API <modules/pineappl/pineappl>
 
 
-.. automodule:: pineappl.pineappl
-
-
 Indices and tables
 ==================
 
