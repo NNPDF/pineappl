@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/pineappl/badge/?version=latest)](https://pineappl.readthedocs.io/en/latest/?badge=latest)
+
 # Python bindings for PineAPPL
 
 This crate uses [PyO3] to provide Python bindings to PineAPPL's [Rust API].
@@ -8,7 +10,7 @@ This crate uses [PyO3] to provide Python bindings to PineAPPL's [Rust API].
 pip install pineappl
 ```
 
-# Compilation (for development)
+## Development installation
 
 1. Make a virtual environment in your favorite way (suggested: `virtualenv`)
 

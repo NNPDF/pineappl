@@ -2,8 +2,6 @@
 [![codecov](https://codecov.io/gh/N3PDF/pineappl/branch/master/graph/badge.svg)](https://codecov.io/gh/N3PDF/pineappl)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
-[![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
-[![Documentation Status](https://readthedocs.org/projects/pineappl/badge/?version=latest)](https://pineappl.readthedocs.io/en/latest/?badge=latest)
 
 # Introduction
 
@@ -68,9 +66,31 @@ There are three crates in this repository:
 
 - For the python interface (optional) please look into the subfolder `./pineappl_py`
 
-# Citation
+# Contributions
 
-If you use PineAPPL, please cite all of the following references:
+Please read the [contribution guidelines](CONTRIBUTING.md).
+
+# Citation
 
 [![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
 [![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
+
+If you use PineAPPL, please cite the following reference:
+
+```
+@article{Carrazza:2020gss,
+    author = "Carrazza, S. and Nocera, E. R. and Schwan, C. and Zaro, M.",
+    title = "{PineAPPL: combining EW and QCD corrections for fast evaluation of LHC processes}",
+    eprint = "2008.12789",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    doi = "10.1007/JHEP12(2020)108",
+    journal = "JHEP",
+    volume = "12",
+    pages = "108",
+    year = "2020"
+}
+```
+
+and the corresponding reference for the version of PineAPPL that you are using
+(click the DOI badge above).
