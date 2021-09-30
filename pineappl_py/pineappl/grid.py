@@ -100,7 +100,7 @@ class Grid(PyWrapper):
         order_mask=(),
         bin_indices=(),
         lumi_mask=(),
-        xi=((1.0, 1.0)),
+        xi=((1.0, 1.0),),
     ):
         """
         Convolute grid with pdf.
@@ -137,7 +137,7 @@ class Grid(PyWrapper):
                 the scale variation)
 
         """
-        self.raw.convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
+        return self.raw.convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
 
     def convolute_eko(self, operators):
         """

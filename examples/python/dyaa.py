@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import argparse
 
-import lhapdf
 import numpy as np
 import pineappl
-
 
 def int_photo(s, t, u):
     """
@@ -156,9 +154,11 @@ def main(calls, pdfname, filename):
 
     # load pdf for testing
     if pdfname:
+        import lhapdf  # pylint: disable=import-outside-toplevel
+
         pdf = lhapdf.mkPDF(pdfname, 0)
         # perform convolution
-        dxsec = grid.convolute(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2, [], [], [], [(1.0, 1.0)])
+        dxsec = grid.convolute(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2)
         for i in range(len(dxsec)):
             print(f"{bins[i]:.1f} {bins[i + 1]:.1f} {dxsec[i]:.3e}")
 
