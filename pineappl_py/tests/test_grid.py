@@ -5,10 +5,12 @@ import numpy as np
 
 class TestOrder:
     def test_init(self):
-        o = pineappl.grid.Order(2, 1, 0, 1)
+        args = (2, 1, 0, 1)
+        o = pineappl.grid.Order(*args)
 
         assert isinstance(o, pineappl.grid.Order)
         assert isinstance(o.raw, pineappl.pineappl.PyOrder)
+        assert o.as_tuple() == args
 
 
 class TestGrid:
@@ -24,6 +26,9 @@ class TestGrid:
         g = self.fake_grid()
         assert isinstance(g, pineappl.grid.Grid)
         assert isinstance(g.raw, pineappl.pineappl.PyGrid)
+        # orders
+        assert len(g.orders()) == 1
+        assert g.orders()[0].as_tuple() == (3,0,0,0)
 
     def test_set_subgrid(self):
         g = self.fake_grid()
@@ -142,4 +147,4 @@ class TestGrid:
         }
         g.set_key_value("lumi_id_types", "PDG")
         fk = g.convolute_eko(fake_eko)
-        assert isinstance(fk, pineappl.pineappl.PyFkTable)
+        assert isinstance(fk.raw, pineappl.pineappl.PyFkTable)

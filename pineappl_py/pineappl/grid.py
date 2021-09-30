@@ -1,5 +1,6 @@
 import numpy as np
 
+from .fk_table import FkTable
 from .pineappl import PyGrid, PyOrder
 from .utils import PyWrapper
 
@@ -92,6 +93,19 @@ class Grid(PyWrapper):
         """
         self.raw.set_remapper(remapper.raw)
 
+    def orders(self):
+        """
+        Extract the available perturbative orders and scale variations.
+
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.orders()`.
+
+        Parameters
+        ----------
+            list(Order) :
+                list with perturbative orders and scale variations
+        """
+        return [Order(*pyorder.as_tuple()) for pyorder in self.raw.orders()]
+
     def convolute(
         self,
         xfx1,
@@ -137,7 +151,9 @@ class Grid(PyWrapper):
                 the scale variation)
 
         """
-        return self.raw.convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
+        return self.raw.convolute(
+            xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi
+        )
 
     def convolute_eko(self, operators):
         """
@@ -160,14 +176,16 @@ class Grid(PyWrapper):
         )
         q2grid = list(operators["Q2grid"].keys())
         alphas_values = [op["alphas"] for op in operators["Q2grid"].values()]
-        return self.raw.convolute_eko(
-            operators["q2_ref"],
-            alphas_values,
-            operators["targetpids"],
-            operators["interpolation_xgrid"],
-            q2grid,
-            operator_grid.flatten(),
-            operator_grid.shape,
+        return FkTable(
+            self.raw.convolute_eko(
+                operators["q2_ref"],
+                alphas_values,
+                operators["targetpids"],
+                operators["interpolation_xgrid"],
+                q2grid,
+                operator_grid.flatten(),
+                operator_grid.shape,
+            )
         )
 
     @classmethod

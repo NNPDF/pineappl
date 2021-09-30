@@ -33,6 +33,27 @@ impl PyOrder {
     pub fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
         Self::new(Order::new(alphas, alpha, logxir, logxif))
     }
+
+    /// Tuple representation.
+    ///
+    /// Returns
+    /// -------
+    ///     alphas : int
+    ///         power of :math:`\alpha_s`
+    ///     alpha : int
+    ///         power of :math:`\alpha`
+    ///     logxir : int
+    ///         power of :math:` \ln(\xi_r)`
+    ///     logxif : int
+    ///         power of :math:` \ln(\xi_f)`
+    pub fn as_tuple(&self) -> (u32, u32, u32, u32) {
+        (
+            self.order.alphas,
+            self.order.alpha,
+            self.order.logxir,
+            self.order.logxif,
+        )
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`
@@ -343,5 +364,21 @@ impl PyGrid {
     ///         right edges of bins
     pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().right(dimension)
+    }
+
+    /// Extract the available perturbative orders and scale variations.
+    ///
+    /// Returns
+    /// -------
+    ///     list(PyOrder) :
+    ///         list with perturbative orders and scale variations
+    pub fn orders(&self) -> Vec<PyOrder> {
+        self.grid
+            .orders()
+            .iter()
+            .map(|order| PyOrder {
+                order: order.clone(),
+            })
+            .collect()
     }
 }
