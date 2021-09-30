@@ -66,6 +66,10 @@ There are three crates in this repository:
 
 - For the python interface (optional) please look into the subfolder `./pineappl_py`
 
+# Contributions
+
+Please read the [contribution guidelines](CONTRIBUTING.md).
+
 # Citation
 
 [![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
