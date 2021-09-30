@@ -92,6 +92,53 @@ class Grid(PyWrapper):
         """
         self.raw.set_remapper(remapper.raw)
 
+    def convolute(
+        self,
+        xfx1,
+        xfx2,
+        alphas,
+        order_mask=(),
+        bin_indices=(),
+        lumi_mask=(),
+        xi=((1.0, 1.0)),
+    ):
+        """
+        Convolute grid with pdf.
+
+        Parameters
+        ----------
+            xfx1 : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
+            xfx2 : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+            alphas : callable
+                lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+            order_mask : list(bool)
+                Mask for selecting specific orders. The value `True` means the corresponding order
+                is included. An empty list corresponds to all orders being enabled.
+            bin_indices : list(int)
+                A list with the indices of the corresponding bins that should be calculated. An
+                empty list means that all orders should be calculated.
+            lumi_mask : list(bool)
+                Mask for selecting specific luminosity channels. The value `True` means the
+                corresponding channel is included. An empty list corresponds to all channels being
+                enabled.
+            xi : list((float, float))
+                A list with the scale variation factors that should be used to calculate
+                scale-varied results. The first entry of a tuple corresponds to the variation of
+                the renormalization scale, the second entry to the variation of the factorization
+                scale. If only results for the central scale are need the list should contain
+                `(1.0, 1.0)`.
+
+        Returns
+        -------
+            list(float) :
+                cross sections for all bins, for each scale-variation tuple (first all bins, then
+                the scale variation)
+
+        """
+        self.raw.convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
+
     def convolute_eko(self, operators):
         """
         Create an FKTable with the EKO.
