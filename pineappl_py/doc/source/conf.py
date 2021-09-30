@@ -138,19 +138,23 @@ def run_apidoc(_):
     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
     sys.path.append(str(here.parent))
-    # run maturin
+    # run maturin to have the latest stuff
     pkg_root = here.parents[1]
     subprocess.run(["maturin", "build"], cwd=pkg_root)
+    # On RTD we were already installing before, but of course this was fake
+    # as it only had the raw Python stuff, so let's do it again
     subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
+    # In case there are several wheels (as on RTD) find the one matching (and let the others happily fail)
     for wheel in wheels:
         subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
     
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
     import pineappl
+    # note that we can NOT point to the local directory (`here.parents[1] / "pineappl"`)
+    # but we need the package built by `maturin` and installed by `pip`
     package = pathlib.Path(pineappl.__file__).parent
-    #package = here.parents[1] / "pineappl"
     main(["--module-first", "-o", str(docs_dest), str(package)])
     (docs_dest / "modules.rst").unlink()
 

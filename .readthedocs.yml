@@ -8,6 +8,7 @@ python:
     version: 3.7
     install:
         - requirements: pineappl_py/dev.requirements.txt
+        # this is fake (see conf.py) but, I think, unavoidable
         - method: pip
           path: pineappl_py
 
@@ -15,6 +16,3 @@ build:
     apt_packages:
         - rustc
         - cargo
-
-#conda:
-#    environment: pineappl_py/environment.yml
