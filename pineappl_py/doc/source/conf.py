@@ -16,6 +16,7 @@
 
 import pathlib
 import os
+import sys
 
 here = pathlib.Path(__file__).absolute().parent
 
@@ -130,24 +131,34 @@ mathjax3_config = {
     }
 }
 
+# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
+def get_base_prefix_compat():
+    """Get base/real prefix, or sys.prefix if there is none."""
+    return getattr(sys, "base_prefix", None) or getattr(sys, "real_prefix", None) or sys.prefix
+
+def in_virtualenv():
+    return get_base_prefix_compat() != sys.prefix
 
 # https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
 def run_apidoc(_):
-    import sys, subprocess  # pylint: disable=import-outside-toplevel
+    import subprocess  # pylint: disable=import-outside-toplevel
 
     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
     sys.path.append(str(here.parent))
     # run maturin to have the latest stuff
     pkg_root = here.parents[1]
-    subprocess.run(["maturin", "build"], cwd=pkg_root)
-    # On RTD we were already installing before, but of course this was fake
-    # as it only had the raw Python stuff, so let's do it again
-    subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
-    wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
-    # In case there are several wheels (as on RTD) find the one matching (and let the others happily fail)
-    for wheel in wheels:
-        subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
+    if in_virtualenv(): # in local repos we're always in a virtualenv
+        subprocess.run(["maturin", "develop"], cwd=pkg_root)
+    else: # on RTD we can't (for some reason we're not inside the virtualenv - or maybe only the subshell isn't)
+        subprocess.run(["maturin", "build"], cwd=pkg_root)
+        # On RTD we were already installing before, but of course this was fake
+        # as it only had the raw Python stuff, so let's do it again
+        subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
+        wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
+        # In case there are several wheels (as on RTD) find the one matching (and let the others happily fail)
+        for wheel in wheels:
+            subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
     
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
