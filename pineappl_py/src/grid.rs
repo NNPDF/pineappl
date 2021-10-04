@@ -7,6 +7,7 @@ use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -122,6 +123,19 @@ impl PyGrid {
             lumi,
             &Ntuple::<f64> { x1, x2, q2, weight },
         );
+    }
+
+    /// Get metadata values stored in the grid.
+    ///
+    ///
+    /// Parameters
+    /// ----------
+    ///     key : str
+    ///         key
+    ///     value : str
+    ///         value
+    pub fn key_values(&self) -> HashMap<String, String> {
+        self.grid.key_values().unwrap().clone()
     }
 
     /// Set a metadata key-value pair in the grid.
