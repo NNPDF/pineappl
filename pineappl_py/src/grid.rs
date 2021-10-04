@@ -152,6 +152,15 @@ impl PyGrid {
         self.grid.set_key_value(key, value);
     }
 
+    /// Retrieve a subgrid.
+    ///
+    /// **Usage:** `yadism`
+    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
+        PySubgridEnum {
+            subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
+        }
+    }
+
     /// Set a subgrid.
     ///
     /// **Usage:** `yadism`

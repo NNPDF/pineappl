@@ -61,6 +61,49 @@ class Grid(PyWrapper):
         orders = [o.raw for o in orders]
         return cls(PyGrid(lumi, orders, bin_limits, subgrid_params.raw))
 
+    def subgrid(self, order, bin_, lumi):
+        """
+        Retrieve the subgrid at the given position.
+
+        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
+
+        Parameters
+        ----------
+            order : int
+                index of order
+            bin_ : int
+                index of bin
+            lumi : int
+                index of luminosity
+
+        Returns
+        -------
+            subgrid : Subgrid
+                subgrid content
+        """
+        return self.raw.subgrid(order, bin_, lumi)
+
+    def __getitem__(self, key):
+        """
+        Retrieve the subgrid at the given position.
+
+        Syntactic sugar for :meth:`subgrid`
+
+        Parameters
+        ----------
+            key : (int, int, int)
+                a 3-element integers tuple, consisting in `(order, bin, lumi)`
+
+        Returns
+        -------
+            subgrid : Subgrid
+                subgrid content
+        """
+        if len(key) != 3:
+            raise ValueError("A tuple with `(order, bin, lumi)` is required as key.")
+
+        return self.subgrid(*key)
+
     def set_subgrid(self, order, bin_, lumi, subgrid):
         """
         Set the subgrid at the given position.
@@ -79,6 +122,24 @@ class Grid(PyWrapper):
                 subgrid content
         """
         self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
+
+    def __setitem__(self, key, subgrid):
+        """
+        Set the subgrid at the given position.
+
+        Syntactic sugar for :meth:`set_subgrid`
+
+        Parameters
+        ----------
+            key : (int, int, int)
+                a 3-element integers tuple, consisting in `(order, bin, lumi)`
+            subgrid : ImportOnlySubgridV1
+                subgrid content
+        """
+        if len(key) != 3:
+            raise ValueError("A tuple with `(order, bin, lumi)` is required as key.")
+
+        self.set_subgrid(*key, subgrid)
 
     def set_remapper(self, remapper):
         """
