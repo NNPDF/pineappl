@@ -1141,6 +1141,7 @@ impl Grid {
         alphas: &[f64],
         (xir, xif): (f64, f64),
         pids: &[i32],
+        target_pids: &[i32],
         x_grid: Vec<f64>,
         q2_grid: Vec<f64>,
         operator: Array5<f64>,
@@ -1178,7 +1179,6 @@ impl Grid {
             _ => unimplemented!(),
         };
 
-        // create target luminosities
         let pids1 = if has_pdf1 {
             pids.to_vec()
         } else {
@@ -1189,9 +1189,20 @@ impl Grid {
         } else {
             vec![initial_state_2]
         };
-        let lumi: Vec<_> = pids1
+        // create target luminosities
+        let tgt_pids1 = if has_pdf1 {
+            target_pids.to_vec()
+        } else {
+            vec![initial_state_1]
+        };
+        let tgt_pids2 = if has_pdf2 {
+            target_pids.to_vec()
+        } else {
+            vec![initial_state_2]
+        };
+        let lumi: Vec<_> = tgt_pids1
             .iter()
-            .cartesian_product(pids2.iter())
+            .cartesian_product(tgt_pids2.iter())
             .map(|(a, b)| lumi_entry![*a, *b, 1.0])
             .collect();
 
