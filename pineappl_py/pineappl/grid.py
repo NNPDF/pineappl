@@ -216,7 +216,7 @@ class Grid(PyWrapper):
             xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi
         )
 
-    def convolute_eko(self, operators):
+    def convolute_eko(self, operators, additional_metadata=None):
         """
         Create an FKTable with the EKO.
 
@@ -226,12 +226,16 @@ class Grid(PyWrapper):
         ----------
             operators : dict
                 EKO Output
+            additional_metadata : dict
+                additional metadata
 
         Returns
         ------
             PyFkTable :
                 raw grid as an FKTable
         """
+        if additional_metadata is None:
+            additional_metadata = {}
         operator_grid = np.array(
             [op["operators"] for op in operators["Q2grid"].values()]
         )
@@ -247,6 +251,7 @@ class Grid(PyWrapper):
                 q2grid,
                 operator_grid.flatten(),
                 operator_grid.shape,
+                additional_metadata,
             )
         )
 

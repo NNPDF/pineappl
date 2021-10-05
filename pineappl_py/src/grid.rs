@@ -10,6 +10,7 @@ use ndarray::{Array, Ix5};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
+use std::collections::HashMap;
 
 use pyo3::prelude::*;
 
@@ -286,6 +287,7 @@ impl PyGrid {
         q2_grid: Vec<f64>,
         operator_flattened: Vec<f64>,
         operator_shape: Vec<usize>,
+        additional_metadata: HashMap<String, String>,
     ) -> PyFkTable {
         let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let evolved_grid = self
@@ -299,6 +301,7 @@ impl PyGrid {
                 x_grid,
                 q2_grid,
                 operator.into_dimensionality::<Ix5>().unwrap(),
+                additional_metadata
             )
             .unwrap();
         PyFkTable {

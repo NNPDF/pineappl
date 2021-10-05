@@ -145,6 +145,6 @@ class TestGrid:
                 }
             }
         }
-        g.set_key_value("lumi_id_types", "PDG")
+        g.set_key_value("lumi_id_types", "pdg_mc_ids")
         fk = g.convolute_eko(fake_eko)
         assert isinstance(fk.raw, pineappl.pineappl.PyFkTable)

@@ -1145,6 +1145,7 @@ impl Grid {
         x_grid: Vec<f64>,
         q2_grid: Vec<f64>,
         operator: Array5<f64>,
+        additional_metadata: HashMap<String, String>,
     ) -> Option<FkTable> {
         // Check operator layout
         let dim = operator.shape();
@@ -1227,6 +1228,10 @@ impl Grid {
             subgrid_params: SubgridParams::default(),
             more_members: self.more_members.clone(),
         };
+        // write additional metadata
+        for (key, value) in additional_metadata.iter() {
+            result.set_key_value(key, value);
+        }
 
         // collect source grid informations
         let eko_info = self.eko_info().unwrap();
