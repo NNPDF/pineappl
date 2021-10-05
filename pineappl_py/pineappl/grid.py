@@ -242,6 +242,7 @@ class Grid(PyWrapper):
                 operators["q2_ref"],
                 alphas_values,
                 operators["targetpids"],
+                operators["inputpids"],
                 operators["interpolation_xgrid"],
                 q2grid,
                 operator_grid.flatten(),
