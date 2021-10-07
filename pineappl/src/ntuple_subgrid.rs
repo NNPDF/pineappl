@@ -25,7 +25,7 @@ impl Subgrid for NtupleSubgridV1 {
         _: &[f64],
         _: &[f64],
         _: &[Mu2],
-        _: &dyn Fn(usize, usize, usize) -> f64,
+        _: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         todo!();
     }
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn convolute() {
-        let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &|_, _, _| 0.0);
+        let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
     }
 
     #[test]

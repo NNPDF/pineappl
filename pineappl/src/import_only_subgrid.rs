@@ -47,7 +47,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         _: &[f64],
         _: &[f64],
         _: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         self.array
             .indexed_iter()
@@ -251,7 +251,7 @@ impl Subgrid for ImportOnlySubgridV2 {
         _: &[f64],
         _: &[f64],
         _: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         self.array
             .indexed_iter()
@@ -397,7 +397,8 @@ mod tests {
         assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
 
         // symmetric luminosity function
-        let lumi = &(|ix1, ix2, _| x[ix1] * x[ix2]) as &dyn Fn(usize, usize, usize) -> f64;
+        let lumi =
+            &mut (|ix1, ix2, _| x[ix1] * x[ix2]) as &mut dyn FnMut(usize, usize, usize) -> f64;
 
         assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
@@ -482,7 +483,8 @@ mod tests {
         assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
 
         // symmetric luminosity function
-        let lumi = &(|ix1, ix2, _| x[ix1] * x[ix2]) as &dyn Fn(usize, usize, usize) -> f64;
+        let lumi =
+            &mut (|ix1, ix2, _| x[ix1] * x[ix2]) as &mut dyn FnMut(usize, usize, usize) -> f64;
 
         assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
 

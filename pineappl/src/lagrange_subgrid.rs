@@ -134,7 +134,7 @@ impl Subgrid for LagrangeSubgridV1 {
         x1: &[f64],
         x2: &[f64],
         _: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         self.grid.as_ref().map_or(0.0, |grid| {
             grid.indexed_iter()
@@ -450,7 +450,7 @@ impl Subgrid for LagrangeSubgridV2 {
         x1: &[f64],
         x2: &[f64],
         _: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         self.grid.as_ref().map_or(0.0, |grid| {
             grid.indexed_iter()
@@ -745,7 +745,7 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         x1: &[f64],
         x2: &[f64],
         _: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         self.array
             .indexed_iter()
@@ -958,7 +958,8 @@ mod tests {
         let x2 = grid.x2_grid();
         let mu2 = grid.mu2_grid();
 
-        let reference = grid.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let reference =
+            grid.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         let mut test = 0.0;
 
@@ -1008,13 +1009,14 @@ mod tests {
         let x2 = grid1.x2_grid().into_owned();
         let mu2 = grid1.mu2_grid().into_owned();
 
-        let reference = grid1.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let reference =
+            grid1.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         // merge filled grid into empty one
         grid2.merge(&mut grid1.into(), false);
         assert!(!grid2.is_empty());
 
-        let merged = grid2.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, reference, merged, ulps = 8));
 
@@ -1045,7 +1047,7 @@ mod tests {
 
         grid2.merge(&mut grid3.into(), false);
 
-        let merged = grid2.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, 2.0 * reference, merged, ulps = 8));
     }
@@ -1100,7 +1102,7 @@ mod tests {
         let x2 = grid.x2_grid();
         let mu2 = grid.mu2_grid();
 
-        let result = grid.convolute(&x1, &x2, &mu2, &|_, _, _| 1.0);
+        let result = grid.convolute(&x1, &x2, &mu2, &mut |_, _, _| 1.0);
 
         assert_eq!(result, 0.0);
     }
@@ -1158,8 +1160,10 @@ mod tests {
         let sparse = LagrangeSparseSubgridV1::from(&dense);
         assert!(!sparse.is_empty());
 
-        let reference = dense.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
-        let converted = sparse.convolute(&x1, &x2, &mu2, &|ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let reference =
+            dense.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let converted =
+            sparse.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert!(approx_eq!(f64, reference, converted, ulps = 8));
     }

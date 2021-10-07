@@ -19,7 +19,6 @@ use ndarray::{s, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
@@ -323,9 +322,9 @@ impl Grid {
         let bin_sizes = self.bin_info().normalizations();
 
         // prepare pdf and alpha caches
-        let pdf_cache1 = RefCell::new(FxHashMap::default());
-        let pdf_cache2 = RefCell::new(FxHashMap::default());
-        let alphas_cache = RefCell::new(FxHashMap::default());
+        let mut pdf_cache1 = FxHashMap::default();
+        let mut pdf_cache2 = FxHashMap::default();
+        let mut alphas_cache = FxHashMap::default();
         let mut last_xif = 0.0;
 
         let (mut mu2_grid, mut x1_grid, mut x2_grid) = self
@@ -357,8 +356,8 @@ impl Grid {
         {
             // whenever the value `xif` changes we can clear the PDF cache
             if xif != last_xif {
-                pdf_cache1.borrow_mut().clear();
-                pdf_cache2.borrow_mut().clear();
+                pdf_cache1.clear();
+                pdf_cache2.clear();
                 last_xif = xif;
             }
             // iterate subgrids
@@ -393,20 +392,18 @@ impl Grid {
 
                     if mu2_grid_changed {
                         mu2_grid = new_mu2_grid;
-                        alphas_cache.borrow_mut().clear();
+                        alphas_cache.clear();
                     }
 
                     if mu2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
-                        pdf_cache1.borrow_mut().clear();
-                        pdf_cache2.borrow_mut().clear();
+                        pdf_cache1.clear();
+                        pdf_cache2.clear();
                     }
 
                     // pass convolute down, using caching
-                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &|ix1, ix2, imu2| {
-                        let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                        let mut pdf_cache2 = pdf_cache2.borrow_mut();
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
                         let mu2 = &mu2_grid[imu2];
@@ -430,7 +427,6 @@ impl Grid {
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
-                        let mut alphas_cache = alphas_cache.borrow_mut();
                         let alphas = alphas_cache
                             .entry(xir_values.len() * imu2 + xir_index)
                             .or_insert_with(|| alphas(xir * xir * mu2.ren));
@@ -480,9 +476,9 @@ impl Grid {
     ) -> Array3<f64> {
         let normalization = self.bin_info().normalizations()[bin];
 
-        let pdf_cache1 = RefCell::new(FxHashMap::default());
-        let pdf_cache2 = RefCell::new(FxHashMap::default());
-        let alphas_cache = RefCell::new(FxHashMap::default());
+        let mut pdf_cache1 = FxHashMap::default();
+        let mut pdf_cache2 = FxHashMap::default();
+        let mut alphas_cache = FxHashMap::default();
 
         let subgrid = &self.subgrids[[order, bin, lumi]];
         let order = &self.orders[order];
@@ -503,8 +499,6 @@ impl Grid {
                 let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
                 for ((imu2, ix1, ix2), value) in subgrid.iter() {
-                    let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                    let mut pdf_cache2 = pdf_cache2.borrow_mut();
                     let x1 = x1_grid[ix1];
                     let x2 = x2_grid[ix2];
                     let mu2 = &mu2_grid[imu2];
@@ -528,7 +522,6 @@ impl Grid {
                         lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                     }
 
-                    let mut alphas_cache = alphas_cache.borrow_mut();
                     let alphas = alphas_cache
                         .entry(imu2)
                         .or_insert_with(|| alphas(xir * xir * mu2.ren));
