@@ -206,34 +206,36 @@ impl MoreMembers {
     }
 }
 
-/// Information required to compute a compatible EKO.
-/// Members spell out specific characteristic of a suitable EKO.
+/// Information required to calculate the evolution kernel operators (EKO) to perform a conversion
+/// of a [`Grid`] using [`Grid::convolute_eko`] to an [`FkTable`].
 pub struct GridAxes {
-    /// is the interpolation grid in x used at the process scale
+    /// Interpolation grid in x of the `Grid`.
     pub x_grid: Vec<f64>,
-    /// are the parton ids used in the process
+    /// Parton IDs used in the grid.
     pub pids: Vec<i32>,
-    /// is the intepolation grid in q2, spanning the q2 range covered by the process data
+    /// Interpolation grid for the factorization scale of the `Grid`.
     pub muf2_grid: Vec<f64>,
 }
 
-/// Extra information required about an EKO to convolute to a Grid
+/// Extra information required to perform the conversion of a [`Grid`] to an [`FkTable`] using
+/// [`Grid::convolute_eko`].
 pub struct EkoInfo {
-    /// scale for the FkTable
+    /// Scale of the FkTable.
     pub muf2_0: f64,
-    /// alpha_s vector
+    /// Strong coupling constants for the factorization scales in the same ordering as given in
+    /// [`GridAxes`].
     pub alphas: Vec<f64>,
-    /// renormalization scale variations ratio
+    /// Renormalization scale variation.
     pub xir: f64,
-    /// factorization scale variations ratio
+    /// Factorization scale variation.
     pub xif: f64,
-    /// x_grid of the final FKTable
+    /// Interpolation grid in x of the `FkTable`.
     pub target_x_grid: Vec<f64>,
-    /// pids of the final FKTable
+    /// Parton IDs for the `FkTable`.
     pub target_pids: Vec<i32>,
     /// axes shared with the process grid
     pub grid_axes: GridAxes,
-    /// further data to add
+    // TODO: replace this member with the actual data
     pub additional_metadata: HashMap<String, String>,
 }
 
