@@ -97,7 +97,7 @@ class TestGrid:
         np.testing.assert_allclose(g.convolute(lambda pid,x,q2: 1, lambda pid,x,q2: 1., lambda q2: 1.), [5e6/9999,0.])
         np.testing.assert_allclose(g.convolute(lambda pid,x,q2: 1, lambda pid,x,q2: 1., lambda q2: 2.), [2**3 * 5e6/9999,0.])
 
-    def test_eko_info(self):
+    def test_axes(self):
         g = self.fake_grid()
 
         # add 2 DIS grids
@@ -119,10 +119,11 @@ class TestGrid:
         )
         g.set_subgrid(0, 1, 0, subgrid)
         # now get the thing
-        ei = g.eko_info()
+        ei = g.axes()
 
         np.testing.assert_allclose(ei[0], xs)
-        np.testing.assert_allclose(ei[1], [90., 100.])
+        np.testing.assert_allclose(ei[1], [])
+        np.testing.assert_allclose(ei[2], [90., 100.])
 
     def test_io(self, tmp_path):
         g = self.fake_grid()
@@ -137,6 +138,9 @@ class TestGrid:
         fake_eko = {
             "q2_ref": 1.,
             "targetpids": [1],
+            "targetgrid": [.1,1.],
+            "inputpids": [1],
+            "inputgrid": [.1,1.],
             "interpolation_xgrid": [.1,1.],
             "Q2grid": {
                 90: {
