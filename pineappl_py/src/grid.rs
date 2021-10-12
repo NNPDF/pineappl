@@ -1,4 +1,4 @@
-use pineappl::grid::{EkoInfo, Grid, Ntuple, Order};
+use pineappl::grid::{EkoInfo, Grid, GridAxes, Ntuple, Order};
 
 use super::bin::PyBinRemapper;
 use super::fk_table::PyFkTable;
@@ -10,7 +10,6 @@ use ndarray::{Array, Ix5};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
-use std::collections::HashMap;
 
 use pyo3::prelude::*;
 
@@ -190,11 +189,17 @@ impl PyGrid {
     /// -------
     ///     x_grid: list(float)
     ///         interpolation grid
+    ///     pids: list(int)
+    ///         particle ids
     ///     muf2_grid : list(float)
     ///         factorization scale list
-    pub fn eko_info(&self) -> (Vec<f64>, Vec<f64>) {
-        let EkoInfo { x_grid, muf2_grid } = self.grid.eko_info().unwrap();
-        (x_grid, muf2_grid)
+    pub fn axes(&self) -> (Vec<f64>, Vec<i32>, Vec<f64>) {
+        let GridAxes {
+            x_grid,
+            pids,
+            muf2_grid,
+        } = self.grid.axes().unwrap();
+        (x_grid, pids, muf2_grid)
     }
 
     /// Convolute grid with pdf.
@@ -258,7 +263,7 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    ///     q2 : float
+    ///     muf2_0 : float
     ///         reference scale
     ///     alphas : list(float)
     ///         list with :math:`\alpha_s(Q2)` for the process scales
@@ -266,12 +271,18 @@ impl PyGrid {
     ///         sorting of the particles in the tensor
     ///     x_grid : list(float)
     ///         interpolation grid
-    ///     q2_grid : list(float)
+    ///     target_pids : list(int)
+    ///         sorting of the particles in the tensor for final FkTable
+    ///     target_x_grid : list(float)
+    ///         final FKTable interpolation grid
+    ///     muf2_grid : list(float)
     ///         list of process scales
     ///     operator_flattened : list(float)
     ///         evolution tensor as a flat list
     ///     operator_shape : list(int)
     ///         shape of the evolution tensor
+    ///     additional_metadata : dict(str: str)
+    ///         further metadata
     ///
     /// Returns
     /// -------
@@ -279,30 +290,36 @@ impl PyGrid {
     ///         produced FK table
     pub fn convolute_eko(
         &self,
-        q2: f64,
+        muf2_0: f64,
         alphas: Vec<f64>,
         pids: Vec<i32>,
-        target_pids: Vec<i32>,
         x_grid: Vec<f64>,
-        q2_grid: Vec<f64>,
+        target_pids: Vec<i32>,
+        target_x_grid: Vec<f64>,
+        muf2_grid: Vec<f64>,
         operator_flattened: Vec<f64>,
         operator_shape: Vec<usize>,
         additional_metadata: HashMap<String, String>,
     ) -> PyFkTable {
         let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
+        let eko_info = EkoInfo {
+            muf2_0,
+            alphas,
+            xir: 0.,
+            xif: 0.,
+            target_pids,
+            target_x_grid,
+            grid_axes: GridAxes {
+                x_grid,
+                pids,
+                muf2_grid,
+            },
+            additional_metadata,
+        };
+
         let evolved_grid = self
             .grid
-            .convolute_eko(
-                q2,
-                &alphas,
-                (1., 1.),
-                &pids,
-                &target_pids,
-                x_grid,
-                q2_grid,
-                operator.into_dimensionality::<Ix5>().unwrap(),
-                additional_metadata
-            )
+            .convolute_eko(operator.into_dimensionality::<Ix5>().unwrap(), eko_info)
             .unwrap();
         PyFkTable {
             fk_table: evolved_grid,
@@ -345,6 +362,11 @@ impl PyGrid {
     pub fn optimize(&mut self) {
         self.grid.optimize();
     }
+
+    /// Optimize grid content.
+    // pub fn merge(&mut self, mut other: Self) {
+    // self.grid.merge(other.grid);
+    // }
 
     /// Extract the number of dimensions for bins.
     ///

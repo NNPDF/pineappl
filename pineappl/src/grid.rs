@@ -208,11 +208,33 @@ impl MoreMembers {
 
 /// Information required to compute a compatible EKO.
 /// Members spell out specific characteristic of a suitable EKO.
-pub struct EkoInfo {
+pub struct GridAxes {
     /// is the interpolation grid in x used at the process scale
     pub x_grid: Vec<f64>,
+    /// are the parton ids used in the process
+    pub pids: Vec<i32>,
     /// is the intepolation grid in q2, spanning the q2 range covered by the process data
     pub muf2_grid: Vec<f64>,
+}
+
+/// Extra information required about an EKO to convolute to a Grid
+pub struct EkoInfo {
+    /// scale for the FkTable
+    pub muf2_0: f64,
+    /// alpha_s vector
+    pub alphas: Vec<f64>,
+    /// renormalization scale variations ratio
+    pub xir: f64,
+    /// factorization scale variations ratio
+    pub xif: f64,
+    /// x_grid of the final FKTable
+    pub target_x_grid: Vec<f64>,
+    /// pids of the final FKTable
+    pub target_pids: Vec<i32>,
+    /// axes shared with the process grid
+    pub grid_axes: GridAxes,
+    /// further data to add
+    pub additional_metadata: HashMap<String, String>,
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -1066,9 +1088,10 @@ impl Grid {
     /// Provide information used to compute a suitable EKO for the current grid.
     /// More specific, the `x_grid` and `muf2_grid` are extracted and checked.
     #[must_use]
-    pub fn eko_info(&self) -> Option<EkoInfo> {
+    pub fn axes(&self) -> Option<GridAxes> {
         let mut muf2_grid = Vec::<f64>::new();
         let mut x_grid = Vec::<f64>::new();
+        let pids = Vec::<i32>::new();
         let mut has_pdf1 = true;
         let mut has_pdf2 = true;
 
@@ -1123,7 +1146,11 @@ impl Grid {
             }
         }
 
-        Some(EkoInfo { x_grid, muf2_grid })
+        Some(GridAxes {
+            x_grid,
+            pids, // TODO: for the time being they are just empty, but we might use them for slicing the eko
+            muf2_grid,
+        })
     }
 
     /// Applies an evolution kernel operator (EKO) to the grids to evolve them from different
@@ -1135,26 +1162,15 @@ impl Grid {
     ///
     /// Panics if the parameters do not match with the given grid.
     #[must_use]
-    pub fn convolute_eko(
-        &self,
-        q2: f64,
-        alphas: &[f64],
-        (xir, xif): (f64, f64),
-        pids: &[i32],
-        target_pids: &[i32],
-        x_grid: Vec<f64>,
-        q2_grid: Vec<f64>,
-        operator: Array5<f64>,
-        additional_metadata: HashMap<String, String>,
-    ) -> Option<FkTable> {
+    pub fn convolute_eko(&self, operator: Array5<f64>, eko_info: EkoInfo) -> Option<FkTable> {
         // Check operator layout
         let dim = operator.shape();
 
-        assert_eq!(dim[0], q2_grid.len());
-        assert_eq!(dim[1], pids.len());
-        assert_eq!(dim[2], x_grid.len());
-        assert_eq!(dim[3], pids.len());
-        assert_eq!(dim[4], x_grid.len());
+        assert_eq!(dim[0], eko_info.grid_axes.muf2_grid.len());
+        assert_eq!(dim[1], eko_info.target_pids.len());
+        assert_eq!(dim[2], eko_info.target_x_grid.len());
+        assert_eq!(dim[3], eko_info.grid_axes.pids.len());
+        assert_eq!(dim[4], eko_info.grid_axes.x_grid.len());
 
         // swap axes around to optimize convolution
         let operator = operator.permuted_axes([3, 1, 4, 0, 2]);
@@ -1181,23 +1197,23 @@ impl Grid {
         };
 
         let pids1 = if has_pdf1 {
-            pids.to_vec()
+            eko_info.grid_axes.pids.to_vec()
         } else {
             vec![initial_state_1]
         };
         let pids2 = if has_pdf2 {
-            pids.to_vec()
+            eko_info.grid_axes.pids.to_vec()
         } else {
             vec![initial_state_2]
         };
         // create target luminosities
         let tgt_pids1 = if has_pdf1 {
-            target_pids.to_vec()
+            eko_info.target_pids.to_vec()
         } else {
             vec![initial_state_1]
         };
         let tgt_pids2 = if has_pdf2 {
-            target_pids.to_vec()
+            eko_info.target_pids.to_vec()
         } else {
             vec![initial_state_2]
         };
@@ -1208,9 +1224,17 @@ impl Grid {
             .collect();
 
         // create target subgrid dimensions
-        let tgt_q2_grid = vec![q2];
-        let tgt_x1_grid = if has_pdf1 { x_grid.clone() } else { vec![1.0] };
-        let tgt_x2_grid = if has_pdf2 { x_grid.clone() } else { vec![1.0] };
+        let tgt_q2_grid = vec![eko_info.muf2_0];
+        let tgt_x1_grid = if has_pdf1 {
+            eko_info.target_x_grid.clone()
+        } else {
+            vec![1.0]
+        };
+        let tgt_x2_grid = if has_pdf2 {
+            eko_info.target_x_grid.clone()
+        } else {
+            vec![1.0]
+        };
 
         // create target grid
         let mut result = Self {
@@ -1229,12 +1253,12 @@ impl Grid {
             more_members: self.more_members.clone(),
         };
         // write additional metadata
-        for (key, value) in additional_metadata.iter() {
+        for (key, value) in eko_info.additional_metadata.iter() {
             result.set_key_value(key, value);
         }
 
         // collect source grid informations
-        let eko_info = self.eko_info().unwrap();
+        let grid_axes = self.axes().unwrap();
 
         // Setup progress bar
         let bar = ProgressBar::new(
@@ -1264,22 +1288,26 @@ impl Grid {
 
                 let mut src_array = SparseArray3::<f64>::new(
                     src_array_q2_grid.len(),
-                    if has_pdf1 { eko_info.x_grid.len() } else { 1 },
-                    if has_pdf2 { eko_info.x_grid.len() } else { 1 },
+                    if has_pdf1 { grid_axes.x_grid.len() } else { 1 },
+                    if has_pdf2 { grid_axes.x_grid.len() } else { 1 },
                 );
 
                 // iterate over the source grid orders and add all of them together into
                 // `src_array`, using the right powers of alphas
                 for (order, powers) in self.orders.iter().enumerate() {
-                    let logs = if (xir, xif) == (1.0, 1.0) {
+                    let logs = if (eko_info.xir, eko_info.xif) == (1.0, 1.0) {
                         if (powers.logxir > 0) || (powers.logxif > 0) {
                             continue;
                         }
 
                         1.0
                     } else {
-                        (xir * xir).ln().powi(powers.logxir.try_into().unwrap())
-                            * (xif * xif).ln().powi(powers.logxif.try_into().unwrap())
+                        (eko_info.xir * eko_info.xir)
+                            .ln()
+                            .powi(powers.logxir.try_into().unwrap())
+                            * (eko_info.xif * eko_info.xif)
+                                .ln()
+                                .powi(powers.logxif.try_into().unwrap())
                     };
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
@@ -1289,13 +1317,13 @@ impl Grid {
                         && !src_subgrid
                             .x1_grid()
                             .iter()
-                            .zip(x_grid.iter())
+                            .zip(eko_info.grid_axes.x_grid.iter())
                             .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)))
                         || (has_pdf2
                             && !src_subgrid
                                 .x2_grid()
                                 .iter()
-                                .zip(x_grid.iter())
+                                .zip(eko_info.grid_axes.x_grid.iter())
                                 .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)));
 
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
@@ -1304,24 +1332,28 @@ impl Grid {
                             .iter()
                             .position(|&q2| q2 == scale)
                             .unwrap();
-                        let als_iq2 = q2_grid
+                        let als_iq2 = eko_info
+                            .grid_axes
+                            .muf2_grid
                             .iter()
-                            .position(|&q2| q2 == xir * xir * scale)
+                            .position(|&q2| q2 == eko_info.xir * eko_info.xir * scale)
                             .unwrap();
 
                         let ix1 = if invert_x && has_pdf1 {
-                            eko_info.x_grid.len() - ix1 - 1
+                            eko_info.grid_axes.x_grid.len() - ix1 - 1
                         } else {
                             ix1
                         };
                         let ix2 = if invert_x && has_pdf2 {
-                            eko_info.x_grid.len() - ix2 - 1
+                            eko_info.grid_axes.x_grid.len() - ix2 - 1
                         } else {
                             ix2
                         };
 
-                        src_array[[src_iq2, ix1, ix2]] +=
-                            alphas[als_iq2].powi(powers.alphas.try_into().unwrap()) * logs * value;
+                        src_array[[src_iq2, ix1, ix2]] += eko_info.alphas[als_iq2]
+                            .powi(powers.alphas.try_into().unwrap())
+                            * logs
+                            * value;
                     }
                 }
 
@@ -1336,7 +1368,14 @@ impl Grid {
                 // Next we need to apply the tensor
                 let eko_src_q2_indices: Vec<_> = src_array_q2_grid
                     .iter()
-                    .map(|&src_q2| q2_grid.iter().position(|&q2| q2 == src_q2).unwrap())
+                    .map(|&src_q2| {
+                        eko_info
+                            .grid_axes
+                            .muf2_grid
+                            .iter()
+                            .position(|&q2| q2 == src_q2)
+                            .unwrap()
+                    })
                     .collect();
                 // Iterate target lumis
                 for (tgt_lumi, (tgt_pid1_idx, tgt_pid2_idx)) in (0..pids1.len())
@@ -1346,7 +1385,10 @@ impl Grid {
                     for (src_pid1, src_pid2, factor) in src_entries.entry().iter() {
                         // find source lumi position
                         let src_pid1_idx = if has_pdf1 {
-                            pids.iter()
+                            eko_info
+                                .grid_axes
+                                .pids
+                                .iter()
                                 .position(|x| {
                                     // if `pid == 0` the gluon is meant
                                     if *src_pid1 == 0 {
@@ -1360,7 +1402,10 @@ impl Grid {
                             0
                         };
                         let src_pid2_idx = if has_pdf2 {
-                            pids.iter()
+                            eko_info
+                                .grid_axes
+                                .pids
+                                .iter()
                                 .position(|x| {
                                     // `pid == 0` is the gluon exception, which might be 0 or 21
                                     if *src_pid2 == 0 {
