@@ -1,6 +1,7 @@
 //! Module for everything related to luminosity functions.
 
 use super::grid::Grid;
+use super::subgrid::Mu2;
 use serde::{Deserialize, Serialize};
 
 /// This structure represens an entry of a luminosity function. Each entry consists of a tuple,
@@ -110,6 +111,9 @@ enum Pdfs<'a> {
 pub struct LumiCache<'a> {
     pdfs: Pdfs<'a>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
+    mu2_grid: Vec<Mu2>,
+    x1_grid: Vec<f64>,
+    x2_grid: Vec<f64>,
     cc1: i32,
     cc2: i32,
 }
@@ -165,6 +169,9 @@ impl<'a> LumiCache<'a> {
         Ok(Self {
             pdfs,
             alphas,
+            mu2_grid: vec![],
+            x1_grid: vec![],
+            x2_grid: vec![],
             cc1,
             cc2,
         })
@@ -229,5 +236,36 @@ impl<'a> LumiCache<'a> {
     /// Return the strong coupling evaluated at the scale `q2`.
     pub fn alphas(&mut self, q2: f64) -> f64 {
         (self.alphas)(q2)
+    }
+
+    /// Clears the cache.
+    pub fn clear(&mut self) {
+        self.mu2_grid.clear();
+        self.x1_grid.clear();
+        self.x2_grid.clear();
+    }
+
+    /// Set the grids.
+    pub fn set_grids(
+        &mut self,
+        mu2_grid: &[Mu2],
+        x1_grid: &[f64],
+        x2_grid: &[f64],
+        xir: f64,
+        xif: f64,
+    ) {
+        if (x1_grid != self.x1_grid) || (x2_grid != self.x2_grid) {
+            self.clear();
+            self.x1_grid = x1_grid.to_vec();
+            self.x2_grid = x2_grid.to_vec();
+        }
+
+        self.mu2_grid = mu2_grid
+            .iter()
+            .map(|Mu2 { ren, fac }| Mu2 {
+                ren: ren * xir * xir,
+                fac: fac * xif * xif,
+            })
+            .collect();
     }
 }
