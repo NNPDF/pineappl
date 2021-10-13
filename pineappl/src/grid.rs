@@ -5,7 +5,7 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::lumi::LumiEntry;
+use super::lumi::{LumiCache, LumiEntry};
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::sparse_array3::SparseArray3;
@@ -473,6 +473,90 @@ impl Grid {
 
                 // fill in ...
                 bins[l + xi.len() * bin_index] += value / bin_sizes[j];
+            }
+        }
+
+        bins
+    }
+
+    /// TODO
+    ///
+    /// Panics
+    ///
+    /// TODO
+    pub fn convolute2(
+        &self,
+        lumi_cache: &mut LumiCache,
+        order_mask: &[bool],
+        bin_indices: &[usize],
+        lumi_mask: &[bool],
+        xi: &[(f64, f64)],
+    ) -> Vec<f64> {
+        let bin_indices = if bin_indices.is_empty() {
+            (0..self.bin_limits.bins()).collect()
+        } else {
+            bin_indices.to_vec()
+        };
+        let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
+        let normalizations = self.bin_info().normalizations();
+
+        for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
+            for ((ord, bin, lumi), subgrid) in self.subgrids.indexed_iter() {
+                let order = &self.orders[ord];
+
+                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                    continue;
+                }
+
+                if (!order_mask.is_empty() && !order_mask[ord])
+                    || (!lumi_mask.is_empty() && !lumi_mask[lumi])
+                {
+                    continue;
+                }
+
+                let bin_index = match bin_indices.iter().position(|&index| index == bin) {
+                    Some(i) => i,
+                    None => continue,
+                };
+
+                if subgrid.is_empty() {
+                    continue;
+                }
+
+                let lumi_entry = &self.lumi[lumi];
+                let mu2_grid = subgrid.mu2_grid();
+                let x1_grid = subgrid.x1_grid();
+                let x2_grid = subgrid.x2_grid();
+
+                let mut value =
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
+                        let x1 = x1_grid[ix1];
+                        let x2 = x2_grid[ix2];
+                        let mur2 = xir * xir * mu2_grid[imu2].ren;
+                        let muf2 = xif * xif * mu2_grid[imu2].fac;
+                        let mut lumi = 0.0;
+
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = lumi_cache.xfx1(entry.0, x1, muf2);
+                            let xfx2 = lumi_cache.xfx2(entry.1, x2, muf2);
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
+
+                        let alphas = lumi_cache.alphas(mur2);
+
+                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
+                        lumi
+                    });
+
+                if order.logxir > 0 {
+                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+                }
+
+                if order.logxif > 0 {
+                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+                }
+
+                bins[xi_index + xi.len() * bin_index] += value / normalizations[bin];
             }
         }
 

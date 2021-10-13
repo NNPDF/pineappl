@@ -1,5 +1,6 @@
 //! Module for everything related to luminosity functions.
 
+use super::grid::Grid;
 use serde::{Deserialize, Serialize};
 
 /// This structure represens an entry of a luminosity function. Each entry consists of a tuple,
@@ -92,4 +93,141 @@ macro_rules! lumi_entry {
     ($a:expr, $b:expr, $factor:expr $(; $c:expr, $d:expr, $fac:expr)*) => {
         $crate::lumi::LumiEntry::new(vec![($a, $b, $factor), $(($c, $d, $fac)),*])
     };
+}
+
+enum Pdfs<'a> {
+    Two {
+        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+    },
+    One {
+        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+    },
+}
+
+/// A cache for evaluating PDFs. Methods like [`Grid::convolute2`] accept instances of this
+/// `struct` instead of the PDFs themselves.
+pub struct LumiCache<'a> {
+    pdfs: Pdfs<'a>,
+    alphas: &'a mut dyn FnMut(f64) -> f64,
+    cc1: i32,
+    cc2: i32,
+}
+
+impl<'a> LumiCache<'a> {
+    fn new(
+        grid: &Grid,
+        pdg1: i32,
+        pdg2: i32,
+        pdfs: Pdfs<'a>,
+        alphas: &'a mut dyn FnMut(f64) -> f64,
+    ) -> Result<Self, ()> {
+        // PDG identifiers of the initial states
+        let pdga = grid.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_1")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
+        });
+        let pdgb = grid.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_2")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
+        });
+
+        // are the initial states hadrons?
+        let has_pdfa = grid
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == pdga));
+        let has_pdfb = grid
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == pdgb));
+
+        // do we have to charge-conjugate the initial states?
+        let cc1 = if pdg1 == pdga {
+            1
+        } else if pdg1 == -pdga {
+            -1
+        } else if has_pdfa {
+            return Err(());
+        } else {
+            0
+        };
+        let cc2 = if pdg2 == pdgb {
+            1
+        } else if pdg2 == -pdgb {
+            -1
+        } else if has_pdfb {
+            return Err(());
+        } else {
+            0
+        };
+
+        Ok(Self {
+            pdfs,
+            alphas,
+            cc1,
+            cc2,
+        })
+    }
+
+    /// Construct a luminosity cache with two PDFs, `xfx1` and `xfx2`. The types of hadrons the
+    /// PDFs correspond to must be given as `pdg1` and `pdg2`. The function to evaluate the
+    /// strong coupling must be given as `alphas`. The grid that the cache will be used with must
+    /// be given as `grid`; this parameter determines which of the initial states are hadronic, and
+    /// if an initial states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some
+    /// of the PDFs must be charge-conjugated, this is automatically done in this function.
+    pub fn with_two(
+        grid: &Grid,
+        pdg1: i32,
+        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        pdg2: i32,
+        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        alphas: &'a mut dyn FnMut(f64) -> f64,
+    ) -> Result<Self, ()> {
+        Self::new(grid, pdg1, pdg2, Pdfs::Two { xfx1, xfx2 }, alphas)
+    }
+
+    /// Construct a luminosity cache with a single PDF `xfx`. The type of hadron the PDF
+    /// corresponds to must be given as `pdg`. The function to evaluate the strong coupling must be
+    /// given as `alphas`. The grid that the cache should be used with must be given as `grid`;
+    /// this parameter determines which of the initial states are hadronic, and if an initial
+    /// states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some of the PDFs
+    /// must be charge-conjugated, this is automatically done in this function.
+    pub fn with_one(
+        grid: &Grid,
+        pdg: i32,
+        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        alphas: &'a mut dyn FnMut(f64) -> f64,
+    ) -> Result<Self, ()> {
+        Self::new(grid, pdg, pdg, Pdfs::One { xfx }, alphas)
+    }
+
+    /// Return the PDF (multiplied with `x`) for the first initial state.
+    pub fn xfx1(&mut self, pdg_id: i32, x: f64, q2: f64) -> f64 {
+        if self.cc1 == 0 {
+            x
+        } else {
+            match &mut self.pdfs {
+                Pdfs::One { xfx } => xfx(self.cc1 * pdg_id, x, q2),
+                Pdfs::Two { xfx1, .. } => xfx1(self.cc1 * pdg_id, x, q2),
+            }
+        }
+    }
+
+    /// Return the PDF (multiplied with `x`) for the second initial state.
+    pub fn xfx2(&mut self, pdg_id: i32, x: f64, q2: f64) -> f64 {
+        if self.cc2 == 0 {
+            x
+        } else {
+            match &mut self.pdfs {
+                Pdfs::One { xfx } => xfx(self.cc2 * pdg_id, x, q2),
+                Pdfs::Two { xfx2, .. } => xfx2(self.cc2 * pdg_id, x, q2),
+            }
+        }
+    }
+
+    /// Return the strong coupling evaluated at the scale `q2`.
+    pub fn alphas(&mut self, q2: f64) -> f64 {
+        (self.alphas)(q2)
+    }
 }
