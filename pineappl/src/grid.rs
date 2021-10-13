@@ -1778,4 +1778,38 @@ mod tests {
             "-2212"
         );
     }
+
+    // TODO: properly test axes returned
+
+    #[test]
+    fn grid_axes() {
+        let mut grid = Grid::new(
+            vec![lumi_entry![21, 21, 1.0], lumi_entry![1, 2, 1.0]],
+            vec![Order {
+                alphas: 0,
+                alpha: 0,
+                logxir: 0,
+                logxif: 0,
+            }],
+            vec![0.0, 1.0],
+            SubgridParams::default(),
+        );
+
+        grid.fill(
+            0,
+            0.5,
+            0,
+            &Ntuple {
+                x1: 0.1,
+                x2: 0.1,
+                q2: 20.,
+                weight: 1.,
+            },
+        );
+
+        let axes = grid.axes().unwrap();
+        assert_eq!(axes.x_grid, vec![]);
+        assert_eq!(axes.muf2_grid, vec![]);
+        assert_eq!(axes.pids, vec![]);
+    }
 }
