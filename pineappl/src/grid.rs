@@ -504,11 +504,12 @@ impl Grid {
                 let x1_grid = subgrid.x1_grid();
                 let x2_grid = subgrid.x2_grid();
 
+                lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
+
                 let mut value =
                     subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
-                        let mur2 = xir * xir * mu2_grid[imu2].ren;
                         let muf2 = xif * xif * mu2_grid[imu2].fac;
                         let mut lumi = 0.0;
 
@@ -518,7 +519,7 @@ impl Grid {
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
-                        let alphas = lumi_cache.alphas(mur2);
+                        let alphas = lumi_cache.alphas(imu2);
 
                         lumi *= alphas.powi(order.alphas.try_into().unwrap());
                         lumi
