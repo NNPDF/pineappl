@@ -210,25 +210,27 @@ impl<'a> LumiCache<'a> {
     }
 
     /// Return the PDF (multiplied with `x`) for the first initial state.
-    pub fn xfx1(&mut self, pdg_id: i32, x: f64, q2: f64) -> f64 {
+    pub fn xfx1(&mut self, pdg_id: i32, x: f64, imu2: usize) -> f64 {
         if self.cc1 == 0 {
             x
         } else {
+            let muf2 = self.mu2_grid[imu2].fac;
             match &mut self.pdfs {
-                Pdfs::One { xfx } => xfx(self.cc1 * pdg_id, x, q2),
-                Pdfs::Two { xfx1, .. } => xfx1(self.cc1 * pdg_id, x, q2),
+                Pdfs::One { xfx } => xfx(self.cc1 * pdg_id, x, muf2),
+                Pdfs::Two { xfx1, .. } => xfx1(self.cc1 * pdg_id, x, muf2),
             }
         }
     }
 
     /// Return the PDF (multiplied with `x`) for the second initial state.
-    pub fn xfx2(&mut self, pdg_id: i32, x: f64, q2: f64) -> f64 {
+    pub fn xfx2(&mut self, pdg_id: i32, x: f64, imu2: usize) -> f64 {
         if self.cc2 == 0 {
             x
         } else {
+            let muf2 = self.mu2_grid[imu2].fac;
             match &mut self.pdfs {
-                Pdfs::One { xfx } => xfx(self.cc2 * pdg_id, x, q2),
-                Pdfs::Two { xfx2, .. } => xfx2(self.cc2 * pdg_id, x, q2),
+                Pdfs::One { xfx } => xfx(self.cc2 * pdg_id, x, muf2),
+                Pdfs::Two { xfx2, .. } => xfx2(self.cc2 * pdg_id, x, muf2),
             }
         }
     }

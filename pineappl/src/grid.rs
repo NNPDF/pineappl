@@ -510,12 +510,11 @@ impl Grid {
                     subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
-                        let muf2 = xif * xif * mu2_grid[imu2].fac;
                         let mut lumi = 0.0;
 
                         for entry in lumi_entry.entry() {
-                            let xfx1 = lumi_cache.xfx1(entry.0, x1, muf2);
-                            let xfx2 = lumi_cache.xfx2(entry.1, x2, muf2);
+                            let xfx1 = lumi_cache.xfx1(entry.0, x1, imu2);
+                            let xfx2 = lumi_cache.xfx2(entry.1, x2, imu2);
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
