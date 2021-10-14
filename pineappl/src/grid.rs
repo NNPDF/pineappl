@@ -537,8 +537,8 @@ impl Grid {
                         let mut lumi = 0.0;
 
                         for entry in lumi_entry.entry() {
-                            let xfx1 = lumi_cache.xfx1(entry.0, x1, imu2);
-                            let xfx2 = lumi_cache.xfx2(entry.1, x2, imu2);
+                            let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
+                            let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
