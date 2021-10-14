@@ -210,7 +210,8 @@ impl<'a> LumiCache<'a> {
     }
 
     /// Return the PDF (multiplied with `x`) for the first initial state.
-    pub fn xfx1(&mut self, pdg_id: i32, x: f64, imu2: usize) -> f64 {
+    pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
+        let x = self.x1_grid[ix1];
         if self.cc1 == 0 {
             x
         } else {
@@ -223,7 +224,8 @@ impl<'a> LumiCache<'a> {
     }
 
     /// Return the PDF (multiplied with `x`) for the second initial state.
-    pub fn xfx2(&mut self, pdg_id: i32, x: f64, imu2: usize) -> f64 {
+    pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
+        let x = self.x2_grid[ix2];
         if self.cc2 == 0 {
             x
         } else {
