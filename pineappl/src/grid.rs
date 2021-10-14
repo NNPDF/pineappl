@@ -15,7 +15,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
-use ndarray::{s, Array3, Array5, Dimension};
+use ndarray::{s, Array, Array2, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -235,7 +235,7 @@ pub struct EkoInfo {
     pub target_pids: Vec<i32>,
     /// axes shared with the process grid
     pub grid_axes: GridAxes,
-    // TODO: replace this member with the actual data
+    /// TODO: replace this member with the actual data
     pub additional_metadata: HashMap<String, String>,
 }
 
@@ -1781,9 +1781,18 @@ mod tests {
 
     // TODO: properly test axes returned
 
-    #[test]
-    fn grid_axes() {
-        let mut grid = Grid::new(
+    fn simple_grid() -> Grid {
+        let mut subgrid_params = SubgridParams::default();
+        subgrid_params.set_x_order(1);
+        subgrid_params.set_x_bins(1);
+        subgrid_params.set_q2_order(1);
+        subgrid_params.set_q2_bins(1);
+
+        let mut extra = ExtraSubgridParams::default();
+        extra.set_x2_order(1);
+        extra.set_x2_bins(1);
+
+        let mut grid = Grid::with_subgrid_type(
             vec![lumi_entry![21, 21, 1.0], lumi_entry![1, 2, 1.0]],
             vec![Order {
                 alphas: 0,
@@ -1792,8 +1801,11 @@ mod tests {
                 logxif: 0,
             }],
             vec![0.0, 1.0],
-            SubgridParams::default(),
-        );
+            subgrid_params,
+            extra,
+            "LagrangeSubgrid",
+        )
+        .unwrap();
 
         grid.fill(
             0,
@@ -1807,9 +1819,49 @@ mod tests {
             },
         );
 
+        grid
+    }
+
+    #[test]
+    fn grid_axes() {
+        let grid = simple_grid();
+
         let axes = grid.axes().unwrap();
         assert_eq!(axes.x_grid, vec![]);
         assert_eq!(axes.muf2_grid, vec![]);
         assert_eq!(axes.pids, vec![]);
+    }
+
+    #[test]
+    fn grid_convolute_eko() {
+        let grid = simple_grid();
+
+        let eko_info = EkoInfo {
+            muf2_0: 1.,
+            alphas: vec![1.],
+            xir: 1.,
+            xif: 1.,
+            target_x_grid: vec![1.],
+            target_pids: vec![21, 1, 2],
+            grid_axes: GridAxes {
+                x_grid: vec![1.],
+                pids: vec![21, 1, 2],
+                muf2_grid: vec![1.],
+            },
+            additional_metadata: HashMap::new(),
+        };
+        let id = Array2::<f64>::eye(3);
+        let operator = Array::from_shape_vec(
+            (1, 3, 1, 3, 1),
+            id.clone()
+                .into_iter()
+                // .cartesian_product(id.iter())
+                // .map(|(i, j)| i * j)
+                .collect(),
+        )
+        .unwrap();
+        let fk = grid.convolute_eko(operator, eko_info).unwrap();
+
+        assert_eq!(fk.bins(), 1);
     }
 }
