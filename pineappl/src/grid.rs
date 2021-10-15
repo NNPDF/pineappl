@@ -1781,18 +1781,29 @@ mod tests {
 
     // TODO: properly test axes returned
 
-    fn simple_grid() -> Grid {
+    fn simple_grid() -> (Grid, GridAxes) {
+        let muf2_grid = vec![20.];
+        let x_grid = vec![0.1, 0.5, 1.];
+
         let mut subgrid_params = SubgridParams::default();
         subgrid_params.set_x_order(1);
         subgrid_params.set_x_bins(1);
         subgrid_params.set_q2_order(1);
         subgrid_params.set_q2_bins(1);
 
-        let mut extra = ExtraSubgridParams::default();
-        extra.set_x2_order(1);
-        extra.set_x2_bins(1);
+        let mut array = Array3::zeros((1, 3, 3));
+        array[[0, 0, 0]] = 1.;
+        let sparse_array = SparseArray3::from_ndarray(&array, 0, 3);
+        let subgrid = ImportOnlySubgridV1::new(
+            sparse_array,
+            muf2_grid.clone(),
+            x_grid.clone(),
+            x_grid.clone(),
+        )
+        .into();
 
-        let mut grid = Grid::with_subgrid_type(
+        let pids = vec![21, 1, 2];
+        let mut grid = Grid::new(
             vec![lumi_entry![21, 21, 1.0], lumi_entry![1, 2, 1.0]],
             vec![Order {
                 alphas: 0,
@@ -1802,61 +1813,59 @@ mod tests {
             }],
             vec![0.0, 1.0],
             subgrid_params,
-            extra,
-            "LagrangeSubgrid",
-        )
-        .unwrap();
-
-        grid.fill(
-            0,
-            0.5,
-            0,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.1,
-                q2: 20.,
-                weight: 1.,
-            },
         );
 
-        grid
+        grid.set_subgrid(0, 0, 0, subgrid);
+
+        (
+            grid,
+            GridAxes {
+                x_grid,
+                pids,
+                muf2_grid,
+            },
+        )
     }
 
     #[test]
     fn grid_axes() {
-        let grid = simple_grid();
+        let (grid, axes) = simple_grid();
 
-        let axes = grid.axes().unwrap();
-        assert_eq!(axes.x_grid, vec![]);
-        assert_eq!(axes.muf2_grid, vec![]);
-        assert_eq!(axes.pids, vec![]);
+        let ret_axes = grid.axes().unwrap();
+        assert_eq!(ret_axes.x_grid, axes.x_grid);
+        assert_eq!(ret_axes.muf2_grid, axes.muf2_grid);
+        assert_eq!(ret_axes.pids, vec![]);
     }
 
     #[test]
     fn grid_convolute_eko() {
-        let grid = simple_grid();
+        let (grid, axes) = simple_grid();
+        let target_x_grid = vec![1e-7, 1e-2, 1.];
+        let target_pids = vec![21, 1, 2];
+
+        let mut additional_metadata = HashMap::new();
+        additional_metadata.insert("lumi_id_types".to_owned(), "pdg_mc_ids".to_owned());
 
         let eko_info = EkoInfo {
             muf2_0: 1.,
             alphas: vec![1.],
             xir: 1.,
             xif: 1.,
-            target_x_grid: vec![1.],
-            target_pids: vec![21, 1, 2],
+            target_x_grid: target_x_grid.clone(),
+            target_pids: target_pids.clone(),
             grid_axes: GridAxes {
-                x_grid: vec![1.],
-                pids: vec![21, 1, 2],
-                muf2_grid: vec![1.],
+                x_grid: axes.x_grid.clone(),
+                pids: axes.pids.clone(),
+                muf2_grid: axes.muf2_grid.clone(),
             },
-            additional_metadata: HashMap::new(),
+            additional_metadata,
         };
-        let id = Array2::<f64>::eye(3);
         let operator = Array::from_shape_vec(
-            (1, 3, 1, 3, 1),
-            id.clone()
-                .into_iter()
-                // .cartesian_product(id.iter())
-                // .map(|(i, j)| i * j)
+            (1, 3, 3, 3, 3),
+            (0..4)
+                .map(|_| (0..3))
+                .multi_cartesian_product()
+                .map(|v| if v[0] == v[2] && v[1] == v[3] { 1. } else { 0. })
                 .collect(),
         )
         .unwrap();
