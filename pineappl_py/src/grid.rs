@@ -7,7 +7,6 @@ use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
 
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -299,7 +298,7 @@ impl PyGrid {
         muf2_grid: Vec<f64>,
         operator_flattened: Vec<f64>,
         operator_shape: Vec<usize>,
-        additional_metadata: HashMap<String, String>,
+        lumi_id_types: String,
     ) -> PyFkTable {
         let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let eko_info = EkoInfo {
@@ -314,7 +313,7 @@ impl PyGrid {
                 pids,
                 muf2_grid,
             },
-            additional_metadata,
+            lumi_id_types,
         };
 
         let evolved_grid = self
