@@ -8,6 +8,7 @@ use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, Lagran
 use super::lumi::{LumiCache, LumiEntry};
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::pids;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use float_cmp::approx_eq;
@@ -315,6 +316,26 @@ impl Grid {
         })
     }
 
+    fn pdg_lumi(&self) -> Cow<[LumiEntry]> {
+        if let Some(key_values) = self.key_values() {
+            if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
+                match lumi_id_types.as_str() {
+                    "pdg_mc_ids" => {}
+                    "evol" => {
+                        return self
+                            .lumi
+                            .iter()
+                            .map(|entry| LumiEntry::translate(entry, &pids::evol_to_pdg_mc_ids))
+                            .collect();
+                    }
+                    _ => unimplemented!(),
+                }
+            }
+        }
+
+        Cow::Borrowed(self.lumi())
+    }
+
     /// Performs a convolution of the contained subgrids with the given PDFs, `xfx1` for the first
     /// parton and `xfx2` for the second parton, `alphas` for the evaluation of the strong
     /// coupling. The parameters `order_mask` and `lumi_mask` can be used to selectively enable
@@ -369,6 +390,7 @@ impl Grid {
             .iter()
             .map(|xi| xir_values.iter().position(|xir| xi.0 == *xir).unwrap())
             .collect();
+        let self_lumi = self.pdg_lumi();
 
         // iterate over the elements of `xi` and a corresponding index, but sorted using the
         // factorisation value of `xi`
@@ -403,7 +425,7 @@ impl Grid {
                     None => continue,
                 };
 
-                let lumi_entry = &self.lumi[k];
+                let lumi_entry = &self_lumi[k];
 
                 let mut value = if subgrid.is_empty() {
                     0.0
@@ -499,6 +521,7 @@ impl Grid {
         };
         let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
         let normalizations = self.bin_info().normalizations();
+        let self_lumi = self.pdg_lumi();
 
         for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
             for ((ord, bin, lumi), subgrid) in self.subgrids.indexed_iter() {
@@ -523,7 +546,7 @@ impl Grid {
                     continue;
                 }
 
-                let lumi_entry = &self.lumi[lumi];
+                let lumi_entry = &self_lumi[lumi];
                 let mu2_grid = subgrid.mu2_grid();
                 let x1_grid = subgrid.x1_grid();
                 let x2_grid = subgrid.x2_grid();
