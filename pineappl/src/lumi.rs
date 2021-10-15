@@ -51,6 +51,35 @@ impl LumiEntry {
         Self { entry }
     }
 
+    /// Translates `entry` into a different basis using `translator`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::lumi::LumiEntry;
+    /// use pineappl::lumi_entry;
+    ///
+    /// let entry = LumiEntry::translate(&lumi_entry![103, 11, 1.0], &|evol_id| match evol_id {
+    ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
+    ///     _ => vec![(evol_id, 1.0)],
+    /// });
+    ///
+    /// assert_eq!(entry, lumi_entry![2, 11, 1.0; -2, 11, -1.0; 1, 11, -1.0; -1, 11, 1.0]);
+    /// ```
+    pub fn translate(entry: &Self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
+        let mut tuples = Vec::new();
+
+        for &(a, b, factor) in &entry.entry {
+            for (aid, af) in translator(a) {
+                for (bid, bf) in translator(b) {
+                    tuples.push((aid, bid, factor * af * bf));
+                }
+            }
+        }
+
+        Self::new(tuples)
+    }
+
     /// Returns a tuple representation of this entry.
     ///
     /// # Examples
