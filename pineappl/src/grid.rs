@@ -15,7 +15,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
-use ndarray::{s, Array, Array2, Array3, Array5, Dimension};
+use ndarray::{s, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -236,7 +236,7 @@ pub struct EkoInfo {
     /// axes shared with the process grid
     pub grid_axes: GridAxes,
     /// TODO: replace this member with the actual data
-    pub additional_metadata: HashMap<String, String>,
+    pub lumi_id_types: String,
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -1255,9 +1255,7 @@ impl Grid {
             more_members: self.more_members.clone(),
         };
         // write additional metadata
-        for (key, value) in eko_info.additional_metadata.iter() {
-            result.set_key_value(key, value);
-        }
+        result.set_key_value("lumi_id_types", &eko_info.lumi_id_types);
 
         // collect source grid informations
         let grid_axes = self.axes().unwrap();
@@ -1843,8 +1841,7 @@ mod tests {
         let target_x_grid = vec![1e-7, 1e-2, 1.];
         let target_pids = vec![21, 1, 2];
 
-        let mut additional_metadata = HashMap::new();
-        additional_metadata.insert("lumi_id_types".to_owned(), "pdg_mc_ids".to_owned());
+        let lumi_id_types = "pdg_mc_ids".to_owned();
 
         let eko_info = EkoInfo {
             muf2_0: 1.,
@@ -1858,9 +1855,9 @@ mod tests {
                 pids: axes.pids.clone(),
                 muf2_grid: axes.muf2_grid.clone(),
             },
-            additional_metadata,
+            lumi_id_types,
         };
-        let operator = Array::from_shape_vec(
+        let operator = ndarray::Array::from_shape_vec(
             (1, 3, 3, 3, 3),
             (0..4)
                 .map(|_| (0..3))
