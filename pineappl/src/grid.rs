@@ -1014,8 +1014,9 @@ impl Grid {
             .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
         {
             self.symmetrize_lumi();
-            self.optimize_lumi();
         }
+
+        self.optimize_lumi();
 
         for subgrid in self.subgrids.iter_mut() {
             if subgrid.is_empty() {
