@@ -304,8 +304,8 @@ impl PyGrid {
         let eko_info = EkoInfo {
             muf2_0,
             alphas,
-            xir: 0.,
-            xif: 0.,
+            xir: 1.,
+            xif: 1.,
             target_pids,
             target_x_grid,
             grid_axes: GridAxes {

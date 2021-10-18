@@ -1337,7 +1337,10 @@ impl Grid {
                             .muf2_grid
                             .iter()
                             .position(|&q2| q2 == eko_info.xir * eko_info.xir * scale)
-                            .unwrap();
+                            .expect(&format!(
+                                "Couldn't find q2: {:?} with xir: {:?} and muf2_grid: {:?}",
+                                scale, eko_info.xir, eko_info.grid_axes.muf2_grid
+                            ));
 
                         let ix1 = if invert_x && has_pdf1 {
                             eko_info.grid_axes.x_grid.len() - ix1 - 1
