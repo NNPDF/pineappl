@@ -136,6 +136,15 @@ impl FkTable {
         self.grid.write(writer)
     }
 
+    /// Optimize grid
+    ///
+    /// # Errors
+    ///
+    /// TODO
+    pub fn optimize(&mut self) {
+        self.grid.optimize()
+    }
+
     /// Propagate convolute to grid
     pub fn convolute(
         &self,
