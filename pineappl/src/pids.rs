@@ -1,6 +1,7 @@
 //! TODO
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
+#[must_use]
 pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
     match id {
         100 => vec![

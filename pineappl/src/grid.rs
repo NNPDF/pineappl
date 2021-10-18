@@ -503,7 +503,7 @@ impl Grid {
 
     /// TODO
     ///
-    /// Panics
+    /// # Panics
     ///
     /// TODO
     pub fn convolute2(

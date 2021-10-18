@@ -212,6 +212,10 @@ impl<'a> LumiCache<'a> {
     /// be given as `grid`; this parameter determines which of the initial states are hadronic, and
     /// if an initial states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some
     /// of the PDFs must be charge-conjugated, this is automatically done in this function.
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn with_two(
         grid: &Grid,
         pdg1: i32,
@@ -229,6 +233,10 @@ impl<'a> LumiCache<'a> {
     /// this parameter determines which of the initial states are hadronic, and if an initial
     /// states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some of the PDFs
     /// must be charge-conjugated, this is automatically done in this function.
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn with_one(
         grid: &Grid,
         pdg: i32,
