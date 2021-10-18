@@ -226,8 +226,9 @@ class Grid(PyWrapper):
         ----------
             operators : dict
                 EKO Output
-            additional_metadata : dict
-                additional metadata
+            lumi_id_types : str
+                kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
+                for evolution basis)
 
         Returns
         ------
