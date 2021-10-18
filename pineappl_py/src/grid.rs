@@ -7,9 +7,11 @@ use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
@@ -363,9 +365,12 @@ impl PyGrid {
     }
 
     /// Optimize grid content.
-    // pub fn merge(&mut self, mut other: Self) {
-    // self.grid.merge(other.grid);
-    // }
+    pub fn merge_from_file(&mut self, path: &str) -> PyResult<()> {
+        match self.grid.merge(Self::read(path).grid) {
+            Ok(()) => Ok(()),
+            Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
+        }
+    }
 
     /// Extract the number of dimensions for bins.
     ///
