@@ -89,14 +89,6 @@ impl PyFkTable {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
 
-    /// Optimize grid.
-    ///
-    /// **Usage:** `pineko`
-    ///
-    pub fn optimize(&mut self) {
-        self.fk_table.optimize();
-    }
-
     /// Convolute grid with pdf.
     ///
     /// **Usage:** `pineko`
