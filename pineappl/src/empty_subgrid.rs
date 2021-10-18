@@ -16,7 +16,7 @@ impl Subgrid for EmptySubgridV1 {
         _: &[f64],
         _: &[f64],
         _: &[Mu2],
-        _: &dyn Fn(usize, usize, usize) -> f64,
+        _: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
         0.0
     }
@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn create_empty() {
         let mut subgrid = EmptySubgridV1::default();
-        assert_eq!(subgrid.convolute(&[], &[], &[], &|_, _, _| 0.0), 0.0,);
+        assert_eq!(subgrid.convolute(&[], &[], &[], &mut |_, _, _| 0.0), 0.0,);
         assert!(subgrid.is_empty());
         subgrid.merge(&mut EmptySubgridV1::default().into(), false);
         subgrid.scale(2.0);

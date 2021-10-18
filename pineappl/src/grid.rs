@@ -5,9 +5,10 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV1;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::lumi::LumiEntry;
+use super::lumi::{LumiCache, LumiEntry};
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::pids;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use float_cmp::approx_eq;
@@ -19,7 +20,6 @@ use ndarray::{s, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
@@ -316,6 +316,26 @@ impl Grid {
         })
     }
 
+    fn pdg_lumi(&self) -> Cow<[LumiEntry]> {
+        if let Some(key_values) = self.key_values() {
+            if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
+                match lumi_id_types.as_str() {
+                    "pdg_mc_ids" => {}
+                    "evol" => {
+                        return self
+                            .lumi
+                            .iter()
+                            .map(|entry| LumiEntry::translate(entry, &pids::evol_to_pdg_mc_ids))
+                            .collect();
+                    }
+                    _ => unimplemented!(),
+                }
+            }
+        }
+
+        Cow::Borrowed(self.lumi())
+    }
+
     /// Performs a convolution of the contained subgrids with the given PDFs, `xfx1` for the first
     /// parton and `xfx2` for the second parton, `alphas` for the evaluation of the strong
     /// coupling. The parameters `order_mask` and `lumi_mask` can be used to selectively enable
@@ -347,9 +367,9 @@ impl Grid {
         let bin_sizes = self.bin_info().normalizations();
 
         // prepare pdf and alpha caches
-        let pdf_cache1 = RefCell::new(FxHashMap::default());
-        let pdf_cache2 = RefCell::new(FxHashMap::default());
-        let alphas_cache = RefCell::new(FxHashMap::default());
+        let mut pdf_cache1 = FxHashMap::default();
+        let mut pdf_cache2 = FxHashMap::default();
+        let mut alphas_cache = FxHashMap::default();
         let mut last_xif = 0.0;
 
         let (mut mu2_grid, mut x1_grid, mut x2_grid) = self
@@ -370,6 +390,7 @@ impl Grid {
             .iter()
             .map(|xi| xir_values.iter().position(|xir| xi.0 == *xir).unwrap())
             .collect();
+        let self_lumi = self.pdg_lumi();
 
         // iterate over the elements of `xi` and a corresponding index, but sorted using the
         // factorisation value of `xi`
@@ -381,8 +402,8 @@ impl Grid {
         {
             // whenever the value `xif` changes we can clear the PDF cache
             if xif != last_xif {
-                pdf_cache1.borrow_mut().clear();
-                pdf_cache2.borrow_mut().clear();
+                pdf_cache1.clear();
+                pdf_cache2.clear();
                 last_xif = xif;
             }
             // iterate subgrids
@@ -404,7 +425,7 @@ impl Grid {
                     None => continue,
                 };
 
-                let lumi_entry = &self.lumi[k];
+                let lumi_entry = &self_lumi[k];
 
                 let mut value = if subgrid.is_empty() {
                     0.0
@@ -417,20 +438,18 @@ impl Grid {
 
                     if mu2_grid_changed {
                         mu2_grid = new_mu2_grid;
-                        alphas_cache.borrow_mut().clear();
+                        alphas_cache.clear();
                     }
 
                     if mu2_grid_changed || (new_x1_grid != x1_grid) || (new_x2_grid != x2_grid) {
                         x1_grid = new_x1_grid;
                         x2_grid = new_x2_grid;
-                        pdf_cache1.borrow_mut().clear();
-                        pdf_cache2.borrow_mut().clear();
+                        pdf_cache1.clear();
+                        pdf_cache2.clear();
                     }
 
                     // pass convolute down, using caching
-                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &|ix1, ix2, imu2| {
-                        let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                        let mut pdf_cache2 = pdf_cache2.borrow_mut();
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
                         let mu2 = &mu2_grid[imu2];
@@ -454,7 +473,6 @@ impl Grid {
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                         }
 
-                        let mut alphas_cache = alphas_cache.borrow_mut();
                         let alphas = alphas_cache
                             .entry(xir_values.len() * imu2 + xir_index)
                             .or_insert_with(|| alphas(xir * xir * mu2.ren));
@@ -483,6 +501,91 @@ impl Grid {
         bins
     }
 
+    /// TODO
+    ///
+    /// Panics
+    ///
+    /// TODO
+    pub fn convolute2(
+        &self,
+        lumi_cache: &mut LumiCache,
+        order_mask: &[bool],
+        bin_indices: &[usize],
+        lumi_mask: &[bool],
+        xi: &[(f64, f64)],
+    ) -> Vec<f64> {
+        let bin_indices = if bin_indices.is_empty() {
+            (0..self.bin_limits.bins()).collect()
+        } else {
+            bin_indices.to_vec()
+        };
+        let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
+        let normalizations = self.bin_info().normalizations();
+        let self_lumi = self.pdg_lumi();
+
+        for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
+            for ((ord, bin, lumi), subgrid) in self.subgrids.indexed_iter() {
+                let order = &self.orders[ord];
+
+                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                    continue;
+                }
+
+                if (!order_mask.is_empty() && !order_mask[ord])
+                    || (!lumi_mask.is_empty() && !lumi_mask[lumi])
+                {
+                    continue;
+                }
+
+                let bin_index = match bin_indices.iter().position(|&index| index == bin) {
+                    Some(i) => i,
+                    None => continue,
+                };
+
+                if subgrid.is_empty() {
+                    continue;
+                }
+
+                let lumi_entry = &self_lumi[lumi];
+                let mu2_grid = subgrid.mu2_grid();
+                let x1_grid = subgrid.x1_grid();
+                let x2_grid = subgrid.x2_grid();
+
+                lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
+
+                let mut value =
+                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
+                        let x1 = x1_grid[ix1];
+                        let x2 = x2_grid[ix2];
+                        let mut lumi = 0.0;
+
+                        for entry in lumi_entry.entry() {
+                            let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
+                            let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
+                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                        }
+
+                        let alphas = lumi_cache.alphas(imu2);
+
+                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
+                        lumi
+                    });
+
+                if order.logxir > 0 {
+                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+                }
+
+                if order.logxif > 0 {
+                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+                }
+
+                bins[xi_index + xi.len() * bin_index] += value / normalizations[bin];
+            }
+        }
+
+        bins
+    }
+
     /// Convolutes a single subgrid `(order, bin, lumi)` with the PDFs strong coupling given by
     /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
     /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
@@ -504,9 +607,9 @@ impl Grid {
     ) -> Array3<f64> {
         let normalization = self.bin_info().normalizations()[bin];
 
-        let pdf_cache1 = RefCell::new(FxHashMap::default());
-        let pdf_cache2 = RefCell::new(FxHashMap::default());
-        let alphas_cache = RefCell::new(FxHashMap::default());
+        let mut pdf_cache1 = FxHashMap::default();
+        let mut pdf_cache2 = FxHashMap::default();
+        let mut alphas_cache = FxHashMap::default();
 
         let subgrid = &self.subgrids[[order, bin, lumi]];
         let order = &self.orders[order];
@@ -527,8 +630,6 @@ impl Grid {
                 let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
                 for ((imu2, ix1, ix2), value) in subgrid.iter() {
-                    let mut pdf_cache1 = pdf_cache1.borrow_mut();
-                    let mut pdf_cache2 = pdf_cache2.borrow_mut();
                     let x1 = x1_grid[ix1];
                     let x2 = x2_grid[ix2];
                     let mu2 = &mu2_grid[imu2];
@@ -552,7 +653,6 @@ impl Grid {
                         lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
                     }
 
-                    let mut alphas_cache = alphas_cache.borrow_mut();
                     let alphas = alphas_cache
                         .entry(imu2)
                         .or_insert_with(|| alphas(xir * xir * mu2.ren));
@@ -937,8 +1037,9 @@ impl Grid {
             .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
         {
             self.symmetrize_lumi();
-            self.optimize_lumi();
         }
+
+        self.optimize_lumi();
 
         for subgrid in self.subgrids.iter_mut() {
             if subgrid.is_empty() {

@@ -63,7 +63,7 @@ pub trait Subgrid {
         x1: &[f64],
         x2: &[f64],
         mu2: &[Mu2],
-        lumi: &dyn Fn(usize, usize, usize) -> f64,
+        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64;
 
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
