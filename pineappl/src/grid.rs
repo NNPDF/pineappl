@@ -1507,6 +1507,7 @@ impl Grid {
 
         bar.finish();
 
+        result.optimize();
         Some(FkTable::try_from(result).unwrap())
     }
 }
