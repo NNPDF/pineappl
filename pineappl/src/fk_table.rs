@@ -53,11 +53,18 @@ impl FkTable {
     /// `x1` and `x2`, in this order.
     #[must_use]
     pub fn table(&self) -> Array4<f64> {
+        let first_non_empty_subgrid = self
+            .grid
+            .subgrids()
+            .iter()
+            .find(|s| !s.is_empty())
+            .unwrap_or_else(|| unreachable!()); // FK tables should never be empty
+
         let mut subgrid = Array4::zeros((
             self.bins(),
             self.grid.lumi().len(),
-            self.grid.subgrid(0, 0, 0).x1_grid().len(),
-            self.grid.subgrid(0, 0, 0).x2_grid().len(),
+            first_non_empty_subgrid.x1_grid().len(),
+            first_non_empty_subgrid.x2_grid().len(),
         ));
 
         for bin in 0..self.bins() {
