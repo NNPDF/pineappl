@@ -974,6 +974,12 @@ impl Grid {
         &self.subgrids[[order, bin, lumi]]
     }
 
+    /// Returns all subgrids as an `Array3`.
+    #[must_use]
+    pub const fn subgrids(&self) -> &Array3<SubgridEnum> {
+        &self.subgrids
+    }
+
     /// Replaces the subgrid for the specified indices `order`, `bin`, and `lumi` with `subgrid`.
     pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: SubgridEnum) {
         self.subgrids[[order, bin, lumi]] = subgrid;
