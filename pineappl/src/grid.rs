@@ -514,6 +514,8 @@ impl Grid {
         lumi_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
+        lumi_cache.setup(self, xi).unwrap();
+
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_limits.bins()).collect()
         } else {
