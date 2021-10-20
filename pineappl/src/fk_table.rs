@@ -148,14 +148,13 @@ impl FkTable {
         &self,
         xfx1: &dyn Fn(i32, f64, f64) -> f64,
         xfx2: &dyn Fn(i32, f64, f64) -> f64,
-        alphas: &dyn Fn(f64) -> f64,
         order_mask: &[bool],
         bin_indices: &[usize],
         lumi_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
         self.grid
-            .convolute(xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi)
+            .convolute(xfx1, xfx2, &|_| 1.0, order_mask, bin_indices, lumi_mask, xi)
     }
 }
 

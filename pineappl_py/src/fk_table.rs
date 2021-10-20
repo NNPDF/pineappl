@@ -108,7 +108,6 @@ impl PyFkTable {
         self.fk_table.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
             &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
-            &|_q2| 1.,
             &[],
             &[],
             &[],
