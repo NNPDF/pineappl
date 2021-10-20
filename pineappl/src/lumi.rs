@@ -250,33 +250,33 @@ impl<'a> LumiCache<'a> {
         });
 
         // are the initial states hadrons?
-        let has_pdfa = grid
+        let has_pdfa = !grid
             .lumi()
             .iter()
             .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == pdga));
-        let has_pdfb = grid
+        let has_pdfb = !grid
             .lumi()
             .iter()
             .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == pdgb));
 
         // do we have to charge-conjugate the initial states?
-        let cc1 = if self.pdg1 == pdga {
+        let cc1 = if !has_pdfa {
+            0
+        } else if self.pdg1 == pdga {
             1
         } else if self.pdg1 == -pdga {
             -1
-        } else if has_pdfa {
-            return Err(());
         } else {
-            0
+            return Err(());
         };
-        let cc2 = if self.pdg2 == pdgb {
+        let cc2 = if !has_pdfb {
+            0
+        } else if self.pdg2 == pdgb {
             1
         } else if self.pdg2 == -pdgb {
             -1
-        } else if has_pdfb {
-            return Err(());
         } else {
-            0
+            return Err(());
         };
 
         // TODO: try to avoid calling clear
