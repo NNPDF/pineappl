@@ -503,7 +503,7 @@ impl Grid {
 
     /// TODO
     ///
-    /// Panics
+    /// # Panics
     ///
     /// TODO
     pub fn convolute2(
@@ -514,6 +514,8 @@ impl Grid {
         lumi_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
+        lumi_cache.setup(self, xi).unwrap();
+
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_limits.bins()).collect()
         } else {
@@ -972,6 +974,12 @@ impl Grid {
     #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &SubgridEnum {
         &self.subgrids[[order, bin, lumi]]
+    }
+
+    /// Returns all subgrids as an `Array3`.
+    #[must_use]
+    pub const fn subgrids(&self) -> &Array3<SubgridEnum> {
+        &self.subgrids
     }
 
     /// Replaces the subgrid for the specified indices `order`, `bin`, and `lumi` with `subgrid`.

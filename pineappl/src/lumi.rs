@@ -1,10 +1,11 @@
 //! Module for everything related to luminosity functions.
 
 use super::grid::Grid;
-use super::subgrid::Mu2;
+use super::subgrid::{Mu2, Subgrid};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-/// This structure represens an entry of a luminosity function. Each entry consists of a tuple,
+/// This structure represents an entry of a luminosity function. Each entry consists of a tuple,
 /// which contains, in the following order, the PDG id of the first incoming parton, then the PDG
 /// id of the second parton, and finally a numerical factor that will multiply the result for this
 /// specific combination.
@@ -128,10 +129,13 @@ macro_rules! lumi_entry {
 enum Pdfs<'a> {
     Two {
         xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        xfx1_cache: FxHashMap<(i32, usize, usize), f64>,
         xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        xfx2_cache: FxHashMap<(i32, usize, usize), f64>,
     },
     One {
         xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        xfx_cache: FxHashMap<(i32, usize, usize), f64>,
     },
 }
 
@@ -140,21 +144,101 @@ enum Pdfs<'a> {
 pub struct LumiCache<'a> {
     pdfs: Pdfs<'a>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
-    mu2_grid: Vec<Mu2>,
+    alphas_cache: Vec<f64>,
+    mur2_grid: Vec<f64>,
+    muf2_grid: Vec<f64>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
+    imur2: Vec<usize>,
+    imuf2: Vec<usize>,
+    ix1: Vec<usize>,
+    ix2: Vec<usize>,
+    pdg1: i32,
+    pdg2: i32,
     cc1: i32,
     cc2: i32,
 }
 
 impl<'a> LumiCache<'a> {
-    fn new(
-        grid: &Grid,
+    /// Construct a luminosity cache with two PDFs, `xfx1` and `xfx2`. The types of hadrons the
+    /// PDFs correspond to must be given as `pdg1` and `pdg2`. The function to evaluate the
+    /// strong coupling must be given as `alphas`. The grid that the cache will be used with must
+    /// be given as `grid`; this parameter determines which of the initial states are hadronic, and
+    /// if an initial states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some
+    /// of the PDFs must be charge-conjugated, this is automatically done in this function.
+    ///
+    /// # Errors
+    ///
+    /// TODO
+    pub fn with_two(
         pdg1: i32,
+        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
         pdg2: i32,
-        pdfs: Pdfs<'a>,
+        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
         alphas: &'a mut dyn FnMut(f64) -> f64,
-    ) -> Result<Self, ()> {
+    ) -> Self {
+        Self {
+            pdfs: Pdfs::Two {
+                xfx1,
+                xfx1_cache: FxHashMap::default(),
+                xfx2,
+                xfx2_cache: FxHashMap::default(),
+            },
+            alphas,
+            alphas_cache: vec![],
+            mur2_grid: vec![],
+            muf2_grid: vec![],
+            x1_grid: vec![],
+            x2_grid: vec![],
+            imur2: Vec::new(),
+            imuf2: Vec::new(),
+            ix1: Vec::new(),
+            ix2: Vec::new(),
+            pdg1,
+            pdg2,
+            cc1: 0,
+            cc2: 0,
+        }
+    }
+
+    /// Construct a luminosity cache with a single PDF `xfx`. The type of hadron the PDF
+    /// corresponds to must be given as `pdg`. The function to evaluate the strong coupling must be
+    /// given as `alphas`. The grid that the cache should be used with must be given as `grid`;
+    /// this parameter determines which of the initial states are hadronic, and if an initial
+    /// states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some of the PDFs
+    /// must be charge-conjugated, this is automatically done in this function.
+    ///
+    /// # Errors
+    ///
+    /// TODO
+    pub fn with_one(
+        pdg: i32,
+        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+        alphas: &'a mut dyn FnMut(f64) -> f64,
+    ) -> Self {
+        Self {
+            pdfs: Pdfs::One {
+                xfx,
+                xfx_cache: FxHashMap::default(),
+            },
+            alphas,
+            alphas_cache: vec![],
+            mur2_grid: vec![],
+            muf2_grid: vec![],
+            x1_grid: vec![],
+            x2_grid: vec![],
+            imur2: Vec::new(),
+            imuf2: Vec::new(),
+            ix1: Vec::new(),
+            ix2: Vec::new(),
+            pdg1: pdg,
+            pdg2: pdg,
+            cc1: 0,
+            cc2: 0,
+        }
+    }
+
+    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64)]) -> Result<(), ()> {
         // PDG identifiers of the initial states
         let pdga = grid.key_values().map_or(2212, |kv| {
             kv.get("initial_state_1")
@@ -166,115 +250,174 @@ impl<'a> LumiCache<'a> {
         });
 
         // are the initial states hadrons?
-        let has_pdfa = grid
+        let has_pdfa = !grid
             .lumi()
             .iter()
             .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == pdga));
-        let has_pdfb = grid
+        let has_pdfb = !grid
             .lumi()
             .iter()
             .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == pdgb));
 
         // do we have to charge-conjugate the initial states?
-        let cc1 = if pdg1 == pdga {
-            1
-        } else if pdg1 == -pdga {
-            -1
-        } else if has_pdfa {
-            return Err(());
-        } else {
+        let cc1 = if !has_pdfa {
             0
-        };
-        let cc2 = if pdg2 == pdgb {
+        } else if self.pdg1 == pdga {
             1
-        } else if pdg2 == -pdgb {
+        } else if self.pdg1 == -pdga {
             -1
-        } else if has_pdfb {
-            return Err(());
         } else {
+            return Err(());
+        };
+        let cc2 = if !has_pdfb {
             0
+        } else if self.pdg2 == pdgb {
+            1
+        } else if self.pdg2 == -pdgb {
+            -1
+        } else {
+            return Err(());
         };
 
-        Ok(Self {
-            pdfs,
-            alphas,
-            mu2_grid: vec![],
-            x1_grid: vec![],
-            x2_grid: vec![],
-            cc1,
-            cc2,
-        })
-    }
+        // TODO: try to avoid calling clear
+        self.clear();
 
-    /// Construct a luminosity cache with two PDFs, `xfx1` and `xfx2`. The types of hadrons the
-    /// PDFs correspond to must be given as `pdg1` and `pdg2`. The function to evaluate the
-    /// strong coupling must be given as `alphas`. The grid that the cache will be used with must
-    /// be given as `grid`; this parameter determines which of the initial states are hadronic, and
-    /// if an initial states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some
-    /// of the PDFs must be charge-conjugated, this is automatically done in this function.
-    pub fn with_two(
-        grid: &Grid,
-        pdg1: i32,
-        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        pdg2: i32,
-        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        alphas: &'a mut dyn FnMut(f64) -> f64,
-    ) -> Result<Self, ()> {
-        Self::new(grid, pdg1, pdg2, Pdfs::Two { xfx1, xfx2 }, alphas)
-    }
+        let mut x1_grid: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .filter_map(|subgrid| {
+                if subgrid.is_empty() {
+                    None
+                } else {
+                    Some(subgrid.x1_grid().into_owned())
+                }
+            })
+            .flatten()
+            .collect();
+        x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        x1_grid.dedup();
 
-    /// Construct a luminosity cache with a single PDF `xfx`. The type of hadron the PDF
-    /// corresponds to must be given as `pdg`. The function to evaluate the strong coupling must be
-    /// given as `alphas`. The grid that the cache should be used with must be given as `grid`;
-    /// this parameter determines which of the initial states are hadronic, and if an initial
-    /// states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some of the PDFs
-    /// must be charge-conjugated, this is automatically done in this function.
-    pub fn with_one(
-        grid: &Grid,
-        pdg: i32,
-        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        alphas: &'a mut dyn FnMut(f64) -> f64,
-    ) -> Result<Self, ()> {
-        Self::new(grid, pdg, pdg, Pdfs::One { xfx }, alphas)
+        let mut x2_grid: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .filter_map(|subgrid| {
+                if subgrid.is_empty() {
+                    None
+                } else {
+                    Some(subgrid.x2_grid().into_owned())
+                }
+            })
+            .flatten()
+            .collect();
+        x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        x2_grid.dedup();
+
+        let mut mur2_grid: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .filter_map(|subgrid| {
+                if subgrid.is_empty() {
+                    None
+                } else {
+                    Some(subgrid.mu2_grid().into_owned())
+                }
+            })
+            .flatten()
+            .flat_map(|Mu2 { ren, .. }| {
+                xi.iter()
+                    .map(|(xir, _)| xir * xir * ren)
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        mur2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        mur2_grid.dedup();
+
+        let mut muf2_grid: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .filter_map(|subgrid| {
+                if subgrid.is_empty() {
+                    None
+                } else {
+                    Some(subgrid.mu2_grid().into_owned())
+                }
+            })
+            .flatten()
+            .flat_map(|Mu2 { fac, .. }| {
+                xi.iter()
+                    .map(|(_, xif)| xif * xif * fac)
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        muf2_grid.dedup();
+
+        self.alphas_cache = mur2_grid.iter().map(|&mur2| (self.alphas)(mur2)).collect();
+
+        self.mur2_grid = mur2_grid;
+        self.muf2_grid = muf2_grid;
+        self.x1_grid = x1_grid;
+        self.x2_grid = x2_grid;
+        self.cc1 = cc1;
+        self.cc2 = cc2;
+
+        Ok(())
     }
 
     /// Return the PDF (multiplied with `x`) for the first initial state.
     pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
+        let ix1 = self.ix1[ix1];
         let x = self.x1_grid[ix1];
         if self.cc1 == 0 {
             x
         } else {
-            let muf2 = self.mu2_grid[imu2].fac;
-            match &mut self.pdfs {
-                Pdfs::One { xfx } => xfx(self.cc1 * pdg_id, x, muf2),
-                Pdfs::Two { xfx1, .. } => xfx1(self.cc1 * pdg_id, x, muf2),
-            }
+            let imuf2 = self.imuf2[imu2];
+            let muf2 = self.muf2_grid[imuf2];
+            let pid = self.cc1 * pdg_id;
+            let (xfx, xfx_cache) = match &mut self.pdfs {
+                Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
+                Pdfs::Two {
+                    xfx1, xfx1_cache, ..
+                } => (xfx1, xfx1_cache),
+            };
+            *xfx_cache
+                .entry((pid, ix1, imuf2))
+                .or_insert_with(|| xfx(pid, x, muf2))
         }
     }
 
     /// Return the PDF (multiplied with `x`) for the second initial state.
     pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
+        let ix2 = self.ix2[ix2];
         let x = self.x2_grid[ix2];
         if self.cc2 == 0 {
             x
         } else {
-            let muf2 = self.mu2_grid[imu2].fac;
-            match &mut self.pdfs {
-                Pdfs::One { xfx } => xfx(self.cc2 * pdg_id, x, muf2),
-                Pdfs::Two { xfx2, .. } => xfx2(self.cc2 * pdg_id, x, muf2),
-            }
+            let imuf2 = self.imuf2[imu2];
+            let muf2 = self.muf2_grid[imuf2];
+            let pid = self.cc2 * pdg_id;
+            let (xfx, xfx_cache) = match &mut self.pdfs {
+                Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
+                Pdfs::Two {
+                    xfx2, xfx2_cache, ..
+                } => (xfx2, xfx2_cache),
+            };
+            *xfx_cache
+                .entry((pid, ix2, imuf2))
+                .or_insert_with(|| xfx(pid, x, muf2))
         }
     }
 
     /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],
     /// in the grid `mu2_grid` at the index `imu2`.
     pub fn alphas(&mut self, imu2: usize) -> f64 {
-        (self.alphas)(self.mu2_grid[imu2].ren)
+        self.alphas_cache[self.imur2[imu2]]
     }
 
     /// Clears the cache.
     pub fn clear(&mut self) {
-        self.mu2_grid.clear();
+        self.mur2_grid.clear();
+        self.muf2_grid.clear();
         self.x1_grid.clear();
         self.x2_grid.clear();
     }
@@ -288,17 +431,40 @@ impl<'a> LumiCache<'a> {
         xir: f64,
         xif: f64,
     ) {
-        if (x1_grid != self.x1_grid) || (x2_grid != self.x2_grid) {
-            self.clear();
-            self.x1_grid = x1_grid.to_vec();
-            self.x2_grid = x2_grid.to_vec();
-        }
-
-        self.mu2_grid = mu2_grid
+        self.imur2 = mu2_grid
             .iter()
-            .map(|Mu2 { ren, fac }| Mu2 {
-                ren: ren * xir * xir,
-                fac: fac * xif * xif,
+            .map(|Mu2 { ren, .. }| {
+                self.mur2_grid
+                    .iter()
+                    .position(|&mur2| mur2 == xir * xir * ren)
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+        self.imuf2 = mu2_grid
+            .iter()
+            .map(|Mu2 { fac, .. }| {
+                self.muf2_grid
+                    .iter()
+                    .position(|&muf2| muf2 == xif * xif * fac)
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+        self.ix1 = x1_grid
+            .iter()
+            .map(|x1| {
+                self.x1_grid
+                    .iter()
+                    .position(|x| x1 == x)
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+        self.ix2 = x2_grid
+            .iter()
+            .map(|x2| {
+                self.x2_grid
+                    .iter()
+                    .position(|x| x2 == x)
+                    .unwrap_or_else(|| unreachable!())
             })
             .collect();
     }

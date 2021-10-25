@@ -99,18 +99,15 @@ impl PyFkTable {
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
     ///     xfx2 : callable
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
-    ///     alphas : callable
-    ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
     ///
     /// Returns
     /// -------
     ///     list(float) :
     ///         cross sections for all bins
-    pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny, alphas: &PyAny) -> Vec<f64> {
+    pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny) -> Vec<f64> {
         self.fk_table.convolute(
             &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
             &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
-            &|q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap(),
             &[],
             &[],
             &[],
