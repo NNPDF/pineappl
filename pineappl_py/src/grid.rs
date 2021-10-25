@@ -1,4 +1,5 @@
 use pineappl::grid::{EkoInfo, Grid, GridAxes, Ntuple, Order};
+use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
 use super::fk_table::PyFkTable;
@@ -209,10 +210,10 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    ///     xfx1 : callable
-    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
-    ///     xfx2 : callable
-    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+    ///     pdg_id : int
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx` is the PDF for
+    ///     xfx : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     ///     alphas : callable
     ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
     ///     order_mask : list(bool)
@@ -237,25 +238,21 @@ impl PyGrid {
     ///     list(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute(
+    pub fn convolute_with_one(
         &self,
-        xfx1: &PyAny,
-        xfx2: &PyAny,
+        pdg_id: i32,
+        xfx: &PyAny,
         alphas: &PyAny,
         order_mask: Vec<bool>,
         bin_indices: Vec<usize>,
         lumi_mask: Vec<bool>,
         xi: Vec<(f64, f64)>,
     ) -> Vec<f64> {
-        self.grid.convolute(
-            &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
-            &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
-            &|q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap(),
-            &order_mask,
-            &bin_indices,
-            &lumi_mask,
-            &xi,
-        )
+        let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
+        let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
+        let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        self.grid
+            .convolute2(&mut lumi_cache, &order_mask, &bin_indices, &lumi_mask, &xi)
     }
 
     /// Convolute with with an evolution operator.

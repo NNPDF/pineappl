@@ -62,7 +62,7 @@ use pineappl::bin::BinRemapper;
 use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, Ntuple, Order};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::lumi::LumiEntry;
+use pineappl::lumi::{LumiCache, LumiEntry};
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridParams};
 use std::collections::HashMap;
@@ -248,10 +248,69 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     slice::from_raw_parts_mut(right, limits.len()).copy_from_slice(&limits);
 }
 
-/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2` and strong coupling `alphas`.
-/// These functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given
-/// PDG id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with
-/// its argument `x`. The value of the pointer `state` provided to these functions is the same one
+/// Convolutes the specified grid with the PDF `xfx`, which is the PDF for a hadron with the PDG id
+/// `pdg_id`, and strong coupling `alphas`. These functions must evaluate the PDFs for the given
+/// `x` and `q2` for the parton with the given PDG id, `pdg_id`, and return the result. Note that
+/// the value must be the PDF multiplied with its argument `x`. The value of the pointer `state`
+/// provided to these functions is the same one given to this function. The parameter `order_mask`
+/// must be as long as there are perturbative orders contained in `grid` and is used to selectively
+/// disable (`false`) or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all
+/// orders are active. The parameter `lumi_mask` can be used similarly, but must be as long as the
+/// luminosity function `grid` was created with has entries, or `NULL` to enable all luminosities.
+/// The values `xi_ren` and `xi_fac` can be used to vary the renormalization and factorization from
+/// its central value, which corresponds to `1.0`. After convolution of the grid with the PDFs the
+/// differential cross section for each bin is written into `results`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must be
+/// null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
+/// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
+/// entries, respectively. Finally, `results` must be as long as `grid` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
+    grid: *const Grid,
+    pdg_id: i32,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: *const bool,
+    lumi_mask: *const bool,
+    xi_ren: f64,
+    xi_fac: f64,
+    results: *mut f64,
+) {
+    let grid = &*grid;
+    let mut pdf = |id, x, q2| xfx(id, x, q2, state);
+    let mut als = |q2| alphas(q2, state);
+    let order_mask = if order_mask.is_null() {
+        vec![]
+    } else {
+        slice::from_raw_parts(order_mask, grid.orders().len()).to_vec()
+    };
+    let lumi_mask = if lumi_mask.is_null() {
+        vec![]
+    } else {
+        slice::from_raw_parts(lumi_mask, grid.lumi().len()).to_vec()
+    };
+    let results = slice::from_raw_parts_mut(results, grid.bin_info().bins());
+    let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
+
+    results.copy_from_slice(&grid.convolute2(
+        &mut lumi_cache,
+        &order_mask,
+        &[],
+        &lumi_mask,
+        &[(xi_ren, xi_fac)],
+    ));
+}
+
+/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`, which are the PDFs of hadrons
+/// with PDG ids `pdg_id1` and `pdg_id2`, respectively, and strong coupling `alphas`. These
+/// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
+/// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
+/// argument `x`. The value of the pointer `state` provided to these functions is the same one
 /// given to this function. The parameter `order_mask` must be as long as there are perturbative
 /// orders contained in `grid` and is used to selectively disable (`false`) or enable (`true`)
 /// individual orders. If `order_mask` is set to `NULL`, all orders are active. The parameter
@@ -269,9 +328,11 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
 /// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
 /// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_convolute(
+pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     grid: *const Grid,
+    pdg_id1: i32,
     xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    pdg_id2: i32,
     xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
@@ -282,9 +343,9 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
     results: *mut f64,
 ) {
     let grid = &*grid;
-    let pdf1 = |id, x, q2| xfx1(id, x, q2, state);
-    let pdf2 = |id, x, q2| xfx2(id, x, q2, state);
-    let als = |q2| alphas(q2, state);
+    let mut pdf1 = |id, x, q2| xfx1(id, x, q2, state);
+    let mut pdf2 = |id, x, q2| xfx2(id, x, q2, state);
+    let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         vec![]
     } else {
@@ -296,11 +357,10 @@ pub unsafe extern "C" fn pineappl_grid_convolute(
         slice::from_raw_parts(lumi_mask, grid.lumi().len()).to_vec()
     };
     let results = slice::from_raw_parts_mut(results, grid.bin_info().bins());
+    let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
 
-    results.copy_from_slice(&grid.convolute(
-        &pdf1,
-        &pdf2,
-        &als,
+    results.copy_from_slice(&grid.convolute2(
+        &mut lumi_cache,
         &order_mask,
         &[],
         &lumi_mask,

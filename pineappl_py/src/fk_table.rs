@@ -1,6 +1,7 @@
 use numpy::{IntoPyArray, PyArray4};
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
+use pineappl::lumi::LumiCache;
 use pyo3::prelude::*;
 use std::convert::TryFrom;
 use std::fs::File;
@@ -95,23 +96,20 @@ impl PyFkTable {
     ///
     /// Parameters
     /// ----------
-    ///     xfx1 : callable
-    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
-    ///     xfx2 : callable
-    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+    ///     pdg_id : integer
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx` is the PDF for
+    ///     xfx : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     ///
     /// Returns
     /// -------
     ///     list(float) :
     ///         cross sections for all bins
-    pub fn convolute(&self, xfx1: &PyAny, xfx2: &PyAny) -> Vec<f64> {
-        self.fk_table.convolute(
-            &|id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap(),
-            &|id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap(),
-            &[],
-            &[],
-            &[],
-            &[(1.0, 1.0)],
-        )
+    pub fn convolute_with_one(&self, pdg_id: i32, xfx: &PyAny) -> Vec<f64> {
+        let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
+        let mut alphas = |_| 1.0;
+        let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        self.fk_table
+            .convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)])
     }
 }

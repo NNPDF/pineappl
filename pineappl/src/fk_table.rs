@@ -1,6 +1,7 @@
 //! Provides the [`FkTable`] type.
 
 use super::grid::{Grid, Order};
+use super::lumi::LumiCache;
 use super::subgrid::Subgrid;
 use ndarray::Array4;
 use std::convert::TryFrom;
@@ -146,15 +147,14 @@ impl FkTable {
     /// Propagate convolute to grid
     pub fn convolute(
         &self,
-        xfx1: &dyn Fn(i32, f64, f64) -> f64,
-        xfx2: &dyn Fn(i32, f64, f64) -> f64,
+        lumi_cache: &mut LumiCache,
         order_mask: &[bool],
         bin_indices: &[usize],
         lumi_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
         self.grid
-            .convolute(xfx1, xfx2, &|_| 1.0, order_mask, bin_indices, lumi_mask, xi)
+            .convolute2(lumi_cache, order_mask, bin_indices, lumi_mask, xi)
     }
 }
 

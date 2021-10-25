@@ -2,6 +2,7 @@ use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::lumi::LumiCache;
 use pineappl::lumi_entry;
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use rand::Rng;
@@ -176,8 +177,8 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
 
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
-    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let alphas = |_| 0.0;
+    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas = |_| 0.0;
 
     // check `read` and `write`
     let mut file = Cursor::new(Vec::new());
@@ -190,7 +191,8 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.29438499470369e-1,
         5.407794857747981e-1,
@@ -236,7 +238,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
             .collect::<Vec<(f64, f64)>>(),
     )?)?;
 
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     // results are slightly different because of the static scale detection - the interpolation
     // error in the Q^2 dimension is removed
@@ -295,8 +297,8 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
 
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
-    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let alphas = |_| 0.0;
+    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas = |_| 0.0;
 
     // check `read` and `write`
     let mut file = Cursor::new(Vec::new());
@@ -309,7 +311,8 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -345,7 +348,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
@@ -375,8 +378,8 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
 
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
-    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let alphas = |_| 0.0;
+    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas = |_| 0.0;
 
     // check `read` and `write`
     let mut file = Cursor::new(Vec::new());
@@ -389,7 +392,8 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -425,7 +429,7 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     //grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
@@ -455,8 +459,8 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
 
     let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
-    let xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
-    let alphas = |_| 0.0;
+    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas = |_| 0.0;
 
     // check `read` and `write`
     let mut file = Cursor::new(Vec::new());
@@ -469,7 +473,8 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -505,7 +510,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute(&xfx, &xfx, &alphas, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
