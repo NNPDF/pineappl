@@ -167,10 +167,10 @@ class Grid(PyWrapper):
         """
         return [Order(*pyorder.as_tuple()) for pyorder in self.raw.orders()]
 
-    def convolute(
+    def convolute_with_one(
         self,
-        xfx1,
-        xfx2,
+        pdg_id,
+        xfx,
         alphas,
         order_mask=(),
         bin_indices=(),
@@ -182,10 +182,10 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            xfx1 : callable
-                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_1`-grid
-            xfx2 : callable
-                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x_2`-grid
+            pdg_id : int
+                PDG Monte Carlo ID of the hadronic particle `xfx` is the PDF for
+            xfx : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
             alphas : callable
                 lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
             order_mask : list(bool)
@@ -212,8 +212,8 @@ class Grid(PyWrapper):
                 the scale variation)
 
         """
-        return self.raw.convolute(
-            xfx1, xfx2, alphas, order_mask, bin_indices, lumi_mask, xi
+        return self.raw.convolute_with_one(
+            pdg_id, xfx, alphas, order_mask, bin_indices, lumi_mask, xi
         )
 
     def convolute_eko(self, operators, lumi_id_types="pdg_mc_ids"):

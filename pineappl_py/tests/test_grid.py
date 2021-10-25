@@ -80,7 +80,7 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2,3])
         np.testing.assert_allclose(g.bin_right(1), [3,5])
 
-    def test_convolute(self):
+    def test_convolute_with_one(self):
         g = self.fake_grid()
 
         # DIS grid
@@ -93,9 +93,9 @@ class TestGrid:
             [1.0],
         )
         g.set_subgrid(0, 0, 0, subgrid)
-        np.testing.assert_allclose(g.convolute(lambda pid,x,q2: 0., lambda pid,x,q2: 0., lambda q2: 0.), [0.]*2)
-        np.testing.assert_allclose(g.convolute(lambda pid,x,q2: 1, lambda pid,x,q2: 1., lambda q2: 1.), [5e6/9999,0.])
-        np.testing.assert_allclose(g.convolute(lambda pid,x,q2: 1, lambda pid,x,q2: 1., lambda q2: 2.), [2**3 * 5e6/9999,0.])
+        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 0., lambda q2: 0.), [0.]*2)
+        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 1, lambda q2: 1.), [5e6/9999,0.])
+        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 1, lambda q2: 2.), [2**3 * 5e6/9999,0.])
 
     def test_axes(self):
         g = self.fake_grid()
