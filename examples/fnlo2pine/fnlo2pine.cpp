@@ -550,8 +550,6 @@ int main(int argc, char* argv[])
 
     std::vector<pineappl_grid*> grids;
 
-    std::size_t pdfs = 0;
-
     for (auto const id : ids)
     {
         auto coeff_table = file.GetCoeffTable(id);
@@ -561,7 +559,6 @@ int main(int argc, char* argv[])
 
         if (converted != nullptr)
         {
-            pdfs = converted->GetNPDF();
             grids.push_back(convert_coeff_add_fix(converted, file, bins, alpha));
         }
         else
@@ -570,7 +567,6 @@ int main(int argc, char* argv[])
 
             if (converted != nullptr)
             {
-                pdfs = converted->GetNPDF();
                 auto const mur_ff = file.GetMuRFunctionalForm();
                 auto const muf_ff = file.GetMuFFunctionalForm();
 
@@ -612,10 +608,10 @@ int main(int argc, char* argv[])
     auto const& results = file.GetCrossSection();
     std::vector<double> other_results(results.size());
 
-    pineappl_grid_convolute(
+    pineappl_grid_convolute_with_one(
         grids.at(0),
+        2212,
         xfx,
-        pdfs == 2 ? xfx : xfx2,
         alphas,
         pdf.get(),
         nullptr,

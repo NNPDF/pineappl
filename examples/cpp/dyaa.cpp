@@ -137,7 +137,7 @@ int main() {
     };
 
     std::vector<double> dxsec(24);
-    pineappl_grid_convolute(grid, xfx, xfx, alphas, pdf, nullptr,
+    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf, nullptr,
         nullptr, 1.0, 1.0, dxsec.data());
 
     // print the results

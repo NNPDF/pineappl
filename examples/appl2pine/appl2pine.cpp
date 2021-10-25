@@ -444,9 +444,9 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
     auto const& results = grid.vconvolute(evolvepdf, evolvepdf, alphaspdf, 1);
     std::vector<double> other_results(results.size());
 
-    pineappl_grid_convolute(
+    pineappl_grid_convolute_with_one(
         grids.at(0),
-        xfx,
+        2212,
         xfx,
         alphas,
         pdf.get(),
