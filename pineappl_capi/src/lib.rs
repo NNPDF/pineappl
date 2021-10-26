@@ -297,7 +297,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     let results = slice::from_raw_parts_mut(results, grid.bin_info().bins());
     let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
 
-    results.copy_from_slice(&grid.convolute2(
+    results.copy_from_slice(&grid.convolute(
         &mut lumi_cache,
         &order_mask,
         &[],
@@ -359,7 +359,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     let results = slice::from_raw_parts_mut(results, grid.bin_info().bins());
     let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
 
-    results.copy_from_slice(&grid.convolute2(
+    results.copy_from_slice(&grid.convolute(
         &mut lumi_cache,
         &order_mask,
         &[],

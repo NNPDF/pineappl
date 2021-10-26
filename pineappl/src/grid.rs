@@ -336,12 +336,17 @@ impl Grid {
         Cow::Borrowed(self.lumi())
     }
 
-    /// TODO
+    /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
+    /// selecting only the orders, bins and luminosities corresponding to `order_mask`,
+    /// `bin_indices` and `lumi_mask`. A variation of the scales
+    /// is performed using the factors in `xi`; the first factor varies the renormalization scale,
+    /// the second the factorization scale. Note that for the variation to be trusted all non-zero
+    /// log-grids must be contained.
     ///
     /// # Panics
     ///
     /// TODO
-    pub fn convolute2(
+    pub fn convolute(
         &self,
         lumi_cache: &mut LumiCache,
         order_mask: &[bool],

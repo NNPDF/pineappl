@@ -101,7 +101,7 @@ pub fn convolute(
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
-    grid.convolute2(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales])
+    grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales])
 }
 
 pub fn convolute_subgrid(
