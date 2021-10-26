@@ -15,7 +15,7 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
-use lz_fear::{framed::DecompressionError::WrongMagic, LZ4FrameReader};
+use lz4_flex::frame::{self, FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, Array5, Dimension};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,7 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{self, BufReader, BufWriter, Read, Seek, Write};
 use std::mem;
 use std::ops::Range;
 use std::ptr;
@@ -119,6 +119,9 @@ pub enum GridError {
     /// Returned when failed to write a Grid.
     #[error(transparent)]
     WriteFailure(bincode::Error),
+    /// Returned while performing IO operations.
+    #[error(transparent)]
+    IoFailure(io::Error),
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -541,29 +544,58 @@ impl Grid {
         }
     }
 
-    /// Constructs a `Grid` by deserializing it from `reader`. Reading is not buffered.
+    /// Construct a `Grid` by deserializing it from `reader`. Reading is buffered.
     ///
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
-    pub fn read(mut reader: impl Read + Seek) -> anyhow::Result<Self> {
-        match LZ4FrameReader::new(&mut reader) {
-            Ok(reader) => Ok(bincode::deserialize_from(reader.into_read())?),
-            Err(WrongMagic(_)) => {
-                reader.seek(SeekFrom::Start(0))?;
-                Ok(bincode::deserialize_from(reader)?)
+    pub fn read(mut reader: impl Read + Seek) -> Result<Self, GridError> {
+        let mut result = bincode::deserialize_from(FrameDecoder::new(&mut reader));
+
+        // check if there was a `WrongMagicNumber` error, in which case `reader` isn't LZ4
+        // compressed
+        let uncompressed = result.as_ref().err().map_or(false, |e| {
+            if let bincode::ErrorKind::Io(io_error) = e.as_ref() {
+                let wrong_magic_number = io_error
+                    .get_ref()
+                    .and_then(|error| error.downcast_ref::<frame::Error>())
+                    .map_or(false, |frame_error| {
+                        matches!(frame_error, frame::Error::WrongMagicNumber)
+                    });
+
+                if wrong_magic_number {
+                    return true;
+                }
             }
-            Err(e) => Err(anyhow::Error::new(e)),
+
+            false
+        });
+
+        if uncompressed {
+            // go back to the start and try without compression
+            reader.rewind().map_err(GridError::IoFailure)?;
+            result = bincode::deserialize_from(BufReader::new(reader));
         }
+
+        result.map_err(GridError::ReadFailure)
     }
 
-    /// Serializes `self` into `writer`. Writing is not buffered.
+    /// Serializes `self` into `writer`. Writing is buffered.
     ///
     /// # Errors
     ///
     /// If writing fails an error is returned.
-    pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
-        Ok(bincode::serialize_into(writer, self)?)
+    pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
+        bincode::serialize_into(BufWriter::new(writer), self).map_err(GridError::WriteFailure)
+    }
+
+    /// Serializes `self` into `writer`, using LZ4 compression. Writing is buffered.
+    ///
+    /// # Errors
+    ///
+    /// If writing or compression fails an error is returned.
+    pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
+        bincode::serialize_into(FrameEncoder::new(writer), self).map_err(GridError::WriteFailure)
     }
 
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,

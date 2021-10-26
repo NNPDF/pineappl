@@ -11,14 +11,13 @@ categories = ["science"]
 description = "PineAPPL is not an extension of APPLgrid"
 
 [dependencies]
-anyhow = "1.0"
 arrayvec = "0.5"
 bincode = "1.0"
 enum_dispatch = "0.3.5"
 float-cmp = "0.8"
 git-version = "0.3"
 itertools = "0.10"
-lz-fear = "0.1"
+lz4_flex = "0.8.2"
 ndarray = { features = ["serde"], version = "0.15.3" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0" }

@@ -1,6 +1,6 @@
 //! Provides the [`FkTable`] type.
 
-use super::grid::{Grid, Order};
+use super::grid::{Grid, GridError, Order};
 use super::lumi::LumiCache;
 use super::subgrid::Subgrid;
 use ndarray::Array4;
@@ -140,8 +140,17 @@ impl FkTable {
     /// # Errors
     ///
     /// TODO
-    pub fn write(&self, writer: impl Write) -> anyhow::Result<()> {
+    pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
         self.grid.write(writer)
+    }
+
+    /// Propagate `write_lz4` to `Grid`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Grid::write_lz4`].
+    pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
+        self.grid.write_lz4(writer)
     }
 
     /// Propagate convolute to grid

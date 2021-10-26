@@ -6,25 +6,28 @@ use pineappl::lumi::LumiCache;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter};
+use std::path::Path;
 
 pub const ONE_SIGMA: f64 = 68.268_949_213_708_58;
 
 pub fn read_grid(input: &str) -> Result<Grid> {
-    Grid::read(BufReader::new(
-        File::open(input).context(format!("unable to open '{}'", input))?,
-    ))
-    .context(format!("unable to read '{}'", input))
+    Grid::read(File::open(input).context(format!("unable to open '{}'", input))?)
+        .context(format!("unable to read '{}'", input))
 }
 
 pub fn write_grid(output: &str, grid: &Grid) -> Result<()> {
-    grid.write(BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(output)
-            .context(format!("unable to write '{}'", output))?,
-    ))
+    let path = Path::new(output);
+    let file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(output)
+        .context(format!("unable to write '{}'", output))?;
+
+    if path.extension().map_or(false, |ext| ext == "lz4") {
+        Ok(grid.write_lz4(file)?)
+    } else {
+        Ok(grid.write(file)?)
+    }
 }
 
 pub fn create_table() -> Table {
