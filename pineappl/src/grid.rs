@@ -1180,23 +1180,23 @@ impl Grid {
         };
 
         let pids1 = if has_pdf1 {
-            eko_info.grid_axes.pids.to_vec()
+            eko_info.grid_axes.pids.clone()
         } else {
             vec![initial_state_1]
         };
         let pids2 = if has_pdf2 {
-            eko_info.grid_axes.pids.to_vec()
+            eko_info.grid_axes.pids.clone()
         } else {
             vec![initial_state_2]
         };
         // create target luminosities
         let tgt_pids1 = if has_pdf1 {
-            eko_info.target_pids.to_vec()
+            eko_info.target_pids.clone()
         } else {
             vec![initial_state_1]
         };
         let tgt_pids2 = if has_pdf2 {
-            eko_info.target_pids.to_vec()
+            eko_info.target_pids.clone()
         } else {
             vec![initial_state_2]
         };
@@ -1318,10 +1318,12 @@ impl Grid {
                             .muf2_grid
                             .iter()
                             .position(|&q2| q2 == eko_info.xir * eko_info.xir * scale)
-                            .expect(&format!(
-                                "Couldn't find q2: {:?} with xir: {:?} and muf2_grid: {:?}",
-                                scale, eko_info.xir, eko_info.grid_axes.muf2_grid
-                            ));
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "Couldn't find q2: {:?} with xir: {:?} and muf2_grid: {:?}",
+                                    scale, eko_info.xir, eko_info.grid_axes.muf2_grid
+                                )
+                            });
 
                         let ix1 = if invert_x && has_pdf1 {
                             eko_info.grid_axes.x_grid.len() - ix1 - 1

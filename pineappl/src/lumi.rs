@@ -105,7 +105,7 @@ impl LumiEntry {
     }
 }
 
-/// Helper macro to quickly generate a LumiEntry at compile time.
+/// Helper macro to quickly generate a `LumiEntry` at compile time.
 ///
 /// # Examples
 ///
