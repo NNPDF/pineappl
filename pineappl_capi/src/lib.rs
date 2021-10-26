@@ -264,8 +264,8 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must be
-/// null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// be null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
 /// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
 /// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
@@ -323,8 +323,8 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must be
-/// null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// be null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
 /// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
 /// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
