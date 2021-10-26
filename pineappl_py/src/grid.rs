@@ -252,7 +252,7 @@ impl PyGrid {
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.grid
-            .convolute2(&mut lumi_cache, &order_mask, &bin_indices, &lumi_mask, &xi)
+            .convolute(&mut lumi_cache, &order_mask, &bin_indices, &lumi_mask, &xi)
     }
 
     /// Convolute with with an evolution operator.

@@ -109,6 +109,6 @@ impl PyFkTable {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
-        self.fk_table.convolute(&mut lumi_cache, &[], &[], &[])
+        self.fk_table.convolute(&mut lumi_cache, &[], &[])
     }
 }
