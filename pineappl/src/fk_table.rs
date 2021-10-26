@@ -148,17 +148,11 @@ impl FkTable {
     pub fn convolute(
         &self,
         lumi_cache: &mut LumiCache,
-        order_mask: &[bool],
         bin_indices: &[usize],
         lumi_mask: &[bool],
     ) -> Vec<f64> {
-        self.grid.convolute2(
-            lumi_cache,
-            order_mask,
-            bin_indices,
-            lumi_mask,
-            &[(1.0, 1.0)],
-        )
+        self.grid
+            .convolute(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
     }
 }
 
