@@ -192,7 +192,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.29438499470369e-1,
         5.407794857747981e-1,
@@ -238,7 +238,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
             .collect::<Vec<(f64, f64)>>(),
     )?)?;
 
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     // results are slightly different because of the static scale detection - the interpolation
     // error in the Q^2 dimension is removed
@@ -312,7 +312,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -348,7 +348,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
@@ -393,7 +393,7 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -429,7 +429,7 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     //grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
@@ -474,7 +474,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
     let reference = vec![
         5.093090431949207e-1,
         5.191668797562395e-1,
@@ -510,7 +510,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     grid.optimize();
 
     // check that the results are still the same
-    let bins = grid.convolute2(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
