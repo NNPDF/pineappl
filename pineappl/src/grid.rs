@@ -23,7 +23,7 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
-use std::io::{self, BufReader, BufWriter, Read, Seek, Write};
+use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::ops::Range;
 use std::ptr;
@@ -575,7 +575,9 @@ impl Grid {
 
         if uncompressed {
             // go back to the start and try without compression
-            reader.rewind().map_err(GridError::IoFailure)?;
+            reader
+                .seek(SeekFrom::Start(0))
+                .map_err(GridError::IoFailure)?;
             result = bincode::deserialize_from(BufReader::new(reader));
         }
 
