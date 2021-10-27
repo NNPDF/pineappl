@@ -1,9 +1,9 @@
 use super::helpers;
 use anyhow::Result;
-use pineappl::subgrid::SubgridEnum;
+use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row, Table};
 
-pub fn subcommand(input: &str) -> Result<Table> {
+pub fn subcommand(input: &str, show_empty: bool) -> Result<Table> {
     let grid = helpers::read_grid(input)?;
     let mut table = helpers::create_table();
 
@@ -11,6 +11,10 @@ pub fn subcommand(input: &str) -> Result<Table> {
     table.set_titles(titles);
 
     for ((order, bin, lumi), subgrid) in grid.subgrids().indexed_iter() {
+        if !show_empty && subgrid.is_empty() {
+            continue;
+        }
+
         let row = table.add_empty_row();
         row.add_cell(cell!(l->&format!("{}", order)));
         row.add_cell(cell!(l->&format!("{}", bin)));

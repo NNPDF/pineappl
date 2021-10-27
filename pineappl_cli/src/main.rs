@@ -267,6 +267,7 @@ fn main() -> Result<()> {
         (@subcommand subgrids =>
             (about: "Print information about the internal subgrid types")
             (@arg input: +required "Path to the input grid")
+            (@arg show_empty: long("show-empty") "Show empty subgrids")
         )
         (@subcommand sum =>
             (about: "Sums two or more bins of a grid together")
@@ -461,8 +462,9 @@ fn main() -> Result<()> {
         set::subcommand(input, output, &entries, &entries_from_file, &deletes)?;
     } else if let Some(matches) = matches.subcommand_matches("subgrids") {
         let input = matches.value_of("input").unwrap();
+        let show_empty = matches.is_present("show-empty");
 
-        subgrids::subcommand(input)?.printstd();
+        subgrids::subcommand(input, show_empty)?.printstd();
     } else if let Some(matches) = matches.subcommand_matches("sum") {
         let input = matches.value_of("input").unwrap();
         let output = matches.value_of("output").unwrap();

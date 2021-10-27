@@ -62,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl_grid_nonzero_q2_slices` to `pineappl_grid_export_mu2_slice` and
   `pineappl_grid_nonzero_mu2_slices`, respectively
 - replaced C API-based Python interface with PyO3-based one
+- the subcommand `subgrids` now does not print empty grids; the old behavior
+  can be restored with the new switch `--show-empty`
 
 ## [0.4.1] - 25/03/2021
 
