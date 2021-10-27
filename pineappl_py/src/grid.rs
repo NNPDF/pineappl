@@ -298,6 +298,7 @@ impl PyGrid {
         operator_flattened: Vec<f64>,
         operator_shape: Vec<usize>,
         lumi_id_types: String,
+        order_mask: Vec<bool>,
     ) -> PyFkTable {
         let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let eko_info = EkoInfo {
@@ -317,7 +318,11 @@ impl PyGrid {
 
         let evolved_grid = self
             .grid
-            .convolute_eko(operator.into_dimensionality::<Ix5>().unwrap(), eko_info)
+            .convolute_eko(
+                operator.into_dimensionality::<Ix5>().unwrap(),
+                eko_info,
+                &order_mask,
+            )
             .unwrap();
         PyFkTable {
             fk_table: evolved_grid,

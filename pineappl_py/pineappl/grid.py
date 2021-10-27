@@ -216,7 +216,7 @@ class Grid(PyWrapper):
             pdg_id, xfx, alphas, order_mask, bin_indices, lumi_mask, xi
         )
 
-    def convolute_eko(self, operators, lumi_id_types="pdg_mc_ids"):
+    def convolute_eko(self, operators, lumi_id_types="pdg_mc_ids", order_mask=()):
         """
         Create an FKTable with the EKO.
 
@@ -229,6 +229,9 @@ class Grid(PyWrapper):
             lumi_id_types : str
                 kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
                 for evolution basis)
+            order_mask : list(bool)
+                Mask for selecting specific orders. The value `True` means the corresponding order
+                is included. An empty list corresponds to all orders being enabled.
 
         Returns
         ------
@@ -252,6 +255,7 @@ class Grid(PyWrapper):
                 operator_grid.flatten(),
                 operator_grid.shape,
                 lumi_id_types,
+                order_mask,
             )
         )
 

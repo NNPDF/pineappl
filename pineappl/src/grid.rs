@@ -1147,7 +1147,12 @@ impl Grid {
     ///
     /// Panics if the parameters do not match with the given grid.
     #[must_use]
-    pub fn convolute_eko(&self, operator: Array5<f64>, eko_info: EkoInfo) -> Option<FkTable> {
+    pub fn convolute_eko(
+        &self,
+        operator: Array5<f64>,
+        eko_info: EkoInfo,
+        order_mask: &[bool],
+    ) -> Option<FkTable> {
         // Check operator layout
         let dim = operator.shape();
 
@@ -1278,6 +1283,10 @@ impl Grid {
                 // iterate over the source grid orders and add all of them together into
                 // `src_array`, using the right powers of alphas
                 for (order, powers) in self.orders.iter().enumerate() {
+                    if !order_mask.is_empty() && !order_mask[order] {
+                        continue;
+                    }
+
                     let logs = if (eko_info.xir, eko_info.xif) == (1.0, 1.0) {
                         if (powers.logxir > 0) || (powers.logxif > 0) {
                             continue;
@@ -1855,7 +1864,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let fk = grid.convolute_eko(operator, eko_info).unwrap();
+        let fk = grid.convolute_eko(operator, eko_info, &[]).unwrap();
 
         assert_eq!(fk.bins(), 1);
     }
