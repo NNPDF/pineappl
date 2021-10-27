@@ -354,6 +354,16 @@ impl PyGrid {
         self.grid.write(File::create(path).unwrap()).unwrap();
     }
 
+    /// Write grid to compressed file.
+    ///
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
+    pub fn write_lz4(&self, path: &str) {
+        self.grid.write_lz4(File::create(path).unwrap()).unwrap();
+    }
+
     /// Optimize grid content.
     ///
     /// **Usage:** `yadism`
