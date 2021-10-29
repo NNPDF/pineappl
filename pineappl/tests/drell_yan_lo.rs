@@ -273,6 +273,17 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
         assert!(approx_eq!(f64, *result, *reference, ulps = 24));
     }
 
+    let bins: Vec<_> = (0..grid.bin_info().bins())
+        .map(|bin| {
+            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                .sum()
+        })
+        .collect();
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
     Ok(())
 }
 
@@ -354,6 +365,17 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
     }
 
+    let bins: Vec<_> = (0..grid.bin_info().bins())
+        .map(|bin| {
+            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                .sum()
+        })
+        .collect();
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
     Ok(())
 }
 
@@ -425,11 +447,22 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
     }
 
-    // optimize the grid
-    //grid.optimize();
-
     // check that the results are still the same
     let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    }
+
+    // optimize the grid
+    grid.optimize();
+
+    let bins: Vec<_> = (0..grid.bin_info().bins())
+        .map(|bin| {
+            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                .sum()
+        })
+        .collect();
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
@@ -515,6 +548,19 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert!(approx_eq!(f64, *result, *reference, ulps = 16));
     }
+
+    // TODO: activate the following tests once `convolute_subgrid` understands reweights
+
+    //let bins: Vec<_> = (0..grid.bin_info().bins())
+    //    .map(|bin| {
+    //        grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+    //            .sum()
+    //    })
+    //    .collect();
+
+    //for (result, reference) in bins.iter().zip(reference.iter()) {
+    //    assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    //}
 
     Ok(())
 }
