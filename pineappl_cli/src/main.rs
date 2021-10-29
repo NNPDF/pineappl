@@ -16,6 +16,7 @@ mod remap;
 mod set;
 mod subgrids;
 mod sum;
+mod upgrade;
 
 use anyhow::{ensure, Context, Result};
 use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
@@ -277,6 +278,11 @@ fn main() -> Result<()> {
                 (@arg integrated: --integrated "Sums all bins into a single bin")
             )
         )
+        (@subcommand upgrade =>
+            (about: "Converts the file format to the most recent version")
+            (@arg input: +required "Path to the input grid")
+            (@arg output: +required "Path to the upgraded PineAPPL file")
+        )
     )
     .get_matches();
 
@@ -474,6 +480,11 @@ fn main() -> Result<()> {
         } else {
             unreachable!();
         }
+    } else if let Some(matches) = matches.subcommand_matches("upgrade") {
+        let input = matches.value_of("input").unwrap();
+        let output = matches.value_of("output").unwrap();
+
+        upgrade::subcommand(input, output)?;
     }
 
     Ok(())
