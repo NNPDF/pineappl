@@ -377,7 +377,12 @@ impl PyGrid {
         self.grid.optimize();
     }
 
-    /// Optimize grid content.
+    /// Merge grid with another one, loaded from file
+    ///
+    /// Note
+    /// ----
+    /// For a current limitation with the implementation of the bound object `Grid` is not possible
+    /// to operate with two `Grid`s in memory, since is not possible to pass a `Grid` by argument
     pub fn merge_from_file(&mut self, path: &str) -> PyResult<()> {
         match self.grid.merge(Self::read(path).grid) {
             Ok(()) => Ok(()),
