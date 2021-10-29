@@ -7,6 +7,7 @@ use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
+use numpy::{IntoPyArray, PyArray1};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -396,6 +397,18 @@ impl PyGrid {
     ///         bin dimension
     pub fn bin_dimensions(&self) -> usize {
         self.grid.bin_info().dimensions()
+    }
+
+    /// Extract the normalizations for each bin.
+    ///
+    /// **Usage:** `runcards`
+    ///
+    /// Returns
+    /// -------
+    ///     np.array
+    ///         bin normalizations
+    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.grid.bin_info().normalizations().into_pyarray(py)
     }
 
     /// Extract the left edges of a specific bin dimension.
