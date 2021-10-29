@@ -94,12 +94,13 @@ pub fn convolute(
         })
         .collect();
 
+    // if the field 'Particle' is missing we assume it's a proton PDF
     let pdf_pdg_id = lhapdf
         .set()
         .entry("Particle")
-        .unwrap_or_else(|| "2212".to_string())
-        .parse::<i32>()
+        .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
+
     let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
@@ -118,9 +119,9 @@ pub fn convolute_subgrid(
     let pdf_pdg_id = lhapdf
         .set()
         .entry("Particle")
-        .unwrap_or_else(|| "2212".to_string())
-        .parse::<i32>()
+        .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
+
     let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
