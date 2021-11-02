@@ -233,7 +233,7 @@ impl BinRemapper {
         if self
             .slices()
             .iter()
-            .any(|&(start, end)| (start >= range.start) && (range.end <= end))
+            .any(|&(start, end)| (start <= range.start) && (range.end <= end))
         {
             for bin in range.start + 1..range.end {
                 self.normalizations[range.start] += self.normalizations[bin];
