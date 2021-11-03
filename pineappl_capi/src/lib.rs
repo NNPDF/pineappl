@@ -71,6 +71,7 @@ use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::os::raw::{c_char, c_void};
+use std::path::Path;
 use std::slice;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
@@ -714,7 +715,8 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
     .unwrap();
 }
 
-/// Write `grid` to a file with name `filename`.
+/// Write `grid` to a file with name `filename`. If `filename` ends in `.lz4` the grid is
+/// automatically LZ4 compressed.
 ///
 /// # Safety
 ///
@@ -728,9 +730,14 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let filename = CStr::from_ptr(filename).to_string_lossy();
-    let writer = BufWriter::new(File::create(filename.as_ref()).unwrap());
+    let path = Path::new(filename.as_ref());
+    let writer = BufWriter::new(File::create(path).unwrap());
 
-    (*grid).write(writer).unwrap();
+    if path.extension().map_or(false, |ext| ext == "lz4") {
+        (*grid).write_lz4(writer).unwrap();
+    } else {
+        (*grid).write(writer).unwrap();
+    }
 }
 
 /// Adds a linear combination of initial states to the luminosity function `lumi`.
