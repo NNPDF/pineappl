@@ -570,7 +570,11 @@ impl Grid {
     ///
     /// If writing or compression fails an error is returned.
     pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
-        bincode::serialize_into(FrameEncoder::new(writer), self).map_err(GridError::WriteFailure)
+        let mut encoder = FrameEncoder::new(writer);
+        self.write(&mut encoder)?;
+        encoder.try_finish().unwrap();
+
+        Ok(())
     }
 
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,

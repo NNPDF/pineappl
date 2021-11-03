@@ -185,6 +185,13 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     grid.write(&mut file)?;
     file.set_position(0);
     mem::drop(grid);
+    let grid = Grid::read(&mut file)?;
+
+    // check `write_lz4`
+    let mut file = Cursor::new(Vec::new());
+    grid.write_lz4(&mut file)?;
+    file.set_position(0);
+    mem::drop(grid);
     let mut grid = Grid::read(&mut file)?;
 
     // some useless scalings
