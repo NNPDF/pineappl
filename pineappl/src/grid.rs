@@ -74,6 +74,90 @@ impl Order {
             logxif,
         }
     }
+
+    /// Return the a mask suitable for [`Grid::convolute`] with the orders that are largest in
+    /// `alphas`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use pineappl::grid::Order;
+    ///
+    /// let orders = [
+    ///     Order::new(0, 2, 0, 0), // alpha^2
+    ///     Order::new(1, 2, 0, 0), // alphas alpha^2
+    ///     Order::new(1, 2, 0, 1), // alphas alpha^2 logxif
+    ///     Order::new(0, 3, 0, 0), // alpha^3
+    ///     Order::new(0, 3, 0, 1), // alpha^3 logxif
+    /// ];
+    ///
+    /// assert_eq!(Order::mask_highest_alphas(&orders), [true, true, true, false, false]);
+    /// ```
+    pub fn mask_highest_alphas(orders: &[Order]) -> Vec<bool> {
+        let mut sorted_orders: Vec<_> = orders
+            .iter()
+            .filter(|order| (order.logxir == 0) && (order.logxif == 0))
+            .collect();
+        sorted_orders.sort();
+
+        let selected_orders: Vec<_> = sorted_orders
+            .into_iter()
+            .group_by(|order| order.alphas + order.alpha)
+            .into_iter()
+            .map(|mut iter| iter.1.next().unwrap())
+            .collect();
+
+        orders
+            .iter()
+            .map(|order| {
+                selected_orders
+                    .iter()
+                    .any(|o| (order.alphas == o.alphas) && (order.alpha == o.alpha))
+            })
+            .collect()
+    }
+
+    /// Return the a mask suitable for [`Grid::convolute`] with the orders that are largest in
+    /// `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use pineappl::grid::Order;
+    ///
+    /// let orders = [
+    ///     Order::new(0, 2, 0, 0), // alpha^2
+    ///     Order::new(1, 2, 0, 0), // alphas alpha^2
+    ///     Order::new(1, 2, 0, 1), // alphas alpha^2 logxif
+    ///     Order::new(0, 3, 0, 0), // alpha^3
+    ///     Order::new(0, 3, 0, 1), // alpha^3 logxif
+    /// ];
+    ///
+    /// assert_eq!(Order::mask_highest_alpha(&orders), [true, false, false, true, true]);
+    /// ```
+    pub fn mask_highest_alpha(orders: &[Order]) -> Vec<bool> {
+        let mut sorted_orders: Vec<_> = orders
+            .iter()
+            .filter(|order| (order.logxir == 0) && (order.logxif == 0))
+            .collect();
+        sorted_orders.sort();
+
+        let selected_orders: Vec<_> = sorted_orders
+            .into_iter()
+            .group_by(|order| order.alphas + order.alpha)
+            .into_iter()
+            .map(|iter| iter.1.last().unwrap())
+            .collect();
+
+        orders
+            .iter()
+            .map(|order| {
+                selected_orders
+                    .iter()
+                    .any(|o| (order.alphas == o.alphas) && (order.alpha == o.alpha))
+            })
+            .collect()
+    }
 }
 
 /// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
