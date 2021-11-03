@@ -139,8 +139,8 @@ enum Pdfs<'a> {
     },
 }
 
-/// A cache for evaluating PDFs. Methods like [`Grid::convolute2`] accept instances of this
-/// `struct` instead of the PDFs themselves.
+/// A cache for evaluating PDFs. Methods like [`Grid::convolute`] accept instances of this `struct`
+/// instead of the PDFs themselves.
 pub struct LumiCache<'a> {
     pdfs: Pdfs<'a>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
