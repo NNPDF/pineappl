@@ -69,7 +69,6 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
 use std::fs::File;
-use std::io::{BufReader, BufWriter};
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
@@ -592,7 +591,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid> {
     let filename = CStr::from_ptr(filename).to_string_lossy();
-    let reader = BufReader::new(File::open(filename.as_ref()).unwrap());
+    let reader = File::open(filename.as_ref()).unwrap();
 
     Box::new(Grid::read(reader).unwrap())
 }
@@ -731,7 +730,7 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
 pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const c_char) {
     let filename = CStr::from_ptr(filename).to_string_lossy();
     let path = Path::new(filename.as_ref());
-    let writer = BufWriter::new(File::create(path).unwrap());
+    let writer = File::create(path).unwrap();
 
     if path.extension().map_or(false, |ext| ext == "lz4") {
         (*grid).write_lz4(writer).unwrap();
