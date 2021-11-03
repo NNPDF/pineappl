@@ -30,11 +30,11 @@ enum flavour_map_index : std::size_t
     charm,         //  4: charm
     bottom,        //  5: bottom
     top,           //  6: top
-    photon,        // 22: photon
+//    photon,        // 22: photon
 };
 
-std::array<bool, 14> flavour_map = {
-//std::array<bool, 13> flavour_map = {
+//std::array<bool, 14> flavour_map = {
+std::array<bool, 13> flavour_map = {
     true,  // -6: anti-top
     true,  // -5: anti-bottom
     true,  // -4: anti-charm
@@ -48,13 +48,13 @@ std::array<bool, 14> flavour_map = {
     true,  //  4: charm
     true,  //  5: bottom
     true,  //  6: top
-    true,  // 22: photon
+//    true,  // 22: photon
 };
 
 constexpr int index_to_pdg_id(std::size_t index)
 {
-    return (index == gluon) ? 21 : ((index == photon) ? 22 : (static_cast <int> (index) - 6));
-//    return (index == gluon) ? 21 : static_cast <int> (index) - 6;
+//    return (index == gluon) ? 21 : ((index == photon) ? 22 : (static_cast <int> (index) - 6));
+    return (index == gluon) ? 21 : static_cast <int> (index) - 6;
 }
 
 extern "C" void evolvepdf(double const& x, double const& q, double* xfx)
