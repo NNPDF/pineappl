@@ -13,6 +13,7 @@ description = "Read, write, and query PineAPPL grids"
 [dependencies]
 anyhow = "1.0"
 clap = { default-features = false, features = ["cargo", "std", "suggestions"], version = "=3.0.0-beta.2" }
+git-version = "0.3"
 itertools = "0.10"
 lhapdf = "0.1.9"
 ndarray = "0.15.3"

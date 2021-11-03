@@ -19,7 +19,8 @@ mod sum;
 mod upgrade;
 
 use anyhow::{ensure, Context, Result};
-use clap::{clap_app, crate_authors, crate_description, crate_version, ArgSettings};
+use clap::{clap_app, crate_authors, crate_description, ArgSettings};
+use git_version::git_version;
 use std::result;
 use std::str::FromStr;
 
@@ -125,7 +126,11 @@ fn main() -> Result<()> {
     let matches = clap_app!(pineappl =>
         (author: crate_authors!())
         (about: crate_description!())
-        (version: crate_version!())
+        (version: git_version!(
+            args = ["--always", "--dirty", "--long", "--tags"],
+            cargo_prefix = "",
+            fallback = "unknown"
+        ))
         (@arg silence_lhapdf: alias("silence_lhapdf") long("silence-lhapdf")
             "Prevents LHAPDF from printing banners")
         (@setting DisableHelpSubcommand)
