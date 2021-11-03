@@ -15,14 +15,14 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
-use lz4_flex::frame::{self, FrameDecoder, FrameEncoder};
+use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, Array5, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
-use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
+use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::mem;
 use std::ops::Range;
 use thiserror::Error;
@@ -120,6 +120,15 @@ pub enum GridError {
     /// Returned while performing IO operations.
     #[error(transparent)]
     IoFailure(io::Error),
+    /// Returned when trying to read a `PineAPPL` file with file format version that is not
+    /// supported.
+    #[error("the file version is {file_version}, but supported is only {supported_version}")]
+    FileVersionMismatch {
+        /// File format version of the file read.
+        file_version: u64,
+        /// Maximum supported file format version for this library.
+        supported_version: u64,
+    },
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -522,37 +531,42 @@ impl Grid {
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
-    pub fn read(mut reader: impl Read + Seek) -> Result<Self, GridError> {
-        let mut result = bincode::deserialize_from(FrameDecoder::new(&mut reader));
+    pub fn read(reader: impl Read) -> Result<Self, GridError> {
+        let mut reader = BufReader::new(reader);
+        let buffer = reader.fill_buf().map_err(GridError::IoFailure)?;
+        let magic_bytes: [u8; 4] = buffer[0..4].try_into().unwrap_or_else(|_| unreachable!());
 
-        // check if there was a `WrongMagicNumber` error, in which case `reader` isn't LZ4
-        // compressed
-        let uncompressed = result.as_ref().err().map_or(false, |e| {
-            if let bincode::ErrorKind::Io(io_error) = e.as_ref() {
-                let wrong_magic_number = io_error
-                    .get_ref()
-                    .and_then(|error| error.downcast_ref::<frame::Error>())
-                    .map_or(false, |frame_error| {
-                        matches!(frame_error, frame::Error::WrongMagicNumber)
-                    });
+        if u32::from_le_bytes(magic_bytes) == 0x18_4D_22_04 {
+            Self::read_uncompressed(FrameDecoder::new(reader))
+        } else {
+            Self::read_uncompressed(reader)
+        }
+    }
 
-                if wrong_magic_number {
-                    return true;
-                }
-            }
+    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
+        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
+            .try_into()
+            .unwrap_or_else(|_| unreachable!());
 
-            false
-        });
+        let file_version = if &magic_bytes[0..8] == b"PineAPPL" {
+            reader.consume(16);
+            u64::from_le_bytes(
+                magic_bytes[8..16]
+                    .try_into()
+                    .unwrap_or_else(|_| unreachable!()),
+            )
+        } else {
+            0
+        };
 
-        if uncompressed {
-            // go back to the start and try without compression
-            reader
-                .seek(SeekFrom::Start(0))
-                .map_err(GridError::IoFailure)?;
-            result = bincode::deserialize_from(BufReader::new(reader));
+        if file_version != 0 {
+            return Err(GridError::FileVersionMismatch {
+                file_version,
+                supported_version: 0,
+            });
         }
 
-        result.map_err(GridError::ReadFailure)
+        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
@@ -561,7 +575,14 @@ impl Grid {
     ///
     /// If writing fails an error is returned.
     pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
-        bincode::serialize_into(BufWriter::new(writer), self).map_err(GridError::WriteFailure)
+        let mut writer = BufWriter::new(writer);
+        let file_header = b"PineAPPL\0\0\0\0\0\0\0\0";
+
+        // first write PineAPPL file header
+        writer.write(file_header).map_err(GridError::IoFailure)?;
+
+        // then serialize
+        bincode::serialize_into(writer, self).map_err(GridError::WriteFailure)
     }
 
     /// Serializes `self` into `writer`, using LZ4 compression. Writing is buffered.
