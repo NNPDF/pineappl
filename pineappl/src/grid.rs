@@ -75,86 +75,112 @@ impl Order {
         }
     }
 
-    /// Return the a mask suitable for [`Grid::convolute`] with the orders that are largest in
-    /// `alphas`.
+    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
+    /// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
+    /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
+    /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
+    /// the NNLO QCD.
     ///
     /// # Example
+    ///
+    /// In the case of Drell—Yan, there are the following orders:
+    ///
+    /// - exactly one leading order (LO),
+    /// - two next-to-leading orders (NLO), which are
+    ///   - the NLO QCD and
+    ///   - the NLO EW, and
+    /// - three next-to-next-to-leading orders (NNLO),
+    ///   - the NNLO QCD,
+    ///   - the NNLO EW, and finally
+    ///   - the mixed NNLO QCD—EW.
     ///
     /// ```rust
     /// use pineappl::grid::Order;
     ///
     /// let orders = [
-    ///     Order::new(0, 2, 0, 0), // alpha^2
-    ///     Order::new(1, 2, 0, 0), // alphas alpha^2
-    ///     Order::new(1, 2, 0, 1), // alphas alpha^2 logxif
-    ///     Order::new(0, 3, 0, 0), // alpha^3
-    ///     Order::new(0, 3, 0, 1), // alpha^3 logxif
+    ///     Order::new(0, 2, 0, 0), //   LO        :          alpha^2
+    ///     Order::new(1, 2, 0, 0), //  NLO QCD    : alphas   alpha^2
+    ///     Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
+    ///     Order::new(2, 2, 0, 0), // NNLO QCD    : alphas^2 alpha^2
+    ///     Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+    ///     Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
     /// ];
     ///
-    /// assert_eq!(Order::mask_highest_alphas(&orders), [true, true, true, false, false]);
+    /// // LO EW
+    /// assert_eq!(Order::create_mask(&orders, 0, 1), [true, false, false, false, false, false]);
+    /// // LO QCD
+    /// assert_eq!(Order::create_mask(&orders, 1, 0), [true, false, false, false, false, false]);
+    /// // LO
+    /// assert_eq!(Order::create_mask(&orders, 1, 1), [true, false, false, false, false, false]);
+    /// // NLO QCD
+    /// assert_eq!(Order::create_mask(&orders, 2, 0), [true, true, false, false, false, false]);
+    /// // NLO EW
+    /// assert_eq!(Order::create_mask(&orders, 0, 2), [true, false, true, false, false, false]);
+    /// // NNLO QCD
+    /// assert_eq!(Order::create_mask(&orders, 3, 0), [true, true, false, true, false, false]);
+    /// // NNLO EW
+    /// assert_eq!(Order::create_mask(&orders, 0, 3), [true, false, true, false, false, true]);
     /// ```
-    pub fn mask_highest_alphas(orders: &[Order]) -> Vec<bool> {
-        let mut sorted_orders: Vec<_> = orders
-            .iter()
-            .filter(|order| (order.logxir == 0) && (order.logxif == 0))
-            .collect();
-        sorted_orders.sort();
-
-        let selected_orders: Vec<_> = sorted_orders
-            .into_iter()
-            .group_by(|order| order.alphas + order.alpha)
-            .into_iter()
-            .map(|mut iter| iter.1.next().unwrap())
-            .collect();
-
-        orders
-            .iter()
-            .map(|order| {
-                selected_orders
-                    .iter()
-                    .any(|o| (order.alphas == o.alphas) && (order.alpha == o.alpha))
-            })
-            .collect()
-    }
-
-    /// Return the a mask suitable for [`Grid::convolute`] with the orders that are largest in
-    /// `alpha`.
     ///
-    /// # Example
+    /// Although not shown in the example above, orders containing non-zero powers of logarithms
+    /// are selected as well:
     ///
     /// ```rust
     /// use pineappl::grid::Order;
     ///
     /// let orders = [
-    ///     Order::new(0, 2, 0, 0), // alpha^2
-    ///     Order::new(1, 2, 0, 0), // alphas alpha^2
-    ///     Order::new(1, 2, 0, 1), // alphas alpha^2 logxif
-    ///     Order::new(0, 3, 0, 0), // alpha^3
-    ///     Order::new(0, 3, 0, 1), // alpha^3 logxif
+    ///     Order::new(0, 2, 0, 0), //  LO         :        alpha^2
+    ///     Order::new(1, 2, 0, 0), //  NLO QCD    : alphas alpha^2
+    ///     Order::new(1, 2, 1, 0), //  NLO QCD    : alphas alpha^2 logxif
+    ///     Order::new(0, 3, 0, 0), //  NLO  EW    :        alpha^3
+    ///     Order::new(0, 3, 1, 0), //  NLO  EW    :        alpha^3 logxif
     /// ];
     ///
-    /// assert_eq!(Order::mask_highest_alpha(&orders), [true, false, false, true, true]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 2), [true, false, false, true, true]);
     /// ```
-    pub fn mask_highest_alpha(orders: &[Order]) -> Vec<bool> {
-        let mut sorted_orders: Vec<_> = orders
+    pub fn create_mask(orders: &[Order], max_as: u32, max_al: u32) -> Vec<bool> {
+        // smallest sum of alphas and alpha
+        let lo = orders
             .iter()
-            .filter(|order| (order.logxir == 0) && (order.logxif == 0))
-            .collect();
-        sorted_orders.sort();
+            .map(|Order { alphas, alpha, .. }| alphas + alpha)
+            .min()
+            .unwrap_or_default();
 
-        let selected_orders: Vec<_> = sorted_orders
-            .into_iter()
-            .group_by(|order| order.alphas + order.alpha)
-            .into_iter()
-            .map(|iter| iter.1.last().unwrap())
+        // all leading orders, without logarithms
+        let leading_orders: Vec<_> = orders
+            .iter()
+            .filter(|Order { alphas, alpha, .. }| alphas + alpha == lo)
+            .cloned()
             .collect();
+
+        let lo_as = leading_orders
+            .iter()
+            .map(|Order { alphas, .. }| *alphas)
+            .max()
+            .unwrap_or_default();
+        let lo_al = leading_orders
+            .iter()
+            .map(|Order { alpha, .. }| *alpha)
+            .max()
+            .unwrap_or_default();
+
+        let max = max_as.max(max_al);
+        let min = max_as.min(max_al);
 
         orders
             .iter()
-            .map(|order| {
-                selected_orders
-                    .iter()
-                    .any(|o| (order.alphas == o.alphas) && (order.alpha == o.alpha))
+            .map(|Order { alphas, alpha, .. }| {
+                let pto = alphas + alpha - lo;
+
+                alphas + alpha < min + lo
+                    || (alphas + alpha < max + lo
+                        && if max_as > max_al {
+                            lo_as + pto == *alphas
+                        } else if max_as < max_al {
+                            lo_al + pto == *alpha
+                        } else {
+                            false
+                        })
             })
             .collect()
     }
@@ -1614,6 +1640,165 @@ mod tests {
         assert_eq!(orders[4], Order::new(0, 3, 0, 0));
         assert_eq!(orders[5], Order::new(0, 3, 0, 1));
         assert_eq!(orders[6], Order::new(0, 3, 1, 0));
+    }
+
+    #[test]
+    fn order_create_mask() {
+        // Drell—Yan orders
+        let orders = [
+            Order::new(0, 2, 0, 0), //   LO        :          alpha^2
+            Order::new(1, 2, 0, 0), //  NLO QCD    : alphas   alpha^2
+            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(2, 2, 0, 0), // NNLO QCD    : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+        ];
+
+        assert_eq!(
+            Order::create_mask(&orders, 0, 0),
+            [false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 1),
+            [true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 2),
+            [true, false, true, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 3),
+            [true, false, true, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 0),
+            [true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 1),
+            [true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 2),
+            [true, false, true, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 3),
+            [true, false, true, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 0),
+            [true, true, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 1),
+            [true, true, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 2),
+            [true, true, true, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 3),
+            [true, true, true, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 0),
+            [true, true, false, true, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 1),
+            [true, true, false, true, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 2),
+            [true, true, true, true, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 3),
+            [true, true, true, true, true, true]
+        );
+
+        // Top-pair production orders
+        let orders = [
+            Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
+            Order::new(1, 1, 0, 0), //   LO QCD—EW : alphas   alpha
+            Order::new(0, 2, 0, 0), //   LO  EW    :          alpha^2
+            Order::new(3, 0, 0, 0), //  NLO QCD    : alphas^3
+            Order::new(2, 1, 0, 0), //  NLO QCD—EW : alphas^2 alpha
+            Order::new(1, 2, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(4, 0, 0, 0), // NNLO QCD    : alphas^4
+            Order::new(3, 1, 0, 0), // NNLO QCD—EW : alphas^3 alpha
+            Order::new(2, 2, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+        ];
+
+        assert_eq!(
+            Order::create_mask(&orders, 0, 0),
+            [false, false, false, false, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 1),
+            [false, false, true, false, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 2),
+            [false, false, true, false, false, false, true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 0, 3),
+            [false, false, true, false, false, false, true, false, false, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 0),
+            [true, false, false, false, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 1),
+            [true, true, true, false, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 2),
+            [true, true, true, false, false, false, true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 1, 3),
+            [true, true, true, false, false, false, true, false, false, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 0),
+            [true, false, false, true, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 1),
+            [true, true, true, true, false, false, false, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 2),
+            [true, true, true, true, true, true, true, false, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 2, 3),
+            [true, true, true, true, true, true, true, false, false, false, false, true]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 0),
+            [true, false, false, true, false, false, false, true, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 1),
+            [true, true, true, true, false, false, false, true, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 2),
+            [true, true, true, true, true, true, true, true, false, false, false, false]
+        );
+        assert_eq!(
+            Order::create_mask(&orders, 3, 3),
+            [true, true, true, true, true, true, true, true, true, true, true, true]
+        );
     }
 
     #[test]
