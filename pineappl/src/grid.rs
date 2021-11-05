@@ -138,6 +138,30 @@ impl Order {
     ///
     /// assert_eq!(Order::create_mask(&orders, 0, 2), [true, false, false, true, true]);
     /// ```
+    ///
+    /// For the more complicated example of top-pair production one can see the difference between
+    /// the selection for different LOs:
+    ///
+    /// ```rust
+    /// use pineappl::grid::Order;
+    ///
+    /// let orders = [
+    ///     Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
+    ///     Order::new(1, 1, 0, 0), //   LO QCD—EW : alphas   alpha
+    ///     Order::new(0, 2, 0, 0), //   LO  EW    :          alpha^2
+    ///     Order::new(3, 0, 0, 0), //  NLO QCD    : alphas^3
+    ///     Order::new(2, 1, 0, 0), //  NLO QCD—EW : alphas^2 alpha
+    ///     Order::new(1, 2, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+    ///     Order::new(0, 3, 0, 0), //  NLO EW     :          alpha^3
+    /// ];
+    ///
+    /// // LO EW
+    /// assert_eq!(Order::create_mask(&orders, 0, 1), [false, false, true, false, false, false, false]);
+    /// // LO QCD
+    /// assert_eq!(Order::create_mask(&orders, 1, 0), [true, false, false, false, false, false, false]);
+    /// // LO
+    /// assert_eq!(Order::create_mask(&orders, 1, 1), [true, true, true, false, false, false, false]);
+    /// ```
     pub fn create_mask(orders: &[Order], max_as: u32, max_al: u32) -> Vec<bool> {
         // smallest sum of alphas and alpha
         let lo = orders
