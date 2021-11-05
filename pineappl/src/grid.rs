@@ -162,29 +162,30 @@ impl Order {
     /// // LO
     /// assert_eq!(Order::create_mask(&orders, 1, 1), [true, true, true, false, false, false, false]);
     /// ```
-    pub fn create_mask(orders: &[Order], max_as: u32, max_al: u32) -> Vec<bool> {
+    #[must_use]
+    pub fn create_mask(orders: &[Self], max_as: u32, max_al: u32) -> Vec<bool> {
         // smallest sum of alphas and alpha
         let lo = orders
             .iter()
-            .map(|Order { alphas, alpha, .. }| alphas + alpha)
+            .map(|Self { alphas, alpha, .. }| alphas + alpha)
             .min()
             .unwrap_or_default();
 
         // all leading orders, without logarithms
         let leading_orders: Vec<_> = orders
             .iter()
-            .filter(|Order { alphas, alpha, .. }| alphas + alpha == lo)
+            .filter(|Self { alphas, alpha, .. }| alphas + alpha == lo)
             .cloned()
             .collect();
 
         let lo_as = leading_orders
             .iter()
-            .map(|Order { alphas, .. }| *alphas)
+            .map(|Self { alphas, .. }| *alphas)
             .max()
             .unwrap_or_default();
         let lo_al = leading_orders
             .iter()
-            .map(|Order { alpha, .. }| *alpha)
+            .map(|Self { alpha, .. }| *alpha)
             .max()
             .unwrap_or_default();
 
@@ -193,17 +194,15 @@ impl Order {
 
         orders
             .iter()
-            .map(|Order { alphas, alpha, .. }| {
+            .map(|Self { alphas, alpha, .. }| {
                 let pto = alphas + alpha - lo;
 
                 alphas + alpha < min + lo
                     || (alphas + alpha < max + lo
-                        && if max_as > max_al {
-                            lo_as + pto == *alphas
-                        } else if max_as < max_al {
-                            lo_al + pto == *alpha
-                        } else {
-                            false
+                        && match max_as.cmp(&max_al) {
+                            Ordering::Greater => lo_as + pto == *alphas,
+                            Ordering::Less => lo_al + pto == *alpha,
+                            Ordering::Equal => false,
                         })
             })
             .collect()
