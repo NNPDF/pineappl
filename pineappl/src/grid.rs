@@ -726,6 +726,7 @@ impl Grid {
     pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
         let mut encoder = FrameEncoder::new(writer);
         self.write(&mut encoder)?;
+        // TODO: get rid of the unwrap call and return the error
         encoder.try_finish().unwrap();
 
         Ok(())
