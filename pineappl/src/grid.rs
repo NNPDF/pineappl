@@ -1142,7 +1142,7 @@ impl Grid {
                     .subgrids
                     .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
-                a.iter_mut().zip(b.iter_mut()).for_each(|(lhs, rhs)| {
+                for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
                     if !rhs.is_empty() {
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
@@ -1152,11 +1152,14 @@ impl Grid {
                             && (lhs.x2_grid() == rhs.x1_grid())
                         {
                             lhs.merge(rhs, true);
+                        } else {
+                            // don't overwrite `rhs`
+                            continue;
                         }
 
                         *rhs = EmptySubgridV1::default().into();
                     }
-                });
+                }
             }
         }
     }
