@@ -439,7 +439,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
     pineappl_grid_optimize(grids.at(0));
 
     LHAPDF::setVerbosity(0);
-    pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 1));
+    pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
 
     auto const& results = grid.vconvolute(evolvepdf, evolvepdf, alphaspdf, 1);
     std::vector<double> other_results(results.size());
