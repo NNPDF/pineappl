@@ -500,7 +500,7 @@ impl Grid {
         lumi_cache.setup(self, xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
-            (0..self.bin_limits.bins()).collect()
+            (0..self.bin_info().bins()).collect()
         } else {
             bin_indices.to_vec()
         };
@@ -791,12 +791,12 @@ impl Grid {
             }
         }
 
+        let bin_count = self.bin_info().bins();
         let mut old_subgrids = mem::replace(
             &mut self.subgrids,
-            Array3::from_shape_simple_fn(
-                (self.orders.len(), self.bin_limits.bins(), self.lumi.len()),
-                || EmptySubgridV1::default().into(),
-            ),
+            Array3::from_shape_simple_fn((self.orders.len(), bin_count, self.lumi.len()), || {
+                EmptySubgridV1::default().into()
+            }),
         );
 
         for ((order, bin, lumi), subgrid) in old_subgrids.indexed_iter_mut() {
@@ -1008,9 +1008,9 @@ impl Grid {
     ///
     /// TODO
     pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridError> {
-        if remapper.bins() != self.bin_limits.bins() {
+        if remapper.bins() != self.bin_info().bins() {
             return Err(GridError::BinNumberMismatch {
-                grid_bins: self.bin_limits.bins(),
+                grid_bins: self.bin_info().bins(),
                 remapper_bins: remapper.bins(),
             });
         }
