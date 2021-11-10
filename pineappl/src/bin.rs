@@ -41,6 +41,16 @@ pub enum MergeBinError {
         /// Number of bins.
         bins: usize,
     },
+
+    /// Returned by [`BinRemapper::merge`] whenever the dimensions of two `BinRemapper` are not the
+    /// same.
+    #[error("tried to merge bins with different dimensions {lhs} and {rhs}")]
+    IncompatibleDimensions {
+        /// Dimension of the bins of the first `BinRemapper`.
+        lhs: usize,
+        /// Dimension of the bins of the second `BinRemapper`.
+        rhs: usize,
+    },
 }
 
 /// Structure representing bin limits.
@@ -249,6 +259,29 @@ impl BinRemapper {
         } else {
             Err(MergeBinError::NonConsecutiveRange(range))
         }
+    }
+
+    /// Merge the `BinRemapper` of `other` into `self` on the right-hand-side.
+    ///
+    /// # Errors
+    ///
+    /// If the dimensions of both remappers are not the same an error is returned.
+    pub fn merge(&mut self, other: &Self) -> Result<(), MergeBinError> {
+        let lhs_dim = self.dimensions();
+        let rhs_dim = other.dimensions();
+
+        if lhs_dim != rhs_dim {
+            return Err(MergeBinError::IncompatibleDimensions {
+                lhs: lhs_dim,
+                rhs: rhs_dim,
+            });
+        }
+
+        // TODO: we shouldn't allow overlapping bins
+        self.normalizations.extend_from_slice(&other.normalizations);
+        self.limits.extend_from_slice(&other.limits);
+
+        Ok(())
     }
 
     /// Return the normalization factors for all bins.
