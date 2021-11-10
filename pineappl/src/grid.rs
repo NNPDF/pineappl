@@ -837,6 +837,44 @@ impl Grid {
         let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
+        if self.bin_info() != other.bin_info() {
+            let lhs_bins = self.bin_info().bins();
+            new_bins = other.bin_info().bins();
+
+            let lhs_remapper = match &mut self.more_members {
+                MoreMembers::V1(_) => None,
+                MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
+                MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
+            };
+            let rhs_remapper = match &other.more_members {
+                MoreMembers::V1(_) => None,
+                MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
+                MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
+            };
+
+            if let Some(lhs) = lhs_remapper {
+                if let Some(rhs) = rhs_remapper {
+                    lhs.merge(rhs).map_err(GridError::MergeBinError)?;
+
+                    let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
+                    let b = u32::try_from(lhs_bins + new_bins).unwrap_or_else(|_| unreachable!());
+
+                    self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
+                    other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
+                } else {
+                    // Return an error
+                    todo!();
+                }
+            } else if rhs_remapper.is_none() {
+                self.bin_limits
+                    .merge(&other.bin_limits)
+                    .map_err(GridError::InvalidBinLimits)?;
+            } else {
+                // Return an error
+                todo!();
+            }
+        }
+
         for ((i, _, k), _) in other
             .subgrids
             .indexed_iter_mut()
@@ -861,25 +899,6 @@ impl Grid {
                 .any(|y| y == other_entry)
             {
                 new_entries.push(other_entry.clone());
-            }
-        }
-
-        if self.bin_limits != other.bin_limits {
-            if let Err(e) = self.bin_limits.merge(&other.bin_limits) {
-                return Err(GridError::InvalidBinLimits(e));
-            }
-
-            new_bins = other.bin_limits.bins();
-
-            // TODO: figure out a better strategy than removing the remapper
-            match &mut self.more_members {
-                MoreMembers::V1(_) => {}
-                MoreMembers::V2(mmv2) => {
-                    mmv2.remapper = None;
-                }
-                MoreMembers::V3(mmv3) => {
-                    mmv3.remapper = None;
-                }
             }
         }
 
