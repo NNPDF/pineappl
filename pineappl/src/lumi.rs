@@ -147,8 +147,7 @@ pub struct LumiCache<'a> {
     alphas_cache: Vec<f64>,
     mur2_grid: Vec<f64>,
     muf2_grid: Vec<f64>,
-    x1_grid: Vec<f64>,
-    x2_grid: Vec<f64>,
+    x_grid: Vec<f64>,
     imur2: Vec<usize>,
     imuf2: Vec<usize>,
     ix1: Vec<usize>,
@@ -188,8 +187,7 @@ impl<'a> LumiCache<'a> {
             alphas_cache: vec![],
             mur2_grid: vec![],
             muf2_grid: vec![],
-            x1_grid: vec![],
-            x2_grid: vec![],
+            x_grid: vec![],
             imur2: Vec::new(),
             imuf2: Vec::new(),
             ix1: Vec::new(),
@@ -225,8 +223,7 @@ impl<'a> LumiCache<'a> {
             alphas_cache: vec![],
             mur2_grid: vec![],
             muf2_grid: vec![],
-            x1_grid: vec![],
-            x2_grid: vec![],
+            x_grid: vec![],
             imur2: Vec::new(),
             imuf2: Vec::new(),
             ix1: Vec::new(),
@@ -282,35 +279,22 @@ impl<'a> LumiCache<'a> {
         // TODO: try to avoid calling clear
         self.clear();
 
-        let mut x1_grid: Vec<_> = grid
+        let mut x_grid: Vec<_> = grid
             .subgrids()
             .iter()
             .filter_map(|subgrid| {
                 if subgrid.is_empty() {
                     None
                 } else {
-                    Some(subgrid.x1_grid().into_owned())
+                    let mut vec = subgrid.x1_grid().into_owned();
+                    vec.extend_from_slice(&subgrid.x2_grid());
+                    Some(vec)
                 }
             })
             .flatten()
             .collect();
-        x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-        x1_grid.dedup();
-
-        let mut x2_grid: Vec<_> = grid
-            .subgrids()
-            .iter()
-            .filter_map(|subgrid| {
-                if subgrid.is_empty() {
-                    None
-                } else {
-                    Some(subgrid.x2_grid().into_owned())
-                }
-            })
-            .flatten()
-            .collect();
-        x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-        x2_grid.dedup();
+        x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        x_grid.dedup();
 
         let mut mur2_grid: Vec<_> = grid
             .subgrids()
@@ -356,8 +340,7 @@ impl<'a> LumiCache<'a> {
 
         self.mur2_grid = mur2_grid;
         self.muf2_grid = muf2_grid;
-        self.x1_grid = x1_grid;
-        self.x2_grid = x2_grid;
+        self.x_grid = x_grid;
         self.cc1 = cc1;
         self.cc2 = cc2;
 
@@ -367,7 +350,7 @@ impl<'a> LumiCache<'a> {
     /// Return the PDF (multiplied with `x`) for the first initial state.
     pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
         let ix1 = self.ix1[ix1];
-        let x = self.x1_grid[ix1];
+        let x = self.x_grid[ix1];
         if self.cc1 == 0 {
             x
         } else {
@@ -389,7 +372,7 @@ impl<'a> LumiCache<'a> {
     /// Return the PDF (multiplied with `x`) for the second initial state.
     pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
         let ix2 = self.ix2[ix2];
-        let x = self.x2_grid[ix2];
+        let x = self.x_grid[ix2];
         if self.cc2 == 0 {
             x
         } else {
@@ -418,8 +401,7 @@ impl<'a> LumiCache<'a> {
     pub fn clear(&mut self) {
         self.mur2_grid.clear();
         self.muf2_grid.clear();
-        self.x1_grid.clear();
-        self.x2_grid.clear();
+        self.x_grid.clear();
     }
 
     /// Set the grids.
@@ -452,16 +434,17 @@ impl<'a> LumiCache<'a> {
         self.ix1 = x1_grid
             .iter()
             .map(|x1| {
-                self.x1_grid
+                self.x_grid
                     .iter()
                     .position(|x| x1 == x)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
+
         self.ix2 = x2_grid
             .iter()
             .map(|x2| {
-                self.x2_grid
+                self.x_grid
                     .iter()
                     .position(|x| x2 == x)
                     .unwrap_or_else(|| unreachable!())
