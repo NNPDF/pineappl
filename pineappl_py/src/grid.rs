@@ -465,4 +465,14 @@ impl PyGrid {
             })
             .collect()
     }
+
+    /// Scale all subgrids.
+    ///
+    /// Parameters
+    /// ----------
+    /// factor : float
+    ///     scalar factor by which scaling
+    pub fn scale(&mut self, factor: f64) {
+        self.grid.scale(factor);
+    }
 }
