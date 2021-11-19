@@ -16,7 +16,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, Array5, Dimension};
+use ndarray::{s, Array3, Array5, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1228,62 +1228,79 @@ impl Grid {
     /// More specific, the `x_grid` and `muf2_grid` are extracted and checked.
     #[must_use]
     pub fn axes(&self) -> Option<GridAxes> {
-        let mut muf2_grid = Vec::<f64>::new();
-        let mut x_grid = Vec::<f64>::new();
-        let pids = Vec::<i32>::new();
-        let mut has_pdf1 = true;
-        let mut has_pdf2 = true;
+        // determine what and how many hadrons are in the initial state
+        let initial_state_1 = self.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_1")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
+        });
+        let initial_state_2 = self.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_2")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
+        });
 
-        for subgrid in &self.subgrids {
-            if !subgrid.is_empty() {
-                let x1 = subgrid.x1_grid();
-                let x2 = subgrid.x2_grid();
+        // are the initial states hadrons?
+        let has_pdf1 = !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1));
+        let has_pdf2 = !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2));
 
-                if muf2_grid.is_empty() {
-                    muf2_grid = subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect();
+        let mut muf2_grid = Vec::new();
+        let mut x_grid = Vec::new();
+        let pids = Vec::new();
 
-                    // if the `x1` grid contains only one element, we assume that it's not a
-                    // hadronic initial state
-                    if x1.len() == 1 {
-                        has_pdf1 = false;
-                    } else {
-                        x_grid = x1.to_vec();
-                    }
+        // Within each lane, that is for a specific combination of (order, bin) ...
+        for lane in self.subgrids().lanes(Axis(2)) {
+            // for all luminosities ...
 
-                    // same for `x2`
-                    if x2.len() == 1 {
-                        has_pdf2 = false;
-                    } else {
-                        x_grid = x2.to_vec();
-                    }
+            // the renormalization and factorization grid must be the same, ...
+            if !lane
+                .iter()
+                .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.mu2_grid()))
+                .all_equal()
+            {
+                return None;
+            }
 
-                    // PineAPPL assumes that there's at least one hadronic initial state
-                    if !has_pdf1 && !has_pdf2 {
-                        return None;
-                    }
+            // the x1 grid must be the same and finally ...
+            if has_pdf1
+                && !lane
+                    .iter()
+                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
+                    .all_equal()
+            {
+                return None;
+            }
 
-                    // for `convolute_eko` to work both grids have to be the same
-                    if has_pdf1 && has_pdf2 && x1 != x2 {
-                        return None;
-                    }
-                } else {
-                    // for `convolute_eko` to work in fact all subgrids must have the same `x1` ...
-                    if has_pdf1 && !x1.iter().eq(x_grid.iter()) {
-                        return None;
-                    }
+            // the x2 grid must be the same
+            if has_pdf2
+                && !lane
+                    .iter()
+                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
+                    .all_equal()
+            {
+                return None;
+            }
 
-                    // and `x2` grids
-                    if has_pdf2 && !x2.iter().eq(x_grid.iter()) {
-                        return None;
-                    }
-                }
-
-                // the `q2` grids (static vs. dynamic scales) can differ across bins/lumis
+            // since all luminosities are equal, we just pick the first one
+            if let Some(subgrid) = lane.iter().next() {
                 muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
-                muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-                muf2_grid.dedup();
+                if has_pdf1 {
+                    x_grid.extend_from_slice(&subgrid.x1_grid());
+                }
+                if has_pdf2 {
+                    x_grid.extend_from_slice(&subgrid.x2_grid());
+                }
             }
         }
+
+        muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        muf2_grid.dedup();
+        x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        x_grid.dedup();
 
         Some(GridAxes {
             x_grid,
@@ -1458,19 +1475,31 @@ impl Grid {
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
 
-                    // if the source x1/x2 grid doesn't agree with `x_grid`, they're inverted
-                    let invert_x = (has_pdf1
-                        && !src_subgrid
-                            .x1_grid()
-                            .iter()
-                            .zip(eko_info.grid_axes.x_grid.iter())
-                            .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)))
-                        || (has_pdf2
-                            && !src_subgrid
-                                .x2_grid()
+                    // source x1/x2 grid might differ and be differently sorted than the operator
+                    let x1_grid: Vec<_> = src_subgrid
+                        .x1_grid()
+                        .iter()
+                        .map(|x| {
+                            eko_info
+                                .grid_axes
+                                .x_grid
                                 .iter()
-                                .zip(eko_info.grid_axes.x_grid.iter())
-                                .all(|(a, b)| approx_eq!(f64, *a, *b, ulps = 128)));
+                                .position(|xi| xi == x)
+                                .unwrap_or_else(|| unreachable!())
+                        })
+                        .collect();
+                    let x2_grid: Vec<_> = src_subgrid
+                        .x2_grid()
+                        .iter()
+                        .map(|x| {
+                            eko_info
+                                .grid_axes
+                                .x_grid
+                                .iter()
+                                .position(|xi| xi == x)
+                                .unwrap_or_else(|| unreachable!())
+                        })
+                        .collect();
 
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
                         let scale = src_subgrid.mu2_grid()[iq2].fac;
@@ -1490,16 +1519,8 @@ impl Grid {
                                 )
                             });
 
-                        let ix1 = if invert_x && has_pdf1 {
-                            eko_info.grid_axes.x_grid.len() - ix1 - 1
-                        } else {
-                            ix1
-                        };
-                        let ix2 = if invert_x && has_pdf2 {
-                            eko_info.grid_axes.x_grid.len() - ix2 - 1
-                        } else {
-                            ix2
-                        };
+                        let ix1 = if has_pdf1 { x1_grid[ix1] } else { ix1 };
+                        let ix2 = if has_pdf2 { x2_grid[ix2] } else { ix2 };
 
                         src_array[[src_iq2, ix1, ix2]] += eko_info.alphas[als_iq2]
                             .powi(powers.alphas.try_into().unwrap())
