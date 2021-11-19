@@ -58,22 +58,21 @@ impl PyOrder {
             self.order.logxif,
         )
     }
-}
-
-/// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
-/// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
-/// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
-/// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
-/// the NNLO QCD.
-///
-/// See `pineappl` crate docs for relevant examples
-#[pyfunction]
-pub fn create_mask(orders: Vec<PyRef<PyOrder>>, max_as: u32, max_al: u32) -> Vec<bool> {
-    Order::create_mask(
-        &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
-        max_as,
-        max_al,
-    )
+    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
+    /// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
+    /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
+    /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
+    /// the NNLO QCD.
+    ///
+    /// See `pineappl` crate docs for relevant examples
+    #[staticmethod]
+    pub fn create_mask(orders: Vec<PyRef<PyOrder>>, max_as: u32, max_al: u32) -> Vec<bool> {
+        Order::create_mask(
+            &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
+            max_as,
+            max_al,
+        )
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`

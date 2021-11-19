@@ -7,8 +7,6 @@ pub mod import_only_subgrid;
 pub mod lumi;
 pub mod subgrid;
 
-use grid::*;
-
 /// PyO3 Python module that contains all exposed classes from Rust.
 ///
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
@@ -16,7 +14,6 @@ use grid::*;
 fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bin::PyBinRemapper>()?;
     m.add_class::<grid::PyGrid>()?;
-    m.add_function(wrap_pyfunction!(create_mask, m)?)?;
     m.add_class::<grid::PyOrder>()?;
     m.add_class::<lumi::PyLumiEntry>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV1>()?;
