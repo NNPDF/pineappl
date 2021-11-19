@@ -1328,17 +1328,15 @@ impl Grid {
             map.get("initial_state_2").unwrap().parse::<i32>().unwrap()
         });
 
-        // TODO: determine the following by simply checking the x1 and x2 grid lengths
-        let has_pdf1 = match initial_state_1 {
-            2212 | -2212 => true,
-            11 | 13 | -11 | -13 => false,
-            _ => unimplemented!(),
-        };
-        let has_pdf2 = match initial_state_2 {
-            2212 | -2212 => true,
-            11 | 13 | -11 | -13 => false,
-            _ => unimplemented!(),
-        };
+        // are the initial states hadrons?
+        let has_pdf1 = !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1));
+        let has_pdf2 = !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2));
 
         let pids1 = if has_pdf1 {
             eko_info.grid_axes.pids.clone()
