@@ -1321,11 +1321,13 @@ impl Grid {
         let operator = operator.as_standard_layout();
 
         // determine what and how many hadrons are in the initial state
-        let initial_state_1 = self.key_values().map_or(2212, |map| {
-            map.get("initial_state_1").unwrap().parse::<i32>().unwrap()
+        let initial_state_1 = self.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_1")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
         });
-        let initial_state_2 = self.key_values().map_or(2212, |map| {
-            map.get("initial_state_2").unwrap().parse::<i32>().unwrap()
+        let initial_state_2 = self.key_values().map_or(2212, |kv| {
+            kv.get("initial_state_2")
+                .map_or(2212, |s| s.parse::<i32>().unwrap())
         });
 
         // are the initial states hadrons?
@@ -1398,7 +1400,7 @@ impl Grid {
         result.set_key_value("lumi_id_types", &eko_info.lumi_id_types);
 
         // collect source grid informations
-        let grid_axes = self.axes().unwrap();
+        let grid_axes = self.axes()?;
 
         // Setup progress bar
         let bar = ProgressBar::new(
@@ -1654,7 +1656,7 @@ impl Grid {
         bar.finish();
 
         result.optimize();
-        Some(FkTable::try_from(result).unwrap())
+        FkTable::try_from(result).ok()
     }
 }
 
