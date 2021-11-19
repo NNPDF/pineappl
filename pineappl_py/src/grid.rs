@@ -66,7 +66,7 @@ impl PyOrder {
     ///
     /// See `pineappl` crate docs for relevant examples
     #[staticmethod]
-    pub fn create_mask(orders: Vec<PyRef<PyOrder>>, max_as: u32, max_al: u32) -> Vec<bool> {
+    pub fn create_mask(orders: Vec<PyRef<Self>>, max_as: u32, max_al: u32) -> Vec<bool> {
         Order::create_mask(
             &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
             max_as,
