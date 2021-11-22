@@ -1482,7 +1482,7 @@ impl Grid {
                                 .grid_axes
                                 .x_grid
                                 .iter()
-                                .position(|xi| approx_eq!(f64, xi, x, ulps = 64))
+                                .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
                                 .unwrap_or_else(|| unreachable!())
                         })
                         .collect();
@@ -1494,7 +1494,7 @@ impl Grid {
                                 .grid_axes
                                 .x_grid
                                 .iter()
-                                .position(|xi| approx_eq!(f64, xi, x, ulps = 64))
+                                .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
                                 .unwrap_or_else(|| unreachable!())
                         })
                         .collect();
