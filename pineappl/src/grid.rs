@@ -1298,9 +1298,9 @@ impl Grid {
         }
 
         muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-        muf2_grid.dedup();
+        muf2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 32));
         x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-        x_grid.dedup();
+        x_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 32));
 
         Some(GridAxes {
             x_grid,
