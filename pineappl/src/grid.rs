@@ -1330,7 +1330,6 @@ impl Grid {
         assert_eq!(dim[0], eko_info.grid_axes.muf2_grid.len());
         assert_eq!(dim[1], eko_info.target_pids.len());
         assert_eq!(dim[3], eko_info.grid_axes.pids.len());
-        assert_eq!(dim[4], eko_info.grid_axes.x_grid.len());
 
         // swap axes around to optimize convolution
         let operator = operator.permuted_axes([3, 1, 4, 0, 2]);
