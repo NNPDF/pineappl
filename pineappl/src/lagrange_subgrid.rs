@@ -923,7 +923,7 @@ impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_cmp::approx_eq;
+    use float_cmp::assert_approx_eq;
 
     fn test_q2_slice_methods<G: Subgrid>(mut grid: G) {
         grid.fill(&Ntuple {
@@ -970,7 +970,7 @@ mod tests {
 
         eprintln!("{} {}", test, reference);
 
-        assert!(approx_eq!(f64, test, reference, ulps = 8));
+        assert_approx_eq!(f64, test, reference, ulps = 8);
     }
 
     fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)
@@ -1018,7 +1018,7 @@ mod tests {
 
         let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
-        assert!(approx_eq!(f64, reference, merged, ulps = 8));
+        assert_approx_eq!(f64, reference, merged, ulps = 8);
 
         grid3.fill(&Ntuple {
             x1: 0.1,
@@ -1049,7 +1049,7 @@ mod tests {
 
         let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
-        assert!(approx_eq!(f64, 2.0 * reference, merged, ulps = 8));
+        assert_approx_eq!(f64, 2.0 * reference, merged, ulps = 8);
     }
 
     fn test_empty_subgrid<G: Subgrid>(mut grid: G) {
@@ -1165,7 +1165,7 @@ mod tests {
         let converted =
             sparse.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
-        assert!(approx_eq!(f64, reference, converted, ulps = 8));
+        assert_approx_eq!(f64, reference, converted, ulps = 8);
     }
 
     #[test]

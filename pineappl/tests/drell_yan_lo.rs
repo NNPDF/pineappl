@@ -1,4 +1,4 @@
-use float_cmp::approx_eq;
+use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Ntuple, Order};
@@ -228,7 +228,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // optimize the grid
@@ -277,7 +277,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 24));
+        assert_approx_eq!(f64, *result, *reference, ulps = 24);
     }
 
     let bins: Vec<_> = (0..grid.bin_info().bins())
@@ -288,14 +288,14 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
         .collect();
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // trivial merge: first bin is merged into first bin
     grid.merge_bins(0..1)?;
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // merge two bins with each other
@@ -310,7 +310,7 @@ fn dy_aa_lagrange_subgrid_static() -> anyhow::Result<()> {
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert!(approx_eq!(f64, *result, reference, ulps = 16));
+        assert_approx_eq!(f64, *result, reference, ulps = 16);
     }
 
     Ok(())
@@ -381,7 +381,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // optimize the grid
@@ -391,7 +391,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
     let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     let bins: Vec<_> = (0..grid.bin_info().bins())
@@ -402,14 +402,14 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
         .collect();
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // trivial merge: first bin is merged into first bin
     grid.merge_bins(0..1)?;
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // merge two bins with each other
@@ -424,7 +424,7 @@ fn dy_aa_lagrange_subgrid_dynamic() -> anyhow::Result<()> {
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert!(approx_eq!(f64, *result, reference, ulps = 16));
+        assert_approx_eq!(f64, *result, reference, ulps = 16);
     }
 
     Ok(())
@@ -495,14 +495,14 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // check that the results are still the same
     let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // optimize the grid
@@ -516,14 +516,14 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
         .collect();
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // trivial merge: first bin is merged into first bin
     grid.merge_bins(0..1)?;
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // merge two bins with each other
@@ -538,7 +538,7 @@ fn dy_aa_lagrange_subgrid_v2_dynamic() -> anyhow::Result<()> {
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert!(approx_eq!(f64, *result, reference, ulps = 16));
+        assert_approx_eq!(f64, *result, reference, ulps = 16);
     }
 
     Ok(())
@@ -609,7 +609,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     ];
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // optimize the grid
@@ -619,7 +619,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // TODO: activate the following tests once `convolute_subgrid` understands reweights
@@ -632,14 +632,14 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
     //    .collect();
 
     //for (result, reference) in bins.iter().zip(reference.iter()) {
-    //    assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+    //    assert_approx_eq!(f64, *result, *reference, ulps = 16);
     //}
 
     // trivial merge: first bin is merged into first bin
     grid.merge_bins(0..1)?;
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert!(approx_eq!(f64, *result, *reference, ulps = 16));
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
     // merge two bins with each other
@@ -654,7 +654,7 @@ fn dy_aa_lagrange_sparse_subgrid_dynamic() -> anyhow::Result<()> {
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert!(approx_eq!(f64, *result, reference, ulps = 16));
+        assert_approx_eq!(f64, *result, reference, ulps = 16);
     }
 
     Ok(())
