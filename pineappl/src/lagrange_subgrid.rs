@@ -176,10 +176,10 @@ impl Subgrid for LagrangeSubgridV1 {
         let u_y1 = (y1 - self.gety(k1)) / self.deltay();
         let u_y2 = (y2 - self.gety(k2)) / self.deltay();
 
-        let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
+        let fi1: ArrayVec<_, 8> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y1))
             .collect();
-        let fi2: ArrayVec<[_; 8]> = (0..=self.yorder)
+        let fi2: ArrayVec<_, 8> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y2))
             .collect();
 
@@ -503,10 +503,10 @@ impl Subgrid for LagrangeSubgridV2 {
         let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
         let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
 
-        let fi1: ArrayVec<[_; 8]> = (0..=self.y1order)
+        let fi1: ArrayVec<_, 8> = (0..=self.y1order)
             .map(|i| fi(i, self.y1order, u_y1))
             .collect();
-        let fi2: ArrayVec<[_; 8]> = (0..=self.y2order)
+        let fi2: ArrayVec<_, 8> = (0..=self.y2order)
             .map(|i| fi(i, self.y2order, u_y2))
             .collect();
 
@@ -782,10 +782,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         let u_y1 = (y1 - self.gety(k1)) / self.deltay();
         let u_y2 = (y2 - self.gety(k2)) / self.deltay();
 
-        let fi1: ArrayVec<[_; 8]> = (0..=self.yorder)
+        let fi1: ArrayVec<_, 8> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y1))
             .collect();
-        let fi2: ArrayVec<[_; 8]> = (0..=self.yorder)
+        let fi2: ArrayVec<_, 8> = (0..=self.yorder)
             .map(|i| fi(i, self.yorder, u_y2))
             .collect();
 
