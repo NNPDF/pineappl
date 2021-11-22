@@ -1482,7 +1482,7 @@ impl Grid {
                                 .grid_axes
                                 .x_grid
                                 .iter()
-                                .position(|xi| xi == x)
+                                .position(|xi| approx_eq!(f64, xi, x, ulps = 64))
                                 .unwrap_or_else(|| unreachable!())
                         })
                         .collect();
@@ -1494,7 +1494,7 @@ impl Grid {
                                 .grid_axes
                                 .x_grid
                                 .iter()
-                                .position(|xi| xi == x)
+                                .position(|xi| approx_eq!(f64, xi, x, ulps = 64))
                                 .unwrap_or_else(|| unreachable!())
                         })
                         .collect();
@@ -1509,7 +1509,9 @@ impl Grid {
                             .grid_axes
                             .muf2_grid
                             .iter()
-                            .position(|&q2| q2 == eko_info.xir * eko_info.xir * scale)
+                            .position(|&q2| {
+                                approx_eq!(f64, q2, eko_info.xir * eko_info.xir * scale, ulps = 64)
+                            })
                             .unwrap_or_else(|| {
                                 panic!(
                                     "Couldn't find q2: {:?} with xir: {:?} and muf2_grid: {:?}",
@@ -1543,7 +1545,7 @@ impl Grid {
                             .grid_axes
                             .muf2_grid
                             .iter()
-                            .position(|&q2| q2 == src_q2)
+                            .position(|&q2| approx_eq!(f64, q2, src_q2, ulps = 64))
                             .unwrap()
                     })
                     .collect();
