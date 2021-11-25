@@ -90,6 +90,20 @@ impl PyFkTable {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
 
+    /// Write grid to file using lz4.
+    ///
+    /// **Usage:** `pineko`
+    ///
+    /// Parameters
+    /// ----------
+    ///     path : str
+    ///         file path
+    pub fn write_lz4(&self, path: &str) {
+        self.fk_table
+            .write_lz4(File::create(path).unwrap())
+            .unwrap();
+    }
+
     /// Convolute grid with pdf.
     ///
     /// **Usage:** `pineko`
