@@ -1,16 +1,19 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use std::fs;
+use std::path::PathBuf;
 
 /// Modifies the internal key-value storage.
 #[derive(Parser)]
 #[clap(name = "set")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Path of the modified PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
     /// Deletes an internal key-value pair.
     #[clap(long, multiple_occurrences = true, value_name = "KEY")]
     delete: Vec<String>,

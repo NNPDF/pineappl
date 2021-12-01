@@ -1,17 +1,20 @@
 use super::helpers;
 use anyhow::{bail, ensure, Context, Result};
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
+use std::path::PathBuf;
 
 /// Modifies the bin dimensions, widths and normalizations.
 #[derive(Parser)]
 #[clap(name = "remap")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Path of the modified PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
     /// Remapping string.
     remapping: String,
     /// Ignore the given observables for differential normalization.

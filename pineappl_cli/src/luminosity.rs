@@ -1,14 +1,16 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use prettytable::{cell, row, Table};
+use std::path::PathBuf;
 
 /// Shows the luminosity function.
 #[derive(Parser)]
 #[clap(name = "lumi", aliases = &["luminosities", "luminosity"])]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
 }
 
 impl Opts {

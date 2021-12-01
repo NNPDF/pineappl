@@ -1,14 +1,16 @@
 use super::helpers;
 use anyhow::Result;
-use clap::{ArgGroup, Parser};
+use clap::{ArgGroup, Parser, ValueHint};
 use itertools::Itertools;
+use std::path::PathBuf;
 
 /// Shows information about the grid.
 #[derive(Parser)]
 #[clap(group = ArgGroup::new("mode").required(true), name = "info")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// For each order print a list of the largest EW order.
     #[clap(group = "mode", long)]
     ew: bool,
