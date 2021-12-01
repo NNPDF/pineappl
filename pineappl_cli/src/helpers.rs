@@ -1,4 +1,5 @@
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
+use lazy_static::lazy_static;
 use lhapdf::Pdf;
 use ndarray::Array3;
 use pineappl::grid::Grid;
@@ -6,9 +7,16 @@ use pineappl::lumi::LumiCache;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
 use std::fs::{File, OpenOptions};
+use std::ops::Range;
 use std::path::Path;
+use std::str::FromStr;
 
 pub const ONE_SIGMA: f64 = 68.268_949_213_708_58;
+pub const ONE_SIGMA_STR: &str = "68.26894921370858";
+
+lazy_static! {
+    pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
+}
 
 pub fn read_grid(input: &str) -> Result<Grid> {
     Grid::read(File::open(input).context(format!("unable to open '{}'", input))?)
@@ -127,4 +135,95 @@ pub fn convolute_subgrid(
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
     grid.convolute_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+}
+
+pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
+    let argument = argument.rsplit_once('=').map_or(argument, |(name, _)| name);
+
+    if let Ok(lhaid) = argument.parse() {
+        if lhapdf::lookup_pdf(lhaid).is_some() {
+            return Ok(());
+        }
+
+        return Err(format!(
+            "The PDF set for the LHAPDF ID `{}` was not found",
+            argument
+        ));
+    } else if lhapdf::available_pdf_sets()
+        .iter()
+        .any(|set| *set == argument)
+    {
+        return Ok(());
+    }
+
+    Err(format!("The PDF set `{}` was not found", argument))
+}
+
+pub fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
+    argument: &str,
+) -> std::result::Result<(), String> {
+    if let Ok(number) = argument.parse::<T>() {
+        if number != T::default() {
+            return Ok(());
+        }
+    }
+
+    Err(format!(
+        "The value `{}` is not positive and non-zero",
+        argument
+    ))
+}
+
+pub fn try_parse_integer_range(range: &str) -> Result<Range<usize>> {
+    if let Some(at) = range.find('-') {
+        let (left, right) = range.split_at(at);
+        let left = str::parse::<usize>(left).context(format!(
+            "unable to parse integer range '{}'; couldn't convert '{}'",
+            range, left
+        ))?;
+        let right = str::parse::<usize>(&right[1..]).context(format!(
+            "unable to parse integer range '{}'; couldn't convert '{}'",
+            range, right
+        ))?;
+
+        Ok(left..(right + 1))
+    } else {
+        let value =
+            str::parse::<usize>(range).context(format!("unable to parse integer '{}'", range))?;
+
+        Ok(value..(value + 1))
+    }
+}
+
+pub fn parse_order(order: &str) -> Result<(u32, u32)> {
+    let mut alphas = 0;
+    let mut alpha = 0;
+
+    let matches: Vec<_> = order.match_indices('a').collect();
+
+    ensure!(
+        matches.len() <= 2,
+        "unable to parse order; too many couplings in '{}'",
+        order
+    );
+
+    for (index, _) in matches {
+        if &order[index..index + 2] == "as" {
+            let len = order[index + 2..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
+                .context(format!("unable to parse order '{}'", order))?;
+        } else {
+            let len = order[index + 1..]
+                .chars()
+                .take_while(|c| c.is_numeric())
+                .count();
+            alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
+                .context(format!("unable to parse order '{}'", order))?;
+        }
+    }
+
+    Ok((alphas, alpha))
 }

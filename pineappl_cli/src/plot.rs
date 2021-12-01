@@ -1,11 +1,35 @@
 use super::helpers;
 use anyhow::Result;
+use clap::Parser;
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::bin::BinInfo;
 use pineappl::subgrid::Subgrid;
 use rayon::prelude::*;
 use std::path::Path;
+
+/// Creates a matplotlib script plotting the contents of the grid.
+#[derive(Parser)]
+#[clap(name = "plot")]
+pub struct Opts {
+    /// Path to the input grid.
+    input: String,
+    /// LHAPDF id(s) or name of the PDF set(s).
+    #[clap(min_values = 1, validator = helpers::validate_pdfset)]
+    pdfsets: Vec<String>,
+    /// Set the number of scale variations.
+    #[clap(default_value = "7", long, possible_values = &["1", "3", "7", "9"], short)]
+    scales: usize,
+    /// Show the pull for a specific grid three-dimensionally.
+    #[clap(
+        conflicts_with = "scales",
+        long = "subgrid-pull",
+        number_of_values = 3,
+        use_delimiter = true,
+        value_names = &["ORDER", "BIN", "LUMI"]
+    )]
+    subgrid_pull: Vec<String>,
+}
 
 fn pdfset_label(pdfset: &str) -> &str {
     pdfset.rsplit_once('=').map_or(pdfset, |(_, label)| label)
@@ -23,7 +47,7 @@ fn map_format_e_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{:e}", x)).join(", ")
 }
 
-fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[&str]) -> String {
+fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -> String {
     let mut result = String::new();
 
     for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
@@ -85,7 +109,7 @@ fn format_script(
     slices: &[(usize, usize)],
     slice_labels: &[String],
     pdf_uncertainties: &[Vec<Vec<f64>>],
-    pdfsets: &[&str],
+    pdfsets: &[String],
     metadata: &[(&String, &String)],
 ) {
     println!("#!/usr/bin/env python3
@@ -407,100 +431,282 @@ if __name__ == '__main__':
         qcd_max=map_format_e_join(qcd_max),
         slices=format!("{:?}", slices),
         slice_labels=format!("[{}]", slice_labels.iter().map(|string| format!("r'{}'", string)).join(", ")),
-        pdf_results=format_pdf_results(pdf_uncertainties, pdfsets),
+        pdf_results=format_pdf_results(pdf_uncertainties, &pdfsets),
         metadata=format_metadata(metadata),
     );
 }
 
-pub fn subcommand_subgrid_pull(
-    input: &str,
-    pdfset1: &str,
-    pdfset2: &str,
-    order: usize,
-    bin: usize,
-    lumi: usize,
-) -> Result<()> {
-    let cl = helpers::ONE_SIGMA;
-    let grid = helpers::read_grid(input)?;
+impl Opts {
+    pub fn subcommand(&self) -> Result<()> {
+        if self.subgrid_pull.is_empty() {
+            let grid = helpers::read_grid(&self.input)?;
+            let lhapdf_name = pdfset_name(&self.pdfsets[0]);
+            let pdf = lhapdf_name.parse().map_or_else(
+                |_| Pdf::with_setname_and_member(lhapdf_name, 0),
+                Pdf::with_lhaid,
+            );
 
-    let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
-        |_| pdfset1.to_string(),
-        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-    ));
-    let set2 = PdfSet::new(&pdfset2.parse().map_or_else(
-        |_| pdfset2.to_string(),
-        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-    ));
-    let pdfset1 = set1.mk_pdfs();
-    let pdfset2 = set2.mk_pdfs();
+            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales);
 
-    let values1: Vec<f64> = pdfset1
-        .par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
-        .collect();
-    let values2: Vec<f64> = pdfset2
-        .par_iter()
-        .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
-        .collect();
+            let qcd_results = {
+                let mut orders = grid.orders().to_vec();
+                orders.sort();
+                let orders = orders;
 
-    let uncertainty1 = set1.uncertainty(&values1, cl, false);
-    let uncertainty2 = set2.uncertainty(&values2, cl, false);
+                let qcd_orders: Vec<_> = orders
+                    .iter()
+                    .group_by(|order| order.alphas + order.alpha)
+                    .into_iter()
+                    .map(|mut group| {
+                        let order = group.1.next().unwrap();
+                        (order.alphas, order.alpha)
+                    })
+                    .collect();
 
-    let full_res1 = {
-        let central: Vec<f64> = pdfset1
-            .iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
-            .collect();
-        set1.uncertainty(&central, cl, false).central
-    };
-    let full_res2 = {
-        let central: Vec<f64> = pdfset2
-            .iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
-            .collect();
-        set1.uncertainty(&central, cl, false).central
-    };
+                helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], self.scales)
+            };
 
-    let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
-    let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
+            let bin_info = grid.bin_info();
 
-    let denominator = {
-        // use the uncertainties in the direction in which the respective results differ
-        let unc1 = if full_res1 > full_res2 {
-            uncertainty1.errminus
+            let pdf_uncertainties: Vec<Vec<Vec<f64>>> = self
+                .pdfsets
+                .par_iter()
+                .map(|pdfset| {
+                    let lhapdf_name = pdfset_name(pdfset);
+                    let set = PdfSet::new(&lhapdf_name.parse().map_or_else(
+                        |_| lhapdf_name.to_string(),
+                        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+                    ));
+
+                    let pdf_results: Vec<_> = set
+                        .mk_pdfs()
+                        .into_par_iter()
+                        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
+                        .collect();
+
+                    let mut central = Vec::with_capacity(bin_info.bins());
+                    let mut min = Vec::with_capacity(bin_info.bins());
+                    let mut max = Vec::with_capacity(bin_info.bins());
+
+                    for bin in 0..bin_info.bins() {
+                        let values: Vec<_> = pdf_results
+                            .iter()
+                            .skip(bin)
+                            .step_by(bin_info.bins())
+                            .copied()
+                            .collect();
+
+                        let uncertainty = set.uncertainty(&values, helpers::ONE_SIGMA, false);
+                        central.push(uncertainty.central);
+                        min.push(uncertainty.central - uncertainty.errminus);
+                        max.push(uncertainty.central + uncertainty.errplus);
+                    }
+
+                    vec![central, min, max]
+                })
+                .collect();
+
+            let left_limits: Vec<_> = (0..bin_info.dimensions())
+                .map(|i| bin_info.left(i))
+                .collect();
+            let right_limits: Vec<_> = (0..bin_info.dimensions())
+                .map(|i| bin_info.right(i))
+                .collect();
+
+            let min: Vec<_> = results
+                .chunks_exact(self.scales)
+                .map(|variations| {
+                    variations
+                        .iter()
+                        .min_by(|a, b| a.partial_cmp(b).unwrap())
+                        .copied()
+                        .unwrap()
+                })
+                .collect();
+            let max: Vec<_> = results
+                .chunks_exact(self.scales)
+                .map(|variations| {
+                    variations
+                        .iter()
+                        .max_by(|a, b| a.partial_cmp(b).unwrap())
+                        .copied()
+                        .unwrap()
+                })
+                .collect();
+
+            let qcd_central: Vec<_> = qcd_results.iter().step_by(self.scales).copied().collect();
+            let qcd_min: Vec<_> = qcd_results
+                .chunks_exact(self.scales)
+                .map(|variations| {
+                    variations
+                        .iter()
+                        .min_by(|a, b| a.partial_cmp(b).unwrap())
+                        .copied()
+                        .unwrap()
+                })
+                .collect();
+            let qcd_max: Vec<_> = qcd_results
+                .chunks_exact(self.scales)
+                .map(|variations| {
+                    variations
+                        .iter()
+                        .max_by(|a, b| a.partial_cmp(b).unwrap())
+                        .copied()
+                        .unwrap()
+                })
+                .collect();
+
+            let slices = bin_info.slices();
+            let slice_labels: Vec<_> = slices
+                .iter()
+                .map(|&(begin, end)| {
+                    (0..bin_info.dimensions() - 1)
+                        .map(|d| {
+                            format!(
+                                "${} < {} < {}$",
+                                bin_info.left(d)[begin],
+                                grid.key_values()
+                                    .and_then(|map| map
+                                        .get(&format!("x{}_label_tex", d + 1))
+                                        .cloned())
+                                    .unwrap_or_else(|| format!("x{}", d + 1))
+                                    .replace("$", ""),
+                                bin_info.right(d)[end - 1]
+                            )
+                        })
+                        .join(r#"\\"#)
+                })
+                .collect();
+
+            let mut key_values = grid.key_values().cloned().unwrap_or_default();
+            key_values.entry("description".to_string()).or_default();
+            key_values.entry("x1_label_tex".to_string()).or_default();
+            key_values.entry("x1_unit".to_string()).or_default();
+            key_values.entry("y_label_tex".to_string()).or_default();
+            key_values.entry("y_unit".to_string()).or_default();
+
+            let mut vector: Vec<_> = key_values.iter().collect();
+            vector.sort();
+            let vector = vector;
+
+            let mut output = Path::new(&self.input);
+
+            // remove ".lz4" and ".pineappl" extension
+            match output.extension() {
+                Some(x) if x == "lz4" => output = Path::new(output.file_stem().unwrap()),
+                _ => {}
+            }
+            match output.extension() {
+                Some(x) if x == "pineappl" => output = Path::new(output.file_stem().unwrap()),
+                _ => {}
+            }
+
+            format_script(
+                &bin_info,
+                output.to_str().unwrap(),
+                left_limits.last().unwrap(),
+                right_limits.last().unwrap(),
+                &min,
+                &max,
+                &qcd_central,
+                &qcd_min,
+                &qcd_max,
+                &slices,
+                &slice_labels,
+                &pdf_uncertainties,
+                &self.pdfsets,
+                &vector,
+            );
         } else {
-            uncertainty1.errplus
-        };
-        let unc2 = if full_res2 > full_res1 {
-            uncertainty2.errminus
-        } else {
-            uncertainty2.errplus
-        };
+            let (pdfset1, pdfset2) = self.pdfsets.iter().collect_tuple().unwrap();
+            let (order, bin, lumi) = self
+                .subgrid_pull
+                .iter()
+                .map(|num| num.parse::<usize>().unwrap())
+                .collect_tuple()
+                .unwrap();
 
-        unc1.hypot(unc2)
-    };
-    let pull = (res2 - res1) / denominator;
+            let cl = helpers::ONE_SIGMA;
+            let grid = helpers::read_grid(&self.input)?;
 
-    let subgrid = grid.subgrid(order, bin, lumi);
-    //let q2 = subgrid.q2_grid();
-    let x1 = subgrid.x1_grid();
-    let x2 = subgrid.x2_grid();
+            let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
+                |_| pdfset1.to_string(),
+                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+            ));
+            let set2 = PdfSet::new(&pdfset2.parse().map_or_else(
+                |_| pdfset2.to_string(),
+                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+            ));
+            let pdfset1 = set1.mk_pdfs();
+            let pdfset2 = set2.mk_pdfs();
 
-    let mut x1_vals = vec![];
-    let mut x2_vals = vec![];
-    let mut vals = vec![];
+            let values1: Vec<f64> = pdfset1
+                .par_iter()
+                .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+                .collect();
+            let values2: Vec<f64> = pdfset2
+                .par_iter()
+                .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+                .collect();
 
-    for ((_, ix1, ix2), value) in pull
-        .indexed_iter()
-        .filter(|((_, _, _), value)| **value != 0.0)
-    {
-        x1_vals.push(x1[ix1]);
-        x2_vals.push(x2[ix2]);
-        vals.push(*value);
-    }
+            let uncertainty1 = set1.uncertainty(&values1, cl, false);
+            let uncertainty2 = set2.uncertainty(&values2, cl, false);
 
-    println!(
-        "#!/usr/bin/env python3
+            let full_res1 = {
+                let central: Vec<f64> = pdfset1
+                    .iter()
+                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+                    .collect();
+                set1.uncertainty(&central, cl, false).central
+            };
+            let full_res2 = {
+                let central: Vec<f64> = pdfset2
+                    .iter()
+                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+                    .collect();
+                set1.uncertainty(&central, cl, false).central
+            };
+
+            let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
+            let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
+
+            let denominator = {
+                // use the uncertainties in the direction in which the respective results differ
+                let unc1 = if full_res1 > full_res2 {
+                    uncertainty1.errminus
+                } else {
+                    uncertainty1.errplus
+                };
+                let unc2 = if full_res2 > full_res1 {
+                    uncertainty2.errminus
+                } else {
+                    uncertainty2.errplus
+                };
+
+                unc1.hypot(unc2)
+            };
+            let pull = (res2 - res1) / denominator;
+
+            let subgrid = grid.subgrid(order, bin, lumi);
+            //let q2 = subgrid.q2_grid();
+            let x1 = subgrid.x1_grid();
+            let x2 = subgrid.x2_grid();
+
+            let mut x1_vals = vec![];
+            let mut x2_vals = vec![];
+            let mut vals = vec![];
+
+            for ((_, ix1, ix2), value) in pull
+                .indexed_iter()
+                .filter(|((_, _, _), value)| **value != 0.0)
+            {
+                x1_vals.push(x1[ix1]);
+                x2_vals.push(x2[ix2]);
+                vals.push(*value);
+            }
+
+            println!(
+                "#!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -562,190 +768,12 @@ axes[1].set_ylabel(r'$x_2$')
 
 figure.colorbar(mesh, ax=axes, extend='min')
 figure.savefig('plot.pdf')",
-        map_format_e_join(&x1_vals),
-        map_format_e_join(&x2_vals),
-        map_format_e_join(&vals)
-    );
+                map_format_e_join(&x1_vals),
+                map_format_e_join(&x2_vals),
+                map_format_e_join(&vals)
+            );
+        }
 
-    Ok(())
-}
-
-pub fn subcommand(input: &str, pdfsets: &[&str], scales: usize) -> Result<()> {
-    let grid = helpers::read_grid(input)?;
-    let lhapdf_name = pdfset_name(pdfsets[0]);
-    let pdf = lhapdf_name.parse().map_or_else(
-        |_| Pdf::with_setname_and_member(lhapdf_name, 0),
-        Pdf::with_lhaid,
-    );
-
-    let results = helpers::convolute(&grid, &pdf, &[], &[], &[], scales);
-
-    let qcd_results = {
-        let mut orders = grid.orders().to_vec();
-        orders.sort();
-        let orders = orders;
-
-        let qcd_orders: Vec<_> = orders
-            .iter()
-            .group_by(|order| order.alphas + order.alpha)
-            .into_iter()
-            .map(|mut group| {
-                let order = group.1.next().unwrap();
-                (order.alphas, order.alpha)
-            })
-            .collect();
-
-        helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], scales)
-    };
-
-    let bin_info = grid.bin_info();
-
-    let pdf_uncertainties: Vec<Vec<Vec<f64>>> = pdfsets
-        .par_iter()
-        .map(|pdfset| {
-            let lhapdf_name = pdfset_name(pdfset);
-            let set = PdfSet::new(&lhapdf_name.parse().map_or_else(
-                |_| lhapdf_name.to_string(),
-                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-            ));
-
-            let pdf_results: Vec<_> = set
-                .mk_pdfs()
-                .into_par_iter()
-                .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
-                .collect();
-
-            let mut central = Vec::with_capacity(bin_info.bins());
-            let mut min = Vec::with_capacity(bin_info.bins());
-            let mut max = Vec::with_capacity(bin_info.bins());
-
-            for bin in 0..bin_info.bins() {
-                let values: Vec<_> = pdf_results
-                    .iter()
-                    .skip(bin)
-                    .step_by(bin_info.bins())
-                    .copied()
-                    .collect();
-
-                let uncertainty = set.uncertainty(&values, helpers::ONE_SIGMA, false);
-                central.push(uncertainty.central);
-                min.push(uncertainty.central - uncertainty.errminus);
-                max.push(uncertainty.central + uncertainty.errplus);
-            }
-
-            vec![central, min, max]
-        })
-        .collect();
-
-    let left_limits: Vec<_> = (0..bin_info.dimensions())
-        .map(|i| bin_info.left(i))
-        .collect();
-    let right_limits: Vec<_> = (0..bin_info.dimensions())
-        .map(|i| bin_info.right(i))
-        .collect();
-
-    let min: Vec<_> = results
-        .chunks_exact(scales)
-        .map(|variations| {
-            variations
-                .iter()
-                .min_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap()
-        })
-        .collect();
-    let max: Vec<_> = results
-        .chunks_exact(scales)
-        .map(|variations| {
-            variations
-                .iter()
-                .max_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap()
-        })
-        .collect();
-
-    let qcd_central: Vec<_> = qcd_results.iter().step_by(scales).copied().collect();
-    let qcd_min: Vec<_> = qcd_results
-        .chunks_exact(scales)
-        .map(|variations| {
-            variations
-                .iter()
-                .min_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap()
-        })
-        .collect();
-    let qcd_max: Vec<_> = qcd_results
-        .chunks_exact(scales)
-        .map(|variations| {
-            variations
-                .iter()
-                .max_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap()
-        })
-        .collect();
-
-    let slices = bin_info.slices();
-    let slice_labels: Vec<_> = slices
-        .iter()
-        .map(|&(begin, end)| {
-            (0..bin_info.dimensions() - 1)
-                .map(|d| {
-                    format!(
-                        "${} < {} < {}$",
-                        bin_info.left(d)[begin],
-                        grid.key_values()
-                            .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
-                            .unwrap_or_else(|| format!("x{}", d + 1))
-                            .replace("$", ""),
-                        bin_info.right(d)[end - 1]
-                    )
-                })
-                .join(r#"\\"#)
-        })
-        .collect();
-
-    let mut key_values = grid.key_values().cloned().unwrap_or_default();
-    key_values.entry("description".to_string()).or_default();
-    key_values.entry("x1_label_tex".to_string()).or_default();
-    key_values.entry("x1_unit".to_string()).or_default();
-    key_values.entry("y_label_tex".to_string()).or_default();
-    key_values.entry("y_unit".to_string()).or_default();
-
-    let mut vector: Vec<_> = key_values.iter().collect();
-    vector.sort();
-    let vector = vector;
-
-    let mut output = Path::new(input);
-
-    // remove ".lz4" and ".pineappl" extension
-    match output.extension() {
-        Some(x) if x == "lz4" => output = Path::new(output.file_stem().unwrap()),
-        _ => {}
+        Ok(())
     }
-    match output.extension() {
-        Some(x) if x == "pineappl" => output = Path::new(output.file_stem().unwrap()),
-        _ => {}
-    }
-
-    format_script(
-        &bin_info,
-        output.to_str().unwrap(),
-        left_limits.last().unwrap(),
-        right_limits.last().unwrap(),
-        &min,
-        &max,
-        &qcd_central,
-        &qcd_min,
-        &qcd_max,
-        &slices,
-        &slice_labels,
-        &pdf_uncertainties,
-        pdfsets,
-        &vector,
-    );
-
-    Ok(())
 }
