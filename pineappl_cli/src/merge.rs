@@ -1,30 +1,50 @@
 use super::helpers;
 use anyhow::Result;
+use clap::Parser;
 
-pub fn subcommand(
-    output: &str,
-    input0: &str,
-    input_rest: &[&str],
+/// Merges one or more PineAPPL grids together.
+#[derive(Parser)]
+#[clap(name = "merge")]
+pub struct Opts {
+    /// Path of the merged PineAPPL file.
+    output: String,
+    /// Path(s) of the files that should be merged.
+    #[clap(min_values = 1)]
+    input: Vec<String>,
+    /// Scales all grids with the given factor.
+    #[clap(long, short)]
     scale: Option<f64>,
-    scale_by_order: &[f64],
-) -> Result<()> {
-    let mut grid0 = helpers::read_grid(input0)?;
+    /// Scales all grids with order-dependent factors.
+    #[clap(
+        alias = "scale_by_order",
+        conflicts_with = "scale",
+        long = "scale-by-order",
+        value_names = &["ALPHAS", "ALPHA", "LOGXIR", "LOGXIF", "GLOBAL"]
+    )]
+    scale_by_order: Vec<f64>,
+}
 
-    for i in input_rest {
-        grid0.merge(helpers::read_grid(i)?)?;
+impl Opts {
+    pub fn subcommand(&self) -> Result<()> {
+        let (input0, input_rest) = self.input.split_first().unwrap();
+        let mut grid0 = helpers::read_grid(input0)?;
+
+        for i in input_rest {
+            grid0.merge(helpers::read_grid(i)?)?;
+        }
+
+        if let Some(scale) = self.scale {
+            grid0.scale(scale);
+        } else if !self.scale_by_order.is_empty() {
+            grid0.scale_by_order(
+                self.scale_by_order[0],
+                self.scale_by_order[1],
+                self.scale_by_order[2],
+                self.scale_by_order[3],
+                self.scale_by_order[4],
+            );
+        }
+
+        helpers::write_grid(&self.output, &grid0)
     }
-
-    if let Some(scale) = scale {
-        grid0.scale(scale);
-    } else if !scale_by_order.is_empty() {
-        grid0.scale_by_order(
-            scale_by_order[0],
-            scale_by_order[1],
-            scale_by_order[2],
-            scale_by_order[3],
-            scale_by_order[4],
-        );
-    }
-
-    helpers::write_grid(output, &grid0)
 }
