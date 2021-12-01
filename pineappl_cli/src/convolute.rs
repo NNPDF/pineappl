@@ -1,16 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row, Table};
 use std::ops::Range;
+use std::path::PathBuf;
 
 /// Convolutes a PineAPPL grid with a PDF set.
 #[derive(Parser)]
 #[clap(name = "convolute")]
 pub struct Opts {
     /// Path of the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
     #[clap(min_values = 1, validator = helpers::validate_pdfset)]
     pdfsets: Vec<String>,

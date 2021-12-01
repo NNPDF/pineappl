@@ -1,15 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
+use std::path::PathBuf;
 
 /// Converts the file format to the most recent version.
 #[derive(Parser)]
 #[clap(name = "upgrade")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Path to the upgraded PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
 }
 
 impl Opts {

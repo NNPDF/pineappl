@@ -1,15 +1,17 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row, Table};
+use std::path::PathBuf;
 
 /// Print information about the internal subgrid types.
 #[derive(Parser)]
 #[clap(name = "subgrids")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Show empty subgrids.
     #[clap(long = "show-empty")]
     show_empty: bool,

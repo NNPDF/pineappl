@@ -1,16 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
+use std::path::PathBuf;
 
 /// Merges one or more PineAPPL grids together.
 #[derive(Parser)]
 #[clap(name = "merge")]
 pub struct Opts {
     /// Path of the merged PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
     /// Path(s) of the files that should be merged.
-    #[clap(min_values = 1)]
-    input: Vec<String>,
+    #[clap(min_values = 1, parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: Vec<PathBuf>,
     /// Scales all grids with the given factor.
     #[clap(long, short)]
     scale: Option<f64>,

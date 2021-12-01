@@ -1,15 +1,17 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row, Table};
+use std::path::PathBuf;
 
 /// Shows the predictions for all bin for each order separately.
 #[derive(Parser)]
 #[clap(name = "orders")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,

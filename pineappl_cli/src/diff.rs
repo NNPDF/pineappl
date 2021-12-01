@@ -1,18 +1,21 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row, Table};
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 /// Compares the contents of two grids with each other.
 #[derive(Parser)]
 #[clap(name = "diff")]
 pub struct Opts {
     /// Path to the first grid.
-    input1: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input1: PathBuf,
     /// Path to the second grid.
-    input2: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input2: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,

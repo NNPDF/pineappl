@@ -1,16 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row, Table};
 use std::ops::Range;
+use std::path::PathBuf;
 
 /// Shows the contribution for each partonic channel.
 #[derive(Parser)]
 #[clap(name = "channels")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,

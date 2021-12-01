@@ -1,19 +1,20 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::bin::BinInfo;
 use pineappl::subgrid::Subgrid;
 use rayon::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Creates a matplotlib script plotting the contents of the grid.
 #[derive(Parser)]
 #[clap(name = "plot")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
     #[clap(min_values = 1, validator = helpers::validate_pdfset)]
     pdfsets: Vec<String>,
@@ -589,15 +590,19 @@ impl Opts {
             vector.sort();
             let vector = vector;
 
-            let mut output = Path::new(&self.input);
+            let mut output = self.input.clone();
 
             // remove ".lz4" and ".pineappl" extension
             match output.extension() {
-                Some(x) if x == "lz4" => output = Path::new(output.file_stem().unwrap()),
+                Some(x) if x == "lz4" => {
+                    output = Path::new(output.file_stem().unwrap()).to_path_buf()
+                }
                 _ => {}
             }
             match output.extension() {
-                Some(x) if x == "pineappl" => output = Path::new(output.file_stem().unwrap()),
+                Some(x) if x == "pineappl" => {
+                    output = Path::new(output.file_stem().unwrap()).to_path_buf()
+                }
                 _ => {}
             }
 

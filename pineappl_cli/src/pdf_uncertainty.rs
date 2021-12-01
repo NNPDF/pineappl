@@ -1,16 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use lhapdf::PdfSet;
 use prettytable::{cell, Row, Table};
 use rayon::{prelude::*, ThreadPoolBuilder};
+use std::path::PathBuf;
 
 /// Calculates PDF uncertainties.
 #[derive(Parser)]
 #[clap(name = "pdfunc", aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,

@@ -1,15 +1,18 @@
 use super::helpers;
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueHint};
+use std::path::PathBuf;
 
 /// Optimizes the internal data structure to minimize memory usage.
 #[derive(Parser)]
 #[clap(name = "optimize")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Path to the optimized PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
 }
 
 impl Opts {

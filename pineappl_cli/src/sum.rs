@@ -1,16 +1,19 @@
 use super::helpers;
 use anyhow::{bail, Result};
-use clap::{ArgGroup, Parser};
+use clap::{ArgGroup, Parser, ValueHint};
 use pineappl::bin::BinRemapper;
+use std::path::PathBuf;
 
 /// Sums two or more bins of a grid together.
 #[derive(Parser)]
 #[clap(group = ArgGroup::new("mode").required(true), name = "sum")]
 pub struct Opts {
     /// Path to the input grid.
-    input: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    input: PathBuf,
     /// Path to the modified PineAPPL file.
-    output: String,
+    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    output: PathBuf,
     /// Sums all bins into a single bin.
     #[clap(long, group = "mode")]
     integrated: bool,

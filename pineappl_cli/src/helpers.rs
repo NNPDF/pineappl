@@ -18,20 +18,19 @@ lazy_static! {
     pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
 }
 
-pub fn read_grid(input: &str) -> Result<Grid> {
-    Grid::read(File::open(input).context(format!("unable to open '{}'", input))?)
-        .context(format!("unable to read '{}'", input))
+pub fn read_grid(input: &Path) -> Result<Grid> {
+    Grid::read(File::open(input).context(format!("unable to open '{}'", input.display()))?)
+        .context(format!("unable to read '{}'", input.display()))
 }
 
-pub fn write_grid(output: &str, grid: &Grid) -> Result<()> {
-    let path = Path::new(output);
+pub fn write_grid(output: &Path, grid: &Grid) -> Result<()> {
     let file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(output)
-        .context(format!("unable to write '{}'", output))?;
+        .context(format!("unable to write '{}'", output.display()))?;
 
-    if path.extension().map_or(false, |ext| ext == "lz4") {
+    if output.extension().map_or(false, |ext| ext == "lz4") {
         Ok(grid.write_lz4(file)?)
     } else {
         Ok(grid.write(file)?)
