@@ -230,3 +230,35 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-diff 
+
+Compares the contents of two grids with each other
+
+USAGE:
+    pineappl diff [OPTIONS] <INPUT1> <INPUT2> <PDFSET>
+
+ARGS:
+    <INPUT1>    Path to the first grid
+    <INPUT2>    Path to the second grid
+    <PDFSET>    LHAPDF id or name of the PDF set
+
+OPTIONS:
+    -h, --help             Print help information
+        --ignore-orders    Sums over all orders
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["diff", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

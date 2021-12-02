@@ -50,3 +50,40 @@ impl Opts {
         helpers::write_grid(&self.output, &grid0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-merge 
+
+Merges one or more PineAPPL grids together
+
+USAGE:
+    pineappl merge [OPTIONS] <OUTPUT> [--] [INPUT]...
+
+ARGS:
+    <OUTPUT>      Path of the merged PineAPPL file
+    <INPUT>...    Path(s) of the files that should be merged
+
+OPTIONS:
+    -h, --help
+            Print help information
+
+    -s, --scale <SCALE>
+            Scales all grids with the given factor
+
+        --scale-by-order <ALPHAS> <ALPHA> <LOGXIR> <LOGXIF> <GLOBAL>
+            Scales all grids with order-dependent factors
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["merge", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

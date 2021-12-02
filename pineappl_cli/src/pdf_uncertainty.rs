@@ -108,3 +108,37 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-pdf-uncertainty 
+
+Calculates PDF uncertainties
+
+USAGE:
+    pineappl pdf-uncertainty [OPTIONS] <INPUT> <PDFSET>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <PDFSET>    LHAPDF id or name of the PDF set
+
+OPTIONS:
+        --cl <CL>               Confidence level in per cent [default: 68.26894921370858]
+    -h, --help                  Print help information
+    -i, --integrated            Show integrated numbers (without bin widths) instead of differential
+                                ones
+    -o, --orders <ORDERS>...    Select orders manually
+        --threads <THREADS>     Number of threads to utilize";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["pdf_uncertainty", "--help"])
+            .assert()
+            .success()
+            .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));
+    }
+}

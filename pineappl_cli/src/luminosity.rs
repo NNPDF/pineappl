@@ -46,3 +46,32 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-luminosity 
+
+Shows the luminosity function
+
+USAGE:
+    pineappl luminosity <INPUT>
+
+ARGS:
+    <INPUT>    Path to the input grid
+
+OPTIONS:
+    -h, --help    Print help information
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["luminosity", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

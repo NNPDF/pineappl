@@ -131,3 +131,37 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-orders 
+
+Shows the predictions for all bin for each order separately
+
+USAGE:
+    pineappl orders [OPTIONS] <INPUT> <PDFSET>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <PDFSET>    LHAPDF id or name of the PDF set
+
+OPTIONS:
+    -a, --absolute                    Show absolute numbers of each perturbative order
+    -h, --help                        Print help information
+    -i, --integrated                  Show integrated numbers (without bin widths) instead of
+                                      differential ones
+    -n, --normalize <NORMALIZE>...    Normalize contributions to the specified orders
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["orders", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

@@ -22,3 +22,33 @@ impl Opts {
         helpers::write_grid(&self.output, &grid)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-upgrade 
+
+Converts the file format to the most recent version
+
+USAGE:
+    pineappl upgrade <INPUT> <OUTPUT>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <OUTPUT>    Path to the upgraded PineAPPL file
+
+OPTIONS:
+    -h, --help    Print help information
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["upgrade", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}
