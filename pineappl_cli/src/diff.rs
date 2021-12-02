@@ -1,8 +1,8 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
-use prettytable::{cell, Row, Table};
+use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -24,8 +24,8 @@ pub struct Opts {
     ignore_orders: bool,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<Table> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let grid1 = helpers::read_grid(&self.input1)?;
         let grid2 = helpers::read_grid(&self.input2)?;
         let pdf = self.pdfset.parse().map_or_else(
@@ -227,7 +227,9 @@ impl Opts {
             }
         }
 
-        Ok(table)
+        table.printstd();
+
+        Ok(())
     }
 }
 

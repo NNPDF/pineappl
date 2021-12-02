@@ -1,4 +1,5 @@
 use anyhow::{ensure, Context, Result};
+use enum_dispatch::enum_dispatch;
 use lazy_static::lazy_static;
 use lhapdf::Pdf;
 use ndarray::Array3;
@@ -35,6 +36,11 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<()> {
     } else {
         Ok(grid.write(file)?)
     }
+}
+
+#[enum_dispatch]
+pub trait Subcommand {
+    fn run(&self) -> Result<()>;
 }
 
 pub fn create_table() -> Table {

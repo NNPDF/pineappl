@@ -1,8 +1,8 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use lhapdf::PdfSet;
-use prettytable::{cell, Row, Table};
+use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::PathBuf;
 
@@ -36,8 +36,8 @@ pub struct Opts {
     threads: usize,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<Table> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
         let set = PdfSet::new(&self.pdfset.parse().map_or_else(
             |_| self.pdfset.to_string(),
@@ -105,7 +105,9 @@ impl Opts {
             );
         }
 
-        Ok(table)
+        table.printstd();
+
+        Ok(())
     }
 }
 

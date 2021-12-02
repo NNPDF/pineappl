@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use std::path::PathBuf;
@@ -15,8 +15,8 @@ pub struct Opts {
     output: PathBuf,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let mut grid = helpers::read_grid(&self.input)?;
         grid.optimize();
         helpers::write_grid(&self.output, &grid)
