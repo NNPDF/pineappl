@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::{bail, Result};
 use clap::{ArgGroup, Parser, ValueHint};
 use pineappl::bin::BinRemapper;
@@ -19,8 +19,8 @@ pub struct Opts {
     integrated: bool,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         if self.integrated {
             let mut grid = helpers::read_grid(&self.input)?;
 

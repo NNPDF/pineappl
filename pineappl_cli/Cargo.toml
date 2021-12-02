@@ -13,6 +13,7 @@ description = "Read, write, and query PineAPPL grids"
 [dependencies]
 anyhow = "1.0.48"
 clap = { version = "=3.0.0-beta.5" }
+enum_dispatch = "0.3.7"
 git-version = "0.3.5"
 itertools = "0.10.1"
 lazy_static = "1.4.0"

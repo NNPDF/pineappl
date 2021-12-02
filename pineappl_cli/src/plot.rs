@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
@@ -437,8 +437,8 @@ if __name__ == '__main__':
     );
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let lhapdf_name = pdfset_name(&self.pdfsets[0]);

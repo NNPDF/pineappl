@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use std::fs;
@@ -36,8 +36,8 @@ pub struct Opts {
     entry_from_file: Vec<String>,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         for key_value in self.entry.chunks(2) {

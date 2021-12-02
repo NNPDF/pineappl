@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{ArgGroup, Parser, ValueHint};
 use itertools::Itertools;
@@ -28,8 +28,8 @@ pub struct Opts {
     show: bool,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         if self.ew || self.qcd {

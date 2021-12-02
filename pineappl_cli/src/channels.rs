@@ -1,8 +1,8 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
-use prettytable::{cell, Row, Table};
+use prettytable::{cell, Row};
 use std::ops::Range;
 use std::path::PathBuf;
 
@@ -49,8 +49,8 @@ pub struct Opts {
     orders: Vec<(u32, u32)>,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<Table> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
         let pdf = self.pdfset.parse().map_or_else(
             |_| Pdf::with_setname_and_member(&self.pdfset, 0),
@@ -167,7 +167,9 @@ impl Opts {
             }
         }
 
-        Ok(table)
+        table.printstd();
+
+        Ok(())
     }
 }
 

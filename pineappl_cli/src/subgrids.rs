@@ -1,8 +1,8 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use pineappl::subgrid::{Subgrid, SubgridEnum};
-use prettytable::{cell, row, Table};
+use prettytable::{cell, row};
 use std::path::PathBuf;
 
 /// Print information about the internal subgrid types.
@@ -17,8 +17,8 @@ pub struct Opts {
     show_empty: bool,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<Table> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
         let mut table = helpers::create_table();
 
@@ -47,7 +47,9 @@ impl Opts {
             ));
         }
 
-        Ok(table)
+        table.printstd();
+
+        Ok(())
     }
 }
 

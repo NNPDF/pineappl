@@ -20,7 +20,9 @@ mod upgrade;
 
 use anyhow::Result;
 use clap::{AppSettings, Parser};
+use enum_dispatch::enum_dispatch;
 use git_version::git_version;
+use helpers::Subcommand;
 
 #[derive(Parser)]
 #[clap(
@@ -40,11 +42,12 @@ struct Opts {
     #[clap(alias = "silence_lhapdf", long = "silence-lhapdf")]
     silence_lhapdf: bool,
     #[clap(subcommand)]
-    subcommand: Subcommands,
+    subcommand: SubcommandEnum,
 }
 
+#[enum_dispatch(Subcommand)]
 #[derive(Parser)]
-enum Subcommands {
+enum SubcommandEnum {
     Channels(channels::Opts),
     Convolute(convolute::Opts),
     Diff(diff::Opts),
@@ -70,48 +73,5 @@ fn main() -> Result<()> {
         lhapdf::set_verbosity(0);
     }
 
-    match opts.subcommand {
-        Subcommands::Channels(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Convolute(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Diff(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Info(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Luminosity(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Merge(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Optimize(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Orders(opts) => opts.subcommand()?.printstd(),
-        Subcommands::PdfUncertainty(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Plot(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Pull(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Remap(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Set(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Subgrids(opts) => opts.subcommand()?.printstd(),
-        Subcommands::Sum(opts) => {
-            opts.subcommand()?;
-            0
-        }
-        Subcommands::Upgrade(opts) => {
-            opts.subcommand()?;
-            0
-        }
-    };
-
-    Ok(())
+    opts.subcommand.run()
 }

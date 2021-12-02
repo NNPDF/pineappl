@@ -1,4 +1,4 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
@@ -33,8 +33,8 @@ pub struct Opts {
     norm: f64,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<()> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let mut grid = helpers::read_grid(&self.input)?;
         let remaps: Result<Vec<Vec<Vec<_>>>> = self
             .remapping

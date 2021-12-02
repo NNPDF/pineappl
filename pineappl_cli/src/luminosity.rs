@@ -1,7 +1,7 @@
-use super::helpers;
+use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
-use prettytable::{cell, row, Table};
+use prettytable::{cell, row};
 use std::path::PathBuf;
 
 /// Shows the luminosity function.
@@ -13,8 +13,8 @@ pub struct Opts {
     input: PathBuf,
 }
 
-impl Opts {
-    pub fn subcommand(&self) -> Result<Table> {
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
@@ -43,7 +43,9 @@ impl Opts {
             }
         }
 
-        Ok(table)
+        table.printstd();
+
+        Ok(())
     }
 }
 
