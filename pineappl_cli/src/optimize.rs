@@ -22,3 +22,33 @@ impl Opts {
         helpers::write_grid(&self.output, &grid)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-optimize 
+
+Optimizes the internal data structure to minimize memory usage
+
+USAGE:
+    pineappl optimize <INPUT> <OUTPUT>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <OUTPUT>    Path to the optimized PineAPPL file
+
+OPTIONS:
+    -h, --help    Print help information
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["optimize", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

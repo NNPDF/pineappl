@@ -55,3 +55,43 @@ impl Opts {
         helpers::write_grid(&self.output, &grid)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-set 
+
+Modifies the internal key-value storage
+
+USAGE:
+    pineappl set [OPTIONS] <INPUT> <OUTPUT>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <OUTPUT>    Path of the modified PineAPPL file
+
+OPTIONS:
+        --delete <KEY>...
+            Deletes an internal key-value pair
+
+        --entry <KEY> <VALUE>
+            Sets an internal key-value pair
+
+        --entry-from-file <KEY> <FILE>
+            Sets an internal key-value pair, with value being read from a file
+
+    -h, --help
+            Print help information
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["set", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

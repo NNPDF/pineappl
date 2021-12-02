@@ -177,3 +177,36 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-pull 
+
+Calculates the pull between two different PDF sets
+
+USAGE:
+    pineappl pull [OPTIONS] <INPUT> <PDFSET1> <PDFSET2>
+
+ARGS:
+    <INPUT>      Path to the input grid
+    <PDFSET1>    LHAPDF id or name of the first PDF set
+    <PDFSET2>    LHAPDF id or name of the second PDF set
+
+OPTIONS:
+        --cl <CL>              Confidence level in per cent [default: 68.26894921370858]
+    -h, --help                 Print help information
+    -l, --limit <LIMIT>        The maximum number of luminosities displayed [default: 10]
+        --threads <THREADS>    Number of threads to utilize";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["pull", "--help"])
+            .assert()
+            .success()
+            .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));
+    }
+}

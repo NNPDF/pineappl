@@ -782,3 +782,40 @@ figure.savefig('plot.pdf')",
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-plot 
+
+Creates a matplotlib script plotting the contents of the grid
+
+USAGE:
+    pineappl plot [OPTIONS] <INPUT> [--] [PDFSETS]...
+
+ARGS:
+    <INPUT>         Path to the input grid
+    <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
+
+OPTIONS:
+    -h, --help
+            Print help information
+
+    -s, --scales <SCALES>
+            Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
+
+        --subgrid-pull <ORDER> <BIN> <LUMI>
+            Show the pull for a specific grid three-dimensionally
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["plot", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

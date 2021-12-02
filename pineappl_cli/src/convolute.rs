@@ -153,3 +153,40 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-convolute 
+
+Convolutes a PineAPPL grid with a PDF set
+
+USAGE:
+    pineappl convolute [OPTIONS] <INPUT> [--] [PDFSETS]...
+
+ARGS:
+    <INPUT>         Path of the input grid
+    <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
+
+OPTIONS:
+    -a, --absolute              Show absolute numbers of the scale variation
+    -b, --bins <BINS>...        Selects a subset of bins
+    -h, --help                  Print help information
+    -i, --integrated            Show integrated numbers (without bin widths) instead of differential
+                                ones
+    -o, --orders <ORDERS>...    Select orders manually
+    -s, --scales <SCALES>       Set the number of scale variations [default: 7] [possible values: 1,
+                                3, 7, 9]
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["convolute", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

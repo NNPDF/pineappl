@@ -188,3 +188,41 @@ impl Opts {
         helpers::write_grid(&self.output, &grid)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-remap 
+
+Modifies the bin dimensions, widths and normalizations
+
+USAGE:
+    pineappl remap [OPTIONS] <INPUT> <OUTPUT> <REMAPPING>
+
+ARGS:
+    <INPUT>        Path to the input grid
+    <OUTPUT>       Path of the modified PineAPPL file
+    <REMAPPING>    Remapping string
+
+OPTIONS:
+    -h, --help
+            Print help information
+
+        --ignore-obs-norm <IGNORE_OBS_NORM>...
+            Ignore the given observables for differential normalization
+
+        --norm <NORM>
+            Normalization factor in addition to the given bin widths [default: 1.0]
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["remap", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

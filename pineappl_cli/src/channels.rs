@@ -170,3 +170,39 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-channels 
+
+Shows the contribution for each partonic channel
+
+USAGE:
+    pineappl channels [OPTIONS] <INPUT> <PDFSET>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <PDFSET>    LHAPDF id or name of the PDF set
+
+OPTIONS:
+    -a, --absolute              Show absolute numbers of each contribution
+    -h, --help                  Print help information
+    -i, --integrated            Show integrated numbers (without bin widths) instead of differential
+                                ones
+    -l, --limit <LIMIT>         The maximum number of channels displayed [default: 10]
+        --lumis <LUMIS>...      Show only the listed channels
+    -o, --orders <ORDERS>...    Select orders manually
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["channels", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

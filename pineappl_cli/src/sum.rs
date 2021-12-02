@@ -48,3 +48,34 @@ impl Opts {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-sum 
+
+Sums two or more bins of a grid together
+
+USAGE:
+    pineappl sum <--integrated> <INPUT> <OUTPUT>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <OUTPUT>    Path to the modified PineAPPL file
+
+OPTIONS:
+    -h, --help          Print help information
+        --integrated    Sums all bins into a single bin
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["sum", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

@@ -105,3 +105,37 @@ impl Opts {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-info 
+
+Shows information about the grid
+
+USAGE:
+    pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
+
+ARGS:
+    <INPUT>    Path to the input grid
+
+OPTIONS:
+        --ew           For each order print a list of the largest EW order
+        --get <key>    Gets an internal key-value pair
+    -h, --help         Print help information
+        --keys         Show all keys stored in the grid
+        --qcd          For each order print a list of the largest QCD order
+        --show         Shows all key-value pairs stored in the grid
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["info", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}

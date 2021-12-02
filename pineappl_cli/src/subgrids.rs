@@ -50,3 +50,33 @@ impl Opts {
         Ok(table)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    const HELP_STR: &str = "pineappl-subgrids 
+
+Print information about the internal subgrid types
+
+USAGE:
+    pineappl subgrids [OPTIONS] <INPUT>
+
+ARGS:
+    <INPUT>    Path to the input grid
+
+OPTIONS:
+    -h, --help          Print help information
+        --show-empty    Show empty subgrids
+";
+
+    #[test]
+    fn help() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["subgrids", "--help"])
+            .assert()
+            .success()
+            .stdout(HELP_STR);
+    }
+}
