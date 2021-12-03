@@ -24,6 +24,29 @@ class Order(PyWrapper):
     def __init__(self, alphas, alpha, logxir, logxif):
         self._raw = PyOrder(alphas, alpha, logxir, logxif)
 
+    @staticmethod
+    def create_mask(orders, max_as, max_al):
+        r"""
+        Return a mask suitable to pass as the `order_mask` parameter of
+        :meth:`Grid.convolute`.
+
+        Parameters
+        ----------
+        orders : list(Order)
+            list of available orders
+        max_as : int
+            maximum power of :math:`\alpha_s`
+        max_al : int
+            maximum power of :math:`\alpha`
+
+        Returns
+        -------
+        list(bool)
+            boolean mask
+
+        """
+        return PyOrder.create_mask([o._raw for o in orders], max_as, max_al)
+
 
 class Grid(PyWrapper):
     r"""
