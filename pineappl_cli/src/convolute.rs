@@ -3,7 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row};
-use std::ops::Range;
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 
 /// Convolutes a PineAPPL grid with a PDF set.
@@ -27,7 +27,7 @@ pub struct Opts {
         parse(try_from_str = helpers::try_parse_integer_range),
         use_delimiter = true
     )]
-    bins: Vec<Range<usize>>,
+    bins: Vec<RangeInclusive<usize>>,
     /// Show integrated numbers (without bin widths) instead of differential ones.
     #[clap(long, short)]
     integrated: bool,
@@ -52,12 +52,7 @@ impl Subcommand for Opts {
             |_| Pdf::with_setname_and_member(&self.pdfsets[0], 0),
             Pdf::with_lhaid,
         );
-        let bins: Vec<_> = self
-            .bins
-            .iter()
-            .cloned()
-            .flat_map(|range| range.collect::<Vec<_>>())
-            .collect();
+        let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
 
         let results = helpers::convolute(&grid, &pdf, &self.orders, &bins, &[], self.scales);
 

@@ -23,9 +23,7 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
 
     fn index(&self, mut index: [usize; 3]) -> &Self::Output {
         // index too small
-        if index[0] < self.start {
-            panic!();
-        }
+        assert!(index[0] >= self.start);
 
         let dim1 = if self.dimensions.1 > self.dimensions.2 {
             index.swap(1, 2);
@@ -35,14 +33,10 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
         };
 
         // index too large
-        if index[0] >= (self.start + (self.indices.len() - 1) / dim1) {
-            panic!();
-        }
+        assert!(index[0] < (self.start + (self.indices.len() - 1) / dim1));
 
         // index too large
-        if index[1] >= dim1 {
-            panic!();
-        }
+        assert!(index[1] < dim1);
 
         let forward = dim1 * (index[0] - self.start) + index[1];
         let indices_a = &self.indices[forward];
@@ -53,14 +47,10 @@ impl<T> Index<[usize; 3]> for SparseArray3<T> {
         let non_zeros = indices_b.1 - offset;
 
         // index too small
-        if index[2] < zeros_left {
-            panic!();
-        }
+        assert!(index[2] >= zeros_left);
 
         // index too large
-        if index[2] >= (non_zeros + zeros_left) {
-            panic!();
-        }
+        assert!(index[2] < (non_zeros + zeros_left));
 
         &self.entries[offset + (index[2] - zeros_left)]
     }
@@ -100,9 +90,7 @@ impl<T: Clone + Default> IndexMut<[usize; 3]> for SparseArray3<T> {
         }
 
         // index too large
-        if index[1] >= dim1 {
-            panic!();
-        }
+        assert!(index[1] < dim1);
 
         let forward = dim1 * (index[0] - self.start) + index[1];
         let indices_a = &self.indices[forward];
@@ -402,9 +390,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         let dim1 = self.dimensions.1.min(self.dimensions.2);
         let nx = (self.indices.len() - 1) / dim1;
 
-        if (x < self.start) || (x >= self.start + nx) {
-            panic!();
-        }
+        assert!((x >= self.start) && (x < self.start + nx));
 
         let index_a = (x - self.start) * dim1;
         let index_b = (x - self.start + 1) * dim1;
