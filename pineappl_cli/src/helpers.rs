@@ -8,7 +8,7 @@ use pineappl::lumi::LumiCache;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
 use std::fs::{File, OpenOptions};
-use std::ops::Range;
+use std::ops::RangeInclusive;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -179,7 +179,7 @@ pub fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
     ))
 }
 
-pub fn try_parse_integer_range(range: &str) -> Result<Range<usize>> {
+pub fn try_parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     if let Some(at) = range.find('-') {
         let (left, right) = range.split_at(at);
         let left = str::parse::<usize>(left).context(format!(
@@ -191,12 +191,12 @@ pub fn try_parse_integer_range(range: &str) -> Result<Range<usize>> {
             range, right
         ))?;
 
-        Ok(left..(right + 1))
+        Ok(left..=right)
     } else {
         let value =
             str::parse::<usize>(range).context(format!("unable to parse integer '{}'", range))?;
 
-        Ok(value..(value + 1))
+        Ok(value..=value)
     }
 }
 

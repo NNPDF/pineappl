@@ -432,7 +432,7 @@ if __name__ == '__main__':
         qcd_max=map_format_e_join(qcd_max),
         slices=format!("{:?}", slices),
         slice_labels=format!("[{}]", slice_labels.iter().map(|string| format!("r'{}'", string)).join(", ")),
-        pdf_results=format_pdf_results(pdf_uncertainties, &pdfsets),
+        pdf_results=format_pdf_results(pdf_uncertainties, pdfsets),
         metadata=format_metadata(metadata),
     );
 }
@@ -595,13 +595,13 @@ impl Subcommand for Opts {
             // remove ".lz4" and ".pineappl" extension
             match output.extension() {
                 Some(x) if x == "lz4" => {
-                    output = Path::new(output.file_stem().unwrap()).to_path_buf()
+                    output = Path::new(output.file_stem().unwrap()).to_path_buf();
                 }
                 _ => {}
             }
             match output.extension() {
                 Some(x) if x == "pineappl" => {
-                    output = Path::new(output.file_stem().unwrap()).to_path_buf()
+                    output = Path::new(output.file_stem().unwrap()).to_path_buf();
                 }
                 _ => {}
             }

@@ -3,7 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use prettytable::{cell, Row};
-use std::ops::Range;
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 
 /// Shows the contribution for each partonic channel.
@@ -38,7 +38,7 @@ pub struct Opts {
         parse(try_from_str = helpers::try_parse_integer_range),
         use_delimiter = true
     )]
-    lumis: Vec<Range<usize>>,
+    lumis: Vec<RangeInclusive<usize>>,
     /// Select orders manually.
     #[clap(
         long,
@@ -56,12 +56,7 @@ impl Subcommand for Opts {
             |_| Pdf::with_setname_and_member(&self.pdfset, 0),
             Pdf::with_lhaid,
         );
-        let lumis: Vec<_> = self
-            .lumis
-            .iter()
-            .cloned()
-            .flat_map(|range| range.collect::<Vec<_>>())
-            .collect();
+        let lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
         let limit = if lumis.is_empty() {
             grid.lumi().len().min(self.limit)
         } else {

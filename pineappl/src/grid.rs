@@ -1108,7 +1108,7 @@ impl Grid {
                 .subgrids
                 .slice(s![.., .., lumi])
                 .iter()
-                .all(|subgrid| subgrid.is_empty())
+                .all(Subgrid::is_empty)
             {
                 keep_lumi_indices.push(lumi);
                 new_lumi_entries.push(entry.clone());
@@ -1229,14 +1229,20 @@ impl Grid {
     #[must_use]
     pub fn axes(&self) -> Option<GridAxes> {
         // determine what and how many hadrons are in the initial state
-        let initial_state_1 = self.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_1")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
-        let initial_state_2 = self.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_2")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
+        let initial_state_1 = self
+            .key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_1").map(String::as_str)
+            })
+            .map(str::parse::<i32>)?
+            .ok()?;
+        let initial_state_2 = self
+            .key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_2").map(String::as_str)
+            })
+            .map(str::parse::<i32>)?
+            .ok()?;
 
         // are the initial states hadrons?
         let has_pdf1 = !self
@@ -1336,14 +1342,20 @@ impl Grid {
         let operator = operator.as_standard_layout();
 
         // determine what and how many hadrons are in the initial state
-        let initial_state_1 = self.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_1")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
-        let initial_state_2 = self.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_2")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
+        let initial_state_1 = self
+            .key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_1").map(String::as_str)
+            })
+            .map(str::parse::<i32>)?
+            .ok()?;
+        let initial_state_2 = self
+            .key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_2").map(String::as_str)
+            })
+            .map(str::parse::<i32>)?
+            .ok()?;
 
         // are the initial states hadrons?
         let has_pdf1 = !self
