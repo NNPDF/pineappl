@@ -45,6 +45,7 @@ pub struct Opts {
         multiple_values = true,
         short,
         parse(try_from_str = helpers::parse_order),
+        use_delimiter = true
     )]
     orders: Vec<(u32, u32)>,
 }
@@ -56,12 +57,13 @@ impl Subcommand for Opts {
             |_| Pdf::with_setname_and_member(&self.pdfset, 0),
             Pdf::with_lhaid,
         );
-        let lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
-        let limit = if lumis.is_empty() {
-            grid.lumi().len().min(self.limit)
-        } else {
-            lumis.iter().filter(|lumi| **lumi < lumis.len()).count()
-        };
+
+        let mut lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
+        lumis.sort();
+        lumis.dedup();
+        let lumis = lumis;
+
+        let limit = grid.lumi().len().min(self.limit);
 
         let results: Vec<_> = (0..grid.lumi().len())
             .map(|lumi| {
