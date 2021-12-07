@@ -56,6 +56,11 @@ jobs:
       with:
         command: check
         args: --verbose
+    - name: Build CLI
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --manifest-path pineappl_cli/Cargo.toml
     - name: Generate doctest coverage
       uses: actions-rs/tarpaulin@v0.1
       with:
