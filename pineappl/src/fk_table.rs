@@ -85,6 +85,26 @@ impl FkTable {
         self.grid.bin_info().bins()
     }
 
+    /// Extract the normalizations for each bin.
+    pub fn bin_normalizations(&self) -> Vec<f64> {
+        self.grid.bin_info().normalizations()
+    }
+
+    /// Extract the number of dimensions for bins.
+    pub fn bin_dimensions(&self) -> usize {
+        self.grid.bin_info().dimensions()
+    }
+
+    /// Extract the left edges of a specific bin dimension.
+    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
+        self.grid.bin_info().left(dimension)
+    }
+
+    /// Extract the right edges of a specific bin dimension.
+    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
+        self.grid.bin_info().right(dimension)
+    }
+
     /// Returns the (simplified) luminosity function for this `FkTable`. All factors are `1.0`.
     #[must_use]
     pub fn lumi(&self) -> Vec<(i32, i32)> {

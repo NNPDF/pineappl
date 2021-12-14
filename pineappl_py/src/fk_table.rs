@@ -1,4 +1,4 @@
-use numpy::{IntoPyArray, PyArray4};
+use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
@@ -46,6 +46,58 @@ impl PyFkTable {
     ///         number of bins
     pub fn bins(&self) -> usize {
         self.fk_table.bins()
+    }
+
+    /// Extract the normalizations for each bin.
+    ///
+    /// Returns
+    /// -------
+    ///     np.array
+    ///         bin normalizations
+    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.fk_table.bin_normalizations().into_pyarray(py)
+    }
+
+    /// Extract the number of dimensions for bins.
+    ///
+    /// E.g.: two differential cross-sections will return 2.
+    ///
+    /// Returns
+    /// -------
+    ///     int :
+    ///         bin dimension
+    pub fn bin_dimensions(&self) -> usize {
+        self.fk_table.bin_dimensions()
+    }
+
+    /// Extract the left edges of a specific bin dimension.
+    ///
+    /// Parameters
+    /// ----------
+    ///     dimension : int
+    ///         bin dimension
+    ///
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         left edges of bins
+    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
+        self.fk_table.bin_left(dimension)
+    }
+
+    /// Extract the right edges of a specific bin dimension.
+    ///
+    /// Parameters
+    /// ----------
+    ///     dimension : int
+    ///         bin dimension
+    ///
+    /// Returns
+    /// -------
+    ///     list(float) :
+    ///         right edges of bins
+    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
+        self.fk_table.bin_right(dimension)
     }
 
     /// Get luminsosity functions.
