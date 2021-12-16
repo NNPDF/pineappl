@@ -773,22 +773,10 @@ impl Grid {
             .merge_bins(bins.clone())
             .map_err(GridError::MergeBinError)?;
 
-        match &mut self.more_members {
-            MoreMembers::V1(_) => {}
-            MoreMembers::V2(mmv2) => {
-                if let Some(remapper) = &mut mmv2.remapper {
-                    remapper
-                        .merge_bins(bins.clone())
-                        .map_err(GridError::MergeBinError)?;
-                }
-            }
-            MoreMembers::V3(mmv3) => {
-                if let Some(remapper) = &mut mmv3.remapper {
-                    remapper
-                        .merge_bins(bins.clone())
-                        .map_err(GridError::MergeBinError)?;
-                }
-            }
+        if let Some(remapper) = self.remapper_mut() {
+            remapper
+                .merge_bins(bins.clone())
+                .map_err(GridError::MergeBinError)?;
         }
 
         let bin_count = self.bin_info().bins();
@@ -841,16 +829,8 @@ impl Grid {
             let lhs_bins = self.bin_info().bins();
             new_bins = other.bin_info().bins();
 
-            let lhs_remapper = match &mut self.more_members {
-                MoreMembers::V1(_) => None,
-                MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
-                MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
-            };
-            let rhs_remapper = match &other.more_members {
-                MoreMembers::V1(_) => None,
-                MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
-                MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
-            };
+            let lhs_remapper = self.remapper_mut();
+            let rhs_remapper = other.remapper();
 
             if let Some(lhs) = lhs_remapper {
                 if let Some(rhs) = rhs_remapper {
@@ -1045,17 +1025,28 @@ impl Grid {
         Ok(())
     }
 
+    /// Return the currently set remapper, if there is any.
+    #[must_use]
+    pub const fn remapper(&self) -> Option<&BinRemapper> {
+        match &self.more_members {
+            MoreMembers::V1(_) => None,
+            MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
+            MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
+        }
+    }
+
+    fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
+        match &mut self.more_members {
+            MoreMembers::V1(_) => None,
+            MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
+            MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
+        }
+    }
+
     /// Returns all information about the bins in this grid.
     #[must_use]
-    pub const fn bin_info(&self) -> BinInfo {
-        BinInfo::new(
-            &self.bin_limits,
-            match &self.more_members {
-                MoreMembers::V1(_) => None,
-                MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
-                MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
-            },
-        )
+    pub fn bin_info(&self) -> BinInfo {
+        BinInfo::new(&self.bin_limits, self.remapper())
     }
 
     /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
