@@ -488,4 +488,16 @@ impl PyGrid {
     pub fn scale(&mut self, factor: f64) {
         self.grid.scale(factor);
     }
+
+    /// Delete bins.
+    ///
+    /// Repeated bins and those exceeding length are ignored.
+    ///
+    /// Parameters
+    /// ----------
+    /// bin_indices : list(int)
+    ///     list of indices of bins to removed
+    pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
+        self.grid.delete_bins(&bin_indices)
+    }
 }
