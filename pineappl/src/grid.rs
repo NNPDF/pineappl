@@ -1670,6 +1670,62 @@ impl Grid {
         result.optimize();
         FkTable::try_from(result).ok()
     }
+
+    /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
+    /// equal the bin length are ignored.
+    pub fn delete_bins(&mut self, bin_indices: &[usize]) {
+        let mut bin_indices: Vec<_> = bin_indices
+            .iter()
+            .copied()
+            // ignore indices corresponding to bin that don't exist
+            .filter(|&index| index >= self.bin_info().bins())
+            .collect();
+
+        // sort and remove repeated indices
+        bin_indices.sort();
+        bin_indices.dedup();
+        let bin_indices = bin_indices;
+
+        let mut bin_ranges: Vec<Range<_>> = Vec::new();
+
+        // convert indices into consecutive ranges
+        for &bin_index in &bin_indices {
+            match bin_ranges.last_mut() {
+                Some(range) if range.end == bin_index => range.end += 1,
+                _ => bin_ranges.push(bin_index..(bin_index + 1)),
+            }
+        }
+
+        let bin_ranges = bin_ranges;
+
+        let mut ranges = bin_ranges.as_slice();
+
+        if let Some((range, remainder)) = bin_ranges.split_first() {
+            if range.start == 0 {
+                self.bin_limits.delete_bins_left(range.end);
+                ranges = remainder;
+            }
+        }
+
+        if let Some((range, remainder)) = bin_ranges.split_last() {
+            if range.end == self.bin_info().bins() {
+                self.bin_limits.delete_bins_right(range.end - range.start);
+                ranges = remainder;
+            }
+        }
+
+        if let Some(remapper) = self.remapper_mut() {
+            remapper.delete_bins(&bin_ranges);
+        }
+
+        if !ranges.is_empty() {
+            todo!();
+        }
+
+        for &bin_index in bin_indices.iter().rev() {
+            self.subgrids.remove_index(Axis(1), bin_index);
+        }
+    }
 }
 
 #[cfg(test)]

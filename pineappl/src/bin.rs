@@ -311,6 +311,19 @@ impl BinRemapper {
                 .collect()
         }
     }
+
+    /// Deletes all bins whose corresponding indices are in one of the ranges of `bins`.
+    pub fn delete_bins(&mut self, bins: &[Range<usize>]) {
+        for range in bins.iter().cloned().rev() {
+            self.normalizations.drain(range);
+        }
+
+        let dim = self.dimensions();
+
+        for range in bins.iter().rev() {
+            self.limits.drain((range.start * dim)..(range.end * dim));
+        }
+    }
 }
 
 impl PartialEq<Self> for BinRemapper {
@@ -515,6 +528,20 @@ impl BinLimits {
             Limits::Unequal { limits } => *limits.last().unwrap(),
             Limits::Equal { right, .. } => *right,
         }
+    }
+
+    /// Delete `bins` number of bins from the start.
+    pub fn delete_bins_left(&mut self, bins: usize) {
+        let mut limits = self.limits();
+        limits.drain(..bins);
+        *self = Self::new(limits);
+    }
+
+    /// Delete `bins` number of bins from the end.
+    pub fn delete_bins_right(&mut self, bins: usize) {
+        let mut limits = self.limits();
+        limits.drain((limits.len() - bins)..);
+        *self = Self::new(limits);
     }
 }
 
