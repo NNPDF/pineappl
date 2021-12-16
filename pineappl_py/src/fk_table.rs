@@ -3,6 +3,7 @@ use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
 use pyo3::prelude::*;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::BufReader;
@@ -98,6 +99,17 @@ impl PyFkTable {
     ///         right edges of bins
     pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
         self.fk_table.bin_right(dimension)
+    }
+
+    /// Get metadata values stored in the grid.
+    ///
+    ///
+    /// Returns
+    /// -------
+    ///     dict :
+    ///         key, value map
+    pub fn key_values(&self) -> HashMap<String, String> {
+        self.fk_table.key_values().unwrap().clone()
     }
 
     /// Get luminsosity functions.

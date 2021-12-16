@@ -4,6 +4,7 @@ use super::grid::{Grid, GridError, Order};
 use super::lumi::LumiCache;
 use super::subgrid::Subgrid;
 use ndarray::Array4;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::io::Write;
 use thiserror::Error;
@@ -103,6 +104,11 @@ impl FkTable {
     /// Extract the right edges of a specific bin dimension.
     pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().right(dimension)
+    }
+
+    /// Access meta data
+    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
+        self.grid.key_values()
     }
 
     /// Returns the (simplified) luminosity function for this `FkTable`. All factors are `1.0`.

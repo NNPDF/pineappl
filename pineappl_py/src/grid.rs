@@ -146,12 +146,10 @@ impl PyGrid {
     /// Get metadata values stored in the grid.
     ///
     ///
-    /// Parameters
-    /// ----------
-    ///     key : str
-    ///         key
-    ///     value : str
-    ///         value
+    /// Returns
+    /// -------
+    ///     dict :
+    ///         key, value map
     pub fn key_values(&self) -> HashMap<String, String> {
         self.grid.key_values().unwrap().clone()
     }
