@@ -56,15 +56,15 @@ jobs:
       with:
         command: check
         args: --verbose
-    - name: Build CLI
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --manifest-path pineappl_cli/Cargo.toml
-    - name: Generate doctest coverage
+    - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --ignore-tests
+        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --command Build --no-run
+        run-types: Doctests,Tests
+    - name: Run tests
+      uses: actions-rs/tarpaulin@v0.1
+      with:
+        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --ignore-tests --follow-exec --skip-clean
         run-types: Doctests,Tests
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1
