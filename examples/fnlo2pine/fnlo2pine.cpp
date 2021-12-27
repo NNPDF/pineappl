@@ -186,6 +186,7 @@ pineappl_grid* convert_coeff_add_fix(
                 // the values are the unsquared q values, correct that
                 for (auto& value : q2_values)
                 {
+                    value *= value;
                     mu2_values.push_back(value);
                     mu2_values.push_back(value);
                 }
