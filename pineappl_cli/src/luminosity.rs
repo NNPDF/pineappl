@@ -67,6 +67,15 @@ OPTIONS:
     -h, --help    Print help information
 ";
 
+    const DEFAULT_STR: &str = "id    entry        entry
+--+------------+------------
+0  1 × ( 2, -1) 1 × ( 4, -3)
+1  1 × ( 0, -3) 1 × ( 0, -1)
+2  1 × (22, -3) 1 × (22, -1)
+3  1 × ( 2,  0) 1 × ( 4,  0)
+4  1 × ( 2, 22) 1 × ( 4, 22)
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -75,5 +84,15 @@ OPTIONS:
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    fn default() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["luminosity", "data/LHCB_WP_7TEV.pineappl.lz4"])
+            .assert()
+            .success()
+            .stdout(DEFAULT_STR);
     }
 }

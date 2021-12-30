@@ -52,6 +52,7 @@ impl Subcommand for Opts {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
+    use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-sum 
 
@@ -77,5 +78,22 @@ OPTIONS:
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    fn integrated() {
+        let output = NamedTempFile::new("summed.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "sum",
+                "--integrated",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                output.path().to_str().unwrap(),
+            ])
+            .assert()
+            .success()
+            .stdout("");
     }
 }
