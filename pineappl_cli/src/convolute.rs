@@ -189,6 +189,19 @@ OPTIONS:
   7    4  4.5 1.3772029e1  -3.46%   2.85%
 ";
 
+    const DEFAULT_MULTIPLE_PDFS_STR: &str =
+        "bin   etal    disg/detal  neg unc pos unc NNPDF31_nlo_as_0118_luxqed 
+---+----+----+-----------+-------+-------+-------------+-------------
+  0    2 2.25 3.7527620e2  -3.77%   2.71%   3.7527620e2         0.00%
+  1 2.25  2.5 3.4521553e2  -3.79%   2.80%   3.4521553e2         0.00%
+  2  2.5 2.75 3.0001406e2  -3.78%   2.86%   3.0001406e2         0.00%
+  3 2.75    3 2.4257663e2  -3.77%   2.92%   2.4257663e2         0.00%
+  4    3 3.25 1.8093343e2  -3.74%   2.95%   1.8093343e2         0.00%
+  5 3.25  3.5 1.2291115e2  -3.71%   2.98%   1.2291115e2         0.00%
+  6  3.5    4 5.7851018e1  -3.63%   2.97%   5.7851018e1         0.00%
+  7    4  4.5 1.3772029e1  -3.46%   2.85%   1.3772029e1         0.00%
+";
+
     const ABSOLUTE_STR: &str =
 "bin   etal    disg/detal     (1,1)       (2,2)     (0.5,0.5)     (2,1)       (1,2)      (0.5,1)     (1,0.5)  
 ---+----+----+-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------
@@ -234,6 +247,19 @@ OPTIONS:
   5 3.25  3.5 3.0727788e1  -3.71%   2.98%
   6  3.5    4 2.8925509e1  -3.63%   2.97%
   7    4  4.5 6.8860146e0  -3.46%   2.85%
+";
+
+    const INTEGRATED_MULTIPLE_PDFS_STR: &str =
+        "bin   etal       integ    neg unc pos unc NNPDF31_nlo_as_0118_luxqed 
+---+----+----+-----------+-------+-------+-------------+-------------
+  0    2 2.25 9.3819050e1  -3.77%   2.71%   9.3819050e1         0.00%
+  1 2.25  2.5 8.6303882e1  -3.79%   2.80%   8.6303882e1         0.00%
+  2  2.5 2.75 7.5003515e1  -3.78%   2.86%   7.5003515e1         0.00%
+  3 2.75    3 6.0644157e1  -3.77%   2.92%   6.0644157e1         0.00%
+  4    3 3.25 4.5233358e1  -3.74%   2.95%   4.5233358e1         0.00%
+  5 3.25  3.5 3.0727788e1  -3.71%   2.98%   3.0727788e1         0.00%
+  6  3.5    4 2.8925509e1  -3.63%   2.97%   2.8925509e1         0.00%
+  7    4  4.5 6.8860146e0  -3.46%   2.85%   6.8860146e0         0.00%
 ";
 
     const ORDERS_A2_A3_STR: &str = "bin   etal    disg/detal  neg unc pos unc
@@ -283,6 +309,22 @@ OPTIONS:
             .assert()
             .success()
             .stdout(DEFAULT_STR);
+    }
+
+    #[test]
+    fn default_multiple_pdfs() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                "NNPDF31_nlo_as_0118_luxqed",
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(DEFAULT_MULTIPLE_PDFS_STR);
     }
 
     #[test]
@@ -348,6 +390,23 @@ OPTIONS:
             .assert()
             .success()
             .stdout(INTEGRATED_STR);
+    }
+
+    #[test]
+    fn integrated_multiple_pdfs() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                "--integrated",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                "NNPDF31_nlo_as_0118_luxqed",
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(INTEGRATED_MULTIPLE_PDFS_STR);
     }
 
     #[test]
