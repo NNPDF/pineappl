@@ -232,7 +232,7 @@ OPTIONS:
   7    4  4.5   #0 7.9734197e0   #3 -5.9183261e-1   #1 -4.9793767e-1   #4 1.9759926e-3   #2 3.8920635e-4
 ";
 
-    const LIMIT_STR: &str = "bin   etal    lumi  size   lumi  size   lumi  size 
+    const LIMIT_3_STR: &str = "bin   etal    lumi  size   lumi  size   lumi  size 
 ---+----+----+----+-------+----+-------+----+------
   0    2 2.25   #0 111.42%   #3  -8.10%   #1 -3.35%
   1 2.25  2.5   #0 112.20%   #3  -8.85%   #1 -3.38%
@@ -244,7 +244,7 @@ OPTIONS:
   7    4  4.5   #0 115.79%   #3  -8.59%   #1 -7.23%
 ";
 
-    const LUMIS_STR: &str = "bin   etal    lumi  size   lumi  size   lumi  size  lumi size 
+    const LUMIS_0123_STR: &str = "bin   etal    lumi  size   lumi  size   lumi  size  lumi size 
 ---+----+----+----+-------+----+-------+----+------+----+-----
   0    2 2.25   #0 111.42%   #3  -8.10%   #1 -3.35%   #2 0.01%
   1 2.25  2.5   #0 112.20%   #3  -8.85%   #1 -3.38%   #2 0.01%
@@ -256,7 +256,7 @@ OPTIONS:
   7    4  4.5   #0 115.79%   #3  -8.59%   #1 -7.23%   #2 0.01%
 ";
 
-    const ORDERS_STR: &str =
+    const ORDERS_A2_AS1A2_STR: &str =
         "bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size 
 ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
   0    2 2.25   #0 111.33%   #3  -8.02%   #1 -3.31%   #2 0.00%   #4 0.00%
@@ -328,7 +328,7 @@ OPTIONS:
     }
 
     #[test]
-    fn limit() {
+    fn limit_3() {
         Command::cargo_bin("pineappl")
             .unwrap()
             .args(&[
@@ -340,11 +340,11 @@ OPTIONS:
             ])
             .assert()
             .success()
-            .stdout(LIMIT_STR);
+            .stdout(LIMIT_3_STR);
     }
 
     #[test]
-    fn lumis() {
+    fn lumis_0123() {
         Command::cargo_bin("pineappl")
             .unwrap()
             .args(&[
@@ -356,11 +356,11 @@ OPTIONS:
             ])
             .assert()
             .success()
-            .stdout(LUMIS_STR);
+            .stdout(LUMIS_0123_STR);
     }
 
     #[test]
-    fn orders() {
+    fn orders_a2_as1a2() {
         Command::cargo_bin("pineappl")
             .unwrap()
             .args(&[
@@ -372,6 +372,6 @@ OPTIONS:
             ])
             .assert()
             .success()
-            .stdout(ORDERS_STR);
+            .stdout(ORDERS_A2_AS1A2_STR);
     }
 }
