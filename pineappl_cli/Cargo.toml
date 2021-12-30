@@ -26,6 +26,7 @@ rayon = "1.5.1"
 
 [dev-dependencies]
 assert_cmd = "2.0.2"
+assert_fs = "1.0.6"
 
 [[bin]]
 name = "pineappl"

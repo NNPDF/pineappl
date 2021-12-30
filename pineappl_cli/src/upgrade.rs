@@ -26,6 +26,7 @@ impl Subcommand for Opts {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
+    use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-upgrade 
 
@@ -50,5 +51,21 @@ OPTIONS:
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    fn upgrade() {
+        let output = NamedTempFile::new("upgraded.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "upgrade",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                output.path().to_str().unwrap(),
+            ])
+            .assert()
+            .success()
+            .stdout("");
     }
 }
