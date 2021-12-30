@@ -67,7 +67,7 @@ jobs:
         args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --ignore-tests --follow-exec --skip-clean
         run-types: AllTargets
     - name: Upload to codecov.io
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         token: ${{secrets.CODECOV_TOKEN}}
     - name: Install cargo-c
