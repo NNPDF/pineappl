@@ -7,7 +7,35 @@ use std::path::PathBuf;
 
 /// Modifies the bin dimensions, widths and normalizations.
 #[derive(Parser)]
-#[clap(name = "remap")]
+#[clap(
+    after_help = "For performance/simplicity reasons Monte Carlo programs (and the PineAPPL
+`Grid::fill` method) typically do not support 1) multi-dimensional distributions or 2)
+distributions whose bin sizes are not equally sized *during generation*. To work around this
+problem a grid with a one-dimensional distribution can be generated instead, and afterwards the
+bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
+REMAPPING string.
+
+The remapping string uses the following special characters to achieve this:
+
+- ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
+separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
+will expect the grid to have 4 bins which cover the range from 0 to 0.6 with 3 bins of equal size
+and the range 0.6 to 1 with another (single) bin
+- ';': If higher-dimensional bins are needed, the bin limits are constructed using a cartesian
+product where the bin limits for each dimension is separated using a semicolon, for example:
+'0,0.5,1;0,1,2' expects the grid to have 4 bins, whose 2-dimensional bin limits are: (0-0.5;0-1),
+(0-0.5;1-2), (00.5-1;0-1), (0.5-1;1-2)
+- '|': When constructing bin limits for higher-dimensional distributions, it is sometimes necessary
+to have bin limits that are dependent on other dimensions; the pipe '|' can be used to achieve
+this. For example the remapping string '0,1,2;0,1,2|0,2,4' expects a grid with a total of 4 bins
+and produces the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4). Leaving out the
+bin limits means that the previous limits are repeated; for example, the following remapping string
+for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;0,1,2||0,2,4'
+- ':': Finally, the colon can be used to 'cut' out bins from the left and right for
+dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
+succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'",
+    name = "remap"
+)]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
@@ -213,6 +241,33 @@ OPTIONS:
 
         --norm <NORM>
             Normalization factor in addition to the given bin widths [default: 1.0]
+
+For performance/simplicity reasons Monte Carlo programs (and the PineAPPL
+`Grid::fill` method) typically do not support 1) multi-dimensional distributions or 2)
+distributions whose bin sizes are not equally sized *during generation*. To work around this
+problem a grid with a one-dimensional distribution can be generated instead, and afterwards the
+bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
+REMAPPING string.
+
+The remapping string uses the following special characters to achieve this:
+
+- ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
+separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
+will expect the grid to have 4 bins which cover the range from 0 to 0.6 with 3 bins of equal size
+and the range 0.6 to 1 with another (single) bin
+- ';': If higher-dimensional bins are needed, the bin limits are constructed using a cartesian
+product where the bin limits for each dimension is separated using a semicolon, for example:
+'0,0.5,1;0,1,2' expects the grid to have 4 bins, whose 2-dimensional bin limits are: (0-0.5;0-1),
+(0-0.5;1-2), (00.5-1;0-1), (0.5-1;1-2)
+- '|': When constructing bin limits for higher-dimensional distributions, it is sometimes necessary
+to have bin limits that are dependent on other dimensions; the pipe '|' can be used to achieve
+this. For example the remapping string '0,1,2;0,1,2|0,2,4' expects a grid with a total of 4 bins
+and produces the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4). Leaving out the
+bin limits means that the previous limits are repeated; for example, the following remapping string
+for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;0,1,2||0,2,4'
+- ':': Finally, the colon can be used to 'cut' out bins from the left and right for
+dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
+succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
 ";
 
     #[test]
