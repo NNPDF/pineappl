@@ -29,7 +29,6 @@ mod tests {
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-optimize 
-
 Optimizes the internal data structure to minimize memory usage
 
 USAGE:

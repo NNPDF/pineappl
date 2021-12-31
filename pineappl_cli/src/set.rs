@@ -61,7 +61,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-set 
-
 Modifies the internal key-value storage
 
 USAGE:
@@ -72,7 +71,7 @@ ARGS:
     <OUTPUT>    Path of the modified PineAPPL file
 
 OPTIONS:
-        --delete <KEY>...
+        --delete <KEY>
             Deletes an internal key-value pair
 
         --entry <KEY> <VALUE>

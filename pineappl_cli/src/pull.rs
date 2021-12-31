@@ -185,7 +185,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-pull 
-
 Calculates the pull between two different PDF sets
 
 USAGE:

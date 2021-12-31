@@ -54,7 +54,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-luminosity 
-
 Shows the luminosity function
 
 USAGE:

@@ -58,7 +58,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-subgrids 
-
 Print information about the internal subgrid types
 
 USAGE:

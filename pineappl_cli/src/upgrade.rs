@@ -29,7 +29,6 @@ mod tests {
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-upgrade 
-
 Converts the file format to the most recent version
 
 USAGE:

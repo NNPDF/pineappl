@@ -116,7 +116,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-pdf-uncertainty 
-
 Calculates PDF uncertainties
 
 USAGE:

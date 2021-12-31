@@ -55,7 +55,6 @@ mod tests {
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-sum 
-
 Sums two or more bins of a grid together
 
 USAGE:

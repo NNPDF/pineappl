@@ -194,7 +194,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-remap 
-
 Modifies the bin dimensions, widths and normalizations
 
 USAGE:
@@ -209,7 +208,7 @@ OPTIONS:
     -h, --help
             Print help information
 
-        --ignore-obs-norm <IGNORE_OBS_NORM>...
+        --ignore-obs-norm <IGNORE_OBS_NORM>
             Ignore the given observables for differential normalization
 
         --norm <NORM>
