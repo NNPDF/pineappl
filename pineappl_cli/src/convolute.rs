@@ -156,7 +156,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-convolute 
-
 Convolutes a PineAPPL grid with a PDF set
 
 USAGE:

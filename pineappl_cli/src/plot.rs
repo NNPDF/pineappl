@@ -788,7 +788,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-plot 
-
 Creates a matplotlib script plotting the contents of the grid
 
 USAGE:

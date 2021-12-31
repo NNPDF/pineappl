@@ -56,7 +56,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-merge 
-
 Merges one or more PineAPPL grids together
 
 USAGE:

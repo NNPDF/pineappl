@@ -238,7 +238,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-diff 
-
 Compares the contents of two grids with each other
 
 USAGE:

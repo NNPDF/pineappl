@@ -139,7 +139,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-orders 
-
 Shows the predictions for all bin for each order separately
 
 USAGE:

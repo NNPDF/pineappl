@@ -175,7 +175,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-channels 
-
 Shows the contribution for each partonic channel
 
 USAGE:

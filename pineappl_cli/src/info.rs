@@ -111,7 +111,6 @@ mod tests {
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl-info 
-
 Shows information about the grid
 
 USAGE:
