@@ -43,8 +43,8 @@ jobs:
     - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: nightly
-          default: true
+        toolchain: nightly
+        default: true
     - uses: actions/cache@v2
       with:
         path: |
