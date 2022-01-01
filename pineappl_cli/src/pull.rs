@@ -6,6 +6,8 @@ use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::PathBuf;
 
+// TODO: do we need the CL parameter?
+
 /// Calculates the pull between two different PDF sets.
 #[derive(Parser)]
 pub struct Opts {
