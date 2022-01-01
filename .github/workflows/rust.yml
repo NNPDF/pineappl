@@ -55,6 +55,7 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
+          ~/.cargo/.crates.toml
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
         restore-keys: |
@@ -83,7 +84,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: install
-        args: cargo-c
+        args: --force cargo-c
     - name: Install PineAPPL's C API
       run: |
         ls -alR $HOME/prefix
