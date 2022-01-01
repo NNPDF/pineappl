@@ -15,7 +15,8 @@ problem a grid with a one-dimensional distribution can be generated instead, and
 bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
 REMAPPING string.
 
-The remapping string uses the following special characters to achieve this:
+The remapping string uses the following special characters to achieve this (note that some of these
+characters must be escaped in certain shells):
 
 - ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
 separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
@@ -33,8 +34,14 @@ bin limits means that the previous limits are repeated; for example, the followi
 for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;0,1,2||0,2,4'
 - ':': Finally, the colon can be used to 'cut' out bins from the left and right for
 dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
-succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'",
-    name = "remap"
+succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
+
+Finally note that the differential cross sections are calculated using the bin sizes (the product
+of bin widths of each dimension) given by the remapping string. The option `--ignore-obs-norm` can
+be used to remove certain dimensions from the bin size determination, for example `'0,10,20;0,2,4'
+--ignore-obs-norm 0` will normalize the bins with a size of `2` because the first dimension (with
+index `0` will be ignored)
+"
 )]
 pub struct Opts {
     /// Path to the input grid.
@@ -220,6 +227,7 @@ impl Subcommand for Opts {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
+    use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-remap 
 Modifies the bin dimensions, widths and normalizations
@@ -249,7 +257,8 @@ problem a grid with a one-dimensional distribution can be generated instead, and
 bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
 REMAPPING string.
 
-The remapping string uses the following special characters to achieve this:
+The remapping string uses the following special characters to achieve this (note that some of these
+characters must be escaped in certain shells):
 
 - ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
 separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
@@ -268,6 +277,12 @@ for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;
 - ':': Finally, the colon can be used to 'cut' out bins from the left and right for
 dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
 succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
+
+Finally note that the differential cross sections are calculated using the bin sizes (the product
+of bin widths of each dimension) given by the remapping string. The option `--ignore-obs-norm` can
+be used to remove certain dimensions from the bin size determination, for example `'0,10,20;0,2,4'
+--ignore-obs-norm 0` will normalize the bins with a size of `2` because the first dimension (with
+index `0` will be ignored)
 ";
 
     #[test]
@@ -278,5 +293,35 @@ succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    #[ignore]
+    fn default() {
+        let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "remap",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                output.path().to_str().unwrap(),
+                "0,1,2;0,2,4,6,8",
+            ])
+            .assert()
+            .success()
+            .stdout("");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout("");
     }
 }
