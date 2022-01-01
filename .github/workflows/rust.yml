@@ -29,11 +29,11 @@ jobs:
         echo "LD_LIBRARY_PATH=${HOME}/prefix/lib" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=${HOME}/prefix/lib/pkgconfig" >> $GITHUB_ENV
         echo "PYTHONPATH=${HOME}/prefix/lib/python3.7/site-packages" >> $GITHUB_ENV
-    - name: Install LHAPDF 6.4.1a
+    - name: Install LHAPDF 6.4.0
       run: |
-        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.1a.tar.gz' -O LHAPDF-6.4.1a.tar.gz
-        tar xzf LHAPDF-6.4.1a.tar.gz
-        cd LHAPDF-6.4.1a
+        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.0.tar.gz' -O LHAPDF-6.4.0.tar.gz
+        tar xzf LHAPDF-6.4.0.tar.gz
+        cd LHAPDF-6.4.0
         ./configure --prefix=${HOME}/prefix
         make -j
         make install
