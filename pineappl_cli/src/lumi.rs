@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// Shows the luminosity function.
 #[derive(Parser)]
-#[clap(aliases = &["luminosities", "luminosity"])]
+#[clap(aliases = &["lumis", "luminosities", "luminosity"])]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
