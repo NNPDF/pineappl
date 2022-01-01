@@ -115,11 +115,11 @@ impl Subcommand for Opts {
 mod tests {
     use assert_cmd::Command;
 
-    const HELP_STR: &str = "pineappl-pdf-uncertainty 
+    const HELP_STR: &str = "pineappl-pdfunc 
 Calculates PDF uncertainties
 
 USAGE:
-    pineappl pdf-uncertainty [OPTIONS] <INPUT> <PDFSET>
+    pineappl pdfunc [OPTIONS] <INPUT> <PDFSET>
 
 ARGS:
     <INPUT>     Path to the input grid
@@ -137,7 +137,7 @@ OPTIONS:
     fn help() {
         Command::cargo_bin("pineappl")
             .unwrap()
-            .args(&["pdf_uncertainty", "--help"])
+            .args(&["pdfunc", "--help"])
             .assert()
             .success()
             .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));

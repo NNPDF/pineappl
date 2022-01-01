@@ -53,11 +53,11 @@ impl Subcommand for Opts {
 mod tests {
     use assert_cmd::Command;
 
-    const HELP_STR: &str = "pineappl-luminosity 
+    const HELP_STR: &str = "pineappl-lumi 
 Shows the luminosity function
 
 USAGE:
-    pineappl luminosity <INPUT>
+    pineappl lumi <INPUT>
 
 ARGS:
     <INPUT>    Path to the input grid
