@@ -84,7 +84,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: install
-        args: --force cargo-c
+        args: cargo-c
     - name: Install PineAPPL's C API
       run: |
         ls -alR $HOME/prefix
