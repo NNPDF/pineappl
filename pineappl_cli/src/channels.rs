@@ -8,7 +8,6 @@ use std::path::PathBuf;
 
 /// Shows the contribution for each partonic channel.
 #[derive(Parser)]
-#[clap(name = "channels")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

@@ -6,7 +6,6 @@ use std::path::PathBuf;
 
 /// Modifies the internal key-value storage.
 #[derive(Parser)]
-#[clap(name = "set")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

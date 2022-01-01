@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 /// Optimizes the internal data structure to minimize memory usage.
 #[derive(Parser)]
-#[clap(name = "optimize")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

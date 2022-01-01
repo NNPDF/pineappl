@@ -8,7 +8,6 @@ use std::path::PathBuf;
 
 /// Calculates the pull between two different PDF sets.
 #[derive(Parser)]
-#[clap(name = "pull")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

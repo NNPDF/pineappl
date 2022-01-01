@@ -7,7 +7,6 @@ use std::path::PathBuf;
 
 /// Print information about the internal subgrid types.
 #[derive(Parser)]
-#[clap(name = "subgrids")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

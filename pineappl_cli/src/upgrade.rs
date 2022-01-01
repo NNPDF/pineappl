@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 /// Converts the file format to the most recent version.
 #[derive(Parser)]
-#[clap(name = "upgrade")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
