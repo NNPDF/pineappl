@@ -654,42 +654,24 @@ impl Subcommand for Opts {
 
             let values1: Vec<f64> = pdfset1
                 .par_iter()
-                .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
                 .collect();
             let values2: Vec<f64> = pdfset2
                 .par_iter()
-                .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1))
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
                 .collect();
 
             let uncertainty1 = set1.uncertainty(&values1, cl, false);
             let uncertainty2 = set2.uncertainty(&values2, cl, false);
 
-            let full_res1 = {
-                let central: Vec<f64> = pdfset1
-                    .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
-                    .collect();
-                set1.uncertainty(&central, cl, false).central
-            };
-            let full_res2 = {
-                let central: Vec<f64> = pdfset2
-                    .iter()
-                    .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
-                    .collect();
-                set1.uncertainty(&central, cl, false).central
-            };
-
-            let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
-            let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
-
             let denominator = {
                 // use the uncertainties in the direction in which the respective results differ
-                let unc1 = if full_res1 > full_res2 {
+                let unc1 = if uncertainty1.central > uncertainty2.central {
                     uncertainty1.errminus
                 } else {
                     uncertainty1.errplus
                 };
-                let unc2 = if full_res2 > full_res1 {
+                let unc2 = if uncertainty2.central > uncertainty1.central {
                     uncertainty2.errminus
                 } else {
                     uncertainty2.errplus
@@ -697,6 +679,10 @@ impl Subcommand for Opts {
 
                 unc1.hypot(unc2)
             };
+
+            let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
+            let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
+
             let pull = (res2 - res1) / denominator;
 
             let subgrid = grid.subgrid(order, bin, lumi);
