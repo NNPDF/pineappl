@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 /// Calculates PDF uncertainties.
 #[derive(Parser)]
-#[clap(name = "pdfunc", aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
+#[clap(aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

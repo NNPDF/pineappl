@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// Shows information about the grid.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").required(true), name = "info")]
+#[clap(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

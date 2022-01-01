@@ -10,7 +10,6 @@ use std::path::{Path, PathBuf};
 
 /// Creates a matplotlib script plotting the contents of the grid.
 #[derive(Parser)]
-#[clap(name = "plot")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

@@ -8,7 +8,6 @@ use std::path::PathBuf;
 
 /// Compares the contents of two grids with each other.
 #[derive(Parser)]
-#[clap(name = "diff")]
 pub struct Opts {
     /// Path to the first grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

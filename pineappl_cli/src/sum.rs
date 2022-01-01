@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// Sums two or more bins of a grid together.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").required(true), name = "sum")]
+#[clap(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

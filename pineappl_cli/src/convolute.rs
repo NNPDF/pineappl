@@ -8,7 +8,6 @@ use std::path::PathBuf;
 
 /// Convolutes a PineAPPL grid with a PDF set.
 #[derive(Parser)]
-#[clap(name = "convolute")]
 pub struct Opts {
     /// Path of the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 /// Merges one or more PineAPPL grids together.
 #[derive(Parser)]
-#[clap(name = "merge")]
 pub struct Opts {
     /// Path of the merged PineAPPL file.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]

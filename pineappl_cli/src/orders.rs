@@ -7,7 +7,6 @@ use std::path::PathBuf;
 
 /// Shows the predictions for all bin for each order separately.
 #[derive(Parser)]
-#[clap(name = "orders")]
 pub struct Opts {
     /// Path to the input grid.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
