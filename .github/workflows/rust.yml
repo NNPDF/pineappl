@@ -29,16 +29,16 @@ jobs:
         echo "LD_LIBRARY_PATH=${HOME}/prefix/lib" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=${HOME}/prefix/lib/pkgconfig" >> $GITHUB_ENV
         echo "PYTHONPATH=${HOME}/prefix/lib/python3.7/site-packages" >> $GITHUB_ENV
-    - name: Install LHAPDF 6.3.0
-      if: steps.cache-lhapdf.outputs.cache-hit != 'true'
+    - name: Install LHAPDF 6.4.1a
       run: |
-        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.3.0.tar.gz' -O LHAPDF-6.3.0.tar.gz
-        tar xzf LHAPDF-6.3.0.tar.gz
-        cd LHAPDF-6.3.0
+        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.1a.tar.gz' -O LHAPDF-6.4.1a.tar.gz
+        tar xzf LHAPDF-6.4.1a.tar.gz
+        cd LHAPDF-6.4.1a
         ./configure --prefix=${HOME}/prefix
         make -j
         make install
         lhapdf install NNPDF31_nlo_as_0118_luxqed
+        lhapdf install NNPDF40_nnlo_as_01180
     - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
