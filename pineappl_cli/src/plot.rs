@@ -5,7 +5,7 @@ use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::bin::BinInfo;
 use pineappl::subgrid::Subgrid;
-use rayon::prelude::*;
+use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::{Path, PathBuf};
 
 /// Creates a matplotlib script plotting the contents of the grid.
@@ -29,6 +29,9 @@ pub struct Opts {
         value_names = &["ORDER", "BIN", "LUMI"]
     )]
     subgrid_pull: Vec<String>,
+    /// Number of threads to utilize.
+    #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
+    threads: usize,
 }
 
 fn pdfset_label(pdfset: &str) -> &str {
@@ -438,6 +441,11 @@ if __name__ == '__main__':
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
+        ThreadPoolBuilder::new()
+            .num_threads(self.threads)
+            .build_global()
+            .unwrap();
+
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let lhapdf_name = pdfset_name(&self.pdfsets[0]);
@@ -805,7 +813,9 @@ OPTIONS:
 
         --subgrid-pull <ORDER> <BIN> <LUMI>
             Show the pull for a specific grid three-dimensionally
-";
+
+        --threads <THREADS>
+            Number of threads to utilize";
 
     #[test]
     fn help() {
@@ -814,6 +824,6 @@ OPTIONS:
             .args(&["plot", "--help"])
             .assert()
             .success()
-            .stdout(HELP_STR);
+            .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));
     }
 }
