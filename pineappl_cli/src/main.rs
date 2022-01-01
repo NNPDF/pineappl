@@ -5,11 +5,11 @@ mod convolute;
 mod diff;
 mod helpers;
 mod info;
-mod luminosity;
+mod lumi;
 mod merge;
 mod optimize;
 mod orders;
-mod pdf_uncertainty;
+mod pdfunc;
 mod plot;
 mod pull;
 mod remap;
@@ -52,11 +52,11 @@ enum SubcommandEnum {
     Convolute(convolute::Opts),
     Diff(diff::Opts),
     Info(info::Opts),
-    Luminosity(luminosity::Opts),
+    Lumi(lumi::Opts),
     Merge(merge::Opts),
     Optimize(optimize::Opts),
     Orders(orders::Opts),
-    PdfUncertainty(pdf_uncertainty::Opts),
+    Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
     Remap(remap::Opts),
