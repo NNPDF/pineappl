@@ -285,6 +285,18 @@ be used to remove certain dimensions from the bin size determination, for exampl
 index `0` will be ignored)
 ";
 
+    const DEFAULT_STR: &str = "bin etal  x1   disg/detal  neg unc pos unc
+---+--+--+-+-+------------+-------+-------
+  0  0  1 0 2  4.6909525e0  -3.77%   2.71%
+  1  0  1 2 4  4.3151941e0  -3.79%   2.80%
+  2  0  1 4 6  3.7501757e0  -3.78%   2.86%
+  3  0  1 6 8  3.0322078e0  -3.77%   2.92%
+  4  1  2 0 2  2.2616679e0  -3.74%   2.95%
+  5  1  2 2 4  1.5363894e0  -3.71%   2.98%
+  6  1  2 4 6  1.4462754e0  -3.63%   2.97%
+  7  1  2 6 8 3.4430073e-1  -3.46%   2.85%
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -296,14 +308,16 @@ index `0` will be ignored)
     }
 
     #[test]
-    #[ignore]
     fn default() {
         let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
 
+        // TODO: try a more complicated remapping string
         Command::cargo_bin("pineappl")
             .unwrap()
             .args(&[
                 "remap",
+                "--ignore-obs-norm=1",
+                "--norm=10",
                 "data/LHCB_WP_7TEV.pineappl.lz4",
                 output.path().to_str().unwrap(),
                 "0,1,2;0,2,4,6,8",
@@ -322,6 +336,6 @@ index `0` will be ignored)
             ])
             .assert()
             .success()
-            .stdout("");
+            .stdout(DEFAULT_STR);
     }
 }
