@@ -19,11 +19,17 @@ jobs:
         run: |
           ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
 
-  deploy-macos:
-    runs-on: macos-latest
+  deploy-other:
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9']
+        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            flags: --universal2
+          - os: windows-latest
+            flags: ""
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -38,19 +44,4 @@ jobs:
         with:
           maturin-version: latest
           command: publish
-          args: --manifest-path pineappl_py/Cargo.toml --universal2 --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-
-  deploy-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: messense/maturin-action@v1
-        with:
-          maturin-version: latest
-          command: publish
-          args: --manifest-path pineappl_py/Cargo.toml --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+          args: --manifest-path pineappl_py/Cargo.toml ${{ matrix.flags }} --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
