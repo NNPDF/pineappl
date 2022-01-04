@@ -287,6 +287,8 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
     }
 
+    // TEST 11: `delete_bins`
+
     //// delete a few bins from the start
     //grid.delete_bins(&[0, 1]);
 
@@ -350,8 +352,8 @@ const STATIC_REFERENCE: [f64; 24] = [
     7.300411258011377e-3,
 ];
 
-// results are slightly different because of the static scale detection (ssd)- the
-// interpolation error in the Q^2 dimension is removed
+// numbers are slightly different from `STATIC_REFERENCE` because the static scale detection (SSD)
+// removes the Q^2 interpolation error
 const STATIC_REFERENCE_AFTER_SSD: [f64; 24] = [
     5.2943850298637385e-1,
     5.4077949153675209e-1,
@@ -417,7 +419,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
     )
 }
 
-// TODO: fix unexpected loss of precision after `optimize`
+// TODO: fix unexpected loss of precision after `optimize` in `dy_aa_lagrange_v1_static`
 
 //#[test]
 //fn dy_aa_lagrange_v1_static() -> Result<()> {
