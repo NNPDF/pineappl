@@ -69,12 +69,12 @@ jobs:
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --command Build --no-run
+        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run
         run-types: AllTargets
     - name: Run tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --ignore-tests --follow-exec --skip-clean --timeout 300
+        args: --workspace --exclude pineappl_capi --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300
         run-types: AllTargets
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
