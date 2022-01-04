@@ -162,7 +162,7 @@ fn perform_grid_tests(
     dynamic: bool,
     reference: &[f64],
     reference_after_ssd: &[f64],
-    convolute_subgrid: bool,
+    (convolute_subgrid_before, convolute_subgrid_after): (bool, bool),
 ) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic)?;
@@ -213,17 +213,8 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
-    // TEST 6: `optimize`
-    grid.optimize();
-
-    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
-
-    for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
-    }
-
-    // TEST 7: `convolute_subgrid`
-    if convolute_subgrid {
+    // TEST 6: `convolute_subgrid`
+    if convolute_subgrid_before {
         let bins: Vec<_> = (0..grid.bin_info().bins())
             .map(|bin| {
                 grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
@@ -236,7 +227,30 @@ fn perform_grid_tests(
         }
     }
 
-    // TEST 8: `set_remapper`
+    // TEST 7: `optimize`
+    grid.optimize();
+
+    // TEST 8: `convolute_subgrid` for the optimized subgrids
+    if convolute_subgrid_after {
+        let bins: Vec<_> = (0..grid.bin_info().bins())
+            .map(|bin| {
+                grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                    .sum()
+            })
+            .collect();
+
+        for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
+            assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+        }
+    }
+
+    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+
+    for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+    }
+
+    // TEST 9: `set_remapper`
 
     // make a two-dimensional distribution out of it
     grid.set_remapper(BinRemapper::new(
@@ -249,7 +263,7 @@ fn perform_grid_tests(
             .collect::<Vec<(f64, f64)>>(),
     )?)?;
 
-    // TEST 9: `merge_bins`
+    // TEST 10: `merge_bins`
 
     // trivial merge: first bin is merged into first bin
     grid.merge_bins(0..1)?;
@@ -399,7 +413,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        true,
+        (false, true),
     )
 }
 
@@ -412,7 +426,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
 //        false,
 //        &STATIC_REFERENCE,
 //        &STATIC_REFERENCE_AFTER_SSD,
-//        true,
+//        (true, true),
 //    )
 //}
 
@@ -423,7 +437,7 @@ fn dy_aa_lagrange_v2_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        true,
+        (false, true),
     )
 }
 
@@ -434,7 +448,7 @@ fn dy_aa_lagrange_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        true,
+        (false, true),
     )
 }
 
@@ -445,7 +459,7 @@ fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        false, // TODO: implement reweighting in `convolute_subgrid`
+        (false, false),
     )
 }
 
@@ -456,7 +470,7 @@ fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        true,
+        (false, true),
     )
 }
 
@@ -467,6 +481,6 @@ fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        false, // TODO: implement reweighting in `convolute_subgrid`
+        (false, false),
     )
 }
