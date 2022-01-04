@@ -1,3 +1,4 @@
+use anyhow::Result;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
@@ -70,7 +71,7 @@ fn fill_drell_yan_lo_grid(
     calls: usize,
     subgrid_type: &str,
     dynamic: bool,
-) -> anyhow::Result<Grid> {
+) -> Result<Grid> {
     let lumi = vec![
         // photons
         lumi_entry![22, 22, 1.0],
@@ -162,7 +163,7 @@ fn perform_grid_tests(
     reference: &[f64],
     reference_after_ssd: &[f64],
     convolute_subgrid: bool,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic)?;
 
@@ -392,7 +393,7 @@ const DYNAMIC_REFERENCE: [f64; 24] = [
 ];
 
 #[test]
-fn dy_aa_lagrange_static() -> anyhow::Result<()> {
+fn dy_aa_lagrange_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgrid",
         false,
@@ -405,7 +406,7 @@ fn dy_aa_lagrange_static() -> anyhow::Result<()> {
 // TODO: fix unexpected loss of precision after `optimize`
 
 //#[test]
-//fn dy_aa_lagrange_v1_static() -> anyhow::Result<()> {
+//fn dy_aa_lagrange_v1_static() -> Result<()> {
 //    perform_grid_tests(
 //        "LagrangeSubgridV1",
 //        false,
@@ -416,7 +417,7 @@ fn dy_aa_lagrange_static() -> anyhow::Result<()> {
 //}
 
 #[test]
-fn dy_aa_lagrange_v2_static() -> anyhow::Result<()> {
+fn dy_aa_lagrange_v2_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
         false,
@@ -427,7 +428,7 @@ fn dy_aa_lagrange_v2_static() -> anyhow::Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_dynamic() -> anyhow::Result<()> {
+fn dy_aa_lagrange_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgrid",
         true,
@@ -438,7 +439,7 @@ fn dy_aa_lagrange_dynamic() -> anyhow::Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v1_dynamic() -> anyhow::Result<()> {
+fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV1",
         true,
@@ -449,7 +450,7 @@ fn dy_aa_lagrange_v1_dynamic() -> anyhow::Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v2_dynamic() -> anyhow::Result<()> {
+fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
         true,
@@ -460,7 +461,7 @@ fn dy_aa_lagrange_v2_dynamic() -> anyhow::Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_sparse_dynamic() -> anyhow::Result<()> {
+fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSparseSubgrid",
         true,
