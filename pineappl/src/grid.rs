@@ -1709,19 +1709,20 @@ impl Grid {
         }
 
         let bin_ranges = bin_ranges;
-
         let mut ranges = bin_ranges.as_slice();
 
-        if let Some((range, remainder)) = bin_ranges.split_first() {
-            if range.start == 0 {
-                self.bin_limits.delete_bins_left(range.end);
+        // remove the bins from the right first, so as not to invalidate any indices
+        if let Some((range, remainder)) = ranges.split_last() {
+            if range.end == self.bin_info().bins() {
+                self.bin_limits.delete_bins_right(range.end - range.start);
                 ranges = remainder;
             }
         }
 
-        if let Some((range, remainder)) = bin_ranges.split_last() {
-            if range.end == self.bin_info().bins() {
-                self.bin_limits.delete_bins_right(range.end - range.start);
+        // indices on the left aren't affected by removal of bins to their right
+        if let Some((range, remainder)) = ranges.split_first() {
+            if range.start == 0 {
+                self.bin_limits.delete_bins_left(range.end);
                 ranges = remainder;
             }
         }
