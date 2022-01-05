@@ -2,6 +2,7 @@
 
 mod channels;
 mod convolute;
+mod delete;
 mod diff;
 mod helpers;
 mod info;
@@ -50,6 +51,7 @@ struct Opts {
 enum SubcommandEnum {
     Channels(channels::Opts),
     Convolute(convolute::Opts),
+    Delete(delete::Opts),
     Diff(diff::Opts),
     Info(info::Opts),
     Lumi(lumi::Opts),
