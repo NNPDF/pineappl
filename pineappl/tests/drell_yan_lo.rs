@@ -289,38 +289,38 @@ fn perform_grid_tests(
 
     // TEST 11: `delete_bins`
 
-    //// delete a few bins from the start
-    //grid.delete_bins(&[0, 1]);
+    // delete a few bins from the start
+    grid.delete_bins(&[0, 1]);
 
-    //let deleted = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let deleted = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
-    //assert_eq!(deleted.len(), 8);
+    assert_eq!(deleted.len(), 10);
 
-    //for (result, reference_after_ssd) in deleted.iter().zip(
-    //    reference_after_ssd
-    //        .chunks_exact(2)
-    //        .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
-    //        .skip(2),
-    //) {
-    //    assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
-    //}
+    for (result, reference_after_ssd) in deleted.iter().zip(
+        reference_after_ssd
+            .chunks_exact(2)
+            .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
+            .skip(2),
+    ) {
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
+    }
 
-    //// delete a few bins from the ending
-    //grid.delete_bins(&[8, 9]);
+    // delete a few bins from the ending
+    grid.delete_bins(&[8, 9]);
 
-    //assert_eq!(deleted.len(), 6);
+    let deleted2 = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
-    //let deleted2 = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    assert_eq!(deleted2.len(), 8);
 
-    //for (result, reference_after_ssd) in deleted2.iter().zip(
-    //    reference_after_ssd
-    //        .chunks_exact(2)
-    //        .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
-    //        .skip(2)
-    //        .take(6),
-    //) {
-    //    assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
-    //}
+    for (result, reference_after_ssd) in deleted2.iter().zip(
+        reference_after_ssd
+            .chunks_exact(2)
+            .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
+            .skip(2)
+            .take(6),
+    ) {
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
+    }
 
     Ok(())
 }
