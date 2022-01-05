@@ -1690,7 +1690,7 @@ impl Grid {
             .iter()
             .copied()
             // ignore indices corresponding to bin that don't exist
-            .filter(|&index| index >= self.bin_info().bins())
+            .filter(|&index| index < self.bin_info().bins())
             .collect();
 
         // sort and remove repeated indices
