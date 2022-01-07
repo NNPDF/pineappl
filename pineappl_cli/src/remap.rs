@@ -18,23 +18,32 @@ REMAPPING string.
 The remapping string uses the following special characters to achieve this (note that some of these
 characters must be escaped in certain shells):
 
-- ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
-separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
-will expect the grid to have 4 bins which cover the range from 0 to 0.6 with 3 bins of equal size
-and the range 0.6 to 1 with another (single) bin
-- ';': If higher-dimensional bins are needed, the bin limits are constructed using a cartesian
-product where the bin limits for each dimension is separated using a semicolon, for example:
-'0,0.5,1;0,1,2' expects the grid to have 4 bins, whose 2-dimensional bin limits are: (0-0.5;0-1),
-(0-0.5;1-2), (00.5-1;0-1), (0.5-1;1-2)
-- '|': When constructing bin limits for higher-dimensional distributions, it is sometimes necessary
-to have bin limits that are dependent on other dimensions; the pipe '|' can be used to achieve
-this. For example the remapping string '0,1,2;0,1,2|0,2,4' expects a grid with a total of 4 bins
-and produces the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4). Leaving out the
-bin limits means that the previous limits are repeated; for example, the following remapping string
-for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;0,1,2||0,2,4'
-- ':': Finally, the colon can be used to 'cut' out bins from the left and right for
-dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
-succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
+- ',': The comma ',' constructs 1-dimensional bin limits (1DBL). For example, the 1DBL
+'0,0.2,0.4,0.6,1' expects the grid to have 4 bins whose bin limits will be (0-0.2), (0.2-0.4),
+(0.4-0.6) and (0.6,1)
+
+- ';': If higher-dimensional bins are needed, the n-dimensional bin limits (NDBL) are constructed
+from a cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
+the grid to have 4 bins, whose 2DBL will be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and
+(0.5-1;1-2)
+
+- '|': The previous operators are enough to contruct NDBL with differently-sized bins, but they can
+not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6); here
+the 1DBL for the second dimension depend on the first dimension and also have a different number of
+bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL are
+'0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'. Note
+that there have to be two 1DBL separated by '|', because the first dimension has two bins. If there
+are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
+accordingly. An example of this is the following remapping string:
+'0,1,2;-2,0,2;0,1,2|1,2,3|2,3,4|3,4,5|4,5,6|5,6,7'. Here the third dimension has 6 1DBL separated
+by '|' because the first dimension has 2 bins and the second dimension has 3 bins, so `6 = 2 * 3`.
+
+If the 1DBL is an empty string, the previous 1DBL is repeated, for
+example '0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
+
+- ':': The last feature of '|' can combined with ':', which is used to 'cut' out bins from the left
+and/or right. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more succinct way
+of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
 
 Finally note that the differential cross sections are calculated using the bin sizes (the product
 of bin widths of each dimension) given by the remapping string. The option `--ignore-obs-norm` can
@@ -260,23 +269,32 @@ REMAPPING string.
 The remapping string uses the following special characters to achieve this (note that some of these
 characters must be escaped in certain shells):
 
-- ',': In the easiest case, when mapping bins to 1-dimensional bins, the bin limits can be given by
-separating them using ',' as in the following example: '0,0.2,0.4,0.6,1'. This remapping string
-will expect the grid to have 4 bins which cover the range from 0 to 0.6 with 3 bins of equal size
-and the range 0.6 to 1 with another (single) bin
-- ';': If higher-dimensional bins are needed, the bin limits are constructed using a cartesian
-product where the bin limits for each dimension is separated using a semicolon, for example:
-'0,0.5,1;0,1,2' expects the grid to have 4 bins, whose 2-dimensional bin limits are: (0-0.5;0-1),
-(0-0.5;1-2), (00.5-1;0-1), (0.5-1;1-2)
-- '|': When constructing bin limits for higher-dimensional distributions, it is sometimes necessary
-to have bin limits that are dependent on other dimensions; the pipe '|' can be used to achieve
-this. For example the remapping string '0,1,2;0,1,2|0,2,4' expects a grid with a total of 4 bins
-and produces the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4). Leaving out the
-bin limits means that the previous limits are repeated; for example, the following remapping string
-for six bins '0,1,2;0,1,2|0,1,2|0,2,4' can be more succinctly written as '0,1,2;0,1,2||0,2,4'
-- ':': Finally, the colon can be used to 'cut' out bins from the left and right for
-dimension-dependent bins. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more
-succinct way of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
+- ',': The comma ',' constructs 1-dimensional bin limits (1DBL). For example, the 1DBL
+'0,0.2,0.4,0.6,1' expects the grid to have 4 bins whose bin limits will be (0-0.2), (0.2-0.4),
+(0.4-0.6) and (0.6,1)
+
+- ';': If higher-dimensional bins are needed, the n-dimensional bin limits (NDBL) are constructed
+from a cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
+the grid to have 4 bins, whose 2DBL will be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and
+(0.5-1;1-2)
+
+- '|': The previous operators are enough to contruct NDBL with differently-sized bins, but they can
+not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6); here
+the 1DBL for the second dimension depend on the first dimension and also have a different number of
+bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL are
+'0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'. Note
+that there have to be two 1DBL separated by '|', because the first dimension has two bins. If there
+are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
+accordingly. An example of this is the following remapping string:
+'0,1,2;-2,0,2;0,1,2|1,2,3|2,3,4|3,4,5|4,5,6|5,6,7'. Here the third dimension has 6 1DBL separated
+by '|' because the first dimension has 2 bins and the second dimension has 3 bins, so `6 = 2 * 3`.
+
+If the 1DBL is an empty string, the previous 1DBL is repeated, for
+example '0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
+
+- ':': The last feature of '|' can combined with ':', which is used to 'cut' out bins from the left
+and/or right. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more succinct way
+of writing the following remapping string: '0,1,2;0,1|0,1,2|0,1,2,3|0,1,2|2,3'
 
 Finally note that the differential cross sections are calculated using the bin sizes (the product
 of bin widths of each dimension) given by the remapping string. The option `--ignore-obs-norm` can
