@@ -58,7 +58,7 @@ impl Subcommand for Opts {
         );
 
         let mut lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
-        lumis.sort();
+        lumis.sort_unstable();
         lumis.dedup();
         let lumis = lumis;
 

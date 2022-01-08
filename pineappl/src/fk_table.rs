@@ -87,26 +87,31 @@ impl FkTable {
     }
 
     /// Extract the normalizations for each bin.
+    #[must_use]
     pub fn bin_normalizations(&self) -> Vec<f64> {
         self.grid.bin_info().normalizations()
     }
 
     /// Extract the number of dimensions for bins.
+    #[must_use]
     pub fn bin_dimensions(&self) -> usize {
         self.grid.bin_info().dimensions()
     }
 
     /// Extract the left edges of a specific bin dimension.
+    #[must_use]
     pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().left(dimension)
     }
 
     /// Extract the right edges of a specific bin dimension.
+    #[must_use]
     pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
         self.grid.bin_info().right(dimension)
     }
 
     /// Access meta data
+    #[must_use]
     pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
         self.grid.key_values()
     }

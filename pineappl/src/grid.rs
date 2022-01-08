@@ -1045,7 +1045,7 @@ impl Grid {
 
     /// Returns all information about the bins in this grid.
     #[must_use]
-    pub fn bin_info(&self) -> BinInfo {
+    pub const fn bin_info(&self) -> BinInfo {
         BinInfo::new(&self.bin_limits, self.remapper())
     }
 
@@ -1694,7 +1694,7 @@ impl Grid {
             .collect();
 
         // sort and remove repeated indices
-        bin_indices.sort();
+        bin_indices.sort_unstable();
         bin_indices.dedup();
         let bin_indices = bin_indices;
 
