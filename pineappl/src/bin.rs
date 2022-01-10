@@ -314,11 +314,11 @@ impl BinRemapper {
 
     /// Deletes all bins whose corresponding indices are in one of the ranges of `bins`.
     pub fn delete_bins(&mut self, bins: &[Range<usize>]) {
+        let dim = self.dimensions();
+
         for range in bins.iter().cloned().rev() {
             self.normalizations.drain(range);
         }
-
-        let dim = self.dimensions();
 
         for range in bins.iter().rev() {
             self.limits.drain((range.start * dim)..(range.end * dim));

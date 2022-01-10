@@ -23,6 +23,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
+use std::iter;
 use std::mem;
 use std::ops::Range;
 use thiserror::Error;
@@ -1710,6 +1711,7 @@ impl Grid {
 
         let bin_ranges = bin_ranges;
         let mut ranges = bin_ranges.as_slice();
+        let old_limits = self.bin_limits.limits();
 
         // remove the bins from the right first, so as not to invalidate any indices
         if let Some((range, remainder)) = ranges.split_last() {
@@ -1727,12 +1729,29 @@ impl Grid {
             }
         }
 
-        if let Some(remapper) = self.remapper_mut() {
-            remapper.delete_bins(&bin_ranges);
+        if !ranges.is_empty() {
+            // if there's no remapper we need to store the bin limits in a new remapper
+            if self.remapper_mut().is_none() {
+                self.set_remapper(
+                    BinRemapper::new(
+                        old_limits.windows(2).map(|win| win[1] - win[0]).collect(),
+                        old_limits.windows(2).map(|win| (win[0], win[1])).collect(),
+                    )
+                    .unwrap_or_else(|_| unreachable!()),
+                )
+                .unwrap_or_else(|_| unreachable!());
+            }
+
+            // the following should not be needed, but let's set these limits to integer values
+            self.bin_limits = BinLimits::new(
+                iter::successors(Some(0.0), |x| Some(x + 1.0))
+                    .take(old_limits.len() - bin_indices.len())
+                    .collect(),
+            );
         }
 
-        if !ranges.is_empty() {
-            todo!();
+        if let Some(remapper) = self.remapper_mut() {
+            remapper.delete_bins(&bin_ranges);
         }
 
         for &bin_index in bin_indices.iter().rev() {
