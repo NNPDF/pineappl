@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - enabled relabeling PDF sets, which means that they can now specified as
   `LHAPDF-set-name=label`, which uses the set `LHAPDF-set-name` to load it from
   LHAPDF, but `label` is the name that appears in the plot legend
+- added new options to the `subgrids` command: `--muf`, `--mur`, `--x1` and
+  `--x2` to print the corresponding grid values and `--stats` to print
+  information about the space requirements of the subgrid type
+- added new subcommand `--delete`, which allows to delete bins from a grid
 
 ### Changed
 
