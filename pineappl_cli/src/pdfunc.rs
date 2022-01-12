@@ -74,8 +74,7 @@ impl Subcommand for Opts {
             title.add_cell(cell);
         }
         title.add_cell(cell!(c->if self.integrated { "integ" } else { y_label }));
-        title.add_cell(cell!(c->"neg unc"));
-        title.add_cell(cell!(c->"pos unc"));
+        title.add_cell(cell!(c->"PDF uncertainty").with_hspan(2));
 
         let mut table = helpers::create_table();
         table.set_titles(title);
@@ -133,7 +132,7 @@ OPTIONS:
     -o, --orders <ORDERS>...    Select orders manually
         --threads <THREADS>     Number of threads to utilize";
 
-    const DEFAULT_STR: &str = "bin   etal    disg/detal  neg unc pos unc
+    const DEFAULT_STR: &str = "bin   etal    disg/detal  PDF uncertainty
 ---+----+----+-----------+-------+-------
   0    2 2.25 3.7528868e2  -1.14%   1.14%
   1 2.25  2.5 3.4521365e2  -1.16%   1.16%
@@ -145,7 +144,7 @@ OPTIONS:
   7    4  4.5 1.3765722e1  -2.76%   2.76%
 ";
 
-    const CL_90_STR: &str = "bin   etal    disg/detal  neg unc pos unc
+    const CL_90_STR: &str = "bin   etal    disg/detal  PDF uncertainty
 ---+----+----+-----------+-------+-------
   0    2 2.25 3.7528868e2  -1.88%   1.88%
   1 2.25  2.5 3.4521365e2  -1.90%   1.90%
@@ -157,7 +156,7 @@ OPTIONS:
   7    4  4.5 1.3765722e1  -4.54%   4.54%
 ";
 
-    const INTEGRATED_STR: &str = "bin   etal       integ    neg unc pos unc
+    const INTEGRATED_STR: &str = "bin   etal       integ    PDF uncertainty
 ---+----+----+-----------+-------+-------
   0    2 2.25 9.3822169e1  -1.14%   1.14%
   1 2.25  2.5 8.6303411e1  -1.16%   1.16%
@@ -169,7 +168,7 @@ OPTIONS:
   7    4  4.5 6.8828610e0  -2.76%   2.76%
 ";
 
-    const ORDERS_A2_AS1A2_STR: &str = "bin   etal    disg/detal  neg unc pos unc
+    const ORDERS_A2_AS1A2_STR: &str = "bin   etal    disg/detal  PDF uncertainty
 ---+----+----+-----------+-------+-------
   0    2 2.25 3.7919477e2  -1.14%   1.14%
   1 2.25  2.5 3.4849336e2  -1.16%   1.16%
