@@ -3,7 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum, SubgridIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIter};
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -155,6 +155,16 @@ impl Subgrid for ImportOnlySubgridV1 {
 
     fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
+    }
+
+    fn stats(&self) -> Stats {
+        Stats {
+            total: self.q2_grid.len() * self.x1_grid.len() * self.x2_grid.len(),
+            allocated: self.array.len() + self.array.zeros(),
+            zeros: self.array.zeros(),
+            overhead: self.array.overhead(),
+            bytes_per_value: mem::size_of::<f64>(),
+        }
     }
 }
 
@@ -352,6 +362,16 @@ impl Subgrid for ImportOnlySubgridV2 {
     fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
     }
+
+    fn stats(&self) -> Stats {
+        Stats {
+            total: self.mu2_grid.len() * self.x1_grid.len() * self.x2_grid.len(),
+            allocated: self.array.len() + self.array.zeros(),
+            zeros: self.array.zeros(),
+            overhead: self.array.overhead(),
+            bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -370,6 +390,17 @@ mod tests {
             x.clone(),
         )
         .into();
+
+        assert_eq!(
+            grid1.stats(),
+            Stats {
+                total: 100,
+                allocated: 0,
+                zeros: 0,
+                overhead: 2,
+                bytes_per_value: 8,
+            }
+        );
 
         let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0 }];
 
@@ -442,6 +473,17 @@ mod tests {
 
         grid1.scale(2.0);
         assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+
+        assert_eq!(
+            grid1.stats(),
+            Stats {
+                total: 200,
+                allocated: 14,
+                zeros: 6,
+                overhead: 42,
+                bytes_per_value: 8,
+            }
+        );
     }
 
     #[test]
@@ -528,6 +570,17 @@ mod tests {
 
         grid1.scale(2.0);
         assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+
+        assert_eq!(
+            grid1.stats(),
+            Stats {
+                total: 200,
+                allocated: 14,
+                zeros: 6,
+                overhead: 42,
+                bytes_per_value: 8,
+            }
+        );
     }
 
     #[test]

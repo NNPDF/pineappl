@@ -3,7 +3,9 @@
 use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridIter, SubgridParams};
+use super::subgrid::{
+    ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIter, SubgridParams,
+};
 use arrayvec::ArrayVec;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
@@ -337,6 +339,27 @@ impl Subgrid for LagrangeSubgridV1 {
                 )
             },
         )
+    }
+
+    fn stats(&self) -> Stats {
+        let (non_zeros, zeros) = self.grid.as_ref().map_or((0, 0), |array| {
+            array.iter().fold((0, 0), |mut result, value| {
+                if *value == 0.0 {
+                    result.0 += 1;
+                } else {
+                    result.1 += 1;
+                }
+                result
+            })
+        });
+
+        Stats {
+            total: non_zeros + zeros,
+            allocated: non_zeros + zeros,
+            zeros,
+            overhead: 0,
+            bytes_per_value: mem::size_of::<f64>(),
+        }
     }
 }
 
@@ -682,6 +705,27 @@ impl Subgrid for LagrangeSubgridV2 {
             },
         )
     }
+
+    fn stats(&self) -> Stats {
+        let (non_zeros, zeros) = self.grid.as_ref().map_or((0, 0), |array| {
+            array.iter().fold((0, 0), |mut result, value| {
+                if *value == 0.0 {
+                    result.0 += 1;
+                } else {
+                    result.1 += 1;
+                }
+                result
+            })
+        });
+
+        Stats {
+            total: non_zeros + zeros,
+            allocated: non_zeros + zeros,
+            zeros,
+            overhead: 0,
+            bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -898,6 +942,16 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     fn iter(&self) -> SubgridIter {
         Box::new(self.array.indexed_iter())
     }
+
+    fn stats(&self) -> Stats {
+        Stats {
+            total: self.ntau * self.ny * self.ny,
+            allocated: self.array.len() + self.array.zeros(),
+            zeros: self.array.zeros(),
+            overhead: self.array.overhead(),
+            bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
 }
 
 impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
@@ -925,7 +979,7 @@ mod tests {
     use super::*;
     use float_cmp::assert_approx_eq;
 
-    fn test_q2_slice_methods<G: Subgrid>(mut grid: G) {
+    fn test_q2_slice_methods<G: Subgrid>(mut grid: G) -> G {
         grid.fill(&Ntuple {
             x1: 0.1,
             x2: 0.2,
@@ -971,6 +1025,8 @@ mod tests {
         eprintln!("{} {}", test, reference);
 
         assert_approx_eq!(f64, test, reference, ulps = 8);
+
+        grid
     }
 
     fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)
@@ -1109,20 +1165,54 @@ mod tests {
 
     #[test]
     fn q2_slice_v1() {
-        test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
+        let subgrid = test_q2_slice_methods(LagrangeSubgridV1::new(&SubgridParams::default()));
+
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 10000,
+                allocated: 10000,
+                zeros: 256,
+                overhead: 0,
+                bytes_per_value: 8
+            }
+        );
     }
 
     #[test]
     fn q2_slice_v2() {
-        test_q2_slice_methods(LagrangeSubgridV2::new(
+        let subgrid = test_q2_slice_methods(LagrangeSubgridV2::new(
             &SubgridParams::default(),
             &ExtraSubgridParams::default(),
         ));
+
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 10000,
+                allocated: 10000,
+                zeros: 256,
+                overhead: 0,
+                bytes_per_value: 8
+            }
+        );
     }
 
     #[test]
     fn sparse_q2_slice() {
-        test_q2_slice_methods(LagrangeSparseSubgridV1::new(&SubgridParams::default()));
+        let subgrid =
+            test_q2_slice_methods(LagrangeSparseSubgridV1::new(&SubgridParams::default()));
+
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 100000,
+                allocated: 432,
+                zeros: 176,
+                overhead: 402,
+                bytes_per_value: 8
+            }
+        );
     }
 
     #[test]

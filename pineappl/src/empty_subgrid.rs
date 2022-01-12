@@ -1,7 +1,7 @@
 //! TODO
 
 use super::grid::Ntuple;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum, SubgridIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
@@ -56,6 +56,16 @@ impl Subgrid for EmptySubgridV1 {
     fn iter(&self) -> SubgridIter {
         Box::new(iter::empty())
     }
+
+    fn stats(&self) -> Stats {
+        Stats {
+            total: 0,
+            allocated: 0,
+            zeros: 0,
+            overhead: 0,
+            bytes_per_value: 0,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -71,6 +81,16 @@ mod tests {
         subgrid.scale(2.0);
         subgrid.symmetrize();
         assert!(subgrid.clone_empty().is_empty());
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 0,
+                allocated: 0,
+                zeros: 0,
+                overhead: 0,
+                bytes_per_value: 0,
+            }
+        );
     }
 
     #[test]

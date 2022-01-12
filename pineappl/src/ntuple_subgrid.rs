@@ -1,7 +1,7 @@
 //! Provides an implementation of the `Grid` trait with n-tuples.
 
 use super::grid::Ntuple;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum, SubgridIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -73,6 +73,10 @@ impl Subgrid for NtupleSubgridV1 {
     fn iter(&self) -> SubgridIter {
         unimplemented!();
     }
+
+    fn stats(&self) -> Stats {
+        unreachable!();
+    }
 }
 
 #[cfg(test)]
@@ -89,6 +93,13 @@ mod tests {
     #[should_panic]
     fn iter() {
         let _ = NtupleSubgridV1::new().iter();
+    }
+
+    #[test]
+    #[should_panic]
+    fn stats() {
+        let subgrid = NtupleSubgridV1::new();
+        subgrid.stats();
     }
 
     #[test]

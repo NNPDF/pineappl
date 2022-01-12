@@ -40,6 +40,26 @@ pub struct Mu2 {
     pub fac: f64,
 }
 
+/// Size-related statistics for a subgrid.
+#[derive(Debug, PartialEq)]
+pub struct Stats {
+    /// Number of possible total entries for a subgrid. This number is the product of the lengths
+    /// of the slices returned by [`Subgrid::mu2_grid`], [`Subgrid::x1_grid`] and
+    /// [`Subgrid::x2_grid`].
+    pub total: usize,
+    /// Number of allocated entries for a subgrid. This number is always smaller or equal than
+    /// [`total`].
+    pub allocated: usize,
+    /// Number of allocated zero entries for a subgrid. This number is always smaller or equal than
+    /// [`allocated`] and contributes to `overhead`.
+    pub zeros: usize,
+    /// The overhead of a [`Subgrid`] is the size of internal data not used to store grid values.
+    pub overhead: usize,
+    /// This value multiplied with any other member of this struct gives an approximate size in
+    /// bytes.
+    pub bytes_per_value: usize,
+}
+
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
@@ -89,6 +109,9 @@ pub trait Subgrid {
 
     /// Return an iterator over all non-zero elements of the subgrid.
     fn iter(&self) -> SubgridIter;
+
+    /// Return statistics for this subgrid.
+    fn stats(&self) -> Stats;
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the

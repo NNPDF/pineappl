@@ -3,6 +3,7 @@
 use ndarray::{Array3, Axis};
 use serde::{Deserialize, Serialize};
 use std::iter;
+use std::mem;
 use std::ops::{Index, IndexMut, Range};
 use std::slice::{Iter, IterMut};
 
@@ -322,6 +323,12 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         self.dimensions
     }
 
+    /// Returns the overhead for storing the explicitly zero and non-zero elements.
+    #[must_use]
+    pub fn overhead(&self) -> usize {
+        (2 * self.indices.len() * mem::size_of::<usize>()) / mem::size_of::<f64>()
+    }
+
     /// Returns the number of default (zero) elements in this array.
     #[must_use]
     pub fn zeros(&self) -> usize {
@@ -430,6 +437,7 @@ mod tests {
 
         // after creation the array must be empty
         assert_eq!(array.x_range(), 0..0);
+        assert_eq!(array.overhead(), 2);
         assert!(array.is_empty());
 
         // insert the first element
@@ -438,6 +446,7 @@ mod tests {
         assert_eq!(array.len(), 1);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 5..6);
+        assert_eq!(array.overhead(), 102);
         assert!(!array.is_empty());
 
         // insert an element after the first one
@@ -447,6 +456,7 @@ mod tests {
         assert_eq!(array.len(), 2);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 5..9);
+        assert_eq!(array.overhead(), 402);
         assert!(!array.is_empty());
 
         // insert an element before the first one
@@ -457,6 +467,7 @@ mod tests {
         assert_eq!(array.len(), 3);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         array[[1, 10, 11]] = 4.0;
@@ -467,6 +478,7 @@ mod tests {
         assert_eq!(array.len(), 4);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         array[[1, 10, 9]] = 5.0;
@@ -478,6 +490,7 @@ mod tests {
         assert_eq!(array.len(), 5);
         assert_eq!(array.zeros(), 0);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         array[[1, 10, 0]] = 6.0;
@@ -489,6 +502,7 @@ mod tests {
         assert_eq!(array[[5, 10, 10]], 1.0);
         assert_eq!(array.len(), 6);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         // check zeros
@@ -513,6 +527,7 @@ mod tests {
         assert_eq!(array[[5, 10, 10]], 1.0);
         assert_eq!(array.len(), 7);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         // check zeros
@@ -536,6 +551,7 @@ mod tests {
         assert_eq!(array[[5, 10, 10]], 1.0);
         assert_eq!(array.len(), 8);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         // check zeros
@@ -560,6 +576,7 @@ mod tests {
         assert_eq!(array[[5, 10, 10]], 1.0);
         assert_eq!(array.len(), 9);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         // check zeros
@@ -586,6 +603,7 @@ mod tests {
         assert_eq!(array[[5, 10, 10]], 1.0);
         assert_eq!(array.len(), 10);
         assert_eq!(array.x_range(), 1..9);
+        assert_eq!(array.overhead(), 802);
         assert!(!array.is_empty());
 
         // check zeros
