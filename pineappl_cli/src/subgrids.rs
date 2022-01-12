@@ -1,6 +1,7 @@
 use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
+use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
@@ -14,6 +15,21 @@ pub struct Opts {
     /// Show empty subgrids.
     #[clap(long = "show-empty")]
     show_empty: bool,
+    /// Show the renormalization grid values.
+    #[clap(long)]
+    mur: bool,
+    /// Show the factorization grid values.
+    #[clap(long)]
+    muf: bool,
+    /// Show the x1 grid values.
+    #[clap(long)]
+    x1: bool,
+    /// Show the x2 grid values.
+    #[clap(long)]
+    x2: bool,
+    /// Show grid statistics (figures are the number of entries).
+    #[clap(long)]
+    stats: bool,
 }
 
 impl Subcommand for Opts {
@@ -21,7 +37,25 @@ impl Subcommand for Opts {
         let grid = helpers::read_grid(&self.input)?;
         let mut table = helpers::create_table();
 
-        let titles = row![c => "order", "bin", "lumi", "type"];
+        let mut titles = row![c => "order", "bin", "lumi", "type"];
+        if self.mur {
+            titles.add_cell(cell!(c->"mur"));
+        }
+        if self.muf {
+            titles.add_cell(cell!(c->"muf"));
+        }
+        if self.x1 {
+            titles.add_cell(cell!(c->"x1"));
+        }
+        if self.x2 {
+            titles.add_cell(cell!(c->"x2"));
+        }
+        if self.stats {
+            titles.add_cell(cell!(c->"total"));
+            titles.add_cell(cell!(c->"allocated"));
+            titles.add_cell(cell!(c->"zeros"));
+            titles.add_cell(cell!(c->"overhead"));
+        }
         table.set_titles(titles);
 
         for ((order, bin, lumi), subgrid) in grid.subgrids().indexed_iter() {
@@ -44,6 +78,50 @@ impl Subcommand for Opts {
                     SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
                 }
             ));
+
+            if self.mur {
+                let values: Vec<_> = subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren.sqrt()))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
+            if self.muf {
+                let values: Vec<_> = subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac.sqrt()))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
+            if self.x1 {
+                let values: Vec<_> = subgrid
+                    .x1_grid()
+                    .iter()
+                    .map(|x| format!("{:.3e}", x))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
+            if self.x2 {
+                let values: Vec<_> = subgrid
+                    .x2_grid()
+                    .iter()
+                    .map(|x| format!("{:.3e}", x))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
+            if self.stats {
+                let stats = subgrid.stats();
+                row.add_cell(cell!(r->&stats.total.to_string()));
+                row.add_cell(cell!(r->&stats.allocated.to_string()));
+                row.add_cell(cell!(r->&stats.zeros.to_string()));
+                row.add_cell(cell!(r->&stats.overhead.to_string()));
+            }
         }
 
         table.printstd();
@@ -67,7 +145,12 @@ ARGS:
 
 OPTIONS:
     -h, --help          Print help information
+        --muf           Show the factorization grid values
+        --mur           Show the renormalization grid values
         --show-empty    Show empty subgrids
+        --stats         Show grid statistics (figures are the number of entries)
+        --x1            Show the x1 grid values
+        --x2            Show the x2 grid values
 ";
 
     const DEFAULT_STR: &str = "order bin lumi        type
