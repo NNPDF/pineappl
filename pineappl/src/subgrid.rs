@@ -48,10 +48,10 @@ pub struct Stats {
     /// [`Subgrid::x2_grid`].
     pub total: usize,
     /// Number of allocated entries for a subgrid. This number is always smaller or equal than
-    /// [`total`].
+    /// [`Self::total`].
     pub allocated: usize,
     /// Number of allocated zero entries for a subgrid. This number is always smaller or equal than
-    /// [`allocated`] and contributes to `overhead`.
+    /// [`Self::allocated`] and contributes to [`Self::overhead`].
     pub zeros: usize,
     /// The overhead of a [`Subgrid`] is the size of internal data not used to store grid values.
     pub overhead: usize,
