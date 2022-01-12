@@ -15,6 +15,9 @@ pub struct Opts {
     /// Show empty subgrids.
     #[clap(long = "show-empty")]
     show_empty: bool,
+    /// Show the subgrid type.
+    #[clap(long = "type")]
+    type_: bool,
     /// Show the renormalization grid values.
     #[clap(long)]
     mur: bool,
@@ -38,6 +41,10 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
 
         let mut titles = row![c => "order", "bin", "lumi", "type"];
+
+        if self.type_ {
+            titles.add_cell(cell!(c->"type"));
+        }
         if self.mur {
             titles.add_cell(cell!(c->"mur"));
         }
@@ -64,21 +71,24 @@ impl Subcommand for Opts {
             }
 
             let row = table.add_empty_row();
+
             row.add_cell(cell!(l->&format!("{}", order)));
             row.add_cell(cell!(l->&format!("{}", bin)));
             row.add_cell(cell!(l->&format!("{}", lumi)));
-            row.add_cell(cell!(l->
-                match subgrid {
-                    SubgridEnum::LagrangeSubgridV1(_) => "LagrangeSubgridV1",
-                    SubgridEnum::NtupleSubgridV1(_) => "NtupleSubgridV1",
-                    SubgridEnum::LagrangeSparseSubgridV1(_) => "LagrangeSparseSubgridV1",
-                    SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
-                    SubgridEnum::ImportOnlySubgridV1(_) => "ImportOnlySubgridV1",
-                    SubgridEnum::ImportOnlySubgridV2(_) => "ImportOnlySubgridV2",
-                    SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
-                }
-            ));
 
+            if self.type_ {
+                row.add_cell(cell!(l->
+                    match subgrid {
+                        SubgridEnum::LagrangeSubgridV1(_) => "LagrangeSubgridV1",
+                        SubgridEnum::NtupleSubgridV1(_) => "NtupleSubgridV1",
+                        SubgridEnum::LagrangeSparseSubgridV1(_) => "LagrangeSparseSubgridV1",
+                        SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
+                        SubgridEnum::ImportOnlySubgridV1(_) => "ImportOnlySubgridV1",
+                        SubgridEnum::ImportOnlySubgridV2(_) => "ImportOnlySubgridV2",
+                        SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
+                    }
+                ));
+            }
             if self.mur {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
@@ -149,11 +159,12 @@ OPTIONS:
         --mur           Show the renormalization grid values
         --show-empty    Show empty subgrids
         --stats         Show grid statistics (figures are the number of entries)
+        --type          Show the subgrid type
         --x1            Show the x1 grid values
         --x2            Show the x2 grid values
 ";
 
-    const DEFAULT_STR: &str = "order bin lumi        type
+    const TYPE_STR: &str = "order bin lumi        type
 -----+---+----+-------------------
 0     0   0    ImportOnlySubgridV1
 0     1   0    ImportOnlySubgridV1
@@ -261,7 +272,7 @@ OPTIONS:
 6     7   4    ImportOnlySubgridV1
 ";
 
-    const SHOW_EMPTY_STR: &str = "order bin lumi        type
+    const TYPE_SHOW_EMPTY_STR: &str = "order bin lumi        type
 -----+---+----+-------------------
 0     0   0    ImportOnlySubgridV1
 0     0   1    EmptySubgridV1
@@ -556,22 +567,27 @@ OPTIONS:
     }
 
     #[test]
-    fn default() {
+    fn type_() {
         Command::cargo_bin("pineappl")
             .unwrap()
-            .args(&["subgrids", "data/LHCB_WP_7TEV.pineappl.lz4"])
+            .args(&["subgrids", "--type", "data/LHCB_WP_7TEV.pineappl.lz4"])
             .assert()
             .success()
-            .stdout(DEFAULT_STR);
+            .stdout(TYPE_STR);
     }
 
     #[test]
-    fn show_empty() {
+    fn type_show_empty() {
         Command::cargo_bin("pineappl")
             .unwrap()
-            .args(&["subgrids", "--show-empty", "data/LHCB_WP_7TEV.pineappl.lz4"])
+            .args(&[
+                "subgrids",
+                "--show-empty",
+                "--type",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+            ])
             .assert()
             .success()
-            .stdout(SHOW_EMPTY_STR);
+            .stdout(TYPE_SHOW_EMPTY_STR);
     }
 }
