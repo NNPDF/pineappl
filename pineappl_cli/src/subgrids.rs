@@ -22,9 +22,15 @@ pub struct Opts {
     /// Show the renormalization grid values.
     #[clap(group = "show", long)]
     mur: bool,
+    /// Show the squared renormalization grid values.
+    #[clap(group = "show", long)]
+    mur2: bool,
     /// Show the factorization grid values.
     #[clap(group = "show", long)]
     muf: bool,
+    /// Show the squared factorization grid values.
+    #[clap(group = "show", long)]
+    muf2: bool,
     /// Show the x1 grid values.
     #[clap(group = "show", long)]
     x1: bool,
@@ -48,8 +54,14 @@ impl Subcommand for Opts {
         if self.mur {
             titles.add_cell(cell!(c->"mur"));
         }
+        if self.mur2 {
+            titles.add_cell(cell!(c->"mur2"));
+        }
         if self.muf {
             titles.add_cell(cell!(c->"muf"));
+        }
+        if self.muf2 {
+            titles.add_cell(cell!(c->"muf2"));
         }
         if self.x1 {
             titles.add_cell(cell!(c->"x1"));
@@ -98,11 +110,29 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->&values.join(", ")));
             }
+            if self.mur2 {
+                let values: Vec<_> = subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
             if self.muf {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
                     .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac.sqrt()))
+                    .collect();
+
+                row.add_cell(cell!(l->&values.join(", ")));
+            }
+            if self.muf2 {
+                let values: Vec<_> = subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac))
                     .collect();
 
                 row.add_cell(cell!(l->&values.join(", ")));
@@ -148,7 +178,7 @@ mod tests {
 Print information about the internal subgrid types
 
 USAGE:
-    pineappl subgrids [OPTIONS] <--type|--mur|--muf|--x1|--x2|--stats> <INPUT>
+    pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x1|--x2|--stats> <INPUT>
 
 ARGS:
     <INPUT>    Path to the input grid
@@ -156,7 +186,9 @@ ARGS:
 OPTIONS:
     -h, --help          Print help information
         --muf           Show the factorization grid values
+        --muf2          Show the squared factorization grid values
         --mur           Show the renormalization grid values
+        --mur2          Show the squared renormalization grid values
         --show-empty    Show empty subgrids
         --stats         Show grid statistics (figures are the number of entries)
         --type          Show the subgrid type
@@ -272,6 +304,114 @@ OPTIONS:
 6 7 4 80.352
 ";
 
+    const MUF2_STR: &str = "o b l   muf2
+-+-+-+--------
+0 0 0 6456.444
+0 1 0 6456.444
+0 2 0 6456.444
+0 3 0 6456.444
+0 4 0 6456.444
+0 5 0 6456.444
+0 6 0 6456.444
+0 7 0 6456.444
+1 0 0 6456.444
+1 0 1 6456.444
+1 0 3 6456.444
+1 1 0 6456.444
+1 1 1 6456.444
+1 1 3 6456.444
+1 2 0 6456.444
+1 2 1 6456.444
+1 2 3 6456.444
+1 3 0 6456.444
+1 3 1 6456.444
+1 3 3 6456.444
+1 4 0 6456.444
+1 4 1 6456.444
+1 4 3 6456.444
+1 5 0 6456.444
+1 5 1 6456.444
+1 5 3 6456.444
+1 6 0 6456.444
+1 6 1 6456.444
+1 6 3 6456.444
+1 7 0 6456.444
+1 7 1 6456.444
+1 7 3 6456.444
+3 0 0 6456.444
+3 0 1 6456.444
+3 0 3 6456.444
+3 1 0 6456.444
+3 1 1 6456.444
+3 1 3 6456.444
+3 2 0 6456.444
+3 2 1 6456.444
+3 2 3 6456.444
+3 3 0 6456.444
+3 3 1 6456.444
+3 3 3 6456.444
+3 4 0 6456.444
+3 4 1 6456.444
+3 4 3 6456.444
+3 5 0 6456.444
+3 5 1 6456.444
+3 5 3 6456.444
+3 6 0 6456.444
+3 6 1 6456.444
+3 6 3 6456.444
+3 7 0 6456.444
+3 7 1 6456.444
+3 7 3 6456.444
+4 0 0 6456.444
+4 0 2 6456.444
+4 0 4 6456.444
+4 1 0 6456.444
+4 1 2 6456.444
+4 1 4 6456.444
+4 2 0 6456.444
+4 2 2 6456.444
+4 2 4 6456.444
+4 3 0 6456.444
+4 3 2 6456.444
+4 3 4 6456.444
+4 4 0 6456.444
+4 4 2 6456.444
+4 4 4 6456.444
+4 5 0 6456.444
+4 5 2 6456.444
+4 5 4 6456.444
+4 6 0 6456.444
+4 6 2 6456.444
+4 6 4 6456.444
+4 7 0 6456.444
+4 7 2 6456.444
+4 7 4 6456.444
+6 0 0 6456.444
+6 0 2 6456.444
+6 0 4 6456.444
+6 1 0 6456.444
+6 1 2 6456.444
+6 1 4 6456.444
+6 2 0 6456.444
+6 2 2 6456.444
+6 2 4 6456.444
+6 3 0 6456.444
+6 3 2 6456.444
+6 3 4 6456.444
+6 4 0 6456.444
+6 4 2 6456.444
+6 4 4 6456.444
+6 5 0 6456.444
+6 5 2 6456.444
+6 5 4 6456.444
+6 6 0 6456.444
+6 6 2 6456.444
+6 6 4 6456.444
+6 7 0 6456.444
+6 7 2 6456.444
+6 7 4 6456.444
+";
+
     const MUR_STR: &str = "o b l  mur
 -+-+-+------
 0 0 0 80.352
@@ -378,6 +518,114 @@ OPTIONS:
 6 7 0 80.352
 6 7 2 80.352
 6 7 4 80.352
+";
+
+    const MUR2_STR: &str = "o b l   mur2
+-+-+-+--------
+0 0 0 6456.444
+0 1 0 6456.444
+0 2 0 6456.444
+0 3 0 6456.444
+0 4 0 6456.444
+0 5 0 6456.444
+0 6 0 6456.444
+0 7 0 6456.444
+1 0 0 6456.444
+1 0 1 6456.444
+1 0 3 6456.444
+1 1 0 6456.444
+1 1 1 6456.444
+1 1 3 6456.444
+1 2 0 6456.444
+1 2 1 6456.444
+1 2 3 6456.444
+1 3 0 6456.444
+1 3 1 6456.444
+1 3 3 6456.444
+1 4 0 6456.444
+1 4 1 6456.444
+1 4 3 6456.444
+1 5 0 6456.444
+1 5 1 6456.444
+1 5 3 6456.444
+1 6 0 6456.444
+1 6 1 6456.444
+1 6 3 6456.444
+1 7 0 6456.444
+1 7 1 6456.444
+1 7 3 6456.444
+3 0 0 6456.444
+3 0 1 6456.444
+3 0 3 6456.444
+3 1 0 6456.444
+3 1 1 6456.444
+3 1 3 6456.444
+3 2 0 6456.444
+3 2 1 6456.444
+3 2 3 6456.444
+3 3 0 6456.444
+3 3 1 6456.444
+3 3 3 6456.444
+3 4 0 6456.444
+3 4 1 6456.444
+3 4 3 6456.444
+3 5 0 6456.444
+3 5 1 6456.444
+3 5 3 6456.444
+3 6 0 6456.444
+3 6 1 6456.444
+3 6 3 6456.444
+3 7 0 6456.444
+3 7 1 6456.444
+3 7 3 6456.444
+4 0 0 6456.444
+4 0 2 6456.444
+4 0 4 6456.444
+4 1 0 6456.444
+4 1 2 6456.444
+4 1 4 6456.444
+4 2 0 6456.444
+4 2 2 6456.444
+4 2 4 6456.444
+4 3 0 6456.444
+4 3 2 6456.444
+4 3 4 6456.444
+4 4 0 6456.444
+4 4 2 6456.444
+4 4 4 6456.444
+4 5 0 6456.444
+4 5 2 6456.444
+4 5 4 6456.444
+4 6 0 6456.444
+4 6 2 6456.444
+4 6 4 6456.444
+4 7 0 6456.444
+4 7 2 6456.444
+4 7 4 6456.444
+6 0 0 6456.444
+6 0 2 6456.444
+6 0 4 6456.444
+6 1 0 6456.444
+6 1 2 6456.444
+6 1 4 6456.444
+6 2 0 6456.444
+6 2 2 6456.444
+6 2 4 6456.444
+6 3 0 6456.444
+6 3 2 6456.444
+6 3 4 6456.444
+6 4 0 6456.444
+6 4 2 6456.444
+6 4 4 6456.444
+6 5 0 6456.444
+6 5 2 6456.444
+6 5 4 6456.444
+6 6 0 6456.444
+6 6 2 6456.444
+6 6 4 6456.444
+6 7 0 6456.444
+6 7 2 6456.444
+6 7 4 6456.444
 ";
 
     const STATS_STR: &str = "o b l total allocated zeros overhead
@@ -1117,6 +1365,16 @@ OPTIONS:
     }
 
     #[test]
+    fn muf2() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["subgrids", "--muf2", "data/LHCB_WP_7TEV.pineappl.lz4"])
+            .assert()
+            .success()
+            .stdout(MUF2_STR);
+    }
+
+    #[test]
     fn mur() {
         Command::cargo_bin("pineappl")
             .unwrap()
@@ -1124,6 +1382,16 @@ OPTIONS:
             .assert()
             .success()
             .stdout(MUR_STR);
+    }
+
+    #[test]
+    fn mur2() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&["subgrids", "--mur2", "data/LHCB_WP_7TEV.pineappl.lz4"])
+            .assert()
+            .success()
+            .stdout(MUR2_STR);
     }
 
     #[test]
