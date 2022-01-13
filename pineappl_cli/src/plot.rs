@@ -15,7 +15,7 @@ pub struct Opts {
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[clap(min_values = 1, validator = helpers::validate_pdfset)]
+    #[clap(required = true, validator = helpers::validate_pdfset)]
     pdfsets: Vec<String>,
     /// Set the number of scale variations.
     #[clap(default_value = "7", long, possible_values = &["1", "3", "7", "9"], short)]
@@ -784,7 +784,7 @@ mod tests {
 Creates a matplotlib script plotting the contents of the grid
 
 USAGE:
-    pineappl plot [OPTIONS] <INPUT> [--] [PDFSETS]...
+    pineappl plot [OPTIONS] <INPUT> <PDFSETS>...
 
 ARGS:
     <INPUT>         Path to the input grid

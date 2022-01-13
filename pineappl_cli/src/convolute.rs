@@ -13,7 +13,7 @@ pub struct Opts {
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[clap(min_values = 1, validator = helpers::validate_pdfset)]
+    #[clap(required = true, validator = helpers::validate_pdfset)]
     pdfsets: Vec<String>,
     /// Show absolute numbers of the scale variation.
     #[clap(long, short)]
@@ -157,7 +157,7 @@ mod tests {
 Convolutes a PineAPPL grid with a PDF set
 
 USAGE:
-    pineappl convolute [OPTIONS] <INPUT> [--] [PDFSETS]...
+    pineappl convolute [OPTIONS] <INPUT> <PDFSETS>...
 
 ARGS:
     <INPUT>         Path of the input grid

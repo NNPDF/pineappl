@@ -10,7 +10,7 @@ pub struct Opts {
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Path(s) of the files that should be merged.
-    #[clap(min_values = 1, parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(required = true, parse(from_os_str), value_hint = ValueHint::FilePath)]
     input: Vec<PathBuf>,
     /// Scales all grids with the given factor.
     #[clap(long, short)]
@@ -59,7 +59,7 @@ mod tests {
 Merges one or more PineAPPL grids together
 
 USAGE:
-    pineappl merge [OPTIONS] <OUTPUT> [--] [INPUT]...
+    pineappl merge [OPTIONS] <OUTPUT> <INPUT>...
 
 ARGS:
     <OUTPUT>      Path of the merged PineAPPL file
