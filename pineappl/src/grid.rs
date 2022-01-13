@@ -1283,8 +1283,8 @@ impl Grid {
                 return None;
             }
 
-            // since all luminosities are equal, we just pick the first one
-            if let Some(subgrid) = lane.iter().next() {
+            // not all luminosities are equal (some appear only at higher orders)
+            for subgrid in lane.iter() {
                 muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
                 if has_pdf1 {
                     x_grid.extend_from_slice(&subgrid.x1_grid());
