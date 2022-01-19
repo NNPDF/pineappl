@@ -1496,6 +1496,17 @@ impl Grid {
             "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} - ETA: {eta_precise} {msg}",
         ));
 
+        // which (tgt_pid, src_pid) tuples are non-zero in general?
+        let non_zero_pid_indices: Vec<_> = (0..operator.dim().0)
+            .cartesian_product(0..operator.dim().1)
+            .filter(|&(tgt_pid_idx, src_pid_idx)| {
+                operator
+                    .slice(s![tgt_pid_idx, src_pid_idx, .., .., ..])
+                    .iter()
+                    .any(|&value| value != 0.0)
+            })
+            .collect();
+
         // iterate over all bins, which are mapped one-to-one from the target to the source grid
         for bin in 0..self.bin_info().bins() {
             // iterate over the source grid luminosities
@@ -1661,6 +1672,18 @@ impl Grid {
                         } else {
                             0
                         };
+
+                        // if `op1` and `op2` below are zero there's no work to do
+                        // TODO: ideally we change the for loops instead of vetoing here
+                        if non_zero_pid_indices
+                            .iter()
+                            .any(|&tuple| tuple == (tgt_pid1_idx, src_pid1_idx))
+                            || non_zero_pid_indices
+                                .iter()
+                                .any(|&tuple| tuple == (tgt_pid2_idx, src_pid2_idx))
+                        {
+                            continue;
+                        }
 
                         // create target subgrid
                         let mut tgt_array =
