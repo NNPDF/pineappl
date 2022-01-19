@@ -1675,10 +1675,10 @@ impl Grid {
 
                         // if `op1` and `op2` below are zero there's no work to do
                         // TODO: ideally we change the for loops instead of vetoing here
-                        if non_zero_pid_indices
+                        if !non_zero_pid_indices
                             .iter()
                             .any(|&tuple| tuple == (tgt_pid1_idx, src_pid1_idx))
-                            || non_zero_pid_indices
+                            || !non_zero_pid_indices
                                 .iter()
                                 .any(|&tuple| tuple == (tgt_pid2_idx, src_pid2_idx))
                         {
