@@ -114,7 +114,15 @@ pub fn convolute(
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
 
-    let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
+    let x_max = lhapdf.x_max();
+    let x_min = lhapdf.x_min();
+    let mut pdf = |id, x, q2| {
+        if x < x_min || x > x_max {
+            0.0
+        } else {
+            lhapdf.xfx_q2(id, x, q2)
+        }
+    };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
@@ -135,7 +143,15 @@ pub fn convolute_subgrid(
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
 
-    let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
+    let x_max = lhapdf.x_max();
+    let x_min = lhapdf.x_min();
+    let mut pdf = |id, x, q2| {
+        if x < x_min || x > x_max {
+            0.0
+        } else {
+            lhapdf.xfx_q2(id, x, q2)
+        }
+    };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
