@@ -1507,6 +1507,39 @@ impl Grid {
             })
             .collect();
 
+        // the x1 and x2 grid values are the same across all non-zero subgrids
+        let first_non_zero_grid = self
+            .subgrids
+            .iter()
+            .filter(|subgrid| !subgrid.is_empty())
+            .next()
+            .unwrap_or_else(|| unreachable!());
+        // source x1/x2 grid might differ and be differently sorted than the operator
+        let x1_grid: Vec<_> = first_non_zero_grid
+            .x1_grid()
+            .iter()
+            .map(|x| {
+                eko_info
+                    .grid_axes
+                    .x_grid
+                    .iter()
+                    .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+        let x2_grid: Vec<_> = first_non_zero_grid
+            .x2_grid()
+            .iter()
+            .map(|x| {
+                eko_info
+                    .grid_axes
+                    .x_grid
+                    .iter()
+                    .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+
         // iterate over all bins, which are mapped one-to-one from the target to the source grid
         for bin in 0..self.bin_info().bins() {
             // iterate over the source grid luminosities
@@ -1554,32 +1587,6 @@ impl Grid {
                     };
 
                     let src_subgrid = &self.subgrids[[order, bin, src_lumi]];
-
-                    // source x1/x2 grid might differ and be differently sorted than the operator
-                    let x1_grid: Vec<_> = src_subgrid
-                        .x1_grid()
-                        .iter()
-                        .map(|x| {
-                            eko_info
-                                .grid_axes
-                                .x_grid
-                                .iter()
-                                .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
-                                .unwrap_or_else(|| unreachable!())
-                        })
-                        .collect();
-                    let x2_grid: Vec<_> = src_subgrid
-                        .x2_grid()
-                        .iter()
-                        .map(|x| {
-                            eko_info
-                                .grid_axes
-                                .x_grid
-                                .iter()
-                                .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
-                                .unwrap_or_else(|| unreachable!())
-                        })
-                        .collect();
 
                     for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
                         let scale = src_subgrid.mu2_grid()[iq2].fac;
