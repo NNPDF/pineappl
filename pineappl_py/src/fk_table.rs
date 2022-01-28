@@ -1,12 +1,15 @@
-use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
+
+use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pyo3::prelude::*;
+
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
@@ -20,7 +23,7 @@ pub struct PyFkTable {
 #[pymethods]
 impl PyFkTable {
     #[staticmethod]
-    pub fn read(path: &str) -> Self {
+    pub fn read(path: PathBuf) -> Self {
         Self {
             fk_table: FkTable::try_from(
                 Grid::read(BufReader::new(File::open(path).unwrap())).unwrap(),
@@ -150,7 +153,7 @@ impl PyFkTable {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write(&self, path: &str) {
+    pub fn write(&self, path: PathBuf) {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
 
@@ -162,7 +165,7 @@ impl PyFkTable {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write_lz4(&self, path: &str) {
+    pub fn write_lz4(&self, path: PathBuf) {
         self.fk_table
             .write_lz4(File::create(path).unwrap())
             .unwrap();

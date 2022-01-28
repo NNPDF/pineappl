@@ -24,7 +24,7 @@ class FkTable(PyWrapper):
 
         Parameters
         ----------
-            path : str
+            path : pathlike
                 file path
 
         Returns
