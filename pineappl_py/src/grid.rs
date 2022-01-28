@@ -12,6 +12,7 @@ use numpy::{IntoPyArray, PyArray1};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -357,7 +358,7 @@ impl PyGrid {
     ///     PyGrid :
     ///         grid
     #[staticmethod]
-    pub fn read(path: &str) -> Self {
+    pub fn read(path: PathBuf) -> Self {
         Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())
     }
 
@@ -369,7 +370,7 @@ impl PyGrid {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write(&self, path: &str) {
+    pub fn write(&self, path: PathBuf) {
         self.grid.write(File::create(path).unwrap()).unwrap();
     }
 
@@ -379,7 +380,7 @@ impl PyGrid {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write_lz4(&self, path: &str) {
+    pub fn write_lz4(&self, path: PathBuf) {
         self.grid.write_lz4(File::create(path).unwrap()).unwrap();
     }
 
@@ -396,7 +397,7 @@ impl PyGrid {
     /// ----
     /// For a current limitation with the implementation of the bound object `Grid` is not possible
     /// to operate with two `Grid`s in memory, since is not possible to pass a `Grid` by argument
-    pub fn merge_from_file(&mut self, path: &str) -> PyResult<()> {
+    pub fn merge_from_file(&mut self, path: PathBuf) -> PyResult<()> {
         match self.grid.merge(Self::read(path).grid) {
             Ok(()) => Ok(()),
             Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),

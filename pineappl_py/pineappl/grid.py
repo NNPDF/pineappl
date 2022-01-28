@@ -291,7 +291,7 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            path : str
+            path : pathlike
                 file path
 
         Returns
