@@ -7,7 +7,7 @@ use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
-use numpy::{IntoPyArray, PyArray1};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray2};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -140,6 +140,52 @@ impl PyGrid {
             observable,
             lumi,
             &Ntuple::<f64> { x1, x2, q2, weight },
+        );
+    }
+
+    /// Add an array to the grid.
+    ///
+    /// Useful to avoid multiple python calls, leading to performance improvement.
+    // TODO: signature
+    pub fn fill_with_array(
+        &mut self,
+        ntuples: PyReadonlyArray2<f64>,
+        order: usize,
+        observable: f64,
+        lumi: usize,
+    ) {
+        for nt in ntuples.as_array().outer_iter() {
+            let (x1, x2, q2, weight) = (nt[0], nt[1], nt[2], nt[3]);
+            self.grid.fill(
+                order,
+                observable,
+                lumi,
+                &Ntuple::<f64> { x1, x2, q2, weight },
+            );
+        }
+    }
+
+    /// Add a point to the grid for all lumis.
+    // TODO: signature
+    pub fn fill_all(
+        &mut self,
+        x1: f64,
+        x2: f64,
+        q2: f64,
+        order: usize,
+        observable: f64,
+        weights: Vec<f64>,
+    ) {
+        self.grid.fill_all(
+            order,
+            observable,
+            &Ntuple::<()> {
+                x1,
+                x2,
+                q2,
+                weight: (),
+            },
+            &weights,
         );
     }
 
