@@ -7,7 +7,7 @@ use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use ndarray::{Array, Ix5};
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray2};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray2};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -146,7 +146,17 @@ impl PyGrid {
     /// Add an array to the grid.
     ///
     /// Useful to avoid multiple python calls, leading to performance improvement.
-    // TODO: signature
+    ///
+    /// Parameters
+    /// ----------
+    ///     ntuples : np.array(float)
+    ///         2 dimensional (4, N) array, made of `(x1, x2, q2, weight)` "ntuples"
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     lumi : int
+    ///         luminosity index
     pub fn fill_with_array(
         &mut self,
         ntuples: PyReadonlyArray2<f64>,
@@ -166,7 +176,21 @@ impl PyGrid {
     }
 
     /// Add a point to the grid for all lumis.
-    // TODO: signature
+    ///
+    /// Parameters
+    /// ----------
+    ///     x1 : float
+    ///         first momentum fraction
+    ///     x2 : float
+    ///         second momentum fraction
+    ///     q2 : float
+    ///         process scale
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     weights : np.array(float)
+    ///         cross section weights, one for each lumi
     pub fn fill_all(
         &mut self,
         x1: f64,
@@ -174,7 +198,7 @@ impl PyGrid {
         q2: f64,
         order: usize,
         observable: f64,
-        weights: Vec<f64>,
+        weights: PyReadonlyArray1<f64>,
     ) {
         self.grid.fill_all(
             order,
@@ -185,7 +209,7 @@ impl PyGrid {
                 q2,
                 weight: (),
             },
-            &weights,
+            &weights.to_vec().unwrap(),
         );
     }
 
