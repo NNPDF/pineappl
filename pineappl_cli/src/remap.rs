@@ -5,15 +5,17 @@ use itertools::Itertools;
 use pineappl::bin::BinRemapper;
 use std::path::PathBuf;
 
+// TODO: the help text below should be formatted better, but right now clap can't do it
+
 /// Modifies the bin dimensions, widths and normalizations.
 #[derive(Parser)]
 #[clap(
     after_help = "For performance/simplicity reasons Monte Carlo programs (and the PineAPPL
-`Grid::fill` method) typically do not support 1) multi-dimensional distributions or 2)
+`Grid::fill` method) typically neither support 1) multi-dimensional distributions nor 2)
 distributions whose bin sizes are not equally sized *during generation*. To work around this
-problem a grid with a one-dimensional distribution can be generated instead, and afterwards the
-bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
-REMAPPING string.
+problem a grid with a one-dimensional distribution with equally-sized bins can be generated
+instead, and afterwards the bins can be 'remapped' to an N-dimensional distribution using the
+limits specified with the REMAPPING string.
 
 The remapping string uses the following special characters to achieve this (note that some of these
 characters must be escaped in certain shells):
@@ -23,23 +25,23 @@ characters must be escaped in certain shells):
 (0.4-0.6) and (0.6,1)
 
 - ';': If higher-dimensional bins are needed, the n-dimensional bin limits (NDBL) are constructed
-from a cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
+from a Cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
 the grid to have 4 bins, whose 2DBL will be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and
 (0.5-1;1-2)
 
-- '|': The previous operators are enough to contruct NDBL with differently-sized bins, but they can
-not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6); here
-the 1DBL for the second dimension depend on the first dimension and also have a different number of
-bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL are
-'0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'. Note
-that there have to be two 1DBL separated by '|', because the first dimension has two bins. If there
-are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
+- '|': The previous operators are enough to construct NDBL with differently-sized bins, but they
+can not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6);
+here the 1DBL for the second dimension depend on the first dimension and also have a different
+number of bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL
+are '0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'.
+Note that there have to be two 1DBL separated by '|', because the first dimension has two bins. If
+there are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
 accordingly. An example of this is the following remapping string:
 '0,1,2;-2,0,2;0,1,2|1,2,3|2,3,4|3,4,5|4,5,6|5,6,7'. Here the third dimension has 6 1DBL separated
 by '|' because the first dimension has 2 bins and the second dimension has 3 bins, so `6 = 2 * 3`.
 
-If the 1DBL is an empty string, the previous 1DBL is repeated, for
-example '0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
+If the 1DBL is an empty string, the previous 1DBL is repeated, for example
+'0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
 
 - ':': The last feature of '|' can combined with ':', which is used to 'cut' out bins from the left
 and/or right. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more succinct way
@@ -260,11 +262,11 @@ OPTIONS:
             Normalization factor in addition to the given bin widths [default: 1.0]
 
 For performance/simplicity reasons Monte Carlo programs (and the PineAPPL
-`Grid::fill` method) typically do not support 1) multi-dimensional distributions or 2)
+`Grid::fill` method) typically neither support 1) multi-dimensional distributions nor 2)
 distributions whose bin sizes are not equally sized *during generation*. To work around this
-problem a grid with a one-dimensional distribution can be generated instead, and afterwards the
-bins can be 'remapped' to an N-dimensional distribution using the limits specified with the
-REMAPPING string.
+problem a grid with a one-dimensional distribution with equally-sized bins can be generated
+instead, and afterwards the bins can be 'remapped' to an N-dimensional distribution using the
+limits specified with the REMAPPING string.
 
 The remapping string uses the following special characters to achieve this (note that some of these
 characters must be escaped in certain shells):
@@ -274,23 +276,23 @@ characters must be escaped in certain shells):
 (0.4-0.6) and (0.6,1)
 
 - ';': If higher-dimensional bins are needed, the n-dimensional bin limits (NDBL) are constructed
-from a cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
+from a Cartesian product of 1DBL separated with a semicolon. For example, '0,0.5,1;0,1,2' expects
 the grid to have 4 bins, whose 2DBL will be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and
 (0.5-1;1-2)
 
-- '|': The previous operators are enough to contruct NDBL with differently-sized bins, but they can
-not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6); here
-the 1DBL for the second dimension depend on the first dimension and also have a different number of
-bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL are
-'0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'. Note
-that there have to be two 1DBL separated by '|', because the first dimension has two bins. If there
-are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
+- '|': The previous operators are enough to construct NDBL with differently-sized bins, but they
+can not construct the following bin limits: (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6);
+here the 1DBL for the second dimension depend on the first dimension and also have a different
+number of bins. For the first two bins the 1DBL is '0,1,2', but for the last three bins the 1DBL
+are '0,2,4,6'. This can be achieved using the following remapping string: '0,1,2;0,1,2|0,2,4,6'.
+Note that there have to be two 1DBL separated by '|', because the first dimension has two bins. If
+there are more dimensions and/or bins, the number of 1DBL separated by '|' must match this number
 accordingly. An example of this is the following remapping string:
 '0,1,2;-2,0,2;0,1,2|1,2,3|2,3,4|3,4,5|4,5,6|5,6,7'. Here the third dimension has 6 1DBL separated
 by '|' because the first dimension has 2 bins and the second dimension has 3 bins, so `6 = 2 * 3`.
 
-If the 1DBL is an empty string, the previous 1DBL is repeated, for
-example '0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
+If the 1DBL is an empty string, the previous 1DBL is repeated, for example
+'0,1,2;0,1,2;0,1,2||0,2,4' is shorthand for '0,1,2;0,1,2;0,1,2|0,1,2|0,2,4'
 
 - ':': The last feature of '|' can combined with ':', which is used to 'cut' out bins from the left
 and/or right. For example, the remapping string '0,1,2;0,1,2,3:2|:1||:1|2:' is a more succinct way
