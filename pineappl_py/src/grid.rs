@@ -6,8 +6,9 @@ use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
+use itertools::izip;
 use ndarray::{Array, Ix5};
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray2};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -157,15 +158,23 @@ impl PyGrid {
     ///         reference point (to be binned)
     ///     lumi : int
     ///         luminosity index
-    pub fn fill_with_array(
+    pub fn fill_array(
         &mut self,
-        ntuples: PyReadonlyArray2<f64>,
+        x1s: PyReadonlyArray1<f64>,
+        x2s: PyReadonlyArray1<f64>,
+        q2s: PyReadonlyArray1<f64>,
         order: usize,
-        observable: f64,
+        observables: PyReadonlyArray1<f64>,
         lumi: usize,
+        weights: PyReadonlyArray1<f64>,
     ) {
-        for nt in ntuples.as_array().outer_iter() {
-            let (x1, x2, q2, weight) = (nt[0], nt[1], nt[2], nt[3]);
+        for (&x1, &x2, &q2, &observable, &weight) in izip!(
+            x1s.iter().unwrap(),
+            x2s.iter().unwrap(),
+            q2s.iter().unwrap(),
+            observables.iter().unwrap(),
+            weights.iter().unwrap(),
+        ) {
             self.grid.fill(
                 order,
                 observable,
