@@ -64,6 +64,11 @@ impl PyOrder {
     /// the NNLO QCD.
     ///
     /// See `pineappl` crate docs for relevant examples
+    ///
+    /// Returns
+    /// -------
+    /// numpy.ndarray(bool)
+    ///     boolean array, to be used as orders' mask
     #[staticmethod]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
@@ -208,11 +213,11 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     x_grid: list(float)
+    ///     x_grid: numpy.ndarray(float)
     ///         interpolation grid
-    ///     pids: list(int)
+    ///     pids: numpy.ndarray(int)
     ///         particle ids
-    ///     muf2_grid : list(float)
+    ///     muf2_grid : numpy.ndarray(float)
     ///         factorization scale list
     pub fn axes<'py>(
         &self,
@@ -242,13 +247,13 @@ impl PyGrid {
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     ///     alphas : callable
     ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-    ///     order_mask : list(bool)
+    ///     order_mask : numpy.ndarray(bool)
     ///         Mask for selecting specific orders. The value `True` means the corresponding order
     ///         is included. An empty list corresponds to all orders being enabled.
-    ///     bin_indices : list(int)
+    ///     bin_indices : numpy.ndarray(int)
     ///         A list with the indices of the corresponding bins that should be calculated. An
     ///         empty list means that all orders should be calculated.
-    ///     lumi_mask : list(bool)
+    ///     lumi_mask : numpy.ndarray(bool)
     ///         Mask for selecting specific luminosity channels. The value `True` means the
     ///         corresponding channel is included. An empty list corresponds to all channels being
     ///         enabled.
@@ -261,7 +266,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpu.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
     pub fn convolute_with_one<'py>(
@@ -297,24 +302,22 @@ impl PyGrid {
     /// ----------
     ///     muf2_0 : float
     ///         reference scale
-    ///     alphas : list(float)
+    ///     alphas : numpy.ndarray(float)
     ///         list with :math:`\alpha_s(Q2)` for the process scales
-    ///     pids : list(int)
+    ///     pids : numpy.ndarray(int)
     ///         sorting of the particles in the tensor
-    ///     x_grid : list(float)
+    ///     x_grid : numpy.ndarray(float)
     ///         interpolation grid
-    ///     target_pids : list(int)
+    ///     target_pids : numpy.ndarray(int)
     ///         sorting of the particles in the tensor for final FkTable
-    ///     target_x_grid : list(float)
+    ///     target_x_grid : numpy.ndarray(float)
     ///         final FKTable interpolation grid
-    ///     muf2_grid : list(float)
+    ///     muf2_grid : numpy.ndarray(float)
     ///         list of process scales
-    ///     operator_flattened : list(float)
-    ///         evolution tensor as a flat list
-    ///     operator_shape : list(int)
-    ///         shape of the evolution tensor
-    ///     additional_metadata : dict(str: str)
-    ///         further metadata
+    ///     operator : numpy.ndarray(int, rank=5)
+    ///         evolution tensor
+    ///     orders_mask: numpy.ndarray(bool)
+    ///         boolean mask to activate orders
     ///
     /// Returns
     /// -------
@@ -441,7 +444,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     np.array
+    ///     np.ndarray
     ///         bin normalizations
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.grid.bin_info().normalizations().into_pyarray(py)
@@ -458,7 +461,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         left edges of bins
     pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
         self.grid.bin_info().left(dimension).into_pyarray(py)
@@ -475,7 +478,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         right edges of bins
     pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
         self.grid.bin_info().right(dimension).into_pyarray(py)
@@ -513,7 +516,7 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : list(int)
+    /// bin_indices : numpy.ndarray(int)
     ///     list of indices of bins to removed
     pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
         self.grid.delete_bins(&bin_indices.to_vec().unwrap())

@@ -54,7 +54,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     np.array
+    ///     numpy.ndarray
     ///         bin normalizations
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.fk_table.bin_normalizations().into_pyarray(py)
@@ -81,7 +81,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         left edges of bins
     pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
         self.fk_table.bin_left(dimension).into_pyarray(py)
@@ -96,7 +96,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         right edges of bins
     pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
         self.fk_table.bin_right(dimension).into_pyarray(py)
@@ -137,7 +137,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     x_grid : list(float)
+    ///     x_grid : numpy.ndarray(float)
     ///         interpolation grid
     pub fn x_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.fk_table.x_grid().into_pyarray(py)
@@ -182,7 +182,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         cross sections for all bins
     pub fn convolute_with_one<'py>(
         &self,
