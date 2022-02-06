@@ -17,7 +17,7 @@ class TestGrid:
     def fake_grid(self):
         lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
-        bin_limits = [1e-7, 1e-3, 1]
+        bin_limits = np.array([1e-7, 1e-3, 1])
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
         return g
@@ -28,7 +28,7 @@ class TestGrid:
         assert isinstance(g.raw, pineappl.pineappl.PyGrid)
         # orders
         assert len(g.orders()) == 1
-        assert g.orders()[0].as_tuple() == (3,0,0,0)
+        assert g.orders()[0].as_tuple() == (3, 0, 0, 0)
 
     def test_set_subgrid(self):
         g = self.fake_grid()
@@ -38,9 +38,9 @@ class TestGrid:
         vs = np.random.rand(len(xs))
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
-            [90],
-            xs,
-            [1.0],
+            np.array([90.0]),
+            np.array(xs),
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
 
@@ -57,28 +57,28 @@ class TestGrid:
     def test_set_key_value(self):
         g = self.fake_grid()
         g.set_key_value("bla", "blub")
-        g.set_key_value("\"", "'")
+        g.set_key_value('"', "'")
         g.set_key_value("äöü", "ß\\")
 
     def test_bins(self):
         g = self.fake_grid()
         # 1D
-        normalizations = [1.0] * 2
-        limits = [(1,1),(2,2)]
+        normalizations = np.array([1.0] * 2)
+        limits = [(1, 1), (2, 2)]
         remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 1
-        np.testing.assert_allclose(g.bin_left(0), [1,2])
-        np.testing.assert_allclose(g.bin_right(0), [1,2])
+        np.testing.assert_allclose(g.bin_left(0), [1, 2])
+        np.testing.assert_allclose(g.bin_right(0), [1, 2])
         # 2D
-        limits = [(1,2),(2,3),(2,4),(3,5)]
+        limits = [(1, 2), (2, 3), (2, 4), (3, 5)]
         remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 2
-        np.testing.assert_allclose(g.bin_left(0), [1,2])
-        np.testing.assert_allclose(g.bin_right(0), [2,4])
-        np.testing.assert_allclose(g.bin_left(1), [2,3])
-        np.testing.assert_allclose(g.bin_right(1), [3,5])
+        np.testing.assert_allclose(g.bin_left(0), [1, 2])
+        np.testing.assert_allclose(g.bin_right(0), [2, 4])
+        np.testing.assert_allclose(g.bin_left(1), [2, 3])
+        np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
     def test_convolute_with_one(self):
         g = self.fake_grid()
@@ -88,14 +88,23 @@ class TestGrid:
         vs = xs.copy()
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
-            [90],
+            np.array([90.0]),
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
-        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 0., lambda q2: 0.), [0.]*2)
-        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 1, lambda q2: 1.), [5e6/9999,0.])
-        np.testing.assert_allclose(g.convolute_with_one(2212, lambda pid,x,q2: 1, lambda q2: 2.), [2**3 * 5e6/9999,0.])
+        np.testing.assert_allclose(
+            g.convolute_with_one(2212, lambda pid, x, q2: 0.0, lambda q2: 0.0),
+            np.array([0.0] * 2),
+        )
+        np.testing.assert_allclose(
+            g.convolute_with_one(2212, lambda pid, x, q2: 1, lambda q2: 1.0),
+            np.array([5e6 / 9999, 0.0]),
+        )
+        np.testing.assert_allclose(
+            g.convolute_with_one(2212, lambda pid, x, q2: 1, lambda q2: 2.0),
+            np.array([2 ** 3 * 5e6 / 9999, 0.0]),
+        )
 
     def test_axes(self):
         g = self.fake_grid()
@@ -105,17 +114,17 @@ class TestGrid:
         vs = np.random.rand(len(xs))
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
-            [90.],
+            np.array([90.0]),
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
         vs2 = np.random.rand(len(xs))
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs2[np.newaxis, :, np.newaxis],
-            [100.],
+            np.array([100.0]),
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 1, 0, subgrid)
         # now get the thing
@@ -123,7 +132,7 @@ class TestGrid:
 
         np.testing.assert_allclose(ei[0], xs)
         np.testing.assert_allclose(ei[1], [])
-        np.testing.assert_allclose(ei[2], [90., 100.])
+        np.testing.assert_allclose(ei[2], [90.0, 100.0])
 
     def test_io(self, tmp_path):
         g = self.fake_grid()
@@ -136,18 +145,13 @@ class TestGrid:
     def test_convolute_eko(self):
         g = self.fake_grid()
         fake_eko = {
-            "q2_ref": 1.,
+            "q2_ref": 1.0,
             "targetpids": [1],
-            "targetgrid": [.1,1.],
+            "targetgrid": [0.1, 1.0],
             "inputpids": [1],
-            "inputgrid": [.1,1.],
-            "interpolation_xgrid": [.1,1.],
-            "Q2grid": {
-                90: {
-                    "operators": np.random.rand(1,2,1,2),
-                    "alphas": 1.
-                }
-            }
+            "inputgrid": [0.1, 1.0],
+            "interpolation_xgrid": [0.1, 1.0],
+            "Q2grid": {90: {"operators": np.random.rand(1, 2, 1, 2), "alphas": 1.0}},
         }
         g.set_key_value("lumi_id_types", "pdg_mc_ids")
         fk = g.convolute_eko(fake_eko)

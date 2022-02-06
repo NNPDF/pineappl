@@ -195,9 +195,9 @@ class Grid(PyWrapper):
         pdg_id,
         xfx,
         alphas,
-        order_mask=(),
-        bin_indices=(),
-        lumi_mask=(),
+        order_mask=np.array([], dtype=bool),
+        bin_indices=np.array([], dtype=np.uint64),
+        lumi_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
         """
@@ -268,17 +268,16 @@ class Grid(PyWrapper):
         alphas_values = [op["alphas"] for op in operators["Q2grid"].values()]
         return FkTable(
             self.raw.convolute_eko(
-                operators["q2_ref"],
-                alphas_values,
-                operators["targetpids"],
-                operators["targetgrid"],
-                operators["inputpids"],
-                operators["inputgrid"],
-                q2grid,
-                operator_grid.flatten(),
-                operator_grid.shape,
+                np.array(operators["q2_ref"]),
+                np.array(alphas_values),
+                np.array(operators["targetpids"], dtype=np.int32),
+                np.array(operators["targetgrid"]),
+                np.array(operators["inputpids"], dtype=np.int32),
+                np.array(operators["inputgrid"]),
+                np.array(q2grid, dtype=np.float64),
+                np.array(operator_grid),
                 lumi_id_types,
-                order_mask,
+                np.array(order_mask, dtype=bool),
             )
         )
 
