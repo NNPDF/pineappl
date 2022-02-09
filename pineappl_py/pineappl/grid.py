@@ -75,14 +75,14 @@ class Grid(PyWrapper):
                 List of active luminosities
             orders: list(Order)
                 List of available orders
-            bin_limits: BinRemapper
-                bins
+            bin_limits: sequence(float)
+                Bin limits
             subgrid_params : SubgridParams
                 subgrid parameters
         """
-        lumi = [l.raw for l in lumi]
+        lumi = [lentry.raw for lentry in lumi]
         orders = [o.raw for o in orders]
-        return cls(PyGrid(lumi, orders, bin_limits, subgrid_params.raw))
+        return cls(PyGrid(lumi, orders, np.array(bin_limits), subgrid_params.raw))
 
     def subgrid(self, order, bin_, lumi):
         """
@@ -211,13 +211,13 @@ class Grid(PyWrapper):
                 lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
             alphas : callable
                 lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-            order_mask : list(bool)
+            order_mask : sequence(bool)
                 Mask for selecting specific orders. The value `True` means the corresponding order
                 is included. An empty list corresponds to all orders being enabled.
-            bin_indices : list(int)
+            bin_indices : sequence(int)
                 A list with the indices of the corresponding bins that should be calculated. An
                 empty list means that all orders should be calculated.
-            lumi_mask : list(bool)
+            lumi_mask : sequence(bool)
                 Mask for selecting specific luminosity channels. The value `True` means the
                 corresponding channel is included. An empty list corresponds to all channels being
                 enabled.
@@ -236,7 +236,13 @@ class Grid(PyWrapper):
 
         """
         return self.raw.convolute_with_one(
-            pdg_id, xfx, alphas, order_mask, bin_indices, lumi_mask, xi
+            pdg_id,
+            xfx,
+            alphas,
+            np.array(order_mask),
+            np.array(bin_indices),
+            np.array(lumi_mask),
+            xi,
         )
 
     def convolute_eko(self, operators, lumi_id_types="pdg_mc_ids", order_mask=()):
@@ -268,7 +274,7 @@ class Grid(PyWrapper):
         alphas_values = [op["alphas"] for op in operators["Q2grid"].values()]
         return FkTable(
             self.raw.convolute_eko(
-                np.array(operators["q2_ref"]),
+                operators["q2_ref"],
                 np.array(alphas_values),
                 np.array(operators["targetpids"], dtype=np.int32),
                 np.array(operators["targetgrid"]),
@@ -299,3 +305,16 @@ class Grid(PyWrapper):
                 grid object
         """
         return cls(PyGrid.read(path))
+
+    def delete_bins(self, bin_indices):
+        """Delete bins.
+
+        Repeated bins and those exceeding length are ignored.
+
+        Parameters
+        ----------
+        bin_indices : sequence(int)
+            list of indices of bins to removed
+
+        """
+        self.raw.delete_bins(np.array(bin_indices))
