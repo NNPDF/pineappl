@@ -6,8 +6,8 @@ mod delete;
 mod diff;
 mod helpers;
 mod info;
-mod lumi;
 mod merge;
+mod obl;
 mod optimize;
 mod orders;
 mod pdfunc;
@@ -30,6 +30,7 @@ use helpers::Subcommand;
     author,
     about,
     name = "pineappl",
+    replace("lumis", &["obl", "--lumis"]), // TODO: this is for backwards compatibility, remove it
     setting(AppSettings::DisableHelpSubcommand),
     setting(AppSettings::SubcommandRequiredElseHelp),
     version = git_version!(
@@ -54,8 +55,8 @@ enum SubcommandEnum {
     Delete(delete::Opts),
     Diff(diff::Opts),
     Info(info::Opts),
-    Lumi(lumi::Opts),
     Merge(merge::Opts),
+    Obl(obl::Opts),
     Optimize(optimize::Opts),
     Orders(orders::Opts),
     Pdfunc(pdfunc::Opts),

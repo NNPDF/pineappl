@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--x2` to print the corresponding grid values and `--stats` to print
   information about the space requirements of the subgrid type
 - added new subcommand `--delete`, which allows to delete bins from a grid
+- added new subcommand `obl`, which stands for orders (o), bins (b) and lumis
+  (l), that shows information about the all contained subgrids in a grid;
+  `pineappl obl -l` will replace `pineappl lumis` in the future
 
 ### Changed
 
