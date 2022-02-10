@@ -17,7 +17,7 @@ class TestGrid:
     def fake_grid(self):
         lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
-        bin_limits = [1e-7, 1e-3, 1]
+        bin_limits = np.array([1e-7, 1e-3, 1])
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
         return g
@@ -38,9 +38,9 @@ class TestGrid:
         vs = np.random.rand(len(xs))
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
-            [90],
-            xs,
-            [1.0],
+            np.array([90.0]),
+            np.array(xs),
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
 
@@ -88,9 +88,9 @@ class TestGrid:
         vs = xs.copy()
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
-            [90],
+            np.array([90.0]),
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
         np.testing.assert_allclose(
@@ -116,7 +116,7 @@ class TestGrid:
             vs[np.newaxis, :, np.newaxis],
             [90.0],
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid)
         vs2 = np.random.rand(len(xs))
@@ -124,7 +124,7 @@ class TestGrid:
             vs2[np.newaxis, :, np.newaxis],
             [100.0],
             xs,
-            [1.0],
+            np.array([1.0]),
         )
         g.set_subgrid(0, 1, 0, subgrid)
         # now get the thing
@@ -139,8 +139,9 @@ class TestGrid:
         p = tmp_path / "test.pineappl"
         p.write_text("")
         g.write(str(p))
-        gg = pineappl.grid.Grid.read(str(p))
+        gg = pineappl.grid.Grid.read(p)
         assert isinstance(gg, pineappl.grid.Grid)
+        _ = pineappl.grid.Grid.read(str(p))
 
     def test_convolute_eko(self):
         g = self.fake_grid()

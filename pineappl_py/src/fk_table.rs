@@ -1,12 +1,15 @@
-use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
+
+use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pyo3::prelude::*;
+
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
@@ -20,7 +23,7 @@ pub struct PyFkTable {
 #[pymethods]
 impl PyFkTable {
     #[staticmethod]
-    pub fn read(path: &str) -> Self {
+    pub fn read(path: PathBuf) -> Self {
         Self {
             fk_table: FkTable::try_from(
                 Grid::read(BufReader::new(File::open(path).unwrap())).unwrap(),
@@ -53,7 +56,7 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     np.array
+    ///     numpy.ndarray
     ///         bin normalizations
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.fk_table.bin_normalizations().into_pyarray(py)
@@ -80,10 +83,10 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         left edges of bins
-    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
-        self.fk_table.bin_left(dimension)
+    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.fk_table.bin_left(dimension).into_pyarray(py)
     }
 
     /// Extract the right edges of a specific bin dimension.
@@ -95,10 +98,10 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         right edges of bins
-    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
-        self.fk_table.bin_right(dimension)
+    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.fk_table.bin_right(dimension).into_pyarray(py)
     }
 
     /// Get metadata values stored in the grid.
@@ -136,10 +139,10 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     x_grid : list(float)
+    ///     x_grid : numpy.ndarray(float)
     ///         interpolation grid
-    pub fn x_grid(&self) -> Vec<f64> {
-        self.fk_table.x_grid()
+    pub fn x_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.fk_table.x_grid().into_pyarray(py)
     }
 
     /// Write grid to file.
@@ -150,7 +153,7 @@ impl PyFkTable {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write(&self, path: &str) {
+    pub fn write(&self, path: PathBuf) {
         self.fk_table.write(File::create(path).unwrap()).unwrap();
     }
 
@@ -162,7 +165,7 @@ impl PyFkTable {
     /// ----------
     ///     path : str
     ///         file path
-    pub fn write_lz4(&self, path: &str) {
+    pub fn write_lz4(&self, path: PathBuf) {
         self.fk_table
             .write_lz4(File::create(path).unwrap())
             .unwrap();
@@ -181,12 +184,19 @@ impl PyFkTable {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         cross sections for all bins
-    pub fn convolute_with_one(&self, pdg_id: i32, xfx: &PyAny) -> Vec<f64> {
+    pub fn convolute_with_one<'py>(
+        &self,
+        pdg_id: i32,
+        xfx: &PyAny,
+        py: Python<'py>,
+    ) -> &'py PyArray1<f64> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
-        self.fk_table.convolute(&mut lumi_cache, &[], &[])
+        self.fk_table
+            .convolute(&mut lumi_cache, &[], &[])
+            .into_pyarray(py)
     }
 }
