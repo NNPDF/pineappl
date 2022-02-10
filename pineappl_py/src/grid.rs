@@ -6,8 +6,7 @@ use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
-use ndarray::{Array, Ix5};
-use numpy::{IntoPyArray, PyArray1};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -66,13 +65,24 @@ impl PyOrder {
     /// the NNLO QCD.
     ///
     /// See `pineappl` crate docs for relevant examples
+    ///
+    /// Returns
+    /// -------
+    /// numpy.ndarray(bool)
+    ///     boolean array, to be used as orders' mask
     #[staticmethod]
-    pub fn create_mask(orders: Vec<PyRef<Self>>, max_as: u32, max_al: u32) -> Vec<bool> {
+    pub fn create_mask<'py>(
+        orders: Vec<PyRef<Self>>,
+        max_as: u32,
+        max_al: u32,
+        py: Python<'py>,
+    ) -> &'py PyArray1<bool> {
         Order::create_mask(
             &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
             max_as,
             max_al,
         )
+        .into_pyarray(py)
     }
 }
 
@@ -97,13 +107,13 @@ impl PyGrid {
     pub fn new_grid(
         lumi: Vec<PyRef<PyLumiEntry>>,
         orders: Vec<PyRef<PyOrder>>,
-        bin_limits: Vec<f64>,
+        bin_limits: PyReadonlyArray1<f64>,
         subgrid_params: PySubgridParams,
     ) -> Self {
         Self::new(Grid::new(
             lumi.iter().map(|pyl| pyl.lumi_entry.clone()).collect(),
             orders.iter().map(|pyo| pyo.order.clone()).collect(),
-            bin_limits,
+            bin_limits.to_vec().unwrap(),
             subgrid_params.subgrid_params,
         ))
     }
@@ -204,19 +214,26 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     x_grid: list(float)
+    ///     x_grid: numpy.ndarray(float)
     ///         interpolation grid
-    ///     pids: list(int)
+    ///     pids: numpy.ndarray(int)
     ///         particle ids
-    ///     muf2_grid : list(float)
+    ///     muf2_grid : numpy.ndarray(float)
     ///         factorization scale list
-    pub fn axes(&self) -> (Vec<f64>, Vec<i32>, Vec<f64>) {
+    pub fn axes<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (&'py PyArray1<f64>, &'py PyArray1<i32>, &'py PyArray1<f64>) {
         let GridAxes {
             x_grid,
             pids,
             muf2_grid,
         } = self.grid.axes().unwrap();
-        (x_grid, pids, muf2_grid)
+        (
+            x_grid.into_pyarray(py),
+            pids.into_pyarray(py),
+            muf2_grid.into_pyarray(py),
+        )
     }
 
     /// Convolute grid with pdf.
@@ -231,13 +248,13 @@ impl PyGrid {
     ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     ///     alphas : callable
     ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-    ///     order_mask : list(bool)
+    ///     order_mask : numpy.ndarray(bool)
     ///         Mask for selecting specific orders. The value `True` means the corresponding order
     ///         is included. An empty list corresponds to all orders being enabled.
-    ///     bin_indices : list(int)
+    ///     bin_indices : numpy.ndarray(int)
     ///         A list with the indices of the corresponding bins that should be calculated. An
     ///         empty list means that all orders should be calculated.
-    ///     lumi_mask : list(bool)
+    ///     lumi_mask : numpy.ndarray(bool)
     ///         Mask for selecting specific luminosity channels. The value `True` means the
     ///         corresponding channel is included. An empty list corresponds to all channels being
     ///         enabled.
@@ -250,24 +267,32 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpu.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute_with_one(
+    pub fn convolute_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
         alphas: &PyAny,
-        order_mask: Vec<bool>,
-        bin_indices: Vec<usize>,
-        lumi_mask: Vec<bool>,
+        order_mask: PyReadonlyArray1<bool>,
+        bin_indices: PyReadonlyArray1<usize>,
+        lumi_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
-    ) -> Vec<f64> {
+        py: Python<'py>,
+    ) -> &'py PyArray1<f64> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.grid
-            .convolute(&mut lumi_cache, &order_mask, &bin_indices, &lumi_mask, &xi)
+            .convolute(
+                &mut lumi_cache,
+                &order_mask.to_vec().unwrap(),
+                &bin_indices.to_vec().unwrap(),
+                &lumi_mask.to_vec().unwrap(),
+                &xi,
+            )
+            .into_pyarray(py)
     }
 
     /// Convolute with with an evolution operator.
@@ -278,24 +303,22 @@ impl PyGrid {
     /// ----------
     ///     muf2_0 : float
     ///         reference scale
-    ///     alphas : list(float)
+    ///     alphas : numpy.ndarray(float)
     ///         list with :math:`\alpha_s(Q2)` for the process scales
-    ///     pids : list(int)
+    ///     pids : numpy.ndarray(int)
     ///         sorting of the particles in the tensor
-    ///     x_grid : list(float)
+    ///     x_grid : numpy.ndarray(float)
     ///         interpolation grid
-    ///     target_pids : list(int)
+    ///     target_pids : numpy.ndarray(int)
     ///         sorting of the particles in the tensor for final FkTable
-    ///     target_x_grid : list(float)
+    ///     target_x_grid : numpy.ndarray(float)
     ///         final FKTable interpolation grid
-    ///     muf2_grid : list(float)
+    ///     muf2_grid : numpy.ndarray(float)
     ///         list of process scales
-    ///     operator_flattened : list(float)
-    ///         evolution tensor as a flat list
-    ///     operator_shape : list(int)
-    ///         shape of the evolution tensor
-    ///     additional_metadata : dict(str: str)
-    ///         further metadata
+    ///     operator : numpy.ndarray(int, rank=5)
+    ///         evolution tensor
+    ///     orders_mask: numpy.ndarray(bool)
+    ///         boolean mask to activate orders
     ///
     /// Returns
     /// -------
@@ -304,29 +327,27 @@ impl PyGrid {
     pub fn convolute_eko(
         &self,
         muf2_0: f64,
-        alphas: Vec<f64>,
-        pids: Vec<i32>,
-        x_grid: Vec<f64>,
-        target_pids: Vec<i32>,
-        target_x_grid: Vec<f64>,
-        muf2_grid: Vec<f64>,
-        operator_flattened: Vec<f64>,
-        operator_shape: Vec<usize>,
+        alphas: PyReadonlyArray1<f64>,
+        pids: PyReadonlyArray1<i32>,
+        x_grid: PyReadonlyArray1<f64>,
+        target_pids: PyReadonlyArray1<i32>,
+        target_x_grid: PyReadonlyArray1<f64>,
+        muf2_grid: PyReadonlyArray1<f64>,
+        operator: PyReadonlyArray5<f64>,
         lumi_id_types: String,
-        order_mask: Vec<bool>,
+        order_mask: PyReadonlyArray1<bool>,
     ) -> PyFkTable {
-        let operator = Array::from_shape_vec(operator_shape, operator_flattened).unwrap();
         let eko_info = EkoInfo {
             muf2_0,
-            alphas,
+            alphas: alphas.to_vec().unwrap(),
             xir: 1.,
             xif: 1.,
-            target_pids,
-            target_x_grid,
+            target_pids: target_pids.to_vec().unwrap(),
+            target_x_grid: target_x_grid.to_vec().unwrap(),
             grid_axes: GridAxes {
-                x_grid,
-                pids,
-                muf2_grid,
+                x_grid: x_grid.to_vec().unwrap(),
+                pids: pids.to_vec().unwrap(),
+                muf2_grid: muf2_grid.to_vec().unwrap(),
             },
             lumi_id_types,
         };
@@ -334,9 +355,9 @@ impl PyGrid {
         let evolved_grid = self
             .grid
             .convolute_eko(
-                operator.into_dimensionality::<Ix5>().unwrap(),
+                operator.as_array().to_owned(),
                 eko_info,
-                &order_mask,
+                &order_mask.to_vec().unwrap(),
             )
             .unwrap();
         PyFkTable {
@@ -424,7 +445,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     np.array
+    ///     np.ndarray
     ///         bin normalizations
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.grid.bin_info().normalizations().into_pyarray(py)
@@ -441,10 +462,10 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         left edges of bins
-    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
-        self.grid.bin_info().left(dimension)
+    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.grid.bin_info().left(dimension).into_pyarray(py)
     }
 
     /// Extract the right edges of a specific bin dimension.
@@ -458,10 +479,10 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(float) :
+    ///     numpy.ndarray(float) :
     ///         right edges of bins
-    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
-        self.grid.bin_info().right(dimension)
+    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
+        self.grid.bin_info().right(dimension).into_pyarray(py)
     }
 
     /// Extract the available perturbative orders and scale variations.
@@ -496,9 +517,9 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : list(int)
+    /// bin_indices : numpy.ndarray(int)
     ///     list of indices of bins to removed
-    pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
-        self.grid.delete_bins(&bin_indices)
+    pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
+        self.grid.delete_bins(&bin_indices.to_vec().unwrap())
     }
 }

@@ -1,3 +1,5 @@
+import numpy as np
+
 from .pineappl import PyBinRemapper
 from .utils import PyWrapper
 
@@ -8,11 +10,11 @@ class BinRemapper(PyWrapper):
 
     Parameters
     ----------
-        normalization : list(float)
+        normalizations : sequence(float)
             list with normalizations
         limits : list(tuple(float,float))
             all bin limits as a flat list
     """
 
-    def __init__(self, normalization, limits):
-        self._raw = PyBinRemapper(normalization, limits)
+    def __init__(self, normalizations, limits):
+        self._raw = PyBinRemapper(np.array(normalizations), limits)

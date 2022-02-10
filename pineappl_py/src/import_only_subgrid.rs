@@ -1,7 +1,9 @@
 use super::subgrid::PySubgridEnum;
-use numpy::PyReadonlyArray3;
+
+use numpy::{PyReadonlyArray1, PyReadonlyArray3};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::sparse_array3::SparseArray3;
+
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
@@ -27,9 +29,9 @@ impl PyImportOnlySubgridV1 {
     #[new]
     pub fn new_import_only_subgrid(
         array: PyReadonlyArray3<f64>,
-        q2_grid: Vec<f64>,
-        x1_grid: Vec<f64>,
-        x2_grid: Vec<f64>,
+        q2_grid: PyReadonlyArray1<f64>,
+        x1_grid: PyReadonlyArray1<f64>,
+        x2_grid: PyReadonlyArray1<f64>,
     ) -> Self {
         let mut sparse_array = SparseArray3::new(q2_grid.len(), x1_grid.len(), x2_grid.len());
 
@@ -43,9 +45,9 @@ impl PyImportOnlySubgridV1 {
 
         Self::new(ImportOnlySubgridV1::new(
             sparse_array,
-            q2_grid,
-            x1_grid,
-            x2_grid,
+            q2_grid.to_vec().unwrap(),
+            x1_grid.to_vec().unwrap(),
+            x2_grid.to_vec().unwrap(),
         ))
     }
 
