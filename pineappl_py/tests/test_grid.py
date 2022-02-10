@@ -1,6 +1,7 @@
 import pineappl
 
 import numpy as np
+import pytest
 
 
 class TestOrder:
@@ -103,7 +104,7 @@ class TestGrid:
         )
         np.testing.assert_allclose(
             g.convolute_with_one(2212, lambda pid, x, q2: 1, lambda q2: 2.0),
-            [2 ** 3 * 5e6 / 9999, 0.0],
+            [2**3 * 5e6 / 9999, 0.0],
         )
 
     def test_axes(self):
@@ -160,7 +161,9 @@ class TestGrid:
 
     def test_fill(self):
         g = self.fake_grid()
-        g.fill(1.0, 1.0, 1.0, 0, 1e-2, 0, 10.0)
+        g.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
+        res = g.convolute_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
+        pytest.approx(res) == 0.0
 
     def test_fill_array(self):
         g = self.fake_grid()
@@ -173,7 +176,11 @@ class TestGrid:
             0,
             np.array([10.0, 100.0]),
         )
+        res = g.convolute_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
+        pytest.approx(res) == 0.0
 
     def test_fill_all(self):
         g = self.fake_grid()
         g.fill_all(1.0, 1.0, 1.0, 0, 1e-2, np.array([10.0]))
+        res = g.convolute_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
+        pytest.approx(res) == 0.0
