@@ -317,4 +317,4 @@ class Grid(PyWrapper):
             list of indices of bins to removed
 
         """
-        self.raw.delete_bins(np.array(bin_indices))
+        self.raw.delete_bins(np.array(bin_indices, dtype=np.uint))
