@@ -161,7 +161,7 @@ impl Subcommand for Opts {
                     .iter()
                     .map(|order| {
                         helpers::convolute(
-                            &grid1,
+                            &grid2,
                             &pdf,
                             &[(order.alphas, order.alpha)],
                             &[],
