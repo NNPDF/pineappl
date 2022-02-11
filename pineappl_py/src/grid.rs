@@ -6,6 +6,7 @@ use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
+use itertools::izip;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
 
 use std::collections::HashMap;
@@ -151,6 +152,84 @@ impl PyGrid {
             observable,
             lumi,
             &Ntuple::<f64> { x1, x2, q2, weight },
+        );
+    }
+
+    /// Add an array to the grid.
+    ///
+    /// Useful to avoid multiple python calls, leading to performance improvement.
+    ///
+    /// Parameters
+    /// ----------
+    ///     ntuples : np.array(float)
+    ///         2 dimensional (4, N) array, made of `(x1, x2, q2, weight)` "ntuples"
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     lumi : int
+    ///         luminosity index
+    pub fn fill_array(
+        &mut self,
+        x1s: PyReadonlyArray1<f64>,
+        x2s: PyReadonlyArray1<f64>,
+        q2s: PyReadonlyArray1<f64>,
+        order: usize,
+        observables: PyReadonlyArray1<f64>,
+        lumi: usize,
+        weights: PyReadonlyArray1<f64>,
+    ) {
+        for (&x1, &x2, &q2, &observable, &weight) in izip!(
+            x1s.iter().unwrap(),
+            x2s.iter().unwrap(),
+            q2s.iter().unwrap(),
+            observables.iter().unwrap(),
+            weights.iter().unwrap(),
+        ) {
+            self.grid.fill(
+                order,
+                observable,
+                lumi,
+                &Ntuple::<f64> { x1, x2, q2, weight },
+            );
+        }
+    }
+
+    /// Add a point to the grid for all lumis.
+    ///
+    /// Parameters
+    /// ----------
+    ///     x1 : float
+    ///         first momentum fraction
+    ///     x2 : float
+    ///         second momentum fraction
+    ///     q2 : float
+    ///         process scale
+    ///     order : int
+    ///         order index
+    ///     observable : float
+    ///         reference point (to be binned)
+    ///     weights : np.array(float)
+    ///         cross section weights, one for each lumi
+    pub fn fill_all(
+        &mut self,
+        x1: f64,
+        x2: f64,
+        q2: f64,
+        order: usize,
+        observable: f64,
+        weights: PyReadonlyArray1<f64>,
+    ) {
+        self.grid.fill_all(
+            order,
+            observable,
+            &Ntuple::<()> {
+                x1,
+                x2,
+                q2,
+                weight: (),
+            },
+            &weights.to_vec().unwrap(),
         );
     }
 
