@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subcommand `obl`, which stands for orders (o), bins (b) and lumis
   (l), that shows information about the all contained subgrids in a grid;
   `pineappl obl -l` will replace `pineappl lumis` in the future
+- added options `--orders1`, `--orders2`, `--scale1` and `--scale2` to the
+  subcommand `pineappl diff`, which allow the selection of orders and scaling
+  of grids that should be compared
 
 ### Changed
 
@@ -73,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - replaced C API-based Python interface with PyO3-based one
 - the subcommand `subgrids` now does not print empty grids; the old behavior
   can be restored with the new switch `--show-empty`
+- `pineappl diff` now behaves differently whenever luminities are different and
+  errors out when this is the case. This can be adjusted using
+  `--ignore-lumis`
 
 ## [0.4.1] - 25/03/2021
 
