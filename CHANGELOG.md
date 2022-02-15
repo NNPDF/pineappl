@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed `pineappl obl --bins`, which had the wrong column headers if there were
+  more than one observable
+
 ## [0.5.0] - 11/02/2022
 
 ### Added

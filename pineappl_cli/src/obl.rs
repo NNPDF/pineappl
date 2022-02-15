@@ -44,8 +44,8 @@ impl Subcommand for Opts {
                 let mut cell = cell!(c->&x_label);
                 cell.set_hspan(2);
                 titles.add_cell(cell);
-                titles.add_cell(cell!(c->"norm"));
             }
+            titles.add_cell(cell!(c->"norm"));
 
             table.set_titles(titles);
 
