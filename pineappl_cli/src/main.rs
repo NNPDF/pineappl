@@ -81,6 +81,7 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use assert_cmd::Command;
 
     const HELP_STR: &str = "pineappl v0.5.0-beta.4-46-ge703521-dirty
@@ -123,5 +124,11 @@ SUBCOMMANDS:
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    fn verify_command() {
+        use clap::CommandFactory;
+        Opts::command().debug_assert();
     }
 }
