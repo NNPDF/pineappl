@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- when running `pineappl convolute ... -s 1` the scale-variation columns are no
+  longer shown. The output would be zero, but this doesn't make sense. All
+  other values of `-s` are unaffected.
+
 ### Fixed
 
 - fixed `pineappl obl --bins`, which had the wrong column headers if there were
