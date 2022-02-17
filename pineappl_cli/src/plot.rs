@@ -25,7 +25,7 @@ pub struct Opts {
         conflicts_with = "scales",
         long = "subgrid-pull",
         number_of_values = 3,
-        use_delimiter = true,
+        use_value_delimiter = true,
         value_names = &["ORDER", "BIN", "LUMI"]
     )]
     subgrid_pull: Vec<String>,

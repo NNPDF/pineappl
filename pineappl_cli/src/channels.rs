@@ -35,7 +35,7 @@ pub struct Opts {
         long,
         multiple_values = true,
         parse(try_from_str = helpers::try_parse_integer_range),
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     lumis: Vec<RangeInclusive<usize>>,
     /// Select orders manually.
@@ -44,7 +44,7 @@ pub struct Opts {
         multiple_values = true,
         short,
         parse(try_from_str = helpers::parse_order),
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     orders: Vec<(u32, u32)>,
 }

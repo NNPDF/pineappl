@@ -29,7 +29,7 @@ pub struct Opts {
         long,
         multiple_values = true,
         parse(try_from_str = helpers::parse_order),
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     orders1: Vec<(u32, u32)>,
     /// Select orders of the second grid.
@@ -37,7 +37,7 @@ pub struct Opts {
         long,
         multiple_values = true,
         parse(try_from_str = helpers::parse_order),
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     orders2: Vec<(u32, u32)>,
     /// Scale all results of the first grid.

@@ -28,7 +28,7 @@ pub struct Opts {
         min_values = 1,
         parse(try_from_str = helpers::parse_order),
         short,
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     orders: Vec<(u32, u32)>,
     /// Number of threads to utilize.

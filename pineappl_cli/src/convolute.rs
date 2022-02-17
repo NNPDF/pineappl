@@ -24,7 +24,7 @@ pub struct Opts {
         short,
         multiple_values = true,
         parse(try_from_str = helpers::try_parse_integer_range),
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     bins: Vec<RangeInclusive<usize>>,
     /// Show integrated numbers (without bin widths) instead of differential ones.
@@ -36,7 +36,7 @@ pub struct Opts {
         multiple_values = true,
         parse(try_from_str = helpers::parse_order),
         short,
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     orders: Vec<(u32, u32)>,
     /// Set the number of scale variations.

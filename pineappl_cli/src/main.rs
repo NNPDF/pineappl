@@ -20,19 +20,19 @@ mod sum;
 mod upgrade;
 
 use anyhow::Result;
-use clap::{AppSettings, Parser};
+use clap::Parser;
 use enum_dispatch::enum_dispatch;
 use git_version::git_version;
 use helpers::Subcommand;
 
 #[derive(Parser)]
 #[clap(
+    arg_required_else_help = true,
     author,
     about,
+    disable_help_subcommand = true,
     name = "pineappl",
     replace("lumis", &["obl", "--lumis"]), // TODO: this is for backwards compatibility, remove it
-    setting(AppSettings::DisableHelpSubcommand),
-    setting(AppSettings::SubcommandRequiredElseHelp),
     version = git_version!(
         args = ["--always", "--dirty", "--long", "--tags"],
         cargo_prefix = "",

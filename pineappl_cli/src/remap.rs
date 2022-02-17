@@ -67,7 +67,7 @@ pub struct Opts {
     #[clap(
         alias = "ignore_obs_norm",
         long = "ignore-obs-norm",
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     ignore_obs_norm: Vec<usize>,
     /// Normalization factor in addition to the given bin widths.
