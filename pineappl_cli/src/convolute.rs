@@ -89,7 +89,7 @@ impl Subcommand for Opts {
             for scale in &helpers::SCALES_VECTOR[0..self.scales] {
                 title.add_cell(cell!(c->&format!("({},{})", scale.0, scale.1)));
             }
-        } else {
+        } else if self.scales != 1 {
             title.add_cell(cell!(c->"scale uncertainty").with_hspan(2));
         }
 
@@ -126,7 +126,7 @@ impl Subcommand for Opts {
                 for &value in values.iter() {
                     row.add_cell(cell!(r->&format!("{:.7e}", if self.integrated { value * normalizations[bin] } else { value })));
                 }
-            } else {
+            } else if self.scales != 1 {
                 row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
                 row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
             }
