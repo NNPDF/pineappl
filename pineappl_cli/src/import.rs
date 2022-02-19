@@ -59,7 +59,18 @@ impl Subcommand for Opts {
 mod tests {
     use assert_cmd::Command;
 
-    const HELP_STR: &str = "
+    const HELP_STR: &str = "pineappl-import 
+Converts fastNLO tables to PineAPPL grids
+
+USAGE:
+    pineappl import <INPUT> <OUTPUT>
+
+ARGS:
+    <INPUT>     Path to the input grid
+    <OUTPUT>    Path to the converted grid
+
+OPTIONS:
+    -h, --help    Print help information
 ";
 
     #[test]
