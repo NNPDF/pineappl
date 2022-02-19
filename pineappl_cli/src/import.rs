@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 // the indirection of two modules instead of one is needed to hide the C++ bridge behind the
 // feature gate
-#[cfg(feature = "import-fastnlo")]
+#[cfg(feature = "fastnlo")]
 mod fastnlo {
     #[cxx::bridge]
     pub mod ffi {
@@ -29,7 +29,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    #[cfg(feature = "import-fastnlo")]
+    #[cfg(feature = "fastnlo")]
     fn run(&self) -> Result<()> {
         use std::ffi::CString;
         use std::os::unix::ffi::OsStrExt;
@@ -47,10 +47,10 @@ impl Subcommand for Opts {
         }
     }
 
-    #[cfg(not(feature = "import-fastnlo"))]
+    #[cfg(not(feature = "fastnlo"))]
     fn run(&self) -> Result<()> {
         Err(anyhow!(
-            "you need to install `pineappl` with feature `import-fastnlo`"
+            "you need to install `pineappl` with feature `fastnlo`"
         ))
     }
 }

@@ -41,4 +41,4 @@ path = "src/main.rs"
 rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
-import-fastnlo = ["cxx", "cxx-build", "pkg-config"]
+fastnlo = ["cxx", "cxx-build", "pkg-config"]
