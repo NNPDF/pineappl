@@ -1,10 +1,12 @@
-#include "pineappl_cli/src/import/fastnlo.hpp"
-
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <iterator>
 #include <numeric>
 #include <string>
 
+#include <LHAPDF/PDF.h>
+#include <pineappl_cli/src/import/fastnlo.hpp>
 #include <fastnlotk/fastNLOLHAPDF.h>
 #include <pineappl_capi.h>
 
@@ -653,4 +655,69 @@ int this_would_be_main(char const* in, char const* out)
     }
 
     return 0;
+}
+
+template <typename T>
+rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
+{
+    rust::Vec<T> result;
+    result.reserve(vector.size());
+    std::move(vector.begin(), vector.end(), std::back_inserter(result));
+    return result;
+}
+
+rust::Vec<double> CalcPDFLinearCombination(
+    fastNLOPDFLinearCombinations const& lc,
+    fastNLOCoeffAddBase const& base,
+    rust::Slice<double const> pdfx1,
+    rust::Slice<double const> pdfx2,
+    bool pdf2IsAntiParticle
+) {
+    std::vector<double> fx1(pdfx1.begin(), pdfx1.end());
+    std::vector<double> fx2(pdfx2.begin(), pdfx2.end());
+
+    return std_vector_to_rust_vec(lc.CalcPDFLinearCombination(&base, fx1, fx2, pdf2IsAntiParticle));
+}
+
+rust::Vec<double> GetScaleNodes(fastNLOCoeffAddFix const& coeffs, int iObs, int iSvar)
+{
+    return std_vector_to_rust_vec(coeffs.GetScaleNodes(iObs, iSvar));
+}
+
+rust::Vec<double> GetXNodes1(fastNLOCoeffAddBase const& coeffs, int iObsBin)
+{
+    return std_vector_to_rust_vec(coeffs.GetXNodes1(iObsBin));
+}
+
+rust::Vec<double> GetXNodes2(fastNLOCoeffAddBase const& coeffs, int iObsBin)
+{
+    return std_vector_to_rust_vec(coeffs.GetXNodes2(iObsBin));
+}
+
+std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(rust::Str name, rust::Str LHAPDFfile, int PDFSet)
+{
+    std::string arg0(name.begin(), name.end());
+    std::string arg1(LHAPDFfile.begin(), LHAPDFfile.end());
+
+    return std::unique_ptr<fastNLOLHAPDF>(new fastNLOLHAPDF(arg0, arg1, PDFSet));
+}
+
+rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
+{
+    return std_vector_to_rust_vec(reader.GetCrossSection(lNorm));
+}
+
+rust::Vec<double> GetBinSize(fastNLOTable const& table)
+{
+    return std_vector_to_rust_vec(table.GetBinSize());
+}
+
+rust::Vec<double> GetScaleNodes1(fastNLOCoeffAddFlex const& coeffs, int iObsBin)
+{
+    return std_vector_to_rust_vec(coeffs.GetScaleNodes1(iObsBin));
+}
+
+rust::Vec<double> GetScaleNodes2(fastNLOCoeffAddFlex const& coeffs, int iObsBin)
+{
+    return std_vector_to_rust_vec(coeffs.GetScaleNodes2(iObsBin));
 }
