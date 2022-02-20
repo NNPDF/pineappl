@@ -8,7 +8,7 @@ fn main() {
     let pineappl_capi = pkg_config::Config::new()
         .atleast_version("0.5.0")
         .probe("pineappl_capi")
-        .unwrap();
+        .expect("PineAPPL's C API not found, please install it");
 
     for include_path in pineappl_capi.include_paths {
         bridge.include(include_path);
@@ -27,7 +27,7 @@ fn main() {
         Command::new("fnlo-tk-config")
             .arg("--incdir")
             .output()
-            .unwrap()
+            .expect("fastNLO not found, please install it")
             .stdout,
     )
     .unwrap();
