@@ -505,7 +505,7 @@ pineappl_grid* convert_coeff_add_flex(
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc < 3 && argc > 4)
     {
         return EXIT_FAILURE;
     }
@@ -513,8 +513,7 @@ int main(int argc, char* argv[])
     std::string in(argv[1]);
     std::string out(argv[2]);
 
-    // TODO: read this from an argument
-    uint32_t alpha = 0;
+    uint32_t alpha = (argc == 4) ? std::stoul(argv[3]) : 0;
 
     LHAPDF::setVerbosity(0);
     pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));

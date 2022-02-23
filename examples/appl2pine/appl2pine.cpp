@@ -203,7 +203,7 @@ void reconstruct_luminosity_function(appl::grid& grid, int order, pineappl_lumi*
     }
 }
 
-pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
+pineappl_grid* convert_grid(appl::grid& grid, bool reweight, long alpha)
 {
     std::vector<double> bin_limits(grid.Nobs_internal() + 1);
     for (std::size_t i = 0; i != bin_limits.size(); ++i)
@@ -221,17 +221,17 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
         if (grid.nloops() == 0)
         {
             order_params = {
-                leading_order, 0, 0, 0, // LO
+                leading_order, 0, alpha, 0, // LO
             };
             orders = 1;
         }
         else if (grid.nloops() == 1)
         {
             order_params = {
-                leading_order + 1, 0, 0, 0, // NLO
-                leading_order + 1, 0, 1, 0, // NLO mur
-                leading_order + 1, 0, 0, 1, // NLO muf
-                leading_order    , 0, 0, 0, // LO
+                leading_order + 1, alpha, 0, 0, // NLO
+                leading_order + 1, alpha, 1, 0, // NLO mur
+                leading_order + 1, alpha, 0, 1, // NLO muf
+                leading_order    , alpha, 0, 0, // LO
             };
             orders = 4;
         }
@@ -249,7 +249,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
         for (int i = 0; i != orders; ++i)
         {
             order_params.push_back(leading_order + i);
-            order_params.push_back(0);
+            order_params.push_back(alpha);
             order_params.push_back(0);
             order_params.push_back(0);
         }
@@ -497,7 +497,7 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight)
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc < 3 && argc > 4)
     {
         return EXIT_FAILURE;
     }
@@ -505,17 +505,19 @@ int main(int argc, char* argv[])
     std::string in(argv[1]);
     std::string out(argv[2]);
 
+    long alpha = (argc == 4) ? std::stoul(argv[3]) : 0;
+
     appl::grid grid(in);
 
     std::cout << ">>> Trying `reweight = true`. This may fail.\n";
 
-    auto* pgrid = convert_grid(grid, true);
+    auto* pgrid = convert_grid(grid, true, alpha);
 
     if (pgrid == nullptr)
     {
         std::cout << ">>> `reweight = true` didn't work. Trying `reweight = false`.\n";
 
-        pgrid = convert_grid(grid, false);
+        pgrid = convert_grid(grid, false, alpha);
 
         if (pgrid == nullptr)
         {
