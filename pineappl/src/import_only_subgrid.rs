@@ -202,14 +202,20 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
-                    SparseArray3::from_ndarray(&array, subgrid.itaumin, subgrid.ntau)
+                    SparseArray3::from_ndarray(&array, 0, subgrid.itaumax - subgrid.itaumin)
                 }
             },
         );
         let q2_grid = if subgrid.static_q2 > 0.0 {
             vec![subgrid.static_q2]
         } else {
-            subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect()
+            subgrid
+                .mu2_grid()
+                .iter()
+                .skip(subgrid.itaumin)
+                .take(subgrid.itaumax - subgrid.itaumin)
+                .map(|mu2| mu2.fac)
+                .collect()
         };
         let x1_grid = subgrid.x1_grid().into_owned();
         let x2_grid = subgrid.x2_grid().into_owned();
@@ -377,6 +383,8 @@ impl Subgrid for ImportOnlySubgridV2 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::subgrid::{ExtraSubgridParams, SubgridParams};
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn test_v1() {
@@ -613,5 +621,58 @@ mod tests {
             q2: 0.0,
             weight: 1.0,
         });
+    }
+
+    #[test]
+    fn from_lagrange_subgrid_v2() {
+        let mut lagrange =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+
+        // by default this should have 40 grid points
+        assert_eq!(lagrange.mu2_grid().len(), 40);
+
+        // only `q2` are important: they're not static and fall between two grid points
+        lagrange.fill(&Ntuple {
+            x1: 0.25,
+            x2: 0.5,
+            q2: 10000.0,
+            weight: 1.0,
+        });
+        lagrange.fill(&Ntuple {
+            x1: 0.0625,
+            x2: 0.125,
+            q2: 10001.0,
+            weight: 1.0,
+        });
+        lagrange.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.0625,
+            q2: 10002.0,
+            weight: 1.0,
+        });
+        lagrange.fill(&Ntuple {
+            x1: 0.1,
+            x2: 0.2,
+            q2: 10003.0,
+            weight: 1.0,
+        });
+
+        let x1 = lagrange.x1_grid();
+        let x2 = lagrange.x2_grid();
+        let mu2 = lagrange.mu2_grid();
+
+        let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
+        let reference = lagrange.convolute(&x1, &x2, &mu2, lumi);
+
+        let imported = ImportOnlySubgridV1::from(&lagrange);
+        let test = imported.convolute(&x1, &x2, &mu2, lumi);
+
+        // make sure the conversion did not change the results
+        assert_approx_eq!(f64, reference, test, ulps = 8);
+
+        // all unneccessary grid points should be gone; since we are inserting between two
+        // interpolation grid points, the imported grid should have as many interpolation grid
+        // points as its interpolation order
+        assert_eq!(imported.mu2_grid().len(), 4);
     }
 }

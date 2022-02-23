@@ -374,7 +374,7 @@ pub struct LagrangeSubgridV2 {
     y2order: usize,
     tauorder: usize,
     pub(crate) itaumin: usize,
-    itaumax: usize,
+    pub(crate) itaumax: usize,
     reweight1: bool,
     reweight2: bool,
     y1min: f64,
