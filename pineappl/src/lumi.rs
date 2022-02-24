@@ -444,3 +444,22 @@ impl<'a> LumiCache<'a> {
             .collect();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pids;
+
+    #[test]
+    fn translate() {
+        let lumi = LumiEntry::translate(&lumi_entry![103, 203, 2.0], &pids::evol_to_pdg_mc_ids);
+
+        assert_eq!(
+            lumi,
+            lumi_entry![ 2,  2,  2.0;  2, -2, -2.0;  2,  1, -2.0;  2, -1,  2.0;
+                        -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
+                         1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
+                        -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
+        );
+    }
+}
