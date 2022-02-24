@@ -67,26 +67,28 @@ impl Subcommand for Opts {
         } else if let Some(ref key) = self.get {
             grid.upgrade();
 
-            if let Some(key_values) = grid.key_values() {
-                if let Some(value) = key_values.get(key) {
-                    println!("{}", value);
-                }
-            } else {
-                unreachable!();
-            }
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    if let Some(value) = key_values.get(key) {
+                        println!("{}", value);
+                    }
+                },
+            );
         } else if self.keys {
             grid.upgrade();
 
-            if let Some(key_values) = grid.key_values() {
-                let mut vector = key_values.iter().collect::<Vec<_>>();
-                vector.sort();
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    let mut vector = key_values.iter().collect::<Vec<_>>();
+                    vector.sort();
 
-                for (key, _) in &vector {
-                    println!("{}", key);
-                }
-            } else {
-                unreachable!();
-            }
+                    for (key, _) in &vector {
+                        println!("{}", key);
+                    }
+                },
+            );
         } else if self.show {
             grid.upgrade();
 

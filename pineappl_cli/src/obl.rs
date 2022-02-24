@@ -41,7 +41,7 @@ impl Subcommand for Opts {
             titles.add_cell(cell!(c->"b"));
 
             for x_label in helpers::labels(&grid).split_last().unwrap().1 {
-                let mut cell = cell!(c->&x_label);
+                let mut cell = cell!(c->x_label);
                 cell.set_hspan(2);
                 titles.add_cell(cell);
             }
@@ -59,14 +59,14 @@ impl Subcommand for Opts {
 
             for bin in 0..grid.bin_info().bins() {
                 let row = table.add_empty_row();
-                row.add_cell(cell!(&bin.to_string()));
+                row.add_cell(cell!(bin.to_string()));
 
                 for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->&format!("{}", left[bin])));
-                    row.add_cell(cell!(r->&format!("{}", right[bin])));
+                    row.add_cell(cell!(r->format!("{}", left[bin])));
+                    row.add_cell(cell!(r->format!("{}", right[bin])));
                 }
 
-                row.add_cell(cell!(r->&format!("{}", normalizations[bin])));
+                row.add_cell(cell!(r->format!("{}", normalizations[bin])));
             }
         } else if self.lumis {
             let mut titles = row![c => "l"];
@@ -84,13 +84,10 @@ impl Subcommand for Opts {
             for (index, entry) in grid.lumi().iter().enumerate() {
                 let row = table.add_empty_row();
 
-                row.add_cell(cell!(&format!("{}", index)));
+                row.add_cell(cell!(format!("{}", index)));
 
                 for (id1, id2, factor) in entry.entry().iter() {
-                    row.add_cell(cell!(&format!(
-                        "{} \u{d7} ({:2.}, {:2.})",
-                        factor, id1, id2
-                    )));
+                    row.add_cell(cell!(format!("{} \u{d7} ({:2.}, {:2.})", factor, id1, id2)));
                 }
             }
         } else {
@@ -122,8 +119,8 @@ impl Subcommand for Opts {
                     })
                     .join(" ");
 
-                row.add_cell(cell!(&index.to_string()));
-                row.add_cell(cell!(&format!("O({})", order_string)));
+                row.add_cell(cell!(index.to_string()));
+                row.add_cell(cell!(format!("O({})", order_string)));
             }
         }
 

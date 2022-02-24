@@ -84,9 +84,9 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(l->&format!("{}", order)));
-            row.add_cell(cell!(l->&format!("{}", bin)));
-            row.add_cell(cell!(l->&format!("{}", lumi)));
+            row.add_cell(cell!(l->format!("{}", order)));
+            row.add_cell(cell!(l->format!("{}", bin)));
+            row.add_cell(cell!(l->format!("{}", lumi)));
 
             if self.type_ {
                 row.add_cell(cell!(l->
@@ -108,7 +108,7 @@ impl Subcommand for Opts {
                     .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren.sqrt()))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.mur2 {
                 let values: Vec<_> = subgrid
@@ -117,7 +117,7 @@ impl Subcommand for Opts {
                     .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.muf {
                 let values: Vec<_> = subgrid
@@ -126,7 +126,7 @@ impl Subcommand for Opts {
                     .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac.sqrt()))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.muf2 {
                 let values: Vec<_> = subgrid
@@ -135,7 +135,7 @@ impl Subcommand for Opts {
                     .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.x1 {
                 let values: Vec<_> = subgrid
@@ -144,7 +144,7 @@ impl Subcommand for Opts {
                     .map(|x| format!("{:.3e}", x))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.x2 {
                 let values: Vec<_> = subgrid
@@ -153,14 +153,14 @@ impl Subcommand for Opts {
                     .map(|x| format!("{:.3e}", x))
                     .collect();
 
-                row.add_cell(cell!(l->&values.join(", ")));
+                row.add_cell(cell!(l->values.join(", ")));
             }
             if self.stats {
                 let stats = subgrid.stats();
-                row.add_cell(cell!(r->&stats.total.to_string()));
-                row.add_cell(cell!(r->&stats.allocated.to_string()));
-                row.add_cell(cell!(r->&stats.zeros.to_string()));
-                row.add_cell(cell!(r->&stats.overhead.to_string()));
+                row.add_cell(cell!(r->stats.total.to_string()));
+                row.add_cell(cell!(r->stats.allocated.to_string()));
+                row.add_cell(cell!(r->stats.zeros.to_string()));
+                row.add_cell(cell!(r->stats.overhead.to_string()));
             }
         }
 

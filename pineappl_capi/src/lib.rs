@@ -621,7 +621,7 @@ pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: 
 /// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
-    (&mut *grid).scale(factor);
+    (*grid).scale(factor);
 }
 
 /// Optimizes the grid representation for space efficiency.
@@ -652,7 +652,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     logxif: f64,
     global: f64,
 ) {
-    (&mut *grid).scale_by_order(alphas, alpha, logxir, logxif, global);
+    (*grid).scale_by_order(alphas, alpha, logxir, logxif, global);
 }
 
 /// Sets an internal key-value pair for the grid.

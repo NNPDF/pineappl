@@ -69,7 +69,7 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
         for x_label in x_labels {
-            let mut cell = cell!(c->&x_label);
+            let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -90,17 +90,17 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->&format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{}", bin)));
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->&format!("{}", left[bin])));
-                row.add_cell(cell!(r->&format!("{}", right[bin])));
+                row.add_cell(cell!(r->format!("{}", left[bin])));
+                row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->&format!("{:.7e}", if self.integrated { uncertainty.central * normalizations[bin] } else { uncertainty.central })));
+            row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { uncertainty.central * normalizations[bin] } else { uncertainty.central })));
             row.add_cell(
-                cell!(r->&format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0)),
+                cell!(r->format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0)),
             );
             row.add_cell(
-                cell!(r->&format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0)),
+                cell!(r->format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0)),
             );
         }
 

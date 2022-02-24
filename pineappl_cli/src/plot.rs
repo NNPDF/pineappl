@@ -84,11 +84,11 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
             "        '{}': r'{}',\n",
             key,
             if *key == "description" {
-                value.replace("\u{2013}", "--").replace("\u{2014}", "---")
+                value.replace('\u{2013}', "--").replace('\u{2014}', "---")
             } else if key.ends_with("_unit") {
                 value
                     .replace("GeV", r#"\giga\electronvolt"#)
-                    .replace("/", r#"\per"#)
+                    .replace('/', r#"\per"#)
                     .replace("pb", r#"\pico\barn"#)
             } else {
                 (*value).clone()
@@ -578,7 +578,7 @@ impl Subcommand for Opts {
                                         .get(&format!("x{}_label_tex", d + 1))
                                         .cloned())
                                     .unwrap_or_else(|| format!("x{}", d + 1))
-                                    .replace("$", ""),
+                                    .replace('$', ""),
                                 bin_info.right(d)[end - 1]
                             )
                         })

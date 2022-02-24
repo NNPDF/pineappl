@@ -86,7 +86,7 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
         for x_label in x_labels {
-            let mut cell = cell!(c->&x_label);
+            let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -103,11 +103,11 @@ impl Subcommand for Opts {
         for bin in 0..bin_info.bins() {
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->&format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{}", bin)));
 
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->&format!("{}", left[bin])));
-                row.add_cell(cell!(r->&format!("{}", right[bin])));
+                row.add_cell(cell!(r->format!("{}", left[bin])));
+                row.add_cell(cell!(r->format!("{}", right[bin])));
             }
 
             if self.absolute {
@@ -136,8 +136,8 @@ impl Subcommand for Opts {
                     .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->&format!("#{}", lumi)));
-                    row.add_cell(cell!(r->&format!("{:.7e}", value)));
+                    row.add_cell(cell!(r->format!("#{}", lumi)));
+                    row.add_cell(cell!(r->format!("{:.7e}", value)));
                 }
             } else {
                 let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
@@ -157,8 +157,8 @@ impl Subcommand for Opts {
                     .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->&format!("#{}", lumi)));
-                    row.add_cell(cell!(r->&format!("{:.2}%", percentage)));
+                    row.add_cell(cell!(r->format!("#{}", lumi)));
+                    row.add_cell(cell!(r->format!("{:.2}%", percentage)));
                 }
             }
         }

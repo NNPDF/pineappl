@@ -96,13 +96,13 @@ impl Subcommand for Opts {
             .iter()
             .map(|order| (order.alphas, order.alpha))
             .collect();
-        orders1.sort();
+        orders1.sort_unstable();
         let orders1 = orders1;
         let mut orders2: Vec<_> = orders2
             .iter()
             .map(|order| (order.alphas, order.alpha))
             .collect();
-        orders2.sort();
+        orders2.sort_unstable();
         let orders2 = orders2;
 
         if !self.ignore_orders && (!diff1.is_empty() || !diff2.is_empty()) {
@@ -132,14 +132,15 @@ impl Subcommand for Opts {
             .map(|i| bin_info.right(i))
             .collect();
 
+        let mut title = Row::empty();
+        title.add_cell(cell!(c->"b"));
+        for i in 0..bin_info.dimensions() {
+            let mut cell = cell!(c->format!("x{}", i + 1));
+            cell.set_hspan(2);
+            title.add_cell(cell);
+        }
+
         if self.ignore_orders {
-            let mut title = Row::empty();
-            title.add_cell(cell!(c->"b"));
-            for i in 0..bin_info.dimensions() {
-                let mut cell = cell!(c->&format!("x{}", i + 1));
-                cell.set_hspan(2);
-                title.add_cell(cell);
-            }
             let mut cell = cell!(c->"diff");
             cell.set_hspan(3);
             title.add_cell(cell);
@@ -154,31 +155,23 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->bin));
                 for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->&format!("{}", left[bin])));
-                    row.add_cell(cell!(r->&format!("{}", right[bin])));
+                    row.add_cell(cell!(r->format!("{}", left[bin])));
+                    row.add_cell(cell!(r->format!("{}", right[bin])));
                 }
 
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
-                row.add_cell(cell!(r->&format!("{:.7e}", result1)));
-                row.add_cell(cell!(r->&format!("{:.7e}", result2)));
-                row.add_cell(cell!(r->&format!("{:.3e}",
+                row.add_cell(cell!(r->format!("{:.7e}", result1)));
+                row.add_cell(cell!(r->format!("{:.7e}", result2)));
+                row.add_cell(cell!(r->format!("{:.3e}",
                 if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
             }
         } else {
-            let mut title = Row::empty();
-            title.add_cell(cell!(c->"b"));
-            for i in 0..bin_info.dimensions() {
-                let mut cell = cell!(c->&format!("x{}", i + 1));
-                cell.set_hspan(2);
-                title.add_cell(cell);
-            }
-
             let orders = orders1;
 
             for (alphas, alpha) in &orders {
-                let mut cell = cell!(c->&format!("O(as^{} a^{})", alphas, alpha));
+                let mut cell = cell!(c->format!("O(as^{} a^{})", alphas, alpha));
                 cell.set_hspan(3);
                 title.add_cell(cell);
             }
@@ -199,16 +192,16 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->bin));
                 for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->&format!("{}", left[bin])));
-                    row.add_cell(cell!(r->&format!("{}", right[bin])));
+                    row.add_cell(cell!(r->format!("{}", left[bin])));
+                    row.add_cell(cell!(r->format!("{}", right[bin])));
                 }
 
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
-                    row.add_cell(cell!(r->&format!("{:.7e}", result1)));
-                    row.add_cell(cell!(r->&format!("{:.7e}", result2)));
-                    row.add_cell(cell!(r->&format!("{:.3e}",
+                    row.add_cell(cell!(r->format!("{:.7e}", result1)));
+                    row.add_cell(cell!(r->format!("{:.7e}", result2)));
+                    row.add_cell(cell!(r->format!("{:.3e}",
                     if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
                 }
             }

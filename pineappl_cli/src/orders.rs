@@ -74,14 +74,14 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
         for x_label in x_labels {
-            let mut cell = cell!(c->&x_label);
+            let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);
         }
         title.add_cell(cell!(c->if self.integrated { "integ" } else { y_label }));
 
         for order in &orders {
-            title.add_cell(cell!(c->&format!("O(as^{} a^{})", order.alphas, order.alpha)));
+            title.add_cell(cell!(c->format!("O(as^{} a^{})", order.alphas, order.alpha)));
         }
 
         let mut table = helpers::create_table();
@@ -95,12 +95,12 @@ impl Subcommand for Opts {
                 1.0
             };
 
-            row.add_cell(cell!(r->&format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{}", bin)));
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->&format!("{}", left[bin])));
-                row.add_cell(cell!(r->&format!("{}", right[bin])));
+                row.add_cell(cell!(r->format!("{}", left[bin])));
+                row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->&format!("{:.7e}",
+            row.add_cell(cell!(r->format!("{:.7e}",
             bin_norm * results.iter().fold(0.0, |value, results| value + results[bin]))));
 
             let mut normalization = 0.0;
@@ -120,9 +120,9 @@ impl Subcommand for Opts {
             // print each order normalized to the sum of all leading orders
             for result in results.iter().map(|vec| vec[bin]) {
                 if self.absolute {
-                    row.add_cell(cell!(r->&format!("{:.7e}", result * bin_norm)));
+                    row.add_cell(cell!(r->format!("{:.7e}", result * bin_norm)));
                 } else {
-                    row.add_cell(cell!(r->&format!("{:.2}%", result / normalization * 100.0)));
+                    row.add_cell(cell!(r->format!("{:.2}%", result / normalization * 100.0)));
                 }
             }
         }

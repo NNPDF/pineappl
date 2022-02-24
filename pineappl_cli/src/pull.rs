@@ -78,7 +78,7 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
         for x_label in x_labels {
-            let mut cell = cell!(c->&x_label);
+            let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -156,13 +156,13 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->&format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{}", bin)));
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->&format!("{}", left[bin])));
-                row.add_cell(cell!(r->&format!("{}", right[bin])));
+                row.add_cell(cell!(r->format!("{}", left[bin])));
+                row.add_cell(cell!(r->format!("{}", right[bin])));
             }
 
-            row.add_cell(cell!(r->&format!("{:.3}", total)));
+            row.add_cell(cell!(r->format!("{:.3}", total)));
 
             // sort using the absolute value in descending order
             pull_tuples.sort_unstable_by(|(_, pull_left), (_, pull_right)| {
@@ -170,8 +170,8 @@ impl Subcommand for Opts {
             });
 
             for (lumi, pull) in pull_tuples.iter().take(self.limit) {
-                row.add_cell(cell!(r->&format!("#{}", lumi)));
-                row.add_cell(cell!(r->&format!("{:.3}", pull)));
+                row.add_cell(cell!(r->format!("#{}", lumi)));
+                row.add_cell(cell!(r->format!("{:.3}", pull)));
             }
         }
 

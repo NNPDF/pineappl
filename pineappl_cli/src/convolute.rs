@@ -79,7 +79,7 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
         for x_label in x_labels {
-            let mut cell = cell!(c->&x_label);
+            let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -87,7 +87,7 @@ impl Subcommand for Opts {
 
         if self.absolute {
             for scale in &helpers::SCALES_VECTOR[0..self.scales] {
-                title.add_cell(cell!(c->&format!("({},{})", scale.0, scale.1)));
+                title.add_cell(cell!(c->format!("({},{})", scale.0, scale.1)));
             }
         } else if self.scales != 1 {
             title.add_cell(cell!(c->"scale uncertainty").with_hspan(2));
@@ -115,20 +115,20 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->&format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{}", bin)));
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->&format!("{}", left[bin])));
-                row.add_cell(cell!(r->&format!("{}", right[bin])));
+                row.add_cell(cell!(r->format!("{}", left[bin])));
+                row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->&format!("{:.7e}", if self.integrated { values[0] * normalizations[bin] } else { values[0] })));
+            row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { values[0] * normalizations[bin] } else { values[0] })));
 
             if self.absolute {
                 for &value in values.iter() {
-                    row.add_cell(cell!(r->&format!("{:.7e}", if self.integrated { value * normalizations[bin] } else { value })));
+                    row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { value * normalizations[bin] } else { value })));
                 }
             } else if self.scales != 1 {
-                row.add_cell(cell!(r->&format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
-                row.add_cell(cell!(r->&format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
             }
 
             let bins = if bins.is_empty() {
@@ -138,8 +138,8 @@ impl Subcommand for Opts {
             };
 
             for &other in other_results.iter().skip(index).step_by(bins) {
-                row.add_cell(cell!(r->&format!("{:.7e}", if self.integrated { other * normalizations[bin] } else { other })));
-                row.add_cell(cell!(r->&format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { other * normalizations[bin] } else { other })));
+                row.add_cell(cell!(r->format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
             }
         }
 
