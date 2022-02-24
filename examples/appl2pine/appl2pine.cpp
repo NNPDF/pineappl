@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include <appl_grid/appl_grid.h>
 #include <appl_grid/appl_igrid.h>
@@ -203,7 +204,7 @@ void reconstruct_luminosity_function(appl::grid& grid, int order, pineappl_lumi*
     }
 }
 
-pineappl_grid* convert_grid(appl::grid& grid, bool reweight, long alpha)
+std::tuple<pineappl_grid*, bool> convert_grid(appl::grid& grid, bool reweight, uint32_t alpha)
 {
     std::vector<double> bin_limits(grid.Nobs_internal() + 1);
     for (std::size_t i = 0; i != bin_limits.size(); ++i)
@@ -487,12 +488,10 @@ pineappl_grid* convert_grid(appl::grid& grid, bool reweight, long alpha)
 
     if (different)
     {
-        pineappl_grid_delete(grids.at(0));
-
-        return nullptr;
+        return std::make_tuple(grids.at(0), false);
     }
 
-    return grids.at(0);
+    return std::make_tuple(grids.at(0), true);
 }
 
 int main(int argc, char* argv[])
@@ -511,18 +510,38 @@ int main(int argc, char* argv[])
 
     std::cout << ">>> Trying `reweight = true`. This may fail.\n";
 
-    auto* pgrid = convert_grid(grid, true, alpha);
+    pineappl_grid* pgrid = nullptr;
+    pineappl_grid* pgrid_reweight_false;
+    bool success;
+    std::tie(pgrid_reweight_false, success) = convert_grid(grid, true, alpha);
 
-    if (pgrid == nullptr)
+    if (success)
+    {
+        pgrid = pgrid_reweight_false;
+    }
+    else
     {
         std::cout << ">>> `reweight = true` didn't work. Trying `reweight = false`.\n";
 
-        pgrid = convert_grid(grid, false, alpha);
+        pineappl_grid* pgrid_reweight_true;
+        std::tie(pgrid_reweight_true, success) = convert_grid(grid, false, alpha);
 
-        if (pgrid == nullptr)
+        if (!success)
         {
+            auto const out_false = out + "_reweight_false";
+            auto const out_true = out + "_reweight_true";
+
+            pineappl_grid_write(pgrid_reweight_false, out_false.c_str());
+            pineappl_grid_write(pgrid_reweight_true, out_true.c_str());
+
+            pineappl_grid_delete(pgrid_reweight_false);
+            pineappl_grid_delete(pgrid_reweight_true);
+
             error_exit("grids are different");
         }
+
+        pineappl_grid_delete(pgrid_reweight_false);
+        pgrid = pgrid_reweight_true;
     }
 
     pineappl_grid_write(pgrid, out.c_str());
