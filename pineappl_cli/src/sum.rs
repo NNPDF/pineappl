@@ -95,6 +95,11 @@ OPTIONS:
   6  3.5  4.5 3.5811524e1   -3.59%    2.95%
 ";
 
+    const INTEGRATED_STR: &str = "bin x0     diff     scale uncertainty
+---+-+-+-----------+--------+--------
+  0 0 1 4.2754327e2   -3.75%    2.85%
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -136,7 +141,7 @@ OPTIONS:
 
     #[test]
     fn integrated() {
-        let output = NamedTempFile::new("summed.pineappl.lz4").unwrap();
+        let output = NamedTempFile::new("integrated.pineappl.lz4").unwrap();
 
         Command::cargo_bin("pineappl")
             .unwrap()
@@ -149,5 +154,17 @@ OPTIONS:
             .assert()
             .success()
             .stdout("");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(INTEGRATED_STR);
     }
 }
