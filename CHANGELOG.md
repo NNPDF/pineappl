@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added the `--bins` option to the CLI subcommand `sum`, which allows to sum
+  bins together
+
 ### Changed
 
 - when running `pineappl convolute ... -s 1` the scale-variation columns are no
