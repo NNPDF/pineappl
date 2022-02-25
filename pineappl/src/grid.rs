@@ -1064,6 +1064,7 @@ impl Grid {
             self.symmetrize_lumi();
         }
 
+        self.optimize_orders();
         self.optimize_lumi();
 
         for subgrid in self.subgrids.iter_mut() {
@@ -1159,6 +1160,22 @@ impl Grid {
 
         self.lumi = new_lumi_entries;
         self.subgrids = new_subgrids;
+    }
+
+    fn optimize_orders(&mut self) {
+        let mut indices: Vec<_> = (0..self.orders().len()).collect();
+
+        while let Some(index) = indices.pop() {
+            if self
+                .subgrids
+                .slice(s![index, .., ..])
+                .iter()
+                .all(Subgrid::is_empty)
+            {
+                self.orders.remove(index);
+                self.subgrids.remove_index(Axis(0), index);
+            }
+        }
     }
 
     fn symmetrize_lumi(&mut self) {
