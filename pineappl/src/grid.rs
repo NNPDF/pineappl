@@ -1758,6 +1758,42 @@ impl Grid {
             self.subgrids.remove_index(Axis(1), bin_index);
         }
     }
+
+    pub(crate) fn rewrite_lumi(&mut self, add: &[(i32, i32)], del: &[i32]) {
+        self.lumi = self
+            .lumi
+            .iter()
+            .map(|entry| {
+                LumiEntry::new(
+                    entry
+                        .entry()
+                        .iter()
+                        .map(|(a, b, f)| {
+                            (
+                                // if `a` is to be added to another pid replace it with this pid
+                                add.iter().fold(
+                                    *a,
+                                    |id, &(source, target)| if id == source { target } else { id },
+                                ),
+                                // if `b` is to be added to another pid replace it with this pid
+                                add.iter().fold(
+                                    *b,
+                                    |id, &(source, target)| if id == source { target } else { id },
+                                ),
+                                // if any of the pids `a` or `b` are to b deleted set the factor to
+                                // zero
+                                if del.iter().any(|id| id == a || id == b) {
+                                    0.0
+                                } else {
+                                    *f
+                                },
+                            )
+                        })
+                        .collect(),
+                )
+            })
+            .collect();
+    }
 }
 
 #[cfg(test)]

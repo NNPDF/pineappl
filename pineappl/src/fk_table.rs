@@ -44,6 +44,33 @@ pub enum TryFromGridError {
     MetadataMissing(String),
 }
 
+/// The optimization assumptions for an [`FkTable`], needed for [`FkTable::optimize`]. Since FK
+/// tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy quarks are
+/// typically set to zero at this scale or set to the same value as their anti-quark PDF. This is
+/// used to optimize the size of FK tables.
+pub enum FkAssumptions {
+    /// All quark PDFs are non-zero at the FK table scale and completely independent.
+    Nf6Ind,
+    /// Like [`Nf6Ind`], but the PDFs of top and anti-top quarks are the same at FK table scale.
+    Nf6Sym,
+    /// Like [`Nf6Ind`], but the PDFs of top and anti-top quarks are zero at FK table scale.
+    Nf5Ind,
+    /// Like [`Nf5Ind`], but the PDFs of bottom and anti-bottom quarks are the same at FK table
+    /// scale.
+    Nf5Sym,
+    /// Like [`Nf5Ind`], but the PDFs of bottom and anti-bottom quarks are zero at FK table scale.
+    Nf4Ind,
+    /// Like [`Nf4Ind`], but the PDFs of charm and anti-charm quarks are the same at FK table
+    /// scale. PDF sets that make this assumption are NNPDF4.0 and NNPDF3.1 at fitting scale.
+    Nf4Sym,
+    /// Like [`Nf4Ind`], but the PDFs of charm and anti-charm quarks are zero at FK table scale.
+    /// PDF set that make this assumption are MSHT20 and NNPDF3.0 at fitting scale.
+    Nf3Ind,
+    /// Like [`Nf3Ind`], but the PDFs of strange and anti-strange are the same at FK table scale.
+    /// A PDF set that makes this assumption is CT18 at fitting scale.
+    Nf3Sym,
+}
+
 impl FkTable {
     /// Returns the [`Grid`] object for this `FkTable`.
     #[must_use]
@@ -193,6 +220,179 @@ impl FkTable {
     ) -> Vec<f64> {
         self.grid
             .convolute(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
+    }
+
+    /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
+    /// scale.
+    pub fn optimize(&mut self, assumptions: FkAssumptions) {
+        let flavor_basis = match self.grid.key_values().unwrap()["lumi_id_types"].as_str() {
+            "pdg_mc_ids" => true,
+            "evol" => false,
+            _ => unimplemented!(),
+        };
+
+        let mut add = Vec::new();
+        let mut del = Vec::new();
+
+        if flavor_basis {
+            match assumptions {
+                FkAssumptions::Nf6Ind => {
+                    // nothing to do here
+                }
+                FkAssumptions::Nf6Sym => {
+                    // add anti-top to top
+                    add.push((-6, 6));
+                }
+                FkAssumptions::Nf5Ind => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                }
+                FkAssumptions::Nf5Sym => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                    // add anti-bottom to bottom
+                    add.push((-5, 5));
+                }
+                FkAssumptions::Nf4Ind => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                    // del anti-bottom and bottom
+                    del.push(-5);
+                    del.push(5);
+                }
+                FkAssumptions::Nf4Sym => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                    // del anti-bottom and bottom
+                    del.push(-5);
+                    del.push(5);
+                    // add anti-charm to charm
+                    add.push((-4, 4));
+                }
+                FkAssumptions::Nf3Ind => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                    // del anti-bottom and bottom
+                    del.push(-5);
+                    del.push(5);
+                    // del anti-charm and charm
+                    del.push(-4);
+                    del.push(4);
+                }
+                FkAssumptions::Nf3Sym => {
+                    // del anti-top and top
+                    del.push(-6);
+                    del.push(6);
+                    // del anti-bottom and bottom
+                    del.push(-5);
+                    del.push(5);
+                    // del anti-charm and charm
+                    del.push(-4);
+                    del.push(4);
+                    // add anti-strange to strange
+                    add.push((-3, 3));
+                }
+            }
+        } else {
+            match assumptions {
+                FkAssumptions::Nf6Ind => {
+                    // nothing to do here
+                }
+                FkAssumptions::Nf6Sym => {
+                    // add V35 to V
+                    add.push((235, 200));
+                }
+                FkAssumptions::Nf5Ind => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                }
+                FkAssumptions::Nf5Sym => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                    // add V24 to V
+                    add.push((224, 200));
+                }
+                FkAssumptions::Nf4Ind => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                    // add V24 to V
+                    add.push((224, 200));
+                    // add T24 to S
+                    add.push((124, 100));
+                }
+                FkAssumptions::Nf4Sym => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                    // add V24 to V
+                    add.push((224, 200));
+                    // add T24 to S
+                    add.push((124, 100));
+                    // add V14 to V
+                    add.push((214, 200));
+                }
+                FkAssumptions::Nf3Ind => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                    // add V24 to V
+                    add.push((224, 200));
+                    // add T24 to S
+                    add.push((124, 100));
+                    // add V14 to V
+                    add.push((214, 200));
+                    // add T14 to S
+                    add.push((114, 100));
+                }
+                FkAssumptions::Nf3Sym => {
+                    // add V35 to V
+                    add.push((235, 200));
+                    // add T35 to S
+                    add.push((135, 100));
+                    // add V24 to V
+                    add.push((224, 200));
+                    // add T24 to S
+                    add.push((124, 100));
+                    // add V14 to V
+                    add.push((214, 200));
+                    // add T14 to S
+                    add.push((114, 100));
+                    // add V8 to V
+                    add.push((208, 200));
+                }
+            }
+        }
+
+        self.grid.rewrite_lumi(&add, &del);
+
+        // store the assumption so that we can check it later on
+        self.grid.set_key_value(
+            "fk_assumptions",
+            match assumptions {
+                FkAssumptions::Nf6Ind => "nf6ind",
+                FkAssumptions::Nf6Sym => "nf6sym",
+                FkAssumptions::Nf5Ind => "nf5ind",
+                FkAssumptions::Nf5Sym => "nf5sym",
+                FkAssumptions::Nf4Ind => "nf4ind",
+                FkAssumptions::Nf4Sym => "nf4sym",
+                FkAssumptions::Nf3Ind => "nf3ind",
+                FkAssumptions::Nf3Sym => "nf3sym",
+            },
+        );
+        self.grid.optimize();
     }
 }
 
