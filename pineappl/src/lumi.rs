@@ -2,6 +2,7 @@
 
 use super::grid::Grid;
 use super::subgrid::{Mu2, Subgrid};
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +33,17 @@ impl LumiEntry {
     /// assert_eq!(entry1, entry2);
     /// ```
     ///
+    /// Same arguments are merged together:
+    ///
+    /// ```rust
+    /// use pineappl::lumi::LumiEntry;
+    ///
+    /// let entry1 = LumiEntry::new(vec![(1, 1, 1.0), (1, 1, 3.0), (3, 3, 1.0), (1, 1, 6.0)]);
+    /// let entry2 = LumiEntry::new(vec![(1, 1, 6.0), (3, 3, 1.0)]);
+    ///
+    /// assert_eq!(entry1, entry2);
+    /// ```
+    ///
     /// # Panics
     ///
     /// Creating an entry with content panics:
@@ -47,9 +59,21 @@ impl LumiEntry {
 
         // sort `entry` because the ordering doesn't matter and because it makes it easier to
         // compare `LumiEntry` objects with each other
-        entry.sort_by(|x, y| (x.0, x.1, x.2).partial_cmp(&(y.0, y.1, y.2)).unwrap());
+        entry.sort_by(|x, y| (x.0, x.1).cmp(&(y.0, y.1)));
 
-        Self { entry }
+        Self {
+            entry: entry
+                .into_iter()
+                .coalesce(|lhs, rhs| {
+                    // sum the factors of repeated elements
+                    if (lhs.0, lhs.1) == (rhs.0, rhs.1) {
+                        Ok((lhs.0, lhs.1, lhs.2 + rhs.2))
+                    } else {
+                        Err((lhs, rhs))
+                    }
+                })
+                .collect(),
+        }
     }
 
     /// Translates `entry` into a different basis using `translator`.

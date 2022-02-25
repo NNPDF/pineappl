@@ -1092,21 +1092,57 @@ impl Grid {
     }
 
     fn optimize_lumi(&mut self) {
+        let mut indices: Vec<_> = (0..self.lumi.len()).rev().collect();
+
+        // merge luminosities that are the same
+        while let Some(index) = indices.pop() {
+            if let Some(&other_index) = indices.iter().find(|i| self.lumi[**i] == self.lumi[index])
+            {
+                let (mut a, mut b) = self
+                    .subgrids
+                    .multi_slice_mut((s![.., .., other_index], s![.., .., index]));
+
+                // check if in all cases the limits are compatible with merging
+                for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
+                    if !rhs.is_empty() {
+                        if lhs.is_empty() {
+                            // we can't merge into an EmptySubgridV1
+                            *lhs = rhs.clone_empty();
+                            lhs.merge(rhs, false);
+                        } else if (lhs.x1_grid() == rhs.x1_grid())
+                            && (lhs.x2_grid() == rhs.x2_grid())
+                        {
+                            lhs.merge(rhs, false);
+                        } else {
+                            // don't overwrite `rhs`
+                            continue;
+                        }
+
+                        *rhs = EmptySubgridV1::default().into();
+                    }
+                }
+            }
+        }
+
         let mut keep_lumi_indices = vec![];
         let mut new_lumi_entries = vec![];
 
+        // only keep luminosities that have non-zero factors and for which at least one subgrid is
+        // non-empty
         for (lumi, entry) in self.lumi.iter().enumerate() {
-            if !self
-                .subgrids
-                .slice(s![.., .., lumi])
-                .iter()
-                .all(Subgrid::is_empty)
+            if !entry.entry().iter().all(|&(_, _, factor)| factor == 0.0)
+                && !self
+                    .subgrids
+                    .slice(s![.., .., lumi])
+                    .iter()
+                    .all(Subgrid::is_empty)
             {
                 keep_lumi_indices.push(lumi);
                 new_lumi_entries.push(entry.clone());
             }
         }
 
+        // only keep the previously selected subgrids
         let new_subgrids = Array3::from_shape_fn(
             (
                 self.orders.len(),

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added the `--bins` option to the CLI subcommand `sum`, which allows to sum
   bins together
+- added the `--fk-table` option to the CLI subcommand `optimize`, which allows
+  the optmization of FK tables based on assumptions of heavy-flavor PDFs
 
 ### Changed
 
