@@ -1,4 +1,4 @@
-use pineappl::fk_table::FkTable;
+use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
 
@@ -18,6 +18,12 @@ use std::path::PathBuf;
 #[repr(transparent)]
 pub struct PyFkTable {
     pub(crate) fk_table: FkTable,
+}
+
+#[pyclass]
+#[repr(transparent)]
+pub struct PyFkAssumptions {
+    pub(crate) assumptions: FkAssumptions,
 }
 
 #[pymethods]
@@ -198,5 +204,19 @@ impl PyFkTable {
         self.fk_table
             .convolute(&mut lumi_cache, &[], &[])
             .into_pyarray(py)
+    }
+
+    /// Optimize FK table storae
+    ///
+    /// In order to perform any relevant optimization, assumptions are needed, and they are passed
+    /// as parameters to the function.
+    ///
+    /// Parameters
+    /// ----------
+    ///     assumptions : FkAssumptions
+    ///         assumptions about the FkTable properties, declared by the user, deciding which
+    ///         optimizations are possible
+    pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
+        self.fk_table.optimize(assumptions.assumptions)
     }
 }
