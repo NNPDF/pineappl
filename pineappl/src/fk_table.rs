@@ -6,6 +6,7 @@ use super::subgrid::Subgrid;
 use ndarray::Array4;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fmt::{self, Display, Formatter};
 use std::io::Write;
 use thiserror::Error;
 
@@ -70,6 +71,54 @@ pub enum FkAssumptions {
     /// Like [`Nf3Ind`], but the PDFs of strange and anti-strange are the same at FK table scale.
     /// A PDF set that makes this assumption is CT18 at fitting scale.
     Nf3Sym,
+}
+
+/// Error type when trying to construct [`FkAssumptions`] with a string.
+#[derive(Debug, Error)]
+#[error("unknown variant for FkAssumptions: {variant}")]
+pub struct UnknownFkAssumption {
+    variant: String,
+}
+
+impl Display for FkAssumptions {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                FkAssumptions::Nf6Ind => "Nf6Ind",
+                FkAssumptions::Nf6Sym => "Nf6Sym",
+                FkAssumptions::Nf5Ind => "Nf5Ind",
+                FkAssumptions::Nf5Sym => "Nf5Sym",
+                FkAssumptions::Nf4Ind => "Nf4Ind",
+                FkAssumptions::Nf4Sym => "Nf4Sym",
+                FkAssumptions::Nf3Ind => "Nf3Ind",
+                FkAssumptions::Nf3Sym => "Nf3Sym",
+            }
+        )
+    }
+}
+
+impl TryFrom<&str> for FkAssumptions {
+    type Error = UnknownFkAssumption;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(match value {
+            "Nf6Ind" => FkAssumptions::Nf6Ind,
+            "Nf6Sym" => FkAssumptions::Nf6Sym,
+            "Nf5Ind" => FkAssumptions::Nf5Ind,
+            "Nf5Sym" => FkAssumptions::Nf5Sym,
+            "Nf4Ind" => FkAssumptions::Nf4Ind,
+            "Nf4Sym" => FkAssumptions::Nf4Sym,
+            "Nf3Ind" => FkAssumptions::Nf3Ind,
+            "Nf3Sym" => FkAssumptions::Nf3Sym,
+            _ => {
+                return Err(UnknownFkAssumption {
+                    variant: value.to_string(),
+                });
+            }
+        })
+    }
 }
 
 impl FkTable {
@@ -318,19 +367,8 @@ impl FkTable {
         self.grid.rewrite_lumi(&add, &del);
 
         // store the assumption so that we can check it later on
-        self.grid.set_key_value(
-            "fk_assumptions",
-            match assumptions {
-                FkAssumptions::Nf6Ind => "nf6ind",
-                FkAssumptions::Nf6Sym => "nf6sym",
-                FkAssumptions::Nf5Ind => "nf5ind",
-                FkAssumptions::Nf5Sym => "nf5sym",
-                FkAssumptions::Nf4Ind => "nf4ind",
-                FkAssumptions::Nf4Sym => "nf4sym",
-                FkAssumptions::Nf3Ind => "nf3ind",
-                FkAssumptions::Nf3Sym => "nf3sym",
-            },
-        );
+        self.grid
+            .set_key_value("fk_assumptions", &assumptions.to_string());
         self.grid.optimize();
     }
 }

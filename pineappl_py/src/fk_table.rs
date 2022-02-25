@@ -31,19 +31,7 @@ impl PyFkAssumptions {
     #[new]
     pub fn new(assumption: &str) -> Self {
         PyFkAssumptions {
-            fk_assumptions: match assumption {
-                "nf6ind" => FkAssumptions::Nf6Ind,
-                "nf6sym" => FkAssumptions::Nf6Sym,
-                "nf5ind" => FkAssumptions::Nf5Ind,
-                "nf5sym" => FkAssumptions::Nf5Sym,
-                "nf4ind" => FkAssumptions::Nf4Ind,
-                "nf4sym" => FkAssumptions::Nf4Sym,
-                "nf3ind" => FkAssumptions::Nf3Ind,
-                "nf3sym" => FkAssumptions::Nf3Sym,
-                unknown => {
-                    unreachable!(format!("{} is not a known FkAssumptions variant", unknown))
-                }
-            },
+            fk_assumptions: FkAssumptions::try_from(assumption).unwrap(),
         }
     }
 }
