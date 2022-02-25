@@ -23,7 +23,29 @@ pub struct PyFkTable {
 #[pyclass]
 #[repr(transparent)]
 pub struct PyFkAssumptions {
-    pub(crate) assumptions: FkAssumptions,
+    pub(crate) fk_assumptions: FkAssumptions,
+}
+
+#[pymethods]
+impl PyFkAssumptions {
+    #[new]
+    pub fn new(assumption: &str) -> Self {
+        PyFkAssumptions {
+            fk_assumptions: match assumption {
+                "nf6ind" => FkAssumptions::Nf6Ind,
+                "nf6sym" => FkAssumptions::Nf6Sym,
+                "nf5ind" => FkAssumptions::Nf5Ind,
+                "nf5sym" => FkAssumptions::Nf5Sym,
+                "nf4ind" => FkAssumptions::Nf4Ind,
+                "nf4sym" => FkAssumptions::Nf4Sym,
+                "nf3ind" => FkAssumptions::Nf3Ind,
+                "nf3sym" => FkAssumptions::Nf3Sym,
+                unknown => {
+                    unreachable!(format!("{} is not a known FkAssumptions variant", unknown))
+                }
+            },
+        }
+    }
 }
 
 #[pymethods]
@@ -217,6 +239,6 @@ impl PyFkTable {
     ///         assumptions about the FkTable properties, declared by the user, deciding which
     ///         optimizations are possible
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
-        self.fk_table.optimize(assumptions.assumptions)
+        self.fk_table.optimize(assumptions.fk_assumptions)
     }
 }

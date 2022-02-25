@@ -1,4 +1,4 @@
-from .pineappl import PyFkTable
+from .pineappl import PyFkTable, PyFkAssumptions
 from .utils import PyWrapper
 
 
@@ -33,3 +33,18 @@ class FkTable(PyWrapper):
                 grid object
         """
         return cls(PyFkTable.read(path))
+
+
+class FkAssumptions(PyWrapper):
+    """
+    Python wrapper object to interface
+    :class:`~pineappl.pineappl.PyFkAssumptions`.
+
+    Parameters
+    ----------
+        assumption : str
+            assumption identifier
+    """
+
+    def __init__(self, assumption):
+        self._raw = PyFkAssumptions(assumption)
