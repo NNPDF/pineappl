@@ -64,7 +64,7 @@ pub enum FkAssumptions {
     /// scale. PDF sets that make this assumption are NNPDF4.0 and NNPDF3.1 at fitting scale.
     Nf4Sym,
     /// Like [`Nf4Ind`], but the PDFs of charm and anti-charm quarks are zero at FK table scale.
-    /// PDF set that make this assumption are MSHT20 and NNPDF3.0 at fitting scale.
+    /// PDF sets that make this assumption are MSHT20 and NNPDF3.0 at fitting scale.
     Nf3Ind,
     /// Like [`Nf3Ind`], but the PDFs of strange and anti-strange are the same at FK table scale.
     /// A PDF set that makes this assumption is CT18 at fitting scale.
@@ -240,62 +240,28 @@ impl FkTable {
                     // nothing to do here
                 }
                 FkAssumptions::Nf6Sym => {
-                    // add anti-top to top
                     add.push((-6, 6));
                 }
                 FkAssumptions::Nf5Ind => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
+                    del.extend_from_slice(&[-6, 6]);
                 }
                 FkAssumptions::Nf5Sym => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
-                    // add anti-bottom to bottom
                     add.push((-5, 5));
+                    del.extend_from_slice(&[-6, 6]);
                 }
                 FkAssumptions::Nf4Ind => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
-                    // del anti-bottom and bottom
-                    del.push(-5);
-                    del.push(5);
+                    del.extend_from_slice(&[-6, 6, -5, 5]);
                 }
                 FkAssumptions::Nf4Sym => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
-                    // del anti-bottom and bottom
-                    del.push(-5);
-                    del.push(5);
-                    // add anti-charm to charm
                     add.push((-4, 4));
+                    del.extend_from_slice(&[-6, 6, -5, 5]);
                 }
                 FkAssumptions::Nf3Ind => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
-                    // del anti-bottom and bottom
-                    del.push(-5);
-                    del.push(5);
-                    // del anti-charm and charm
-                    del.push(-4);
-                    del.push(4);
+                    del.extend_from_slice(&[-6, 6, -5, 5, -4, 4]);
                 }
                 FkAssumptions::Nf3Sym => {
-                    // del anti-top and top
-                    del.push(-6);
-                    del.push(6);
-                    // del anti-bottom and bottom
-                    del.push(-5);
-                    del.push(5);
-                    // del anti-charm and charm
-                    del.push(-4);
-                    del.push(4);
-                    // add anti-strange to strange
                     add.push((-3, 3));
+                    del.extend_from_slice(&[-6, 6, -5, 5, -4, 4]);
                 }
             }
         } else {
@@ -304,74 +270,46 @@ impl FkTable {
                     // nothing to do here
                 }
                 FkAssumptions::Nf6Sym => {
-                    // add V35 to V
                     add.push((235, 200));
                 }
                 FkAssumptions::Nf5Ind => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
+                    add.extend_from_slice(&[(235, 200), (135, 100)]);
                 }
                 FkAssumptions::Nf5Sym => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
-                    // add V24 to V
-                    add.push((224, 200));
+                    add.extend_from_slice(&[(235, 200), (135, 100), (224, 200)]);
                 }
                 FkAssumptions::Nf4Ind => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
-                    // add V24 to V
-                    add.push((224, 200));
-                    // add T24 to S
-                    add.push((124, 100));
+                    add.extend_from_slice(&[(235, 200), (135, 100), (224, 200), (124, 100)]);
                 }
                 FkAssumptions::Nf4Sym => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
-                    // add V24 to V
-                    add.push((224, 200));
-                    // add T24 to S
-                    add.push((124, 100));
-                    // add V14 to V
-                    add.push((214, 200));
+                    add.extend_from_slice(&[
+                        (235, 200),
+                        (135, 100),
+                        (224, 200),
+                        (124, 100),
+                        (215, 200),
+                    ]);
                 }
                 FkAssumptions::Nf3Ind => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
-                    // add V24 to V
-                    add.push((224, 200));
-                    // add T24 to S
-                    add.push((124, 100));
-                    // add V14 to V
-                    add.push((214, 200));
-                    // add T14 to S
-                    add.push((114, 100));
+                    add.extend_from_slice(&[
+                        (235, 200),
+                        (135, 100),
+                        (224, 200),
+                        (124, 100),
+                        (215, 200),
+                        (115, 100),
+                    ]);
                 }
                 FkAssumptions::Nf3Sym => {
-                    // add V35 to V
-                    add.push((235, 200));
-                    // add T35 to S
-                    add.push((135, 100));
-                    // add V24 to V
-                    add.push((224, 200));
-                    // add T24 to S
-                    add.push((124, 100));
-                    // add V14 to V
-                    add.push((214, 200));
-                    // add T14 to S
-                    add.push((114, 100));
-                    // add V8 to V
-                    add.push((208, 200));
+                    add.extend_from_slice(&[
+                        (235, 200),
+                        (135, 100),
+                        (224, 200),
+                        (124, 100),
+                        (215, 200),
+                        (115, 100),
+                        (208, 200),
+                    ]);
                 }
             }
         }
