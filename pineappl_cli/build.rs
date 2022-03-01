@@ -46,8 +46,7 @@ fn main() {
     println!("cargo:rustc-link-search={}", fnlo_lib_path.trim());
 
     // TODO: why do I have to link statically?
-    println!("cargo:rustc-link-lib=static=fastnlotoolkit");
-    println!("cargo:rustc-link-lib=z");
+    println!("cargo:rustc-link-lib=fastnlotoolkit");
 
     // bridging code
     bridge.file("src/import/fastnlo.cpp").compile("cxx-bridge");
