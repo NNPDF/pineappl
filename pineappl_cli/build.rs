@@ -53,7 +53,6 @@ fn main() {
     bridge.file("src/import/fastnlo.cpp").compile("cxx-bridge");
 
     println!("cargo:rerun-if-changed=src/import.rs");
-    println!("cargo:rerun-if-changed=src/import/import-ffirs");
     println!("cargo:rerun-if-changed=src/import/fastnlo.cpp");
     println!("cargo:rerun-if-changed=src/import/fastnlo.hpp");
 }
