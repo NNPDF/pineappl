@@ -32,7 +32,7 @@ fn main() {
     )
     .unwrap();
 
-    bridge.include(fnlo_include_path);
+    bridge.include(fnlo_include_path.trim());
 
     let fnlo_lib_path = String::from_utf8(
         Command::new("fnlo-tk-config")
@@ -43,7 +43,7 @@ fn main() {
     )
     .unwrap();
 
-    println!("cargo:rustc-link-search={}", fnlo_lib_path);
+    println!("cargo:rustc-link-search={}", fnlo_lib_path.trim());
 
     // TODO: why do I have to link statically?
     println!("cargo:rustc-link-lib=static=fastnlotoolkit");
