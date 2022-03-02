@@ -1,0 +1,36 @@
+name: Python
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: messense/maturin-action@v1
+        with:
+          maturin-version: latest
+          command: develop
+      - name: Test
+        run: |
+          pip install pytest
+          cd pineappl_py
+          pytest tests
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          files: pineappl_py/coverage.xml

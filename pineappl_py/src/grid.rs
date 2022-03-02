@@ -438,7 +438,7 @@ impl PyGrid {
                 eko_info,
                 &order_mask.to_vec().unwrap(),
             )
-            .unwrap();
+            .expect("Nothing returned from evolution.");
         PyFkTable {
             fk_table: evolved_grid,
         }
