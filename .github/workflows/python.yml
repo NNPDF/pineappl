@@ -23,9 +23,10 @@ jobs:
       - uses: messense/maturin-action@v1
         with:
           maturin-version: latest
-          command: develop
+          command: build
       - name: Test
         run: |
+          pip install target/wheels/*.whl
           pip install pytest
           cd pineappl_py
           pytest tests
