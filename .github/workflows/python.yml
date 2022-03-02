@@ -27,9 +27,9 @@ jobs:
           args: --manifest-path pineappl_py/Cargo.toml
       - name: Test
         run: |
-          pip install target/wheels/*.whl
           pip install pytest
           cd pineappl_py
+          pip install target/wheels/*.whl
           pytest tests
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
