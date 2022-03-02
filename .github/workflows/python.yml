@@ -24,6 +24,7 @@ jobs:
         with:
           maturin-version: latest
           command: build
+          args: --manifest-path pineappl_py/Cargo.toml
       - name: Test
         run: |
           pip install target/wheels/*.whl
