@@ -23,11 +23,13 @@ jobs:
       - name: Test
         run: |
           cd pineappl_py
+          pip install virtualenv
+          virtualenv env
+          . env/bin/activate
           pip install -r dev.requirements.txt
-          maturin build -i python
+          maturin develop -i python
           pip install target/wheels/*.whl
           pytest
-          cat coverage.xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
         with:
