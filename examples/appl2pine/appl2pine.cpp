@@ -204,8 +204,13 @@ void reconstruct_luminosity_function(appl::grid& grid, int order, pineappl_lumi*
     }
 }
 
-std::tuple<pineappl_grid*, bool> convert_grid(appl::grid& grid, bool reweight, uint32_t alpha)
-{
+std::tuple<pineappl_grid*, bool> convert_grid(
+    appl::grid& grid,
+    bool reweight,
+    uint32_t alpha,
+    int initial_state_1,
+    int initial_state_2
+) {
     std::vector<double> bin_limits(grid.Nobs_internal() + 1);
     for (std::size_t i = 0; i != bin_limits.size(); ++i)
     {
@@ -437,7 +442,6 @@ std::tuple<pineappl_grid*, bool> convert_grid(appl::grid& grid, bool reweight, u
     }
 
     pineappl_grid_scale_by_order(grids.at(0), alphas_factor, 1.0, 1.0, 1.0, global);
-    pineappl_grid_optimize(grids.at(0));
 
     LHAPDF::setVerbosity(0);
     pdf.reset(LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
@@ -491,6 +495,16 @@ std::tuple<pineappl_grid*, bool> convert_grid(appl::grid& grid, bool reweight, u
         return std::make_tuple(grids.at(0), false);
     }
 
+    // set the true initial states after the check, because otherwise we'd have to change the PDFs
+    // above
+    auto const in1 = std::to_string(initial_state_1);
+    auto const in2 = std::to_string(initial_state_2);
+
+    pineappl_grid_set_key_value(grids.at(0), "initial_state_1", in1.c_str());
+    pineappl_grid_set_key_value(grids.at(0), "initial_state_2", in2.c_str());
+
+    pineappl_grid_optimize(grids.at(0));
+
     return std::make_tuple(grids.at(0), true);
 }
 
@@ -504,7 +518,11 @@ int main(int argc, char* argv[])
     std::string in(argv[1]);
     std::string out(argv[2]);
 
-    long alpha = (argc == 4) ? std::stoul(argv[3]) : 0;
+    long alpha = (argc >= 4) ? std::stoul(argv[3]) : 0;
+
+    // by default we assume there to be protons in the initial state
+    int initial_state_1 = (argc >= 5) ? std::stoi(argv[4]) : 2212;
+    int initial_state_2 = (argc >= 6) ? std::stoi(argv[5]) : 2212;
 
     appl::grid grid(in);
 
@@ -513,7 +531,7 @@ int main(int argc, char* argv[])
     pineappl_grid* pgrid = nullptr;
     pineappl_grid* pgrid_reweight_false;
     bool success;
-    std::tie(pgrid_reweight_false, success) = convert_grid(grid, true, alpha);
+    std::tie(pgrid_reweight_false, success) = convert_grid(grid, true, alpha, initial_state_1, initial_state_2);
 
     if (success)
     {
@@ -524,7 +542,7 @@ int main(int argc, char* argv[])
         std::cout << ">>> `reweight = true` didn't work. Trying `reweight = false`.\n";
 
         pineappl_grid* pgrid_reweight_true;
-        std::tie(pgrid_reweight_true, success) = convert_grid(grid, false, alpha);
+        std::tie(pgrid_reweight_true, success) = convert_grid(grid, false, alpha, initial_state_1, initial_state_2);
 
         if (!success)
         {
