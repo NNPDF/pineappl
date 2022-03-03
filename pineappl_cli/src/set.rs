@@ -18,6 +18,7 @@ pub struct Opts {
     delete: Vec<String>,
     /// Sets an internal key-value pair.
     #[clap(
+        allow_hyphen_values = true,
         long,
         multiple_occurrences = true,
         number_of_values = 2,
