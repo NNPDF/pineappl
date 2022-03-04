@@ -976,6 +976,11 @@ impl Grid {
         &self.orders
     }
 
+    /// Set the luminosity function for this grid.
+    pub fn set_lumis(&mut self, lumis: Vec<LumiEntry>) {
+        self.lumi = lumis;
+    }
+
     /// Returns the subgrid with the specified indices `order`, `bin`, and `lumi`.
     #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &SubgridEnum {

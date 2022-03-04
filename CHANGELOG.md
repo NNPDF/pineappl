@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bins together
 - added the `--fk-table` option to the CLI subcommand `optimize`, which allows
   the optmization of FK tables based on assumptions of heavy-flavor PDFs
+- added new subcommand `ops` which collects various modifying operations on
+  grids. The switches `--cc1` and `--cc2` charge conjugate the first and second
+  PDF, respectively, and charge conjugates the luminosity function
+  correspondingly such that the convolutions are unchanged
 
 ### Changed
 
