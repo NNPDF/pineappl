@@ -524,6 +524,12 @@ int main(int argc, char* argv[])
     int initial_state_1 = (argc >= 5) ? std::stoi(argv[4]) : 2212;
     int initial_state_2 = (argc >= 6) ? std::stoi(argv[5]) : 2212;
 
+    std::cout << ">>> input = " << in << '\n';
+    std::cout << ">>> output = " << out << '\n';
+    std::cout << ">>> alpha = " << alpha << '\n';
+    std::cout << ">>> initial_state_1 = " << initial_state_1 << '\n';
+    std::cout << ">>> initial_state_2 = " << initial_state_2 << '\n';
+
     appl::grid grid(in);
 
     std::cout << ">>> Trying `reweight = true`. This may fail.\n";
