@@ -1,6 +1,7 @@
 //! Module for everything related to luminosity functions.
 
 use super::grid::Grid;
+use super::pids;
 use super::subgrid::{Mu2, Subgrid};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -372,7 +373,11 @@ impl<'a> LumiCache<'a> {
         } else {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = self.cc1 * pdg_id;
+            let pid = if self.cc1 == 1 {
+                pdg_id
+            } else {
+                pids::charge_conjugate_pdg_pid(pdg_id)
+            };
             let (xfx, xfx_cache) = match &mut self.pdfs {
                 Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
                 Pdfs::Two {
@@ -394,7 +399,11 @@ impl<'a> LumiCache<'a> {
         } else {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = self.cc2 * pdg_id;
+            let pid = if self.cc2 == 1 {
+                pdg_id
+            } else {
+                pids::charge_conjugate_pdg_pid(pdg_id)
+            };
             let (xfx, xfx_cache) = match &mut self.pdfs {
                 Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
                 Pdfs::Two {
