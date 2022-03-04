@@ -510,7 +510,7 @@ std::tuple<pineappl_grid*, bool> convert_grid(
 
 int main(int argc, char* argv[])
 {
-    if (argc < 3 && argc > 4)
+    if ((argc < 3) || (argc > 7))
     {
         return EXIT_FAILURE;
     }
