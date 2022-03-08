@@ -1,0 +1,17 @@
+[package]
+name = "pineappl_fastnlo"
+version = "0.1.0"
+authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
+edition = "2018"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/N3PDF/pineappl"
+readme = "README.md"
+keywords = ["high-energy-physics", "physics"]
+categories = ["science"]
+description = "PineAPPL's interface to fastNLO"
+
+[dependencies]
+cxx = { version = "1.0.65" }
+
+[build-dependencies]
+cxx-build = { version = "1.0.65" }

@@ -3,6 +3,7 @@ members = [
     "pineappl",
     "pineappl_capi",
     "pineappl_cli",
+    "pineappl_fastnlo",
 ]
 exclude = ["pineappl_py"]
 
