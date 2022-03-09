@@ -228,7 +228,7 @@ impl PyFkTable {
             .into_pyarray(py)
     }
 
-    /// Optimize FK table storae
+    /// Optimize FK table storage
     ///
     /// In order to perform any relevant optimization, assumptions are needed, and they are passed
     /// as parameters to the function.

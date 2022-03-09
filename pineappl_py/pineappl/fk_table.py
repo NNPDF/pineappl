@@ -34,6 +34,22 @@ class FkTable(PyWrapper):
         """
         return cls(PyFkTable.read(path))
 
+    def optimize(self, assumptions = "Nf6Ind"):
+        """Optimize FK table storage.
+
+        In order to perform any relevant optimization, assumptions are needed, and they are passed
+        as parameters to the function.
+        
+        Parameters
+        ----------
+        assumptions : FkAssumptions or str
+            assumptions about the FkTable properties, declared by the user, deciding which
+            optimizations are possible
+        """
+        if not isinstance(assumptions,FkAssumptions):
+            assumptions = FkAssumptions(assumptions)
+        return self._raw.optimize(assumptions._raw)
+
 
 class FkAssumptions(PyWrapper):
     """
