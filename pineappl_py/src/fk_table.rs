@@ -131,6 +131,18 @@ impl PyFkTable {
         self.fk_table.key_values().unwrap().clone()
     }
 
+    /// Set a metadata key-value pair in the FK table.
+    ///
+    /// Parameters
+    /// ----------
+    ///     key : str
+    ///         key
+    ///     value : str
+    ///         value
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.fk_table.set_key_value(key, value);
+    }
+
     /// Get luminsosity functions.
     ///
     /// Returns

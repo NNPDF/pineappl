@@ -272,6 +272,11 @@ impl FkTable {
             .convolute(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
     }
 
+    /// Set a metadata key-value pair
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.grid.set_key_value(key, value);
+    }
+
     /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
     /// scale.
     pub fn optimize(&mut self, assumptions: FkAssumptions) {
