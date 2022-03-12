@@ -189,7 +189,7 @@ mod fastnlo {
 
                             if value != 0.0 {
                                 non_zero_subgrid = true;
-                                array[[mu2_slice, ix1, ix2]] =
+                                array[[mu2_slice, ix2, ix1]] =
                                     value / factor * x1_values[ix1] * x2_values[ix2];
                             }
 
