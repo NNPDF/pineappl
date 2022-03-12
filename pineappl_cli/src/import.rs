@@ -606,12 +606,15 @@ pub struct Opts {
     /// LHAPDF id or name of the PDF set to check the converted grid with.
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,
+    /// LO coupling power in alpha.
+    #[clap(default_value_t = 0)]
+    alpha: u32,
 }
 
 impl Subcommand for Opts {
     #[cfg(feature = "fastnlo")]
     fn run(&self) -> Result<()> {
-        let grid = fastnlo::convert_fastnlo_table(&self.input, &self.pdfset)?;
+        let grid = fastnlo::convert_fastnlo_table(&self.input, &self.pdfset, self.alpha)?;
 
         helpers::write_grid(&self.output, &grid)
     }
