@@ -481,9 +481,7 @@ mod fastnlo {
         .filter(|&id| id >= 0)
         .collect();
 
-        let normalizations = ffi::GetBinSize(file_as_table);
-        let bins = normalizations.len();
-
+        let bins: usize = file_as_table.GetNObsBin().try_into().unwrap();
         let mut grids = Vec::new();
 
         for id in ids {
@@ -534,6 +532,11 @@ mod fastnlo {
 
         let dimensions: usize = file_as_table.GetNumDiffBin().try_into().unwrap();
         let mut limits = Vec::new();
+        let normalizations = if file_as_table.IsNorm() {
+            ffi::GetBinSize(file_as_table)
+        } else {
+            vec![1.0; bins]
+        };
         limits.reserve(2 * dimensions * bins);
 
         for i in 0..bins {

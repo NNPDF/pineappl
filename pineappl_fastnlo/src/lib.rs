@@ -133,7 +133,9 @@ pub mod ffi {
 
         fn GetCoeffTable(&self, _: i32) -> *mut fastNLOCoeffBase;
         fn GetIpublunits(&self) -> i32;
+        fn GetNObsBin(&self) -> u32;
         fn GetNumDiffBin(&self) -> u32;
+        fn IsNorm(&self) -> bool;
     }
 
     unsafe extern "C++" {
