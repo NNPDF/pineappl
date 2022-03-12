@@ -18,6 +18,7 @@ mod fastnlo {
         fastNLOPDFLinearCombinations, ESMCalculation, ESMOrder, EScaleFunctionalForm,
     };
     use std::convert::{TryFrom, TryInto};
+    use std::f64::consts::TAU;
     use std::path::Path;
     use std::ptr;
 
@@ -81,15 +82,11 @@ mod fastnlo {
 
                     assert!(lumi.len() == nsubproc);
 
-                    for i in 0..lumi.len() {
-                        if lumi[i] == 0.0 {
-                            continue;
-                        }
-
+                    for (i, l) in lumi.iter().copied().enumerate().filter(|(_, l)| *l != 0.0) {
                         let ap = pid_to_pdg_id(i32::try_from(a).unwrap() - 6);
                         let bp = pid_to_pdg_id(i32::try_from(b).unwrap() - 6);
 
-                        entries[i].push((ap, bp, lumi[i]));
+                        entries[i].push((ap, bp, l));
                     }
 
                     xfx2[b] = 0.0;
@@ -468,33 +465,21 @@ mod fastnlo {
         todo!()
     }
 
-    pub fn convert_fastnlo_table(input: &Path, pdfset: &str) -> Result<Grid> {
-        // TODO: read this from an argument
-        let alpha = 0;
-
+    pub fn convert_fastnlo_table(input: &Path, pdfset: &str, alpha: u32) -> Result<Grid> {
         let mut file =
             ffi::make_fastnlo_lhapdf_with_name_file_set(input.to_str().unwrap(), pdfset, 0);
         let file_as_reader = ffi::downcast_lhapdf_to_reader(file.as_ref().unwrap());
         let file_as_table = ffi::downcast_lhapdf_to_table(file.as_ref().unwrap());
 
-        let id_lo = file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kLeading);
-        let id_nlo = file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToLeading);
-        let id_nnlo =
-            file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToNextToLeading);
-
-        let mut ids = Vec::new();
-
-        if id_lo >= 0 {
-            ids.push(id_lo);
-        }
-
-        if id_nlo >= 0 {
-            ids.push(id_nlo);
-        }
-
-        if id_nnlo >= 0 {
-            ids.push(id_nnlo);
-        }
+        let ids: Vec<_> = [
+            file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kLeading),
+            file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToLeading),
+            file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToNextToLeading),
+        ]
+        .iter()
+        .copied()
+        .filter(|&id| id >= 0)
+        .collect();
 
         let normalizations = ffi::GetBinSize(file_as_table);
         let bins = normalizations.len();
@@ -544,7 +529,7 @@ mod fastnlo {
             result.merge(grid)?;
         }
 
-        result.scale_by_order(0.5 / f64::acos(-1.0), 1.0, 1.0, 1.0, 1.0);
+        result.scale_by_order(1.0 / TAU, 1.0, 1.0, 1.0, 1.0);
         result.optimize();
 
         let dimensions: usize = file_as_table.GetNumDiffBin().try_into().unwrap();
@@ -583,6 +568,7 @@ mod fastnlo {
 
             // catches the case where both results are zero
             if one == two {
+                println!(">>> Success!");
                 continue;
             }
 
