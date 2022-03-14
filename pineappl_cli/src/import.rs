@@ -23,14 +23,10 @@ mod fastnlo {
     use std::ptr;
 
     fn pid_to_pdg_id(pid: i32) -> i32 {
-        if pid >= -6 && pid <= 6 {
-            if pid == 0 {
-                21
-            } else {
-                pid
-            }
-        } else {
-            unreachable!()
+        match pid {
+            -6..=-1 | 1..=6 => pid,
+            0 => 21,
+            _ => unimplemented!(),
         }
     }
 
@@ -121,12 +117,9 @@ mod fastnlo {
             SubgridParams::default(),
         );
 
-        let n_obs_bin = table_as_add_base.GetNObsBin();
-        let n_subproc = table_as_add_base.GetNSubproc();
-        let total_scalevars = table.GetTotalScalevars();
         let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
-        for obs in 0..n_obs_bin {
+        for obs in 0..table_as_add_base.GetNObsBin() {
             let x1_values = ffi::GetXNodes1(table_as_add_base, obs);
 
             // TODO: is this the correct assumption?
@@ -136,10 +129,10 @@ mod fastnlo {
                 ffi::GetXNodes2(table_as_add_base, obs)
             };
 
-            for subproc in 0..n_subproc {
-                let factor = table.GetNevt(obs, subproc);
+            for subproc in 0..table_as_add_base.GetNSubproc() {
+                let factor = table_as_add_base.GetNevt(obs, subproc);
 
-                for j in 0..total_scalevars {
+                for j in 0..table.GetTotalScalevars() {
                     // TODO: for the time being we only extract the central scale result
                     if table.GetScaleFactor(j) != 1.0 {
                         continue;
@@ -159,8 +152,6 @@ mod fastnlo {
 
                     // TODO: figure out what the general case is supposed to be
                     assert_eq!(j, 0);
-
-                    let mut non_zero_subgrid = false;
 
                     for mu2_slice in 0..total_scalenodes {
                         let mut ix1: usize = 0;
@@ -185,7 +176,6 @@ mod fastnlo {
                             );
 
                             if value != 0.0 {
-                                non_zero_subgrid = true;
                                 array[[mu2_slice, ix2, ix1]] =
                                     value / factor * x1_values[ix1] * x2_values[ix2];
                             }
@@ -210,7 +200,7 @@ mod fastnlo {
                         }
                     }
 
-                    if non_zero_subgrid {
+                    if !array.is_empty() {
                         grid.set_subgrid(
                             0,
                             obs.try_into().unwrap(),
