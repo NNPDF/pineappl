@@ -1,5 +1,14 @@
 #include "pineappl_fastnlo/src/fastnlo.hpp"
 
+// TODO: is this portable enough?
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#define HAVE_UNISTD_H
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -41,16 +50,51 @@ rust::Vec<double> GetXNodes2(fastNLOCoeffAddBase const& coeffs, int iObsBin)
     return std_vector_to_rust_vec(coeffs.GetXNodes2(iObsBin));
 }
 
-std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(rust::Str name, rust::Str LHAPDFfile, int PDFSet)
-{
+std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
+    rust::Str name,
+    rust::Str LHAPDFfile,
+    int PDFSet,
+    bool silence
+) {
     std::string arg0(name.begin(), name.end());
     std::string arg1(LHAPDFfile.begin(), LHAPDFfile.end());
 
-    return std::unique_ptr<fastNLOLHAPDF>(new fastNLOLHAPDF(arg0, arg1, PDFSet));
+    std::unique_ptr<fastNLOLHAPDF> result;
+
+#ifdef HAVE_UNISTD_H
+    int backup_fd;
+    FILE *dev_null;
+
+    // the constructor of `fastNLOLHAPDF` isn't completely silent even we nicely ask it to, so we
+    // have to resort to drastic measures
+    if (silence)
+    {
+        fflush(stdout);
+        backup_fd = dup(STDOUT_FILENO);
+        dev_null = fopen("/dev/null", "w");
+        dup2(fileno(dev_null), STDOUT_FILENO);
+    }
+#endif
+
+    result.reset(new fastNLOLHAPDF(arg0, arg1, PDFSet));
+
+#ifdef HAVE_UNISTD_H
+    if (silence)
+    {
+        fflush(stdout);
+        fclose(dev_null);
+        dup2(backup_fd, STDOUT_FILENO);
+        close(backup_fd);
+    }
+#endif
+
+    return result;
 }
 
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
 {
+    // if we don't unconditionally silence LHAPDF in fastNLO its header will be shown twice
+    LHAPDF::setVerbosity(0);
     return std_vector_to_rust_vec(reader.GetCrossSection(lNorm));
 }
 

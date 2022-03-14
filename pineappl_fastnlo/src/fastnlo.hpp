@@ -16,7 +16,8 @@
 std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     rust::Str name,
     rust::Str LHAPDFfile,
-    int PDFSet
+    int PDFSet,
+    bool silence
 );
 
 rust::Vec<double> CalcPDFLinearCombination(

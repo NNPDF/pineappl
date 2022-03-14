@@ -518,6 +518,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[clap(default_value = "1e-10", long)]
     accuracy: f64,
+    /// Prevents fastNLO from printing output.
+    #[clap(long = "silence-fastnlo")]
+    silence_fastnlo: bool,
 }
 
 impl Subcommand for Opts {
@@ -527,10 +530,15 @@ impl Subcommand for Opts {
         use pineappl_fastnlo::ffi::{self, Verbosity};
         use prettytable::{cell, row};
 
+        if self.silence_fastnlo {
+            ffi::SetGlobalVerbosity(Verbosity::SILENT);
+        }
+
         let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
             self.input.to_str().unwrap(),
             &self.pdfset,
             0,
+            self.silence_fastnlo,
         );
         let grid = fastnlo::convert_fastnlo_table(&file, self.alpha)?;
 
@@ -610,6 +618,7 @@ OPTIONS:
                                  comparison fails [default: 1e-10]
         --alpha <ALPHA>          LO coupling power in alpha [default: 0]
     -h, --help                   Print help information
+        --silence-fastnlo        Prevents fastNLO from printing output
 ";
 
     #[test]
