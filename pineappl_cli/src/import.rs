@@ -553,7 +553,7 @@ pub struct Opts {
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,
     /// LO coupling power in alpha.
-    #[clap(default_value_t = 0)]
+    #[clap(default_value_t = 0, long)]
     alpha: u32,
 }
 
@@ -581,16 +581,16 @@ mod tests {
 Converts fastNLO tables to PineAPPL grids
 
 USAGE:
-    pineappl import <INPUT> <OUTPUT> <PDFSET> [ALPHA]
+    pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
 
 ARGS:
     <INPUT>     Path to the input grid
     <OUTPUT>    Path to the converted grid
     <PDFSET>    LHAPDF id or name of the PDF set to check the converted grid with
-    <ALPHA>     LO coupling power in alpha [default: 0]
 
 OPTIONS:
-    -h, --help    Print help information
+        --alpha <ALPHA>    LO coupling power in alpha [default: 0]
+    -h, --help             Print help information
 ";
 
     #[test]
