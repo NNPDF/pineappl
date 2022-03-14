@@ -68,6 +68,7 @@ pub mod ffi {
 
         type fastNLOCoeffAddBase;
 
+        fn GetNevt(&self, _: i32, _: i32) -> f64;
         fn GetNObsBin(&self) -> i32;
         fn GetNPDF(&self) -> i32;
         fn GetNSubproc(&self) -> i32;
@@ -80,7 +81,6 @@ pub mod ffi {
         type fastNLOCoeffAddFix;
 
         fn GetNPDFDim(&self) -> i32;
-        fn GetNevt(&self, _: i32, _: i32) -> f64;
         fn GetNxmax(&self, _: i32) -> i32;
         fn GetNxtot2(&self, _: i32) -> i32;
         fn GetScaleFactor(&self, _: i32) -> f64;
@@ -146,8 +146,6 @@ pub mod ffi {
         fn GetIXsectUnits(&self) -> i32;
         fn GetNScaleDep(&self) -> i32;
         fn GetPDFPDG(&self, _: i32) -> i32;
-
-        // TODO: GetSigmaTildes
     }
 
     unsafe extern "C++" {
@@ -163,8 +161,19 @@ pub mod ffi {
         fn GetXNodes1(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
         fn GetXNodes2(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
         fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
+        fn GetSigmaTilde(
+            _: &fastNLOCoeffAddFlex,
+            _: usize,
+            _: usize,
+            _: usize,
+            _: usize,
+            _: usize,
+            _: i32,
+        ) -> f64;
+        fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
 
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
+        fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
         fn downcast_lhapdf_to_reader(_: &fastNLOLHAPDF) -> &fastNLOReader;
         fn downcast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
         fn downcast_lhapdf_to_table(_: &fastNLOLHAPDF) -> &fastNLOTable;

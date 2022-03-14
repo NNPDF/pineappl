@@ -6,6 +6,7 @@ use std::path::PathBuf;
 #[cfg(feature = "fastnlo")]
 mod fastnlo {
     use super::*;
+    use itertools::Itertools;
     use lhapdf::Pdf;
     use pineappl::bin::BinRemapper;
     use pineappl::grid::{Grid, Order};
@@ -222,237 +223,189 @@ mod fastnlo {
     }
 
     fn convert_coeff_add_flex(
-        _table: &fastNLOCoeffAddFlex,
-        _comb: &fastNLOPDFLinearCombinations,
-        _mur_ff: EScaleFunctionalForm,
-        _muf_ff: EScaleFunctionalForm,
-        _bins: usize,
-        _alpha: u32,
-        _ipub_units: i32,
+        table: &fastNLOCoeffAddFlex,
+        comb: &fastNLOPDFLinearCombinations,
+        mur_ff: EScaleFunctionalForm,
+        muf_ff: EScaleFunctionalForm,
+        bins: usize,
+        alpha: u32,
+        ipub_units: i32,
     ) -> Grid {
-        //std::vector<uint32_t> order_params = { static_cast <uint32_t> (table->GetNpow()), alpha, 0, 0 };
-        //
-        //auto* lumi = pineappl_lumi_new();
-        //create_lumi(table, comb, lumi);
-        //
-        //std::vector<double> bin_limits(bins + 1);
-        //std::iota(bin_limits.begin(), bin_limits.end(), 0.0);
-        //auto* key_vals = pineappl_keyval_new();
-        //
-        //// flexible grids always have a hadron in initial state 1 ...
-        //pineappl_keyval_set_string(key_vals, "initial_state_1",
-        //    std::to_string(table->GetPDFPDG(0)).c_str());
-        //// and something else at 2
-        //pineappl_keyval_set_string(key_vals, "initial_state_2", "11");
-        //
-        //auto* pgrid = pineappl_grid_new(lumi, 1, order_params.data(), bins, bin_limits.data(),
-        //    key_vals);
-        //pineappl_keyval_delete(key_vals);
-        //pineappl_lumi_delete(lumi);
-        //
-        //std::size_t n_obs_bin = table->GetNObsBin();
-        //std::size_t n_subproc = table->GetNSubproc();
-        //
-        //auto const& sigma_tildes = table->GetSigmaTildes();
-        //
-        //auto const rescale = std::pow(0.1, table->GetIXsectUnits() - ipub_units);
-        //
-        //for (std::size_t obs = 0; obs != n_obs_bin; ++obs)
-        //{
-        //    auto const& scale_nodes1 = table->GetScaleNodes1(obs);
-        //    auto const& scale_nodes2 = table->GetScaleNodes2(obs);
-        //    auto const& x1_values = table->GetXNodes1(obs);
-        //
-        //    std::vector<double> mur2_values;
-        //
-        //    switch (mur_ff)
-        //    {
-        //    case fastNLO::kScale1:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (std::size_t i = 0; i != scale_nodes2.size(); ++i)
-        //            {
-        //                mur2_values.push_back(s1 * s1);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kScale2:
-        //        for (std::size_t i = 0; i != scale_nodes1.size(); ++i)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                mur2_values.push_back(s2 * s2);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kQuadraticSum:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                mur2_values.push_back(s1 * s1 + s2 * s2);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kQuadraticMean:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                mur2_values.push_back(0.5 * (s1 * s1 + s2 * s2));
-        //            }
-        //        }
-        //        break;
-        //
-        //    default:
-        //        // TODO: NYI
-        //        assert( false );
-        //    }
-        //
-        //    std::vector<double> muf2_values;
-        //
-        //    switch (muf_ff)
-        //    {
-        //    case fastNLO::kScale1:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (std::size_t i = 0; i != scale_nodes2.size(); ++i)
-        //            {
-        //                muf2_values.push_back(s1 * s1);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kScale2:
-        //        for (std::size_t i = 0; i != scale_nodes1.size(); ++i)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                muf2_values.push_back(s2 * s2);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kQuadraticSum:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                muf2_values.push_back(s1 * s1 + s2 * s2);
-        //            }
-        //        }
-        //        break;
-        //
-        //    case fastNLO::kQuadraticMean:
-        //        for (auto const s1 : scale_nodes1)
-        //        {
-        //            for (auto const s2 : scale_nodes2)
-        //            {
-        //                muf2_values.push_back(0.5 * (s1 * s1 + s2 * s2));
-        //            }
-        //        }
-        //        break;
-        //
-        //    default:
-        //        // TODO: NYI
-        //        assert( false );
-        //    }
-        //
-        //    std::vector<double> mu2_values;
-        //
-        //    for (std::size_t i = 0; i != scale_nodes1.size() * scale_nodes2.size(); ++i)
-        //    {
-        //        mu2_values.push_back(mur2_values.at(i));
-        //        mu2_values.push_back(muf2_values.at(i));
-        //    }
-        //
-        //    std::vector<double> x2_values{1.0};
-        //
-        //    for (std::size_t subproc = 0; subproc != n_subproc; ++subproc)
-        //    {
-        //        auto* subgrid = pineappl_subgrid_new2(mu2_values.size() / 2, mu2_values.data(),
-        //            x1_values.size(), x1_values.data(), x2_values.size(), x2_values.data());
-        //
-        //        auto const factor = rescale / table->GetNevt(obs, subproc);
-        //        bool non_zero_subgrid = false;
-        //
-        //        std::size_t mu2_slice = 0;
-        //
-        //        for (std::size_t is1 = 0; is1 != scale_nodes1.size(); ++is1)
-        //        {
-        //            for (std::size_t is2 = 0; is2 != scale_nodes2.size(); ++is2)
-        //            {
-        //                std::vector<double> slice(x1_values.size());
-        //                bool non_zero = false;
-        //                auto const logmur2 = std::log(mu2_values.at(2 * mu2_slice + 0));
-        //                auto const logmuf2 = std::log(mu2_values.at(2 * mu2_slice + 1));
-        //
-        //                // flexible scale grids only allow one initial-state hadron
-        //                for (std::size_t ix = 0; ix != sigma_tildes.at(0)->at(obs).size(); ++ix)
-        //                {
-        //                    double value = sigma_tildes.at(0)->at(obs).at(ix).at(is1).at(is2)
-        //                        .at(subproc);
-        //
-        //                    if (table->GetNScaleDep() >= 5)
-        //                    {
-        //                        // mur
-        //                        value += logmur2 *
-        //                            sigma_tildes.at(1)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-        //                        // muf
-        //                        value += logmuf2 *
-        //                            sigma_tildes.at(2)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-        //
-        //                        if (table->GetNScaleDep() >= 6)
-        //                        {
-        //                            // mur mur
-        //                            value += logmur2 * logmur2 *
-        //                                sigma_tildes.at(3)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-        //                        }
-        //
-        //                        if (table->GetNScaleDep() >= 7)
-        //                        {
-        //                            // muf muf
-        //                            value += logmuf2 * logmuf2 *
-        //                                sigma_tildes.at(4)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-        //                            // mur muf
-        //                            value += logmur2 * logmuf2 *
-        //                                sigma_tildes.at(5)->at(obs).at(ix).at(is1).at(is2).at(subproc);
-        //                        }
-        //                    }
-        //
-        //                    if (value != 0.0)
-        //                    {
-        //                        non_zero = true;
-        //                        slice.at(ix) = value * factor * x1_values.at(ix);
-        //                    }
-        //                }
-        //
-        //                if (non_zero)
-        //                {
-        //                    non_zero_subgrid = true;
-        //                    pineappl_subgrid_import_mu2_slice(subgrid, mu2_slice, slice.data());
-        //                }
-        //
-        //                ++mu2_slice;
-        //            }
-        //        }
-        //
-        //        if (non_zero_subgrid)
-        //        {
-        //            pineappl_grid_replace_and_delete(pgrid, subgrid, 0, obs, subproc);
-        //        }
-        //        else
-        //        {
-        //            pineappl_subgrid_delete(subgrid);
-        //        }
-        //    }
-        //}
-        //
-        //return pgrid;
-        todo!()
+        let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
+
+        let mut grid = Grid::new(
+            create_lumi(table_as_add_base, comb),
+            vec![Order {
+                alphas: table_as_add_base.GetNpow().try_into().unwrap(),
+                alpha,
+                logxir: 0,
+                logxif: 0,
+            }],
+            (0..=bins).map(|limit| limit as f64).collect(),
+            SubgridParams::default(),
+        );
+
+        grid.set_key_value("initial_state_1", &table.GetPDFPDG(0).to_string());
+        grid.set_key_value("initial_state_2", "11");
+
+        let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
+
+        for obs in 0..bins {
+            let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
+            let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
+            let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
+
+            let mut mur2_values = Vec::new();
+
+            match mur_ff {
+                EScaleFunctionalForm::kScale1 => {
+                    for s1 in &scale_nodes1 {
+                        for _ in 0..scale_nodes2.len() {
+                            mur2_values.push(s1 * s1);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kScale2 => {
+                    for _ in 0..scale_nodes1.len() {
+                        for s2 in &scale_nodes2 {
+                            mur2_values.push(s2 * s2);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kQuadraticSum => {
+                    for s1 in &scale_nodes1 {
+                        for s2 in &scale_nodes2 {
+                            mur2_values.push(s1 * s1 + s2 * s2);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kQuadraticMean => {
+                    for s1 in &scale_nodes1 {
+                        for s2 in &scale_nodes2 {
+                            mur2_values.push(0.5 * (s1 * s1 + s2 * s2));
+                        }
+                    }
+                }
+                _ => {
+                    // TODO: NYI
+                    unimplemented!()
+                }
+            }
+
+            let mut muf2_values = Vec::new();
+
+            match muf_ff {
+                EScaleFunctionalForm::kScale1 => {
+                    for s1 in &scale_nodes1 {
+                        for _ in 0..scale_nodes2.len() {
+                            muf2_values.push(s1 * s1);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kScale2 => {
+                    for _ in 0..scale_nodes1.len() {
+                        for s2 in &scale_nodes2 {
+                            muf2_values.push(s2 * s2);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kQuadraticSum => {
+                    for s1 in &scale_nodes1 {
+                        for s2 in &scale_nodes2 {
+                            muf2_values.push(s1 * s1 + s2 * s2);
+                        }
+                    }
+                }
+                EScaleFunctionalForm::kQuadraticMean => {
+                    for s1 in &scale_nodes1 {
+                        for s2 in &scale_nodes2 {
+                            muf2_values.push(0.5 * (s1 * s1 + s2 * s2));
+                        }
+                    }
+                }
+                _ => {
+                    // TODO: NYI
+                    unimplemented!()
+                }
+            }
+
+            let mut mu2_values = Vec::new();
+
+            for i in 0..(scale_nodes1.len() * scale_nodes2.len()) {
+                mu2_values.push(Mu2 {
+                    ren: mur2_values[i],
+                    fac: muf2_values[i],
+                });
+            }
+
+            let nx = ffi::GetNx(table, obs);
+
+            for subproc in 0..table_as_add_base.GetNSubproc() {
+                let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
+                let mut array = SparseArray3::new(mu2_values.len(), x1_values.len(), 1);
+
+                for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
+                    .cartesian_product(0..scale_nodes2.len())
+                    .enumerate()
+                {
+                    let logmur2 = mu2_values[mu2_slice].ren.ln();
+                    let logmuf2 = mu2_values[mu2_slice].fac.ln();
+
+                    // flexible scale grids only allow one initial-state hadron
+                    for ix in 0..nx {
+                        let mut value = ffi::GetSigmaTilde(table, 0, obs, ix, is1, is2, subproc);
+
+                        if table.GetNScaleDep() >= 5 {
+                            // mur
+                            value +=
+                                logmur2 * ffi::GetSigmaTilde(table, 1, obs, ix, is1, is2, subproc);
+                            // muf
+                            value +=
+                                logmuf2 * ffi::GetSigmaTilde(table, 2, obs, ix, is1, is2, subproc);
+
+                            if table.GetNScaleDep() >= 6 {
+                                // mur mur
+                                value += logmur2
+                                    * logmur2
+                                    * ffi::GetSigmaTilde(table, 3, obs, ix, is1, is2, subproc);
+                            }
+
+                            if table.GetNScaleDep() >= 7 {
+                                // muf muf
+                                value += logmuf2
+                                    * logmuf2
+                                    * ffi::GetSigmaTilde(table, 4, obs, ix, is1, is2, subproc);
+                                // mur muf
+                                value += logmur2
+                                    * logmuf2
+                                    * ffi::GetSigmaTilde(table, 5, obs, ix, is1, is2, subproc);
+                            }
+                        }
+
+                        if value != 0.0 {
+                            array[[mu2_slice, ix, 0]] = value * factor * x1_values[ix];
+                        }
+                    }
+                }
+
+                if !array.is_empty() {
+                    grid.set_subgrid(
+                        0,
+                        obs.try_into().unwrap(),
+                        subproc.try_into().unwrap(),
+                        ImportOnlySubgridV2::new(
+                            array,
+                            mu2_values.clone(),
+                            x1_values.clone(),
+                            vec![1.0],
+                        )
+                        .into(),
+                    );
+                }
+            }
+        }
+
+        grid
     }
 
     pub fn convert_fastnlo_table(input: &Path, pdfset: &str, alpha: u32) -> Result<Grid> {

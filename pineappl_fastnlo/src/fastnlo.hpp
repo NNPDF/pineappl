@@ -45,7 +45,21 @@ std::size_t GetPDFCoeffSize(fastNLOCoeffAddBase const& coeffs);
 
 rust::Vec<pair_int_int> GetPDFCoeff(fastNLOCoeffAddBase const& coeffs, std::size_t index);
 
+double GetSigmaTilde(
+    fastNLOCoeffAddFlex const& coeffs,
+    std::size_t,
+    std::size_t,
+    std::size_t,
+    std::size_t,
+    std::size_t,
+    int
+);
+
+std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t);
+
 fastNLOCoeffAddBase const& downcast_coeff_add_fix_to_base(fastNLOCoeffAddFix const& coeffs);
+
+fastNLOCoeffAddBase const& downcast_coeff_add_flex_to_base(fastNLOCoeffAddFlex const& coeffs);
 
 fastNLOReader const& downcast_lhapdf_to_reader(fastNLOLHAPDF const& lhapdf);
 

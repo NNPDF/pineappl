@@ -91,7 +91,29 @@ rust::Vec<pair_int_int> GetPDFCoeff(fastNLOCoeffAddBase const& coeffs, std::size
     return result;
 }
 
+double GetSigmaTilde(
+    fastNLOCoeffAddFlex const& coeffs,
+    std::size_t mu,
+    std::size_t obs,
+    std::size_t ix,
+    std::size_t is1,
+    std::size_t is2,
+    int subproc
+) {
+    return coeffs.GetSigmaTildes().at(mu)->at(obs).at(ix).at(is1).at(is2).at(subproc);
+}
+
+std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t obs)
+{
+    return coeffs.GetSigmaTildes().at(0)->at(obs).size();
+}
+
 fastNLOCoeffAddBase const& downcast_coeff_add_fix_to_base(fastNLOCoeffAddFix const& coeffs)
+{
+    return coeffs;
+}
+
+fastNLOCoeffAddBase const& downcast_coeff_add_flex_to_base(fastNLOCoeffAddFlex const& coeffs)
 {
     return coeffs;
 }
