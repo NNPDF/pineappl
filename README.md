@@ -8,14 +8,15 @@
 This repository contains libraries, tools, and interfaces to read and write
 `PineAPPL` grids.
 
-There are three crates in this repository:
+There are four main crates in this repository:
 
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
   main functionality
 - [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
-  C header, to use PineAPPL from your C, C++, Fortran, or Python programs
+  C header, to use PineAPPL from your C, C++ or Fortran programs
 - [`pineappl_cli`](https://crates.io/crates/pineappl) installs the program
   `pineappl` to use PineAPPL from the command line
+- `pineappl_py` is the Python interface
 
 # Installation
 
@@ -35,12 +36,18 @@ There are three crates in this repository:
   `~/.cargo/bin`. You can use this binary to perform all kinds of operations
   on PineAPPL grid files.
 
-- Proceed by installing `cargo-c`, which is required for the next step:
+## Optional: C interface
+
+If you plan to one of the supported Monte Carlo programs to *generate* PineAPPL
+grids, or if you want to access the contents of grids from your own program,
+you will likely need the C interface (unless you are using Python, see below).
+In that case proceed by installing
+
+- `cargo-c`, which is required for the next step:
 
       cargo install cargo-c
 
-- Install `pineappl_capi` (the C API, needed if you plan to use PineAPPL in
-  your C, C++, Fortran, or Python program):
+- Now install `pineappl_capi`:
 
       cd pineappl_capi
       cargo cinstall --release --prefix=${prefix}
@@ -64,7 +71,10 @@ There are three crates in this repository:
   environment and that it points to a directory containing the
   `pineappl_capi.pc` file.
 
-- For the python interface (optional) please look into the subfolder `./pineappl_py`
+## Optional: Python interface
+
+To install the Python interface, please follow the instructions in its
+subdirectory.
 
 # Contributions
 
@@ -75,7 +85,7 @@ Please read the [contribution guidelines](CONTRIBUTING.md).
 [![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
 [![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
 
-If you use PineAPPL, please cite the following reference:
+If you use PineAPPL, please cite the the zenodo DOI above and the following reference:
 
 ```
 @article{Carrazza:2020gss,
@@ -91,6 +101,3 @@ If you use PineAPPL, please cite the following reference:
     year = "2020"
 }
 ```
-
-and the corresponding reference for the version of PineAPPL that you are using
-(click the DOI badge above).
