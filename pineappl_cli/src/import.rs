@@ -581,12 +581,13 @@ mod tests {
 Converts fastNLO tables to PineAPPL grids
 
 USAGE:
-    pineappl import <INPUT> <OUTPUT> <PDFSET>
+    pineappl import <INPUT> <OUTPUT> <PDFSET> [ALPHA]
 
 ARGS:
     <INPUT>     Path to the input grid
     <OUTPUT>    Path to the converted grid
     <PDFSET>    LHAPDF id or name of the PDF set to check the converted grid with
+    <ALPHA>     LO coupling power in alpha [default: 0]
 
 OPTIONS:
     -h, --help    Print help information
