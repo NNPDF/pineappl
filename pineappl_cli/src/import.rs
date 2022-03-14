@@ -515,6 +515,9 @@ pub struct Opts {
     /// LO coupling power in alpha.
     #[clap(default_value_t = 0, long)]
     alpha: u32,
+    /// Relative threshold between the table and the converted grid when comparison fails.
+    #[clap(default_value = "1e-10", long)]
+    accuracy: f64,
 }
 
 impl Subcommand for Opts {
@@ -558,7 +561,7 @@ impl Subcommand for Opts {
                 (two / one - 1.0).abs()
             };
 
-            if rel_diff > 1e-10 {
+            if rel_diff > self.accuracy {
                 different = false;
             }
 
@@ -603,8 +606,10 @@ ARGS:
     <PDFSET>    LHAPDF id or name of the PDF set to check the converted grid with
 
 OPTIONS:
-        --alpha <ALPHA>    LO coupling power in alpha [default: 0]
-    -h, --help             Print help information
+        --accuracy <ACCURACY>    Relative threshold between the table and the converted grid when
+                                 comparison fails [default: 1e-10]
+        --alpha <ALPHA>          LO coupling power in alpha [default: 0]
+    -h, --help                   Print help information
 ";
 
     #[test]
