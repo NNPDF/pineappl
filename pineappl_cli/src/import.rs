@@ -7,7 +7,6 @@ use std::path::PathBuf;
 mod fastnlo {
     use super::*;
     use itertools::Itertools;
-    use lhapdf::Pdf;
     use pineappl::bin::BinRemapper;
     use pineappl::grid::{Grid, Order};
     use pineappl::import_only_subgrid::ImportOnlySubgridV2;
@@ -15,12 +14,11 @@ mod fastnlo {
     use pineappl::sparse_array3::SparseArray3;
     use pineappl::subgrid::{Mu2, SubgridParams};
     use pineappl_fastnlo::ffi::{
-        self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex,
+        self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
         fastNLOPDFLinearCombinations, ESMCalculation, ESMOrder, EScaleFunctionalForm,
     };
     use std::convert::{TryFrom, TryInto};
     use std::f64::consts::TAU;
-    use std::path::Path;
     use std::ptr;
 
     fn pid_to_pdg_id(pid: i32) -> i32 {
@@ -408,11 +406,9 @@ mod fastnlo {
         grid
     }
 
-    pub fn convert_fastnlo_table(input: &Path, pdfset: &str, alpha: u32) -> Result<Grid> {
-        let mut file =
-            ffi::make_fastnlo_lhapdf_with_name_file_set(input.to_str().unwrap(), pdfset, 0);
-        let file_as_reader = ffi::downcast_lhapdf_to_reader(file.as_ref().unwrap());
-        let file_as_table = ffi::downcast_lhapdf_to_table(file.as_ref().unwrap());
+    pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
+        let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
+        let file_as_table = ffi::downcast_lhapdf_to_table(file);
 
         let ids: Vec<_> = [
             file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kLeading),
@@ -429,7 +425,11 @@ mod fastnlo {
 
         for id in ids {
             let coeff_table = file_as_table.GetCoeffTable(id);
-            assert_ne!(coeff_table, ptr::null_mut());
+
+            if coeff_table == ptr::null_mut() {
+                return Err(anyhow!("could not access coefficient table"));
+            }
+
             let linear_combinations =
                 ffi::downcast_reader_to_pdf_linear_combinations(file_as_reader);
 
@@ -496,47 +496,7 @@ mod fastnlo {
 
         result.set_remapper(BinRemapper::new(normalizations.clone(), limits).unwrap())?;
 
-        let file_as_reader_mut = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
-        let results = ffi::GetCrossSection(file_as_reader_mut, false);
-        let pdf = pdfset
-            .parse()
-            .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-        let other_results = helpers::convolute(&result, &pdf, &[], &[], &[], 1);
-
-        let mut different = false;
-
-        for (i, (one, mut two)) in results
-            .into_iter()
-            .zip(other_results.into_iter())
-            .enumerate()
-        {
-            two *= normalizations[i];
-
-            // catches the case where both results are zero
-            if one == two {
-                println!(">>> Success!");
-                continue;
-            }
-
-            if (two / one - 1.0).abs() > 1e-10 {
-                println!(
-                    ">>> fastNLO: {} PineAPPL: {} fN/P: {} P/fN: {}",
-                    one,
-                    two,
-                    one / two,
-                    two / one
-                );
-                different = true;
-            } else {
-                println!(">>> Success!");
-            }
-        }
-
-        if different {
-            Err(anyhow!("grids are different"))
-        } else {
-            Ok(result)
-        }
+        Ok(result)
     }
 }
 
@@ -560,9 +520,63 @@ pub struct Opts {
 impl Subcommand for Opts {
     #[cfg(feature = "fastnlo")]
     fn run(&self) -> Result<()> {
-        let grid = fastnlo::convert_fastnlo_table(&self.input, &self.pdfset, self.alpha)?;
+        use lhapdf::Pdf;
+        use pineappl_fastnlo::ffi::{self, Verbosity};
+        use prettytable::{cell, row};
 
-        helpers::write_grid(&self.output, &grid)
+        let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
+            self.input.to_str().unwrap(),
+            &self.pdfset,
+            0,
+        );
+        let grid = fastnlo::convert_fastnlo_table(&file, self.alpha)?;
+
+        let table_results = ffi::GetCrossSection(
+            ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
+            false,
+        );
+        let pdf = self.pdfset.parse().map_or_else(
+            |_| Pdf::with_setname_and_member(&self.pdfset, 0),
+            Pdf::with_lhaid,
+        );
+        let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
+
+        let mut different = false;
+
+        let mut table = helpers::create_table();
+        table.set_titles(row![c => "b", "PineAPPL", "fastNLO", "rel. diff"]);
+
+        for (bin, (one, two)) in results
+            .into_iter()
+            .zip(table_results.into_iter())
+            .enumerate()
+        {
+            // catches the case where both results are zero
+            let rel_diff = if one == two {
+                0.0
+            } else {
+                (two / one - 1.0).abs()
+            };
+
+            if rel_diff > 1e-10 {
+                different = false;
+            }
+
+            table.add_row(row![
+                bin.to_string(),
+                r->format!("{:.7e}", one),
+                r->format!("{:.7e}", two),
+                r->format!("{:.7e}", rel_diff)
+            ]);
+        }
+
+        table.printstd();
+
+        if different {
+            Err(anyhow!("grids are different"))
+        } else {
+            helpers::write_grid(&self.output, &grid)
+        }
     }
 
     #[cfg(not(feature = "fastnlo"))]
