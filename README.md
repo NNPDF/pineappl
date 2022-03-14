@@ -20,9 +20,6 @@ There are four main crates in this repository:
 
 # Installation
 
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
-[![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
-
 - `PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
   needs the Rust compiler and build system `cargo`. If `cargo` isn't installed,
   use your favourite package manager to install it, or go to
@@ -73,6 +70,9 @@ In that case proceed by installing
 
 ## Optional: Python interface
 
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
+[![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
+
 To install the Python interface, please follow the instructions in its
 subdirectory.
 
@@ -85,7 +85,7 @@ Please read the [contribution guidelines](CONTRIBUTING.md).
 [![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
 [![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
 
-If you use PineAPPL, please cite the the zenodo DOI above and the following reference:
+If you use PineAPPL, please cite the zenodo DOI above and the following reference:
 
 ```
 @article{Carrazza:2020gss,
