@@ -1,7 +1,8 @@
 #include "pineappl_fastnlo/src/fastnlo.hpp"
 
 // TODO: is this portable enough?
-#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#if defined (__unix__) || defined(__unix) || defined(unix) || \
+    (defined (__APPLE__) && defined (__MACH__))
 #define HAVE_UNISTD_H
 #endif
 
