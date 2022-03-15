@@ -115,14 +115,6 @@ pub mod ffi {
         include!("fastnlotk/fastNLOPDFLinearCombinations.h");
 
         type fastNLOPDFLinearCombinations;
-
-        fn CalcPDFLinearCombination(
-            _: &fastNLOPDFLinearCombinations,
-            _: &fastNLOCoeffAddBase,
-            _: &[f64],
-            _: &[f64],
-            _: bool,
-        ) -> Vec<f64>;
     }
 
     unsafe extern "C++" {
@@ -172,8 +164,18 @@ pub mod ffi {
     unsafe extern "C++" {
         include!("pineappl_fastnlo/src/fastnlo.hpp");
 
+        fn CalcPDFLinearCombination(
+            _: &fastNLOPDFLinearCombinations,
+            _: &fastNLOCoeffAddBase,
+            _: &[f64],
+            _: &[f64],
+            _: bool,
+        ) -> Vec<f64>;
+
         fn GetBinSize(_: &fastNLOTable) -> Vec<f64>;
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
+        fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
+        fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
         fn GetPDFCoeff(_: &fastNLOCoeffAddBase, index: usize) -> Vec<pair_int_int>;
         fn GetPDFCoeffSize(_: &fastNLOCoeffAddBase) -> usize;
         fn GetScaleNodes(_: &fastNLOCoeffAddFix, _: i32, _: i32) -> Vec<f64>;
@@ -181,7 +183,6 @@ pub mod ffi {
         fn GetScaleNodes2(_: &fastNLOCoeffAddFlex, _: i32) -> Vec<f64>;
         fn GetXNodes1(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
         fn GetXNodes2(_: &fastNLOCoeffAddBase, _: i32) -> Vec<f64>;
-        fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
         fn GetSigmaTilde(
             _: &fastNLOCoeffAddFlex,
             _: usize,
@@ -191,7 +192,6 @@ pub mod ffi {
             _: usize,
             _: i32,
         ) -> f64;
-        fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
 
         fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
         fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
@@ -201,15 +201,16 @@ pub mod ffi {
         fn downcast_reader_to_pdf_linear_combinations(
             _: &fastNLOReader,
         ) -> &fastNLOPDFLinearCombinations;
+
+        unsafe fn dynamic_cast_coeff_add_fix(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffAddFix;
+        unsafe fn dynamic_cast_coeff_add_flex(_: *mut fastNLOCoeffBase)
+            -> *mut fastNLOCoeffAddFlex;
+
         fn make_fastnlo_lhapdf_with_name_file_set(
             name: &str,
             lhapdf: &str,
             set: i32,
             silence: bool,
         ) -> UniquePtr<fastNLOLHAPDF>;
-
-        unsafe fn dynamic_cast_coeff_add_fix(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffAddFix;
-        unsafe fn dynamic_cast_coeff_add_flex(_: *mut fastNLOCoeffBase)
-            -> *mut fastNLOCoeffAddFlex;
     }
 }
