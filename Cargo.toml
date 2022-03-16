@@ -4,8 +4,13 @@ members = [
     "pineappl_capi",
     "pineappl_cli",
     "pineappl_fastnlo",
+    "pineappl_py",
 ]
-exclude = ["pineappl_py"]
+default-members = [
+    "pineappl",
+    "pineappl_capi",
+    "pineappl_cli",
+]
 
 [profile.release]
 lto = true
