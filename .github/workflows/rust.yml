@@ -43,6 +43,14 @@ jobs:
         lhapdf update
         lhapdf install NNPDF31_nlo_as_0118_luxqed
         lhapdf install NNPDF40_nnlo_as_01180
+    - name: Install fastNLO 2.5.0 2826
+      run: |
+        wget 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
+        tar xzf fastnlo_toolkit-2.5.0-2826.tar.gz
+        cd fastnlo_toolkit-2.5.0-2826
+        ./configure --prefix=${HOME}/prefix
+        make -j
+        make install
     - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
