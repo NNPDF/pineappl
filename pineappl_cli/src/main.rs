@@ -5,6 +5,7 @@ mod convolute;
 mod delete;
 mod diff;
 mod helpers;
+mod import;
 mod info;
 mod merge;
 mod obl;
@@ -55,6 +56,7 @@ enum SubcommandEnum {
     Convolute(convolute::Opts),
     Delete(delete::Opts),
     Diff(diff::Opts),
+    Import(import::Opts),
     Info(info::Opts),
     Merge(merge::Opts),
     Obl(obl::Opts),
