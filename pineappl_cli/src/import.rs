@@ -563,13 +563,9 @@ impl Subcommand for Opts {
             .enumerate()
         {
             // catches the case where both results are zero
-            let rel_diff = if one == two {
-                0.0
-            } else {
-                (two / one - 1.0).abs()
-            };
+            let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
 
-            if rel_diff > self.accuracy {
+            if rel_diff.abs() > self.accuracy {
                 different = false;
             }
 
