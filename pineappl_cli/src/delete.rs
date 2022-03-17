@@ -4,7 +4,7 @@ use clap::{ArgGroup, Parser, ValueHint};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 
-/// Print information about the internal subgrid types.
+/// Deletes parts from a PineAPPL grid.
 #[derive(Parser)]
 #[clap(group = ArgGroup::new("mode").multiple(true).required(true))]
 pub struct Opts {
@@ -46,7 +46,7 @@ mod tests {
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-delete 
-Print information about the internal subgrid types
+Deletes parts from a PineAPPL grid
 
 USAGE:
     pineappl delete <--bins <BINS>...> <INPUT> <OUTPUT>
