@@ -11,40 +11,62 @@ This repository contains libraries, tools, and interfaces to read and write
 There are four main crates in this repository:
 
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
-  main functionality
+  main functionality,
 - [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
-  C header, to use PineAPPL from your C, C++ or Fortran programs
+  C header, to use PineAPPL from your C, C++ or Fortran programs;
 - [`pineappl_cli`](https://crates.io/crates/pineappl) installs the program
-  `pineappl` to use PineAPPL from the command line
-- `pineappl_py` is the Python interface
+  `pineappl` to use PineAPPL from the command line and
+- `pineappl_py` is the Python interface.
 
 # Installation
 
-- `PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
-  needs the Rust compiler and build system `cargo`. If `cargo` isn't installed,
-  use your favourite package manager to install it, or go to
-  <https://www.rust-lang.org/tools/install> and follow the instructions there.
+`PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
+needs the Rust compiler and build system `cargo`. If `cargo` isn't installed,
+use your favourite package manager to install it, or go to
+<https://www.rust-lang.org/tools/install> and follow the instructions there.
 
-- Next install the command-line interface:
+Next install the command-line interface (CLI) by choosing either the release
+or development version below. In both cases the binary `pineappl` will be
+installed user-wide, typically into `~/.cargo/bin`. You can use this binary to
+perform all kinds of operations on PineAPPL grid files.
 
-      cargo install --path pineappl_cli
+## Install the release version (recommended)
 
-  This will install the binary `pineappl` user-wide, typically into
-  `~/.cargo/bin`. You can use this binary to perform all kinds of operations
-  on PineAPPL grid files.
+For this installation option you do not need this repository, because `cargo`
+downloads the most-recently released version from
+[crates.io](https://crates.io). Simply run
+
+    cargo install pineappl_cli
+
+## Install the development version (alternative)
+
+Download this repository and inside it run
+
+    cargo install --path pineappl_cli
+
+## Installation of the fastNLO converter
+
+If you would like to convert fastNLO tables to PineAPPL, make sure to install
+[fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+`--features=fastnlo` during the installation, for example
+
+    cargo install --features=fastnlo pineappl_cli
+
+Note that currently only the development version supports the fastNLO
+converter.
 
 ## Optional: C interface
 
-If you plan to one of the supported Monte Carlo programs to *generate* PineAPPL
-grids, or if you want to access the contents of grids from your own program,
-you will likely need the C interface (unless you are using Python, see below).
-In that case proceed by installing
+If you plan to use one of the supported Monte Carlo programs to *generate*
+PineAPPL grids, or if you want to access the contents of grids from your own
+program, you will likely need the C interface (unless you are using Python, see
+below). In that case proceed by installing
 
 - `cargo-c`, which is required for the next step:
 
       cargo install cargo-c
 
-- Now install `pineappl_capi`:
+- Now install `pineappl_capi`, PineAPPL's C API:
 
       cd pineappl_capi
       cargo cinstall --release --prefix=${prefix}
@@ -70,6 +92,7 @@ In that case proceed by installing
 
 ## Optional: Python interface
 
+[![PyPI version](https://badge.fury.io/py/pineappl.svg)](https://badge.fury.io/py/pineappl)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
