@@ -21,36 +21,44 @@ There are four main crates in this repository:
 # Installation
 
 `PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
-needs the Rust compiler and build system `cargo`. If `cargo` isn't installed,
-use your favourite package manager to install it, or go to
+needs the Rust compiler and its build system `cargo`. If `cargo` isn't
+installed, use your favourite package manager to install it, or go to
 <https://www.rust-lang.org/tools/install> and follow the instructions there.
 
-Next install the command-line interface (CLI) by choosing either the release
-or development version below. In both cases the binary `pineappl` will be
+Next, install the command-line interface (CLI) by choosing either the *release*
+or *development version* below. In both cases the binary `pineappl` will be
 installed user-wide, typically into `~/.cargo/bin`. You can use this binary to
-perform all kinds of operations on PineAPPL grid files.
+perform all kinds of operations on PineAPPL grids.
 
-## Install the release version (recommended)
+For most users the release version is recommended, as we guarantee that all
+grids generated with release versions will be supported in all future release
+versions (backwards compatibility). The advantage of the development version is
+that it typically supports more features.
 
-For this installation option you do not need this repository, because `cargo`
-downloads the most-recently released version from
-[crates.io](https://crates.io). Simply run
+## Release version (recommended)
+
+Simply run
 
     cargo install pineappl_cli
 
-## Install the development version (alternative)
+anywhere and you are done; you don't need this repository, because `cargo`
+downloads the most-recently released version from
+[crates.io](https://crates.io).
+
+## Development version (alternative)
 
 Download this repository and inside it run
 
     cargo install --path pineappl_cli
 
-## Installation of the fastNLO converter
+## Optional: fastNLO converter
 
-If you would like to convert fastNLO tables to PineAPPL, make sure to install
+If you'd like to convert fastNLO tables to PineAPPL, make sure to install
 [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
-`--features=fastnlo` during the installation, for example
+`--features=fastnlo` during the CLI's installation, for instance for the
+development version:
 
-    cargo install --features=fastnlo pineappl_cli
+    cargo install --features=fastnlo --path pineappl_cli
 
 Note that currently only the development version supports the fastNLO
 converter.
