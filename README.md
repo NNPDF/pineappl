@@ -13,7 +13,7 @@ There are four main crates in this repository:
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
   main functionality,
 - [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
-  C header, to use PineAPPL from your C, C++ or Fortran programs;
+  C header, to use PineAPPL from your C, C++ or Fortran programs,
 - [`pineappl_cli`](https://crates.io/crates/pineappl) installs the program
   `pineappl` to use PineAPPL from the command line and
 - `pineappl_py` is the Python interface.
@@ -41,15 +41,21 @@ Simply run
 
     cargo install pineappl_cli
 
-anywhere and you are done; you don't need this repository, because `cargo`
-downloads the most-recently released version from
-[crates.io](https://crates.io).
+anywhere and you are done; this will automatically download the most-recently
+released version from [crates.io](https://crates.io).
 
 ## Development version (alternative)
 
-Download this repository and inside it run
+To simply use the most recent version available run
+
+    cargo install --git https://github.com/N3PDF/pineappl.git
+
+If you plan to make changes to the source code it's better to checkout this
+repository and run
 
     cargo install --path pineappl_cli
+
+inside it.
 
 ## Optional: fastNLO converter
 
@@ -106,6 +112,10 @@ below). In that case proceed by installing
 
 To install the Python interface, please follow the instructions in its
 subdirectory.
+
+# Tutorials
+
+To get to know PineAPPL, take the [tutorial](tutorial/mainpage.md)!
 
 # Contributions
 
