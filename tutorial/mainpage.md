@@ -292,6 +292,30 @@ the PDF set that we've chosen doesn't have a photon PDF. Let's try again with
       6  3.5    4   #0 115.57%   #3 -10.18%   #1 -5.41%   #4 0.01%   #2 0.01%
       7    4  4.5   #0 115.08%   #3  -8.22%   #1 -6.89%   #4 0.03%   #2 0.01%
 
+## Plot the grid: `pineappl plot`
+
+Often plotting predictions is a good way to start understanding them.
+Fortunately, this is easy with PineAPPL:
+
+    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 CT18NNLO > plot.py
+
+This will write a [matplotlib] plotting script in Python. Note that the script
+in written to the standard output and redirected into `plot.py`. For this
+reason we must add `--silence-lhapdf`, because otherwise LHAPDF's banner end up
+in the script, which breaks it, of course. The advantage of writing a plotting
+script instead of directly producing the plot is that you can change it to fit
+your needs. Finally, let's run the plotting script:
+
+    python3 plot.py
+
+This should create a `LHCB_WP_7TEV.pdf`, which you can open. If you wish a
+different format than `.pdf`, look for the string `'.pdf'` in the plotting
+script and change it to the file ending corresponding to your desired format.
+Here's how the result for a JPEG looks:
+
+[plot](LHCB_WP_7TEV.jpeg)
+
 [APPLgrid]: https://applgrid.hepforge.org/
 [fastNLO]: https://fastnlo.hepforge.org/
 [Madgraph5_aMC@NLO]: https://launchpad.net/mg5amcnlo
+[matplotlib]: https://matplotlib.org/
