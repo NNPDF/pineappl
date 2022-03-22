@@ -313,7 +313,7 @@ different format than `.pdf`, look for the string `'.pdf'` in the plotting
 script and change it to the file ending corresponding to your desired format.
 Here's how the result for a JPEG looks:
 
-[plot](LHCB_WP_7TEV.jpeg)
+![plot](LHCB_WP_7TEV.jpeg)
 
 [APPLgrid]: https://applgrid.hepforge.org/
 [fastNLO]: https://fastnlo.hepforge.org/
