@@ -3,7 +3,7 @@
 Welcome to PineAPPL's CLI tutorial! Here we explain the basics of PineAPPL's
 command-line interface (CLI): that's the program `pineappl` that you can you use
 inside your shell. This will also introduce and explain the terminology needed
-to understand the C, Python and Rust API.
+to understand the C, Fortran, Python and Rust API.
 
 First, let's explain what interpolation grids are and what PineAPPL is. If you
 already know that, feel free to skip these sections!
@@ -30,7 +30,7 @@ does that, but in fact there at least two others: [APPLgrid] and [fastNLO]. A
 distinguishing feature of PineAPPL is
 
 - support for arbitrary fixed-order calculations, in particular EW and mixed
-  QCD-EW corrections. Furthermore it aims to
+  QCD–EW corrections. Furthermore it aims to
 - provide *excellent* tooling, which is easy to use and provides maximum
   insight into theory predictions.
 
@@ -48,7 +48,7 @@ will create a temporary directory. Finally, we'll need a grid,
 
 which we'll use together with the CLI.
 
-## Performing convolutions
+## Performing convolutions: `pineappl convolute`
 
 Now that we have a grid, let's perform a convolution with a PDF set:
 
@@ -95,7 +95,7 @@ Let's have a closer look at what the output shows us:
 - the last two columns show the scale uncertainty, which typically is
   asymmetric.
 
-## Getting help
+## Getting help: `pineappl --help`
 
 One of the most difficult aspects of learning a new program is remembering
 *how* to achieve certain tasks and *what* to type. Fortunately, this is easy
@@ -118,7 +118,7 @@ we've used already, run
 
     pineappl convolute --help
 
-Depending on the version of PineAPPL this will show an output similar to the
+Depending on the version of PineAPPL this will show output similar to the
 following:
 
     pineappl-convolute
@@ -141,11 +141,11 @@ following:
         -s, --scales <SCALES>       Set the number of scale variations [default: 7] [possible values: 1,
                                     3, 7, 9]
 
-If you read the help message carefully, you'll for instance notice that the
+If you read the help message carefully, you'll notice for instance that the
 scale uncertainty shown previously is a 7-point variation, because the default
 value of `--scales` is `7`.
 
-## What does this grid contain?
+## What am I looking at here: `pineappl info`
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name what the convoluted numbers will most likely show.
