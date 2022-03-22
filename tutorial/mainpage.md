@@ -180,6 +180,118 @@ are important:
   [Madgraph5_aMC@NLO] was used to calculate the predictions, and `runcard` are
   the runcards used to run the calculation.
 
+## Orders, bins and lumis: `pineappl obl`
+
+Each *grid* is basically a three-dimensional array of *subgrids*, which are the
+actual interpolation grids. The three dimensions are: orders (`o`), bins (`b`)
+and luminosities/lumis (`l`), which we abbreviate as `obl`. The subcommand with
+the same name is used to see how each grid is built. Let's go through them one
+by one using our grid:
+
+    pineappl obl --orders LHCB_WP_7TEV.pineappl.lz4
+
+The output is:
+
+    o      order
+    -+----------------
+    0 O(a^2)
+    1 O(as^1 a^2)
+    2 O(as^1 a^2 lr^1)
+    3 O(as^1 a^2 lf^1)
+    4 O(a^3)
+    5 O(a^3 lr^1)
+    6 O(a^3 lf^1)
+
+This shows that there's a leading order (LO) with index `0`, which has the
+coupling alpha squared, the QCD next-to-leading order (NLO) with index `1` and
+the EW NLO with index `4`. Additionally, there are NLO grids with
+factorization-log dependent terms, which are needed for the correct calculation
+of the scale variation. The corresponding renormalization-logs are also
+present, but they are in fact zero.
+
+Now let's look at the bins:
+
+    pineappl obl --bins LHCB_WP_7TEV.pineappl.lz4
+
+which prints:
+
+    b   etal    norm
+    -+----+----+----
+    0    2 2.25 0.25
+    1 2.25  2.5 0.25
+    2  2.5 2.75 0.25
+    3 2.75    3 0.25
+    4    3 3.25 0.25
+    5 3.25  3.5 0.25
+    6  3.5    4  0.5
+    7    4  4.5  0.5
+
+this shows the bin indices `b` for the observable `etal`, with their left and
+right bin limits, which you've already seen in `convolute`. The column `norm`
+shows the factor that all convolutions are divided with. Typically this is, as
+in this case, the bin width, but this doesn't have to be the case.
+
+Finally, let's have a look at the luminosities or lumis:
+
+    pineappl obl --lumis LHCB_WP_7TEV.pineappl.lz4
+
+This prints all partonic initial states that contribute to this process:
+
+    l    entry        entry
+    -+------------+------------
+    0 1 × ( 2, -1) 1 × ( 4, -3)
+    1 1 × ( 0, -3) 1 × ( 0, -1)
+    2 1 × (22, -3) 1 × (22, -1)
+    3 1 × ( 2,  0) 1 × ( 4,  0)
+    4 1 × ( 2, 22) 1 × ( 4, 22)
+
+In this case you see that the up–anti-down and charm–anti-strage initial states
+(the numbers are PDG MC IDs) are grouped together in a single *channel*, each
+with a factor of `1`. In general this factor can be different from one, if the
+Monte Carlo decides to factor out CKM factors or electric charges, for
+instance, to group the channels together. This is an optimization step, as
+fewer channels result in a smaller grid file.
+
+All remaining channels are the ones with a gluon (in this case denoted with
+`0`) or with a photon, `22`.
+
+## What is the size of each partonic channel: `pineappl channels`
+
+Since we an understanding of how PineAPPL constructs the luminosity function,
+we can ask the size of each partonic channel:
+
+    pineappl --silence-lhapdf channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+
+This will show the following table,
+
+    bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
+    ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
+      0    2 2.25   #0 111.09%   #3  -7.96%   #1 -3.13%   #2 0.00%   #4 0.00%
+      1 2.25  2.5   #0 111.83%   #3  -8.68%   #1 -3.15%   #2 0.00%   #4 0.00%
+      2  2.5 2.75   #0 112.66%   #3  -9.40%   #1 -3.25%   #2 0.00%   #4 0.00%
+      3 2.75    3   #0 113.49%   #3  -9.95%   #1 -3.54%   #2 0.00%   #4 0.00%
+      4    3 3.25   #0 114.24%   #3 -10.36%   #1 -3.89%   #2 0.00%   #4 0.00%
+      5 3.25  3.5   #0 114.96%   #3 -10.57%   #1 -4.39%   #2 0.00%   #4 0.00%
+      6  3.5    4   #0 115.63%   #3 -10.25%   #1 -5.38%   #2 0.00%   #4 0.00%
+      7    4  4.5   #0 115.74%   #3  -8.56%   #1 -7.18%   #2 0.00%   #4 0.00%
+
+which, for each bin, lists the size of each lumi. The most important channel is
+`#0`, which is the up-type–anti-down-type combination. The channels with gluons
+have are much smaller and negative. Channels with a photon are zero, because
+the PDF set that we've chosen doesn't have a photon PDF. Let's try again with
+`NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
+
+    bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
+    ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
+      0    2 2.25   #0 111.13%   #3  -7.89%   #1 -3.27%   #4 0.02%   #2 0.01%
+      1 2.25  2.5   #0 111.88%   #3  -8.62%   #1 -3.29%   #4 0.02%   #2 0.01%
+      2  2.5 2.75   #0 112.72%   #3  -9.34%   #1 -3.40%   #4 0.01%   #2 0.01%
+      3 2.75    3   #0 113.56%   #3  -9.89%   #1 -3.70%   #4 0.01%   #2 0.01%
+      4    3 3.25   #0 114.32%   #3 -10.29%   #1 -4.05%   #4 0.01%   #2 0.01%
+      5 3.25  3.5   #0 115.01%   #3 -10.51%   #1 -4.53%   #2 0.02%   #4 0.01%
+      6  3.5    4   #0 115.57%   #3 -10.18%   #1 -5.41%   #4 0.01%   #2 0.01%
+      7    4  4.5   #0 115.08%   #3  -8.22%   #1 -6.89%   #4 0.03%   #2 0.01%
+
 [APPLgrid]: https://applgrid.hepforge.org/
 [fastNLO]: https://fastnlo.hepforge.org/
 [Madgraph5_aMC@NLO]: https://launchpad.net/mg5amcnlo
