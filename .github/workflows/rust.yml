@@ -71,6 +71,8 @@ jobs:
     - name: Generate code coverage
       id: coverage
       uses: actions-rs/grcov@v0.1
+      with:
+        config: .github/grcov.yml
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
