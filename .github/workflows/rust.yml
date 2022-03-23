@@ -50,6 +50,9 @@ jobs:
       with:
         toolchain: nightly
         default: true
+    - name: Set lld as the default linker
+      run: |
+        echo "RUSTFLAGS='-C link-arg=-fuse-ld=lld'" >> $GITHUB_ENV
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
