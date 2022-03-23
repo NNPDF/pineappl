@@ -73,16 +73,16 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --verbose
+        args: --features=fastnlo --verbose
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose
+        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose --features=fastnlo
         run-types: AllTargets
     - name: Run tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose
+        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose --features=fastnlo
         run-types: AllTargets
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
