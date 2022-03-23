@@ -76,7 +76,7 @@ jobs:
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
-        directory: ${{steps.coverage.outputs.report}}
+        directory: ./lcov.info/
         token: ${{secrets.CODECOV_TOKEN}}
     - name: Install cargo-c
       uses: actions-rs/cargo@v1
