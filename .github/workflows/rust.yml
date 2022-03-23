@@ -48,19 +48,15 @@ jobs:
     - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        components: llvm-tools-preview
         default: true
-    - name: Compile tests
-      uses: actions-rs/tarpaulin@v0.1
-      with:
-        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose --features=fastnlo --jobs 1
-        run-types: AllTargets
-    - name: Run tests
-      uses: actions-rs/tarpaulin@v0.1
-      with:
-        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --verbose --features=fastnlo --jobs 1
-        run-types: AllTargets
-        timeout: 300
+        toolchain: nightly
+    - name: Generate code coverage
+      run: |
+        echo "export RUSTFLAGS=-Zinstrument-coverage" >> $GITHUB_ENV
+        cargo build
+        echo "LLVM_PROFILE_FILE=your_name-%p-%m.profraw" >> $GITHUB_ENV
+        cargo test
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
