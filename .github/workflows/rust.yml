@@ -58,8 +58,9 @@ jobs:
     - name: Run tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose --features=fastnlo --jobs 1
+        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --verbose --features=fastnlo --jobs 1
         run-types: AllTargets
+        timeout: 300
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
