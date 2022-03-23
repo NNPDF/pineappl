@@ -51,12 +51,12 @@ jobs:
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose --features=fastnlo
+        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose --features=fastnlo --jobs 1
         run-types: AllTargets
     - name: Run tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose --features=fastnlo
+        args: --packages pineappl,pineappl_cli,pineappl_fastnlo --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose --features=fastnlo --jobs 1
         run-types: AllTargets
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
