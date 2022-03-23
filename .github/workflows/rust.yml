@@ -73,6 +73,10 @@ jobs:
       uses: actions-rs/grcov@v0.1
       with:
         config: .github/grcov.yml
+    - run: |
+        ls
+        file /home/runner/work/pineappl/pineappl/lcov.info
+        ls lcov.info
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
