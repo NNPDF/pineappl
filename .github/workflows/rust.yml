@@ -48,7 +48,6 @@ jobs:
     - name: Install Rust nightly
       uses: actions-rs/toolchain@v1
       with:
-        components: llvm-tools-preview
         default: true
         toolchain: nightly
     - name: Generate code coverage
