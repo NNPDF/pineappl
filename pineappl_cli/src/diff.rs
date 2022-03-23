@@ -53,11 +53,6 @@ impl Subcommand for Opts {
         let grid1 = helpers::read_grid(&self.input1)?;
         let grid2 = helpers::read_grid(&self.input2)?;
 
-        // are the orders different?
-        if (grid1.orders() != grid2.orders()) && !self.ignore_orders {
-            bail!("orders differ");
-        }
-
         let orders1: HashSet<_> = grid1
             .orders()
             .iter()
