@@ -56,11 +56,6 @@ jobs:
       with:
         toolchain: nightly
         default: true
-    - name: Run cargo check
-      uses: actions-rs/cargo@v1
-      with:
-        command: check
-        args: --features=fastnlo --verbose
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
