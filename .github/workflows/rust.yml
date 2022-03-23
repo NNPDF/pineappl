@@ -77,12 +77,12 @@ jobs:
     - name: Compile tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run
+        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --command Build --no-run --verbose
         run-types: AllTargets
     - name: Run tests
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300
+        args: --packages pineappl,pineappl_cli --exclude-files pineappl_py/* --exclude-files pineappl/tests/* --ignore-tests --follow-exec --skip-clean --timeout 300 --verbose
         run-types: AllTargets
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
