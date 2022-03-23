@@ -32,6 +32,8 @@ jobs:
         ./configure --prefix=${HOME}/prefix --disable-static
         make -j
         make install
+    - name: Install PDF sets
+      run : |
         lhapdf update
         lhapdf install NNPDF31_nlo_as_0118_luxqed
         lhapdf install NNPDF40_nnlo_as_01180
