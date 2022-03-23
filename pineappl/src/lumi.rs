@@ -40,7 +40,7 @@ impl LumiEntry {
     /// use pineappl::lumi::LumiEntry;
     ///
     /// let entry1 = LumiEntry::new(vec![(1, 1, 1.0), (1, 1, 3.0), (3, 3, 1.0), (1, 1, 6.0)]);
-    /// let entry2 = LumiEntry::new(vec![(1, 1, 6.0), (3, 3, 1.0)]);
+    /// let entry2 = LumiEntry::new(vec![(1, 1, 10.0), (3, 3, 1.0)]);
     ///
     /// assert_eq!(entry1, entry2);
     /// ```
