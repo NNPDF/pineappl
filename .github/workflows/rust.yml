@@ -26,7 +26,7 @@ jobs:
         echo "PYTHONPATH=${HOME}/prefix/lib/python3.7/site-packages" >> $GITHUB_ENV
     - name: Install LHAPDF 6.4.0
       run: |
-        wget 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.0.tar.gz' -O LHAPDF-6.4.0.tar.gz
+        wget --no-verbose 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.0.tar.gz' -O LHAPDF-6.4.0.tar.gz
         tar xzf LHAPDF-6.4.0.tar.gz
         cd LHAPDF-6.4.0
         ./configure --prefix=${HOME}/prefix --disable-static
@@ -39,7 +39,7 @@ jobs:
         lhapdf install NNPDF40_nnlo_as_01180
     - name: Install fastNLO 2.5.0 rev. 2826
       run: |
-        wget 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
+        wget --no-verbose 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
         tar xzf fastnlo_toolkit-2.5.0-2826.tar.gz
         cd fastnlo_toolkit-2.5.0-2826
         ./configure --prefix=${HOME}/prefix --disable-static
