@@ -54,9 +54,9 @@ jobs:
     - name: Generate code coverage
       run: |
         echo "export RUSTFLAGS=-Zinstrument-coverage" >> $GITHUB_ENV
-        cargo build
+        cargo build --verbose --features=fastnlo
         echo "LLVM_PROFILE_FILE=your_name-%p-%m.profraw" >> $GITHUB_ENV
-        cargo test
+        cargo test --verbose --features=fastnlo
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v2
       with:
