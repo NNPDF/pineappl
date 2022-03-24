@@ -154,15 +154,15 @@ the following questions:
 
 1) for which process is the prediction for? Which observable is shown?
 2) Is there a corresponding measurement? Where's the paper for that
-   measurement? Where's can we get the measurements corresponding to the
+   measurement? Where can we get the measurements corresponding to the
    predictions?
 3) Which program/generator was used to produce this grid? What version? Which
    runcards were used, which parameter values?
 
 These questions do not concern the main data, the theory predictions, but
-instead the *metadata*, that's the data about the data. The subcommand that
-we'll need is `info`. The easiest way to answer all the questions is to print
-all metadata using
+instead the *metadata*, that's the data about the data. The subcommand that'll
+show you the metadata is `info`. There are several ways to get the metadata,
+but in this instance it's easiest to simple print out everything:
 
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
@@ -171,14 +171,18 @@ are important:
 
 - `description` gives a short description of the process.
 - The value of the key `arxiv` gives us the corresponding paper, in this case
-  for the experimental measurement.
-- The measured data itself we can get from the location specified by `hepdata`,
+  for the experimental measurement; enter the value into the search field of
+  <https://arxiv.org>, and it'll show you the paper.
+- The measured data itself you can get from the location specified by `hepdata`,
   which is a digital object identifier (DOI). Go to <https://www.doi.org/> and
   enter the string there. This will get you to the right table on
   <https://www.hepdata.net> for the corresponding observable.
 - the presence of `mg5amc_repo` and `mg5amc_revno` signal that
-  [Madgraph5_aMC@NLO] was used to calculate the predictions, and `runcard` are
-  the runcards used to run the calculation.
+  [Madgraph5_aMC@NLO] was used to calculate the predictions, and moreover that
+  an official release was used. If these values are non-empty they'll point to
+  repository and revision number of the repository used for the calculation.
+  The value of `runcard` contains runcards of the calculation and also the
+  information that Madgraph5_aMC@NLO v3.1.0 was used run the calculation.
 
 ## Orders, bins and lumis: `pineappl obl`
 
@@ -252,13 +256,18 @@ Monte Carlo decides to factor out CKM factors or electric charges, for
 instance, to group the channels together. This is an optimization step, as
 fewer channels result in a smaller grid file.
 
+Note that channels with the transposed initial states, for instance
+anti-down—up, are merged with each other, which always works if the two
+initial-state hadrons are the same; this is an optimization step, also to keep
+the size of the grid files small.
+
 All remaining channels are the ones with a gluon (in this case denoted with
 `0`) or with a photon, `22`.
 
-## What is the size of each partonic channel: `pineappl channels`
+## The size of each partonic channel: `pineappl channels`
 
-Since we an understanding of how PineAPPL constructs the luminosity function,
-we can ask the size of each partonic channel:
+Since we an understanding of how PineAPPL constructs the luminosity function
+(see the previous section), we can ask for the size of each partonic channel:
 
     pineappl --silence-lhapdf channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -275,10 +284,10 @@ This will show the following table,
       6  3.5    4   #0 115.63%   #3 -10.25%   #1 -5.38%   #2 0.00%   #4 0.00%
       7    4  4.5   #0 115.74%   #3  -8.56%   #1 -7.18%   #2 0.00%   #4 0.00%
 
-which, for each bin, lists the size of each lumi. The most important channel is
+which, for each bin, lists the size of each channel. The most important one is
 `#0`, which is the up-type–anti-down-type combination. The channels with gluons
-have are much smaller and negative. Channels with a photon are zero, because
-the PDF set that we've chosen doesn't have a photon PDF. Let's try again with
+are much smaller and negative. Channels with a photon are zero, because the PDF
+set that we've chosen doesn't have a photon PDF. Let's try again with
 `NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
 
     bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
