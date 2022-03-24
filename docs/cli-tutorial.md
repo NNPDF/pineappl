@@ -386,6 +386,17 @@ Here's how the result for a JPEG looks:
 
 ![plot](LHCB_WP_7TEV.jpeg)
 
+The `plot` subcommand is much more powerful, however. It accepts multiple PDF
+sets, for instance
+
+    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED CT18NNLO=CT18 MSHT20nnlo_as118=MSHT20 > plot.py
+
+in which case two more insets are plotted, which show the PDF uncertainty for
+each set and also the pull using the first PDF set. As shown above, you can use
+`=plotlabel` after the LHAPDF name to change the labels in the plot:
+
+![plot](LHCB_WP_7TEV_2.jpeg)
+
 ## Conclusion
 
 This is the end of the tutorial, but there are many subcommands in PineAPPL's
