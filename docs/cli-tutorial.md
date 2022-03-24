@@ -1,9 +1,11 @@
 # Tutorial for PineAPPL's CLI
 
-Welcome to PineAPPL's CLI tutorial! Here we explain the basics of PineAPPL's
+Welcome to PineAPPL's CLI tutorial! Here we'll explain the basics of PineAPPL's
 command-line interface (CLI): that's the program `pineappl` that you can you use
 inside your shell. This will also introduce and explain the terminology needed
 to understand the C, Fortran, Python and Rust API.
+
+## Interpolation grids and PineAPPL
 
 First, let's explain what interpolation grids are and what PineAPPL is. If you
 already know that, feel free to skip these sections!
@@ -37,20 +39,20 @@ distinguishing feature of PineAPPL is
 ## Installation
 
 To take the tutorial, you'll need PineAPPL's CLI; follow the installation
-section in the [README](../README.md). Next, we'll need a fresh directory that
-we can work in, for instance,
+section in the [README](../README.md). Next, you'll need a fresh directory. For
+instance, running
 
     cd $(mktemp -d)
 
-will create a temporary directory. Finally, we'll need a grid,
+will create a temporary directory. Finally, you'll need a grid,
 
     wget 'https://github.com/N3PDF/pineappl/raw/master/pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4'
 
-which we'll use together with the CLI.
+which will be used together with the CLI.
 
 ## Performing convolutions: `pineappl convolute`
 
-Now that we have a grid, let's perform a convolution with a PDF set:
+Now that you have a grid, perform a convolution with a PDF set:
 
     pineappl convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -84,12 +86,12 @@ installation. If you don't want to see LHAPDF messages, add the option
 
     pineappl --silence-lhapdf convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
-Let's have a closer look at what the output shows us:
+Have a closer look at what the output shows:
 
-- the `bin` column shows that there are 8 bins, labeled 0 to 7,
-- the next two columns `etal` shows the observable used to define the bins and
-  its left and right bin limits,
-- `disg/detal` has a spelling mistake unfortunately and should read
+- the `bin` column shows there are 8 bins, labeled 0 to 7,
+- the next two columns labelled `etal` shows the observable used to define the
+  bins and its left and right bin limits,
+- `disg/detal` has a spelling mistake, unfortunately, and should read
   `dsig/detal`. It shows the differential cross section (`dsig`) for the bin
   limits given in the previous two columns. Finally,
 - the last two columns show the scale uncertainty, which typically is
@@ -149,7 +151,7 @@ value of `--scales` is `7`.
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name what the convoluted numbers will most likely show.
-However, how do we make certain? Specifically, we'd like to know the answers to
+However, how do you make certain? Specifically, we'd like to know the answers to
 the following questions:
 
 1) for which process is the prediction for? Which observable is shown?
@@ -266,8 +268,9 @@ All remaining channels are the ones with a gluon (in this case denoted with
 
 ## The size of each partonic channel: `pineappl channels`
 
-Since we an understanding of how PineAPPL constructs the luminosity function
-(see the previous section), we can ask for the size of each partonic channel:
+Since you now have an understanding of how PineAPPL constructs the luminosity
+function (see the previous section), you can ask for the size of each partonic
+channel:
 
     pineappl --silence-lhapdf channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -372,14 +375,14 @@ Fortunately, this is easy with PineAPPL:
 
 This will write a [matplotlib] plotting script in Python. Note that the script
 in written to the standard output and redirected into `plot.py`. For this
-reason we must add `--silence-lhapdf`, because otherwise LHAPDF's banner end up
-in the script, which breaks it, of course. The advantage of writing a plotting
-script instead of directly producing the plot is that you can change it to fit
-your needs. Finally, let's run the plotting script:
+reason you must add `--silence-lhapdf`, because otherwise LHAPDF's banner would
+end up in the script and break it. The advantage of writing a plotting script
+instead of directly producing the plot is that you can change it to fit your
+needs. Finally, let's run the plotting script:
 
     python3 plot.py
 
-This should create a `LHCB_WP_7TEV.pdf`, which you can open. If you wish a
+This will create a `LHCB_WP_7TEV.pdf`, which you can open. If you wish a
 different format than `.pdf`, look for the string `'.pdf'` in the plotting
 script and change it to the file ending corresponding to your desired format.
 Here's how the result for a JPEG looks:
@@ -399,9 +402,9 @@ each set and also the pull using the first PDF set. As shown above, you can use
 
 ## Conclusion
 
-This is the end of the tutorial, but there are many subcommands in PineAPPL's
-CLI, and many more switches for the subcommand that were part of the tutorial.
-Remember that you can always run
+This is the end of the tutorial, but there are many more subcommands left that
+we didn't discuss, and many more switches for the subcommands that were part of
+the tutorial. Remember that you can always run
 
     pineappl
 
