@@ -301,6 +301,68 @@ set that we've chosen doesn't have a photon PDF. Let's try again with
       6  3.5    4   #0 115.57%   #3 -10.18%   #1 -5.41%   #4 0.01%   #2 0.01%
       7    4  4.5   #0 115.08%   #3  -8.22%   #1 -6.89%   #4 0.03%   #2 0.01%
 
+## PDF uncertainties: `pineappl pdfunc`
+
+Let's calculate the PDF uncertainties for our grid:
+
+    pineappl pdfunc LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+
+This will show a table very similar to `pineappl convolute`:
+
+    bin   etal    disg/detal  PDF uncertainty
+    ---+----+----+-----------+-------+-------
+      0    2 2.25 3.8562616e2  -3.04%   2.24%
+      1 2.25  2.5 3.5553189e2  -3.02%   2.34%
+      2  2.5 2.75 3.0928086e2  -2.98%   2.44%
+      3 2.75    3 2.4991572e2  -2.93%   2.55%
+      4    3 3.25 1.8610527e2  -2.90%   2.72%
+      5 3.25  3.5 1.2614289e2  -2.90%   3.00%
+      6  3.5    4 5.9206239e1  -3.08%   3.67%
+      7    4  4.5 1.3881523e1  -4.01%   5.62%
+
+The PDF uncertainty is calculated using LHAPDF, so `pineappl` is always using
+the correct algorithm no matter what type of PDF sets you use: Hessian, Monte
+Carlo, etc.
+
+In particular this means that in the case of `CT18NNLO` the numbers will be
+exactly the same as the one you saw in `pineappl convolute`. This will not be
+case for a Monte Carlo PDF set, however, for which `pineappl convolute` uses
+the `0`-member PDF, whereas `pineappl pdfunc` uses the average over all
+replicas. However, this is expected and the difference is typically small.
+
+## PDF pulls: `pineappl pull`
+
+A variation of PDF uncertainties are *pulls*; they quantify how different two
+the predictions for two PDF sets are. The pull is defined as the difference of
+the two predictions, divided by the square-root of sum of squares of the PDF
+uncertainties. You can calculate it using:
+
+    pineappl pull LHCB_WP_7TEV.pineappl.lz4 CT18NNLO NNPDF31_nnlo_as_0118_luxqed
+
+This will show not only the pull, in column `total`, but also how this pull is
+calculated using the different channels:
+
+    bin   etal    total  lumi  pull  lumi  pull  lumi  pull  lumi pull  lumi pull
+    ---+----+----+------+----+------+----+------+----+------+----+-----+----+-----
+      0    2 2.25  0.072   #0  0.081   #1 -0.045   #3  0.024   #4 0.008   #2 0.004
+      1 2.25  2.5 -0.029   #1 -0.043   #3  0.030   #0 -0.027   #4 0.008   #2 0.003
+      2  2.5 2.75 -0.096   #0 -0.097   #1 -0.043   #3  0.036   #4 0.005   #2 0.002
+      3 2.75    3 -0.145   #0 -0.148   #1 -0.045   #3  0.040   #4 0.005   #2 0.002
+      4    3 3.25 -0.187   #0 -0.190   #1 -0.045   #3  0.042   #4 0.004   #2 0.002
+      5 3.25  3.5 -0.234   #0 -0.249   #3  0.043   #1 -0.037   #2 0.005   #4 0.003
+      6  3.5    4 -0.293   #0 -0.345   #3  0.043   #1  0.004   #4 0.004   #2 0.001
+      7    4  4.5  0.145   #0  0.071   #3  0.037   #1  0.031   #4 0.004   #2 0.001
+
+Looking at the `total` column we see that the numbers are much smaller than
+`1`, which you'd expect knowing that this dataset is used to fit both PDF sets.
+Furthermore, the remaining columns show how this pull was calculated, for
+instance for the first bin we see that when we sum the four contributions in
+`pull` we obtain the `total` result.
+
+Note that the chosen CT18 set doesn't have a photon PDF, where the NNPDF set
+*does* have one. However, for these observables the photon PDF contribution is
+too small to make a difference in the pull.
+
 ## Plot the grid: `pineappl plot`
 
 Often plotting predictions is a good way to start understanding them.
@@ -323,6 +385,21 @@ script and change it to the file ending corresponding to your desired format.
 Here's how the result for a JPEG looks:
 
 ![plot](LHCB_WP_7TEV.jpeg)
+
+## Conclusion
+
+This is the end of the tutorial, but there are many subcommands in PineAPPL's
+CLI, and many more switches for the subcommand that were part of the tutorial.
+Remember that you can always run
+
+    pineappl
+
+to get an overview of what's there and what you might need, and that
+
+    pineappl <SUBCOMMAND> --help
+
+gives you a more detailed description of the options and switches for each
+subcommand.
 
 [APPLgrid]: https://applgrid.hepforge.org/
 [fastNLO]: https://fastnlo.hepforge.org/
