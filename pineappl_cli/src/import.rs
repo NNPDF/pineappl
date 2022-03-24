@@ -597,6 +597,7 @@ impl Subcommand for Opts {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
+    use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-import 
 Converts fastNLO tables to PineAPPL grids
@@ -617,6 +618,20 @@ OPTIONS:
         --silence-fastnlo        Prevents fastNLO from printing output
 ";
 
+    const IMPORT_FIX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
+-+------------+------------+--------------
+0 2.9158424e-4 2.9158424e-4 -2.9976022e-15
+1 2.4657895e-4 2.4657895e-4 -2.8865799e-15
+";
+
+    const IMPORT_FLEX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
+-+------------+------------+--------------
+0  8.2754182e1  8.2754182e1 -1.3544721e-14
+1  3.6097335e1  3.6097335e1 -6.8833828e-15
+2  8.0048746e0  8.0048746e0  5.3290705e-15
+3 9.4319392e-1 9.4319392e-1  5.5511151e-15
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -625,5 +640,45 @@ OPTIONS:
             .assert()
             .success()
             .stdout(HELP_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fastnlo")]
+    fn import_fix_grid() {
+        let output = NamedTempFile::new("converted1.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "--silence-fastnlo",
+                "data/NJetEvents_0-0-2.tab.gz",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_FIX_GRID_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fastnlo")]
+    fn import_flex_grid() {
+        let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "--silence-fastnlo",
+                "data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_FLEX_GRID_STR);
     }
 }
