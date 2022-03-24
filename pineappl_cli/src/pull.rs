@@ -126,7 +126,7 @@ impl Subcommand for Opts {
                         .iter()
                         .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
                         .collect();
-                    set1.uncertainty(&central, self.cl, false).central
+                    set2.uncertainty(&central, self.cl, false).central
                 })
                 .collect();
 
