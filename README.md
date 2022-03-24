@@ -115,7 +115,7 @@ subdirectory.
 
 # Tutorials
 
-To get to know PineAPPL, take the [tutorial](tutorial/mainpage.md)!
+To get to know PineAPPL, take the [tutorial](docs/cli-tutorial.md)!
 
 # Contributions
 
