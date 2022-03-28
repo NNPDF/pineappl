@@ -294,11 +294,50 @@ the size of the grid files small.
 All remaining channels are the ones with a gluon (in this case denoted with
 `0`) or with a photon, `22`.
 
+## `pineappl orders`: What's the size of each perturbative order?
+
+In the previous section you've seen that each order is stored separately, which
+means you convolute each order separately:
+
+    pineappl orders LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+
+which prints
+
+    bin   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+    ---+----+----+-----------+-----------+-----------+-----------
+      0    2 2.25 7.7526895e2     100.00%      17.63%      -1.25%
+      1 2.25  2.5 7.1092145e2     100.00%      17.47%      -1.13%
+      2  2.5 2.75 6.1876958e2     100.00%      18.07%      -1.04%
+      3 2.75    3 5.0017809e2     100.00%      18.53%      -0.92%
+      4    3 3.25 3.7228440e2     100.00%      19.12%      -0.85%
+      5 3.25  3.5 2.5236943e2     100.00%      19.84%      -0.81%
+      6  3.5    4 1.1857770e2     100.00%      21.32%      -0.83%
+      7    4  4.5 2.7740964e1     100.00%      24.59%      -1.01%
+
+By default all higher orders are shown relative to the sum of all LOs. However,
+this can be changed using the switches `--normalize`, which asks for the orders
+you declare as 100 per cent. If we'd like the numbers to be normalized to NLO,
+we'd run
+
+    pineappl orders --normalize=a2,a2as1 LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+
+which will show
+
+    bin   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+    ---+----+----+-----------+-----------+-----------+-----------
+      0    2 2.25 7.7526895e2      85.01%      14.99%      -1.06%
+      1 2.25  2.5 7.1092145e2      85.13%      14.87%      -0.96%
+      2  2.5 2.75 6.1876958e2      84.69%      15.31%      -0.88%
+      3 2.75    3 5.0017809e2      84.37%      15.63%      -0.78%
+      4    3 3.25 3.7228440e2      83.95%      16.05%      -0.71%
+      5 3.25  3.5 2.5236943e2      83.45%      16.55%      -0.67%
+      6  3.5    4 1.1857770e2      82.42%      17.58%      -0.69%
+      7    4  4.5 2.7740964e1      80.26%      19.74%      -0.81%
+
 ## `pineappl channels`: What's the size of each channel?
 
-Since you now have an understanding of how PineAPPL constructs the luminosity
-function (see the previous section), you can ask for the size of each partonic
-channel:
+You can also show a convolution separately for each luminosity, or in other
+words show the size of each partonic channel:
 
     pineappl --silence-lhapdf channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
