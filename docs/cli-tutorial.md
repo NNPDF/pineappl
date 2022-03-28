@@ -26,10 +26,10 @@ following applications:
 
 ### What is PineAPPL?
 
-PineAPPL is one interpolation library, and provides interfaces to numerical
+PineAPPL is an interpolation library, and provides interfaces to numerical
 calcuations to generate interpolation grids. It is not the only library that
-does that, but in fact there at least two others: [APPLgrid] and [fastNLO]. A
-distinguishing feature of PineAPPL is
+does that, as there at least two others: [APPLgrid] and [fastNLO].
+Distinguishing features of PineAPPL are
 
 - support for arbitrary fixed-order calculations, in particular EW and mixed
   QCD–EW corrections. Furthermore it aims to
@@ -50,18 +50,18 @@ will create a temporary directory. Finally, you'll need a grid,
 
 which will be used together with the CLI.
 
-## Performing convolutions: `pineappl convolute`
+## `pineappl convolute`: Performing convolutions
 
-Now that you have a grid, perform a convolution with a PDF set:
+Now that you've got a grid, perform a convolution with a PDF set:
 
     pineappl convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
-We've chosen the default CT18 PDF set to use in this tutorial, because it's the
-easiest to type. If you get this error,
+We've chosen to use the default CT18 PDF set for this tutorial, because it's
+the easiest to type. If you get an error that reads
 
     error: Invalid value for '<PDFSETS>...': The PDF set `CT18NNLO` was not found
 
-install the PDF set in LHAPDF, or use a different PDF set—the numbers won't
+install the PDF set with LHAPDF, or use a different PDF set—the numbers won't
 matter for the sake of the tutorial. If the command was successful, you should
 see the following output:
 
@@ -97,23 +97,20 @@ Have a closer look at what the output shows:
 - the last two columns show the scale uncertainty, which typically is
   asymmetric.
 
-## Getting help: `pineappl --help`
+## `pineappl --help`: Getting help
 
-One of the most difficult aspects of learning a new program is remembering
-*how* to achieve certain tasks and *what* to type. Fortunately, this is easy
-with `pineappl`. If you don't want to remember a bunch of commands just
-remember that you can type
+One of the most difficult aspects of learning a new program is remembering how
+to achieve certain tasks and what to type. This should be easy with `pineappl`.
+If you don't want to remember a bunch of commands just remember that you can
+type
 
     pineappl
 
-which is a shortcut for
-
-    pineappl --help
-
-This will give you a list of program options and *subcommands*, under which all
-operations in `pineappl` are grouped, and a corresponding description. You'll
-be familiar with the concept of subcommand if you're using `git`: `add`,
-`commit` and `push` are well-known subcommands of it.
+which is a shortcut for `pineappl --help`. This will give you a list of program
+options and *subcommands*, under which all operations in `pineappl` are
+grouped, and a corresponding description. You'll be familiar with the concept
+of subcommand if you're using `git`: `add`, `commit` and `push` are well-known
+subcommands of it.
 
 To get more help on a specific subcommand, for instance `convolute`, which
 we've used already, run
@@ -147,52 +144,72 @@ If you read the help message carefully, you'll notice for instance that the
 scale uncertainty shown previously is a 7-point variation, because the default
 value of `--scales` is `7`.
 
-## What am I looking at here: `pineappl info`
+## `pineappl info`: What does this grid contain?
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name what the convoluted numbers will most likely show.
-However, how do you make certain? Specifically, we'd like to know the answers to
-the following questions:
+However, how can you be certain? Specifically, the you'll probably want to know
+the answers to the following questions:
 
-1) for which process is the prediction for? Which observable is shown?
-2) Is there a corresponding measurement? Where's the paper for that
-   measurement? Where can we get the measurements corresponding to the
-   predictions?
-3) Which program/generator was used to produce this grid? What version? Which
-   runcards were used, which parameter values?
+1) For which process is the prediction for?
+2) Which observable is shown?
+3) If there's a corresponding experimental paper, where is it?
+4) Where are the measurements corresponding to the predictions?
+5) Which program/generator was used to produce this grid? What version?
+6) Which runcards were used, which parameter values?
 
-These questions do not concern the main data, the theory predictions, but
-instead the *metadata*, that's the data about the data. The subcommand that'll
-show you the metadata is `info`. There are several ways to get the metadata,
-but in this instance it's easiest to simple print out everything:
+The subcommand that'll answer all these questions is `info`. This will get you
+access to what we call *metadata* (the data describing the interpolation
+grids):
 
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
-This will print out very long list of key–value pairs, of which the following
-are important:
+This will print out very long list of (alphabetically sorted) key–value pairs,
+from which you can read off the anwers to the questions above. Let's go through
+them one by one:
 
-- `description` gives a short description of the process.
-- The value of the key `arxiv` gives us the corresponding paper, in this case
-  for the experimental measurement; enter the value into the search field of
-  <https://arxiv.org>, and it'll show you the paper.
-- The measured data itself you can get from the location specified by `hepdata`,
-  which is a digital object identifier (DOI). Go to <https://www.doi.org/> and
-  enter the string there. This will get you to the right table on
-  <https://www.hepdata.net> for the corresponding observable.
-- the presence of `mg5amc_repo` and `mg5amc_revno` signal that
-  [Madgraph5_aMC@NLO] was used to calculate the predictions, and moreover that
-  an official release was used. If these values are non-empty they'll point to
-  repository and revision number of the repository used for the calculation.
-  The value of `runcard` contains runcards of the calculation and also the
-  information that Madgraph5_aMC@NLO v3.1.0 was used run the calculation.
+1) The value for the key `description` gives a short description of the
+   process. In this case this is `LHCb differential W-boson production cross
+   section at 7 TeV`.
+2) The keys `x1_label` contains the name of the observable, and `y_label` the
+   name of the corresponding (differential) cross section. These strings are
+   being used by `convolute` and other subcommands that perform convolutions to
+   label the columns with the corresponding numbers. If grids contain two- or
+   even higher-dimensional distributions there would be additional labels, for
+   instance `x2_label`, etc. Furthermore, for plots there are the corresponding
+   labels in LaTeX: `x1_label_tex`, `y_label_tex` and so on. Finally, `x1_unit`
+   contains the physical units for each observable, typically `GeV`, and
+   `y_label` the units of the (differential) cross section, typically `pb`.
+3) The value of the key `arxiv` gives us the corresponding arXiv identifier, in
+   this case for the experimental measurement; enter the value into the search
+   field of <https://arxiv.org>, and it'll lead you to the paper.
+4) The measured data itself you can get from the location specified by `hepdata`,
+   which is a digital object identifier (DOI). Go to <https://www.doi.org/> and
+   enter the string there. This will get you to the right table on
+   <https://www.hepdata.net> for the corresponding observable. Together with
+   the paper this will make clear that the predictions show the pseudorapidity
+   of the positively-charged lepton, corresponding to table 6 in the paper.
+5) The presence of `mg5amc_repo` and `mg5amc_revno` signal that
+   [Madgraph5_aMC@NLO] was used to calculate the predictions. Since their
+   values are empty, an official release was used, whose version we can read
+   off from `runcard`. If these values were non-zero, they'd point to the
+   Madgraph5 repository and its revision number.
+6) Finally, the value of `runcard` contains runcards of the calculation and
+   also the information that Madgraph5_aMC@NLO v3.1.0 was used run the
+   calculation, the values of all independent parameters and a few cuts.
 
-## Orders, bins and lumis: `pineappl obl`
+## `pineappl obl`: Orders, bins and lumis
 
-Each *grid* is basically a three-dimensional array of *subgrids*, which are the
-actual interpolation grids. The three dimensions are: orders (`o`), bins (`b`)
-and luminosities/lumis (`l`), which we abbreviate as `obl`. The subcommand with
-the same name is used to see how each grid is built. Let's go through them one
-by one using our grid:
+Each *grid* is—basically—a three-dimensional array of *subgrids*, which are the
+actual interpolation grids. The three dimensions are:
+
+- orders (`o`),
+- bins (`b`) and
+- luminosities/lumis (`l`),
+
+which we abbreviate as `obl`. You can use the subcommand with the same name to
+see exactly how each grid is built. Let's go through them one by one using our
+grid:
 
     pineappl obl --orders LHCB_WP_7TEV.pineappl.lz4
 
@@ -208,12 +225,23 @@ The output is:
     5 O(a^3 lr^1)
     6 O(a^3 lf^1)
 
-This shows that there's a leading order (LO) with index `0`, which has the
-coupling alpha squared, the QCD next-to-leading order (NLO) with index `1` and
-the EW NLO with index `4`. Additionally, there are NLO grids with
-factorization-log dependent terms, which are needed for the correct calculation
-of the scale variation. The corresponding renormalization-logs are also
-present, but they are in fact zero.
+This shows that there's
+
+- a leading order (LO) with index `0`, which has the coupling alpha squared
+  (`a^2`),
+- the QCD next-to-leading order (NLO) with index `1` and
+- the EW NLO with index `4`.
+
+Additionally, there are
+
+- NLO grids with factorization-log dependent terms, with indices `3` and `6`,
+  which are needed for the correct calculation of the scale variation. The
+  corresponding
+- renormalization-logs (`2` and `5`) are also present, but their contributions
+  are in fact zero.
+
+These last two grids are needed if during the convolution the scale-variation
+uncertainty should be calculated.
 
 Now let's look at the bins:
 
@@ -234,8 +262,8 @@ which prints:
 
 this shows the bin indices `b` for the observable `etal`, with their left and
 right bin limits, which you've already seen in `convolute`. The column `norm`
-shows the factor that all convolutions are divided with. Typically this is, as
-in this case, the bin width, but this doesn't have to be the case.
+shows the factor that all convolutions are divided with. Typically, as shown in
+this case, this is the bin width, but this doesn't have to be the case.
 
 Finally, let's have a look at the luminosities or lumis:
 
@@ -251,12 +279,12 @@ This prints all partonic initial states that contribute to this process:
     3 1 × ( 2,  0) 1 × ( 4,  0)
     4 1 × ( 2, 22) 1 × ( 4, 22)
 
-In this case you see that the up–anti-down and charm–anti-strage initial states
-(the numbers are PDG MC IDs) are grouped together in a single *channel*, each
-with a factor of `1`. In general this factor can be different from one, if the
-Monte Carlo decides to factor out CKM factors or electric charges, for
-instance, to group the channels together. This is an optimization step, as
-fewer channels result in a smaller grid file.
+In this case you see that the up–anti-down (2, -1) and charm–anti-strage (4,
+-3) initial states (the numbers are PDG MC IDs) are grouped together in a
+single *channel*, each with a factor of `1`. In general this number can be
+different from one, if the Monte Carlo decides to factor out CKM factors or
+electric charges, for instance, to group more channels together. This is an
+optimization step, as fewer channels result in a smaller grid file.
 
 Note that channels with the transposed initial states, for instance
 anti-down—up, are merged with each other, which always works if the two
@@ -266,7 +294,7 @@ the size of the grid files small.
 All remaining channels are the ones with a gluon (in this case denoted with
 `0`) or with a photon, `22`.
 
-## The size of each partonic channel: `pineappl channels`
+## `pineappl channels`: What's the size of each channel?
 
 Since you now have an understanding of how PineAPPL constructs the luminosity
 function (see the previous section), you can ask for the size of each partonic
@@ -287,11 +315,10 @@ This will show the following table,
       6  3.5    4   #0 115.63%   #3 -10.25%   #1 -5.38%   #2 0.00%   #4 0.00%
       7    4  4.5   #0 115.74%   #3  -8.56%   #1 -7.18%   #2 0.00%   #4 0.00%
 
-which, for each bin, lists the size of each channel. The most important one is
-`#0`, which is the up-type–anti-down-type combination. The channels with gluons
-are much smaller and negative. Channels with a photon are zero, because the PDF
-set that we've chosen doesn't have a photon PDF. Let's try again with
-`NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
+The most important channel is `#0`, which is the up-type–anti-down-type
+combination. The channels with gluons are much smaller and negative. Channels
+with a photon are zero, because the PDF set that we've chosen doesn't have a
+photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
 
     bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
     ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
@@ -304,7 +331,7 @@ set that we've chosen doesn't have a photon PDF. Let's try again with
       6  3.5    4   #0 115.57%   #3 -10.18%   #1 -5.41%   #4 0.01%   #2 0.01%
       7    4  4.5   #0 115.08%   #3  -8.22%   #1 -6.89%   #4 0.03%   #2 0.01%
 
-## PDF uncertainties: `pineappl pdfunc`
+## `pineappl pdfunc`: How large are the PDF uncertainties?
 
 Let's calculate the PDF uncertainties for our grid:
 
@@ -323,8 +350,8 @@ This will show a table very similar to `pineappl convolute`:
       6  3.5    4 5.9206239e1  -3.08%   3.67%
       7    4  4.5 1.3881523e1  -4.01%   5.62%
 
-The PDF uncertainty is calculated using LHAPDF, so `pineappl` is always using
-the correct algorithm no matter what type of PDF sets you use: Hessian, Monte
+The PDF uncertainty is calculated using LHAPDF, so `pineappl` always uses the
+correct algorithm no matter what type of PDF sets you use: Hessian, Monte
 Carlo, etc.
 
 In particular this means that in the case of `CT18NNLO` the numbers will be
@@ -333,7 +360,7 @@ case for a Monte Carlo PDF set, however, for which `pineappl convolute` uses
 the `0`-member PDF, whereas `pineappl pdfunc` uses the average over all
 replicas. However, this is expected and the difference is typically small.
 
-## PDF pulls: `pineappl pull`
+## `pineappl pull`: Are two PDF sets compatible with each other?
 
 A variation of PDF uncertainties are *pulls*; they quantify how different two
 the predictions for two PDF sets are. The pull is defined as the difference of
@@ -356,28 +383,28 @@ calculated using the different channels:
       6  3.5    4 -0.293   #0 -0.345   #3  0.043   #1  0.004   #4 0.004   #2 0.001
       7    4  4.5  0.145   #0  0.071   #3  0.037   #1  0.031   #4 0.004   #2 0.001
 
-Looking at the `total` column we see that the numbers are much smaller than
-`1`, which you'd expect knowing that this dataset is used to fit both PDF sets.
-Furthermore, the remaining columns show how this pull was calculated, for
-instance for the first bin we see that when we sum the four contributions in
-`pull` we obtain the `total` result.
+Looking at the `total` column you can see that the numbers are much smaller
+than `1`, corresponding to a one sigma deviation. This we'd expect knowing that
+this dataset is used to fit both PDF sets. Furthermore, the remaining columns
+show how this pull was calculated, for instance for the first bin we see that
+when we sum the four contributions in `pull` we obtain the `total` result.
 
 Note that the chosen CT18 set doesn't have a photon PDF, where the NNPDF set
 *does* have one. However, for these observables the photon PDF contribution is
 too small to make a difference in the pull.
 
-## Plot the grid: `pineappl plot`
+## `pineappl plot`: Show me a plot of the predictions!
 
 Often plotting predictions is a good way to start understanding them.
 Fortunately, this is easy with PineAPPL:
 
     pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 CT18NNLO > plot.py
 
-This will write a [matplotlib] plotting script in Python. Note that the script
-in written to the standard output and redirected into `plot.py`. For this
-reason you must add `--silence-lhapdf`, because otherwise LHAPDF's banner would
-end up in the script and break it. The advantage of writing a plotting script
-instead of directly producing the plot is that you can change it to fit your
+This will write a [matplotlib] script in Python. Note that the script is
+written to the standard output and redirected into `plot.py`. For this reason
+you must add `--silence-lhapdf`, because otherwise LHAPDF's banner would end up
+in the script and break it. The advantage of writing a plotting script instead
+of directly producing the plot is that you can change it according to your
 needs. Finally, let's run the plotting script:
 
     python3 plot.py
@@ -392,7 +419,8 @@ Here's how the result for a JPEG looks:
 The `plot` subcommand is much more powerful, however. It accepts multiple PDF
 sets, for instance
 
-    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED CT18NNLO=CT18 MSHT20nnlo_as118=MSHT20 > plot.py
+    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED \
+        CT18NNLO=CT18 MSHT20nnlo_as118=MSHT20 > plot.py
 
 in which case two more insets are plotted, which show the PDF uncertainty for
 each set and also the pull using the first PDF set. As shown above, you can use
@@ -403,8 +431,8 @@ each set and also the pull using the first PDF set. As shown above, you can use
 ## Conclusion
 
 This is the end of the tutorial, but there are many more subcommands left that
-we didn't discuss, and many more switches for the subcommands that were part of
-the tutorial. Remember that you can always run
+we didn't discuss, and many more switches for subcommands that were part of the
+tutorial. Remember that you can always run
 
     pineappl
 
