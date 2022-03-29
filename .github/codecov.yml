@@ -1,2 +1,6 @@
+flag_management:
+  default_rules:
+    carryforward: true
+
 github_checks:
   annotations: false
