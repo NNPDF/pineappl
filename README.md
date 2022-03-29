@@ -20,6 +20,9 @@ There are four main crates in this repository:
 
 # Installation
 
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
+[![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
+
 `PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
 needs the Rust compiler and its build system `cargo`. If `cargo` isn't
 installed, use your favourite package manager to install it, or go to
@@ -65,9 +68,6 @@ If you'd like to convert fastNLO tables to PineAPPL, make sure to install
 development version:
 
     cargo install --features=fastnlo --path pineappl_cli
-
-Note that currently only the development version supports the fastNLO
-converter.
 
 ## Optional: C interface
 
