@@ -78,7 +78,7 @@ jobs:
       with:
         files: ${{steps.coverage.outputs.report}}
         token: ${{secrets.CODECOV_TOKEN}}
-        flags: -F rust
+        flags: rust
     - name: Install cargo-c
       uses: actions-rs/cargo@v1
       with:

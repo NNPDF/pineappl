@@ -34,4 +34,4 @@ jobs:
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           files: pineappl_py/coverage.xml
-          flags: -F python
+          flags: python
