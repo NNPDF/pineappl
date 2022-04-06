@@ -42,6 +42,7 @@ jobs:
         wget --no-verbose 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
         tar xzf fastnlo_toolkit-2.5.0-2826.tar.gz
         cd fastnlo_toolkit-2.5.0-2826
+        patch -p0 < .github/fix_fastnlo_warnings.patch
         ./configure --prefix=${HOME}/prefix --disable-static
         make -j
         make install
