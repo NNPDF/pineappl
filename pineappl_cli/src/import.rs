@@ -1,14 +1,15 @@
 use super::helpers::{self, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
-use std::path::PathBuf;
+use pineappl::grid::Grid;
+use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fastnlo")]
 mod fastnlo {
     use super::*;
     use itertools::Itertools;
     use pineappl::bin::BinRemapper;
-    use pineappl::grid::{Grid, Order};
+    use pineappl::grid::Order;
     use pineappl::import_only_subgrid::ImportOnlySubgridV2;
     use pineappl::lumi::LumiEntry;
     use pineappl::sparse_array3::SparseArray3;
@@ -500,6 +501,50 @@ mod fastnlo {
     }
 }
 
+#[cfg(feature = "fastnlo")]
+fn convert_grid(
+    input: &Path,
+    alpha: u32,
+    pdfset: &str,
+    member: usize,
+    silence: bool,
+) -> Result<(&'static str, Grid, Vec<f64>)> {
+    use pineappl_fastnlo::ffi::{self, Verbosity};
+    use std::convert::TryInto;
+
+    if silence {
+        ffi::SetGlobalVerbosity(Verbosity::SILENT);
+    }
+
+    let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
+        input.to_str().unwrap(),
+        pdfset,
+        member.try_into().unwrap(),
+        silence,
+    );
+    let grid = fastnlo::convert_fastnlo_table(&file, alpha.try_into().unwrap())?;
+
+    let results = ffi::GetCrossSection(
+        ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
+        false,
+    );
+
+    Ok(("fastNLO", grid, results))
+}
+
+#[cfg(not(feature = "fastnlo"))]
+fn convert_grid(
+    _: &Path,
+    _: u32,
+    _: &str,
+    _: usize,
+    _: bool,
+) -> Result<(&'static str, Grid, Vec<f64>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fastnlo`"
+    ))
+}
+
 /// Converts fastNLO tables to PineAPPL grids.
 #[derive(Parser)]
 pub struct Opts {
@@ -524,28 +569,18 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    #[cfg(feature = "fastnlo")]
     fn run(&self) -> Result<()> {
         use lhapdf::Pdf;
-        use pineappl_fastnlo::ffi::{self, Verbosity};
         use prettytable::{cell, row};
 
-        if self.silence_fastnlo {
-            ffi::SetGlobalVerbosity(Verbosity::SILENT);
-        }
-
-        let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
-            self.input.to_str().unwrap(),
+        // TODO: figure out `member` from `self.pdfset`
+        let (grid_type, grid, table_results) = convert_grid(
+            &self.input,
+            self.alpha,
             &self.pdfset,
             0,
             self.silence_fastnlo,
-        );
-        let grid = fastnlo::convert_fastnlo_table(&file, self.alpha)?;
-
-        let table_results = ffi::GetCrossSection(
-            ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
-            false,
-        );
+        )?;
         let pdf = self.pdfset.parse().map_or_else(
             |_| Pdf::with_setname_and_member(&self.pdfset, 0),
             Pdf::with_lhaid,
@@ -555,7 +590,7 @@ impl Subcommand for Opts {
         let mut different = false;
 
         let mut table = helpers::create_table();
-        table.set_titles(row![c => "b", "PineAPPL", "fastNLO", "rel. diff"]);
+        table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
 
         for (bin, (one, two)) in results
             .into_iter()
@@ -584,13 +619,6 @@ impl Subcommand for Opts {
         } else {
             helpers::write_grid(&self.output, &grid)
         }
-    }
-
-    #[cfg(not(feature = "fastnlo"))]
-    fn run(&self) -> Result<()> {
-        Err(anyhow!(
-            "you need to install `pineappl` with feature `fastnlo`"
-        ))
     }
 }
 
