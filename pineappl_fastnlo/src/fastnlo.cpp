@@ -63,8 +63,8 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     std::unique_ptr<fastNLOLHAPDF> result;
 
 #ifdef HAVE_UNISTD_H
-    int backup_fd;
-    FILE *dev_null;
+    int backup_fd = -1;
+    FILE *dev_null = NULL;
 
     // the constructor of `fastNLOLHAPDF` isn't completely silent even we nicely ask it to, so we
     // have to resort to drastic measures
