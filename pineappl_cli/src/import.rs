@@ -646,12 +646,14 @@ OPTIONS:
         --silence-fastnlo        Prevents fastNLO from printing output
 ";
 
+    #[cfg(feature = "fastnlo")]
     const IMPORT_FIX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
 -+------------+------------+--------------
 0 2.9158424e-4 2.9158424e-4 -2.9976022e-15
 1 2.4657895e-4 2.4657895e-4 -2.8865799e-15
 ";
 
+    #[cfg(feature = "fastnlo")]
     const IMPORT_FLEX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
 -+------------+------------+--------------
 0  8.2754182e1  8.2754182e1 -1.3544721e-14
