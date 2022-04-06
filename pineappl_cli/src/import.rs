@@ -8,17 +8,17 @@ use std::path::{Path, PathBuf};
 mod fastnlo;
 
 #[cfg(feature = "fastnlo")]
-fn convert_grid(
+fn convert_fastnlo(
     input: &Path,
     alpha: u32,
     pdfset: &str,
     member: usize,
-    silence: bool,
+    silence_fastnlo: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_fastnlo::ffi::{self, Verbosity};
     use std::convert::TryInto;
 
-    if silence {
+    if silence_fastnlo {
         ffi::SetGlobalVerbosity(Verbosity::SILENT);
     }
 
@@ -26,7 +26,7 @@ fn convert_grid(
         input.to_str().unwrap(),
         pdfset,
         member.try_into().unwrap(),
-        silence,
+        silence_fastnlo,
     );
     let grid = fastnlo::convert_fastnlo_table(&file, alpha.try_into().unwrap())?;
 
@@ -39,7 +39,7 @@ fn convert_grid(
 }
 
 #[cfg(not(feature = "fastnlo"))]
-fn convert_grid(
+fn convert_fastnlo(
     _: &Path,
     _: u32,
     _: &str,
@@ -49,6 +49,22 @@ fn convert_grid(
     Err(anyhow!(
         "you need to install `pineappl` with feature `fastnlo`"
     ))
+}
+
+fn convert_grid(
+    input: &Path,
+    alpha: u32,
+    pdfset: &str,
+    member: usize,
+    silence_fastnlo: bool,
+) -> Result<(&'static str, Grid, Vec<f64>)> {
+    if let Some(extension) = input.extension() {
+        if extension == "tab" || extension == "tab.gz" {
+            return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
+        }
+    }
+
+    Err(anyhow!("could not detect file format"))
 }
 
 /// Converts fastNLO tables to PineAPPL grids.
@@ -80,45 +96,50 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
-        let (grid_type, grid, table_results) = convert_grid(
+        let (grid_type, grid, reference_results) = convert_grid(
             &self.input,
             self.alpha,
             &self.pdfset,
             0,
             self.silence_fastnlo,
         )?;
-        let pdf = self.pdfset.parse().map_or_else(
-            |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-            Pdf::with_lhaid,
-        );
-        let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
 
         let mut different = false;
 
-        let mut table = helpers::create_table();
-        table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
+        if reference_results.is_empty() {
+            println!("can not check conversion for this type");
+        } else {
+            let pdf = self.pdfset.parse().map_or_else(
+                |_| Pdf::with_setname_and_member(&self.pdfset, 0),
+                Pdf::with_lhaid,
+            );
+            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
 
-        for (bin, (one, two)) in results
-            .into_iter()
-            .zip(table_results.into_iter())
-            .enumerate()
-        {
-            // catches the case where both results are zero
-            let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
+            let mut table = helpers::create_table();
+            table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
 
-            if rel_diff.abs() > self.accuracy {
-                different = false;
+            for (bin, (one, two)) in results
+                .into_iter()
+                .zip(reference_results.into_iter())
+                .enumerate()
+            {
+                // catches the case where both results are zero
+                let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
+
+                if rel_diff.abs() > self.accuracy {
+                    different = false;
+                }
+
+                table.add_row(row![
+                    bin.to_string(),
+                    r->format!("{:.7e}", one),
+                    r->format!("{:.7e}", two),
+                    r->format!("{:.7e}", rel_diff)
+                ]);
             }
 
-            table.add_row(row![
-                bin.to_string(),
-                r->format!("{:.7e}", one),
-                r->format!("{:.7e}", two),
-                r->format!("{:.7e}", rel_diff)
-            ]);
+            table.printstd();
         }
-
-        table.printstd();
 
         if different {
             Err(anyhow!("grids are different"))
