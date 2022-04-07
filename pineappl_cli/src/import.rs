@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fastnlo")]
 mod fastnlo;
+#[cfg(feature = "fktable")]
+mod fktable;
 
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
@@ -51,6 +53,20 @@ fn convert_fastnlo(
     ))
 }
 
+#[cfg(feature = "fktable")]
+fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    let fktable = fktable::convert_fktable(input)?;
+
+    Ok(("fktable", fktable, vec![]))
+}
+
+#[cfg(not(feature = "fastnlo"))]
+fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fktable`"
+    ))
+}
+
 fn convert_grid(
     input: &Path,
     alpha: u32,
@@ -61,6 +77,8 @@ fn convert_grid(
     if let Some(extension) = input.extension() {
         if extension == "tab" || extension == "tab.gz" {
             return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
+        } else if extension == "dat" {
+            return convert_fktable(input);
         }
     }
 
