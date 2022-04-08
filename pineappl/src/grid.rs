@@ -357,6 +357,8 @@ pub struct GridAxes {
     pub x_grid: Vec<f64>,
     /// Parton IDs used in the grid.
     pub pids: Vec<i32>,
+    /// Interpolation grid for the renormalization scale of the `Grid`.
+    pub mur2_grid: Vec<f64>,
     /// Interpolation grid for the factorization scale of the `Grid`.
     pub muf2_grid: Vec<f64>,
 }
@@ -366,7 +368,7 @@ pub struct GridAxes {
 pub struct EkoInfo {
     /// Scale of the FkTable.
     pub muf2_0: f64,
-    /// Strong coupling constants for the factorization scales in the same ordering as given in
+    /// Strong coupling constants for the renormalization scales in the same ordering as given in
     /// [`GridAxes`].
     pub alphas: Vec<f64>,
     /// Renormalization scale variation.
@@ -1304,6 +1306,7 @@ impl Grid {
             .iter()
             .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2));
 
+        let mut mur2_grid = Vec::new();
         let mut muf2_grid = Vec::new();
         let mut x_grid = Vec::new();
         let pids = Vec::new();
@@ -1343,6 +1346,7 @@ impl Grid {
 
             // not all luminosities are equal (some appear only at higher orders)
             for subgrid in lane.iter() {
+                mur2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.ren).collect());
                 muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
                 if has_pdf1 {
                     x_grid.extend_from_slice(&subgrid.x1_grid());
@@ -1361,6 +1365,7 @@ impl Grid {
         Some(GridAxes {
             x_grid,
             pids, // TODO: for the time being they are just empty, but we might use them for slicing the eko
+            mur2_grid,
             muf2_grid,
         })
     }
@@ -1383,6 +1388,7 @@ impl Grid {
         // Check operator layout
         let dim = operator.shape();
 
+        assert_eq!(dim[0], eko_info.grid_axes.mur2_grid.len());
         assert_eq!(dim[0], eko_info.grid_axes.muf2_grid.len());
         assert_eq!(dim[1], eko_info.target_pids.len());
         assert_eq!(dim[3], eko_info.grid_axes.pids.len());
@@ -1569,15 +1575,15 @@ impl Grid {
                             .unwrap();
                         let als_iq2 = eko_info
                             .grid_axes
-                            .muf2_grid
+                            .mur2_grid
                             .iter()
                             .position(|&q2| {
                                 approx_eq!(f64, q2, eko_info.xir * eko_info.xir * scale, ulps = 64)
                             })
                             .unwrap_or_else(|| {
                                 panic!(
-                                    "Couldn't find q2: {:?} with xir: {:?} and muf2_grid: {:?}",
-                                    scale, eko_info.xir, eko_info.grid_axes.muf2_grid
+                                    "Couldn't find mur2: {:?} with xir: {:?} and mur2_grid: {:?}",
+                                    scale, eko_info.xir, eko_info.grid_axes.mur2_grid
                                 )
                             });
 
@@ -1607,8 +1613,13 @@ impl Grid {
                             .grid_axes
                             .muf2_grid
                             .iter()
-                            .position(|&q2| approx_eq!(f64, q2, src_q2, ulps = 64))
-                            .unwrap()
+                            .position(|&q2| approx_eq!(f64, q2, eko_info.xif * eko_info.xif * src_q2, ulps = 64))
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "Couldn't find muf2: {:?} with xif: {:?} and muf2_grid: {:?}",
+                                    src_q2, eko_info.xif, eko_info.grid_axes.muf2_grid
+                                )
+                            })
                     })
                     .collect();
                 // Iterate target lumis
@@ -2285,6 +2296,7 @@ mod tests {
     // TODO: properly test axes returned
 
     fn simple_grid() -> (Grid, GridAxes) {
+        let mur2_grid = vec![20.];
         let muf2_grid = vec![20.];
         let x_grid = vec![0.1, 0.5, 1.];
 
@@ -2325,6 +2337,7 @@ mod tests {
             GridAxes {
                 x_grid,
                 pids,
+                mur2_grid,
                 muf2_grid,
             },
         )
@@ -2336,6 +2349,7 @@ mod tests {
 
         let ret_axes = grid.axes().unwrap();
         assert_eq!(ret_axes.x_grid, axes.x_grid);
+        assert_eq!(ret_axes.mur2_grid, axes.mur2_grid);
         assert_eq!(ret_axes.muf2_grid, axes.muf2_grid);
         assert_eq!(ret_axes.pids, vec![]);
     }
@@ -2358,6 +2372,7 @@ mod tests {
             grid_axes: GridAxes {
                 x_grid: axes.x_grid.clone(),
                 pids: axes.pids.clone(),
+                mur2_grid: axes.mur2_grid.clone(),
                 muf2_grid: axes.muf2_grid.clone(),
             },
             lumi_id_types,

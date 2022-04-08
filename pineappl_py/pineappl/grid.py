@@ -245,7 +245,7 @@ class Grid(PyWrapper):
             xi,
         )
 
-    def convolute_eko(self, operators, lumi_id_types="pdg_mc_ids", order_mask=()):
+    def convolute_eko(self, operators, mur2_grid, alphas_values, lumi_id_types="pdg_mc_ids", order_mask=(), xi=(1.0, 1.0)):
         """
         Create an FKTable with the EKO.
 
@@ -255,12 +255,22 @@ class Grid(PyWrapper):
         ----------
             operators : dict
                 EKO Output
+            mur2_grid : list[float]
+                renormalization scales
+            alphas_values : list[float]
+                alpha_s values associated to the renormalization scales
             lumi_id_types : str
                 kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
                 for evolution basis)
             order_mask : list(bool)
                 Mask for selecting specific orders. The value `True` means the corresponding order
                 is included. An empty list corresponds to all orders being enabled.
+            xi : (float, float)
+                A tuple with the scale variation factors that should be used.
+                The first entry of a tuple corresponds to the variation of
+                the renormalization scale, the second entry to the variation of the factorization
+                scale. If only results for the central scale are need the tuple should be
+                `(1.0, 1.0)`.
 
         Returns
         ------
@@ -271,19 +281,20 @@ class Grid(PyWrapper):
             [op["operators"] for op in operators["Q2grid"].values()]
         )
         q2grid = list(operators["Q2grid"].keys())
-        alphas_values = [op["alphas"] for op in operators["Q2grid"].values()]
         return FkTable(
             self.raw.convolute_eko(
                 operators["q2_ref"],
-                np.array(alphas_values),
+                np.array(alphas_values, dtype=np.float64),
                 np.array(operators["targetpids"], dtype=np.int32),
                 np.array(operators["targetgrid"]),
                 np.array(operators["inputpids"], dtype=np.int32),
                 np.array(operators["inputgrid"]),
+                np.array(mur2_grid, dtype=np.float64),
                 np.array(q2grid, dtype=np.float64),
                 np.array(operator_grid),
                 lumi_id_types,
                 np.array(order_mask, dtype=bool),
+                xi
             )
         )
 
