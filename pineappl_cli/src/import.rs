@@ -60,7 +60,7 @@ fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
     Ok(("fktable", fktable, vec![]))
 }
 
-#[cfg(not(feature = "fastnlo"))]
+#[cfg(not(feature = "fktable"))]
 fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
