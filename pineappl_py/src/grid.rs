@@ -297,20 +297,24 @@ impl PyGrid {
     ///         interpolation grid
     ///     pids: numpy.ndarray(int)
     ///         particle ids
+    ///     mur2_grid : numpy.ndarray(float)
+    ///         factorization scale list
     ///     muf2_grid : numpy.ndarray(float)
     ///         factorization scale list
     pub fn axes<'py>(
         &self,
         py: Python<'py>,
-    ) -> (&'py PyArray1<f64>, &'py PyArray1<i32>, &'py PyArray1<f64>) {
+    ) -> (&'py PyArray1<f64>, &'py PyArray1<i32>, &'py PyArray1<f64>, &'py PyArray1<f64>) {
         let GridAxes {
             x_grid,
             pids,
+            mur2_grid,
             muf2_grid,
         } = self.grid.axes().unwrap();
         (
             x_grid.into_pyarray(py),
             pids.into_pyarray(py),
+            mur2_grid.into_pyarray(py),
             muf2_grid.into_pyarray(py),
         )
     }
@@ -392,8 +396,10 @@ impl PyGrid {
     ///         sorting of the particles in the tensor for final FkTable
     ///     target_x_grid : numpy.ndarray(float)
     ///         final FKTable interpolation grid
+    ///     mur2_grid : numpy.ndarray(float)
+    ///         list of renormalization scales
     ///     muf2_grid : numpy.ndarray(float)
-    ///         list of process scales
+    ///         list of factorizazion scales
     ///     operator : numpy.ndarray(int, rank=5)
     ///         evolution tensor
     ///     orders_mask: numpy.ndarray(bool)
@@ -411,21 +417,24 @@ impl PyGrid {
         x_grid: PyReadonlyArray1<f64>,
         target_pids: PyReadonlyArray1<i32>,
         target_x_grid: PyReadonlyArray1<f64>,
+        mur2_grid: PyReadonlyArray1<f64>,
         muf2_grid: PyReadonlyArray1<f64>,
         operator: PyReadonlyArray5<f64>,
         lumi_id_types: String,
         order_mask: PyReadonlyArray1<bool>,
+        xi: (f64, f64),
     ) -> PyFkTable {
         let eko_info = EkoInfo {
             muf2_0,
             alphas: alphas.to_vec().unwrap(),
-            xir: 1.,
-            xif: 1.,
+            xir: xi.0,
+            xif: xi.1,
             target_pids: target_pids.to_vec().unwrap(),
             target_x_grid: target_x_grid.to_vec().unwrap(),
             grid_axes: GridAxes {
                 x_grid: x_grid.to_vec().unwrap(),
                 pids: pids.to_vec().unwrap(),
+                mur2_grid: mur2_grid.to_vec().unwrap(),
                 muf2_grid: muf2_grid.to_vec().unwrap(),
             },
             lumi_id_types,
