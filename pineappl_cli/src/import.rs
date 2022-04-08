@@ -75,7 +75,13 @@ fn convert_grid(
     silence_fastnlo: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     if let Some(extension) = input.extension() {
-        if extension == "tab" || extension == "tab.gz" {
+        if extension == "tab"
+            || (extension == "gz"
+                && input
+                    .with_extension("")
+                    .extension()
+                    .map_or(false, |ext| ext == "tab"))
+        {
             return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
         } else if extension == "dat" {
             return convert_fktable(input);
