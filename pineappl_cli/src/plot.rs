@@ -51,52 +51,51 @@ fn map_format_e_join(slice: &[f64]) -> String {
 }
 
 fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -> String {
-    let mut result = String::new();
-
-    for (values, pdfset) in pdf_uncertainties.iter().zip(pdfsets.iter()) {
-        result.push_str(&format!(
-            "        (
+    pdf_uncertainties
+        .iter()
+        .zip(pdfsets.iter())
+        .map(|(values, pdfset)| {
+            format!(
+                "        (
             '{}',
             np.array([{}]),
             np.array([{}]),
             np.array([{}]),
-        ),\n",
-            pdfset_label(pdfset).replace('_', "\\_"),
-            map_format_e_join(&values[0]),
-            map_format_e_join(&values[1]),
-            map_format_e_join(&values[2]),
-        ));
-    }
-
-    result
+        ),",
+                pdfset_label(pdfset).replace('_', r#"\_"#),
+                map_format_e_join(&values[0]),
+                map_format_e_join(&values[1]),
+                map_format_e_join(&values[2]),
+            )
+        })
+        .join("\n")
 }
 
 fn format_metadata(metadata: &[(&String, &String)]) -> String {
-    let mut result = String::new();
-
-    for (key, value) in metadata {
-        // skip multi-line entries
-        if value.contains('\n') {
-            continue;
-        }
-
-        result.push_str(&format!(
-            "        '{}': r'{}',\n",
-            key,
-            if *key == "description" {
-                value.replace('\u{2013}', "--").replace('\u{2014}', "---")
-            } else if key.ends_with("_unit") {
-                value
-                    .replace("GeV", r#"\giga\electronvolt"#)
-                    .replace('/', r#"\per"#)
-                    .replace("pb", r#"\pico\barn"#)
+    metadata
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.contains('\n') {
+                // skip multi-line entries
+                None
             } else {
-                (*value).clone()
+                Some(format!(
+                    "        '{}': r'{}',",
+                    key,
+                    if *key == "description" {
+                        value.replace('\u{2013}', "--").replace('\u{2014}', "---")
+                    } else if key.ends_with("_unit") {
+                        value
+                            .replace("GeV", r#"\giga\electronvolt"#)
+                            .replace('/', r#"\per"#)
+                            .replace("pb", r#"\pico\barn"#)
+                    } else {
+                        (*value).clone()
+                    }
+                ))
             }
-        ));
-    }
-
-    result
+        })
+        .join("\n")
 }
 
 fn format_script(

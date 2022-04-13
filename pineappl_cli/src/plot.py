@@ -280,7 +280,8 @@ def data():
     slices = {slices}
     slice_labels = {slice_labels}
     pdf_results = [
-{pdf_results}    ]
+{pdf_results}
+    ]
 
     return [{{
         'mid': 0.5 * (left[slice[0]:slice[1]] + right[slice[0]:slice[1]]),
@@ -302,7 +303,8 @@ def data():
 
 def metadata():
     return {{
-{metadata}    }}
+{metadata}
+    }}
 
 if __name__ == '__main__':
     main()
