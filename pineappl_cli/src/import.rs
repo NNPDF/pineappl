@@ -158,6 +158,8 @@ impl Subcommand for Opts {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
+
+    #[cfg(feature = "fastnlo")]
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-import 
