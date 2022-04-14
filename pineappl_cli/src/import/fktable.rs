@@ -33,7 +33,8 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
 
     let mut hadronic = false;
     let mut ndata: u16 = 0;
-    let mut nx = 0;
+    let mut nx1 = 0;
+    let mut nx2 = 0;
     let mut q0 = 0.0;
     //let mut setname = String::new();
 
@@ -67,8 +68,10 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
             }
             "{FastKernel_________________________________________________" => {
                 assert_eq!(section, FkTableSection::Xgrid);
-                assert_eq!(nx, x_grid.len());
+                assert_eq!(nx1, x_grid.len());
                 section = FkTableSection::FastKernel;
+
+                nx2 = if hadronic { nx1 } else { 1 };
 
                 // TODO: are FK tables always in the flavor basis?
                 let basis = vec![
@@ -123,7 +126,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(SparseArray3::new(1, nx, nx))
+                arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
                     .take(flavor_mask.iter().filter(|&&value| value).count())
                     .collect();
             }
@@ -139,7 +142,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                                 }
                             }
                             "*NDATA:" => ndata = value.parse()?,
-                            "*NX:" => nx = value.parse()?,
+                            "*NX:" => nx1 = value.parse()?,
                             "*SETNAME:" => { /*setname = value.to_string()*/ }
                             _ => unreachable!(),
                         }
@@ -199,7 +202,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                             );
                         }
 
-                        arrays = iter::repeat(SparseArray3::new(1, nx, nx))
+                        arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
                             .take(flavor_mask.iter().filter(|&&value| value).count())
                             .collect();
                         last_bin = bin;
