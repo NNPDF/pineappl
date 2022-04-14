@@ -92,16 +92,17 @@ impl Subcommand for Opts {
         } else if self.show {
             grid.upgrade();
 
-            if let Some(key_values) = grid.key_values() {
-                let mut vector = key_values.iter().collect::<Vec<_>>();
-                vector.sort();
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    let mut vector = key_values.iter().collect::<Vec<_>>();
+                    vector.sort();
 
-                for (key, value) in &vector {
-                    println!("{}: {}", key, value);
-                }
-            } else {
-                unreachable!();
-            }
+                    for (key, value) in &vector {
+                        println!("{}: {}", key, value);
+                    }
+                },
+            );
         }
 
         Ok(())

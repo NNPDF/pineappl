@@ -127,7 +127,8 @@ pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
 }
 
 /// Return the charge-conjugated PDG ID of `pid`.
-pub fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
+#[must_use]
+pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     match pid {
         21 | 22 => pid,
         _ => -pid,
