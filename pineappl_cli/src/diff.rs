@@ -21,6 +21,9 @@ pub struct Opts {
     /// Ignore differences in the orders and sum them.
     #[clap(alias = "ignore_orders", long = "ignore-orders")]
     ignore_orders: bool,
+    /// Ignore bin limits (but not number of bins).
+    #[clap(long = "ignore-bin-limits")]
+    ignore_bin_limits: bool,
     /// Ignore differences in the luminosity functions.
     #[clap(long = "ignore-lumis")]
     ignore_lumis: bool,
@@ -104,8 +107,12 @@ impl Subcommand for Opts {
             bail!("selected orders differ");
         }
 
-        if grid1.bin_info() != grid2.bin_info() {
-            bail!("bins differ");
+        if !self.ignore_bin_limits && (grid1.bin_info() != grid2.bin_info()) {
+            bail!("bins limits differ");
+        }
+
+        if grid1.bin_info().bins() != grid2.bin_info().bins() {
+            bail!("number of bins differ");
         }
 
         if (grid1.lumi() != grid2.lumi()) && !self.ignore_lumis {
@@ -225,6 +232,7 @@ ARGS:
 
 OPTIONS:
     -h, --help                    Print help information
+        --ignore-bin-limits       Ignore bin limits (but not number of bins)
         --ignore-lumis            Ignore differences in the luminosity functions
         --ignore-orders           Ignore differences in the orders and sum them
         --orders1 <ORDERS1>...    Select orders of the first grid

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- added new switch `--ignore-bin-limits` to `diff` that ignores possibly
+  different bin limits. However, the number of total bins must still be the
+  same between both grids
+
 ## [0.5.2] - 29/03/2022
 
 ### Added
