@@ -162,13 +162,13 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                 FkTableSection::TheoryInfo => {
                     if let Some((key, value)) = line.split_once(' ') {
                         match key {
-                            "*Q0:" => q0 = value.parse::<f64>()?,
+                            "*Q0:" => q0 = value.parse()?,
                             _ => {}
                         }
                     }
                 }
                 FkTableSection::Xgrid => {
-                    x_grid.push(line.parse::<f64>()?);
+                    x_grid.push(line.parse()?);
                 }
                 FkTableSection::FastKernel => {
                     let tokens: Vec<_> = line.split_whitespace().collect();
@@ -208,17 +208,14 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         last_bin = bin;
                     }
 
-                    let grid_values: Vec<_> = tokens
+                    // we can't handle `last_bin > bin`
+                    assert_eq!(last_bin, bin);
+
+                    let grid_values: Vec<f64> = tokens
                         .iter()
                         .skip(if hadronic { 3 } else { 2 })
                         .zip(flavor_mask.iter())
-                        .filter_map(|(string, &mask)| {
-                            if mask {
-                                Some(string.parse::<f64>().unwrap())
-                            } else {
-                                None
-                            }
-                        })
+                        .filter_map(|(string, &mask)| mask.then(|| string.parse().unwrap()))
                         .collect();
 
                     assert_eq!(grid_values.len(), arrays.len());
