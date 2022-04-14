@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
+use ndarray::Axis;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::{Path, PathBuf};
@@ -344,10 +345,10 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
-            let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
-
-            let pull = (res2 - res1) / denominator;
+            let res1 =
+                helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi).sum_axis(Axis(0));
+            let res2 =
+                helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi).sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();
@@ -358,13 +359,15 @@ impl Subcommand for Opts {
             let mut x2_vals = vec![];
             let mut vals = vec![];
 
-            for ((_, ix1, ix2), value) in pull
-                .indexed_iter()
-                .filter(|((_, _, _), value)| **value != 0.0)
-            {
+            for (((ix1, ix2), &one), &two) in res1.indexed_iter().zip(res2.iter()) {
+                if one == 0.0 {
+                    assert_eq!(two, 0.0);
+                    continue;
+                }
+
                 x1_vals.push(x1[ix1]);
                 x2_vals.push(x2[ix2]);
-                vals.push(*value);
+                vals.push((two - one) / denominator);
             }
 
             println!(
