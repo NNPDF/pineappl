@@ -5,9 +5,9 @@ import numpy as np
 from math import fabs, log10
 from scipy.interpolate import griddata
 
-x1 = np.array([{}])
-x2 = np.array([{}])
-z = np.array([{}])
+x1 = np.array([{x1}])
+x2 = np.array([{x2}])
+z = np.array([{z}])
 x = 0.5 * np.log(x1 / x2)
 y = np.sqrt(x1 * x2)
 
