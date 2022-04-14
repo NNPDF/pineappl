@@ -3,7 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
-use pineappl::bin::BinInfo;
+use ndarray::Axis;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::{Path, PathBuf};
@@ -96,46 +96,6 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
             }
         })
         .join("\n")
-}
-
-fn format_script(
-    bin_info: &BinInfo,
-    output: &str,
-    left: &[f64],
-    right: &[f64],
-    min: &[f64],
-    max: &[f64],
-    qcd_central: &[f64],
-    qcd_min: &[f64],
-    qcd_max: &[f64],
-    slices: &[(usize, usize)],
-    slice_labels: &[String],
-    pdf_uncertainties: &[Vec<Vec<f64>>],
-    pdfsets: &[String],
-    metadata: &[(&String, &String)],
-) {
-    println!(
-        include_str!("plot.py"),
-        xaxis = format!("x{}", bin_info.dimensions()),
-        output = output,
-        left = map_format_join(left),
-        right = map_format_join(right),
-        min = map_format_e_join(min),
-        max = map_format_e_join(max),
-        qcd_central = map_format_e_join(qcd_central),
-        qcd_min = map_format_e_join(qcd_min),
-        qcd_max = map_format_e_join(qcd_max),
-        slices = format!("{:?}", slices),
-        slice_labels = format!(
-            "[{}]",
-            slice_labels
-                .iter()
-                .map(|string| format!("r'{}'", string))
-                .join(", ")
-        ),
-        pdf_results = format_pdf_results(pdf_uncertainties, pdfsets),
-        metadata = format_metadata(metadata),
-    );
 }
 
 impl Subcommand for Opts {
@@ -312,21 +272,27 @@ impl Subcommand for Opts {
                 _ => {}
             }
 
-            format_script(
-                &bin_info,
-                output.to_str().unwrap(),
-                left_limits.last().unwrap(),
-                right_limits.last().unwrap(),
-                &min,
-                &max,
-                &qcd_central,
-                &qcd_min,
-                &qcd_max,
-                &slices,
-                &slice_labels,
-                &pdf_uncertainties,
-                &self.pdfsets,
-                &vector,
+            println!(
+                include_str!("plot.py"),
+                xaxis = format!("x{}", bin_info.dimensions()),
+                output = output.to_str().unwrap(),
+                left = map_format_join(left_limits.last().unwrap()),
+                right = map_format_join(right_limits.last().unwrap()),
+                min = map_format_e_join(&min),
+                max = map_format_e_join(&max),
+                qcd_central = map_format_e_join(&qcd_central),
+                qcd_min = map_format_e_join(&qcd_min),
+                qcd_max = map_format_e_join(&qcd_max),
+                slices = format!("{:?}", slices),
+                slice_labels = format!(
+                    "[{}]",
+                    slice_labels
+                        .iter()
+                        .map(|string| format!("r'{}'", string))
+                        .join(", ")
+                ),
+                pdf_results = format_pdf_results(&pdf_uncertainties, &self.pdfsets),
+                metadata = format_metadata(&vector),
             );
         } else {
             let (pdfset1, pdfset2) = self.pdfsets.iter().collect_tuple().unwrap();
@@ -379,10 +345,10 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi);
-            let res2 = helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi);
-
-            let pull = (res2 - res1) / denominator;
+            let res1 =
+                helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi).sum_axis(Axis(0));
+            let res2 =
+                helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi).sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();
@@ -393,20 +359,22 @@ impl Subcommand for Opts {
             let mut x2_vals = vec![];
             let mut vals = vec![];
 
-            for ((_, ix1, ix2), value) in pull
-                .indexed_iter()
-                .filter(|((_, _, _), value)| **value != 0.0)
-            {
+            for (((ix1, ix2), &one), &two) in res1.indexed_iter().zip(res2.iter()) {
+                if one == 0.0 {
+                    assert_eq!(two, 0.0);
+                    continue;
+                }
+
                 x1_vals.push(x1[ix1]);
                 x2_vals.push(x2[ix2]);
-                vals.push(*value);
+                vals.push((two - one) / denominator);
             }
 
             println!(
                 include_str!("subgrid-pull-plot.py"),
-                map_format_e_join(&x1_vals),
-                map_format_e_join(&x2_vals),
-                map_format_e_join(&vals)
+                x1 = map_format_e_join(&x1_vals),
+                x2 = map_format_e_join(&x2_vals),
+                z = map_format_e_join(&vals)
             );
         }
 

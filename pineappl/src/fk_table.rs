@@ -104,14 +104,14 @@ impl TryFrom<&str> for FkAssumptions {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
-            "Nf6Ind" => FkAssumptions::Nf6Ind,
-            "Nf6Sym" => FkAssumptions::Nf6Sym,
-            "Nf5Ind" => FkAssumptions::Nf5Ind,
-            "Nf5Sym" => FkAssumptions::Nf5Sym,
-            "Nf4Ind" => FkAssumptions::Nf4Ind,
-            "Nf4Sym" => FkAssumptions::Nf4Sym,
-            "Nf3Ind" => FkAssumptions::Nf3Ind,
-            "Nf3Sym" => FkAssumptions::Nf3Sym,
+            "Nf6Ind" => Self::Nf6Ind,
+            "Nf6Sym" => Self::Nf6Sym,
+            "Nf5Ind" => Self::Nf5Ind,
+            "Nf5Sym" => Self::Nf5Sym,
+            "Nf4Ind" => Self::Nf4Ind,
+            "Nf4Sym" => Self::Nf4Sym,
+            "Nf3Ind" => Self::Nf3Ind,
+            "Nf3Sym" => Self::Nf3Sym,
             _ => {
                 return Err(UnknownFkAssumption {
                     variant: value.to_string(),

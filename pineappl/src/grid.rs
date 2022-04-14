@@ -574,8 +574,6 @@ impl Grid {
         bins
     }
 
-    // TODO: migrate to use a LumiCache
-
     /// Convolutes a single subgrid `(order, bin, lumi)` with the PDFs strong coupling given by
     /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
     /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
