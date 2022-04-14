@@ -225,7 +225,8 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         .zip(grid_values.iter())
                         .filter(|(_, value)| **value != 0.0)
                     {
-                        array[[0, x1, x2]] = *value;
+                        array[[0, x1, x2]] =
+                            x_grid[x1] * if hadronic { x_grid[x2] } else { 1.0 } * value;
                     }
                 }
                 _ => {}
