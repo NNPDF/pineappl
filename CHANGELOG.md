@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
 - added new switch `--ignore-bin-limits` to `diff` that ignores possibly
   different bin limits. However, the number of total bins must still be the
   same between both grids
+- added support for
+  [FK tables](https://docs.nnpdf.science/data/th-data-files.html) in the
+  subcommand `import`
 
 ## [0.5.2] - 29/03/2022
 

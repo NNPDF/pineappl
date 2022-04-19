@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fastnlo")]
 mod fastnlo;
+#[cfg(feature = "fktable")]
+mod fktable;
 
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
@@ -51,6 +53,20 @@ fn convert_fastnlo(
     ))
 }
 
+#[cfg(feature = "fktable")]
+fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    let fktable = fktable::convert_fktable(input)?;
+
+    Ok(("fktable", fktable, vec![]))
+}
+
+#[cfg(not(feature = "fktable"))]
+fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fktable`"
+    ))
+}
+
 fn convert_grid(
     input: &Path,
     alpha: u32,
@@ -67,6 +83,8 @@ fn convert_grid(
                     .map_or(false, |ext| ext == "tab"))
         {
             return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
+        } else if extension == "dat" {
+            return convert_fktable(input);
         }
     }
 
@@ -197,6 +215,37 @@ OPTIONS:
 3 9.4319392e-1 9.4319392e-1  5.5511151e-15
 ";
 
+    #[cfg(feature = "fktable")]
+    const IMPORT_DIS_FKTABLE_STR: &str = "bin  x0       diff      scale uncertainty
+---+--+--+-------------+--------+--------
+  0  0  1   1.8900584e0  -69.81%  107.21%
+  1  1  2   1.4830883e0  -69.63%   98.20%
+  2  2  3   1.1497012e0  -69.68%   90.39%
+  3  3  4  8.7974506e-1  -69.38%   82.45%
+  4  4  5  7.0882550e-1  -69.14%   70.54%
+  5  5  6  5.7345845e-1  -69.02%   59.25%
+  6  6  7  4.7744833e-1  -68.37%   44.68%
+  7  7  8  4.1037984e-1  -67.36%   29.06%
+  8  8  9  4.0362470e-1  -65.97%   12.72%
+  9  9 10  4.2613006e-1  -64.37%    0.00%
+ 10 10 11  3.7669466e-1  -63.54%    0.00%
+ 11 11 12  2.9572989e-1  -62.91%    0.00%
+ 12 12 13  2.0869778e-1  -62.28%    0.00%
+ 13 13 14  1.2602675e-1  -61.64%    0.00%
+ 14 14 15  6.4220769e-2  -60.94%    0.00%
+ 15 15 16  2.5434367e-2  -60.76%    0.00%
+ 16 16 17  7.6070428e-3  -59.97%    0.00%
+ 17 17 18  2.1848546e-3  -60.65%    0.00%
+ 18 18 19  6.2309735e-4  -57.15%    0.00%
+ 19 19 20 -1.0496472e-4    0.00%  -55.42%
+";
+
+    #[cfg(feature = "fktable")]
+    const IMPORT_HADRONIC_FKTABLE_STR: &str = "bin x0     diff     scale uncertainty
+---+-+-+-----------+--------+--------
+  0 0 1 7.7624461e2  -86.97%    0.00%
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -245,5 +294,67 @@ OPTIONS:
             .assert()
             .success()
             .stdout(IMPORT_FLEX_GRID_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fktable")]
+    fn import_dis_fktable() {
+        let output = NamedTempFile::new("converted3.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/FK_POSXDQ.dat",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout("can not check conversion for this type\n");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_DIS_FKTABLE_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fktable")]
+    fn import_hadronic_fktable() {
+        let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/FK_ATLASTTBARTOT13TEV.dat",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout("can not check conversion for this type\n");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_HADRONIC_FKTABLE_STR);
     }
 }
