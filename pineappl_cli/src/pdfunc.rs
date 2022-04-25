@@ -52,7 +52,9 @@ impl Subcommand for Opts {
 
         let results: Vec<f64> = pdfs
             .into_par_iter()
-            .flat_map(|pdf| helpers::convolute(&grid, &pdf, &self.orders, &[], &[], 1))
+            .flat_map(|pdf| {
+                helpers::convolute(&grid, &pdf, &self.orders, &[], &[], 1, self.integrated)
+            })
             .collect();
 
         let bin_info = grid.bin_info();
@@ -62,9 +64,8 @@ impl Subcommand for Opts {
         let right_limits: Vec<_> = (0..bin_info.dimensions())
             .map(|i| bin_info.right(i))
             .collect();
-        let normalizations = bin_info.normalizations();
 
-        let labels = helpers::labels(&grid);
+        let labels = helpers::labels(&grid, self.integrated);
         let (y_label, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
@@ -73,7 +74,7 @@ impl Subcommand for Opts {
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->if self.integrated { "integ" } else { y_label }));
+        title.add_cell(cell!(c->y_label));
         title.add_cell(cell!(c->"PDF uncertainty").with_hspan(2));
 
         let mut table = helpers::create_table();
@@ -95,7 +96,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { uncertainty.central * normalizations[bin] } else { uncertainty.central })));
+            row.add_cell(cell!(r->format!("{:.7e}", uncertainty.central)));
             row.add_cell(
                 cell!(r->format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0)),
             );

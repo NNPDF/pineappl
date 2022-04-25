@@ -51,7 +51,15 @@ impl Subcommand for Opts {
         let results: Vec<Vec<f64>> = orders
             .iter()
             .map(|order| {
-                helpers::convolute(&grid, &pdf, &[(order.alphas, order.alpha)], &[], &[], 1)
+                helpers::convolute(
+                    &grid,
+                    &pdf,
+                    &[(order.alphas, order.alpha)],
+                    &[],
+                    &[],
+                    1,
+                    self.integrated,
+                )
             })
             .collect();
 
@@ -67,9 +75,8 @@ impl Subcommand for Opts {
         let right_limits: Vec<_> = (0..bin_info.dimensions())
             .map(|i| bin_info.right(i))
             .collect();
-        let normalizations = bin_info.normalizations();
 
-        let labels = helpers::labels(&grid);
+        let labels = helpers::labels(&grid, self.integrated);
         let (y_label, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
@@ -78,7 +85,7 @@ impl Subcommand for Opts {
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->if self.integrated { "integ" } else { y_label }));
+        title.add_cell(cell!(c->y_label));
 
         for order in &orders {
             title.add_cell(cell!(c->format!("O(as^{} a^{})", order.alphas, order.alpha)));
@@ -89,11 +96,6 @@ impl Subcommand for Opts {
 
         for bin in 0..bin_info.bins() {
             let row = table.add_empty_row();
-            let bin_norm = if self.integrated {
-                normalizations[bin]
-            } else {
-                1.0
-            };
 
             row.add_cell(cell!(r->format!("{}", bin)));
             for (left, right) in left_limits.iter().zip(right_limits.iter()) {
@@ -101,7 +103,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
             row.add_cell(cell!(r->format!("{:.7e}",
-            bin_norm * results.iter().fold(0.0, |value, results| value + results[bin]))));
+            results.iter().fold(0.0, |value, results| value + results[bin]))));
 
             let mut normalization = 0.0;
 
@@ -120,7 +122,7 @@ impl Subcommand for Opts {
             // print each order normalized to the sum of all leading orders
             for result in results.iter().map(|vec| vec[bin]) {
                 if self.absolute {
-                    row.add_cell(cell!(r->format!("{:.7e}", result * bin_norm)));
+                    row.add_cell(cell!(r->format!("{:.7e}", result)));
                 } else {
                     row.add_cell(cell!(r->format!("{:.2}%", result / normalization * 100.0)));
                 }

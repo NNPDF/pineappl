@@ -8,6 +8,7 @@ use pineappl::lumi::LumiCache;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
 use std::fs::{File, OpenOptions};
+use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::str::FromStr;
@@ -66,7 +67,7 @@ pub const SCALES_VECTOR: [(f64, f64); 9] = [
     (0.5, 2.0),
 ];
 
-pub fn labels(grid: &Grid) -> Vec<String> {
+pub fn labels(grid: &Grid, integrated: bool) -> Vec<String> {
     let mut labels = vec![];
     let key_values = grid.key_values().cloned().unwrap_or_default();
 
@@ -79,12 +80,14 @@ pub fn labels(grid: &Grid) -> Vec<String> {
         );
     }
 
-    labels.push(
+    labels.push(if integrated {
+        "integ".to_string()
+    } else {
         key_values
             .get("y_label")
-            .unwrap_or(&"diff".to_owned())
-            .clone(),
-    );
+            .unwrap_or(&"diff".to_string())
+            .clone()
+    });
     labels
 }
 
@@ -95,6 +98,7 @@ pub fn convolute(
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
+    integrated: bool,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -126,7 +130,24 @@ pub fn convolute(
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
-    grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales])
+    let mut results = grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales]);
+
+    if integrated {
+        let normalizations = grid.bin_info().normalizations();
+
+        results
+            .iter_mut()
+            .zip(
+                normalizations
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, _)| (bins.is_empty() || bins.iter().any(|b| b == index)))
+                    .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
+            )
+            .for_each(|(value, norm)| *value *= norm);
+    }
+
+    results
 }
 
 pub fn convolute_subgrid(

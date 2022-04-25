@@ -137,7 +137,7 @@ impl Subcommand for Opts {
                 |_| Pdf::with_setname_and_member(&self.pdfset, 0),
                 Pdf::with_lhaid,
             );
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
+            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1, false);
 
             let mut table = helpers::create_table();
             table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);

@@ -53,7 +53,15 @@ impl Subcommand for Opts {
         );
         let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
 
-        let results = helpers::convolute(&grid, &pdf, &self.orders, &bins, &[], self.scales);
+        let results = helpers::convolute(
+            &grid,
+            &pdf,
+            &self.orders,
+            &bins,
+            &[],
+            self.scales,
+            self.integrated,
+        );
 
         let other_results: Vec<f64> = self.pdfsets[1..]
             .iter()
@@ -61,7 +69,7 @@ impl Subcommand for Opts {
                 let pdf = pdfset
                     .parse()
                     .map_or_else(|_| Pdf::with_setname_and_member(pdfset, 0), Pdf::with_lhaid);
-                helpers::convolute(&grid, &pdf, &[], &bins, &[], 1)
+                helpers::convolute(&grid, &pdf, &[], &bins, &[], 1, self.integrated)
             })
             .collect();
 
@@ -72,9 +80,8 @@ impl Subcommand for Opts {
         let right_limits: Vec<_> = (0..bin_info.dimensions())
             .map(|i| bin_info.right(i))
             .collect();
-        let normalizations = bin_info.normalizations();
 
-        let labels = helpers::labels(&grid);
+        let labels = helpers::labels(&grid, self.integrated);
         let (y_label, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
@@ -83,7 +90,7 @@ impl Subcommand for Opts {
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->if self.integrated { "integ" } else { y_label }));
+        title.add_cell(cell!(c->y_label));
 
         if self.absolute {
             for scale in &helpers::SCALES_VECTOR[0..self.scales] {
@@ -120,11 +127,11 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { values[0] * normalizations[bin] } else { values[0] })));
+            row.add_cell(cell!(r->format!("{:.7e}", values[0])));
 
             if self.absolute {
                 for &value in values.iter() {
-                    row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { value * normalizations[bin] } else { value })));
+                    row.add_cell(cell!(r->format!("{:.7e}", value)));
                 }
             } else if self.scales != 1 {
                 row.add_cell(cell!(r->format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
@@ -138,7 +145,7 @@ impl Subcommand for Opts {
             };
 
             for &other in other_results.iter().skip(index).step_by(bins) {
-                row.add_cell(cell!(r->format!("{:.7e}", if self.integrated { other * normalizations[bin] } else { other })));
+                row.add_cell(cell!(r->format!("{:.7e}", other)));
                 row.add_cell(cell!(r->format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
             }
         }

@@ -58,11 +58,11 @@ impl Subcommand for Opts {
 
         let results1: Vec<f64> = pdfset1
             .par_iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
         let results2: Vec<f64> = pdfset2
             .par_iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
 
         let bin_info = grid.bin_info();
@@ -73,7 +73,7 @@ impl Subcommand for Opts {
             .map(|i| bin_info.right(i))
             .collect();
 
-        let labels = helpers::labels(&grid);
+        let labels = helpers::labels(&grid, false);
         let (_, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
@@ -113,7 +113,9 @@ impl Subcommand for Opts {
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset1
                         .iter()
-                        .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
+                        .map(|pdf| {
+                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                        })
                         .collect();
                     set1.uncertainty(&central, self.cl, false).central
                 })
@@ -124,7 +126,9 @@ impl Subcommand for Opts {
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset2
                         .iter()
-                        .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
+                        .map(|pdf| {
+                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                        })
                         .collect();
                     set2.uncertainty(&central, self.cl, false).central
                 })

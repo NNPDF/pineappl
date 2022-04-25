@@ -68,7 +68,15 @@ impl Subcommand for Opts {
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(&grid, &pdf, &self.orders, &[], &lumi_mask, 1)
+                helpers::convolute(
+                    &grid,
+                    &pdf,
+                    &self.orders,
+                    &[],
+                    &lumi_mask,
+                    1,
+                    self.integrated,
+                )
             })
             .collect();
 
@@ -79,9 +87,8 @@ impl Subcommand for Opts {
         let right_limits: Vec<_> = (0..bin_info.dimensions())
             .map(|i| bin_info.right(i))
             .collect();
-        let normalizations = bin_info.normalizations();
 
-        let labels = helpers::labels(&grid);
+        let labels = helpers::labels(&grid, self.integrated);
         let (y_label, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
@@ -92,9 +99,7 @@ impl Subcommand for Opts {
         }
         for _ in 0..limit {
             title.add_cell(cell!(c->"l"));
-            title.add_cell(
-            cell!(c->if self.absolute { if self.integrated { "integ" } else { y_label } } else { "size" }),
-        );
+            title.add_cell(cell!(c->if self.absolute { y_label } else { "size" }));
         }
 
         let mut table = helpers::create_table();
@@ -114,16 +119,7 @@ impl Subcommand for Opts {
                 let mut values: Vec<_> = results
                     .iter()
                     .enumerate()
-                    .map(|(lumi, vec)| {
-                        (
-                            lumi,
-                            if self.integrated {
-                                normalizations[bin] * vec[bin]
-                            } else {
-                                vec[bin]
-                            },
-                        )
-                    })
+                    .map(|(lumi, vec)| (lumi, vec[bin]))
                     .collect();
 
                 // sort using the absolute value in descending order

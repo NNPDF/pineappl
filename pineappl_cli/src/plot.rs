@@ -113,7 +113,7 @@ impl Subcommand for Opts {
                 Pdf::with_lhaid,
             );
 
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales);
+            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales, false);
 
             let qcd_results = {
                 let mut orders = grid.orders().to_vec();
@@ -130,7 +130,7 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], self.scales)
+                helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], self.scales, false)
             };
 
             let bin_info = grid.bin_info();
@@ -148,7 +148,7 @@ impl Subcommand for Opts {
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
                         .into_par_iter()
-                        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
+                        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1, false))
                         .collect();
 
                     let mut central = Vec::with_capacity(bin_info.bins());
@@ -319,11 +319,11 @@ impl Subcommand for Opts {
 
             let values1: Vec<f64> = pdfset1
                 .par_iter()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
             let values2: Vec<f64> = pdfset2
                 .par_iter()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
 
             let uncertainty1 = set1.uncertainty(&values1, cl, false);
