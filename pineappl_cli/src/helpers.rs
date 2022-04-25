@@ -1,7 +1,7 @@
 use anyhow::{ensure, Context, Result};
 use enum_dispatch::enum_dispatch;
 use lazy_static::lazy_static;
-use lhapdf::Pdf;
+use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
@@ -18,6 +18,19 @@ pub const ONE_SIGMA_STR: &str = "68.26894921370858";
 
 lazy_static! {
     pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
+}
+
+pub fn create_pdf(pdf: &str) -> Pdf {
+    // TODO: use different `Pdf` constructor so we can use the `PDFSET/member` syntax
+    pdf.parse()
+        .map_or_else(|_| Pdf::with_setname_and_member(pdf, 0), Pdf::with_lhaid)
+}
+
+pub fn create_pdfset(pdfset: &str) -> PdfSet {
+    PdfSet::new(&pdfset.parse().map_or_else(
+        |_| pdfset.to_string(),
+        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+    ))
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {

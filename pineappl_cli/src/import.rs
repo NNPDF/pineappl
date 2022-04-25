@@ -116,7 +116,6 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
-        use lhapdf::Pdf;
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
@@ -133,10 +132,7 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("can not check conversion for this type");
         } else {
-            let pdf = self.pdfset.parse().map_or_else(
-                |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-                Pdf::with_lhaid,
-            );
+            let pdf = helpers::create_pdf(&self.pdfset);
             let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1, false);
 
             let mut table = helpers::create_table();

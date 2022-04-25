@@ -1,7 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
@@ -52,10 +51,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let pdf = self.pdfset.parse().map_or_else(
-            |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-            Pdf::with_lhaid,
-        );
+        let pdf = helpers::create_pdf(&self.pdfset);
 
         let mut lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
         lumis.sort_unstable();

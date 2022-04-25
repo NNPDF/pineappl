@@ -1,7 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
-use lhapdf::PdfSet;
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::PathBuf;
@@ -40,14 +39,8 @@ impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let set1 = PdfSet::new(&self.pdfset1.parse().map_or_else(
-            |_| self.pdfset1.to_string(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ));
-        let set2 = PdfSet::new(&self.pdfset2.parse().map_or_else(
-            |_| self.pdfset2.to_string(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ));
+        let set1 = helpers::create_pdfset(&self.pdfset1);
+        let set2 = helpers::create_pdfset(&self.pdfset2);
         let pdfset1 = set1.mk_pdfs();
         let pdfset2 = set2.mk_pdfs();
 

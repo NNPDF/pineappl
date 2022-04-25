@@ -1,7 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -119,10 +118,7 @@ impl Subcommand for Opts {
             bail!("luminosities differ");
         }
 
-        let pdf = self.pdfset.parse().map_or_else(
-            |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-            Pdf::with_lhaid,
-        );
+        let pdf = helpers::create_pdf(&self.pdfset);
 
         let mut table = helpers::create_table();
         let bin_info = grid1.bin_info();

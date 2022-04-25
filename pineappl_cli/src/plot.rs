@@ -2,7 +2,6 @@ use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
-use lhapdf::{Pdf, PdfSet};
 use ndarray::Axis;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -108,10 +107,7 @@ impl Subcommand for Opts {
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let lhapdf_name = pdfset_name(&self.pdfsets[0]);
-            let pdf = lhapdf_name.parse().map_or_else(
-                |_| Pdf::with_setname_and_member(lhapdf_name, 0),
-                Pdf::with_lhaid,
-            );
+            let pdf = helpers::create_pdf(lhapdf_name);
 
             let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales, false);
 
@@ -140,10 +136,7 @@ impl Subcommand for Opts {
                 .par_iter()
                 .map(|pdfset| {
                     let lhapdf_name = pdfset_name(pdfset);
-                    let set = PdfSet::new(&lhapdf_name.parse().map_or_else(
-                        |_| lhapdf_name.to_string(),
-                        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-                    ));
+                    let set = helpers::create_pdfset(lhapdf_name);
 
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
@@ -306,14 +299,8 @@ impl Subcommand for Opts {
             let cl = helpers::ONE_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
-                |_| pdfset1.to_string(),
-                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-            ));
-            let set2 = PdfSet::new(&pdfset2.parse().map_or_else(
-                |_| pdfset2.to_string(),
-                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-            ));
+            let set1 = helpers::create_pdfset(&pdfset1);
+            let set2 = helpers::create_pdfset(&pdfset2);
             let pdfset1 = set1.mk_pdfs();
             let pdfset2 = set2.mk_pdfs();
 
