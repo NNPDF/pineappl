@@ -74,7 +74,7 @@ pub fn labels(grid: &Grid) -> Vec<String> {
         labels.push(
             key_values
                 .get(&format!("x{}_label", d + 1))
-                .unwrap_or(&format!("x{}", d))
+                .unwrap_or(&format!("x{}", d + 1))
                 .clone(),
         );
     }
