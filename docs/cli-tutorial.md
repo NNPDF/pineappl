@@ -133,6 +133,10 @@ following:
     OPTIONS:
         -a, --absolute              Show absolute numbers of the scale variation
         -b, --bins <BINS>...        Selects a subset of bins
+            --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
+                                    [default: 7]
+            --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
+                                    [default: 2]
         -h, --help                  Print help information
         -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                     ones

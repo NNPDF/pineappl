@@ -41,6 +41,12 @@ pub struct Opts {
     /// Set the number of scale variations.
     #[clap(default_value = "7", long, possible_values = ["1", "3", "7", "9"], short)]
     scales: usize,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -121,15 +127,15 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.7e}", values[0])));
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, values[0])));
 
             if self.absolute {
                 for &value in values.iter() {
-                    row.add_cell(cell!(r->format!("{:.7e}", value)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
                 }
             } else if self.scales != 1 {
-                row.add_cell(cell!(r->format!("{:.2}%", (min_value / values[0] - 1.0) * 100.0)));
-                row.add_cell(cell!(r->format!("{:.2}%", (max_value / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.*}%", self.digits_rel, (min_value / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.*}%", self.digits_rel, (max_value / values[0] - 1.0) * 100.0)));
             }
 
             let bins = if bins.is_empty() {
@@ -139,8 +145,10 @@ impl Subcommand for Opts {
             };
 
             for &other in other_results.iter().skip(index).step_by(bins) {
-                row.add_cell(cell!(r->format!("{:.7e}", other)));
-                row.add_cell(cell!(r->format!("{:.2}%", (other / values[0] - 1.0) * 100.0)));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, other)));
+                row.add_cell(
+                    cell!(r->format!("{:.*}%", self.digits_rel, (other / values[0] - 1.0) * 100.0)),
+                );
             }
         }
 
@@ -167,6 +175,10 @@ ARGS:
 OPTIONS:
     -a, --absolute              Show absolute numbers of the scale variation
     -b, --bins <BINS>...        Selects a subset of bins
+        --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
+                                [default: 7]
+        --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
+                                [default: 2]
     -h, --help                  Print help information
     -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                 ones

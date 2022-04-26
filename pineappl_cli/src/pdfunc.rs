@@ -33,6 +33,12 @@ pub struct Opts {
     /// Number of threads to utilize.
     #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
     threads: usize,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -92,12 +98,12 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.7e}", uncertainty.central)));
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, uncertainty.central)));
             row.add_cell(
-                cell!(r->format!("{:.2}%", (-uncertainty.errminus / uncertainty.central) * 100.0)),
+                cell!(r->format!("{:.*}%", self.digits_rel, (-uncertainty.errminus / uncertainty.central) * 100.0)),
             );
             row.add_cell(
-                cell!(r->format!("{:.2}%", (uncertainty.errplus / uncertainty.central) * 100.0)),
+                cell!(r->format!("{:.*}%", self.digits_rel, (uncertainty.errplus / uncertainty.central) * 100.0)),
             );
         }
 
@@ -123,6 +129,10 @@ ARGS:
 
 OPTIONS:
         --cl <CL>               Confidence level in per cent [default: 68.26894921370858]
+        --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
+                                [default: 7]
+        --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
+                                [default: 2]
     -h, --help                  Print help information
     -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                 ones

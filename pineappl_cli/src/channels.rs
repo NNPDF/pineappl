@@ -46,6 +46,12 @@ pub struct Opts {
         use_value_delimiter = true
     )]
     orders: Vec<(u32, u32)>,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -129,7 +135,7 @@ impl Subcommand for Opts {
                     .take(limit)
                 {
                     row.add_cell(cell!(r->format!("{}", lumi)));
-                    row.add_cell(cell!(r->format!("{:.7e}", value)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
                 }
             } else {
                 let sum: f64 = results.iter().map(|vec| vec[bin]).sum();
@@ -150,7 +156,7 @@ impl Subcommand for Opts {
                     .take(limit)
                 {
                     row.add_cell(cell!(r->format!("{}", lumi)));
-                    row.add_cell(cell!(r->format!("{:.2}%", percentage)));
+                    row.add_cell(cell!(r->format!("{:.*}%", self.digits_rel, percentage)));
                 }
             }
         }
@@ -177,6 +183,10 @@ ARGS:
 
 OPTIONS:
     -a, --absolute              Show absolute numbers of each contribution
+        --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
+                                [default: 7]
+        --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
+                                [default: 2]
     -h, --help                  Print help information
     -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                 ones

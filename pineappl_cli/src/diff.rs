@@ -48,6 +48,12 @@ pub struct Opts {
     /// Scale all results of the second grid.
     #[clap(long, default_value = "1.0")]
     scale2: f64,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 3, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -160,9 +166,9 @@ impl Subcommand for Opts {
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
-                row.add_cell(cell!(r->format!("{:.7e}", result1)));
-                row.add_cell(cell!(r->format!("{:.7e}", result2)));
-                row.add_cell(cell!(r->format!("{:.3e}",
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
                 if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
             }
         } else {
@@ -197,9 +203,9 @@ impl Subcommand for Opts {
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
-                    row.add_cell(cell!(r->format!("{:.7e}", result1)));
-                    row.add_cell(cell!(r->format!("{:.7e}", result2)));
-                    row.add_cell(cell!(r->format!("{:.3e}",
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
                     if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
                 }
             }
@@ -227,6 +233,10 @@ ARGS:
     <PDFSET>    LHAPDF id or name of the PDF set
 
 OPTIONS:
+        --digits-abs <ABS>        Set the number of fractional digits shown for absolute numbers
+                                  [default: 7]
+        --digits-rel <REL>        Set the number of fractional digits shown for relative numbers
+                                  [default: 3]
     -h, --help                    Print help information
         --ignore-bin-limits       Ignore bin limits (but not number of bins)
         --ignore-lumis            Ignore differences in the luminosity functions

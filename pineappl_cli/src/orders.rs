@@ -29,6 +29,12 @@ pub struct Opts {
         use_value_delimiter = true
     )]
     normalize: Vec<(u32, u32)>,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -98,7 +104,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.7e}",
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs,
             results.iter().fold(0.0, |value, results| value + results[bin]))));
 
             let mut normalization = 0.0;
@@ -118,9 +124,9 @@ impl Subcommand for Opts {
             // print each order normalized to the sum of all leading orders
             for result in results.iter().map(|vec| vec[bin]) {
                 if self.absolute {
-                    row.add_cell(cell!(r->format!("{:.7e}", result)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result)));
                 } else {
-                    row.add_cell(cell!(r->format!("{:.2}%", result / normalization * 100.0)));
+                    row.add_cell(cell!(r->format!("{:.*}%", self.digits_rel, result / normalization * 100.0)));
                 }
             }
         }
@@ -147,6 +153,10 @@ ARGS:
 
 OPTIONS:
     -a, --absolute                    Show absolute numbers of each perturbative order
+        --digits-abs <ABS>            Set the number of fractional digits shown for absolute numbers
+                                      [default: 7]
+        --digits-rel <REL>            Set the number of fractional digits shown for relative numbers
+                                      [default: 2]
     -h, --help                        Print help information
     -i, --integrated                  Show integrated numbers (without bin widths) instead of
                                       differential ones

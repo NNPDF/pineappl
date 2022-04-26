@@ -33,6 +33,9 @@ pub struct Opts {
     /// Number of threads to utilize.
     #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
     threads: usize,
+    /// Set the number of digits shown for numerical values.
+    #[clap(default_value_t = 3, long = "digits")]
+    digits: usize,
 }
 
 impl Subcommand for Opts {
@@ -159,7 +162,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
 
-            row.add_cell(cell!(r->format!("{:.3}", total)));
+            row.add_cell(cell!(r->format!("{:.*}", self.digits, total)));
 
             // sort using the absolute value in descending order
             pull_tuples.sort_unstable_by(|(_, pull_left), (_, pull_right)| {
@@ -168,7 +171,7 @@ impl Subcommand for Opts {
 
             for (lumi, pull) in pull_tuples.iter().take(self.limit) {
                 row.add_cell(cell!(r->format!("{}", lumi)));
-                row.add_cell(cell!(r->format!("{:.3}", pull)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits, pull)));
             }
         }
 
@@ -195,6 +198,7 @@ ARGS:
 
 OPTIONS:
         --cl <CL>              Confidence level in per cent [default: 68.26894921370858]
+        --digits <DIGITS>      Set the number of digits shown for numerical values [default: 3]
     -h, --help                 Print help information
     -l, --limit <LIMIT>        The maximum number of luminosities displayed [default: 10]
         --threads <THREADS>    Number of threads to utilize";

@@ -112,6 +112,12 @@ pub struct Opts {
     /// Prevents fastNLO from printing output.
     #[clap(long = "silence-fastnlo")]
     silence_fastnlo: bool,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -152,9 +158,9 @@ impl Subcommand for Opts {
 
                 table.add_row(row![
                     bin.to_string(),
-                    r->format!("{:.7e}", one),
-                    r->format!("{:.7e}", two),
-                    r->format!("{:.7e}", rel_diff)
+                    r->format!("{:.*e}", self.digits_abs, one),
+                    r->format!("{:.*e}", self.digits_abs, two),
+                    r->format!("{:.*e}", self.digits_rel, rel_diff)
                 ]);
             }
 
@@ -191,6 +197,10 @@ OPTIONS:
         --accuracy <ACCURACY>    Relative threshold between the table and the converted grid when
                                  comparison fails [default: 1e-10]
         --alpha <ALPHA>          LO coupling power in alpha [default: 0]
+        --digits-abs <ABS>       Set the number of fractional digits shown for absolute numbers
+                                 [default: 7]
+        --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
+                                 [default: 7]
     -h, --help                   Print help information
         --silence-fastnlo        Prevents fastNLO from printing output
 ";
