@@ -222,7 +222,7 @@ OPTIONS:
 ";
 
     #[cfg(feature = "fktable")]
-    const IMPORT_DIS_FKTABLE_STR: &str = "b  x1       diff      scale uncertainty
+    const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff      scale uncertainty
 --+--+--+-------------+--------+--------
  0  0  1   1.8900584e0  -69.81%  107.21%
  1  1  2   1.4830883e0  -69.63%   98.20%
@@ -247,9 +247,9 @@ OPTIONS:
 ";
 
     #[cfg(feature = "fktable")]
-    const IMPORT_HADRONIC_FKTABLE_STR: &str = "bin x0     diff     scale uncertainty
----+-+-+-----------+--------+--------
-  0 0 1 7.7624461e2  -86.97%    0.00%
+    const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff     scale uncertainty
+-+-+-+-----------+--------+--------
+0 0 1 7.7624461e2  -86.97%    0.00%
 ";
 
     #[test]
