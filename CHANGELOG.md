@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added support for
   [FK tables](https://docs.nnpdf.science/data/th-data-files.html) in the
   subcommand `import`
+- added new switches `--digits-abs`, `--digits-rel` and `--digits` to various
+  subcommand to influence the number of (fractional) digits printed
 
 ## [0.5.2] - 29/03/2022
 
@@ -23,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subcommand `import`, which at this stage converts fastNLO tables to
   PineAPPL grids. This program was previously an example and written in C++ and
   now has been removed.
-- added new switches `--digits-abs`, `--digits-rel` and `--digits` to various
-  subcommand to influence the number of (fractional) digits printed
 
 ## [0.5.1] - 01/03/2022
 
