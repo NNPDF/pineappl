@@ -80,28 +80,37 @@ pub const SCALES_VECTOR: [(f64, f64); 9] = [
     (0.5, 2.0),
 ];
 
-pub fn labels(grid: &Grid, integrated: bool) -> Vec<String> {
-    let mut labels = vec![];
-    let key_values = grid.key_values().cloned().unwrap_or_default();
+pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
+    let key_values = grid.key_values();
 
-    for d in 0..grid.bin_info().dimensions() {
-        labels.push(
+    (
+        (0..grid.bin_info().dimensions())
+            .map(|d| {
+                (
+                    key_values
+                        .and_then(|kv| kv.get(&format!("x{}_label", d + 1)).cloned())
+                        .unwrap_or_else(|| format!("x{}", d + 1)),
+                    key_values
+                        .and_then(|kv| kv.get(&format!("x{}_unit", d + 1)))
+                        .map_or("", String::as_str),
+                )
+            })
+            .collect(),
+        if integrated {
+            "integ"
+        } else {
             key_values
-                .get(&format!("x{}_label", d + 1))
-                .unwrap_or(&format!("x{}", d + 1))
-                .clone(),
-        );
-    }
-
-    labels.push(if integrated {
-        "integ".to_string()
-    } else {
-        key_values
-            .get("y_label")
-            .unwrap_or(&"diff".to_string())
-            .clone()
-    });
-    labels
+                .and_then(|kv| kv.get("y_label").map(String::as_str))
+                .unwrap_or("diff")
+        },
+        if integrated {
+            "" // TODO: compute the units for the integrated cross section
+        } else {
+            key_values
+                .and_then(|kv| kv.get("y_unit").map(String::as_str))
+                .unwrap_or("")
+        },
+    )
 }
 
 pub fn convolute(

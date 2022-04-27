@@ -78,11 +78,10 @@ impl Subcommand for Opts {
             .map(|i| bin_info.right(i))
             .collect();
 
-        let labels = helpers::labels(&grid, self.integrated);
-        let (y_label, x_labels) = labels.split_last().unwrap();
+        let (x, y_label, _) = helpers::labels_and_units(&grid, self.integrated);
         let mut title = Row::empty();
         title.add_cell(cell!(c->"bin"));
-        for x_label in x_labels {
+        for (x_label, _) in x {
             let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);

@@ -69,11 +69,9 @@ impl Subcommand for Opts {
             .map(|i| bin_info.right(i))
             .collect();
 
-        let labels = helpers::labels(&grid, false);
-        let (_, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
-        for x_label in x_labels {
+        for (x_label, _) in helpers::labels_and_units(&grid, false).0 {
             let mut cell = cell!(c->x_label);
             cell.set_hspan(2);
             title.add_cell(cell);

@@ -40,7 +40,7 @@ impl Subcommand for Opts {
             let mut titles = Row::empty();
             titles.add_cell(cell!(c->"b"));
 
-            for x_label in helpers::labels(&grid, false).split_last().unwrap().1 {
+            for (x_label, _) in helpers::labels_and_units(&grid, false).0 {
                 let mut cell = cell!(c->x_label);
                 cell.set_hspan(2);
                 titles.add_cell(cell);
