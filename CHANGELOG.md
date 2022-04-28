@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - slightly changed the output of the CLI; indices of orders, bins and
   luminosities are now consistently abbreviated by `o`, `b` and `l`
+- changed the output of the CLI to also print the units of the numbers
 
 ## [0.5.2] - 29/03/2022
 

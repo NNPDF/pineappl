@@ -71,15 +71,15 @@ impl Subcommand for Opts {
 
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
-        for (x_label, _) in helpers::labels_and_units(&grid, false).0 {
-            let mut cell = cell!(c->x_label);
+        for (x_label, x_unit) in helpers::labels_and_units(&grid, false).0 {
+            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->"total"));
+        title.add_cell(cell!(c->"total\n[\u{3c3}]"));
         for _ in 0..self.limit {
             title.add_cell(cell!(c->"l"));
-            title.add_cell(cell!(c->"pull"));
+            title.add_cell(cell!(c->"pull\n[\u{3c3}]"));
         }
 
         let mut table = helpers::create_table();
@@ -202,6 +202,7 @@ OPTIONS:
         --threads <THREADS>    Number of threads to utilize";
 
     const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
 0    2 2.25 3.577 0 3.762 1 -0.108 3 -0.052 4 -0.016 2 -0.009
 1 2.25  2.5 3.451 0 3.630 1 -0.095 3 -0.062 4 -0.016 2 -0.006
@@ -214,6 +215,7 @@ OPTIONS:
 ";
 
     const CL_90_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
 0    2 2.25 2.175 0 2.287 1 -0.066 3 -0.031 4 -0.009 2 -0.005
 1 2.25  2.5 2.098 0 2.207 1 -0.058 3 -0.038 4 -0.010 2 -0.003
@@ -226,6 +228,7 @@ OPTIONS:
 ";
 
     const LIMIT_STR: &str = "b   etal    total l pull 
+     []      [\u{3c3}]     [\u{3c3}] 
 -+----+----+-----+-+-----
 0    2 2.25 3.577 0 3.762
 1 2.25  2.5 3.451 0 3.630
