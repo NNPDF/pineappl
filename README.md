@@ -6,17 +6,22 @@
 # Introduction
 
 This repository contains libraries, tools, and interfaces to read and write
-`PineAPPL` grids.
+`PineAPPL` interpolation grids.
 
 There are four main crates in this repository:
 
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
   main functionality,
-- [`pineappl_capi`](https://crates.io/crates/pineappl) installs a library and a
-  C header, to use PineAPPL from your C, C++ or Fortran programs,
-- [`pineappl_cli`](https://crates.io/crates/pineappl) installs the program
+- [`pineappl_capi`](https://crates.io/crates/pineappl_capi/) installs a library
+  and a C header, to use PineAPPL from your C, C++ or Fortran programs,
+- [`pineappl_cli`](https://crates.io/crates/pineappl_cli/) installs the program
   `pineappl` to use PineAPPL from the command line and
-- `pineappl_py` is the Python interface.
+- [`pineappl_py`](https://pypi.org/project/pineappl/) is the Python interface.
+
+Similar projects are:
+
+- [APPLgrid](https://applgrid.hepforge.org/) and
+- [fastNLO](https://fastnlo.hepforge.org/).
 
 # Installation
 
@@ -35,8 +40,8 @@ perform all kinds of operations on PineAPPL grids.
 
 For most users the release version is recommended, as we guarantee that all
 grids generated with release versions will be supported in all future release
-versions (backwards compatibility). The advantage of the development version is
-that it typically supports more features.
+versions (backwards compatibility guarantee). The advantage of the development
+version is that it typically supports more features.
 
 ## Release version (recommended)
 
@@ -49,12 +54,12 @@ released version from [crates.io](https://crates.io).
 
 ## Development version (alternative)
 
-To simply use the most recent version available run
+To use the most recent version available run
 
     cargo install --git https://github.com/N3PDF/pineappl.git
 
-If you plan to make changes to the source code it's better to checkout this
-repository and run
+Instead, if you plan to make changes to the source code it's better to checkout
+this repository and run
 
     cargo install --path pineappl_cli
 
@@ -110,8 +115,12 @@ below). In that case proceed by installing
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
-To install the Python interface, please follow the instructions in its
-subdirectory.
+To install the Python interface, run
+
+    pip install pineappl
+
+For more documentation and more information see its
+[README](pineappl_py/README.md).
 
 # Tutorials
 
@@ -119,7 +128,8 @@ To get to know PineAPPL, take the [tutorial](docs/cli-tutorial.md)!
 
 # Contributions
 
-Please read the [contribution guidelines](CONTRIBUTING.md).
+Before submitting a pull request please read the
+[contribution guidelines](CONTRIBUTING.md).
 
 # Citation
 
