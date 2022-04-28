@@ -106,7 +106,7 @@ impl Subcommand for Opts {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset1
-                        .iter()
+                        .par_iter()
                         .map(|pdf| {
                             helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
                         })
@@ -119,7 +119,7 @@ impl Subcommand for Opts {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset2
-                        .iter()
+                        .par_iter()
                         .map(|pdf| {
                             helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
                         })
