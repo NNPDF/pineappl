@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subcommand `import`
 - added new switches `--digits-abs`, `--digits-rel` and `--digits` to various
   subcommand to influence the number of (fractional) digits printed
+
+### Changed
+
 - slightly changed the output of the CLI; indices of orders, bins and
   luminosities are now consistently abbreviated by `o`, `b` and `l`
 
