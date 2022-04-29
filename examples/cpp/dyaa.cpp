@@ -146,8 +146,15 @@ int main() {
     }
 
     // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    pineappl_grid_write(grid, "DY-LO-AA.pineappl.lz4");
+    char const* filename = "DY-LO-AA.pineappl.lz4";
+    pineappl_grid_write(grid, filename);
 
     // destroy the object
     pineappl_grid_delete(grid);
+
+    std::printf("Generated %s.\n"
+        "Try using:\n"
+        "- pineappl convolute %s LHAPDF_SET_NAME\n"
+        "- pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py\n"
+        "- pineappl --help\n", filename, filename);
 }
