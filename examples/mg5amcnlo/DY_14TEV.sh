@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # exit script at the first sign of an error
 set -o errexit
