@@ -373,15 +373,12 @@ EOF
 
 mg5_aMC launch.txt
 
-# step 6: copy the PineAPPL file
-cp ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}"
-
-# step 7: change the bin limits from 0,1,2,3,... to the actual values
-pineappl remap "${grid}" "${grid}".tmp '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000'
+# step 6: change the bin limits from 0,1,2,3,... to the actual values
+pineappl remap ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000'
 mv "${grid}".tmp "${grid}"
 
-# step 8: add some metadata (used mainly by the plot script)
-pineappl set "${grid}" "${grid}".tmp \
+# step 7: add some metadata (used mainly by the plot script)
+pineappl set "${grid}" "${grid}".lz4 \
     --entry description 'Differential Drell–Yan cross section at 14 TeV' \
     --entry x1_label 'Mll' \
     --entry x1_label_tex '$M_{\ell\bar{\ell}}$' \
@@ -389,16 +386,6 @@ pineappl set "${grid}" "${grid}".tmp \
     --entry y_label 'dsig/dMll' \
     --entry y_label_tex '$\frac{\mathrm{d}\sigma}{\mathrm{d}M_{\ell\bar{\ell}}}$' \
     --entry y_unit 'pb/GeV'
-mv "${grid}".tmp "${grid}"
-
-# step 9: compress the grid if we find `lz4`
-lz4=$(which lz4 2> /dev/null || true)
-
-if [[ -x ${lz4} ]]; then
-    lz4 -9 "${grid}"
-    rm "${grid}"
-    grid="${grid}".lz4
-fi
 
 cat <<EOF
 Generated ${grid}.
