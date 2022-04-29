@@ -95,8 +95,8 @@ program dyaa
     ! optimize the grid representation (makes the file smaller)
     call pineappl_grid_optimize(grid)
 
-    ! write the grid to disk
-    call pineappl_grid_write(grid, 'DY-LO-AA.pineappl')
+    ! write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
+    call pineappl_grid_write(grid, 'DY-LO-AA.pineappl.lz4')
 
 contains
     ! photon-photon initiated lepton-pair production

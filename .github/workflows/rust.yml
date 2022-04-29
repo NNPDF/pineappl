@@ -95,3 +95,9 @@ jobs:
         make
         ./dyaa
         test -f ./DY-LO-AA.pineappl.lz4
+    - name: Test Fortran example
+      run: |
+        cd examples/fortran
+        make
+        ./dyaa
+        test -f ./DY-LO-AA.pineappl.lz4
