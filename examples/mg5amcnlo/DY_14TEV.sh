@@ -49,13 +49,14 @@ cd "${dataset}"
 patch -p1 <<EOF
 --- NLO/SubProcesses/setscales.f  2020-05-21 17:23:55.126143088 +0200
 +++ NLO/SubProcesses/setscales.f.new  2020-05-21 17:27:26.262700419 +0200
-@@ -527,6 +527,17 @@
+@@ -527,6 +527,18 @@
        integer i,j
        character*80 temp_scale_id
        common/ctemp_scale_id/temp_scale_id
 +      integer iPDG_reco(nexternal)
 +      double precision ppl(0:3), pplb(0:3), ppv(0:3), xmll
 +      double precision p_reco(0:4,nexternal), p_in(0:4,nexternal)
++      logical is_nextph_iso(nexternal),is_nextph_iso_reco(nexternal)
 +c     les houches accord stuff to identify particles
 +c
 +      integer idup(nexternal,maxproc),mothup(2,nexternal,maxproc),
@@ -67,7 +68,7 @@ patch -p1 <<EOF
  c
        tmp=0
        if(ickkw.eq.-1)then
-@@ -568,10 +579,104 @@
+@@ -568,10 +579,105 @@
  cc                 dynamical_scale_choice = 10                                   cc
  cc      in the run_card (run_card.dat)                                           cc
  ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -82,7 +83,8 @@ patch -p1 <<EOF
 +           p_in(4,i) = pmass(i)
 +         enddo
 +         call recombine_momenta(rphreco, etaphreco, lepphreco, quarkphreco,
-+     $                          p_in, idup(1,1), p_reco, iPDG_reco)
++     $                          p_in, idup(1,1), is_nextph_iso, p_reco,
++     $                          iPDG_reco, is_nextph_iso_reco)
 +
 +         do j = nincoming+1, nexternal
 +           if (iPDG_reco(j).eq.13) ppl(0:3)=p_reco(0:3,j)
@@ -217,6 +219,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       double precision p(0:4,nexternal)
       double precision wgts(*)
       double precision ppl(0:3), pplb(0:3), ppv(0:3), xmll
+      logical is_nextph_iso(nexternal),is_nextph_iso_reco(nexternal)
       double precision obs
       integer i
 
@@ -224,7 +227,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       integer iPDG_reco(nexternal),grid
 
       call recombine_momenta(rphreco, etaphreco, lepphreco, quarkphreco,
-     $                       p, iPDG, p_reco, iPDG_reco)
+     $                       p, iPDG, is_nextph_iso, p_reco, iPDG_reco,
+     $                       is_nextph_iso_reco)
 
       do i = nincoming+1, nexternal
         if (iPDG_reco(i).eq.13) ppl(0:3)=p_reco(0:3,i)
