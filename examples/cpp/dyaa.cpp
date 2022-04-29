@@ -145,8 +145,8 @@ int main() {
         std::printf("%.1f %.1f %.3e\n", bins[i], bins[i + 1], dxsec[i]);
     }
 
-    // write the grid to disk
-    pineappl_grid_write(grid, "DY-LO-AA.pineappl");
+    // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
+    pineappl_grid_write(grid, "DY-LO-AA.pineappl.lz4");
 
     // destroy the object
     pineappl_grid_delete(grid);
