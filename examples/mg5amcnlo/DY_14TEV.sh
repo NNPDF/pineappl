@@ -18,11 +18,8 @@ accuracy=0.01
 # the name of the grid
 grid=${dataset}.pineappl
 
-# try to find mg5_aMC
-if ! which mg5_aMC 2> /dev/null; then
-    echo "The binary \`mg5_aMC\` wasn't found. Add Madgraph5_aMC@NLO's bin folder to PATH." >&2
-    exit 1
-fi
+# download link for Madgraph5_aMC@NLO
+MG5_AMC_AT_NLO=https://launchpad.net/mg5amcnlo/3.0/3.3.x/+download/MG5_aMC_v3.3.2.tar.gz
 
 # try to find pineappl
 if ! which pineappl 2> /dev/null; then
@@ -30,8 +27,15 @@ if ! which pineappl 2> /dev/null; then
     exit 1
 fi
 
+# step 0: install Madgraph5_aMC@NLO
+TMP=$(mktemp -d)
+wget -q ${MG5_AMC_AT_NLO} -O - | tar xz -C "${TMP}"
+MG5_AMC_AT_NLO_DIR=$(cd "${TMP}"/*/bin && pwd)
+export PATH="${MG5_AMC_AT_NLO_DIR}":$PATH
+
 # step 1: generate code
 cat > output.txt <<EOF
+set auto_convert_model True
 set complex_mass_scheme True
 import model loop_qcd_qed_sm_Gmu
 define p = p b b~
