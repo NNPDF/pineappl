@@ -40,7 +40,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let pdf = helpers::create_pdf(&self.pdfset);
+        let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
         let mut orders: Vec<_> = grid
             .orders()
@@ -55,7 +55,7 @@ impl Subcommand for Opts {
             .map(|order| {
                 helpers::convolute(
                     &grid,
-                    &pdf,
+                    &mut pdf,
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],

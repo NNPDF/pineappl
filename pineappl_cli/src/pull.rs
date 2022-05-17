@@ -42,10 +42,10 @@ impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let set1 = helpers::create_pdfset(&self.pdfset1);
-        let set2 = helpers::create_pdfset(&self.pdfset2);
-        let pdfset1 = set1.mk_pdfs();
-        let pdfset2 = set2.mk_pdfs();
+        let set1 = helpers::create_pdfset(&self.pdfset1)?;
+        let set2 = helpers::create_pdfset(&self.pdfset2)?;
+        let mut pdfset1 = set1.mk_pdfs();
+        let mut pdfset2 = set2.mk_pdfs();
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
@@ -53,11 +53,11 @@ impl Subcommand for Opts {
             .unwrap();
 
         let results1: Vec<f64> = pdfset1
-            .par_iter()
+            .par_iter_mut()
             .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
         let results2: Vec<f64> = pdfset2
-            .par_iter()
+            .par_iter_mut()
             .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
 
@@ -98,20 +98,20 @@ impl Subcommand for Opts {
                 .step_by(bin_info.bins())
                 .copied()
                 .collect();
-            let uncertainty1 = set1.uncertainty(&values1, self.cl, false);
-            let uncertainty2 = set2.uncertainty(&values2, self.cl, false);
+            let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
+            let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
 
             let lumi_results1: Vec<_> = (0..grid.lumi().len())
                 .map(|lumi| {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset1
-                        .par_iter()
+                        .par_iter_mut()
                         .map(|pdf| {
                             helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
                         })
                         .collect();
-                    set1.uncertainty(&central, self.cl, false).central
+                    set1.uncertainty(&central, self.cl, false).unwrap().central
                 })
                 .collect();
             let lumi_results2: Vec<_> = (0..grid.lumi().len())
@@ -119,12 +119,12 @@ impl Subcommand for Opts {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset2
-                        .par_iter()
+                        .par_iter_mut()
                         .map(|pdf| {
                             helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
                         })
                         .collect();
-                    set2.uncertainty(&central, self.cl, false).central
+                    set2.uncertainty(&central, self.cl, false).unwrap().central
                 })
                 .collect();
 

@@ -44,7 +44,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let set = helpers::create_pdfset(&self.pdfset);
+        let set = helpers::create_pdfset(&self.pdfset)?;
         let pdfs = set.mk_pdfs();
 
         ThreadPoolBuilder::new()
@@ -54,8 +54,8 @@ impl Subcommand for Opts {
 
         let results: Vec<f64> = pdfs
             .into_par_iter()
-            .flat_map(|pdf| {
-                helpers::convolute(&grid, &pdf, &self.orders, &[], &[], 1, self.integrated)
+            .flat_map(|mut pdf| {
+                helpers::convolute(&grid, &mut pdf, &self.orders, &[], &[], 1, self.integrated)
             })
             .collect();
 
@@ -88,7 +88,7 @@ impl Subcommand for Opts {
                 .step_by(bin_info.bins())
                 .copied()
                 .collect();
-            let uncertainty = set.uncertainty(&values, self.cl, false);
+            let uncertainty = set.uncertainty(&values, self.cl, false)?;
 
             let row = table.add_empty_row();
 

@@ -124,7 +124,7 @@ impl Subcommand for Opts {
             bail!("luminosities differ");
         }
 
-        let pdf = helpers::create_pdf(&self.pdfset);
+        let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
         let mut table = helpers::create_table();
         let bin_info = grid1.bin_info();
@@ -151,8 +151,8 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(&grid1, &pdf, &orders1, &[], &[], 1, false);
-            let results2 = helpers::convolute(&grid2, &pdf, &orders2, &[], &[], 1, false);
+            let results1 = helpers::convolute(&grid1, &mut pdf, &orders1, &[], &[], 1, false);
+            let results2 = helpers::convolute(&grid2, &mut pdf, &orders2, &[], &[], 1, false);
 
             for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
                 let row = table.add_empty_row();
@@ -184,11 +184,11 @@ impl Subcommand for Opts {
 
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid1, &pdf, &[order], &[], &[], 1, false))
+                .map(|&order| helpers::convolute(&grid1, &mut pdf, &[order], &[], &[], 1, false))
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid2, &pdf, &[order], &[], &[], 1, false))
+                .map(|&order| helpers::convolute(&grid2, &mut pdf, &[order], &[], &[], 1, false))
                 .collect();
 
             for bin in 0..bin_info.bins() {

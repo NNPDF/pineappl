@@ -107,9 +107,9 @@ impl Subcommand for Opts {
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let lhapdf_name = pdfset_name(&self.pdfsets[0]);
-            let pdf = helpers::create_pdf(lhapdf_name);
+            let mut pdf = helpers::create_pdf(lhapdf_name)?;
 
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales, false);
+            let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], self.scales, false);
 
             let qcd_results = {
                 let mut orders = grid.orders().to_vec();
@@ -126,7 +126,7 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], self.scales, false)
+                helpers::convolute(&grid, &mut pdf, &qcd_orders, &[], &[], self.scales, false)
             };
 
             let bin_info = grid.bin_info();
@@ -136,12 +136,14 @@ impl Subcommand for Opts {
                 .par_iter()
                 .map(|pdfset| {
                     let lhapdf_name = pdfset_name(pdfset);
-                    let set = helpers::create_pdfset(lhapdf_name);
+                    let set = helpers::create_pdfset(lhapdf_name).unwrap();
 
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
                         .into_par_iter()
-                        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1, false))
+                        .flat_map(|mut pdf| {
+                            helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false)
+                        })
                         .collect();
 
                     let mut central = Vec::with_capacity(bin_info.bins());
@@ -156,7 +158,8 @@ impl Subcommand for Opts {
                             .copied()
                             .collect();
 
-                        let uncertainty = set.uncertainty(&values, helpers::ONE_SIGMA, false);
+                        let uncertainty =
+                            set.uncertainty(&values, helpers::ONE_SIGMA, false).unwrap();
                         central.push(uncertainty.central);
                         min.push(uncertainty.central - uncertainty.errminus);
                         max.push(uncertainty.central + uncertainty.errplus);
@@ -299,22 +302,22 @@ impl Subcommand for Opts {
             let cl = helpers::ONE_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let set1 = helpers::create_pdfset(&pdfset1);
-            let set2 = helpers::create_pdfset(&pdfset2);
-            let pdfset1 = set1.mk_pdfs();
-            let pdfset2 = set2.mk_pdfs();
+            let set1 = helpers::create_pdfset(pdfset1)?;
+            let set2 = helpers::create_pdfset(pdfset2)?;
+            let mut pdfset1 = set1.mk_pdfs();
+            let mut pdfset2 = set2.mk_pdfs();
 
             let values1: Vec<f64> = pdfset1
-                .par_iter()
+                .par_iter_mut()
                 .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
             let values2: Vec<f64> = pdfset2
-                .par_iter()
+                .par_iter_mut()
                 .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
 
-            let uncertainty1 = set1.uncertainty(&values1, cl, false);
-            let uncertainty2 = set2.uncertainty(&values2, cl, false);
+            let uncertainty1 = set1.uncertainty(&values1, cl, false)?;
+            let uncertainty2 = set2.uncertainty(&values2, cl, false)?;
 
             let denominator = {
                 // use the uncertainties in the direction in which the respective results differ
@@ -332,10 +335,10 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 =
-                helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi).sum_axis(Axis(0));
-            let res2 =
-                helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi).sum_axis(Axis(0));
+            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi)
+                .sum_axis(Axis(0));
+            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi)
+                .sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();

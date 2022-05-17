@@ -52,12 +52,12 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let pdf = helpers::create_pdf(&self.pdfsets[0]);
+        let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
         let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
 
         let results = helpers::convolute(
             &grid,
-            &pdf,
+            &mut pdf,
             &self.orders,
             &bins,
             &[],
@@ -68,8 +68,8 @@ impl Subcommand for Opts {
         let other_results: Vec<f64> = self.pdfsets[1..]
             .iter()
             .flat_map(|pdfset| {
-                let pdf = helpers::create_pdf(pdfset);
-                helpers::convolute(&grid, &pdf, &[], &bins, &[], 1, self.integrated)
+                let mut pdf = helpers::create_pdf(pdfset).unwrap();
+                helpers::convolute(&grid, &mut pdf, &[], &bins, &[], 1, self.integrated)
             })
             .collect();
 

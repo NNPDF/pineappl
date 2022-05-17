@@ -183,7 +183,7 @@ fn perform_grid_tests(
 
     assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
 
-    let pdf = Pdf::with_setname_and_member(&pdf_set, 0);
+    let pdf = Pdf::with_setname_and_member(&pdf_set, 0)?;
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
 

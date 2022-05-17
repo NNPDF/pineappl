@@ -20,17 +20,18 @@ lazy_static! {
     pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
 }
 
-pub fn create_pdf(pdf: &str) -> Pdf {
+pub fn create_pdf(pdf: &str) -> Result<Pdf> {
     // TODO: use different `Pdf` constructor so we can use the `PDFSET/member` syntax
-    pdf.parse()
-        .map_or_else(|_| Pdf::with_setname_and_member(pdf, 0), Pdf::with_lhaid)
+    Ok(pdf
+        .parse()
+        .map_or_else(|_| Pdf::with_setname_and_member(pdf, 0), Pdf::with_lhaid)?)
 }
 
-pub fn create_pdfset(pdfset: &str) -> PdfSet {
-    PdfSet::new(&pdfset.parse().map_or_else(
+pub fn create_pdfset(pdfset: &str) -> Result<PdfSet> {
+    Ok(PdfSet::new(&pdfset.parse().map_or_else(
         |_| pdfset.to_string(),
         |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-    ))
+    ))?)
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {
@@ -115,7 +116,7 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
 
 pub fn convolute(
     grid: &Grid,
-    lhapdf: &Pdf,
+    lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
@@ -174,7 +175,7 @@ pub fn convolute(
 
 pub fn convolute_subgrid(
     grid: &Grid,
-    lhapdf: &Pdf,
+    lhapdf: &mut Pdf,
     order: usize,
     bin: usize,
     lumi: usize,

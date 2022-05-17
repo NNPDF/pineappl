@@ -57,7 +57,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let pdf = helpers::create_pdf(&self.pdfset);
+        let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
         let mut lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
         lumis.sort_unstable();
@@ -72,7 +72,7 @@ impl Subcommand for Opts {
                 lumi_mask[lumi] = true;
                 helpers::convolute(
                     &grid,
-                    &pdf,
+                    &mut pdf,
                     &self.orders,
                     &[],
                     &lumi_mask,

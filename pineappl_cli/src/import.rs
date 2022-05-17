@@ -138,8 +138,8 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("can not check conversion for this type");
         } else {
-            let pdf = helpers::create_pdf(&self.pdfset);
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1, false);
+            let mut pdf = helpers::create_pdf(&self.pdfset)?;
+            let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false);
 
             let mut table = helpers::create_table();
             table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
