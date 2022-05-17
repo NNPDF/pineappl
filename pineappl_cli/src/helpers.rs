@@ -13,10 +13,9 @@ use std::path::Path;
 use std::str::FromStr;
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
-    // TODO: use different `Pdf` constructor so we can use the `PDFSET/member` syntax
     Ok(pdf
         .parse()
-        .map_or_else(|_| Pdf::with_setname_and_member(pdf, 0), Pdf::with_lhaid)?)
+        .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
 }
 
 pub fn create_pdfset(pdfset: &str) -> Result<PdfSet> {
@@ -206,10 +205,13 @@ pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
             "The PDF set for the LHAPDF ID `{}` was not found",
             argument
         ));
-    } else if lhapdf::available_pdf_sets()
-        .iter()
-        .any(|set| *set == argument)
-    {
+    } else if lhapdf::available_pdf_sets().iter().any(|set| {
+        // there's no function in LHAPDF to validate the 'setname/member' syntax; there is a
+        // function that returns the LHAPDF ID, but that ID might not exist
+        *set == argument
+            .split_once('/')
+            .map_or(argument, |(setname, _)| setname)
+    }) {
         return Ok(());
     }
 
