@@ -29,7 +29,7 @@ pub struct Opts {
     )]
     subgrid_pull: Vec<String>,
     /// Number of threads to utilize.
-    #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
+    #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
 }
 
@@ -159,7 +159,7 @@ impl Subcommand for Opts {
                             .collect();
 
                         let uncertainty =
-                            set.uncertainty(&values, helpers::ONE_SIGMA, false).unwrap();
+                            set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
                         central.push(uncertainty.central);
                         min.push(uncertainty.central - uncertainty.errminus);
                         max.push(uncertainty.central + uncertainty.errplus);
@@ -299,7 +299,7 @@ impl Subcommand for Opts {
                 .collect_tuple()
                 .unwrap();
 
-            let cl = helpers::ONE_SIGMA;
+            let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
             let set1 = helpers::create_pdfset(pdfset1)?;

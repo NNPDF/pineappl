@@ -1,6 +1,5 @@
 use anyhow::{ensure, Context, Result};
 use enum_dispatch::enum_dispatch;
-use lazy_static::lazy_static;
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::grid::Grid;
@@ -12,13 +11,6 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::str::FromStr;
-
-pub const ONE_SIGMA: f64 = 68.268_949_213_708_58;
-pub const ONE_SIGMA_STR: &str = "68.26894921370858";
-
-lazy_static! {
-    pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
-}
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
     // TODO: use different `Pdf` constructor so we can use the `PDFSET/member` syntax

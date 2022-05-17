@@ -20,7 +20,7 @@ pub struct Opts {
     #[clap(validator = helpers::validate_pdfset)]
     pdfset2: String,
     /// Confidence level in per cent.
-    #[clap(default_value = helpers::ONE_SIGMA_STR, long)]
+    #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// The maximum number of luminosities displayed.
     #[clap(
@@ -31,7 +31,7 @@ pub struct Opts {
     )]
     limit: usize,
     /// Number of threads to utilize.
-    #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
+    #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
     /// Set the number of digits shown for numerical values.
     #[clap(default_value_t = 3, long = "digits")]

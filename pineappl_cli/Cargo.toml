@@ -18,7 +18,6 @@ enum_dispatch = "0.3.7"
 flate2 = { optional = true, version = "1.0.22" }
 git-version = "0.3.5"
 itertools = "0.10.1"
-lazy_static = "1.4.0"
 lhapdf = "0.2.0"
 ndarray = "0.15.4"
 num_cpus = "1.13.0"
