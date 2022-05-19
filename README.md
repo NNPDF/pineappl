@@ -9,7 +9,12 @@
 This repository contains libraries, tools, and interfaces to read and write
 `PineAPPL` interpolation grids.
 
-There are four main crates in this repository:
+Similar projects are:
+
+- [APPLgrid](https://applgrid.hepforge.org/) and
+- [fastNLO](https://fastnlo.hepforge.org/).
+
+This repository hosts four main crates:
 
 - [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
   main functionality,
@@ -19,10 +24,28 @@ There are four main crates in this repository:
   `pineappl` to use PineAPPL from the command line and
 - [`pineappl_py`](https://pypi.org/project/pineappl/) is the Python interface.
 
-Similar projects are:
+# Documentation
 
-- [APPLgrid](https://applgrid.hepforge.org/) and
-- [fastNLO](https://fastnlo.hepforge.org/).
+## Tutorials
+
+A good starting point to learn what PineAPPL and its CLI `pineappl` can do is
+the [tutorial](docs/cli-tutorial.md)!
+
+For the CLI also a partial reference [reference](docs/cli-reference.md) is
+available.
+
+## API documentation:
+
+- [C](https://docs.rs/pineappl/latest/pineappl_capi/)
+- for Fortran there's no dedicated documentation available, because it's a
+  [wrapper](examples/fortran/pineappl.f90) of the C API
+- [Python](https://pineappl.readthedocs.io/en/latest/installation.html)
+- [Rust](https://docs.rs/pineappl/latest/pineappl/)
+
+## Code examples
+
+Another way to learn using the APIs is to have a look/modify the
+[examples](examples/).
 
 # Installation
 
@@ -132,10 +155,6 @@ To install the Python interface, run
 
 For more documentation and more information see its
 [README](pineappl_py/README.md).
-
-# Tutorials
-
-To get to know PineAPPL, take the [tutorial](docs/cli-tutorial.md)!
 
 # Contributions
 

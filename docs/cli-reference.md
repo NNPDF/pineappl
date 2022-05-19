@@ -44,7 +44,7 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
 - `setname`: This is a special case of the previous specification, where the
   member with index `0` is selected. For example, the strings `CT18NNLO` and
   `CT18NNLO/0` select the same (central) PDF set.
-- `LHAID`: This allows to select PDFs using their [LHAID](LHAPDF), which is an
+- `LHAID`: This allows to select PDFs using their [LHAID][LHAPDF], which is an
   integer. Non-central members are typically denoted by adding their index to
   the central LHAID. For example, `14000` would select the same PDF set as
   `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
