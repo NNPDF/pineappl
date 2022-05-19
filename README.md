@@ -26,20 +26,18 @@ This repository hosts four main crates:
 
 # Documentation
 
-## Tutorials
-
-A good starting point to learn what PineAPPL and its CLI `pineappl` can do is
-the [tutorial](docs/cli-tutorial.md)!
+A good starting point to learn what PineAPPL and its command-line program
+`pineappl` can do is the [tutorial](docs/cli-tutorial.md)!
 
 For the CLI also a partial reference [reference](docs/cli-reference.md) is
 available.
 
 ## API documentation:
 
-- [C](https://docs.rs/pineappl/latest/pineappl_capi/)
+- [C](https://docs.rs/pineappl_capi/latest/pineappl_capi/)
 - for Fortran there's no dedicated documentation available, because it's a
   [wrapper](examples/fortran/pineappl.f90) of the C API
-- [Python](https://pineappl.readthedocs.io/en/latest/installation.html)
+- [Python](https://pineappl.readthedocs.io/en/latest/modules/pineappl/pineappl.html)
 - [Rust](https://docs.rs/pineappl/latest/pineappl/)
 
 ## Code examples
@@ -166,19 +164,22 @@ Before submitting a pull request please read the
 [![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
 [![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
 
-If you use PineAPPL, please cite the zenodo DOI above and the following reference:
+If you use PineAPPL, please cite
 
-```
-@article{Carrazza:2020gss,
-    author = "Carrazza, S. and Nocera, E. R. and Schwan, C. and Zaro, M.",
-    title = "{PineAPPL: combining EW and QCD corrections for fast evaluation of LHC processes}",
-    eprint = "2008.12789",
-    archivePrefix = "arXiv",
-    primaryClass = "hep-ph",
-    doi = "10.1007/JHEP12(2020)108",
-    journal = "JHEP",
-    volume = "12",
-    pages = "108",
-    year = "2020"
-}
-```
+1) the zenodo DOI above and
+2) the following reference:
+
+   ```
+   @article{Carrazza:2020gss,
+       author = "Carrazza, S. and Nocera, E. R. and Schwan, C. and Zaro, M.",
+       title = "{PineAPPL: combining EW and QCD corrections for fast evaluation of LHC processes}",
+       eprint = "2008.12789",
+       archivePrefix = "arXiv",
+       primaryClass = "hep-ph",
+       doi = "10.1007/JHEP12(2020)108",
+       journal = "JHEP",
+       volume = "12",
+       pages = "108",
+       year = "2020"
+   }
+   ```
