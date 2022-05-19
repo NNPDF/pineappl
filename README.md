@@ -2,6 +2,7 @@
 [![codecov](https://codecov.io/gh/N3PDF/pineappl/branch/master/graph/badge.svg)](https://codecov.io/gh/N3PDF/pineappl)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
+[![Minimum cargo version](https://img.shields.io/badge/cargo-1.54+-lightgray.svg)](https://github.com/N3PDF/pineappl#installation)
 
 # Introduction
 
@@ -29,9 +30,14 @@ Similar projects are:
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
 `PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
-needs the Rust compiler and its build system `cargo`. If `cargo` isn't
-installed, use your favourite package manager to install it, or go to
-<https://www.rust-lang.org/tools/install> and follow the instructions there.
+needs the Rust compiler and its build system `cargo`. If `cargo` is already
+installed, make sure it is recent enough:
+
+    cargo --version
+
+This should show a version that 1.54 or newer. If you do not have `cargo` or it
+is too old, go to <https://www.rust-lang.org/tools/install> and follow the
+instructions there.
 
 Next, install the command-line interface (CLI) by choosing either the *release*
 or *development version* below. In both cases the binary `pineappl` will be
@@ -84,6 +90,11 @@ below). In that case proceed by installing
 - `cargo-c`, which is required for the next step:
 
       cargo install cargo-c
+
+  It is possible that the installation fails if your Rust compiler is too old.
+  In that case update Rust or try installing an older version of `cargo-c`:
+
+      cargo install cargo-c --version 0.7.3
 
 - Now install `pineappl_capi`, PineAPPL's C API:
 

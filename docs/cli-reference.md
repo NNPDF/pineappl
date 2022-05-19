@@ -29,7 +29,7 @@ where `N` must be the exponent of the strong coupling (denoted with `as`) and
 example, in Drell–Yan lepton-pair production `a2,a2as1` selects the leading
 order (`a2`) and the next-to-leading order QCD (`a2as1`).
 
-## `PDFSET`: Specifying PDFs and or PDF sets
+## `PDFSET`: Specifying PDFs or PDF sets
 
 The parameter `PDFSET` that appears for all convolutional-type subcommands
 (`channels`, `convolute`, etc.) must be one of the following strings:
@@ -44,7 +44,7 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
 - `setname`: This is a special case of the previous specification, where the
   member with index `0` is selected. For example, the strings `CT18NNLO` and
   `CT18NNLO/0` select the same (central) PDF set.
-- `LHAID`: This allows to select PDFs using their [LHAID](LHAID), which is an
+- `LHAID`: This allows to select PDFs using their [LHAID](LHAPDF), which is an
   integer. Non-central members are typically denoted by adding their index to
   the central LHAID. For example, `14000` would select the same PDF set as
   `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
@@ -59,12 +59,12 @@ For performance/simplicity reasons most Monte Carlo generators (and also the
 PineAPPL `Grid::fill` method) neither support
 
 1) multi-dimensional distributions nor
-2) distributions whose bin sizes are not equally sized *during generation*.
+2) distributions whose bin sizes are not equally sized
 
-To work around this problem a grid with a one-dimensional distribution with
-equally-sized bins can be generated instead, and afterwards the bins can be
-'remapped' to an N-dimensional distribution using the limits specified with the
-`REMAPPING` string.
+*during generation*. To work around this problem a grid with a one-dimensional
+distribution with equally-sized bins can be generated instead, and afterwards
+the bins can be 'remapped' to an N-dimensional distribution using the limits
+specified with the `REMAPPING` string.
 
 ### Reference
 
@@ -105,6 +105,6 @@ sizes (the product of bin widths of each dimension) given by the remapping
 string. The option `--ignore-obs-norm` can be used to remove certain dimensions
 from the bin size determination, for example `'0,10,20;0,2,4' --ignore-obs-norm
 1` will normalize the bins with a size of `2` because the first dimension (with
-index `1` will be ignored)
+index `1`) will be ignored
 
 [LHAPDF]: https://lhapdf.hepforge.org/pdfsets.html

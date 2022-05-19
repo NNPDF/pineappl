@@ -18,7 +18,7 @@ arbitrary PDFs in a fraction of a second. This is very advantageous for the
 following applications:
 
 - *PDF set dependence* of a prediction. Are the predictions with CT18, MSHT20
-  and NNPDF3.1 compatible? If they are not, which part(s) of their PDF sets is
+  and NNPDF3.1 compatible? If they are not, which parts of their PDF sets are
   responsible for this?
 - *PDF fits* require the evaluation and fitting of theory predictions to
   experimental data with changing PDFs, which are impossible without
@@ -27,7 +27,7 @@ following applications:
 ### What is PineAPPL?
 
 PineAPPL is an interpolation library, and provides interfaces to numerical
-calcuations to generate interpolation grids. It is not the only library that
+calculations to generate interpolation grids. It is not the only library that
 does that, as there at least two others: [APPLgrid] and [fastNLO].
 Distinguishing features of PineAPPL are
 
@@ -170,8 +170,8 @@ grids):
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
 This will print out very long list of (alphabetically sorted) key–value pairs,
-from which you can read off the anwers to the questions above. Let's go through
-them one by one:
+from which you can read off the answers to the questions above. Let's go
+through them one by one:
 
 1) The value for the key `description` gives a short description of the
    process. In this case this is `LHCb differential W-boson production cross
@@ -284,7 +284,7 @@ This prints all partonic initial states that contribute to this process:
     3 1 × ( 2,  0) 1 × ( 4,  0)
     4 1 × ( 2, 22) 1 × ( 4, 22)
 
-In this case you see that the up–anti-down (2, -1) and charm–anti-strage (4,
+In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
 -3) initial states (the numbers are PDG MC IDs) are grouped together in a
 single *channel*, each with a factor of `1`. In general this number can be
 different from one, if the Monte Carlo decides to factor out CKM factors or
