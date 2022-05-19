@@ -1,5 +1,34 @@
 # CLI reference
 
+## `INPUT`/`OUTPUT`: Grid selection
+
+The parameters `INPUT` selects which file is being read from, and similarly for
+subcommands that write grids, `OUTPUT` determines which file is being written
+to. The CLI `pineappl` does not care about file suffixes at all, but typically
+PineAPPL grids have the file suffix `.pineappl`, and if they are compressed
+`.pineappl.lz4`. If you write a grid and choose a file name with an `.lz4`
+suffix, `pineappl` will automatically compress the file using an LZ4
+compression. If a compressed grid is read by `pineappl` it will automatically
+decompress it internally, so that this step does not have to be done by the
+user.
+
+## `ORDERS`: Selecting perturbative orders
+
+A few convolutional subcommands accept a parameter `ORDERS` which allows to
+select a subset of perturbative orders to be taken into account during the
+convolution. This must be a comma separated list of orders, which are of the
+form:
+
+- `asNaM`,
+- `aMasN`,
+- `asN` or
+- `aM`,
+
+where `N` must be the exponent of the strong coupling (denoted with `as`) and
+`M` must be the exponent of the electroweak coupling (denoted with `a`). For
+example, in Drell–Yan lepton-pair production `a2,a2as1` selects the leading
+order (`a2`) and the next-to-leading order QCD (`a2as1`).
+
 ## `PDFSET`: Specifying PDFs and or PDF sets
 
 The parameter `PDFSET` that appears for all convolutional-type subcommands
