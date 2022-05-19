@@ -1,5 +1,25 @@
 # CLI reference
 
+## `PDFSET`: Specifying PDFs and or PDF sets
+
+The parameter `PDFSET` that appears for all convolutional-type subcommands
+(`channels`, `convolute`, etc.) must be one of the following strings:
+
+- `setname/member`: In this case `setname` must be a valid [LHAPDF] set name
+  and `member` must be the member index. The index `0` denotes the central PDF,
+  and if `setname` is a set that supports the computation of PDF uncertainties
+  the indices `1` through `n-1` denote the uncertainty members. The value of
+  `n` can read off from `lhapdf show setname`. For example, the string
+  `CT18NNLO/1` selects the first uncertainty member of
+  the NNLO PDF set of CT18. `CT18NNLO/0` selects the central PDF set.
+- `setname`: This is a special case of the previous specification, where the
+  member with index `0` is selected. For example, the strings `CT18NNLO` and
+  `CT18NNLO/0` select the same (central) PDF set.
+- `LHAID`: This allows to select PDFs using their [LHAID](LHAID), which is an
+  integer. Non-central members are typically denoted by adding their index to
+  the central LHAID. For example, `14000` would select the same PDF set as
+  `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
+
 ## `REMAPPING`: Remapping parameter specification
 
 This section specifies the `REMAPPING` parameter of `pineappl remap`.
@@ -57,3 +77,5 @@ string. The option `--ignore-obs-norm` can be used to remove certain dimensions
 from the bin size determination, for example `'0,10,20;0,2,4' --ignore-obs-norm
 1` will normalize the bins with a size of `2` because the first dimension (with
 index `1` will be ignored)
+
+[LHAPDF]: https://lhapdf.hepforge.org/pdfsets.html
