@@ -99,7 +99,7 @@ impl Subcommand for Opts {
             title.add_cell(cell!(c->"scale uncertainty\n[%]").with_hspan(2));
         }
 
-        for other in self.pdfsets[1..].iter() {
+        for other in self.pdfsets[1..].iter().map(|pdf| helpers::pdf_label(pdf)) {
             let mut cell = cell!(c->format!("{}\n[{}] [%]", other, y_unit));
             cell.set_hspan(2);
             title.add_cell(cell);
@@ -225,6 +225,20 @@ OPTIONS:
 5 3.25  3.5 1.2291115e2    -3.71     2.98    1.2195463e2          -0.78
 6  3.5    4 5.7851018e1    -3.63     2.97    5.7551676e1          -0.52
 7    4  4.5 1.3772029e1    -3.46     2.85    1.3640796e1          -0.95
+";
+
+    const MULTIPLE_PDFS_WITH_RELABELING_STR: &str =
+        "b   etal    disg/detal  scale uncertainty       other      
+     []        [pb]            [%]            [pb] [%]     
+-+----+----+-----------+--------+--------+-----------+-----
+0    2 2.25 3.7527620e2    -3.77     2.71 3.7379477e2 -0.39
+1 2.25  2.5 3.4521553e2    -3.79     2.80 3.4316002e2 -0.60
+2  2.5 2.75 3.0001406e2    -3.78     2.86 2.9780437e2 -0.74
+3 2.75    3 2.4257663e2    -3.77     2.92 2.4059099e2 -0.82
+4    3 3.25 1.8093343e2    -3.74     2.95 1.7941535e2 -0.84
+5 3.25  3.5 1.2291115e2    -3.71     2.98 1.2195463e2 -0.78
+6  3.5    4 5.7851018e1    -3.63     2.97 5.7551676e1 -0.52
+7    4  4.5 1.3772029e1    -3.46     2.85 1.3640796e1 -0.95
 ";
 
     const ABSOLUTE_STR: &str =
@@ -373,6 +387,22 @@ OPTIONS:
             .assert()
             .success()
             .stdout(MULTIPLE_PDFS_WITH_NEW_CONSTRUCTION_STR);
+    }
+
+    #[test]
+    fn multiple_pdfs_with_relabeling() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                "NNPDF31_nlo_as_0118_luxqed",
+                "NNPDF31_nlo_as_0118_luxqed/1=other",
+            ])
+            .assert()
+            .success()
+            .stdout(MULTIPLE_PDFS_WITH_RELABELING_STR);
     }
 
     #[test]

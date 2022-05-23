@@ -13,16 +13,24 @@ use std::path::Path;
 use std::str::FromStr;
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
+    let pdf = pdf.rsplit_once('=').map_or(pdf, |(name, _)| name);
+
     Ok(pdf
         .parse()
         .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
 }
 
 pub fn create_pdfset(pdfset: &str) -> Result<PdfSet> {
+    let pdfset = pdfset.rsplit_once('=').map_or(pdfset, |(name, _)| name);
+
     Ok(PdfSet::new(&pdfset.parse().map_or_else(
         |_| pdfset.to_string(),
         |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
     ))?)
+}
+
+pub fn pdf_label(pdf: &str) -> &str {
+    pdf.rsplit_once('=').map_or(pdf, |(_, label)| label)
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {

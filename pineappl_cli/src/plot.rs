@@ -33,14 +33,6 @@ pub struct Opts {
     threads: usize,
 }
 
-fn pdfset_label(pdfset: &str) -> &str {
-    pdfset.rsplit_once('=').map_or(pdfset, |(_, label)| label)
-}
-
-fn pdfset_name(pdfset: &str) -> &str {
-    pdfset.rsplit_once('=').map_or(pdfset, |(name, _)| name)
-}
-
 fn map_format_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{}", x)).join(", ")
 }
@@ -61,7 +53,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -
             np.array([{}]),
             np.array([{}]),
         ),",
-                pdfset_label(pdfset).replace('_', r#"\_"#),
+                helpers::pdf_label(pdfset).replace('_', r#"\_"#),
                 map_format_e_join(&values[0]),
                 map_format_e_join(&values[1]),
                 map_format_e_join(&values[2]),
@@ -106,8 +98,7 @@ impl Subcommand for Opts {
 
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
-            let lhapdf_name = pdfset_name(&self.pdfsets[0]);
-            let mut pdf = helpers::create_pdf(lhapdf_name)?;
+            let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
 
             let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], self.scales, false);
 
@@ -135,8 +126,7 @@ impl Subcommand for Opts {
                 .pdfsets
                 .par_iter()
                 .map(|pdfset| {
-                    let lhapdf_name = pdfset_name(pdfset);
-                    let set = helpers::create_pdfset(lhapdf_name).unwrap();
+                    let set = helpers::create_pdfset(pdfset).unwrap();
 
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
