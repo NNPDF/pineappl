@@ -1,6 +1,7 @@
 version: 2
 
 sphinx:
+  builder: html
   configuration: pineappl_py/docs/source/conf.py
 
 build:
@@ -13,3 +14,5 @@ python:
   install:
     - method: pip
       path: pineappl_py
+      extra_requirements:
+        - docs
