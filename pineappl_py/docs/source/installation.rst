@@ -25,7 +25,7 @@ Development installation
 .. code:: sh
 
     . env/bin/activate
-    pip install -r dev.requirements.txt
+    pip install maturin
 
 
 3. Run `maturin` to compile and install the library as a python package in the

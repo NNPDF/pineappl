@@ -3,8 +3,36 @@ requires = ["maturin>=0.11,<0.12"]
 build-backend = "maturin"
 
 [project]
-dependencies = ["numpy>=1.16.0,<2.0.0"]
 name = "pineappl"
+requires-python = ">=3.6"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Natural Language :: English",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Rust",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = ["numpy>=1.16.0,<2.0.0"]
+
+[project.optional-dependencies]
+docs = ["sphinx_rtd_theme", "sphinxcontrib-bitex"]
+test = ["pytest", "pytest-cov"]
+
+[project.urls]
+homepage = "https://n3pdf.github.io/pineappl/"
+documentation = "https://pineappl.readthedocs.io/"
+changelog = "https://github.com/N3PDF/pineappl/blob/master/CHANGELOG.md"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+bindings = "pyo3"
+strip = true
 
 [tool.pytest.ini_options]
 testpaths = ['tests/']
