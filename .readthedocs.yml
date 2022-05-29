@@ -12,6 +12,8 @@ build:
   jobs:
     pre_install: 
       - pip config list
+      - unset PIP_USE_FEATURE
+      - pip config list
 
 python:
   install:
