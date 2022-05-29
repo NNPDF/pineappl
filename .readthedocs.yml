@@ -9,11 +9,6 @@ build:
   tools:
     python: "3.10"
     rust: "1.55"
-  jobs:
-    pre_install: 
-      - pip config list
-      - export PIP_USE_FEATURE=""
-      - pip config list
 
 python:
   install:
