@@ -9,6 +9,11 @@ build:
   tools:
     python: "3.10"
     rust: "1.55"
+  jobs:
+    pre_install: 
+      - pip config unset global.use-feature
+      - pip config unset --site global.use-feature
+      - pip config list
 
 python:
   install:
@@ -16,4 +21,3 @@ python:
       path: pineappl_py
       extra_requirements:
         - docs
-  system_packages: true
