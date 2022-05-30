@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=0.11,<0.12"]
+requires = ["maturin>=0.12,<0.13"]
 build-backend = "maturin"
 
 [project]
@@ -21,7 +21,7 @@ classifiers = [
 dependencies = ["numpy>=1.16.0,<2.0.0"]
 
 [project.optional-dependencies]
-docs = ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-bitex"]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-bibtex"]
 test = ["pytest", "pytest-cov"]
 
 [project.urls]
