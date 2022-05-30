@@ -147,17 +147,17 @@ def run_apidoc(_):
     sys.path.append(str(here.parent))
     # run maturin to have the latest stuff
     pkg_root = here.parents[1]
-    if in_virtualenv():  # in local repos we're always in a virtualenv
-        subprocess.run(["maturin", "develop"], cwd=pkg_root)
-    else:  # on RTD we can't (for some reason we're not inside the virtualenv - or maybe only the subshell isn't)
-        subprocess.run(["maturin", "build"], cwd=pkg_root)
-        # On RTD we were already installing before, but of course this was fake
-        # as it only had the raw Python stuff, so let's do it again
-        subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
-        wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
-        # In case there are several wheels (as on RTD) find the one matching (and let the others happily fail)
-        for wheel in wheels:
-            subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
+    # if in_virtualenv():  # in local repos we're always in a virtualenv
+    #     subprocess.run(["maturin", "develop"], cwd=pkg_root)
+    # else:  # on RTD we can't (for some reason we're not inside the virtualenv - or maybe only the subshell isn't)
+    #     subprocess.run(["maturin", "build"], cwd=pkg_root)
+    #     # On RTD we were already installing before, but of course this was fake
+    #     # as it only had the raw Python stuff, so let's do it again
+    #     subprocess.run(["pip", "uninstall", "pineappl", "-y"], cwd=pkg_root)
+    #     wheels = list((pkg_root / "target" / "wheels").glob("pineappl*.whl"))
+    #     # In case there are several wheels (as on RTD) find the one matching (and let the others happily fail)
+    #     for wheel in wheels:
+    #         subprocess.run(["pip", "install", str(wheel.absolute())], cwd=pkg_root)
 
     # analyse 'pineappl'
     docs_dest = here / "modules" / "pineappl"
