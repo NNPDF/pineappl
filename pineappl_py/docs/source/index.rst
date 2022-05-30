@@ -26,7 +26,7 @@ The Python wrapper is also used in :yadism:`\ ` and :pineko:`\ `. We also list s
    If you are looking for the methods of a specific class, be aware that part of
    them are just passed to the underlying Rust object, whose class is the same
    of the user-facing one, but prefixed with a ``Py``, e.g.:
-   :cls:`pineappl.grid.Grid` and :cls:`pineappl.pineappl.grid.PyGrid`.
+   :class:`pineappl.grid.Grid` and :class:`pineappl.pineappl.grid.PyGrid`.
 
    You will find the documentation of the unwrapped method in the raw ``Py``
    class, while part of the methods are wrapped and thus even documented in the
