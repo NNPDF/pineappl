@@ -43,6 +43,28 @@ How can I edit a grid?
     # edit the way you prefer
     g = pineappl.grid.Grid.write_lz4("path/to/grid.pineappl.lz4")
 
+You can edit your grid in several ways. A few are listed in this section.
+
+Change normalizations
+~~~~~~~~~~~~~~~~~~~~~
+
+One possible option is to change the normalization related to each bin, or
+change even the bins themselves.
+
+.. code:: python
+
+    # each element of `bins` is an object with a left and right limit, and an
+    # associated normalization
+    limits = [(bin.left, bin.right) for bin in bins]
+    normalizations = [bin.norm for bin in bins]
+    remapper = pineappl.bin.BinRemapper(normalizations, limits)
+    g.set_remapper(remapper)
+
+For more details about :class:`pineappl.bin.BinRemapper` check also the `Rust
+documentation
+<https://docs.rs/pineappl/latest/pineappl/bin/struct.BinRemapper.html>`_, e.g.
+on how to treat multidimensional distributions.
+
 How can I get the bin configurations from a given PineAPPL grid?
 ----------------------------------------------------------------
 
