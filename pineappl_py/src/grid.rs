@@ -180,11 +180,11 @@ impl PyGrid {
         weights: PyReadonlyArray1<f64>,
     ) {
         for (&x1, &x2, &q2, &observable, &weight) in izip!(
-            x1s.iter().unwrap(),
-            x2s.iter().unwrap(),
-            q2s.iter().unwrap(),
-            observables.iter().unwrap(),
-            weights.iter().unwrap(),
+            x1s.as_array().iter(),
+            x2s.as_array().iter(),
+            q2s.as_array().iter(),
+            observables.as_array().iter(),
+            weights.as_array().iter(),
         ) {
             self.grid.fill(
                 order,
