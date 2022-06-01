@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fastnlo")]
 mod fastnlo;
+#[cfg(feature = "fktable")]
+mod fktable;
 
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
@@ -51,6 +53,20 @@ fn convert_fastnlo(
     ))
 }
 
+#[cfg(feature = "fktable")]
+fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    let fktable = fktable::convert_fktable(input)?;
+
+    Ok(("fktable", fktable, vec![]))
+}
+
+#[cfg(not(feature = "fktable"))]
+fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fktable`"
+    ))
+}
+
 fn convert_grid(
     input: &Path,
     alpha: u32,
@@ -67,6 +83,8 @@ fn convert_grid(
                     .map_or(false, |ext| ext == "tab"))
         {
             return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
+        } else if extension == "dat" {
+            return convert_fktable(input);
         }
     }
 
@@ -94,11 +112,16 @@ pub struct Opts {
     /// Prevents fastNLO from printing output.
     #[clap(long = "silence-fastnlo")]
     silence_fastnlo: bool,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
-        use lhapdf::Pdf;
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
@@ -115,11 +138,8 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("can not check conversion for this type");
         } else {
-            let pdf = self.pdfset.parse().map_or_else(
-                |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-                Pdf::with_lhaid,
-            );
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], 1);
+            let mut pdf = helpers::create_pdf(&self.pdfset)?;
+            let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false);
 
             let mut table = helpers::create_table();
             table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
@@ -138,9 +158,9 @@ impl Subcommand for Opts {
 
                 table.add_row(row![
                     bin.to_string(),
-                    r->format!("{:.7e}", one),
-                    r->format!("{:.7e}", two),
-                    r->format!("{:.7e}", rel_diff)
+                    r->format!("{:.*e}", self.digits_abs, one),
+                    r->format!("{:.*e}", self.digits_abs, two),
+                    r->format!("{:.*e}", self.digits_rel, rel_diff)
                 ]);
             }
 
@@ -177,6 +197,10 @@ OPTIONS:
         --accuracy <ACCURACY>    Relative threshold between the table and the converted grid when
                                  comparison fails [default: 1e-10]
         --alpha <ALPHA>          LO coupling power in alpha [default: 0]
+        --digits-abs <ABS>       Set the number of fractional digits shown for absolute numbers
+                                 [default: 7]
+        --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
+                                 [default: 7]
     -h, --help                   Print help information
         --silence-fastnlo        Prevents fastNLO from printing output
 ";
@@ -195,6 +219,39 @@ OPTIONS:
 1  3.6097335e1  3.6097335e1 -6.8833828e-15
 2  8.0048746e0  8.0048746e0  5.3290705e-15
 3 9.4319392e-1 9.4319392e-1  5.5511151e-15
+";
+
+    #[cfg(feature = "fktable")]
+    const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff      scale uncertainty
+    []        []              [%]       
+--+--+--+-------------+--------+--------
+ 0  0  1   1.8900584e0   -69.81   107.21
+ 1  1  2   1.4830883e0   -69.63    98.20
+ 2  2  3   1.1497012e0   -69.68    90.39
+ 3  3  4  8.7974506e-1   -69.38    82.45
+ 4  4  5  7.0882550e-1   -69.14    70.54
+ 5  5  6  5.7345845e-1   -69.02    59.25
+ 6  6  7  4.7744833e-1   -68.37    44.68
+ 7  7  8  4.1037984e-1   -67.36    29.06
+ 8  8  9  4.0362470e-1   -65.97    12.72
+ 9  9 10  4.2613006e-1   -64.37     0.00
+10 10 11  3.7669466e-1   -63.54     0.00
+11 11 12  2.9572989e-1   -62.91     0.00
+12 12 13  2.0869778e-1   -62.28     0.00
+13 13 14  1.2602675e-1   -61.64     0.00
+14 14 15  6.4220769e-2   -60.94     0.00
+15 15 16  2.5434367e-2   -60.76     0.00
+16 16 17  7.6070428e-3   -59.97     0.00
+17 17 18  2.1848546e-3   -60.65     0.00
+18 18 19  6.2309735e-4   -57.15     0.00
+19 19 20 -1.0496472e-4     0.00   -55.42
+";
+
+    #[cfg(feature = "fktable")]
+    const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff     scale uncertainty
+  []      []             [%]       
+-+-+-+-----------+--------+--------
+0 0 1 7.7624461e2   -86.97     0.00
 ";
 
     #[test]
@@ -245,5 +302,67 @@ OPTIONS:
             .assert()
             .success()
             .stdout(IMPORT_FLEX_GRID_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fktable")]
+    fn import_dis_fktable() {
+        let output = NamedTempFile::new("converted3.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/FK_POSXDQ.dat",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout("can not check conversion for this type\n");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_DIS_FKTABLE_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "fktable")]
+    fn import_hadronic_fktable() {
+        let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/FK_ATLASTTBARTOT13TEV.dat",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout("can not check conversion for this type\n");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(IMPORT_HADRONIC_FKTABLE_STR);
     }
 }

@@ -24,6 +24,6 @@ crate-type = ["cdylib"]
 [dependencies]
 itertools = "0.9"
 ndarray = "0.15.3"
-numpy = "0.14.1"
+numpy = "0.16.2"
 pineappl = { path = "../pineappl", version = "0.5.2" }
-pyo3 = { features = ["extension-module"], version = "0.14.5" }
+pyo3 = { features = ["extension-module"], version = "0.16.4" }

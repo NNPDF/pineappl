@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # exit script at the first sign of an error
 set -o errexit
@@ -18,11 +18,8 @@ accuracy=0.01
 # the name of the grid
 grid=${dataset}.pineappl
 
-# try to find mg5_aMC
-if ! which mg5_aMC 2> /dev/null; then
-    echo "The binary \`mg5_aMC\` wasn't found. Add Madgraph5_aMC@NLO's bin folder to PATH." >&2
-    exit 1
-fi
+# download link for Madgraph5_aMC@NLO
+MG5_AMC_AT_NLO=https://launchpad.net/mg5amcnlo/3.0/3.3.x/+download/MG5_aMC_v3.3.2.tar.gz
 
 # try to find pineappl
 if ! which pineappl 2> /dev/null; then
@@ -30,8 +27,15 @@ if ! which pineappl 2> /dev/null; then
     exit 1
 fi
 
+# step 0: install Madgraph5_aMC@NLO
+TMP=$(mktemp -d)
+wget -q ${MG5_AMC_AT_NLO} -O - | tar xz -C "${TMP}"
+MG5_AMC_AT_NLO_DIR=$(cd "${TMP}"/*/bin && pwd)
+export PATH="${MG5_AMC_AT_NLO_DIR}":$PATH
+
 # step 1: generate code
 cat > output.txt <<EOF
+set auto_convert_model True
 set complex_mass_scheme True
 import model loop_qcd_qed_sm_Gmu
 define p = p b b~
@@ -49,13 +53,14 @@ cd "${dataset}"
 patch -p1 <<EOF
 --- NLO/SubProcesses/setscales.f  2020-05-21 17:23:55.126143088 +0200
 +++ NLO/SubProcesses/setscales.f.new  2020-05-21 17:27:26.262700419 +0200
-@@ -527,6 +527,17 @@
+@@ -527,6 +527,18 @@
        integer i,j
        character*80 temp_scale_id
        common/ctemp_scale_id/temp_scale_id
 +      integer iPDG_reco(nexternal)
 +      double precision ppl(0:3), pplb(0:3), ppv(0:3), xmll
 +      double precision p_reco(0:4,nexternal), p_in(0:4,nexternal)
++      logical is_nextph_iso(nexternal),is_nextph_iso_reco(nexternal)
 +c     les houches accord stuff to identify particles
 +c
 +      integer idup(nexternal,maxproc),mothup(2,nexternal,maxproc),
@@ -67,7 +72,7 @@ patch -p1 <<EOF
  c
        tmp=0
        if(ickkw.eq.-1)then
-@@ -568,10 +579,104 @@
+@@ -568,10 +579,105 @@
  cc                 dynamical_scale_choice = 10                                   cc
  cc      in the run_card (run_card.dat)                                           cc
  ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -82,7 +87,8 @@ patch -p1 <<EOF
 +           p_in(4,i) = pmass(i)
 +         enddo
 +         call recombine_momenta(rphreco, etaphreco, lepphreco, quarkphreco,
-+     $                          p_in, idup(1,1), p_reco, iPDG_reco)
++     $                          p_in, idup(1,1), is_nextph_iso, p_reco,
++     $                          iPDG_reco, is_nextph_iso_reco)
 +
 +         do j = nincoming+1, nexternal
 +           if (iPDG_reco(j).eq.13) ppl(0:3)=p_reco(0:3,j)
@@ -217,6 +223,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       double precision p(0:4,nexternal)
       double precision wgts(*)
       double precision ppl(0:3), pplb(0:3), ppv(0:3), xmll
+      logical is_nextph_iso(nexternal),is_nextph_iso_reco(nexternal)
       double precision obs
       integer i
 
@@ -224,7 +231,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       integer iPDG_reco(nexternal),grid
 
       call recombine_momenta(rphreco, etaphreco, lepphreco, quarkphreco,
-     $                       p, iPDG, p_reco, iPDG_reco)
+     $                       p, iPDG, is_nextph_iso, p_reco, iPDG_reco,
+     $                       is_nextph_iso_reco)
 
       do i = nincoming+1, nexternal
         if (iPDG_reco(i).eq.13) ppl(0:3)=p_reco(0:3,i)
@@ -365,15 +373,12 @@ EOF
 
 mg5_aMC launch.txt
 
-# step 6: copy the PineAPPL file
-cp ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}"
-
-# step 7: change the bin limits from 0,1,2,3,... to the actual values
-pineappl remap "${grid}" "${grid}".tmp '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000'
+# step 6: change the bin limits from 0,1,2,3,... to the actual values
+pineappl remap ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000'
 mv "${grid}".tmp "${grid}"
 
-# step 8: add some metadata (used mainly by the plot script)
-pineappl set "${grid}" "${grid}".tmp \
+# step 7: add some metadata (used mainly by the plot script)
+pineappl set "${grid}" "${grid}".lz4 \
     --entry description 'Differential Drell–Yan cross section at 14 TeV' \
     --entry x1_label 'Mll' \
     --entry x1_label_tex '$M_{\ell\bar{\ell}}$' \
@@ -381,16 +386,6 @@ pineappl set "${grid}" "${grid}".tmp \
     --entry y_label 'dsig/dMll' \
     --entry y_label_tex '$\frac{\mathrm{d}\sigma}{\mathrm{d}M_{\ell\bar{\ell}}}$' \
     --entry y_unit 'pb/GeV'
-mv "${grid}".tmp "${grid}"
-
-# step 9: compress the grid if we find `lz4`
-lz4=$(which lz4 2> /dev/null || true)
-
-if [[ -x ${lz4} ]]; then
-    lz4 -9 "${grid}"
-    rm "${grid}"
-    grid="${grid}".lz4
-fi
 
 cat <<EOF
 Generated ${grid}.

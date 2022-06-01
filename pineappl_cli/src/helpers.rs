@@ -1,22 +1,28 @@
 use anyhow::{ensure, Context, Result};
 use enum_dispatch::enum_dispatch;
-use lazy_static::lazy_static;
-use lhapdf::Pdf;
+use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
 use std::fs::{File, OpenOptions};
+use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::str::FromStr;
 
-pub const ONE_SIGMA: f64 = 68.268_949_213_708_58;
-pub const ONE_SIGMA_STR: &str = "68.26894921370858";
+pub fn create_pdf(pdf: &str) -> Result<Pdf> {
+    Ok(pdf
+        .parse()
+        .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
+}
 
-lazy_static! {
-    pub static ref NUM_CPUS_STRING: String = num_cpus::get().to_string();
+pub fn create_pdfset(pdfset: &str) -> Result<PdfSet> {
+    Ok(PdfSet::new(&pdfset.parse().map_or_else(
+        |_| pdfset.to_string(),
+        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+    ))?)
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {
@@ -66,35 +72,47 @@ pub const SCALES_VECTOR: [(f64, f64); 9] = [
     (0.5, 2.0),
 ];
 
-pub fn labels(grid: &Grid) -> Vec<String> {
-    let mut labels = vec![];
-    let key_values = grid.key_values().cloned().unwrap_or_default();
+pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
+    let key_values = grid.key_values();
 
-    for d in 0..grid.bin_info().dimensions() {
-        labels.push(
+    (
+        (0..grid.bin_info().dimensions())
+            .map(|d| {
+                (
+                    key_values
+                        .and_then(|kv| kv.get(&format!("x{}_label", d + 1)).cloned())
+                        .unwrap_or_else(|| format!("x{}", d + 1)),
+                    key_values
+                        .and_then(|kv| kv.get(&format!("x{}_unit", d + 1)))
+                        .map_or("", String::as_str),
+                )
+            })
+            .collect(),
+        if integrated {
+            "integ"
+        } else {
             key_values
-                .get(&format!("x{}_label", d + 1))
-                .unwrap_or(&format!("x{}", d))
-                .clone(),
-        );
-    }
-
-    labels.push(
-        key_values
-            .get("y_label")
-            .unwrap_or(&"diff".to_owned())
-            .clone(),
-    );
-    labels
+                .and_then(|kv| kv.get("y_label").map(String::as_str))
+                .unwrap_or("diff")
+        },
+        if integrated {
+            "" // TODO: compute the units for the integrated cross section
+        } else {
+            key_values
+                .and_then(|kv| kv.get("y_unit").map(String::as_str))
+                .unwrap_or("")
+        },
+    )
 }
 
 pub fn convolute(
     grid: &Grid,
-    lhapdf: &Pdf,
+    lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
+    integrated: bool,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -126,12 +144,29 @@ pub fn convolute(
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
-    grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales])
+    let mut results = grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales]);
+
+    if integrated {
+        let normalizations = grid.bin_info().normalizations();
+
+        results
+            .iter_mut()
+            .zip(
+                normalizations
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, _)| (bins.is_empty() || bins.iter().any(|b| b == index)))
+                    .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
+            )
+            .for_each(|(value, norm)| *value *= norm);
+    }
+
+    results
 }
 
 pub fn convolute_subgrid(
     grid: &Grid,
-    lhapdf: &Pdf,
+    lhapdf: &mut Pdf,
     order: usize,
     bin: usize,
     lumi: usize,
@@ -170,10 +205,13 @@ pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
             "The PDF set for the LHAPDF ID `{}` was not found",
             argument
         ));
-    } else if lhapdf::available_pdf_sets()
-        .iter()
-        .any(|set| *set == argument)
-    {
+    } else if lhapdf::available_pdf_sets().iter().any(|set| {
+        // there's no function in LHAPDF to validate the 'setname/member' syntax; there is a
+        // function that returns the LHAPDF ID, but that ID might not exist
+        *set == argument
+            .split_once('/')
+            .map_or(argument, |(setname, _)| setname)
+    }) {
         return Ok(());
     }
 

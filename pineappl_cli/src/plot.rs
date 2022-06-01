@@ -2,7 +2,6 @@ use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
-use lhapdf::{Pdf, PdfSet};
 use ndarray::Axis;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -30,7 +29,7 @@ pub struct Opts {
     )]
     subgrid_pull: Vec<String>,
     /// Number of threads to utilize.
-    #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
+    #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
 }
 
@@ -108,12 +107,9 @@ impl Subcommand for Opts {
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let lhapdf_name = pdfset_name(&self.pdfsets[0]);
-            let pdf = lhapdf_name.parse().map_or_else(
-                |_| Pdf::with_setname_and_member(lhapdf_name, 0),
-                Pdf::with_lhaid,
-            );
+            let mut pdf = helpers::create_pdf(lhapdf_name)?;
 
-            let results = helpers::convolute(&grid, &pdf, &[], &[], &[], self.scales);
+            let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], self.scales, false);
 
             let qcd_results = {
                 let mut orders = grid.orders().to_vec();
@@ -130,7 +126,7 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                helpers::convolute(&grid, &pdf, &qcd_orders, &[], &[], self.scales)
+                helpers::convolute(&grid, &mut pdf, &qcd_orders, &[], &[], self.scales, false)
             };
 
             let bin_info = grid.bin_info();
@@ -140,15 +136,14 @@ impl Subcommand for Opts {
                 .par_iter()
                 .map(|pdfset| {
                     let lhapdf_name = pdfset_name(pdfset);
-                    let set = PdfSet::new(&lhapdf_name.parse().map_or_else(
-                        |_| lhapdf_name.to_string(),
-                        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-                    ));
+                    let set = helpers::create_pdfset(lhapdf_name).unwrap();
 
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
                         .into_par_iter()
-                        .flat_map(|pdf| helpers::convolute(&grid, &pdf, &[], &[], &[], 1))
+                        .flat_map(|mut pdf| {
+                            helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false)
+                        })
                         .collect();
 
                     let mut central = Vec::with_capacity(bin_info.bins());
@@ -163,7 +158,8 @@ impl Subcommand for Opts {
                             .copied()
                             .collect();
 
-                        let uncertainty = set.uncertainty(&values, helpers::ONE_SIGMA, false);
+                        let uncertainty =
+                            set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
                         central.push(uncertainty.central);
                         min.push(uncertainty.central - uncertainty.errminus);
                         max.push(uncertainty.central + uncertainty.errplus);
@@ -303,31 +299,25 @@ impl Subcommand for Opts {
                 .collect_tuple()
                 .unwrap();
 
-            let cl = helpers::ONE_SIGMA;
+            let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let set1 = PdfSet::new(&pdfset1.parse().map_or_else(
-                |_| pdfset1.to_string(),
-                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-            ));
-            let set2 = PdfSet::new(&pdfset2.parse().map_or_else(
-                |_| pdfset2.to_string(),
-                |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-            ));
-            let pdfset1 = set1.mk_pdfs();
-            let pdfset2 = set2.mk_pdfs();
+            let set1 = helpers::create_pdfset(pdfset1)?;
+            let set2 = helpers::create_pdfset(pdfset2)?;
+            let mut pdfset1 = set1.mk_pdfs();
+            let mut pdfset2 = set2.mk_pdfs();
 
             let values1: Vec<f64> = pdfset1
-                .par_iter()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
+                .par_iter_mut()
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
             let values2: Vec<f64> = pdfset2
-                .par_iter()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1)[0])
+                .par_iter_mut()
+                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
                 .collect();
 
-            let uncertainty1 = set1.uncertainty(&values1, cl, false);
-            let uncertainty2 = set2.uncertainty(&values2, cl, false);
+            let uncertainty1 = set1.uncertainty(&values1, cl, false)?;
+            let uncertainty2 = set2.uncertainty(&values2, cl, false)?;
 
             let denominator = {
                 // use the uncertainties in the direction in which the respective results differ
@@ -345,10 +335,10 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 =
-                helpers::convolute_subgrid(&grid, &pdfset1[0], order, bin, lumi).sum_axis(Axis(0));
-            let res2 =
-                helpers::convolute_subgrid(&grid, &pdfset2[0], order, bin, lumi).sum_axis(Axis(0));
+            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi)
+                .sum_axis(Axis(0));
+            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi)
+                .sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();
@@ -698,7 +688,7 @@ def data():
             np.array([3.7956699e2, 3.4920896e2, 3.0355066e2, 2.4550827e2, 1.8320260e2, 1.2454929e2, 5.8707503e1, 1.4145914e1]),
         ),
         (
-            'NNPDF40\_nnlo\_as\_01180',
+            'NNPDF4.0',
             np.array([3.9213747e2, 3.6039984e2, 3.1252694e2, 2.5175698e2, 1.8696447e2, 1.2647235e2, 5.9461315e1, 1.4510917e1]),
             np.array([3.9016816e2, 3.5855470e2, 3.1086142e2, 2.5032095e2, 1.8577848e2, 1.2551944e2, 5.8778139e1, 1.4032527e1]),
             np.array([3.9410678e2, 3.6224497e2, 3.1419247e2, 2.5319301e2, 1.8815045e2, 1.2742527e2, 6.0144492e1, 1.4989306e1]),
@@ -832,7 +822,7 @@ figure.savefig('plot.pdf')
                 "--threads=1",
                 "data/LHCB_WP_7TEV.pineappl.lz4",
                 "NNPDF31_nlo_as_0118_luxqed",
-                "NNPDF40_nnlo_as_01180",
+                "NNPDF40_nnlo_as_01180=NNPDF4.0",
             ])
             .assert()
             .success()

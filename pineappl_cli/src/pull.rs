@@ -1,7 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
-use lhapdf::PdfSet;
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::path::PathBuf;
@@ -21,7 +20,7 @@ pub struct Opts {
     #[clap(validator = helpers::validate_pdfset)]
     pdfset2: String,
     /// Confidence level in per cent.
-    #[clap(default_value = helpers::ONE_SIGMA_STR, long)]
+    #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// The maximum number of luminosities displayed.
     #[clap(
@@ -32,24 +31,21 @@ pub struct Opts {
     )]
     limit: usize,
     /// Number of threads to utilize.
-    #[clap(default_value = &helpers::NUM_CPUS_STRING, long)]
+    #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
+    /// Set the number of digits shown for numerical values.
+    #[clap(default_value_t = 3, long = "digits")]
+    digits: usize,
 }
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let set1 = PdfSet::new(&self.pdfset1.parse().map_or_else(
-            |_| self.pdfset1.to_string(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ));
-        let set2 = PdfSet::new(&self.pdfset2.parse().map_or_else(
-            |_| self.pdfset2.to_string(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ));
-        let pdfset1 = set1.mk_pdfs();
-        let pdfset2 = set2.mk_pdfs();
+        let set1 = helpers::create_pdfset(&self.pdfset1)?;
+        let set2 = helpers::create_pdfset(&self.pdfset2)?;
+        let mut pdfset1 = set1.mk_pdfs();
+        let mut pdfset2 = set2.mk_pdfs();
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
@@ -57,12 +53,12 @@ impl Subcommand for Opts {
             .unwrap();
 
         let results1: Vec<f64> = pdfset1
-            .par_iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .par_iter_mut()
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
         let results2: Vec<f64> = pdfset2
-            .par_iter()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1))
+            .par_iter_mut()
+            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
             .collect();
 
         let bin_info = grid.bin_info();
@@ -73,19 +69,17 @@ impl Subcommand for Opts {
             .map(|i| bin_info.right(i))
             .collect();
 
-        let labels = helpers::labels(&grid);
-        let (_, x_labels) = labels.split_last().unwrap();
         let mut title = Row::empty();
-        title.add_cell(cell!(c->"bin"));
-        for x_label in x_labels {
-            let mut cell = cell!(c->x_label);
+        title.add_cell(cell!(c->"b"));
+        for (x_label, x_unit) in helpers::labels_and_units(&grid, false).0 {
+            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->"total"));
+        title.add_cell(cell!(c->"total\n[\u{3c3}]"));
         for _ in 0..self.limit {
-            title.add_cell(cell!(c->"lumi"));
-            title.add_cell(cell!(c->"pull"));
+            title.add_cell(cell!(c->"l"));
+            title.add_cell(cell!(c->"pull\n[\u{3c3}]"));
         }
 
         let mut table = helpers::create_table();
@@ -104,18 +98,20 @@ impl Subcommand for Opts {
                 .step_by(bin_info.bins())
                 .copied()
                 .collect();
-            let uncertainty1 = set1.uncertainty(&values1, self.cl, false);
-            let uncertainty2 = set2.uncertainty(&values2, self.cl, false);
+            let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
+            let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
 
             let lumi_results1: Vec<_> = (0..grid.lumi().len())
                 .map(|lumi| {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset1
-                        .iter()
-                        .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
+                        .par_iter_mut()
+                        .map(|pdf| {
+                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                        })
                         .collect();
-                    set1.uncertainty(&central, self.cl, false).central
+                    set1.uncertainty(&central, self.cl, false).unwrap().central
                 })
                 .collect();
             let lumi_results2: Vec<_> = (0..grid.lumi().len())
@@ -123,10 +119,12 @@ impl Subcommand for Opts {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
                     let central: Vec<f64> = pdfset2
-                        .iter()
-                        .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1)[0])
+                        .par_iter_mut()
+                        .map(|pdf| {
+                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                        })
                         .collect();
-                    set2.uncertainty(&central, self.cl, false).central
+                    set2.uncertainty(&central, self.cl, false).unwrap().central
                 })
                 .collect();
 
@@ -162,7 +160,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
 
-            row.add_cell(cell!(r->format!("{:.3}", total)));
+            row.add_cell(cell!(r->format!("{:.*}", self.digits, total)));
 
             // sort using the absolute value in descending order
             pull_tuples.sort_unstable_by(|(_, pull_left), (_, pull_right)| {
@@ -170,8 +168,8 @@ impl Subcommand for Opts {
             });
 
             for (lumi, pull) in pull_tuples.iter().take(self.limit) {
-                row.add_cell(cell!(r->format!("#{}", lumi)));
-                row.add_cell(cell!(r->format!("{:.3}", pull)));
+                row.add_cell(cell!(r->format!("{}", lumi)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits, pull)));
             }
         }
 
@@ -198,46 +196,48 @@ ARGS:
 
 OPTIONS:
         --cl <CL>              Confidence level in per cent [default: 68.26894921370858]
+        --digits <DIGITS>      Set the number of digits shown for numerical values [default: 3]
     -h, --help                 Print help information
     -l, --limit <LIMIT>        The maximum number of luminosities displayed [default: 10]
         --threads <THREADS>    Number of threads to utilize";
 
-    const DEFAULT_STR: &str =
-        "bin   etal    total lumi pull  lumi  pull  lumi  pull  lumi  pull  lumi  pull 
----+----+----+-----+----+-----+----+------+----+------+----+------+----+------
-  0    2 2.25 3.577   #0 3.762   #1 -0.108   #3 -0.052   #4 -0.016   #2 -0.009
-  1 2.25  2.5 3.451   #0 3.630   #1 -0.095   #3 -0.062   #4 -0.016   #2 -0.006
-  2  2.5 2.75 3.195   #0 3.338   #1 -0.072   #3 -0.056   #4 -0.010   #2 -0.005
-  3 2.75    3 2.803   #0 2.887   #1 -0.045   #3 -0.024   #4 -0.011   #2 -0.004
-  4    3 3.25 2.346   #0 2.349   #3  0.023   #1 -0.013   #4 -0.009   #2 -0.004
-  5 3.25  3.5 1.873   #0 1.810   #3  0.082   #2 -0.011   #4 -0.007   #1 -0.001
-  6  3.5    4 1.468   #0 1.389   #3  0.177   #1 -0.088   #4 -0.007   #2 -0.003
-  7    4  4.5 1.219   #0 1.439   #1 -0.358   #3  0.147   #4 -0.006   #2 -0.001
+    const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
+-+----+----+-----+-+-----+-+------+-+------+-+------+-+------
+0    2 2.25 3.577 0 3.762 1 -0.108 3 -0.052 4 -0.016 2 -0.009
+1 2.25  2.5 3.451 0 3.630 1 -0.095 3 -0.062 4 -0.016 2 -0.006
+2  2.5 2.75 3.195 0 3.338 1 -0.072 3 -0.056 4 -0.010 2 -0.005
+3 2.75    3 2.803 0 2.887 1 -0.045 3 -0.024 4 -0.011 2 -0.004
+4    3 3.25 2.346 0 2.349 3  0.023 1 -0.013 4 -0.009 2 -0.004
+5 3.25  3.5 1.873 0 1.810 3  0.082 2 -0.011 4 -0.007 1 -0.001
+6  3.5    4 1.468 0 1.389 3  0.177 1 -0.088 4 -0.007 2 -0.003
+7    4  4.5 1.219 0 1.439 1 -0.358 3  0.147 4 -0.006 2 -0.001
 ";
 
-    const CL_90_STR: &str =
-        "bin   etal    total lumi pull  lumi  pull  lumi  pull  lumi  pull  lumi  pull 
----+----+----+-----+----+-----+----+------+----+------+----+------+----+------
-  0    2 2.25 2.175   #0 2.287   #1 -0.066   #3 -0.031   #4 -0.009   #2 -0.005
-  1 2.25  2.5 2.098   #0 2.207   #1 -0.058   #3 -0.038   #4 -0.010   #2 -0.003
-  2  2.5 2.75 1.942   #0 2.029   #1 -0.044   #3 -0.034   #4 -0.006   #2 -0.003
-  3 2.75    3 1.704   #0 1.755   #1 -0.027   #3 -0.015   #4 -0.007   #2 -0.003
-  4    3 3.25 1.426   #0 1.428   #3  0.014   #1 -0.008   #4 -0.005   #2 -0.003
-  5 3.25  3.5 1.138   #0 1.100   #3  0.050   #2 -0.007   #4 -0.004   #1 -0.001
-  6  3.5    4 0.892   #0 0.845   #3  0.107   #1 -0.053   #4 -0.004   #2 -0.002
-  7    4  4.5 0.741   #0 0.875   #1 -0.218   #3  0.089   #4 -0.004   #2 -0.001
+    const CL_90_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
+-+----+----+-----+-+-----+-+------+-+------+-+------+-+------
+0    2 2.25 2.175 0 2.287 1 -0.066 3 -0.031 4 -0.009 2 -0.005
+1 2.25  2.5 2.098 0 2.207 1 -0.058 3 -0.038 4 -0.010 2 -0.003
+2  2.5 2.75 1.942 0 2.029 1 -0.044 3 -0.034 4 -0.006 2 -0.003
+3 2.75    3 1.704 0 1.755 1 -0.027 3 -0.015 4 -0.007 2 -0.003
+4    3 3.25 1.426 0 1.428 3  0.014 1 -0.008 4 -0.005 2 -0.003
+5 3.25  3.5 1.138 0 1.100 3  0.050 2 -0.007 4 -0.004 1 -0.001
+6  3.5    4 0.892 0 0.845 3  0.107 1 -0.053 4 -0.004 2 -0.002
+7    4  4.5 0.741 0 0.875 1 -0.218 3  0.089 4 -0.004 2 -0.001
 ";
 
-    const LIMIT_STR: &str = "bin   etal    total lumi pull 
----+----+----+-----+----+-----
-  0    2 2.25 3.577   #0 3.762
-  1 2.25  2.5 3.451   #0 3.630
-  2  2.5 2.75 3.195   #0 3.338
-  3 2.75    3 2.803   #0 2.887
-  4    3 3.25 2.346   #0 2.349
-  5 3.25  3.5 1.873   #0 1.810
-  6  3.5    4 1.468   #0 1.389
-  7    4  4.5 1.219   #0 1.439
+    const LIMIT_STR: &str = "b   etal    total l pull 
+     []      [\u{3c3}]     [\u{3c3}] 
+-+----+----+-----+-+-----
+0    2 2.25 3.577 0 3.762
+1 2.25  2.5 3.451 0 3.630
+2  2.5 2.75 3.195 0 3.338
+3 2.75    3 2.803 0 2.887
+4    3 3.25 2.346 0 2.349
+5 3.25  3.5 1.873 0 1.810
+6  3.5    4 1.468 0 1.389
+7    4  4.5 1.219 0 1.439
 ";
 
     #[test]

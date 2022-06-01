@@ -40,6 +40,9 @@ pub struct Opts {
     /// Show grid statistics (figures are the number of entries).
     #[clap(group = "show", long)]
     stats: bool,
+    /// Set the number of digits shown for numerical values.
+    #[clap(default_value_t = 3, long = "digits")]
+    digits: usize,
 }
 
 impl Subcommand for Opts {
@@ -105,7 +108,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren.sqrt()))
+                    .map(|Mu2 { ren, fac: _ }| format!("{:.*}", self.digits, ren.sqrt()))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -114,7 +117,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren, fac: _ }| format!("{:.3}", ren))
+                    .map(|Mu2 { ren, fac: _ }| format!("{:.*}", self.digits, ren))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -123,7 +126,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac.sqrt()))
+                    .map(|Mu2 { ren: _, fac }| format!("{:.*}", self.digits, fac.sqrt()))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -132,7 +135,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren: _, fac }| format!("{:.3}", fac))
+                    .map(|Mu2 { ren: _, fac }| format!("{:.*}", self.digits, fac))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -141,7 +144,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .x1_grid()
                     .iter()
-                    .map(|x| format!("{:.3e}", x))
+                    .map(|x| format!("{:.*e}", self.digits, x))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -150,7 +153,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .x2_grid()
                     .iter()
-                    .map(|x| format!("{:.3e}", x))
+                    .map(|x| format!("{:.*e}", self.digits, x))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -184,16 +187,17 @@ ARGS:
     <INPUT>    Path to the input grid
 
 OPTIONS:
-    -h, --help          Print help information
-        --muf           Show the factorization grid values
-        --muf2          Show the squared factorization grid values
-        --mur           Show the renormalization grid values
-        --mur2          Show the squared renormalization grid values
-        --show-empty    Show empty subgrids
-        --stats         Show grid statistics (figures are the number of entries)
-        --type          Show the subgrid type
-        --x1            Show the x1 grid values
-        --x2            Show the x2 grid values
+        --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
+    -h, --help               Print help information
+        --muf                Show the factorization grid values
+        --muf2               Show the squared factorization grid values
+        --mur                Show the renormalization grid values
+        --mur2               Show the squared renormalization grid values
+        --show-empty         Show empty subgrids
+        --stats              Show grid statistics (figures are the number of entries)
+        --type               Show the subgrid type
+        --x1                 Show the x1 grid values
+        --x2                 Show the x2 grid values
 ";
 
     const MUF_STR: &str = "o b l  muf

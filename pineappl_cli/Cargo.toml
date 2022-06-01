@@ -15,20 +15,22 @@ anyhow = "1.0.48"
 clap = { features = ["derive", "unstable-replace"], version = "3.1.0" }
 cxx = { optional = true, version = "1.0.65" }
 enum_dispatch = "0.3.7"
+flate2 = { optional = true, version = "1.0.22" }
 git-version = "0.3.5"
 itertools = "0.10.1"
-lazy_static = "1.4.0"
-lhapdf = "0.1.11"
+lhapdf = "0.2.0"
 ndarray = "0.15.4"
 num_cpus = "1.13.0"
 pineappl = { path = "../pineappl", version = "0.5.2" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.1.0" }
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.8.0" }
 rayon = "1.5.1"
+tar = { optional = true, version = "0.4.38" }
 
 [dev-dependencies]
 assert_cmd = "2.0.2"
 assert_fs = "1.0.6"
+predicates = "2.1.1"
 
 [[bin]]
 name = "pineappl"
@@ -39,3 +41,4 @@ rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
 fastnlo = ["pineappl_fastnlo"]
+fktable = ["flate2", "tar"]

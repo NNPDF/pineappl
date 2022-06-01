@@ -18,7 +18,7 @@ arbitrary PDFs in a fraction of a second. This is very advantageous for the
 following applications:
 
 - *PDF set dependence* of a prediction. Are the predictions with CT18, MSHT20
-  and NNPDF3.1 compatible? If they are not, which part(s) of their PDF sets is
+  and NNPDF3.1 compatible? If they are not, which parts of their PDF sets are
   responsible for this?
 - *PDF fits* require the evaluation and fitting of theory predictions to
   experimental data with changing PDFs, which are impossible without
@@ -27,7 +27,7 @@ following applications:
 ### What is PineAPPL?
 
 PineAPPL is an interpolation library, and provides interfaces to numerical
-calcuations to generate interpolation grids. It is not the only library that
+calculations to generate interpolation grids. It is not the only library that
 does that, as there at least two others: [APPLgrid] and [fastNLO].
 Distinguishing features of PineAPPL are
 
@@ -65,19 +65,20 @@ install the PDF set with LHAPDF, or use a different PDF set—the numbers won't
 matter for the sake of the tutorial. If the command was successful, you should
 see the following output:
 
-    LHAPDF 6.4.0 loading /home/cschwan/prefix/share/LHAPDF/CT18NNLO/CT18NNLO_0000.dat
+    LHAPDF 6.4.1a loading /home/cschwan/prefix/share/LHAPDF/CT18NNLO/CT18NNLO_0000.dat
     CT18NNLO PDF set, member #0, version 1; LHAPDF ID = 14000
-    bin   etal    disg/detal  scale uncertainty
-    ---+----+----+-----------+--------+--------
-      0    2 2.25 3.8562616e2   -3.69%    2.65%
-      1 2.25  2.5 3.5553189e2   -3.70%    2.73%
-      2  2.5 2.75 3.0928086e2   -3.68%    2.79%
-      3 2.75    3 2.4991572e2   -3.66%    2.83%
-      4    3 3.25 1.8610527e2   -3.62%    2.85%
-      5 3.25  3.5 1.2614289e2   -3.57%    2.87%
-      6  3.5    4 5.9206239e1   -3.47%    2.84%
-      7    4  4.5 1.3881523e1   -3.29%    2.75%
-    Thanks for using LHAPDF 6.4.0. Please make sure to cite the paper:
+    b   etal    disg/detal  scale uncertainty
+         []        [pb]            [%]
+    -+----+----+-----------+--------+--------
+    0    2 2.25 3.8562616e2    -3.69     2.65
+    1 2.25  2.5 3.5553189e2    -3.70     2.73
+    2  2.5 2.75 3.0928086e2    -3.68     2.79
+    3 2.75    3 2.4991572e2    -3.66     2.83
+    4    3 3.25 1.8610527e2    -3.62     2.85
+    5 3.25  3.5 1.2614289e2    -3.57     2.87
+    6  3.5    4 5.9206239e1    -3.47     2.84
+    7    4  4.5 1.3881523e1    -3.29     2.75
+    Thanks for using LHAPDF 6.4.1a. Please make sure to cite the paper:
       Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
 
 On your computer the output will be slightly different depending on your LHAPDF
@@ -88,7 +89,7 @@ installation. If you don't want to see LHAPDF messages, add the option
 
 Have a closer look at what the output shows:
 
-- the `bin` column shows there are 8 bins, labeled 0 to 7,
+- the `b` column shows there are 8 bins, labeled 0 to 7,
 - the next two columns labelled `etal` shows the observable used to define the
   bins and its left and right bin limits,
 - `disg/detal` has a spelling mistake, unfortunately, and should read
@@ -133,6 +134,10 @@ following:
     OPTIONS:
         -a, --absolute              Show absolute numbers of the scale variation
         -b, --bins <BINS>...        Selects a subset of bins
+            --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
+                                    [default: 7]
+            --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
+                                    [default: 2]
         -h, --help                  Print help information
         -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                     ones
@@ -165,8 +170,8 @@ grids):
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
 This will print out very long list of (alphabetically sorted) key–value pairs,
-from which you can read off the anwers to the questions above. Let's go through
-them one by one:
+from which you can read off the answers to the questions above. Let's go
+through them one by one:
 
 1) The value for the key `description` gives a short description of the
    process. In this case this is `LHCb differential W-boson production cross
@@ -279,7 +284,7 @@ This prints all partonic initial states that contribute to this process:
     3 1 × ( 2,  0) 1 × ( 4,  0)
     4 1 × ( 2, 22) 1 × ( 4, 22)
 
-In this case you see that the up–anti-down (2, -1) and charm–anti-strage (4,
+In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
 -3) initial states (the numbers are PDG MC IDs) are grouped together in a
 single *channel*, each with a factor of `1`. In general this number can be
 different from one, if the Monte Carlo decides to factor out CKM factors or
@@ -303,16 +308,17 @@ means you convolute each order separately:
 
 which prints
 
-    bin   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
-    ---+----+----+-----------+-----------+-----------+-----------
-      0    2 2.25 7.7526895e2     100.00%      17.63%      -1.25%
-      1 2.25  2.5 7.1092145e2     100.00%      17.47%      -1.13%
-      2  2.5 2.75 6.1876958e2     100.00%      18.07%      -1.04%
-      3 2.75    3 5.0017809e2     100.00%      18.53%      -0.92%
-      4    3 3.25 3.7228440e2     100.00%      19.12%      -0.85%
-      5 3.25  3.5 2.5236943e2     100.00%      19.84%      -0.81%
-      6  3.5    4 1.1857770e2     100.00%      21.32%      -0.83%
-      7    4  4.5 2.7740964e1     100.00%      24.59%      -1.01%
+    b   etal    disg/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+         []        [pb]         [%]         [%]         [%]
+    -+----+----+-----------+-----------+-----------+-----------
+    0    2 2.25 3.8562616e2      100.00       17.21       -1.23
+    1 2.25  2.5 3.5553189e2      100.00       17.67       -1.13
+    2  2.5 2.75 3.0928086e2      100.00       18.15       -1.03
+    3 2.75    3 2.4991572e2      100.00       18.54       -0.91
+    4    3 3.25 1.8610527e2      100.00       19.17       -0.85
+    5 3.25  3.5 1.2614289e2      100.00       20.00       -0.78
+    6  3.5    4 5.9206239e1      100.00       21.34       -0.90
+    7    4  4.5 1.3881523e1      100.00       24.77       -1.02
 
 By default all higher orders are shown relative to the sum of all LOs. However,
 this can be changed using the switches `--normalize`, which asks for the orders
@@ -323,52 +329,55 @@ we'd run
 
 which will show
 
-    bin   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
-    ---+----+----+-----------+-----------+-----------+-----------
-      0    2 2.25 7.7526895e2      85.01%      14.99%      -1.06%
-      1 2.25  2.5 7.1092145e2      85.13%      14.87%      -0.96%
-      2  2.5 2.75 6.1876958e2      84.69%      15.31%      -0.88%
-      3 2.75    3 5.0017809e2      84.37%      15.63%      -0.78%
-      4    3 3.25 3.7228440e2      83.95%      16.05%      -0.71%
-      5 3.25  3.5 2.5236943e2      83.45%      16.55%      -0.67%
-      6  3.5    4 1.1857770e2      82.42%      17.58%      -0.69%
-      7    4  4.5 2.7740964e1      80.26%      19.74%      -0.81%
+    b   etal    disg/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+         []        [pb]         [%]         [%]         [%]
+    -+----+----+-----------+-----------+-----------+-----------
+    0    2 2.25 3.8562616e2       85.32       14.68       -1.05
+    1 2.25  2.5 3.5553189e2       84.98       15.02       -0.96
+    2  2.5 2.75 3.0928086e2       84.64       15.36       -0.87
+    3 2.75    3 2.4991572e2       84.36       15.64       -0.76
+    4    3 3.25 1.8610527e2       83.91       16.09       -0.72
+    5 3.25  3.5 1.2614289e2       83.33       16.67       -0.65
+    6  3.5    4 5.9206239e1       82.41       17.59       -0.75
+    7    4  4.5 1.3881523e1       80.14       19.86       -0.82
 
 ## `pineappl channels`: What's the size of each channel?
 
 You can also show a convolution separately for each luminosity, or in other
 words show the size of each partonic channel:
 
-    pineappl --silence-lhapdf channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+    pineappl channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 This will show the following table,
 
-    bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
-    ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
-      0    2 2.25   #0 111.09%   #3  -7.96%   #1 -3.13%   #2 0.00%   #4 0.00%
-      1 2.25  2.5   #0 111.83%   #3  -8.68%   #1 -3.15%   #2 0.00%   #4 0.00%
-      2  2.5 2.75   #0 112.66%   #3  -9.40%   #1 -3.25%   #2 0.00%   #4 0.00%
-      3 2.75    3   #0 113.49%   #3  -9.95%   #1 -3.54%   #2 0.00%   #4 0.00%
-      4    3 3.25   #0 114.24%   #3 -10.36%   #1 -3.89%   #2 0.00%   #4 0.00%
-      5 3.25  3.5   #0 114.96%   #3 -10.57%   #1 -4.39%   #2 0.00%   #4 0.00%
-      6  3.5    4   #0 115.63%   #3 -10.25%   #1 -5.38%   #2 0.00%   #4 0.00%
-      7    4  4.5   #0 115.74%   #3  -8.56%   #1 -7.18%   #2 0.00%   #4 0.00%
+    b   etal    l  size  l  size  l size  l size l size
+         []        [%]      [%]      [%]    [%]    [%]
+    -+----+----+-+------+-+------+-+-----+-+----+-+----
+    0    2 2.25 0 111.09 3  -7.96 1 -3.13 2 0.00 4 0.00
+    1 2.25  2.5 0 111.83 3  -8.68 1 -3.15 2 0.00 4 0.00
+    2  2.5 2.75 0 112.66 3  -9.40 1 -3.25 2 0.00 4 0.00
+    3 2.75    3 0 113.49 3  -9.95 1 -3.54 2 0.00 4 0.00
+    4    3 3.25 0 114.24 3 -10.36 1 -3.89 2 0.00 4 0.00
+    5 3.25  3.5 0 114.96 3 -10.57 1 -4.39 2 0.00 4 0.00
+    6  3.5    4 0 115.63 3 -10.25 1 -5.38 2 0.00 4 0.00
+    7    4  4.5 0 115.74 3  -8.56 1 -7.18 2 0.00 4 0.00
 
-The most important channel is `#0`, which is the up-type–anti-down-type
+The most important channel is `0`, which is the up-type–anti-down-type
 combination. The channels with gluons are much smaller and negative. Channels
 with a photon are zero, because the PDF set that we've chosen doesn't have a
 photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
 
-    bin   etal    lumi  size   lumi  size   lumi  size  lumi size  lumi size
-    ---+----+----+----+-------+----+-------+----+------+----+-----+----+-----
-      0    2 2.25   #0 111.13%   #3  -7.89%   #1 -3.27%   #4 0.02%   #2 0.01%
-      1 2.25  2.5   #0 111.88%   #3  -8.62%   #1 -3.29%   #4 0.02%   #2 0.01%
-      2  2.5 2.75   #0 112.72%   #3  -9.34%   #1 -3.40%   #4 0.01%   #2 0.01%
-      3 2.75    3   #0 113.56%   #3  -9.89%   #1 -3.70%   #4 0.01%   #2 0.01%
-      4    3 3.25   #0 114.32%   #3 -10.29%   #1 -4.05%   #4 0.01%   #2 0.01%
-      5 3.25  3.5   #0 115.01%   #3 -10.51%   #1 -4.53%   #2 0.02%   #4 0.01%
-      6  3.5    4   #0 115.57%   #3 -10.18%   #1 -5.41%   #4 0.01%   #2 0.01%
-      7    4  4.5   #0 115.08%   #3  -8.22%   #1 -6.89%   #4 0.03%   #2 0.01%
+    b   etal    l  size  l  size  l size  l size l size
+         []        [%]      [%]      [%]    [%]    [%]
+    -+----+----+-+------+-+------+-+-----+-+----+-+----
+    0    2 2.25 0 111.13 3  -7.89 1 -3.27 4 0.02 2 0.01
+    1 2.25  2.5 0 111.88 3  -8.62 1 -3.29 4 0.02 2 0.01
+    2  2.5 2.75 0 112.72 3  -9.34 1 -3.40 4 0.01 2 0.01
+    3 2.75    3 0 113.56 3  -9.89 1 -3.70 4 0.01 2 0.01
+    4    3 3.25 0 114.32 3 -10.29 1 -4.05 4 0.01 2 0.01
+    5 3.25  3.5 0 115.01 3 -10.51 1 -4.53 2 0.02 4 0.01
+    6  3.5    4 0 115.57 3 -10.18 1 -5.41 4 0.01 2 0.01
+    7    4  4.5 0 115.08 3  -8.22 1 -6.89 4 0.03 2 0.01
 
 ## `pineappl pdfunc`: How large are the PDF uncertainties?
 
@@ -378,16 +387,17 @@ Let's calculate the PDF uncertainties for our grid:
 
 This will show a table very similar to `pineappl convolute`:
 
-    bin   etal    disg/detal  PDF uncertainty
-    ---+----+----+-----------+-------+-------
-      0    2 2.25 3.8562616e2  -3.04%   2.24%
-      1 2.25  2.5 3.5553189e2  -3.02%   2.34%
-      2  2.5 2.75 3.0928086e2  -2.98%   2.44%
-      3 2.75    3 2.4991572e2  -2.93%   2.55%
-      4    3 3.25 1.8610527e2  -2.90%   2.72%
-      5 3.25  3.5 1.2614289e2  -2.90%   3.00%
-      6  3.5    4 5.9206239e1  -3.08%   3.67%
-      7    4  4.5 1.3881523e1  -4.01%   5.62%
+    b   etal    disg/detal  PDF uncertainty
+         []        [pb]           [%]
+    -+----+----+-----------+-------+-------
+    0    2 2.25 3.8562616e2   -3.04    2.24
+    1 2.25  2.5 3.5553189e2   -3.02    2.34
+    2  2.5 2.75 3.0928086e2   -2.98    2.44
+    3 2.75    3 2.4991572e2   -2.93    2.55
+    4    3 3.25 1.8610527e2   -2.90    2.72
+    5 3.25  3.5 1.2614289e2   -2.90    3.00
+    6  3.5    4 5.9206239e1   -3.08    3.67
+    7    4  4.5 1.3881523e1   -4.01    5.62
 
 The PDF uncertainty is calculated using LHAPDF, so `pineappl` always uses the
 correct algorithm no matter what type of PDF sets you use: Hessian, Monte
@@ -411,16 +421,17 @@ uncertainties. You can calculate it using:
 This will show not only the pull, in column `total`, but also how this pull is
 calculated using the different channels:
 
-    bin   etal    total  lumi  pull  lumi  pull  lumi  pull  lumi pull  lumi pull
-    ---+----+----+------+----+------+----+------+----+------+----+-----+----+-----
-      0    2 2.25  0.072   #0  0.081   #1 -0.045   #3  0.024   #4 0.008   #2 0.004
-      1 2.25  2.5 -0.029   #1 -0.043   #3  0.030   #0 -0.027   #4 0.008   #2 0.003
-      2  2.5 2.75 -0.096   #0 -0.097   #1 -0.043   #3  0.036   #4 0.005   #2 0.002
-      3 2.75    3 -0.145   #0 -0.148   #1 -0.045   #3  0.040   #4 0.005   #2 0.002
-      4    3 3.25 -0.187   #0 -0.190   #1 -0.045   #3  0.042   #4 0.004   #2 0.002
-      5 3.25  3.5 -0.234   #0 -0.249   #3  0.043   #1 -0.037   #2 0.005   #4 0.003
-      6  3.5    4 -0.293   #0 -0.345   #3  0.043   #1  0.004   #4 0.004   #2 0.001
-      7    4  4.5  0.145   #0  0.071   #3  0.037   #1  0.031   #4 0.004   #2 0.001
+    b   etal    total  l  pull  l  pull  l  pull  l pull  l pull
+         []      [σ]      [σ]      [σ]      [σ]      [σ]     [σ]
+    -+----+----+------+-+------+-+------+-+------+-+-----+-+-----
+    0    2 2.25  0.072 0  0.081 1 -0.045 3  0.024 4 0.008 2 0.004
+    1 2.25  2.5 -0.029 1 -0.043 3  0.030 0 -0.027 4 0.008 2 0.003
+    2  2.5 2.75 -0.096 0 -0.097 1 -0.043 3  0.036 4 0.005 2 0.002
+    3 2.75    3 -0.145 0 -0.148 1 -0.045 3  0.040 4 0.005 2 0.002
+    4    3 3.25 -0.187 0 -0.190 1 -0.045 3  0.042 4 0.004 2 0.002
+    5 3.25  3.5 -0.234 0 -0.249 3  0.043 1 -0.037 2 0.005 4 0.003
+    6  3.5    4 -0.293 0 -0.345 3  0.043 1  0.004 4 0.004 2 0.001
+    7    4  4.5  0.145 0  0.071 3  0.037 1  0.031 4 0.004 2 0.001
 
 Looking at the `total` column you can see that the numbers are much smaller
 than `1`, corresponding to a one sigma deviation. This we'd expect knowing that

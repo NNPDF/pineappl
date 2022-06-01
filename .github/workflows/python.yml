@@ -26,8 +26,8 @@ jobs:
           pip install virtualenv
           virtualenv env
           . env/bin/activate
-          pip install -r dev.requirements.txt
-          maturin develop
+          pip install maturin
+          maturin develop --extras test
           pytest
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2

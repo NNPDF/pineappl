@@ -88,7 +88,7 @@ mod tests {
     use super::*;
     use assert_cmd::Command;
 
-    const HELP_STR: &str = "pineappl v0.5.0-beta.4-46-ge703521-dirty
+    const HELP_STR: &str = "
 Christopher Schwan <handgranaten-herbert@posteo.de>
 Read, write, and query PineAPPL grids
 
@@ -103,10 +103,13 @@ OPTIONS:
 SUBCOMMANDS:
     channels     Shows the contribution for each partonic channel
     convolute    Convolutes a PineAPPL grid with a PDF set
-    diff         Compares the contents of two grids with each other
+    delete       Deletes parts from a PineAPPL grid
+    diff         Compares the numerical content of two grids with each other
+    import       Converts fastNLO tables to PineAPPL grids
     info         Shows information about the grid
-    lumi         Shows the luminosity function
     merge        Merges one or more PineAPPL grids together
+    obl          Shows information about orders (o), bins (b), or luminosities (l) of a grid
+    ops          A collection of various modifying operations on grids
     optimize     Optimizes the internal data structure to minimize memory usage
     orders       Shows the predictions for all bin for each order separately
     pdfunc       Calculates PDF uncertainties
@@ -120,14 +123,13 @@ SUBCOMMANDS:
 ";
 
     #[test]
-    #[ignore] // TODO: fix version string comparison
     fn help() {
         Command::cargo_bin("pineappl")
             .unwrap()
             .arg("--help")
             .assert()
             .success()
-            .stdout(HELP_STR);
+            .stdout(predicates::str::ends_with(HELP_STR));
     }
 
     #[test]

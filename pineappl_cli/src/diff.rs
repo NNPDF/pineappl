@@ -1,7 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
-use lhapdf::Pdf;
 use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -21,6 +20,9 @@ pub struct Opts {
     /// Ignore differences in the orders and sum them.
     #[clap(alias = "ignore_orders", long = "ignore-orders")]
     ignore_orders: bool,
+    /// Ignore bin limits (but not number of bins).
+    #[clap(long = "ignore-bin-limits")]
+    ignore_bin_limits: bool,
     /// Ignore differences in the luminosity functions.
     #[clap(long = "ignore-lumis")]
     ignore_lumis: bool,
@@ -46,6 +48,12 @@ pub struct Opts {
     /// Scale all results of the second grid.
     #[clap(long, default_value = "1.0")]
     scale2: f64,
+    /// Set the number of fractional digits shown for absolute numbers.
+    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    digits_abs: usize,
+    /// Set the number of fractional digits shown for relative numbers.
+    #[clap(default_value_t = 3, long = "digits-rel", value_name = "REL")]
+    digits_rel: usize,
 }
 
 impl Subcommand for Opts {
@@ -104,18 +112,19 @@ impl Subcommand for Opts {
             bail!("selected orders differ");
         }
 
-        if grid1.bin_info() != grid2.bin_info() {
-            bail!("bins differ");
+        if !self.ignore_bin_limits && (grid1.bin_info() != grid2.bin_info()) {
+            bail!("bins limits differ");
+        }
+
+        if grid1.bin_info().bins() != grid2.bin_info().bins() {
+            bail!("number of bins differ");
         }
 
         if (grid1.lumi() != grid2.lumi()) && !self.ignore_lumis {
             bail!("luminosities differ");
         }
 
-        let pdf = self.pdfset.parse().map_or_else(
-            |_| Pdf::with_setname_and_member(&self.pdfset, 0),
-            Pdf::with_lhaid,
-        );
+        let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
         let mut table = helpers::create_table();
         let bin_info = grid1.bin_info();
@@ -142,8 +151,8 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(&grid1, &pdf, &orders1, &[], &[], 1);
-            let results2 = helpers::convolute(&grid2, &pdf, &orders2, &[], &[], 1);
+            let results1 = helpers::convolute(&grid1, &mut pdf, &orders1, &[], &[], 1, false);
+            let results2 = helpers::convolute(&grid2, &mut pdf, &orders2, &[], &[], 1, false);
 
             for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
                 let row = table.add_empty_row();
@@ -157,9 +166,9 @@ impl Subcommand for Opts {
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
-                row.add_cell(cell!(r->format!("{:.7e}", result1)));
-                row.add_cell(cell!(r->format!("{:.7e}", result2)));
-                row.add_cell(cell!(r->format!("{:.3e}",
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
                 if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
             }
         } else {
@@ -175,11 +184,11 @@ impl Subcommand for Opts {
 
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid1, &pdf, &[order], &[], &[], 1))
+                .map(|&order| helpers::convolute(&grid1, &mut pdf, &[order], &[], &[], 1, false))
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid2, &pdf, &[order], &[], &[], 1))
+                .map(|&order| helpers::convolute(&grid2, &mut pdf, &[order], &[], &[], 1, false))
                 .collect();
 
             for bin in 0..bin_info.bins() {
@@ -194,9 +203,9 @@ impl Subcommand for Opts {
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
-                    row.add_cell(cell!(r->format!("{:.7e}", result1)));
-                    row.add_cell(cell!(r->format!("{:.7e}", result2)));
-                    row.add_cell(cell!(r->format!("{:.3e}",
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
                     if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
                 }
             }
@@ -224,7 +233,12 @@ ARGS:
     <PDFSET>    LHAPDF id or name of the PDF set
 
 OPTIONS:
+        --digits-abs <ABS>        Set the number of fractional digits shown for absolute numbers
+                                  [default: 7]
+        --digits-rel <REL>        Set the number of fractional digits shown for relative numbers
+                                  [default: 3]
     -h, --help                    Print help information
+        --ignore-bin-limits       Ignore bin limits (but not number of bins)
         --ignore-lumis            Ignore differences in the luminosity functions
         --ignore-orders           Ignore differences in the orders and sum them
         --orders1 <ORDERS1>...    Select orders of the first grid

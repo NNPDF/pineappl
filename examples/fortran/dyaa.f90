@@ -95,8 +95,15 @@ program dyaa
     ! optimize the grid representation (makes the file smaller)
     call pineappl_grid_optimize(grid)
 
-    ! write the grid to disk
-    call pineappl_grid_write(grid, 'DY-LO-AA.pineappl')
+    ! write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
+    call pineappl_grid_write(grid, 'DY-LO-AA.pineappl.lz4')
+
+    print *, 'Generated DY-LO-AA.pineappl.lz4.'
+    print *, ''
+    print *, 'Try using:'
+    print *, '  - pineappl convolute DY-LO-AA.pineappl.lz4 LHAPDF_SET_NAME'
+    print *, '  - pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py'
+    print *, '  - pineappl --help'
 
 contains
     ! photon-photon initiated lepton-pair production
