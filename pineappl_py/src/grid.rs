@@ -304,7 +304,12 @@ impl PyGrid {
     pub fn axes<'py>(
         &self,
         py: Python<'py>,
-    ) -> (&'py PyArray1<f64>, &'py PyArray1<i32>, &'py PyArray1<f64>, &'py PyArray1<f64>) {
+    ) -> (
+        &'py PyArray1<f64>,
+        &'py PyArray1<i32>,
+        &'py PyArray1<f64>,
+        &'py PyArray1<f64>,
+    ) {
         let GridAxes {
             x_grid,
             pids,
