@@ -200,7 +200,7 @@ class Grid(PyWrapper):
         lumi_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
-        """
+        r"""
         Convolute grid with pdf.
 
         Parameters
