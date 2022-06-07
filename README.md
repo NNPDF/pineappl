@@ -6,23 +6,32 @@
 
 # Introduction
 
-This repository contains libraries, tools, and interfaces to read and write
-`PineAPPL` interpolation grids.
+This repository contains tools, libraries and interfaces to read and write
+`PineAPPL` interpolation grids, which store theoretical predictions for
+[high-energy collisions] independently from their [PDFs].
 
 Similar projects are:
 
-- [APPLgrid](https://applgrid.hepforge.org/) and
-- [fastNLO](https://fastnlo.hepforge.org/).
+- [APPLgrid] and
+- [fastNLO].
 
 This repository hosts four main crates:
 
-- [`pineappl`](https://crates.io/crates/pineappl) is the crate containing the
-  main functionality,
-- [`pineappl_capi`](https://crates.io/crates/pineappl_capi/) installs a library
-  and a C header, to use PineAPPL from your C, C++ or Fortran programs,
-- [`pineappl_cli`](https://crates.io/crates/pineappl_cli/) installs the program
-  `pineappl` to use PineAPPL from the command line and
-- [`pineappl_py`](https://pypi.org/project/pineappl/) is the Python interface.
+- [`pineappl`] is the crate containing the main functionality,
+- [`pineappl_capi`] installs a library and a C header, to use PineAPPL from
+  your C, C++ or Fortran programs,
+- [`pineappl_cli`] installs the program `pineappl` to use PineAPPL from the
+  command line and
+- [`pineappl_py`] is the Python interface.
+
+[APPLgrid]: https://applgrid.hepforge.org/
+[fastNLO]: https://fastnlo.hepforge.org/
+[high-energy collisions]: https://en.wikipedia.org/wiki/Particle_physics
+[PDFs]: https://en.wikipedia.org/wiki/Parton_(particle_physics)#Parton_distribution_functions
+[`pineappl`]: https://crates.io/crates/pineappl/
+[`pineappl_capi`]: https://crates.io/crates/pineappl_capi/
+[`pineappl_cli`]: https://crates.io/crates/pineappl_cli/
+[`pineappl_py`]: https://pypi.org/project/pineappl/
 
 # Documentation
 
