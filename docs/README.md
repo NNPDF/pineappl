@@ -1,9 +1,9 @@
 # PineAPPL documentation
 
 A good starting point to learn what PineAPPL and its command-line program
-`pineappl` can do is the [tutorial](docs/cli-tutorial.md)!
+`pineappl` can do is the [tutorial](cli-tutorial.md)!
 
-For the CLI also a partial reference [reference](docs/cli-reference.md) is
+For the CLI also a partial reference [reference](cli-reference.md) is
 available.
 
 ## API documentation:
