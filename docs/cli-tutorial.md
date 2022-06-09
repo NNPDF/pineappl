@@ -10,7 +10,7 @@ This tutorial assumes that understand the basics of interpolation grids. If
 you'd like to refresh your memory read the short
 [overview](interpolation-grids.md).
 
-## Prerequites
+## Prerequisites
 
 To take the tutorial, you'll need PineAPPL's CLI; follow the installation
 section in the [README](../README.md). Next, you'll need a fresh directory. For
@@ -127,7 +127,7 @@ value of `--scales` is `7`.
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name what the convoluted numbers will most likely show.
-However, how can you be certain? Specifically, you'll probably want to know the
+However, how can we be certain? Specifically, we'll probably want to know the
 answers to the following questions:
 
 1) For which process is the prediction for?
@@ -299,9 +299,9 @@ which prints
     7    4  4.5 1.3881523e1      100.00       24.77       -1.02
 
 By default all higher orders are shown relative to the sum of all LOs. However,
-this can be changed using the switche `--normalize` or `-n`, which asks for the
-orders you declare as 100 per cent. If we'd like the numbers to be normalized
-to NLO QCD, we'd run
+this can be changed using the switches `--normalize` or `-n`, which asks for
+the orders you declare as 100 per cent. If we'd like the numbers to be
+normalized to NLO QCD, we'd run
 
     pineappl orders --normalize=a2,a2as1 LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
