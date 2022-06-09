@@ -83,19 +83,35 @@ unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraS
     if !key_vals.is_null() {
         let keyval = &*key_vals;
 
-        if let Some(value) = keyval.ints.get("q2_bins") {
+        if let Some(value) = keyval
+            .ints
+            .get("q2_bins")
+            .or_else(|| keyval.ints.get("nq2"))
+        {
             subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
         }
 
-        if let Some(value) = keyval.doubles.get("q2_max") {
+        if let Some(value) = keyval
+            .doubles
+            .get("q2_max")
+            .or_else(|| keyval.doubles.get("q2max"))
+        {
             subgrid_params.set_q2_max(*value);
         }
 
-        if let Some(value) = keyval.doubles.get("q2_min") {
+        if let Some(value) = keyval
+            .doubles
+            .get("q2_min")
+            .or_else(|| keyval.doubles.get("q2min"))
+        {
             subgrid_params.set_q2_min(*value);
         }
 
-        if let Some(value) = keyval.ints.get("q2_order") {
+        if let Some(value) = keyval
+            .ints
+            .get("q2_order")
+            .or_else(|| keyval.ints.get("q2order"))
+        {
             subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
         }
 
@@ -103,23 +119,35 @@ unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraS
             subgrid_params.set_reweight(*value);
         }
 
-        if let Some(value) = keyval.ints.get("x_bins") {
+        if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
             let value = usize::try_from(*value).unwrap();
             subgrid_params.set_x_bins(value);
             extra.set_x2_bins(value);
         }
 
-        if let Some(value) = keyval.doubles.get("x_max") {
+        if let Some(value) = keyval
+            .doubles
+            .get("x_max")
+            .or_else(|| keyval.doubles.get("xmax"))
+        {
             subgrid_params.set_x_max(*value);
             extra.set_x2_max(*value);
         }
 
-        if let Some(value) = keyval.doubles.get("x_min") {
+        if let Some(value) = keyval
+            .doubles
+            .get("x_min")
+            .or_else(|| keyval.doubles.get("xmin"))
+        {
             subgrid_params.set_x_min(*value);
             extra.set_x2_min(*value);
         }
 
-        if let Some(value) = keyval.ints.get("x_order") {
+        if let Some(value) = keyval
+            .ints
+            .get("x_order")
+            .or_else(|| keyval.ints.get("xorder"))
+        {
             let value = usize::try_from(*value).unwrap();
             subgrid_params.set_x_order(value);
             extra.set_x2_order(value);
