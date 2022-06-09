@@ -6,36 +6,9 @@ inside your shell to convolute grids with PDFs and perform other operations.
 This tutorial will also introduce and explain the terminology needed to
 understand the C, Fortran, Python and Rust API.
 
-## Interpolation grids and PineAPPL
-
-First, let's explain what interpolation grids are and what PineAPPL is. If you
-already know that, feel free to skip these sections!
-
-### What are interpolation grids?
-
-Interpolation grids store theoretical predictions that are not convoluted with
-PDFs yet. After they've been generated once, the grids can be convoluted with
-arbitrary PDFs in a fraction of a second. This is very advantageous for the
-following applications:
-
-- *PDF set dependence* of a prediction. Are the predictions with CT18, MSHT20
-  and NNPDF3.1 compatible? If they are not, which parts of their PDF sets are
-  responsible for this?
-- *PDF fits* require the evaluation and fitting of theory predictions to
-  experimental data with changing PDFs, which are impossible without
-  PDF-independent theory predictions.
-
-### What is PineAPPL?
-
-PineAPPL is an interpolation library, and provides interfaces to numerical
-calculations to generate interpolation grids. It is not the only library that
-does that, as there at least two others: [APPLgrid] and [fastNLO].
-Distinguishing features of PineAPPL are
-
-- support for arbitrary fixed-order calculations, in particular EW and mixed
-  QCD–EW corrections. Furthermore it aims to
-- provide *excellent* tooling, which is easy to use and provides maximum
-  insight into theory predictions.
+This tutorial assumes that understand the basics of interpolation grids. If
+you'd like to refresh your memory read the short
+[overview](interpolation-grids.md).
 
 ## Prerequites
 
@@ -203,6 +176,9 @@ through them one by one:
 6) Finally, the value of `runcard` contains runcards of the calculation and
    also the information that Madgraph5_aMC@NLO v3.1.0 was used run the
    calculation, the values of all independent parameters and a few cuts.
+
+If you'd like a complete description of all recognized metadata, have a look at
+the [full list](metadata.md).
 
 ## `pineappl obl`: Orders, bins and lumis
 

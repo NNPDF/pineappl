@@ -49,6 +49,12 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
   the central LHAID. For example, `14000` would select the same PDF set as
   `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
 
+Finally, it is possible to re-label PDF sets by adding `=label` to the
+specification. This is particularly helpful when plotting predictions with
+multiple PDF sets. For example, `NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED`
+instructs to use the the PDF set `NNPDF31_nnlo_as_0118_luxqed`, but it would be
+called `NNPDF31luxQED`.
+
 ## `REMAPPING`: Remapping parameter specification
 
 This section specifies the `REMAPPING` parameter of `pineappl remap`.
