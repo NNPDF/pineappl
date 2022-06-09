@@ -15,11 +15,11 @@ Here is a list of all the documentation is this directory:
 
 ## API documentation:
 
-- [C](https://docs.rs/pineappl_capi/latest/pineappl_capi/)
+- [C](https://docs.rs/pineappl_capi/)
 - for Fortran there's no dedicated documentation available, because it's a
   [wrapper](../examples/fortran/pineappl.f90) of the C API
-- [Python](https://pineappl.readthedocs.io/en/latest/modules/pineappl/pineappl.html)
-- [Rust](https://docs.rs/pineappl/latest/pineappl/)
+- [Python](https://pineappl.readthedocs.io/)
+- [Rust](https://docs.rs/pineappl/)
 
 ## Code examples
 
