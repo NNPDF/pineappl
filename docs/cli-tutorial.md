@@ -2,8 +2,9 @@
 
 Welcome to PineAPPL's CLI tutorial! Here we'll explain the basics of PineAPPL's
 command-line interface (CLI): that's the program `pineappl` that you can you use
-inside your shell. This will also introduce and explain the terminology needed
-to understand the C, Fortran, Python and Rust API.
+inside your shell to convolute grids with PDFs and perform other operations.
+This tutorial will also introduce and explain the terminology needed to
+understand the C, Fortran, Python and Rust API.
 
 ## Interpolation grids and PineAPPL
 
@@ -36,7 +37,7 @@ Distinguishing features of PineAPPL are
 - provide *excellent* tooling, which is easy to use and provides maximum
   insight into theory predictions.
 
-## Installation
+## Prerequites
 
 To take the tutorial, you'll need PineAPPL's CLI; follow the installation
 section in the [README](../README.md). Next, you'll need a fresh directory. For
@@ -52,12 +53,12 @@ which will be used together with the CLI.
 
 ## `pineappl convolute`: Performing convolutions
 
-Now that you've got a grid, perform a convolution with a PDF set:
+Now that we've got a grid, we can perform a convolution with a PDF set:
 
     pineappl convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 We've chosen to use the default CT18 PDF set for this tutorial, because it's
-the easiest to type. If you get an error that reads
+the shortest to type. If you get an error that reads
 
     error: Invalid value for '<PDFSETS>...': The PDF set `CT18NNLO` was not found
 
@@ -87,9 +88,9 @@ installation. If you don't want to see LHAPDF messages, add the option
 
     pineappl --silence-lhapdf convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
-Have a closer look at what the output shows:
+Let's have a closer look at what the output shows:
 
-- the `b` column shows there are 8 bins, labeled 0 to 7,
+- the `b` column shows there are 8 bins, labeled `0` to `7`,
 - the next two columns labelled `etal` shows the observable used to define the
   bins and its left and right bin limits,
 - `disg/detal` has a spelling mistake, unfortunately, and should read
@@ -153,13 +154,13 @@ value of `--scales` is `7`.
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name what the convoluted numbers will most likely show.
-However, how can you be certain? Specifically, the you'll probably want to know
-the answers to the following questions:
+However, how can you be certain? Specifically, you'll probably want to know the
+answers to the following questions:
 
 1) For which process is the prediction for?
 2) Which observable is shown?
 3) If there's a corresponding experimental paper, where is it?
-4) Where are the measurements corresponding to the predictions?
+4) Where are the measured values corresponding to the shown predictions?
 5) Which program/generator was used to produce this grid? What version?
 6) Which runcards were used, which parameter values?
 
@@ -169,8 +170,8 @@ grids):
 
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
-This will print out very long list of (alphabetically sorted) key–value pairs,
-from which you can read off the answers to the questions above. Let's go
+This will print out a very long list of (alphabetically sorted) key–value
+pairs, from which you can read off the answers to the questions above. Let's go
 through them one by one:
 
 1) The value for the key `description` gives a short description of the
@@ -184,7 +185,7 @@ through them one by one:
    instance `x2_label`, etc. Furthermore, for plots there are the corresponding
    labels in LaTeX: `x1_label_tex`, `y_label_tex` and so on. Finally, `x1_unit`
    contains the physical units for each observable, typically `GeV`, and
-   `y_label` the units of the (differential) cross section, typically `pb`.
+   `y_unit` the units of the (differential) cross section, typically in `pb`.
 3) The value of the key `arxiv` gives us the corresponding arXiv identifier, in
    this case for the experimental measurement; enter the value into the search
    field of <https://arxiv.org>, and it'll lead you to the paper.
@@ -194,7 +195,7 @@ through them one by one:
    <https://www.hepdata.net> for the corresponding observable. Together with
    the paper this will make clear that the predictions show the pseudorapidity
    of the positively-charged lepton, corresponding to table 6 in the paper.
-5) The presence of `mg5amc_repo` and `mg5amc_revno` signal that
+5) The presence of `mg5amc_repo` and `mg5amc_revno` show that
    [Madgraph5_aMC@NLO] was used to calculate the predictions. Since their
    values are empty, an official release was used, whose version we can read
    off from `runcard`. If these values were non-zero, they'd point to the
@@ -245,8 +246,8 @@ Additionally, there are
 - renormalization-logs (`2` and `5`) are also present, but their contributions
   are in fact zero.
 
-These last two grids are needed if during the convolution the scale-variation
-uncertainty should be calculated.
+These last two subgrid types are needed if during the convolution the
+scale-variation uncertainty should be calculated.
 
 Now let's look at the bins:
 
@@ -268,9 +269,9 @@ which prints:
 this shows the bin indices `b` for the observable `etal`, with their left and
 right bin limits, which you've already seen in `convolute`. The column `norm`
 shows the factor that all convolutions are divided with. Typically, as shown in
-this case, this is the bin width, but this doesn't have to be the case.
+this case, this is the bin width, but in general this can be different.
 
-Finally, let's have a look at the luminosities or lumis:
+Finally, let's have a look at the luminosities or *lumis*:
 
     pineappl obl --lumis LHCB_WP_7TEV.pineappl.lz4
 
@@ -287,22 +288,23 @@ This prints all partonic initial states that contribute to this process:
 In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
 -3) initial states (the numbers are PDG MC IDs) are grouped together in a
 single *channel*, each with a factor of `1`. In general this number can be
-different from one, if the Monte Carlo decides to factor out CKM factors or
-electric charges, for instance, to group more channels together. This is an
-optimization step, as fewer channels result in a smaller grid file.
+different from one, if the Monte Carlo decides to factor out CKM values or
+electric charges, for instance, to group more lumis with the same matrix
+elements together. This is an optimization step, as fewer lumis result in a
+smaller grid file.
 
-Note that channels with the transposed initial states, for instance
+Note that lumis with the transposed initial states, for instance
 anti-down—up, are merged with each other, which always works if the two
 initial-state hadrons are the same; this is an optimization step, also to keep
 the size of the grid files small.
 
-All remaining channels are the ones with a gluon (in this case denoted with
+All remaining lumis are the ones with a gluon (in this case denoted with
 `0`) or with a photon, `22`.
 
 ## `pineappl orders`: What's the size of each perturbative order?
 
 In the previous section you've seen that each order is stored separately, which
-means you convolute each order separately:
+means you can convolute each order separately:
 
     pineappl orders LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -321,9 +323,9 @@ which prints
     7    4  4.5 1.3881523e1      100.00       24.77       -1.02
 
 By default all higher orders are shown relative to the sum of all LOs. However,
-this can be changed using the switches `--normalize`, which asks for the orders
-you declare as 100 per cent. If we'd like the numbers to be normalized to NLO,
-we'd run
+this can be changed using the switche `--normalize` or `-n`, which asks for the
+orders you declare as 100 per cent. If we'd like the numbers to be normalized
+to NLO QCD, we'd run
 
     pineappl orders --normalize=a2,a2as1 LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -343,8 +345,8 @@ which will show
 
 ## `pineappl channels`: What's the size of each channel?
 
-You can also show a convolution separately for each luminosity, or in other
-words show the size of each partonic channel:
+You can also show a convolution separately for each lumi, or in other words
+show the size of each partonic channel:
 
     pineappl channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -362,7 +364,7 @@ This will show the following table,
     6  3.5    4 0 115.63 3 -10.25 1 -5.38 2 0.00 4 0.00
     7    4  4.5 0 115.74 3  -8.56 1 -7.18 2 0.00 4 0.00
 
-The most important channel is `0`, which is the up-type–anti-down-type
+The most important lumi is `0`, which is the up-type–anti-down-type
 combination. The channels with gluons are much smaller and negative. Channels
 with a photon are zero, because the PDF set that we've chosen doesn't have a
 photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
@@ -411,15 +413,19 @@ replicas. However, this is expected and the difference is typically small.
 
 ## `pineappl pull`: Are two PDF sets compatible with each other?
 
-A variation of PDF uncertainties are *pulls*; they quantify how different two
-the predictions for two PDF sets are. The pull is defined as the difference of
-the two predictions, divided by the square-root of sum of squares of the PDF
-uncertainties. You can calculate it using:
+A variation of PDF uncertainties are *pulls*; they quantify how different
+predictions for two PDF sets are. The pull is defined as the difference of the
+two predictions $\sigma_1$ and $\sigma_2$, in terms of their PDF uncertainties
+$\delta \sigma_1$ and $\delta \sigma_2$:
+
+$$ \text{pull} = \frac{\sigma_2 - \sigma_1}{\sqrt{(\delta \sigma_1)^2 + (\delta \sigma_2)^2}} $$
+
+You can calculate it for each bin using:
 
     pineappl pull LHCB_WP_7TEV.pineappl.lz4 CT18NNLO NNPDF31_nnlo_as_0118_luxqed
 
-This will show not only the pull, in column `total`, but also how this pull is
-calculated using the different channels:
+This will show not only the pull, in the column `total`, but also how this pull
+is calculated using the different channels:
 
     b   etal    total  l  pull  l  pull  l  pull  l pull  l pull
          []      [σ]      [σ]      [σ]      [σ]      [σ]     [σ]
@@ -434,10 +440,11 @@ calculated using the different channels:
     7    4  4.5  0.145 0  0.071 3  0.037 1  0.031 4 0.004 2 0.001
 
 Looking at the `total` column you can see that the numbers are much smaller
-than `1`, corresponding to a one sigma deviation. This we'd expect knowing that
-this dataset is used to fit both PDF sets. Furthermore, the remaining columns
-show how this pull was calculated, for instance for the first bin we see that
-when we sum the four contributions in `pull` we obtain the `total` result.
+than `1`, which would correspond to a one sigma deviation. This we'd expect
+knowing that this dataset is used to fit both PDF sets. Furthermore, the
+remaining columns show how this pull was calculated, for instance for the first
+bin we see that when we sum the four contributions in `pull` we obtain the
+`total` result.
 
 Note that the chosen CT18 set doesn't have a photon PDF, where the NNPDF set
 *does* have one. However, for these observables the photon PDF contribution is
