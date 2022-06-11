@@ -130,12 +130,12 @@ and the observable name what the convoluted numbers will most likely show.
 However, how can we be certain? Specifically, we'll probably want to know the
 answers to the following questions:
 
-1) For which process is the prediction for?
-2) Which observable is shown?
-3) If there's a corresponding experimental paper, where is it?
-4) Where are the measured values corresponding to the shown predictions?
-5) Which program/generator was used to produce this grid? What version?
-6) Which runcards were used, which parameter values?
+1. For which process is the prediction for?
+2. Which observable is shown?
+3. If there's a corresponding experimental paper, where is it?
+4. Where are the measured values corresponding to the shown predictions?
+5. Which program/generator was used to produce this grid? What version?
+6. Which runcards were used, which parameter values?
 
 The subcommand that'll answer all these questions is `info`. This will get you
 access to what we call *metadata* (the data describing the interpolation
@@ -147,10 +147,10 @@ This will print out a very long list of (alphabetically sorted) key–value
 pairs, from which you can read off the answers to the questions above. Let's go
 through them one by one:
 
-1) The value for the key `description` gives a short description of the
+1. The value for the key `description` gives a short description of the
    process. In this case this is `LHCb differential W-boson production cross
    section at 7 TeV`.
-2) The keys `x1_label` contains the name of the observable, and `y_label` the
+2. The keys `x1_label` contains the name of the observable, and `y_label` the
    name of the corresponding (differential) cross section. These strings are
    being used by `convolute` and other subcommands that perform convolutions to
    label the columns with the corresponding numbers. If grids contain two- or
@@ -159,21 +159,21 @@ through them one by one:
    labels in LaTeX: `x1_label_tex`, `y_label_tex` and so on. Finally, `x1_unit`
    contains the physical units for each observable, typically `GeV`, and
    `y_unit` the units of the (differential) cross section, typically in `pb`.
-3) The value of the key `arxiv` gives us the corresponding arXiv identifier, in
+3. The value of the key `arxiv` gives us the corresponding arXiv identifier, in
    this case for the experimental measurement; enter the value into the search
    field of <https://arxiv.org>, and it'll lead you to the paper.
-4) The measured data itself you can get from the location specified by `hepdata`,
+4. The measured data itself you can get from the location specified by `hepdata`,
    which is a digital object identifier (DOI). Go to <https://www.doi.org/> and
    enter the string there. This will get you to the right table on
    <https://www.hepdata.net> for the corresponding observable. Together with
    the paper this will make clear that the predictions show the pseudorapidity
    of the positively-charged lepton, corresponding to table 6 in the paper.
-5) The presence of `mg5amc_repo` and `mg5amc_revno` show that
+5. The presence of `mg5amc_repo` and `mg5amc_revno` show that
    [Madgraph5_aMC@NLO] was used to calculate the predictions. Since their
    values are empty, an official release was used, whose version we can read
    off from `runcard`. If these values were non-zero, they'd point to the
    Madgraph5 repository and its revision number.
-6) Finally, the value of `runcard` contains runcards of the calculation and
+6. Finally, the value of `runcard` contains runcards of the calculation and
    also the information that Madgraph5_aMC@NLO v3.1.0 was used run the
    calculation, the values of all independent parameters and a few cuts.
 

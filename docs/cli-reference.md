@@ -64,8 +64,8 @@ This section specifies the `REMAPPING` parameter of `pineappl remap`.
 For performance/simplicity reasons most Monte Carlo generators (and also the
 PineAPPL `Grid::fill` method) neither support
 
-1) multi-dimensional distributions nor
-2) distributions whose bin sizes are not equally sized
+1. multi-dimensional distributions nor
+2. distributions whose bin sizes are not equally sized
 
 *during generation*. To work around this problem a grid with a one-dimensional
 distribution with equally-sized bins can be generated instead, and afterwards

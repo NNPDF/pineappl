@@ -158,8 +158,8 @@ Before submitting a pull request please read the
 
 If you use PineAPPL, please cite
 
-1) the zenodo DOI above and
-2) the following reference:
+1. the zenodo DOI above and
+2. the following reference:
 
    ```
    @article{Carrazza:2020gss,
