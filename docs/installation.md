@@ -105,4 +105,4 @@ To install the Python interface, run
     pip install pineappl
 
 For more documentation and more information see its
-[README](pineappl_py/README.md).
+[README](../pineappl_py/README.md).
