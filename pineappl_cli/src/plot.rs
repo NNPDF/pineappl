@@ -258,7 +258,7 @@ impl Subcommand for Opts {
                 _ => {}
             }
 
-            println!(
+            print!(
                 include_str!("plot.py"),
                 xaxis = format!("x{}", bin_info.dimensions()),
                 output = output.to_str().unwrap(),
@@ -350,7 +350,7 @@ impl Subcommand for Opts {
                 vals.push((two - one) / denominator);
             }
 
-            println!(
+            print!(
                 include_str!("subgrid-pull-plot.py"),
                 x1 = map_format_e_join(&x1_vals),
                 x2 = map_format_e_join(&x2_vals),
