@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subcommand `import`
 - added new switches `--digits-abs`, `--digits-rel` and `--digits` to various
   subcommand to influence the number of (fractional) digits printed
+- PDF relabeling support has been added. This means that all subcommands
+  understand PDF specifications of the type `pdfset=label`, where `pdfset` must
+  be an LHAPDF identifier, and results using this set are displayed using
+  `label` instead of `pdfset`.
 
 ### Changed
 
