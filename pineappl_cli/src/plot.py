@@ -70,6 +70,7 @@ def plot_abs(axis, **kwargs):
     ylog = kwargs['ylog']
     ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
+    pdf_uncertainties = kwargs['pdf_results']
 
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
@@ -79,6 +80,31 @@ def plot_abs(axis, **kwargs):
     axis.step(x, y, 'royalblue', linewidth=1.0, where='post', label=slice_label)
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
     axis.set_ylabel(ylabel)
+
+    if slice_label != '':
+        axis.legend(fontsize='xx-small', frameon=False)
+
+def plot_abs_pdfs(axis, **kwargs):
+    x = kwargs['x']
+    ylog = kwargs['ylog']
+    ylabel = kwargs['ylabel']
+    slice_label = kwargs['slice_label']
+    pdf_uncertainties = kwargs['pdf_results']
+
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+    axis.set_yscale('log' if ylog else 'linear')
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+    axis.set_ylabel(ylabel)
+
+    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0)
 
     if slice_label != '':
         axis.legend(fontsize='xx-small', frameon=False)
@@ -225,6 +251,7 @@ def plot_rel_pdfpull(axis, **kwargs):
 def main():
     panels = [
         plot_abs,
+        #plot_abs_pdfs,
         plot_rel_ewonoff,
     ]
 
