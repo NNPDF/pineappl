@@ -122,8 +122,8 @@ def plot_rel_pdfunc(axis, **kwargs):
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
-        ymin = (ymin / y - 1.0) * 100.0
-        ymax = (ymax / y - 1.0) * 100.0
+        ymin = percent_diff(ymin, y)
+        ymax = percent_diff(ymax, y)
         axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
         axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
 
