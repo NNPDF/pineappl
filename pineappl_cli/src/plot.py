@@ -17,7 +17,15 @@ def ylimits(axis):
 
     inc = 1.0
 
-    if (max - min) > 10.5:
+    if (max - min) > 100.0:
+        min = -50.0
+        max = 50.0
+        inc = 25.0
+    elif (max - min) > 30.5:
+        inc = 10.0
+    elif (max - min) > 20.5:
+        inc = 5.0
+    elif (max - min) > 10.5:
         inc = 2.0
     elif (max - min) < 3.0:
         inc = 0.5
