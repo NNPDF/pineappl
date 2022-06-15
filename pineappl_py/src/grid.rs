@@ -594,7 +594,7 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// factor : numpy.ndarray[float]
+    /// factors : numpy.ndarray[float]
     ///     bin-dependent factors by which scaling
     pub fn scale_by_bin(&mut self, factors: PyReadonlyArray1<f64>) {
         self.grid.scale_by_bin(&factors.to_vec().unwrap());
