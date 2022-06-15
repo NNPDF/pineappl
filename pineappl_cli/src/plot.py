@@ -70,7 +70,6 @@ def plot_abs(axis, **kwargs):
     ylog = kwargs['ylog']
     ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
-    pdf_uncertainties = kwargs['pdf_results']
 
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
