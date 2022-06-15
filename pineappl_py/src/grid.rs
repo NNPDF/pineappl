@@ -590,13 +590,23 @@ impl PyGrid {
         self.grid.scale(factor);
     }
 
+    /// Scale subgrids bin by bin.
+    ///
+    /// Parameters
+    /// ----------
+    /// factor : numpy.ndarray[float]
+    ///     bin-dependent factors by which scaling
+    pub fn scale_by_bin(&mut self, factors: PyReadonlyArray1<f64>) {
+        self.grid.scale_by_bin(&factors.to_vec().unwrap());
+    }
+
     /// Delete bins.
     ///
     /// Repeated bins and those exceeding length are ignored.
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : numpy.ndarray(int)
+    /// bin_indices : numpy.ndarray[int]
     ///     list of indices of bins to removed
     pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
         self.grid.delete_bins(&bin_indices.to_vec().unwrap())
