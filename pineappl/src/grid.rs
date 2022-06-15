@@ -968,6 +968,17 @@ impl Grid {
         }
     }
 
+    /// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a
+    /// corresponding entry in `factors` it is not rescaled. If `factors` has more entries than
+    /// there are bins the superfluous entries do not have an effect.
+    pub fn scale_by_bin(&mut self, factors: &[f64]) {
+        for ((_, bin, _), subgrid) in self.subgrids.indexed_iter_mut() {
+            if let Some(&factor) = factors.get(bin) {
+                subgrid.scale(factor);
+            }
+        }
+    }
+
     /// Returns the subgrid parameters.
     #[must_use]
     pub fn orders(&self) -> &[Order] {

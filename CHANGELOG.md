@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   understand PDF specifications of the type `pdfset=label`, where `pdfset` must
   be an LHAPDF identifier, and results using this set are displayed using
   `label` instead of `pdfset`.
+- added bin-dependent rescaling method. To use it through the CLI use `pineappl
+  ops --scale-by-bin=`
 
 ### Changed
 

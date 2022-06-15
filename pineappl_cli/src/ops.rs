@@ -21,6 +21,13 @@ pub struct Opts {
     /// Charge conjugate the second initial state.
     #[clap(long)]
     cc2: bool,
+    /// Scale each bin with a different factor.
+    #[clap(
+        long = "scale-by-bin",
+        multiple_values = true,
+        use_value_delimiter = true
+    )]
+    scale_by_bin: Vec<f64>,
 }
 
 impl Subcommand for Opts {
@@ -78,6 +85,10 @@ impl Subcommand for Opts {
             grid.set_lumis(lumis);
         }
 
+        if !self.scale_by_bin.is_empty() {
+            grid.scale_by_bin(&self.scale_by_bin);
+        }
+
         helpers::write_grid(&self.output, &grid)
     }
 }
@@ -98,9 +109,10 @@ ARGS:
     <OUTPUT>    Path of the modified PineAPPL file
 
 OPTIONS:
-        --cc1     Charge conjugate the first initial state
-        --cc2     Charge conjugate the second initial state
-    -h, --help    Print help information
+        --cc1                               Charge conjugate the first initial state
+        --cc2                               Charge conjugate the second initial state
+    -h, --help                              Print help information
+        --scale-by-bin <SCALE_BY_BIN>...    Scale each bin with a different factor
 ";
 
     const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -114,6 +126,19 @@ OPTIONS:
 5 3.25  3.5 1.2291115e2    -3.71     2.98
 6  3.5    4 5.7851018e1    -3.63     2.97
 7    4  4.5 1.3772029e1    -3.46     2.85
+";
+
+    const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal  scale uncertainty
+     []        [pb]            [%]       
+-+----+----+-----------+--------+--------
+0    2 2.25 3.7527620e2    -3.77     2.71
+1 2.25  2.5 6.9043106e2    -3.79     2.80
+2  2.5 2.75 9.0004217e2    -3.78     2.86
+3 2.75    3 9.7030651e2    -3.77     2.92
+4    3 3.25 9.0466716e2    -3.74     2.95
+5 3.25  3.5 7.3746691e2    -3.71     2.98
+6  3.5    4 4.0495712e2    -3.63     2.97
+7    4  4.5 1.1017623e2    -3.46     2.85
 ";
 
     #[test]
@@ -182,5 +207,34 @@ OPTIONS:
             .assert()
             .success()
             .stdout(DEFAULT_STR);
+    }
+
+    #[test]
+    fn scale_by_bin() {
+        let output = NamedTempFile::new("scale_by_bin.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "ops",
+                "--scale-by-bin=1,2,3,4,5,6,7,8",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                output.path().to_str().unwrap(),
+            ])
+            .assert()
+            .success()
+            .stdout("");
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "convolute",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(SCALE_BY_BIN_STR);
     }
 }
