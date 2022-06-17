@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_cli"
-version = "0.5.3-beta"
+version = "0.5.3-beta.1"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -21,7 +21,7 @@ itertools = "0.10.1"
 lhapdf = "0.2.0"
 ndarray = "0.15.4"
 num_cpus = "1.13.0"
-pineappl = { path = "../pineappl", version = "0.5.3-beta" }
+pineappl = { path = "../pineappl", version = "0.5.3-beta.1" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.1.0" }
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.8.0" }
 rayon = "1.5.1"

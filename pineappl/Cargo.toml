@@ -1,6 +1,6 @@
 [package]
 name = "pineappl"
-version = "0.5.3-beta"
+version = "0.5.3-beta.1"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
