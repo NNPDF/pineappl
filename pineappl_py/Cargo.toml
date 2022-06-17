@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_py"
-version = "0.5.3-beta.1"
+version = "0.5.3-beta.2"
 authors = [
     "Christopher Schwan <handgranaten-herbert@posteo.de>",
     "Alessandro Candido <candido.ale@gmail.com>",
@@ -25,5 +25,5 @@ crate-type = ["cdylib"]
 itertools = "0.9"
 ndarray = "0.15.3"
 numpy = "0.16.2"
-pineappl = { path = "../pineappl", version = "0.5.3-beta.1" }
+pineappl = { path = "../pineappl", version = "0.5.3-beta.2" }
 pyo3 = { features = ["extension-module"], version = "0.16.4" }
