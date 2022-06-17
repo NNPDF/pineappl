@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     # a dedicated container is needed, so maturin-action is not an option, see pineappl_py/package/README.md for details
     container:
-      image: docker://ghcr.io/n3pdf/maturin:latest
+      image: docker://ghcr.io/n3pdf/maturin:0.2.1
     steps:
       - name: Compile and Publish wheels
         working-directory: /home/pineappl
