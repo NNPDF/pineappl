@@ -17,7 +17,7 @@ jobs:
         env:
           HOME: /home/pineappl
         run: |
-          ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+          ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }} --interpreter 3.7 3.8 3.9 3.10 pypy3.7
 
   deploy-other:
     strategy:
