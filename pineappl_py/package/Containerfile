@@ -24,4 +24,4 @@ COPY maturin /home/pineappl
 
 ENTRYPOINT ["/home/pineappl/maturin"]
 # To minimize the size of the wheel use '--strip'
-CMD ["build --release"]
+CMD ["build --release --interpreter 3.7 3.8 3.9 3.10 pypy3.7"]
