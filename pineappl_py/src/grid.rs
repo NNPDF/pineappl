@@ -584,13 +584,14 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     list(tuple(float,float)) :
-    ///         luminosity functions as pid tuples
-    pub fn lumi(&self) -> Vec<(i32, i32)> {
+    ///     list(list(tuple(float,float))) :
+    ///         luminosity functions as pid tuples (multiple tuples can bee associated to the same
+    ///         contribution)
+    pub fn lumi(&self) -> Vec<Vec<(i32, i32)>> {
         self.grid
             .lumi()
             .iter()
-            .map(|entry| (entry.entry()[0].0, entry.entry()[0].1))
+            .map(|entry| entry.entry().iter().map(|ch| (ch.0, ch.1)).collect())
             .collect()
     }
 
