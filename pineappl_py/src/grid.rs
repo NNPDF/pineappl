@@ -580,6 +580,20 @@ impl PyGrid {
             .collect()
     }
 
+    /// Get luminsosity functions.
+    ///
+    /// Returns
+    /// -------
+    ///     list(tuple(float,float)) :
+    ///         luminosity functions as pid tuples
+    pub fn lumi(&self) -> Vec<(i32, i32)> {
+        self.grid
+            .lumi()
+            .iter()
+            .map(|entry| (entry.entry()[0].0, entry.entry()[0].1))
+            .collect()
+    }
+
     /// Scale all subgrids.
     ///
     /// Parameters
