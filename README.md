@@ -4,7 +4,7 @@
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
 [![Minimum cargo version](https://img.shields.io/badge/cargo-1.54+-lightgray.svg)](https://github.com/N3PDF/pineappl#installation)
 
-# Introduction
+# What is PineAPPL?
 
 This repository contains tools, libraries and interfaces to read and write
 `PineAPPL` interpolation grids, which store theoretical predictions for

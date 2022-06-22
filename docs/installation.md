@@ -9,9 +9,9 @@ installed, make sure it is recent enough:
 
     cargo --version
 
-This should show a version that 1.54 or newer. If you do not have `cargo` or it
-is too old, go to <https://www.rust-lang.org/tools/install> and follow the
-instructions there.
+This should show a version that is at least 1.54. If you do not have `cargo` or
+if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
+the instructions there.
 
 Next, install the command-line interface (CLI) by choosing either the *release*
 or *development version* below. In both cases the binary `pineappl` will be

@@ -7,6 +7,7 @@ A good starting point to learn what PineAPPL and its command-line program
 
 Here is a list of all the documentation is this directory:
 
+- [Installation](installation.md): installation instructions
 - [CLI tutorial](cli-tutorial.md): a tutorial for the command-line interface
   (CLI).
 - [CLI reference](cli-reference.md): a reference for all parameters of the CLI.
