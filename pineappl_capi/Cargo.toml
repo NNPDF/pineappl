@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_capi"
-version = "0.5.3-beta.2"
+version = "0.5.3"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -11,7 +11,7 @@ categories = ["science"]
 description = "C language interface to PineAPPL"
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.5.3-beta.2" }
+pineappl = { path = "../pineappl", version = "0.5.3" }
 itertools = "0.10.1"
 
 [features]

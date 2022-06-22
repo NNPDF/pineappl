@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 22/06/2022
+
 ### Added
 
 - added new switch `--ignore-bin-limits` to `diff` that ignores possibly
@@ -251,7 +253,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.3...HEAD
+[0.5.2]: https://github.com/N3PDF/pineappl/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/N3PDF/pineappl/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/N3PDF/pineappl/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/N3PDF/pineappl/compare/v0.4.1...v0.5.0
