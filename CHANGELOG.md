@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new switch `--force-positive` to CLI to cut out negative PDF values
+
 ## [0.5.3] - 22/06/2022
 
 ### Added

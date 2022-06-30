@@ -54,6 +54,9 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 3, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Forces negative PDF values to zero.
+    #[clap(long = "force-positive")]
+    force_positive: bool,
 }
 
 impl Subcommand for Opts {
@@ -151,8 +154,26 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(&grid1, &mut pdf, &orders1, &[], &[], 1, false);
-            let results2 = helpers::convolute(&grid2, &mut pdf, &orders2, &[], &[], 1, false);
+            let results1 = helpers::convolute(
+                &grid1,
+                &mut pdf,
+                &orders1,
+                &[],
+                &[],
+                1,
+                false,
+                self.force_positive,
+            );
+            let results2 = helpers::convolute(
+                &grid2,
+                &mut pdf,
+                &orders2,
+                &[],
+                &[],
+                1,
+                false,
+                self.force_positive,
+            );
 
             for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
                 let row = table.add_empty_row();
@@ -184,11 +205,33 @@ impl Subcommand for Opts {
 
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid1, &mut pdf, &[order], &[], &[], 1, false))
+                .map(|&order| {
+                    helpers::convolute(
+                        &grid1,
+                        &mut pdf,
+                        &[order],
+                        &[],
+                        &[],
+                        1,
+                        false,
+                        self.force_positive,
+                    )
+                })
                 .collect();
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
-                .map(|&order| helpers::convolute(&grid2, &mut pdf, &[order], &[], &[], 1, false))
+                .map(|&order| {
+                    helpers::convolute(
+                        &grid2,
+                        &mut pdf,
+                        &[order],
+                        &[],
+                        &[],
+                        1,
+                        false,
+                        self.force_positive,
+                    )
+                })
                 .collect();
 
             for bin in 0..bin_info.bins() {

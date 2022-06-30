@@ -36,6 +36,9 @@ pub struct Opts {
     /// Set the number of digits shown for numerical values.
     #[clap(default_value_t = 3, long = "digits")]
     digits: usize,
+    /// Forces negative PDF values to zero.
+    #[clap(long = "force-positive")]
+    force_positive: bool,
 }
 
 impl Subcommand for Opts {
@@ -54,11 +57,15 @@ impl Subcommand for Opts {
 
         let results1: Vec<f64> = pdfset1
             .par_iter_mut()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
+            .flat_map(|pdf| {
+                helpers::convolute(&grid, pdf, &[], &[], &[], 1, false, self.force_positive)
+            })
             .collect();
         let results2: Vec<f64> = pdfset2
             .par_iter_mut()
-            .flat_map(|pdf| helpers::convolute(&grid, pdf, &[], &[], &[], 1, false))
+            .flat_map(|pdf| {
+                helpers::convolute(&grid, pdf, &[], &[], &[], 1, false, self.force_positive)
+            })
             .collect();
 
         let bin_info = grid.bin_info();
@@ -108,7 +115,16 @@ impl Subcommand for Opts {
                     let central: Vec<f64> = pdfset1
                         .par_iter_mut()
                         .map(|pdf| {
-                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                            helpers::convolute(
+                                &grid,
+                                pdf,
+                                &[],
+                                &[bin],
+                                &lumi_mask,
+                                1,
+                                false,
+                                self.force_positive,
+                            )[0]
                         })
                         .collect();
                     set1.uncertainty(&central, self.cl, false).unwrap().central
@@ -121,7 +137,16 @@ impl Subcommand for Opts {
                     let central: Vec<f64> = pdfset2
                         .par_iter_mut()
                         .map(|pdf| {
-                            helpers::convolute(&grid, pdf, &[], &[bin], &lumi_mask, 1, false)[0]
+                            helpers::convolute(
+                                &grid,
+                                pdf,
+                                &[],
+                                &[bin],
+                                &lumi_mask,
+                                1,
+                                false,
+                                self.force_positive,
+                            )[0]
                         })
                         .collect();
                     set2.uncertainty(&central, self.cl, false).unwrap().central

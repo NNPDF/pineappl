@@ -31,6 +31,9 @@ pub struct Opts {
     /// Number of threads to utilize.
     #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
+    /// Forces negative PDF values to zero.
+    #[clap(long = "force-positive")]
+    force_positive: bool,
 }
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -100,7 +103,16 @@ impl Subcommand for Opts {
             let grid = helpers::read_grid(&self.input)?;
             let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
 
-            let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], self.scales, false);
+            let results = helpers::convolute(
+                &grid,
+                &mut pdf,
+                &[],
+                &[],
+                &[],
+                self.scales,
+                false,
+                self.force_positive,
+            );
 
             let qcd_results = {
                 let mut orders = grid.orders().to_vec();
@@ -117,7 +129,16 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                helpers::convolute(&grid, &mut pdf, &qcd_orders, &[], &[], self.scales, false)
+                helpers::convolute(
+                    &grid,
+                    &mut pdf,
+                    &qcd_orders,
+                    &[],
+                    &[],
+                    self.scales,
+                    false,
+                    self.force_positive,
+                )
             };
 
             let bin_info = grid.bin_info();
@@ -132,7 +153,16 @@ impl Subcommand for Opts {
                         .mk_pdfs()
                         .into_par_iter()
                         .flat_map(|mut pdf| {
-                            helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false)
+                            helpers::convolute(
+                                &grid,
+                                &mut pdf,
+                                &[],
+                                &[],
+                                &[],
+                                1,
+                                false,
+                                self.force_positive,
+                            )
                         })
                         .collect();
 
@@ -299,11 +329,17 @@ impl Subcommand for Opts {
 
             let values1: Vec<f64> = pdfset1
                 .par_iter_mut()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
+                .map(|pdf| {
+                    helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false, self.force_positive)
+                        [0]
+                })
                 .collect();
             let values2: Vec<f64> = pdfset2
                 .par_iter_mut()
-                .map(|pdf| helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false)[0])
+                .map(|pdf| {
+                    helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false, self.force_positive)
+                        [0]
+                })
                 .collect();
 
             let uncertainty1 = set1.uncertainty(&values1, cl, false)?;

@@ -121,6 +121,7 @@ pub fn convolute(
     lumis: &[bool],
     scales: usize,
     integrated: bool,
+    force_positive: bool,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -139,6 +140,10 @@ pub fn convolute(
         .entry("Particle")
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
+
+    if force_positive {
+        lhapdf.set_force_positive(1);
+    }
 
     let x_max = lhapdf.x_max();
     let x_min = lhapdf.x_min();

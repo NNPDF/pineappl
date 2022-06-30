@@ -39,6 +39,9 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Forces negative PDF values to zero.
+    #[clap(long = "force-positive")]
+    force_positive: bool,
 }
 
 impl Subcommand for Opts {
@@ -55,7 +58,16 @@ impl Subcommand for Opts {
         let results: Vec<f64> = pdfs
             .into_par_iter()
             .flat_map(|mut pdf| {
-                helpers::convolute(&grid, &mut pdf, &self.orders, &[], &[], 1, self.integrated)
+                helpers::convolute(
+                    &grid,
+                    &mut pdf,
+                    &self.orders,
+                    &[],
+                    &[],
+                    1,
+                    self.integrated,
+                    self.force_positive,
+                )
             })
             .collect();
 

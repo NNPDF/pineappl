@@ -35,6 +35,9 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Forces negative PDF values to zero.
+    #[clap(long = "force-positive")]
+    force_positive: bool,
 }
 
 impl Subcommand for Opts {
@@ -61,6 +64,7 @@ impl Subcommand for Opts {
                     &[],
                     1,
                     self.integrated,
+                    self.force_positive,
                 )
             })
             .collect();
