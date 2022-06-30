@@ -404,7 +404,7 @@ impl PyGrid {
     ///     mur2_grid : numpy.ndarray(float)
     ///         list of renormalization scales
     ///     muf2_grid : numpy.ndarray(float)
-    ///         list of factorizazion scales
+    ///         list of factorization scales
     ///     operator : numpy.ndarray(int, rank=5)
     ///         evolution tensor
     ///     orders_mask: numpy.ndarray(bool)
