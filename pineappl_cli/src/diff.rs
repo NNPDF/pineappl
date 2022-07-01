@@ -280,6 +280,7 @@ OPTIONS:
                                   [default: 7]
         --digits-rel <REL>        Set the number of fractional digits shown for relative numbers
                                   [default: 3]
+        --force-positive          Forces negative PDF values to zero
     -h, --help                    Print help information
         --ignore-bin-limits       Ignore bin limits (but not number of bins)
         --ignore-lumis            Ignore differences in the luminosity functions

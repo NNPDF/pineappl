@@ -413,6 +413,9 @@ ARGS:
     <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
 
 OPTIONS:
+        --force-positive
+            Forces negative PDF values to zero
+
     -h, --help
             Print help information
 

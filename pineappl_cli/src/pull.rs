@@ -222,6 +222,7 @@ ARGS:
 OPTIONS:
         --cl <CL>              Confidence level in per cent [default: 68.26894921370858]
         --digits <DIGITS>      Set the number of digits shown for numerical values [default: 3]
+        --force-positive       Forces negative PDF values to zero
     -h, --help                 Print help information
     -l, --limit <LIMIT>        The maximum number of luminosities displayed [default: 10]
         --threads <THREADS>    Number of threads to utilize";

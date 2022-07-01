@@ -144,6 +144,7 @@ OPTIONS:
                                 [default: 7]
         --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
                                 [default: 2]
+        --force-positive        Forces negative PDF values to zero
     -h, --help                  Print help information
     -i, --integrated            Show integrated numbers (without bin widths) instead of differential
                                 ones
