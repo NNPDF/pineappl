@@ -14,7 +14,8 @@ Here is a list of all the documentation is this directory:
   released and unreleased versions of PineAPPL.
 - [Contribution guidelines](../CONTRIBUTING.md): technical guidelines for how
   to contribute to PineAPPL's development.
-- [Grid repository](): pre-computed grids for specific experimental setups.
+- [Grid repository](https://github.com/NNPDF/pineapplgrids/): pre-computed grids
+  for specific experimental setups.
 - [Installation](installation.md): installation instructions.
 - [Madgraph5_aMC@NLO](mg5_aMC.md): how to create PineAPPL grids with
   [Madgraph5_aMC@NLO](https://launchpad.net/mg5amcnlo/).
