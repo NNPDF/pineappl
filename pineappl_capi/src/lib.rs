@@ -33,28 +33,33 @@
 //! This will read `PineAPPL`'s `.pc` file and print the neccessary `CFLAGS` (`--cflags`) and
 //! linker flags (`--libs`). This procedure is supported by many build systems, such as
 //!
-//! * Autotools (using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster] page for
-//!   correct usage)
-//! * `CMake`, using [`FindPkgConfig`], and
-//! * `meson`, using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
+//! * [Autoconf]/[Automake], using the `PKG_CHECK_MODULES` macro, see the [Autotools mythbuster]
+//!   page for correct usage,
+//! * [CMake], using [`FindPkgConfig`] and
+//! * [meson], using [`dependency`]; it usually suffices to write `dependency('pineappl_capi')`.
 //!
+//! [Autoconf]: https://www.gnu.org/software/autoconf/
+//! [Automake]: https://www.gnu.org/software/automake/
+//! [Autotools mythbuster]: https://autotools.io/pkgconfig/pkg_check_modules.html
+//! [CMake]: https://cmake.org/
+//! [`dependency`]: https://mesonbuild.com/Reference-manual.html#dependency
+//! [`FindPkgConfig`]: https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
+//! [meson]: https://mesonbuild.com/
 //! [`pkgconf`]: https://github.com/pkgconf/pkgconf
 //! [`pkg-conf`]: https://www.freedesktop.org/wiki/Software/pkg-config
-//! [Autotools mythbuster]: https://autotools.io/pkgconfig/pkg_check_modules.html
-//! [`FindPkgConfig`]: https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
-//! [`dependency`]: https://mesonbuild.com/Reference-manual.html#dependency
 //!
 //! # Strings and other types
 //!
 //! All strings used in this library, denoted with the Rust type `*const c_char` or `*mut c_char`,
 //! which correspond to the C types `const char*` and `char*`, respectively, are assumed to be
 //! encoded using UTF-8, which Rust uses internally. The conversions are performed using
-//! [`CStr::to_string_lossy`], which you can consult for how the strings are converted.
+//! [`CStr::to_string_lossy`], which you can consult on how strings are converted.
 //!
 //! All other built-in types in Rust (`f64`, `usize`, `i32`, `u32`, ...) correspond to types in C
 //! as defined by the [translation tables] of cbindgen. If in doubt, consult the generated header
 //! `pineappl_capi.h`.
 //!
+//! [`CStr::to_string_lossy`]: std::ffi::CStr::to_string_lossy
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
