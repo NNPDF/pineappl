@@ -18,32 +18,16 @@ This repository contains tools, libraries and interfaces to read and write
 - [Documentation](docs/README.md)
 - [Installation instructions](docs/installation.md)
 - [Changelog](CHANGELOG.md)
-- [Contribution guidelines](CONTRIBUTING.md)
 
 # Citation
 
-[![arXiv](https://img.shields.io/badge/arXiv-2008.12789-b31b1b?labelColor=222222)](https://arxiv.org/abs/2008.12789)
-[![DOI](https://zenodo.org/badge/248306479.svg)](https://zenodo.org/badge/latestdoi/248306479)
-
 If you use PineAPPL, please cite
 
-1. the zenodo DOI above and
-2. the following reference:
+1. the software itself using its [zenodo DOI] and
+2. the [paper] introducing it.
 
-   ```
-   @article{Carrazza:2020gss,
-       author = "Carrazza, S. and Nocera, E. R. and Schwan, C. and Zaro, M.",
-       title = "{PineAPPL: combining EW and QCD corrections for fast evaluation of LHC processes}",
-       eprint = "2008.12789",
-       archivePrefix = "arXiv",
-       primaryClass = "hep-ph",
-       doi = "10.1007/JHEP12(2020)108",
-       journal = "JHEP",
-       volume = "12",
-       pages = "108",
-       year = "2020"
-   }
-   ```
+[zenodo DOI]: https://zenodo.org/badge/latestdoi/248306479
+[paper]: https://inspirehep.net/literature/1814432
 
 # Similar projects
 
