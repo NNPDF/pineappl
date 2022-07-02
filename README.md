@@ -50,5 +50,5 @@ If you use PineAPPL, please cite
 `PineAPPL` isn't the only or even first interpolation library. There are at
 least:
 
-- [APPLgrid] and
-- [fastNLO].
+- [APPLgrid](https://applgrid.hepforge.org/) and
+- [fastNLO](https://fastnlo.hepforge.org/).
