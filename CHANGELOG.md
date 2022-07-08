@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added new switch `--force-positive` to CLI to cut out negative PDF values
+- exposed scale variation parameters to the Python API
 
 ## [0.5.3] - 22/06/2022
 
