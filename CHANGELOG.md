@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added new switch `--force-positive` to CLI to cut out negative PDF values
 - exposed scale variation parameters to the Python API
+- added the C functions `pineappl_grid_key_value` to read out metadata and
+  `pineappl_string_delete` to delete string allocated from the previous
+  function
 
 ## [0.5.3] - 22/06/2022
 

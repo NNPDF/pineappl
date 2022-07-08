@@ -74,6 +74,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
 use std::fs::File;
+use std::mem;
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
@@ -688,6 +689,34 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
     (*grid).scale_by_order(alphas, alpha, logxir, logxif, global);
 }
 
+/// Return the value for `key` stored in `grid`. If `key` isn't found, `NULL` will be returned.
+/// After usage the string must be deallocated using [`pineappl_string_delete`].
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the `NULL`
+/// pointer, this function is not safe to call. The parameter `key` must be non-`NULL` and a valid
+/// C string.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_key_value(
+    grid: *mut Grid,
+    key: *const c_char,
+) -> *mut c_char {
+    let key = CStr::from_ptr(key).to_string_lossy();
+
+    CString::new(
+        (*grid)
+            .key_values()
+            .map_or("", |kv| kv.get(key.as_ref()).map_or("", String::as_str)),
+    )
+    .unwrap()
+    .into_raw()
+}
+
 /// Sets an internal key-value pair for the grid.
 ///
 /// # Safety
@@ -1164,4 +1193,18 @@ pub unsafe extern "C" fn pineappl_keyval_set_string(
         CStr::from_ptr(key).to_string_lossy().into_owned(),
         CString::from(CStr::from_ptr(value)),
     );
+}
+
+/// Deletes a string previously allocated by [`pineappl_grid_key_value`]. If `string` is a `NULL`
+/// pointer this function does nothing.
+///
+/// # Safety
+///
+/// The parameter `string` must be a pointer to string created by [`pineappl_grid_key_value`] or
+/// `NULL`, otherwise this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
+    if !string.is_null() {
+        mem::drop(CString::from_raw(string));
+    }
 }

@@ -145,6 +145,16 @@ int main() {
         std::printf("%.1f %.1f %.3e\n", bins[i], bins[i + 1], dxsec[i]);
     }
 
+    // store some metadata in the grid
+    pineappl_grid_set_key_value(grid, "events", "10000000");
+
+    // read out the stored value and print it on stdout
+    auto* value = pineappl_grid_key_value(grid, "events");
+    std::printf("Finished running %s events.\n", value);
+
+    // delete the allocated object
+    pineappl_string_delete(value);
+
     // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
     char const* filename = "DY-LO-AA.pineappl.lz4";
     pineappl_grid_write(grid, filename);
