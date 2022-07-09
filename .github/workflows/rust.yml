@@ -13,11 +13,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - use: actions/checkout@v3
 
     - name: Install LHAPDF
-      uses: ./.github/workflows/lhapdf.yaml
+      uses: ./.github/actions/lhapdf
 
     - name: Install fastNLO 2.5.0 rev. 2826
       run: |
