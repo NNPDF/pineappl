@@ -61,24 +61,3 @@ jobs:
         files: ${{steps.coverage.outputs.report}}
         token: ${{secrets.CODECOV_TOKEN}}
         flags: rust
-    - name: Install cargo-c
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: cargo-c
-    - name: Install PineAPPL's C API
-      run: |
-        ls -alR $HOME/prefix
-        cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
-    - name: Test C++ example
-      run: |
-        cd examples/cpp
-        make
-        ./dyaa
-        test -f ./DY-LO-AA.pineappl.lz4
-    - name: Test Fortran example
-      run: |
-        cd examples/fortran
-        make
-        ./dyaa
-        test -f ./DY-LO-AA.pineappl.lz4

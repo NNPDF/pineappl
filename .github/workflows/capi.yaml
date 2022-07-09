@@ -1,0 +1,42 @@
+name: CAPI
+
+on: push
+
+jobs:
+  capi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install LHAPDF
+        uses: ./.github/actions/lhapdf
+
+      - name: Install Rust nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          default: true
+          toolchain: nightly
+
+      - name: Install cargo-c
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-c
+
+      - name: Install PineAPPL's C API
+        run: |
+          cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+
+      - name: Test C++ example
+        run: |
+          cd examples/cpp
+          make
+          ./dyaa
+          test -f ./DY-LO-AA.pineappl.lz4
+
+      - name: Test Fortran example
+        run: |
+          cd examples/fortran
+          make
+          ./dyaa
+          test -f ./DY-LO-AA.pineappl.lz4
