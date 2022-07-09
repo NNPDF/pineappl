@@ -6,13 +6,14 @@ authors = [
     "Alessandro Candido <candido.ale@gmail.com>",
     "Felix Hekhorn <felix.hekhorn@mi.infn.it>"
 ]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/N3PDF/pineappl"
 readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "Python bindings to PineAPPL"
+rust-version = "1.56.1"
 
 [package.metadata.maturin]
 name = "pineappl"

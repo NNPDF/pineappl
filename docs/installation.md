@@ -9,8 +9,8 @@ installed, make sure it is recent enough:
 
     cargo --version
 
-This should show a version that is at least 1.54. If you do not have `cargo` or
-if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
+This should show a version that is at least 1.56.1. If you do not have `cargo`
+or if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
 the instructions there.
 
 Next, install the command-line interface (CLI) by choosing either the *release*

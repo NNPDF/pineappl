@@ -2,13 +2,14 @@
 name = "pineappl_cli"
 version = "0.5.4"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/N3PDF/pineappl"
 readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "Read, write, and query PineAPPL grids"
+rust-version = "1.56.1"
 
 [dependencies]
 anyhow = "1.0.48"
