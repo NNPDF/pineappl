@@ -10,6 +10,7 @@ runs:
         echo "LD_LIBRARY_PATH=${HOME}/prefix/lib" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=${HOME}/prefix/lib/pkgconfig" >> $GITHUB_ENV
         echo "PYTHONPATH=${HOME}/prefix/lib/python3.7/site-packages" >> $GITHUB_ENV
+      shell: bash
     - name: Install LHAPDF 6.4.0
       env:
         VERSION: 6.4.0
@@ -20,8 +21,10 @@ runs:
         ./configure --prefix=${HOME}/prefix --disable-static
         make -j
         make install
+      shell: bash
     - name: Install PDF sets
       run : |
         lhapdf update
         lhapdf install NNPDF31_nlo_as_0118_luxqed
         lhapdf install NNPDF40_nnlo_as_01180
+      shell: bash
