@@ -1,7 +1,7 @@
 FROM quay.io/pypa/manylinux2014_x86_64
 
 ARG MATURIN_TAR='maturin-x86_64-unknown-linux-musl.tar.gz'
-ARG MATURIN_TAG='v0.13.0-beta.1'
+ARG MATURIN_TAG='v0.13.0-beta.9'
 
 # install c compiler
 # and create a dedicated user
