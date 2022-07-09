@@ -13,8 +13,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: ./.github/workflows/lhapdf.yaml
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install LHAPDF
+      uses: ./.github/workflows/lhapdf.yaml
+
     - name: Install fastNLO 2.5.0 rev. 2826
       run: |
         wget --no-verbose 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
