@@ -28,7 +28,7 @@ jobs:
       env:
         VERSION: 6.4.0
       run: |
-        wget --no-verbose 'https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${VERSION}.tar.gz' -O LHAPDF-${VERSION}.tar.gz
+        wget --no-verbose https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${VERSION}.tar.gz -O LHAPDF-${VERSION}.tar.gz
         tar xzf LHAPDF-${VERSION}.tar.gz
         cd LHAPDF-${VERSION}
         ./configure --prefix=${HOME}/prefix --disable-static
