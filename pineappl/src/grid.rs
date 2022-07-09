@@ -724,6 +724,10 @@ impl Grid {
     /// # Errors
     ///
     /// If writing or compression fails an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
         let mut encoder = FrameEncoder::new(writer);
         self.write(&mut encoder)?;
@@ -1287,6 +1291,10 @@ impl Grid {
 
     /// Provide information used to compute a suitable EKO for the current grid.
     /// More specific, the `x_grid` and `muf2_grid` are extracted and checked.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn axes(&self) -> Option<GridAxes> {
         // determine what and how many hadrons are in the initial state
@@ -1520,8 +1528,7 @@ impl Grid {
         let first_non_zero_grid = self
             .subgrids
             .iter()
-            .filter(|subgrid| !subgrid.is_empty())
-            .next()
+            .find(|subgrid| !subgrid.is_empty())
             .unwrap_or_else(|| unreachable!());
         // source x1/x2 grid might differ and be differently sorted than the operator
         let x1_grid: Vec<_> = first_non_zero_grid
@@ -1643,7 +1650,9 @@ impl Grid {
                             .grid_axes
                             .muf2_grid
                             .iter()
-                            .position(|&q2| approx_eq!(f64, q2, eko_info.xif * eko_info.xif * src_q2, ulps = 64))
+                            .position(|&q2| {
+                                approx_eq!(f64, q2, eko_info.xif * eko_info.xif * src_q2, ulps = 64)
+                            })
                             .unwrap_or_else(|| {
                                 panic!(
                                     "Couldn't find muf2: {:?} with xif: {:?} and muf2_grid: {:?}",

@@ -86,14 +86,14 @@ impl Display for FkAssumptions {
             f,
             "{}",
             match self {
-                FkAssumptions::Nf6Ind => "Nf6Ind",
-                FkAssumptions::Nf6Sym => "Nf6Sym",
-                FkAssumptions::Nf5Ind => "Nf5Ind",
-                FkAssumptions::Nf5Sym => "Nf5Sym",
-                FkAssumptions::Nf4Ind => "Nf4Ind",
-                FkAssumptions::Nf4Sym => "Nf4Sym",
-                FkAssumptions::Nf3Ind => "Nf3Ind",
-                FkAssumptions::Nf3Sym => "Nf3Sym",
+                Self::Nf6Ind => "Nf6Ind",
+                Self::Nf6Sym => "Nf6Sym",
+                Self::Nf5Ind => "Nf5Ind",
+                Self::Nf5Sym => "Nf5Sym",
+                Self::Nf4Ind => "Nf4Ind",
+                Self::Nf4Sym => "Nf4Sym",
+                Self::Nf3Ind => "Nf3Ind",
+                Self::Nf3Sym => "Nf3Sym",
             }
         )
     }
@@ -279,6 +279,10 @@ impl FkTable {
 
     /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
     /// scale.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn optimize(&mut self, assumptions: FkAssumptions) {
         let flavor_basis = match self.grid.key_values().unwrap()["lumi_id_types"].as_str() {
             "pdg_mc_ids" => true,

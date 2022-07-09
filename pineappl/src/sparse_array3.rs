@@ -319,7 +319,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
 
     /// Returns the dimensions of this array.
     #[must_use]
-    pub fn dimensions(&self) -> (usize, usize, usize) {
+    pub const fn dimensions(&self) -> (usize, usize, usize) {
         self.dimensions
     }
 
