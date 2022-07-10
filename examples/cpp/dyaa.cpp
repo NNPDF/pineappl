@@ -162,9 +162,9 @@ int main() {
     // destroy the object
     pineappl_grid_delete(grid);
 
-    std::printf("Generated %s.\n"
-        "Try using:\n"
-        "- pineappl convolute %s LHAPDF_SET_NAME\n"
-        "- pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py\n"
-        "- pineappl --help\n", filename, filename);
+    std::printf("Generated %s containing a a -> l+ l-.\n\n"
+        "Try running (PDF sets must contain non-zero photon PDF):\n"
+        "  - pineappl convolute %s NNPDF31_nnlo_as_0118_luxqed\n"
+        "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
+        "  - pineappl --help\n", filename, filename, filename);
 }
