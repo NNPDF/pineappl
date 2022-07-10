@@ -26,13 +26,13 @@ program dyaa
     real (dp)            :: x1, x2, q2, weight, s, t, u, jacobian, ptl, mll, yll, ylp, ylm
     type (psp2to2)       :: tmp
 
-    ! create a new luminosity function for the $\gamma\gamma$ initial state
+    ! create a new luminosity function for the photon-photon initial state
     lumi = pineappl_lumi_new()
     pdg_ids = [ 22, 22 ]
     ckm_factors = [ 1.0_dp ]
     call pineappl_lumi_add(lumi, 1, pdg_ids, ckm_factors)
 
-    ! only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
+    ! only O(alphas^0 alpha^2 log^0(xiR^2) \log^0(xiF^2)
     orders = [ 0, 2, 0, 0 ]
     ! we bin in rapidity from 0 to 2.4 in steps of 0.1
     bins = [ (i * 0.1_dp, i = 0, 24) ]
@@ -62,7 +62,8 @@ program dyaa
 
         jacobian = jacobian * hbarc2 / calls
 
-        ! cuts for LO for the invariant-mass slice containing the Z-peak from CMSDY2D11
+        ! cuts for LO for the invariant-mass slice containing the Z-peak from the paper given in the
+        ! metadata below
         if ((ptl < 14.0_dp) .or. (abs(yll) > 2.4_dp) .or. (ylp > 2.4_dp) .or. (ylm > 2.4_dp) .or. &
             (mll < 60.0_dp) .or. (mll > 120.0_dp)) then
             cycle
@@ -74,11 +75,19 @@ program dyaa
         order_idx = 0
         lumi_idx = 0
 
-        ! fill the grid with a single event
+        ! fill
+        ! - 'grid'
+        ! - for PDF parameters 'x1, x2, q2',
+        ! - for perturbative order O(alpha^2) ('order_idx = 0' corresponds to the first four powers
+        !   given in 'orders' above)
+        ! - for the bin of the differential distribution corresponding to 'abs(yll)'
+        ! - for the first partonic channel ('lumi_idx = 0' corresponds to the lumi entry created
+        !   above in 'lumi')
+        ! - with the given 'weight'
         call pineappl_grid_fill(grid, x1, x2, q2, order_idx, abs(yll), lumi_idx, weight)
     end do
 
-    ! set metadata - this isn't needed, but usually useful
+    ! set metadata - this isn't strictly needed, but usually useful (plot script, ...)
     call pineappl_grid_set_key_value(grid, 'arxiv', '1310.7291')
     call pineappl_grid_set_key_value(grid, 'description', 'CMS double-differential Drell—Yan cross section at 7 TeV')
     call pineappl_grid_set_key_value(grid, 'hepdata', '10.17182/hepdata.62207.v1/t8')
