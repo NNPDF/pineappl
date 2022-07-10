@@ -24,23 +24,6 @@ module pineappl
     end type
 
     interface
-        subroutine lumi_add(lumi, combinations, pdg_id_pairs, factors) bind(c, name = 'pineappl_lumi_add')
-            use iso_c_binding
-            type (c_ptr), value       :: lumi
-            integer (c_size_t), value :: combinations
-            integer (c_int32_t)       :: pdg_id_pairs(*)
-            real (c_double)           :: factors(*)
-        end subroutine
-
-        subroutine lumi_delete(lumi) bind(c, name = 'pineappl_lumi_delete')
-            use iso_c_binding
-            type (c_ptr), value :: lumi
-        end subroutine
-
-        type (c_ptr) function lumi_new() bind(c, name = 'pineappl_lumi_new')
-            use iso_c_binding
-        end function
-
         subroutine grid_delete(grid) bind(c, name = 'pineappl_grid_delete')
             use iso_c_binding
             type (c_ptr), value :: grid
@@ -93,36 +76,26 @@ module pineappl
             type (c_ptr), value :: keyval
             character (c_char)  :: key(*), valju(*)
         end subroutine
+
+        subroutine lumi_add(lumi, combinations, pdg_id_pairs, factors) bind(c, name = 'pineappl_lumi_add')
+            use iso_c_binding
+            type (c_ptr), value       :: lumi
+            integer (c_size_t), value :: combinations
+            integer (c_int32_t)       :: pdg_id_pairs(*)
+            real (c_double)           :: factors(*)
+        end subroutine
+
+        subroutine lumi_delete(lumi) bind(c, name = 'pineappl_lumi_delete')
+            use iso_c_binding
+            type (c_ptr), value :: lumi
+        end subroutine
+
+        type (c_ptr) function lumi_new() bind(c, name = 'pineappl_lumi_new')
+            use iso_c_binding
+        end function
     end interface
 
 contains
-    subroutine pineappl_lumi_add(lumi, combinations, pdg_id_pairs, factors)
-        use iso_c_binding
-
-        implicit none
-
-        type (pineappl_lumi), intent(in)                 :: lumi
-        integer, intent(in)                              :: combinations
-        integer, dimension(2 * combinations), intent(in) :: pdg_id_pairs
-        real (dp), dimension(combinations), intent(in)   :: factors
-
-        call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
-    end subroutine
-
-    subroutine pineappl_lumi_delete(lumi)
-        implicit none
-
-        type (pineappl_lumi), intent(in) :: lumi
-
-        call lumi_delete(lumi%ptr)
-    end subroutine
-
-    type (pineappl_lumi) function pineappl_lumi_new()
-        implicit none
-
-        pineappl_lumi_new = pineappl_lumi(lumi_new())
-    end function
-
     subroutine pineappl_grid_delete(grid)
         implicit none
 
@@ -211,4 +184,31 @@ contains
 
         call keyval_set_string(keyval%ptr, key // c_null_char, valju // c_null_char)
     end subroutine
+
+    subroutine pineappl_lumi_add(lumi, combinations, pdg_id_pairs, factors)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_lumi), intent(in)                 :: lumi
+        integer, intent(in)                              :: combinations
+        integer, dimension(2 * combinations), intent(in) :: pdg_id_pairs
+        real (dp), dimension(combinations), intent(in)   :: factors
+
+        call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
+    end subroutine
+
+    subroutine pineappl_lumi_delete(lumi)
+        implicit none
+
+        type (pineappl_lumi), intent(in) :: lumi
+
+        call lumi_delete(lumi%ptr)
+    end subroutine
+
+    type (pineappl_lumi) function pineappl_lumi_new()
+        implicit none
+
+        pineappl_lumi_new = pineappl_lumi(lumi_new())
+    end function
 end module
