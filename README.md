@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/N3PDF/pineappl/branch/master/graph/badge.svg)](https://codecov.io/gh/N3PDF/pineappl)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
-[![Minimum cargo version](https://img.shields.io/badge/cargo-1.56.1+-lightgray.svg)](https://github.com/N3PDF/pineappl#installation)
+[![MSRV](https://img.shields.io/badge/Rust-1.56+-lightgray.svg)](https://github.com/N3PDF/pineappl#installation)
 
 # What is PineAPPL?
 
@@ -31,8 +31,7 @@ If you use PineAPPL, please cite
 
 # Similar projects
 
-`PineAPPL` isn't the only or even first interpolation library. There are at
-least:
+`PineAPPL` is not the only or first grid interpolation library. There are also:
 
 - [APPLgrid](https://applgrid.hepforge.org/) and
 - [fastNLO](https://fastnlo.hepforge.org/).

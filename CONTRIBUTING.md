@@ -9,6 +9,8 @@
     - `cargo clippy`, to run the linter and to fix important warnings,
     - and finally `cargo fmt`, to format your code properly.
 - Make sure to keep `CHANGELOG.md` up-to-date.
+- Make sure not to use Rust features newer than the specified minimum supported
+  Rust Version (MSRV), which is documented in the [README](README.md)
 
 ## Git
 
