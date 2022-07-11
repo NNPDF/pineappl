@@ -3,36 +3,53 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
-`PineAPPL` is written in [`Rust`](https://www.rust-lang.org/) and therefore
-needs the Rust compiler and its build system `cargo`. If `cargo` is already
-installed, make sure it is recent enough:
+`PineAPPL` is written in [`Rust`](https://www.rust-lang.org/), but besides Rust
+it also offers interfaces for the most popular programming languages: C and
+C++, Fortran and Python. Furthermore the program `pineappl` can be installed
+that will allow you to perform many operations on grids in your favorite shell:
+the command-line interface (CLI).
 
-    cargo --version
+Simply pick the interface(s) you're planning to use and follow the
+corresponding instructions below. If you don't know which interfaces you'll
+likely use, here are a few guidelines:
 
-This should show a version that is at least 1.56.1. If you do not have `cargo`
-or if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
-the instructions there.
+- if you're planning to use PineAPPL within the NNPDF fitting framework, you'll
+  need the Python interface
+- if you want to run a Monte Carlo to generate PineAPPL grids, you'll need the
+  C interface
+- if you want to produce predictions, plots and small analyses quickly install
+  the CLI.
 
-Next, install the command-line interface (CLI) by choosing either the *release*
-or *development version* below. In both cases the binary `pineappl` will be
-installed user-wide, typically into `~/.cargo/bin`. You can use this binary to
-perform all kinds of operations on PineAPPL grids.
+## The CLI: `pineappl` for your shell
 
-For most users the release version is recommended, as we guarantee that all
-grids generated with release versions will be supported in all future release
-versions (backwards compatibility guarantee). The advantage of the development
-version is that it typically supports more features.
-
-## Release version (recommended)
-
-Simply run
+You need to install Rust first (see below). Then simply run
 
     cargo install pineappl_cli
 
 anywhere and you are done; this will automatically download the most-recently
 released version from [crates.io](https://crates.io).
 
-## Development version (alternative)
+### Optional: fastNLO converter
+
+If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
+[fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+`--features=fastnlo` during the CLI's installation, for instance:
+
+    cargo install --features=fastnlo pineappl_cli
+
+### Optional: FK table converter
+
+If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, make sure
+to install [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+`--features=fktable` during the CLI's installation, for instance:
+
+    cargo install --features=fktable pineappl_cli
+
+If you want both `fastnlo` and `fktables` add a comma:
+
+    cargo install --features=fastnlo,fktable pineappl_cli
+
+### Alternative: development version
 
 To use the most recent version available run
 
@@ -45,56 +62,49 @@ this repository and run
 
 inside it.
 
-## Optional: fastNLO converter
-
-If you'd like to convert fastNLO tables to PineAPPL, make sure to install
-[fastNLO](https://fastnlo.hepforge.org/) first and add the switch
-`--features=fastnlo` during the CLI's installation, for instance for the
-development version:
-
-    cargo install --features=fastnlo --path pineappl_cli
-
-## Optional: C interface
+## C, C++ and Fortran: the CAPI
 
 If you plan to use one of the supported Monte Carlo programs to *generate*
 PineAPPL grids, or if you want to access the contents of grids from your own
-program, you will likely need the C interface (unless you are using Python, see
-below). In that case proceed by installing
+program written in C, C++ or Fortran you will need the C interface. In that
+case follow these instructions:
 
-- `cargo-c`, which is required for the next step:
+0. Install Rust, see the instructions below.
 
-      cargo install cargo-c
+1. `cargo-c`, which is required for the next step:
 
-  It is possible that the installation fails if your Rust compiler is too old.
-  In that case update Rust or try installing an older version of `cargo-c`:
+       cargo install cargo-c
 
-      cargo install cargo-c --version 0.7.3
+   It is possible that the installation fails if your Rust compiler is too old.
+   In that case update Rust or try installing an older version of `cargo-c`:
 
-- Now install `pineappl_capi`, PineAPPL's C API:
+       cargo install cargo-c --version 0.7.3
 
-      cd pineappl_capi
-      cargo cinstall --release --prefix=${prefix}
-      cd ..
+2. Now install `pineappl_capi`, PineAPPL's C API:
 
-  where `${prefix}` points to the desired installation directory.
+       cd pineappl_capi
+       cargo cinstall --release --prefix=${prefix}
+       cd ..
 
-- Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
-  `LD_LIBRARY_PATH` to the right directories. Adding
+   where `${prefix}` points to the desired installation directory.
 
-      export LD_LIBRARY_PATH=${prefix}/lib:$LD_LIBRARY_PATH
-      export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:$PKG_CONFIG_PATH
+3. Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
+   `LD_LIBRARY_PATH` to the right directories. Adding
 
-  to your `~/.bashrc` should do the trick (remember to replace `${prefix}` with
-  the correct directory). You can check `PKG_CONFIG_PATH` by running
+       export LD_LIBRARY_PATH=${prefix}/lib:$LD_LIBRARY_PATH
+       export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-      pkg-config pineappl_capi --libs
+   to your `~/.bashrc` should do the trick (remember to replace `${prefix}` with
+   the correct directory). You can check `PKG_CONFIG_PATH` by running
 
-  which should print the library flags needed to link against the C API. If
-  there's no output or an error, double-check that `PKG_CONFIG_PATH` is in the
-  environment and that it points to a directory containing the
-  `pineappl_capi.pc` file.
+       pkg-config pineappl_capi --libs
 
-## Optional: Python interface
+   which should print the library flags needed to link against the C API. If
+   there's no output or an error, double-check that `PKG_CONFIG_PATH` is in the
+   environment and that it points to a directory containing the
+   `pineappl_capi.pc` file.
+
+## Python
 
 [![PyPI version](https://badge.fury.io/py/pineappl.svg)](https://badge.fury.io/py/pineappl)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/installer/conda.svg)](https://anaconda.org/conda-forge/pineappl)
@@ -106,3 +116,16 @@ To install the Python interface, run
 
 For more documentation and more information see its
 [README](../pineappl_py/README.md).
+
+## Rust
+
+You will need the Rust compiler and its build system `cargo`. If `cargo` is
+already installed, make sure it is recent enough:
+
+    cargo --version
+
+This should show a version that is at least 1.56.1. If you do not have `cargo`
+or if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
+the instructions there.
+
+The Rust crate is called [pineappl](https://docs.rs/pineappl/latest/pineappl/).
