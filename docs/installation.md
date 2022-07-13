@@ -22,7 +22,8 @@ likely use, here are a few guidelines:
 
 ## C, C++ and Fortran: the CAPI
 
-You first need to install Rust and `cargo`, see the instructions below.
+You first need to install Rust and `cargo`, see the [instructions](#rust)
+below.
 
 1. Then install `cargo-c`, which is required for the next step:
 
@@ -59,7 +60,7 @@ You first need to install Rust and `cargo`, see the instructions below.
 
 ## CLI: `pineappl` for your shell
 
-You need to install Rust first (see below). Then simply run
+You need to install [Rust](#rust) first (see below). Then simply run
 
     cargo install pineappl_cli
 
