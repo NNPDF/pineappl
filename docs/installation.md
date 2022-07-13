@@ -20,48 +20,6 @@ likely use, here are a few guidelines:
 - if you want to produce predictions, plots and small analyses quickly install
   the CLI.
 
-## The CLI: `pineappl` for your shell
-
-You need to install Rust first (see below). Then simply run
-
-    cargo install pineappl_cli
-
-anywhere and you are done; this will automatically download the most-recently
-released version from [crates.io](https://crates.io).
-
-### Optional: fastNLO converter
-
-If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
-[fastNLO](https://fastnlo.hepforge.org/) first and add the switch
-`--features=fastnlo` during the CLI's installation, for instance:
-
-    cargo install --features=fastnlo pineappl_cli
-
-### Optional: FK table converter
-
-If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, make sure
-to install [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
-`--features=fktable` during the CLI's installation, for instance:
-
-    cargo install --features=fktable pineappl_cli
-
-If you want both `fastnlo` and `fktables` add a comma:
-
-    cargo install --features=fastnlo,fktable pineappl_cli
-
-### Alternative: development version
-
-To use the most recent version available run
-
-    cargo install --git https://github.com/N3PDF/pineappl.git
-
-Instead, if you plan to make changes to the source code it's better to checkout
-this repository and run
-
-    cargo install --path pineappl_cli
-
-inside it.
-
 ## C, C++ and Fortran: the CAPI
 
 If you plan to use one of the supported Monte Carlo programs to *generate*
@@ -103,6 +61,48 @@ case follow these instructions:
    there's no output or an error, double-check that `PKG_CONFIG_PATH` is in the
    environment and that it points to a directory containing the
    `pineappl_capi.pc` file.
+
+## The CLI: `pineappl` for your shell
+
+You need to install Rust first (see below). Then simply run
+
+    cargo install pineappl_cli
+
+anywhere and you are done; this will automatically download the most-recently
+released version from [crates.io](https://crates.io).
+
+### Optional: fastNLO converter
+
+If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
+[fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+`--features=fastnlo` during the CLI's installation, for instance:
+
+    cargo install --features=fastnlo pineappl_cli
+
+### Optional: FK table converter
+
+If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, make sure
+to install [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+`--features=fktable` during the CLI's installation, for instance:
+
+    cargo install --features=fktable pineappl_cli
+
+If you want both `fastnlo` and `fktables` add a comma:
+
+    cargo install --features=fastnlo,fktable pineappl_cli
+
+### Alternative: development version
+
+To use the most recent version available run
+
+    cargo install --git https://github.com/N3PDF/pineappl.git
+
+Instead, if you plan to make changes to the source code it's better to checkout
+this repository and run
+
+    cargo install --path pineappl_cli
+
+inside it.
 
 ## Python
 
