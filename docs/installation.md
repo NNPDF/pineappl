@@ -14,11 +14,11 @@ corresponding instructions below. If you don't know which interfaces you'll
 likely use, here are a few guidelines:
 
 - if you're planning to use PineAPPL within the NNPDF fitting framework, you'll
-  need the Python interface;
+  need the [Python interface](#python);
 - if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll need
-  the C interface;
+  the [C interface](#c-c-and-fortran-the-capi);
 - if you want to quickly produce predictions, plots and small analyses install
-  the CLI.
+  the [CLI](#cli-pineappl-for-your-shell).
 
 ## C, C++ and Fortran: the CAPI
 
