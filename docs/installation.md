@@ -14,22 +14,17 @@ corresponding instructions below. If you don't know which interfaces you'll
 likely use, here are a few guidelines:
 
 - if you're planning to use PineAPPL within the NNPDF fitting framework, you'll
-  need the Python interface
-- if you want to run a Monte Carlo to generate PineAPPL grids, you'll need the
-  C interface
-- if you want to produce predictions, plots and small analyses quickly install
+  need the Python interface;
+- if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll need
+  the C interface;
+- if you want to quickly produce predictions, plots and small analyses install
   the CLI.
 
 ## C, C++ and Fortran: the CAPI
 
-If you plan to use one of the supported Monte Carlo programs to *generate*
-PineAPPL grids, or if you want to access the contents of grids from your own
-program written in C, C++ or Fortran you will need the C interface. In that
-case follow these instructions:
+You first need to install Rust and `cargo`, see the instructions below.
 
-0. Install Rust, see the instructions below.
-
-1. `cargo-c`, which is required for the next step:
+1. Then install `cargo-c`, which is required for the next step:
 
        cargo install cargo-c
 
@@ -62,7 +57,7 @@ case follow these instructions:
    environment and that it points to a directory containing the
    `pineappl_capi.pc` file.
 
-## The CLI: `pineappl` for your shell
+## CLI: `pineappl` for your shell
 
 You need to install Rust first (see below). Then simply run
 
