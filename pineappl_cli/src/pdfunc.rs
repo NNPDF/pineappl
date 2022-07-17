@@ -47,7 +47,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
-        let set = helpers::create_pdfset(&self.pdfset)?;
+        let (set, member) = helpers::create_pdfset(&self.pdfset)?;
         let pdfs = set.mk_pdfs();
 
         ThreadPoolBuilder::new()
@@ -109,7 +109,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, uncertainty.central)));
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, if let Some(member) = member { values[member] } else { uncertainty.central })));
             row.add_cell(
                 cell!(r->format!("{:.*}", self.digits_rel, (-uncertainty.errminus / uncertainty.central) * 100.0)),
             );
@@ -190,6 +190,19 @@ OPTIONS:
 7    4  4.5 6.8828610e0   -2.76    2.76
 ";
 
+    const REPLICA0_STR: &str = "b   etal    disg/detal  PDF uncertainty
+     []        [pb]           [%]      
+-+----+----+-----------+-------+-------
+0    2 2.25 3.7527620e2   -1.14    1.14
+1 2.25  2.5 3.4521553e2   -1.16    1.16
+2  2.5 2.75 3.0001406e2   -1.18    1.18
+3 2.75    3 2.4257663e2   -1.22    1.22
+4    3 3.25 1.8093343e2   -1.27    1.27
+5 3.25  3.5 1.2291115e2   -1.35    1.35
+6  3.5    4 5.7851018e1   -1.50    1.50
+7    4  4.5 1.3772029e1   -2.76    2.76
+";
+
     const ORDERS_A2_AS1A2_STR: &str = "b   etal    disg/detal  PDF uncertainty
      []        [pb]           [%]      
 -+----+----+-----------+-------+-------
@@ -261,6 +274,22 @@ OPTIONS:
             .assert()
             .success()
             .stdout(INTEGRATED_STR);
+    }
+
+    #[test]
+    fn replica0() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "pdfunc",
+                "--threads=1",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                "NNPDF31_nlo_as_0118_luxqed/0",
+            ])
+            .assert()
+            .success()
+            .stdout(REPLICA0_STR);
     }
 
     #[test]

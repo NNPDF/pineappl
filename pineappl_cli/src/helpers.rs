@@ -20,13 +20,21 @@ pub fn create_pdf(pdf: &str) -> Result<Pdf> {
         .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
 }
 
-pub fn create_pdfset(pdfset: &str) -> Result<PdfSet> {
+pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
     let pdfset = pdfset.rsplit_once('=').map_or(pdfset, |(name, _)| name);
+    let (pdfset, member) = pdfset
+        .rsplit_once('/')
+        .map_or((pdfset, None), |(set, member)| {
+            (set, Some(member.parse::<usize>().unwrap()))
+        });
 
-    Ok(PdfSet::new(&pdfset.parse().map_or_else(
-        |_| pdfset.to_string(),
-        |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-    ))?)
+    Ok((
+        PdfSet::new(&pdfset.parse().map_or_else(
+            |_| pdfset.to_string(),
+            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
+        ))?,
+        member,
+    ))
 }
 
 pub fn pdf_label(pdf: &str) -> &str {

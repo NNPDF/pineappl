@@ -147,7 +147,7 @@ impl Subcommand for Opts {
                 .pdfsets
                 .par_iter()
                 .map(|pdfset| {
-                    let set = helpers::create_pdfset(pdfset).unwrap();
+                    let (set, member) = helpers::create_pdfset(pdfset).unwrap();
 
                     let pdf_results: Vec<_> = set
                         .mk_pdfs()
@@ -180,7 +180,11 @@ impl Subcommand for Opts {
 
                         let uncertainty =
                             set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
-                        central.push(uncertainty.central);
+                        central.push(if let Some(member) = member {
+                            values[member]
+                        } else {
+                            uncertainty.central
+                        });
                         min.push(uncertainty.central - uncertainty.errminus);
                         max.push(uncertainty.central + uncertainty.errplus);
                     }
@@ -322,8 +326,8 @@ impl Subcommand for Opts {
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let set1 = helpers::create_pdfset(pdfset1)?;
-            let set2 = helpers::create_pdfset(pdfset2)?;
+            let (set1, member1) = helpers::create_pdfset(pdfset1)?;
+            let (set2, member2) = helpers::create_pdfset(pdfset2)?;
             let mut pdfset1 = set1.mk_pdfs();
             let mut pdfset2 = set2.mk_pdfs();
 
@@ -344,15 +348,25 @@ impl Subcommand for Opts {
 
             let uncertainty1 = set1.uncertainty(&values1, cl, false)?;
             let uncertainty2 = set2.uncertainty(&values2, cl, false)?;
+            let central1 = if let Some(member1) = member1 {
+                values1[member1]
+            } else {
+                uncertainty1.central
+            };
+            let central2 = if let Some(member2) = member2 {
+                values2[member2]
+            } else {
+                uncertainty2.central
+            };
 
             let denominator = {
                 // use the uncertainties in the direction in which the respective results differ
-                let unc1 = if uncertainty1.central > uncertainty2.central {
+                let unc1 = if central1 > central2 {
                     uncertainty1.errminus
                 } else {
                     uncertainty1.errplus
                 };
-                let unc2 = if uncertainty2.central > uncertainty1.central {
+                let unc2 = if central2 > central1 {
                     uncertainty2.errminus
                 } else {
                     uncertainty2.errplus

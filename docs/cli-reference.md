@@ -55,6 +55,14 @@ multiple PDF sets. For example, `NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED`
 instructs to use the the PDF set `NNPDF31_nnlo_as_0118_luxqed`, but it would be
 called `NNPDF31luxQED`.
 
+If an entire PDF set must be given for the calculation of PDF uncertainties,
+that means for for `pdfunc`, `plot` or `pull`, the member selection using `/0`,
+`/1` can be used to show specific members instead of the central prediction.
+For instance `pineappl pdfunc ... NNPDF40_nnlo_as_01180` calculates the central
+value using the average over all replicas, whereas `pineappl pdfunc ...
+NNPDF40_nnlo_as_01180/0` uses the zeroth member. This is especially useful to
+show different replicas in plots.
+
 ## `REMAPPING`: Remapping parameter specification
 
 This section specifies the `REMAPPING` parameter of `pineappl remap`.

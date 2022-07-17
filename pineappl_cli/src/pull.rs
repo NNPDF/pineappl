@@ -45,8 +45,8 @@ impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let set1 = helpers::create_pdfset(&self.pdfset1)?;
-        let set2 = helpers::create_pdfset(&self.pdfset2)?;
+        let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
+        let (set2, member2) = helpers::create_pdfset(&self.pdfset2)?;
         let mut pdfset1 = set1.mk_pdfs();
         let mut pdfset2 = set2.mk_pdfs();
 
@@ -112,44 +112,72 @@ impl Subcommand for Opts {
                 .map(|lumi| {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
-                    let central: Vec<f64> = pdfset1
-                        .par_iter_mut()
-                        .map(|pdf| {
-                            helpers::convolute(
-                                &grid,
-                                pdf,
-                                &[],
-                                &[bin],
-                                &lumi_mask,
-                                1,
-                                false,
-                                self.force_positive,
-                            )[0]
-                        })
-                        .collect();
-                    set1.uncertainty(&central, self.cl, false).unwrap().central
+
+                    if let Some(member1) = member1 {
+                        helpers::convolute(
+                            &grid,
+                            &mut pdfset1[member1],
+                            &[],
+                            &[bin],
+                            &lumi_mask,
+                            1,
+                            false,
+                            self.force_positive,
+                        )[0]
+                    } else {
+                        let central: Vec<f64> = pdfset1
+                            .par_iter_mut()
+                            .map(|pdf| {
+                                helpers::convolute(
+                                    &grid,
+                                    pdf,
+                                    &[],
+                                    &[bin],
+                                    &lumi_mask,
+                                    1,
+                                    false,
+                                    self.force_positive,
+                                )[0]
+                            })
+                            .collect();
+                        set1.uncertainty(&central, self.cl, false).unwrap().central
+                    }
                 })
                 .collect();
             let lumi_results2: Vec<_> = (0..grid.lumi().len())
                 .map(|lumi| {
                     let mut lumi_mask = vec![false; grid.lumi().len()];
                     lumi_mask[lumi] = true;
-                    let central: Vec<f64> = pdfset2
-                        .par_iter_mut()
-                        .map(|pdf| {
-                            helpers::convolute(
-                                &grid,
-                                pdf,
-                                &[],
-                                &[bin],
-                                &lumi_mask,
-                                1,
-                                false,
-                                self.force_positive,
-                            )[0]
-                        })
-                        .collect();
-                    set2.uncertainty(&central, self.cl, false).unwrap().central
+
+                    if let Some(member2) = member2 {
+                        helpers::convolute(
+                            &grid,
+                            &mut pdfset2[member2],
+                            &[],
+                            &[bin],
+                            &lumi_mask,
+                            1,
+                            false,
+                            self.force_positive,
+                        )[0]
+                    } else {
+                        let central: Vec<f64> = pdfset2
+                            .par_iter_mut()
+                            .map(|pdf| {
+                                helpers::convolute(
+                                    &grid,
+                                    pdf,
+                                    &[],
+                                    &[bin],
+                                    &lumi_mask,
+                                    1,
+                                    false,
+                                    self.force_positive,
+                                )[0]
+                            })
+                            .collect();
+                        set2.uncertainty(&central, self.cl, false).unwrap().central
+                    }
                 })
                 .collect();
 
@@ -266,6 +294,19 @@ OPTIONS:
 7    4  4.5 1.219 0 1.439
 ";
 
+    const REPLICA0_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
+-+----+----+-----+-+-----+-+------+-+------+-+------+-+------
+0    2 2.25 3.582 0 3.766 1 -0.108 3 -0.052 4 -0.016 2 -0.009
+1 2.25  2.5 3.452 0 3.631 1 -0.095 3 -0.062 4 -0.016 2 -0.006
+2  2.5 2.75 3.193 0 3.336 1 -0.073 3 -0.056 4 -0.010 2 -0.005
+3 2.75    3 2.798 0 2.882 1 -0.045 3 -0.024 4 -0.011 2 -0.004
+4    3 3.25 2.339 0 2.342 3  0.023 1 -0.013 4 -0.009 2 -0.004
+5 3.25  3.5 1.863 0 1.801 3  0.082 2 -0.011 4 -0.007 1 -0.002
+6  3.5    4 1.457 0 1.378 3  0.177 1 -0.088 4 -0.007 2 -0.003
+7    4  4.5 1.211 0 1.430 1 -0.358 3  0.147 4 -0.006 2 -0.001
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -327,5 +368,22 @@ OPTIONS:
             .assert()
             .success()
             .stdout(LIMIT_STR);
+    }
+
+    #[test]
+    fn replica0() {
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "pull",
+                "--threads=1",
+                "data/LHCB_WP_7TEV.pineappl.lz4",
+                "NNPDF31_nlo_as_0118_luxqed/0",
+                "NNPDF40_nnlo_as_01180/0",
+            ])
+            .assert()
+            .success()
+            .stdout(REPLICA0_STR);
     }
 }
