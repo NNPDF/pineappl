@@ -15,22 +15,20 @@
 ## Git
 
 - When you commit, make sure the commit message is written properly. This
-  blogpost explains it nicely: https://chris.beams.io/posts/git-commit/.
-- Whenever possible, prefer rebase over merge
+  blogpost explains it nicely: <https://chris.beams.io/posts/git-commit/>.
+- Whenever possible, prefer rebase over merge.
 
-## Releasing a tagged version
+## Making a new release
 
-Please follow these steps to make a release:
+Run
 
-1) Make sure to correctly set the version number you want to release in
-    - `pineappl/Cargo.toml`,
-    - `pineappl_capi/Cargo.toml`,
-    - `pineappl_cli/Cargo.toml` and
-    - `pineappl_py/Cargo.toml`,
-   both in the `version` field and the dependency on `pineappl`, if that exists.
-2) Update `CHANGELOG.md` by adding the version you are about to release before
-   the 'Unreleased' header and update the necessary links.
-3) Commit the changes with the message 'Release vX.X.X'
-4) Tag the release, and push both the commit and the tag to github.com
-5) Create a release on github.com, using the entries of `CHANGELOG.md` for this
-   version
+    ./make_release 0.5.4
+
+and replace `0.5.4` with a version string, *not* including `v` at the start.
+The version strings must adhere to [Semantic
+Versioning](https://semver.org/spec/v2.0.0.html).
+
+This will take care of almost everything: the C, Python and Rust interfaces and
+their documentation. After some time also a new [Conda
+package](https://github.com/conda-forge/pineappl-feedstock) will be generated,
+for which the pull request will have to be accepted manually though.
