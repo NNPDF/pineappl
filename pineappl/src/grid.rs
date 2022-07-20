@@ -793,6 +793,10 @@ impl Grid {
         );
 
         for ((order, bin, lumi), subgrid) in old_subgrids.indexed_iter_mut() {
+            if subgrid.is_empty() {
+                continue;
+            }
+
             if bins.contains(&bin) {
                 let new_subgrid = &mut self.subgrids[[order, bins.start, lumi]];
 
