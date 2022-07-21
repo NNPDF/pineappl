@@ -105,7 +105,7 @@ SUBCOMMANDS:
     convolute    Convolutes a PineAPPL grid with a PDF set
     delete       Deletes parts from a PineAPPL grid
     diff         Compares the numerical content of two grids with each other
-    import       Converts fastNLO tables to PineAPPL grids
+    import       Converts fastNLO/FastKernel tables to PineAPPL grids
     info         Shows information about the grid
     merge        Merges one or more PineAPPL grids together
     obl          Shows information about orders (o), bins (b), or luminosities (l) of a grid

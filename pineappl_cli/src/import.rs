@@ -91,7 +91,7 @@ fn convert_grid(
     Err(anyhow!("could not detect file format"))
 }
 
-/// Converts fastNLO tables to PineAPPL grids.
+/// Converts fastNLO/FastKernel tables to PineAPPL grids.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -136,7 +136,7 @@ impl Subcommand for Opts {
         let mut different = false;
 
         if reference_results.is_empty() {
-            println!("can not check conversion for this type");
+            println!("file was converted, but we cannot check the conversion for this type");
         } else {
             let mut pdf = helpers::create_pdf(&self.pdfset)?;
             let results = helpers::convolute(&grid, &mut pdf, &[], &[], &[], 1, false, false);
@@ -183,7 +183,7 @@ mod tests {
     use assert_fs::NamedTempFile;
 
     const HELP_STR: &str = "pineappl-import 
-Converts fastNLO tables to PineAPPL grids
+Converts fastNLO/FastKernel tables to PineAPPL grids
 
 USAGE:
     pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
@@ -320,7 +320,7 @@ OPTIONS:
             ])
             .assert()
             .success()
-            .stdout("can not check conversion for this type\n");
+            .stdout("file was converted, but we cannot check the conversion for this type\n");
 
         Command::cargo_bin("pineappl")
             .unwrap()
@@ -351,7 +351,7 @@ OPTIONS:
             ])
             .assert()
             .success()
-            .stdout("can not check conversion for this type\n");
+            .stdout("file was converted, but we cannot check the conversion for this type\n");
 
         Command::cargo_bin("pineappl")
             .unwrap()
