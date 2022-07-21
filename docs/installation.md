@@ -77,8 +77,7 @@ If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
 
 ### Optional: FK table converter
 
-If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, make sure
-to install [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
+If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, add the switch
 `--features=fktable` during the CLI's installation, for instance:
 
     cargo install --features=fktable pineappl_cli
