@@ -317,9 +317,11 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         self.start = 0;
     }
 
+    // TODO: make `const` once we support a Rust version where this is stabilized
+
     /// Returns the dimensions of this array.
     #[must_use]
-    pub const fn dimensions(&self) -> (usize, usize, usize) {
+    pub fn dimensions(&self) -> (usize, usize, usize) {
         self.dimensions
     }
 
