@@ -19,6 +19,16 @@ if ! gh auth status 2>/dev/null; then
     exit 1
 fi
 
+if ! cargo msrv --help >/dev/null; then
+    echo "Didn't find \`msrv\` applet of \`cargo\`."
+    exit 1
+fi
+
+if ! cargo msrv --min 1.56.1 --max 1.56.1 >/dev/null; then
+    echo "Minimum supported Rust version doesn't match avertised one."
+    exit
+fi
+
 #if [[ -n $(git status --porcelain) ]]; then
 #    echo "This repository isn't clean. Make sure to add or delete the corresponding files."
 #    exit 1
