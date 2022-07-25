@@ -304,36 +304,7 @@ def main():
         plt.close(figure)
 
 def data():
-    left = np.array([{left}])
-    right = np.array([{right}])
-    min = np.array([{min}])
-    max = np.array([{max}])
-    qcd_central = np.array([{qcd_central}])
-    qcd_min = np.array([{qcd_min}])
-    qcd_max = np.array([{qcd_max}])
-    slices = {slices}
-    slice_labels = {slice_labels}
-    pdf_results = [
-{pdf_results}
-    ]
-
-    return [{{
-        'mid': 0.5 * (left[slice[0]:slice[1]] + right[slice[0]:slice[1]]),
-        'pdf_results': [(
-            res[0],
-            np.append(res[1][slice[0]:slice[1]], res[1][slice[1]-1]),
-            np.append(res[2][slice[0]:slice[1]], res[2][slice[1]-1]),
-            np.append(res[3][slice[0]:slice[1]], res[3][slice[1]-1])
-            ) for res in pdf_results],
-        'qcd_max': np.append(qcd_max[slice[0]:slice[1]], qcd_max[slice[1]-1]),
-        'qcd_min': np.append(qcd_min[slice[0]:slice[1]], qcd_min[slice[1]-1]),
-        'qcd_y': np.append(qcd_central[slice[0]:slice[1]], qcd_central[slice[1]-1]),
-        'x': np.append(left[slice[0]:slice[1]], right[slice[1]-1]),
-        'y': np.append(pdf_results[0][1][slice[0]:slice[1]], pdf_results[0][1][slice[1]-1]),
-        'ymax': np.append(max[slice[0]:slice[1]], max[slice[1]-1]),
-        'ymin': np.append(min[slice[0]:slice[1]], min[slice[1]-1]),
-        'slice_label': slice_labels[index],
-    }} for (index, slice) in enumerate(slices)]
+    return {data}
 
 def metadata():
     return {{
