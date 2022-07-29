@@ -18,7 +18,6 @@ fn convert_fastnlo(
     silence_fastnlo: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_fastnlo::ffi::{self, Verbosity};
-    use std::convert::TryInto;
 
     if silence_fastnlo {
         ffi::SetGlobalVerbosity(Verbosity::SILENT);
