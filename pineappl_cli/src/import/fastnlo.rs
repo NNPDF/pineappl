@@ -224,8 +224,17 @@ fn convert_coeff_add_flex(
         SubgridParams::default(),
     );
 
-    grid.set_key_value("initial_state_1", &table.GetPDFPDG(0).to_string());
-    grid.set_key_value("initial_state_2", "11");
+    let npdf = table_as_add_base.GetNPDF();
+    let pdf_pdg1 = table.GetPDFPDG(0).to_string();
+    let pdf_pdg2 = if npdf > 1 {
+        table.GetPDFPDG(1).to_string()
+    } else {
+        // TODO: don't hardcode this
+        "11".to_string()
+    };
+
+    grid.set_key_value("initial_state_1", &pdf_pdg1);
+    grid.set_key_value("initial_state_2", &pdf_pdg2);
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 
@@ -233,6 +242,11 @@ fn convert_coeff_add_flex(
         let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
         let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
         let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
+        let x2_values = if npdf > 1 {
+            ffi::GetXNodes2(table_as_add_base, obs.try_into().unwrap())
+        } else {
+            vec![1.0]
+        };
 
         let mut mur2_values = Vec::new();
 
@@ -321,7 +335,7 @@ fn convert_coeff_add_flex(
 
         for subproc in 0..table_as_add_base.GetNSubproc() {
             let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
-            let mut array = SparseArray3::new(mu2_values.len(), x1_values.len(), 1);
+            let mut array = SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
 
             for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
                 .cartesian_product(0..scale_nodes2.len())
@@ -330,8 +344,10 @@ fn convert_coeff_add_flex(
                 let logmur2 = mu2_values[mu2_slice].ren.ln();
                 let logmuf2 = mu2_values[mu2_slice].fac.ln();
 
-                // flexible scale grids only allow one initial-state hadron
                 for ix in 0..nx {
+                    // TODO: is this always correct? Isn't there a member function for it?
+                    let ix1 = ix % x1_values.len();
+                    let ix2 = ix / x1_values.len();
                     let mut value = ffi::GetSigmaTilde(table, 0, obs, ix, is1, is2, subproc);
 
                     if table.GetNScaleDep() >= 5 {
@@ -360,7 +376,8 @@ fn convert_coeff_add_flex(
                     }
 
                     if value != 0.0 {
-                        array[[mu2_slice, ix, 0]] = value * factor * x1_values[ix];
+                        array[[mu2_slice, ix1, ix2]] =
+                            value * factor * x1_values[ix1] * x2_values[ix2];
                     }
                 }
             }
@@ -374,7 +391,7 @@ fn convert_coeff_add_flex(
                         array,
                         mu2_values.clone(),
                         x1_values.clone(),
-                        vec![1.0],
+                        x2_values.clone(),
                     )
                     .into(),
                 );
