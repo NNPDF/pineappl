@@ -67,6 +67,19 @@ You need to install [Rust](#rust) first (see below). Then simply run
 anywhere and you are done; this will automatically download the most-recently
 released version from [crates.io](https://crates.io).
 
+### Optional: APPLgrid converter
+
+If you'd like to convert APPLgrids to PineAPPL grids, make sure to
+
+1. install [APPLgrid](https://applgrid.hepforge.org/) (you must have at version
+   1.6.27),
+2. set the environment variable `APPL_IGRID_DIR` to the `src` directory of
+   APPLgrid and
+3. add the switch `--features=applgrid` during the CLI's installation, for
+   instance:
+
+    APPL_IGRID_DIR=/tmp/applgrid-1.6.27/src cargo install --features=applgrid pineappl_cli
+
 ### Optional: fastNLO converter
 
 If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
