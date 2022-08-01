@@ -36,7 +36,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --features=fastnlo,fktable --verbose
+        args: --all-features --verbose
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
@@ -45,7 +45,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --features=fastnlo,fktable --verbose
+        args: --all-features --verbose
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
