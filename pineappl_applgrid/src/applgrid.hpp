@@ -6,6 +6,7 @@
 
 #include <appl_grid/appl_grid.h>
 #include <appl_grid/lumi_pdf.h>
+#include <appl_igrid.h>
 #include <memory>
 
 std::unique_ptr<appl::grid> make_grid(rust::Str filename);
@@ -25,5 +26,7 @@ double sparse_matrix_get(SparseMatrix3d const& matrix, int x, int y, int z);
 lumi_pdf const* dynamic_cast_lumi_pdf(appl::appl_pdf const* pdf);
 
 double weightfun(double x);
+
+bool igrid_m_reweight(appl::igrid const& igrid);
 
 #endif

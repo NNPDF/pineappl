@@ -116,3 +116,27 @@ double weightfun(double x)
 {
     return appl::igrid::weightfun(x);
 }
+
+template <typename tag, typename tag::type M>
+struct access_private_member_variable
+{
+    friend typename tag::type access(tag)
+    {
+        return M;
+    }
+};
+
+struct appl_igrid_m_reweight
+{
+    typedef bool appl::igrid::*type;
+    friend type access(appl_igrid_m_reweight);
+};
+
+template class access_private_member_variable<appl_igrid_m_reweight, &appl::igrid::m_reweight>;
+
+// we need access to `m_reweight`, but it is private
+bool igrid_m_reweight(appl::igrid const& igrid)
+{
+	// adapted from https://stackoverflow.com/a/3173080/812178
+    return igrid.*access(appl_igrid_m_reweight());
+}

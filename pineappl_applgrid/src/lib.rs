@@ -92,5 +92,7 @@ pub mod ffi {
         fn weightfun(_: f64) -> f64;
 
         unsafe fn dynamic_cast_lumi_pdf(_: *const appl_pdf) -> *const lumi_pdf;
+
+        fn igrid_m_reweight(_: &igrid) -> bool;
     }
 }

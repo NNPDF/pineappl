@@ -51,7 +51,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32) -> Vec<LumiEntry> {
     lumis.into_iter().map(LumiEntry::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, reweight: bool, alpha: u32) -> Result<Grid> {
+pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
@@ -105,6 +105,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, reweight: bool, alpha: u32) -> Res
         for bin in 0..grid.Nobs_internal() {
             let igrid = grid.weightgrid(i.try_into().unwrap(), bin);
             let igrid = unsafe { &*igrid };
+            let reweight = ffi::igrid_m_reweight(igrid);
 
             let mu2_values: Vec<_> = (0..igrid.Ntau())
                 .map(|i| {
