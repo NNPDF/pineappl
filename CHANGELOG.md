@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   calculates the central value using the average over all replicas, whereas
   `pineappl pdfunc ... NNPDF40_nnlo_as_01180/0` uses the zeroth member. The
   calculated uncertainties are the same for both
+- added support for converting APPLgrids in `import`
 
 ## [0.5.4] - 08/07/2022
 

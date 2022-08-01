@@ -1,0 +1,96 @@
+#[cxx::bridge]
+pub mod ffi {
+    #[repr(u32)]
+    enum grid_CALCULATION {
+        STANDARD = 0,
+        AMCATNLO = 1,
+        SHERPA = 2,
+    }
+
+    unsafe extern "C++" {
+        // this header is needed to make the enum a member of the class `appl::grid`
+        include!("pineappl_applgrid/src/calculation.hpp");
+
+        type grid_CALCULATION;
+    }
+
+    #[namespace = "appl"]
+    unsafe extern "C++" {
+        include!("appl_grid/appl_grid.h");
+
+        type grid;
+
+        fn calculation(&self) -> grid_CALCULATION;
+        fn genpdf(&self, _: i32, _: bool) -> *const appl_pdf;
+        fn getApplyCorrections(&self) -> bool;
+        fn getDynamicScale(&self) -> f64;
+        fn getNormalised(&self) -> bool;
+        fn leadingOrder(&self) -> i32;
+        fn nloops(&self) -> i32;
+        fn Nobs_internal(&self) -> i32;
+        fn obslow_internal(&self, _: i32) -> f64;
+        fn run(self: Pin<&mut Self>) -> &mut f64;
+        fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
+    }
+
+    #[namespace = "appl"]
+    unsafe extern "C++" {
+        include!("appl_igrid.h");
+
+        type igrid;
+
+        fn getQ2(&self, _: i32) -> f64;
+        fn getx1(&self, _: i32) -> f64;
+        fn getx2(&self, _: i32) -> f64;
+        fn Ntau(&self) -> i32;
+        fn Ny1(&self) -> i32;
+        fn Ny2(&self) -> i32;
+        fn weightgrid(&self, _: i32) -> *const SparseMatrix3d;
+    }
+
+    #[namespace = "appl"]
+    unsafe extern "C++" {
+        include!("appl_grid/appl_pdf.h");
+
+        type appl_pdf;
+
+        fn Nproc(&self) -> i32;
+        unsafe fn evaluate(&self, _: *const f64, _: *const f64, _: *mut f64);
+    }
+
+    unsafe extern "C++" {
+        include!("appl_grid/lumi_pdf.h");
+
+        type lumi_pdf;
+
+        fn size(&self) -> u32;
+    }
+
+    unsafe extern "C++" {
+        type SparseMatrix3d;
+    }
+
+    unsafe extern "C++" {
+        include!("pineappl_applgrid/src/applgrid.hpp");
+
+        fn make_grid(_: &str) -> UniquePtr<grid>;
+
+        fn grid_convolute(
+            _: Pin<&mut grid>,
+            _: &str,
+            _: i32,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: f64,
+        ) -> Vec<f64>;
+
+        fn sparse_matrix_get(_: &SparseMatrix3d, _: i32, _: i32, _: i32) -> f64;
+
+        // TODO: class member functions aren't supported yet by cxx, see
+        // https://github.com/dtolnay/cxx/issues/447
+        fn weightfun(_: f64) -> f64;
+
+        unsafe fn dynamic_cast_lumi_pdf(_: *const appl_pdf) -> *const lumi_pdf;
+    }
+}

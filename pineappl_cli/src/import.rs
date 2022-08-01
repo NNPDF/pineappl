@@ -4,10 +4,35 @@ use clap::{Parser, ValueHint};
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "applgrid")]
+mod applgrid;
 #[cfg(feature = "fastnlo")]
 mod fastnlo;
 #[cfg(feature = "fktable")]
 mod fktable;
+
+#[cfg(feature = "applgrid")]
+fn convert_applgrid(
+    input: &Path,
+    alpha: u32,
+    pdfset: &str,
+    member: usize,
+) -> Result<(&'static str, Grid, Vec<f64>)> {
+    use pineappl_applgrid::ffi;
+
+    let mut grid = ffi::make_grid(input.to_str().unwrap());
+    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), false, alpha)?;
+    let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member)?;
+
+    Ok(("APPLgrid", pgrid, results))
+}
+
+#[cfg(not(feature = "applgrid"))]
+fn convert_applgrid(_: &Path, _: u32, _: &str, _: usize) -> Result<(&'static str, Grid, Vec<f64>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `applgrid`"
+    ))
+}
 
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
@@ -84,6 +109,8 @@ fn convert_grid(
             return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
         } else if extension == "dat" {
             return convert_fktable(input);
+        } else if extension == "appl" || extension == "root" {
+            return convert_applgrid(input, alpha, pdfset, member);
         }
     }
 

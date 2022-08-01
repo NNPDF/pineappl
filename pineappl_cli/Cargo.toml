@@ -23,6 +23,7 @@ lhapdf = "0.2.1"
 ndarray = "0.15.4"
 num_cpus = "1.13.0"
 pineappl = { path = "../pineappl", version = "0.5.4" }
+pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "0.1.0" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.1.0" }
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.8.0" }
 rayon = "1.5.1"
@@ -41,5 +42,6 @@ path = "src/main.rs"
 rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
+applgrid = ["pineappl_applgrid"]
 fastnlo = ["pineappl_fastnlo"]
 fktable = ["flate2", "tar"]
