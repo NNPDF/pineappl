@@ -153,7 +153,7 @@ impl Subcommand for Opts {
                 let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
 
                 if rel_diff.abs() > self.accuracy {
-                    different = false;
+                    different = true;
                 }
 
                 table.add_row(row![
