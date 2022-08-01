@@ -44,6 +44,11 @@ echo ">>> Testing release configuration with default features ..."
 cargo build --release
 cargo test --release
 
+echo ">>> Testing release configuration with \`applgrid\` feature ..."
+
+cargo build --release --features=applgrid
+cargo test --release --features=applgrid
+
 echo ">>> Testing release configuration with \`fastnlo\` feature ..."
 
 cargo build --release --features=fastnlo
