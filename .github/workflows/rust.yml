@@ -18,6 +18,16 @@ jobs:
     - name: Install LHAPDF
       uses: ./.github/actions/lhapdf
 
+    - name: Install APPLgrid 1.6.27
+      run: |
+        wget --no-verbose 'http://applgrid.hepforge.org/downloads/applgrid-1.6.27.tgz'
+        tar xzf applgrid-1.6.27.tgz
+        cd applgrid-1.6.27
+        ./configure --prefix=${HOME}/prefix --disable-static
+        make -j
+        make install
+        echo "APPL_IGRID_DIR=$(pwd)/src" >> $GITHUB_ENV
+
     - name: Install fastNLO 2.5.0 rev. 2826
       run: |
         wget --no-verbose 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
