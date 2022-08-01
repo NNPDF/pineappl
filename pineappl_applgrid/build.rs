@@ -4,6 +4,22 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    let version = String::from_utf8(
+        Command::new("applgrid-config")
+            .arg("--version")
+            .output()
+            .expect("did not find `applgrid-config`, please install APPLgrid")
+            .stdout,
+    )
+    .unwrap();
+
+    if version.trim() != "1.6.27" {
+        println!(
+            "cargo:warning=found APPLgrid version {}, which has not been tested",
+            version.trim()
+        );
+    }
+
     let lib_path = String::from_utf8(
         Command::new("applgrid-config")
             .arg("--libdir")
