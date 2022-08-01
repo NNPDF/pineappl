@@ -15,4 +15,5 @@ rust-version = "1.56.1"
 cxx = "1.0.65"
 
 [build-dependencies]
+cc = "1.0.49"
 cxx-build = "1.0.65"
