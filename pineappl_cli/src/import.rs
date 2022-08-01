@@ -280,6 +280,18 @@ OPTIONS:
 0 0 1 7.7624461e2   -86.97     0.00
 ";
 
+    #[cfg(feature = "applgrid")]
+    const IMPORT_PHOTON_GRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
+-+------------+------------+--------------
+0 5.5621307e-4 5.5621307e-4 -1.5543122e-15
+";
+
+    #[cfg(feature = "applgrid")]
+    const IMPORT_APPLGRID_STR: &str = "b  PineAPPL    APPLgrid     rel. diff
+-+-----------+-----------+--------------
+0 2.9884537e6 2.9884537e6 -6.6613381e-16
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -390,5 +402,43 @@ OPTIONS:
             .assert()
             .success()
             .stdout(IMPORT_HADRONIC_FKTABLE_STR);
+    }
+
+    #[test]
+    #[cfg(feature = "applgrid")]
+    fn import_photon_grid() {
+        let output = NamedTempFile::new("converted5.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/LHCBWZMU7TEV_PI_part1.root",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(predicates::str::ends_with(IMPORT_PHOTON_GRID_STR));
+    }
+
+    #[test]
+    #[cfg(feature = "applgrid")]
+    fn import_applgrid() {
+        let output = NamedTempFile::new("converted6.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/ATLASWPT11-Wplus_tot.root",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(predicates::str::ends_with(IMPORT_APPLGRID_STR));
     }
 }
