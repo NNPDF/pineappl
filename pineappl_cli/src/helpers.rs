@@ -121,6 +121,11 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
     )
 }
 
+pub enum ConvoluteMode {
+    Integrated,
+    Normal,
+}
+
 pub fn convolute(
     grid: &Grid,
     lhapdf: &mut Pdf,
@@ -128,7 +133,7 @@ pub fn convolute(
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
-    integrated: bool,
+    mode: ConvoluteMode,
     force_positive: bool,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
@@ -164,25 +169,36 @@ pub fn convolute(
     };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-
     let mut results = grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales]);
 
-    if integrated {
-        let normalizations = grid.bin_info().normalizations();
+    match mode {
+        ConvoluteMode::Integrated => {
+            let normalizations = grid.bin_info().normalizations();
 
-        results
-            .iter_mut()
-            .zip(
-                normalizations
-                    .iter()
-                    .enumerate()
-                    .filter(|(index, _)| (bins.is_empty() || bins.iter().any(|b| b == index)))
-                    .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
-            )
-            .for_each(|(value, norm)| *value *= norm);
+            results
+                .iter_mut()
+                .zip(
+                    normalizations
+                        .iter()
+                        .enumerate()
+                        .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
+                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
+                )
+                .for_each(|(value, norm)| *value *= norm);
+        }
+        ConvoluteMode::Normal => {}
     }
 
     results
+}
+
+pub fn convolute_limits(grid: &Grid, bins: &[usize], _: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
+    grid.bin_info()
+        .limits()
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
+        .collect()
 }
 
 pub fn convolute_subgrid(

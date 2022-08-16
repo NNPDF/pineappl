@@ -166,6 +166,27 @@ impl<'a> BinInfo<'a> {
         }
     }
 
+    /// For each bin return a vector of `(left, right)` limits for each dimension.
+    pub fn limits(&self) -> Vec<Vec<(f64, f64)>> {
+        self.remapper.map_or_else(
+            || {
+                self.limits
+                    .limits()
+                    .windows(2)
+                    .map(|window| vec![(window[0], window[1])])
+                    .collect()
+            },
+            |remapper| {
+                remapper
+                    .limits()
+                    .to_vec()
+                    .chunks_exact(self.dimensions())
+                    .map(<[(f64, f64)]>::to_vec)
+                    .collect()
+            },
+        )
+    }
+
     /// Returns all normalization factors.
     #[must_use]
     pub fn normalizations(&self) -> Vec<f64> {

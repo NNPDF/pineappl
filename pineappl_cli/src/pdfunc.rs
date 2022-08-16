@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -55,6 +55,15 @@ impl Subcommand for Opts {
             .build_global()
             .unwrap();
 
+        let limits = helpers::convolute_limits(
+            &grid,
+            &[],
+            if self.integrated {
+                ConvoluteMode::Integrated
+            } else {
+                ConvoluteMode::Normal
+            },
+        );
         let results: Vec<f64> = pdfs
             .into_par_iter()
             .flat_map(|mut pdf| {
@@ -65,18 +74,14 @@ impl Subcommand for Opts {
                     &[],
                     &[],
                     1,
-                    self.integrated,
+                    if self.integrated {
+                        ConvoluteMode::Integrated
+                    } else {
+                        ConvoluteMode::Normal
+                    },
                     self.force_positive,
                 )
             })
-            .collect();
-
-        let bin_info = grid.bin_info();
-        let left_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.left(i))
-            .collect();
-        let right_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.right(i))
             .collect();
 
         let (x, y_label, y_unit) = helpers::labels_and_units(&grid, self.integrated);
@@ -93,11 +98,11 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         table.set_titles(title);
 
-        for bin in 0..bin_info.bins() {
+        for (bin, left_right_limits) in limits.iter().enumerate() {
             let values: Vec<_> = results
                 .iter()
                 .skip(bin)
-                .step_by(bin_info.bins())
+                .step_by(limits.len())
                 .copied()
                 .collect();
             let uncertainty = set.uncertainty(&values, self.cl, false)?;
@@ -105,9 +110,9 @@ impl Subcommand for Opts {
             let row = table.add_empty_row();
 
             row.add_cell(cell!(r->format!("{}", bin)));
-            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->format!("{}", left[bin])));
-                row.add_cell(cell!(r->format!("{}", right[bin])));
+            for (left, right) in left_right_limits {
+                row.add_cell(cell!(r->format!("{}", left)));
+                row.add_cell(cell!(r->format!("{}", right)));
             }
             row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, member.map_or(uncertainty.central, |member| values[member]))));
             row.add_cell(

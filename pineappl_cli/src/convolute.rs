@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -65,8 +65,21 @@ impl Subcommand for Opts {
             &bins,
             &[],
             self.scales,
-            self.integrated,
+            if self.integrated {
+                ConvoluteMode::Integrated
+            } else {
+                ConvoluteMode::Normal
+            },
             self.force_positive,
+        );
+        let limits = helpers::convolute_limits(
+            &grid,
+            &bins,
+            if self.integrated {
+                ConvoluteMode::Integrated
+            } else {
+                ConvoluteMode::Normal
+            },
         );
 
         let other_results: Vec<f64> = self.pdfsets[1..]
@@ -80,18 +93,14 @@ impl Subcommand for Opts {
                     &bins,
                     &[],
                     1,
-                    self.integrated,
+                    if self.integrated {
+                        ConvoluteMode::Integrated
+                    } else {
+                        ConvoluteMode::Normal
+                    },
                     self.force_positive,
                 )
             })
-            .collect();
-
-        let bin_info = grid.bin_info();
-        let left_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.left(i))
-            .collect();
-        let right_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.right(i))
             .collect();
 
         let (x, y_label, y_unit) = helpers::labels_and_units(&grid, self.integrated);
@@ -121,7 +130,11 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         table.set_titles(title);
 
-        for (index, values) in results.chunks_exact(self.scales).enumerate() {
+        for (index, (limits, values)) in limits
+            .into_iter()
+            .zip(results.chunks_exact(self.scales))
+            .enumerate()
+        {
             let min_value = values
                 .iter()
                 .min_by(|left, right| left.partial_cmp(right).unwrap())
@@ -135,9 +148,9 @@ impl Subcommand for Opts {
             let row = table.add_empty_row();
 
             row.add_cell(cell!(r->format!("{}", bin)));
-            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->format!("{}", left[bin])));
-                row.add_cell(cell!(r->format!("{}", right[bin])));
+            for (left, right) in limits.iter() {
+                row.add_cell(cell!(r->format!("{}", left)));
+                row.add_cell(cell!(r->format!("{}", right)));
             }
             row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, values[0])));
 
@@ -150,13 +163,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, (max_value / values[0] - 1.0) * 100.0)));
             }
 
-            let bins = if bins.is_empty() {
-                bin_info.bins()
-            } else {
-                self.bins.len()
-            };
-
-            for &other in other_results.iter().skip(index).step_by(bins) {
+            for &other in other_results.iter().skip(index).step_by(results.len()) {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, other)));
                 row.add_cell(
                     cell!(r->format!("{:.*}", self.digits_rel, (other / values[0] - 1.0) * 100.0)),

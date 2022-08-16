@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
@@ -153,24 +153,23 @@ impl Subcommand for Opts {
         if self.subgrid_pull.is_empty() {
             let grid = helpers::read_grid(&self.input)?;
             let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
-            let bin_info = grid.bin_info();
-            let slices = bin_info.slices();
+            let slices = grid.bin_info().slices();
             let mut data_string = String::new();
 
             data_string.push_str("[\n");
 
             for (slice, label) in slices.iter().zip(slices.iter().map(|&(begin, end)| {
-                (0..bin_info.dimensions() - 1)
+                (0..grid.bin_info().dimensions() - 1)
                     .map(|d| {
                         format!(
                             "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
-                            left = bin_info.left(d)[begin],
+                            left = grid.bin_info().left(d)[begin],
                             obs = grid
                                 .key_values()
                                 .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
                                 .unwrap_or_else(|| format!("x{}", d + 1))
                                 .replace('$', ""),
-                            right = bin_info.right(d)[end - 1],
+                            right = grid.bin_info().right(d)[end - 1],
                             unit = grid
                                 .key_values()
                                 .and_then(|map| map.get(&format!("x{}_unit", d + 1)).cloned())
@@ -188,7 +187,7 @@ impl Subcommand for Opts {
                     &bins,
                     &[],
                     self.scales,
-                    false,
+                    ConvoluteMode::Normal,
                     self.force_positive,
                 );
 
@@ -214,7 +213,7 @@ impl Subcommand for Opts {
                         &bins,
                         &[],
                         self.scales,
-                        false,
+                        ConvoluteMode::Normal,
                         self.force_positive,
                     )
                 };
@@ -236,7 +235,7 @@ impl Subcommand for Opts {
                                     &bins,
                                     &[],
                                     1,
-                                    false,
+                                    ConvoluteMode::Normal,
                                     self.force_positive,
                                 )
                             })
@@ -266,38 +265,18 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                let left_limits: Vec<_> = bin_info
-                    .left(bin_info.dimensions() - 1)
+                let bin_limits: Vec<_> =
+                    helpers::convolute_limits(&grid, &bins, ConvoluteMode::Normal)
+                        .into_iter()
+                        .map(|limits| limits.last().copied().unwrap())
+                        .collect();
+                let x: Vec<_> = bin_limits
                     .iter()
-                    .enumerate()
-                    .filter_map(|(index, &limit)| {
-                        if bins.iter().any(|&element| element == index) {
-                            Some(limit)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-                let right_limits: Vec<f64> = bin_info
-                    .right(bin_info.dimensions() - 1)
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(index, &limit)| {
-                        if bins.iter().any(|&element| element == index) {
-                            Some(limit)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-
-                let x: Vec<_> = left_limits
-                    .iter()
+                    .map(|(left, _)| left)
+                    .chain(bin_limits.last().map(|(_, right)| right))
                     .copied()
-                    .chain(right_limits.last().copied())
                     .collect();
-
-                let mid: Vec<f64> = x
+                let mid: Vec<_> = x
                     .windows(2)
                     .map(|limits| 0.5 * (limits[0] + limits[1]))
                     .collect();
@@ -360,7 +339,7 @@ impl Subcommand for Opts {
                                 &bins,
                                 &lumi_mask,
                                 1,
-                                false,
+                                ConvoluteMode::Normal,
                                 self.force_positive,
                             ),
                         )
@@ -442,7 +421,7 @@ impl Subcommand for Opts {
 
             print!(
                 include_str!("plot.py"),
-                xaxis = format!("x{}", bin_info.dimensions()),
+                xaxis = format!("x{}", grid.bin_info().dimensions()),
                 output = output.to_str().unwrap(),
                 data = data_string,
                 metadata = format_metadata(&vector),
@@ -467,15 +446,41 @@ impl Subcommand for Opts {
             let values1: Vec<f64> = pdfset1
                 .par_iter_mut()
                 .map(|pdf| {
-                    helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false, self.force_positive)
-                        [0]
+                    match helpers::convolute(
+                        &grid,
+                        pdf,
+                        &[],
+                        &[bin],
+                        &[],
+                        1,
+                        ConvoluteMode::Normal,
+                        self.force_positive,
+                    )
+                    .as_slice()
+                    {
+                        [value] => *value,
+                        _ => unreachable!(),
+                    }
                 })
                 .collect();
             let values2: Vec<f64> = pdfset2
                 .par_iter_mut()
                 .map(|pdf| {
-                    helpers::convolute(&grid, pdf, &[], &[bin], &[], 1, false, self.force_positive)
-                        [0]
+                    match helpers::convolute(
+                        &grid,
+                        pdf,
+                        &[],
+                        &[bin],
+                        &[],
+                        1,
+                        ConvoluteMode::Normal,
+                        self.force_positive,
+                    )
+                    .as_slice()
+                    {
+                        [value] => *value,
+                        _ => unreachable!(),
+                    }
                 })
                 .collect();
 

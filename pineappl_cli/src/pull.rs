@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -55,25 +55,36 @@ impl Subcommand for Opts {
             .build_global()
             .unwrap();
 
+        let bin_limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
         let results1: Vec<f64> = pdfset1
             .par_iter_mut()
             .flat_map(|pdf| {
-                helpers::convolute(&grid, pdf, &[], &[], &[], 1, false, self.force_positive)
+                helpers::convolute(
+                    &grid,
+                    pdf,
+                    &[],
+                    &[],
+                    &[],
+                    1,
+                    ConvoluteMode::Normal,
+                    self.force_positive,
+                )
             })
             .collect();
         let results2: Vec<f64> = pdfset2
             .par_iter_mut()
             .flat_map(|pdf| {
-                helpers::convolute(&grid, pdf, &[], &[], &[], 1, false, self.force_positive)
+                helpers::convolute(
+                    &grid,
+                    pdf,
+                    &[],
+                    &[],
+                    &[],
+                    1,
+                    ConvoluteMode::Normal,
+                    self.force_positive,
+                )
             })
-            .collect();
-
-        let bin_info = grid.bin_info();
-        let left_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.left(i))
-            .collect();
-        let right_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.right(i))
             .collect();
 
         let mut title = Row::empty();
@@ -92,17 +103,17 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         table.set_titles(title);
 
-        for bin in 0..bin_info.bins() {
+        for (bin, limits) in bin_limits.iter().enumerate() {
             let values1: Vec<_> = results1
                 .iter()
                 .skip(bin)
-                .step_by(bin_info.bins())
+                .step_by(bin_limits.len())
                 .copied()
                 .collect();
             let values2: Vec<_> = results2
                 .iter()
                 .skip(bin)
-                .step_by(bin_info.bins())
+                .step_by(bin_limits.len())
                 .copied()
                 .collect();
             let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
@@ -114,30 +125,40 @@ impl Subcommand for Opts {
                     lumi_mask[lumi] = true;
 
                     if let Some(member1) = member1 {
-                        helpers::convolute(
+                        match helpers::convolute(
                             &grid,
                             &mut pdfset1[member1],
                             &[],
                             &[bin],
                             &lumi_mask,
                             1,
-                            false,
+                            ConvoluteMode::Normal,
                             self.force_positive,
-                        )[0]
+                        )
+                        .as_slice()
+                        {
+                            [value] => *value,
+                            _ => unreachable!(),
+                        }
                     } else {
                         let central: Vec<f64> = pdfset1
                             .par_iter_mut()
                             .map(|pdf| {
-                                helpers::convolute(
+                                match helpers::convolute(
                                     &grid,
                                     pdf,
                                     &[],
                                     &[bin],
                                     &lumi_mask,
                                     1,
-                                    false,
+                                    ConvoluteMode::Normal,
                                     self.force_positive,
-                                )[0]
+                                )
+                                .as_slice()
+                                {
+                                    [value] => *value,
+                                    _ => unreachable!(),
+                                }
                             })
                             .collect();
                         set1.uncertainty(&central, self.cl, false).unwrap().central
@@ -150,30 +171,40 @@ impl Subcommand for Opts {
                     lumi_mask[lumi] = true;
 
                     if let Some(member2) = member2 {
-                        helpers::convolute(
+                        match helpers::convolute(
                             &grid,
                             &mut pdfset2[member2],
                             &[],
                             &[bin],
                             &lumi_mask,
                             1,
-                            false,
+                            ConvoluteMode::Normal,
                             self.force_positive,
-                        )[0]
+                        )
+                        .as_slice()
+                        {
+                            [value] => *value,
+                            _ => unreachable!(),
+                        }
                     } else {
                         let central: Vec<f64> = pdfset2
                             .par_iter_mut()
                             .map(|pdf| {
-                                helpers::convolute(
+                                match helpers::convolute(
                                     &grid,
                                     pdf,
                                     &[],
                                     &[bin],
                                     &lumi_mask,
                                     1,
-                                    false,
+                                    ConvoluteMode::Normal,
                                     self.force_positive,
-                                )[0]
+                                )
+                                .as_slice()
+                                {
+                                    [value] => *value,
+                                    _ => unreachable!(),
+                                }
                             })
                             .collect();
                         set2.uncertainty(&central, self.cl, false).unwrap().central
@@ -208,9 +239,9 @@ impl Subcommand for Opts {
             let row = table.add_empty_row();
 
             row.add_cell(cell!(r->format!("{}", bin)));
-            for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                row.add_cell(cell!(r->format!("{}", left[bin])));
-                row.add_cell(cell!(r->format!("{}", right[bin])));
+            for (left, right) in limits {
+                row.add_cell(cell!(r->format!("{}", left)));
+                row.add_cell(cell!(r->format!("{}", right)));
             }
 
             row.add_cell(cell!(r->format!("{:.*}", self.digits, total)));

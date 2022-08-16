@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -130,22 +130,15 @@ impl Subcommand for Opts {
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
         let mut table = helpers::create_table();
-        let bin_info = grid1.bin_info();
-
-        let left_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.left(i))
-            .collect();
-        let right_limits: Vec<_> = (0..bin_info.dimensions())
-            .map(|i| bin_info.right(i))
-            .collect();
-
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
-        for i in 0..bin_info.dimensions() {
+        for i in 0..grid1.bin_info().dimensions() {
             let mut cell = cell!(c->format!("x{}", i + 1));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
+
+        let limits1 = helpers::convolute_limits(&grid1, &[], ConvoluteMode::Normal);
 
         if self.ignore_orders {
             let mut cell = cell!(c->"diff");
@@ -161,7 +154,7 @@ impl Subcommand for Opts {
                 &[],
                 &[],
                 1,
-                false,
+                ConvoluteMode::Normal,
                 self.force_positive,
             );
             let results2 = helpers::convolute(
@@ -171,17 +164,21 @@ impl Subcommand for Opts {
                 &[],
                 &[],
                 1,
-                false,
+                ConvoluteMode::Normal,
                 self.force_positive,
             );
 
-            for (bin, (result1, result2)) in results1.iter().zip(results2.iter()).enumerate() {
+            for (bin, (limits1, (result1, result2))) in limits1
+                .iter()
+                .zip(results1.iter().zip(results2.iter()))
+                .enumerate()
+            {
                 let row = table.add_empty_row();
 
                 row.add_cell(cell!(r->bin));
-                for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->format!("{}", left[bin])));
-                    row.add_cell(cell!(r->format!("{}", right[bin])));
+                for (left, right) in limits1.iter() {
+                    row.add_cell(cell!(r->format!("{}", left)));
+                    row.add_cell(cell!(r->format!("{}", right)));
                 }
 
                 let result1 = result1 * self.scale1;
@@ -213,7 +210,7 @@ impl Subcommand for Opts {
                         &[],
                         &[],
                         1,
-                        false,
+                        ConvoluteMode::Normal,
                         self.force_positive,
                     )
                 })
@@ -228,19 +225,19 @@ impl Subcommand for Opts {
                         &[],
                         &[],
                         1,
-                        false,
+                        ConvoluteMode::Normal,
                         self.force_positive,
                     )
                 })
                 .collect();
 
-            for bin in 0..bin_info.bins() {
+            for (bin, limits1) in limits1.iter().enumerate() {
                 let row = table.add_empty_row();
 
                 row.add_cell(cell!(r->bin));
-                for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->format!("{}", left[bin])));
-                    row.add_cell(cell!(r->format!("{}", right[bin])));
+                for (left, right) in limits1 {
+                    row.add_cell(cell!(r->format!("{}", left)));
+                    row.add_cell(cell!(r->format!("{}", right)));
                 }
 
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
