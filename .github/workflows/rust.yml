@@ -23,7 +23,7 @@ jobs:
         wget --no-verbose 'http://applgrid.hepforge.org/downloads/applgrid-1.6.27.tgz'
         tar xzf applgrid-1.6.27.tgz
         cd applgrid-1.6.27
-        ./configure --prefix=${HOME}/prefix --disable-static
+        ./configure --prefix=${HOME}/prefix --disable-static --without-root
         make -j
         make install
         echo "APPL_IGRID_DIR=$(pwd)/src" >> $GITHUB_ENV
@@ -46,7 +46,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --features=fastnlo,fktable --verbose
+        args: --all-features --verbose
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
@@ -55,7 +55,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --features=fastnlo,fktable --verbose
+        args: --all-features --verbose -- --skip import_applgrid --skip import_photon_grid
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'

@@ -292,6 +292,22 @@ OPTIONS:
 0 2.9884537e6 2.9884537e6 -6.6613381e-16
 ";
 
+    #[cfg(feature = "applgrid")]
+    const IMPORT_NEW_APPLGRID_STR: &str = "b   PineAPPL    APPLgrid     rel. diff
+--+-----------+-----------+--------------
+0  6.2634897e2 6.2634897e2  8.8817842e-16
+1  6.2847078e2 6.2847078e2 -2.2204460e-16
+2  6.3163323e2 6.3163323e2  6.6613381e-16
+3  6.3586556e2 6.3586556e2  4.4408921e-16
+4  6.4139163e2 6.4139163e2  1.3322676e-15
+5  6.4848088e2 6.4848088e2  2.2204460e-16
+6  6.5354150e2 6.5354150e2 -4.2188475e-15
+7  6.5377566e2 6.5377566e2  6.6613381e-16
+8  6.5094729e2 6.5094729e2  8.8817842e-16
+9  6.3588760e2 6.3588760e2 -3.8857806e-15
+10 5.9810718e2 5.9810718e2  2.4424907e-15
+";
+
     #[test]
     fn help() {
         Command::cargo_bin("pineappl")
@@ -440,5 +456,24 @@ OPTIONS:
             .assert()
             .success()
             .stdout(predicates::str::ends_with(IMPORT_APPLGRID_STR));
+    }
+
+    #[test]
+    #[cfg(feature = "applgrid")]
+    fn import_new_applgrid() {
+        let output = NamedTempFile::new("converted7.pineappl.lz4").unwrap();
+
+        Command::cargo_bin("pineappl")
+            .unwrap()
+            .args(&[
+                "--silence-lhapdf",
+                "import",
+                "data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
+                output.path().to_str().unwrap(),
+                "NNPDF31_nlo_as_0118_luxqed",
+            ])
+            .assert()
+            .success()
+            .stdout(predicates::str::ends_with(IMPORT_NEW_APPLGRID_STR));
     }
 }
