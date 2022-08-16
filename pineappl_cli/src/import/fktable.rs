@@ -105,7 +105,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         logxir: 0,
                         logxif: 0,
                     }],
-                    (0..=ndata).map(|limit| limit.into()).collect(),
+                    (0..=ndata).map(Into::into).collect(),
                     SubgridParams::default(),
                 );
 
@@ -160,11 +160,8 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                     );
                 }
                 FkTableSection::TheoryInfo => {
-                    if let Some((key, value)) = line.split_once(' ') {
-                        match key {
-                            "*Q0:" => q0 = value.parse()?,
-                            _ => {}
-                        }
+                    if let Some(("*Q0:", value)) = line.split_once(' ') {
+                        q0 = value.parse()?;
                     }
                 }
                 FkTableSection::Xgrid => {

@@ -22,7 +22,7 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap());
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
-    let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member)?;
+    let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", pgrid, results))
 }
@@ -54,7 +54,7 @@ fn convert_fastnlo(
         member.try_into().unwrap(),
         silence_fastnlo,
     );
-    let grid = fastnlo::convert_fastnlo_table(&file, alpha.try_into().unwrap())?;
+    let grid = fastnlo::convert_fastnlo_table(&file, alpha)?;
 
     let results = ffi::GetCrossSection(
         ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),

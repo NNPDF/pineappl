@@ -12,7 +12,6 @@ use pineappl_fastnlo::ffi::{
 };
 use std::convert::{TryFrom, TryInto};
 use std::f64::consts::TAU;
-use std::ptr;
 
 fn pid_to_pdg_id(pid: i32) -> i32 {
     match pid {
@@ -385,7 +384,7 @@ fn convert_coeff_add_flex(
             if !array.is_empty() {
                 grid.set_subgrid(
                     0,
-                    obs.try_into().unwrap(),
+                    obs,
                     subproc.try_into().unwrap(),
                     ImportOnlySubgridV2::new(
                         array,
@@ -422,7 +421,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
     for id in ids {
         let coeff_table = file_as_table.GetCoeffTable(id);
 
-        if coeff_table == ptr::null_mut() {
+        if coeff_table.is_null() {
             return Err(anyhow!("could not access coefficient table"));
         }
 
@@ -430,17 +429,13 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
 
         let converted = unsafe { ffi::dynamic_cast_coeff_add_fix(coeff_table) };
 
-        if converted != ptr::null_mut() {
-            grids.push(convert_coeff_add_fix(
-                unsafe { &*converted },
-                linear_combinations,
-                bins,
-                alpha,
-            ));
-        } else {
+        if converted.is_null() {
             let converted = unsafe { ffi::dynamic_cast_coeff_add_flex(coeff_table) };
 
-            if converted != ptr::null_mut() {
+            if converted.is_null() {
+                // TODO: NYI
+                unreachable!();
+            } else {
                 let mur_ff = file_as_reader.GetMuRFunctionalForm();
                 let muf_ff = file_as_reader.GetMuFFunctionalForm();
 
@@ -453,10 +448,14 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
                     alpha,
                     file_as_table.GetIpublunits(),
                 ));
-            } else {
-                // TODO: NYI
-                unreachable!();
             }
+        } else {
+            grids.push(convert_coeff_add_fix(
+                unsafe { &*converted },
+                linear_combinations,
+                bins,
+                alpha,
+            ));
         }
     }
 
@@ -489,7 +488,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
         }
     }
 
-    result.set_remapper(BinRemapper::new(normalizations.clone(), limits).unwrap())?;
+    result.set_remapper(BinRemapper::new(normalizations, limits).unwrap())?;
 
     Ok(result)
 }

@@ -41,7 +41,7 @@ pub struct Mu2 {
 }
 
 /// Size-related statistics for a subgrid.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Stats {
     /// Number of possible total entries for a subgrid. This number is the product of the lengths
     /// of the slices returned by [`Subgrid::mu2_grid`], [`Subgrid::x1_grid`] and

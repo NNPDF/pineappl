@@ -109,7 +109,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{}", left[bin])));
                 row.add_cell(cell!(r->format!("{}", right[bin])));
             }
-            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, if let Some(member) = member { values[member] } else { uncertainty.central })));
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, member.map_or(uncertainty.central, |member| values[member]))));
             row.add_cell(
                 cell!(r->format!("{:.*}", self.digits_rel, (-uncertainty.errminus / uncertainty.central) * 100.0)),
             );

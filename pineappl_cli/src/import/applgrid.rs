@@ -180,8 +180,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     let mut grid0 = grids.remove(0);
     grids
         .into_iter()
-        .map(|g| grid0.merge(g).map_err(|e| anyhow::Error::new(e)))
-        .collect::<Result<()>>()?;
+        .try_for_each(|g| grid0.merge(g).map_err(anyhow::Error::new))?;
 
     let mut global = 1.0;
 
@@ -198,10 +197,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     Ok(grid0)
 }
 
-pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Result<Vec<f64>> {
+pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    Ok(ffi::grid_convolute(
+    ffi::grid_convolute(
         grid,
         pdfset,
         member.try_into().unwrap(),
@@ -209,5 +208,5 @@ pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> 
         1.0,
         1.0,
         1.0,
-    ))
+    )
 }

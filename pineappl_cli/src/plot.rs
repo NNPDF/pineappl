@@ -113,32 +113,25 @@ impl Subcommand for Opts {
             let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
             let bin_info = grid.bin_info();
             let slices = bin_info.slices();
-            let slice_labels: Vec<_> = slices
-                .iter()
-                .map(|&(begin, end)| {
-                    (0..bin_info.dimensions() - 1)
-                        .map(|d| {
-                            format!(
-                                "${} < {} < {}$",
-                                bin_info.left(d)[begin],
-                                grid.key_values()
-                                    .and_then(|map| map
-                                        .get(&format!("x{}_label_tex", d + 1))
-                                        .cloned())
-                                    .unwrap_or_else(|| format!("x{}", d + 1))
-                                    .replace('$', ""),
-                                bin_info.right(d)[end - 1]
-                            )
-                        })
-                        .join(r#"\\"#)
-                })
-                .collect();
-
             let mut data_string = String::new();
 
             data_string.push_str("[\n");
 
-            for (slice, label) in slices.into_iter().zip(slice_labels.into_iter()) {
+            for (slice, label) in slices.iter().zip(slices.iter().map(|&(begin, end)| {
+                (0..bin_info.dimensions() - 1)
+                    .map(|d| {
+                        format!(
+                            "${} < {} < {}$",
+                            bin_info.left(d)[begin],
+                            grid.key_values()
+                                .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
+                                .unwrap_or_else(|| format!("x{}", d + 1))
+                                .replace('$', ""),
+                            bin_info.right(d)[end - 1]
+                        )
+                    })
+                    .join(r#"\\"#)
+            })) {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 
                 let results = helpers::convolute(
@@ -216,11 +209,8 @@ impl Subcommand for Opts {
 
                             let uncertainty =
                                 set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
-                            central.push(if let Some(member) = member {
-                                values[member]
-                            } else {
-                                uncertainty.central
-                            });
+                            central
+                                .push(member.map_or(uncertainty.central, |member| values[member]));
                             min.push(uncertainty.central - uncertainty.errminus);
                             max.push(uncertainty.central + uncertainty.errplus);
                         }
@@ -234,7 +224,7 @@ impl Subcommand for Opts {
                     .iter()
                     .enumerate()
                     .filter_map(|(index, &limit)| {
-                        if bins.iter().find(|&&element| element == index).is_some() {
+                        if bins.iter().any(|&element| element == index) {
                             Some(limit)
                         } else {
                             None
@@ -246,7 +236,7 @@ impl Subcommand for Opts {
                     .iter()
                     .enumerate()
                     .filter_map(|(index, &limit)| {
-                        if bins.iter().find(|&&element| element == index).is_some() {
+                        if bins.iter().any(|&element| element == index) {
                             Some(limit)
                         } else {
                             None
@@ -256,8 +246,8 @@ impl Subcommand for Opts {
 
                 let x: Vec<_> = left_limits
                     .iter()
-                    .cloned()
-                    .chain(right_limits.last().cloned())
+                    .copied()
+                    .chain(right_limits.last().copied())
                     .collect();
 
                 let mid: Vec<f64> = x
@@ -411,16 +401,8 @@ impl Subcommand for Opts {
 
             let uncertainty1 = set1.uncertainty(&values1, cl, false)?;
             let uncertainty2 = set2.uncertainty(&values2, cl, false)?;
-            let central1 = if let Some(member1) = member1 {
-                values1[member1]
-            } else {
-                uncertainty1.central
-            };
-            let central2 = if let Some(member2) = member2 {
-                values2[member2]
-            } else {
-                uncertainty2.central
-            };
+            let central1 = member1.map_or(uncertainty1.central, |member1| values1[member1]);
+            let central2 = member2.map_or(uncertainty2.central, |member2| values2[member2]);
 
             let denominator = {
                 // use the uncertainties in the direction in which the respective results differ
