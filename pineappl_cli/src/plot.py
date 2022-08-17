@@ -89,6 +89,7 @@ def plot_abs_pdfs(axis, **kwargs):
     ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
     pdf_uncertainties = kwargs['pdf_results']
+    channels = kwargs['channels']
 
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
@@ -102,6 +103,14 @@ def plot_abs_pdfs(axis, **kwargs):
         label, y, ymin, ymax = i
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+
+    linestyles = ['--', ':']
+    for index, i in enumerate(channels):
+        if index >= len(linestyles):
+            break
+
+        label, y = i
+        axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
 
     axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0)
 

@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
+use pineappl::lumi::LumiEntry;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -51,6 +52,47 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
         .chain(slice.last())
         .map(|x| format!("{:.7e}", x))
         .join(", ")
+}
+
+// TODO: this function should take into account what type the particle IDs are
+fn map_format_parton(parton: i32) -> &'static str {
+    match parton {
+        -6 => r#"\bar{\mathrm{t}}"#,
+        -5 => r#"\bar{\mathrm{b}}"#,
+        -4 => r#"\bar{\mathrm{c}}"#,
+        -3 => r#"\bar{\mathrm{s}}"#,
+        -2 => r#"\bar{\mathrm{u}}"#,
+        -1 => r#"\bar{\mathrm{d}}"#,
+        1 => r#"\mathrm{d}"#,
+        2 => r#"\mathrm{u}"#,
+        3 => r#"\mathrm{s}"#,
+        4 => r#"\mathrm{c}"#,
+        5 => r#"\mathrm{b}"#,
+        6 => r#"\mathrm{t}"#,
+        0 | 21 => r#"\mathrm{g}"#,
+        22 => r#"\gamma"#,
+        _ => unimplemented!(),
+    }
+}
+
+fn map_format_lumi(lumi: &LumiEntry) -> String {
+    lumi.entry()
+        .iter()
+        .map(|&(a, b, _)| format!("{}{}", map_format_parton(a), map_format_parton(b)))
+        .join(" + ")
+}
+
+fn map_format_channels(channels: &Vec<(String, Vec<f64>)>) -> String {
+    channels
+        .iter()
+        .map(|(label, bins)| {
+            format!(
+                "                (r'${}$', np.array([{}]))",
+                label,
+                map_format_e_join_repeat_last(bins)
+            )
+        })
+        .join(",\n")
 }
 
 fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -> String {
@@ -300,6 +342,35 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
+                let mut channels: Vec<_> = (0..grid.lumi().len())
+                    .map(|lumi| {
+                        let mut lumi_mask = vec![false; grid.lumi().len()];
+                        lumi_mask[lumi] = true;
+                        (
+                            map_format_lumi(&grid.lumi()[lumi]),
+                            helpers::convolute(
+                                &grid,
+                                &mut pdf,
+                                &[],
+                                &bins,
+                                &lumi_mask,
+                                1,
+                                false,
+                                self.force_positive,
+                            ),
+                        )
+                    })
+                    .collect();
+
+                // sort channels by importance
+                channels.sort_by(|(_, lhs), (_, rhs)| {
+                    let lhs = lhs.iter().fold(0.0, |prev, x| prev + x.abs());
+                    let rhs = rhs.iter().fold(0.0, |prev, x| prev + x.abs());
+                    // TODO: use total_cmp once we can use Rust 1.62
+                    rhs.partial_cmp(&lhs).unwrap()
+                });
+                let channels = channels;
+
                 writeln!(
                     &mut data_string,
                     "        {{
@@ -315,6 +386,9 @@ impl Subcommand for Opts {
             'y'        : np.array([{y}]),
             'ymin'     : np.array([{ymin}]),
             'ymax'     : np.array([{ymax}]),
+            'channels' : [
+{channels}
+            ],
         }},",
                     slice_label = label,
                     mid = map_format_join(&mid),
@@ -326,6 +400,7 @@ impl Subcommand for Opts {
                     y = map_format_e_join_repeat_last(&central),
                     ymin = map_format_e_join_repeat_last(&min),
                     ymax = map_format_e_join_repeat_last(&max),
+                    channels = map_format_channels(&channels),
                 )
                 .unwrap_or_else(|_| unreachable!());
             }
@@ -578,6 +653,7 @@ def plot_abs_pdfs(axis, **kwargs):
     ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
     pdf_uncertainties = kwargs['pdf_results']
+    channels = kwargs['channels']
 
     axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
     axis.minorticks_on()
@@ -591,6 +667,14 @@ def plot_abs_pdfs(axis, **kwargs):
         label, y, ymin, ymax = i
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+
+    linestyles = ['--', ':']
+    for index, i in enumerate(channels):
+        if index >= len(linestyles):
+            break
+
+        label, y = i
+        axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
 
     axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0)
 
@@ -818,6 +902,13 @@ def data():
             'y'        : np.array([3.7527620e2, 3.4521553e2, 3.0001406e2, 2.4257663e2, 1.8093343e2, 1.2291115e2, 5.7851018e1, 1.3772029e1, 1.3772029e1]),
             'ymin'     : np.array([3.6114679e2, 3.3214336e2, 2.8866119e2, 2.3342681e2, 1.7416314e2, 1.1835555e2, 5.5752518e1, 1.3296051e1, 1.3296051e1]),
             'ymax'     : np.array([3.8546011e2, 3.5487551e2, 3.0860377e2, 2.4965490e2, 1.8627534e2, 1.2657016e2, 5.9567473e1, 1.4165115e1, 1.4165115e1]),
+            'channels' : [
+                (r'$\mathrm{u}\bar{\mathrm{d}} + \mathrm{c}\bar{\mathrm{s}}$', np.array([4.1812079e2, 3.8732921e2, 3.3927446e2, 2.7651168e2, 2.0772858e2, 1.4204593e2, 6.7246107e1, 1.5946839e1, 1.5946839e1])),
+                (r'$\mathrm{u}\mathrm{g} + \mathrm{c}\mathrm{g}$', np.array([-3.0404615e1, -3.0544941e1, -2.8777182e1, -2.4643233e1, -1.9135032e1, -1.3267050e1, -6.0617011e0, -1.1836652e0, -1.1836652e0])),
+                (r'$\mathrm{g}\bar{\mathrm{s}} + \mathrm{g}\bar{\mathrm{d}}$', np.array([-1.2554096e1, -1.1664958e1, -1.0542665e1, -9.3423343e0, -7.6928937e0, -5.9020586e0, -3.3444315e0, -9.9587535e-1, -9.9587535e-1])),
+                (r'$\mathrm{u}\gamma + \mathrm{c}\gamma$', np.array([7.3283017e-2, 7.1405161e-2, 3.9504114e-2, 3.6066338e-2, 2.2005096e-2, 1.2525547e-2, 8.0948775e-3, 3.9519852e-3, 3.9519852e-3])),
+                (r'$\gamma\bar{\mathrm{s}} + \gamma\bar{\mathrm{d}}$', np.array([4.0843648e-2, 2.4809894e-2, 1.9941837e-2, 1.4446490e-2, 1.0776479e-2, 2.1802965e-2, 2.9487321e-3, 7.7841269e-4, 7.7841269e-4]))
+            ],
         },
     ]
 
