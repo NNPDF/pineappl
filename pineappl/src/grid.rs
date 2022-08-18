@@ -1535,30 +1535,38 @@ impl Grid {
             .find(|subgrid| !subgrid.is_empty())
             .unwrap_or_else(|| unreachable!());
         // source x1/x2 grid might differ and be differently sorted than the operator
-        let x1_grid: Vec<_> = first_non_zero_grid
-            .x1_grid()
-            .iter()
-            .map(|x| {
-                eko_info
-                    .grid_axes
-                    .x_grid
-                    .iter()
-                    .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
-                    .unwrap_or_else(|| unreachable!())
-            })
-            .collect();
-        let x2_grid: Vec<_> = first_non_zero_grid
-            .x2_grid()
-            .iter()
-            .map(|x| {
-                eko_info
-                    .grid_axes
-                    .x_grid
-                    .iter()
-                    .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
-                    .unwrap_or_else(|| unreachable!())
-            })
-            .collect();
+        let x1_grid: Vec<_> = if has_pdf1 {
+            first_non_zero_grid
+                .x1_grid()
+                .iter()
+                .map(|x| {
+                    eko_info
+                        .grid_axes
+                        .x_grid
+                        .iter()
+                        .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
+                        .unwrap_or_else(|| unreachable!())
+                })
+                .collect()
+        } else {
+            Vec::<usize>::new()
+        };
+        let x2_grid: Vec<_> = if has_pdf2 {
+            first_non_zero_grid
+                .x2_grid()
+                .iter()
+                .map(|x| {
+                    eko_info
+                        .grid_axes
+                        .x_grid
+                        .iter()
+                        .position(|xi| approx_eq!(f64, *xi, *x, ulps = 64))
+                        .unwrap_or_else(|| unreachable!())
+                })
+                .collect()
+        } else {
+            Vec::<usize>::new()
+        };
 
         // iterate over all bins, which are mapped one-to-one from the target to the source grid
         for bin in 0..self.bin_info().bins() {
