@@ -163,13 +163,18 @@ impl Subcommand for Opts {
                 (0..bin_info.dimensions() - 1)
                     .map(|d| {
                         format!(
-                            "${} < {} < {}$",
-                            bin_info.left(d)[begin],
-                            grid.key_values()
+                            "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
+                            left = bin_info.left(d)[begin],
+                            obs = grid
+                                .key_values()
                                 .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
                                 .unwrap_or_else(|| format!("x{}", d + 1))
                                 .replace('$', ""),
-                            bin_info.right(d)[end - 1]
+                            right = bin_info.right(d)[end - 1],
+                            unit = grid
+                                .key_values()
+                                .and_then(|map| map.get(&format!("x{}_unit", d + 1)).cloned())
+                                .unwrap_or_default()
                         )
                     })
                     .join(r#"\\"#)
