@@ -681,10 +681,11 @@ def plot_abs_pdfs(axis, **kwargs):
         label, y = i
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0)
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2), fontsize='x-small', frameon=False, borderpad=0)
 
     if slice_label != '':
-        axis.legend(fontsize='xx-small', frameon=False)
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
+        t.set_bbox({ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' })
 
 def plot_rel_ewonoff(axis, **kwargs):
     x = kwargs['x']
