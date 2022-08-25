@@ -106,6 +106,7 @@ echo ">>> Publishing crate 'pineappl_cli' ..."
 
 cd ../pineappl_cli
 cargo publish
+cd ..
 
 echo ">>> Making a release on github"
 
