@@ -92,8 +92,9 @@ echo ">>> Publishing crate 'pineappl' ..."
 
 cd pineappl
 cargo publish
+cd ..
 
-echo "Waiting the 'pineappl' crate to become available on crates.io ..."
+echo "Waiting for the 'pineappl' crate to become available on crates.io ..."
 
 sleep 60
 
@@ -104,7 +105,7 @@ cargo publish
 
 echo ">>> Publishing crate 'pineappl_cli' ..."
 
-cd ../pineappl_cli
+cd pineappl_cli
 cargo publish
 cd ..
 
