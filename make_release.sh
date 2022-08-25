@@ -116,7 +116,7 @@ old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head 
 
 # extract news for the current version from the changelog file, dismissing
 # empty lines at the start and the end
-news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${version}\\]/! { /\\[${old_version}\\]/! p } }" \
+news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
     CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
 
 gh release create v${version} -n "${news}"
