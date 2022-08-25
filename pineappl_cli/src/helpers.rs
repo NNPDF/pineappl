@@ -121,7 +121,9 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
     )
 }
 
+#[derive(Clone, Copy)]
 pub enum ConvoluteMode {
+    Asymmetry,
     Integrated,
     Normal,
 }
@@ -172,6 +174,17 @@ pub fn convolute(
     let mut results = grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales]);
 
     match mode {
+        ConvoluteMode::Asymmetry => results
+            .chunks_exact(results.len() / scales)
+            .flat_map(|chunk| {
+                let vec: Vec<_> = chunk[chunk.len() / 2..]
+                    .iter()
+                    .zip(chunk[..chunk.len() / 2].iter().rev())
+                    .map(|(pos, neg)| (pos - neg) / (pos + neg))
+                    .collect();
+                vec
+            })
+            .collect(),
         ConvoluteMode::Integrated => {
             let normalizations = grid.bin_info().normalizations();
 
@@ -185,20 +198,26 @@ pub fn convolute(
                         .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
                 )
                 .for_each(|(value, norm)| *value *= norm);
-        }
-        ConvoluteMode::Normal => {}
-    }
 
-    results
+            results
+        }
+        ConvoluteMode::Normal => results,
+    }
 }
 
-pub fn convolute_limits(grid: &Grid, bins: &[usize], _: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
-    grid.bin_info()
+pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
+    let limits: Vec<_> = grid
+        .bin_info()
         .limits()
         .into_iter()
         .enumerate()
         .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
-        .collect()
+        .collect();
+
+    match mode {
+        ConvoluteMode::Asymmetry => limits[limits.len() / 2..].to_vec(),
+        ConvoluteMode::Integrated | ConvoluteMode::Normal => limits,
+    }
 }
 
 pub fn convolute_subgrid(

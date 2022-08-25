@@ -30,6 +30,9 @@ pub struct Opts {
         value_names = &["ORDER", "BIN", "LUMI"]
     )]
     subgrid_pull: Vec<String>,
+    /// Plot the asymmetry.
+    #[clap(conflicts_with = "subgrid-pull", long)]
+    asymmetry: bool,
     /// Number of threads to utilize.
     #[clap(default_value_t = num_cpus::get(), long)]
     threads: usize,
@@ -151,6 +154,12 @@ impl Subcommand for Opts {
             .unwrap();
 
         if self.subgrid_pull.is_empty() {
+            let mode = if self.asymmetry {
+                ConvoluteMode::Asymmetry
+            } else {
+                ConvoluteMode::Normal
+            };
+
             let grid = helpers::read_grid(&self.input)?;
             let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
             let slices = grid.bin_info().slices();
@@ -187,7 +196,7 @@ impl Subcommand for Opts {
                     &bins,
                     &[],
                     self.scales,
-                    ConvoluteMode::Normal,
+                    mode,
                     self.force_positive,
                 );
 
@@ -213,10 +222,25 @@ impl Subcommand for Opts {
                         &bins,
                         &[],
                         self.scales,
-                        ConvoluteMode::Normal,
+                        mode,
                         self.force_positive,
                     )
                 };
+
+                let bin_limits: Vec<_> = helpers::convolute_limits(&grid, &bins, mode)
+                    .into_iter()
+                    .map(|limits| limits.last().copied().unwrap())
+                    .collect();
+                let x: Vec<_> = bin_limits
+                    .iter()
+                    .map(|(left, _)| left)
+                    .chain(bin_limits.last().map(|(_, right)| right))
+                    .copied()
+                    .collect();
+                let mid: Vec<_> = x
+                    .windows(2)
+                    .map(|limits| 0.5 * (limits[0] + limits[1]))
+                    .collect();
 
                 let pdf_uncertainties: Vec<Vec<Vec<f64>>> = self
                     .pdfsets
@@ -235,21 +259,23 @@ impl Subcommand for Opts {
                                     &bins,
                                     &[],
                                     1,
-                                    ConvoluteMode::Normal,
+                                    mode,
                                     self.force_positive,
                                 )
                             })
                             .collect();
 
-                        let mut central = Vec::with_capacity(bins.len());
-                        let mut min = Vec::with_capacity(bins.len());
-                        let mut max = Vec::with_capacity(bins.len());
+                        let bins = mid.len();
 
-                        for bin in 0..bins.len() {
+                        let mut central = Vec::with_capacity(bins);
+                        let mut min = Vec::with_capacity(bins);
+                        let mut max = Vec::with_capacity(bins);
+
+                        for bin in 0..bins {
                             let values: Vec<_> = pdf_results
                                 .iter()
                                 .skip(bin)
-                                .step_by(bins.len())
+                                .step_by(bins)
                                 .copied()
                                 .collect();
 
@@ -263,22 +289,6 @@ impl Subcommand for Opts {
 
                         vec![central, min, max]
                     })
-                    .collect();
-
-                let bin_limits: Vec<_> =
-                    helpers::convolute_limits(&grid, &bins, ConvoluteMode::Normal)
-                        .into_iter()
-                        .map(|limits| limits.last().copied().unwrap())
-                        .collect();
-                let x: Vec<_> = bin_limits
-                    .iter()
-                    .map(|(left, _)| left)
-                    .chain(bin_limits.last().map(|(_, right)| right))
-                    .copied()
-                    .collect();
-                let mid: Vec<_> = x
-                    .windows(2)
-                    .map(|limits| 0.5 * (limits[0] + limits[1]))
                     .collect();
 
                 let central: Vec<_> = results.iter().step_by(self.scales).copied().collect();
@@ -326,34 +336,38 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                let mut channels: Vec<_> = (0..grid.lumi().len())
-                    .map(|lumi| {
-                        let mut lumi_mask = vec![false; grid.lumi().len()];
-                        lumi_mask[lumi] = true;
-                        (
-                            map_format_lumi(&grid.lumi()[lumi]),
-                            helpers::convolute(
-                                &grid,
-                                &mut pdf,
-                                &[],
-                                &bins,
-                                &lumi_mask,
-                                1,
-                                ConvoluteMode::Normal,
-                                self.force_positive,
-                            ),
-                        )
-                    })
-                    .collect();
+                let channels = if let ConvoluteMode::Asymmetry = mode {
+                    vec![]
+                } else {
+                    let mut channels: Vec<_> = (0..grid.lumi().len())
+                        .map(|lumi| {
+                            let mut lumi_mask = vec![false; grid.lumi().len()];
+                            lumi_mask[lumi] = true;
+                            (
+                                map_format_lumi(&grid.lumi()[lumi]),
+                                helpers::convolute(
+                                    &grid,
+                                    &mut pdf,
+                                    &[],
+                                    &bins,
+                                    &lumi_mask,
+                                    1,
+                                    mode,
+                                    self.force_positive,
+                                ),
+                            )
+                        })
+                        .collect();
 
-                // sort channels by importance
-                channels.sort_by(|(_, lhs), (_, rhs)| {
-                    let lhs = lhs.iter().fold(0.0, |prev, x| prev + x.abs());
-                    let rhs = rhs.iter().fold(0.0, |prev, x| prev + x.abs());
-                    // TODO: use total_cmp once we can use Rust 1.62
-                    rhs.partial_cmp(&lhs).unwrap()
-                });
-                let channels = channels;
+                    // sort channels by importance
+                    channels.sort_by(|(_, lhs), (_, rhs)| {
+                        let lhs = lhs.iter().fold(0.0, |prev, x| prev + x.abs());
+                        let rhs = rhs.iter().fold(0.0, |prev, x| prev + x.abs());
+                        // TODO: use total_cmp once we can use Rust 1.62
+                        rhs.partial_cmp(&lhs).unwrap()
+                    });
+                    channels
+                };
 
                 writeln!(
                     &mut data_string,
@@ -557,6 +571,9 @@ ARGS:
     <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
 
 OPTIONS:
+        --asymmetry
+            Plot the asymmetry
+
         --force-positive
             Forces negative PDF values to zero
 
