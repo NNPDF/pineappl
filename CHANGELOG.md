@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   calculated uncertainties are the same for both
 - added support for converting APPLgrids in `import`
 - added support plotting asymmetries with `pineappl plot`
+- added new function to the C API, `pineappl_grid_clone`, which clones a given
+  grid
 
 ## [0.5.4] - 08/07/2022
 

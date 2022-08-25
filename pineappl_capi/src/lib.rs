@@ -282,6 +282,17 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     slice::from_raw_parts_mut(right, limits.len()).copy_from_slice(&limits);
 }
 
+/// Returns a cloned object of `grid`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
+    Box::new((*grid).clone())
+}
+
 /// Convolutes the specified grid with the PDF `xfx`, which is the PDF for a hadron with the PDG id
 /// `pdg_id`, and strong coupling `alphas`. These functions must evaluate the PDFs for the given
 /// `x` and `q2` for the parton with the given PDG id, `pdg_id`, and return the result. Note that

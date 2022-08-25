@@ -387,7 +387,7 @@ pub struct EkoInfo {
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
     lumi: Vec<LumiEntry>,
