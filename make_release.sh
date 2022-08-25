@@ -9,6 +9,11 @@ if [[ -z ${version} ]]; then
     exit 1
 fi
 
+if [[ ! ${version} =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
+    echo "Version string incorrect."
+    exit 1
+fi
+
 if ! which gh >/dev/null; then
     echo "Didn't find the \`gh\` binary."
     exit 1
