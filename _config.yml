@@ -9,4 +9,3 @@ plugins:
 include:
   - CHANGELOG.md
   - CONTRIBUTING.md
-  - docs/installation.md
