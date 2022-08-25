@@ -1535,7 +1535,7 @@ impl Grid {
             .find(|subgrid| !subgrid.is_empty())
             .unwrap_or_else(|| unreachable!());
         // source x1/x2 grid might differ and be differently sorted than the operator
-        let x1_grid: Vec<_> = if has_pdf1 {
+        let x1_grid = if has_pdf1 {
             first_non_zero_grid
                 .x1_grid()
                 .iter()
@@ -1549,9 +1549,9 @@ impl Grid {
                 })
                 .collect()
         } else {
-            Vec::<usize>::new()
+            Vec::new()
         };
-        let x2_grid: Vec<_> = if has_pdf2 {
+        let x2_grid = if has_pdf2 {
             first_non_zero_grid
                 .x2_grid()
                 .iter()
@@ -1565,7 +1565,7 @@ impl Grid {
                 })
                 .collect()
         } else {
-            Vec::<usize>::new()
+            Vec::new()
         };
 
         // iterate over all bins, which are mapped one-to-one from the target to the source grid
