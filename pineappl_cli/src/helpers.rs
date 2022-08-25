@@ -211,7 +211,10 @@ pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec
         .limits()
         .into_iter()
         .enumerate()
-        .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
+        .filter_map(|(index, limits)| {
+            // TODO: use then_some once we support Rust 1.62
+            (bins.is_empty() || bins.contains(&index)).then(|| limits)
+        })
         .collect();
 
     match mode {
