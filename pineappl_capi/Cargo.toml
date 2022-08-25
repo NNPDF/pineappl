@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_capi"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -12,7 +12,7 @@ description = "C language interface to PineAPPL"
 rust-version = "1.56.1"
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.5.4" }
+pineappl = { path = "../pineappl", version = "0.5.5" }
 itertools = "0.10.1"
 
 [features]
