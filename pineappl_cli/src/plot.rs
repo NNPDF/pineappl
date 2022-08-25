@@ -85,7 +85,7 @@ fn map_format_lumi(lumi: &LumiEntry) -> String {
         .join(" + ")
 }
 
-fn map_format_channels(channels: &Vec<(String, Vec<f64>)>) -> String {
+fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
     channels
         .iter()
         .map(|(label, bins)| {

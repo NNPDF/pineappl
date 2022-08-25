@@ -167,6 +167,7 @@ impl<'a> BinInfo<'a> {
     }
 
     /// For each bin return a vector of `(left, right)` limits for each dimension.
+    #[must_use]
     pub fn limits(&self) -> Vec<Vec<(f64, f64)>> {
         self.remapper.map_or_else(
             || {
