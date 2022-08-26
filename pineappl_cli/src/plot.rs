@@ -689,7 +689,7 @@ def plot_abs_pdfs(axis, **kwargs):
     axis.grid(linestyle='dotted')
     axis.set_ylabel(ylabel)
 
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
@@ -736,7 +736,7 @@ def plot_rel_ewonoff(axis, **kwargs):
 def plot_rel_pdfunc(axis, **kwargs):
     x = kwargs['x']
     pdf_uncertainties = kwargs['pdf_results']
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
     #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
     #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
@@ -793,7 +793,7 @@ def plot_rel_pdfpull(axis, **kwargs):
     central_ymin = kwargs['pdf_results'][0][2]
     central_ymax = kwargs['pdf_results'][0][3]
     pdf_uncertainties = kwargs['pdf_results']
-    colors = ['royalblue', 'brown', 'darkorange', 'darkgreen', 'purple', 'tan']
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     x = kwargs['x']
     y = kwargs['y']
 
