@@ -12,6 +12,7 @@ Known keys
 - `hepdata`
 - `inspire`
 - `results`
+- `results_pdf`
 
 - `x1_label`
 - `x2_label`, `x3_label`, ...

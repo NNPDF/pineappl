@@ -2,36 +2,37 @@
 
 Welcome to PineAPPL's CLI tutorial! Here we'll explain the basics of PineAPPL's
 command-line interface (CLI): that's the program `pineappl` that you can you use
-inside your shell to convolute grids with PDFs and perform other operations.
+inside your shell to convolute grids with PDFs and to perform other operations.
 This tutorial will also introduce and explain the terminology needed to
 understand the C, Fortran, Python and Rust API.
 
-This tutorial assumes that understand the basics of interpolation grids. If
+This tutorial assumes that you understand the basics of interpolation grids. If
 you'd like to refresh your memory read the short
 [overview](interpolation-grids.md).
 
 ## Prerequisites
 
-To take the tutorial, you'll need PineAPPL's CLI; follow the installation
-section in the [README](../README.md). Next, you'll need a fresh directory. For
-instance, running
+To take the tutorial, you'll first need PineAPPL's CLI; if you haven't
+installed it yet follow its [installation
+instructions](installation.html#cli-pineappl-for-your-shell). Next, you'll need
+a fresh directory. For instance, run
 
     cd $(mktemp -d)
 
-will create a temporary directory. Finally, you'll need a grid,
+to create a temporary directory. Finally, you'll need a grid,
 
     wget 'https://github.com/N3PDF/pineappl/raw/master/pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4'
 
-which will be used together with the CLI.
+which you'll use with the CLI.
 
 ## `pineappl convolute`: Performing convolutions
 
-Now that we've got a grid, we can perform a convolution with a PDF set:
+Now that you've got a grid, you can perform a convolution with a PDF set:
 
     pineappl convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
-We've chosen to use the default CT18 PDF set for this tutorial, because it's
-the shortest to type. If you get an error that reads
+We chose to use the default CT18 PDF set for this tutorial, because it's the
+shortest to type. If you get an error that reads
 
     error: Invalid value for '<PDFSETS>...': The PDF set `CT18NNLO` was not found
 
@@ -63,7 +64,7 @@ installation. If you don't want to see LHAPDF messages, add the option
 
 Let's have a closer look at what the output shows:
 
-- the `b` column shows there are 8 bins, labeled `0` to `7`,
+- the `b` column shows there are 8 bins, indexed `0` through `7`,
 - the next two columns labelled `etal` shows the observable used to define the
   bins and its left and right bin limits,
 - `disg/detal` has a spelling mistake, unfortunately, and should read
@@ -75,9 +76,8 @@ Let's have a closer look at what the output shows:
 ## `pineappl --help`: Getting help
 
 One of the most difficult aspects of learning a new program is remembering how
-to achieve certain tasks and what to type. This should be easy with `pineappl`.
-If you don't want to remember a bunch of commands just remember that you can
-type
+to achieve certain tasks and what to type. This should be easy with `pineappl`:
+just remember that you can type
 
     pineappl
 
@@ -119,16 +119,23 @@ following:
         -s, --scales <SCALES>       Set the number of scale variations [default: 7] [possible values: 1,
                                     3, 7, 9]
 
-If you read the help message carefully, you'll notice for instance that the
-scale uncertainty shown previously is a 7-point variation, because the default
-value of `--scales` is `7`.
+This explains that `pineappl` needs at least two arguments, the first being the
+grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`, which
+determines the PDF set. Note that the argument has three dots, `...`, meaning
+that you're allowed to pass multiple PDF sets, in which case `pineappl` will
+perform the convolution with each PDF set, such that you can compare with each
+other. This subcommand also accepts a few optional parameters, denoted with
+`[OPTIONS]`. If you read the help message carefully, you'll notice for instance
+that the scale uncertainty shown previously is a 7-point variation, because the
+default value of `--scales` is `7`.
 
 ## `pineappl info`: What does this grid contain?
 
 If you're experienced, you've already inferred from the file name of the grid
-and the observable name what the convoluted numbers will most likely show.
-However, how can we be certain? Specifically, we'll probably want to know the
-answers to the following questions:
+and the observable name `etal` what the convoluted numbers will most likely
+show. However, how can you be certain? Specifically, if you didn't generate the
+grid yourself you'll probably want to know the answers to the following
+questions:
 
 1. For which process is the prediction for?
 2. Which observable is shown?
@@ -137,9 +144,8 @@ answers to the following questions:
 5. Which program/generator was used to produce this grid? What version?
 6. Which runcards were used, which parameter values?
 
-The subcommand that'll answer all these questions is `info`. This will get you
-access to what we call *metadata* (the data describing the interpolation
-grids):
+The subcommand that'll answer all questions is `info`. It gives you access to
+what we call *metadata* (the data describing the interpolation grids):
 
     pineappl info --show LHCB_WP_7TEV.pineappl.lz4
 
@@ -207,7 +213,7 @@ The output is:
     5 O(a^3 lr^1)
     6 O(a^3 lf^1)
 
-This shows that there's
+This shows that the grid contains:
 
 - a leading order (LO) with index `0`, which has the coupling alpha squared
   (`a^2`),
@@ -262,12 +268,12 @@ This prints all partonic initial states that contribute to this process:
     4 1 × ( 2, 22) 1 × ( 4, 22)
 
 In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
--3) initial states (the numbers are PDG MC IDs) are grouped together in a
-single *channel*, each with a factor of `1`. In general this number can be
-different from one, if the Monte Carlo decides to factor out CKM values or
-electric charges, for instance, to group more lumis with the same matrix
-elements together. This is an optimization step, as fewer lumis result in a
-smaller grid file.
+-3) initial states (the numbers are [PDG](https://pdg.lbl.gov/) MC IDs) are
+grouped together in a single *channel*, each with a factor of `1`. In general
+this number can be different from one, if the Monte Carlo decides to factor out
+CKM values or electric charges, for instance, to group more lumis with the same
+matrix elements together. This is an optimization step, as fewer lumis result
+in a smaller grid file.
 
 Note that lumis with the transposed initial states, for instance
 anti-down—up, are merged with each other, which always works if the two
@@ -300,7 +306,7 @@ which prints
 
 By default all higher orders are shown relative to the sum of all LOs. However,
 this can be changed using the switches `--normalize` or `-n`, which asks for
-the orders you declare as 100 per cent. If we'd like the numbers to be
+the orders you define as 100 per cent. If we'd like the numbers to be
 normalized to NLO QCD, we'd run
 
     pineappl orders --normalize=a2,a2as1 LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
@@ -400,8 +406,10 @@ You can calculate it for each bin using:
 
     pineappl pull LHCB_WP_7TEV.pineappl.lz4 CT18NNLO NNPDF31_nnlo_as_0118_luxqed
 
-This will show not only the pull, in the column `total`, but also how this pull
-is calculated using the different channels:
+in which `CT18NNLO` will be used to calculate $\sigma_1$ and $\delta \sigma_1$
+and `NNPDF31_nnlo_as_0118_luxqed` for $\sigma_2$ and $\delta \sigma_2$. This
+will show not only the pull, in the column `total`, but also how this pull is
+calculated using the different channels:
 
     b   etal    total  l  pull  l  pull  l  pull  l pull  l pull
          []      [σ]      [σ]      [σ]      [σ]      [σ]     [σ]
@@ -416,7 +424,7 @@ is calculated using the different channels:
     7    4  4.5  0.145 0  0.071 3  0.037 1  0.031 4 0.004 2 0.001
 
 Looking at the `total` column you can see that the numbers are much smaller
-than `1`, which would correspond to a one sigma deviation. This we'd expect
+than `1`, which would correspond to a one sigma difference. This we'd expect
 knowing that this dataset is used to fit both PDF sets. Furthermore, the
 remaining columns show how this pull was calculated, for instance for the first
 bin we see that when we sum the four contributions in `pull` we obtain the

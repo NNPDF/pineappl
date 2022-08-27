@@ -29,7 +29,7 @@ where `N` must be the exponent of the strong coupling (denoted with `as`) and
 example, in Drell–Yan lepton-pair production `a2,a2as1` selects the leading
 order (`a2`) and the next-to-leading order QCD (`a2as1`).
 
-## `PDFSET`: Specifying PDFs or PDF sets
+## `PDFSET`: Specifying PDF members or entire PDF sets
 
 The parameter `PDFSET` that appears for all convolutional-type subcommands
 (`channels`, `convolute`, etc.) must be one of the following strings:
@@ -37,10 +37,10 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
 - `setname/member`: In this case `setname` must be a valid [LHAPDF] set name
   and `member` must be the member index. The index `0` denotes the central PDF,
   and if `setname` is a set that supports the computation of PDF uncertainties
-  the indices `1` through `n-1` denote the uncertainty members. The value of
-  `n` can read off from `lhapdf show setname`. For example, the string
-  `CT18NNLO/1` selects the first uncertainty member of
-  the NNLO PDF set of CT18. `CT18NNLO/0` selects the central PDF set.
+  the indices `1` through `n` denote the uncertainty members. The value of `n`
+  can be read off from `lhapdf show setname`. For example, the string
+  `CT18NNLO/1` selects the first uncertainty member of the NNLO PDF set of
+  CT18. `CT18NNLO/0` selects the central member.
 - `setname`: This is a special case of the previous specification, where the
   member with index `0` is selected. For example, the strings `CT18NNLO` and
   `CT18NNLO/0` select the same (central) PDF set.
@@ -48,12 +48,6 @@ The parameter `PDFSET` that appears for all convolutional-type subcommands
   integer. Non-central members are typically denoted by adding their index to
   the central LHAID. For example, `14000` would select the same PDF set as
   `CT18NNLO` and `14001` corresponds to `CT18NNLO/1`.
-
-Finally, it is possible to re-label PDF sets by adding `=label` to the
-specification. This is particularly helpful when plotting predictions with
-multiple PDF sets. For example, `NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED`
-instructs to use the the PDF set `NNPDF31_nnlo_as_0118_luxqed`, but it would be
-called `NNPDF31luxQED`.
 
 If an entire PDF set must be given for the calculation of PDF uncertainties,
 that means for for `pdfunc`, `plot` or `pull`, the member selection using `/0`,
@@ -63,14 +57,19 @@ value using the average over all replicas, whereas `pineappl pdfunc ...
 NNPDF40_nnlo_as_01180/0` uses the zeroth member. This is especially useful to
 show different replicas in plots.
 
+Finally, it is possible to re-label PDF sets by adding `=label` to the
+specification. This is particularly helpful when plotting predictions with
+multiple PDF sets. For example, `NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED`
+instructs to use the the PDF set `NNPDF31_nnlo_as_0118_luxqed`, but it would be
+called `NNPDF31luxQED`.
+
 ## `REMAPPING`: Remapping parameter specification
 
 This section specifies the `REMAPPING` parameter of `pineappl remap`.
 
 ### Motivation
 
-For performance/simplicity reasons most Monte Carlo generators (and also the
-PineAPPL `Grid::fill` method) neither support
+For performance/simplicity reasons most Monte Carlo generators neither support
 
 1. multi-dimensional distributions nor
 2. distributions whose bin sizes are not equally sized
@@ -88,11 +87,10 @@ The remapping string uses the following special characters to achieve this
 - `,`: The comma constructs 1-dimensional bin limits (1DBL). For example,
   the 1DBL `0,0.2,0.4,0.6,1` expects the grid to have 4 bins whose bin limits
   will be (0-0.2), (0.2-0.4), (0.4-0.6) and (0.6,1).
-- `;`: If higher-dimensional bins are needed, the n-dimensional bin limits
-  (NDBL) are constructed from a Cartesian product of 1DBL separated with a
-  semicolon. For example, `0,0.5,1;0,1,2` expects the grid to have 4 bins,
-  whose 2DBL will be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and
-  (0.5-1;1-2).
+- `;`: If higher-dimensional bins are needed, n-dimensional bin limits (NDBL)
+  are constructed from a Cartesian product of 1DBL separated with a semicolon.
+  For example, `0,0.5,1;0,1,2` expects the grid to have 4 bins, whose 2DBL will
+  be are: (0-0.5;0-1), (0-0.5;1-2), (0.5-1;0-1) and (0.5-1;1-2).
 - `|`: The previous operators are enough to construct NDBL with
   differently-sized bins, but they can not construct the following bin limits:
   (0-1;0-1), (0-1;1-2), (1-2;0-2), (1-2;2-4), (1-2;4-6); here the 1DBL for the
