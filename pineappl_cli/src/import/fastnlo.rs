@@ -465,7 +465,6 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
     }
 
     result.scale_by_order(1.0 / TAU, 1.0, 1.0, 1.0, 1.0);
-    result.optimize();
 
     let dimensions: usize = file_as_table.GetNumDiffBin().try_into().unwrap();
     let mut limits = Vec::new();

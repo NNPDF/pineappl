@@ -144,6 +144,9 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Do not optimize converted grid.
+    #[clap(long = "no-optimize")]
+    no_optimize: bool,
 }
 
 impl Subcommand for Opts {
@@ -151,13 +154,17 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
-        let (grid_type, grid, reference_results) = convert_grid(
+        let (grid_type, mut grid, reference_results) = convert_grid(
             &self.input,
             self.alpha,
             &self.pdfset,
             0,
             self.silence_fastnlo,
         )?;
+
+        if !self.no_optimize {
+            grid.optimize();
+        }
 
         let mut different = false;
 
@@ -237,6 +244,7 @@ OPTIONS:
         --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
                                  [default: 7]
     -h, --help                   Print help information
+        --no-optimize            Do not optimize converted grid
         --silence-fastnlo        Prevents fastNLO from printing output
 ";
 
