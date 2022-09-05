@@ -22,6 +22,7 @@ pub mod ffi {
 
         fn calculation(&self) -> grid_CALCULATION;
         fn genpdf(&self, _: i32, _: bool) -> *const appl_pdf;
+        fn getApplyCorrection(&self, _: u32) -> bool;
         fn getApplyCorrections(&self) -> bool;
         fn getDynamicScale(&self) -> f64;
         fn getNormalised(&self) -> bool;

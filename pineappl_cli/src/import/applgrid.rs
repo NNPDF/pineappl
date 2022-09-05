@@ -86,6 +86,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     // this setting isn't supported
     assert!(!grid.getApplyCorrections());
 
+    for bin in 0..(grid.Nobs_internal() as u32) {
+        // this setting isn't supported either
+        assert!(!grid.getApplyCorrection(bin));
+    }
+
     // this setting isn't supported
     assert_eq!(grid.getDynamicScale(), 0.0);
 
