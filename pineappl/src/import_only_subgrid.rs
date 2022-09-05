@@ -168,67 +168,6 @@ impl Subgrid for ImportOnlySubgridV1 {
     }
 }
 
-impl From<&LagrangeSubgridV2> for ImportOnlySubgridV1 {
-    fn from(subgrid: &LagrangeSubgridV2) -> Self {
-        let array = subgrid.grid.as_ref().map_or_else(
-            || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
-            // in the following case we should optimize when ny2 > ny1
-            |array| {
-                let reweight_x1: Vec<_> = subgrid
-                    .x1_grid()
-                    .iter()
-                    .map(|x| lagrange_subgrid::weightfun(*x))
-                    .collect();
-                let reweight_x2: Vec<_> = subgrid
-                    .x2_grid()
-                    .iter()
-                    .map(|x| lagrange_subgrid::weightfun(*x))
-                    .collect();
-
-                if subgrid.static_q2 > 0.0 {
-                    // in this case we've detected a static scale for this bin and we can collapse
-                    // the Q^2 axis into a single bin
-
-                    let mut array = array
-                        .sum_axis(Axis(0))
-                        .into_shape((1, subgrid.ny1, subgrid.ny2))
-                        .unwrap();
-                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
-                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
-                    }
-                    SparseArray3::from_ndarray(&array, 0, 1)
-                } else {
-                    let mut array = array.clone();
-                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
-                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
-                    }
-                    SparseArray3::from_ndarray(&array, 0, subgrid.itaumax - subgrid.itaumin)
-                }
-            },
-        );
-        let q2_grid = if subgrid.static_q2 > 0.0 {
-            vec![subgrid.static_q2]
-        } else {
-            subgrid
-                .mu2_grid()
-                .iter()
-                .skip(subgrid.itaumin)
-                .take(subgrid.itaumax - subgrid.itaumin)
-                .map(|mu2| mu2.fac)
-                .collect()
-        };
-        let x1_grid = subgrid.x1_grid().into_owned();
-        let x2_grid = subgrid.x2_grid().into_owned();
-
-        Self {
-            array,
-            q2_grid,
-            x1_grid,
-            x2_grid,
-        }
-    }
-}
-
 /// TODO
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ImportOnlySubgridV2 {
@@ -376,6 +315,73 @@ impl Subgrid for ImportOnlySubgridV2 {
             zeros: self.array.zeros(),
             overhead: self.array.overhead(),
             bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
+}
+
+impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
+    fn from(subgrid: &LagrangeSubgridV2) -> Self {
+        let array = subgrid.grid.as_ref().map_or_else(
+            || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
+            // in the following case we should optimize when ny2 > ny1
+            |array| {
+                let reweight_x1: Vec<_> = subgrid
+                    .x1_grid()
+                    .iter()
+                    .map(|x| lagrange_subgrid::weightfun(*x))
+                    .collect();
+                let reweight_x2: Vec<_> = subgrid
+                    .x2_grid()
+                    .iter()
+                    .map(|x| lagrange_subgrid::weightfun(*x))
+                    .collect();
+
+                if subgrid.static_q2 > 0.0 {
+                    // in this case we've detected a static scale for this bin and we can collapse
+                    // the Q^2 axis into a single bin
+
+                    let mut array = array
+                        .sum_axis(Axis(0))
+                        .into_shape((1, subgrid.ny1, subgrid.ny2))
+                        .unwrap();
+                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
+                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
+                    }
+                    SparseArray3::from_ndarray(&array, 0, 1)
+                } else {
+                    let mut array = array.clone();
+                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
+                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
+                    }
+                    SparseArray3::from_ndarray(&array, 0, subgrid.itaumax - subgrid.itaumin)
+                }
+            },
+        );
+        let mu2_grid = if subgrid.static_q2 > 0.0 {
+            vec![Mu2 {
+                ren: subgrid.static_q2,
+                fac: subgrid.static_q2,
+            }]
+        } else {
+            subgrid
+                .mu2_grid()
+                .iter()
+                .skip(subgrid.itaumin)
+                .take(subgrid.itaumax - subgrid.itaumin)
+                .map(|mu2| Mu2 {
+                    ren: mu2.ren,
+                    fac: mu2.fac,
+                })
+                .collect()
+        };
+        let x1_grid = subgrid.x1_grid().into_owned();
+        let x2_grid = subgrid.x2_grid().into_owned();
+
+        Self {
+            array,
+            mu2_grid,
+            x1_grid,
+            x2_grid,
         }
     }
 }
@@ -664,7 +670,7 @@ mod tests {
         let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
         let reference = lagrange.convolute(&x1, &x2, &mu2, lumi);
 
-        let imported = ImportOnlySubgridV1::from(&lagrange);
+        let imported = ImportOnlySubgridV2::from(&lagrange);
         let test = imported.convolute(&x1, &x2, &mu2, lumi);
 
         // make sure the conversion did not change the results

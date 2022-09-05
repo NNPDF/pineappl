@@ -3,14 +3,14 @@
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::empty_subgrid::EmptySubgridV1;
 use super::fk_table::FkTable;
-use super::import_only_subgrid::ImportOnlySubgridV1;
+use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::lumi::{LumiCache, LumiEntry};
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::pids;
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
 use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -1101,7 +1101,7 @@ impl Grid {
                         mem::swap(subgrid, &mut new_subgrid);
                     }
                     SubgridEnum::LagrangeSubgridV2(grid) => {
-                        let mut new_subgrid = ImportOnlySubgridV1::from(&*grid).into();
+                        let mut new_subgrid = ImportOnlySubgridV2::from(&*grid).into();
                         mem::swap(subgrid, &mut new_subgrid);
                     }
                     SubgridEnum::EmptySubgridV1(_)
@@ -1475,7 +1475,10 @@ impl Grid {
             .collect();
 
         // create target subgrid dimensions
-        let tgt_q2_grid = vec![eko_info.muf2_0];
+        let tgt_q2_grid = vec![Mu2 {
+            ren: eko_info.muf2_0,
+            fac: eko_info.muf2_0,
+        }];
         let tgt_x1_grid = if has_pdf1 {
             eko_info.target_x_grid.clone()
         } else {
@@ -1782,7 +1785,7 @@ impl Grid {
                             );
 
                             let mut subgrid = match tgt_subgrid {
-                                SubgridEnum::EmptySubgridV1(_) => ImportOnlySubgridV1::new(
+                                SubgridEnum::EmptySubgridV1(_) => ImportOnlySubgridV2::new(
                                     tgt_array,
                                     tgt_q2_grid.clone(),
                                     tgt_x1_grid.clone(),
@@ -1933,6 +1936,7 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::import_only_subgrid::ImportOnlySubgridV1;
     use crate::lumi_entry;
 
     #[test]
