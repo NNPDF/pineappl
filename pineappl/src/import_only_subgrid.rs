@@ -239,9 +239,38 @@ impl Subgrid for ImportOnlySubgridV2 {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
-                // TODO: the general case isn't implemented
-                assert!(self.x1_grid() == other_grid.x1_grid());
-                assert!(self.x2_grid() == other_grid.x2_grid());
+                if self.x1_grid() != other_grid.x1_grid() || self.x2_grid() != other_grid.x2_grid()
+                {
+                    let mut x1_grid = self.x1_grid.to_owned();
+                    let mut x2_grid = self.x2_grid.to_owned();
+
+                    x1_grid.extend_from_slice(&other_grid.x1_grid());
+                    x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                    x1_grid.dedup();
+                    x2_grid.extend_from_slice(&other_grid.x2_grid());
+                    x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                    x2_grid.dedup();
+
+                    let mut array =
+                        SparseArray3::new(self.array.dimensions().0, x1_grid.len(), x2_grid.len());
+
+                    for ((i, j, k), value) in self.array.indexed_iter() {
+                        let target_j = x1_grid
+                            .iter()
+                            .position(|&x| x == self.x1_grid[j])
+                            .unwrap_or_else(|| unreachable!());
+                        let target_k = x2_grid
+                            .iter()
+                            .position(|&x| x == self.x2_grid[k])
+                            .unwrap_or_else(|| unreachable!());
+
+                        array[[i, target_j, target_k]] = *value;
+                    }
+
+                    self.array = array;
+                    self.x1_grid = x1_grid;
+                    self.x2_grid = x2_grid;
+                }
 
                 for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
                     let index = match self
@@ -391,6 +420,9 @@ mod tests {
     use super::*;
     use crate::subgrid::{ExtraSubgridParams, SubgridParams};
     use float_cmp::assert_approx_eq;
+    use rand::distributions::{Distribution, Uniform};
+    use rand::Rng;
+    use rand_pcg::Pcg64;
 
     #[test]
     fn test_v1() {
@@ -680,5 +712,55 @@ mod tests {
         // interpolation grid points, the imported grid should have as many interpolation grid
         // points as its interpolation order
         assert_eq!(imported.mu2_grid().len(), 4);
+    }
+
+    #[test]
+    fn merge_with_different_x_grids() {
+        let mut params = SubgridParams::default();
+        let mut grid1 = LagrangeSubgridV2::new(&params, &ExtraSubgridParams::default());
+
+        // change parameters of the second grid to force non-trivial merging
+        params.set_x_min(0.2);
+        params.set_x_max(0.5);
+
+        let mut grid2 = LagrangeSubgridV2::new(&params, &ExtraSubgridParams::default());
+        let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+        let q2_range = Uniform::new(1e4, 1e8);
+
+        for _ in 0..1000 {
+            grid1.fill(&Ntuple {
+                x1: rng.gen(),
+                x2: rng.gen(),
+                q2: q2_range.sample(&mut rng),
+                weight: 1.0,
+            });
+            grid2.fill(&Ntuple {
+                x1: rng.gen(),
+                x2: rng.gen(),
+                q2: q2_range.sample(&mut rng),
+                weight: 1.0,
+            });
+        }
+
+        let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
+        let result1 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+        let result2 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
+
+        let mut grid1: SubgridEnum = ImportOnlySubgridV2::from(&grid1).into();
+        let mut grid2: SubgridEnum = ImportOnlySubgridV2::from(&grid2).into();
+
+        let result3 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+        let result4 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
+
+        // conversion from LangrangeSubgridV2 to ImportOnlySubgridV2 shouldn't change the results
+        assert!((result3 / result1 - 1.0).abs() < 1e-13);
+        assert!((result4 / result2 - 1.0).abs() < 1e-13);
+
+        grid1.merge(&mut grid2, false);
+
+        let result5 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+
+        // merging the two grids should give the sum of the two results
+        assert!((result5 / (result3 + result4) - 1.0).abs() < 1e-12);
     }
 }
