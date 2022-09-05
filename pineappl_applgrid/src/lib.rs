@@ -28,6 +28,7 @@ pub mod ffi {
         fn getNormalised(&self) -> bool;
         fn leadingOrder(&self) -> i32;
         fn nloops(&self) -> i32;
+        fn Nobs(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
         fn run(self: Pin<&mut Self>) -> &mut f64;
@@ -74,8 +75,9 @@ pub mod ffi {
     unsafe extern "C++" {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
-        fn make_grid(_: &str) -> UniquePtr<grid>;
+        fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
 
+        fn grid_combine(_: &grid) -> Vec<i32>;
         fn grid_convolute(
             _: Pin<&mut grid>,
             _: &str,

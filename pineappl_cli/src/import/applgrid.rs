@@ -187,6 +187,25 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
         .into_iter()
         .try_for_each(|g| grid0.merge(g).map_err(anyhow::Error::new))?;
 
+    let combine = ffi::grid_combine(&grid);
+
+    if !combine.is_empty() {
+        assert_eq!(combine.iter().sum::<i32>(), grid.Nobs_internal());
+    }
+
+    let mut ranges = Vec::new();
+    let mut index = 0;
+
+    for bins in combine {
+        let bins = usize::try_from(bins).unwrap();
+        ranges.push(index..(index + bins));
+        index += bins;
+    }
+
+    for range in ranges.into_iter().rev() {
+        grid0.merge_bins(range)?;
+    }
+
     let mut global = 1.0;
 
     if !grid.getNormalised() {

@@ -11,6 +11,8 @@
 
 std::unique_ptr<appl::grid> make_grid(rust::Str filename);
 
+rust::Vec<int> grid_combine(appl::grid const& grid);
+
 rust::Vec<double> grid_convolute(
     appl::grid& grid,
     rust::Str pdfset,

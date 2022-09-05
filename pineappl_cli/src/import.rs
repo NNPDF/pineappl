@@ -1,5 +1,5 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{Parser, ValueHint};
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -20,7 +20,7 @@ fn convert_applgrid(
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_applgrid::ffi;
 
-    let mut grid = ffi::make_grid(input.to_str().unwrap());
+    let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
     let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
@@ -182,6 +182,14 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal,
                 false,
             );
+
+            if results.len() != reference_results.len() {
+                bail!(
+                    "grids have different number of bins: {} (input) vs {} (output)",
+                    reference_results.len(),
+                    results.len()
+                );
+            }
 
             let mut table = helpers::create_table();
             table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
