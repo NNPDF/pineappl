@@ -1,11 +1,10 @@
 use super::helpers::{self, Subcommand};
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Parser, ValueHint};
+use itertools::izip;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
 use std::path::PathBuf;
-
-// TODO: the help text below should be formatted better, but right now clap can't do it
 
 /// Modifies the bin dimensions, widths and normalizations.
 #[derive(Parser)]
@@ -16,8 +15,8 @@ pub struct Opts {
     /// Path of the modified PineAPPL file.
     #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// Remapping string. See <https://github.com/N3PDF/pineappl/blob/master/docs/cli-reference.md>
-    /// for full reference.
+    /// Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full
+    /// reference.
     remapping: String,
     /// Ignore the given observables for differential normalization.
     #[clap(
@@ -35,157 +34,160 @@ pub struct Opts {
     norm: f64,
 }
 
-impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
-        let mut grid = helpers::read_grid(&self.input)?;
-        let remaps: Result<Vec<Vec<Vec<_>>>> = self
-            .remapping
-            .split(';')
-            .map(|string| {
-                string
-                    .split('|')
-                    .map(|string| {
-                        string
-                            .find(':')
-                            .map_or(string, |index| {
-                                let (lhs, rhs) = string.split_at(index);
-                                if lhs.trim().parse::<usize>().is_err() {
-                                    lhs
-                                } else {
-                                    rhs
-                                }
-                            })
-                            .split(',')
-                            .filter_map(|string| {
-                                let string = string.trim();
-                                if string.is_empty() {
-                                    None
-                                } else {
-                                    Some(
-                                        string
-                                            .parse::<f64>()
-                                            .context(format!("unable to parse limit '{}'", string)),
-                                    )
-                                }
-                            })
-                            .collect()
-                    })
-                    .collect()
-            })
-            .collect();
-        let mut remaps = remaps?;
+fn parse_remapping_string(
+    remapping: &str,
+    ignore_obs_norm: &[usize],
+    norm: f64,
+) -> Result<(Vec<f64>, Vec<(f64, f64)>)> {
+    let remaps: Result<Vec<Vec<Vec<_>>>> = remapping
+        .split(';')
+        .map(|string| {
+            string
+                .split('|')
+                .map(|string| {
+                    string
+                        .find(':')
+                        .map_or(string, |index| {
+                            let (lhs, rhs) = string.split_at(index);
+                            let rhs = &rhs[1..]; // remove ':' which is contained with `split_at`
 
-        ensure!(
-            remaps[0].len() == 1,
-            "'|' syntax not meaningful for first dimension"
-        );
+                            // extract the part that doesn't belong to the ':' specification
+                            match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
+                                (Err(_), Ok(_)) => lhs,
+                                (Ok(_), Err(_)) => rhs,
+                                _ => "",
+                            }
+                        })
+                        .split(',')
+                        .filter_map(|string| {
+                            let string = string.trim();
+                            if string.is_empty() {
+                                None
+                            } else {
+                                Some(
+                                    string
+                                        .parse::<f64>()
+                                        .context(format!("unable to parse limit '{}'", string)),
+                                )
+                            }
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect();
+    let mut remaps = remaps?;
 
-        // go over `remaps` again, and repeat previous entries as requested with the `||` syntax
-        for vec in &mut remaps {
-            for i in 1..vec.len() {
-                if vec[i].is_empty() {
-                    ensure!(!vec[i - 1].is_empty(), "empty repetition with '|'");
-                    vec[i] = vec[i - 1].clone();
+    ensure!(
+        remaps[0].len() == 1,
+        "'|' syntax not meaningful for first dimension"
+    );
+
+    // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
+    for vec in &mut remaps {
+        for i in 1..vec.len() {
+            if vec[i].is_empty() {
+                ensure!(!vec[i - 1].is_empty(), "empty repetition with '|'");
+                vec[i] = vec[i - 1].clone();
+            }
+        }
+    }
+
+    // go over `remaps` again, this time remove bin as requested with the `:N` or `N:` syntax
+    for (vec, string) in remaps.iter_mut().zip(remapping.split(';')) {
+        for (vec, string) in vec.iter_mut().zip(string.split('|')) {
+            let (lhs, rhs) = {
+                let split: Vec<_> = string.split(':').collect();
+
+                if split.len() == 1 {
+                    // there's no colon
+                    continue;
+                }
+
+                ensure!(split.len() == 2, "too many ':' found: '{}'", string);
+
+                (split[0].parse::<usize>(), split[1].parse::<usize>())
+            };
+
+            if let Ok(num) = rhs {
+                vec.truncate(vec.len() - num);
+            }
+
+            if let Ok(num) = lhs {
+                vec.drain(0..num);
+            }
+
+            if lhs.is_err() && rhs.is_err() {
+                bail!("unable to parse ':' syntax from: '{}'", string);
+            }
+
+            if vec.len() <= 1 {
+                bail!("no limits due to ':' syntax");
+            }
+        }
+    }
+
+    let dimensions = remaps.len();
+    let mut normalizations = Vec::new();
+    let mut limits = Vec::new();
+    let mut buffer = Vec::with_capacity(dimensions);
+    let mut pipe_indices = vec![0; dimensions];
+    let mut last_indices = vec![0; dimensions];
+
+    'looop: for indices in remaps
+        .iter()
+        .map(|vec| 0..vec.iter().map(|vec| vec.len() - 1).max().unwrap())
+        .multi_cartesian_product()
+    {
+        // calculate `pipe_indices`, which stores the indices for the second dimension of `remaps`
+        for d in 0..dimensions - 1 {
+            if indices[d] > last_indices[d] {
+                for dp in d + 1..dimensions {
+                    if remaps[dp].len() != 1 {
+                        pipe_indices[dp] += 1;
+                    }
                 }
             }
         }
 
-        // go over `remaps` again, this time remove bin as requested with the `:N` or `N:` syntax
-        for (vec, string) in remaps.iter_mut().zip(self.remapping.split(';')) {
-            for (vec, string) in vec.iter_mut().zip(string.split('|')) {
-                let (lhs, rhs) = {
-                    let split: Vec<_> = string.split(':').collect();
+        last_indices = indices.clone();
 
-                    if split.len() == 1 {
-                        // there's no colon
-                        continue;
-                    }
+        let mut normalization = 1.0;
 
-                    ensure!(split.len() == 2, "too many ':' found: '{}'", string);
-
-                    (split[0], split[1])
-                };
-
-                let lhs = lhs.parse::<usize>();
-                let rhs = rhs.parse::<usize>();
-
-                if let Ok(remove_from_left) = lhs {
-                    ensure!(
-                        rhs.is_err(),
-                        "ambiguity in parsing ':' syntax from: '{}'",
-                        string
-                    );
-                    vec.drain(0..remove_from_left);
-                } else if let Ok(remove_from_right) = rhs {
-                    ensure!(
-                        lhs.is_err(),
-                        "ambiguity in parsing ':' syntax from: '{}'",
-                        string
-                    );
-                    vec.truncate(vec.len() - remove_from_right);
-                } else {
-                    bail!("unable to parse ':' syntax from: '{}'", string);
-                }
-            }
-        }
-
-        let dimensions = remaps.len();
-        let max_bins = remaps.iter().fold(1, |bins, vec| {
-            bins * vec.iter().map(|vec| vec.len() - 1).max().unwrap()
-        });
-
-        let mut normalizations = Vec::with_capacity(max_bins);
-        let mut limits = Vec::with_capacity(max_bins * dimensions);
-        let mut buffer = Vec::with_capacity(dimensions);
-
-        let mut indices1 = vec![0; dimensions];
-        let mut last_indices = vec![0; dimensions];
-
-        'looop: for indices in remaps
-            .iter()
-            .map(|vec| 0..vec.iter().map(|vec| vec.len() - 1).max().unwrap())
-            .multi_cartesian_product()
-        {
-            for d in 0..dimensions - 1 {
-                if indices[d] > last_indices[d] {
-                    for dp in d + 1..dimensions {
-                        if remaps[dp].len() != 1 {
-                            indices1[dp] += 1;
-                        }
-                    }
-                }
-            }
-
-            last_indices = indices.clone();
-
-            let mut normalization = 1.0;
-            for d in 0..dimensions {
-                let index = indices1[d];
-
-                if remaps[d][index].len() <= (indices[d] + 1) {
+        for (d, (remap, &pipe_index, &i)) in izip!(&remaps, &pipe_indices, &indices).enumerate() {
+            if let Some(r) = remap.get(pipe_index) {
+                if r.len() <= (i + 1) {
                     buffer.clear();
 
                     // this index doesn't exist
                     continue 'looop;
                 }
 
-                let left = remaps[d][index][indices[d]];
-                let right = remaps[d][index][indices[d] + 1];
+                let left = r[i];
+                let right = r[i + 1];
 
                 buffer.push((left, right));
 
-                if !self.ignore_obs_norm.iter().any(|dim| *dim == (d + 1)) {
+                if !ignore_obs_norm.iter().any(|dim| *dim == (d + 1)) {
                     normalization *= right - left;
                 }
+            } else {
+                bail!("missing '|' specification: number of variants too small");
             }
-
-            limits.append(&mut buffer);
-            normalizations.push(self.norm * normalization);
         }
 
-        normalizations.shrink_to_fit();
-        limits.shrink_to_fit();
+        limits.append(&mut buffer);
+        normalizations.push(norm * normalization);
+    }
 
+    Ok((normalizations, limits))
+}
+
+impl Subcommand for Opts {
+    fn run(&self) -> Result<()> {
+        let mut grid = helpers::read_grid(&self.input)?;
+        let (normalizations, limits) =
+            parse_remapping_string(&self.remapping, &self.ignore_obs_norm, self.norm)?;
         grid.set_remapper(BinRemapper::new(normalizations, limits).unwrap())?;
         helpers::write_grid(&self.output, &grid)
     }
@@ -193,6 +195,7 @@ impl Subcommand for Opts {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use assert_cmd::Command;
     use assert_fs::NamedTempFile;
 
@@ -206,8 +209,7 @@ ARGS:
     <INPUT>        Path to the input grid
     <OUTPUT>       Path of the modified PineAPPL file
     <REMAPPING>    Remapping string. See
-                   <https://github.com/N3PDF/pineappl/blob/master/docs/cli-reference.md> for
-                   full reference
+                   <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full reference
 
 OPTIONS:
     -h, --help
@@ -220,17 +222,17 @@ OPTIONS:
             Normalization factor in addition to the given bin widths [default: 1.0]
 ";
 
-    const DEFAULT_STR: &str = "b etal  x2   disg/detal  scale uncertainty
-   []   []      [pb]            [%]       
--+--+--+-+-+------------+--------+--------
-0  0  1 0 2  4.6909525e0    -3.77     2.71
-1  0  1 2 4  4.3151941e0    -3.79     2.80
-2  0  1 4 6  3.7501757e0    -3.78     2.86
-3  0  1 6 8  3.0322078e0    -3.77     2.92
-4  1  2 0 2  2.2616679e0    -3.74     2.95
-5  1  2 2 4  1.5363894e0    -3.71     2.98
-6  1  2 4 6  1.4462754e0    -3.63     2.97
-7  1  2 6 8 3.4430073e-1    -3.46     2.85
+    const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
+   []   []  []     [pb]            [%]       
+-+--+--+-+-+-+-+-----------+--------+--------
+0  0  1 0 2 1 2 1.8763810e1    -3.77     2.71
+1  0  1 0 2 2 3 1.7260776e1    -3.79     2.80
+2  0  1 0 2 3 4 1.5000703e1    -3.78     2.86
+3  0  1 0 2 4 5 1.2128831e1    -3.77     2.92
+4  0  1 2 4 1 2 9.0466716e0    -3.74     2.95
+5  1  2 0 2 8 9 6.1455576e0    -3.71     2.98
+6  1  2 2 4 3 4 5.7851018e0    -3.63     2.97
+7  1  2 2 4 4 5 1.3772029e0    -3.46     2.85
 ";
 
     #[test]
@@ -244,19 +246,54 @@ OPTIONS:
     }
 
     #[test]
+    #[should_panic(expected = "empty repetition with '|'")]
+    fn pipe_syntax_first_empty() {
+        parse_remapping_string("0,1,2;0,2,4;||", &[], 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "too many ':' found: '::'")]
+    fn colon_syntax_too_many_colons() {
+        parse_remapping_string("0,1,2;0,2,4;1,2,3,4,5|::", &[], 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "unable to parse ':' syntax from: '2.5:'")]
+    fn colon_syntax_bad_lhs() {
+        parse_remapping_string("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3", &[], 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "unable to parse ':' syntax from: ':2.5'")]
+    fn colon_syntax_bad_rhs() {
+        parse_remapping_string("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3", &[], 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "no limits due to ':' syntax")]
+    fn colon_syntax_no_limits() {
+        parse_remapping_string("0,1,2;0,2,4;1,2,3,4,5|:4|:3|:3", &[], 1.0).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "missing '|' specification: number of variants too small")]
+    fn pipe_syntax_too_few_pipes() {
+        parse_remapping_string("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9", &[], 1.0).unwrap();
+    }
+
+    #[test]
     fn default() {
         let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
 
-        // TODO: try a more complicated remapping string
         Command::cargo_bin("pineappl")
             .unwrap()
             .args(&[
                 "remap",
-                "--ignore-obs-norm=1",
-                "--norm=10",
+                "--ignore-obs-norm=2",
+                "--norm=5",
                 "data/LHCB_WP_7TEV.pineappl.lz4",
                 output.path().to_str().unwrap(),
-                "0,1,2;0,2,4,6,8",
+                "0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
             ])
             .assert()
             .success()
