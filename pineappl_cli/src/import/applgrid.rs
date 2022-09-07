@@ -62,10 +62,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
     lumis.into_iter().map(LumiEntry::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
-    // TODO: set this from the outside
-    let dis_pid = 11;
-
+pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();

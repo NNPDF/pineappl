@@ -17,18 +17,25 @@ fn convert_applgrid(
     alpha: u32,
     pdfset: &str,
     member: usize,
+    dis_pid: i32,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_applgrid::ffi;
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
-    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
+    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
     let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", pgrid, results))
 }
 
 #[cfg(not(feature = "applgrid"))]
-fn convert_applgrid(_: &Path, _: u32, _: &str, _: usize) -> Result<(&'static str, Grid, Vec<f64>)> {
+fn convert_applgrid(
+    _: &Path,
+    _: u32,
+    _: &str,
+    _: usize,
+    _: i32,
+) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
     ))
@@ -40,6 +47,7 @@ fn convert_fastnlo(
     alpha: u32,
     pdfset: &str,
     member: usize,
+    dis_pid: i32,
     silence_fastnlo: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_fastnlo::ffi::{self, Verbosity};
@@ -54,7 +62,7 @@ fn convert_fastnlo(
         member.try_into().unwrap(),
         silence_fastnlo,
     );
-    let grid = fastnlo::convert_fastnlo_table(&file, alpha)?;
+    let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
 
     let results = ffi::GetCrossSection(
         ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
@@ -70,6 +78,7 @@ fn convert_fastnlo(
     _: u32,
     _: &str,
     _: usize,
+    _: i32,
     _: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
@@ -96,6 +105,7 @@ fn convert_grid(
     alpha: u32,
     pdfset: &str,
     member: usize,
+    dis_pid: i32,
     silence_fastnlo: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     if let Some(extension) = input.extension() {
@@ -106,11 +116,11 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(input, alpha, pdfset, member, silence_fastnlo);
+            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, silence_fastnlo);
         } else if extension == "dat" {
             return convert_fktable(input);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, pdfset, member);
+            return convert_applgrid(input, alpha, pdfset, member, dis_pid);
         }
     }
 
@@ -147,6 +157,9 @@ pub struct Opts {
     /// Do not optimize converted grid.
     #[clap(long = "no-optimize")]
     no_optimize: bool,
+    /// Particle ID for the non-hadronic initial states if it cannot be determined from the grid.
+    #[clap(long = "dis-pid", default_value_t = 11)]
+    dis_pid: i32,
 }
 
 impl Subcommand for Opts {
@@ -159,6 +172,7 @@ impl Subcommand for Opts {
             self.alpha,
             &self.pdfset,
             0,
+            self.dis_pid,
             self.silence_fastnlo,
         )?;
 
@@ -251,6 +265,8 @@ OPTIONS:
                                  [default: 7]
         --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
                                  [default: 7]
+        --dis-pid <DIS_PID>      Particle ID for the non-hadronic initial states if it cannot be
+                                 determined from the grid [default: 11]
     -h, --help                   Print help information
         --no-optimize            Do not optimize converted grid
         --silence-fastnlo        Prevents fastNLO from printing output

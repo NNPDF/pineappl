@@ -21,9 +21,12 @@ fn pid_to_pdg_id(pid: i32) -> i32 {
     }
 }
 
-fn create_lumi(table: &fastNLOCoeffAddBase, comb: &fastNLOPDFLinearCombinations) -> Vec<LumiEntry> {
-    // TODO: set this to the right value if there's only one PDF
-    let lepton_id = if table.GetNPDF() == 2 { 0 } else { 11 };
+fn create_lumi(
+    table: &fastNLOCoeffAddBase,
+    comb: &fastNLOPDFLinearCombinations,
+    dis_pid: i32,
+) -> Vec<LumiEntry> {
+    let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
     let mut lumis = Vec::new();
 
     // if there's a (non-empty) PDF coefficient vector reconstruct the luminosity function; the
@@ -33,10 +36,10 @@ fn create_lumi(table: &fastNLOCoeffAddBase, comb: &fastNLOPDFLinearCombinations)
 
         for entry in ffi::GetPDFCoeff(table, pdf_entry) {
             let a = pid_to_pdg_id(entry.first);
-            let b = if lepton_id == 0 {
+            let b = if dis_pid == 0 {
                 pid_to_pdg_id(entry.second)
             } else {
-                11
+                dis_pid
             };
             let f = 1.0;
 
@@ -90,11 +93,12 @@ fn convert_coeff_add_fix(
     comb: &fastNLOPDFLinearCombinations,
     bins: usize,
     alpha: u32,
+    dis_pid: i32,
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
 
     let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb),
+        create_lumi(table_as_add_base, comb, dis_pid),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
             alpha,
@@ -208,11 +212,12 @@ fn convert_coeff_add_flex(
     bins: usize,
     alpha: u32,
     ipub_units: i32,
+    dis_pid: i32,
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
 
     let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb),
+        create_lumi(table_as_add_base, comb, dis_pid),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
             alpha,
@@ -225,11 +230,10 @@ fn convert_coeff_add_flex(
 
     let npdf = table_as_add_base.GetNPDF();
     let pdf_pdg1 = table.GetPDFPDG(0).to_string();
-    let pdf_pdg2 = if npdf > 1 {
+    let pdf_pdg2 = if npdf == 2 {
         table.GetPDFPDG(1).to_string()
     } else {
-        // TODO: don't hardcode this
-        "11".to_string()
+        dis_pid.to_string()
     };
 
     grid.set_key_value("initial_state_1", &pdf_pdg1);
@@ -401,7 +405,7 @@ fn convert_coeff_add_flex(
     grid
 }
 
-pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
+pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> Result<Grid> {
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 
@@ -447,6 +451,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
                     bins,
                     alpha,
                     file_as_table.GetIpublunits(),
+                    dis_pid,
                 ));
             }
         } else {
@@ -455,6 +460,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
                 linear_combinations,
                 bins,
                 alpha,
+                dis_pid,
             ));
         }
     }
