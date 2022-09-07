@@ -7,6 +7,7 @@ use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
+use std::ptr;
 
 fn convert_to_pdg_id(id: usize) -> i32 {
     let id = i32::try_from(id).unwrap() - 6;
@@ -19,7 +20,7 @@ fn convert_to_pdg_id(id: usize) -> i32 {
     }
 }
 
-fn reconstruct_luminosity_function(grid: &grid, order: i32) -> Vec<LumiEntry> {
+fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<LumiEntry> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
@@ -31,18 +32,28 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32) -> Vec<LumiEntry> {
     for a in 0..=13 {
         xfx1[a] = 1.0;
 
-        for b in 0..=13 {
-            xfx2[b] = 1.0;
-
-            unsafe { (*pdf).evaluate(xfx1.as_ptr(), xfx2.as_ptr(), results.as_mut_ptr()) };
+        if grid.isDIS() {
+            unsafe { (*pdf).evaluate(xfx1.as_ptr(), ptr::null(), results.as_mut_ptr()) };
 
             for i in 0..nproc {
                 if results[i] != 0.0 {
-                    lumis[i].push((convert_to_pdg_id(a), convert_to_pdg_id(b), results[i]));
+                    lumis[i].push((convert_to_pdg_id(a), dis_pid, results[i]));
                 }
             }
+        } else {
+            for b in 0..=13 {
+                xfx2[b] = 1.0;
 
-            xfx2[b] = 0.0;
+                unsafe { (*pdf).evaluate(xfx1.as_ptr(), xfx2.as_ptr(), results.as_mut_ptr()) };
+
+                for i in 0..nproc {
+                    if results[i] != 0.0 {
+                        lumis[i].push((convert_to_pdg_id(a), convert_to_pdg_id(b), results[i]));
+                    }
+                }
+
+                xfx2[b] = 0.0;
+            }
         }
 
         xfx1[a] = 0.0;
@@ -52,6 +63,9 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32) -> Vec<LumiEntry> {
 }
 
 pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
+    // TODO: set this from the outside
+    let dis_pid = 11;
+
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
@@ -98,7 +112,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     grids.reserve(orders.len());
 
     for (i, order) in orders.into_iter().enumerate() {
-        let lumis = reconstruct_luminosity_function(&grid, i.try_into().unwrap());
+        let lumis = reconstruct_luminosity_function(&grid, i.try_into().unwrap(), dis_pid);
         let lumis_len = lumis.len();
         let mut pgrid = Grid::new(
             lumis,
@@ -106,6 +120,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
             bin_limits.clone(),
             SubgridParams::default(),
         );
+
+        if grid.isDIS() {
+            pgrid.set_key_value("initial_state_2", &dis_pid.to_string());
+        }
 
         for bin in 0..grid.Nobs_internal() {
             let igrid = grid.weightgrid(i.try_into().unwrap(), bin);
@@ -130,7 +148,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
                 .collect();
             let x2_weights: Vec<_> = x2_values
                 .iter()
-                .map(|&x2| if reweight { ffi::weightfun(x2) } else { 1.0 })
+                .map(|&x2| {
+                    if reweight && !grid.isDIS() {
+                        ffi::weightfun(x2)
+                    } else {
+                        1.0
+                    }
+                })
                 .collect();
 
             for lumi in 0..lumis_len {
