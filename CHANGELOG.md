@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new function to the C API, `pineappl_grid_clone`, which clones a given
   grid
 
+### Changed
+
+- renamed the switch `--silence-fastnlo` to `--silence-libraries`, which also
+  covers APPLgrid. For backwards compatibility the previous name still works
+
 ## [0.5.4] - 08/07/2022
 
 ### Added

@@ -9,7 +9,7 @@
 #include <appl_igrid.h>
 #include <memory>
 
-std::unique_ptr<appl::grid> make_grid(rust::Str filename);
+std::unique_ptr<appl::grid> make_grid(rust::Str filename, bool silence);
 
 rust::Vec<int> grid_combine(appl::grid const& grid);
 

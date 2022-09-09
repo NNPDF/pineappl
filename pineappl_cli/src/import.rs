@@ -18,10 +18,11 @@ fn convert_applgrid(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
+    silence: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_applgrid::ffi;
 
-    let mut grid = ffi::make_grid(input.to_str().unwrap())?;
+    let mut grid = ffi::make_grid(input.to_str().unwrap(), silence)?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
     let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
@@ -35,6 +36,7 @@ fn convert_applgrid(
     _: &str,
     _: usize,
     _: i32,
+    _: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
@@ -48,11 +50,11 @@ fn convert_fastnlo(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-    silence_fastnlo: bool,
+    silence: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_fastnlo::ffi::{self, Verbosity};
 
-    if silence_fastnlo {
+    if silence {
         ffi::SetGlobalVerbosity(Verbosity::SILENT);
     }
 
@@ -60,7 +62,7 @@ fn convert_fastnlo(
         input.to_str().unwrap(),
         pdfset,
         member.try_into().unwrap(),
-        silence_fastnlo,
+        silence,
     );
     let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
 
@@ -106,7 +108,7 @@ fn convert_grid(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-    silence_fastnlo: bool,
+    silence_libraries: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     if let Some(extension) = input.extension() {
         if extension == "tab"
@@ -116,11 +118,11 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, silence_fastnlo);
+            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, silence_libraries);
         } else if extension == "dat" {
             return convert_fktable(input);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, pdfset, member, dis_pid);
+            return convert_applgrid(input, alpha, pdfset, member, dis_pid, silence_libraries);
         }
     }
 
@@ -145,9 +147,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[clap(default_value = "1e-10", long)]
     accuracy: f64,
-    /// Prevents fastNLO from printing output.
-    #[clap(long = "silence-fastnlo")]
-    silence_fastnlo: bool,
+    /// Prevents third-party libraries from printing output.
+    #[clap(alias = "silence-fastnlo", long = "silence-libraries")]
+    silence_libraries: bool,
     /// Set the number of fractional digits shown for absolute numbers.
     #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
     digits_abs: usize,
@@ -173,7 +175,7 @@ impl Subcommand for Opts {
             &self.pdfset,
             0,
             self.dis_pid,
-            self.silence_fastnlo,
+            self.silence_libraries,
         )?;
 
         if !self.no_optimize {
@@ -269,7 +271,7 @@ OPTIONS:
                                  determined from the grid [default: 11]
     -h, --help                   Print help information
         --no-optimize            Do not optimize converted grid
-        --silence-fastnlo        Prevents fastNLO from printing output
+        --silence-libraries      Prevents third-party libraries from printing output
 ";
 
     #[cfg(feature = "fastnlo")]

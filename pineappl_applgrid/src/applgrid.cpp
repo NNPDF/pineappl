@@ -1,5 +1,15 @@
 #include "pineappl_applgrid/src/applgrid.hpp"
 
+// TODO: is this portable enough?
+#if defined (__unix__) || defined(__unix) || defined(unix) || \
+    (defined (__APPLE__) && defined (__MACH__))
+#define HAVE_UNISTD_H
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <algorithm>
 #include <appl_igrid.h>
 #include <cmath>
@@ -79,10 +89,37 @@ double as(double const& q)
     return pdf->alphasQ(q);
 }
 
-std::unique_ptr<appl::grid> make_grid(rust::Str filename)
+std::unique_ptr<appl::grid> make_grid(rust::Str filename, bool silence)
 {
     std::string name(filename.begin(), filename.end());
-    return std::unique_ptr<appl::grid>(new appl::grid(name));
+    std::unique_ptr<appl::grid> result;
+
+#ifdef HAVE_UNISTD_H
+    int backup_fd = -1;
+    FILE *dev_null = NULL;
+
+    if (silence)
+    {
+        fflush(stdout);
+        backup_fd = dup(STDOUT_FILENO);
+        dev_null = fopen("/dev/null", "w");
+        dup2(fileno(dev_null), STDOUT_FILENO);
+    }
+#endif
+
+    result.reset(new appl::grid(name));
+
+#ifdef HAVE_UNISTD_H
+    if (silence)
+    {
+        fflush(stdout);
+        fclose(dev_null);
+        dup2(backup_fd, STDOUT_FILENO);
+        close(backup_fd);
+    }
+#endif
+
+    return result;
 }
 
 rust::Vec<int> grid_combine(appl::grid const& grid)
