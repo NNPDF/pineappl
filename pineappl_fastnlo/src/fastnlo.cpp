@@ -11,8 +11,8 @@
 #endif
 
 #include <algorithm>
+#include <iterator>
 #include <string>
-#include <vector>
 
 template <typename T>
 rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)

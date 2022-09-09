@@ -4,6 +4,7 @@
 #include "pineappl_fastnlo/src/lib.rs.h"
 #include "rust/cxx.h"
 
+#include <cstddef>
 #include <fastnlotk/fastNLOCoeffAddBase.h>
 #include <fastnlotk/fastNLOCoeffAddFix.h>
 #include <fastnlotk/fastNLOCoeffAddFlex.h>
@@ -12,6 +13,7 @@
 #include <fastnlotk/fastNLOReader.h>
 #include <fastnlotk/fastNLOTable.h>
 #include <memory>
+#include <vector>
 
 std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     rust::Str name,

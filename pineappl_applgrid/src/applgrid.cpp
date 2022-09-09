@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <appl_igrid.h>
+#include <array>
 #include <cmath>
 #include <iterator>
 #include <LHAPDF/LHAPDF.h>
