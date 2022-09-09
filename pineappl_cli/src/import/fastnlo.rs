@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, Order};
@@ -8,7 +8,7 @@ use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
-    fastNLOPDFLinearCombinations, ESMCalculation, ESMOrder, EScaleFunctionalForm,
+    fastNLOPDFLinearCombinations, EScaleFunctionalForm,
 };
 use std::convert::{TryFrom, TryInto};
 use std::f64::consts::TAU;
@@ -409,24 +409,15 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 
-    let ids: Vec<_> = [
-        file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kLeading),
-        file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToLeading),
-        file_as_reader.ContrId(ESMCalculation::kFixedOrder, ESMOrder::kNextToNextToLeading),
-    ]
-    .iter()
-    .copied()
-    .filter(|&id| id >= 0)
-    .collect();
-
     let bins: usize = file_as_table.GetNObsBin().try_into().unwrap();
     let mut grids = Vec::new();
 
-    for id in ids {
+    for id in 0.. {
+        // TODO: there doesn't seem to be a better way than trying an index and stopping whenever a
+        // NULL pointer is returned
         let coeff_table = file_as_table.GetCoeffTable(id);
-
         if coeff_table.is_null() {
-            return Err(anyhow!("could not access coefficient table"));
+            break;
         }
 
         let linear_combinations = ffi::downcast_reader_to_pdf_linear_combinations(file_as_reader);
@@ -438,7 +429,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
             if converted.is_null() {
                 // TODO: NYI
-                unreachable!();
+                unimplemented!();
             } else {
                 let mur_ff = file_as_reader.GetMuRFunctionalForm();
                 let muf_ff = file_as_reader.GetMuFFunctionalForm();
