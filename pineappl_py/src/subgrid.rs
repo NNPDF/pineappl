@@ -41,14 +41,54 @@ impl PySubgridParams {
         Self::new(subgrid_params)
     }
 
+    /// Set number of :math:`Q^2` bins.
+    ///
+    /// Parameters
+    /// ----------
+    /// q2_bins : int
+    ///     number of bins
+    pub fn set_q2_bins(&mut self, q2_bins: usize) {
+        self.subgrid_params.set_q2_bins(q2_bins);
+    }
+
+    /// Set the upper limit for :math:`Q^2`.
+    ///
+    /// Parameters
+    /// ----------
+    /// q2_max: float
+    ///     new `q2_max`
+    pub fn set_q2_max(&mut self, q2_max: f64) {
+        self.subgrid_params.set_q2_max(q2_max);
+    }
+
+    /// Set the lower limit for :math:`Q^2`.
+    ///
+    /// Parameters
+    /// ----------
+    /// q2_min: float
+    ///     new `q2_min`
+    pub fn set_q2_min(&mut self, q2_min: f64) {
+        self.subgrid_params.set_q2_min(q2_min);
+    }
+
+    /// Set interpolation order for :math:`Q^2_{grid}`.
+    ///
+    /// Parameters
+    /// ----------
+    /// q2_order : float
+    ///     new `q2_order`
+    pub fn set_q2_order(&mut self, q2_order: usize) {
+        self.subgrid_params.set_q2_order(q2_order);
+    }
+
     /// Set reweighting.
     ///
     /// **Usage:** `yadism`
     ///
     /// Parameters
     /// ----------
-    ///     reweight : bool
-    ///         apply reweighting?
+    /// reweight : bool
+    ///     apply reweighting?
     pub fn set_reweight(&mut self, reweight: bool) {
         self.subgrid_params.set_reweight(reweight);
     }
@@ -59,8 +99,8 @@ impl PySubgridParams {
     ///
     /// Parameters
     /// ----------
-    ///     x_bins : int
-    ///         number of bins
+    /// x_bins : int
+    ///     number of bins
     pub fn set_x_bins(&mut self, x_bins: usize) {
         self.subgrid_params.set_x_bins(x_bins);
     }
@@ -71,8 +111,8 @@ impl PySubgridParams {
     ///
     /// Parameters
     /// ----------
-    ///     x_max : float
-    ///         new `x_max`
+    /// x_max : float
+    ///     new `x_max`
     pub fn set_x_max(&mut self, x_max: f64) {
         self.subgrid_params.set_x_max(x_max);
     }
@@ -83,28 +123,26 @@ impl PySubgridParams {
     ///
     /// Parameters
     /// ----------
-    ///     x_min : float
-    ///         new `x_min`
+    /// x_min : float
+    ///     new `x_min`
     pub fn set_x_min(&mut self, x_min: f64) {
         self.subgrid_params.set_x_min(x_min);
     }
 
-    /// Set interpolation order for `x_grid`.
+    /// Set interpolation order for :math:`x_{grid}`.
     ///
     /// **Usage:** `yadism`
     ///
     /// Parameters
     /// ----------
-    ///     x_order : float
-    ///         new `x_order`
+    /// x_order : float
+    ///     new `x_order`
     pub fn set_x_order(&mut self, x_order: usize) {
         self.subgrid_params.set_x_order(x_order);
     }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
-///
-/// **Usage**: `yadism`, FKTable interface
 #[pyclass]
 #[derive(Clone)]
 #[repr(transparent)]
