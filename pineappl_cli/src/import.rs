@@ -391,7 +391,7 @@ OPTIONS:
             .args(&[
                 "--silence-lhapdf",
                 "import",
-                "--silence-fastnlo",
+                "--silence-libraries",
                 "data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
                 output.path().to_str().unwrap(),
                 "NNPDF31_nlo_as_0118_luxqed",
@@ -473,13 +473,14 @@ OPTIONS:
             .args(&[
                 "--silence-lhapdf",
                 "import",
+                "--silence-libraries",
                 "data/LHCBWZMU7TEV_PI_part1.root",
                 output.path().to_str().unwrap(),
                 "NNPDF31_nlo_as_0118_luxqed",
             ])
             .assert()
             .success()
-            .stdout(predicates::str::ends_with(IMPORT_PHOTON_GRID_STR));
+            .stdout(IMPORT_PHOTON_GRID_STR);
     }
 
     #[test]
@@ -492,13 +493,14 @@ OPTIONS:
             .args(&[
                 "--silence-lhapdf",
                 "import",
+                "--silence-libraries",
                 "data/ATLASWPT11-Wplus_tot.root",
                 output.path().to_str().unwrap(),
                 "NNPDF31_nlo_as_0118_luxqed",
             ])
             .assert()
             .success()
-            .stdout(predicates::str::ends_with(IMPORT_APPLGRID_STR));
+            .stdout(IMPORT_APPLGRID_STR);
     }
 
     #[test]
@@ -511,12 +513,13 @@ OPTIONS:
             .args(&[
                 "--silence-lhapdf",
                 "import",
+                "--silence-libraries",
                 "data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
                 output.path().to_str().unwrap(),
                 "NNPDF31_nlo_as_0118_luxqed",
             ])
             .assert()
             .success()
-            .stdout(predicates::str::ends_with(IMPORT_NEW_APPLGRID_STR));
+            .stdout(IMPORT_NEW_APPLGRID_STR);
     }
 }
