@@ -714,7 +714,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 /// TODO
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_key_value(
-    grid: *mut Grid,
+    grid: *const Grid,
     key: *const c_char,
 ) -> *mut c_char {
     let key = CStr::from_ptr(key).to_string_lossy();
@@ -859,7 +859,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_lumi_count(lumi: *mut Lumi) -> usize {
+pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     (*lumi).0.len()
 }
 
@@ -879,7 +879,7 @@ pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 /// long.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_entry(
-    lumi: *mut Lumi,
+    lumi: *const Lumi,
     entry: usize,
     pdg_ids: *mut i32,
     factors: *mut f64,
