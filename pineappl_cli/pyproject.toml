@@ -1,0 +1,29 @@
+[build-system]
+requires = ["maturin>=0.12,<0.13"]
+build-backend = "maturin"
+
+[project]
+name = "pineappl-cli"
+requires-python = ">=3.6"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Natural Language :: English",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Programming Language :: Rust",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = []
+
+[project.urls]
+homepage = "https://n3pdf.github.io/pineappl/"
+documentation = "https://pineappl.readthedocs.io/"
+changelog = "https://github.com/N3PDF/pineappl/blob/master/CHANGELOG.md"
+
+[tool.maturin]
+bindings = "bin"
+strip = true
