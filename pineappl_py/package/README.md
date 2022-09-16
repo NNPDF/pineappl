@@ -39,11 +39,17 @@ podman run ghcr.io/n3pdf/maturin
 podman cp <container-id>:root/pineappl/pineappl_py/target/wheels/ .
 ```
 
-<a name="docker">[1]</a>: to use `docker` instead you can simply replace
-`podman -> docker`, they have compatible subcommands
-
 Now wheels are available outside the container and can be uploaded in your
 favorite way.
+
+#### Interactive use
+
+If you want to use the container environment interactively, you need to provide
+an alternative entry point:
+
+```sh
+podman run --entrypoint bash -it <your-image>
+```
 
 ### Create a new `maturin` image
 
@@ -76,5 +82,8 @@ podman push ghcr.io/n3pdf/maturin:<version>
 podman push ghcr.io/n3pdf/maturin:latest
 ```
 
+<a name="docker">[1]</a>: In the following I will use `podman` as the container
+runtime for the examples. To use `docker` instead, you can simply replace
+`podman -> docker`, they have compatible subcommands
 <a name="github-registry-docs">[2]</a>: official
 [GitHub registry docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
