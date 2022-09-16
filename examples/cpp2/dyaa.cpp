@@ -1,4 +1,3 @@
-#include <pineappl_capi.h>
 #include <LHAPDF/LHAPDF.h>
 
 #include <cmath>
@@ -6,6 +5,9 @@
 #include <cstdio>
 #include <random>
 #include <vector>
+#include <list>
+
+#include "PineAPPLpp.hpp"
 
 double int_photo(double s, double t, double u) {
     double alpha0 = 1.0 / 137.03599911;
@@ -55,7 +57,7 @@ Psp2to2 hadronic_pspgen(std::mt19937& rng, double mmin, double mmax) {
     return { s, t, u, x1, x2, jacobian };
 }
 
-void fill_grid(pineappl_grid* grid, std::size_t calls) {
+void fill_grid(PineAPPL::Grid* grid, std::size_t calls) {
     using std::acosh;
     using std::fabs;
     using std::log;
@@ -93,78 +95,61 @@ void fill_grid(pineappl_grid* grid, std::size_t calls) {
         }
 
         auto weight = jacobian * int_photo(s, t, u);
-        double  q2 = 90.0 * 90.0;
+        double q2 = 90.0 * 90.0;
 
-        pineappl_grid_fill(grid, x1, x2, q2, 0, fabs(yll), 0, weight);
+        grid->fill(x1, x2, q2, 0, fabs(yll), 0, weight);
     }
 }
 
 int main() {
     // create a new luminosity function for the $\gamma\gamma$ initial state
-    auto* lumi = pineappl_lumi_new();
-    int32_t pdg_ids[] = { 22, 22 };
-    double ckm_factors[] = { 1.0 };
-    pineappl_lumi_add(lumi, 1, pdg_ids, ckm_factors);
+    PineAPPL::Lumi lumi;
+    lumi.add({PineAPPL::LumiEntry {22,22,1.0}});
 
     // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
-    uint32_t orders[] = { 0, 2, 0, 0 };
+    std::list<PineAPPL::Order> orders = {PineAPPL::Order {0,2,0,0}};
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
-    double bins[] = {
-        0.0,
-        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
-        1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4
-    };
+    std::vector<double> bins;
+    double b = 0.;
+    for (size_t j = 0; j < 24+1; ++j) {
+        bins.push_back(b);
+        b += 0.1;
+    }
 
     // create the PineAPPL grid with default interpolation and binning parameters
-    auto* keyval = pineappl_keyval_new();
-    auto* grid = pineappl_grid_new(lumi, 1, orders, 24, bins, keyval);
-
-    // now we no longer need `keyval` and `lumi`
-    pineappl_keyval_delete(keyval);
-    pineappl_lumi_delete(lumi);
+    PineAPPL::KeyVal kv;
+    PineAPPL::Grid grid(lumi, orders, bins, kv);
 
     // fill the grid with phase-space points
-    fill_grid(grid, 10000000);
+    fill_grid(&grid, 10000000);
 
     // perform a convolution of the grid with PDFs
     auto* pdf = LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0);
-    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
-    };
-
-    std::vector<double> dxsec(24);
-    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf, nullptr,
-        nullptr, 1.0, 1.0, dxsec.data());
-
+    std::vector<double> dxsec = grid.convolute_with_one(2212, pdf);
+    
     // print the results
-    for (std::size_t i = 0; i != 24; ++i) {
-        std::printf("%02d %.1f %.1f %.3e\n", i, bins[i], bins[i + 1], dxsec[i]);
+    for (std::size_t j = 0; j != 24; ++j) {
+        std::printf("%02d %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
     }
 
-    // store some metadata in the grid
-    pineappl_grid_set_key_value(grid, "events", "10000000");
+    // // store some metadata in the grid
+    // pineappl_grid_set_key_value(grid, "events", "10000000");
 
-    // read out the stored value and print it on stdout
-    auto* value = pineappl_grid_key_value(grid, "events");
-    std::printf("Finished running %s events.\n", value);
+    // // read out the stored value and print it on stdout
+    // auto* value = pineappl_grid_key_value(grid, "events");
+    // std::printf("Finished running %s events.\n", value);
 
-    // delete the allocated object
-    pineappl_string_delete(value);
+    // // delete the allocated object
+    // pineappl_string_delete(value);
 
     // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    char const* filename = "DY-LO-AA.pineappl.lz4";
-    pineappl_grid_write(grid, filename);
-
-    // destroy the object
-    pineappl_grid_delete(grid);
+    std::string filename = "DY-LO-AA.pineappl.lz4";
+    grid.write(filename);
 
     std::printf("Generated %s containing a a -> l+ l-.\n\n"
         "Try running (PDF sets must contain non-zero photon PDF):\n"
         "  - pineappl convolute %s NNPDF31_nnlo_as_0118_luxqed\n"
         "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
-        "  - pineappl --help\n", filename, filename, filename);
+        "  - pineappl --help\n", filename.c_str(), filename.c_str(), filename.c_str());
 }
