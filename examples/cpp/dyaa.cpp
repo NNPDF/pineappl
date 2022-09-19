@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <random>
 #include <vector>
-#include <list>
 
 #include "PineAPPL.hpp"
 
@@ -57,7 +56,7 @@ Psp2to2 hadronic_pspgen(std::mt19937& rng, double mmin, double mmax) {
     return { s, t, u, x1, x2, jacobian };
 }
 
-void fill_grid(PineAPPL::Grid* grid, std::size_t calls) {
+void fill_grid(PineAPPL::Grid &grid, std::size_t calls) {
     using std::acosh;
     using std::fabs;
     using std::log;
@@ -97,7 +96,7 @@ void fill_grid(PineAPPL::Grid* grid, std::size_t calls) {
         auto weight = jacobian * int_photo(s, t, u);
         double q2 = 90.0 * 90.0;
 
-        grid->fill(x1, x2, q2, 0, fabs(yll), 0, weight);
+        grid.fill(x1, x2, q2, 0, fabs(yll), 0, weight);
     }
 }
 
@@ -122,7 +121,7 @@ int main() {
     PineAPPL::Grid grid(lumi, orders, bins, kv);
 
     // fill the grid with phase-space points
-    fill_grid(&grid, 10000000);
+    fill_grid(grid, 10000000);
 
     // perform a convolution of the grid with PDFs
     auto* pdf = LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0);

@@ -6,7 +6,6 @@
 #define PineAPPL_HPP_
 
 #include <string>
-#include <list>
 #include <LHAPDF/LHAPDF.h>
 
 #include <pineappl_capi.h>
@@ -167,7 +166,7 @@ public:
      * @param lumi luminosity index
      * @param weight weight
      */
-    void fill(double x1, double x2, double q2, size_t order, double observable, size_t lumi, double weight) const {
+    void fill(const double x1, const double x2, const double q2, const size_t order, const double observable, const size_t lumi, const double weight) const {
         pineappl_grid_fill(this->raw, x1, x2, q2, order, observable, lumi, weight);
     }
 
@@ -180,7 +179,7 @@ public:
      * @return prediction for each bin
      * @return prediction for each bin
      */
-    std::vector<double> convolute_with_one(int32_t pdg_id, LHAPDF::PDF *pdf, double xi_ren = 1.0, double xi_fac = 1.0 ) const {
+    std::vector<double> convolute_with_one(const int32_t pdg_id, LHAPDF::PDF *pdf, const double xi_ren = 1.0, const double xi_fac = 1.0 ) const {
         std::vector<bool> order_mask(this->n_orders, true);
         std::vector<bool> lumi_mask(this->n_lumis, true);
         return this->convolute_with_one(pdg_id, pdf, order_mask, lumi_mask, xi_ren, xi_fac);
@@ -196,7 +195,7 @@ public:
      * @param xi_fac factorization scale variation
      * @return prediction for each bin
      */
-    std::vector<double> convolute_with_one(int32_t pdg_id, LHAPDF::PDF *pdf, const std::vector<bool>& order_mask, const std::vector<bool>& lumi_mask, double xi_ren = 1.0, double xi_fac = 1.0) const {
+    std::vector<double> convolute_with_one(const int32_t pdg_id, LHAPDF::PDF *pdf, const std::vector<bool>& order_mask, const std::vector<bool>& lumi_mask, const double xi_ren = 1.0, const double xi_fac = 1.0) const {
         // prepare LHAPDF stuff
         auto xfx = [](int32_t id, double x, double q2, void* pdf) {
             return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
@@ -224,7 +223,7 @@ public:
      * @brief Write grid to file
      * @param filename file name
      */
-    void write(std::string filename) const {
+    void write(const std::string &filename) const {
         pineappl_grid_write(this->raw, filename.c_str());
     }
 
@@ -233,7 +232,7 @@ public:
      * @param key key
      * @param value value
      */
-    void set_key_value(std::string key, std::string value) const {
+    void set_key_value(const std::string &key, const std::string &value) const {
         pineappl_grid_set_key_value(this->raw, key.c_str(), value.c_str());
     }
 
@@ -242,7 +241,7 @@ public:
      * @param key key
      * @return value
      */
-    std::string get_key_value(std::string key) const {
+    std::string get_key_value(const std::string &key) const {
         auto* value = pineappl_grid_key_value(this->raw, key.c_str());
         std::string res(value);
         // delete the allocated object
