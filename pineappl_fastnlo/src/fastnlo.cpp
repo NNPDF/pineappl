@@ -183,24 +183,24 @@ fastNLOTable const& downcast_lhapdf_to_table(fastNLOLHAPDF const& lhapdf)
     return lhapdf;
 }
 
-fastNLOCoeffAddFix* dynamic_cast_coeff_add_fix(fastNLOCoeffBase* coeffs)
+fastNLOCoeffAddFix const* dynamic_cast_coeff_add_fix(fastNLOCoeffBase const* coeffs)
 {
-    return dynamic_cast <fastNLOCoeffAddFix*> (coeffs);
+    return dynamic_cast <fastNLOCoeffAddFix const*> (coeffs);
 }
 
-fastNLOCoeffAddFlex* dynamic_cast_coeff_add_flex(fastNLOCoeffBase* coeffs)
+fastNLOCoeffAddFlex const* dynamic_cast_coeff_add_flex(fastNLOCoeffBase const* coeffs)
 {
-    return dynamic_cast <fastNLOCoeffAddFlex*> (coeffs);
+    return dynamic_cast <fastNLOCoeffAddFlex const*> (coeffs);
 }
 
-fastNLOCoeffData* dynamic_cast_coeff_data(fastNLOCoeffBase* coeffs)
+fastNLOCoeffData const* dynamic_cast_coeff_data(fastNLOCoeffBase const* coeffs)
 {
-    return dynamic_cast <fastNLOCoeffData*> (coeffs);
+    return dynamic_cast <fastNLOCoeffData const*> (coeffs);
 }
 
-fastNLOCoeffMult* dynamic_cast_coeff_mult(fastNLOCoeffBase* coeffs)
+fastNLOCoeffMult const* dynamic_cast_coeff_mult(fastNLOCoeffBase const* coeffs)
 {
-    return dynamic_cast <fastNLOCoeffMult*> (coeffs);
+    return dynamic_cast <fastNLOCoeffMult const*> (coeffs);
 }
 
 fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(

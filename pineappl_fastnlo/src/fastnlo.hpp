@@ -72,13 +72,13 @@ fastNLOReader& downcast_lhapdf_to_reader_mut(fastNLOLHAPDF& lhapdf);
 
 fastNLOTable const& downcast_lhapdf_to_table(fastNLOLHAPDF const& lhapdf);
 
-fastNLOCoeffAddFix* dynamic_cast_coeff_add_fix(fastNLOCoeffBase* coeffs);
+fastNLOCoeffAddFix const* dynamic_cast_coeff_add_fix(fastNLOCoeffBase const* coeffs);
 
-fastNLOCoeffAddFlex* dynamic_cast_coeff_add_flex(fastNLOCoeffBase* coeffs);
+fastNLOCoeffAddFlex const* dynamic_cast_coeff_add_flex(fastNLOCoeffBase const* coeffs);
 
-fastNLOCoeffData* dynamic_cast_coeff_data(fastNLOCoeffBase* coeffs);
+fastNLOCoeffData const* dynamic_cast_coeff_data(fastNLOCoeffBase const* coeffs);
 
-fastNLOCoeffMult* dynamic_cast_coeff_mult(fastNLOCoeffBase* coeffs);
+fastNLOCoeffMult const* dynamic_cast_coeff_mult(fastNLOCoeffBase const* coeffs);
 
 fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(
     fastNLOReader const& reader

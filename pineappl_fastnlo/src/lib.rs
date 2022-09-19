@@ -215,11 +215,14 @@ pub mod ffi {
             _: &fastNLOReader,
         ) -> &fastNLOPDFLinearCombinations;
 
-        unsafe fn dynamic_cast_coeff_add_fix(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffAddFix;
-        unsafe fn dynamic_cast_coeff_add_flex(_: *mut fastNLOCoeffBase)
-            -> *mut fastNLOCoeffAddFlex;
-        unsafe fn dynamic_cast_coeff_data(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffData;
-        unsafe fn dynamic_cast_coeff_mult(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffMult;
+        unsafe fn dynamic_cast_coeff_add_fix(
+            _: *const fastNLOCoeffBase,
+        ) -> *const fastNLOCoeffAddFix;
+        unsafe fn dynamic_cast_coeff_add_flex(
+            _: *const fastNLOCoeffBase,
+        ) -> *const fastNLOCoeffAddFlex;
+        unsafe fn dynamic_cast_coeff_data(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffData;
+        unsafe fn dynamic_cast_coeff_mult(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffMult;
 
         fn make_fastnlo_lhapdf_with_name_file_set(
             name: &str,
