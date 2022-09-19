@@ -162,6 +162,18 @@ pub mod ffi {
     }
 
     unsafe extern "C++" {
+        include!("fastnlotk/fastNLOCoeffData.h");
+
+        type fastNLOCoeffData;
+    }
+
+    unsafe extern "C++" {
+        include!("fastnlotk/fastNLOCoeffMult.h");
+
+        type fastNLOCoeffMult;
+    }
+
+    unsafe extern "C++" {
         include!("pineappl_fastnlo/src/fastnlo.hpp");
 
         fn CalcPDFLinearCombination(
@@ -174,6 +186,7 @@ pub mod ffi {
 
         fn GetBinSize(_: &fastNLOTable) -> Vec<f64>;
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
+        fn GetMultFactor(_: &fastNLOCoeffMult) -> Vec<f64>;
         fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
         fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
         fn GetPDFCoeff(_: &fastNLOCoeffAddBase, index: usize) -> Vec<pair_int_int>;
@@ -205,6 +218,8 @@ pub mod ffi {
         unsafe fn dynamic_cast_coeff_add_fix(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffAddFix;
         unsafe fn dynamic_cast_coeff_add_flex(_: *mut fastNLOCoeffBase)
             -> *mut fastNLOCoeffAddFlex;
+        unsafe fn dynamic_cast_coeff_data(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffData;
+        unsafe fn dynamic_cast_coeff_mult(_: *mut fastNLOCoeffBase) -> *mut fastNLOCoeffMult;
 
         fn make_fastnlo_lhapdf_with_name_file_set(
             name: &str,

@@ -23,6 +23,11 @@ rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
     return result;
 }
 
+rust::Vec<double> GetMultFactor(fastNLOCoeffMult const& coeffs)
+{
+    return std_vector_to_rust_vec(coeffs.GetMultFactor());
+}
+
 rust::Vec<double> CalcPDFLinearCombination(
     fastNLOPDFLinearCombinations const& lc,
     fastNLOCoeffAddBase const& base,
@@ -186,6 +191,16 @@ fastNLOCoeffAddFix* dynamic_cast_coeff_add_fix(fastNLOCoeffBase* coeffs)
 fastNLOCoeffAddFlex* dynamic_cast_coeff_add_flex(fastNLOCoeffBase* coeffs)
 {
     return dynamic_cast <fastNLOCoeffAddFlex*> (coeffs);
+}
+
+fastNLOCoeffData* dynamic_cast_coeff_data(fastNLOCoeffBase* coeffs)
+{
+    return dynamic_cast <fastNLOCoeffData*> (coeffs);
+}
+
+fastNLOCoeffMult* dynamic_cast_coeff_mult(fastNLOCoeffBase* coeffs)
+{
+    return dynamic_cast <fastNLOCoeffMult*> (coeffs);
 }
 
 fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(

@@ -415,21 +415,34 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
     for id in 0.. {
         // TODO: there doesn't seem to be a better way than trying an index and stopping whenever a
         // NULL pointer is returned
-        let coeff_table = file_as_table.GetCoeffTable(id);
-        if coeff_table.is_null() {
+        let coeff_base = file_as_table.GetCoeffTable(id);
+        if coeff_base.is_null() {
             break;
         }
 
         let linear_combinations = ffi::downcast_reader_to_pdf_linear_combinations(file_as_reader);
 
-        let converted = unsafe { ffi::dynamic_cast_coeff_add_fix(coeff_table) };
+        let converted = unsafe { ffi::dynamic_cast_coeff_add_fix(coeff_base) };
 
         if converted.is_null() {
-            let converted = unsafe { ffi::dynamic_cast_coeff_add_flex(coeff_table) };
+            let converted = unsafe { ffi::dynamic_cast_coeff_add_flex(coeff_base) };
 
             if converted.is_null() {
-                // TODO: NYI
-                unimplemented!();
+                let converted = unsafe { ffi::dynamic_cast_coeff_mult(coeff_base) };
+
+                if converted.is_null() {
+                    let converted = unsafe { ffi::dynamic_cast_coeff_data(coeff_base) };
+
+                    if converted.is_null() {
+                        unimplemented!();
+                    } else {
+                        // TODO: handle this case
+                        unimplemented!();
+                    }
+                } else {
+                    // TODO: handle this case
+                    unimplemented!();
+                }
             } else {
                 let mur_ff = file_as_reader.GetMuRFunctionalForm();
                 let muf_ff = file_as_reader.GetMuFFunctionalForm();

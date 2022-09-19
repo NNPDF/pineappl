@@ -30,6 +30,8 @@ rust::Vec<double> CalcPDFLinearCombination(
     bool pdf2IsAntiParticle
 );
 
+rust::Vec<double> GetMultFactor(fastNLOCoeffMult const& coeffs);
+
 rust::Vec<double> GetScaleNodes(fastNLOCoeffAddFix const& coeffs, int iObs, int iSvar);
 
 rust::Vec<double> GetXNodes1(fastNLOCoeffAddBase const& coeffs, int iObsBin);
@@ -73,6 +75,10 @@ fastNLOTable const& downcast_lhapdf_to_table(fastNLOLHAPDF const& lhapdf);
 fastNLOCoeffAddFix* dynamic_cast_coeff_add_fix(fastNLOCoeffBase* coeffs);
 
 fastNLOCoeffAddFlex* dynamic_cast_coeff_add_flex(fastNLOCoeffBase* coeffs);
+
+fastNLOCoeffData* dynamic_cast_coeff_data(fastNLOCoeffBase* coeffs);
+
+fastNLOCoeffMult* dynamic_cast_coeff_mult(fastNLOCoeffBase* coeffs);
 
 fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(
     fastNLOReader const& reader
