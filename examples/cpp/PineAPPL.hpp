@@ -6,6 +6,7 @@
 #define PineAPPL_HPP_
 
 #include <string>
+#include <cstdint>
 #include <LHAPDF/LHAPDF.h>
 
 #include <pineappl_capi.h>
@@ -46,10 +47,10 @@ struct KeyVal {
 /** @brief Entry in luminosity function  */
 struct LumiEntry {
     /** @brief first parton id */
-    int32_t pid1;
+    std::int32_t pid1;
 
     /** @brief second parton id */
-    int32_t pid2;
+    std::int32_t pid2;
 
     /** @brief relative weight */
     double weight;
@@ -67,31 +68,31 @@ struct Lumi {
     ~Lumi(){ pineappl_lumi_delete(this->raw); }
 
     /** @brief number of elements */
-    size_t count() const { return pineappl_lumi_count(this->raw); }
+    std::size_t count() const { return pineappl_lumi_count(this->raw); }
 
     /**
      * @brief add a luminosity function
      * @param c luminosity function
      */
     void add(const std::vector<LumiEntry>& c) const {
-        size_t n = 0;
-        int32_t *pids = new int32_t;
-        double *weights = new double;
+        std::size_t n = 0;
+        std::int32_t *pids = new std::int32_t[2*c.size()];
+        double *weights = new double[c.size()];
         for (auto it = c.cbegin(); it != c.cend(); ++it, ++n) {
             pids[2*n] = it->pid1;
             pids[2*n+1] = it->pid2;
             weights[n] = it->weight;
         }
         pineappl_lumi_add(this->raw, n, pids, weights);
-        delete pids;
-        delete weights;
+        delete[] pids;
+        delete[] weights;
     }
 
     /**
      * @brief Returns the number of combinations of the luminosity function `lumi` for the specified entry.
      * @param entry position in lumi
      */
-    size_t combinations(size_t entry) const { return pineappl_lumi_combinations(this->raw, entry); }
+    std::size_t combinations(std::size_t entry) const { return pineappl_lumi_combinations(this->raw, entry); }
 };
 
 /** @brief Coupling powers for each grid. */
@@ -111,13 +112,13 @@ struct Order {
 
 class Grid {
     /** @brief number of orders */
-    size_t n_orders = 0;
+    std::size_t n_orders = 0;
 
     /** @brief number of bins */
-    size_t n_bins = 0;
+    std::size_t n_bins = 0;
 
     /** @brief number of lumis */
-    size_t n_lumis = 0;
+    std::size_t n_lumis = 0;
 
 public:
 
@@ -166,7 +167,7 @@ public:
      * @param lumi luminosity index
      * @param weight weight
      */
-    void fill(const double x1, const double x2, const double q2, const size_t order, const double observable, const size_t lumi, const double weight) const {
+    void fill(const double x1, const double x2, const double q2, const std::size_t order, const double observable, const std::size_t lumi, const double weight) const {
         pineappl_grid_fill(this->raw, x1, x2, q2, order, observable, lumi, weight);
     }
 
@@ -179,7 +180,7 @@ public:
      * @return prediction for each bin
      * @return prediction for each bin
      */
-    std::vector<double> convolute_with_one(const int32_t pdg_id, LHAPDF::PDF *pdf, const double xi_ren = 1.0, const double xi_fac = 1.0 ) const {
+    std::vector<double> convolute_with_one(const std::int32_t pdg_id, LHAPDF::PDF *pdf, const double xi_ren = 1.0, const double xi_fac = 1.0 ) const {
         std::vector<bool> order_mask(this->n_orders, true);
         std::vector<bool> lumi_mask(this->n_lumis, true);
         return this->convolute_with_one(pdg_id, pdf, order_mask, lumi_mask, xi_ren, xi_fac);
@@ -195,9 +196,9 @@ public:
      * @param xi_fac factorization scale variation
      * @return prediction for each bin
      */
-    std::vector<double> convolute_with_one(const int32_t pdg_id, LHAPDF::PDF *pdf, const std::vector<bool>& order_mask, const std::vector<bool>& lumi_mask, const double xi_ren = 1.0, const double xi_fac = 1.0) const {
+    std::vector<double> convolute_with_one(const std::int32_t pdg_id, LHAPDF::PDF *pdf, const std::vector<bool>& order_mask, const std::vector<bool>& lumi_mask, const double xi_ren = 1.0, const double xi_fac = 1.0) const {
         // prepare LHAPDF stuff
-        auto xfx = [](int32_t id, double x, double q2, void* pdf) {
+        auto xfx = [](std::int32_t id, double x, double q2, void* pdf) {
             return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
         };
         auto alphas = [](double q2, void* pdf) {
@@ -205,11 +206,11 @@ public:
         };
         // cast order_mask
         bool *raw_order_mask = new bool[this->n_orders];
-        {size_t j = 0;
+        {std::size_t j = 0;
         for (auto it = order_mask.cbegin(); it != order_mask.cend(); ++it, ++j)
             raw_order_mask[j] = *it;}
         bool *raw_lumi_mask = new bool[this->n_lumis];
-        {size_t j = 0;
+        {std::size_t j = 0;
         for (auto it = lumi_mask.cbegin(); it != lumi_mask.cend(); ++it, ++j)
             raw_lumi_mask[j] = *it;}
         std::vector<double> results(this->n_bins - 1);
