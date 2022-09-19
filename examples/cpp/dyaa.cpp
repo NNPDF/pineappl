@@ -7,7 +7,7 @@
 #include <vector>
 #include <list>
 
-#include "PineAPPLpp.hpp"
+#include "PineAPPL.hpp"
 
 double int_photo(double s, double t, double u) {
     double alpha0 = 1.0 / 137.03599911;
