@@ -478,11 +478,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
     let dimensions: usize = file_as_table.GetNumDiffBin().try_into().unwrap();
     let mut limits = Vec::new();
-    let normalizations = if file_as_table.IsNorm() {
-        ffi::GetBinSize(file_as_table)
-    } else {
-        vec![1.0; bins]
-    };
+    let normalizations = vec![1.0; bins];
     limits.reserve(2 * dimensions * bins);
 
     for i in 0..bins {
