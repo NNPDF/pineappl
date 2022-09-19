@@ -74,7 +74,7 @@ struct Lumi {
      * @brief add a luminosity function
      * @param c luminosity function
      */
-    void add(const std::list<LumiEntry>& c) const {
+    void add(const std::vector<LumiEntry>& c) const {
         size_t n = 0;
         int32_t *pids = new int32_t;
         double *weights = new double;
@@ -132,7 +132,7 @@ public:
      * @param bins bins
      * @param key_val additional informations
      */
-    Grid(const Lumi& lumi, const std::list<Order>& orders, const std::vector<double>& bins, const KeyVal& key_val) {
+    Grid(const Lumi& lumi, const std::vector<Order>& orders, const std::vector<double>& bins, const KeyVal& key_val) {
         this->n_lumis = lumi.count();
         // cast orders
         uint32_t *raw_orders = new uint32_t[4 * orders.size()];
@@ -181,8 +181,8 @@ public:
      * @return prediction for each bin
      */
     std::vector<double> convolute_with_one(int32_t pdg_id, LHAPDF::PDF *pdf, double xi_ren = 1.0, double xi_fac = 1.0 ) const {
-        std::list<bool> order_mask(this->n_orders, true);
-        std::list<bool> lumi_mask(this->n_lumis, true);
+        std::vector<bool> order_mask(this->n_orders, true);
+        std::vector<bool> lumi_mask(this->n_lumis, true);
         return this->convolute_with_one(pdg_id, pdf, order_mask, lumi_mask, xi_ren, xi_fac);
     }
 
@@ -196,7 +196,7 @@ public:
      * @param xi_fac factorization scale variation
      * @return prediction for each bin
      */
-    std::vector<double> convolute_with_one(int32_t pdg_id, LHAPDF::PDF *pdf, const std::list<bool>& order_mask, const std::list<bool>& lumi_mask, double xi_ren = 1.0, double xi_fac = 1.0) const {
+    std::vector<double> convolute_with_one(int32_t pdg_id, LHAPDF::PDF *pdf, const std::vector<bool>& order_mask, const std::vector<bool>& lumi_mask, double xi_ren = 1.0, double xi_fac = 1.0) const {
         // prepare LHAPDF stuff
         auto xfx = [](int32_t id, double x, double q2, void* pdf) {
             return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);

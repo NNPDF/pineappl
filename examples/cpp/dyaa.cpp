@@ -107,7 +107,7 @@ int main() {
     lumi.add({PineAPPL::LumiEntry {22,22,1.0}});
 
     // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
-    std::list<PineAPPL::Order> orders = {PineAPPL::Order {0,2,0,0}};
+    std::vector<PineAPPL::Order> orders = {PineAPPL::Order {0,2,0,0}};
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     std::vector<double> bins;
