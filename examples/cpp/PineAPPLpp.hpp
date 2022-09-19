@@ -16,7 +16,6 @@ namespace PineAPPL {
 
 /** @brief Key-value storage for passing optional information during grid creation */
 struct KeyVal {
-
     /** @brief underlying raw object */ 
     pineappl_keyval *raw;
 
@@ -47,14 +46,18 @@ struct KeyVal {
 
 /** @brief Entry in luminosity function  */
 struct LumiEntry {
+    /** @brief first parton id */
     int32_t pid1;
+
+    /** @brief second parton id */
     int32_t pid2;
+
+    /** @brief relative weight */
     double weight;
 };
 
 /** @brief Luminosity function */
 struct Lumi {
-
     /** @brief underlying raw object */
     pineappl_lumi *raw;
 
@@ -96,10 +99,13 @@ struct Lumi {
 struct Order {
     /** @brief Exponent of the strong coupling. */
     uint32_t alphas;
+
     /** @brief Exponent of the electromagnetic coupling. */
     uint32_t alpha;
+
     /** @brief Exponent of the logarithm of the scale factor of the renomalization scale. */
     uint32_t logxir;
+
     /** @brief Exponent of the logarithm of the scale factor of the factorization scale. */
     uint32_t logxif;
 };
@@ -220,6 +226,28 @@ public:
      */
     void write(std::string filename) const {
         pineappl_grid_write(this->raw, filename.c_str());
+    }
+
+    /**
+     * @brief Set a metadata entry
+     * @param key key
+     * @param value value
+     */
+    void set_key_value(std::string key, std::string value) const {
+        pineappl_grid_set_key_value(this->raw, key.c_str(), value.c_str());
+    }
+
+    /**
+     * @brief Get a metadata entry
+     * @param key key
+     * @return value
+     */
+    std::string get_key_value(std::string key) const {
+        auto* value = pineappl_grid_key_value(this->raw, key.c_str());
+        std::string res(value);
+        // delete the allocated object
+        pineappl_string_delete(value);
+        return res;
     }
 };
 
