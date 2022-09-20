@@ -8,10 +8,15 @@ use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
-    fastNLOPDFLinearCombinations, EScaleFunctionalForm,
+    fastNLOPDFLinearCombinations, fastNLOReader, fastNLOTable, EScaleFunctionalForm,
 };
 use std::convert::{TryFrom, TryInto};
 use std::f64::consts::TAU;
+
+// needed to cast between different types that are the same in C++ through inheritance
+unsafe fn static_cast<T, U>(x: &U) -> &T {
+    &*((x as *const U) as *const T)
+}
 
 fn pid_to_pdg_id(pid: i32) -> i32 {
     match pid {
@@ -95,7 +100,7 @@ fn convert_coeff_add_fix(
     alpha: u32,
     dis_pid: i32,
 ) -> Grid {
-    let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
+    let table_as_add_base: &fastNLOCoeffAddBase = unsafe { static_cast(table) };
 
     let mut grid = Grid::new(
         create_lumi(table_as_add_base, comb, dis_pid),
@@ -214,7 +219,7 @@ fn convert_coeff_add_flex(
     ipub_units: i32,
     dis_pid: i32,
 ) -> Grid {
-    let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
+    let table_as_add_base: &fastNLOCoeffAddBase = unsafe { static_cast(table) };
 
     let mut grid = Grid::new(
         create_lumi(table_as_add_base, comb, dis_pid),
@@ -406,8 +411,8 @@ fn convert_coeff_add_flex(
 }
 
 pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> Result<Grid> {
-    let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
-    let file_as_table = ffi::downcast_lhapdf_to_table(file);
+    let file_as_reader: &fastNLOReader = unsafe { static_cast(file) };
+    let file_as_table: &fastNLOTable = unsafe { static_cast(file) };
 
     let bins: usize = file_as_table.GetNObsBin().try_into().unwrap();
     let mut grids = Vec::new();
@@ -426,7 +431,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
             break;
         }
 
-        let linear_combinations = ffi::downcast_reader_to_pdf_linear_combinations(file_as_reader);
+        let linear_combinations: &fastNLOPDFLinearCombinations = unsafe { static_cast(file) };
 
         let converted = unsafe { ffi::dynamic_cast_coeff_add_fix(coeff_base) };
 

@@ -208,15 +208,6 @@ pub mod ffi {
             _: i32,
         ) -> f64;
 
-        fn downcast_coeff_add_fix_to_base(_: &fastNLOCoeffAddFix) -> &fastNLOCoeffAddBase;
-        fn downcast_coeff_add_flex_to_base(_: &fastNLOCoeffAddFlex) -> &fastNLOCoeffAddBase;
-        fn downcast_lhapdf_to_reader(_: &fastNLOLHAPDF) -> &fastNLOReader;
-        fn downcast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
-        fn downcast_lhapdf_to_table(_: &fastNLOLHAPDF) -> &fastNLOTable;
-        fn downcast_reader_to_pdf_linear_combinations(
-            _: &fastNLOReader,
-        ) -> &fastNLOPDFLinearCombinations;
-
         unsafe fn dynamic_cast_coeff_add_fix(
             _: *const fastNLOCoeffBase,
         ) -> *const fastNLOCoeffAddFix;
@@ -225,6 +216,8 @@ pub mod ffi {
         ) -> *const fastNLOCoeffAddFlex;
         unsafe fn dynamic_cast_coeff_data(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffData;
         unsafe fn dynamic_cast_coeff_mult(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffMult;
+
+        fn static_cast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
 
         fn make_fastnlo_lhapdf_with_name_file_set(
             name: &str,
