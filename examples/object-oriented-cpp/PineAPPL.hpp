@@ -76,12 +76,12 @@ struct Lumi {
      */
     void add(const std::vector<LumiEntry>& c) const {
         const std::size_t n = c.size();
-        std::vector<std::int32_t> pids (2*n);
-        std::vector<double> weights (n);
-        for (std::size_t j = 0; j < n; ++j) {
-            pids[2*j] = c[j].pid1;
-            pids[2*j+1] = c[j].pid2;
-            weights[j] = c[j].weight;
+        std::vector<std::int32_t> pids;
+        std::vector<double> weights;
+        for (const LumiEntry& l : c) {
+            pids.push_back(l.pid1);
+            pids.push_back(l.pid2);
+            weights.push_back(l.weight);
         }
         pineappl_lumi_add(this->raw, n, pids.data(), weights.data());
     }
@@ -123,12 +123,12 @@ struct Grid {
     Grid(const Lumi& lumi, const std::vector<Order>& orders, const std::vector<double>& bin_limits, const KeyVal& key_val) {
         // cast orders
         const std::size_t n_orders = orders.size();
-        std::vector<std::uint32_t> raw_orders (4 * n_orders);
-        for (size_t j = 0; j < n_orders; ++j) {
-            raw_orders[4*j + 0] = orders[j].alphas;
-            raw_orders[4*j + 1] = orders[j].alpha;
-            raw_orders[4*j + 2] = orders[j].logxir;
-            raw_orders[4*j + 3] = orders[j].logxif;
+        std::vector<std::uint32_t> raw_orders;
+        for (const Order& order : orders) {
+            raw_orders.push_back(order.alphas);
+            raw_orders.push_back(order.alpha);
+            raw_orders.push_back(order.logxir);
+            raw_orders.push_back(order.logxif);
         }
         this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders.data(), bin_limits.size() - 1, bin_limits.data(), key_val.raw);
     }
