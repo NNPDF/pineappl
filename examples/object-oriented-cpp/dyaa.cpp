@@ -128,7 +128,7 @@ int main() {
     
     // print the results
     for (std::size_t j = 0; j != 24; ++j) {
-        std::printf("%02d %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
+        std::printf("%02u %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
     }
 
     // store some metadata in the grid
