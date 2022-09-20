@@ -75,7 +75,7 @@ struct Lumi {
      * @param c luminosity function
      */
     void add(const std::vector<LumiEntry>& c) const {
-        std::size_t n = c.size();
+        const std::size_t n = c.size();
         std::vector<std::int32_t> pids (2*n);
         std::vector<double> weights (n);
         for (std::size_t j = 0; j < n; ++j) {
@@ -90,7 +90,7 @@ struct Lumi {
      * @brief Returns the number of combinations of the luminosity function `lumi` for the specified entry.
      * @param entry position in lumi
      */
-    std::size_t combinations(std::size_t entry) const { return pineappl_lumi_combinations(this->raw, entry); }
+    std::size_t combinations(const std::size_t entry) const { return pineappl_lumi_combinations(this->raw, entry); }
 };
 
 /** @brief Coupling powers for each grid. */
@@ -122,18 +122,15 @@ struct Grid {
      */
     Grid(const Lumi& lumi, const std::vector<Order>& orders, const std::vector<double>& bin_limits, const KeyVal& key_val) {
         // cast orders
-        std::size_t n_orders = 0;
-        uint32_t *raw_orders = new uint32_t[4 * orders.size()];
-        for (auto it = orders.cbegin(); it != orders.cend(); ++it, ++n_orders){
-            raw_orders[4*n_orders + 0] = it->alphas;
-            raw_orders[4*n_orders + 1] = it->alpha;
-            raw_orders[4*n_orders + 2] = it->logxir;
-            raw_orders[4*n_orders + 3] = it->logxif;
+        const std::size_t n_orders = orders.size();
+        std::vector<std::uint32_t> raw_orders (4 * n_orders);
+        for (size_t j = 0; j < n_orders; ++j) {
+            raw_orders[4*j + 0] = orders[j].alphas;
+            raw_orders[4*j + 1] = orders[j].alpha;
+            raw_orders[4*j + 2] = orders[j].logxir;
+            raw_orders[4*j + 3] = orders[j].logxif;
         }
-        // now, we got all we need
-        this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders, bin_limits.size() - 1, bin_limits.data(), key_val.raw);
-        // clean up
-        delete[] raw_orders;
+        this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders.data(), bin_limits.size() - 1, bin_limits.data(), key_val.raw);
     }
 
     /** @brief destructor */
@@ -210,7 +207,7 @@ struct Grid {
         for (auto it = order_mask.cbegin(); it != order_mask.cend(); ++it, ++j)
             raw_order_mask[j] = *it;}
         pineappl_lumi* l = pineappl_grid_lumi(this->raw);
-        std::size_t n_lumis = pineappl_lumi_count(l);
+        const std::size_t n_lumis = pineappl_lumi_count(l);
         pineappl_lumi_delete(l);
         bool *raw_lumi_mask = new bool[n_lumis];
         {std::size_t j = 0;
@@ -247,7 +244,7 @@ struct Grid {
      */
     std::string get_key_value(const std::string &key) const {
         auto* value = pineappl_grid_key_value(this->raw, key.c_str());
-        std::string res(value);
+        const std::string res(value);
         // delete the allocated object
         pineappl_string_delete(value);
         return res;
