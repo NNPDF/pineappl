@@ -132,16 +132,10 @@ struct Grid {
             raw_orders[4*n_orders + 2] = it->logxir;
             raw_orders[4*n_orders + 3] = it->logxif;
         }
-        // cast bins
-        std::size_t n_bins = 0;
-        double *raw_bins = new double[bin_limits.size()];
-        for (auto it = bin_limits.cbegin(); it != bin_limits.cend(); ++it, ++n_bins)
-            raw_bins[n_bins] = *it;
         // now, we got all we need
-        this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders, n_bins - 1, raw_bins, key_val.raw);
+        this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders, bin_limits.size() - 1, bin_limits.data(), key_val.raw);
         // clean up
         delete[] raw_orders;
-        delete[] raw_bins;
     }
 
     /** @brief destructor */
