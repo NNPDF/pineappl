@@ -75,17 +75,15 @@ struct Lumi {
      * @param c luminosity function
      */
     void add(const std::vector<LumiEntry>& c) const {
-        std::size_t n = 0;
-        std::int32_t *pids = new std::int32_t[2*c.size()];
-        double *weights = new double[c.size()];
-        for (auto it = c.cbegin(); it != c.cend(); ++it, ++n) {
-            pids[2*n] = it->pid1;
-            pids[2*n+1] = it->pid2;
-            weights[n] = it->weight;
+        std::size_t n = c.size();
+        std::vector<std::int32_t> pids (2*n);
+        std::vector<double> weights (n);
+        for (std::size_t j = 0; j < n; ++j) {
+            pids[2*j] = c[j].pid1;
+            pids[2*j+1] = c[j].pid2;
+            weights[j] = c[j].weight;
         }
-        pineappl_lumi_add(this->raw, n, pids, weights);
-        delete[] pids;
-        delete[] weights;
+        pineappl_lumi_add(this->raw, n, pids.data(), weights.data());
     }
 
     /**
