@@ -12,12 +12,28 @@ jobs:
     container:
       image: docker://ghcr.io/n3pdf/maturin:0.2.1
     steps:
+      - name: Set Path
+        run: |
+          echo "PATH=${HOME}/local/bin:${HOME}/.cargo/bin:${PATH}" >> $GITHUB_ENV
+      - name: Clone repository
+        run: |
+          cd ${HOME}
+          # clone pineappl code
+          git clone https://github.com/N3PDF/pineappl.git
+      - name: Compile and Publish CLI wheels
+        working-directory: /home/pineappl
+        env:
+          HOME: /home/pineappl
+        run: |
+          cd ${HOME}/pineappl/pineappl_cli
+          maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }} -F fktable --no-sdist
       - name: Compile and Publish wheels
         working-directory: /home/pineappl
         env:
           HOME: /home/pineappl
         run: |
-          ~/maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }} --interpreter 3.7 3.8 3.9 3.10 pypy3.7
+          cd ${HOME}/pineappl/pineappl_py
+          maturin publish --skip-existing --username __token__ --password ${{ secrets.PYPI_TOKEN }} --interpreter 3.7 3.8 3.9 3.10 3.11 pypy3.7 pypy3.8 pypy 3.9
 
   deploy-other:
     strategy:
