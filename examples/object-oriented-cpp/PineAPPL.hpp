@@ -201,19 +201,17 @@ struct Grid {
             return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
         };
         // cast order_mask
-        bool* raw_order_mask = new bool[this->order_count()];
-        for (std::size_t j = 0; j < order_mask.size(); ++j)
-            raw_order_mask[j] = order_mask[j];
+        std::unique_ptr<bool[]> raw_order_mask(new bool[this->order_count()]);
+        std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
+        // cast lumi mask
         pineappl_lumi* l = pineappl_grid_lumi(this->raw);
         const std::size_t n_lumis = pineappl_lumi_count(l);
         pineappl_lumi_delete(l);
-        bool* raw_lumi_mask = new bool[n_lumis];
-        for (std::size_t j = 0; j < lumi_mask.size(); ++j)
-            raw_lumi_mask[j] = lumi_mask[j];
+        std::unique_ptr<bool[]> raw_lumi_mask(new bool[n_lumis]);
+        std::copy(lumi_mask.begin(), lumi_mask.end(), &raw_lumi_mask[0]);
+        // do it!
         std::vector<double> results(this->bin_count());
-        pineappl_grid_convolute_with_one(this->raw, pdg_id, xfx, alphas, pdf, raw_order_mask, raw_lumi_mask, xi_ren, xi_fac, results.data());
-        delete[] raw_order_mask;
-        delete[] raw_lumi_mask;
+        pineappl_grid_convolute_with_one(this->raw, pdg_id, xfx, alphas, pdf, raw_order_mask.get(), raw_lumi_mask.get(), xi_ren, xi_fac, results.data());
         return results;
     }
 
