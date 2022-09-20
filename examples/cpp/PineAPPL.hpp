@@ -20,7 +20,7 @@ struct KeyVal {
     pineappl_keyval *raw;
 
     /** @brief constructor */
-    KeyVal() { this->raw = pineappl_keyval_new(); }
+    KeyVal() : raw(pineappl_keyval_new()) {}
 
     /** @brief destructor */
     ~KeyVal() { pineappl_keyval_delete(this->raw); }
@@ -62,7 +62,7 @@ struct Lumi {
     pineappl_lumi *raw;
 
     /** @brief constructor */
-    Lumi(){ this->raw = pineappl_lumi_new(); }
+    Lumi() : raw(pineappl_lumi_new()) {}
 
     /** @brief destructor */
     ~Lumi(){ pineappl_lumi_delete(this->raw); }
