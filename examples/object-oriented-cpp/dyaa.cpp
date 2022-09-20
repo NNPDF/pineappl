@@ -109,12 +109,11 @@ int main() {
     std::vector<PineAPPL::Order> orders = {PineAPPL::Order {0,2,0,0}};
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
-    std::vector<double> bins;
-    double b = 0.;
-    for (size_t j = 0; j < 24+1; ++j) {
-        bins.push_back(b);
-        b += 0.1;
-    }
+    std::vector<double> bins = {
+        0.0,
+        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
+        1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4
+    };
 
     // create the PineAPPL grid with default interpolation and binning parameters
     PineAPPL::KeyVal kv;
