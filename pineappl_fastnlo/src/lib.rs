@@ -127,6 +127,8 @@ pub mod ffi {
         include!("fastnlotk/fastNLOCoeffBase.h");
 
         type fastNLOCoeffBase;
+
+        fn IsEnabled(&self) -> bool;
     }
 
     unsafe extern "C++" {

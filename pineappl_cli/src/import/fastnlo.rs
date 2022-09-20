@@ -416,7 +416,13 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
         // TODO: there doesn't seem to be a better way than trying an index and stopping whenever a
         // NULL pointer is returned
         let coeff_base = file_as_table.GetCoeffTable(id);
-        if coeff_base.is_null() {
+        let coeff_base = if let Some(x) = unsafe { coeff_base.as_ref() } {
+            x
+        } else {
+            break;
+        };
+
+        if !coeff_base.IsEnabled() {
             break;
         }
 
@@ -434,14 +440,15 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
                     let converted = unsafe { ffi::dynamic_cast_coeff_data(coeff_base) };
 
                     if converted.is_null() {
-                        unimplemented!();
+                        // this path shouldn't be reached, at least not with fastNLO 2.5.0 2826
+                        unreachable!();
                     } else {
                         // TODO: handle this case
-                        unimplemented!();
+                        todo!();
                     }
                 } else {
                     // TODO: handle this case
-                    unimplemented!();
+                    todo!();
                 }
             } else {
                 let mur_ff = file_as_reader.GetMuRFunctionalForm();
