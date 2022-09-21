@@ -5,9 +5,9 @@
 #ifndef PineAPPL_HPP_
 #define PineAPPL_HPP_
 
+#include <pineappl_capi.h>
 #include <LHAPDF/LHAPDF.h>
 #include <cstdint>
-#include <pineappl_capi.h>
 #include <string>
 #include <vector>
 #include <memory>
