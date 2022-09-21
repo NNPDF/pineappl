@@ -5,11 +5,10 @@
 #ifndef PineAPPL_HPP_
 #define PineAPPL_HPP_
 
-#include <string>
-#include <cstdint>
 #include <LHAPDF/LHAPDF.h>
-
+#include <cstdint>
 #include <pineappl_capi.h>
+#include <string>
 
 /** @brief object oriented interface to PineAPPL  */
 namespace PineAPPL {
@@ -21,6 +20,14 @@ struct KeyVal {
 
     /** @brief constructor */
     KeyVal() : raw(pineappl_keyval_new()) {}
+
+    KeyVal(const KeyVal&) = delete;
+
+    KeyVal(KeyVal&&) = delete;
+
+    KeyVal& operator=(const KeyVal&) = delete;
+
+    KeyVal& operator=(KeyVal&&) = delete;
 
     /** @brief destructor */
     ~KeyVal() { pineappl_keyval_delete(this->raw); }
@@ -63,6 +70,14 @@ struct Lumi {
 
     /** @brief constructor */
     Lumi() : raw(pineappl_lumi_new()) {}
+
+    Lumi(const Lumi&) = delete;
+
+    Lumi(Lumi&&) = delete;
+
+    Lumi& operator=(const Lumi&) = delete;
+
+    Lumi& operator=(Lumi&&) = delete;
 
     /** @brief destructor */
     ~Lumi(){ pineappl_lumi_delete(this->raw); }
@@ -133,6 +148,16 @@ struct Grid {
         this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders.data(), bin_limits.size() - 1, bin_limits.data(), key_val.raw);
     }
 
+    Grid() = delete;
+
+    Grid(const Grid&) = delete;
+
+    Grid(Grid&&) = delete;
+
+    Grid& operator=(const Grid&) = delete;
+
+    Grid& operator=(Grid&&) = delete;
+
     /** @brief destructor */
     ~Grid(){ pineappl_grid_delete(this->raw); }
 
@@ -186,13 +211,13 @@ struct Grid {
         };
         // cast order_mask
         std::unique_ptr<bool[]> raw_order_mask;
-        if (order_mask.size() > 0) {
+        if (!order_mask.empty()) {
             raw_order_mask = std::unique_ptr<bool[]> (new bool[order_mask.size()]);
             std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
         }
         // cast lumi mask
         std::unique_ptr<bool[]> raw_lumi_mask;
-        if (lumi_mask.size() > 0) {
+        if (!lumi_mask.empty()) {
             raw_lumi_mask = std::unique_ptr<bool[]>(new bool[lumi_mask.size()]);
             std::copy(lumi_mask.begin(), lumi_mask.end(), &raw_lumi_mask[0]);
         }
@@ -226,7 +251,7 @@ struct Grid {
      */
     std::string get_key_value(const std::string &key) const {
         auto* value = pineappl_grid_key_value(this->raw, key.c_str());
-        const std::string res(value);
+        std::string res(value);
         // delete the allocated object
         pineappl_string_delete(value);
         return res;
