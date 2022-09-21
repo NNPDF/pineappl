@@ -96,16 +96,16 @@ struct Lumi {
 /** @brief Coupling powers for each grid. */
 struct Order {
     /** @brief Exponent of the strong coupling. */
-    uint32_t alphas;
+    std::uint32_t alphas;
 
     /** @brief Exponent of the electromagnetic coupling. */
-    uint32_t alpha;
+    std::uint32_t alpha;
 
     /** @brief Exponent of the logarithm of the scale factor of the renomalization scale. */
-    uint32_t logxir;
+    std::uint32_t logxir;
 
     /** @brief Exponent of the logarithm of the scale factor of the factorization scale. */
-    uint32_t logxif;
+    std::uint32_t logxif;
 };
 
 struct Grid {
@@ -187,16 +187,13 @@ struct Grid {
         // cast order_mask
         std::unique_ptr<bool[]> raw_order_mask;
         if (order_mask.size() > 0) {
-            raw_order_mask = std::unique_ptr<bool[]> (new bool[this->order_count()]);
+            raw_order_mask = std::unique_ptr<bool[]> (new bool[order_mask.size()]);
             std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
         }
         // cast lumi mask
-        pineappl_lumi* l = pineappl_grid_lumi(this->raw);
-        const std::size_t n_lumis = pineappl_lumi_count(l);
-        pineappl_lumi_delete(l);
         std::unique_ptr<bool[]> raw_lumi_mask;
         if (lumi_mask.size() > 0) {
-            raw_lumi_mask = std::unique_ptr<bool[]>(new bool[n_lumis]);
+            raw_lumi_mask = std::unique_ptr<bool[]>(new bool[lumi_mask.size()]);
             std::copy(lumi_mask.begin(), lumi_mask.end(), &raw_lumi_mask[0]);
         }
         // do it!
