@@ -16,7 +16,7 @@
 //! on the github page.
 //!
 //! [`PineAPPL`]: https://docs.rs/pineappl
-//! [C++ example]: https://github.com/N3PDF/pineappl/tree/master/examples/cpp
+//! [C++ example]: https://github.com/N3PDF/pineappl/tree/master/examples/basic-capi-usage
 //! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
 //! [issue]: https://github.com/N3PDF/pineappl/issues
 //!

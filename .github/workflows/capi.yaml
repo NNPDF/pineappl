@@ -27,9 +27,9 @@ jobs:
         run: |
           cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
 
-      - name: Test C++ example
+      - name: Test C example
         run: |
-          cd examples/cpp
+          cd examples/basic-capi-usage
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
@@ -37,6 +37,13 @@ jobs:
       - name: Test Fortran example
         run: |
           cd examples/fortran
+          make
+          ./dyaa
+          test -f ./DY-LO-AA.pineappl.lz4
+
+      - name: Test C++ example
+        run: |
+          cd examples/object-oriented-cpp
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
