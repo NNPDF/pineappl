@@ -125,10 +125,10 @@ int main() {
     // perform a convolution of the grid with PDFs
     std::unique_ptr<LHAPDF::PDF> pdf (LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
     std::vector<double> dxsec = grid.convolute_with_one(2212, *pdf.get());
-    
+
     // print the results
-    for (std::size_t j = 0; j != 24; ++j) {
-        std::printf("%02u %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
+    for (std::size_t j = 0; j != dxsec.size(); ++j) {
+        std::printf("%02zu %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
     }
 
     // store some metadata in the grid
@@ -139,7 +139,7 @@ int main() {
     std::printf("Finished running %s events.\n", value.c_str());
 
     // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    std::string filename = "DY-LO-AA.pineappl.lz4";
+    const std::string filename = "DY-LO-AA.pineappl.lz4";
     grid.write(filename);
 
     std::printf("Generated %s containing a a -> l+ l-.\n\n"
