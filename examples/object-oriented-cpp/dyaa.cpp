@@ -123,8 +123,8 @@ int main() {
     fill_grid(grid, 10000000);
 
     // perform a convolution of the grid with PDFs
-    auto* pdf = LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0);
-    std::vector<double> dxsec = grid.convolute_with_one(2212, pdf);
+    std::unique_ptr<LHAPDF::PDF> pdf (LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
+    std::vector<double> dxsec = grid.convolute_with_one(2212, *pdf.get());
     
     // print the results
     for (std::size_t j = 0; j != 24; ++j) {
