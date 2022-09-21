@@ -126,7 +126,7 @@ fn import_fix_grid() {
         .args(&[
             "--silence-lhapdf",
             "import",
-            "--silence-fastnlo",
+            "--silence-libraries",
             "data/NJetEvents_0-0-2.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",

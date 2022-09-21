@@ -1,5 +1,5 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -198,13 +198,8 @@ impl Subcommand for Opts {
                 false,
             );
 
-            if results.len() != reference_results.len() {
-                bail!(
-                    "grids have different number of bins: {} (input) vs {} (output)",
-                    reference_results.len(),
-                    results.len()
-                );
-            }
+            // if both grids don't have the same number of bins there's bug in the program
+            assert_eq!(results.len(), reference_results.len());
 
             let mut table = helpers::create_table();
             table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);

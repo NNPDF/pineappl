@@ -119,11 +119,11 @@ impl Subcommand for Opts {
             bail!("bins limits differ");
         }
 
-        if grid1.bin_info().bins() != grid2.bin_info().bins() {
+        if self.ignore_bin_limits && (grid1.bin_info().bins() != grid2.bin_info().bins()) {
             bail!("number of bins differ");
         }
 
-        if (grid1.lumi() != grid2.lumi()) && !self.ignore_lumis {
+        if !self.ignore_lumis && (grid1.lumi() != grid2.lumi()) {
             bail!("luminosities differ");
         }
 
