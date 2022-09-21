@@ -39,6 +39,19 @@ const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty
 7    4  4.5 1.3772029e1    -3.46     2.85
 ";
 
+const FORCE_POSITIVE_STR: &str = "b   etal    disg/detal  scale uncertainty
+     []        [pb]            [%]       
+-+----+----+-----------+--------+--------
+0    2 2.25 3.7528881e2    -3.76     2.71
+1 2.25  2.5 3.4523428e2    -3.79     2.80
+2  2.5 2.75 3.0004398e2    -3.78     2.86
+3 2.75    3 2.4262216e2    -3.77     2.91
+4    3 3.25 1.8101238e2    -3.74     2.94
+5 3.25  3.5 1.2304887e2    -3.69     2.96
+6  3.5    4 5.8141170e1    -3.60     2.92
+7    4  4.5 1.4224044e1    -3.39     2.74
+";
+
 const DEFAULT_MULTIPLE_PDFS_STR: &str =
     "b   etal    disg/detal  scale uncertainty NNPDF31_nlo_as_0118_luxqed 
      []        [pb]            [%]                 [pb] [%]          
@@ -198,6 +211,22 @@ fn default() {
 }
 
 #[test]
+fn force_positive() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "--force-positive",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(FORCE_POSITIVE_STR);
+}
+
+#[test]
 fn default_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -206,7 +235,7 @@ fn default_multiple_pdfs() {
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
-            "NNPDF31_nlo_as_0118_luxqed",
+            "324900=NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()

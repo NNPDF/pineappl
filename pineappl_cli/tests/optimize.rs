@@ -29,7 +29,8 @@ fn help() {
 
 #[test]
 fn default() {
-    let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+    // use `.pineappl` extension without `.lz4` to test `Grid::write` without compresssion
+    let output = NamedTempFile::new("optimized.pineappl").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()

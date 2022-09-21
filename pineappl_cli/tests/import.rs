@@ -106,6 +106,13 @@ const IMPORT_NEW_APPLGRID_STR: &str = "b   PineAPPL    APPLgrid     rel. diff
 10 5.9810718e2 5.9810718e2  2.4424907e-15
 ";
 
+const IMPORT_FILE_FORMAT_FAILURE_STR: &str = "Error: could not detect file format
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_GRID_COMPARISON_FAILURE_STR: &str = "Error: grids are different
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -276,4 +283,39 @@ fn import_new_applgrid() {
         .assert()
         .success()
         .stdout(IMPORT_NEW_APPLGRID_STR);
+}
+
+#[test]
+fn import_file_format_failure() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "import",
+            "file-doesnt.exist",
+            "no.output",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(IMPORT_FILE_FORMAT_FAILURE_STR);
+}
+
+#[test]
+#[cfg(feature = "fastnlo")]
+fn import_grid_comparison_failure() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "import",
+            "--accuracy=0",
+            "--silence-libraries",
+            "data/NJetEvents_0-0-2.tab.gz",
+            "this-file-wont-be-writen",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(IMPORT_GRID_COMPARISON_FAILURE_STR)
+        .stdout(IMPORT_FIX_GRID_STR);
 }

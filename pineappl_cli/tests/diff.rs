@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "pineappl-diff 
 Compares the numerical content of two grids with each other
@@ -74,6 +75,18 @@ const SCALE2_2_STR: &str = "b    x1                O(as^0 a^2)                  
 5 3.25  3.5 1.0384063e2 2.0768125e2 -5.000e-1 -8.0459807e-1  -1.6091961e0 -5.000e-1 1.9875123e1 3.9750247e1 -5.000e-1
 6  3.5    4 4.8383606e1 9.6767212e1 -5.000e-1 -4.4462513e-1 -8.8925027e-1 -5.000e-1 9.9120372e0 1.9824074e1 -5.000e-1
 7    4  4.5 1.1185365e1 2.2370731e1 -5.000e-1 -1.0948700e-1 -2.1897400e-1 -5.000e-1 2.6961509e0 5.3923018e0 -5.000e-1
+";
+
+const ORDERS_DIFFER_STR: &str = "Error: selected orders differ
+";
+
+const BIN_LIMITS_DIFFER_STR: &str = "Error: bins limits differ
+";
+
+const BIN_NUMBER_DIFFERS_STR: &str = "Error: number of bins differ
+";
+
+const LUMIS_DIFFER_STR: &str = "Error: luminosities differ
 ";
 
 #[test]
@@ -155,4 +168,102 @@ fn scale2_2() {
         .assert()
         .success()
         .stdout(SCALE2_2_STR);
+}
+
+#[test]
+fn orders_differ() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "diff",
+            "--orders1=a2",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(ORDERS_DIFFER_STR)
+        .stdout("");
+}
+
+#[test]
+fn bin_limits_differ() {
+    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "remap",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "0,1,2,3,4,5,6,7,8",
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "diff",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(BIN_LIMITS_DIFFER_STR)
+        .stdout("");
+}
+
+#[test]
+fn bin_number_differs() {
+    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "delete",
+            "--bins=0,1",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "diff",
+            "--ignore-bin-limits",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(BIN_NUMBER_DIFFERS_STR)
+        .stdout("");
+}
+
+#[test]
+fn lumis_differ() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "diff",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "data/LHCB_WP_7TEV_new.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(LUMIS_DIFFER_STR)
+        .stdout("");
 }
