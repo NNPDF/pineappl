@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <pineappl_capi.h>
 #include <string>
+#include <vector>
+#include <memory>
+#include <algorithm>
 
 /** @brief object oriented interface to PineAPPL  */
 namespace PineAPPL {
