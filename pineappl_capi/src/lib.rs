@@ -7,7 +7,7 @@
 //! functions that allow one to use [`PineAPPL`] without having to write Rust code, and instead
 //! using
 //!
-//! * C or C++ (see the [C example] in the repository).
+//! * C or C++ (see the [C++ example] in the repository).
 //! * Fortran can be used as well, using the `iso_c_binding` module to wrap CAPI's functions (see
 //!   the [Fortran example] in the repository).
 //!
@@ -16,7 +16,7 @@
 //! on the github page.
 //!
 //! [`PineAPPL`]: https://docs.rs/pineappl
-//! [C example]: https://github.com/N3PDF/pineappl/tree/master/examples/basic-capi-usage
+//! [C++ example]: https://github.com/N3PDF/pineappl/tree/master/examples/basic-capi-usage
 //! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
 //! [issue]: https://github.com/N3PDF/pineappl/issues
 //!
