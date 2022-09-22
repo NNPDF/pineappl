@@ -88,5 +88,5 @@ fn main() {
     println!("cargo:rerun-if-changed=src/applgrid.cpp");
     println!("cargo:rerun-if-changed=src/applgrid.hpp");
     println!("cargo:rerun-if-changed=src/calculation.hpp");
-    println!("cargo:rerun-if-changed=src/check_appl_igrid_dir.cpp");
+    println!("cargo:rerun-if-changed=src/check_appl_igrid.cpp");
 }
