@@ -128,7 +128,7 @@ fn convert_grid(
     Err(anyhow!("could not detect file format"))
 }
 
-/// Converts fastNLO/FastKernel tables to PineAPPL grids.
+/// Converts APPLgrid/fastNLO/FastKernel tables to PineAPPL grids.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
