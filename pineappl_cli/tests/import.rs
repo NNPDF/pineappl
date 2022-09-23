@@ -4,7 +4,7 @@ use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "pineappl-import 
-Converts fastNLO/FastKernel tables to PineAPPL grids
+Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
 USAGE:
     pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
