@@ -1792,7 +1792,7 @@ impl Grid {
                                     tgt_x2_grid.clone(),
                                 )
                                 .into(),
-                                SubgridEnum::ImportOnlySubgridV1(ref mut array) => {
+                                SubgridEnum::ImportOnlySubgridV2(ref mut array) => {
                                     let array = array.array_mut();
 
                                     for ((_, tgt_x1_idx, tgt_x2_idx), &value) in
