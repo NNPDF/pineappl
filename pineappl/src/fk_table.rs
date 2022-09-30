@@ -49,7 +49,7 @@ pub enum TryFromGridError {
 /// tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy quarks are
 /// typically set to zero at this scale or set to the same value as their anti-quark PDF. This is
 /// used to optimize the size of FK tables.
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FkAssumptions {
     /// All quark PDFs are non-zero at the FK table scale and completely independent.
     Nf6Ind,
@@ -74,7 +74,7 @@ pub enum FkAssumptions {
 }
 
 /// Error type when trying to construct [`FkAssumptions`] with a string.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 #[error("unknown variant for FkAssumptions: {variant}")]
 pub struct UnknownFkAssumption {
     variant: String,
@@ -471,5 +471,40 @@ impl TryFrom<Grid> for FkTable {
         }
 
         Ok(Self { grid })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fk_assumptions_try_from() {
+        assert_eq!(FkAssumptions::try_from("Nf6Ind"), Ok(FkAssumptions::Nf6Ind));
+        assert_eq!(FkAssumptions::try_from("Nf6Sym"), Ok(FkAssumptions::Nf6Sym));
+        assert_eq!(FkAssumptions::try_from("Nf5Ind"), Ok(FkAssumptions::Nf5Ind));
+        assert_eq!(FkAssumptions::try_from("Nf5Sym"), Ok(FkAssumptions::Nf5Sym));
+        assert_eq!(FkAssumptions::try_from("Nf4Ind"), Ok(FkAssumptions::Nf4Ind));
+        assert_eq!(FkAssumptions::try_from("Nf4Sym"), Ok(FkAssumptions::Nf4Sym));
+        assert_eq!(FkAssumptions::try_from("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
+        assert_eq!(FkAssumptions::try_from("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
+        assert_eq!(
+            FkAssumptions::try_from("XXXXXX"),
+            Err(UnknownFkAssumption {
+                variant: "XXXXXX".to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn fk_assumptions_display() {
+        assert_eq!(format!("{}", FkAssumptions::Nf6Ind), "Nf6Ind");
+        assert_eq!(format!("{}", FkAssumptions::Nf6Sym), "Nf6Sym");
+        assert_eq!(format!("{}", FkAssumptions::Nf5Ind), "Nf5Ind");
+        assert_eq!(format!("{}", FkAssumptions::Nf5Sym), "Nf5Sym");
+        assert_eq!(format!("{}", FkAssumptions::Nf4Ind), "Nf4Ind");
+        assert_eq!(format!("{}", FkAssumptions::Nf4Sym), "Nf4Sym");
+        assert_eq!(format!("{}", FkAssumptions::Nf3Ind), "Nf3Ind");
+        assert_eq!(format!("{}", FkAssumptions::Nf3Sym), "Nf3Sym");
     }
 }
