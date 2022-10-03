@@ -224,15 +224,24 @@ fn import_hadronic_fktable() {
         .success()
         .stdout(IMPORT_HADRONIC_FKTABLE_STR);
 
-    use pineappl::fk_table::FkTable;
+    use lhapdf::Pdf;
+    use pineappl::fk_table::{FkAssumptions, FkTable};
     use pineappl::grid::Grid;
+    use pineappl::lumi::LumiCache;
     use std::fs::File;
 
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 
     let file = File::open(output.path()).unwrap();
     let grid = Grid::read(file).unwrap();
-    let fk_table = FkTable::try_from(grid).unwrap();
+
+    let pdf = Pdf::with_setname_and_member("NNPDF31_nlo_as_0118_luxqed", 0).unwrap();
+    let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas = |_| 0.0;
+    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
+    let results = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+
+    let mut fk_table = FkTable::try_from(grid).unwrap();
 
     assert_eq!(fk_table.bins(), 1);
     assert_eq!(fk_table.bin_normalizations(), [1.0]);
@@ -247,8 +256,9 @@ fn import_hadronic_fktable() {
         fk_table.key_values().unwrap()["initial_state_2"],
         "2212".to_string()
     );
+    let lumi = fk_table.lumi();
     assert_eq!(
-        fk_table.lumi(),
+        lumi,
         [
             (100, 100),
             (100, 21),
@@ -331,6 +341,128 @@ fn import_hadronic_fktable() {
             0.8011891117676506,
             0.8666785643244361,
             0.9329776879738404
+        ]
+    );
+
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+
+    fk_table.optimize(FkAssumptions::Nf6Ind);
+    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+    fk_table.optimize(FkAssumptions::Nf6Sym);
+    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+    fk_table.optimize(FkAssumptions::Nf5Ind);
+    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+    fk_table.optimize(FkAssumptions::Nf5Sym);
+    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+    fk_table.optimize(FkAssumptions::Nf4Ind);
+    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+
+    fk_table.optimize(FkAssumptions::Nf4Sym);
+    assert_eq!(
+        fk_table.lumi(),
+        [
+            (100, 100),
+            (100, 21),
+            (100, 203),
+            (100, 208),
+            (100, 200),
+            (100, 103),
+            (100, 108),
+            (100, 115),
+            (21, 21),
+            (21, 203),
+            (21, 208),
+            (21, 200),
+            (21, 103),
+            (21, 108),
+            (21, 115),
+            (200, 203),
+            (200, 208),
+            (203, 203),
+            (203, 208),
+            (203, 103),
+            (203, 108),
+            (203, 115),
+            (208, 208),
+            (208, 103),
+            (208, 108),
+            (208, 115),
+            (200, 200),
+            (200, 103),
+            (200, 108),
+            (200, 115),
+            (103, 103),
+            (103, 108),
+            (103, 115),
+            (108, 108),
+            (108, 115),
+            (115, 115)
+        ]
+    );
+    fk_table.optimize(FkAssumptions::Nf3Ind);
+    assert_eq!(
+        fk_table.lumi(),
+        [
+            (100, 21),
+            (100, 203),
+            (100, 208),
+            (100, 200),
+            (100, 103),
+            (100, 108),
+            (21, 21),
+            (21, 203),
+            (21, 208),
+            (21, 200),
+            (21, 103),
+            (21, 108),
+            (200, 203),
+            (200, 208),
+            (203, 203),
+            (203, 208),
+            (203, 103),
+            (203, 108),
+            (208, 208),
+            (208, 103),
+            (208, 108),
+            (200, 200),
+            (200, 103),
+            (200, 108),
+            (103, 103),
+            (103, 108),
+            (108, 108),
+            (100, 100)
+        ]
+    );
+    fk_table.optimize(FkAssumptions::Nf3Sym);
+    assert_eq!(
+        fk_table.lumi(),
+        [
+            (100, 21),
+            (100, 203),
+            (100, 200),
+            (100, 103),
+            (100, 108),
+            (21, 21),
+            (21, 203),
+            (21, 200),
+            (21, 103),
+            (21, 108),
+            (200, 203),
+            (203, 203),
+            (203, 103),
+            (203, 108),
+            (200, 200),
+            (200, 103),
+            (200, 108),
+            (103, 103),
+            (103, 108),
+            (108, 108),
+            (100, 100)
         ]
     );
 }
