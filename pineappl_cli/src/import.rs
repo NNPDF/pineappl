@@ -88,14 +88,14 @@ fn convert_fastnlo(
 }
 
 #[cfg(feature = "fktable")]
-fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
-    let fktable = fktable::convert_fktable(input)?;
+fn convert_fktable(input: &Path, dis_pid: i32) -> Result<(&'static str, Grid, Vec<f64>)> {
+    let fktable = fktable::convert_fktable(input, dis_pid)?;
 
     Ok(("fktable", fktable, vec![]))
 }
 
 #[cfg(not(feature = "fktable"))]
-fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>)> {
+fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -119,7 +119,7 @@ fn convert_grid(
         {
             return convert_fastnlo(input, alpha, pdfset, member, dis_pid, silence_libraries);
         } else if extension == "dat" {
-            return convert_fktable(input);
+            return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
             return convert_applgrid(input, alpha, pdfset, member, dis_pid, silence_libraries);
         }

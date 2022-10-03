@@ -23,7 +23,7 @@ enum FkTableSection {
     FastKernel,
 }
 
-fn read_fktable(reader: impl BufRead) -> Result<Grid> {
+fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
     let mut section = FkTableSection::SOF;
     let mut flavor_mask = Vec::<bool>::new();
     let mut x_grid = Vec::new();
@@ -86,12 +86,11 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         })
                         .collect()
                 } else {
-                    // TODO: for DIS we assume the second particle to be a lepton
                     flavor_mask
                         .iter()
                         .enumerate()
                         .filter_map(|(index, value)| {
-                            value.then(|| lumi_entry![basis[index], 11, 1.0])
+                            value.then(|| lumi_entry![basis[index], dis_pid, 1.0])
                         })
                         .collect()
                 };
@@ -114,14 +113,13 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                     .key_values_mut()
                     .insert("lumi_id_types".to_string(), "evol".to_string());
 
-                // TODO: generalize this
                 fktable
                     .key_values_mut()
                     .insert("initial_state_1".to_string(), "2212".to_string());
                 if !hadronic {
                     fktable
                         .key_values_mut()
-                        .insert("initial_state_2".to_string(), "11".to_string());
+                        .insert("initial_state_2".to_string(), dis_pid.to_string());
                 }
 
                 grid = Some(fktable);
@@ -253,7 +251,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
     Ok(grid)
 }
 
-pub fn convert_fktable(input: &Path) -> Result<Grid> {
+pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
     let reader = GzDecoder::new(File::open(input)?);
 
     let mut archive = Archive::new(reader);
@@ -264,7 +262,7 @@ pub fn convert_fktable(input: &Path) -> Result<Grid> {
 
         if let Some(extension) = path.extension() {
             if extension == "dat" {
-                return read_fktable(BufReader::new(file));
+                return read_fktable(BufReader::new(file), dis_pid);
             }
         }
     }
