@@ -73,7 +73,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                 nx2 = if hadronic { nx1 } else { 1 };
 
-                // TODO: are FK tables always in the flavor basis?
+                // FK tables are always in the flavor basis
                 let basis = vec![
                     22, 100, 21, 200, 203, 208, 215, 224, 235, 103, 108, 115, 124, 135,
                 ];

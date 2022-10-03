@@ -284,96 +284,57 @@ impl FkTable {
     ///
     /// TODO
     pub fn optimize(&mut self, assumptions: FkAssumptions) {
-        let flavor_basis = match self.grid.key_values().unwrap()["lumi_id_types"].as_str() {
-            "pdg_mc_ids" => true,
-            "evol" => false,
-            _ => unimplemented!(),
-        };
-
         let mut add = Vec::new();
-        let mut del = Vec::new();
 
-        if flavor_basis {
-            match assumptions {
-                FkAssumptions::Nf6Ind => {
-                    // nothing to do here
-                }
-                FkAssumptions::Nf6Sym => {
-                    add.push((-6, 6));
-                }
-                FkAssumptions::Nf5Ind => {
-                    del.extend_from_slice(&[-6, 6]);
-                }
-                FkAssumptions::Nf5Sym => {
-                    add.push((-5, 5));
-                    del.extend_from_slice(&[-6, 6]);
-                }
-                FkAssumptions::Nf4Ind => {
-                    del.extend_from_slice(&[-6, 6, -5, 5]);
-                }
-                FkAssumptions::Nf4Sym => {
-                    add.push((-4, 4));
-                    del.extend_from_slice(&[-6, 6, -5, 5]);
-                }
-                FkAssumptions::Nf3Ind => {
-                    del.extend_from_slice(&[-6, 6, -5, 5, -4, 4]);
-                }
-                FkAssumptions::Nf3Sym => {
-                    add.push((-3, 3));
-                    del.extend_from_slice(&[-6, 6, -5, 5, -4, 4]);
-                }
+        match assumptions {
+            FkAssumptions::Nf6Ind => {
+                // nothing to do here
             }
-        } else {
-            match assumptions {
-                FkAssumptions::Nf6Ind => {
-                    // nothing to do here
-                }
-                FkAssumptions::Nf6Sym => {
-                    add.push((235, 200));
-                }
-                FkAssumptions::Nf5Ind => {
-                    add.extend_from_slice(&[(235, 200), (135, 100)]);
-                }
-                FkAssumptions::Nf5Sym => {
-                    add.extend_from_slice(&[(235, 200), (135, 100), (224, 200)]);
-                }
-                FkAssumptions::Nf4Ind => {
-                    add.extend_from_slice(&[(235, 200), (135, 100), (224, 200), (124, 100)]);
-                }
-                FkAssumptions::Nf4Sym => {
-                    add.extend_from_slice(&[
-                        (235, 200),
-                        (135, 100),
-                        (224, 200),
-                        (124, 100),
-                        (215, 200),
-                    ]);
-                }
-                FkAssumptions::Nf3Ind => {
-                    add.extend_from_slice(&[
-                        (235, 200),
-                        (135, 100),
-                        (224, 200),
-                        (124, 100),
-                        (215, 200),
-                        (115, 100),
-                    ]);
-                }
-                FkAssumptions::Nf3Sym => {
-                    add.extend_from_slice(&[
-                        (235, 200),
-                        (135, 100),
-                        (224, 200),
-                        (124, 100),
-                        (215, 200),
-                        (115, 100),
-                        (208, 200),
-                    ]);
-                }
+            FkAssumptions::Nf6Sym => {
+                add.push((235, 200));
+            }
+            FkAssumptions::Nf5Ind => {
+                add.extend_from_slice(&[(235, 200), (135, 100)]);
+            }
+            FkAssumptions::Nf5Sym => {
+                add.extend_from_slice(&[(235, 200), (135, 100), (224, 200)]);
+            }
+            FkAssumptions::Nf4Ind => {
+                add.extend_from_slice(&[(235, 200), (135, 100), (224, 200), (124, 100)]);
+            }
+            FkAssumptions::Nf4Sym => {
+                add.extend_from_slice(&[
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                ]);
+            }
+            FkAssumptions::Nf3Ind => {
+                add.extend_from_slice(&[
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                ]);
+            }
+            FkAssumptions::Nf3Sym => {
+                add.extend_from_slice(&[
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                    (208, 200),
+                ]);
             }
         }
 
-        self.grid.rewrite_lumi(&add, &del);
+        self.grid.rewrite_lumi(&add, &[]);
 
         // store the assumption so that we can check it later on
         self.grid
