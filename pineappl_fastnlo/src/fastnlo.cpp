@@ -23,11 +23,6 @@ rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
     return result;
 }
 
-rust::Vec<double> GetMultFactor(fastNLOCoeffMult const& coeffs)
-{
-    return std_vector_to_rust_vec(coeffs.GetMultFactor());
-}
-
 rust::Vec<double> CalcPDFLinearCombination(
     fastNLOPDFLinearCombinations const& lc,
     fastNLOCoeffAddBase const& base,
@@ -102,11 +97,6 @@ rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
     // if we don't unconditionally silence LHAPDF in fastNLO its header will be shown twice
     LHAPDF::setVerbosity(0);
     return std_vector_to_rust_vec(reader.GetCrossSection(lNorm));
-}
-
-rust::Vec<double> GetBinSize(fastNLOTable const& table)
-{
-    return std_vector_to_rust_vec(table.GetBinSize());
 }
 
 rust::Vec<double> GetScaleNodes1(fastNLOCoeffAddFlex const& coeffs, int iObsBin)

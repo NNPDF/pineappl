@@ -30,8 +30,6 @@ rust::Vec<double> CalcPDFLinearCombination(
     bool pdf2IsAntiParticle
 );
 
-rust::Vec<double> GetMultFactor(fastNLOCoeffMult const& coeffs);
-
 rust::Vec<double> GetScaleNodes(fastNLOCoeffAddFix const& coeffs, int iObs, int iSvar);
 
 rust::Vec<double> GetXNodes1(fastNLOCoeffAddBase const& coeffs, int iObsBin);
@@ -39,8 +37,6 @@ rust::Vec<double> GetXNodes1(fastNLOCoeffAddBase const& coeffs, int iObsBin);
 rust::Vec<double> GetXNodes2(fastNLOCoeffAddBase const& coeffs, int iObsBin);
 
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm);
-
-rust::Vec<double> GetBinSize(fastNLOTable const& table);
 
 rust::Vec<double> GetScaleNodes1(fastNLOCoeffAddFlex const& coeffs, int iObsBin);
 

@@ -22,24 +22,6 @@ pub mod ffi {
         kConst,
     }
 
-    #[namespace = "fastNLO"]
-    #[repr(u32)]
-    enum ESMCalculation {
-        kFixedOrder = 0,
-        kThresholdCorrection = 1,
-        kElectroWeakCorrection = 2,
-        kNonPerturbativeCorrection = 3,
-        kContactInteraction = 10,
-    }
-
-    #[namespace = "fastNLO"]
-    #[repr(u32)]
-    enum ESMOrder {
-        kLeading,
-        kNextToLeading,
-        kNextToNextToLeading,
-    }
-
     struct pair_double_double {
         first: f64,
         second: f64,
@@ -138,7 +120,6 @@ pub mod ffi {
 
         fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
         fn GetMuFFunctionalForm(&self) -> EScaleFunctionalForm;
-        fn ContrId(&self, _: ESMCalculation, _: ESMOrder) -> i32;
     }
 
     unsafe extern "C++" {
@@ -186,9 +167,7 @@ pub mod ffi {
             _: bool,
         ) -> Vec<f64>;
 
-        fn GetBinSize(_: &fastNLOTable) -> Vec<f64>;
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
-        fn GetMultFactor(_: &fastNLOCoeffMult) -> Vec<f64>;
         fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
         fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
         fn GetPDFCoeff(_: &fastNLOCoeffAddBase, index: usize) -> Vec<pair_int_int>;
