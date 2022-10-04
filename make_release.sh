@@ -100,8 +100,9 @@ sleep 60
 
 echo ">>> Publishing crate 'pineappl_capi' ..."
 
-cd ../pineappl_capi
+cd pineappl_capi
 cargo publish
+cd ..
 
 echo ">>> Publishing crate 'pineappl_cli' ..."
 
