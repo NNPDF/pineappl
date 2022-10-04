@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 04/10/2022
+
 ### Added
 
 - added `--dis-pid` switch to `import` subcommand
@@ -304,7 +306,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.6...HEAD
+[0.5.6]: https://github.com/N3PDF/pineappl/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/N3PDF/pineappl/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/N3PDF/pineappl/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/N3PDF/pineappl/compare/v0.5.2...v0.5.3
