@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 05/10/2022
+
 ### Fixed
 
 - the importer did not depend on the right versions of `pineappl_applgrid` and
@@ -311,7 +313,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.6...HEAD
+[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/N3PDF/pineappl/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/N3PDF/pineappl/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/N3PDF/pineappl/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/N3PDF/pineappl/compare/v0.5.3...v0.5.4
