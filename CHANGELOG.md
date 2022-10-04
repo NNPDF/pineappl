@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- the importer did not depend on the right versions of `pineappl_applgrid` and
+  `pineappl_fastnlo`
+
 ## [0.5.6] - 04/10/2022
 
 ### Added
