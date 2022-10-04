@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added `--dis-pid` switch to `import` subcommand
+- added `--no-optimize` switch to `import` subcommand
+
+### Changed
+
+- improved documentation
+- changed `--silence-fastnlo` to `--silence-libraries`, which now silences also
+  APPLgrid
+- improved `import` converter, which now is able to convert most APPLgrids and
+  fastNLO tables on ploughshare
+
+### Fixed
+
+- fixed corner cases of the `REMAPPING` string that were handled incorrectly
+- made most tests of `pineappl` integration tests, which resolves that problem
+  that `cargo build` had to be called before
+- fixed problem in `Grid::convolute_eko` that lead to wrong result when
+  subgrids had different x-grids
+
 ## [0.5.5] - 25/08/2022
 
 ### Added
