@@ -1932,11 +1932,13 @@ impl Grid {
         let operators: Vec<_> = pid_indices
             .iter()
             .map(|&(pid0_idx, pid1_idx)| {
-                operator
+                let mut op = operator
                     .slice(s![.., pid1_idx, .., pid0_idx, ..])
-                    .permuted_axes([0, 2, 1])
-                    .as_standard_layout()
-                    .into_owned()
+                    .permuted_axes([0, 2, 1]);
+                // TODO: implement the general case in which the process-scale x-grid points are
+                // correctly chosen
+                op.invert_axis(Axis(2));
+                op.as_standard_layout().into_owned()
             })
             .collect();
 
