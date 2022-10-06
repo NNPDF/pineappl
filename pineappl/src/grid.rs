@@ -1872,28 +1872,37 @@ impl Grid {
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        // TODO: here we assume that we convolute with two PDFs
-
         // TODO: convert these to errors
+        if operator.dim().0 != info.fac1.len() {
+            todo!();
+        }
+
         if operator.dim().1 != info.pids1.len() {
             todo!();
         }
 
         if operator.dim().3 != info.pids0.len() {
-            todo!()
+            todo!();
         }
 
+        let x1 = self
+            .subgrids
+            .iter()
+            .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
+            .unwrap_or_default();
+
+        // TODO: if all subgrids are empty return an empty FkTable
+        if x1.is_empty() {
+            todo!();
+        }
+
+        // TODO: here we assume that we convolute with two PDFs
         // TODO: for the time being we assume that all x-grids are the same - lift this restriction
         assert!(self
             .subgrids
             .iter()
-            .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
-            .chain(
-                self.subgrids
-                    .iter()
-                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
-            )
-            .all_equal());
+            .any(|subgrid| subgrid.is_empty()
+                || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
 
         // list of all non-zero PID indices
         let pid_indices: Vec<_> = (0..operator.dim().3)
