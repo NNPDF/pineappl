@@ -2766,6 +2766,7 @@ mod tests {
     #[test]
     #[ignore]
     fn grid_convolute_eko_for_lhcbwp8tev() {
+        use float_cmp::assert_approx_eq;
         use lhapdf::Pdf;
         use ndarray::{Array1, Array5};
         use std::fs::File;
@@ -2861,18 +2862,13 @@ mod tests {
         //    .write(File::create("fk_table.pineappl").unwrap())
         //    .unwrap();
 
-        assert_eq!(
-            evolved_results,
-            [
-                1526.1321420502966,
-                1380.605564314246,
-                1182.565055380693,
-                947.3266541818663,
-                702.6776451873732,
-                477.8683182368509,
-                229.2748278368886,
-                58.35460083148634
-            ]
-        );
+        assert_approx_eq!(f64, evolved_results[0], 1526.1321420502966, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[1], 1380.605564314246, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[2], 1182.565055380693, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[3], 947.3266541818663, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[4], 702.6776451873732, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[5], 477.8683182368509, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[6], 229.2748278368886, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[7], 58.35460083148634, ulps = 8);
     }
 }
