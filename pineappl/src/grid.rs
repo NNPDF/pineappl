@@ -1865,7 +1865,10 @@ impl Grid {
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
     /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
     /// are enabled, and in particular if `order_mask` is empty all orders are activated.
-    #[must_use]
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn evolve(
         &self,
         operator: &Array5<f64>,
@@ -1917,7 +1920,7 @@ impl Grid {
                     && self
                         .lumi
                         .iter()
-                        .flat_map(|lumi| lumi.entry())
+                        .flat_map(LumiEntry::entry)
                         .any(|&(a, b, _)| a == info.pids1[pid1_idx] || b == info.pids1[pid1_idx])
             })
             .collect();
@@ -1945,7 +1948,7 @@ impl Grid {
         mem::drop(pid_indices);
 
         let mut pids0_filtered: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
-        pids0_filtered.sort();
+        pids0_filtered.sort_unstable();
         pids0_filtered.dedup();
         let pids0_filtered = pids0_filtered;
 
@@ -2010,17 +2013,17 @@ impl Grid {
                     if order.logxir > 0 {
                         if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
                             continue;
-                        } else {
-                            logs *= (info.xir * info.xir).ln();
                         }
+
+                        logs *= (info.xir * info.xir).ln();
                     }
 
                     if order.logxif > 0 {
                         if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
                             continue;
-                        } else {
-                            logs *= (info.xif * info.xif).ln();
                         }
+
+                        logs *= (info.xif * info.xif).ln();
                     }
 
                     for ((imu2, ix1, ix2), value) in subgrid.iter() {
@@ -2090,7 +2093,7 @@ impl Grid {
             // TODO: to reduce memory footprint convert the ndarrays here
         }
 
-        let mut grid = Grid {
+        let mut grid = Self {
             subgrids: Array::from_iter(sub_fk_tables.into_iter().map(|table| {
                 ImportOnlySubgridV2::new(
                     SparseArray3::from_ndarray(&table.insert_axis(Axis(0)), 0, 1),
