@@ -1872,17 +1872,17 @@ impl Grid {
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        // TODO: convert these to errors
+        // TODO: improve the error message information
         if operator.dim().0 != info.fac1.len() {
-            todo!();
+            return Err(GridError::EvolutionFailure);
         }
 
         if operator.dim().1 != info.pids1.len() {
-            todo!();
+            return Err(GridError::EvolutionFailure);
         }
 
         if operator.dim().3 != info.pids0.len() {
-            todo!();
+            return Err(GridError::EvolutionFailure);
         }
 
         let x1 = self
@@ -2038,8 +2038,8 @@ impl Grid {
                             }) {
                             alphas.powi(order.alphas.try_into().unwrap())
                         } else {
-                            // TODO: return an error that no alphas was found
-                            todo!();
+                            // TODO: improve this error message
+                            return Err(GridError::EvolutionFailure);
                         };
 
                         let mu2_index = fac
