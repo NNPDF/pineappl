@@ -2793,7 +2793,7 @@ mod tests {
 
         let grid = Grid::read(File::open(grid).unwrap()).unwrap();
 
-        let lhapdf = Pdf::with_setname_and_nmem("NNPDF40_nnlo_as_01180").unwrap();
+        let lhapdf = Pdf::with_setname_and_nmem("NNPDF40_nlo_as_01180").unwrap();
         let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
         let mut als = |q2| lhapdf.alphas_q2(q2);
         let mut cache = LumiCache::with_one(2212, &mut pdf, &mut als);
@@ -2802,20 +2802,23 @@ mod tests {
         assert_eq!(
             results,
             [
-                890.2387443571963,
-                835.660120450909,
-                746.6184824761646,
-                625.2924916248973,
-                485.015536246328,
-                344.90077665184435,
-                175.56380647931934,
-                48.34350718500204
+                877.9498750860583,
+                823.5123400865052,
+                735.605093586326,
+                616.3465722662226,
+                478.63703336207277,
+                341.06729874517384,
+                174.3688634669724,
+                48.27440593682665
             ]
         );
 
         let metadata: Metadata = serde_yaml::from_reader(File::open(metadata).unwrap()).unwrap();
         let alphas: Array1<f64> = ndarray_npy::read_npy(alphas).unwrap();
-        let alphas: Vec<f64> = alphas.to_vec();
+        let alphas = alphas.to_vec();
+        let operator: Array5<f64> = ndarray_npy::read_npy(operator).unwrap();
+
+        assert_eq!(operator.dim(), (1, 14, 50, 14, 50));
 
         let info = OperatorInfo {
             fac1: metadata.q2_grid.clone(),
@@ -2825,36 +2828,47 @@ mod tests {
             x1: metadata.targetgrid,
             fac0: metadata.q2_ref,
             ren1: metadata.q2_grid, // TODO: check whether this is true in the general case
-            alphas,
+            alphas: alphas,
             xir: 1.0,
             xif: 1.0,
-            lumi_id_types: String::from("pdg_mc_ids"),
+            lumi_id_types: "pdg_mc_ids".to_string(),
         };
-        let operator: Array5<f64> = ndarray_npy::read_npy(operator).unwrap();
 
-        assert_eq!(operator.dim(), (1, 14, 50, 14, 50));
+        //let mut grid_axes = grid.axes().unwrap();
+        //grid_axes.pids = metadata.targetpids.clone(); // TODO: which one them?
+        //let eko_info = EkoInfo {
+        //    muf2_0: metadata.q2_ref,
+        //    alphas,
+        //    xir: 1.0,
+        //    xif: 1.0,
+        //    target_x_grid: metadata.inputgrid,
+        //    target_pids: metadata.targetpids,
+        //    grid_axes,
+        //    lumi_id_types: "pdg_mc_ids".to_string(),
+        //};
 
+        //let fk_table = grid.convolute_eko(operator, eko_info, &[]).unwrap();
         let fk_table = grid.evolve(&operator, &info, &[]).unwrap();
 
         let evolved_results = fk_table
             .grid()
             .convolute(&mut cache, &[], &[], &[], &[(1.0, 1.0)]);
 
-        fk_table
-            .write(File::create("fk_table.pineappl").unwrap())
-            .unwrap();
+        //fk_table
+        //    .write(File::create("fk_table.pineappl").unwrap())
+        //    .unwrap();
 
         assert_eq!(
             evolved_results,
             [
-                1487.9078765387771,
-                1345.6851727580326,
-                1153.200724621109,
-                924.9096054295742,
-                686.8280502253064,
-                467.0606813737761,
-                222.82409765430953,
-                55.01443172570564
+                1526.1321420502966,
+                1380.605564314246,
+                1182.565055380693,
+                947.3266541818663,
+                702.6776451873732,
+                477.8683182368509,
+                229.2748278368886,
+                58.35460083148634
             ]
         );
     }
