@@ -1931,17 +1931,39 @@ impl Grid {
             .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
             .collect();
 
+        // permutation between the grid x values and the operator x1 values
+        let x1_indices: Vec<_> = if let Some(x1_indices) = x1
+            .iter()
+            .map(|&x1p| {
+                info.x1
+                    .iter()
+                    .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 4))
+            })
+            .collect()
+        {
+            x1_indices
+        } else {
+            // TODO: return better error - operator x1 values don't match grid's x1 values
+            return Err(GridError::EvolutionFailure);
+        };
+
         // create the corresponding operators accessible in the form [muf2, x0, x1]
         let operators: Vec<_> = pid_indices
             .iter()
             .map(|&(pid0_idx, pid1_idx)| {
-                let mut op = operator
+                let mut op = Array3::zeros((operator.dim().0, x1.len(), x1.len()));
+                // TODO: there must be better way than manually copying every entry
+                for ((i, j, k), &value) in operator
                     .slice(s![.., pid1_idx, .., pid0_idx, ..])
-                    .permuted_axes([0, 2, 1]);
-                // TODO: implement the general case in which the process-scale x-grid points are
-                // correctly chosen
-                op.invert_axis(Axis(2));
-                op.as_standard_layout().into_owned()
+                    .permuted_axes([0, 2, 1])
+                    .indexed_iter()
+                {
+                    // TODO: this doesn't work as soon as bins have different x1 grids because we
+                    // optimized the size of the EKO using a trick - figure out the trick and fix
+                    // this
+                    op[[i, j, x1_indices[k]]] = value;
+                }
+                op
             })
             .collect();
 
