@@ -1974,25 +1974,12 @@ impl Grid {
             .enumerate()
         {
             for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-                let mut fac: Vec<_> = subgrids_o
-                    .iter()
-                    .flat_map(|subgrid| {
-                        subgrid
-                            .mu2_grid()
-                            .iter()
-                            .map(|mu2| mu2.fac)
-                            .collect::<Vec<_>>()
-                    })
-                    .collect();
-                fac.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                fac.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 4));
-                let fac = fac;
-
                 let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
                     (!subgrid.is_empty())
                         .then(|| (subgrid.x1_grid().len(), subgrid.x2_grid().len()))
                 }) {
-                    Array3::<f64>::zeros((fac.len(), nx1, nx2))
+                    // TODO: in this way we allocate not the minimum number of dimensions
+                    Array3::<f64>::zeros((info.fac1.len(), nx1, nx2))
                 } else {
                     // `find_map` may fail if all grids are empty
                     break;
@@ -2045,7 +2032,8 @@ impl Grid {
                             return Err(GridError::EvolutionFailure);
                         };
 
-                        let mu2_index = fac
+                        let mu2_index = info
+                            .fac1
                             .iter()
                             .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 4))
                             .unwrap();
