@@ -16,7 +16,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, Array5, Axis, Dimension};
+use ndarray::{s, Array, Array2, Array3, Array5, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -263,6 +263,9 @@ pub enum GridError {
         /// Maximum supported file format version for this library.
         supported_version: u64,
     },
+    /// Returned from [`Grid::evolve`] if the evolution failed.
+    #[error("TODO")]
+    EvolutionFailure,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -382,6 +385,46 @@ pub struct EkoInfo {
     /// axes shared with the process grid
     pub grid_axes: GridAxes,
     /// TODO: replace this member with the actual data
+    pub lumi_id_types: String,
+}
+
+/// Information about the evolution kernel operator (EKO) passed to [`Grid::evolve`] as `operator`,
+/// which is used to convert a [`Grid`] into an [`FkTable`]. The dimensions of the EKO must
+/// correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`], exactly in
+/// this order. Members with a `1` are defined at the squared factorization scales given in
+/// [`fac1`] (often called process scales) and are found in the [`Grid`] that [`Grid::evolve`] is
+/// called with and members with a `0` are defined at the squared factorization scale [`fac0`]
+/// (often called fitting scale or starting scale) that defines the resulting [`FkTable`].
+///
+/// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
+/// possibly different basis given by [`pids0`]. This basis must also be identified using
+/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The
+/// members [`ren1`] and [`alphas`] must be the strong couplings given at the respective
+/// renormalization scales. Finally, [`xir`] and [`xif`] must
+pub struct OperatorInfo {
+    /// Squared factorization scales of the `Grid`.
+    pub fac1: Vec<f64>,
+    /// Particle identifiers of the `FkTable`.
+    pub pids0: Vec<i32>,
+    /// `x`-grid coordinates of the `FkTable`
+    pub x0: Vec<f64>,
+    /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
+    /// given here, the contributions of them are silently ignored.
+    pub pids1: Vec<i32>,
+    /// `x`-grid coordinates of the `Grid`.
+    pub x1: Vec<f64>,
+
+    /// Squared factorization scale of the `FkTable`.
+    pub fac0: f64,
+    /// Renormalization scales of the `Grid`.
+    pub ren1: Vec<f64>,
+    /// Strong couplings corresponding to the order given in [`ren1`].
+    pub alphas: Vec<f64>,
+    /// Multiplicative factor for the central renormalization scale.
+    pub xir: f64,
+    /// Multiplicative factor for the central factorization scale.
+    pub xif: f64,
+    /// Identifier of the particle basis for the `FkTable`.
     pub lumi_id_types: String,
 }
 
@@ -1815,6 +1858,260 @@ impl Grid {
         FkTable::try_from(result).ok()
     }
 
+    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
+    /// `operator`. The dimensions and properties of this operator must be described using `info`.
+    /// The parameter `order_mask` can be used to include or exclude orders from this operation,
+    /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
+    /// are enabled, and in particular if `order_mask` is empty all orders are activated.
+    #[must_use]
+    pub fn evolve(
+        &self,
+        operator: &Array5<f64>,
+        info: &OperatorInfo,
+        order_mask: &[bool],
+    ) -> Result<FkTable, GridError> {
+        // naming convention: whenever an index has `0` in its name, it's meant to index something
+        // at fitting scale (at Q0), and when instead it has `1` it denotes something at a process
+        // scale
+
+        // TODO: here we assume that we convolute with two PDFs
+
+        // TODO: convert these to errors
+        if operator.dim().1 != info.pids1.len() {
+            todo!();
+        }
+
+        if operator.dim().3 != info.pids0.len() {
+            todo!()
+        }
+
+        // TODO: for the time being we assume that all x-grids are the same - lift this restriction
+        assert!(self
+            .subgrids
+            .iter()
+            .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
+            .chain(
+                self.subgrids
+                    .iter()
+                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
+            )
+            .all_equal());
+
+        // list of all non-zero PID indices
+        let pid_indices: Vec<_> = (0..operator.dim().3)
+            .cartesian_product(0..operator.dim().1)
+            .filter(|&(pid0_idx, pid1_idx)| {
+                // 1) at least one element of the operator must be non-zero, and 2) the pid must be
+                // contained in the lumi somewhere
+                operator
+                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
+                    .iter()
+                    .any(|&value| value != 0.0)
+                    && self
+                        .lumi
+                        .iter()
+                        .flat_map(|lumi| lumi.entry())
+                        .any(|&(a, b, _)| a == info.pids1[pid1_idx] || b == info.pids1[pid1_idx])
+            })
+            .collect();
+
+        // list of all non-zero PIDs
+        let pids: Vec<_> = pid_indices
+            .iter()
+            .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
+            .collect();
+
+        // create the corresponding operators accessible in the form [muf2, x0, x1]
+        let operators: Vec<_> = pid_indices
+            .iter()
+            .map(|&(pid0_idx, pid1_idx)| {
+                operator
+                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
+                    .permuted_axes([0, 2, 1])
+                    .as_standard_layout()
+                    .into_owned()
+            })
+            .collect();
+
+        mem::drop(pid_indices);
+
+        let mut pids0_filtered: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
+        pids0_filtered.sort();
+        pids0_filtered.dedup();
+        let pids0_filtered = pids0_filtered;
+
+        let lumi0: Vec<_> = pids0_filtered
+            .iter()
+            .copied()
+            .cartesian_product(pids0_filtered.iter().copied())
+            .collect();
+
+        mem::drop(pids0_filtered);
+
+        //println!("{:#?}", lumi0);
+
+        let mut sub_fk_tables =
+            Array2::from_shape_simple_fn((self.bin_info().bins(), lumi0.len()), || {
+                Array2::zeros((info.x0.len(), info.x0.len()))
+            });
+
+        for (_bin, (subgrids_ol, mut tables)) in self
+            .subgrids
+            .axis_iter(Axis(1))
+            .zip(sub_fk_tables.axis_iter_mut(Axis(0)))
+            .enumerate()
+        {
+            for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+                let mut fac: Vec<_> = subgrids_o
+                    .iter()
+                    .flat_map(|subgrid| {
+                        subgrid
+                            .mu2_grid()
+                            .iter()
+                            .map(|mu2| mu2.fac)
+                            .collect::<Vec<_>>()
+                    })
+                    .collect();
+                fac.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                fac.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 4));
+                let fac = fac;
+
+                let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
+                    (!subgrid.is_empty())
+                        .then(|| (subgrid.x1_grid().len(), subgrid.x2_grid().len()))
+                }) {
+                    Array3::<f64>::zeros((fac.len(), nx1, nx2))
+                } else {
+                    // `find_map` may fail if all grids are empty
+                    break;
+                };
+
+                // add subgrids for different orders, but the same bin and lumi, using the right
+                // couplings
+                for (subgrid, order) in subgrids_o
+                    .iter()
+                    .zip(self.orders.iter())
+                    .zip(order_mask.iter().chain(iter::repeat(&true)))
+                    .filter_map(|((subgrid, order), &enabled)| {
+                        (enabled && !subgrid.is_empty()).then(|| (subgrid, order))
+                    })
+                {
+                    let mut logs = 1.0;
+
+                    if order.logxir > 0 {
+                        if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
+                            continue;
+                        } else {
+                            logs *= (info.xir * info.xir).ln();
+                        }
+                    }
+
+                    if order.logxif > 0 {
+                        if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
+                            continue;
+                        } else {
+                            logs *= (info.xif * info.xif).ln();
+                        }
+                    }
+
+                    for ((imu2, ix1, ix2), value) in subgrid.iter() {
+                        let Mu2 {
+                            ren: mur2,
+                            fac: muf2,
+                        } = subgrid.mu2_grid()[imu2];
+
+                        let als = if let Some(alphas) = info
+                            .ren1
+                            .iter()
+                            .zip(info.alphas.iter())
+                            .find_map(|(&ren1, &alphas)| {
+                                approx_eq!(f64, ren1, mur2, ulps = 4).then(|| alphas)
+                            }) {
+                            alphas.powi(order.alphas.try_into().unwrap())
+                        } else {
+                            // TODO: return an error that no alphas was found
+                            todo!();
+                        };
+
+                        let mu2_index = fac
+                            .iter()
+                            .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 4))
+                            .unwrap();
+
+                        array[[mu2_index, ix1, ix2]] += als * logs * value;
+                    }
+                }
+
+                //println!("bin = {}, lumi = {}", bin, lumi1);
+
+                for &(pida1, pidb1, factor) in self.lumi[lumi1].entry() {
+                    //println!("-- pida1 = {}, pidb1 = {}", pida1, pidb1);
+
+                    for (/*pida0, pidb0,*/ fk_table, opa, opb) in lumi0
+                        .iter()
+                        .zip(tables.iter_mut())
+                        .filter_map(|(&(pida0, pidb0), fk_table)| {
+                            pids.iter()
+                                .zip(operators.iter())
+                                .cartesian_product(pids.iter().zip(operators.iter()))
+                                .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
+                                    (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
+                                        .then(|| (opa, opb))
+                                })
+                                .map(|(opa, opb)| (/*pida0, pidb0,*/ fk_table, opa, opb))
+                        })
+                    {
+                        //println!("evolve {} -> {}, {} -> {}", pida1, pida0, pidb1, pidb0);
+
+                        let mut result = Array2::zeros((array.dim().1, array.dim().2));
+
+                        for imu2 in 0..array.dim().0 {
+                            let opa = opa.index_axis(Axis(0), imu2);
+                            let opb = opb.index_axis(Axis(0), imu2);
+                            let arr = array.index_axis(Axis(0), imu2);
+
+                            result += &opa.dot(&arr.dot(&opb.t()));
+                        }
+
+                        fk_table.scaled_add(factor, &result);
+                    }
+                }
+            }
+
+            // TODO: to reduce memory footprint convert the ndarrays here
+        }
+
+        let mut grid = Grid {
+            subgrids: Array::from_iter(sub_fk_tables.into_iter().map(|table| {
+                ImportOnlySubgridV2::new(
+                    SparseArray3::from_ndarray(&table.insert_axis(Axis(0)), 0, 1),
+                    vec![Mu2 {
+                        // TODO: FK tables don't depend on the renormalization scale
+                        //ren: -1.0,
+                        ren: info.fac0,
+                        fac: info.fac0,
+                    }],
+                    info.x0.clone(),
+                    info.x0.clone(),
+                )
+                .into()
+            }))
+            .into_shape((1, self.bin_info().bins(), lumi0.len()))
+            .unwrap(),
+            lumi: lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order::new(0, 0, 0, 0)],
+            subgrid_params: SubgridParams::default(),
+            more_members: self.more_members.clone(),
+        };
+
+        // write additional metadata
+        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
+
+        // TODO: convert unwrap to error
+        Ok(FkTable::try_from(grid).unwrap())
+    }
+
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
     /// equal the bin length are ignored.
     pub fn delete_bins(&mut self, bin_indices: &[usize]) {
@@ -2452,5 +2749,104 @@ mod tests {
         let fk = grid.convolute_eko(operator, eko_info, &[]).unwrap();
 
         assert_eq!(fk.bins(), 1);
+    }
+
+    #[test]
+    #[ignore]
+    fn grid_convolute_eko_for_lhcbwp8tev() {
+        use lhapdf::Pdf;
+        use ndarray::{Array1, Array5};
+        use std::fs::File;
+
+        let grid = "../LHCB_WP_8TEV.pineappl.lz4";
+        let metadata = "../LHCB_WP_8TEV/metadata.yaml";
+        let alphas = "../LHCB_WP_8TEV/alphas.npy";
+        let operator = "../LHCB_WP_8TEV/operators.npy";
+
+        #[derive(Deserialize)]
+        struct Metadata {
+            #[serde(rename = "Q2grid")]
+            q2_grid: Vec<f64>,
+            #[allow(dead_code)]
+            eko_version: String,
+            inputgrid: Vec<f64>,
+            inputpids: Vec<i32>,
+            #[allow(dead_code)]
+            interpolation_is_log: bool,
+            #[allow(dead_code)]
+            interpolation_polynomial_degree: usize,
+            #[allow(dead_code)]
+            interpolation_xgrid: Vec<f64>,
+            q2_ref: f64,
+            targetgrid: Vec<f64>,
+            targetpids: Vec<i32>,
+        }
+
+        let grid = Grid::read(File::open(grid).unwrap()).unwrap();
+
+        let lhapdf = Pdf::with_setname_and_nmem("NNPDF40_nnlo_as_01180").unwrap();
+        let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
+        let mut als = |q2| lhapdf.alphas_q2(q2);
+        let mut cache = LumiCache::with_one(2212, &mut pdf, &mut als);
+        let results = grid.convolute(&mut cache, &[], &[], &[], &[(1.0, 1.0)]);
+
+        assert_eq!(
+            results,
+            [
+                890.2387443571963,
+                835.660120450909,
+                746.6184824761646,
+                625.2924916248973,
+                485.015536246328,
+                344.90077665184435,
+                175.56380647931934,
+                48.34350718500204
+            ]
+        );
+
+        let metadata: Metadata = serde_yaml::from_reader(File::open(metadata).unwrap()).unwrap();
+        let alphas: Array1<f64> = ndarray_npy::read_npy(alphas).unwrap();
+        let alphas: Vec<f64> = alphas.to_vec();
+
+        let info = OperatorInfo {
+            fac1: metadata.q2_grid.clone(),
+            pids0: metadata.inputpids,
+            x0: metadata.inputgrid,
+            pids1: metadata.targetpids,
+            x1: metadata.targetgrid,
+            fac0: metadata.q2_ref,
+            ren1: metadata.q2_grid, // TODO: check whether this is true in the general case
+            alphas,
+            xir: 1.0,
+            xif: 1.0,
+            lumi_id_types: String::from("pdg_mc_ids"),
+        };
+        let operator: Array5<f64> = ndarray_npy::read_npy(operator).unwrap();
+
+        assert_eq!(operator.dim(), (1, 14, 50, 14, 50));
+
+        let fk_table = grid.evolve(&operator, &info, &[]).unwrap();
+
+        let evolved_results = fk_table
+            .grid()
+            .convolute(&mut cache, &[], &[], &[], &[(1.0, 1.0)]);
+
+        fk_table
+            .write(File::create("fk_table.pineappl").unwrap())
+            .unwrap();
+
+        assert_eq!(
+            evolved_results,
+            [
+                1487.9078765387771,
+                1345.6851727580326,
+                1153.200724621109,
+                924.9096054295742,
+                686.8280502253064,
+                467.0606813737761,
+                222.82409765430953,
+                55.01443172570564
+            ]
+        );
     }
 }
