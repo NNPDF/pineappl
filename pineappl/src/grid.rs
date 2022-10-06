@@ -1904,7 +1904,7 @@ impl Grid {
         assert!(self
             .subgrids
             .iter()
-            .any(|subgrid| subgrid.is_empty()
+            .all(|subgrid| subgrid.is_empty()
                 || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
 
         // list of all non-zero PID indices
