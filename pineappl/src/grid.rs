@@ -393,14 +393,16 @@ pub struct EkoInfo {
 /// correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`], exactly in
 /// this order. Members with a `1` are defined at the squared factorization scales given in
 /// [`fac1`] (often called process scales) and are found in the [`Grid`] that [`Grid::evolve`] is
-/// called with and members with a `0` are defined at the squared factorization scale [`fac0`]
-/// (often called fitting scale or starting scale) that defines the resulting [`FkTable`].
+/// called with. Members with a `0` are defined at the squared factorization scale [`fac0`] (often
+/// called fitting scale or starting scale) and are found in the [`FkTable`] resulting from
+/// [`Grid::evolve`].
 ///
 /// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
 /// possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The
-/// members [`ren1`] and [`alphas`] must be the strong couplings given at the respective
-/// renormalization scales. Finally, [`xir`] and [`xif`] must
+/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The members
+/// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
+/// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
+/// scales, respectively, around their central values.
 pub struct OperatorInfo {
     /// Squared factorization scales of the `Grid`.
     pub fac1: Vec<f64>,
@@ -1870,10 +1872,6 @@ impl Grid {
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        // naming convention: whenever an index has `0` in its name, it's meant to index something
-        // at fitting scale (at Q0), and when instead it has `1` it denotes something at a process
-        // scale
-
         // TODO: here we assume that we convolute with two PDFs
 
         // TODO: convert these to errors
