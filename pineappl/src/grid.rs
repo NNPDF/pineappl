@@ -1952,16 +1952,9 @@ impl Grid {
             .iter()
             .map(|&(pid0_idx, pid1_idx)| {
                 let mut op = Array3::zeros((operator.dim().0, x1.len(), x1.len()));
-                // TODO: there must be better way than manually copying every entry
-                for ((i, j, k), &value) in operator
-                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
-                    .permuted_axes([0, 2, 1])
-                    .indexed_iter()
-                {
-                    // TODO: this doesn't work as soon as bins have different x1 grids because we
-                    // optimized the size of the EKO using a trick - figure out the trick and fix
-                    // this
-                    op[[i, j, x1_indices[k]]] = value;
+                for (op_index, &x1_index) in x1_indices.iter().enumerate() {
+                    op.slice_mut(s![.., .., op_index])
+                        .assign(&operator.slice(s![.., pid1_idx, x1_index, pid0_idx, ..]));
                 }
                 op
             })
