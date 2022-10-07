@@ -1884,7 +1884,15 @@ impl Grid {
             return Err(GridError::EvolutionFailure);
         }
 
+        if operator.dim().2 != info.x1.len() {
+            return Err(GridError::EvolutionFailure);
+        }
+
         if operator.dim().3 != info.pids0.len() {
+            return Err(GridError::EvolutionFailure);
+        }
+
+        if operator.dim().4 != info.x0.len() {
             return Err(GridError::EvolutionFailure);
         }
 
