@@ -1974,25 +1974,37 @@ impl Grid {
             .all(|subgrid| subgrid.is_empty()
                 || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
 
-        let (pids, operators) = Self::pids_operators(operator, info, &x1, &|pid1| {
+        let (pids_a, operators_a) = Self::pids_operators(operator, info, &x1, &|pid1| {
             self.lumi
                 .iter()
                 .flat_map(LumiEntry::entry)
-                .any(|&(a, b, _)| a == pid1 || b == pid1)
+                .any(|&(a, _, _)| a == pid1)
         })?;
 
-        let mut pids0_filtered: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
-        pids0_filtered.sort_unstable();
-        pids0_filtered.dedup();
-        let pids0_filtered = pids0_filtered;
+        let (pids_b, operators_b) = Self::pids_operators(operator, info, &x1, &|pid1| {
+            self.lumi
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(_, b, _)| b == pid1)
+        })?;
 
-        let lumi0: Vec<_> = pids0_filtered
+        let mut pids0_a_filtered: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
+        pids0_a_filtered.sort_unstable();
+        pids0_a_filtered.dedup();
+        let pids0_a_filtered = pids0_a_filtered;
+        let mut pids0_b_filtered: Vec<_> = pids_b.iter().map(|&(pid0, _)| pid0).collect();
+        pids0_b_filtered.sort_unstable();
+        pids0_b_filtered.dedup();
+        let pids0_b_filtered = pids0_b_filtered;
+
+        let lumi0: Vec<_> = pids0_a_filtered
             .iter()
             .copied()
-            .cartesian_product(pids0_filtered.iter().copied())
+            .cartesian_product(pids0_b_filtered.iter().copied())
             .collect();
 
-        mem::drop(pids0_filtered);
+        mem::drop(pids0_a_filtered);
+        mem::drop(pids0_b_filtered);
 
         //println!("{:#?}", lumi0);
 
@@ -2085,9 +2097,10 @@ impl Grid {
                         .iter()
                         .zip(tables.iter_mut())
                         .filter_map(|(&(pida0, pidb0), fk_table)| {
-                            pids.iter()
-                                .zip(operators.iter())
-                                .cartesian_product(pids.iter().zip(operators.iter()))
+                            pids_a
+                                .iter()
+                                .zip(operators_a.iter())
+                                .cartesian_product(pids_b.iter().zip(operators_b.iter()))
                                 .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
                                     (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
                                         .then(|| (opa, opb))
