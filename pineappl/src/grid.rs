@@ -1860,6 +1860,65 @@ impl Grid {
         FkTable::try_from(result).ok()
     }
 
+    // TODO: move this function into a separate module
+    fn pids_operators(
+        operator: &Array5<f64>,
+        info: &OperatorInfo,
+        x1: &[f64],
+        pid1_nonzero: &dyn Fn(i32) -> bool,
+    ) -> Result<(Vec<(i32, i32)>, Vec<Array3<f64>>), GridError> {
+        // list of all non-zero PID indices
+        let pid_indices: Vec<_> = (0..operator.dim().3)
+            .cartesian_product(0..operator.dim().1)
+            .filter(|&(pid0_idx, pid1_idx)| {
+                // 1) at least one element of the operator must be non-zero, and 2) the pid must be
+                // contained in the lumi somewhere
+                operator
+                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
+                    .iter()
+                    .any(|&value| value != 0.0)
+                    && pid1_nonzero(info.pids1[pid1_idx])
+            })
+            .collect();
+
+        // list of all non-zero PIDs
+        let pids: Vec<_> = pid_indices
+            .iter()
+            .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
+            .collect();
+
+        // permutation between the grid x values and the operator x1 values
+        let x1_indices: Vec<_> = if let Some(x1_indices) = x1
+            .iter()
+            .map(|&x1p| {
+                info.x1
+                    .iter()
+                    .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 4))
+            })
+            .collect()
+        {
+            x1_indices
+        } else {
+            // TODO: return better error - operator x1 values don't match grid's x1 values
+            return Err(GridError::EvolutionFailure);
+        };
+
+        // create the corresponding operators accessible in the form [muf2, x0, x1]
+        let operators: Vec<_> = pid_indices
+            .iter()
+            .map(|&(pid0_idx, pid1_idx)| {
+                let mut op = Array3::zeros((operator.dim().0, x1.len(), x1.len()));
+                for (op_index, &x1_index) in x1_indices.iter().enumerate() {
+                    op.slice_mut(s![.., .., op_index])
+                        .assign(&operator.slice(s![.., pid1_idx, x1_index, pid0_idx, ..]));
+                }
+                op
+            })
+            .collect();
+
+        Ok((pids, operators))
+    }
+
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
     /// `operator`. The dimensions and properties of this operator must be described using `info`.
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
@@ -1915,60 +1974,12 @@ impl Grid {
             .all(|subgrid| subgrid.is_empty()
                 || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
 
-        // list of all non-zero PID indices
-        let pid_indices: Vec<_> = (0..operator.dim().3)
-            .cartesian_product(0..operator.dim().1)
-            .filter(|&(pid0_idx, pid1_idx)| {
-                // 1) at least one element of the operator must be non-zero, and 2) the pid must be
-                // contained in the lumi somewhere
-                operator
-                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
-                    .iter()
-                    .any(|&value| value != 0.0)
-                    && self
-                        .lumi
-                        .iter()
-                        .flat_map(LumiEntry::entry)
-                        .any(|&(a, b, _)| a == info.pids1[pid1_idx] || b == info.pids1[pid1_idx])
-            })
-            .collect();
-
-        // list of all non-zero PIDs
-        let pids: Vec<_> = pid_indices
-            .iter()
-            .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
-            .collect();
-
-        // permutation between the grid x values and the operator x1 values
-        let x1_indices: Vec<_> = if let Some(x1_indices) = x1
-            .iter()
-            .map(|&x1p| {
-                info.x1
-                    .iter()
-                    .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 4))
-            })
-            .collect()
-        {
-            x1_indices
-        } else {
-            // TODO: return better error - operator x1 values don't match grid's x1 values
-            return Err(GridError::EvolutionFailure);
-        };
-
-        // create the corresponding operators accessible in the form [muf2, x0, x1]
-        let operators: Vec<_> = pid_indices
-            .iter()
-            .map(|&(pid0_idx, pid1_idx)| {
-                let mut op = Array3::zeros((operator.dim().0, x1.len(), x1.len()));
-                for (op_index, &x1_index) in x1_indices.iter().enumerate() {
-                    op.slice_mut(s![.., .., op_index])
-                        .assign(&operator.slice(s![.., pid1_idx, x1_index, pid0_idx, ..]));
-                }
-                op
-            })
-            .collect();
-
-        mem::drop(pid_indices);
+        let (pids, operators) = Self::pids_operators(operator, info, &x1, &|pid1| {
+            self.lumi
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(a, b, _)| a == pid1 || b == pid1)
+        })?;
 
         let mut pids0_filtered: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
         pids0_filtered.sort_unstable();
