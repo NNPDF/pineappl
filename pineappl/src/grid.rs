@@ -2026,7 +2026,7 @@ impl Grid {
                         .iter()
                         .zip(info.alphas.iter())
                         .find_map(|(&ren1, &alphas)| {
-                            approx_eq!(f64, ren1, mur2, ulps = 4).then(|| alphas)
+                            approx_eq!(f64, ren1, mur2, ulps = 64).then(|| alphas)
                         }) {
                     alphas.powi(order.alphas.try_into().unwrap())
                 } else {
@@ -2040,7 +2040,7 @@ impl Grid {
                 let mu2_index = info
                     .fac1
                     .iter()
-                    .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 4))
+                    .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 64))
                     .unwrap();
 
                 array[[mu2_index, xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
