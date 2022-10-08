@@ -2006,18 +2006,15 @@ impl Grid {
         mem::drop(pids0_a_filtered);
         mem::drop(pids0_b_filtered);
 
-        //println!("{:#?}", lumi0);
-
         let mut sub_fk_tables =
             Array2::from_shape_simple_fn((self.bin_info().bins(), lumi0.len()), || {
                 Array2::zeros((info.x0.len(), info.x0.len()))
             });
 
-        for (_bin, (subgrids_ol, mut tables)) in self
+        for (subgrids_ol, mut tables) in self
             .subgrids
             .axis_iter(Axis(1))
             .zip(sub_fk_tables.axis_iter_mut(Axis(0)))
-            .enumerate()
         {
             for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
                 let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
@@ -2088,15 +2085,9 @@ impl Grid {
                     }
                 }
 
-                //println!("bin = {}, lumi = {}", bin, lumi1);
-
                 for &(pida1, pidb1, factor) in self.lumi[lumi1].entry() {
-                    //println!("-- pida1 = {}, pidb1 = {}", pida1, pidb1);
-
-                    for (/*pida0, pidb0,*/ fk_table, opa, opb) in lumi0
-                        .iter()
-                        .zip(tables.iter_mut())
-                        .filter_map(|(&(pida0, pidb0), fk_table)| {
+                    for (fk_table, opa, opb) in lumi0.iter().zip(tables.iter_mut()).filter_map(
+                        |(&(pida0, pidb0), fk_table)| {
                             pids_a
                                 .iter()
                                 .zip(operators_a.iter())
@@ -2105,11 +2096,9 @@ impl Grid {
                                     (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
                                         .then(|| (opa, opb))
                                 })
-                                .map(|(opa, opb)| (/*pida0, pidb0,*/ fk_table, opa, opb))
-                        })
-                    {
-                        //println!("evolve {} -> {}, {} -> {}", pida1, pida0, pidb1, pidb0);
-
+                                .map(|(opa, opb)| (fk_table, opa, opb))
+                        },
+                    ) {
                         let mut result = Array2::zeros((array.dim().1, array.dim().2));
 
                         for imu2 in 0..array.dim().0 {
