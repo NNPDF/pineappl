@@ -1861,12 +1861,11 @@ impl Grid {
     }
 
     // TODO: move this function into a separate module
-    fn pids_operators(
+    fn pids(
         operator: &Array5<f64>,
         info: &OperatorInfo,
-        x1: &[f64],
         pid1_nonzero: &dyn Fn(i32) -> bool,
-    ) -> Result<(Vec<(i32, i32)>, Vec<Array3<f64>>), GridError> {
+    ) -> (Vec<(usize, usize)>, Vec<(i32, i32)>) {
         // list of all non-zero PID indices
         let pid_indices: Vec<_> = (0..operator.dim().3)
             .cartesian_product(0..operator.dim().1)
@@ -1881,12 +1880,38 @@ impl Grid {
             })
             .collect();
 
-        // list of all non-zero PIDs
-        let pids: Vec<_> = pid_indices
+        // list of all non-zero (pid0, pid1) combinations
+        let pids = pid_indices
             .iter()
             .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
             .collect();
 
+        (pid_indices, pids)
+    }
+
+    // TODO: move this function into a separate module
+    fn lumi0(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
+        let mut pids0_a: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
+        pids0_a.sort_unstable();
+        pids0_a.dedup();
+        let mut pids0_b: Vec<_> = pids_b.iter().map(|&(pid0, _)| pid0).collect();
+        pids0_b.sort_unstable();
+        pids0_b.dedup();
+
+        pids0_a
+            .iter()
+            .copied()
+            .cartesian_product(pids0_b.iter().copied())
+            .collect()
+    }
+
+    // TODO: move this function into a separate module
+    fn operators(
+        operator: &Array5<f64>,
+        info: &OperatorInfo,
+        pid_indices: &[(usize, usize)],
+        x1: &[f64],
+    ) -> Result<Vec<Array3<f64>>, GridError> {
         // permutation between the grid x values and the operator x1 values
         let x1_indices: Vec<_> = if let Some(x1_indices) = x1
             .iter()
@@ -1918,7 +1943,7 @@ impl Grid {
             })
             .collect();
 
-        Ok((pids, operators))
+        Ok(operators)
     }
 
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
@@ -1953,6 +1978,21 @@ impl Grid {
             )));
         }
 
+        let (pid_indices_a, pids_a) = Self::pids(operator, info, &|pid1| {
+            self.lumi
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(a, _, _)| a == pid1)
+        });
+        let (pid_indices_b, pids_b) = Self::pids(operator, info, &|pid1| {
+            self.lumi
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(_, b, _)| b == pid1)
+        });
+
+        let lumi0 = Self::lumi0(&pids_a, &pids_b);
+
         let x1 = self
             .subgrids
             .iter()
@@ -1972,37 +2012,8 @@ impl Grid {
             .all(|subgrid| subgrid.is_empty()
                 || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
 
-        let (pids_a, operators_a) = Self::pids_operators(operator, info, &x1, &|pid1| {
-            self.lumi
-                .iter()
-                .flat_map(LumiEntry::entry)
-                .any(|&(a, _, _)| a == pid1)
-        })?;
-
-        let (pids_b, operators_b) = Self::pids_operators(operator, info, &x1, &|pid1| {
-            self.lumi
-                .iter()
-                .flat_map(LumiEntry::entry)
-                .any(|&(_, b, _)| b == pid1)
-        })?;
-
-        let mut pids0_a_filtered: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
-        pids0_a_filtered.sort_unstable();
-        pids0_a_filtered.dedup();
-        let pids0_a_filtered = pids0_a_filtered;
-        let mut pids0_b_filtered: Vec<_> = pids_b.iter().map(|&(pid0, _)| pid0).collect();
-        pids0_b_filtered.sort_unstable();
-        pids0_b_filtered.dedup();
-        let pids0_b_filtered = pids0_b_filtered;
-
-        let lumi0: Vec<_> = pids0_a_filtered
-            .iter()
-            .copied()
-            .cartesian_product(pids0_b_filtered.iter().copied())
-            .collect();
-
-        mem::drop(pids0_a_filtered);
-        mem::drop(pids0_b_filtered);
+        let operators_a = Self::operators(operator, info, &pid_indices_a, &x1)?;
+        let operators_b = Self::operators(operator, info, &pid_indices_b, &x1)?;
 
         let mut sub_fk_tables =
             Array2::from_shape_simple_fn((self.bin_info().bins(), lumi0.len()), || {
