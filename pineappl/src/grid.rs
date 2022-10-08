@@ -1995,16 +1995,9 @@ impl Grid {
 
         let lumi0 = Self::lumi0(&pids_a, &pids_b);
 
-        let mut sub_fk_tables =
-            Array2::from_shape_simple_fn((self.bin_info().bins(), lumi0.len()), || {
-                Array2::zeros((info.x0.len(), info.x0.len()))
-            });
+        let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
 
-        for (subgrids_ol, mut tables) in self
-            .subgrids
-            .axis_iter(Axis(1))
-            .zip(sub_fk_tables.axis_iter_mut(Axis(0)))
-        {
+        for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
             let x1_a = subgrids_ol
                 .iter()
                 .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
@@ -2030,6 +2023,8 @@ impl Grid {
             // them and if they are the same over bins share them!
             let operators_a = Self::operators(operator, info, &pid_indices_a, &x1_a)?;
             let operators_b = Self::operators(operator, info, &pid_indices_b, &x1_b)?;
+
+            let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
             for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
                 let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
@@ -2132,11 +2127,7 @@ impl Grid {
                 }
             }
 
-            // TODO: to reduce memory footprint convert the ndarrays here
-        }
-
-        let mut grid = Self {
-            subgrids: Array::from_iter(sub_fk_tables.into_iter().map(|table| {
+            sub_fk_tables.extend(tables.into_iter().map(|table| {
                 ImportOnlySubgridV2::new(
                     SparseArray3::from_ndarray(&table.insert_axis(Axis(0)), 0, 1),
                     vec![Mu2 {
@@ -2149,9 +2140,13 @@ impl Grid {
                     info.x0.clone(),
                 )
                 .into()
-            }))
-            .into_shape((1, self.bin_info().bins(), lumi0.len()))
-            .unwrap(),
+            }));
+        }
+
+        let mut grid = Self {
+            subgrids: Array::from_iter(sub_fk_tables.into_iter())
+                .into_shape((1, self.bin_info().bins(), lumi0.len()))
+                .unwrap(),
             lumi: lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
             bin_limits: self.bin_limits.clone(),
             orders: vec![Order::new(0, 0, 0, 0)],
