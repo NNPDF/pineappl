@@ -1934,7 +1934,7 @@ impl Grid {
         let operators: Vec<_> = pid_indices
             .iter()
             .map(|&(pid0_idx, pid1_idx)| {
-                let mut op = Array3::zeros((operator.dim().0, x1.len(), x1.len()));
+                let mut op = Array3::zeros((operator.dim().0, info.x0.len(), x1.len()));
                 for (op_index, &x1_index) in x1_indices.iter().enumerate() {
                     op.slice_mut(s![.., .., op_index])
                         .assign(&operator.slice(s![.., pid1_idx, x1_index, pid0_idx, ..]));
@@ -2112,7 +2112,7 @@ impl Grid {
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         },
                     ) {
-                        let mut result = Array2::zeros((array.dim().1, array.dim().2));
+                        let mut result = Array2::zeros((info.x0.len(), info.x0.len()));
 
                         for imu2 in 0..array.dim().0 {
                             let opa = opa.index_axis(Axis(0), imu2);
