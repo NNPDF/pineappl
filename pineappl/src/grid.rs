@@ -16,7 +16,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array, Array2, Array3, Array5, Axis, Dimension};
+use ndarray::{s, Array1, Array2, Array3, Array5, ArrayView1, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1918,7 +1918,7 @@ impl Grid {
             .map(|&x1p| {
                 info.x1
                     .iter()
-                    .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 4))
+                    .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 64))
             })
             .collect()
         {
@@ -1944,6 +1944,110 @@ impl Grid {
             .collect();
 
         Ok(operators)
+    }
+
+    fn ndarray_from_subgrid_orders(
+        &self,
+        info: &OperatorInfo,
+        subgrids: &ArrayView1<SubgridEnum>,
+        order_mask: &[bool],
+    ) -> Result<(Vec<f64>, Vec<f64>, Array3<f64>), GridError> {
+        let mut x1_a: Vec<_> = subgrids
+            .iter()
+            .flat_map(|subgrid| subgrid.x1_grid().into_owned())
+            .collect();
+        let mut x1_b: Vec<_> = subgrids
+            .iter()
+            .flat_map(|subgrid| subgrid.x2_grid().into_owned())
+            .collect();
+
+        x1_a.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+        x1_b.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+
+        let mut array = Array3::<f64>::zeros((info.fac1.len(), x1_a.len(), x1_b.len()));
+
+        // add subgrids for different orders, but the same bin and lumi, using the right
+        // couplings
+        for (subgrid, order) in subgrids
+            .iter()
+            .zip(self.orders.iter())
+            .zip(order_mask.iter().chain(iter::repeat(&true)))
+            .filter_map(|((subgrid, order), &enabled)| {
+                (enabled && !subgrid.is_empty()).then(|| (subgrid, order))
+            })
+        {
+            let mut logs = 1.0;
+
+            if order.logxir > 0 {
+                if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
+                    continue;
+                }
+
+                logs *= (info.xir * info.xir).ln();
+            }
+
+            if order.logxif > 0 {
+                if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
+                    continue;
+                }
+
+                logs *= (info.xif * info.xif).ln();
+            }
+
+            let xa_indices: Vec<_> = subgrid
+                .x1_grid()
+                .iter()
+                .map(|&xa| {
+                    x1_a.iter()
+                        .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = 64))
+                        .unwrap()
+                })
+                .collect();
+            let xb_indices: Vec<_> = subgrid
+                .x2_grid()
+                .iter()
+                .map(|&xb| {
+                    x1_b.iter()
+                        .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = 64))
+                        .unwrap()
+                })
+                .collect();
+
+            for ((imu2, ix1, ix2), value) in subgrid.iter() {
+                let Mu2 {
+                    ren: mur2,
+                    fac: muf2,
+                } = subgrid.mu2_grid()[imu2];
+
+                let als = if let Some(alphas) =
+                    info.ren1
+                        .iter()
+                        .zip(info.alphas.iter())
+                        .find_map(|(&ren1, &alphas)| {
+                            approx_eq!(f64, ren1, mur2, ulps = 4).then(|| alphas)
+                        }) {
+                    alphas.powi(order.alphas.try_into().unwrap())
+                } else {
+                    return Err(GridError::EvolutionFailure(format!(
+                        "could not find alphas for mur2 = {}",
+                        mur2
+                    )));
+                };
+
+                // TODO: get rid of the `unwrap`
+                let mu2_index = info
+                    .fac1
+                    .iter()
+                    .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 4))
+                    .unwrap();
+
+                array[[mu2_index, xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
+            }
+        }
+
+        Ok((x1_a, x1_b, array))
     }
 
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
@@ -1998,105 +2102,16 @@ impl Grid {
         let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
 
         for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
-            let x1_a = subgrids_ol
-                .iter()
-                .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
-                .unwrap_or_default();
-            let x1_b = subgrids_ol
-                .iter()
-                .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
-                .unwrap_or_default();
-
-            if x1_a.is_empty() || x1_b.is_empty() {
-                continue;
-            }
-
-            if subgrids_ol.iter().any(|subgrid| {
-                !subgrid.is_empty() && (subgrid.x1_grid() != x1_a || subgrid.x2_grid() != x1_b)
-            }) {
-                return Err(GridError::EvolutionFailure(
-                    "subgrids do not share the same x-grid values".to_string(),
-                ));
-            }
-
-            // TODO: here's some optimization potential: if `x1_a` and `x1_b` are the same share
-            // them and if they are the same over bins share them!
-            let operators_a = Self::operators(operator, info, &pid_indices_a, &x1_a)?;
-            let operators_b = Self::operators(operator, info, &pid_indices_b, &x1_b)?;
-
             let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
             for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-                let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
-                    (!subgrid.is_empty())
-                        .then(|| (subgrid.x1_grid().len(), subgrid.x2_grid().len()))
-                }) {
-                    // TODO: in this way we allocate not the minimum number of dimensions
-                    Array3::<f64>::zeros((info.fac1.len(), nx1, nx2))
-                } else {
-                    // `find_map` may fail if all grids are empty
-                    break;
-                };
+                let (x1_a, x1_b, array) =
+                    self.ndarray_from_subgrid_orders(info, &subgrids_o, order_mask)?;
 
-                // add subgrids for different orders, but the same bin and lumi, using the right
-                // couplings
-                for (subgrid, order) in subgrids_o
-                    .iter()
-                    .zip(self.orders.iter())
-                    .zip(order_mask.iter().chain(iter::repeat(&true)))
-                    .filter_map(|((subgrid, order), &enabled)| {
-                        (enabled && !subgrid.is_empty()).then(|| (subgrid, order))
-                    })
-                {
-                    let mut logs = 1.0;
-
-                    if order.logxir > 0 {
-                        if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
-                            continue;
-                        }
-
-                        logs *= (info.xir * info.xir).ln();
-                    }
-
-                    if order.logxif > 0 {
-                        if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
-                            continue;
-                        }
-
-                        logs *= (info.xif * info.xif).ln();
-                    }
-
-                    for ((imu2, ix1, ix2), value) in subgrid.iter() {
-                        let Mu2 {
-                            ren: mur2,
-                            fac: muf2,
-                        } = subgrid.mu2_grid()[imu2];
-
-                        let als = if let Some(alphas) = info
-                            .ren1
-                            .iter()
-                            .zip(info.alphas.iter())
-                            .find_map(|(&ren1, &alphas)| {
-                                approx_eq!(f64, ren1, mur2, ulps = 4).then(|| alphas)
-                            }) {
-                            alphas.powi(order.alphas.try_into().unwrap())
-                        } else {
-                            return Err(GridError::EvolutionFailure(format!(
-                                "could not find alphas for mur2 = {}",
-                                mur2
-                            )));
-                        };
-
-                        // TODO: get rid of the `unwrap`
-                        let mu2_index = info
-                            .fac1
-                            .iter()
-                            .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 4))
-                            .unwrap();
-
-                        array[[mu2_index, ix1, ix2]] += als * logs * value;
-                    }
-                }
+                // TODO: optimization potential: if `x1_a` and `x1_b` are the same cache them, if
+                // they are the same over bins and/or orders cache them too
+                let operators_a = Self::operators(operator, info, &pid_indices_a, &x1_a)?;
+                let operators_b = Self::operators(operator, info, &pid_indices_b, &x1_b)?;
 
                 for &(pida1, pidb1, factor) in self.lumi[lumi1].entry() {
                     for (fk_table, opa, opb) in lumi0.iter().zip(tables.iter_mut()).filter_map(
@@ -2144,7 +2159,7 @@ impl Grid {
         }
 
         let mut grid = Self {
-            subgrids: Array::from_iter(sub_fk_tables.into_iter())
+            subgrids: Array1::from_iter(sub_fk_tables.into_iter())
                 .into_shape((1, self.bin_info().bins(), lumi0.len()))
                 .unwrap(),
             lumi: lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
