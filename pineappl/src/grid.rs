@@ -1978,6 +1978,8 @@ impl Grid {
             )));
         }
 
+        // TODO: here we assume that we convolute with two PDFs
+
         let (pid_indices_a, pids_a) = Self::pids(operator, info, &|pid1| {
             self.lumi
                 .iter()
@@ -1993,28 +1995,6 @@ impl Grid {
 
         let lumi0 = Self::lumi0(&pids_a, &pids_b);
 
-        let x1 = self
-            .subgrids
-            .iter()
-            .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
-            .unwrap_or_default();
-
-        // TODO: if all subgrids are empty return an empty FkTable
-        if x1.is_empty() {
-            todo!();
-        }
-
-        // TODO: here we assume that we convolute with two PDFs
-        // TODO: for the time being we assume that all x-grids are the same - lift this restriction
-        assert!(self
-            .subgrids
-            .iter()
-            .all(|subgrid| subgrid.is_empty()
-                || (subgrid.x1_grid() == x1 && subgrid.x2_grid() == x1)));
-
-        let operators_a = Self::operators(operator, info, &pid_indices_a, &x1)?;
-        let operators_b = Self::operators(operator, info, &pid_indices_b, &x1)?;
-
         let mut sub_fk_tables =
             Array2::from_shape_simple_fn((self.bin_info().bins(), lumi0.len()), || {
                 Array2::zeros((info.x0.len(), info.x0.len()))
@@ -2025,6 +2005,32 @@ impl Grid {
             .axis_iter(Axis(1))
             .zip(sub_fk_tables.axis_iter_mut(Axis(0)))
         {
+            let x1_a = subgrids_ol
+                .iter()
+                .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
+                .unwrap_or_default();
+            let x1_b = subgrids_ol
+                .iter()
+                .find_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
+                .unwrap_or_default();
+
+            if x1_a.is_empty() || x1_b.is_empty() {
+                continue;
+            }
+
+            if subgrids_ol.iter().any(|subgrid| {
+                !subgrid.is_empty() && (subgrid.x1_grid() != x1_a || subgrid.x2_grid() != x1_b)
+            }) {
+                return Err(GridError::EvolutionFailure(
+                    "subgrids do not share the same x-grid values".to_string(),
+                ));
+            }
+
+            // TODO: here's some optimization potential: if `x1_a` and `x1_b` are the same share
+            // them and if they are the same over bins share them!
+            let operators_a = Self::operators(operator, info, &pid_indices_a, &x1_a)?;
+            let operators_b = Self::operators(operator, info, &pid_indices_b, &x1_b)?;
+
             for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
                 let mut array = if let Some((nx1, nx2)) = subgrids_o.iter().find_map(|subgrid| {
                     (!subgrid.is_empty())
