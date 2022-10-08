@@ -264,8 +264,8 @@ pub enum GridError {
         supported_version: u64,
     },
     /// Returned from [`Grid::evolve`] if the evolution failed.
-    #[error("TODO")]
-    EvolutionFailure,
+    #[error("failed to evolve grid: {0}")]
+    EvolutionFailure(String),
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -1900,7 +1900,9 @@ impl Grid {
             x1_indices
         } else {
             // TODO: return better error - operator x1 values don't match grid's x1 values
-            return Err(GridError::EvolutionFailure);
+            return Err(GridError::EvolutionFailure(
+                "operator information does not match grid's x-grid values".to_string(),
+            ));
         };
 
         // create the corresponding operators accessible in the form [muf2, x0, x1]
@@ -1927,32 +1929,28 @@ impl Grid {
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
+    /// incompatible with this `Grid`.
     pub fn evolve(
         &self,
         operator: &Array5<f64>,
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        // TODO: improve the error message information
-        if operator.dim().0 != info.fac1.len() {
-            return Err(GridError::EvolutionFailure);
-        }
+        let op_info_dim = (
+            info.fac1.len(),
+            info.pids1.len(),
+            info.x1.len(),
+            info.pids0.len(),
+            info.x0.len(),
+        );
 
-        if operator.dim().1 != info.pids1.len() {
-            return Err(GridError::EvolutionFailure);
-        }
-
-        if operator.dim().2 != info.x1.len() {
-            return Err(GridError::EvolutionFailure);
-        }
-
-        if operator.dim().3 != info.pids0.len() {
-            return Err(GridError::EvolutionFailure);
-        }
-
-        if operator.dim().4 != info.x0.len() {
-            return Err(GridError::EvolutionFailure);
+        if operator.dim() != op_info_dim {
+            return Err(GridError::EvolutionFailure(format!(
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim,
+                operator.dim(),
+            )));
         }
 
         let x1 = self
@@ -2071,10 +2069,13 @@ impl Grid {
                             }) {
                             alphas.powi(order.alphas.try_into().unwrap())
                         } else {
-                            // TODO: improve this error message
-                            return Err(GridError::EvolutionFailure);
+                            return Err(GridError::EvolutionFailure(format!(
+                                "could not find alphas for mur2 = {}",
+                                mur2
+                            )));
                         };
 
+                        // TODO: get rid of the `unwrap`
                         let mu2_index = info
                             .fac1
                             .iter()
