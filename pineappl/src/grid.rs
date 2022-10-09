@@ -1924,7 +1924,6 @@ impl Grid {
         {
             x1_indices
         } else {
-            // TODO: return better error - operator x1 values don't match grid's x1 values
             return Err(GridError::EvolutionFailure(
                 "operator information does not match grid's x-grid values".to_string(),
             ));
