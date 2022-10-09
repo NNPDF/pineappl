@@ -2817,16 +2817,11 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn grid_convolute_eko_for_lhcbwp8tev() {
+    fn evolve() {
         use float_cmp::assert_approx_eq;
         use lhapdf::Pdf;
         use ndarray::{Array1, Array5};
         use std::fs::File;
-
-        let grid = "../LHCB_WP_8TEV.pineappl.lz4";
-        let metadata = "../LHCB_WP_8TEV/metadata.yaml";
-        let alphas = "../LHCB_WP_8TEV/alphas.npy";
-        let operator = "../LHCB_WP_8TEV/operators.npy";
 
         #[derive(Deserialize)]
         struct Metadata {
@@ -2847,9 +2842,30 @@ mod tests {
             targetpids: Vec<i32>,
         }
 
+        let setname = "NNPDF40_nlo_as_01180";
+
+        let grid =
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4";
+        let metadata =
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/metadata.yaml";
+        let alphas =
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/alphas.npy";
+        let operator =
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/operators.npy";
+
+        //let grid = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34.pineappl.lz4";
+        //let metadata = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/metadata.yaml";
+        //let alphas = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/alphas.npy";
+        //let operator = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/operators.npy";
+
+        //let grid = "../LHCB_WP_8TEV.pineappl.lz4";
+        //let metadata = "../LHCB_WP_8TEV/metadata.yaml";
+        //let alphas = "../LHCB_WP_8TEV/alphas.npy";
+        //let operator = "../LHCB_WP_8TEV/operators.npy";
+
         let grid = Grid::read(File::open(grid).unwrap()).unwrap();
 
-        let lhapdf = Pdf::with_setname_and_nmem("NNPDF40_nlo_as_01180").unwrap();
+        let lhapdf = Pdf::with_setname_and_nmem(setname).unwrap();
         let mut pdf = |id, x, q2| lhapdf.xfx_q2(id, x, q2);
         let mut als = |q2| lhapdf.alphas_q2(q2);
         let mut cache = LumiCache::with_one(2212, &mut pdf, &mut als);
@@ -2858,23 +2874,57 @@ mod tests {
         assert_eq!(
             results,
             [
-                877.9498750860583,
-                823.5123400865052,
-                735.605093586326,
-                616.3465722662226,
-                478.63703336207277,
-                341.06729874517384,
-                174.3688634669724,
-                48.27440593682665
+                1469.0819829706113,
+                4364.509970805006,
+                2072.647269805865,
+                742.6160478667135,
+                312.195449854513,
+                145.782031788469,
+                72.64484245290579,
+                38.88392569051013,
+                17.093513927247354,
+                6.157887576517187,
+                2.4621639421455903,
+                1.0817834362838417,
+                0.5084171526510098,
+                0.2520459057372801,
+                0.10211930488819178,
+                0.021141855492915994
             ]
         );
+
+        //assert_eq!(
+        //    results,
+        //    [
+        //        134632.4480167966,
+        //        133472.53856965082,
+        //        130776.9197998554,
+        //        126991.17650299768,
+        //        121168.15135839234,
+        //        112761.75563082621,
+        //        98484.12455342771,
+        //        57843.82009866679
+        //    ]
+        //);
+
+        //assert_eq!(
+        //    results,
+        //    [
+        //        877.9498750860583,
+        //        823.5123400865052,
+        //        735.605093586326,
+        //        616.3465722662226,
+        //        478.63703336207277,
+        //        341.06729874517384,
+        //        174.3688634669724,
+        //        48.27440593682665
+        //    ]
+        //);
 
         let metadata: Metadata = serde_yaml::from_reader(File::open(metadata).unwrap()).unwrap();
         let alphas: Array1<f64> = ndarray_npy::read_npy(alphas).unwrap();
         let alphas = alphas.to_vec();
         let operator: Array5<f64> = ndarray_npy::read_npy(operator).unwrap();
-
-        assert_eq!(operator.dim(), (1, 14, 50, 14, 50));
 
         let info = OperatorInfo {
             fac1: metadata.q2_grid.clone(),
@@ -2884,7 +2934,7 @@ mod tests {
             x1: metadata.targetgrid,
             fac0: metadata.q2_ref,
             ren1: metadata.q2_grid, // TODO: check whether this is true in the general case
-            alphas: alphas,
+            alphas,
             xir: 1.0,
             xif: 1.0,
             lumi_id_types: "pdg_mc_ids".to_string(),
@@ -2910,17 +2960,44 @@ mod tests {
             .grid()
             .convolute(&mut cache, &[], &[], &[], &[(1.0, 1.0)]);
 
-        //fk_table
-        //    .write(File::create("fk_table.pineappl").unwrap())
-        //    .unwrap();
+        assert_eq!(
+            evolved_results,
+            [
+                1467.6009449768221,
+                4359.87917180896,
+                2070.4278159799974,
+                741.9298754488171,
+                311.9073865166957,
+                145.65671641953438,
+                72.58340237308579,
+                38.85208071336316,
+                17.080194246318936,
+                6.153298093496777,
+                2.4604627649049604,
+                1.0810950528772425,
+                0.5081137620517796,
+                0.25190465608989626,
+                0.10206534388970377,
+                0.02113211970400249
+            ]
+        );
 
-        assert_approx_eq!(f64, evolved_results[0], 1526.1321420502966, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[1], 1380.605564314246, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[2], 1182.565055380693, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[3], 947.3266541818663, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[4], 702.6776451873732, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[5], 477.8683182368509, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[6], 229.2748278368886, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[7], 58.35460083148634, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[0], 134500.65897999398, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[1], 133344.24845948347, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[2], 130663.70226447149, ulps = 32);
+        //assert_approx_eq!(f64, evolved_results[3], 126890.6156547337, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[4], 121090.7595443343, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[5], 112698.92115188896, ulps = 16);
+        //assert_approx_eq!(f64, evolved_results[6], 98421.19065191328, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[7], 57813.500329070215, ulps = 8);
+
+        //assert_approx_eq!(f64, evolved_results[0], 1526.1321420502966, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[1], 1380.605564314246, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[2], 1182.565055380693, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[3], 947.3266541818663, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[4], 702.6776451873732, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[5], 477.8683182368509, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[6], 229.2748278368886, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[7], 58.35460083148634, ulps = 8);
     }
 }
