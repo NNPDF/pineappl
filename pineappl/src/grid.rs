@@ -1933,12 +1933,12 @@ impl Grid {
         let operators: Vec<_> = pid_indices
             .iter()
             .map(|&(pid0_idx, pid1_idx)| {
-                let mut op = Array3::zeros((operator.dim().0, info.x0.len(), x1.len()));
-                for (op_index, &x1_index) in x1_indices.iter().enumerate() {
-                    op.slice_mut(s![.., .., op_index])
-                        .assign(&operator.slice(s![.., pid1_idx, x1_index, pid0_idx, ..]));
-                }
-                op
+                operator
+                    .slice(s![.., pid1_idx, .., pid0_idx, ..])
+                    .select(Axis(1), &x1_indices)
+                    .permuted_axes([0, 2, 1])
+                    .as_standard_layout()
+                    .into_owned()
             })
             .collect();
 
