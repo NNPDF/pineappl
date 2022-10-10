@@ -9,6 +9,7 @@ mod convert;
 
 pub mod bin;
 pub mod empty_subgrid;
+pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
