@@ -2009,40 +2009,21 @@ impl Grid {
         Ok((x1_a, x1_b, array))
     }
 
-    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
-    /// `operator`. The dimensions and properties of this operator must be described using `info`.
-    /// The parameter `order_mask` can be used to include or exclude orders from this operation,
-    /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
-    /// are enabled, and in particular if `order_mask` is empty all orders are activated.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`.
-    pub fn evolve(
+    fn evolve_with_one(
+        &self,
+        _operator: &Array5<f64>,
+        _info: &OperatorInfo,
+        _order_mask: &[bool],
+    ) -> Result<FkTable, GridError> {
+        todo!()
+    }
+
+    fn evolve_with_two(
         &self,
         operator: &Array5<f64>,
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        let op_info_dim = (
-            info.fac1.len(),
-            info.pids1.len(),
-            info.x1.len(),
-            info.pids0.len(),
-            info.x0.len(),
-        );
-
-        if operator.dim() != op_info_dim {
-            return Err(GridError::EvolutionFailure(format!(
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim,
-                operator.dim(),
-            )));
-        }
-
-        // TODO: here we assume that we convolute with two PDFs
-
         let (pid_indices_a, pids_a) = Self::pids(operator, info, &|pid1| {
             self.lumi
                 .iter()
@@ -2131,8 +2112,46 @@ impl Grid {
         // write additional metadata
         grid.set_key_value("lumi_id_types", &info.lumi_id_types);
 
-        // TODO: convert unwrap to error
         Ok(FkTable::try_from(grid).unwrap())
+    }
+
+    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
+    /// `operator`. The dimensions and properties of this operator must be described using `info`.
+    /// The parameter `order_mask` can be used to include or exclude orders from this operation,
+    /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
+    /// are enabled, and in particular if `order_mask` is empty all orders are activated.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
+    /// incompatible with this `Grid`.
+    pub fn evolve(
+        &self,
+        operator: &Array5<f64>,
+        info: &OperatorInfo,
+        order_mask: &[bool],
+    ) -> Result<FkTable, GridError> {
+        let op_info_dim = (
+            info.fac1.len(),
+            info.pids1.len(),
+            info.x1.len(),
+            info.pids0.len(),
+            info.x0.len(),
+        );
+
+        if operator.dim() != op_info_dim {
+            return Err(GridError::EvolutionFailure(format!(
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim,
+                operator.dim(),
+            )));
+        }
+
+        if self.has_pdf1() && self.has_pdf2() {
+            self.evolve_with_two(operator, info, order_mask)
+        } else {
+            self.evolve_with_one(operator, info, order_mask)
+        }
     }
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
