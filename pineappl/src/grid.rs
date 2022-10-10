@@ -1346,31 +1346,9 @@ impl Grid {
     /// TODO
     #[must_use]
     pub fn axes(&self) -> Option<GridAxes> {
-        // determine what and how many hadrons are in the initial state
-        let initial_state_1 = self
-            .key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_1").map(String::as_str)
-            })
-            .map(str::parse::<i32>)?
-            .ok()?;
-        let initial_state_2 = self
-            .key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_2").map(String::as_str)
-            })
-            .map(str::parse::<i32>)?
-            .ok()?;
-
         // are the initial states hadrons?
-        let has_pdf1 = !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1));
-        let has_pdf2 = !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2));
+        let has_pdf1 = self.has_pdf1();
+        let has_pdf2 = self.has_pdf1();
 
         let mut mur2_grid = Vec::new();
         let mut muf2_grid = Vec::new();
@@ -1467,30 +1445,12 @@ impl Grid {
         let operator = operator.as_standard_layout();
 
         // determine what and how many hadrons are in the initial state
-        let initial_state_1 = self
-            .key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_1").map(String::as_str)
-            })
-            .map(str::parse::<i32>)?
-            .ok()?;
-        let initial_state_2 = self
-            .key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_2").map(String::as_str)
-            })
-            .map(str::parse::<i32>)?
-            .ok()?;
+        let initial_state_1 = self.initial_state_1();
+        let initial_state_2 = self.initial_state_2();
 
         // are the initial states hadrons?
-        let has_pdf1 = !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1));
-        let has_pdf2 = !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2));
+        let has_pdf1 = self.has_pdf1();
+        let has_pdf2 = self.has_pdf1();
 
         let pids1 = if has_pdf1 {
             eko_info.grid_axes.pids.clone()
@@ -2284,6 +2244,50 @@ impl Grid {
                 )
             })
             .collect();
+    }
+
+    /// Returns `true` if the first initial state needs a convolution, `false` otherwise.
+    pub fn has_pdf1(&self) -> bool {
+        let initial_state_1 = self.initial_state_1();
+
+        !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1))
+    }
+
+    /// Returns `true` if the second initial state needs a convolution, `false` otherwise.
+    pub fn has_pdf2(&self) -> bool {
+        let initial_state_2 = self.initial_state_2();
+
+        !self
+            .lumi()
+            .iter()
+            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2))
+    }
+
+    /// Returns the particle identifier of the first initial state. This is usually, but not always
+    /// a proton, which is represented by the PDG ID `2212`.
+    pub fn initial_state_1(&self) -> i32 {
+        self.key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_1").map(String::as_str)
+            })
+            .map(str::parse)
+            .unwrap()
+            .unwrap()
+    }
+
+    /// Returns the particle identifier of the second initial state. This is usually, but not
+    /// always a proton, which is represented by the PDG ID `2212`.
+    pub fn initial_state_2(&self) -> i32 {
+        self.key_values()
+            .map_or(Some("2212"), |kv| {
+                kv.get("initial_state_2").map(String::as_str)
+            })
+            .map(str::parse)
+            .unwrap()
+            .unwrap()
     }
 }
 
