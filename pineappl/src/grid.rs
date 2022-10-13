@@ -2735,8 +2735,8 @@ mod tests {
     #[test]
     #[ignore]
     fn evolve() {
-        //use float_cmp::assert_approx_eq;
         use evolution::OperatorInfo;
+        use float_cmp::assert_approx_eq;
         use lhapdf::Pdf;
         use ndarray::{Array1, Array5};
         use std::fs::File;
@@ -2930,50 +2930,45 @@ mod tests {
 
         let evolved_results = fk_table.convolute(&mut cache, &[], &[]);
 
-        assert_eq!(
-            evolved_results,
-            [
-                1.1586791793006517,
-                1.1202273184348848,
-                0.8874599897872428,
-                0.6063712625073608,
-                0.4672874245885059,
-                0.9173403727229149,
-                0.962399631849818,
-                0.8319677648956049,
-                0.5839675146069822,
-                0.4505325132086283,
-                0.6686768094263615,
-                0.6888210100292264,
-                0.5297074425880604,
-                0.41607535867486134,
-                0.23142390114495495,
-                0.5648727887895276,
-                0.47919973616456246,
-                0.38616444708721975,
-                0.21793107752932925,
-                0.08431941687497238,
-                0.46764290121503427,
-                0.43249701889959064,
-                0.35882091245690373,
-                0.20657579928724892,
-                0.36139047088472026,
-                0.35024730127068276,
-                0.3095490328079981,
-                0.1871428094003754,
-                0.07375775279995289,
-                0.22918160031673335,
-                0.22772688522902013,
-                0.15506498963894486,
-                0.0640029182481115,
-                0.14030150245012324,
-                0.11638652740576161,
-                0.052752620249130584,
-                0.05463985560251649,
-                0.03357575618674528,
-                0.010951799924697785
-            ]
-        );
+        assert_approx_eq!(f64, evolved_results[0], 1.1586791793006517, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[1], 1.1202273184348848, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[2], 0.8874599897872428, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[3], 0.6063712625073608, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[4], 0.4672874245885059, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[5], 0.9173403727229149, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[6], 0.962399631849818, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[7], 0.8319677648956049, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[8], 0.5839675146069822, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[9], 0.4505325132086283, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[10], 0.6686768094263615, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[11], 0.6888210100292264, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[12], 0.5297074425880604, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[13], 0.41607535867486134, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[14], 0.23142390114495495, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[15], 0.5648727887895276, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[16], 0.47919973616456246, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[17], 0.38616444708721975, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[18], 0.21793107752932925, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[19], 0.08431941687497238, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[20], 0.46764290121503427, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[21], 0.43249701889959064, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[22], 0.35882091245690373, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[23], 0.20657579928724892, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[24], 0.36139047088472026, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[25], 0.35024730127068276, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[26], 0.3095490328079981, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[27], 0.1871428094003754, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[28], 0.07375775279995289, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[29], 0.22918160031673335, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[30], 0.22772688522902013, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[31], 0.15506498963894486, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[32], 0.0640029182481115, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[33], 0.14030150245012324, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[34], 0.11638652740576161, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[35], 0.052752620249130584, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[36], 0.05463985560251649, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[37], 0.03357575618674528, ulps = 8);
+        assert_approx_eq!(f64, evolved_results[38], 0.010951799924697785, ulps = 8);
 
         //assert_eq!(
         //    evolved_results,
