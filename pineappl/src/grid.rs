@@ -1866,8 +1866,12 @@ impl Grid {
                         ren: info.fac0,
                         fac: info.fac0,
                     }],
-                    info.x0.clone(),
-                    info.x0.clone(),
+                    if has_pdf1 { info.x0.clone() } else { vec![1.0] },
+                    if !has_pdf1 {
+                        info.x0.clone()
+                    } else {
+                        vec![1.0]
+                    },
                 )
                 .into()
             }));
