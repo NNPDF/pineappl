@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new method `Grid::evolve`, which will succeed `Grid::convolute_eko` and
+  is more robust, faster and easier to understand
+
+### Fixed
+
+- fixed a bug in `LumiCache::setup`, which caused wrong results returned by
+  `Grid::convolute`, if `lumi_cache` is reused for a second grid with different
+  Q2/x1/x2 parameters
+
 ## [0.5.7] - 05/10/2022
 
 ### Fixed
