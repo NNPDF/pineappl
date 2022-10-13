@@ -77,6 +77,14 @@ pub(crate) fn pids(
     (pid_indices, pids)
 }
 
+pub(crate) fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
+    let mut pids0: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
+    pids0.sort_unstable();
+    pids0.dedup();
+
+    pids0
+}
+
 pub(crate) fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
     let mut pids0_a: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
     pids0_a.sort_unstable();

@@ -1781,11 +1781,128 @@ impl Grid {
 
     fn evolve_with_one(
         &self,
-        _operator: &Array5<f64>,
-        _info: &OperatorInfo,
-        _order_mask: &[bool],
+        operator: &Array5<f64>,
+        info: &OperatorInfo,
+        order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        todo!()
+        let has_pdf1 = self.has_pdf1();
+
+        let (pid_indices, pids) = evolution::pids(operator, info, &|pid| {
+            self.lumi
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
+        });
+
+        let lumi0 = evolution::lumi0_with_one(&pids);
+        let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
+        let new_axis = if has_pdf1 { 2 } else { 1 };
+
+        for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
+            let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
+
+            for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+                let (x1_a, x1_b, array) = evolution::ndarray_from_subgrid_orders(
+                    info,
+                    &subgrids_o,
+                    &self.orders,
+                    order_mask,
+                )?;
+
+                let x1 = if has_pdf1 { x1_a } else { x1_b };
+                let operators = evolution::operators(operator, info, &pid_indices, &x1)?;
+
+                for (&pid1, &factor) in
+                    self.lumi[lumi1].entry().iter().map(
+                        |(a, b, f)| {
+                            if has_pdf1 {
+                                (a, f)
+                            } else {
+                                (b, f)
+                            }
+                        },
+                    )
+                {
+                    for (fk_table, op) in
+                        lumi0
+                            .iter()
+                            .zip(tables.iter_mut())
+                            .filter_map(|(&pid0, fk_table)| {
+                                pids.iter()
+                                    .zip(operators.iter())
+                                    .find_map(|(&(p0, p1), op)| {
+                                        (p0 == pid0 && p1 == pid1).then(|| op)
+                                    })
+                                    .map(|op| (fk_table, op))
+                            })
+                    {
+                        let mut result = Array1::zeros(info.x0.len());
+
+                        for imu2 in 0..array.dim().0 {
+                            let op = op.index_axis(Axis(0), imu2);
+
+                            result += &op.dot(
+                                &array
+                                    .index_axis(Axis(0), imu2)
+                                    .index_axis(Axis(new_axis - 1), 0),
+                            );
+                        }
+
+                        fk_table.scaled_add(factor, &result);
+                    }
+                }
+            }
+
+            sub_fk_tables.extend(tables.into_iter().map(|table| {
+                ImportOnlySubgridV2::new(
+                    SparseArray3::from_ndarray(
+                        &table.insert_axis(Axis(0)).insert_axis(Axis(new_axis)),
+                        0,
+                        1,
+                    ),
+                    vec![Mu2 {
+                        // TODO: FK tables don't depend on the renormalization scale
+                        //ren: -1.0,
+                        ren: info.fac0,
+                        fac: info.fac0,
+                    }],
+                    info.x0.clone(),
+                    info.x0.clone(),
+                )
+                .into()
+            }));
+        }
+
+        let pid = if has_pdf1 {
+            self.initial_state_2()
+        } else {
+            self.initial_state_1()
+        };
+
+        let mut grid = Self {
+            subgrids: Array1::from_iter(sub_fk_tables.into_iter())
+                .into_shape((1, self.bin_info().bins(), lumi0.len()))
+                .unwrap(),
+            lumi: lumi0
+                .iter()
+                .map(|&a| {
+                    lumi_entry![
+                        if has_pdf1 { a } else { pid },
+                        if !has_pdf1 { a } else { pid },
+                        1.0
+                    ]
+                })
+                .collect(),
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order::new(0, 0, 0, 0)],
+            subgrid_params: SubgridParams::default(),
+            more_members: self.more_members.clone(),
+        };
+
+        // write additional metadata
+        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
+
+        Ok(FkTable::try_from(grid).unwrap())
     }
 
     fn evolve_with_two(
@@ -2641,14 +2758,19 @@ mod tests {
 
         let setname = "NNPDF40_nlo_as_01180";
 
-        let grid =
-            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4";
-        let metadata =
-            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/metadata.yaml";
-        let alphas =
-            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/alphas.npy";
-        let operator =
-            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/operators.npy";
+        let grid = "../HERA_CC_318GEV_EP_SIGMARED.pineappl.lz4";
+        let metadata = "../HERA_CC_318GEV_EP_SIGMARED/metadata.yaml";
+        let alphas = "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy";
+        let operator = "../HERA_CC_318GEV_EP_SIGMARED/operators.npy";
+
+        //let grid =
+        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4";
+        //let metadata =
+        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/metadata.yaml";
+        //let alphas =
+        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/alphas.npy";
+        //let operator =
+        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/operators.npy";
 
         //let grid = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34.pineappl.lz4";
         //let metadata = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/metadata.yaml";
@@ -2671,24 +2793,69 @@ mod tests {
         assert_eq!(
             results,
             [
-                1469.0819829706113,
-                4364.509970805006,
-                2072.647269805865,
-                742.6160478667135,
-                312.195449854513,
-                145.782031788469,
-                72.64484245290579,
-                38.88392569051013,
-                17.093513927247354,
-                6.157887576517187,
-                2.4621639421455903,
-                1.0817834362838417,
-                0.5084171526510098,
-                0.2520459057372801,
-                0.10211930488819178,
-                0.021141855492915994
+                1.158872296528366,
+                1.1204108571716151,
+                0.8875902564141837,
+                0.6064124901549366,
+                0.46730446763293626,
+                0.9175036665313503,
+                0.9625683080629993,
+                0.832097616454224,
+                0.5840101875241862,
+                0.45055068848064506,
+                0.6688041946734723,
+                0.6889352106823404,
+                0.5297495101909169,
+                0.41609405897210827,
+                0.23143317308882982,
+                0.5649694171604525,
+                0.4792399077439775,
+                0.3861828122239765,
+                0.21793994357039714,
+                0.08432403516120096,
+                0.467724373428524,
+                0.43253481860290705,
+                0.3588386557913573,
+                0.20658438492949507,
+                0.36145545861402606,
+                0.350280931434649,
+                0.3095655884296923,
+                0.18715074960942407,
+                0.0737622486172105,
+                0.2292088799939892,
+                0.2277411334118036,
+                0.15507169325765838,
+                0.06400693681274111,
+                0.1403126590329724,
+                0.11639162212711233,
+                0.052756148828243,
+                0.05464232942385792,
+                0.033578480958376296,
+                0.01095350422009362
             ]
         );
+
+        //assert_eq!(
+        //    results,
+        //    [
+        //        1469.0819829706113,
+        //        4364.509970805006,
+        //        2072.647269805865,
+        //        742.6160478667135,
+        //        312.195449854513,
+        //        145.782031788469,
+        //        72.64484245290579,
+        //        38.88392569051013,
+        //        17.093513927247354,
+        //        6.157887576517187,
+        //        2.4621639421455903,
+        //        1.0817834362838417,
+        //        0.5084171526510098,
+        //        0.2520459057372801,
+        //        0.10211930488819178,
+        //        0.021141855492915994
+        //    ]
+        //);
 
         //assert_eq!(
         //    results,
@@ -2760,24 +2927,69 @@ mod tests {
         assert_eq!(
             evolved_results,
             [
-                1467.6009449768221,
-                4359.87917180896,
-                2070.4278159799974,
-                741.9298754488171,
-                311.9073865166957,
-                145.65671641953438,
-                72.58340237308579,
-                38.85208071336316,
-                17.080194246318936,
-                6.153298093496777,
-                2.4604627649049604,
-                1.0810950528772425,
-                0.5081137620517796,
-                0.25190465608989626,
-                0.10206534388970377,
-                0.02113211970400249
+                1.8170022921477553,
+                1.572186789222731,
+                1.0120743119644493,
+                0.5513681196303996,
+                0.369732897935647,
+                1.4463393022497653,
+                1.3434521752529411,
+                0.9396007527971952,
+                0.5265636855582448,
+                0.35392024601127764,
+                0.9476126904820632,
+                0.7724575723596495,
+                0.4732213954723062,
+                0.3241042357593822,
+                0.14208837561282434,
+                0.6348291801851951,
+                0.42639863308407194,
+                0.2995555092631841,
+                0.1332978572669808,
+                0.040242587222404244,
+                0.5291482249999523,
+                0.3841371951752628,
+                0.2776461765631634,
+                0.12604952037651973,
+                0.4158009739671785,
+                0.31101583663344756,
+                0.23888711855765635,
+                0.11386513733409395,
+                0.035056166504958824,
+                0.2051492116806069,
+                0.175643994922963,
+                0.09413231582370057,
+                0.030381614976052386,
+                0.1089423164124738,
+                0.07069503513298457,
+                0.025079212588928746,
+                0.03372105113135905,
+                0.01616849864998008,
+                0.005770141756592387
             ]
         );
+
+        //assert_eq!(
+        //    evolved_results,
+        //    [
+        //        1467.6009449768221,
+        //        4359.87917180896,
+        //        2070.4278159799974,
+        //        741.9298754488171,
+        //        311.9073865166957,
+        //        145.65671641953438,
+        //        72.58340237308579,
+        //        38.85208071336316,
+        //        17.080194246318936,
+        //        6.153298093496777,
+        //        2.4604627649049604,
+        //        1.0810950528772425,
+        //        0.5081137620517796,
+        //        0.25190465608989626,
+        //        0.10206534388970377,
+        //        0.02113211970400249
+        //    ]
+        //);
 
         //assert_approx_eq!(f64, evolved_results[0], 134500.65897999398, ulps = 8);
         //assert_approx_eq!(f64, evolved_results[1], 133344.24845948347, ulps = 8);
