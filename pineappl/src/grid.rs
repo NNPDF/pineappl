@@ -1807,7 +1807,7 @@ impl Grid {
                 .any(|&(_, b, _)| b == pid1)
         });
 
-        let lumi0 = evolution::lumi0(&pids_a, &pids_b);
+        let lumi0 = evolution::lumi0_with_two(&pids_a, &pids_b);
 
         let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
 
