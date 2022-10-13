@@ -1409,7 +1409,7 @@ impl Grid {
 
         // are the initial states hadrons?
         let has_pdf1 = self.has_pdf1();
-        let has_pdf2 = self.has_pdf1();
+        let has_pdf2 = self.has_pdf2();
 
         let pids1 = if has_pdf1 {
             eko_info.grid_axes.pids.clone()
