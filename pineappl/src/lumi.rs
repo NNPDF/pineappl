@@ -164,6 +164,22 @@ enum Pdfs<'a> {
     },
 }
 
+impl<'a> Pdfs<'a> {
+    pub fn clear(&mut self) {
+        match self {
+            Self::One { xfx_cache, .. } => xfx_cache.clear(),
+            Self::Two {
+                xfx1_cache,
+                xfx2_cache,
+                ..
+            } => {
+                xfx1_cache.clear();
+                xfx2_cache.clear();
+            }
+        }
+    }
+}
+
 /// A cache for evaluating PDFs. Methods like [`Grid::convolute`] accept instances of this `struct`
 /// instead of the PDFs themselves.
 pub struct LumiCache<'a> {
@@ -424,6 +440,8 @@ impl<'a> LumiCache<'a> {
 
     /// Clears the cache.
     pub fn clear(&mut self) {
+        self.alphas_cache.clear();
+        self.pdfs.clear();
         self.mur2_grid.clear();
         self.muf2_grid.clear();
         self.x_grid.clear();
