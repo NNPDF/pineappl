@@ -1963,7 +1963,7 @@ impl Grid {
             .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2))
     }
 
-    /// Returns the particle identifier of the first initial state. This is usually, but not always
+    /// Returns the particle identifier of the first initial state. This is usually but not always
     /// a proton, which is represented by the PDG ID `2212`.
     pub fn initial_state_1(&self) -> i32 {
         self.key_values()
@@ -1975,8 +1975,8 @@ impl Grid {
             .unwrap()
     }
 
-    /// Returns the particle identifier of the second initial state. This is usually, but not
-    /// always a proton, which is represented by the PDG ID `2212`.
+    /// Returns the particle identifier of the second initial state. This is usually but not always
+    /// a proton, which is represented by the PDG ID `2212`.
     pub fn initial_state_2(&self) -> i32 {
         self.key_values()
             .map_or(Some("2212"), |kv| {
