@@ -107,9 +107,27 @@ pub(crate) fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Ve
 pub(crate) fn operators(
     operator: &Array5<f64>,
     info: &OperatorInfo,
+    fac1: &[f64],
     pid_indices: &[(usize, usize)],
     x1: &[f64],
 ) -> Result<Vec<Array3<f64>>, GridError> {
+    // permutation between the grid fac1 values and the operator fac1 values
+    let fac1_indices: Vec<_> = if let Some(fac1_indices) = fac1
+        .iter()
+        .map(|&fac1p| {
+            info.fac1
+                .iter()
+                .position(|&fac1| approx_eq!(f64, fac1p, fac1, ulps = 64))
+        })
+        .collect()
+    {
+        fac1_indices
+    } else {
+        return Err(GridError::EvolutionFailure(
+            "operator information does not match grid's factorization scale values".to_string(),
+        ));
+    };
+
     // permutation between the grid x values and the operator x1 values
     let x1_indices: Vec<_> = if let Some(x1_indices) = x1
         .iter()
@@ -133,6 +151,7 @@ pub(crate) fn operators(
         .map(|&(pid0_idx, pid1_idx)| {
             operator
                 .slice(s![.., pid1_idx, .., pid0_idx, ..])
+                .select(Axis(0), &fac1_indices)
                 .select(Axis(1), &x1_indices)
                 .permuted_axes([0, 2, 1])
                 .as_standard_layout()
@@ -148,7 +167,20 @@ pub(crate) fn ndarray_from_subgrid_orders(
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
-) -> Result<(Vec<f64>, Vec<f64>, Array3<f64>), GridError> {
+) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>, Array3<f64>), GridError> {
+    // TODO: skip empty subgrids
+
+    let mut fac1: Vec<_> = subgrids
+        .iter()
+        .flat_map(|subgrid| {
+            subgrid
+                .mu2_grid()
+                .into_owned()
+                .into_iter()
+                .map(|mu2| mu2.fac)
+                .collect::<Vec<_>>()
+        })
+        .collect();
     let mut x1_a: Vec<_> = subgrids
         .iter()
         .flat_map(|subgrid| subgrid.x1_grid().into_owned())
@@ -158,12 +190,14 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .flat_map(|subgrid| subgrid.x2_grid().into_owned())
         .collect();
 
+    fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
     x1_a.sort_by(|a, b| a.partial_cmp(b).unwrap());
     x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
     x1_b.sort_by(|a, b| a.partial_cmp(b).unwrap());
     x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
 
-    let mut array = Array3::<f64>::zeros((info.fac1.len(), x1_a.len(), x1_b.len()));
+    let mut array = Array3::<f64>::zeros((fac1.len(), x1_a.len(), x1_b.len()));
 
     // add subgrids for different orders, but the same bin and lumi, using the right
     // couplings
@@ -193,6 +227,15 @@ pub(crate) fn ndarray_from_subgrid_orders(
             logs *= (info.xif * info.xif).ln();
         }
 
+        let fac1_indices: Vec<_> = subgrid
+            .mu2_grid()
+            .iter()
+            .map(|&Mu2 { fac, .. }| {
+                fac1.iter()
+                    .position(|&scale| approx_eq!(f64, fac, scale, ulps = 64))
+                    .unwrap()
+            })
+            .collect();
         let xa_indices: Vec<_> = subgrid
             .x1_grid()
             .iter()
@@ -212,11 +255,8 @@ pub(crate) fn ndarray_from_subgrid_orders(
             })
             .collect();
 
-        for ((imu2, ix1, ix2), value) in subgrid.iter() {
-            let Mu2 {
-                ren: mur2,
-                fac: muf2,
-            } = subgrid.mu2_grid()[imu2];
+        for ((ifac1, ix1, ix2), value) in subgrid.iter() {
+            let Mu2 { ren: mur2, .. } = subgrid.mu2_grid()[ifac1];
 
             let als = if let Some(alphas) = info
                 .ren1
@@ -232,18 +272,11 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 )));
             };
 
-            // TODO: get rid of the `unwrap`
-            let mu2_index = info
-                .fac1
-                .iter()
-                .position(|&fac| approx_eq!(f64, fac, muf2, ulps = 64))
-                .unwrap();
-
-            array[[mu2_index, xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
+            array[[fac1_indices[ifac1], xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
         }
     }
 
-    Ok((x1_a, x1_b, array))
+    Ok((fac1, x1_a, x1_b, array))
 }
 
 pub(crate) fn evolve_with_one(
@@ -266,24 +299,35 @@ pub(crate) fn evolve_with_one(
     let new_axis = if has_pdf1 { 2 } else { 1 };
 
     let mut last_x1 = Vec::new();
+    let mut last_fac1 = Vec::new();
     let mut ops = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
 
         for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-            let (x1_a, x1_b, array) =
+            let (fac1, x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders(info, &subgrids_o, &grid.orders(), order_mask)?;
 
             let x1 = if has_pdf1 { x1_a } else { x1_b };
 
-            if (last_x1.len() != x1.len())
+            if x1.is_empty() {
+                continue;
+            }
+
+            if (last_fac1.len() != fac1.len())
+                || last_fac1
+                    .iter()
+                    .zip(fac1.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                || (last_x1.len() != x1.len())
                 || last_x1
                     .iter()
                     .zip(x1.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
             {
-                ops = operators(operator, info, &pid_indices, &x1)?;
+                ops = operators(operator, info, &fac1, &pid_indices, &x1)?;
+                last_fac1 = fac1;
                 last_x1 = x1;
             }
 
@@ -401,13 +445,13 @@ pub(crate) fn evolve_with_two(
         let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
         for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-            let (x1_a, x1_b, array) =
+            let (fac1, x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders(info, &subgrids_o, &grid.orders(), order_mask)?;
 
             // TODO: optimization potential: if `x1_a` and `x1_b` are the same cache them, if
             // they are the same over bins and/or orders cache them too
-            let operators_a = operators(operator, info, &pid_indices_a, &x1_a)?;
-            let operators_b = operators(operator, info, &pid_indices_b, &x1_b)?;
+            let operators_a = operators(operator, info, &fac1, &pid_indices_a, &x1_a)?;
+            let operators_b = operators(operator, info, &fac1, &pid_indices_b, &x1_b)?;
 
             // TODO: get rid of array-index access
             for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
