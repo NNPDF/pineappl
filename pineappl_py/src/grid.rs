@@ -1,3 +1,4 @@
+use pineappl::evolution::OperatorInfo;
 use pineappl::grid::{EkoInfo, Grid, GridAxes, Ntuple, Order};
 use pineappl::lumi::LumiCache;
 
@@ -450,6 +451,77 @@ impl PyGrid {
             .convolute_eko(
                 operator.as_array().to_owned(),
                 eko_info,
+                &order_mask.to_vec().unwrap(),
+            )
+            .expect("Nothing returned from evolution.");
+        PyFkTable {
+            fk_table: evolved_grid,
+        }
+    }
+
+    /// Convolute with with an evolution operator.
+    ///
+    /// Parameters
+    /// ----------
+    /// muf2_0 : float
+    ///     reference scale
+    /// alphas : numpy.ndarray(float)
+    ///     list with :math:`\alpha_s(Q2)` for the process scales
+    /// pids : numpy.ndarray(int)
+    ///     sorting of the particles in the tensor
+    /// x_grid : numpy.ndarray(float)
+    ///     interpolation grid
+    /// target_pids : numpy.ndarray(int)
+    ///     sorting of the particles in the tensor for final FkTable
+    /// target_x_grid : numpy.ndarray(float)
+    ///     final FKTable interpolation grid
+    /// mur2_grid : numpy.ndarray(float)
+    ///     list of renormalization scales
+    /// muf2_grid : numpy.ndarray(float)
+    ///     list of factorization scales
+    /// operator : numpy.ndarray(int, rank=5)
+    ///     evolution tensor
+    /// orders_mask : numpy.ndarray(bool)
+    ///     boolean mask to activate orders
+    ///
+    /// Returns
+    /// -------
+    /// PyFkTable :
+    ///     produced FK table
+    pub fn evolve(
+        &self,
+        operator: PyReadonlyArray5<f64>,
+        fac0: f64,
+        pids0: PyReadonlyArray1<i32>,
+        x0: PyReadonlyArray1<f64>,
+        fac1: PyReadonlyArray1<f64>,
+        pids1: PyReadonlyArray1<i32>,
+        x1: PyReadonlyArray1<f64>,
+        ren1: PyReadonlyArray1<f64>,
+        alphas: PyReadonlyArray1<f64>,
+        xi: (f64, f64),
+        lumi_id_types: String,
+        order_mask: PyReadonlyArray1<bool>,
+    ) -> PyFkTable {
+        let op_info = OperatorInfo {
+            fac0: fac0,
+            pids0: pids0.to_vec().unwrap(),
+            x0: x0.to_vec().unwrap(),
+            fac1: fac1.to_vec().unwrap(),
+            pids1: pids1.to_vec().unwrap(),
+            x1: x1.to_vec().unwrap(),
+            ren1: ren1.to_vec().unwrap(),
+            alphas: alphas.to_vec().unwrap(),
+            xir: xi.0,
+            xif: xi.1,
+            lumi_id_types: lumi_id_types,
+        };
+
+        let evolved_grid = self
+            .grid
+            .evolve(
+                &operator.as_array().to_owned(),
+                &op_info,
                 &order_mask.to_vec().unwrap(),
             )
             .expect("Nothing returned from evolution.");
