@@ -2543,12 +2543,18 @@ mod tests {
             targetpids: Vec<i32>,
         }
 
-        let setname = "NNPDF40_nlo_as_01180";
+        //let setname = "NNPDF40_nlo_as_01180";
 
-        let grid = "../HERA_CC_318GEV_EP_SIGMARED.pineappl.lz4";
-        let metadata = "../HERA_CC_318GEV_EP_SIGMARED/metadata.yaml";
+        let setname = "NNPDF40_nnlo_as_01180";
+        let grid = "../NNPDF_POS_ANTI_UP_40.pineappl.lz4";
+        let metadata = "../NNPDF_POS_ANTI_UP_40/metadata.yaml";
         let alphas = "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy";
-        let operator = "../HERA_CC_318GEV_EP_SIGMARED/operators.npy";
+        let operator = "../NNPDF_POS_ANTI_UP_40/operators.npy";
+
+        //let grid = "../HERA_CC_318GEV_EP_SIGMARED.pineappl.lz4";
+        //let metadata = "../HERA_CC_318GEV_EP_SIGMARED/metadata.yaml";
+        //let alphas = "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy";
+        //let operator = "../HERA_CC_318GEV_EP_SIGMARED/operators.npy";
 
         //let grid =
         //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4";
@@ -2580,47 +2586,73 @@ mod tests {
         assert_eq!(
             results,
             [
-                1.158872296528366,
-                1.1204108571716151,
-                0.8875902564141837,
-                0.6064124901549366,
-                0.46730446763293626,
-                0.9175036665313503,
-                0.9625683080629993,
-                0.832097616454224,
-                0.5840101875241862,
-                0.45055068848064506,
-                0.6688041946734723,
-                0.6889352106823404,
-                0.5297495101909169,
-                0.41609405897210827,
-                0.23143317308882982,
-                0.5649694171604525,
-                0.4792399077439775,
-                0.3861828122239765,
-                0.21793994357039714,
-                0.08432403516120096,
-                0.467724373428524,
-                0.43253481860290705,
-                0.3588386557913573,
-                0.20658438492949507,
-                0.36145545861402606,
-                0.350280931434649,
-                0.3095655884296923,
-                0.18715074960942407,
-                0.0737622486172105,
-                0.2292088799939892,
-                0.2277411334118036,
-                0.15507169325765838,
-                0.06400693681274111,
-                0.1403126590329724,
-                0.11639162212711233,
-                0.052756148828243,
-                0.05464232942385792,
-                0.033578480958376296,
-                0.01095350422009362
+                1.24053558491532,
+                1.0556043292537103,
+                0.8982894541272358,
+                0.764653254688176,
+                0.6497645161935843,
+                0.5455683653190757,
+                0.44285618029811136,
+                0.34236858231394923,
+                0.23851111837499242,
+                0.10826740305077837,
+                0.053312425688123236,
+                0.022300403914252444,
+                0.007689357135047722,
+                0.0030482582072498296,
+                0.001778467203699489,
+                0.0016533253586389347,
+                0.001889830982843056,
+                0.0014804650577204803,
+                0.0006649270383861285,
+                0.00014006028310118777
             ]
         );
+
+        //assert_eq!(
+        //    results,
+        //    [
+        //        1.158872296528366,
+        //        1.1204108571716151,
+        //        0.8875902564141837,
+        //        0.6064124901549366,
+        //        0.46730446763293626,
+        //        0.9175036665313503,
+        //        0.9625683080629993,
+        //        0.832097616454224,
+        //        0.5840101875241862,
+        //        0.45055068848064506,
+        //        0.6688041946734723,
+        //        0.6889352106823404,
+        //        0.5297495101909169,
+        //        0.41609405897210827,
+        //        0.23143317308882982,
+        //        0.5649694171604525,
+        //        0.4792399077439775,
+        //        0.3861828122239765,
+        //        0.21793994357039714,
+        //        0.08432403516120096,
+        //        0.467724373428524,
+        //        0.43253481860290705,
+        //        0.3588386557913573,
+        //        0.20658438492949507,
+        //        0.36145545861402606,
+        //        0.350280931434649,
+        //        0.3095655884296923,
+        //        0.18715074960942407,
+        //        0.0737622486172105,
+        //        0.2292088799939892,
+        //        0.2277411334118036,
+        //        0.15507169325765838,
+        //        0.06400693681274111,
+        //        0.1403126590329724,
+        //        0.11639162212711233,
+        //        0.052756148828243,
+        //        0.05464232942385792,
+        //        0.033578480958376296,
+        //        0.01095350422009362
+        //    ]
+        //);
 
         //assert_eq!(
         //    results,
@@ -2713,45 +2745,71 @@ mod tests {
 
         let evolved_results = fk_table.convolute(&mut cache, &[], &[]);
 
-        assert_approx_eq!(f64, evolved_results[0], 1.1586791793006517, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[1], 1.1202273184348848, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[2], 0.8874599897872428, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[3], 0.6063712625073608, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[4], 0.4672874245885059, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[5], 0.9173403727229149, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[6], 0.962399631849818, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[7], 0.8319677648956049, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[8], 0.5839675146069822, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[9], 0.4505325132086283, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[10], 0.6686768094263615, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[11], 0.6888210100292264, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[12], 0.5297074425880604, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[13], 0.41607535867486134, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[14], 0.23142390114495495, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[15], 0.5648727887895276, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[16], 0.47919973616456246, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[17], 0.38616444708721975, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[18], 0.21793107752932925, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[19], 0.08431941687497238, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[20], 0.46764290121503427, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[21], 0.43249701889959064, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[22], 0.35882091245690373, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[23], 0.20657579928724892, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[24], 0.36139047088472026, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[25], 0.35024730127068276, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[26], 0.3095490328079981, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[27], 0.1871428094003754, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[28], 0.07375775279995289, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[29], 0.22918160031673335, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[30], 0.22772688522902013, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[31], 0.15506498963894486, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[32], 0.0640029182481115, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[33], 0.14030150245012324, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[34], 0.11638652740576161, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[35], 0.052752620249130584, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[36], 0.05463985560251649, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[37], 0.03357575618674528, ulps = 8);
-        assert_approx_eq!(f64, evolved_results[38], 0.010951799924697785, ulps = 8);
+        assert_eq!(
+            evolved_results,
+            [
+                1.2207842700252995,
+                1.045048066777534,
+                0.8929558020715721,
+                0.7616886315970761,
+                0.6473998210787656,
+                0.5429673354151222,
+                0.4397140650493807,
+                0.3388398929365999,
+                0.2360361559509584,
+                0.10965325070809523,
+                0.0565065025445373,
+                0.025950818992108653,
+                0.010936975130524709,
+                0.005500955939196705,
+                0.003402371551444896,
+                0.0025976596425020862,
+                0.002333911364590294,
+                0.001628487038508355,
+                0.0006948686757361142,
+                0.00014172972322202258
+            ]
+        );
+
+        //assert_approx_eq!(f64, evolved_results[0], 1.1586791793006517, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[1], 1.1202273184348848, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[2], 0.8874599897872428, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[3], 0.6063712625073608, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[4], 0.4672874245885059, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[5], 0.9173403727229149, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[6], 0.962399631849818, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[7], 0.8319677648956049, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[8], 0.5839675146069822, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[9], 0.4505325132086283, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[10], 0.6686768094263615, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[11], 0.6888210100292264, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[12], 0.5297074425880604, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[13], 0.41607535867486134, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[14], 0.23142390114495495, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[15], 0.5648727887895276, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[16], 0.47919973616456246, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[17], 0.38616444708721975, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[18], 0.21793107752932925, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[19], 0.08431941687497238, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[20], 0.46764290121503427, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[21], 0.43249701889959064, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[22], 0.35882091245690373, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[23], 0.20657579928724892, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[24], 0.36139047088472026, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[25], 0.35024730127068276, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[26], 0.3095490328079981, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[27], 0.1871428094003754, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[28], 0.07375775279995289, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[29], 0.22918160031673335, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[30], 0.22772688522902013, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[31], 0.15506498963894486, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[32], 0.0640029182481115, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[33], 0.14030150245012324, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[34], 0.11638652740576161, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[35], 0.052752620249130584, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[36], 0.05463985560251649, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[37], 0.03357575618674528, ulps = 8);
+        //assert_approx_eq!(f64, evolved_results[38], 0.010951799924697785, ulps = 8);
 
         //assert_eq!(
         //    evolved_results,
