@@ -2515,13 +2515,18 @@ mod tests {
         assert_eq!(fk.bins(), 1);
     }
 
-    #[test]
-    #[ignore]
-    fn evolve() {
-        use evolution::OperatorInfo;
+    fn execute_evolve_test(
+        setname: &str,
+        grid: &str,
+        metadata: &str,
+        alphas: &str,
+        operator: &str,
+        ref_results: &[f64],
+        ref_evolved_results: &[f64],
+    ) {
         use float_cmp::assert_approx_eq;
         use lhapdf::Pdf;
-        use ndarray::{Array1, Array5};
+        use ndarray::Array1;
         use std::fs::File;
 
         #[derive(Deserialize)]
@@ -2543,38 +2548,6 @@ mod tests {
             targetpids: Vec<i32>,
         }
 
-        //let setname = "NNPDF40_nlo_as_01180";
-
-        let setname = "NNPDF40_nnlo_as_01180";
-        let grid = "../NNPDF_POS_ANTI_UP_40.pineappl.lz4";
-        let metadata = "../NNPDF_POS_ANTI_UP_40/metadata.yaml";
-        let alphas = "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy";
-        let operator = "../NNPDF_POS_ANTI_UP_40/operators.npy";
-
-        //let grid = "../HERA_CC_318GEV_EP_SIGMARED.pineappl.lz4";
-        //let metadata = "../HERA_CC_318GEV_EP_SIGMARED/metadata.yaml";
-        //let alphas = "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy";
-        //let operator = "../HERA_CC_318GEV_EP_SIGMARED/operators.npy";
-
-        //let grid =
-        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4";
-        //let metadata =
-        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/metadata.yaml";
-        //let alphas =
-        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/alphas.npy";
-        //let operator =
-        //    "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/operators.npy";
-
-        //let grid = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34.pineappl.lz4";
-        //let metadata = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/metadata.yaml";
-        //let alphas = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/alphas.npy";
-        //let operator = "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/operators.npy";
-
-        //let grid = "../LHCB_WP_8TEV.pineappl.lz4";
-        //let metadata = "../LHCB_WP_8TEV/metadata.yaml";
-        //let alphas = "../LHCB_WP_8TEV/alphas.npy";
-        //let operator = "../LHCB_WP_8TEV/operators.npy";
-
         let grid = Grid::read(File::open(grid).unwrap()).unwrap();
 
         let lhapdf = Pdf::with_setname_and_nmem(setname).unwrap();
@@ -2583,126 +2556,7 @@ mod tests {
         let mut cache = LumiCache::with_one(2212, &mut pdf, &mut als);
         let results = grid.convolute(&mut cache, &[], &[], &[], &[(1.0, 1.0)]);
 
-        assert_eq!(
-            results,
-            [
-                1.24053558491532,
-                1.0556043292537103,
-                0.8982894541272358,
-                0.764653254688176,
-                0.6497645161935843,
-                0.5455683653190757,
-                0.44285618029811136,
-                0.34236858231394923,
-                0.23851111837499242,
-                0.10826740305077837,
-                0.053312425688123236,
-                0.022300403914252444,
-                0.007689357135047722,
-                0.0030482582072498296,
-                0.001778467203699489,
-                0.0016533253586389347,
-                0.001889830982843056,
-                0.0014804650577204803,
-                0.0006649270383861285,
-                0.00014006028310118777
-            ]
-        );
-
-        //assert_eq!(
-        //    results,
-        //    [
-        //        1.158872296528366,
-        //        1.1204108571716151,
-        //        0.8875902564141837,
-        //        0.6064124901549366,
-        //        0.46730446763293626,
-        //        0.9175036665313503,
-        //        0.9625683080629993,
-        //        0.832097616454224,
-        //        0.5840101875241862,
-        //        0.45055068848064506,
-        //        0.6688041946734723,
-        //        0.6889352106823404,
-        //        0.5297495101909169,
-        //        0.41609405897210827,
-        //        0.23143317308882982,
-        //        0.5649694171604525,
-        //        0.4792399077439775,
-        //        0.3861828122239765,
-        //        0.21793994357039714,
-        //        0.08432403516120096,
-        //        0.467724373428524,
-        //        0.43253481860290705,
-        //        0.3588386557913573,
-        //        0.20658438492949507,
-        //        0.36145545861402606,
-        //        0.350280931434649,
-        //        0.3095655884296923,
-        //        0.18715074960942407,
-        //        0.0737622486172105,
-        //        0.2292088799939892,
-        //        0.2277411334118036,
-        //        0.15507169325765838,
-        //        0.06400693681274111,
-        //        0.1403126590329724,
-        //        0.11639162212711233,
-        //        0.052756148828243,
-        //        0.05464232942385792,
-        //        0.033578480958376296,
-        //        0.01095350422009362
-        //    ]
-        //);
-
-        //assert_eq!(
-        //    results,
-        //    [
-        //        1469.0819829706113,
-        //        4364.509970805006,
-        //        2072.647269805865,
-        //        742.6160478667135,
-        //        312.195449854513,
-        //        145.782031788469,
-        //        72.64484245290579,
-        //        38.88392569051013,
-        //        17.093513927247354,
-        //        6.157887576517187,
-        //        2.4621639421455903,
-        //        1.0817834362838417,
-        //        0.5084171526510098,
-        //        0.2520459057372801,
-        //        0.10211930488819178,
-        //        0.021141855492915994
-        //    ]
-        //);
-
-        //assert_eq!(
-        //    results,
-        //    [
-        //        134632.4480167966,
-        //        133472.53856965082,
-        //        130776.9197998554,
-        //        126991.17650299768,
-        //        121168.15135839234,
-        //        112761.75563082621,
-        //        98484.12455342771,
-        //        57843.82009866679
-        //    ]
-        //);
-
-        //assert_eq!(
-        //    results,
-        //    [
-        //        877.9498750860583,
-        //        823.5123400865052,
-        //        735.605093586326,
-        //        616.3465722662226,
-        //        478.63703336207277,
-        //        341.06729874517384,
-        //        174.3688634669724,
-        //        48.27440593682665
-        //    ]
-        //);
+        assert_eq!(results, ref_results);
 
         let metadata: Metadata = serde_yaml::from_reader(File::open(metadata).unwrap()).unwrap();
         let alphas: Array1<f64> = ndarray_npy::read_npy(alphas).unwrap();
@@ -2738,16 +2592,253 @@ mod tests {
 
         //let fk_table = grid.convolute_eko(operator, eko_info, &[]).unwrap();
         let fk_table = grid.evolve(&operator, &info, &[]).unwrap();
-
-        fk_table
-            .write(File::create("../fk_table.pineappl.lz4").unwrap())
-            .unwrap();
-
         let evolved_results = fk_table.convolute(&mut cache, &[], &[]);
 
-        assert_eq!(
-            evolved_results,
-            [
+        assert_eq!(evolved_results.len(), ref_evolved_results.len());
+
+        for (&result, &ref_result) in evolved_results.iter().zip(ref_evolved_results.iter()) {
+            assert_approx_eq!(f64, result, ref_result, ulps = 16);
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn evolve_hera_cc_318gev_ep_sigmared() {
+        execute_evolve_test(
+            "NNPDF40_nlo_as_01180",
+            "../HERA_CC_318GEV_EP_SIGMARED.pineappl.lz4",
+            "../HERA_CC_318GEV_EP_SIGMARED/metadata.yaml",
+            "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy",
+            "../HERA_CC_318GEV_EP_SIGMARED/operators.npy",
+            &[
+                1.158872296528366,
+                1.1204108571716151,
+                0.8875902564141837,
+                0.6064124901549366,
+                0.46730446763293626,
+                0.9175036665313503,
+                0.9625683080629993,
+                0.832097616454224,
+                0.5840101875241862,
+                0.45055068848064506,
+                0.6688041946734723,
+                0.6889352106823404,
+                0.5297495101909169,
+                0.41609405897210827,
+                0.23143317308882982,
+                0.5649694171604525,
+                0.4792399077439775,
+                0.3861828122239765,
+                0.21793994357039714,
+                0.08432403516120096,
+                0.467724373428524,
+                0.43253481860290705,
+                0.3588386557913573,
+                0.20658438492949507,
+                0.36145545861402606,
+                0.350280931434649,
+                0.3095655884296923,
+                0.18715074960942407,
+                0.0737622486172105,
+                0.2292088799939892,
+                0.2277411334118036,
+                0.15507169325765838,
+                0.06400693681274111,
+                0.1403126590329724,
+                0.11639162212711233,
+                0.052756148828243,
+                0.05464232942385792,
+                0.033578480958376296,
+                0.01095350422009362,
+            ],
+            &[
+                1.1586791793006517,
+                1.1202273184348848,
+                0.8874599897872428,
+                0.6063712625073608,
+                0.4672874245885059,
+                0.9173403727229149,
+                0.962399631849818,
+                0.8319677648956049,
+                0.5839675146069822,
+                0.4505325132086283,
+                0.6686768094263615,
+                0.6888210100292264,
+                0.5297074425880604,
+                0.41607535867486134,
+                0.23142390114495495,
+                0.5648727887895276,
+                0.47919973616456246,
+                0.38616444708721975,
+                0.21793107752932925,
+                0.08431941687497238,
+                0.46764290121503427,
+                0.43249701889959064,
+                0.35882091245690373,
+                0.20657579928724892,
+                0.36139047088472026,
+                0.35024730127068276,
+                0.3095490328079981,
+                0.1871428094003754,
+                0.07375775279995289,
+                0.22918160031673335,
+                0.22772688522902013,
+                0.15506498963894486,
+                0.0640029182481115,
+                0.14030150245012324,
+                0.11638652740576161,
+                0.052752620249130584,
+                0.05463985560251649,
+                0.03357575618674528,
+                0.010951799924697785,
+            ],
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn evolve_atlaswzrap36pb() {
+        execute_evolve_test(
+            "NNPDF40_nlo_as_01180",
+            "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34.pineappl.lz4",
+            "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/metadata.yaml",
+            "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/alphas.npy",
+            "../ATLASWZRAP36PB-ATLAS-arXiv:1109.5141-Z0_eta34/operators.npy",
+            &[
+                134632.4480167966,
+                133472.53856965082,
+                130776.9197998554,
+                126991.17650299768,
+                121168.15135839234,
+                112761.75563082621,
+                98484.12455342771,
+                57843.82009866679,
+            ],
+            &[
+                134500.65897999398,
+                133344.24845948347,
+                130663.70226447149,
+                126890.6156547337,
+                121090.7595443343,
+                112698.92115188896,
+                98421.19065191328,
+                57813.500329070215,
+            ],
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn evolve_lhcb_wp_8tev() {
+        execute_evolve_test(
+            "NNPDF40_nlo_as_01180",
+            "../LHCB_WP_8TEV.pineappl.lz4",
+            "../LHCB_WP_8TEV/metadata.yaml",
+            "../LHCB_WP_8TEV/alphas.npy",
+            "../LHCB_WP_8TEV/operators.npy",
+            &[
+                877.9498750860583,
+                823.5123400865052,
+                735.605093586326,
+                616.3465722662226,
+                478.63703336207277,
+                341.06729874517384,
+                174.3688634669724,
+                48.27440593682665,
+            ],
+            &[
+                877.710496991437,
+                823.2923843876903,
+                735.4119248950592,
+                616.18687672059,
+                478.5155078388758,
+                340.9838587318582,
+                174.33023801119046,
+                48.2671526729747,
+            ],
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn evolve_atlas_wm_jet_8tev_pt() {
+        execute_evolve_test(
+            "NNPDF40_nlo_as_01180",
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003.pineappl.lz4",
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/metadata.yaml",
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/alphas.npy",
+            "../ATLAS_WM_JET_8TEV_PT-atlas-atlas-wjets-arxiv-1711.03296-xsec003/operators.npy",
+            &[
+                1469.0819829706113,
+                4364.509970805006,
+                2072.647269805865,
+                742.6160478667135,
+                312.195449854513,
+                145.782031788469,
+                72.64484245290579,
+                38.88392569051013,
+                17.093513927247354,
+                6.157887576517187,
+                2.4621639421455903,
+                1.0817834362838417,
+                0.5084171526510098,
+                0.2520459057372801,
+                0.10211930488819178,
+                0.021141855492915994,
+            ],
+            &[
+                1467.6009449768221,
+                4359.87917180896,
+                2070.4278159799974,
+                741.9298754488171,
+                311.9073865166957,
+                145.65671641953438,
+                72.58340237308579,
+                38.85208071336316,
+                17.080194246318936,
+                6.153298093496777,
+                2.4604627649049604,
+                1.0810950528772425,
+                0.5081137620517796,
+                0.25190465608989626,
+                0.10206534388970377,
+                0.02113211970400249,
+            ],
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn evolve_nnpdf_pos_anti_up_40() {
+        execute_evolve_test(
+            "NNPDF40_nnlo_as_01180",
+            "../NNPDF_POS_ANTI_UP_40.pineappl.lz4",
+            "../NNPDF_POS_ANTI_UP_40/metadata.yaml",
+            "../HERA_CC_318GEV_EP_SIGMARED/alphas.npy",
+            "../NNPDF_POS_ANTI_UP_40/operators.npy",
+            &[
+                1.24053558491532,
+                1.0556043292537103,
+                0.8982894541272358,
+                0.764653254688176,
+                0.6497645161935843,
+                0.5455683653190757,
+                0.44285618029811136,
+                0.34236858231394923,
+                0.23851111837499242,
+                0.10826740305077837,
+                0.053312425688123236,
+                0.022300403914252444,
+                0.007689357135047722,
+                0.0030482582072498296,
+                0.001778467203699489,
+                0.0016533253586389347,
+                0.001889830982843056,
+                0.0014804650577204803,
+                0.0006649270383861285,
+                0.00014006028310118777,
+            ],
+            &[
                 1.2207842700252995,
                 1.045048066777534,
                 0.8929558020715721,
@@ -2767,88 +2858,8 @@ mod tests {
                 0.002333911364590294,
                 0.001628487038508355,
                 0.0006948686757361142,
-                0.00014172972322202258
-            ]
+                0.00014172972322202258,
+            ],
         );
-
-        //assert_approx_eq!(f64, evolved_results[0], 1.1586791793006517, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[1], 1.1202273184348848, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[2], 0.8874599897872428, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[3], 0.6063712625073608, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[4], 0.4672874245885059, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[5], 0.9173403727229149, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[6], 0.962399631849818, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[7], 0.8319677648956049, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[8], 0.5839675146069822, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[9], 0.4505325132086283, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[10], 0.6686768094263615, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[11], 0.6888210100292264, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[12], 0.5297074425880604, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[13], 0.41607535867486134, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[14], 0.23142390114495495, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[15], 0.5648727887895276, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[16], 0.47919973616456246, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[17], 0.38616444708721975, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[18], 0.21793107752932925, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[19], 0.08431941687497238, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[20], 0.46764290121503427, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[21], 0.43249701889959064, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[22], 0.35882091245690373, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[23], 0.20657579928724892, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[24], 0.36139047088472026, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[25], 0.35024730127068276, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[26], 0.3095490328079981, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[27], 0.1871428094003754, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[28], 0.07375775279995289, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[29], 0.22918160031673335, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[30], 0.22772688522902013, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[31], 0.15506498963894486, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[32], 0.0640029182481115, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[33], 0.14030150245012324, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[34], 0.11638652740576161, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[35], 0.052752620249130584, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[36], 0.05463985560251649, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[37], 0.03357575618674528, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[38], 0.010951799924697785, ulps = 8);
-
-        //assert_eq!(
-        //    evolved_results,
-        //    [
-        //        1467.6009449768221,
-        //        4359.87917180896,
-        //        2070.4278159799974,
-        //        741.9298754488171,
-        //        311.9073865166957,
-        //        145.65671641953438,
-        //        72.58340237308579,
-        //        38.85208071336316,
-        //        17.080194246318936,
-        //        6.153298093496777,
-        //        2.4604627649049604,
-        //        1.0810950528772425,
-        //        0.5081137620517796,
-        //        0.25190465608989626,
-        //        0.10206534388970377,
-        //        0.02113211970400249
-        //    ]
-        //);
-
-        //assert_approx_eq!(f64, evolved_results[0], 134500.65897999398, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[1], 133344.24845948347, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[2], 130663.70226447149, ulps = 32);
-        //assert_approx_eq!(f64, evolved_results[3], 126890.6156547337, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[4], 121090.7595443343, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[5], 112698.92115188896, ulps = 16);
-        //assert_approx_eq!(f64, evolved_results[6], 98421.19065191328, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[7], 57813.500329070215, ulps = 8);
-
-        //assert_approx_eq!(f64, evolved_results[0], 1526.1321420502966, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[1], 1380.605564314246, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[2], 1182.565055380693, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[3], 947.3266541818663, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[4], 702.6776451873732, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[5], 477.8683182368509, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[6], 229.2748278368886, ulps = 8);
-        //assert_approx_eq!(f64, evolved_results[7], 58.35460083148634, ulps = 8);
     }
 }
