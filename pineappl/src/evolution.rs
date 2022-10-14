@@ -27,20 +27,20 @@ use std::iter;
 /// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
 /// scales, respectively, around their central values.
 pub struct OperatorInfo {
-    /// Squared factorization scales of the `Grid`.
-    pub fac1: Vec<f64>,
+    /// Squared factorization scale of the `FkTable`.
+    pub fac0: f64,
     /// Particle identifiers of the `FkTable`.
     pub pids0: Vec<i32>,
     /// `x`-grid coordinates of the `FkTable`
     pub x0: Vec<f64>,
+    /// Squared factorization scales of the `Grid`.
+    pub fac1: Vec<f64>,
     /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
     /// given here, the contributions of them are silently ignored.
     pub pids1: Vec<i32>,
     /// `x`-grid coordinates of the `Grid`.
     pub x1: Vec<f64>,
 
-    /// Squared factorization scale of the `FkTable`.
-    pub fac0: f64,
     /// Renormalization scales of the `Grid`.
     pub ren1: Vec<f64>,
     /// Strong couplings corresponding to the order given in [`ren1`].
