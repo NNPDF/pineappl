@@ -17,7 +17,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array1, Array2, Array3, Array5, Axis, Dimension};
+use ndarray::{s, Array3, Array5, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1779,249 +1779,6 @@ impl Grid {
         FkTable::try_from(result).ok()
     }
 
-    fn evolve_with_one(
-        &self,
-        operator: &Array5<f64>,
-        info: &OperatorInfo,
-        order_mask: &[bool],
-    ) -> Result<FkTable, GridError> {
-        let has_pdf1 = self.has_pdf1();
-
-        let (pid_indices, pids) = evolution::pids(operator, info, &|pid| {
-            self.lumi
-                .iter()
-                .flat_map(LumiEntry::entry)
-                .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
-        });
-
-        let lumi0 = evolution::lumi0_with_one(&pids);
-        let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
-        let new_axis = if has_pdf1 { 2 } else { 1 };
-
-        let mut last_x1 = Vec::new();
-        let mut operators = Vec::new();
-
-        for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
-            let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
-
-            for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-                let (x1_a, x1_b, array) = evolution::ndarray_from_subgrid_orders(
-                    info,
-                    &subgrids_o,
-                    &self.orders,
-                    order_mask,
-                )?;
-
-                let x1 = if has_pdf1 { x1_a } else { x1_b };
-
-                if (last_x1.len() != x1.len())
-                    || last_x1
-                        .iter()
-                        .zip(x1.iter())
-                        .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
-                {
-                    operators = evolution::operators(operator, info, &pid_indices, &x1)?;
-                    last_x1 = x1;
-                }
-
-                for (&pid1, &factor) in
-                    self.lumi[lumi1].entry().iter().map(
-                        |(a, b, f)| {
-                            if has_pdf1 {
-                                (a, f)
-                            } else {
-                                (b, f)
-                            }
-                        },
-                    )
-                {
-                    for (fk_table, op) in
-                        lumi0
-                            .iter()
-                            .zip(tables.iter_mut())
-                            .filter_map(|(&pid0, fk_table)| {
-                                pids.iter()
-                                    .zip(operators.iter())
-                                    .find_map(|(&(p0, p1), op)| {
-                                        (p0 == pid0 && p1 == pid1).then(|| op)
-                                    })
-                                    .map(|op| (fk_table, op))
-                            })
-                    {
-                        let mut result = Array1::zeros(info.x0.len());
-
-                        for imu2 in 0..array.dim().0 {
-                            let op = op.index_axis(Axis(0), imu2);
-
-                            result += &op.dot(
-                                &array
-                                    .index_axis(Axis(0), imu2)
-                                    .index_axis(Axis(new_axis - 1), 0),
-                            );
-                        }
-
-                        fk_table.scaled_add(factor, &result);
-                    }
-                }
-            }
-
-            sub_fk_tables.extend(tables.into_iter().map(|table| {
-                ImportOnlySubgridV2::new(
-                    SparseArray3::from_ndarray(
-                        &table.insert_axis(Axis(0)).insert_axis(Axis(new_axis)),
-                        0,
-                        1,
-                    ),
-                    vec![Mu2 {
-                        // TODO: FK tables don't depend on the renormalization scale
-                        //ren: -1.0,
-                        ren: info.fac0,
-                        fac: info.fac0,
-                    }],
-                    if has_pdf1 { info.x0.clone() } else { vec![1.0] },
-                    if !has_pdf1 {
-                        info.x0.clone()
-                    } else {
-                        vec![1.0]
-                    },
-                )
-                .into()
-            }));
-        }
-
-        let pid = if has_pdf1 {
-            self.initial_state_2()
-        } else {
-            self.initial_state_1()
-        };
-
-        let mut grid = Self {
-            subgrids: Array1::from_iter(sub_fk_tables.into_iter())
-                .into_shape((1, self.bin_info().bins(), lumi0.len()))
-                .unwrap(),
-            lumi: lumi0
-                .iter()
-                .map(|&a| {
-                    lumi_entry![
-                        if has_pdf1 { a } else { pid },
-                        if !has_pdf1 { a } else { pid },
-                        1.0
-                    ]
-                })
-                .collect(),
-            bin_limits: self.bin_limits.clone(),
-            orders: vec![Order::new(0, 0, 0, 0)],
-            subgrid_params: SubgridParams::default(),
-            more_members: self.more_members.clone(),
-        };
-
-        // write additional metadata
-        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
-
-        Ok(FkTable::try_from(grid).unwrap())
-    }
-
-    fn evolve_with_two(
-        &self,
-        operator: &Array5<f64>,
-        info: &OperatorInfo,
-        order_mask: &[bool],
-    ) -> Result<FkTable, GridError> {
-        let (pid_indices_a, pids_a) = evolution::pids(operator, info, &|pid1| {
-            self.lumi
-                .iter()
-                .flat_map(LumiEntry::entry)
-                .any(|&(a, _, _)| a == pid1)
-        });
-        let (pid_indices_b, pids_b) = evolution::pids(operator, info, &|pid1| {
-            self.lumi
-                .iter()
-                .flat_map(LumiEntry::entry)
-                .any(|&(_, b, _)| b == pid1)
-        });
-
-        let lumi0 = evolution::lumi0_with_two(&pids_a, &pids_b);
-
-        let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
-
-        for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
-            let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
-
-            for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
-                let (x1_a, x1_b, array) = evolution::ndarray_from_subgrid_orders(
-                    info,
-                    &subgrids_o,
-                    &self.orders,
-                    order_mask,
-                )?;
-
-                // TODO: optimization potential: if `x1_a` and `x1_b` are the same cache them, if
-                // they are the same over bins and/or orders cache them too
-                let operators_a = evolution::operators(operator, info, &pid_indices_a, &x1_a)?;
-                let operators_b = evolution::operators(operator, info, &pid_indices_b, &x1_b)?;
-
-                for &(pida1, pidb1, factor) in self.lumi[lumi1].entry() {
-                    for (fk_table, opa, opb) in lumi0.iter().zip(tables.iter_mut()).filter_map(
-                        |(&(pida0, pidb0), fk_table)| {
-                            pids_a
-                                .iter()
-                                .zip(operators_a.iter())
-                                .cartesian_product(pids_b.iter().zip(operators_b.iter()))
-                                .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
-                                    (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
-                                        .then(|| (opa, opb))
-                                })
-                                .map(|(opa, opb)| (fk_table, opa, opb))
-                        },
-                    ) {
-                        let mut result = Array2::zeros((info.x0.len(), info.x0.len()));
-
-                        for imu2 in 0..array.dim().0 {
-                            let opa = opa.index_axis(Axis(0), imu2);
-                            let opb = opb.index_axis(Axis(0), imu2);
-                            let arr = array.index_axis(Axis(0), imu2);
-
-                            result += &opa.dot(&arr.dot(&opb.t()));
-                        }
-
-                        fk_table.scaled_add(factor, &result);
-                    }
-                }
-            }
-
-            sub_fk_tables.extend(tables.into_iter().map(|table| {
-                ImportOnlySubgridV2::new(
-                    SparseArray3::from_ndarray(&table.insert_axis(Axis(0)), 0, 1),
-                    vec![Mu2 {
-                        // TODO: FK tables don't depend on the renormalization scale
-                        //ren: -1.0,
-                        ren: info.fac0,
-                        fac: info.fac0,
-                    }],
-                    info.x0.clone(),
-                    info.x0.clone(),
-                )
-                .into()
-            }));
-        }
-
-        let mut grid = Self {
-            subgrids: Array1::from_iter(sub_fk_tables.into_iter())
-                .into_shape((1, self.bin_info().bins(), lumi0.len()))
-                .unwrap(),
-            lumi: lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
-            bin_limits: self.bin_limits.clone(),
-            orders: vec![Order::new(0, 0, 0, 0)],
-            subgrid_params: SubgridParams::default(),
-            more_members: self.more_members.clone(),
-        };
-
-        // write additional metadata
-        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
-
-        Ok(FkTable::try_from(grid).unwrap())
-    }
-
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
     /// `operator`. The dimensions and properties of this operator must be described using `info`.
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
@@ -2054,11 +1811,25 @@ impl Grid {
             )));
         }
 
-        if self.has_pdf1() && self.has_pdf2() {
-            self.evolve_with_two(operator, info, order_mask)
+        let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
+            evolution::evolve_with_two(self, operator, info, order_mask)
         } else {
-            self.evolve_with_one(operator, info, order_mask)
-        }
+            evolution::evolve_with_one(self, operator, info, order_mask)
+        }?;
+
+        let mut grid = Self {
+            subgrids,
+            lumi,
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order::new(0, 0, 0, 0)],
+            subgrid_params: SubgridParams::default(),
+            more_members: self.more_members.clone(),
+        };
+
+        // write additional metadata
+        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
+
+        Ok(FkTable::try_from(grid).unwrap())
     }
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
