@@ -1798,6 +1798,9 @@ impl Grid {
         let mut sub_fk_tables = Vec::with_capacity(self.bin_info().bins() * lumi0.len());
         let new_axis = if has_pdf1 { 2 } else { 1 };
 
+        let mut last_x1 = Vec::new();
+        let mut operators = Vec::new();
+
         for subgrids_ol in self.subgrids.axis_iter(Axis(1)) {
             let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
 
@@ -1810,7 +1813,16 @@ impl Grid {
                 )?;
 
                 let x1 = if has_pdf1 { x1_a } else { x1_b };
-                let operators = evolution::operators(operator, info, &pid_indices, &x1)?;
+
+                if (last_x1.len() != x1.len())
+                    || last_x1
+                        .iter()
+                        .zip(x1.iter())
+                        .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                {
+                    operators = evolution::operators(operator, info, &pid_indices, &x1)?;
+                    last_x1 = x1;
+                }
 
                 for (&pid1, &factor) in
                     self.lumi[lumi1].entry().iter().map(
