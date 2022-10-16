@@ -4,6 +4,7 @@ mod channels;
 mod convolute;
 mod delete;
 mod diff;
+mod evolve;
 mod helpers;
 mod import;
 mod info;
@@ -56,6 +57,7 @@ enum SubcommandEnum {
     Convolute(convolute::Opts),
     Delete(delete::Opts),
     Diff(diff::Opts),
+    Evolve(evolve::Opts),
     Import(import::Opts),
     Info(info::Opts),
     Merge(merge::Opts),
