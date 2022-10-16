@@ -438,8 +438,13 @@ pub(crate) fn evolve_with_two(
     });
 
     let lumi0 = lumi0_with_two(&pids_a, &pids_b);
-
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
+
+    let mut last_fac1 = Vec::new();
+    let mut last_x1a = Vec::new();
+    let mut last_x1b = Vec::new();
+    let mut operators_a = Vec::new();
+    let mut operators_b = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
@@ -448,10 +453,37 @@ pub(crate) fn evolve_with_two(
             let (fac1, x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders(info, &subgrids_o, &grid.orders(), order_mask)?;
 
-            // TODO: optimization potential: if `x1_a` and `x1_b` are the same cache them, if
-            // they are the same over bins and/or orders cache them too
-            let operators_a = operators(operator, info, &fac1, &pid_indices_a, &x1_a)?;
-            let operators_b = operators(operator, info, &fac1, &pid_indices_b, &x1_b)?;
+            let fac1_diff = (last_fac1.len() != fac1.len())
+                || last_fac1
+                    .iter()
+                    .zip(fac1.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64));
+
+            if fac1_diff
+                || (last_x1a.len() != x1_a.len())
+                || last_x1a
+                    .iter()
+                    .zip(x1_a.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+            {
+                operators_a = operators(operator, info, &fac1, &pid_indices_a, &x1_a)?;
+                last_x1a = x1_a;
+            }
+
+            if fac1_diff
+                || (last_x1b.len() != x1_b.len())
+                || last_x1b
+                    .iter()
+                    .zip(x1_b.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+            {
+                operators_b = operators(operator, info, &fac1, &pid_indices_b, &x1_b)?;
+                last_x1b = x1_b;
+            }
+
+            if fac1_diff {
+                last_fac1 = fac1;
+            };
 
             // TODO: get rid of array-index access
             for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
