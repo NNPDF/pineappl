@@ -258,7 +258,9 @@ pub(crate) fn ndarray_from_subgrid_orders(
         for ((ifac1, ix1, ix2), value) in subgrid.iter() {
             let Mu2 { ren: mur2, .. } = subgrid.mu2_grid()[ifac1];
 
-            let als = if let Some(alphas) = info
+            let als = if order.alphas == 0 {
+                1.0
+            } else if let Some(alphas) = info
                 .ren1
                 .iter()
                 .zip(info.alphas.iter())
