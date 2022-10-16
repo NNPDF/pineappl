@@ -87,7 +87,7 @@ fn evolve_grid(_: &Grid, _: &Path) -> Result<FkTable> {
     ))
 }
 
-/// Evolves a PineAPPL grid together with an evolution kernel operator to an FK table.
+/// Evolve a grid with an evolution kernel operator to an FK table.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
