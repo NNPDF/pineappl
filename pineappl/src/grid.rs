@@ -2596,6 +2596,16 @@ mod tests {
 
         assert_eq!(evolved_results.len(), ref_evolved_results.len());
 
+        for (bin, diff) in results
+            .iter()
+            .zip(evolved_results.iter())
+            .map(|(a, b)| (b / a - 1.0) * 1000.0)
+            .enumerate()
+            .filter(|&(_, diff)| diff > 1.0)
+        {
+            println!("WARNING: bin {} diff {}", bin, diff);
+        }
+
         for (&result, &ref_result) in evolved_results.iter().zip(ref_evolved_results.iter()) {
             assert_approx_eq!(f64, result, ref_result, ulps = 16);
         }
