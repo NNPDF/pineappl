@@ -23,6 +23,16 @@ OPTIONS:
     -h, --help                   Print help information
 ";
 
+const E906NLO_BIN_00_STR: &str = "b   FkTable        Grid       rel. diff
+-+------------+------------+-------------
+0 1.0659807e-1 1.0657910e-1 -1.7800240e-4
+1 1.0659807e-1 1.0657910e-1 -1.7800240e-4
+2 1.0659807e-1 1.0657910e-1 -1.7800240e-4
+3 1.0659807e-1 1.0657910e-1 -1.7800240e-4
+4  3.2698655e0  3.2710283e0  3.5561489e-4
+5  1.6039253e0  1.6047363e0  5.0563376e-4
+";
+
 const LHCB_WP_7TEV_STR: &str = "b   FkTable      Grid       rel. diff
 -+-----------+-----------+-------------
 0 7.7911994e2 7.7891206e2 -2.6680685e-4
@@ -63,4 +73,24 @@ fn lhcb_wp_7tev() {
         .assert()
         .success()
         .stdout(LHCB_WP_7TEV_STR);
+}
+
+#[test]
+#[ignore]
+fn e906nlo_bin_00() {
+    let output = NamedTempFile::new("fktable2.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "evolve",
+            "../test-data/E906nlo_bin_00.pineappl.lz4",
+            "../test-data/E906nlo_bin_00.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(E906NLO_BIN_00_STR);
 }
