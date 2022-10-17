@@ -42,11 +42,15 @@ jobs:
       with:
         default: true
         toolchain: nightly
+    - name: Download test data
+      run: |
+        wget -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
+        wget -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
     - name: Run tests
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all-features --verbose -- --skip import_applgrid --skip import_photon_grid
+        args: --all-features --verbose -- --include-ignored --skip import_applgrid --skip import_photon_grid
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
