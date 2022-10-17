@@ -44,8 +44,8 @@ jobs:
         toolchain: nightly
     - name: Download test data
       run: |
-        wget -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
-        wget -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
+        wget --no-verbose -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
+        wget --no-verbose -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
     - name: Run tests
       uses: actions-rs/cargo@v1
       with:
