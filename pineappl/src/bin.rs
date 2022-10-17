@@ -902,14 +902,14 @@ mod test {
         assert_eq!(remapper.slices(), [(0, 1)]);
     }
 
-    #[test]
-    #[ignore] // FIXME: there's a bug in the `slices` method
-    #[should_panic]
-    fn bin_remapper_merge_bins_panic() {
-        let mut remapper =
-            BinRemapper::new(vec![1.0; 3], vec![(0.0, 0.25), (0.5, 0.75), (0.75, 1.0)]).unwrap();
+    //#[test]
+    //#[ignore] // FIXME: there's a bug in the `slices` method
+    //#[should_panic]
+    //fn bin_remapper_merge_bins_panic() {
+    //    let mut remapper =
+    //        BinRemapper::new(vec![1.0; 3], vec![(0.0, 0.25), (0.5, 0.75), (0.75, 1.0)]).unwrap();
 
-        //assert_eq!(remapper.slices(), [(0, 1), (1, 3)]);
-        remapper.merge_bins(0..3).unwrap();
-    }
+    //    //assert_eq!(remapper.slices(), [(0, 1), (1, 3)]);
+    //    remapper.merge_bins(0..3).unwrap();
+    //}
 }
