@@ -53,9 +53,24 @@ pub struct OperatorInfo {
     pub lumi_id_types: String,
 }
 
+fn gluon_has_pid_zero(grid: &Grid) -> bool {
+    if grid.key_values().map_or(false, |key_values| {
+        key_values
+            .get("lumi_id_types")
+            .map_or(false, |value| value == "pdg_mc_ids")
+    }) {
+        grid.lumi()
+            .iter()
+            .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
+    } else {
+        false
+    }
+}
+
 pub(crate) fn pids(
     operator: &Array5<f64>,
     info: &OperatorInfo,
+    gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
 ) -> (Vec<(usize, usize)>, Vec<(i32, i32)>) {
     // list of all non-zero PID indices
@@ -75,7 +90,16 @@ pub(crate) fn pids(
     // list of all non-zero (pid0, pid1) combinations
     let pids = pid_indices
         .iter()
-        .map(|&(pid0_idx, pid1_idx)| (info.pids0[pid0_idx], info.pids1[pid1_idx]))
+        .map(|&(pid0_idx, pid1_idx)| {
+            (
+                info.pids0[pid0_idx],
+                if gluon_has_pid_zero && info.pids1[pid1_idx] == 21 {
+                    0
+                } else {
+                    info.pids1[pid1_idx]
+                },
+            )
+        })
         .collect();
 
     (pid_indices, pids)
@@ -287,9 +311,10 @@ pub(crate) fn evolve_with_one(
     info: &OperatorInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
+    let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
 
-    let (pid_indices, pids) = pids(operator, info, &|pid| {
+    let (pid_indices, pids) = pids(operator, info, gluon_has_pid_zero, &|pid| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
@@ -426,13 +451,15 @@ pub(crate) fn evolve_with_two(
     info: &OperatorInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
-    let (pid_indices_a, pids_a) = pids(operator, info, &|pid1| {
+    let gluon_has_pid_zero = gluon_has_pid_zero(grid);
+
+    let (pid_indices_a, pids_a) = pids(operator, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(a, _, _)| a == pid1)
     });
-    let (pid_indices_b, pids_b) = pids(operator, info, &|pid1| {
+    let (pid_indices_b, pids_b) = pids(operator, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
