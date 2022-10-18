@@ -83,7 +83,11 @@ pub(crate) fn pids(
                 .slice(s![.., pid1_idx, .., pid0_idx, ..])
                 .iter()
                 .any(|&value| value != 0.0)
-                && pid1_nonzero(info.pids1[pid1_idx])
+                && pid1_nonzero(if gluon_has_pid_zero && info.pids1[pid1_idx] == 21 {
+                    0
+                } else {
+                    info.pids1[pid1_idx]
+                })
         })
         .collect();
 
