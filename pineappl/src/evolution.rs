@@ -205,7 +205,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 .mu2_grid()
                 .iter()
                 .cloned()
-                .map(|mu2| mu2.fac)
+                .map(|mu2| info.xif * info.xif * mu2.fac)
                 .collect::<Vec<_>>()
         })
         .collect();
@@ -284,7 +284,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
             .collect();
 
         for ((ifac1, ix1, ix2), value) in subgrid.iter() {
-            let Mu2 { ren: mur2, .. } = subgrid.mu2_grid()[ifac1];
+            let mur2 = info.xir * info.xir * subgrid.mu2_grid()[ifac1].ren;
 
             let als = if order.alphas == 0 {
                 1.0
