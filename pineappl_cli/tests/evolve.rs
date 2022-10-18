@@ -33,6 +33,28 @@ const E906NLO_BIN_00_STR: &str = "b   FkTable        Grid       rel. diff
 5  1.6039253e0  1.6047363e0  5.0563376e-4
 ";
 
+const LHCB_DY_8TEV_STR: &str = "b    FkTable        Grid       rel. diff
+--+------------+------------+-------------
+0   8.1098384e0  8.1077663e0 -2.5550537e-4
+1   2.3743076e1  2.3737363e1 -2.4059398e-4
+2   3.8047878e1  3.8038820e1 -2.3808089e-4
+3   5.0883597e1  5.0870965e1 -2.4825643e-4
+4   6.1803061e1  6.1786970e1 -2.6035384e-4
+5   7.0086849e1  7.0068287e1 -2.6483200e-4
+6   7.5526963e1  7.5506936e1 -2.6516554e-4
+7   7.7701083e1  7.7680621e1 -2.6334886e-4
+8   7.6395213e1  7.6375564e1 -2.5721140e-4
+9   7.1337740e1  7.1320163e1 -2.4638218e-4
+10  6.1083107e1  6.1068812e1 -2.3403347e-4
+11  4.7617019e1  4.7606056e1 -2.3023324e-4
+12  3.4090165e1  3.4081756e1 -2.4667862e-4
+13  2.2027068e1  2.2021463e1 -2.5446838e-4
+14  1.2535284e1  1.2532680e1 -2.0773561e-4
+15  5.9288895e0  5.9282771e0 -1.0328299e-4
+16  1.3830183e0  1.3832217e0  1.4703176e-4
+17 5.1352256e-2 5.1398317e-2  8.9695182e-4
+";
+
 const LHCB_WP_7TEV_STR: &str = "b   FkTable      Grid       rel. diff
 -+-----------+-----------+-------------
 0 7.7911994e2 7.7891206e2 -2.6680685e-4
@@ -164,4 +186,24 @@ fn nutev_cc_nu_fe_sigmared() {
         .failure()
         .stderr("Error: grids are different\n")
         .stdout(NUTEV_CC_NU_FE_SIGMARED_STR);
+}
+
+#[test]
+#[ignore]
+fn lhcb_dy_8tev() {
+    let output = NamedTempFile::new("fktable4.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "evolve",
+            "../test-data/LHCB_DY_8TEV.pineappl.lz4",
+            "../test-data/LHCB_DY_8TEV.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_DY_8TEV_STR);
 }
