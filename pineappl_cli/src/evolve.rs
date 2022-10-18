@@ -6,7 +6,7 @@ use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fktable")]
-fn evolve_grid(grid: &Grid, eko: &Path) -> Result<FkTable> {
+fn evolve_grid(grid: &Grid, eko: &Path, xir: f64, xif: f64) -> Result<FkTable> {
     use lz4_flex::frame::FrameDecoder;
     use ndarray::{Array1, Array5};
     use ndarray_npy::ReadNpyExt;
@@ -72,8 +72,8 @@ fn evolve_grid(grid: &Grid, eko: &Path) -> Result<FkTable> {
         fac0: metadata.q2_ref,
         ren1: metadata.q2_grid, // TODO: check whether this is true in the general case
         alphas,
-        xir: 1.0,                                // TODO: make this a CLI option
-        xif: 1.0,                                // TODO: make this a CLI option
+        xir,
+        xif,
         lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
     };
 
@@ -81,7 +81,7 @@ fn evolve_grid(grid: &Grid, eko: &Path) -> Result<FkTable> {
 }
 
 #[cfg(not(feature = "fktable"))]
-fn evolve_grid(_: &Grid, _: &Path) -> Result<FkTable> {
+fn evolve_grid(_: &Grid, _: &Path, _: f64, _: f64) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -111,6 +111,12 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Rescale the renormalization scale with this factor.
+    #[clap(default_value_t = 1.0, long)]
+    xir: f64,
+    /// Rescale the factorization scale with this factor.
+    #[clap(default_value_t = 1.0, long)]
+    xif: f64,
 }
 
 impl Subcommand for Opts {
@@ -118,7 +124,7 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         let grid = helpers::read_grid(&self.input)?;
-        let fk_table = evolve_grid(&grid, &self.eko)?;
+        let fk_table = evolve_grid(&grid, &self.eko, self.xir, self.xif)?;
 
         let mut different = false;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
@@ -133,13 +139,13 @@ impl Subcommand for Opts {
             ConvoluteMode::Normal,
             false,
         );
-        let evolved_results = helpers::convolute(
+        let evolved_results = helpers::convolute_scales(
             fk_table.grid(),
             &mut pdf,
             &[],
             &[],
             &[],
-            1,
+            &[(self.xir, self.xif)],
             ConvoluteMode::Normal,
             false,
         );

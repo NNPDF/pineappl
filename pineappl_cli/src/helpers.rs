@@ -128,13 +128,13 @@ pub enum ConvoluteMode {
     Normal,
 }
 
-pub fn convolute(
+pub fn convolute_scales(
     grid: &Grid,
     lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
-    scales: usize,
+    scales: &[(f64, f64)],
     mode: ConvoluteMode,
     force_positive: bool,
 ) -> Vec<f64> {
@@ -171,11 +171,11 @@ pub fn convolute(
     };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolute(&mut cache, &orders, bins, lumis, &SCALES_VECTOR[0..scales]);
+    let mut results = grid.convolute(&mut cache, &orders, bins, lumis, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => results
-            .chunks_exact(results.len() / scales)
+            .chunks_exact(results.len() / scales.len())
             .flat_map(|chunk| {
                 let vec: Vec<_> = chunk[chunk.len() / 2..]
                     .iter()
@@ -195,7 +195,7 @@ pub fn convolute(
                         .iter()
                         .enumerate()
                         .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
-                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales)),
+                        .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
                 )
                 .for_each(|(value, norm)| *value *= norm);
 
@@ -203,6 +203,28 @@ pub fn convolute(
         }
         ConvoluteMode::Normal => results,
     }
+}
+
+pub fn convolute(
+    grid: &Grid,
+    lhapdf: &mut Pdf,
+    orders: &[(u32, u32)],
+    bins: &[usize],
+    lumis: &[bool],
+    scales: usize,
+    mode: ConvoluteMode,
+    force_positive: bool,
+) -> Vec<f64> {
+    convolute_scales(
+        grid,
+        lhapdf,
+        orders,
+        bins,
+        lumis,
+        &SCALES_VECTOR[0..scales],
+        mode,
+        force_positive,
+    )
 }
 
 pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
