@@ -459,29 +459,33 @@ impl PyGrid {
         }
     }
 
-    /// Convolute with with an evolution operator.
+    /// Convolute with grid with an evolution operator.
     ///
     /// Parameters
     /// ----------
-    /// muf2_0 : float
-    ///     reference scale
-    /// alphas : numpy.ndarray(float)
-    ///     list with :math:`\alpha_s(Q2)` for the process scales
-    /// pids : numpy.ndarray(int)
-    ///     sorting of the particles in the tensor
-    /// x_grid : numpy.ndarray(float)
-    ///     interpolation grid
-    /// target_pids : numpy.ndarray(int)
-    ///     sorting of the particles in the tensor for final FkTable
-    /// target_x_grid : numpy.ndarray(float)
-    ///     final FKTable interpolation grid
-    /// mur2_grid : numpy.ndarray(float)
-    ///     list of renormalization scales
-    /// muf2_grid : numpy.ndarray(float)
-    ///     list of factorization scales
     /// operator : numpy.ndarray(int, rank=5)
     ///     evolution tensor
-    /// orders_mask : numpy.ndarray(bool)
+    /// fac0 : float
+    ///     reference scale
+    /// pids0 : numpy.ndarray(int)
+    ///     sorting of the particles in the tensor for final FkTable
+    /// x0 : numpy.ndarray(float)
+    ///     final FKTable interpolation grid
+    /// fac1 : numpy.ndarray(float)
+    ///     list of factorization scales
+    /// pids1 : numpy.ndarray(int)
+    ///     sorting of the particles in the grid
+    /// x1 : numpy.ndarray(float)
+    ///     interpolation grid at process level
+    /// ren1 : numpy.ndarray(float)
+    ///     list of renormalization scales
+    /// alphas : numpy.ndarray(float)
+    ///     list with :math:`\alpha_s(Q2)` for the process scales
+    /// xi : (float, float)
+    ///     factorization and renormalization variation
+    /// lumi_id_types : str
+    ///     type of luminosity identifier
+    /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     ///
     /// Returns
