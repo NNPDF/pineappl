@@ -1944,6 +1944,7 @@ impl Grid {
     }
 
     /// Returns `true` if the first initial state needs a convolution, `false` otherwise.
+    #[must_use]
     pub fn has_pdf1(&self) -> bool {
         let initial_state_1 = self.initial_state_1();
 
@@ -1954,6 +1955,7 @@ impl Grid {
     }
 
     /// Returns `true` if the second initial state needs a convolution, `false` otherwise.
+    #[must_use]
     pub fn has_pdf2(&self) -> bool {
         let initial_state_2 = self.initial_state_2();
 
@@ -1965,6 +1967,7 @@ impl Grid {
 
     /// Returns the particle identifier of the first initial state. This is usually but not always
     /// a proton, which is represented by the PDG ID `2212`.
+    #[must_use]
     pub fn initial_state_1(&self) -> i32 {
         self.key_values()
             .map_or(Some("2212"), |kv| {
@@ -1977,6 +1980,7 @@ impl Grid {
 
     /// Returns the particle identifier of the second initial state. This is usually but not always
     /// a proton, which is represented by the PDG ID `2212`.
+    #[must_use]
     pub fn initial_state_2(&self) -> i32 {
         self.key_values()
             .map_or(Some("2212"), |kv| {
