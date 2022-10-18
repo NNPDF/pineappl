@@ -203,8 +203,8 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .flat_map(|subgrid| {
             subgrid
                 .mu2_grid()
-                .into_owned()
-                .into_iter()
+                .iter()
+                .cloned()
                 .map(|mu2| mu2.fac)
                 .collect::<Vec<_>>()
         })
@@ -338,7 +338,7 @@ pub(crate) fn evolve_with_one(
 
         for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
             let (fac1, x1_a, x1_b, array) =
-                ndarray_from_subgrid_orders(info, &subgrids_o, &grid.orders(), order_mask)?;
+                ndarray_from_subgrid_orders(info, &subgrids_o, grid.orders(), order_mask)?;
 
             let x1 = if has_pdf1 { x1_a } else { x1_b };
 
@@ -416,11 +416,7 @@ pub(crate) fn evolve_with_one(
                     fac: info.fac0,
                 }],
                 if has_pdf1 { info.x0.clone() } else { vec![1.0] },
-                if !has_pdf1 {
-                    info.x0.clone()
-                } else {
-                    vec![1.0]
-                },
+                if has_pdf1 { vec![1.0] } else { info.x0.clone() },
             )
             .into()
         }));
@@ -441,7 +437,7 @@ pub(crate) fn evolve_with_one(
             .map(|&a| {
                 lumi_entry![
                     if has_pdf1 { a } else { pid },
-                    if !has_pdf1 { a } else { pid },
+                    if has_pdf1 { pid } else { a },
                     1.0
                 ]
             })
@@ -484,7 +480,7 @@ pub(crate) fn evolve_with_two(
 
         for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
             let (fac1, x1_a, x1_b, array) =
-                ndarray_from_subgrid_orders(info, &subgrids_o, &grid.orders(), order_mask)?;
+                ndarray_from_subgrid_orders(info, &subgrids_o, grid.orders(), order_mask)?;
 
             let fac1_diff = (last_fac1.len() != fac1.len())
                 || last_fac1
