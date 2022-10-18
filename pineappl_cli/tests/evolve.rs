@@ -21,6 +21,8 @@ OPTIONS:
         --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
                                  [default: 7]
     -h, --help                   Print help information
+        --xif <XIF>              Rescale the factorization scale with this factor [default: 1]
+        --xir <XIR>              Rescale the renormalization scale with this factor [default: 1]
 ";
 
 const E906NLO_BIN_00_STR: &str = "b   FkTable        Grid       rel. diff
