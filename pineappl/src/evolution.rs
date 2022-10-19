@@ -54,17 +54,16 @@ pub struct OperatorInfo {
 }
 
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
-    if grid.key_values().map_or(false, |key_values| {
-        key_values
-            .get("lumi_id_types")
-            .map_or(false, |value| value == "pdg_mc_ids")
-    }) {
-        grid.lumi()
-            .iter()
-            .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
-    } else {
-        false
-    }
+    grid.key_values()
+        .and_then(|key_values| key_values.get("lumi_id_types"))
+        .and_then(|value| {
+            (value == "pdg_mc_ids").then(|| {
+                grid.lumi()
+                    .iter()
+                    .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
+            })
+        })
+        .unwrap_or(false)
 }
 
 pub(crate) fn pids(
