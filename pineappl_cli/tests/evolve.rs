@@ -173,7 +173,6 @@ fn e906nlo_bin_00() {
 fn nutev_cc_nu_fe_sigmared() {
     let output = NamedTempFile::new("fktable3.lz4").unwrap();
 
-    // TODO: find out the reason why this evolution fails
     Command::cargo_bin("pineappl")
         .unwrap()
         .args(&[
