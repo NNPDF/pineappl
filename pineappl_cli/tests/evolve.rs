@@ -1,3 +1,5 @@
+#![cfg(feature = "fktable")]
+
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
