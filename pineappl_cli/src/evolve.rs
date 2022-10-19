@@ -1,14 +1,15 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
+use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fktable")]
-fn evolve_grid(grid: &Grid, eko: &Path, xir: f64, xif: f64) -> Result<FkTable> {
+fn evolve_grid(grid: &Grid, eko: &Path, pdf: &Pdf, xir: f64, xif: f64) -> Result<FkTable> {
     use lz4_flex::frame::FrameDecoder;
-    use ndarray::{Array1, Array5};
+    use ndarray::Array5;
     use ndarray_npy::ReadNpyExt;
     use pineappl::evolution::OperatorInfo;
     use serde::Deserialize;
@@ -37,7 +38,6 @@ fn evolve_grid(grid: &Grid, eko: &Path, xir: f64, xif: f64) -> Result<FkTable> {
 
     let mut archive = Archive::new(File::open(eko)?);
 
-    let mut alphas = Vec::new();
     let mut operator = Default::default();
     let mut metadata: Metadata = Default::default();
 
@@ -52,16 +52,18 @@ fn evolve_grid(grid: &Grid, eko: &Path, xir: f64, xif: f64) -> Result<FkTable> {
                 "operators.npy.lz4" => {
                     operator = Array5::<f64>::read_npy(FrameDecoder::new(BufReader::new(file)))?
                 }
-                "alphas.npy.lz4" => {
-                    alphas =
-                        Array1::<f64>::read_npy(FrameDecoder::new(BufReader::new(file)))?.to_vec()
-                }
                 _ => {}
             }
         }
     }
 
     // TODO: handle errors when files in the EKO are not present
+
+    let alphas: Vec<_> = metadata
+        .q2_grid
+        .iter()
+        .map(|&mur2| pdf.alphas_q2(mur2))
+        .collect();
 
     let info = OperatorInfo {
         fac1: metadata.q2_grid.clone(),
@@ -81,7 +83,7 @@ fn evolve_grid(grid: &Grid, eko: &Path, xir: f64, xif: f64) -> Result<FkTable> {
 }
 
 #[cfg(not(feature = "fktable"))]
-fn evolve_grid(_: &Grid, _: &Path, _: f64, _: f64) -> Result<FkTable> {
+fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: f64, _: f64) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -124,11 +126,7 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         let grid = helpers::read_grid(&self.input)?;
-        let fk_table = evolve_grid(&grid, &self.eko, self.xir, self.xif)?;
-
-        let mut different = false;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
-
         let results = helpers::convolute(
             &grid,
             &mut pdf,
@@ -139,6 +137,8 @@ impl Subcommand for Opts {
             ConvoluteMode::Normal,
             false,
         );
+
+        let fk_table = evolve_grid(&grid, &self.eko, &pdf, self.xir, self.xif)?;
         let evolved_results = helpers::convolute_scales(
             fk_table.grid(),
             &mut pdf,
@@ -155,6 +155,8 @@ impl Subcommand for Opts {
 
         let mut table = helpers::create_table();
         table.set_titles(row![c => "b", "FkTable", "Grid", "rel. diff"]);
+
+        let mut different = false;
 
         for (bin, (one, two)) in results
             .into_iter()
