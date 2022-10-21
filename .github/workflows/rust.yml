@@ -47,18 +47,25 @@ jobs:
       uses: actions/cache@v3
       with:
         path: test-data
-        key: test-data-v2
+        key: test-data-v3
     - name: Download test data
       if: steps.cache-test-data.outputs.cache-hit != 'true'
       run: |
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.root'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.root'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/NJetEvents_0-0-2.tab.gz'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.tar'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
     - name: Run tests
       uses: actions-rs/cargo@v1
       with:
