@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8] - 21/10/2022
+
 ### Added
 
 - added new method `Grid::evolve`, which will succeed `Grid::convolute_eko` and
@@ -324,7 +326,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.7...HEAD
+[Unreleased]: https://github.com/N3PDF/pineappl/compare/v0.5.8...HEAD
+[0.5.8]: https://github.com/N3PDF/pineappl/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/N3PDF/pineappl/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/N3PDF/pineappl/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/N3PDF/pineappl/compare/v0.5.4...v0.5.5
