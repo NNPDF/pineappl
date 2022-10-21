@@ -12,7 +12,7 @@ you'd like to refresh your memory read the short
 
 ## Prerequisites
 
-To take the tutorial, you'll first need PineAPPL's CLI; if you haven't
+To follow the tutorial, you'll first need PineAPPL's CLI; if you haven't
 installed it yet follow its [installation
 instructions](installation.html#cli-pineappl-for-your-shell). Next, you'll need
 a fresh directory. For instance, run
@@ -123,11 +123,11 @@ This explains that `pineappl` needs at least two arguments, the first being the
 grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`, which
 determines the PDF set. Note that the argument has three dots, `...`, meaning
 that you're allowed to pass multiple PDF sets, in which case `pineappl` will
-perform the convolution with each PDF set, such that you can compare with each
-other. This subcommand also accepts a few optional parameters, denoted with
-`[OPTIONS]`. If you read the help message carefully, you'll notice for instance
-that the scale uncertainty shown previously is a 7-point variation, because the
-default value of `--scales` is `7`.
+perform the convolution with each PDF set, such that you can compare them with
+each other. This subcommand also accepts a few optional parameters, denoted
+with `[OPTIONS]`. If you read the help message carefully, you'll notice for
+instance that the scale uncertainty shown previously is a 7-point variation,
+because the default value of `--scales` is `7`.
 
 ## `pineappl info`: What does this grid contain?
 
@@ -222,9 +222,8 @@ This shows that the grid contains:
 
 Additionally, there are
 
-- NLO grids with factorization-log dependent terms, with indices `3` and `6`,
-  which are needed for the correct calculation of the scale variation. The
-  corresponding
+- NLO grids with factorization-log dependent terms, with indices `3` and `6`.
+  The corresponding
 - renormalization-logs (`2` and `5`) are also present, but their contributions
   are in fact zero.
 
@@ -270,10 +269,10 @@ This prints all partonic initial states that contribute to this process:
 In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
 -3) initial states (the numbers are [PDG](https://pdg.lbl.gov/) MC IDs) are
 grouped together in a single *channel*, each with a factor of `1`. In general
-this number can be different from one, if the Monte Carlo decides to factor out
+this number can be different from `1`, if the Monte Carlo decides to factor out
 CKM values or electric charges, for instance, to group more lumis with the same
-matrix elements together. This is an optimization step, as fewer lumis result
-in a smaller grid file.
+matrix elements together into a single channel. This is an optimization step,
+as fewer lumis result in a smaller grid file.
 
 Note that lumis with the transposed initial states, for instance
 anti-down—up, are merged with each other, which always works if the two
@@ -285,8 +284,8 @@ All remaining lumis are the ones with a gluon (in this case denoted with
 
 ## `pineappl orders`: What's the size of each perturbative order?
 
-In the previous section you've seen that each order is stored separately, which
-means you can convolute each order separately:
+In the previous section you saw that each order is stored separately, which
+means you can perform convolutions separately for each order:
 
     pineappl orders LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -425,10 +424,11 @@ calculated using the different channels:
 
 Looking at the `total` column you can see that the numbers are much smaller
 than `1`, which would correspond to a one sigma difference. This we'd expect
-knowing that this dataset is used to fit both PDF sets. Furthermore, the
-remaining columns show how this pull was calculated, for instance for the first
-bin we see that when we sum the four contributions in `pull` we obtain the
-`total` result.
+knowing that this dataset is used to fit both PDF sets. The remaining columns
+show how the different luminosities (with indices in the `l` column) contribute
+to the total pull. For the last bin, for instance, we see lumi `0` contributes
+roughly half to the total pull, the remaining pull coming from lumis `3` and
+`1`.
 
 Note that the chosen CT18 set doesn't have a photon PDF, where the NNPDF set
 *does* have one. However, for these observables the photon PDF contribution is
@@ -436,7 +436,7 @@ too small to make a difference in the pull.
 
 ## `pineappl plot`: Show me a plot of the predictions!
 
-Often plotting predictions is a good way to start understanding them.
+Often a good way to start understanding predictions is to plot them.
 Fortunately, this is easy with PineAPPL:
 
     pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 CT18NNLO > plot.py
@@ -450,10 +450,10 @@ needs. Finally, let's run the plotting script:
 
     python3 plot.py
 
-This will create a `LHCB_WP_7TEV.pdf`, which you can open. If you wish a
+This will create the file `LHCB_WP_7TEV.pdf`, which you can open. If you need a
 different format than `.pdf`, look for the string `'.pdf'` in the plotting
 script and change it to the file ending corresponding to your desired format.
-Here's how the result for a JPEG looks:
+Here's how the result for `.jpeg` looks:
 
 ![plot](LHCB_WP_7TEV.jpeg)
 
