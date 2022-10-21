@@ -260,7 +260,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
             .iter()
             .map(|&Mu2 { fac, .. }| {
                 fac1.iter()
-                    .position(|&scale| approx_eq!(f64, fac, scale, ulps = 64))
+                    .position(|&scale| approx_eq!(f64, info.xif * info.xif * fac, scale, ulps = 64))
                     .ok_or_else(|| {
                         GridError::EvolutionFailure(format!("no operator for muf2 = {} found", fac))
                     })
