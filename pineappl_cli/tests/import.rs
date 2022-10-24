@@ -113,6 +113,41 @@ const IMPORT_FILE_FORMAT_FAILURE_STR: &str = "Error: could not detect file forma
 const IMPORT_GRID_COMPARISON_FAILURE_STR: &str = "Error: grids are different
 ";
 
+#[cfg(feature = "applgrid")]
+const IMPORT_DIS_APPLGRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
+-+------------+------------+--------------
+0 9.3514881e-2 9.3514881e-2 -3.3306691e-16
+1 3.9993061e-2 3.9993061e-2  2.2204460e-16
+2 1.3593440e-2 1.3593440e-2 -2.2204460e-16
+3 2.0825199e-3 2.0825199e-3 -4.4408921e-16
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_DOUBLE_HADRONIC_FASTNLO_STR: &str = "b    PineAPPL     fastNLO      rel. diff
+--+------------+------------+--------------
+0   9.6382069e5  9.6382069e5  4.4408921e-16
+1   3.7342594e5  3.7342594e5  1.7985613e-14
+2   1.4195038e5  1.4195038e5 -1.0880186e-14
+3   5.7043791e4  5.7043791e4  4.4408921e-15
+4   2.3327746e4  2.3327746e4  8.2156504e-15
+5   1.0495603e4  1.0495603e4  1.3100632e-14
+6   4.8153483e3  4.8153483e3 -1.6209256e-14
+7   2.2957587e3  2.2957587e3  4.8849813e-15
+8   1.1142545e3  1.1142545e3 -2.4424907e-15
+9   5.3699925e2  5.3699925e2 -6.7723605e-15
+10  2.5460314e2  2.5460314e2 -7.5495166e-15
+11  1.1847638e2  1.1847638e2  1.0658141e-14
+12  5.7567355e1  5.7567355e1 -2.9976022e-15
+13  2.7189719e1  2.7189719e1  1.3322676e-15
+14  1.2791922e1  1.2791922e1 -6.9944051e-15
+15  5.8346996e0  5.8346996e0  3.1086245e-15
+16  2.6521590e0  2.6521590e0  7.3274720e-15
+17  1.1726035e0  1.1726035e0  1.2656542e-14
+18 4.8823596e-1 4.8823596e-1  8.6597396e-15
+19 1.9564964e-1 1.9564964e-1 -4.4408921e-15
+20 2.0326950e-2 2.0326950e-2  6.6613381e-15
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -568,4 +603,46 @@ fn import_grid_comparison_failure() {
         .failure()
         .stderr(IMPORT_GRID_COMPARISON_FAILURE_STR)
         .stdout(IMPORT_FIX_GRID_STR);
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "applgrid")]
+fn import_dis_applgrid() {
+    let output = NamedTempFile::new("converted8.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "import",
+            "--silence-libraries",
+            "../test-data/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(IMPORT_DIS_APPLGRID_STR);
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "applgrid")]
+fn import_double_hadronic_fastnlo() {
+    let output = NamedTempFile::new("converted9.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "import",
+            "--silence-libraries",
+            "../test-data/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(IMPORT_DOUBLE_HADRONIC_FASTNLO_STR);
 }
