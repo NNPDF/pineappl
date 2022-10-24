@@ -469,6 +469,7 @@ fn import_hadronic_fktable() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "applgrid")]
 fn import_photon_grid() {
     let output = NamedTempFile::new("converted5.pineappl.lz4").unwrap();
@@ -479,7 +480,7 @@ fn import_photon_grid() {
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
-            "data/LHCBWZMU7TEV_PI_part1.root",
+            "../test-data/LHCBWZMU7TEV_PI_part1.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -489,6 +490,7 @@ fn import_photon_grid() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "applgrid")]
 fn import_applgrid() {
     let output = NamedTempFile::new("converted6.pineappl.lz4").unwrap();
@@ -499,7 +501,7 @@ fn import_applgrid() {
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
-            "data/ATLASWPT11-Wplus_tot.root",
+            "../test-data/ATLASWPT11-Wplus_tot.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])

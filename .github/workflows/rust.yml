@@ -47,16 +47,16 @@ jobs:
       uses: actions/cache@v3
       with:
         path: test-data
-        key: test-data-v3
+        key: test-data-v4
     - name: Download test data
       if: steps.cache-test-data.outputs.cache-hit != 'true'
       run: |
-        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.root'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.appl'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
-        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.root'
+        wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
         wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
@@ -70,7 +70,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all-features --verbose -- --include-ignored --skip import_applgrid --skip import_photon_grid
+        args: --all-features --verbose -- --include-ignored
       env:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
