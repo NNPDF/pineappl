@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -256,7 +257,7 @@ class Grid(PyWrapper):
         alphas_values: Sequence[float],
         lumi_id_types: str = "pdg_mc_ids",
         order_mask: Sequence[float] = (),
-        xi: tuple[float, float] = (1.0, 1.0),
+        xi: Tuple[float, float] = (1.0, 1.0),
     ):
         """
         Create an FKTable with the EKO.
@@ -306,7 +307,15 @@ class Grid(PyWrapper):
             )
         )
 
-    def evolve(self, operators, mur2_grid, alphas_values, lumi_id_types="pdg_mc_ids", order_mask=(), xi=(1.0, 1.0)):
+    def evolve(
+        self,
+        operators,
+        mur2_grid,
+        alphas_values,
+        lumi_id_types="pdg_mc_ids",
+        order_mask=(),
+        xi=(1.0, 1.0),
+    ):
         """
         Create an FKTable with the EKO.
 
