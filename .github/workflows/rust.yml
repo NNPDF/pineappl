@@ -47,7 +47,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: test-data
-        key: test-data-v4
+        key: test-data-v5
     - name: Download test data
       if: steps.cache-test-data.outputs.cache-hit != 'true'
       run: |
