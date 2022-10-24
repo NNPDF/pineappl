@@ -29,7 +29,6 @@ pub mod ffi {
         fn isDIS(&self) -> bool;
         fn leadingOrder(&self) -> i32;
         fn nloops(&self) -> i32;
-        fn Nobs(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
         fn run(self: Pin<&mut Self>) -> &mut f64;
@@ -62,14 +61,6 @@ pub mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("appl_grid/lumi_pdf.h");
-
-        type lumi_pdf;
-
-        fn size(&self) -> u32;
-    }
-
-    unsafe extern "C++" {
         type SparseMatrix3d;
     }
 
@@ -94,8 +85,6 @@ pub mod ffi {
         // TODO: class member functions aren't supported yet by cxx, see
         // https://github.com/dtolnay/cxx/issues/447
         fn weightfun(_: f64) -> f64;
-
-        unsafe fn dynamic_cast_lumi_pdf(_: *const appl_pdf) -> *const lumi_pdf;
 
         fn igrid_m_reweight(_: &igrid) -> bool;
     }

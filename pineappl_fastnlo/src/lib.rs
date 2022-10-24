@@ -131,7 +131,6 @@ pub mod ffi {
         fn GetIpublunits(&self) -> i32;
         fn GetNObsBin(&self) -> u32;
         fn GetNumDiffBin(&self) -> u32;
-        fn IsNorm(&self) -> bool;
     }
 
     unsafe extern "C++" {
