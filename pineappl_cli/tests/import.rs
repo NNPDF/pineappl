@@ -144,6 +144,7 @@ fn import_fix_grid() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -154,7 +155,7 @@ fn import_flex_grid() {
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
-            "data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -508,6 +509,7 @@ fn import_applgrid() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "applgrid")]
 fn import_new_applgrid() {
     let output = NamedTempFile::new("converted7.pineappl.lz4").unwrap();
@@ -518,7 +520,7 @@ fn import_new_applgrid() {
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
-            "data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
+            "../test-data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
