@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import Tuple
+from typing import Sequence, Tuple
 
 import numpy as np
 import numpy.typing as npt
