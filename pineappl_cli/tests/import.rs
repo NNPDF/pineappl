@@ -124,6 +124,7 @@ fn help() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_fix_grid() {
     let output = NamedTempFile::new("converted1.pineappl.lz4").unwrap();
@@ -134,7 +135,7 @@ fn import_fix_grid() {
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
-            "data/NJetEvents_0-0-2.tab.gz",
+            "../test-data/NJetEvents_0-0-2.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -165,6 +166,7 @@ fn import_flex_grid() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
     let output = NamedTempFile::new("converted3.pineappl.lz4").unwrap();
@@ -174,7 +176,7 @@ fn import_dis_fktable() {
         .args(&[
             "--silence-lhapdf",
             "import",
-            "data/FK_POSXDQ.dat",
+            "../test-data/FK_POSXDQ.dat",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -196,6 +198,7 @@ fn import_dis_fktable() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "fktable")]
 fn import_hadronic_fktable() {
     let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();
@@ -205,7 +208,7 @@ fn import_hadronic_fktable() {
         .args(&[
             "--silence-lhapdf",
             "import",
-            "data/FK_ATLASTTBARTOT13TEV.dat",
+            "../test-data/FK_ATLASTTBARTOT13TEV.dat",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -547,6 +550,7 @@ fn import_file_format_failure() {
 }
 
 #[test]
+#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_grid_comparison_failure() {
     Command::cargo_bin("pineappl")
@@ -556,7 +560,7 @@ fn import_grid_comparison_failure() {
             "import",
             "--accuracy=0",
             "--silence-libraries",
-            "data/NJetEvents_0-0-2.tab.gz",
+            "../test-data/NJetEvents_0-0-2.tab.gz",
             "this-file-wont-be-writen",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
