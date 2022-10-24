@@ -1,4 +1,7 @@
+from collections.abc import Sequence
+
 import numpy as np
+import numpy.typing as npt
 
 from .fk_table import FkTable
 from .pineappl import PyGrid, PyOrder
@@ -245,7 +248,16 @@ class Grid(PyWrapper):
             xi,
         )
 
-    def convolute_eko(self, operators, mur2_grid, alphas_values, lumi_id_types="pdg_mc_ids", order_mask=(), xi=(1.0, 1.0)):
+    def convolute_eko(
+        self,
+        operators: npt.NDArray,
+        muf2_grid: Sequence[float],
+        mur2_grid: Sequence[float],
+        alphas_values: Sequence[float],
+        lumi_id_types: str = "pdg_mc_ids",
+        order_mask: Sequence[float] = (),
+        xi: tuple[float, float] = (1.0, 1.0),
+    ):
         """
         Create an FKTable with the EKO.
 
@@ -253,8 +265,8 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            operators : dict
-                EKO Output
+            operators : np.ndarray
+                array containing the concatenation of EKO operators
             mur2_grid : list[float]
                 renormalization scales
             alphas_values : list[float]
@@ -277,10 +289,6 @@ class Grid(PyWrapper):
             PyFkTable :
                 raw grid as an FKTable
         """
-        operator_grid = np.array(
-            [op["operators"] for op in operators["Q2grid"].values()]
-        )
-        q2grid = list(operators["Q2grid"].keys())
         return FkTable(
             self.raw.convolute_eko(
                 operators["q2_ref"],
@@ -290,11 +298,11 @@ class Grid(PyWrapper):
                 np.array(operators["inputpids"], dtype=np.int32),
                 np.array(operators["inputgrid"]),
                 np.array(mur2_grid, dtype=np.float64),
-                np.array(q2grid, dtype=np.float64),
-                np.array(operator_grid),
+                np.array(muf2_grid, dtype=np.float64),
+                np.array(operators),
                 lumi_id_types,
                 np.array(order_mask, dtype=bool),
-                xi
+                xi,
             )
         )
 
