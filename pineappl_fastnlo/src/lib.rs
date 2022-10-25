@@ -192,8 +192,6 @@ pub mod ffi {
         unsafe fn dynamic_cast_coeff_add_flex(
             _: *const fastNLOCoeffBase,
         ) -> *const fastNLOCoeffAddFlex;
-        unsafe fn dynamic_cast_coeff_data(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffData;
-        unsafe fn dynamic_cast_coeff_mult(_: *const fastNLOCoeffBase) -> *const fastNLOCoeffMult;
 
         fn static_cast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
 

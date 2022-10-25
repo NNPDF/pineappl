@@ -439,22 +439,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
             let converted = unsafe { ffi::dynamic_cast_coeff_add_flex(coeff_base) };
 
             if converted.is_null() {
-                let converted = unsafe { ffi::dynamic_cast_coeff_mult(coeff_base) };
-
-                if converted.is_null() {
-                    let converted = unsafe { ffi::dynamic_cast_coeff_data(coeff_base) };
-
-                    if converted.is_null() {
-                        // this path shouldn't be reached, at least not with fastNLO 2.5.0 2826
-                        unreachable!();
-                    } else {
-                        // TODO: handle this case
-                        todo!();
-                    }
-                } else {
-                    // TODO: handle this case
-                    todo!();
-                }
+                unimplemented!("subclass of fastNLOCoeffBase is not supported");
             } else {
                 let mur_ff = file_as_reader.GetMuRFunctionalForm();
                 let muf_ff = file_as_reader.GetMuFFunctionalForm();

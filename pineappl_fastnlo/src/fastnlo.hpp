@@ -64,10 +64,6 @@ fastNLOCoeffAddFix const* dynamic_cast_coeff_add_fix(fastNLOCoeffBase const* coe
 
 fastNLOCoeffAddFlex const* dynamic_cast_coeff_add_flex(fastNLOCoeffBase const* coeffs);
 
-fastNLOCoeffData const* dynamic_cast_coeff_data(fastNLOCoeffBase const* coeffs);
-
-fastNLOCoeffMult const* dynamic_cast_coeff_mult(fastNLOCoeffBase const* coeffs);
-
 pair_double_double GetObsBinDimBounds(
     fastNLOTable const& table,
     unsigned int iObs,
