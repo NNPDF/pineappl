@@ -22,7 +22,7 @@ fn pid_to_pdg_id(pid: i32) -> i32 {
     match pid {
         -6..=-1 | 1..=6 => pid,
         0 => 21,
-        _ => unimplemented!(),
+        _ => unimplemented!("pid = {pid} is not supported"),
     }
 }
 
@@ -183,7 +183,7 @@ fn convert_coeff_add_fix(
                                     ix2 += 1;
                                 }
                             }
-                            _ => unreachable!(),
+                            n => unimplemented!("GetNPDFDim = {n} is not supported"),
                         }
                     }
                 }

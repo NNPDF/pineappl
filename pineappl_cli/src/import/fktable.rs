@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use pineappl::grid::{Grid, Order};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
@@ -136,26 +136,24 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                                 hadronic = match value {
                                     "0" => false,
                                     "1" => true,
-                                    _ => unreachable!(),
+                                    _ => {
+                                        unimplemented!("hadronic value: '{value}' is not supported")
+                                    }
                                 }
                             }
                             "*NDATA:" => ndata = value.parse()?,
                             "*NX:" => nx1 = value.parse()?,
                             "*SETNAME:" => { /*setname = value.to_string()*/ }
-                            _ => unreachable!(),
+                            _ => unimplemented!("grid info key: '{key}' is not supported"),
                         }
                     }
                 }
                 FkTableSection::FlavourMap => {
-                    let len = flavor_mask.len();
-                    flavor_mask.splice(
-                        len..len,
-                        line.split_whitespace().map(|tuple| match tuple {
-                            "1" => true,
-                            "0" => false,
-                            _ => unreachable!(),
-                        }),
-                    );
+                    flavor_mask.extend(line.split_whitespace().map(|token| match token {
+                        "1" => true,
+                        "0" => false,
+                        _ => unimplemented!("flavor map entry: '{token}' is not supported"),
+                    }));
                 }
                 FkTableSection::TheoryInfo => {
                     if let Some(("*Q0:", value)) = line.split_once(' ') {
@@ -180,7 +178,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                     // if `bin` has changed, we assume that the subgrids in `array` are finished
                     if bin > last_bin {
-                        let grid = grid.as_mut().unwrap_or_else(|| unreachable!());
+                        let grid = grid.as_mut().unwrap();
 
                         for (lumi, array) in arrays.into_iter().enumerate() {
                             grid.set_subgrid(
@@ -210,8 +208,14 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .skip(if hadronic { 3 } else { 2 })
                         .zip(flavor_mask.iter())
-                        .filter_map(|(string, &mask)| mask.then(|| string.parse().unwrap()))
-                        .collect();
+                        .filter_map(|(string, &mask)| {
+                            mask.then(|| {
+                                string.parse().with_context(|| {
+                                    format!("failed to parse floating point number from '{string}'")
+                                })
+                            })
+                        })
+                        .collect::<Result<_>>()?;
 
                     assert_eq!(grid_values.len(), arrays.len());
 
@@ -231,7 +235,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
     assert_eq!(section, FkTableSection::FastKernel);
 
-    let mut grid = grid.unwrap_or_else(|| unreachable!());
+    let mut grid = grid.unwrap();
 
     for (lumi, array) in arrays.into_iter().enumerate() {
         grid.set_subgrid(
@@ -267,5 +271,5 @@ pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
         }
     }
 
-    todo!()
+    Err(anyhow!("no FK table entry found"))
 }

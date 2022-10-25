@@ -9,14 +9,14 @@ use std::f64::consts::TAU;
 use std::pin::Pin;
 use std::ptr;
 
-fn convert_to_pdg_id(id: usize) -> i32 {
-    let id = i32::try_from(id).unwrap() - 6;
+fn convert_to_pdg_id(pid: usize) -> i32 {
+    let pid = i32::try_from(pid).unwrap() - 6;
 
-    match id {
-        -6..=-1 | 1..=6 => id,
+    match pid {
+        -6..=-1 | 1..=6 => pid,
         0 => 21,
         7 => 22,
-        _ => unreachable!(),
+        _ => unimplemented!("pid = {pid} is not supported"),
     }
 }
 
@@ -83,7 +83,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 Order::new(leading_order, alpha, 0, 0),     // LO
             ]
         } else {
-            panic!("unsupported value of nloops: {}", grid.nloops());
+            unimplemented!("nloops = {} is not supported", grid.nloops());
         };
     } else if grid.calculation() == ffi::grid_CALCULATION::STANDARD {
         alphas_factor = 1.0 / TAU;
@@ -91,7 +91,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             .map(|power| Order::new(leading_order + u32::try_from(power).unwrap(), alpha, 0, 0))
             .collect();
     } else {
-        panic!("calculation not supported");
+        unimplemented!("calculation is not supported");
     }
 
     // this setting isn't supported
