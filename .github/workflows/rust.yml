@@ -90,10 +90,12 @@ jobs:
 
     - name: Generate code coverage
       run: |
-        cargo test --all-features --no-run 2>&1 | \
+        ls $(rustc --print target-libdir)/../bin/
+        which llvm-cov
+        cargo test --no-run 2>&1 | \
             sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' | \
             xargs printf ' --object %s' | \
-            xargs rust-cov show \
+            xargs $(rustc --print target-libdir)/../bin/llvm-cov show \
                 --ignore-filename-regex='/.cargo/registry' \
                 --ignore-filename-regex='rustc' \
                 --instr-profile=pineappl.profdata \
