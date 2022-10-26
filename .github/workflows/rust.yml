@@ -90,8 +90,6 @@ jobs:
 
     - name: Generate code coverage
       run: |
-        ls $(rustc --print target-libdir)/../bin/
-        which llvm-cov
         cargo test --no-run 2>&1 | \
             sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' | \
             xargs printf ' --object %s' | \
