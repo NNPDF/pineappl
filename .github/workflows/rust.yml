@@ -92,9 +92,9 @@ jobs:
       run: |
         set -x
         find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        cargo test --no-run 2>stderr >stdout
+        RUSTFLAGS='-Cinstrument-coverage' CARGO_TERM_COLOR=never cargo test --no-run 2>stderr >stdout
         cat stderr
-        sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr stderr-sed
+        sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr > stderr-sed
         cat stderr-sed
         cat stderr-sed | xargs printf ' --object %s' > stderr-sed-xargs
         cat stderr-sed-xargs
