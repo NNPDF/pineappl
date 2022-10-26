@@ -90,6 +90,8 @@ jobs:
 
     - name: Generate code coverage
       run: |
+        set -x
+        find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
         cargo test --no-run 2>&1 | \
             sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' | \
             xargs printf ' --object %s' | \
