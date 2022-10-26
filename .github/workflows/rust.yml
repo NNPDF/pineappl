@@ -98,11 +98,12 @@ jobs:
         cat stderr-sed
         cat stderr-sed | xargs printf ' --object %s' > stderr-sed-xargs
         cat stderr-sed-xargs
-        cat stderr-sed-xargs | xargs $(rustc --print target-libdir)/../bin/llvm-cov show \
+        cat stderr-sed-xargs | xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
                 --ignore-filename-regex='/.cargo/registry' \
                 --ignore-filename-regex='rustc' \
                 --instr-profile=pineappl.profdata \
-                --Xdemangler=rustfilt > coverage.txt
+                --Xdemangler=rustfilt \
+                --format lcov > lcov.info
 
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v3
