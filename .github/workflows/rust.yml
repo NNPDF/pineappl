@@ -7,6 +7,7 @@ on:
     branches: [master]
 
 env:
+  CARGO_TERM_COLOR: always
   RUSTFLAGS: '-Cinstrument-coverage'
 
 jobs:
@@ -72,8 +73,10 @@ jobs:
 
     - name: Run tests and generate code coverage
       run: |
-        cargo test -- convolute
-        cargo test -- convolute >/dev/null 2>stderr
+        # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
+        cargo test -- coverage 2> >(tee stderr 1>&2)
+        # from https://stackoverflow.com/a/51141872/812178
+        sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
         cat stderr
         #args: --all-features --verbose -- --include-ignored
         #env:
@@ -86,7 +89,7 @@ jobs:
       run: |
         set -x
         find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr > stderr-sed
+        sed -nE 's/  Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr > stderr-sed
         cat stderr-sed
         cat stderr-sed | xargs printf ' --object %s' > stderr-sed-xargs
         cat stderr-sed-xargs
