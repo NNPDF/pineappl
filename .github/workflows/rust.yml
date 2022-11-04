@@ -86,8 +86,12 @@ jobs:
             xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
                 --ignore-filename-regex='/.cargo/registry' \
                 --ignore-filename-regex='rustc' \
+                --ignore-filename-regex='pineappl/tests' \
+                --ignore-filename-regex='pineappl_capi' \
+                --ignore-filename-regex='pineappl_cli/tests' \
                 --instr-profile=pineappl.profdata \
                 --skip-functions \
+                --object target/debug/pineappl \
                 --format lcov > lcov.info
 
     - name: Upload to codecov.io
