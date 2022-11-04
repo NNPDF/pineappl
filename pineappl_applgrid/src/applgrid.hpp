@@ -25,8 +25,6 @@ rust::Vec<double> grid_convolute(
 
 double sparse_matrix_get(SparseMatrix3d const& matrix, int x, int y, int z);
 
-lumi_pdf const* dynamic_cast_lumi_pdf(appl::appl_pdf const* pdf);
-
 double weightfun(double x);
 
 bool igrid_m_reweight(appl::igrid const& igrid);

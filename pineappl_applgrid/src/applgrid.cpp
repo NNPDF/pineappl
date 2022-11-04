@@ -149,11 +149,6 @@ double sparse_matrix_get(SparseMatrix3d const& matrix, int x, int y, int z)
     return matrix(x, y, z);
 }
 
-lumi_pdf const* dynamic_cast_lumi_pdf(appl::appl_pdf const* pdf)
-{
-    return dynamic_cast <lumi_pdf const*> (pdf);
-}
-
 double weightfun(double x)
 {
     return appl::igrid::weightfun(x);
