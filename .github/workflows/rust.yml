@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  RUSTFLAGS: '-Cinstrument-coverage'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -69,7 +72,7 @@ jobs:
 
     - name: Run tests and generate code coverage
       run: |
-        RUSTFLAGS='-Cinstrument-coverage' cargo test -- convolute
+        cargo test -- convolute
         #args: --all-features --verbose -- --include-ignored
         #env:
         #CARGO_INCREMENTAL: '0'
@@ -81,7 +84,7 @@ jobs:
       run: |
         set -x
         find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        RUSTFLAGS='-Cinstrument-coverage' cargo test --no-run 2>stderr >stdout
+        cargo test --no-run 2>stderr >stdout
         cat stderr
         cat stdout
         sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr > stderr-sed
