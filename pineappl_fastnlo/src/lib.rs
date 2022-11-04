@@ -45,27 +45,6 @@ pub mod ffi {
         type ESMOrder;
     }
 
-    #[namespace = "say"]
-    #[repr(i32)]
-    enum Verbosity {
-        DEBUG = -1000,
-        MANUAL = 2,
-        INFO = 0,
-        WARNING = 1,
-        ERROR = 2,
-        SILENT = 1000,
-    }
-
-    unsafe extern "C++" {
-        include!("fastnlotk/speaker.h");
-
-        #[namespace = "say"]
-        type Verbosity;
-
-        #[namespace = "say"]
-        fn SetGlobalVerbosity(_: Verbosity) -> i32;
-    }
-
     unsafe extern "C++" {
         include!("fastnlotk/fastNLOCoeffAddBase.h");
 
@@ -196,10 +175,9 @@ pub mod ffi {
         fn static_cast_lhapdf_to_reader_mut(_: Pin<&mut fastNLOLHAPDF>) -> Pin<&mut fastNLOReader>;
 
         fn make_fastnlo_lhapdf_with_name_file_set(
-            name: &str,
-            lhapdf: &str,
-            set: i32,
-            silence: bool,
+            _: &str,
+            _: &str,
+            _: i32,
         ) -> UniquePtr<fastNLOLHAPDF>;
     }
 }

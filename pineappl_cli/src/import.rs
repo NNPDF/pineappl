@@ -1,7 +1,10 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
+use libc::{c_int, O_WRONLY, STDERR_FILENO, STDOUT_FILENO};
 use pineappl::grid::Grid;
+use scopeguard::defer;
+use std::ffi::CStr;
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "applgrid")]
@@ -18,11 +21,10 @@ fn convert_applgrid(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-    silence: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     use pineappl_applgrid::ffi;
 
-    let mut grid = ffi::make_grid(input.to_str().unwrap(), silence)?;
+    let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
     let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
@@ -36,7 +38,6 @@ fn convert_applgrid(
     _: &str,
     _: usize,
     _: i32,
-    _: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
@@ -50,19 +51,13 @@ fn convert_fastnlo(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-    silence: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
-    use pineappl_fastnlo::ffi::{self, Verbosity};
-
-    if silence {
-        ffi::SetGlobalVerbosity(Verbosity::SILENT);
-    }
+    use pineappl_fastnlo::ffi;
 
     let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
         input.to_str().unwrap(),
         pdfset,
         member.try_into().unwrap(),
-        silence,
     );
     let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
     let results = ffi::GetCrossSection(
@@ -80,7 +75,6 @@ fn convert_fastnlo(
     _: &str,
     _: usize,
     _: i32,
-    _: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fastnlo`"
@@ -101,6 +95,26 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>)> {
     ))
 }
 
+fn silence_fd(fd: c_int) -> (c_int, c_int) {
+    let backup = unsafe { libc::dup(fd) };
+
+    assert_ne!(backup, -1);
+
+    let path = CStr::from_bytes_with_nul(b"/dev/null\0").unwrap();
+    let null = unsafe { libc::open(path.as_ptr(), O_WRONLY) };
+
+    assert_ne!(null, -1);
+    assert_ne!(unsafe { libc::dup2(null, fd) }, -1);
+
+    (backup, null)
+}
+
+fn unsilence_fd(fd: c_int, (old, new): (c_int, c_int)) {
+    assert_ne!(unsafe { libc::close(new) }, -1);
+    assert_ne!(unsafe { libc::dup2(old, fd) }, -1);
+    assert_ne!(unsafe { libc::close(old) }, -1);
+}
+
 fn convert_grid(
     input: &Path,
     alpha: u32,
@@ -109,6 +123,19 @@ fn convert_grid(
     dis_pid: i32,
     silence_libraries: bool,
 ) -> Result<(&'static str, Grid, Vec<f64>)> {
+    let (stdout, stderr) = if silence_libraries {
+        (silence_fd(STDOUT_FILENO), silence_fd(STDERR_FILENO))
+    } else {
+        ((-1, -1), (-1, -1))
+    };
+
+    defer! {
+        if silence_libraries {
+            unsilence_fd(STDOUT_FILENO, stdout);
+            unsilence_fd(STDERR_FILENO, stderr);
+        }
+    }
+
     if let Some(extension) = input.extension() {
         if extension == "tab"
             || (extension == "gz"
@@ -117,11 +144,11 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, silence_libraries);
+            return convert_fastnlo(input, alpha, pdfset, member, dis_pid);
         } else if extension == "dat" {
             return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, pdfset, member, dis_pid, silence_libraries);
+            return convert_applgrid(input, alpha, pdfset, member, dis_pid);
         }
     }
 

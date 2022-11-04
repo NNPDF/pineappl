@@ -67,7 +67,7 @@ pub mod ffi {
     unsafe extern "C++" {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
-        fn make_grid(_: &str, silence: bool) -> Result<UniquePtr<grid>>;
+        fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;
         fn grid_convolute(
