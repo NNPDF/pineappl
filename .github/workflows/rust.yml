@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [master]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,30 +67,23 @@ jobs:
     #    wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
     #    wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
 
-    - name: Run tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
+    - name: Run tests and generate code coverage
+      run: |
+        RUSTFLAGS='-Cinstrument-coverage' cargo test -- convolute
         #args: --all-features --verbose -- --include-ignored
-        args: --verbose -- convolute
-      env:
+        #env:
         #CARGO_INCREMENTAL: '0'
-        RUSTFLAGS: '-Cinstrument-coverage'
+        #RUSTFLAGS: '-Cinstrument-coverage'
         #RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests -Cinstrument-coverage'
         #RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests -Cinstrument-coverage'
-
-    - name: Install rustfilt
-      uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: rustfilt
 
     - name: Generate code coverage
       run: |
         set -x
         find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        RUSTFLAGS='-Cinstrument-coverage' CARGO_TERM_COLOR=never cargo test --no-run 2>stderr >stdout
+        RUSTFLAGS='-Cinstrument-coverage' cargo test --no-run 2>stderr >stdout
         cat stderr
+        cat stdout
         sed -nE 's/  Executable( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr > stderr-sed
         cat stderr-sed
         cat stderr-sed | xargs printf ' --object %s' > stderr-sed-xargs
@@ -102,7 +92,7 @@ jobs:
                 --ignore-filename-regex='/.cargo/registry' \
                 --ignore-filename-regex='rustc' \
                 --instr-profile=pineappl.profdata \
-                --Xdemangler=rustfilt \
+                --skip-functions \
                 --format lcov > lcov.info
 
     - name: Upload to codecov.io
