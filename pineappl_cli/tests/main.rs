@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use git_version::git_version;
 
 const HELP_STR: &str = "
 Christopher Schwan <handgranaten-herbert@posteo.de>
@@ -42,5 +43,13 @@ fn help() {
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicates::str::ends_with(HELP_STR));
+        .stdout(format!(
+            "{}{}",
+            git_version!(
+                args = ["--always", "--dirty", "--long", "--tags"],
+                cargo_prefix = "cargo:",
+                fallback = "unknown"
+            ),
+            HELP_STR
+        ));
 }
