@@ -44,7 +44,7 @@ fn help() {
         .assert()
         .success()
         .stdout(format!(
-            "{}{}",
+            "pineappl {}{}",
             git_version!(
                 args = ["--always", "--dirty", "--long", "--tags"],
                 cargo_prefix = "cargo:",
