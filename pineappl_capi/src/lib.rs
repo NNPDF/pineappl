@@ -4,26 +4,24 @@
 //! The C-language interface for `PineAPPL`.
 //!
 //! The `PineAPPL` Application Programming Interface for the C language (CAPI) defines types and
-//! functions that allow one to use [`PineAPPL`] without having to write Rust code, and instead
-//! using
+//! functions that allow `PineAPPL` to be used without having to write Rust code, and instead
+//! offering
 //!
-//! * C or C++ (see the [C++ example] in the repository).
-//! * Fortran can be used as well, using the `iso_c_binding` module to wrap CAPI's functions (see
-//!   the [Fortran example] in the repository).
+//! * C or C++, or
+//! * Fortran as programming languages. Fortran is supported using the `iso_c_binding` module to
+//!   wrap CAPI's functions (see the [Fortran example] in the repository).
 //!
 //! Note that the CAPI only defines a subset of functionality available in the Rust module, which
 //! is extended on an as-needed basis. If you happen to miss a function please open a new [issue]
 //! on the github page.
 //!
-//! [`PineAPPL`]: https://docs.rs/pineappl
-//! [C++ example]: https://github.com/N3PDF/pineappl/tree/master/examples/basic-capi-usage
 //! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
 //! [issue]: https://github.com/N3PDF/pineappl/issues
 //!
 //! # Using and linking the CAPI
 //!
-//! To use `PineAPPL`'s CAPI you have to include its header `pineappl_capi.h`. To successfully
-//! build your program, you should rely on [`pkgconf`] or [`pkg-conf`], as follows:
+//! To use `PineAPPL`'s CAPI you must include its header `pineappl_capi.h`. To successfully build
+//! your program, you should rely on [`pkgconf`] or [`pkg-conf`], as follows:
 //!
 //! ```shell
 //! pkg-config --cflags pineappl_capi
@@ -50,16 +48,14 @@
 //!
 //! # Strings and other types
 //!
-//! All strings used in this library, denoted with the Rust type `*const c_char` or `*mut c_char`,
-//! which correspond to the C types `const char*` and `char*`, respectively, are assumed to be
-//! encoded using UTF-8, which Rust uses internally. The conversions are performed using
-//! [`CStr::to_string_lossy`], which you can consult on how strings are converted.
+//! Strings used in this library are have the Rust type `*const c_char` or `*mut c_char` and
+//! correspond to the C types `const char*` and `char*`, respectively. The strings are assumed to
+//! be encoded using UTF-8, which Rust uses internally.
 //!
 //! All other built-in types in Rust (`f64`, `usize`, `i32`, `u32`, ...) correspond to types in C
 //! as defined by the [translation tables] of cbindgen. If in doubt, consult the generated header
 //! `pineappl_capi.h`.
 //!
-//! [`CStr::to_string_lossy`]: std::ffi::CStr::to_string_lossy
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;

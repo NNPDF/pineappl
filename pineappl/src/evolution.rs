@@ -26,6 +26,20 @@ use std::iter;
 /// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
 /// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
 /// scales, respectively, around their central values.
+///
+/// [`FkTable::convolute`]: super::fk_table::FkTable::convolute
+/// [`FkTable`]: super::fk_table::FkTable
+/// [`alphas`]: Self::alphas
+/// [`fac0`]: Self::fac0
+/// [`fac1`]: Self::fac1
+/// [`lumi_id_types`]: Self::lumi_id_types
+/// [`pids0`]: Self::pids0
+/// [`pids1`]: Self::pids1
+/// [`ren1`]: Self::ren1
+/// [`x0`]: Self::x0
+/// [`x1`]: Self::x1
+/// [`xif`]: Self::xif
+/// [`xir`]: Self::xir
 pub struct OperatorInfo {
     /// Squared factorization scale of the `FkTable`.
     pub fac0: f64,
@@ -43,7 +57,7 @@ pub struct OperatorInfo {
 
     /// Renormalization scales of the `Grid`.
     pub ren1: Vec<f64>,
-    /// Strong couplings corresponding to the order given in [`ren1`].
+    /// Strong couplings corresponding to the order given in [`ren1`](Self::ren1).
     pub alphas: Vec<f64>,
     /// Multiplicative factor for the central renormalization scale.
     pub xir: f64,

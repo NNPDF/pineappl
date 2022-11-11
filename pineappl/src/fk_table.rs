@@ -13,7 +13,8 @@ use thiserror::Error;
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
 /// additional guarantees are given:
 ///
-/// - all subgrids of the grid evaluate the PDFs at a single scale `muf2`.
+/// - all subgrids of the grid evaluate the PDFs at a single factorization scale given by
+///   [`FkTable::muf2`].
 /// - all subgrids, for both hadronic initial states (if both initial states are hadronic), share
 ///   the same `x` grid. See [`FkTable::x_grid`].
 /// - the luminosity function is *simple*, meaning that every entry consists of a single pair of
@@ -53,23 +54,27 @@ pub enum TryFromGridError {
 pub enum FkAssumptions {
     /// All quark PDFs are non-zero at the FK table scale and completely independent.
     Nf6Ind,
-    /// Like [`Nf6Ind`], but the PDFs of top and anti-top quarks are the same at FK table scale.
+    /// Like [`Nf6Ind`](Self::Nf6Ind), but the PDFs of top and anti-top quarks are the same at FK
+    /// table scale.
     Nf6Sym,
-    /// Like [`Nf6Ind`], but the PDFs of top and anti-top quarks are zero at FK table scale.
-    Nf5Ind,
-    /// Like [`Nf5Ind`], but the PDFs of bottom and anti-bottom quarks are the same at FK table
+    /// Like [`Nf6Ind`](Self::Nf6Ind), but the PDFs of top and anti-top quarks are zero at FK table
     /// scale.
+    Nf5Ind,
+    /// Like [`Nf5Ind`](Self::Nf5Ind), but the PDFs of bottom and anti-bottom quarks are the same
+    /// at FK table scale.
     Nf5Sym,
-    /// Like [`Nf5Ind`], but the PDFs of bottom and anti-bottom quarks are zero at FK table scale.
+    /// Like [`Nf5Ind`](Self::Nf5Ind), but the PDFs of bottom and anti-bottom quarks are zero at FK
+    /// table scale.
     Nf4Ind,
-    /// Like [`Nf4Ind`], but the PDFs of charm and anti-charm quarks are the same at FK table
-    /// scale. PDF sets that make this assumption are NNPDF4.0 and NNPDF3.1 at fitting scale.
+    /// Like [`Nf4Ind`](Self::Nf4Ind), but the PDFs of charm and anti-charm quarks are the same at
+    /// FK table scale. PDF sets that make this assumption are NNPDF4.0 and NNPDF3.1 at fitting
+    /// scale.
     Nf4Sym,
-    /// Like [`Nf4Ind`], but the PDFs of charm and anti-charm quarks are zero at FK table scale.
-    /// PDF sets that make this assumption are MSHT20 and NNPDF3.0 at fitting scale.
+    /// Like [`Nf4Ind`](Self::Nf4Ind), but the PDFs of charm and anti-charm quarks are zero at FK
+    /// table scale. PDF sets that make this assumption are MSHT20 and NNPDF3.0 at fitting scale.
     Nf3Ind,
-    /// Like [`Nf3Ind`], but the PDFs of strange and anti-strange are the same at FK table scale.
-    /// A PDF set that makes this assumption is CT18 at fitting scale.
+    /// Like [`Nf3Ind`](Self::Nf3Ind), but the PDFs of strange and anti-strange are the same at FK
+    /// table scale. A PDF set that makes this assumption is CT18 at fitting scale.
     Nf3Sym,
 }
 
