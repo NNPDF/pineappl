@@ -1,8 +1,23 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 version=$1
+
+crates=(
+    # this must always be the first item
+    pineappl
+
+    pineappl_capi
+    pineappl_cli
+    pineappl_py
+)
+
+features=(
+    applgrid
+    fastnlo
+    fktable
+)
 
 if [[ -z ${version} ]]; then
     echo "No version number given."
@@ -25,7 +40,7 @@ if ! gh auth status 2>/dev/null; then
 fi
 
 if ! cargo msrv --help >/dev/null; then
-    echo "Didn't find \`msrv\` applet of \`cargo\`."
+    echo "Didn't find \`msrv\` applet of \`cargo\`. Run \`cargo install msrv\` to install it."
     exit 1
 fi
 
@@ -49,20 +64,12 @@ echo ">>> Testing release configuration with default features ..."
 cargo build --release
 cargo test --release
 
-echo ">>> Testing release configuration with \`applgrid\` feature ..."
+for feature in ${features[@]}; do
+    echo ">>> Testing release configuration with \`${feature}\` feature ..."
 
-cargo build --release --features=applgrid
-cargo test --release --features=applgrid
-
-echo ">>> Testing release configuration with \`fastnlo\` feature ..."
-
-cargo build --release --features=fastnlo
-cargo test --release --features=fastnlo
-
-echo ">>> Testing release configuration with \`fktable\` feature ..."
-
-cargo build --release --features=fktable
-cargo test --release --features=fktable
+    cargo build --release --features=${feature}
+    cargo test --release --features=${feature}
+done
 
 echo ">>> Testing if 'pineappl' can be published ..."
 
@@ -80,7 +87,7 @@ sed -i \
 sed -i \
     -e "s:^version = \".*\":version = \"${version}\":" \
     -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"${version}\":" \
-    pineappl{,_capi,_cli,_py}/Cargo.toml
+    ${crates[@]}/Cargo.toml
 
 echo ">>> Commiting and pushing changes ..."
 
@@ -88,27 +95,23 @@ git commit -a -m "Release v${version}"
 git tag -a v${version} -m v${version}
 git push --follow-tags
 
-echo ">>> Publishing crate 'pineappl' ..."
+for crate in ${crates[@]}; do
+    if [[ ${crate} == "pineappl_py" ]]; then
+        # don't publish this crate
+        continue
+    fi
 
-cd pineappl
-cargo publish
-cd ..
+    echo ">>> Publishing crate '${crate}' ..."
 
-echo "Waiting for the 'pineappl' crate to become available on crates.io ..."
+    cd ${crate}
+    cargo publish
+    cd ..
 
-sleep 60
-
-echo ">>> Publishing crate 'pineappl_capi' ..."
-
-cd pineappl_capi
-cargo publish
-cd ..
-
-echo ">>> Publishing crate 'pineappl_cli' ..."
-
-cd pineappl_cli
-cargo publish
-cd ..
+    if [[ ${crate} == "pineappl" ]]; then
+        echo "Waiting for the 'pineappl' crate to become available on crates.io ..."
+        sleep 60
+    fi
+done
 
 echo ">>> Making a release on github"
 
