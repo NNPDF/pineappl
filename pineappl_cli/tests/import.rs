@@ -628,7 +628,7 @@ fn import_dis_applgrid() {
 
 #[test]
 #[ignore]
-#[cfg(feature = "applgrid")]
+#[cfg(feature = "fastnlo")]
 fn import_double_hadronic_fastnlo() {
     let output = NamedTempFile::new("converted9.pineappl.lz4").unwrap();
 
