@@ -8,8 +8,10 @@ crates=(
     # this must always be the first item
     pineappl
 
+    pineappl_applgrid
     pineappl_capi
     pineappl_cli
+    pineappl_fastnlo
     pineappl_py
 )
 
