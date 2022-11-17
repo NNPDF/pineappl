@@ -291,7 +291,18 @@ impl Subgrid for ImportOnlySubgridV2 {
                         .filter(|&((i, _, _), _)| i == other_index)
                     {
                         let (j, k) = if transpose { (k, j) } else { (j, k) };
-                        self.array[[index, j, k]] += value;
+                        let target_j = self
+                            .x1_grid
+                            .iter()
+                            .position(|&x| x == other_grid.x1_grid()[j])
+                            .unwrap_or_else(|| unreachable!());
+                        let target_k = self
+                            .x2_grid
+                            .iter()
+                            .position(|&x| x == other_grid.x2_grid()[k])
+                            .unwrap_or_else(|| unreachable!());
+
+                        self.array[[index, target_j, target_k]] += value;
                     }
                 }
             }
