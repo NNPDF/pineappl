@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added new method `Grid::evolve`, which will succeed `Grid::convolute_eko` and
   is more robust, faster and easier to understand
+- added new function `pineappl_grid_scale_by_bin` to the CAPI that corresponds
+  to `Grid::scale_by_bin`
 
 ### Fixed
 

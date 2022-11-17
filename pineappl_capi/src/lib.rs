@@ -676,6 +676,24 @@ pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
     (&mut *grid).optimize();
 }
 
+/// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a
+/// corresponding entry in `factors` it is not rescaled. If `factors` has more entries than there
+/// are bins the superfluous entries do not have an effect.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The pointer `factors` must be an array of at least the size
+/// given by `count`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_scale_by_bin(
+    grid: *mut Grid,
+    count: usize,
+    factors: *const f64,
+) {
+    (*grid).scale_by_bin(slice::from_raw_parts(factors, count));
+}
+
 /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
 /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In addition,
 /// every subgrid is scaled by a factor `global` independently of its order.
