@@ -84,10 +84,14 @@ sed -i \
     -e "s:\[Unreleased\]\(\: https\://github.com/N3PDF/pineappl/compare/v\)\(.*\)...HEAD:[Unreleased]\1${version}...HEAD\n[${version}]\1\2...v${version}:" \
     CHANGELOG.md
 
-sed -i \
-    -e "s:^version = \".*\":version = \"${version}\":" \
-    -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"${version}\":" \
-    ${crates[@]}/Cargo.toml
+for crate in ${crates[@]}; do
+    sed -i \
+        -e "s:^version = \".*\":version = \"${version}\":" \
+        -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"${version}\":" \
+        -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"${version}\":" \
+        -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"${version}\":" \
+        ${crate}/Cargo.toml
+done
 
 echo ">>> Commiting and pushing changes ..."
 
