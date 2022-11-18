@@ -174,17 +174,25 @@ pub fn convolute_scales(
     let mut results = grid.convolute(&mut cache, &orders, bins, lumis, scales);
 
     match mode {
-        ConvoluteMode::Asymmetry => results
-            .chunks_exact(results.len() / scales.len())
-            .flat_map(|chunk| {
-                let vec: Vec<_> = chunk[chunk.len() / 2..]
-                    .iter()
-                    .zip(chunk[..chunk.len() / 2].iter().rev())
-                    .map(|(pos, neg)| (pos - neg) / (pos + neg))
-                    .collect();
-                vec
-            })
-            .collect(),
+        ConvoluteMode::Asymmetry => {
+            let bin_count = grid.bin_info().bins();
+
+            // calculating the asymmetry for a subset of bins doesn't work
+            assert!(bins.is_empty() || (bins.len() == bin_count));
+
+            results
+                .iter()
+                .skip(bin_count / 2)
+                .zip(
+                    results
+                        .chunks_exact(scales.len())
+                        .take(bin_count / 2)
+                        .rev()
+                        .flatten(),
+                )
+                .map(|(pos, neg)| (pos - neg) / (pos + neg))
+                .collect()
+        }
         ConvoluteMode::Integrated => {
             let normalizations = grid.bin_info().normalizations();
 
