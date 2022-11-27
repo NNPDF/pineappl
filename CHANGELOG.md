@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is more robust, faster and easier to understand
 - added new function `pineappl_grid_scale_by_bin` to the CAPI that corresponds
   to `Grid::scale_by_bin`
+- added new subcommand `analyze`, which performs various analyses. For time
+  being only one analysis is available: `ckf`. This calculates the per-channel
+  K factors which can be compared against the per-bin K factors
 
 ### Fixed
 

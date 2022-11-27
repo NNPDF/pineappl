@@ -1,5 +1,6 @@
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
 
+mod analyze;
 mod channels;
 mod convolute;
 mod delete;
@@ -53,6 +54,7 @@ struct Opts {
 #[enum_dispatch(Subcommand)]
 #[derive(Parser)]
 enum SubcommandEnum {
+    Analyze(analyze::Opts),
     Channels(channels::Opts),
     Convolute(convolute::Opts),
     Delete(delete::Opts),

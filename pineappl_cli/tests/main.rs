@@ -14,6 +14,7 @@ OPTIONS:
     -V, --version           Print version information
 
 SUBCOMMANDS:
+    analyze      Perform various analyses with grids
     channels     Shows the contribution for each partonic channel
     convolute    Convolutes a PineAPPL grid with a PDF set
     delete       Deletes parts from a PineAPPL grid
