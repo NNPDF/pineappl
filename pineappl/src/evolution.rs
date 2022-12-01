@@ -425,7 +425,10 @@ pub(crate) fn evolve_with_one(
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportOnlySubgridV2::new(
                 SparseArray3::from_ndarray(
-                    &table.insert_axis(Axis(0)).insert_axis(Axis(new_axis)),
+                    table
+                        .insert_axis(Axis(0))
+                        .insert_axis(Axis(new_axis))
+                        .view(),
                     0,
                     1,
                 ),
@@ -569,7 +572,7 @@ pub(crate) fn evolve_with_two(
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportOnlySubgridV2::new(
-                SparseArray3::from_ndarray(&table.insert_axis(Axis(0)), 0, 1),
+                SparseArray3::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
                 vec![Mu2 {
                     // TODO: FK tables don't depend on the renormalization scale
                     //ren: -1.0,

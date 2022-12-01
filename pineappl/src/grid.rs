@@ -2436,7 +2436,7 @@ mod tests {
 
         let mut array = Array3::zeros((1, 3, 3));
         array[[0, 0, 0]] = 1.;
-        let sparse_array = SparseArray3::from_ndarray(&array, 0, 3);
+        let sparse_array = SparseArray3::from_ndarray(array.view(), 0, 3);
         let subgrid = ImportOnlySubgridV1::new(
             sparse_array,
             muf2_grid.clone(),

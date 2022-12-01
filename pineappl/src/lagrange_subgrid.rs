@@ -959,7 +959,7 @@ impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
         Self {
             array: subgrid.grid.as_ref().map_or_else(
                 || SparseArray3::new(subgrid.ntau, subgrid.ny, subgrid.ny),
-                |grid| SparseArray3::from_ndarray(grid, subgrid.itaumin, subgrid.ntau),
+                |grid| SparseArray3::from_ndarray(grid.view(), subgrid.itaumin, subgrid.ntau),
             ),
             ntau: subgrid.ntau,
             ny: subgrid.ny,

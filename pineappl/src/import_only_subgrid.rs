@@ -387,13 +387,13 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
-                    SparseArray3::from_ndarray(&array, 0, 1)
+                    SparseArray3::from_ndarray(array.view(), 0, 1)
                 } else {
                     let mut array = array.clone();
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
-                    SparseArray3::from_ndarray(&array, 0, subgrid.itaumax - subgrid.itaumin)
+                    SparseArray3::from_ndarray(array.view(), 0, subgrid.itaumax - subgrid.itaumin)
                 }
             },
         );
