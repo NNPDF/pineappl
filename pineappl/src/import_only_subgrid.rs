@@ -4,7 +4,7 @@ use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIter};
-use ndarray::Axis;
+use ndarray::{s, Axis};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
@@ -361,17 +361,26 @@ impl Subgrid for ImportOnlySubgridV2 {
 
 impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
     fn from(subgrid: &LagrangeSubgridV2) -> Self {
+        // figure out the tightest x1-x2 boundaries for this subgrid
+        let (x1_range, x2_range) = subgrid.iter().fold(
+            (subgrid.x1_grid().len()..0, subgrid.x2_grid().len()..0),
+            |prev, ((_, ix1, ix2), _)| {
+                (
+                    prev.0.start.min(ix1)..prev.0.end.max(ix1 + 1),
+                    prev.1.start.min(ix2)..prev.1.end.max(ix2 + 1),
+                )
+            },
+        );
+
         let array = subgrid.grid.as_ref().map_or_else(
             || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
             // in the following case we should optimize when ny2 > ny1
             |array| {
-                let reweight_x1: Vec<_> = subgrid
-                    .x1_grid()
+                let reweight_x1: Vec<_> = subgrid.x1_grid()[x1_range.clone()]
                     .iter()
                     .map(|x| lagrange_subgrid::weightfun(*x))
                     .collect();
-                let reweight_x2: Vec<_> = subgrid
-                    .x2_grid()
+                let reweight_x2: Vec<_> = subgrid.x2_grid()[x2_range.clone()]
                     .iter()
                     .map(|x| lagrange_subgrid::weightfun(*x))
                     .collect();
@@ -381,15 +390,18 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                     // the Q^2 axis into a single bin
 
                     let mut array = array
+                        .slice(s![.., x1_range.clone(), x2_range.clone()])
                         .sum_axis(Axis(0))
-                        .into_shape((1, subgrid.ny1, subgrid.ny2))
+                        .into_shape((1, x1_range.len(), x2_range.len()))
                         .unwrap();
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
                     SparseArray3::from_ndarray(array.view(), 0, 1)
                 } else {
-                    let mut array = array.clone();
+                    let mut array = array
+                        .slice(s![.., x1_range.clone(), x2_range.clone()])
+                        .into_owned();
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
@@ -414,8 +426,8 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                 })
                 .collect()
         };
-        let x1_grid = subgrid.x1_grid().into_owned();
-        let x2_grid = subgrid.x2_grid().into_owned();
+        let x1_grid = subgrid.x1_grid()[x1_range].to_vec();
+        let x2_grid = subgrid.x2_grid()[x2_range].to_vec();
 
         Self {
             array,
