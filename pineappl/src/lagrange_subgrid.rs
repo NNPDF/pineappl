@@ -247,9 +247,16 @@ impl Subgrid for LagrangeSubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+        let x1_equal = self.x1_grid() == other.x1_grid();
+        let x2_equal = self.x2_grid() == other.x2_grid();
+
         if let SubgridEnum::LagrangeSubgridV1(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
+                    // TODO: the general case isn't implemented
+                    assert!(x1_equal);
+                    assert!(x2_equal);
+
                     let new_itaumin = self.itaumin.min(other_grid.itaumin);
                     let new_itaumax = self.itaumax.max(other_grid.itaumax);
                     let offset = other_grid.itaumin.saturating_sub(self.itaumin);
@@ -601,9 +608,16 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+        let x1_equal = self.x1_grid() == other.x1_grid();
+        let x2_equal = self.x2_grid() == other.x2_grid();
+
         if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
             if let Some(other_grid_grid) = &mut other_grid.grid {
                 if self.grid.is_some() {
+                    // TODO: the general case isn't implemented
+                    assert!(x1_equal);
+                    assert!(x2_equal);
+
                     let new_itaumin = self.itaumin.min(other_grid.itaumin);
                     let new_itaumax = self.itaumax.max(other_grid.itaumax);
                     let offset = other_grid.itaumin.saturating_sub(self.itaumin);
@@ -885,6 +899,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
+                // TODO: the general case isn't implemented
+                assert!(self.x1_grid() == other_grid.x1_grid());
+                assert!(self.x2_grid() == other_grid.x2_grid());
+
                 // TODO: we need much more checks here if there subgrids are compatible at all
 
                 if transpose {
