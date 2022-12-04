@@ -303,7 +303,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
             })
             .collect::<Result<_, _>>()?;
 
-        for ((ifac1, ix1, ix2), value) in subgrid.iter() {
+        for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
             let mur2 = info.xir * info.xir * subgrid.mu2_grid()[ifac1].ren;
 
             let als = if order.alphas == 0 {

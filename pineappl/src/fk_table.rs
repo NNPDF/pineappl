@@ -153,8 +153,8 @@ impl FkTable {
 
         for bin in 0..self.bins() {
             for lumi in 0..self.grid.lumi().len() {
-                for ((_, ix1, ix2), value) in self.grid().subgrid(0, bin, lumi).iter() {
-                    subgrid[[bin, lumi, ix1, ix2]] = *value;
+                for ((_, ix1, ix2), value) in self.grid().subgrid(0, bin, lumi).indexed_iter() {
+                    subgrid[[bin, lumi, ix1, ix2]] = value;
                 }
             }
         }

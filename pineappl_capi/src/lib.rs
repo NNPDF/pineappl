@@ -943,9 +943,9 @@ pub unsafe extern "C" fn pineappl_grid_export_mu2_slice(
     let x1_len = subgrid.x1_grid().len();
     let slice = slice::from_raw_parts_mut(buffer, x1_len * subgrid.x2_grid().len());
     subgrid
-        .iter()
+        .indexed_iter()
         .filter(|((imu2, _, _), _)| *imu2 == q2_slice)
-        .for_each(|((_, ix1, ix2), &value)| slice[ix1 + x1_len * ix2] = value);
+        .for_each(|((_, ix1, ix2), value)| slice[ix1 + x1_len * ix2] = value);
 }
 
 /// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
@@ -964,7 +964,7 @@ pub unsafe extern "C" fn pineappl_grid_nonzero_mu2_slices(
     tuple: *mut usize,
 ) {
     let tuple = slice::from_raw_parts_mut(tuple, 2);
-    let mut iter = (*grid).subgrid(order, bin, lumi).iter();
+    let mut iter = (*grid).subgrid(order, bin, lumi).indexed_iter();
 
     if let Some(((first, _, _), _)) = iter.next() {
         tuple[0] = first;

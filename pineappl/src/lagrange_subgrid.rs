@@ -4,7 +4,7 @@ use super::convert::{f64_from_usize, usize_from_f64};
 use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{
-    ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIter, SubgridParams,
+    ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
 use arrayvec::ArrayVec;
 use ndarray::Array3;
@@ -329,13 +329,13 @@ impl Subgrid for LagrangeSubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> SubgridIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter {
         self.grid.as_ref().map_or_else(
-            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
+            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
                 Box::new(
                     grid.indexed_iter()
-                        .filter(|&((_, _, _), value)| *value != 0.0),
+                        .filter_map(|(tuple, &value)| (value != 0.0).then(|| (tuple, value))),
                 )
             },
         )
@@ -694,13 +694,13 @@ impl Subgrid for LagrangeSubgridV2 {
         .into()
     }
 
-    fn iter(&self) -> SubgridIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter {
         self.grid.as_ref().map_or_else(
-            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), &f64)>>,
+            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
                 Box::new(
                     grid.indexed_iter()
-                        .filter(|&((_, _, _), value)| *value != 0.0),
+                        .filter_map(|(tuple, &value)| (value != 0.0).then(|| (tuple, value))),
                 )
             },
         )
@@ -913,10 +913,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     fn symmetrize(&mut self) {
         let mut new_array = SparseArray3::new(self.ntau, self.ny, self.ny);
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
             new_array[[i, k, j]] += sigma;
         }
 
@@ -939,7 +939,7 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> SubgridIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(self.array.indexed_iter())
     }
 
@@ -1018,7 +1018,7 @@ mod tests {
         let mut test = 0.0;
 
         // check `reference` against manually calculated result from q2 slices
-        for ((_, ix1, ix2), value) in grid.iter() {
+        for ((_, ix1, ix2), value) in grid.indexed_iter() {
             test += value * weightfun(x1[ix1]) * weightfun(x2[ix2]) / (x1[ix1] * x2[ix2]);
         }
 
