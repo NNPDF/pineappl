@@ -142,8 +142,8 @@ pub struct IndexedIter<'a, T> {
     dimensions: (usize, usize, usize),
 }
 
-impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
-    type Item = ((usize, usize, usize), &'a T);
+impl<'a, T: Copy + Default + PartialEq> Iterator for IndexedIter<'a, T> {
+    type Item = ((usize, usize, usize), T);
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(element) = self.entry_iter.next() {
@@ -179,7 +179,7 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
                     self.tuple.1 += 1;
                     self.next()
                 } else {
-                    let result = Some((self.tuple, element));
+                    let result = Some((self.tuple, *element));
                     self.tuple.1 += 1;
                     result
                 }
@@ -212,7 +212,7 @@ impl<'a, T: Default + PartialEq> Iterator for IndexedIter<'a, T> {
                     self.tuple.2 += 1;
                     self.next()
                 } else {
-                    let result = Some((self.tuple, element));
+                    let result = Some((self.tuple, *element));
                     self.tuple.2 += 1;
                     result
                 }
@@ -350,7 +350,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Return an indexed `Iterator` over the non-zero elements of this array. The iterator element
-    /// type is `((usize, usize, usize), &T)`.
+    /// type is `((usize, usize, usize), T)`.
     #[must_use]
     pub fn indexed_iter(&self) -> IndexedIter<'_, T> {
         IndexedIter::new(self)
@@ -708,7 +708,7 @@ mod tests {
         let mut iter = array.indexed_iter();
 
         // check iterator with one element
-        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 4), 1.0)));
         assert_eq!(iter.next(), None);
 
         // insert another element
@@ -716,8 +716,8 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 4), 1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), 2.0)));
         assert_eq!(iter.next(), None);
 
         // insert yet another element
@@ -725,9 +725,9 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
-        assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 4), 1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), 2.0)));
+        assert_eq!(iter.next(), Some(((4, 5, 7), 3.0)));
         assert_eq!(iter.next(), None);
 
         // insert at the very first position
@@ -735,10 +735,10 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(((2, 0, 0), &4.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 4), &1.0)));
-        assert_eq!(iter.next(), Some(((2, 3, 6), &2.0)));
-        assert_eq!(iter.next(), Some(((4, 5, 7), &3.0)));
+        assert_eq!(iter.next(), Some(((2, 0, 0), 4.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 4), 1.0)));
+        assert_eq!(iter.next(), Some(((2, 3, 6), 2.0)));
+        assert_eq!(iter.next(), Some(((4, 5, 7), 3.0)));
         assert_eq!(iter.next(), None);
     }
 
@@ -1017,19 +1017,19 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(((0, 0, 0), &1.0)));
-        assert_eq!(iter.next(), Some(((0, 0, 1), &2.0)));
-        assert_eq!(iter.next(), Some(((1, 6, 0), &5.0)));
-        assert_eq!(iter.next(), Some(((1, 8, 0), &6.0)));
-        assert_eq!(iter.next(), Some(((1, 9, 0), &7.0)));
-        assert_eq!(iter.next(), Some(((1, 2, 1), &3.0)));
-        assert_eq!(iter.next(), Some(((1, 5, 1), &4.0)));
-        assert_eq!(iter.next(), Some(((2, 0, 0), &8.0)));
-        assert_eq!(iter.next(), Some(((3, 4, 0), &10.0)));
-        assert_eq!(iter.next(), Some(((3, 2, 1), &9.0)));
-        assert_eq!(iter.next(), Some(((3, 4, 1), &11.0)));
-        assert_eq!(iter.next(), Some(((4, 0, 0), &12.0)));
-        assert_eq!(iter.next(), Some(((4, 0, 1), &13.0)));
+        assert_eq!(iter.next(), Some(((0, 0, 0), 1.0)));
+        assert_eq!(iter.next(), Some(((0, 0, 1), 2.0)));
+        assert_eq!(iter.next(), Some(((1, 6, 0), 5.0)));
+        assert_eq!(iter.next(), Some(((1, 8, 0), 6.0)));
+        assert_eq!(iter.next(), Some(((1, 9, 0), 7.0)));
+        assert_eq!(iter.next(), Some(((1, 2, 1), 3.0)));
+        assert_eq!(iter.next(), Some(((1, 5, 1), 4.0)));
+        assert_eq!(iter.next(), Some(((2, 0, 0), 8.0)));
+        assert_eq!(iter.next(), Some(((3, 4, 0), 10.0)));
+        assert_eq!(iter.next(), Some(((3, 2, 1), 9.0)));
+        assert_eq!(iter.next(), Some(((3, 4, 1), 11.0)));
+        assert_eq!(iter.next(), Some(((4, 0, 0), 12.0)));
+        assert_eq!(iter.next(), Some(((4, 0, 1), 13.0)));
         assert_eq!(iter.next(), None);
 
         let mut ndarray = Array3::zeros((5, 50, 2));

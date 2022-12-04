@@ -612,7 +612,7 @@ impl Grid {
 
         let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
-        for ((imu2, ix1, ix2), value) in subgrid.iter() {
+        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
             let x1 = x1_grid[ix1];
             let x2 = x2_grid[ix2];
             let mut lumi = 0.0;
@@ -1577,7 +1577,7 @@ impl Grid {
                         Vec::new()
                     };
 
-                    for ((iq2, ix1, ix2), &value) in src_subgrid.iter() {
+                    for ((iq2, ix1, ix2), value) in src_subgrid.indexed_iter() {
                         let scale = src_subgrid.mu2_grid()[iq2].fac;
                         let src_iq2 = src_array_q2_grid
                             .iter()
@@ -1753,7 +1753,7 @@ impl Grid {
                                 SubgridEnum::ImportOnlySubgridV2(ref mut array) => {
                                     let array = array.array_mut();
 
-                                    for ((_, tgt_x1_idx, tgt_x2_idx), &value) in
+                                    for ((_, tgt_x1_idx, tgt_x2_idx), value) in
                                         tgt_array.indexed_iter()
                                     {
                                         array[[0, tgt_x1_idx, tgt_x2_idx]] += value;

@@ -3,7 +3,7 @@
 use super::grid::Ntuple;
 use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use ndarray::Axis;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -132,11 +132,11 @@ impl Subgrid for ImportOnlySubgridV1 {
         let mut new_array =
             SparseArray3::new(self.q2_grid.len(), self.x1_grid.len(), self.x2_grid.len());
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
         // do not change the diagonal entries (k==j)
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
             new_array[[i, k, j]] += sigma;
         }
 
@@ -153,7 +153,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         .into()
     }
 
-    fn iter(&self) -> SubgridIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(self.array.indexed_iter())
     }
 
@@ -264,7 +264,7 @@ impl Subgrid for ImportOnlySubgridV2 {
                             .position(|&x| x == self.x2_grid[k])
                             .unwrap_or_else(|| unreachable!());
 
-                        array[[i, target_j, target_k]] = *value;
+                        array[[i, target_j, target_k]] = value;
                     }
 
                     self.array = array;
@@ -323,11 +323,11 @@ impl Subgrid for ImportOnlySubgridV2 {
         let mut new_array =
             SparseArray3::new(self.mu2_grid.len(), self.x1_grid.len(), self.x2_grid.len());
 
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
         // do not change the diagonal entries (k==j)
-        for ((i, j, k), &sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
+        for ((i, j, k), sigma) in self.array.indexed_iter().filter(|((_, j, k), _)| k < j) {
             new_array[[i, k, j]] += sigma;
         }
 
@@ -344,7 +344,7 @@ impl Subgrid for ImportOnlySubgridV2 {
         .into()
     }
 
-    fn iter(&self) -> SubgridIter {
+    fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(self.array.indexed_iter())
     }
 
@@ -479,10 +479,10 @@ mod tests {
 
         assert!(!grid1.is_empty());
 
-        assert_eq!(grid1.iter().nth(0), Some(((0, 1, 2), &1.0)));
-        assert_eq!(grid1.iter().nth(1), Some(((0, 1, 3), &2.0)));
-        assert_eq!(grid1.iter().nth(2), Some(((0, 4, 3), &4.0)));
-        assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
+        assert_eq!(grid1.indexed_iter().nth(0), Some(((0, 1, 2), 1.0)));
+        assert_eq!(grid1.indexed_iter().nth(1), Some(((0, 1, 3), 2.0)));
+        assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
+        assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
 
         // symmetric luminosity function
         let lumi =
@@ -508,10 +508,10 @@ mod tests {
         }
         assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        assert_eq!(grid2.iter().nth(0), Some(((0, 1, 7), &8.0)));
-        assert_eq!(grid2.iter().nth(1), Some(((0, 2, 1), &1.0)));
-        assert_eq!(grid2.iter().nth(2), Some(((0, 3, 1), &2.0)));
-        assert_eq!(grid2.iter().nth(3), Some(((0, 3, 4), &4.0)));
+        assert_eq!(grid2.indexed_iter().nth(0), Some(((0, 1, 7), 8.0)));
+        assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
+        assert_eq!(grid2.indexed_iter().nth(2), Some(((0, 3, 1), 2.0)));
+        assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
 
         grid1.merge(&mut grid2, false);
 
@@ -576,10 +576,10 @@ mod tests {
 
         assert!(!grid1.is_empty());
 
-        assert_eq!(grid1.iter().nth(0), Some(((0, 1, 2), &1.0)));
-        assert_eq!(grid1.iter().nth(1), Some(((0, 1, 3), &2.0)));
-        assert_eq!(grid1.iter().nth(2), Some(((0, 4, 3), &4.0)));
-        assert_eq!(grid1.iter().nth(3), Some(((0, 7, 1), &8.0)));
+        assert_eq!(grid1.indexed_iter().nth(0), Some(((0, 1, 2), 1.0)));
+        assert_eq!(grid1.indexed_iter().nth(1), Some(((0, 1, 3), 2.0)));
+        assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
+        assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
 
         // symmetric luminosity function
         let lumi =
@@ -605,10 +605,10 @@ mod tests {
         }
         assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        assert_eq!(grid2.iter().nth(0), Some(((0, 1, 7), &8.0)));
-        assert_eq!(grid2.iter().nth(1), Some(((0, 2, 1), &1.0)));
-        assert_eq!(grid2.iter().nth(2), Some(((0, 3, 1), &2.0)));
-        assert_eq!(grid2.iter().nth(3), Some(((0, 3, 4), &4.0)));
+        assert_eq!(grid2.indexed_iter().nth(0), Some(((0, 1, 7), 8.0)));
+        assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
+        assert_eq!(grid2.indexed_iter().nth(2), Some(((0, 3, 1), 2.0)));
+        assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
 
         grid1.merge(&mut grid2, false);
 
