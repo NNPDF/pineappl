@@ -154,7 +154,7 @@ impl Subcommand for Opts {
         assert_eq!(results.len(), evolved_results.len());
 
         let mut table = helpers::create_table();
-        table.set_titles(row![c => "b", "FkTable", "Grid", "rel. diff"]);
+        table.set_titles(row![c => "b", "Grid", "FkTable", "rel. diff"]);
 
         let mut different = false;
 

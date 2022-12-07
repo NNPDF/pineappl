@@ -27,7 +27,7 @@ OPTIONS:
         --xir <XIR>              Rescale the renormalization scale with this factor [default: 1]
 ";
 
-const E906NLO_BIN_00_STR: &str = "b   FkTable        Grid       rel. diff
+const E906NLO_BIN_00_STR: &str = "b     Grid       FkTable      rel. diff
 -+------------+------------+-------------
 0 1.0659807e-1 1.0657904e-1 -1.7851986e-4
 1 1.0659807e-1 1.0657904e-1 -1.7851986e-4
@@ -37,7 +37,7 @@ const E906NLO_BIN_00_STR: &str = "b   FkTable        Grid       rel. diff
 5  1.6039253e0  1.6047566e0  5.1825508e-4
 ";
 
-const LHCB_DY_8TEV_STR: &str = "b    FkTable        Grid       rel. diff
+const LHCB_DY_8TEV_STR: &str = "b      Grid       FkTable      rel. diff
 --+------------+------------+-------------
 0   8.1098384e0  8.1077630e0 -2.5590382e-4
 1   2.3743076e1  2.3737354e1 -2.4098617e-4
@@ -59,7 +59,7 @@ const LHCB_DY_8TEV_STR: &str = "b    FkTable        Grid       rel. diff
 17 5.1352256e-2 5.1398297e-2  8.9657766e-4
 ";
 
-const LHCB_WP_7TEV_STR: &str = "b   FkTable      Grid       rel. diff
+const LHCB_WP_7TEV_STR: &str = "b    Grid       FkTable     rel. diff
 -+-----------+-----------+-------------
 0 7.7911994e2 7.7891224e2 -2.6657796e-4
 1 7.1170872e2 7.1152134e2 -2.6328724e-4
@@ -71,7 +71,7 @@ const LHCB_WP_7TEV_STR: &str = "b   FkTable      Grid       rel. diff
 7 2.9013827e1 2.9010220e1 -1.2430486e-4
 ";
 
-const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b    FkTable      Grid       rel. diff
+const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. diff
 --+-----------+-----------+-------------
 0  8.2920022e0 1.0954648e1  3.2111014e-1
 1  1.3975037e1 1.4236502e1  1.8709416e-2
