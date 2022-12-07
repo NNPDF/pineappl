@@ -333,10 +333,20 @@ impl Subgrid for LagrangeSubgridV1 {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
-                Box::new(
-                    grid.indexed_iter()
-                        .filter_map(|(tuple, &value)| (value != 0.0).then(|| (tuple, value))),
-                )
+                Box::new(grid.indexed_iter().filter_map(|(tuple, &value)| {
+                    (value != 0.0).then(|| {
+                        (
+                            tuple,
+                            value
+                                * if self.reweight {
+                                    weightfun(fx(self.gety(tuple.1)))
+                                        * weightfun(fx(self.gety(tuple.2)))
+                                } else {
+                                    1.0
+                                },
+                        )
+                    })
+                }))
             },
         )
     }
@@ -698,10 +708,24 @@ impl Subgrid for LagrangeSubgridV2 {
         self.grid.as_ref().map_or_else(
             || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
             |grid| {
-                Box::new(
-                    grid.indexed_iter()
-                        .filter_map(|(tuple, &value)| (value != 0.0).then(|| (tuple, value))),
-                )
+                Box::new(grid.indexed_iter().filter_map(|(tuple, &value)| {
+                    (value != 0.0).then(|| {
+                        (
+                            tuple,
+                            value
+                                * if self.reweight1 {
+                                    weightfun(fx(self.gety1(tuple.1)))
+                                } else {
+                                    1.0
+                                }
+                                * if self.reweight2 {
+                                    weightfun(fx(self.gety2(tuple.2)))
+                                } else {
+                                    1.0
+                                },
+                        )
+                    })
+                }))
             },
         )
     }
@@ -940,7 +964,17 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        Box::new(self.array.indexed_iter())
+        Box::new(self.array.indexed_iter().map(|(tuple, value)| {
+            (
+                tuple,
+                value
+                    * if self.reweight {
+                        weightfun(fx(self.gety(tuple.1))) * weightfun(fx(self.gety(tuple.2)))
+                    } else {
+                        1.0
+                    },
+            )
+        }))
     }
 
     fn stats(&self) -> Stats {
@@ -1019,7 +1053,7 @@ mod tests {
 
         // check `reference` against manually calculated result from q2 slices
         for ((_, ix1, ix2), value) in grid.indexed_iter() {
-            test += value * weightfun(x1[ix1]) * weightfun(x2[ix2]) / (x1[ix1] * x2[ix2]);
+            test += value / (x1[ix1] * x2[ix2]);
         }
 
         eprintln!("{} {}", test, reference);
