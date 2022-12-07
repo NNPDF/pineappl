@@ -8,7 +8,14 @@ use pineappl::subgrid::{Mu2, Subgrid};
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fktable")]
-fn evolve_grid(grid: &Grid, eko: &Path, pdf: &Pdf, xir: f64, xif: f64) -> Result<FkTable> {
+fn evolve_grid(
+    grid: &Grid,
+    eko: &Path,
+    pdf: &Pdf,
+    orders: &[(u32, u32)],
+    xir: f64,
+    xif: f64,
+) -> Result<FkTable> {
     use lz4_flex::frame::FrameDecoder;
     use ndarray::Array5;
     use ndarray_npy::ReadNpyExt;
@@ -91,7 +98,18 @@ fn evolve_grid(grid: &Grid, eko: &Path, pdf: &Pdf, xir: f64, xif: f64) -> Result
         lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
     };
 
-    Ok(grid.evolve(&operator, &info, &[])?)
+    let orders: Vec<_> = grid
+        .orders()
+        .iter()
+        .map(|order| {
+            orders.is_empty()
+                || orders
+                    .iter()
+                    .any(|other| (order.alphas == other.0) && (order.alpha == other.1))
+        })
+        .collect();
+
+    Ok(grid.evolve(&operator, &info, &orders)?)
 }
 
 #[cfg(not(feature = "fktable"))]
@@ -125,6 +143,15 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
+    /// Select which orders to evolve.
+    #[clap(
+        long,
+        multiple_values = true,
+        parse(try_from_str = helpers::parse_order),
+        short,
+        use_value_delimiter = true
+    )]
+    orders: Vec<(u32, u32)>,
     /// Rescale the renormalization scale with this factor.
     #[clap(default_value_t = 1.0, long)]
     xir: f64,
@@ -142,7 +169,7 @@ impl Subcommand for Opts {
         let results = helpers::convolute_scales(
             &grid,
             &mut pdf,
-            &[],
+            &self.orders,
             &[],
             &[],
             &[(self.xir, self.xif)],
@@ -150,7 +177,7 @@ impl Subcommand for Opts {
             false,
         );
 
-        let fk_table = evolve_grid(&grid, &self.eko, &pdf, self.xir, self.xif)?;
+        let fk_table = evolve_grid(&grid, &self.eko, &pdf, &self.orders, self.xir, self.xif)?;
         let evolved_results = helpers::convolute_scales(
             fk_table.grid(),
             &mut pdf,
