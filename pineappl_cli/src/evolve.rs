@@ -127,13 +127,13 @@ impl Subcommand for Opts {
 
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
-        let results = helpers::convolute(
+        let results = helpers::convolute_scales(
             &grid,
             &mut pdf,
             &[],
             &[],
             &[],
-            1,
+            &[(self.xir, self.xif)],
             ConvoluteMode::Normal,
             false,
         );
@@ -145,7 +145,7 @@ impl Subcommand for Opts {
             &[],
             &[],
             &[],
-            &[(self.xir, self.xif)],
+            &[(1.0, 1.0)],
             ConvoluteMode::Normal,
             false,
         );
