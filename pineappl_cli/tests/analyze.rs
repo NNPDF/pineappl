@@ -66,21 +66,20 @@ fn ckf_help() {
         .stdout(CKF_HELP_STR);
 }
 
-#[test]
-#[ignore]
-fn ckf() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args(&[
-            "--silence-lhapdf",
-            "analyze",
-            "ckf",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
-            "a2as1",
-            "a2",
-        ])
-        .assert()
-        .success()
-        .stdout(CKF_STR);
-}
+//#[test]
+//fn ckf() {
+//    Command::cargo_bin("pineappl")
+//        .unwrap()
+//        .args(&[
+//            "--silence-lhapdf",
+//            "analyze",
+//            "ckf",
+//            "data/LHCB_WP_7TEV.pineappl.lz4",
+//            "NNPDF31_nlo_as_0118_luxqed",
+//            "a2as1",
+//            "a2",
+//        ])
+//        .assert()
+//        .success()
+//        .stdout(CKF_STR);
+//}
