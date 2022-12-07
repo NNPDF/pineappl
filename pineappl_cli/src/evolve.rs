@@ -4,7 +4,6 @@ use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
-use pineappl::subgrid::{Mu2, Subgrid};
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fktable")]
@@ -20,6 +19,7 @@ fn evolve_grid(
     use ndarray::Array5;
     use ndarray_npy::ReadNpyExt;
     use pineappl::evolution::OperatorInfo;
+    use pineappl::subgrid::{Mu2, Subgrid};
     use serde::Deserialize;
     use std::fs::File;
     use std::io::BufReader;
@@ -113,7 +113,7 @@ fn evolve_grid(
 }
 
 #[cfg(not(feature = "fktable"))]
-fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: f64, _: f64) -> Result<FkTable> {
+fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: &[(u32, u32)], _: f64, _: f64) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
