@@ -4,6 +4,7 @@ use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
+use pineappl::subgrid::{Mu2, Subgrid};
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fktable")]
@@ -59,11 +60,22 @@ fn evolve_grid(grid: &Grid, eko: &Path, pdf: &Pdf, xir: f64, xif: f64) -> Result
 
     // TODO: handle errors when files in the EKO are not present
 
-    let alphas: Vec<_> = metadata
-        .q2_grid
+    // TODO: the following should probably be a method of `Grid`
+    let mut ren1: Vec<_> = grid
+        .subgrids()
         .iter()
-        .map(|&mur2| pdf.alphas_q2(mur2))
+        .flat_map(|subgrid| {
+            subgrid
+                .mu2_grid()
+                .iter()
+                .map(|Mu2 { ren, .. }| xir * xir * ren)
+                .collect::<Vec<_>>()
+        })
         .collect();
+    ren1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    ren1.dedup();
+    let ren1 = ren1;
+    let alphas: Vec<_> = ren1.iter().map(|&mur2| pdf.alphas_q2(mur2)).collect();
 
     let info = OperatorInfo {
         fac1: metadata.q2_grid.clone(),
@@ -72,7 +84,7 @@ fn evolve_grid(grid: &Grid, eko: &Path, pdf: &Pdf, xir: f64, xif: f64) -> Result
         pids1: metadata.targetpids,
         x1: metadata.targetgrid,
         fac0: metadata.q2_ref,
-        ren1: metadata.q2_grid, // TODO: check whether this is true in the general case
+        ren1,
         alphas,
         xir,
         xif,
