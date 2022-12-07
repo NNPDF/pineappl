@@ -67,6 +67,7 @@ fn ckf_help() {
 }
 
 #[test]
+#[ignore]
 fn ckf() {
     Command::cargo_bin("pineappl")
         .unwrap()
