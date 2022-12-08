@@ -39,11 +39,11 @@ jobs:
         ./configure --prefix=${HOME}/prefix --disable-static
         make -j
         make install
-    - name: Install Rust nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
         default: true
-        toolchain: nightly
+        toolchain: stable
         components: llvm-tools-preview
     - name: Get test data
       id: cache-test-data
