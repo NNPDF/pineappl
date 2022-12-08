@@ -39,11 +39,11 @@ jobs:
         ./configure --prefix=${HOME}/prefix --disable-static
         make -j
         make install
-    - name: Install Rust nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
         default: true
-        toolchain: nightly
+        toolchain: stable
         components: llvm-tools-preview
     - name: Get test data
       id: cache-test-data
@@ -75,7 +75,7 @@ jobs:
     - name: Run tests
       run: |
         # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
-        cargo test --all-features --no-fail-fast -- --test-threads=1 --include-ignored 2> >(tee stderr 1>&2)
+        cargo test --all-features --no-fail-fast -- --include-ignored 2> >(tee stderr 1>&2)
         # from https://stackoverflow.com/a/51141872/812178
         sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 
