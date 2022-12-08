@@ -74,7 +74,13 @@ jobs:
 
     - name: Run tests
       run: |
+        df .
+        cargo run -- channels --absolute --integrated pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nlo_as_0118_luxqed
+        ls -al
+        df .
         cargo run --all-features -- channels --absolute --integrated pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nlo_as_0118_luxqed
+        ls -al
+        df .
         # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
         cargo test --all-features --no-fail-fast -- --include-ignored 2> >(tee stderr 1>&2)
         # from https://stackoverflow.com/a/51141872/812178
