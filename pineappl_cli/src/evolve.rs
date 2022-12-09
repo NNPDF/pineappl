@@ -162,7 +162,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
-        use prettytable::{cell, row};
+        use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;

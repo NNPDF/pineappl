@@ -192,7 +192,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
-        use prettytable::{cell, row};
+        use prettytable::row;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, mut grid, reference_results) = convert_grid(
