@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new subcommand `analyze`, which performs various analyses. For time
   being only one analysis is available: `ckf`. This calculates the per-channel
   K factors which can be compared against the per-bin K factors
+- added switch `--orders` to `evolve` to allow evolving a subset of orders of
+  the full grid
+
+### Fixed
+
+- fixed bug in the calculation of asymmetries when multiple scales were
+  requested
 
 ## [0.5.8] - 21/10/2022
 
