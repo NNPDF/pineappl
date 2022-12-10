@@ -7,17 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new function `pineappl_grid_scale_by_bin` to the CAPI that corresponds
+  to `Grid::scale_by_bin`
+- added new subcommand `analyze`, which performs various analyses. For time
+  being only one analysis is available: `ckf`. This calculates the per-channel
+  K factors which can be compared against the per-bin K factors
+
 ## [0.5.8] - 21/10/2022
 
 ### Added
 
 - added new method `Grid::evolve`, which will succeed `Grid::convolute_eko` and
   is more robust, faster and easier to understand
-- added new function `pineappl_grid_scale_by_bin` to the CAPI that corresponds
-  to `Grid::scale_by_bin`
-- added new subcommand `analyze`, which performs various analyses. For time
-  being only one analysis is available: `ckf`. This calculates the per-channel
-  K factors which can be compared against the per-bin K factors
 
 ### Fixed
 
