@@ -29,16 +29,8 @@ fn evolve_grid(
     struct Metadata {
         #[serde(rename = "Q2grid")]
         q2_grid: Vec<f64>,
-        #[allow(dead_code)]
-        eko_version: String,
         inputgrid: Vec<f64>,
         inputpids: Vec<i32>,
-        #[allow(dead_code)]
-        interpolation_is_log: bool,
-        #[allow(dead_code)]
-        interpolation_polynomial_degree: usize,
-        #[allow(dead_code)]
-        interpolation_xgrid: Vec<f64>,
         q2_ref: f64,
         targetgrid: Vec<f64>,
         targetpids: Vec<i32>,
