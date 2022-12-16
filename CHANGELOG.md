@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   K factors which can be compared against the per-bin K factors
 - added switch `--orders` to `evolve` to allow evolving a subset of orders of
   the full grid
+- added new switch `--fktable` to the CLI subcommand `pineappl obl` to detect
+  whether a grid is also an FK table
 - added new method `Grid::evolve_info` which extracts the information need to
   generate EKOs. This function is less restrictive than `Grid::axes`, which it
   will replace
