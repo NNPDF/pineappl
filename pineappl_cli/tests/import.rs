@@ -236,7 +236,7 @@ fn import_dis_fktable() {
         .args(&["obl", "--fktable", output.path().to_str().unwrap()])
         .assert()
         .success()
-        .stdout("yes");
+        .stdout("yes\n");
 }
 
 #[test]
