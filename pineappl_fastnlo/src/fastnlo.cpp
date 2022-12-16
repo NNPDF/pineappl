@@ -106,7 +106,27 @@ std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t obs)
     return coeffs.GetSigmaTildes().at(0)->at(obs).size();
 }
 
-fastNLOReader& static_cast_lhapdf_to_reader_mut(fastNLOLHAPDF& lhapdf)
+fastNLOCoeffAddBase const& downcast_coeff_add_fix_to_base(fastNLOCoeffAddFix const& coeffs)
+{
+    return coeffs;
+}
+
+fastNLOCoeffAddBase const& downcast_coeff_add_flex_to_base(fastNLOCoeffAddFlex const& coeffs)
+{
+    return coeffs;
+}
+
+fastNLOReader const& downcast_lhapdf_to_reader(fastNLOLHAPDF const& lhapdf)
+{
+    return lhapdf;
+}
+
+fastNLOReader& downcast_lhapdf_to_reader_mut(fastNLOLHAPDF& lhapdf)
+{
+    return lhapdf;
+}
+
+fastNLOTable const& downcast_lhapdf_to_table(fastNLOLHAPDF const& lhapdf)
 {
     return lhapdf;
 }
@@ -119,6 +139,22 @@ fastNLOCoeffAddFix const* dynamic_cast_coeff_add_fix(fastNLOCoeffBase const* coe
 fastNLOCoeffAddFlex const* dynamic_cast_coeff_add_flex(fastNLOCoeffBase const* coeffs)
 {
     return dynamic_cast <fastNLOCoeffAddFlex const*> (coeffs);
+}
+
+fastNLOCoeffData const* dynamic_cast_coeff_data(fastNLOCoeffBase const* coeffs)
+{
+    return dynamic_cast <fastNLOCoeffData const*> (coeffs);
+}
+
+fastNLOCoeffMult const* dynamic_cast_coeff_mult(fastNLOCoeffBase const* coeffs)
+{
+    return dynamic_cast <fastNLOCoeffMult const*> (coeffs);
+}
+
+fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(
+    fastNLOReader const& reader
+) {
+    return reader;
 }
 
 pair_double_double GetObsBinDimBounds(

@@ -61,7 +61,7 @@ fn convert_fastnlo(
     );
     let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
     let results = ffi::GetCrossSection(
-        ffi::static_cast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
+        ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
         false,
     );
 

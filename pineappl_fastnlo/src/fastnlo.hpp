@@ -57,11 +57,27 @@ double GetSigmaTilde(
 
 std::size_t GetNx(fastNLOCoeffAddFlex const& coeffs, std::size_t);
 
-fastNLOReader& static_cast_lhapdf_to_reader_mut(fastNLOLHAPDF& lhapdf);
+fastNLOCoeffAddBase const& downcast_coeff_add_fix_to_base(fastNLOCoeffAddFix const& coeffs);
+
+fastNLOCoeffAddBase const& downcast_coeff_add_flex_to_base(fastNLOCoeffAddFlex const& coeffs);
+
+fastNLOReader const& downcast_lhapdf_to_reader(fastNLOLHAPDF const& lhapdf);
+
+fastNLOReader& downcast_lhapdf_to_reader_mut(fastNLOLHAPDF& lhapdf);
+
+fastNLOTable const& downcast_lhapdf_to_table(fastNLOLHAPDF const& lhapdf);
 
 fastNLOCoeffAddFix const* dynamic_cast_coeff_add_fix(fastNLOCoeffBase const* coeffs);
 
 fastNLOCoeffAddFlex const* dynamic_cast_coeff_add_flex(fastNLOCoeffBase const* coeffs);
+
+fastNLOCoeffData const* dynamic_cast_coeff_data(fastNLOCoeffBase const* coeffs);
+
+fastNLOCoeffMult const* dynamic_cast_coeff_mult(fastNLOCoeffBase const* coeffs);
+
+fastNLOPDFLinearCombinations const& downcast_reader_to_pdf_linear_combinations(
+    fastNLOReader const& reader
+);
 
 pair_double_double GetObsBinDimBounds(
     fastNLOTable const& table,
