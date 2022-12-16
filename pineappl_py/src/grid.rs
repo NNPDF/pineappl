@@ -525,9 +525,9 @@ impl PyGrid {
         let evolved_grid = self
             .grid
             .evolve(
-                &operator.as_array().to_owned(),
+                operator.as_array(),
                 &op_info,
-                &order_mask.to_vec().unwrap(),
+                order_mask.as_slice().unwrap(),
             )
             .expect("Nothing returned from evolution.");
         PyFkTable {

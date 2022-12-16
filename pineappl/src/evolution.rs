@@ -8,7 +8,7 @@ use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::Itertools;
-use ndarray::{s, Array1, Array2, Array3, Array5, ArrayView1, Axis};
+use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView5, Axis};
 use std::iter;
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
@@ -94,7 +94,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
 }
 
 pub(crate) fn pids(
-    operator: &Array5<f64>,
+    operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
@@ -159,7 +159,7 @@ pub(crate) fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Ve
 }
 
 pub(crate) fn operators(
-    operator: &Array5<f64>,
+    operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     fac1: &[f64],
     pid_indices: &[(usize, usize)],
@@ -344,7 +344,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
 
 pub(crate) fn evolve_with_one(
     grid: &Grid,
-    operator: &Array5<f64>,
+    operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
@@ -480,7 +480,7 @@ pub(crate) fn evolve_with_one(
 
 pub(crate) fn evolve_with_two(
     grid: &Grid,
-    operator: &Array5<f64>,
+    operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
