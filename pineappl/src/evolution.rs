@@ -11,6 +11,19 @@ use itertools::Itertools;
 use ndarray::{s, Array1, Array2, Array3, Array5, ArrayView1, Axis};
 use std::iter;
 
+/// This structure captures the information needed to create an evolution kernel operator (EKO) for
+/// a specific [`Grid`].
+pub struct EvolveInfo {
+    /// Squared factorization scales of the `Grid`.
+    pub fac1: Vec<f64>,
+    /// Particle identifiers of the `Grid`.
+    pub pids1: Vec<i32>,
+    /// `x`-grid coordinates of the `Grid`.
+    pub x1: Vec<f64>,
+    /// Renormalization scales of the `Grid`.
+    pub ren1: Vec<f64>,
+}
+
 /// Information about the evolution kernel operator (EKO) passed to [`Grid::evolve`] as `operator`,
 /// which is used to convert a [`Grid`] into an [`FkTable`]. The dimensions of the EKO must
 /// correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`], exactly in
