@@ -230,6 +230,13 @@ fn import_dis_fktable() {
         .assert()
         .success()
         .stdout(IMPORT_DIS_FKTABLE_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&["obl", "--fktable", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout("yes");
 }
 
 #[test]

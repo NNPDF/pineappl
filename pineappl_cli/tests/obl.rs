@@ -4,13 +4,14 @@ const HELP_STR: &str = "pineappl-obl
 Shows information about orders (o), bins (b), or luminosities (l) of a grid
 
 USAGE:
-    pineappl obl <--orders|--orders-spaces|--orders-long|--bins|--lumis> <INPUT>
+    pineappl obl <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable> <INPUT>
 
 ARGS:
     <INPUT>    Path to the input grid
 
 OPTIONS:
     -b, --bins             Show the bins of a grid
+        --fktable          Check if input is an FK table
     -h, --help             Print help information
     -l, --lumis            Show the luminsities a grid
     -o, --orders           Show the orders of a grid, stripping zero powers
@@ -72,6 +73,10 @@ const ORDERS_SPACES_STR: &str = "o         order
 6 O(     a^3      lf^1)
 ";
 
+const FKTABLE_STR: &str = "no
+multiple orders detected
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -130,4 +135,14 @@ fn orders_spaces() {
         .assert()
         .success()
         .stdout(ORDERS_SPACES_STR);
+}
+
+#[test]
+fn fktable() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&["obl", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(FKTABLE_STR);
 }

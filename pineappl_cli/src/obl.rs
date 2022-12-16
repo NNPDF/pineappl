@@ -2,6 +2,7 @@ use super::helpers::{self, Subcommand};
 use anyhow::Result;
 use clap::{ArgGroup, Parser, ValueHint};
 use itertools::Itertools;
+use pineappl::fk_table::FkTable;
 use pineappl::grid::Order;
 use prettytable::{cell, row, Row};
 use std::path::PathBuf;
@@ -28,6 +29,9 @@ pub struct Opts {
     /// Show the luminsities a grid.
     #[clap(group = "mode", long, short)]
     lumis: bool,
+    /// Check if input is an FK table.
+    #[clap(group = "mode", long)]
+    fktable: bool,
 }
 
 impl Subcommand for Opts {
@@ -67,6 +71,12 @@ impl Subcommand for Opts {
                 }
 
                 row.add_cell(cell!(r->format!("{}", normalizations[bin])));
+            }
+        } else if self.fktable {
+            if let Err(err) = FkTable::try_from(grid) {
+                println!("no\n{}", err);
+            } else {
+                println!("yes");
             }
         } else if self.lumis {
             let mut titles = row![c => "l"];
