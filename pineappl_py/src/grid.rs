@@ -3,6 +3,7 @@ use pineappl::grid::{EkoInfo, Grid, GridAxes, Ntuple, Order};
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
+use super::evolution::PyEvolveInfo;
 use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
@@ -531,6 +532,23 @@ impl PyGrid {
             .expect("Nothing returned from evolution.");
         PyFkTable {
             fk_table: evolved_grid,
+        }
+    }
+
+    /// Convolute with grid with an evolution operator.
+    ///
+    /// Parameters
+    /// ----------
+    /// order_mask : numpy.ndarray(bool)
+    ///     boolean mask to activate orders
+    ///
+    /// Returns
+    /// -------
+    /// PyEvolveInfo :
+    ///     produced FK table
+    pub fn evolve_info(&self, order_mask: PyReadonlyArray1<bool>) -> PyEvolveInfo {
+        PyEvolveInfo {
+            evolve_info: self.grid.evolve_info(order_mask.as_slice().unwrap()),
         }
     }
 

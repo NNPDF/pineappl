@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 pub mod bin;
+pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
@@ -13,6 +14,7 @@ pub mod subgrid;
 #[pymodule]
 fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<bin::PyBinRemapper>()?;
+    m.add_class::<evolution::PyEvolveInfo>()?;
     m.add_class::<grid::PyGrid>()?;
     m.add_class::<grid::PyOrder>()?;
     m.add_class::<lumi::PyLumiEntry>()?;
