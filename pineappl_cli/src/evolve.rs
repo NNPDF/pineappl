@@ -101,7 +101,7 @@ fn evolve_grid(
         })
         .collect();
 
-    Ok(grid.evolve(&operator, &info, &orders)?)
+    Ok(grid.evolve(operator.view(), &info, &orders)?)
 }
 
 #[cfg(not(feature = "fktable"))]

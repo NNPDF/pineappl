@@ -17,7 +17,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, Array5, Axis, Dimension};
+use ndarray::{s, Array3, Array5, ArrayView5, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1791,7 +1791,7 @@ impl Grid {
     /// incompatible with this `Grid`.
     pub fn evolve(
         &self,
-        operator: &Array5<f64>,
+        operator: ArrayView5<f64>,
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
@@ -1812,9 +1812,9 @@ impl Grid {
         }
 
         let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
-            evolution::evolve_with_two(self, operator, info, order_mask)
+            evolution::evolve_with_two(self, &operator, info, order_mask)
         } else {
-            evolution::evolve_with_one(self, operator, info, order_mask)
+            evolution::evolve_with_one(self, &operator, info, order_mask)
         }?;
 
         let mut grid = Self {
