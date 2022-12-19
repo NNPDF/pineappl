@@ -216,14 +216,29 @@ fn convert_coeff_add_flex(
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
 
+    let alphas = table_as_add_base.GetNpow().try_into().unwrap();
+    let orders: Vec<_> = [
+        Order::new(alphas, alpha, 0, 0),
+        Order::new(alphas, alpha, 1, 0),
+        Order::new(alphas, alpha, 0, 1),
+        Order::new(alphas, alpha, 2, 0),
+        Order::new(alphas, alpha, 0, 2),
+        Order::new(alphas, alpha, 1, 1),
+    ]
+    .into_iter()
+    .take(match table.GetNScaleDep() {
+        0..=4 => 1,
+        5 => 3,
+        6 => 4,
+        7 => 6,
+        _ => unimplemented!(),
+    })
+    .collect();
+    let orders_len = orders.len();
+
     let mut grid = Grid::new(
         create_lumi(table_as_add_base, comb, dis_pid),
-        vec![Order {
-            alphas: table_as_add_base.GetNpow().try_into().unwrap(),
-            alpha,
-            logxir: 0,
-            logxif: 0,
-        }],
+        orders,
         (0..=bins).map(|limit| limit as f64).collect(),
         SubgridParams::default(),
     );
@@ -338,7 +353,11 @@ fn convert_coeff_add_flex(
 
         for subproc in 0..table_as_add_base.GetNSubproc() {
             let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
-            let mut array = SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+            let mut arrays =
+                vec![
+                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                    orders_len
+                ];
 
             for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
                 .cartesian_product(0..scale_nodes2.len())
@@ -346,48 +365,61 @@ fn convert_coeff_add_flex(
             {
                 let logmur2 = mu2_values[mu2_slice].ren.ln();
                 let logmuf2 = mu2_values[mu2_slice].fac.ln();
+                let logs00 = [
+                    logmur2,
+                    logmuf2,
+                    logmur2 * logmur2,
+                    logmuf2 * logmuf2,
+                    logmur2 * logmuf2,
+                ];
+                let logs10 = [2.0 * logmur2, 0.0, logmuf2];
+                let logs01 = [0.0, 2.0 * logmuf2, logmur2];
 
                 for ix in 0..nx {
                     // TODO: is this always correct? Isn't there a member function for it?
                     let ix1 = ix % x1_values.len();
                     let ix2 = ix / x1_values.len();
-                    let mut value = ffi::GetSigmaTilde(table, 0, obs, ix, is1, is2, subproc);
+                    let mut values = [0.0; 6];
 
-                    if table.GetNScaleDep() >= 5 {
-                        // mur
-                        value += logmur2 * ffi::GetSigmaTilde(table, 1, obs, ix, is1, is2, subproc);
-                        // muf
-                        value += logmuf2 * ffi::GetSigmaTilde(table, 2, obs, ix, is1, is2, subproc);
-
-                        if table.GetNScaleDep() >= 6 {
-                            // mur mur
-                            value += logmur2
-                                * logmur2
-                                * ffi::GetSigmaTilde(table, 3, obs, ix, is1, is2, subproc);
-                        }
-
-                        if table.GetNScaleDep() >= 7 {
-                            // muf muf
-                            value += logmuf2
-                                * logmuf2
-                                * ffi::GetSigmaTilde(table, 4, obs, ix, is1, is2, subproc);
-                            // mur muf
-                            value += logmur2
-                                * logmuf2
-                                * ffi::GetSigmaTilde(table, 5, obs, ix, is1, is2, subproc);
-                        }
+                    for (index, value) in values.iter_mut().enumerate().take(orders_len) {
+                        *value = ffi::GetSigmaTilde(table, index, obs, ix, is1, is2, subproc);
                     }
 
-                    if value != 0.0 {
+                    values[0] += values[1..]
+                        .iter()
+                        .zip(logs00.iter())
+                        .map(|(value, log)| value * log)
+                        .sum::<f64>();
+                    values[1] += values[3..]
+                        .iter()
+                        .zip(logs10.iter())
+                        .map(|(value, log)| value * log)
+                        .sum::<f64>();
+                    values[2] += values[3..]
+                        .iter()
+                        .zip(logs01.iter())
+                        .map(|(value, log)| value * log)
+                        .sum::<f64>();
+
+                    for (value, array) in values
+                        .iter()
+                        .copied()
+                        .zip(arrays.iter_mut())
+                        .filter(|(value, _)| *value != 0.0)
+                    {
                         array[[mu2_slice, ix1, ix2]] =
                             value * factor * x1_values[ix1] * x2_values[ix2];
                     }
                 }
             }
 
-            if !array.is_empty() {
+            for (order, array) in arrays
+                .into_iter()
+                .enumerate()
+                .filter(|(_, array)| !array.is_empty())
+            {
                 grid.set_subgrid(
-                    0,
+                    order,
                     obs,
                     subproc.try_into().unwrap(),
                     ImportOnlySubgridV2::new(
