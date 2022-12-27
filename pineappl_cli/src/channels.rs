@@ -68,6 +68,11 @@ impl Subcommand for Opts {
         let lumis = lumis;
 
         let limit = grid.lumi().len().min(self.limit);
+        let limit = if lumis.is_empty() {
+            limit
+        } else {
+            limit.min(lumis.len())
+        };
         let limits = helpers::convolute_limits(
             &grid,
             &[],

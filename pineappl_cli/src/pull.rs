@@ -55,6 +55,7 @@ impl Subcommand for Opts {
             .build_global()
             .unwrap();
 
+        let limit = grid.lumi().len().min(self.limit);
         let bin_limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
         let results1: Vec<f64> = pdfset1
             .par_iter_mut()
@@ -95,7 +96,7 @@ impl Subcommand for Opts {
             title.add_cell(cell);
         }
         title.add_cell(cell!(c->"total\n[\u{3c3}]"));
-        for _ in 0..self.limit {
+        for _ in 0..limit {
             title.add_cell(cell!(c->"l"));
             title.add_cell(cell!(c->"pull\n[\u{3c3}]"));
         }
