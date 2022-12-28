@@ -39,7 +39,7 @@ fn evolve_grid(
     let mut archive = Archive::new(File::open(eko)?);
 
     let mut operator = Default::default();
-    let mut metadata: Metadata = Default::default();
+    let mut metadata = Metadata::default();
 
     for entry in archive.entries()? {
         let file = entry?;
@@ -50,7 +50,7 @@ fn evolve_grid(
             match file_name.to_str().unwrap() {
                 "metadata.yaml" => metadata = serde_yaml::from_reader(file)?,
                 "operators.npy.lz4" => {
-                    operator = Array5::<f64>::read_npy(FrameDecoder::new(BufReader::new(file)))?
+                    operator = Array5::<f64>::read_npy(FrameDecoder::new(BufReader::new(file)))?;
                 }
                 _ => {}
             }

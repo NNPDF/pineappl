@@ -1781,6 +1781,7 @@ impl Grid {
 
     /// Returns information for the generation of evolution operators that are being used in
     /// [`Grid::evolve`] with the parameter `order_mask`.
+    #[must_use]
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         let has_pdf1 = self.has_pdf1();
         let has_pdf2 = self.has_pdf1();

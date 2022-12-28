@@ -25,7 +25,7 @@ enum SubcommandEnum {
 impl Subcommand for SubcommandEnum {
     fn run(&self) -> Result<()> {
         match self {
-            SubcommandEnum::Ckf(opts) => opts.run(),
+            Self::Ckf(opts) => opts.run(),
         }
     }
 }

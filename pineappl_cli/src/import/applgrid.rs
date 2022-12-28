@@ -97,9 +97,9 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     // this setting isn't supported
     assert!(!grid.getApplyCorrections());
 
-    for bin in 0..(grid.Nobs_internal() as u32) {
+    for bin in 0..grid.Nobs_internal() {
         // this setting isn't supported either
-        assert!(!grid.getApplyCorrection(bin));
+        assert!(!grid.getApplyCorrection(bin.try_into().unwrap()));
     }
 
     // this setting isn't supported

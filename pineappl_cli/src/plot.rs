@@ -336,7 +336,7 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                let channels = if let ConvoluteMode::Asymmetry = mode {
+                let channels = if matches!(mode, ConvoluteMode::Asymmetry) {
                     vec![]
                 } else {
                     let mut channels: Vec<_> = (0..grid.lumi().len())

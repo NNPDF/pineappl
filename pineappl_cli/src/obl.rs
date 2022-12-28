@@ -97,7 +97,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(format!("{}", index)));
 
                 for (id1, id2, factor) in entry.entry().iter() {
-                    row.add_cell(cell!(format!("{} \u{d7} ({:2.}, {:2.})", factor, id1, id2)));
+                    row.add_cell(cell!(format!("{} \u{d7} ({:2}, {:2})", factor, id1, id2)));
                 }
             }
         } else {

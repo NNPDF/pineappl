@@ -673,7 +673,7 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 /// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
-    (&mut *grid).optimize();
+    (*grid).optimize();
 }
 
 /// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a
@@ -919,7 +919,7 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
-    Box::new(Lumi::default())
+    Box::default()
 }
 
 /// Fills `buffer` with the q2-slice for the index `q2_slice` of the grid for the specified
@@ -1148,7 +1148,7 @@ pub unsafe extern "C" fn pineappl_keyval_string(
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
-    Box::new(KeyVal::default())
+    Box::default()
 }
 
 /// Set the double-valued parameter with name `key` to `value` in `key_vals`.

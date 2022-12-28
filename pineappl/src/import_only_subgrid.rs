@@ -241,8 +241,8 @@ impl Subgrid for ImportOnlySubgridV2 {
             } else {
                 if self.x1_grid() != other_grid.x1_grid() || self.x2_grid() != other_grid.x2_grid()
                 {
-                    let mut x1_grid = self.x1_grid.to_owned();
-                    let mut x2_grid = self.x2_grid.to_owned();
+                    let mut x1_grid = self.x1_grid.clone();
+                    let mut x2_grid = self.x2_grid.clone();
 
                     x1_grid.extend_from_slice(&other_grid.x1_grid());
                     x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());

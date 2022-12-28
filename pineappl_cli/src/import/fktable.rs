@@ -13,7 +13,7 @@ use tar::Archive;
 
 #[derive(Debug, PartialEq)]
 enum FkTableSection {
-    SOF,
+    Sof,
     GridDesc,
     VersionInfo,
     GridInfo,
@@ -24,7 +24,7 @@ enum FkTableSection {
 }
 
 fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
-    let mut section = FkTableSection::SOF;
+    let mut section = FkTableSection::Sof;
     let mut flavor_mask = Vec::<bool>::new();
     let mut x_grid = Vec::new();
     let mut grid = None;
@@ -43,7 +43,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
         match line.as_str() {
             "{GridDesc___________________________________________________" => {
-                assert_eq!(section, FkTableSection::SOF);
+                assert_eq!(section, FkTableSection::Sof);
                 section = FkTableSection::GridDesc;
             }
             "_VersionInfo________________________________________________" => {

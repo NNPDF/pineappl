@@ -50,7 +50,7 @@ pub enum TryFromGridError {
 /// tables are typically stored at very small `Q2 = Q0`, the PDFs `f(x,Q0)` of heavy quarks are
 /// typically set to zero at this scale or set to the same value as their anti-quark PDF. This is
 /// used to optimize the size of FK tables.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FkAssumptions {
     /// All quark PDFs are non-zero at the FK table scale and completely independent.
     Nf6Ind,
@@ -79,7 +79,7 @@ pub enum FkAssumptions {
 }
 
 /// Error type when trying to construct [`FkAssumptions`] with a string.
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Eq, Error, PartialEq)]
 #[error("unknown variant for FkAssumptions: {variant}")]
 pub struct UnknownFkAssumption {
     variant: String,

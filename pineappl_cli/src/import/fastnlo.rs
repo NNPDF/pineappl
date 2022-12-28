@@ -105,7 +105,9 @@ fn convert_coeff_add_fix(
             logxir: 0,
             logxif: 0,
         }],
-        (0..=bins).map(|limit| limit as f64).collect(),
+        (0..=bins)
+            .map(|limit| u16::try_from(limit).unwrap().into())
+            .collect(),
         SubgridParams::default(),
     );
 
@@ -239,7 +241,9 @@ fn convert_coeff_add_flex(
     let mut grid = Grid::new(
         create_lumi(table_as_add_base, comb, dis_pid),
         orders,
-        (0..=bins).map(|limit| limit as f64).collect(),
+        (0..=bins)
+            .map(|limit| u16::try_from(limit).unwrap().into())
+            .collect(),
         SubgridParams::default(),
     );
 
