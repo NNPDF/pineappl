@@ -75,8 +75,10 @@ impl Subcommand for Opts {
         } else if self.fktable {
             if let Err(err) = FkTable::try_from(grid) {
                 println!("no\n{}", err);
+                return Ok(1);
             } else {
                 println!("yes");
+                return Ok(0);
             }
         } else if self.lumis {
             let mut titles = row![c => "l"];
