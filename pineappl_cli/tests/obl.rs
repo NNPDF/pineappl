@@ -143,6 +143,6 @@ fn fktable() {
         .unwrap()
         .args(&["obl", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
-        .success()
+        .failure()
         .stdout(FKTABLE_STR);
 }
