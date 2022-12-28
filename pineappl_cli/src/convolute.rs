@@ -53,7 +53,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
         let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
@@ -173,6 +173,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(())
+        Ok(0)
     }
 }

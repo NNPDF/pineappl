@@ -28,6 +28,7 @@ use clap::Parser;
 use enum_dispatch::enum_dispatch;
 use git_version::git_version;
 use helpers::Subcommand;
+use std::process;
 
 #[derive(Parser)]
 #[clap(
@@ -84,7 +85,14 @@ fn main() -> Result<()> {
         lhapdf::set_verbosity(0);
     }
 
-    opts.subcommand.run()
+    // TODO: use exit code from Rust 1.61
+    let code = opts.subcommand.run()?;
+
+    if code == 0 {
+        Ok(())
+    } else {
+        process::exit(code.into());
+    }
 }
 
 #[cfg(test)]

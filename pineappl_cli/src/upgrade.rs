@@ -15,7 +15,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let mut grid = helpers::read_grid(&self.input)?;
         grid.upgrade();
         helpers::write_grid(&self.output, &grid)

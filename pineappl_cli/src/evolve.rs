@@ -153,7 +153,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;

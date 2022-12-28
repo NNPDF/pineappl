@@ -46,7 +46,7 @@ pub fn read_grid(input: &Path) -> Result<Grid> {
         .context(format!("unable to read '{}'", input.display()))
 }
 
-pub fn write_grid(output: &Path, grid: &Grid) -> Result<()> {
+pub fn write_grid(output: &Path, grid: &Grid) -> Result<u8> {
     let file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -54,15 +54,17 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<()> {
         .context(format!("unable to write '{}'", output.display()))?;
 
     if output.extension().map_or(false, |ext| ext == "lz4") {
-        Ok(grid.write_lz4(file)?)
+        grid.write_lz4(file)?;
     } else {
-        Ok(grid.write(file)?)
+        grid.write(file)?;
     }
+
+    Ok(0)
 }
 
 #[enum_dispatch]
 pub trait Subcommand {
-    fn run(&self) -> Result<()>;
+    fn run(&self) -> Result<u8>;
 }
 
 pub fn create_table() -> Table {

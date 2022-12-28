@@ -147,7 +147,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
             .build_global()
@@ -552,6 +552,6 @@ impl Subcommand for Opts {
             );
         }
 
-        Ok(())
+        Ok(0)
     }
 }

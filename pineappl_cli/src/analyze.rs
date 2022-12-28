@@ -12,7 +12,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         self.subcommand.run()
     }
 }
@@ -23,7 +23,7 @@ enum SubcommandEnum {
 }
 
 impl Subcommand for SubcommandEnum {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         match self {
             Self::Ckf(opts) => opts.run(),
         }
@@ -66,7 +66,7 @@ pub struct CkfOpts {
 }
 
 impl Subcommand for CkfOpts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
@@ -188,6 +188,6 @@ impl Subcommand for CkfOpts {
 
         table.printstd();
 
-        Ok(())
+        Ok(0)
     }
 }

@@ -27,7 +27,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let (input0, input_rest) = self.input.split_first().unwrap();
         let mut grid0 = helpers::read_grid(input0)?;
 

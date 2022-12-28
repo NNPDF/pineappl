@@ -37,7 +37,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         for key_value in self.entry.chunks(2) {

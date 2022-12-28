@@ -42,7 +42,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
 
         let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
@@ -260,6 +260,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(())
+        Ok(0)
     }
 }

@@ -184,7 +184,7 @@ fn parse_remapping_string(
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let mut grid = helpers::read_grid(&self.input)?;
         let (normalizations, limits) =
             parse_remapping_string(&self.remapping, &self.ignore_obs_norm, self.norm)?;

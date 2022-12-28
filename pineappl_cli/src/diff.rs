@@ -60,7 +60,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<()> {
+    fn run(&self) -> Result<u8> {
         let grid1 = helpers::read_grid(&self.input1)?;
         let grid2 = helpers::read_grid(&self.input2)?;
 
@@ -253,6 +253,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(())
+        Ok(0)
     }
 }
