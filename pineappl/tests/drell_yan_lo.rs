@@ -213,6 +213,17 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
+    // TEST 5b: `convolute` with `LumiCache::with_two`
+    let mut xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
+    let mut alphas2 = |_| 0.0;
+    let mut lumi_cache2 = LumiCache::with_two(2212, &mut xfx1, 2212, &mut xfx2, &mut alphas2);
+    let bins2 = grid.convolute(&mut lumi_cache2, &[], &[], &[], &[(1.0, 1.0)]);
+
+    for (result, reference) in bins2.iter().zip(reference.iter()) {
+        assert_approx_eq!(f64, *result, *reference, ulps = 16);
+    }
+
     // TEST 6: `convolute_subgrid`
     if convolute_subgrid_before {
         let bins: Vec<_> = (0..grid.bin_info().bins())
