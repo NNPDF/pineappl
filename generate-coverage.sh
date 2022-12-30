@@ -37,7 +37,8 @@ sed -nE 's/  Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr | \
         --instr-profile=pineappl.profdata \
         --object target/debug/pineappl \
         --format html \
-        --output-dir cov
+        --output-dir cov \
+        -Xdemangler=rustfilt
 
 rm pineappl.profdata
 find . -name '*.profraw' -delete
