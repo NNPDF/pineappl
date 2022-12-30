@@ -5,7 +5,7 @@ set -euo pipefail
 version=$1
 
 crates=(
-    # this must always be the first item
+    # this must always be the first item because all other crates depend on it
     pineappl
 
     pineappl_applgrid
@@ -110,9 +110,12 @@ for crate in ${crates[@]}; do
     echo ">>> Publishing crate '${crate}' ..."
 
     cd ${crate}
+    # cargo publish will block starting with 1.66:
+    # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
     cargo publish
     cd ..
 
+    # ... remove the following block
     if [[ ${crate} == "pineappl" ]]; then
         echo "Waiting for the 'pineappl' crate to become available on crates.io ..."
         sleep 60
