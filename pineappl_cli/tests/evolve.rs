@@ -72,6 +72,19 @@ const LHCB_WP_7TEV_STR: &str = "b    Grid       FkTable     rel. diff
 7 2.9272102e1 2.9268451e1 -1.2474967e-4
 ";
 
+const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 7.8731123e2
+1 2.25  2.5 7.1853181e2
+2  2.5 2.75 6.2306064e2
+3 2.75    3 5.0203783e2
+4    3 3.25 3.7305123e2
+5 3.25  3.5 2.5295990e2
+6  3.5    4 1.1968534e2
+7    4  4.5 2.9268451e1
+";
+
 const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. diff
 --+-----------+-----------+-------------
 0  8.2920022e0 1.0954648e1  3.2111014e-1
@@ -134,7 +147,7 @@ fn help() {
 #[test]
 #[ignore]
 fn lhcb_wp_7tev() {
-    let output = NamedTempFile::new("fktable1.lz4").unwrap();
+    let output = NamedTempFile::new("fktable1a.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -150,6 +163,34 @@ fn lhcb_wp_7tev() {
         .assert()
         .success()
         .stdout(LHCB_WP_7TEV_STR);
+
+    let optimized = NamedTempFile::new("fktable1b.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "optimize",
+            "--fk-table",
+            "Nf4Sym",
+            output.path().to_str().unwrap(),
+            optimized.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "--scales=1",
+            optimized.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_7TEV_OPTIMIZED_STR);
 }
 
 #[test]
