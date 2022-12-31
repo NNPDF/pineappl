@@ -198,6 +198,12 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic(expected = "'|' syntax not meaningful for first dimension")]
+    fn pipe_syntax_first_dimension() {
+        parse_remapping_string("|0,1,2", &[], 1.0).unwrap();
+    }
+
+    #[test]
     #[should_panic(expected = "empty repetition with '|'")]
     fn pipe_syntax_first_empty() {
         parse_remapping_string("0,1,2;0,2,4;||", &[], 1.0).unwrap();

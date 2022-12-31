@@ -94,6 +94,17 @@ const MULTIPLE_PDFS_WITH_RELABELING_STR: &str =
 7    4  4.5 1.3772029e1    -3.46     2.85 1.3640796e1 -0.95
 ";
 
+const WRONG_LHAID_STR: &str = "error: Invalid value \"999999999999\" for '<PDFSETS>...': The PDF set `999999999999` was not found
+
+For more information try --help
+";
+
+const WRONG_PDFSET_STR: &str =
+    "error: Invalid value \"IDONTEXIST\" for '<PDFSETS>...': The PDF set `IDONTEXIST` was not found
+
+For more information try --help
+";
+
 const ABSOLUTE_STR: &str =
 "b   etal    disg/detal     (1,1)       (2,2)     (0.5,0.5)     (2,1)       (1,2)      (0.5,1)     (1,0.5)  
      []        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]        [pb]    
@@ -170,6 +181,11 @@ const ORDERS_A2_A3_STR: &str = "b   etal    disg/detal  scale uncertainty
 5 3.25  3.5 1.0303603e2    -6.38     5.09
 6  3.5    4 4.7938981e1    -5.59     4.31
 7    4  4.5 1.1075878e1    -4.60     3.35
+";
+
+const WRONG_ORDERS_STR: &str = "error: Invalid value \"a2a2as2\" for '--orders <ORDERS>...': unable to parse order; too many couplings in 'a2a2as2'
+
+For more information try --help
 ";
 
 const SCALES_9_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -275,6 +291,36 @@ fn multiple_pdfs_with_relabeling() {
 }
 
 #[test]
+fn wrong_lhaid() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "999999999999",
+        ])
+        .assert()
+        .failure()
+        .stderr(WRONG_LHAID_STR);
+}
+
+#[test]
+fn wrong_pdfset() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "IDONTEXIST",
+        ])
+        .assert()
+        .failure()
+        .stderr(WRONG_PDFSET_STR);
+}
+
+#[test]
 fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -370,6 +416,22 @@ fn orders_a2_a3() {
         .assert()
         .success()
         .stdout(ORDERS_A2_A3_STR);
+}
+
+#[test]
+fn wrong_orders() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "--orders=a2a2as2",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(WRONG_ORDERS_STR);
 }
 
 #[test]
