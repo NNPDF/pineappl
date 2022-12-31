@@ -309,17 +309,17 @@ pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
     Err(format!("The PDF set `{}` was not found", argument))
 }
 
-pub fn validate_pos_non_zero<T: Default + FromStr + PartialEq>(
+pub fn validate_pos_non_zero<T: Default + FromStr + PartialOrd>(
     argument: &str,
 ) -> std::result::Result<(), String> {
     if let Ok(number) = argument.parse::<T>() {
-        if number != T::default() {
+        if number > T::default() {
             return Ok(());
         }
     }
 
     Err(format!(
-        "The value `{}` is not positive and non-zero",
+        "The value `{}` is not positive or non-zero",
         argument
     ))
 }
