@@ -46,6 +46,21 @@ const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K
 7    4  4.5  1.24 0 1.44 3 -inf 1 -inf 2 0.00 4 0.00
 ";
 
+// TODO: understand these factors
+const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
+    "b   etal    bin-K  l   K    l  K   l  K   l  K   l  K  
+     []                                                
+-+----+----+------+-+------+-+----+-+----+-+----+-+----
+0    2 2.25 -12.92 0 -23.21 3 -inf 1 -inf 4 1.00 2 1.00
+1 2.25  2.5 -14.53 0 -26.59 3 -inf 1 -inf 4 1.00 2 1.00
+2  2.5 2.75 -16.29 0 -30.64 3 -inf 1 -inf 4 1.00 2 1.00
+3 2.75    3 -18.84 0 -36.08 3 -inf 1 -inf 4 1.00 2 1.00
+4    3 3.25 -20.56 0 -40.00 3 -inf 1 -inf 4 1.00 2 1.00
+5 3.25  3.5 -23.70 0 -45.54 3 -inf 1 -inf 2 1.00 4 1.00
+6  3.5    4 -21.29 0 -41.40 3 -inf 1 -inf 4 1.00 2 1.00
+7    4  4.5 -23.63 0 -41.69 3 -inf 1 -inf 4 1.00 2 1.00
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -82,4 +97,21 @@ fn ckf() {
         .assert()
         .success()
         .stdout(CKF_STR);
+}
+
+#[test]
+fn ckf_with_default_denominator() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "analyze",
+            "ckf",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+            "a2as1",
+        ])
+        .assert()
+        .success()
+        .stdout(CKF_WITH_DEFAULT_DENOMINATOR_STR);
 }
