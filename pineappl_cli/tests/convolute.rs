@@ -94,7 +94,8 @@ const MULTIPLE_PDFS_WITH_RELABELING_STR: &str =
 7    4  4.5 1.3772029e1    -3.46     2.85 1.3640796e1 -0.95
 ";
 
-const WRONG_LHAID_STR: &str = "error: Invalid value \"999999999999\" for '<PDFSETS>...': The PDF set `999999999999` was not found
+const WRONG_LHAID_STR: &str =
+    "error: Invalid value \"0\" for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
 
 For more information try --help
 ";
@@ -298,7 +299,7 @@ fn wrong_lhaid() {
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
-            "999999999999",
+            "0",
         ])
         .assert()
         .failure()
