@@ -1,6 +1,6 @@
 //! Module containing the `SparseArray3` struct.
 
-use ndarray::{Array3, Axis};
+use ndarray::{ArrayView3, Axis};
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::mem;
@@ -256,7 +256,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
 
     /// Converts `array` into a `SparseArray3`.
     #[must_use]
-    pub fn from_ndarray(array: &Array3<T>, xstart: usize, xsize: usize) -> Self {
+    pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let (_, ny, nz) = array.dim();
         let array = if ny > nz {
             let mut array = array.clone();
@@ -432,6 +432,7 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ndarray::Array3;
 
     #[test]
     fn index_access() {
@@ -962,7 +963,7 @@ mod tests {
         ndarray[[0, 5, 7]] = 5.0;
         ndarray[[1, 3, 9]] = 6.0;
 
-        let array = SparseArray3::from_ndarray(&ndarray, 3, 40);
+        let array = SparseArray3::from_ndarray(ndarray.view(), 3, 40);
 
         assert_eq!(array[[3, 4, 3]], 1.0);
         assert_eq!(array[[3, 4, 4]], 2.0);
@@ -1048,7 +1049,7 @@ mod tests {
         ndarray[[4, 0, 0]] = 12.0;
         ndarray[[4, 0, 1]] = 13.0;
 
-        let mut other = SparseArray3::from_ndarray(&ndarray, 0, 5);
+        let mut other = SparseArray3::from_ndarray(ndarray.view(), 0, 5);
 
         assert_eq!(other[[0, 0, 0]], 1.0);
         assert_eq!(other[[0, 0, 1]], 2.0);

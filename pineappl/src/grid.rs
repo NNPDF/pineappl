@@ -1141,13 +1141,8 @@ impl Grid {
                             // we can't merge into an EmptySubgridV1
                             *lhs = rhs.clone_empty();
                             lhs.merge(rhs, false);
-                        } else if (lhs.x1_grid() == rhs.x1_grid())
-                            && (lhs.x2_grid() == rhs.x2_grid())
-                        {
-                            lhs.merge(rhs, false);
                         } else {
-                            // don't overwrite `rhs`
-                            continue;
+                            lhs.merge(rhs, false);
                         }
 
                         *rhs = EmptySubgridV1::default().into();
@@ -2503,7 +2498,7 @@ mod tests {
 
         let mut array = Array3::zeros((1, 3, 3));
         array[[0, 0, 0]] = 1.;
-        let sparse_array = SparseArray3::from_ndarray(&array, 0, 3);
+        let sparse_array = SparseArray3::from_ndarray(array.view(), 0, 3);
         let subgrid = ImportOnlySubgridV1::new(
             sparse_array,
             muf2_grid.clone(),
