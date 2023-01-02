@@ -21,14 +21,17 @@ fn convert_applgrid(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-) -> Result<(&'static str, Grid, Vec<f64>)> {
+    _: usize,
+) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
+
+    // TODO: check AMCATNLO scale variations
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
     let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
 
-    Ok(("APPLgrid", pgrid, results))
+    Ok(("APPLgrid", pgrid, results, 1))
 }
 
 #[cfg(not(feature = "applgrid"))]
@@ -38,7 +41,8 @@ fn convert_applgrid(
     _: &str,
     _: usize,
     _: i32,
-) -> Result<(&'static str, Grid, Vec<f64>)> {
+    _: usize,
+) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
     ))
@@ -51,8 +55,10 @@ fn convert_fastnlo(
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-) -> Result<(&'static str, Grid, Vec<f64>)> {
+    scales: usize,
+) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_fastnlo::ffi;
+    use std::ptr;
 
     let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
         input.to_str().unwrap(),
@@ -60,12 +66,38 @@ fn convert_fastnlo(
         member.try_into().unwrap(),
     );
     let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
-    let results = ffi::GetCrossSection(
-        ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap()),
-        false,
-    );
+    let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
 
-    Ok(("fastNLO", grid, results))
+    // TODO: scale-variation log conversion is only enabled for flex grids
+    let scales = if unsafe { reader.GetIsFlexibleScaleTable(ptr::null_mut()) } {
+        scales
+    } else {
+        1
+    };
+
+    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR[0..scales]
+        .iter()
+        .map(|&(mur, muf)| {
+            if !reader.as_mut().SetScaleFactorsMuRMuF(mur, muf) {
+                return None;
+            }
+            reader.as_mut().CalcCrossSection();
+            Some(ffi::GetCrossSection(reader.as_mut(), false))
+        })
+        .take_while(Option::is_some)
+        .map(Option::unwrap)
+        .collect();
+
+    assert!(matches!(unpermuted_results.len(), 1 | 3 | 7 | 9));
+
+    let bins = unpermuted_results[0].len();
+    let actual_scales = unpermuted_results.len();
+
+    let results: Vec<_> = (0..bins)
+        .flat_map(|bin| unpermuted_results.iter().map(move |r| r[bin]))
+        .collect();
+
+    Ok(("fastNLO", grid, results, actual_scales))
 }
 
 #[cfg(not(feature = "fastnlo"))]
@@ -75,21 +107,22 @@ fn convert_fastnlo(
     _: &str,
     _: usize,
     _: i32,
-) -> Result<(&'static str, Grid, Vec<f64>)> {
+    _: usize,
+) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fastnlo`"
     ))
 }
 
 #[cfg(feature = "fktable")]
-fn convert_fktable(input: &Path, dis_pid: i32) -> Result<(&'static str, Grid, Vec<f64>)> {
+fn convert_fktable(input: &Path, dis_pid: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     let fktable = fktable::convert_fktable(input, dis_pid)?;
 
-    Ok(("fktable", fktable, vec![]))
+    Ok(("fktable", fktable, vec![], 1))
 }
 
 #[cfg(not(feature = "fktable"))]
-fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>)> {
+fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -122,7 +155,8 @@ fn convert_grid(
     member: usize,
     dis_pid: i32,
     silence_libraries: bool,
-) -> Result<(&'static str, Grid, Vec<f64>)> {
+    scales: usize,
+) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     let (stdout, stderr) = if silence_libraries {
         (silence_fd(STDOUT_FILENO), silence_fd(STDERR_FILENO))
     } else {
@@ -144,11 +178,11 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(input, alpha, pdfset, member, dis_pid);
+            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, scales);
         } else if extension == "dat" {
             return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, pdfset, member, dis_pid);
+            return convert_applgrid(input, alpha, pdfset, member, dis_pid, scales);
         }
     }
 
@@ -173,6 +207,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[clap(default_value = "1e-10", long)]
     accuracy: f64,
+    /// Set the number of scale variations to compare with if they are available.
+    #[clap(default_value = "7", long, possible_values = ["1", "3", "7", "9"], short)]
+    scales: usize,
     /// Prevents third-party libraries from printing output.
     #[clap(alias = "silence-fastnlo", long = "silence-libraries")]
     silence_libraries: bool,
@@ -192,16 +229,17 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self) -> Result<u8> {
-        use prettytable::row;
+        use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
-        let (grid_type, mut grid, reference_results) = convert_grid(
+        let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
             &self.input,
             self.alpha,
             &self.pdfset,
             0,
             self.dis_pid,
             self.silence_libraries,
+            self.scales,
         )?;
 
         if !self.no_optimize {
@@ -220,7 +258,7 @@ impl Subcommand for Opts {
                 &[],
                 &[],
                 &[],
-                1,
+                scale_variations,
                 ConvoluteMode::Normal,
                 false,
             );
@@ -229,26 +267,48 @@ impl Subcommand for Opts {
             assert_eq!(results.len(), reference_results.len());
 
             let mut table = helpers::create_table();
-            table.set_titles(row![c => "b", "PineAPPL", grid_type, "rel. diff"]);
+            let mut titles = row![c => "b", "PineAPPL", grid_type, "rel. diff"];
+
+            if scale_variations > 1 {
+                titles.add_cell(cell!(c -> "svmaxreldiff"));
+            }
+
+            table.set_titles(titles);
 
             for (bin, (one, two)) in results
-                .into_iter()
-                .zip(reference_results.into_iter())
+                .chunks_exact(scale_variations)
+                .zip(reference_results.chunks_exact(scale_variations))
                 .enumerate()
             {
                 // catches the case where both results are zero
-                let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
+                let rel_diffs: Vec<_> = one
+                    .iter()
+                    .zip(two.iter())
+                    .map(|(a, b)| if a == b { 0.0 } else { b / a - 1.0 })
+                    .collect();
 
-                if rel_diff.abs() > self.accuracy {
+                let max_rel_diff = rel_diffs
+                    .iter()
+                    .max_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap())
+                    .unwrap()
+                    .abs();
+
+                if max_rel_diff > self.accuracy {
                     different = true;
                 }
 
-                table.add_row(row![
+                let mut row = row![
                     bin.to_string(),
-                    r->format!("{:.*e}", self.digits_abs, one),
-                    r->format!("{:.*e}", self.digits_abs, two),
-                    r->format!("{:.*e}", self.digits_rel, rel_diff)
-                ]);
+                    r->format!("{:.*e}", self.digits_abs, one[0]),
+                    r->format!("{:.*e}", self.digits_abs, two[0]),
+                    r->format!("{:.*e}", self.digits_rel, rel_diffs[0])
+                ];
+
+                if scale_variations > 1 {
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, max_rel_diff)));
+                }
+
+                table.add_row(row);
             }
 
             table.printstd();

@@ -97,8 +97,11 @@ pub mod ffi {
 
         type fastNLOReader;
 
+        fn CalcCrossSection(self: Pin<&mut fastNLOReader>);
+        unsafe fn GetIsFlexibleScaleTable(&self, _: *mut fastNLOCoeffAddBase) -> bool;
         fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
         fn GetMuFFunctionalForm(&self) -> EScaleFunctionalForm;
+        fn SetScaleFactorsMuRMuF(self: Pin<&mut Self>, _: f64, _: f64) -> bool;
     }
 
     unsafe extern "C++" {
