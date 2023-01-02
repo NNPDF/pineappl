@@ -8,10 +8,12 @@ crates=(
     # this must always be the first item because all other crates depend on it
     pineappl
 
+    # the CLI depends on the following two
     pineappl_applgrid
+    pineappl_fastnlo
+
     pineappl_capi
     pineappl_cli
-    pineappl_fastnlo
     pineappl_py
 )
 
