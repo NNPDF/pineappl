@@ -356,6 +356,7 @@ impl MoreMembers {
 
 /// Information required to calculate the evolution kernel operators (EKO) to perform a conversion
 /// of a [`Grid`] using [`Grid::convolute_eko`] to an [`FkTable`].
+#[deprecated(since = "0.6.0", note = "use EvolveInfo instead")]
 pub struct GridAxes {
     /// Interpolation grid in x of the `Grid`.
     pub x_grid: Vec<f64>,
@@ -369,6 +370,7 @@ pub struct GridAxes {
 
 /// Extra information required to perform the conversion of a [`Grid`] to an [`FkTable`] using
 /// [`Grid::convolute_eko`].
+#[deprecated(since = "0.6.0", note = "use OperatorInfo instead")]
 pub struct EkoInfo {
     /// Scale of the FkTable.
     pub muf2_0: f64,
@@ -384,6 +386,7 @@ pub struct EkoInfo {
     /// Parton IDs for the `FkTable`.
     pub target_pids: Vec<i32>,
     /// axes shared with the process grid
+    #[allow(deprecated)]
     pub grid_axes: GridAxes,
     /// TODO: replace this member with the actual data
     pub lumi_id_types: String,
@@ -1304,6 +1307,8 @@ impl Grid {
     ///
     /// TODO
     #[must_use]
+    #[deprecated(since = "0.6.0", note = "use evolve_info instead")]
+    #[allow(deprecated)]
     pub fn axes(&self) -> Option<GridAxes> {
         // are the initial states hadrons?
         let has_pdf1 = self.has_pdf1();
@@ -1385,6 +1390,8 @@ impl Grid {
     ///
     /// Panics if the parameters do not match with the given grid.
     #[must_use]
+    #[deprecated(since = "0.6.0", note = "use evolve instead")]
+    #[allow(deprecated)]
     pub fn convolute_eko(
         &self,
         operator: Array5<f64>,
@@ -2482,6 +2489,7 @@ mod tests {
 
     // TODO: properly test axes returned
 
+    #[allow(deprecated)]
     fn simple_grid() -> (Grid, GridAxes) {
         let mur2_grid = vec![20.];
         let muf2_grid = vec![20.];
@@ -2531,6 +2539,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn grid_axes() {
         let (grid, axes) = simple_grid();
 
@@ -2542,6 +2551,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn grid_convolute_eko() {
         let (grid, axes) = simple_grid();
         let target_x_grid = vec![1e-7, 1e-2, 1.];
