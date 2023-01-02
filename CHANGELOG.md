@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new method `Grid::evolve_info` which extracts the information need to
   generate EKOs. This function is less restrictive than `Grid::axes`, which it
   will replace
+- `pineappl import` now converts also scale-variation log-grids from
+  flexible-scale fastNLO tables
 
 ### Fixed
 
