@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_fastnlo"
-version = "0.2.0"
+version = "0.5.9"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2021"
 license = "GPL-3.0-or-later"

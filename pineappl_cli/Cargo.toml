@@ -1,6 +1,6 @@
 [package]
 name = "pineappl_cli"
-version = "0.5.8"
+version = "0.5.9"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -25,9 +25,9 @@ lz4_flex = { optional = true, version = "0.9.2" }
 ndarray = "0.15.4"
 ndarray-npy = { optional = true, version = "0.8.1" }
 num_cpus = "1.13.0"
-pineappl = { path = "../pineappl", version = "0.5.8" }
-pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "0.2.0" }
-pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.2.0" }
+pineappl = { path = "../pineappl", version = "0.5.9" }
+pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "0.5.9" }
+pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.5.9" }
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.10.0" }
 rayon = "1.5.1"
 scopeguard = "1.1.0"
