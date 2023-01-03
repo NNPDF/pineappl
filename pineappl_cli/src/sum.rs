@@ -22,9 +22,9 @@ pub struct Opts {
     #[clap(
         long,
         group = "mode",
-        parse(try_from_str = helpers::try_parse_integer_range),
         short,
         use_value_delimiter = true,
+        value_parser = helpers::parse_integer_range
     )]
     bins: Option<RangeInclusive<usize>>,
 }

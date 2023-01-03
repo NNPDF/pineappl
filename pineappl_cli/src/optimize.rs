@@ -27,7 +27,7 @@ pub struct Opts {
             "Nf3Ind",
             "Nf3Sym",
         ],
-        value_name = "ASSUMPTIONS",
+        value_name = "ASSUMPTIONS"
     )]
     fk_table: Option<FkAssumptions>,
 }

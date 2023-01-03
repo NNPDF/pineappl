@@ -319,7 +319,7 @@ pub fn validate_pos_non_zero<T: Default + FromStr + PartialOrd>(
     ))
 }
 
-pub fn try_parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
+pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     if let Some(at) = range.find('-') {
         let (left, right) = range.split_at(at);
         let left = str::parse::<usize>(left).context(format!(

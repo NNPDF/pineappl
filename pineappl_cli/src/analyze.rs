@@ -40,13 +40,13 @@ pub struct CkfOpts {
     #[clap(validator = helpers::validate_pdfset)]
     pdfset: String,
     /// Order defining the K factors.
-    #[clap(parse(try_from_str = helpers::parse_order))]
+    #[clap(value_parser = helpers::parse_order)]
     order: (u32, u32),
     /// Normalizing orders of the K factors.
     #[clap(
-        parse(try_from_str = helpers::parse_order),
         require_value_delimiter = true,
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     orders_den: Vec<(u32, u32)>,
     /// The maximum number of channels displayed.

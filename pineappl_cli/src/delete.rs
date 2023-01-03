@@ -18,8 +18,8 @@ pub struct Opts {
         group = "mode",
         long,
         multiple_values = true,
-        parse(try_from_str = helpers::try_parse_integer_range),
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_integer_range
     )]
     /// Indices of bins that should be deleted.
     bins: Vec<RangeInclusive<usize>>,

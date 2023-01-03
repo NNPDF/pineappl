@@ -30,16 +30,16 @@ pub struct Opts {
     #[clap(
         long,
         multiple_values = true,
-        parse(try_from_str = helpers::parse_order),
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     orders1: Vec<(u32, u32)>,
     /// Select orders of the second grid.
     #[clap(
         long,
         multiple_values = true,
-        parse(try_from_str = helpers::parse_order),
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     orders2: Vec<(u32, u32)>,
     /// Scale all results of the first grid.

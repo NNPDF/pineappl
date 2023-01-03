@@ -24,9 +24,9 @@ pub struct Opts {
         conflicts_with = "absolute",
         long,
         min_values = 1,
-        parse(try_from_str = helpers::parse_order),
         short,
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     normalize: Vec<(u32, u32)>,
     /// Set the number of fractional digits shown for absolute numbers.

@@ -33,8 +33,8 @@ pub struct Opts {
         conflicts_with = "limit",
         long,
         multiple_values = true,
-        parse(try_from_str = helpers::try_parse_integer_range),
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_integer_range
     )]
     lumis: Vec<RangeInclusive<usize>>,
     /// Select orders manually.
@@ -42,8 +42,8 @@ pub struct Opts {
         long,
         multiple_values = true,
         short,
-        parse(try_from_str = helpers::parse_order),
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
     /// Set the number of fractional digits shown for absolute numbers.

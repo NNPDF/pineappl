@@ -139,9 +139,9 @@ pub struct Opts {
     #[clap(
         long,
         multiple_values = true,
-        parse(try_from_str = helpers::parse_order),
         short,
-        use_value_delimiter = true
+        use_value_delimiter = true,
+        value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
     /// Rescale the renormalization scale with this factor.
