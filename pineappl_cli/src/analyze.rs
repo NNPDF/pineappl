@@ -37,7 +37,7 @@ pub struct CkfOpts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Order defining the K factors.
     #[clap(value_parser = helpers::parse_order)]
@@ -54,7 +54,7 @@ pub struct CkfOpts {
         default_value = "10",
         long,
         short,
-        validator = helpers::validate_pos_non_zero::<usize>
+        value_parser = helpers::parse_pos_non_zero::<usize>
     )]
     limit: usize,
     /// Set the number of fractional digits shown for relative numbers.

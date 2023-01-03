@@ -1,5 +1,6 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
+use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
@@ -16,10 +17,15 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[clap(required = true, validator = helpers::validate_pdfset)]
+    #[clap(required = true, value_parser = helpers::parse_pdfset)]
     pdfsets: Vec<String>,
     /// Set the number of scale variations.
-    #[clap(default_value = "7", long, possible_values = &["1", "3", "7", "9"], short)]
+    #[clap(
+        default_value = "7",
+        long,
+        short,
+        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).map(|s| s.parse::<usize>().unwrap()) // TODO: remove unwrap and use try_map with clap-v4
+    )]
     scales: usize,
     /// Show the pull for a specific grid three-dimensionally.
     #[clap(

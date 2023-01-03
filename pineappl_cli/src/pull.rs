@@ -14,10 +14,10 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the first PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset1: String,
     /// LHAPDF id or name of the second PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset2: String,
     /// Confidence level in per cent.
     #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]
@@ -27,7 +27,7 @@ pub struct Opts {
         default_value = "10",
         long,
         short,
-        validator = helpers::validate_pos_non_zero::<usize>
+        value_parser = helpers::parse_pos_non_zero::<usize>
     )]
     limit: usize,
     /// Number of threads to utilize.

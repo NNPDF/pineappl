@@ -11,7 +11,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Show absolute numbers of each perturbative order.
     #[clap(long, short)]

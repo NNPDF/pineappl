@@ -29,7 +29,7 @@ pub struct Opts {
     #[clap(
         default_value = "1.0",
         long,
-        validator = helpers::validate_pos_non_zero::<f64>
+        value_parser = helpers::parse_pos_non_zero::<f64>
     )]
     norm: f64,
 }

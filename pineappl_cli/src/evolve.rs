@@ -124,7 +124,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[clap(default_value = "1e-3", long)]

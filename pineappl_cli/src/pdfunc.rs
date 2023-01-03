@@ -13,7 +13,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Confidence level in per cent.
     #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]

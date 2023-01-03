@@ -1,6 +1,6 @@
 use super::helpers::{self, Subcommand};
 use anyhow::Result;
-use clap::{Parser, ValueHint};
+use clap::{ArgAction, Parser, ValueHint};
 use std::fs;
 use std::path::PathBuf;
 
@@ -14,22 +14,22 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Deletes an internal key-value pair.
-    #[clap(long, multiple_occurrences = true, value_name = "KEY")]
+    #[clap(action = ArgAction::Append, long, value_name = "KEY")]
     delete: Vec<String>,
     /// Sets an internal key-value pair.
     #[clap(
+        action = ArgAction::Append,
         allow_hyphen_values = true,
         long,
-        multiple_occurrences = true,
         number_of_values = 2,
         value_names = &["KEY", "VALUE"]
     )]
     entry: Vec<String>,
     /// Sets an internal key-value pair, with value being read from a file.
     #[clap(
+        action = ArgAction::Append,
         alias = "entry_from_file",
         long = "entry-from-file",
-        multiple_occurrences = true,
         number_of_values = 2,
         value_names = &["KEY", "FILE"]
     )]

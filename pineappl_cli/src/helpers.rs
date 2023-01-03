@@ -281,36 +281,36 @@ pub fn convolute_subgrid(
     grid.convolute_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
 }
 
-pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
-    let argument = argument.rsplit_once('=').map_or(argument, |(name, _)| name);
+pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
+    let lhapdf_name = argument.rsplit_once('=').map_or(argument, |(name, _)| name);
 
-    if let Ok(lhaid) = argument.parse() {
+    if let Ok(lhaid) = lhapdf_name.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
-            return Ok(());
+            return Ok(argument.to_string());
         }
 
         return Err(format!(
-            "The PDF set for the LHAPDF ID `{argument}` was not found"
+            "The PDF set for the LHAPDF ID `{lhapdf_name}` was not found"
         ));
     } else if lhapdf::available_pdf_sets().iter().any(|set| {
         // there's no function in LHAPDF to validate the 'setname/member' syntax; there is a
         // function that returns the LHAPDF ID, but that ID might not exist
-        *set == argument
+        *set == lhapdf_name
             .split_once('/')
-            .map_or(argument, |(setname, _)| setname)
+            .map_or(lhapdf_name, |(setname, _)| setname)
     }) {
-        return Ok(());
+        return Ok(argument.to_string());
     }
 
-    Err(format!("The PDF set `{argument}` was not found"))
+    Err(format!("The PDF set `{lhapdf_name}` was not found"))
 }
 
-pub fn validate_pos_non_zero<T: Default + FromStr + PartialOrd>(
+pub fn parse_pos_non_zero<T: Default + FromStr + PartialOrd>(
     argument: &str,
-) -> std::result::Result<(), String> {
+) -> std::result::Result<T, String> {
     if let Ok(number) = argument.parse::<T>() {
         if number > T::default() {
-            return Ok(());
+            return Ok(number);
         }
     }
 

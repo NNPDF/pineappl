@@ -1,5 +1,6 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::Result;
+use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
@@ -12,7 +13,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[clap(required = true, validator = helpers::validate_pdfset)]
+    #[clap(required = true, value_parser = helpers::parse_pdfset)]
     pdfsets: Vec<String>,
     /// Show absolute numbers of the scale variation.
     #[clap(long, short)]
@@ -39,7 +40,12 @@ pub struct Opts {
     )]
     orders: Vec<(u32, u32)>,
     /// Set the number of scale variations.
-    #[clap(default_value = "7", long, possible_values = ["1", "3", "7", "9"], short)]
+    #[clap(
+        default_value = "7",
+        long,
+        short,
+        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).map(|s| s.parse::<usize>().unwrap()) // TODO: remove unwrap and use try_map with clap-v4
+    )]
     scales: usize,
     /// Set the number of fractional digits shown for absolute numbers.
     #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]

@@ -15,7 +15,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input2: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Ignore differences in the orders and sum them.
     #[clap(alias = "ignore_orders", long = "ignore-orders")]

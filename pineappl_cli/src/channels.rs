@@ -12,7 +12,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Show absolute numbers of each contribution.
     #[clap(long, short)]
@@ -22,7 +22,7 @@ pub struct Opts {
         default_value = "10",
         long,
         short,
-        validator = helpers::validate_pos_non_zero::<usize>
+        value_parser = helpers::parse_pos_non_zero::<usize>
     )]
     limit: usize,
     /// Show integrated numbers (without bin widths) instead of differential ones.

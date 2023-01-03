@@ -1,5 +1,6 @@
 use super::helpers::{self, ConvoluteMode, Subcommand};
 use anyhow::{anyhow, Result};
+use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use libc::{c_int, O_WRONLY, STDERR_FILENO, STDOUT_FILENO};
 use pineappl::grid::Grid;
@@ -199,7 +200,7 @@ pub struct Opts {
     #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[clap(validator = helpers::validate_pdfset)]
+    #[clap(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// LO coupling power in alpha.
     #[clap(default_value_t = 0, long)]
@@ -208,7 +209,12 @@ pub struct Opts {
     #[clap(default_value = "1e-10", long)]
     accuracy: f64,
     /// Set the number of scale variations to compare with if they are available.
-    #[clap(default_value = "7", long, possible_values = ["1", "3", "7", "9"], short)]
+    #[clap(
+        default_value = "7",
+        long,
+        short,
+        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).map(|s| s.parse::<usize>().unwrap()) // TODO: remove unwrap and use try_map with clap-v4
+    )]
     scales: usize,
     /// Prevents third-party libraries from printing output.
     #[clap(alias = "silence-fastnlo", long = "silence-libraries")]
