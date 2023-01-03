@@ -1138,10 +1138,8 @@ impl Grid {
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
                             *lhs = rhs.clone_empty();
-                            lhs.merge(rhs, false);
-                        } else {
-                            lhs.merge(rhs, false);
                         }
+                        lhs.merge(rhs, false);
 
                         *rhs = EmptySubgridV1::default().into();
                     }

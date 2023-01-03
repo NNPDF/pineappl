@@ -259,11 +259,11 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let (_, ny, nz) = array.dim();
         let array = if ny > nz {
-            let mut array = array.clone();
+            let mut array = array;
             array.swap_axes(1, 2);
             array
         } else {
-            array.clone()
+            array
         };
 
         let dimensions = (xsize, ny, nz);
