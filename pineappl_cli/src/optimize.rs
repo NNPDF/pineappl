@@ -9,10 +9,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the optimized PineAPPL file.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     #[clap(
         long = "fk-table",

@@ -10,10 +10,10 @@ use std::path::PathBuf;
 #[clap(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the modified PineAPPL file.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Sums all bins into a single bin.
     #[clap(long, group = "mode")]

@@ -7,10 +7,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path of the merged PineAPPL file.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Path(s) of the files that should be merged.
-    #[clap(required = true, parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(required = true, value_parser, value_hint = ValueHint::FilePath)]
     input: Vec<PathBuf>,
     /// Scales all grids with the given factor.
     #[clap(long, short)]

@@ -8,10 +8,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path of the modified PineAPPL file.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Deletes an internal key-value pair.
     #[clap(long, multiple_occurrences = true, value_name = "KEY")]

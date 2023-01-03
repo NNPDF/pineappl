@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
     #[clap(required = true, validator = helpers::validate_pdfset)]

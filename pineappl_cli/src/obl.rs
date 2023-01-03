@@ -12,7 +12,7 @@ use std::path::PathBuf;
 #[clap(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Show the orders of a grid, stripping zero powers.
     #[clap(group = "mode", long, short)]

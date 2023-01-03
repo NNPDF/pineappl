@@ -10,10 +10,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path of the modified PineAPPL file.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full
     /// reference.

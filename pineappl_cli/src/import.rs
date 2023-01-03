@@ -193,10 +193,10 @@ fn convert_grid(
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the converted grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF id or name of the PDF set to check the converted grid with.
     #[clap(validator = helpers::validate_pdfset)]

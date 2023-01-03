@@ -34,7 +34,7 @@ impl Subcommand for SubcommandEnum {
 #[derive(Parser)]
 pub struct CkfOpts {
     /// Path to the input grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
@@ -46,7 +46,7 @@ pub struct CkfOpts {
     #[clap(
         parse(try_from_str = helpers::parse_order),
         require_value_delimiter = true,
-        use_value_delimiter = true,
+        use_value_delimiter = true
     )]
     orders_den: Vec<(u32, u32)>,
     /// The maximum number of channels displayed.

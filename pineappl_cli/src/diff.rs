@@ -9,10 +9,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the first grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input1: PathBuf,
     /// Path to the second grid.
-    #[clap(parse(from_os_str), value_hint = ValueHint::FilePath)]
+    #[clap(value_parser, value_hint = ValueHint::FilePath)]
     input2: PathBuf,
     /// LHAPDF id or name of the PDF set.
     #[clap(validator = helpers::validate_pdfset)]
