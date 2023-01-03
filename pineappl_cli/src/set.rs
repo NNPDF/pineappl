@@ -8,29 +8,29 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path of the modified PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Deletes an internal key-value pair.
-    #[clap(action = ArgAction::Append, long, value_name = "KEY")]
+    #[arg(action = ArgAction::Append, long, value_name = "KEY")]
     delete: Vec<String>,
     /// Sets an internal key-value pair.
-    #[clap(
+    #[arg(
         action = ArgAction::Append,
         allow_hyphen_values = true,
         long,
-        number_of_values = 2,
+        num_args(2),
         value_names = &["KEY", "VALUE"]
     )]
     entry: Vec<String>,
     /// Sets an internal key-value pair, with value being read from a file.
-    #[clap(
+    #[arg(
         action = ArgAction::Append,
         alias = "entry_from_file",
         long = "entry-from-file",
-        number_of_values = 2,
+        num_args(2),
         value_names = &["KEY", "FILE"]
     )]
     entry_from_file: Vec<String>,

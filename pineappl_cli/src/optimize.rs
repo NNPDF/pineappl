@@ -6,7 +6,7 @@ use std::convert::TryFrom;
 use std::path::PathBuf;
 
 #[derive(Clone, Copy, ValueEnum)]
-#[clap(rename_all = "PascalCase")]
+#[value(rename_all = "PascalCase")]
 enum FkAssum {
     Nf6Ind,
     Nf6Sym,
@@ -37,12 +37,12 @@ impl From<FkAssum> for FkAssumptions {
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the optimized PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    #[clap(long = "fk-table", value_enum, value_name = "ASSUMPTIONS")]
+    #[arg(long = "fk-table", value_enum, value_name = "ASSUMPTIONS")]
     fk_table: Option<FkAssum>,
 }
 

@@ -1,26 +1,24 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-subgrids 
-Print information about the internal subgrid types
+const HELP_STR: &str = "Print information about the internal subgrid types
 
-USAGE:
-    pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x1|--x2|--stats> <INPUT>
+Usage: pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x1|--x2|--stats> <INPUT>
 
-ARGS:
-    <INPUT>    Path to the input grid
+Arguments:
+  <INPUT>  Path to the input grid
 
-OPTIONS:
-        --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
-    -h, --help               Print help information
-        --muf                Show the factorization grid values
-        --muf2               Show the squared factorization grid values
-        --mur                Show the renormalization grid values
-        --mur2               Show the squared renormalization grid values
-        --show-empty         Show empty subgrids
-        --stats              Show grid statistics (figures are the number of entries)
-        --type               Show the subgrid type
-        --x1                 Show the x1 grid values
-        --x2                 Show the x2 grid values
+Options:
+      --show-empty       Show empty subgrids
+      --type             Show the subgrid type
+      --mur              Show the renormalization grid values
+      --mur2             Show the squared renormalization grid values
+      --muf              Show the factorization grid values
+      --muf2             Show the squared factorization grid values
+      --x1               Show the x1 grid values
+      --x2               Show the x2 grid values
+      --stats            Show grid statistics (figures are the number of entries)
+      --digits <DIGITS>  Set the number of digits shown for numerical values [default: 3]
+  -h, --help             Print help information
 ";
 
 const MUF_STR: &str = "o b l  muf

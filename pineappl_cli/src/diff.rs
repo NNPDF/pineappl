@@ -9,53 +9,53 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the first grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input1: PathBuf,
     /// Path to the second grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input2: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Ignore differences in the orders and sum them.
-    #[clap(alias = "ignore_orders", long = "ignore-orders")]
+    #[arg(alias = "ignore_orders", long = "ignore-orders")]
     ignore_orders: bool,
     /// Ignore bin limits (but not number of bins).
-    #[clap(long = "ignore-bin-limits")]
+    #[arg(long = "ignore-bin-limits")]
     ignore_bin_limits: bool,
     /// Ignore differences in the luminosity functions.
-    #[clap(long = "ignore-lumis")]
+    #[arg(long = "ignore-lumis")]
     ignore_lumis: bool,
     /// Select orders of the first grid.
-    #[clap(
+    #[arg(
         long,
-        multiple_values = true,
-        use_value_delimiter = true,
+        num_args(1..),
+        value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
     orders1: Vec<(u32, u32)>,
     /// Select orders of the second grid.
-    #[clap(
+    #[arg(
         long,
-        multiple_values = true,
-        use_value_delimiter = true,
+        num_args(1..),
+        value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
     orders2: Vec<(u32, u32)>,
     /// Scale all results of the first grid.
-    #[clap(long, default_value = "1.0")]
+    #[arg(long, default_value = "1.0")]
     scale1: f64,
     /// Scale all results of the second grid.
-    #[clap(long, default_value = "1.0")]
+    #[arg(long, default_value = "1.0")]
     scale2: f64,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[clap(default_value_t = 3, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 3, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
     /// Forces negative PDF values to zero.
-    #[clap(long = "force-positive")]
+    #[arg(long = "force-positive")]
     force_positive: bool,
 }
 

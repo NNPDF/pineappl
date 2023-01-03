@@ -1,27 +1,22 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-remap 
-Modifies the bin dimensions, widths and normalizations
+const HELP_STR: &str = "Modifies the bin dimensions, widths and normalizations
 
-USAGE:
-    pineappl remap [OPTIONS] <INPUT> <OUTPUT> <REMAPPING>
+Usage: pineappl remap [OPTIONS] <INPUT> <OUTPUT> <REMAPPING>
 
-ARGS:
-    <INPUT>        Path to the input grid
-    <OUTPUT>       Path of the modified PineAPPL file
-    <REMAPPING>    Remapping string. See
-                   <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full reference
+Arguments:
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path of the modified PineAPPL file
+  <REMAPPING>  Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full reference
 
-OPTIONS:
-    -h, --help
-            Print help information
-
-        --ignore-obs-norm <IGNORE_OBS_NORM>
-            Ignore the given observables for differential normalization
-
-        --norm <NORM>
-            Normalization factor in addition to the given bin widths [default: 1.0]
+Options:
+      --ignore-obs-norm <IGNORE_OBS_NORM>
+          Ignore the given observables for differential normalization
+      --norm <NORM>
+          Normalization factor in addition to the given bin widths [default: 1.0]
+  -h, --help
+          Print help information
 ";
 
 const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
@@ -38,9 +33,9 @@ const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
 ";
 
 const WRONG_NORM_STR: &str =
-    "error: Invalid value \"-1\" for '--norm <NORM>': The value `-1` is not positive or non-zero
+    "error: Invalid value '-1' for '--norm <NORM>': The value `-1` is not positive or non-zero
 
-For more information try --help
+For more information try '--help'
 ";
 
 #[test]

@@ -1,36 +1,31 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-analyze 
-Perform various analyses with grids
+const HELP_STR: &str = "Perform various analyses with grids
 
-USAGE:
-    pineappl analyze <SUBCOMMAND>
+Usage: pineappl analyze <COMMAND>
 
-OPTIONS:
-    -h, --help    Print help information
+Commands:
+  ckf  Compare K-factors with channel K factors (ckf)
 
-SUBCOMMANDS:
-    ckf    Compare K-factors with channel K factors (ckf)
+Options:
+  -h, --help  Print help information
 ";
 
-const CKF_HELP_STR: &str = "pineappl-analyze-ckf 
-Compare K-factors with channel K factors (ckf)
+const CKF_HELP_STR: &str = "Compare K-factors with channel K factors (ckf)
 
-USAGE:
-    pineappl analyze ckf [OPTIONS] <INPUT> <PDFSET> <ORDER> [ORDERS_DEN]...
+Usage: pineappl analyze ckf [OPTIONS] <INPUT> <PDFSET> <ORDER> [ORDERS_DEN]...
 
-ARGS:
-    <INPUT>            Path to the input grid
-    <PDFSET>           LHAPDF id or name of the PDF set
-    <ORDER>            Order defining the K factors
-    <ORDERS_DEN>...    Normalizing orders of the K factors
+Arguments:
+  <INPUT>          Path to the input grid
+  <PDFSET>         LHAPDF id or name of the PDF set
+  <ORDER>          Order defining the K factors
+  [ORDERS_DEN]...  Normalizing orders of the K factors
 
-OPTIONS:
-        --digits-rel <REL>    Set the number of fractional digits shown for relative numbers
-                              [default: 2]
-        --force-positive      Forces negative PDF values to zero
-    -h, --help                Print help information
-    -l, --limit <LIMIT>       The maximum number of channels displayed [default: 10]
+Options:
+  -l, --limit <LIMIT>     The maximum number of channels displayed [default: 10]
+      --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
+      --force-positive    Forces negative PDF values to zero
+  -h, --help              Print help information
 ";
 
 const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K  

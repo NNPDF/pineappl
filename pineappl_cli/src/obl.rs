@@ -9,28 +9,28 @@ use std::path::PathBuf;
 
 /// Shows information about orders (o), bins (b), or luminosities (l) of a grid.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").required(true))]
+#[command(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Show the orders of a grid, stripping zero powers.
-    #[clap(group = "mode", long, short)]
+    #[arg(group = "mode", long, short)]
     orders: bool,
     /// Show the orders of a grid, replacing zero powers with spaces.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     orders_spaces: bool,
     /// Show the orders of a grid, including zero powers.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     orders_long: bool,
     /// Show the bins of a grid.
-    #[clap(group = "mode", long, short)]
+    #[arg(group = "mode", long, short)]
     bins: bool,
     /// Show the luminsities a grid.
-    #[clap(group = "mode", long, short)]
+    #[arg(group = "mode", long, short)]
     lumis: bool,
     /// Check if input is an FK table.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     fktable: bool,
 }
 

@@ -1,25 +1,18 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-merge 
-Merges one or more PineAPPL grids together
+const HELP_STR: &str = "Merges one or more PineAPPL grids together
 
-USAGE:
-    pineappl merge [OPTIONS] <OUTPUT> <INPUT>...
+Usage: pineappl merge [OPTIONS] <OUTPUT> <INPUT>...
 
-ARGS:
-    <OUTPUT>      Path of the merged PineAPPL file
-    <INPUT>...    Path(s) of the files that should be merged
+Arguments:
+  <OUTPUT>    Path of the merged PineAPPL file
+  <INPUT>...  Path(s) of the files that should be merged
 
-OPTIONS:
-    -h, --help
-            Print help information
-
-    -s, --scale <SCALE>
-            Scales all grids with the given factor
-
-        --scale-by-order <ALPHAS> <ALPHA> <LOGXIR> <LOGXIF> <GLOBAL>
-            Scales all grids with order-dependent factors
+Options:
+  -s, --scale <SCALE>                    Scales all grids with the given factor
+      --scale-by-order <SCALE_BY_ORDER>  Scales all grids with order-dependent factors
+  -h, --help                             Print help information
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

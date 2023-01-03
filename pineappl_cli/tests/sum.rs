@@ -1,20 +1,18 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-sum 
-Sums two or more bins of a grid together
+const HELP_STR: &str = "Sums two or more bins of a grid together
 
-USAGE:
-    pineappl sum <--integrated|--bins <BINS>> <INPUT> <OUTPUT>
+Usage: pineappl sum <--integrated|--bins <BINS>> <INPUT> <OUTPUT>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <OUTPUT>    Path to the modified PineAPPL file
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path to the modified PineAPPL file
 
-OPTIONS:
-    -b, --bins <BINS>    Merge specific bins together
-    -h, --help           Print help information
-        --integrated     Sums all bins into a single bin
+Options:
+      --integrated   Sums all bins into a single bin
+  -b, --bins <BINS>  Merge specific bins together
+  -h, --help         Print help information
 ";
 
 const BINS_STR: &str = "b   etal    disg/detal  scale uncertainty

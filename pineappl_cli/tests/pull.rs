@@ -1,23 +1,22 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-pull 
-Calculates the pull between two different PDF sets
+const HELP_STR: &str = "Calculates the pull between two different PDF sets
 
-USAGE:
-    pineappl pull [OPTIONS] <INPUT> <PDFSET1> <PDFSET2>
+Usage: pineappl pull [OPTIONS] <INPUT> <PDFSET1> <PDFSET2>
 
-ARGS:
-    <INPUT>      Path to the input grid
-    <PDFSET1>    LHAPDF id or name of the first PDF set
-    <PDFSET2>    LHAPDF id or name of the second PDF set
+Arguments:
+  <INPUT>    Path to the input grid
+  <PDFSET1>  LHAPDF id or name of the first PDF set
+  <PDFSET2>  LHAPDF id or name of the second PDF set
 
-OPTIONS:
-        --cl <CL>              Confidence level in per cent [default: 68.26894921370858]
-        --digits <DIGITS>      Set the number of digits shown for numerical values [default: 3]
-        --force-positive       Forces negative PDF values to zero
-    -h, --help                 Print help information
-    -l, --limit <LIMIT>        The maximum number of luminosities displayed [default: 10]
-        --threads <THREADS>    Number of threads to utilize";
+Options:
+      --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
+  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
+      --threads <THREADS>  Number of threads to utilize [default: {}]
+      --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
+      --force-positive     Forces negative PDF values to zero
+  -h, --help               Print help information
+";
 
 const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
@@ -78,7 +77,7 @@ fn help() {
         .args(&["pull", "--help"])
         .assert()
         .success()
-        .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));
+        .stdout(HELP_STR.replace("{}", &num_cpus::get().to_string()));
 }
 
 #[test]

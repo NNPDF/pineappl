@@ -31,7 +31,7 @@ use helpers::Subcommand;
 use std::process;
 
 #[derive(Parser)]
-#[clap(
+#[command(
     arg_required_else_help = true,
     author,
     about,
@@ -46,7 +46,7 @@ use std::process;
 )]
 struct Opts {
     /// Prevents LHAPDF from printing banners.
-    #[clap(alias = "silence_lhapdf", long = "silence-lhapdf")]
+    #[arg(alias = "silence_lhapdf", long = "silence-lhapdf")]
     silence_lhapdf: bool,
     #[clap(subcommand)]
     subcommand: SubcommandEnum,

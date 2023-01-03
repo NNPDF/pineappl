@@ -115,40 +115,40 @@ fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: &[(u32, u32)], _: f64, _: f64) ->
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the evolution kernel operator.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     eko: PathBuf,
     /// Path to the converted grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Relative threshold between the table and the converted grid when comparison fails.
-    #[clap(default_value = "1e-3", long)]
+    #[arg(default_value = "1e-3", long)]
     accuracy: f64,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 7, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
     /// Select which orders to evolve.
-    #[clap(
+    #[arg(
         long,
-        multiple_values = true,
+        num_args(1..),
         short,
-        use_value_delimiter = true,
+        value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
     /// Rescale the renormalization scale with this factor.
-    #[clap(default_value_t = 1.0, long)]
+    #[arg(default_value_t = 1.0, long)]
     xir: f64,
     /// Rescale the factorization scale with this factor.
-    #[clap(default_value_t = 1.0, long)]
+    #[arg(default_value_t = 1.0, long)]
     xif: f64,
 }
 

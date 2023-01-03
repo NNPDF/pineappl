@@ -34,23 +34,19 @@ impl Subcommand for SubcommandEnum {
 #[derive(Parser)]
 pub struct CkfOpts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Order defining the K factors.
-    #[clap(value_parser = helpers::parse_order)]
+    #[arg(value_parser = helpers::parse_order)]
     order: (u32, u32),
     /// Normalizing orders of the K factors.
-    #[clap(
-        require_value_delimiter = true,
-        use_value_delimiter = true,
-        value_parser = helpers::parse_order
-    )]
+    #[arg(value_delimiter = ',', value_parser = helpers::parse_order)]
     orders_den: Vec<(u32, u32)>,
     /// The maximum number of channels displayed.
-    #[clap(
+    #[arg(
         default_value = "10",
         long,
         short,
@@ -58,10 +54,10 @@ pub struct CkfOpts {
     )]
     limit: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 2, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
     /// Forces negative PDF values to zero.
-    #[clap(long = "force-positive")]
+    #[arg(long = "force-positive")]
     force_positive: bool,
 }
 

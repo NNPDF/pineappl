@@ -14,36 +14,36 @@ use std::path::{Path, PathBuf};
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[clap(required = true, value_parser = helpers::parse_pdfset)]
+    #[arg(required = true, value_parser = helpers::parse_pdfset)]
     pdfsets: Vec<String>,
     /// Set the number of scale variations.
-    #[clap(
+    #[arg(
         default_value = "7",
         long,
         short,
-        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).map(|s| s.parse::<usize>().unwrap()) // TODO: remove unwrap and use try_map with clap-v4
+        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())
     )]
     scales: usize,
     /// Show the pull for a specific grid three-dimensionally.
-    #[clap(
+    #[arg(
         conflicts_with = "scales",
         long = "subgrid-pull",
-        number_of_values = 3,
-        use_value_delimiter = true,
-        value_names = &["ORDER", "BIN", "LUMI"]
+        value_delimiter = ','
+        // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
+        //value_names = &["ORDER", "BIN", "LUMI"],
     )]
     subgrid_pull: Vec<String>,
     /// Plot the asymmetry.
-    #[clap(conflicts_with = "subgrid-pull", long)]
+    #[arg(conflicts_with = "subgrid_pull", long)]
     asymmetry: bool,
     /// Number of threads to utilize.
-    #[clap(default_value_t = num_cpus::get(), long)]
+    #[arg(default_value_t = num_cpus::get(), long)]
     threads: usize,
     /// Forces negative PDF values to zero.
-    #[clap(long = "force-positive")]
+    #[arg(long = "force-positive")]
     force_positive: bool,
 }
 

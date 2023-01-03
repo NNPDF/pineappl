@@ -1,33 +1,21 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-plot 
-Creates a matplotlib script plotting the contents of the grid
+const HELP_STR: &str = "Creates a matplotlib script plotting the contents of the grid
 
-USAGE:
-    pineappl plot [OPTIONS] <INPUT> <PDFSETS>...
+Usage: pineappl plot [OPTIONS] <INPUT> <PDFSETS>...
 
-ARGS:
-    <INPUT>         Path to the input grid
-    <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
+Arguments:
+  <INPUT>       Path to the input grid
+  <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
 
-OPTIONS:
-        --asymmetry
-            Plot the asymmetry
-
-        --force-positive
-            Forces negative PDF values to zero
-
-    -h, --help
-            Print help information
-
-    -s, --scales <SCALES>
-            Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
-
-        --subgrid-pull <ORDER> <BIN> <LUMI>
-            Show the pull for a specific grid three-dimensionally
-
-        --threads <THREADS>
-            Number of threads to utilize";
+Options:
+  -s, --scales <SCALES>              Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
+      --subgrid-pull <SUBGRID_PULL>  Show the pull for a specific grid three-dimensionally
+      --asymmetry                    Plot the asymmetry
+      --threads <THREADS>            Number of threads to utilize [default: {}]
+      --force-positive               Forces negative PDF values to zero
+  -h, --help                         Print help information
+";
 
 const DEFAULT_STR: &str = r#"#!/usr/bin/env python3
 
@@ -476,7 +464,7 @@ fn help() {
         .args(&["plot", "--help"])
         .assert()
         .success()
-        .stdout(format!("{} [default: {}]\n", HELP_STR, num_cpus::get()));
+        .stdout(HELP_STR.replace("{}", &num_cpus::get().to_string()));
 }
 
 #[test]

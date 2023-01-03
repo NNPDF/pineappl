@@ -194,42 +194,42 @@ fn convert_grid(
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the converted grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// LO coupling power in alpha.
-    #[clap(default_value_t = 0, long)]
+    #[arg(default_value_t = 0, long)]
     alpha: u32,
     /// Relative threshold between the table and the converted grid when comparison fails.
-    #[clap(default_value = "1e-10", long)]
+    #[arg(default_value = "1e-10", long)]
     accuracy: f64,
     /// Set the number of scale variations to compare with if they are available.
-    #[clap(
+    #[arg(
         default_value = "7",
         long,
         short,
-        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).map(|s| s.parse::<usize>().unwrap()) // TODO: remove unwrap and use try_map with clap-v4
+        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())
     )]
     scales: usize,
     /// Prevents third-party libraries from printing output.
-    #[clap(alias = "silence-fastnlo", long = "silence-libraries")]
+    #[arg(alias = "silence-fastnlo", long = "silence-libraries")]
     silence_libraries: bool,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[clap(default_value_t = 7, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 7, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
     /// Do not optimize converted grid.
-    #[clap(long = "no-optimize")]
+    #[arg(long = "no-optimize")]
     no_optimize: bool,
     /// Particle ID for the non-hadronic initial states if it cannot be determined from the grid.
-    #[clap(long = "dis-pid", default_value_t = 11)]
+    #[arg(long = "dis-pid", default_value_t = 11)]
     dis_pid: i32,
 }
 

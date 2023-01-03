@@ -7,23 +7,23 @@ use std::path::PathBuf;
 
 /// Sums two or more bins of a grid together.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").required(true))]
+#[command(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the modified PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Sums all bins into a single bin.
-    #[clap(long, group = "mode")]
+    #[arg(long, group = "mode")]
     integrated: bool,
     /// Merge specific bins together.
-    #[clap(
+    #[arg(
         long,
         group = "mode",
         short,
-        use_value_delimiter = true,
+        value_delimiter = ',',
         value_parser = helpers::parse_integer_range
     )]
     bins: Option<RangeInclusive<usize>>,

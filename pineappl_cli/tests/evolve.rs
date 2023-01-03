@@ -3,29 +3,24 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-evolve 
-Evolve a grid with an evolution kernel operator to an FK table
+const HELP_STR: &str = "Evolve a grid with an evolution kernel operator to an FK table
 
-USAGE:
-    pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <PDFSET>
+Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <PDFSET>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <EKO>       Path to the evolution kernel operator
-    <OUTPUT>    Path to the converted grid
-    <PDFSET>    LHAPDF id or name of the PDF set to check the converted grid with
+Arguments:
+  <INPUT>   Path to the input grid
+  <EKO>     Path to the evolution kernel operator
+  <OUTPUT>  Path to the converted grid
+  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
 
-OPTIONS:
-        --accuracy <ACCURACY>    Relative threshold between the table and the converted grid when
-                                 comparison fails [default: 1e-3]
-        --digits-abs <ABS>       Set the number of fractional digits shown for absolute numbers
-                                 [default: 7]
-        --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
-                                 [default: 7]
-    -h, --help                   Print help information
-    -o, --orders <ORDERS>...     Select which orders to evolve
-        --xif <XIF>              Rescale the factorization scale with this factor [default: 1]
-        --xir <XIR>              Rescale the renormalization scale with this factor [default: 1]
+Options:
+      --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
+      --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
+  -o, --orders <ORDERS>...   Select which orders to evolve
+      --xir <XIR>            Rescale the renormalization scale with this factor [default: 1]
+      --xif <XIF>            Rescale the factorization scale with this factor [default: 1]
+  -h, --help                 Print help information
 ";
 
 const E906NLO_BIN_00_STR: &str = "b     Grid       FkTable      rel. diff

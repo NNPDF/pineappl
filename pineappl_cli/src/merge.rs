@@ -7,21 +7,22 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path of the merged PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Path(s) of the files that should be merged.
-    #[clap(required = true, value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(required = true, value_hint = ValueHint::FilePath)]
     input: Vec<PathBuf>,
     /// Scales all grids with the given factor.
-    #[clap(long, short)]
+    #[arg(long, short)]
     scale: Option<f64>,
     /// Scales all grids with order-dependent factors.
-    #[clap(
+    #[arg(
         alias = "scale_by_order",
         conflicts_with = "scale",
         long = "scale-by-order",
-        use_value_delimiter = true,
-        value_names = &["ALPHAS", "ALPHA", "LOGXIR", "LOGXIF", "GLOBAL"]
+        value_delimiter = ',',
+        // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
+        //value_names = &["ALPHAS", "ALPHA", "LOGXIR", "LOGXIF", "GLOBAL"]
     )]
     scale_by_order: Vec<f64>,
 }

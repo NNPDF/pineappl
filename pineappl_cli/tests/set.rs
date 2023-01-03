@@ -1,28 +1,19 @@
 use assert_cmd::Command;
 use assert_fs::{fixture::FileWriteStr, NamedTempFile};
 
-const HELP_STR: &str = "pineappl-set 
-Modifies the internal key-value storage
+const HELP_STR: &str = "Modifies the internal key-value storage
 
-USAGE:
-    pineappl set [OPTIONS] <INPUT> <OUTPUT>
+Usage: pineappl set [OPTIONS] <INPUT> <OUTPUT>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <OUTPUT>    Path of the modified PineAPPL file
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path of the modified PineAPPL file
 
-OPTIONS:
-        --delete <KEY>
-            Deletes an internal key-value pair
-
-        --entry <KEY> <VALUE>
-            Sets an internal key-value pair
-
-        --entry-from-file <KEY> <FILE>
-            Sets an internal key-value pair, with value being read from a file
-
-    -h, --help
-            Print help information
+Options:
+      --delete <KEY>                  Deletes an internal key-value pair
+      --entry <KEY> <VALUE>           Sets an internal key-value pair
+      --entry-from-file <KEY> <FILE>  Sets an internal key-value pair, with value being read from a file
+  -h, --help                          Print help information
 ";
 
 const DEFAULT_STR: &str = r#"arxiv: 1505.07024

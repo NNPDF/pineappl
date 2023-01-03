@@ -11,19 +11,19 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the first PDF set.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset1: String,
     /// LHAPDF id or name of the second PDF set.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset2: String,
     /// Confidence level in per cent.
-    #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]
+    #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// The maximum number of luminosities displayed.
-    #[clap(
+    #[arg(
         default_value = "10",
         long,
         short,
@@ -31,13 +31,13 @@ pub struct Opts {
     )]
     limit: usize,
     /// Number of threads to utilize.
-    #[clap(default_value_t = num_cpus::get(), long)]
+    #[arg(default_value_t = num_cpus::get(), long)]
     threads: usize,
     /// Set the number of digits shown for numerical values.
-    #[clap(default_value_t = 3, long = "digits")]
+    #[arg(default_value_t = 3, long = "digits")]
     digits: usize,
     /// Forces negative PDF values to zero.
-    #[clap(long = "force-positive")]
+    #[arg(long = "force-positive")]
     force_positive: bool,
 }
 

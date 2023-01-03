@@ -3,32 +3,25 @@ use assert_cmd::Command;
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-import 
-Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
+const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
-USAGE:
-    pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <OUTPUT>    Path to the converted grid
-    <PDFSET>    LHAPDF id or name of the PDF set to check the converted grid with
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path to the converted grid
+  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
 
-OPTIONS:
-        --accuracy <ACCURACY>    Relative threshold between the table and the converted grid when
-                                 comparison fails [default: 1e-10]
-        --alpha <ALPHA>          LO coupling power in alpha [default: 0]
-        --digits-abs <ABS>       Set the number of fractional digits shown for absolute numbers
-                                 [default: 7]
-        --digits-rel <REL>       Set the number of fractional digits shown for relative numbers
-                                 [default: 7]
-        --dis-pid <DIS_PID>      Particle ID for the non-hadronic initial states if it cannot be
-                                 determined from the grid [default: 11]
-    -h, --help                   Print help information
-        --no-optimize            Do not optimize converted grid
-    -s, --scales <SCALES>        Set the number of scale variations to compare with if they are
-                                 available [default: 7] [possible values: 1, 3, 7, 9]
-        --silence-libraries      Prevents third-party libraries from printing output
+Options:
+      --alpha <ALPHA>        LO coupling power in alpha [default: 0]
+      --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
+  -s, --scales <SCALES>      Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
+      --silence-libraries    Prevents third-party libraries from printing output
+      --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
+      --no-optimize          Do not optimize converted grid
+      --dis-pid <DIS_PID>    Particle ID for the non-hadronic initial states if it cannot be determined from the grid [default: 11]
+  -h, --help                 Print help information
 ";
 
 #[cfg(feature = "fastnlo")]

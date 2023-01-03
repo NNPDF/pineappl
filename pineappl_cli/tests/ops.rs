@@ -1,21 +1,19 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-ops 
-A collection of various modifying operations on grids
+const HELP_STR: &str = "A collection of various modifying operations on grids
 
-USAGE:
-    pineappl ops [OPTIONS] <INPUT> <OUTPUT>
+Usage: pineappl ops [OPTIONS] <INPUT> <OUTPUT>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <OUTPUT>    Path of the modified PineAPPL file
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path of the modified PineAPPL file
 
-OPTIONS:
-        --cc1                               Charge conjugate the first initial state
-        --cc2                               Charge conjugate the second initial state
-    -h, --help                              Print help information
-        --scale-by-bin <SCALE_BY_BIN>...    Scale each bin with a different factor
+Options:
+      --cc1                             Charge conjugate the first initial state
+      --cc2                             Charge conjugate the second initial state
+      --scale-by-bin <SCALE_BY_BIN>...  Scale each bin with a different factor
+  -h, --help                            Print help information
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

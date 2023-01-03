@@ -13,7 +13,7 @@ rust-version = "1.66.0"
 
 [dependencies]
 anyhow = "1.0.48"
-clap = { features = ["derive", "unstable-replace"], version = "~3.2.0" }
+clap = { features = ["deprecated", "derive", "unstable-replace"], version = "4.0.32" }
 cxx = { optional = true, version = "1.0.65" }
 enum_dispatch = "0.3.7"
 flate2 = { optional = true, version = "1.0.22" }

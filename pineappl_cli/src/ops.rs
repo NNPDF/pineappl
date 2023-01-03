@@ -10,22 +10,22 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path of the modified PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Charge conjugate the first initial state.
-    #[clap(long)]
+    #[arg(long)]
     cc1: bool,
     /// Charge conjugate the second initial state.
-    #[clap(long)]
+    #[arg(long)]
     cc2: bool,
     /// Scale each bin with a different factor.
-    #[clap(
+    #[arg(
         long = "scale-by-bin",
-        multiple_values = true,
-        use_value_delimiter = true
+        num_args(1..),
+        value_delimiter = ','
     )]
     scale_by_bin: Vec<f64>,
 }

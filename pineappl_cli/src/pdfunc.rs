@@ -7,40 +7,40 @@ use std::path::PathBuf;
 
 /// Calculates PDF uncertainties.
 #[derive(Parser)]
-#[clap(aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
+#[command(aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[clap(value_parser = helpers::parse_pdfset)]
+    #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Confidence level in per cent.
-    #[clap(default_value_t = lhapdf::CL_1_SIGMA, long)]
+    #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// Show integrated numbers (without bin widths) instead of differential ones.
-    #[clap(long, short)]
+    #[arg(long, short)]
     integrated: bool,
     /// Select orders manually.
-    #[clap(
+    #[arg(
         long,
-        min_values = 1,
+        num_args(1..),
         short,
-        use_value_delimiter = true,
+        value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
     /// Number of threads to utilize.
-    #[clap(default_value_t = num_cpus::get(), long)]
+    #[arg(default_value_t = num_cpus::get(), long)]
     threads: usize,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[clap(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[clap(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 2, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
     /// Forces negative PDF values to zero.
-    #[clap(long = "force-positive")]
+    #[arg(long = "force-positive")]
     force_positive: bool,
 }
 

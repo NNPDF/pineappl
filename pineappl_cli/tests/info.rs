@@ -1,21 +1,19 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-info 
-Shows information about the grid
+const HELP_STR: &str = "Shows information about the grid
 
-USAGE:
-    pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
 
-ARGS:
-    <INPUT>    Path to the input grid
+Arguments:
+  <INPUT>  Path to the input grid
 
-OPTIONS:
-        --ew           For each order print a list of the largest EW order
-        --get <key>    Gets an internal key-value pair
-    -h, --help         Print help information
-        --keys         Show all keys stored in the grid
-        --qcd          For each order print a list of the largest QCD order
-        --show         Shows all key-value pairs stored in the grid
+Options:
+      --ew         For each order print a list of the largest EW order
+      --get <key>  Gets an internal key-value pair
+      --keys       Show all keys stored in the grid
+      --qcd        For each order print a list of the largest QCD order
+      --show       Shows all key-value pairs stored in the grid
+  -h, --help       Print help information
 ";
 
 const KEYS_STR: &str = "arxiv

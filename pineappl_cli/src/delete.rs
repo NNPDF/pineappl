@@ -6,19 +6,19 @@ use std::path::PathBuf;
 
 /// Deletes parts from a PineAPPL grid.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").multiple(true).required(true))]
+#[command(group = ArgGroup::new("mode").multiple(true).required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the modified PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    #[clap(
+    #[arg(
         group = "mode",
         long,
-        multiple_values = true,
-        use_value_delimiter = true,
+        num_args(1..),
+        value_delimiter = ',',
         value_parser = helpers::parse_integer_range
     )]
     /// Indices of bins that should be deleted.

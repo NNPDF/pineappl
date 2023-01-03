@@ -8,40 +8,40 @@ use std::path::PathBuf;
 
 /// Print information about the internal subgrid types.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("show").multiple(true).required(true))]
+#[command(group = ArgGroup::new("show").multiple(true).required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Show empty subgrids.
-    #[clap(long = "show-empty")]
+    #[arg(long = "show-empty")]
     show_empty: bool,
     /// Show the subgrid type.
-    #[clap(group = "show", long = "type")]
+    #[arg(group = "show", long = "type")]
     type_: bool,
     /// Show the renormalization grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     mur: bool,
     /// Show the squared renormalization grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     mur2: bool,
     /// Show the factorization grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     muf: bool,
     /// Show the squared factorization grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     muf2: bool,
     /// Show the x1 grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     x1: bool,
     /// Show the x2 grid values.
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     x2: bool,
     /// Show grid statistics (figures are the number of entries).
-    #[clap(group = "show", long)]
+    #[arg(group = "show", long)]
     stats: bool,
     /// Set the number of digits shown for numerical values.
-    #[clap(default_value_t = 3, long = "digits")]
+    #[arg(default_value_t = 3, long = "digits")]
     digits: usize,
 }
 

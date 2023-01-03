@@ -1,26 +1,21 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-orders 
-Shows the predictions for all bin for each order separately
+const HELP_STR: &str = "Shows the predictions for all bin for each order separately
 
-USAGE:
-    pineappl orders [OPTIONS] <INPUT> <PDFSET>
+Usage: pineappl orders [OPTIONS] <INPUT> <PDFSET>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <PDFSET>    LHAPDF id or name of the PDF set
+Arguments:
+  <INPUT>   Path to the input grid
+  <PDFSET>  LHAPDF id or name of the PDF set
 
-OPTIONS:
-    -a, --absolute                    Show absolute numbers of each perturbative order
-        --digits-abs <ABS>            Set the number of fractional digits shown for absolute numbers
-                                      [default: 7]
-        --digits-rel <REL>            Set the number of fractional digits shown for relative numbers
-                                      [default: 2]
-        --force-positive              Forces negative PDF values to zero
-    -h, --help                        Print help information
-    -i, --integrated                  Show integrated numbers (without bin widths) instead of
-                                      differential ones
-    -n, --normalize <NORMALIZE>...    Normalize contributions to the specified orders
+Options:
+  -a, --absolute                  Show absolute numbers of each perturbative order
+  -i, --integrated                Show integrated numbers (without bin widths) instead of differential ones
+  -n, --normalize <NORMALIZE>...  Normalize contributions to the specified orders
+      --digits-abs <ABS>          Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>          Set the number of fractional digits shown for relative numbers [default: 2]
+      --force-positive            Forces negative PDF values to zero
+  -h, --help                      Print help information
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)

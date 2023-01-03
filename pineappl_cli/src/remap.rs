@@ -10,23 +10,23 @@ use std::path::PathBuf;
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path of the modified PineAPPL file.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full
     /// reference.
     remapping: String,
     /// Ignore the given observables for differential normalization.
-    #[clap(
+    #[arg(
         alias = "ignore_obs_norm",
         long = "ignore-obs-norm",
-        use_value_delimiter = true
+        value_delimiter = ','
     )]
     ignore_obs_norm: Vec<usize>,
     /// Normalization factor in addition to the given bin widths.
-    #[clap(
+    #[arg(
         default_value = "1.0",
         long,
         value_parser = helpers::parse_pos_non_zero::<f64>

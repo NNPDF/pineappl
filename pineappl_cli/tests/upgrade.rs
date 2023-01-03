@@ -1,18 +1,16 @@
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
 
-const HELP_STR: &str = "pineappl-upgrade 
-Converts the file format to the most recent version
+const HELP_STR: &str = "Converts the file format to the most recent version
 
-USAGE:
-    pineappl upgrade <INPUT> <OUTPUT>
+Usage: pineappl upgrade <INPUT> <OUTPUT>
 
-ARGS:
-    <INPUT>     Path to the input grid
-    <OUTPUT>    Path to the upgraded PineAPPL file
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path to the upgraded PineAPPL file
 
-OPTIONS:
-    -h, --help    Print help information
+Options:
+  -h, --help  Print help information
 ";
 
 #[test]

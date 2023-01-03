@@ -6,25 +6,25 @@ use std::path::PathBuf;
 
 /// Shows information about the grid.
 #[derive(Parser)]
-#[clap(group = ArgGroup::new("mode").required(true))]
+#[command(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
-    #[clap(value_parser, value_hint = ValueHint::FilePath)]
+    #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// For each order print a list of the largest EW order.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     ew: bool,
     /// Gets an internal key-value pair.
-    #[clap(group = "mode", long, takes_value = true, value_name = "key")]
+    #[arg(group = "mode", long, num_args(1), value_name = "key")]
     get: Option<String>,
     /// Show all keys stored in the grid.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     keys: bool,
     /// For each order print a list of the largest QCD order.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     qcd: bool,
     /// Shows all key-value pairs stored in the grid.
-    #[clap(group = "mode", long)]
+    #[arg(group = "mode", long)]
     show: bool,
 }
 

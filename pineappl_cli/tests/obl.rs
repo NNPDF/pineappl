@@ -1,22 +1,20 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "pineappl-obl 
-Shows information about orders (o), bins (b), or luminosities (l) of a grid
+const HELP_STR: &str = "Shows information about orders (o), bins (b), or luminosities (l) of a grid
 
-USAGE:
-    pineappl obl <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable> <INPUT>
+Usage: pineappl obl <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable> <INPUT>
 
-ARGS:
-    <INPUT>    Path to the input grid
+Arguments:
+  <INPUT>  Path to the input grid
 
-OPTIONS:
-    -b, --bins             Show the bins of a grid
-        --fktable          Check if input is an FK table
-    -h, --help             Print help information
-    -l, --lumis            Show the luminsities a grid
-    -o, --orders           Show the orders of a grid, stripping zero powers
-        --orders-long      Show the orders of a grid, including zero powers
-        --orders-spaces    Show the orders of a grid, replacing zero powers with spaces
+Options:
+  -o, --orders         Show the orders of a grid, stripping zero powers
+      --orders-spaces  Show the orders of a grid, replacing zero powers with spaces
+      --orders-long    Show the orders of a grid, including zero powers
+  -b, --bins           Show the bins of a grid
+  -l, --lumis          Show the luminsities a grid
+      --fktable        Check if input is an FK table
+  -h, --help           Print help information
 ";
 
 const BINS_STR: &str = "b   etal    norm
