@@ -639,8 +639,6 @@ impl Grid {
             array *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
         }
 
-        // TODO: what's missing here are possible reweighting factors
-
         array /= normalizations[bin];
         array
     }
