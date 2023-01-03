@@ -74,12 +74,12 @@ impl Subcommand for Opts {
             }
         } else if self.fktable {
             if let Err(err) = FkTable::try_from(grid) {
-                println!("no\n{}", err);
+                println!("no\n{err}");
                 return Ok(1);
-            } else {
-                println!("yes");
-                return Ok(0);
             }
+
+            println!("yes");
+            return Ok(0);
         } else if self.lumis {
             let mut titles = row![c => "l"];
             for _ in 0..grid
@@ -96,10 +96,10 @@ impl Subcommand for Opts {
             for (index, entry) in grid.lumi().iter().enumerate() {
                 let row = table.add_empty_row();
 
-                row.add_cell(cell!(format!("{}", index)));
+                row.add_cell(cell!(format!("{index}")));
 
                 for (id1, id2, factor) in entry.entry().iter() {
-                    row.add_cell(cell!(format!("{} \u{d7} ({:2}, {:2})", factor, id1, id2)));
+                    row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
                 }
             }
         } else {
@@ -132,7 +132,7 @@ impl Subcommand for Opts {
                     .join(" ");
 
                 row.add_cell(cell!(index.to_string()));
-                row.add_cell(cell!(format!("O({})", order_string)));
+                row.add_cell(cell!(format!("O({order_string})")));
             }
         }
 

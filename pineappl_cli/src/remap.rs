@@ -67,7 +67,7 @@ fn parse_remapping_string(
                                 Some(
                                     string
                                         .parse::<f64>()
-                                        .context(format!("unable to parse limit '{}'", string)),
+                                        .context(format!("unable to parse limit '{string}'")),
                                 )
                             }
                         })

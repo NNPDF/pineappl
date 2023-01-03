@@ -63,7 +63,7 @@ impl Subcommand for Opts {
                 .collect::<Vec<_>>()
                 .join(",");
 
-            println!("{}", orders);
+            println!("{orders}");
         } else if let Some(ref key) = self.get {
             grid.upgrade();
 
@@ -71,7 +71,7 @@ impl Subcommand for Opts {
                 || unreachable!(),
                 |key_values| {
                     if let Some(value) = key_values.get(key) {
-                        println!("{}", value);
+                        println!("{value}");
                     }
                 },
             );
@@ -85,7 +85,7 @@ impl Subcommand for Opts {
                     vector.sort();
 
                     for (key, _) in &vector {
-                        println!("{}", key);
+                        println!("{key}");
                     }
                 },
             );
@@ -99,7 +99,7 @@ impl Subcommand for Opts {
                     vector.sort();
 
                     for (key, value) in &vector {
-                        println!("{}: {}", key, value);
+                        println!("{key}: {value}");
                     }
                 },
             );

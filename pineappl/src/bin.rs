@@ -323,7 +323,7 @@ impl BinRemapper {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, x)| {
-                    ((index % self.dimensions()) != (self.dimensions() - 1)).then(|| x)
+                    ((index % self.dimensions()) != (self.dimensions() - 1)).then_some(x)
                 })
                 .collect::<Vec<_>>()
                 .chunks_exact(self.dimensions() - 1)

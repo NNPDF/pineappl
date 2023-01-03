@@ -75,7 +75,7 @@ impl Subcommand for CkfOpts {
                 .iter()
                 .filter_map(|order| {
                     ((order.alphas != self.order.0) && (order.alpha != self.order.1))
-                        .then(|| (order.alphas, order.alpha))
+                        .then_some((order.alphas, order.alpha))
                 })
                 .collect()
         } else {
@@ -121,7 +121,7 @@ impl Subcommand for CkfOpts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
         for (x_label, x_unit) in x {
-            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
+            let mut cell = cell!(c->format!("{x_label}\n[{x_unit}]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -137,11 +137,11 @@ impl Subcommand for CkfOpts {
         for (bin, limits) in limits.iter().enumerate() {
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{bin}")));
 
             for (left, right) in limits {
-                row.add_cell(cell!(r->format!("{}", left)));
-                row.add_cell(cell!(r->format!("{}", right)));
+                row.add_cell(cell!(r->format!("{left}")));
+                row.add_cell(cell!(r->format!("{right}")));
             }
 
             let mut values: Vec<_> = results
@@ -170,7 +170,7 @@ impl Subcommand for CkfOpts {
             );
 
             for (lumi, value, value_den) in values.into_iter().take(limit) {
-                row.add_cell(cell!(r->format!("{}", lumi)));
+                row.add_cell(cell!(r->format!("{lumi}")));
 
                 let channel_k = if value_den == 0.0 {
                     if value == 0.0 {

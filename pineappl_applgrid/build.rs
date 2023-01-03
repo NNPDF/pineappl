@@ -63,7 +63,7 @@ fn main() {
         .split_whitespace()
         .filter_map(|token| token.strip_prefix("-l"))
     {
-        println!("cargo:rustc-link-lib={}", lib);
+        println!("cargo:rustc-link-lib={lib}");
     }
 
     Build::new()

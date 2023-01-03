@@ -91,11 +91,11 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
         for (x_label, x_unit) in x {
-            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
+            let mut cell = cell!(c->format!("{x_label}\n[{x_unit}]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->format!("{}\n[{}]", y_label, y_unit)));
+        title.add_cell(cell!(c->format!("{y_label}\n[{y_unit}]")));
 
         for order in &orders {
             title.add_cell(cell!(c->format!("O(as^{} a^{})\n[{}]", order.alphas, order.alpha, if self.absolute { y_unit } else { "%" })));
@@ -107,10 +107,10 @@ impl Subcommand for Opts {
         for (bin, limits) in limits.iter().enumerate() {
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{bin}")));
             for (left, right) in limits {
-                row.add_cell(cell!(r->format!("{}", left)));
-                row.add_cell(cell!(r->format!("{}", right)));
+                row.add_cell(cell!(r->format!("{left}")));
+                row.add_cell(cell!(r->format!("{right}")));
             }
             row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs,
             results.iter().fold(0.0, |value, results| value + results[bin]))));

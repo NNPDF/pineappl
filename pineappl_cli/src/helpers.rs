@@ -243,10 +243,7 @@ pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec
         .limits()
         .into_iter()
         .enumerate()
-        .filter_map(|(index, limits)| {
-            // TODO: use then_some once we support Rust 1.62
-            (bins.is_empty() || bins.contains(&index)).then(|| limits)
-        })
+        .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
         .collect();
 
     match mode {
@@ -293,8 +290,7 @@ pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
         }
 
         return Err(format!(
-            "The PDF set for the LHAPDF ID `{}` was not found",
-            argument
+            "The PDF set for the LHAPDF ID `{argument}` was not found"
         ));
     } else if lhapdf::available_pdf_sets().iter().any(|set| {
         // there's no function in LHAPDF to validate the 'setname/member' syntax; there is a
@@ -306,7 +302,7 @@ pub fn validate_pdfset(argument: &str) -> std::result::Result<(), String> {
         return Ok(());
     }
 
-    Err(format!("The PDF set `{}` was not found", argument))
+    Err(format!("The PDF set `{argument}` was not found"))
 }
 
 pub fn validate_pos_non_zero<T: Default + FromStr + PartialOrd>(
@@ -319,8 +315,7 @@ pub fn validate_pos_non_zero<T: Default + FromStr + PartialOrd>(
     }
 
     Err(format!(
-        "The value `{}` is not positive or non-zero",
-        argument
+        "The value `{argument}` is not positive or non-zero"
     ))
 }
 
@@ -328,18 +323,16 @@ pub fn try_parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     if let Some(at) = range.find('-') {
         let (left, right) = range.split_at(at);
         let left = str::parse::<usize>(left).context(format!(
-            "unable to parse integer range '{}'; couldn't convert '{}'",
-            range, left
+            "unable to parse integer range '{range}'; couldn't convert '{left}'"
         ))?;
         let right = str::parse::<usize>(&right[1..]).context(format!(
-            "unable to parse integer range '{}'; couldn't convert '{}'",
-            range, right
+            "unable to parse integer range '{range}'; couldn't convert '{right}'"
         ))?;
 
         Ok(left..=right)
     } else {
         let value =
-            str::parse::<usize>(range).context(format!("unable to parse integer '{}'", range))?;
+            str::parse::<usize>(range).context(format!("unable to parse integer '{range}'"))?;
 
         Ok(value..=value)
     }
@@ -364,14 +357,14 @@ pub fn parse_order(order: &str) -> Result<(u32, u32)> {
                 .take_while(|c| c.is_numeric())
                 .count();
             alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
-                .context(format!("unable to parse order '{}'", order))?;
+                .context(format!("unable to parse order '{order}'"))?;
         } else {
             let len = order[index + 1..]
                 .chars()
                 .take_while(|c| c.is_numeric())
                 .count();
             alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
-                .context(format!("unable to parse order '{}'", order))?;
+                .context(format!("unable to parse order '{order}'"))?;
         }
     }
 

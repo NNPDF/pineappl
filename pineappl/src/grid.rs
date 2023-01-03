@@ -532,10 +532,8 @@ impl Grid {
                     continue;
                 }
 
-                let bin_index = match bin_indices.iter().position(|&index| index == bin) {
-                    Some(i) => i,
-                    None => continue,
-                };
+                let Some(bin_index) = bin_indices.iter().position(|&index| index == bin)
+                    else { continue };
 
                 if subgrid.is_empty() {
                     continue;
@@ -1798,15 +1796,15 @@ impl Grid {
             .indexed_iter()
             .filter_map(|(tuple, subgrid)| {
                 (!subgrid.is_empty() && (order_mask.is_empty() || order_mask[tuple.0]))
-                    .then(|| (tuple.2, subgrid))
+                    .then_some((tuple.2, subgrid))
             })
         {
             ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
-            ren1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            ren1.sort_by(f64::total_cmp);
             ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
 
             fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
-            fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            fac1.sort_by(f64::total_cmp);
             fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
 
             if has_pdf1 {
@@ -1816,7 +1814,7 @@ impl Grid {
                 x1.extend(subgrid.x2_grid().iter());
             }
 
-            x1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x1.sort_by(f64::total_cmp);
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
 
             if has_pdf1 {

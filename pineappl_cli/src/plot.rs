@@ -42,18 +42,18 @@ pub struct Opts {
 }
 
 fn map_format_join(slice: &[f64]) -> String {
-    slice.iter().map(|x| format!("{}", x)).join(", ")
+    slice.iter().map(|x| format!("{x}")).join(", ")
 }
 
 fn map_format_e_join(slice: &[f64]) -> String {
-    slice.iter().map(|x| format!("{:.7e}", x)).join(", ")
+    slice.iter().map(|x| format!("{x:.7e}")).join(", ")
 }
 
 fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
     slice
         .iter()
         .chain(slice.last())
-        .map(|x| format!("{:.7e}", x))
+        .map(|x| format!("{x:.7e}"))
         .join(", ")
 }
 

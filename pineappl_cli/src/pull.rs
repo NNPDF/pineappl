@@ -91,7 +91,7 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
         for (x_label, x_unit) in helpers::labels_and_units(&grid, false).0 {
-            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
+            let mut cell = cell!(c->format!("{x_label}\n[{x_unit}]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -239,10 +239,10 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{bin}")));
             for (left, right) in limits {
-                row.add_cell(cell!(r->format!("{}", left)));
-                row.add_cell(cell!(r->format!("{}", right)));
+                row.add_cell(cell!(r->format!("{left}")));
+                row.add_cell(cell!(r->format!("{right}")));
             }
 
             row.add_cell(cell!(r->format!("{:.*}", self.digits, total)));
@@ -253,7 +253,7 @@ impl Subcommand for Opts {
             });
 
             for (lumi, pull) in pull_tuples.iter().take(self.limit) {
-                row.add_cell(cell!(r->format!("{}", lumi)));
+                row.add_cell(cell!(r->format!("{lumi}")));
                 row.add_cell(cell!(r->format!("{:.*}", self.digits, pull)));
             }
         }

@@ -107,11 +107,11 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
         for (x_label, x_unit) in x {
-            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
+            let mut cell = cell!(c->format!("{x_label}\n[{x_unit}]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
-        title.add_cell(cell!(c->format!("{}\n[{}]", y_label, y_unit)));
+        title.add_cell(cell!(c->format!("{y_label}\n[{y_unit}]")));
 
         if self.absolute {
             for scale in &helpers::SCALES_VECTOR[0..self.scales] {
@@ -122,7 +122,7 @@ impl Subcommand for Opts {
         }
 
         for other in self.pdfsets[1..].iter().map(|pdf| helpers::pdf_label(pdf)) {
-            let mut cell = cell!(c->format!("{}\n[{}] [%]", other, y_unit));
+            let mut cell = cell!(c->format!("{other}\n[{y_unit}] [%]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
@@ -147,10 +147,10 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{bin}")));
             for (left, right) in &limits {
-                row.add_cell(cell!(r->format!("{}", left)));
-                row.add_cell(cell!(r->format!("{}", right)));
+                row.add_cell(cell!(r->format!("{left}")));
+                row.add_cell(cell!(r->format!("{right}")));
             }
             row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, values[0])));
 

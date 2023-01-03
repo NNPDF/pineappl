@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "PineAPPL's interface to fastNLO"
-rust-version = "1.56.1"
+rust-version = "1.66.0"
 
 [dependencies]
 cxx = { version = "1.0.65" }

@@ -452,11 +452,8 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
         // TODO: there doesn't seem to be a better way than trying an index and stopping whenever a
         // NULL pointer is returned
         let coeff_base = file_as_table.GetCoeffTable(id);
-        let coeff_base = if let Some(x) = unsafe { coeff_base.as_ref() } {
-            x
-        } else {
-            break;
-        };
+        let Some(coeff_base) = (unsafe { coeff_base.as_ref() })
+            else { break; };
 
         if !coeff_base.IsEnabled() {
             break;

@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "Read, write, and query PineAPPL grids"
-rust-version = "1.56.1"
+rust-version = "1.66.0"
 
 [dependencies]
 anyhow = "1.0.48"

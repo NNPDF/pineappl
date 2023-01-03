@@ -87,9 +87,9 @@ impl Subcommand for Opts {
 
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(l->format!("{}", order)));
-            row.add_cell(cell!(l->format!("{}", bin)));
-            row.add_cell(cell!(l->format!("{}", lumi)));
+            row.add_cell(cell!(l->format!("{order}")));
+            row.add_cell(cell!(l->format!("{bin}")));
+            row.add_cell(cell!(l->format!("{lumi}")));
 
             if self.type_ {
                 row.add_cell(cell!(l->

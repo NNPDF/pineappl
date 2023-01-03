@@ -244,11 +244,11 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .flat_map(|subgrid| subgrid.x2_grid().into_owned())
         .collect();
 
-    fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    fac1.sort_by(f64::total_cmp);
     fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
-    x1_a.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    x1_a.sort_by(f64::total_cmp);
     x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
-    x1_b.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    x1_b.sort_by(f64::total_cmp);
     x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
 
     let mut array = Array3::<f64>::zeros((fac1.len(), x1_a.len(), x1_b.len()));
@@ -260,7 +260,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .zip(orders.iter())
         .zip(order_mask.iter().chain(iter::repeat(&true)))
         .filter_map(|((subgrid, order), &enabled)| {
-            (enabled && !subgrid.is_empty()).then(|| (subgrid, order))
+            (enabled && !subgrid.is_empty()).then_some((subgrid, order))
         })
     {
         let mut logs = 1.0;
@@ -289,7 +289,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 fac1.iter()
                     .position(|&scale| approx_eq!(f64, info.xif * info.xif * fac, scale, ulps = 64))
                     .ok_or_else(|| {
-                        GridError::EvolutionFailure(format!("no operator for muf2 = {} found", fac))
+                        GridError::EvolutionFailure(format!("no operator for muf2 = {fac} found"))
                     })
             })
             .collect::<Result<_, _>>()?;
@@ -300,7 +300,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 x1_a.iter()
                     .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = 64))
                     .ok_or_else(|| {
-                        GridError::EvolutionFailure(format!("no operator for x1 = {} found", xa))
+                        GridError::EvolutionFailure(format!("no operator for x1 = {xa} found"))
                     })
             })
             .collect::<Result<_, _>>()?;
@@ -311,7 +311,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 x1_b.iter()
                     .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = 64))
                     .ok_or_else(|| {
-                        GridError::EvolutionFailure(format!("no operator for x1 = {} found", xb))
+                        GridError::EvolutionFailure(format!("no operator for x1 = {xb} found"))
                     })
             })
             .collect::<Result<_, _>>()?;
@@ -330,8 +330,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 alphas.powi(order.alphas.try_into().unwrap())
             } else {
                 return Err(GridError::EvolutionFailure(format!(
-                    "could not find alphas for mur2 = {}",
-                    mur2
+                    "could not find alphas for mur2 = {mur2}"
                 )));
             };
 
@@ -414,7 +413,9 @@ pub(crate) fn evolve_with_one(
                         .filter_map(|(&pid0, fk_table)| {
                             pids.iter()
                                 .zip(ops.iter())
-                                .find_map(|(&(p0, p1), op)| (p0 == pid0 && p1 == pid1).then(|| op))
+                                .find_map(|(&(p0, p1), op)| {
+                                    (p0 == pid0 && p1 == pid1).then_some(op)
+                                })
                                 .map(|op| (fk_table, op))
                         })
                 {
@@ -563,7 +564,7 @@ pub(crate) fn evolve_with_two(
                                 .cartesian_product(pids_b.iter().zip(operators_b.iter()))
                                 .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
                                     (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
-                                        .then(|| (opa, opb))
+                                        .then_some((opa, opb))
                                 })
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         })

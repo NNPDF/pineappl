@@ -107,14 +107,14 @@ impl Subcommand for Opts {
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
         for (x_label, x_unit) in x {
-            let mut cell = cell!(c->format!("{}\n[{}]", x_label, x_unit));
+            let mut cell = cell!(c->format!("{x_label}\n[{x_unit}]"));
             cell.set_hspan(2);
             title.add_cell(cell);
         }
         for _ in 0..limit {
             title.add_cell(cell!(c->"l"));
             title.add_cell(
-                cell!(c->&if self.absolute { format!("{}\n[{}]", y_label, y_unit) } else { "size\n[%]".to_string() }),
+                cell!(c->&if self.absolute { format!("{y_label}\n[{y_unit}]") } else { "size\n[%]".to_string() }),
             );
         }
 
@@ -124,11 +124,11 @@ impl Subcommand for Opts {
         for (bin, limits) in limits.iter().enumerate() {
             let row = table.add_empty_row();
 
-            row.add_cell(cell!(r->format!("{}", bin)));
+            row.add_cell(cell!(r->format!("{bin}")));
 
             for (left, right) in limits {
-                row.add_cell(cell!(r->format!("{}", left)));
-                row.add_cell(cell!(r->format!("{}", right)));
+                row.add_cell(cell!(r->format!("{left}")));
+                row.add_cell(cell!(r->format!("{right}")));
             }
 
             if self.absolute {
@@ -148,7 +148,7 @@ impl Subcommand for Opts {
                     .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->format!("{}", lumi)));
+                    row.add_cell(cell!(r->format!("{lumi}")));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
                 }
             } else {
@@ -169,7 +169,7 @@ impl Subcommand for Opts {
                     .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->format!("{}", lumi)));
+                    row.add_cell(cell!(r->format!("{lumi}")));
                     row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, percentage)));
                 }
             }

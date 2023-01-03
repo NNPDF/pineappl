@@ -177,8 +177,8 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->bin));
                 for (left, right) in limits1.iter() {
-                    row.add_cell(cell!(r->format!("{}", left)));
-                    row.add_cell(cell!(r->format!("{}", right)));
+                    row.add_cell(cell!(r->format!("{left}")));
+                    row.add_cell(cell!(r->format!("{right}")));
                 }
 
                 let result1 = result1 * self.scale1;
@@ -193,7 +193,7 @@ impl Subcommand for Opts {
             let orders = orders1;
 
             for (alphas, alpha) in &orders {
-                let mut cell = cell!(c->format!("O(as^{} a^{})", alphas, alpha));
+                let mut cell = cell!(c->format!("O(as^{alphas} a^{alpha})"));
                 cell.set_hspan(3);
                 title.add_cell(cell);
             }
@@ -236,8 +236,8 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->bin));
                 for (left, right) in limits1 {
-                    row.add_cell(cell!(r->format!("{}", left)));
-                    row.add_cell(cell!(r->format!("{}", right)));
+                    row.add_cell(cell!(r->format!("{left}")));
+                    row.add_cell(cell!(r->format!("{right}")));
                 }
 
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
