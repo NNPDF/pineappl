@@ -37,7 +37,6 @@ use std::process;
     about,
     disable_help_subcommand = true,
     name = "pineappl",
-    replace("lumis", &["obl", "--lumis"]), // TODO: this is for backwards compatibility, remove it
     version = git_version!(
         args = ["--always", "--dirty", "--long", "--tags"],
         cargo_prefix = "",
