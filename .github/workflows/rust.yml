@@ -43,7 +43,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         default: true
-        toolchain: 1.66.0
+        toolchain: 1.65.0
         components: llvm-tools-preview
     - name: Get test data
       id: cache-test-data

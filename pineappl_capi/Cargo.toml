@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "C language interface to PineAPPL"
-rust-version = "1.66.0"
+rust-version = "1.65.0"
 
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.5.9" }

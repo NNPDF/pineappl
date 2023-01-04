@@ -48,7 +48,7 @@ if ! cargo msrv --help >/dev/null; then
     exit 1
 fi
 
-if ! cargo msrv --min 1.66.0 --max 1.66.0 >/dev/null; then
+if ! cargo msrv --min 1.65.0 --max 1.65.0 >/dev/null; then
     echo "Minimum supported Rust version doesn't match avertised one."
     exit
 fi

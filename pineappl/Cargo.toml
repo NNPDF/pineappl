@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["high-energy-physics", "physics"]
 categories = ["science"]
 description = "PineAPPL is not an extension of APPLgrid"
-rust-version = "1.66.0"
+rust-version = "1.65.0"
 
 [dependencies]
 arrayvec = "0.7.2"
