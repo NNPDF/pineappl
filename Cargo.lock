@@ -893,7 +893,6 @@ dependencies = [
  "lz4_flex",
  "ndarray",
  "ndarray-npy",
- "num_cpus",
  "pineappl",
  "pineappl_applgrid",
  "pineappl_fastnlo",

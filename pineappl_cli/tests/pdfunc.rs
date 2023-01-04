@@ -1,4 +1,6 @@
 use assert_cmd::Command;
+use std::num::NonZeroUsize;
+use std::thread;
 
 const HELP_STR: &str = "Calculates PDF uncertainties
 
@@ -91,7 +93,14 @@ fn help() {
         .args(&["pdfunc", "--help"])
         .assert()
         .success()
-        .stdout(HELP_STR.replace("{}", &num_cpus::get().to_string()));
+        .stdout(
+            HELP_STR.replace(
+                "{}",
+                &thread::available_parallelism()
+                    .map_or(1, NonZeroUsize::get)
+                    .to_string(),
+            ),
+        );
 }
 
 #[test]

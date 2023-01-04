@@ -3,7 +3,9 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
+use std::num::NonZeroUsize;
 use std::path::PathBuf;
+use std::thread;
 
 // TODO: do we need the CL parameter?
 
@@ -31,7 +33,7 @@ pub struct Opts {
     )]
     limit: usize,
     /// Number of threads to utilize.
-    #[arg(default_value_t = num_cpus::get(), long)]
+    #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
     /// Set the number of digits shown for numerical values.
     #[arg(default_value_t = 3, long = "digits")]

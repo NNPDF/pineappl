@@ -8,7 +8,9 @@ use pineappl::lumi::LumiEntry;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use std::thread;
 
 /// Creates a matplotlib script plotting the contents of the grid.
 #[derive(Parser)]
@@ -40,7 +42,7 @@ pub struct Opts {
     #[arg(conflicts_with = "subgrid_pull", long)]
     asymmetry: bool,
     /// Number of threads to utilize.
-    #[arg(default_value_t = num_cpus::get(), long)]
+    #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
     /// Forces negative PDF values to zero.
     #[arg(long = "force-positive")]

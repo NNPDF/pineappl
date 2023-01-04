@@ -24,7 +24,6 @@ libc = "0.2.126"
 lz4_flex = { optional = true, version = "0.9.2" }
 ndarray = "0.15.4"
 ndarray-npy = { optional = true, version = "0.8.1" }
-num_cpus = "1.13.0"
 pineappl = { path = "../pineappl", version = "0.5.9" }
 pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "0.5.9" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "0.5.9" }
