@@ -883,7 +883,6 @@ dependencies = [
  "assert_cmd",
  "assert_fs",
  "clap",
- "cxx",
  "enum_dispatch",
  "flate2",
  "git-version",
