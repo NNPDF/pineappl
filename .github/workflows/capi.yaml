@@ -15,7 +15,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: 1.65.0
+          toolchain: nightly
 
       - name: Install cargo-c
         uses: actions-rs/cargo@v1
