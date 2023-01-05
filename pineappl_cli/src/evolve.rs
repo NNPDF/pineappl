@@ -5,6 +5,7 @@ use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 
 #[cfg(feature = "fktable")]
 fn evolve_grid(
@@ -153,7 +154,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;

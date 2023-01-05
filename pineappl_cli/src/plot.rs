@@ -10,6 +10,7 @@ use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 use std::thread;
 
 /// Creates a matplotlib script plotting the contents of the grid.
@@ -152,7 +153,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
             .build_global()
@@ -557,6 +558,6 @@ impl Subcommand for Opts {
             );
         }
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

@@ -5,6 +5,7 @@ use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Print information about the internal subgrid types.
 #[derive(Parser)]
@@ -46,7 +47,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
         let mut table = helpers::create_table();
         let mut titles = row![c => "o", "b", "l"];
@@ -169,6 +170,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{ArgGroup, Parser, ValueHint};
 use itertools::Itertools;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Shows information about the grid.
 #[derive(Parser)]
@@ -29,7 +30,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         if self.ew || self.qcd {
@@ -105,6 +106,6 @@ impl Subcommand for Opts {
             );
         }
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

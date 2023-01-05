@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{ArgAction, Parser, ValueHint};
 use std::fs;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Modifies the internal key-value storage.
 #[derive(Parser)]
@@ -37,7 +38,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         for key_value in self.entry.chunks(2) {

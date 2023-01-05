@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{ArgGroup, Parser, ValueHint};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Deletes parts from a PineAPPL grid.
 #[derive(Parser)]
@@ -26,7 +27,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
         let bins: Vec<usize> = self
             .bins

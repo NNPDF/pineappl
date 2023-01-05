@@ -6,6 +6,7 @@ use pineappl::fk_table::FkTable;
 use pineappl::grid::Order;
 use prettytable::{cell, row, Row};
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Shows information about orders (o), bins (b), or luminosities (l) of a grid.
 #[derive(Parser)]
@@ -35,7 +36,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
@@ -75,11 +76,11 @@ impl Subcommand for Opts {
         } else if self.fktable {
             if let Err(err) = FkTable::try_from(grid) {
                 println!("no\n{err}");
-                return Ok(1);
+                return Ok(ExitCode::FAILURE);
             }
 
             println!("yes");
-            return Ok(0);
+            return Ok(ExitCode::SUCCESS);
         } else if self.lumis {
             let mut titles = row![c => "l"];
             for _ in 0..grid
@@ -138,6 +139,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

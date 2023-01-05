@@ -4,6 +4,7 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Optimizes the internal data structure to minimize memory usage.
 #[derive(Parser)]
@@ -23,7 +24,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         if let Some(assumptions) = self.fk_table {

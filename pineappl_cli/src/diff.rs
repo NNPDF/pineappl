@@ -4,6 +4,7 @@ use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Compares the numerical content of two grids with each other.
 #[derive(Parser)]
@@ -57,7 +58,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid1 = helpers::read_grid(&self.input1)?;
         let grid2 = helpers::read_grid(&self.input2)?;
 
@@ -250,6 +251,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

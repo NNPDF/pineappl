@@ -7,6 +7,7 @@ use pineappl::grid::Grid;
 use scopeguard::defer;
 use std::ffi::CStr;
 use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 
 #[cfg(feature = "applgrid")]
 mod applgrid;
@@ -234,7 +235,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`

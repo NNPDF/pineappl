@@ -5,6 +5,7 @@ use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
+use std::process::ExitCode;
 use std::thread;
 
 // TODO: do we need the CL parameter?
@@ -41,7 +42,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
 
         let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
@@ -259,6 +260,6 @@ impl Subcommand for Opts {
 
         table.printstd();
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

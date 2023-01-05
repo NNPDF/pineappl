@@ -2,6 +2,7 @@ use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Merges one or more PineAPPL grids together.
 #[derive(Parser)]
@@ -28,7 +29,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let (input0, input_rest) = self.input.split_first().unwrap();
         let mut grid0 = helpers::read_grid(input0)?;
 

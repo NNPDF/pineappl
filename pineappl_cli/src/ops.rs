@@ -5,6 +5,7 @@ use pineappl::lumi::LumiEntry;
 use pineappl::pids;
 use std::ops::Deref;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// A collection of various modifying operations on grids.
 #[derive(Parser)]
@@ -31,7 +32,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         if self.cc1 || self.cc2 {

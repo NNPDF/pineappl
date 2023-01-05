@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Perform various analyses with grids.
 #[derive(Parser)]
@@ -12,7 +13,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         self.subcommand.run(cfg)
     }
 }
@@ -23,7 +24,7 @@ enum SubcommandEnum {
 }
 
 impl Subcommand for SubcommandEnum {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         match self {
             Self::Ckf(opts) => opts.run(cfg),
         }
@@ -59,7 +60,7 @@ pub struct CkfOpts {
 }
 
 impl Subcommand for CkfOpts {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
@@ -181,6 +182,6 @@ impl Subcommand for CkfOpts {
 
         table.printstd();
 
-        Ok(0)
+        Ok(ExitCode::SUCCESS)
     }
 }

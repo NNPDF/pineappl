@@ -4,6 +4,7 @@ use clap::{ArgGroup, Parser, ValueHint};
 use pineappl::bin::BinRemapper;
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Sums two or more bins of a grid together.
 #[derive(Parser)]
@@ -30,7 +31,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         if self.integrated {

@@ -11,6 +11,7 @@ use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
+use std::process::ExitCode;
 use std::str::FromStr;
 
 #[derive(Parser)]
@@ -57,7 +58,7 @@ pub fn read_grid(input: &Path) -> Result<Grid> {
         .context(format!("unable to read '{}'", input.display()))
 }
 
-pub fn write_grid(output: &Path, grid: &Grid) -> Result<u8> {
+pub fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
     let file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -70,12 +71,12 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<u8> {
         grid.write(file)?;
     }
 
-    Ok(0)
+    Ok(ExitCode::SUCCESS)
 }
 
 #[enum_dispatch]
 pub trait Subcommand {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8>;
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode>;
 }
 
 pub fn create_table() -> Table {

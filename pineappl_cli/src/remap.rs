@@ -5,6 +5,7 @@ use itertools::izip;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 /// Modifies the bin dimensions, widths and normalizations.
 #[derive(Parser)]
@@ -184,7 +185,7 @@ fn parse_remapping_string(
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
         let (normalizations, limits) =
             parse_remapping_string(&self.remapping, &self.ignore_obs_norm, self.norm)?;

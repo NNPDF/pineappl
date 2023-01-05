@@ -28,7 +28,7 @@ use clap::Parser;
 use enum_dispatch::enum_dispatch;
 use git_version::git_version;
 use helpers::{GlobalConfiguration, Subcommand};
-use std::process;
+use std::process::{ExitCode, Termination};
 
 #[derive(Parser)]
 #[command(
@@ -76,20 +76,16 @@ enum SubcommandEnum {
     Upgrade(upgrade::Opts),
 }
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let opts = Opts::parse();
 
     if opts.configuration.silence_lhapdf {
         lhapdf::set_verbosity(0);
     }
 
-    // TODO: use exit code from Rust 1.61
-    let code = opts.subcommand.run(&opts.configuration)?;
-
-    if code == 0 {
-        Ok(())
-    } else {
-        process::exit(code.into());
+    match opts.subcommand.run(&opts.configuration) {
+        Ok(code) => code,
+        result @ Err(_) => result.report(),
     }
 }
 
