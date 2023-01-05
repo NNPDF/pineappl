@@ -5,9 +5,9 @@ use super::lumi::LumiCache;
 use super::subgrid::Subgrid;
 use ndarray::Array4;
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
 use std::io::Write;
+use std::str::FromStr;
 use thiserror::Error;
 
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
@@ -104,11 +104,11 @@ impl Display for FkAssumptions {
     }
 }
 
-impl TryFrom<&str> for FkAssumptions {
-    type Error = UnknownFkAssumption;
+impl FromStr for FkAssumptions {
+    type Err = UnknownFkAssumption;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(match value {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
             "Nf6Ind" => Self::Nf6Ind,
             "Nf6Sym" => Self::Nf6Sym,
             "Nf5Ind" => Self::Nf5Ind,
@@ -119,7 +119,7 @@ impl TryFrom<&str> for FkAssumptions {
             "Nf3Sym" => Self::Nf3Sym,
             _ => {
                 return Err(UnknownFkAssumption {
-                    variant: value.to_string(),
+                    variant: s.to_string(),
                 });
             }
         })
@@ -446,16 +446,16 @@ mod tests {
 
     #[test]
     fn fk_assumptions_try_from() {
-        assert_eq!(FkAssumptions::try_from("Nf6Ind"), Ok(FkAssumptions::Nf6Ind));
-        assert_eq!(FkAssumptions::try_from("Nf6Sym"), Ok(FkAssumptions::Nf6Sym));
-        assert_eq!(FkAssumptions::try_from("Nf5Ind"), Ok(FkAssumptions::Nf5Ind));
-        assert_eq!(FkAssumptions::try_from("Nf5Sym"), Ok(FkAssumptions::Nf5Sym));
-        assert_eq!(FkAssumptions::try_from("Nf4Ind"), Ok(FkAssumptions::Nf4Ind));
-        assert_eq!(FkAssumptions::try_from("Nf4Sym"), Ok(FkAssumptions::Nf4Sym));
-        assert_eq!(FkAssumptions::try_from("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
-        assert_eq!(FkAssumptions::try_from("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
+        assert_eq!(FkAssumptions::from_str("Nf6Ind"), Ok(FkAssumptions::Nf6Ind));
+        assert_eq!(FkAssumptions::from_str("Nf6Sym"), Ok(FkAssumptions::Nf6Sym));
+        assert_eq!(FkAssumptions::from_str("Nf5Ind"), Ok(FkAssumptions::Nf5Ind));
+        assert_eq!(FkAssumptions::from_str("Nf5Sym"), Ok(FkAssumptions::Nf5Sym));
+        assert_eq!(FkAssumptions::from_str("Nf4Ind"), Ok(FkAssumptions::Nf4Ind));
+        assert_eq!(FkAssumptions::from_str("Nf4Sym"), Ok(FkAssumptions::Nf4Sym));
+        assert_eq!(FkAssumptions::from_str("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
+        assert_eq!(FkAssumptions::from_str("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
         assert_eq!(
-            FkAssumptions::try_from("XXXXXX"),
+            FkAssumptions::from_str("XXXXXX"),
             Err(UnknownFkAssumption {
                 variant: "XXXXXX".to_string()
             })

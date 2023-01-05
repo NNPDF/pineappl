@@ -6,10 +6,10 @@ use numpy::{IntoPyArray, PyArray1, PyArray4};
 use pyo3::prelude::*;
 
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
@@ -31,7 +31,7 @@ impl PyFkAssumptions {
     #[new]
     pub fn new(assumption: &str) -> Self {
         PyFkAssumptions {
-            fk_assumptions: FkAssumptions::try_from(assumption).unwrap(),
+            fk_assumptions: FkAssumptions::from_str(assumption).unwrap(),
         }
     }
 }
