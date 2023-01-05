@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
@@ -234,7 +234,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`

@@ -15,7 +15,6 @@ Options:
       --subgrid-pull <SUBGRID_PULL>  Show the pull for a specific grid three-dimensionally
       --asymmetry                    Plot the asymmetry
       --threads <THREADS>            Number of threads to utilize [default: {}]
-      --force-positive               Forces negative PDF values to zero
   -h, --help                         Print help information
 ";
 

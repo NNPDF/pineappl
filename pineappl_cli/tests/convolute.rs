@@ -16,7 +16,6 @@ Options:
   -s, --scales <SCALES>     Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
       --digits-abs <ABS>    Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>    Set the number of fractional digits shown for relative numbers [default: 2]
-      --force-positive      Forces negative PDF values to zero
   -h, --help                Print help information
 ";
 
@@ -226,9 +225,9 @@ fn force_positive() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args(&[
+            "--force-positive",
             "--silence-lhapdf",
             "convolute",
-            "--force-positive",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])

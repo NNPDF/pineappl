@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -38,13 +38,10 @@ pub struct Opts {
     /// Set the number of digits shown for numerical values.
     #[arg(default_value_t = 3, long = "digits")]
     digits: usize,
-    /// Forces negative PDF values to zero.
-    #[arg(long = "force-positive")]
-    force_positive: bool,
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
 
         let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
@@ -70,7 +67,7 @@ impl Subcommand for Opts {
                     &[],
                     1,
                     ConvoluteMode::Normal,
-                    self.force_positive,
+                    cfg.force_positive,
                 )
             })
             .collect();
@@ -85,7 +82,7 @@ impl Subcommand for Opts {
                     &[],
                     1,
                     ConvoluteMode::Normal,
-                    self.force_positive,
+                    cfg.force_positive,
                 )
             })
             .collect();
@@ -136,7 +133,7 @@ impl Subcommand for Opts {
                             &lumi_mask,
                             1,
                             ConvoluteMode::Normal,
-                            self.force_positive,
+                            cfg.force_positive,
                         )
                         .as_slice()
                         {
@@ -155,7 +152,7 @@ impl Subcommand for Opts {
                                     &lumi_mask,
                                     1,
                                     ConvoluteMode::Normal,
-                                    self.force_positive,
+                                    cfg.force_positive,
                                 )
                                 .as_slice()
                                 {
@@ -182,7 +179,7 @@ impl Subcommand for Opts {
                             &lumi_mask,
                             1,
                             ConvoluteMode::Normal,
-                            self.force_positive,
+                            cfg.force_positive,
                         )
                         .as_slice()
                         {
@@ -201,7 +198,7 @@ impl Subcommand for Opts {
                                     &lumi_mask,
                                     1,
                                     ConvoluteMode::Normal,
-                                    self.force_positive,
+                                    cfg.force_positive,
                                 )
                                 .as_slice()
                                 {

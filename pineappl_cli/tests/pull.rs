@@ -16,7 +16,6 @@ Options:
   -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
-      --force-positive     Forces negative PDF values to zero
   -h, --help               Print help information
 ";
 

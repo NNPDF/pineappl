@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
@@ -44,9 +44,6 @@ pub struct Opts {
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
-    /// Forces negative PDF values to zero.
-    #[arg(long = "force-positive")]
-    force_positive: bool,
 }
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -155,7 +152,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
             .build_global()
@@ -205,7 +202,7 @@ impl Subcommand for Opts {
                     &[],
                     self.scales,
                     mode,
-                    self.force_positive,
+                    cfg.force_positive,
                 );
 
                 let qcd_results = {
@@ -231,7 +228,7 @@ impl Subcommand for Opts {
                         &[],
                         self.scales,
                         mode,
-                        self.force_positive,
+                        cfg.force_positive,
                     )
                 };
 
@@ -268,7 +265,7 @@ impl Subcommand for Opts {
                                     &[],
                                     1,
                                     mode,
-                                    self.force_positive,
+                                    cfg.force_positive,
                                 )
                             })
                             .collect();
@@ -361,7 +358,7 @@ impl Subcommand for Opts {
                                     &lumi_mask,
                                     1,
                                     mode,
-                                    self.force_positive,
+                                    cfg.force_positive,
                                 ),
                             )
                         })
@@ -476,7 +473,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        self.force_positive,
+                        cfg.force_positive,
                     )
                     .as_slice()
                     {
@@ -496,7 +493,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        self.force_positive,
+                        cfg.force_positive,
                     )
                     .as_slice()
                     {

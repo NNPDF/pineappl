@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Parser, ValueHint};
 use itertools::izip;
@@ -184,7 +184,7 @@ fn parse_remapping_string(
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         let mut grid = helpers::read_grid(&self.input)?;
         let (normalizations, limits) =
             parse_remapping_string(&self.remapping, &self.ignore_obs_norm, self.norm)?;

@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -54,13 +54,10 @@ pub struct Opts {
     /// Set the number of fractional digits shown for relative numbers.
     #[arg(default_value_t = 3, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
-    /// Forces negative PDF values to zero.
-    #[arg(long = "force-positive")]
-    force_positive: bool,
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         let grid1 = helpers::read_grid(&self.input1)?;
         let grid2 = helpers::read_grid(&self.input2)?;
 
@@ -155,7 +152,7 @@ impl Subcommand for Opts {
                 &[],
                 1,
                 ConvoluteMode::Normal,
-                self.force_positive,
+                cfg.force_positive,
             );
             let results2 = helpers::convolute(
                 &grid2,
@@ -165,7 +162,7 @@ impl Subcommand for Opts {
                 &[],
                 1,
                 ConvoluteMode::Normal,
-                self.force_positive,
+                cfg.force_positive,
             );
 
             for (bin, (limits1, (result1, result2))) in limits1
@@ -211,7 +208,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        self.force_positive,
+                        cfg.force_positive,
                     )
                 })
                 .collect();
@@ -226,7 +223,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        self.force_positive,
+                        cfg.force_positive,
                     )
                 })
                 .collect();

@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{ArgGroup, Parser, ValueHint};
 use itertools::Itertools;
@@ -35,7 +35,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();

@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
@@ -153,7 +153,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;

@@ -24,7 +24,6 @@ Arguments:
 Options:
   -l, --limit <LIMIT>     The maximum number of channels displayed [default: 10]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
-      --force-positive    Forces negative PDF values to zero
   -h, --help              Print help information
 ";
 

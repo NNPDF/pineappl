@@ -27,7 +27,7 @@ use anyhow::Result;
 use clap::Parser;
 use enum_dispatch::enum_dispatch;
 use git_version::git_version;
-use helpers::Subcommand;
+use helpers::{GlobalConfiguration, Subcommand};
 use std::process;
 
 #[derive(Parser)]
@@ -44,10 +44,9 @@ use std::process;
     )
 )]
 struct Opts {
-    /// Prevents LHAPDF from printing banners.
-    #[arg(alias = "silence_lhapdf", long = "silence-lhapdf")]
-    silence_lhapdf: bool,
-    #[clap(subcommand)]
+    #[command(flatten)]
+    configuration: GlobalConfiguration,
+    #[command(subcommand)]
     subcommand: SubcommandEnum,
 }
 
@@ -80,12 +79,12 @@ enum SubcommandEnum {
 fn main() -> Result<()> {
     let opts = Opts::parse();
 
-    if opts.silence_lhapdf {
+    if opts.configuration.silence_lhapdf {
         lhapdf::set_verbosity(0);
     }
 
     // TODO: use exit code from Rust 1.61
-    let code = opts.subcommand.run()?;
+    let code = opts.subcommand.run(&opts.configuration)?;
 
     if code == 0 {
         Ok(())

@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode, Subcommand};
+use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -12,8 +12,8 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
-        self.subcommand.run()
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
+        self.subcommand.run(cfg)
     }
 }
 
@@ -23,9 +23,9 @@ enum SubcommandEnum {
 }
 
 impl Subcommand for SubcommandEnum {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         match self {
-            Self::Ckf(opts) => opts.run(),
+            Self::Ckf(opts) => opts.run(cfg),
         }
     }
 }
@@ -56,13 +56,10 @@ pub struct CkfOpts {
     /// Set the number of fractional digits shown for relative numbers.
     #[arg(default_value_t = 2, long = "digits-rel", value_name = "REL")]
     digits_rel: usize,
-    /// Forces negative PDF values to zero.
-    #[arg(long = "force-positive")]
-    force_positive: bool,
 }
 
 impl Subcommand for CkfOpts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
@@ -92,7 +89,7 @@ impl Subcommand for CkfOpts {
                     &lumi_mask,
                     1,
                     ConvoluteMode::Normal,
-                    self.force_positive,
+                    cfg.force_positive,
                 )
             })
             .collect();
@@ -108,7 +105,7 @@ impl Subcommand for CkfOpts {
                     &lumi_mask,
                     1,
                     ConvoluteMode::Normal,
-                    self.force_positive,
+                    cfg.force_positive,
                 )
             })
             .collect();

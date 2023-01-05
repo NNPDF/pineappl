@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use std::path::PathBuf;
@@ -28,7 +28,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         let (input0, input_rest) = self.input.split_first().unwrap();
         let mut grid0 = helpers::read_grid(input0)?;
 

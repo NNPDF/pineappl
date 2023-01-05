@@ -1,4 +1,4 @@
-use super::helpers::{self, Subcommand};
+use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{ArgAction, Parser, ValueHint};
 use std::fs;
@@ -37,7 +37,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self) -> Result<u8> {
+    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
         let mut grid = helpers::read_grid(&self.input)?;
 
         for key_value in self.entry.chunks(2) {
