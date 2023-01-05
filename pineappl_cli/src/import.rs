@@ -234,7 +234,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         use prettytable::{cell, row};
 
         // TODO: figure out `member` from `self.pdfset`
@@ -266,7 +266,7 @@ impl Subcommand for Opts {
                 &[],
                 scale_variations,
                 ConvoluteMode::Normal,
-                false,
+                cfg.force_positive,
             );
 
             // if both grids don't have the same number of bins there's bug in the program

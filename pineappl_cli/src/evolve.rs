@@ -153,7 +153,7 @@ pub struct Opts {
 }
 
 impl Subcommand for Opts {
-    fn run(&self, _: &GlobalConfiguration) -> Result<u8> {
+    fn run(&self, cfg: &GlobalConfiguration) -> Result<u8> {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
@@ -166,7 +166,7 @@ impl Subcommand for Opts {
             &[],
             &[(self.xir, self.xif)],
             ConvoluteMode::Normal,
-            false,
+            cfg.force_positive,
         );
 
         let fk_table = evolve_grid(&grid, &self.eko, &pdf, &self.orders, self.xir, self.xif)?;
@@ -178,7 +178,7 @@ impl Subcommand for Opts {
             &[],
             &[(1.0, 1.0)],
             ConvoluteMode::Normal,
-            false,
+            cfg.force_positive,
         );
 
         // if both grids don't have the same number of bins there's a bug in the program
