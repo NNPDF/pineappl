@@ -14,4 +14,6 @@ default-members = [
 exclude = ["pineappl_py"]
 
 [profile.release]
+codegen-units = 1
 lto = true
+strip = "debuginfo"
