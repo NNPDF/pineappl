@@ -23,11 +23,7 @@ pub struct Opts {
     #[arg(long, value_delimiter = ',')]
     ignore_obs_norm: Vec<usize>,
     /// Normalization factor in addition to the given bin widths.
-    #[arg(
-        default_value = "1.0",
-        long,
-        value_parser = helpers::parse_pos_non_zero::<f64>
-    )]
+    #[arg(default_value = "1.0", long)]
     norm: f64,
 }
 

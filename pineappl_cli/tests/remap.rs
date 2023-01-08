@@ -32,12 +32,6 @@ const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
 7  1  2 2 4 4 5 1.3772029e0    -3.46     2.85
 ";
 
-const WRONG_NORM_STR: &str =
-    "error: Invalid value '-1' for '--norm <NORM>': The value `-1` is not positive or non-zero
-
-For more information try '--help'
-";
-
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -77,23 +71,4 @@ fn default() {
         .assert()
         .success()
         .stdout(DEFAULT_STR);
-}
-
-#[test]
-fn wrong_norm() {
-    let output = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args(&[
-            "remap",
-            "--ignore-obs-norm=2",
-            "--norm=-1",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
-            output.path().to_str().unwrap(),
-            "0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
-        ])
-        .assert()
-        .failure()
-        .stderr(WRONG_NORM_STR);
 }
