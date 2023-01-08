@@ -63,7 +63,7 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal
             },
         );
-        let results: Vec<f64> = pdfs
+        let results: Vec<_> = pdfs
             .into_par_iter()
             .flat_map(|mut pdf| {
                 helpers::convolute(

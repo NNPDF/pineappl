@@ -86,7 +86,7 @@ impl Subcommand for Opts {
             },
         );
 
-        let other_results: Vec<f64> = self.pdfsets[1..]
+        let other_results: Vec<_> = self.pdfsets[1..]
             .iter()
             .flat_map(|pdfset| {
                 let mut pdf = helpers::create_pdf(pdfset).unwrap();

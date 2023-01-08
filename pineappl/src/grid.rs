@@ -514,7 +514,7 @@ impl Grid {
         } else {
             bin_indices.to_vec()
         };
-        let mut bins: Vec<f64> = vec![0.0; bin_indices.len() * xi.len()];
+        let mut bins = vec![0.0; bin_indices.len() * xi.len()];
         let normalizations = self.bin_info().normalizations();
         let self_lumi = self.pdg_lumi();
 
@@ -1496,13 +1496,13 @@ impl Grid {
             // iterate over the source grid luminosities
             for (src_lumi, src_entries) in self.lumi.iter().enumerate() {
                 // create a sorted and unique vector with the `q2` for all orders
-                let mut src_array_q2_grid: Vec<f64> = (0..self.orders.len())
+                let mut src_array_q2_grid: Vec<_> = (0..self.orders.len())
                     .flat_map(|order| {
                         self.subgrids[[order, bin, src_lumi]]
                             .mu2_grid()
                             .iter()
                             .map(|mu2| mu2.fac)
-                            .collect::<Vec<f64>>()
+                            .collect::<Vec<_>>()
                     })
                     .collect();
                 src_array_q2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());

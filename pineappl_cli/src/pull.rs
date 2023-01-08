@@ -59,7 +59,7 @@ impl Subcommand for Opts {
 
         let limit = grid.lumi().len().min(self.limit);
         let bin_limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
-        let results1: Vec<f64> = pdfset1
+        let results1: Vec<_> = pdfset1
             .par_iter_mut()
             .flat_map(|pdf| {
                 helpers::convolute(
@@ -74,7 +74,7 @@ impl Subcommand for Opts {
                 )
             })
             .collect();
-        let results2: Vec<f64> = pdfset2
+        let results2: Vec<_> = pdfset2
             .par_iter_mut()
             .flat_map(|pdf| {
                 helpers::convolute(
@@ -144,7 +144,7 @@ impl Subcommand for Opts {
                             _ => unreachable!(),
                         }
                     } else {
-                        let central: Vec<f64> = pdfset1
+                        let central: Vec<_> = pdfset1
                             .par_iter_mut()
                             .map(|pdf| {
                                 match helpers::convolute(
@@ -190,7 +190,7 @@ impl Subcommand for Opts {
                             _ => unreachable!(),
                         }
                     } else {
-                        let central: Vec<f64> = pdfset2
+                        let central: Vec<_> = pdfset2
                             .par_iter_mut()
                             .map(|pdf| {
                                 match helpers::convolute(

@@ -86,7 +86,7 @@ fn fill_drell_yan_lo_grid(
     }];
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
-    let bin_limits: Vec<f64> = (0..=24).map(|x| x as f64 / 10.0).collect();
+    let bin_limits: Vec<_> = (0..=24).map(|x| x as f64 / 10.0).collect();
 
     let mut subgrid_params = SubgridParams::default();
     let mut extra = ExtraSubgridParams::default();

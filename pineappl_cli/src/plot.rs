@@ -248,7 +248,7 @@ impl Subcommand for Opts {
                     .map(|limits| 0.5 * (limits[0] + limits[1]))
                     .collect();
 
-                let pdf_uncertainties: Vec<Vec<Vec<f64>>> = self
+                let pdf_uncertainties: Vec<Vec<Vec<_>>> = self
                     .pdfsets
                     .par_iter()
                     .map(|pdfset| {
@@ -463,7 +463,7 @@ impl Subcommand for Opts {
             let mut pdfset1 = set1.mk_pdfs();
             let mut pdfset2 = set2.mk_pdfs();
 
-            let values1: Vec<f64> = pdfset1
+            let values1: Vec<_> = pdfset1
                 .par_iter_mut()
                 .map(|pdf| {
                     match helpers::convolute(
@@ -483,7 +483,7 @@ impl Subcommand for Opts {
                     }
                 })
                 .collect();
-            let values2: Vec<f64> = pdfset2
+            let values2: Vec<_> = pdfset2
                 .par_iter_mut()
                 .map(|pdf| {
                     match helpers::convolute(
