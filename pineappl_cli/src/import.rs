@@ -211,7 +211,7 @@ pub struct Opts {
     accuracy: f64,
     /// Set the number of scale variations to compare with if they are available.
     #[arg(
-        default_value = "7",
+        default_value_t = 7,
         long,
         short,
         value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())

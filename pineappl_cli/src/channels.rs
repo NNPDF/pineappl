@@ -21,7 +21,7 @@ pub struct Opts {
     absolute: bool,
     /// The maximum number of channels displayed.
     #[arg(
-        default_value = "10",
+        default_value_t = 10,
         long,
         short,
         // TODO: see https://github.com/clap-rs/clap/issues/4253
