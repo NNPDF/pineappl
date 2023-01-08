@@ -8,7 +8,7 @@ Usage: pineappl remap [OPTIONS] <INPUT> <OUTPUT> <REMAPPING>
 Arguments:
   <INPUT>      Path to the input grid
   <OUTPUT>     Path of the modified PineAPPL file
-  <REMAPPING>  Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full reference
+  <REMAPPING>  Remapping string. See <https://nnpdf.github.io/pineappl/docs/cli-reference.html> for full reference
 
 Options:
       --ignore-obs-norm <IGNORE_OBS_NORM>

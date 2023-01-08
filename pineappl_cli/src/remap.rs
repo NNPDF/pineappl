@@ -16,7 +16,7 @@ pub struct Opts {
     /// Path of the modified PineAPPL file.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// Remapping string. See <https://n3pdf.github.io/pineappl/docs/cli-reference.html> for full
+    /// Remapping string. See <https://nnpdf.github.io/pineappl/docs/cli-reference.html> for full
     /// reference.
     remapping: String,
     /// Ignore the given observables for differential normalization.
