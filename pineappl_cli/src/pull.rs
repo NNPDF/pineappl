@@ -1,6 +1,7 @@
 use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::{Parser, ValueHint};
+use clap::builder::TypedValueParser;
+use clap::{value_parser, Parser, ValueHint};
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::num::NonZeroUsize;
@@ -30,7 +31,8 @@ pub struct Opts {
         default_value = "10",
         long,
         short,
-        value_parser = helpers::parse_pos_non_zero::<usize>
+        // TODO: see https://github.com/clap-rs/clap/issues/4253
+        value_parser = value_parser!(u16).range(1..).map(usize::from)
     )]
     limit: usize,
     /// Number of threads to utilize.

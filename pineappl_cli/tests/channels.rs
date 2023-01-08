@@ -73,6 +73,11 @@ const LIMIT_3_STR: &str = "b   etal    l  size  l  size  l size
 7    4  4.5 0 115.79 3  -8.59 1 -7.23
 ";
 
+const BAD_LIMIT_STR: &str = "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
+
+For more information try '--help'
+";
+
 const LUMIS_0123_STR: &str = "b   etal    l  size  l  size  l size  l size
      []        [%]      [%]      [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----
@@ -171,6 +176,22 @@ fn limit_3() {
         .assert()
         .success()
         .stdout(LIMIT_3_STR);
+}
+
+#[test]
+fn bad_limit() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "channels",
+            "--limit=0",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(BAD_LIMIT_STR);
 }
 
 #[test]

@@ -58,6 +58,11 @@ const LIMIT_STR: &str = "b   etal    total l pull
 7    4  4.5 1.219 0 1.439
 ";
 
+const BAD_LIMIT_STR: &str = "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
+
+For more information try '--help'
+";
+
 const REPLICA0_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
@@ -139,6 +144,24 @@ fn limit() {
         .assert()
         .success()
         .stdout(LIMIT_STR);
+}
+
+#[test]
+fn bad_limit() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "pull",
+            "--limit=0",
+            "--threads=1",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .failure()
+        .stderr(BAD_LIMIT_STR);
 }
 
 #[test]

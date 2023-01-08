@@ -55,6 +55,12 @@ const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
 7    4  4.5 -23.63 0 -41.69 3 -inf 1 -inf 4 1.00 2 1.00
 ";
 
+const CKF_WITH_BAD_LIMIT_STR: &str =
+    "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
+
+For more information try '--help'
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -108,4 +114,22 @@ fn ckf_with_default_denominator() {
         .assert()
         .success()
         .stdout(CKF_WITH_DEFAULT_DENOMINATOR_STR);
+}
+
+#[test]
+fn ckf_with_bad_limit() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "analyze",
+            "ckf",
+            "--limit=0",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+            "a2as1",
+        ])
+        .assert()
+        .failure()
+        .stderr(CKF_WITH_BAD_LIMIT_STR);
 }

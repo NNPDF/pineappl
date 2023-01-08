@@ -12,7 +12,6 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
-use std::str::FromStr;
 
 #[derive(Parser)]
 pub struct GlobalConfiguration {
@@ -315,20 +314,6 @@ pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
     }
 
     Err(format!("The PDF set `{lhapdf_name}` was not found"))
-}
-
-pub fn parse_pos_non_zero<T: Default + FromStr + PartialOrd>(
-    argument: &str,
-) -> std::result::Result<T, String> {
-    if let Ok(number) = argument.parse::<T>() {
-        if number > T::default() {
-            return Ok(number);
-        }
-    }
-
-    Err(format!(
-        "The value `{argument}` is not positive or non-zero"
-    ))
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
