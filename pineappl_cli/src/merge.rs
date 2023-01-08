@@ -18,7 +18,6 @@ pub struct Opts {
     scale: Option<f64>,
     /// Scales all grids with order-dependent factors.
     #[arg(
-        alias = "scale_by_order",
         conflicts_with = "scale",
         long = "scale-by-order",
         value_delimiter = ',',

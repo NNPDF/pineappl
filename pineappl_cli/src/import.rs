@@ -218,7 +218,7 @@ pub struct Opts {
     )]
     scales: usize,
     /// Prevents third-party libraries from printing output.
-    #[arg(alias = "silence-fastnlo", long = "silence-libraries")]
+    #[arg(long = "silence-libraries")]
     silence_libraries: bool,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]

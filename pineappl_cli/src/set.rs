@@ -29,7 +29,6 @@ pub struct Opts {
     /// Sets an internal key-value pair, with value being read from a file.
     #[arg(
         action = ArgAction::Append,
-        alias = "entry_from_file",
         long = "entry-from-file",
         num_args(2),
         value_names = &["KEY", "FILE"]

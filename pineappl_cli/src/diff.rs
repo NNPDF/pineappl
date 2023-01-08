@@ -19,7 +19,7 @@ pub struct Opts {
     #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Ignore differences in the orders and sum them.
-    #[arg(alias = "ignore_orders", long = "ignore-orders")]
+    #[arg(long = "ignore-orders")]
     ignore_orders: bool,
     /// Ignore bin limits (but not number of bins).
     #[arg(long = "ignore-bin-limits")]

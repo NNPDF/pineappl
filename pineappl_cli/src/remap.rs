@@ -20,11 +20,7 @@ pub struct Opts {
     /// reference.
     remapping: String,
     /// Ignore the given observables for differential normalization.
-    #[arg(
-        alias = "ignore_obs_norm",
-        long = "ignore-obs-norm",
-        value_delimiter = ','
-    )]
+    #[arg(long = "ignore-obs-norm", value_delimiter = ',')]
     ignore_obs_norm: Vec<usize>,
     /// Normalization factor in addition to the given bin widths.
     #[arg(

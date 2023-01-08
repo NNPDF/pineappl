@@ -17,7 +17,7 @@ use std::str::FromStr;
 #[derive(Parser)]
 pub struct GlobalConfiguration {
     /// Prevents LHAPDF from printing banners.
-    #[arg(alias = "silence_lhapdf", long = "silence-lhapdf")]
+    #[arg(long = "silence-lhapdf")]
     pub silence_lhapdf: bool,
     /// Forces negative PDF values to zero.
     #[arg(long = "force-positive")]

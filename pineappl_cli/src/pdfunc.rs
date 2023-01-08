@@ -10,7 +10,6 @@ use std::thread;
 
 /// Calculates PDF uncertainties.
 #[derive(Parser)]
-#[command(aliases = &["pdf-uncertainty", "pdf_uncertainty"])]
 pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
