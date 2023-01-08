@@ -1,7 +1,6 @@
 title: PineAPPL
 show_downloads: false
 baseurl: "/pineappl"
-url: "https://n3pdf.github.io"
 markdown: kramdown
 remote_theme: pages-themes/primer@v0.6.0
 plugins:
