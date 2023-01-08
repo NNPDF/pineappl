@@ -33,7 +33,7 @@ pub struct Opts {
     /// Show the pull for a specific grid three-dimensionally.
     #[arg(
         conflicts_with = "scales",
-        long = "subgrid-pull",
+        long,
         value_delimiter = ','
         // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
         //value_names = &["ORDER", "BIN", "LUMI"],

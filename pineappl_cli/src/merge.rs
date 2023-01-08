@@ -19,7 +19,7 @@ pub struct Opts {
     /// Scales all grids with order-dependent factors.
     #[arg(
         conflicts_with = "scale",
-        long = "scale-by-order",
+        long,
         value_delimiter = ',',
         // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
         //value_names = &["ALPHAS", "ALPHA", "LOGXIR", "LOGXIF", "GLOBAL"]

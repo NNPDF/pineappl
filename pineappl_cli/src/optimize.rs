@@ -16,7 +16,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     #[arg(
-        long = "fk-table",
+        long,
         value_name = "ASSUMPTIONS",
         value_parser = PossibleValuesParser::new(["Nf6Ind", "Nf6Sym", "Nf5Ind", "Nf5Sym", "Nf4Ind", "Nf4Sym", "Nf3Ind", "Nf3Sym"]).try_map(|s| s.parse::<FkAssumptions>())
     )]

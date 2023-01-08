@@ -17,10 +17,10 @@ use std::str::FromStr;
 #[derive(Parser)]
 pub struct GlobalConfiguration {
     /// Prevents LHAPDF from printing banners.
-    #[arg(long = "silence-lhapdf")]
+    #[arg(long)]
     pub silence_lhapdf: bool,
     /// Forces negative PDF values to zero.
-    #[arg(long = "force-positive")]
+    #[arg(long)]
     pub force_positive: bool,
 }
 

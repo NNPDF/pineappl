@@ -131,10 +131,10 @@ pub struct Opts {
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[arg(default_value_t = 7, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 7, long, value_name = "REL")]
     digits_rel: usize,
     /// Select which orders to evolve.
     #[arg(

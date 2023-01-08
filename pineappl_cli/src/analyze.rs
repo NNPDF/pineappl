@@ -55,7 +55,7 @@ pub struct CkfOpts {
     )]
     limit: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[arg(default_value_t = 2, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 2, long, value_name = "REL")]
     digits_rel: usize,
 }
 

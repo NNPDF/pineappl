@@ -37,7 +37,7 @@ pub struct Opts {
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
     /// Set the number of digits shown for numerical values.
-    #[arg(default_value_t = 3, long = "digits")]
+    #[arg(default_value_t = 3, long)]
     digits: usize,
 }
 

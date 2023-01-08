@@ -42,7 +42,7 @@ pub struct Opts {
     #[arg(group = "show", long)]
     stats: bool,
     /// Set the number of digits shown for numerical values.
-    #[arg(default_value_t = 3, long = "digits")]
+    #[arg(default_value_t = 3, long)]
     digits: usize,
 }
 

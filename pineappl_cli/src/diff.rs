@@ -19,13 +19,13 @@ pub struct Opts {
     #[arg(value_parser = helpers::parse_pdfset)]
     pdfset: String,
     /// Ignore differences in the orders and sum them.
-    #[arg(long = "ignore-orders")]
+    #[arg(long)]
     ignore_orders: bool,
     /// Ignore bin limits (but not number of bins).
-    #[arg(long = "ignore-bin-limits")]
+    #[arg(long)]
     ignore_bin_limits: bool,
     /// Ignore differences in the luminosity functions.
-    #[arg(long = "ignore-lumis")]
+    #[arg(long)]
     ignore_lumis: bool,
     /// Select orders of the first grid.
     #[arg(
@@ -50,10 +50,10 @@ pub struct Opts {
     #[arg(long, default_value = "1.0")]
     scale2: f64,
     /// Set the number of fractional digits shown for absolute numbers.
-    #[arg(default_value_t = 7, long = "digits-abs", value_name = "ABS")]
+    #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
     /// Set the number of fractional digits shown for relative numbers.
-    #[arg(default_value_t = 3, long = "digits-rel", value_name = "REL")]
+    #[arg(default_value_t = 3, long, value_name = "REL")]
     digits_rel: usize,
 }
 
