@@ -15,13 +15,11 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: nightly
+          toolchain: 1.65.0
 
       - name: Install cargo-c
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-c
+        run: |
+          cargo install cargo-c --version 0.9.14+cargo-0.67
 
       - name: Install PineAPPL's C API
         run: |

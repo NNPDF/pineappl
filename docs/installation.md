@@ -32,7 +32,7 @@ below.
    It is possible that the installation fails if your Rust compiler is too old.
    In that case update Rust or try installing an older version of `cargo-c`:
 
-       cargo install cargo-c --version 0.7.3
+       cargo install cargo-c --version 0.9.14+cargo-0.67
 
 2. Now install `pineappl_capi`, PineAPPL's C API:
 
@@ -132,7 +132,7 @@ already installed, make sure it is recent enough:
 
     cargo --version
 
-This should show a version that is at least 1.56.1. If you do not have `cargo`
+This should show a version that is at least 1.65.0. If you do not have `cargo`
 or if it is too old, go to <https://www.rust-lang.org/tools/install> and follow
 the instructions there.
 
