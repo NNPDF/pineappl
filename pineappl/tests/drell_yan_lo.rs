@@ -162,7 +162,6 @@ fn perform_grid_tests(
     dynamic: bool,
     reference: &[f64],
     reference_after_ssd: &[f64],
-    (convolute_subgrid_before, convolute_subgrid_after): (bool, bool),
     x_grid: &[f64],
 ) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
@@ -226,17 +225,15 @@ fn perform_grid_tests(
     }
 
     // TEST 6: `convolute_subgrid`
-    if convolute_subgrid_before {
-        let bins: Vec<_> = (0..grid.bin_info().bins())
-            .map(|bin| {
-                grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
-                    .sum()
-            })
-            .collect();
+    let bins: Vec<_> = (0..grid.bin_info().bins())
+        .map(|bin| {
+            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                .sum()
+        })
+        .collect();
 
-        for (result, reference) in bins.iter().zip(reference.iter()) {
-            assert_approx_eq!(f64, *result, *reference, ulps = 24);
-        }
+    for (result, reference) in bins.iter().zip(reference.iter()) {
+        assert_approx_eq!(f64, *result, *reference, ulps = 24);
     }
 
     // TEST 7: `optimize`
@@ -246,17 +243,15 @@ fn perform_grid_tests(
     assert_eq!(grid.subgrid(0, 0, 0).x2_grid().as_ref(), x_grid);
 
     // TEST 8: `convolute_subgrid` for the optimized subgrids
-    if convolute_subgrid_after {
-        let bins: Vec<_> = (0..grid.bin_info().bins())
-            .map(|bin| {
-                grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
-                    .sum()
-            })
-            .collect();
+    let bins: Vec<_> = (0..grid.bin_info().bins())
+        .map(|bin| {
+            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+                .sum()
+        })
+        .collect();
 
-        for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-            assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
-        }
+    for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
     }
 
     let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
@@ -430,7 +425,6 @@ fn dy_aa_lagrange_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -451,7 +445,6 @@ fn dy_aa_lagrange_static() -> Result<()> {
 //        false,
 //        &STATIC_REFERENCE,
 //        &STATIC_REFERENCE_AFTER_SSD,
-//        (true, true),
 //    )
 //}
 
@@ -462,7 +455,6 @@ fn dy_aa_lagrange_v2_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -481,7 +473,6 @@ fn dy_aa_lagrange_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -500,7 +491,6 @@ fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (false, false),
         &[
             1.0,
             0.9309440808717544,
@@ -563,7 +553,6 @@ fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -582,7 +571,6 @@ fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (false, false),
         &[
             1.0,
             0.9309440808717544,
