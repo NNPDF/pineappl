@@ -234,8 +234,8 @@ fn perform_grid_tests(
             })
             .collect();
 
-        for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-            assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+        for (result, reference) in bins.iter().zip(reference.iter()) {
+            assert_approx_eq!(f64, *result, *reference, ulps = 24);
         }
     }
 
@@ -430,7 +430,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        (false, true),
+        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -462,7 +462,7 @@ fn dy_aa_lagrange_v2_static() -> Result<()> {
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
-        (false, true),
+        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -481,7 +481,7 @@ fn dy_aa_lagrange_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (false, true),
+        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
@@ -563,7 +563,7 @@ fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
-        (false, true),
+        (true, true),
         &[
             0.030521584007828916,
             0.02108918668378717,
