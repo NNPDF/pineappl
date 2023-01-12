@@ -362,20 +362,25 @@ impl Subgrid for ImportOnlySubgridV2 {
 impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
     fn from(subgrid: &LagrangeSubgridV2) -> Self {
         // figure out the tightest x1-x2 boundaries for this subgrid
-        let (x1_range, x2_range) = subgrid.indexed_iter().fold(
-            (subgrid.x1_grid().len()..0, subgrid.x2_grid().len()..0),
-            |prev, ((_, ix1, ix2), _)| {
+        let (mu2_range, x1_range, x2_range) = subgrid.indexed_iter().fold(
+            (
+                subgrid.mu2_grid().len()..0,
+                subgrid.x1_grid().len()..0,
+                subgrid.x2_grid().len()..0,
+            ),
+            |prev, ((imu2, ix1, ix2), _)| {
                 (
-                    prev.0.start.min(ix1)..prev.0.end.max(ix1 + 1),
-                    prev.1.start.min(ix2)..prev.1.end.max(ix2 + 1),
+                    prev.0.start.min(imu2)..prev.0.end.max(imu2 + 1),
+                    prev.1.start.min(ix1)..prev.1.end.max(ix1 + 1),
+                    prev.2.start.min(ix2)..prev.2.end.max(ix2 + 1),
                 )
             },
         );
 
         let array = subgrid.grid.as_ref().map_or_else(
-            || SparseArray3::new(subgrid.ntau, subgrid.ny1, subgrid.ny2),
-            // in the following case we should optimize when ny2 > ny1
+            || SparseArray3::new(mu2_range.len(), x1_range.len(), x2_range.len()),
             |array| {
+                // FIXME: reweighting must be wrong if the grid doesn't
                 let reweight_x1: Vec<_> = subgrid.x1_grid()[x1_range.clone()]
                     .iter()
                     .map(|x| lagrange_subgrid::weightfun(*x))
@@ -405,7 +410,7 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                     for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
                         *entry *= reweight_x1[ix1] * reweight_x2[ix2];
                     }
-                    SparseArray3::from_ndarray(array.view(), 0, subgrid.itaumax - subgrid.itaumin)
+                    SparseArray3::from_ndarray(array.view(), 0, mu2_range.len())
                 }
             },
         );
@@ -415,10 +420,7 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                 fac: subgrid.static_q2,
             }]
         } else {
-            subgrid.mu2_grid()[subgrid.itaumin..subgrid.itaumax]
-                .iter()
-                .cloned()
-                .collect()
+            subgrid.mu2_grid()[mu2_range].iter().cloned().collect()
         };
         let x1_grid = subgrid.x1_grid()[x1_range].to_vec();
         let x2_grid = subgrid.x2_grid()[x2_range].to_vec();
