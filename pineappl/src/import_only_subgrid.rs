@@ -415,15 +415,9 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
                 fac: subgrid.static_q2,
             }]
         } else {
-            subgrid
-                .mu2_grid()
+            subgrid.mu2_grid()[subgrid.itaumin..subgrid.itaumax]
                 .iter()
-                .skip(subgrid.itaumin)
-                .take(subgrid.itaumax - subgrid.itaumin)
-                .map(|mu2| Mu2 {
-                    ren: mu2.ren,
-                    fac: mu2.fac,
-                })
+                .cloned()
                 .collect()
         };
         let x1_grid = subgrid.x1_grid()[x1_range].to_vec();

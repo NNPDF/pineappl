@@ -343,7 +343,7 @@ impl Subgrid for LagrangeSubgridV1 {
                 Box::new(grid.indexed_iter().filter_map(|(tuple, &value)| {
                     (value != 0.0).then(|| {
                         (
-                            tuple,
+                            (self.itaumin + tuple.0, tuple.1, tuple.2),
                             value
                                 * if self.reweight {
                                     weightfun(fx(self.gety(tuple.1)))
@@ -725,7 +725,7 @@ impl Subgrid for LagrangeSubgridV2 {
                 Box::new(grid.indexed_iter().filter_map(|(tuple, &value)| {
                     (value != 0.0).then(|| {
                         (
-                            tuple,
+                            (self.itaumin + tuple.0, tuple.1, tuple.2),
                             value
                                 * if self.reweight1 {
                                     weightfun(fx(self.gety1(tuple.1)))
