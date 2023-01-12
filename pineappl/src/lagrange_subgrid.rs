@@ -13,7 +13,7 @@ use std::borrow::Cow;
 use std::iter;
 use std::mem;
 
-pub(crate) fn weightfun(x: f64) -> f64 {
+fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
@@ -62,7 +62,7 @@ fn fi(i: usize, n: usize, u: f64) -> f64 {
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV1 {
-    pub(crate) grid: Option<Array3<f64>>,
+    grid: Option<Array3<f64>>,
     ntau: usize,
     ny: usize,
     yorder: usize,
@@ -383,7 +383,7 @@ impl Subgrid for LagrangeSubgridV1 {
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
-    pub(crate) grid: Option<Array3<f64>>,
+    grid: Option<Array3<f64>>,
     ntau: usize,
     ny1: usize,
     ny2: usize,
