@@ -1,10 +1,8 @@
 //! TODO
 
 use super::grid::Ntuple;
-use super::lagrange_subgrid::{self, LagrangeSubgridV2};
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use ndarray::{s, Axis};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
@@ -359,9 +357,9 @@ impl Subgrid for ImportOnlySubgridV2 {
     }
 }
 
-impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
-    fn from(subgrid: &LagrangeSubgridV2) -> Self {
-        // figure out the tightest x1-x2 boundaries for this subgrid
+impl From<&SubgridEnum> for ImportOnlySubgridV2 {
+    fn from(subgrid: &SubgridEnum) -> Self {
+        // find smallest ranges
         let (mu2_range, x1_range, x2_range) = subgrid.indexed_iter().fold(
             (
                 subgrid.mu2_grid().len()..0,
@@ -377,53 +375,36 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
             },
         );
 
-        let array = subgrid.grid.as_ref().map_or_else(
-            || SparseArray3::new(mu2_range.len(), x1_range.len(), x2_range.len()),
-            |array| {
-                // FIXME: reweighting must be wrong if the grid doesn't
-                let reweight_x1: Vec<_> = subgrid.x1_grid()[x1_range.clone()]
-                    .iter()
-                    .map(|x| lagrange_subgrid::weightfun(*x))
-                    .collect();
-                let reweight_x2: Vec<_> = subgrid.x2_grid()[x2_range.clone()]
-                    .iter()
-                    .map(|x| lagrange_subgrid::weightfun(*x))
-                    .collect();
+        let static_q2 = if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
+            subgrid.static_q2
+        } else {
+            -1.0
+        };
+        let static_scale = static_q2 != -1.0;
 
-                if subgrid.static_q2 > 0.0 {
-                    // in this case we've detected a static scale for this bin and we can collapse
-                    // the Q^2 axis into a single bin
-
-                    let mut array = array
-                        .slice(s![.., x1_range.clone(), x2_range.clone()])
-                        .sum_axis(Axis(0))
-                        .into_shape((1, x1_range.len(), x2_range.len()))
-                        .unwrap();
-                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
-                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
-                    }
-                    SparseArray3::from_ndarray(array.view(), 0, 1)
-                } else {
-                    let mut array = array
-                        .slice(s![.., x1_range.clone(), x2_range.clone()])
-                        .into_owned();
-                    for ((_, ix1, ix2), entry) in array.indexed_iter_mut() {
-                        *entry *= reweight_x1[ix1] * reweight_x2[ix2];
-                    }
-                    SparseArray3::from_ndarray(array.view(), 0, mu2_range.len())
-                }
-            },
-        );
-        let mu2_grid = if subgrid.static_q2 > 0.0 {
+        let mu2_grid = if static_scale {
             vec![Mu2 {
-                ren: subgrid.static_q2,
-                fac: subgrid.static_q2,
+                ren: static_q2,
+                fac: static_q2,
             }]
         } else {
-            subgrid.mu2_grid()[mu2_range].iter().cloned().collect()
+            subgrid.mu2_grid()[mu2_range.clone()].to_vec()
         };
-        let x1_grid = subgrid.x1_grid()[x1_range].to_vec();
-        let x2_grid = subgrid.x2_grid()[x2_range].to_vec();
+        let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
+        let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();
+
+        let mut array = SparseArray3::new(mu2_grid.len(), x1_grid.len(), x2_grid.len());
+
+        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
+            // if there's a static scale we want every value to be added to same grid point
+            let index = if static_scale {
+                0
+            } else {
+                imu2 - mu2_range.start
+            };
+
+            array[[index, ix1 - x1_range.start, ix2 - x2_range.start]] += value;
+        }
 
         Self {
             array,
@@ -437,6 +418,7 @@ impl From<&LagrangeSubgridV2> for ImportOnlySubgridV2 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lagrange_subgrid::LagrangeSubgridV2;
     use crate::subgrid::{ExtraSubgridParams, SubgridParams};
     use float_cmp::assert_approx_eq;
     use rand::distributions::{Distribution, Uniform};
@@ -714,14 +696,14 @@ mod tests {
             weight: 1.0,
         });
 
-        let x1 = lagrange.x1_grid();
-        let x2 = lagrange.x2_grid();
-        let mu2 = lagrange.mu2_grid();
+        let x1 = lagrange.x1_grid().to_vec();
+        let x2 = lagrange.x2_grid().to_vec();
+        let mu2 = lagrange.mu2_grid().to_vec();
 
         let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
         let reference = lagrange.convolute(&x1, &x2, &mu2, lumi);
 
-        let imported = ImportOnlySubgridV2::from(&lagrange);
+        let imported = ImportOnlySubgridV2::from(&lagrange.into());
         let test = imported.convolute(&x1, &x2, &mu2, lumi);
 
         // make sure the conversion did not change the results
@@ -765,8 +747,8 @@ mod tests {
         let result1 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
         let result2 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
 
-        let mut grid1: SubgridEnum = ImportOnlySubgridV2::from(&grid1).into();
-        let mut grid2: SubgridEnum = ImportOnlySubgridV2::from(&grid2).into();
+        let mut grid1: SubgridEnum = ImportOnlySubgridV2::from(&grid1.into()).into();
+        let mut grid2: SubgridEnum = ImportOnlySubgridV2::from(&grid2.into()).into();
 
         let result3 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
         let result4 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);

@@ -1099,21 +1099,14 @@ impl Grid {
                 *subgrid = EmptySubgridV1::default().into();
             } else {
                 match subgrid {
-                    SubgridEnum::LagrangeSubgridV1(grid) => {
-                        let mut new_subgrid = LagrangeSparseSubgridV1::from(&*grid).into();
+                    // can't be reach because we already caught empty grids above
+                    SubgridEnum::EmptySubgridV1(_) => unreachable!(),
+                    // can't be optimized without losing information
+                    SubgridEnum::NtupleSubgridV1(_) => continue,
+                    _ => {
+                        let mut new_subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
                         mem::swap(subgrid, &mut new_subgrid);
                     }
-                    SubgridEnum::LagrangeSubgridV2(grid) => {
-                        let mut new_subgrid = ImportOnlySubgridV2::from(&*grid).into();
-                        mem::swap(subgrid, &mut new_subgrid);
-                    }
-                    SubgridEnum::EmptySubgridV1(_)
-                    | SubgridEnum::LagrangeSparseSubgridV1(_)
-                    | SubgridEnum::ImportOnlySubgridV1(_)
-                    | SubgridEnum::ImportOnlySubgridV2(_) => {
-                        // nothing to optimize here
-                    }
-                    SubgridEnum::NtupleSubgridV1(_) => todo!(),
                 }
             }
         }
