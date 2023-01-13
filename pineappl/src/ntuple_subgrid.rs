@@ -77,6 +77,10 @@ impl Subgrid for NtupleSubgridV1 {
     fn stats(&self) -> Stats {
         unreachable!();
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        todo!()
+    }
 }
 
 #[cfg(test)]

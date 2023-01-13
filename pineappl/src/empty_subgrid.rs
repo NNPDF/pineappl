@@ -66,6 +66,10 @@ impl Subgrid for EmptySubgridV1 {
             bytes_per_value: 0,
         }
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        None
+    }
 }
 
 #[cfg(test)]

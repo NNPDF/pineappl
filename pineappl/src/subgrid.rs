@@ -112,6 +112,9 @@ pub trait Subgrid {
 
     /// Return statistics for this subgrid.
     fn stats(&self) -> Stats;
+
+    /// Return the static (single) scale, if this subgrid has one.
+    fn static_scale(&self) -> Option<Mu2>;
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the

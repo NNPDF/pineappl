@@ -164,6 +164,17 @@ impl Subgrid for ImportOnlySubgridV1 {
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        if let &[static_scale] = self.q2_grid.as_slice() {
+            Some(Mu2 {
+                ren: static_scale,
+                fac: static_scale,
+            })
+        } else {
+            None
+        }
+    }
 }
 
 /// TODO
@@ -355,6 +366,14 @@ impl Subgrid for ImportOnlySubgridV2 {
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        if let [static_scale] = self.mu2_grid.as_slice() {
+            Some(static_scale.clone())
+        } else {
+            None
+        }
+    }
 }
 
 impl From<&SubgridEnum> for ImportOnlySubgridV2 {
@@ -375,20 +394,10 @@ impl From<&SubgridEnum> for ImportOnlySubgridV2 {
             },
         );
 
-        let static_q2 = if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
-            subgrid.static_q2
+        let (mu2_grid, static_scale) = if let Some(scale) = subgrid.static_scale() {
+            (vec![scale], true)
         } else {
-            -1.0
-        };
-        let static_scale = static_q2 != -1.0;
-
-        let mu2_grid = if static_scale {
-            vec![Mu2 {
-                ren: static_q2,
-                fac: static_q2,
-            }]
-        } else {
-            subgrid.mu2_grid()[mu2_range.clone()].to_vec()
+            (subgrid.mu2_grid()[mu2_range.clone()].to_vec(), false)
         };
         let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
         let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();

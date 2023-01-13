@@ -378,6 +378,14 @@ impl Subgrid for LagrangeSubgridV1 {
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        if let [static_scale] = self.mu2_grid().as_ref() {
+            Some(static_scale.clone())
+        } else {
+            None
+        }
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation.
@@ -400,7 +408,7 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
-    pub(crate) static_q2: f64,
+    static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
@@ -764,6 +772,17 @@ impl Subgrid for LagrangeSubgridV2 {
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        if self.static_q2 > 0.0 {
+            Some(Mu2 {
+                ren: self.static_q2,
+                fac: self.static_q2,
+            })
+        } else {
+            None
+        }
+    }
 }
 
 /// Subgrid which uses Lagrange-interpolation, but also stores its contents in a space-efficient
@@ -1002,6 +1021,14 @@ impl Subgrid for LagrangeSparseSubgridV1 {
             zeros: self.array.zeros(),
             overhead: self.array.overhead(),
             bytes_per_value: mem::size_of::<f64>(),
+        }
+    }
+
+    fn static_scale(&self) -> Option<Mu2> {
+        if let [static_scale] = self.mu2_grid().as_ref() {
+            Some(static_scale.clone())
+        } else {
+            None
         }
     }
 }
