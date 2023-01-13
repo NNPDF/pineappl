@@ -32,9 +32,6 @@ pub enum TryFromGridError {
     /// Error if the grid contains multiple scales instead of a single one.
     #[error("multiple scales detected")]
     MultipleScales,
-    /// Error if the x grids are not the same across all subgrids and hadronic initial states.
-    #[error("different x grids detected")]
-    NonUniqueGrids,
     /// Error if the luminosity is not simple.
     #[error("complicated luminosity function detected")]
     InvalidLumi,
@@ -353,7 +350,6 @@ impl TryFrom<Grid> for FkTable {
 
     fn try_from(grid: Grid) -> Result<Self, Self::Error> {
         let mut muf2 = -1.0;
-        let mut x_grid = Vec::new();
 
         if grid.orders()
             != [Order {
@@ -375,8 +371,6 @@ impl TryFrom<Grid> for FkTable {
                 }
 
                 let mu2_grid = subgrid.mu2_grid();
-                let x1_grid = subgrid.x1_grid();
-                let x2_grid = subgrid.x2_grid();
 
                 if mu2_grid.len() > 1 {
                     return Err(TryFromGridError::MultipleScales);
@@ -384,23 +378,9 @@ impl TryFrom<Grid> for FkTable {
 
                 if muf2 < 0.0 {
                     muf2 = mu2_grid[0].fac;
-
-                    if x1_grid.len() == 1 {
-                        x_grid = x2_grid.into_owned();
-                    } else {
-                        x_grid = x1_grid.into_owned();
-                    }
                 } else {
                     if muf2 != mu2_grid[0].fac {
                         return Err(TryFromGridError::MultipleScales);
-                    }
-
-                    if x1_grid.len() != 1 && x1_grid != x_grid {
-                        return Err(TryFromGridError::NonUniqueGrids);
-                    }
-
-                    if x2_grid.len() != 1 && x2_grid != x_grid {
-                        return Err(TryFromGridError::NonUniqueGrids);
                     }
                 }
             }
