@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - raised MSRV to 1.65.0
-- the switch `--force-positive`
+- the switch `--force-positive` must be given at the same level as
+  `--silence-lhapdf`
 
 ## [0.5.9] - 02/01/2023
 
