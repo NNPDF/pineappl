@@ -3,6 +3,7 @@
 use super::grid::{Grid, GridError, Order};
 use super::lumi::LumiCache;
 use super::subgrid::Subgrid;
+use float_cmp::approx_eq;
 use ndarray::Array4;
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
@@ -134,29 +135,49 @@ impl FkTable {
     /// `x1` and `x2`, in this order.
     #[must_use]
     pub fn table(&self) -> Array4<f64> {
-        let first_non_empty_subgrid = self
-            .grid
-            .subgrids()
-            .iter()
-            .find(|s| !s.is_empty())
-            .unwrap_or_else(|| unreachable!()); // FK tables should never be empty
+        let has_pdf1 = self.grid.has_pdf1();
+        let has_pdf2 = self.grid.has_pdf2();
+        let x_grid = self.x_grid();
 
-        let mut subgrid = Array4::zeros((
+        let mut result = Array4::zeros((
             self.bins(),
             self.grid.lumi().len(),
-            first_non_empty_subgrid.x1_grid().len(),
-            first_non_empty_subgrid.x2_grid().len(),
+            if has_pdf1 { x_grid.len() } else { 1 },
+            if has_pdf2 { x_grid.len() } else { 1 },
         ));
 
         for bin in 0..self.bins() {
             for lumi in 0..self.grid.lumi().len() {
-                for ((_, ix1, ix2), value) in self.grid().subgrid(0, bin, lumi).indexed_iter() {
-                    subgrid[[bin, lumi, ix1, ix2]] = value;
+                let subgrid = self.grid().subgrid(0, bin, lumi);
+
+                let indices1 = if has_pdf1 {
+                    subgrid
+                        .x1_grid()
+                        .iter()
+                        .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
+                        .collect::<Option<_>>()
+                        .unwrap()
+                } else {
+                    vec![0]
+                };
+                let indices2 = if has_pdf2 {
+                    subgrid
+                        .x2_grid()
+                        .iter()
+                        .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
+                        .collect::<Option<_>>()
+                        .unwrap()
+                } else {
+                    vec![0]
+                };
+
+                for ((_, ix1, ix2), value) in subgrid.indexed_iter() {
+                    result[[bin, lumi, indices1[ix1], indices2[ix2]]] = value;
                 }
             }
         }
 
-        subgrid
+        result
     }
 
     /// Returns the number of bins for this `FkTable`.
@@ -208,41 +229,18 @@ impl FkTable {
     /// Returns the single `muf2` scale of this `FkTable`.
     #[must_use]
     pub fn muf2(&self) -> f64 {
-        for bin in 0..self.grid.bin_info().bins() {
-            for lumi in 0..self.grid.lumi().len() {
-                let subgrid = self.grid.subgrid(0, bin, lumi);
-
-                if subgrid.is_empty() {
-                    continue;
-                }
-
-                return subgrid.mu2_grid()[0].fac;
-            }
+        if let &[muf2] = &self.grid.evolve_info(&[true]).fac1[..] {
+            muf2
+        } else {
+            // every `FkTable` has only a single factorization scale
+            unreachable!()
         }
-
-        unreachable!();
     }
 
     /// Returns the x grid that all subgrids for all hadronic initial states share.
     #[must_use]
     pub fn x_grid(&self) -> Vec<f64> {
-        for bin in 0..self.grid.bin_info().bins() {
-            for lumi in 0..self.grid.lumi().len() {
-                let subgrid = self.grid.subgrid(0, bin, lumi);
-
-                if subgrid.is_empty() {
-                    continue;
-                }
-
-                if subgrid.x1_grid().is_empty() {
-                    return subgrid.x2_grid().into_owned();
-                }
-
-                return subgrid.x1_grid().into_owned();
-            }
-        }
-
-        unreachable!();
+        self.grid.evolve_info(&[true]).x1
     }
 
     /// Propagate write to grid
