@@ -4,6 +4,7 @@ use super::grid::Ntuple;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::mem;
 
 /// Structure holding a grid with an n-tuple as the storage method for weights.
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -27,7 +28,7 @@ impl Subgrid for NtupleSubgridV1 {
         _: &[Mu2],
         _: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
-        todo!();
+        panic!("NtupleSubgridV1 doesn't support the convolute operation");
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -56,7 +57,7 @@ impl Subgrid for NtupleSubgridV1 {
         if let SubgridEnum::NtupleSubgridV1(other_grid) = other {
             self.ntuples.append(&mut other_grid.ntuples);
         } else {
-            todo!();
+            panic!("NtupleSubgridV1 doesn't support the merge operation with subgrid types other than itself");
         }
     }
 
@@ -71,11 +72,17 @@ impl Subgrid for NtupleSubgridV1 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        unimplemented!();
+        panic!("NtupleSubgridV1 doesn't support the indexed_iter operation");
     }
 
     fn stats(&self) -> Stats {
-        unreachable!();
+        Stats {
+            total: self.ntuples.len(),
+            allocated: self.ntuples.len(),
+            zeros: 0,
+            overhead: 0,
+            bytes_per_value: mem::size_of::<Ntuple<f64>>(),
+        }
     }
 
     fn static_scale(&self) -> Option<Mu2> {
@@ -86,24 +93,53 @@ impl Subgrid for NtupleSubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lagrange_subgrid::LagrangeSubgridV2;
+    use crate::subgrid::{ExtraSubgridParams, SubgridParams};
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "NtupleSubgridV1 doesn't support the convolute operation")]
     fn convolute() {
         let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
     }
 
     #[test]
-    #[should_panic]
-    fn iter() {
+    #[should_panic(expected = "NtupleSubgridV1 doesn't support the indexed_iter operation")]
+    fn indexed_iter() {
         let _ = NtupleSubgridV1::new().indexed_iter();
     }
 
     #[test]
-    #[should_panic]
     fn stats() {
         let subgrid = NtupleSubgridV1::new();
-        subgrid.stats();
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 0,
+                allocated: 0,
+                zeros: 0,
+                overhead: 0,
+                bytes_per_value: 32,
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn static_scale() {
+        let subgrid = NtupleSubgridV1::new();
+        subgrid.static_scale();
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "NtupleSubgridV1 doesn't support the merge operation with subgrid types other than itself"
+    )]
+    fn merge_with_lagrange_subgrid() {
+        let mut subgrid = NtupleSubgridV1::new();
+        let mut other =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default())
+                .into();
+        subgrid.merge(&mut other, false);
     }
 
     #[test]

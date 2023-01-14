@@ -22,7 +22,7 @@ impl Subgrid for EmptySubgridV1 {
     }
 
     fn fill(&mut self, _: &Ntuple<f64>) {
-        unreachable!();
+        panic!("EmptySubgridV1 doesn't support the fill operation");
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
@@ -42,7 +42,10 @@ impl Subgrid for EmptySubgridV1 {
     }
 
     fn merge(&mut self, subgrid: &mut SubgridEnum, _: bool) {
-        assert!(subgrid.is_empty());
+        assert!(
+            subgrid.is_empty(),
+            "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
+        );
     }
 
     fn scale(&mut self, _: f64) {}
@@ -95,10 +98,11 @@ mod tests {
                 bytes_per_value: 0,
             }
         );
+        assert_eq!(subgrid.static_scale(), None);
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
         let mut subgrid = EmptySubgridV1::default();
         subgrid.fill(&Ntuple {
