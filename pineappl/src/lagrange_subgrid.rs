@@ -1101,8 +1101,6 @@ mod tests {
             test += value / (x1[ix1] * x2[ix2]);
         }
 
-        eprintln!("{} {}", test, reference);
-
         assert_approx_eq!(f64, test, reference, ulps = 8);
 
         grid
