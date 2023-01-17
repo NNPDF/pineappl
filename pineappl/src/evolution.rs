@@ -98,7 +98,7 @@ pub(crate) fn pids(
     info: &OperatorInfo,
     gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
-) -> (Vec<(usize, usize)>, Vec<(i32, i32)>) {
+) -> Result<(Vec<(usize, usize)>, Vec<(i32, i32)>), GridError> {
     // list of all non-zero PID indices
     let pid_indices: Vec<_> = (0..operator.dim().3)
         .cartesian_product(0..operator.dim().1)
@@ -117,6 +117,12 @@ pub(crate) fn pids(
         })
         .collect();
 
+    if pid_indices.is_empty() {
+        return Err(GridError::EvolutionFailure(
+            "no non-zero operator found; result would be an empty FkTable".to_string(),
+        ));
+    }
+
     // list of all non-zero (pid0, pid1) combinations
     let pids = pid_indices
         .iter()
@@ -132,7 +138,7 @@ pub(crate) fn pids(
         })
         .collect();
 
-    (pid_indices, pids)
+    Ok((pid_indices, pids))
 }
 
 pub(crate) fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
@@ -355,7 +361,7 @@ pub(crate) fn evolve_with_one(
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
-    });
+    })?;
 
     let lumi0 = lumi0_with_one(&pids);
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
@@ -495,13 +501,13 @@ pub(crate) fn evolve_with_two(
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(a, _, _)| a == pid1)
-    });
+    })?;
     let (pid_indices_b, pids_b) = pids(operator, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(_, b, _)| b == pid1)
-    });
+    })?;
 
     let lumi0 = lumi0_with_two(&pids_a, &pids_b);
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
