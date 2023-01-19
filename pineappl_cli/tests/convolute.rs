@@ -87,6 +87,20 @@ const MULTIPLE_PDFS_WITH_RELABELING_STR: &str =
 7    4  4.5 1.3772029e1    -3.46     2.85 1.3640796e1 -0.95
 ";
 
+const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str =
+    "b   etal    disg/detal  scale uncertainty NNPDF31_nlo_as_0118_luxqed/1 
+     []        [pb]            [%]                  [pb] [%]           
+-+----+----+-----------+--------+--------+--------------+--------------
+0    2 2.25 3.2482657e2    -9.10     7.81    3.2399084e2          -0.26
+1 2.25  2.5 2.9755128e2    -8.58     7.28    2.9619757e2          -0.45
+2  2.5 2.75 2.5751142e2    -8.01     6.71    2.5598573e2          -0.59
+3 2.75    3 2.0748091e2    -7.43     6.11    2.0608487e2          -0.67
+4    3 3.25 1.5397599e2    -6.84     5.52    1.5289865e2          -0.70
+5 3.25  3.5 1.0384063e2    -6.24     4.92    1.0317243e2          -0.64
+6  3.5    4 4.8383606e1    -5.44     4.13    4.8189863e1          -0.40
+7    4  4.5 1.1185365e1    -4.43     3.16    1.1083933e1          -0.91
+";
+
 const THREE_PDFS_STR: &str = "b   etal    disg/detal  scale uncertainty NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2 
      []        [pb]            [%]                  [pb] [%]                      [pb] [%]           
 -+----+----+-----------+--------+--------+--------------+--------------+--------------+--------------
@@ -295,6 +309,23 @@ fn multiple_pdfs_with_relabeling() {
         .assert()
         .success()
         .stdout(MULTIPLE_PDFS_WITH_RELABELING_STR);
+}
+
+#[test]
+fn two_pdfs_with_order_subset() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "--orders=a2",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed/0",
+            "NNPDF31_nlo_as_0118_luxqed/1",
+        ])
+        .assert()
+        .success()
+        .stdout(TWO_PDFS_WITH_ORDER_SUBSET_STR);
 }
 
 #[test]

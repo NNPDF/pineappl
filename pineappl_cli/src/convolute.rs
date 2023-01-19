@@ -94,7 +94,7 @@ impl Subcommand for Opts {
                 helpers::convolute(
                     &grid,
                     &mut pdf,
-                    &[],
+                    &self.orders,
                     &bins,
                     &[],
                     1,
