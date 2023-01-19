@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added `--orders` switch to pull to allow the selection of a subset of
+  perturbative orders
+
 ### Changed
 
 - raised MSRV to 1.65.0
