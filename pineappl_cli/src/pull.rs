@@ -2,6 +2,7 @@ use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::TypedValueParser;
 use clap::{value_parser, Parser, ValueHint};
+use lhapdf::{Pdf, PdfSet};
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::num::NonZeroUsize;
@@ -131,34 +132,16 @@ impl Subcommand for Opts {
             let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
             let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
 
-            let lumi_results1: Vec<_> = (0..grid.lumi().len())
-                .map(|lumi| {
-                    let mut lumi_mask = vec![false; grid.lumi().len()];
-                    lumi_mask[lumi] = true;
-
-                    if let Some(member1) = member1 {
-                        match helpers::convolute(
-                            &grid,
-                            &mut pdfset1[member1],
-                            &self.orders,
-                            &[bin],
-                            &lumi_mask,
-                            1,
-                            ConvoluteMode::Normal,
-                            cfg.force_positive,
-                        )
-                        .as_slice()
-                        {
-                            [value] => *value,
-                            _ => unreachable!(),
-                        }
-                    } else {
-                        let central: Vec<_> = pdfset1
-                            .par_iter_mut()
-                            .map(|pdf| {
+            let lumi_results =
+                |member: Option<usize>, pdfset: &mut Vec<Pdf>, set: &PdfSet| -> Vec<f64> {
+                    if let Some(member) = member {
+                        (0..grid.lumi().len())
+                            .map(|lumi| {
+                                let mut lumi_mask = vec![false; grid.lumi().len()];
+                                lumi_mask[lumi] = true;
                                 match helpers::convolute(
                                     &grid,
-                                    pdf,
+                                    &mut pdfset[member],
                                     &self.orders,
                                     &[bin],
                                     &lumi_mask,
@@ -172,57 +155,40 @@ impl Subcommand for Opts {
                                     _ => unreachable!(),
                                 }
                             })
-                            .collect();
-                        set1.uncertainty(&central, self.cl, false).unwrap().central
-                    }
-                })
-                .collect();
-            let lumi_results2: Vec<_> = (0..grid.lumi().len())
-                .map(|lumi| {
-                    let mut lumi_mask = vec![false; grid.lumi().len()];
-                    lumi_mask[lumi] = true;
-
-                    if let Some(member2) = member2 {
-                        match helpers::convolute(
-                            &grid,
-                            &mut pdfset2[member2],
-                            &self.orders,
-                            &[bin],
-                            &lumi_mask,
-                            1,
-                            ConvoluteMode::Normal,
-                            cfg.force_positive,
-                        )
-                        .as_slice()
-                        {
-                            [value] => *value,
-                            _ => unreachable!(),
-                        }
+                            .collect()
                     } else {
-                        let central: Vec<_> = pdfset2
-                            .par_iter_mut()
-                            .map(|pdf| {
-                                match helpers::convolute(
-                                    &grid,
-                                    pdf,
-                                    &self.orders,
-                                    &[bin],
-                                    &lumi_mask,
-                                    1,
-                                    ConvoluteMode::Normal,
-                                    cfg.force_positive,
-                                )
-                                .as_slice()
-                                {
-                                    [value] => *value,
-                                    _ => unreachable!(),
-                                }
+                        (0..grid.lumi().len())
+                            .map(|lumi| {
+                                let mut lumi_mask = vec![false; grid.lumi().len()];
+                                lumi_mask[lumi] = true;
+                                let central: Vec<_> = pdfset
+                                    .iter_mut()
+                                    .map(|pdf| {
+                                        match helpers::convolute(
+                                            &grid,
+                                            pdf,
+                                            &self.orders,
+                                            &[bin],
+                                            &lumi_mask,
+                                            1,
+                                            ConvoluteMode::Normal,
+                                            cfg.force_positive,
+                                        )
+                                        .as_slice()
+                                        {
+                                            [value] => *value,
+                                            _ => unreachable!(),
+                                        }
+                                    })
+                                    .collect();
+                                set.uncertainty(&central, self.cl, false).unwrap().central
                             })
-                            .collect();
-                        set2.uncertainty(&central, self.cl, false).unwrap().central
+                            .collect()
                     }
-                })
-                .collect();
+                };
+
+            let lumi_results1: Vec<_> = lumi_results(member1, &mut pdfset1, &set1);
+            let lumi_results2: Vec<_> = lumi_results(member2, &mut pdfset2, &set2);
 
             let mut pull_tuples: Vec<_> = lumi_results2
                 .iter()
