@@ -14,7 +14,7 @@ Options:
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
   -i, --integrated         Show integrated numbers (without bin widths) instead of differential ones
   -o, --orders <ORDERS>    Select orders manually
-      --threads <THREADS>  Number of threads to utilize [default: 8]
+      --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits-abs <ABS>   Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>   Set the number of fractional digits shown for relative numbers [default: 2]
   -h, --help               Print help information
