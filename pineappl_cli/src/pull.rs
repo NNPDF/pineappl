@@ -157,13 +157,13 @@ impl Subcommand for Opts {
                             })
                             .collect()
                     } else {
-                        (0..grid.lumi().len())
-                            .map(|lumi| {
-                                let mut lumi_mask = vec![false; grid.lumi().len()];
-                                lumi_mask[lumi] = true;
-                                let central: Vec<_> = pdfset
-                                    .iter_mut()
-                                    .map(|pdf| {
+                        let results: Vec<_> = pdfset
+                            .iter_mut()
+                            .flat_map(|pdf| {
+                                (0..grid.lumi().len())
+                                    .map(|lumi| {
+                                        let mut lumi_mask = vec![false; grid.lumi().len()];
+                                        lumi_mask[lumi] = true;
                                         match helpers::convolute(
                                             &grid,
                                             pdf,
@@ -180,6 +180,17 @@ impl Subcommand for Opts {
                                             _ => unreachable!(),
                                         }
                                     })
+                                    .collect::<Vec<_>>()
+                            })
+                            .collect();
+
+                        (0..grid.lumi().len())
+                            .map(|lumi| {
+                                let central: Vec<_> = results
+                                    .iter()
+                                    .skip(lumi)
+                                    .step_by(grid.lumi().len())
+                                    .copied()
                                     .collect();
                                 set.uncertainty(&central, self.cl, false).unwrap().central
                             })
