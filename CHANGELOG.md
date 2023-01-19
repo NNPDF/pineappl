@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the switch `--force-positive` must be given at the same level as
   `--silence-lhapdf`
 
+### Fixed
+
+- fixed a bug introduced in v0.5.5 that caused `pineappl convolute` to not show
+  results for more than two PDF sets
+- fixed a bug that caused `pineappl convolute` to ignore a possible `--order`
+  parameter for additionally given PDF sets
+
 ## [0.5.9] - 02/01/2023
 
 ### Added
