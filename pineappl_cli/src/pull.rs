@@ -35,6 +35,15 @@ pub struct Opts {
         value_parser = value_parser!(u16).range(1..).map(usize::from)
     )]
     limit: usize,
+    /// Select orders manually.
+    #[arg(
+        long,
+        num_args(1),
+        short,
+        value_delimiter = ',',
+        value_parser = helpers::parse_order
+    )]
+    orders: Vec<(u32, u32)>,
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
@@ -65,7 +74,7 @@ impl Subcommand for Opts {
                 helpers::convolute(
                     &grid,
                     pdf,
-                    &[],
+                    &self.orders,
                     &[],
                     &[],
                     1,
@@ -80,7 +89,7 @@ impl Subcommand for Opts {
                 helpers::convolute(
                     &grid,
                     pdf,
-                    &[],
+                    &self.orders,
                     &[],
                     &[],
                     1,
@@ -131,7 +140,7 @@ impl Subcommand for Opts {
                         match helpers::convolute(
                             &grid,
                             &mut pdfset1[member1],
-                            &[],
+                            &self.orders,
                             &[bin],
                             &lumi_mask,
                             1,
@@ -150,7 +159,7 @@ impl Subcommand for Opts {
                                 match helpers::convolute(
                                     &grid,
                                     pdf,
-                                    &[],
+                                    &self.orders,
                                     &[bin],
                                     &lumi_mask,
                                     1,
@@ -177,7 +186,7 @@ impl Subcommand for Opts {
                         match helpers::convolute(
                             &grid,
                             &mut pdfset2[member2],
-                            &[],
+                            &self.orders,
                             &[bin],
                             &lumi_mask,
                             1,
@@ -196,7 +205,7 @@ impl Subcommand for Opts {
                                 match helpers::convolute(
                                     &grid,
                                     pdf,
-                                    &[],
+                                    &self.orders,
                                     &[bin],
                                     &lumi_mask,
                                     1,

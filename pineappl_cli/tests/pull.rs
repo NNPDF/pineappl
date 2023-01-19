@@ -14,6 +14,7 @@ Arguments:
 Options:
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
   -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
+  -o, --orders <ORDERS>    Select orders manually
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
   -h, --help               Print help information
@@ -30,6 +31,19 @@ const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  
 5 3.25  3.5 1.873 0 1.810 3  0.082 2 -0.011 4 -0.007 1 -0.001
 6  3.5    4 1.468 0 1.389 3  0.177 1 -0.088 4 -0.007 2 -0.003
 7    4  4.5 1.219 0 1.439 1 -0.358 3  0.147 4 -0.006 2 -0.001
+";
+
+const ORDERS_STR: &str = "b   etal    total l pull  l pull  l pull  l pull  l pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}] 
+-+----+----+-----+-+-----+-+-----+-+-----+-+-----+-+-----
+0    2 2.25 3.630 0 3.630 1 0.000 2 0.000 3 0.000 4 0.000
+1 2.25  2.5 3.475 0 3.475 1 0.000 2 0.000 3 0.000 4 0.000
+2  2.5 2.75 3.163 0 3.163 1 0.000 2 0.000 3 0.000 4 0.000
+3 2.75    3 2.701 0 2.701 1 0.000 2 0.000 3 0.000 4 0.000
+4    3 3.25 2.163 0 2.163 1 0.000 2 0.000 3 0.000 4 0.000
+5 3.25  3.5 1.634 0 1.634 1 0.000 2 0.000 3 0.000 4 0.000
+6  3.5    4 1.241 0 1.241 1 0.000 2 0.000 3 0.000 4 0.000
+7    4  4.5 1.201 0 1.201 1 0.000 2 0.000 3 0.000 4 0.000
 ";
 
 const CL_90_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
@@ -108,6 +122,24 @@ fn default() {
         .assert()
         .success()
         .stdout(DEFAULT_STR);
+}
+
+#[test]
+fn orders() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "pull",
+            "--threads=1",
+            "--orders=a2",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed/0",
+            "NNPDF40_nnlo_as_01180/0",
+        ])
+        .assert()
+        .success()
+        .stdout(ORDERS_STR);
 }
 
 #[test]
