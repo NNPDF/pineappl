@@ -139,7 +139,7 @@ pub struct Opts {
     /// Select which orders to evolve.
     #[arg(
         long,
-        num_args(1..),
+        num_args(1),
         short,
         value_delimiter = ',',
         value_parser = helpers::parse_order

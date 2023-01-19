@@ -43,7 +43,7 @@ pub struct Opts {
     /// Select orders manually.
     #[arg(
         long,
-        num_args(1..),
+        num_args(1),
         short,
         value_delimiter = ',',
         value_parser = helpers::parse_order

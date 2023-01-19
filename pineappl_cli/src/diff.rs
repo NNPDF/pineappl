@@ -30,7 +30,7 @@ pub struct Opts {
     /// Select orders of the first grid.
     #[arg(
         long,
-        num_args(1..),
+        num_args(1),
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
@@ -38,7 +38,7 @@ pub struct Opts {
     /// Select orders of the second grid.
     #[arg(
         long,
-        num_args(1..),
+        num_args(1),
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]

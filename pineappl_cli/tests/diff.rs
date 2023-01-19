@@ -11,16 +11,16 @@ Arguments:
   <PDFSET>  LHAPDF id or name of the PDF set
 
 Options:
-      --ignore-orders         Ignore differences in the orders and sum them
-      --ignore-bin-limits     Ignore bin limits (but not number of bins)
-      --ignore-lumis          Ignore differences in the luminosity functions
-      --orders1 <ORDERS1>...  Select orders of the first grid
-      --orders2 <ORDERS2>...  Select orders of the second grid
-      --scale1 <SCALE1>       Scale all results of the first grid [default: 1.0]
-      --scale2 <SCALE2>       Scale all results of the second grid [default: 1.0]
-      --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers [default: 7]
-      --digits-rel <REL>      Set the number of fractional digits shown for relative numbers [default: 3]
-  -h, --help                  Print help information
+      --ignore-orders      Ignore differences in the orders and sum them
+      --ignore-bin-limits  Ignore bin limits (but not number of bins)
+      --ignore-lumis       Ignore differences in the luminosity functions
+      --orders1 <ORDERS1>  Select orders of the first grid
+      --orders2 <ORDERS2>  Select orders of the second grid
+      --scale1 <SCALE1>    Scale all results of the first grid [default: 1.0]
+      --scale2 <SCALE2>    Scale all results of the second grid [default: 1.0]
+      --digits-abs <ABS>   Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>   Set the number of fractional digits shown for relative numbers [default: 3]
+  -h, --help               Print help information
 ";
 
 const ORDERS1_A2_ORDERS2_A2_STR: &str = "b    x1               O(as^0 a^2)          
