@@ -85,6 +85,7 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal
             },
         );
+        let bin_count = limits.len();
 
         let other_results: Vec<_> = self.pdfsets[1..]
             .iter()
@@ -167,7 +168,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, (max_value / values[0] - 1.0) * 100.0)));
             }
 
-            for &other in other_results.iter().skip(index).step_by(results.len()) {
+            for &other in other_results.iter().skip(index).step_by(bin_count) {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, other)));
                 row.add_cell(
                     cell!(r->format!("{:.*}", self.digits_rel, (other / values[0] - 1.0) * 100.0)),

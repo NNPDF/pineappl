@@ -87,6 +87,19 @@ const MULTIPLE_PDFS_WITH_RELABELING_STR: &str =
 7    4  4.5 1.3772029e1    -3.46     2.85 1.3640796e1 -0.95
 ";
 
+const THREE_PDFS_STR: &str = "b   etal    disg/detal  scale uncertainty NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2 
+     []        [pb]            [%]                  [pb] [%]                      [pb] [%]           
+-+----+----+-----------+--------+--------+--------------+--------------+--------------+--------------
+0    2 2.25 3.7527620e2    -3.77     2.71    3.7379477e2          -0.39    3.7670804e2           0.38
+1 2.25  2.5 3.4521553e2    -3.79     2.80    3.4316002e2          -0.60    3.4596819e2           0.22
+2  2.5 2.75 3.0001406e2    -3.78     2.86    2.9780437e2          -0.74    3.0023944e2           0.08
+3 2.75    3 2.4257663e2    -3.77     2.92    2.4059099e2          -0.82    2.4259549e2           0.01
+4    3 3.25 1.8093343e2    -3.74     2.95    1.7941535e2          -0.84    1.8095662e2           0.01
+5 3.25  3.5 1.2291115e2    -3.71     2.98    1.2195463e2          -0.78    1.2308878e2           0.14
+6  3.5    4 5.7851018e1    -3.63     2.97    5.7551676e1          -0.52    5.8229565e1           0.65
+7    4  4.5 1.3772029e1    -3.46     2.85    1.3640796e1          -0.95    1.4234097e1           3.36
+";
+
 const WRONG_LHAID_STR: &str =
     "error: Invalid value '0' for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
 
@@ -282,6 +295,23 @@ fn multiple_pdfs_with_relabeling() {
         .assert()
         .success()
         .stdout(MULTIPLE_PDFS_WITH_RELABELING_STR);
+}
+
+#[test]
+fn three_pdfs() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "--silence-lhapdf",
+            "convolute",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed/0",
+            "NNPDF31_nlo_as_0118_luxqed/1",
+            "NNPDF31_nlo_as_0118_luxqed/2",
+        ])
+        .assert()
+        .success()
+        .stdout(THREE_PDFS_STR);
 }
 
 #[test]
