@@ -46,6 +46,6 @@ path = "src/main.rs"
 rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
-applgrid = ["pineappl_applgrid"]
-fastnlo = ["pineappl_fastnlo"]
-fktable = ["flate2", "lz4_flex", "ndarray-npy", "serde", "serde_yaml", "tar"]
+applgrid = ["dep:pineappl_applgrid"]
+fastnlo = ["dep:pineappl_fastnlo"]
+fktable = ["dep:flate2", "dep:lz4_flex", "dep:ndarray-npy", "dep:serde", "dep:serde_yaml", "dep:tar"]
