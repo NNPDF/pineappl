@@ -5,13 +5,13 @@ members = [
     "pineappl_capi",
     "pineappl_cli",
     "pineappl_fastnlo",
+    "pineappl_py"
 ]
 default-members = [
     "pineappl",
     "pineappl_capi",
     "pineappl_cli",
 ]
-exclude = ["pineappl_py"]
 
 [workspace.package]
 categories = ["science"]
