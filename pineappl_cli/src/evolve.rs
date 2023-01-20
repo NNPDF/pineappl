@@ -7,7 +7,7 @@ use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-#[cfg(feature = "fktable")]
+#[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
     eko: &Path,
@@ -105,10 +105,10 @@ fn evolve_grid(
     Ok(grid.evolve(operator.view(), &info, &orders)?)
 }
 
-#[cfg(not(feature = "fktable"))]
+#[cfg(not(feature = "evolve"))]
 fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: &[(u32, u32)], _: f64, _: f64) -> Result<FkTable> {
     Err(anyhow!(
-        "you need to install `pineappl` with feature `fktable`"
+        "you need to install `pineappl` with feature `evolve`"
     ))
 }
 

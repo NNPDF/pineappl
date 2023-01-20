@@ -47,5 +47,6 @@ rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
 applgrid = ["dep:pineappl_applgrid"]
+evolve = ["dep:tar", "dep:lz4_flex", "dep:ndarray-npy", "dep:serde", "dep:serde_yaml"]
 fastnlo = ["dep:pineappl_fastnlo"]
-fktable = ["dep:flate2", "dep:lz4_flex", "dep:ndarray-npy", "dep:serde", "dep:serde_yaml", "dep:tar"]
+fktable = ["dep:flate2",  "dep:tar"]

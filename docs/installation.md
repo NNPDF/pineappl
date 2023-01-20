@@ -67,6 +67,9 @@ You need to install [Rust](#rust) first (see below). Then simply run
 anywhere and you are done; this will automatically download the most-recently
 released version from [crates.io](https://crates.io).
 
+More functionality can be added by adding the `--feature=feature1,feature2,...`
+flag, see below.
+
 ### Optional: APPLgrid converter
 
 If you'd like to convert APPLgrids to PineAPPL grids, make sure to
@@ -79,6 +82,14 @@ If you'd like to convert APPLgrids to PineAPPL grids, make sure to
    instance:
 
        APPL_IGRID_DIR=/tmp/applgrid-1.6.27/src cargo install --features=applgrid pineappl_cli
+
+### Optional: Evolution/EKO support
+
+If you'd like to convert PineAPPL grids into FK tables using evolution kernel
+operators (EKO), add the switch `--features=evolve` during the CLI's
+installation, for instance:
+
+    cargo install --features=evolve pineappl_cli
 
 ### Optional: fastNLO converter
 
@@ -94,10 +105,6 @@ If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, add the swi
 `--features=fktable` during the CLI's installation, for instance:
 
     cargo install --features=fktable pineappl_cli
-
-If you want both `fastnlo` and `fktables` add a comma:
-
-    cargo install --features=fastnlo,fktable pineappl_cli
 
 ### Alternative: development version
 
