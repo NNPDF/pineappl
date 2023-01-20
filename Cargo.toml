@@ -13,6 +13,15 @@ default-members = [
 ]
 exclude = ["pineappl_py"]
 
+[workspace.package]
+categories = ["science"]
+edition = "2021"
+keywords = ["high-energy-physics", "physics"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/N3PDF/pineappl"
+rust-version = "1.65.0"
+version = "0.5.9"
+
 [profile.release]
 codegen-units = 1
 lto = true

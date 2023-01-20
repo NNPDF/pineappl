@@ -1,15 +1,16 @@
 [package]
-name = "pineappl_capi"
-version = "0.5.9"
 authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/N3PDF/pineappl"
-readme = "README.md"
-keywords = ["high-energy-physics", "physics"]
-categories = ["science"]
 description = "C language interface to PineAPPL"
-rust-version = "1.65.0"
+name = "pineappl_capi"
+readme = "README.md"
+
+categories.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [dependencies]
 pineappl = { path = "../pineappl", version = "0.5.9" }
