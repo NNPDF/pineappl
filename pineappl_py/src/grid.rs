@@ -1,5 +1,9 @@
 use pineappl::evolution::OperatorInfo;
-use pineappl::grid::{EkoInfo, Grid, GridAxes, Ntuple, Order};
+use pineappl::grid::{Grid, Ntuple, Order};
+
+#[allow(deprecated)]
+use pineappl::grid::{EkoInfo, GridAxes};
+
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
@@ -303,6 +307,8 @@ impl PyGrid {
     ///         factorization scale list
     ///     muf2_grid : numpy.ndarray(float)
     ///         factorization scale list
+    #[deprecated(since = "0.6.0", note = "use evolve_info instead")]
+    #[allow(deprecated)]
     pub fn axes<'py>(
         &self,
         py: Python<'py>,
@@ -416,6 +422,8 @@ impl PyGrid {
     /// -------
     ///     PyFkTable :
     ///         produced FK table
+    #[deprecated(since = "0.6.0", note = "use evolve instead")]
+    #[allow(deprecated)]
     pub fn convolute_eko(
         &self,
         muf2_0: f64,
