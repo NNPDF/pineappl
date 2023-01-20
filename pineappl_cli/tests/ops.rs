@@ -10,10 +10,10 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1                             Charge conjugate the first initial state
-      --cc2                             Charge conjugate the second initial state
-      --scale-by-bin <SCALE_BY_BIN>...  Scale each bin with a different factor
-  -h, --help                            Print help information
+      --cc1                           Charge conjugate the first initial state
+      --cc2                           Charge conjugate the second initial state
+      --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
+  -h, --help                          Print help information
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

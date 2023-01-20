@@ -34,9 +34,9 @@ pub struct Opts {
     #[arg(
         conflicts_with = "scales",
         long,
-        value_delimiter = ','
-        // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
-        //value_names = &["ORDER", "BIN", "LUMI"],
+        num_args(1),
+        value_delimiter = ',',
+        value_name = "ORDER,BIN,LUMI"
     )]
     subgrid_pull: Vec<String>,
     /// Plot the asymmetry.

@@ -20,9 +20,9 @@ pub struct Opts {
     #[arg(
         conflicts_with = "scale",
         long,
+        num_args(1),
         value_delimiter = ',',
-        // TODO: conflict due to https://github.com/clap-rs/clap/pull/4026
-        //value_names = &["ALPHAS", "ALPHA", "LOGXIR", "LOGXIF", "GLOBAL"]
+        value_name = "ALPHAS,ALPHA,LOGXIR,LOGXIF,GLOBAL"
     )]
     scale_by_order: Vec<f64>,
 }

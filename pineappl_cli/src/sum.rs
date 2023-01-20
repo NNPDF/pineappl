@@ -23,6 +23,7 @@ pub struct Opts {
     #[arg(
         long,
         group = "mode",
+        num_args(1),
         short,
         value_delimiter = ',',
         value_parser = helpers::parse_integer_range

@@ -23,7 +23,7 @@ pub struct Opts {
     #[arg(long)]
     cc2: bool,
     /// Scale each bin with a different factor.
-    #[arg(long, num_args(1..), value_delimiter = ',')]
+    #[arg(long, num_args(1), value_delimiter = ',', value_name = "BIN1,BIN2,...")]
     scale_by_bin: Vec<f64>,
 }
 

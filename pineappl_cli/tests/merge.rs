@@ -10,9 +10,12 @@ Arguments:
   <INPUT>...  Path(s) of the files that should be merged
 
 Options:
-  -s, --scale <SCALE>                    Scales all grids with the given factor
-      --scale-by-order <SCALE_BY_ORDER>  Scales all grids with order-dependent factors
-  -h, --help                             Print help information
+  -s, --scale <SCALE>
+          Scales all grids with the given factor
+      --scale-by-order <ALPHAS,ALPHA,LOGXIR,LOGXIF,GLOBAL>
+          Scales all grids with order-dependent factors
+  -h, --help
+          Print help information
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

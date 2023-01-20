@@ -11,7 +11,7 @@ Arguments:
   <REMAPPING>  Remapping string. See <https://nnpdf.github.io/pineappl/docs/cli-reference.html> for full reference
 
 Options:
-      --ignore-obs-norm <IGNORE_OBS_NORM>
+      --ignore-obs-norm <OBS1,OBS2,...>
           Ignore the given observables for differential normalization
       --norm <NORM>
           Normalization factor in addition to the given bin widths [default: 1.0]
