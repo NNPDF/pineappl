@@ -1,4 +1,4 @@
-use pineappl::subgrid::{SubgridEnum, SubgridParams};
+use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
@@ -148,4 +148,16 @@ impl PySubgridParams {
 #[repr(transparent)]
 pub struct PySubgridEnum {
     pub(crate) subgrid_enum: SubgridEnum,
+}
+
+impl PySubgridEnum {
+    /// Scale the subgrid by `factor`.
+    ///
+    /// Parameters
+    /// ----------
+    /// factor : float
+    ///     scaling factor
+    pub fn scale(&mut self, factor: f64) {
+        self.subgrid_enum.scale(factor);
+    }
 }
