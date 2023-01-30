@@ -150,6 +150,7 @@ pub struct PySubgridEnum {
     pub(crate) subgrid_enum: SubgridEnum,
 }
 
+#[pymethods]
 impl PySubgridEnum {
     /// Scale the subgrid by `factor`.
     ///
