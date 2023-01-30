@@ -680,6 +680,16 @@ impl PyGrid {
         self.grid.bin_info().right(dimension).into_pyarray(py)
     }
 
+    /// Return the number of bins.
+    ///
+    /// Returns
+    /// -------
+    ///     int :
+    ///         Number of bins
+    pub fn bins(&self) -> usize {
+        self.grid.bin_info().bins()
+    }
+
     /// Extract the available perturbative orders and scale variations.
     ///
     /// Returns
