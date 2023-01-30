@@ -161,4 +161,8 @@ impl PySubgridEnum {
     pub fn scale(&mut self, factor: f64) {
         self.subgrid_enum.scale(factor);
     }
+
+    pub fn into(&self) -> Self {
+        self.clone()
+    }
 }
