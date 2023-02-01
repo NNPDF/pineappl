@@ -46,7 +46,7 @@ impl Subcommand for Opts {
 
         // TODO: if `man` can't be found display the usual `--help` message
         let mut child = Command::new("man")
-            .args(["-l", "-"])
+            .args(["/dev/stdin"])
             .stdin(Stdio::piped())
             .stdout(Stdio::inherit())
             .spawn()?;
