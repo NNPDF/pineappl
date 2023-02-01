@@ -110,7 +110,7 @@ If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, add the swi
 
 To use the most recent version available run
 
-    cargo install --git https://github.com/N3PDF/pineappl.git
+    cargo install --git https://github.com/NNPDF/pineappl.git
 
 Instead, if you plan to make changes to the source code it's better to checkout
 this repository and run

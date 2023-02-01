@@ -15,8 +15,8 @@
 //! is extended on an as-needed basis. If you happen to miss a function please open a new [issue]
 //! on the github page.
 //!
-//! [Fortran example]: https://github.com/N3PDF/pineappl/tree/master/examples/fortran
-//! [issue]: https://github.com/N3PDF/pineappl/issues
+//! [Fortran example]: https://github.com/NNPDF/pineappl/tree/master/examples/fortran
+//! [issue]: https://github.com/NNPDF/pineappl/issues
 //!
 //! # Using and linking the CAPI
 //!

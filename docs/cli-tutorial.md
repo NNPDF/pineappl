@@ -21,7 +21,7 @@ a fresh directory. For instance, run
 
 to create a temporary directory. Finally, you'll need a grid,
 
-    wget 'https://github.com/N3PDF/pineappl/raw/master/pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4'
+    wget 'https://github.com/NNPDF/pineappl/raw/master/pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4'
 
 which you'll use with the CLI.
 

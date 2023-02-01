@@ -27,7 +27,7 @@ test = ["pytest", "pytest-cov"]
 [project.urls]
 homepage = "https://n3pdf.github.io/pineappl/"
 documentation = "https://pineappl.readthedocs.io/"
-changelog = "https://github.com/N3PDF/pineappl/blob/master/CHANGELOG.md"
+changelog = "https://github.com/NNPDF/pineappl/blob/master/CHANGELOG.md"
 
 [tool.maturin]
 bindings = "pyo3"

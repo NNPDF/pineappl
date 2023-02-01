@@ -5,16 +5,16 @@ In order to compile wheels to distribute some requirements have to be met:
 - `linux`: the compilation process has to be run in a
   [`manylinux`](https://github.com/pypa/manylinux) compliant environment, for
   this reason a suitable container image is provided (see
-  [published packages](https://github.com/orgs/N3PDF/packages?repo_name=pineappl)
+  [published packages](https://github.com/orgs/NNPDF/packages?repo_name=pineappl)
   and the respective [`Containerfile`](./Containerfile))
 
   Notice that the default container provided by
   [pypa](https://github.com/pypa/manylinux) is not sufficient, since it does not
   ship a C compiler (required to compile the `syn` crate).
 - `macOS`: it just needs to be run in a macOS environment, see
-  [publishing workflow](https://github.com/N3PDF/pineappl/tree/master/.github/workflows/wheels.yml)
+  [publishing workflow](https://github.com/NNPDF/pineappl/tree/master/.github/workflows/wheels.yml)
 - `windows`: it just needs to be run in a windows environment, see
-  [publishing workflow](https://github.com/N3PDF/pineappl/tree/master/.github/workflows/wheels.yml)
+  [publishing workflow](https://github.com/NNPDF/pineappl/tree/master/.github/workflows/wheels.yml)
 
 ## `maturin` container image
 
@@ -28,7 +28,7 @@ and:
 ### Using `maturin` to compile for `manylinux`
 
 This is the easy part: you just need to download the
-[image](https://github.com/N3PDF/pineappl/pkgs/container/maturin) and run with
+[image](https://github.com/NNPDF/pineappl/pkgs/container/maturin) and run with
 your favorite container tool.
 
 Here the explicit commands with `podman` [[1]](#docker)

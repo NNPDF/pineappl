@@ -85,7 +85,7 @@ echo ">>> Updating version strings ..."
 
 sed -i \
     -e "s:\(## \[Unreleased\]\):\1\n\n## [${version}] - $(date +%d/%m/%Y):" \
-    -e "s:\[Unreleased\]\(\: https\://github.com/N3PDF/pineappl/compare/v\)\(.*\)...HEAD:[Unreleased]\1${version}...HEAD\n[${version}]\1\2...v${version}:" \
+    -e "s:\[Unreleased\]\(\: https\://github.com/NNPDF/pineappl/compare/v\)\(.*\)...HEAD:[Unreleased]\1${version}...HEAD\n[${version}]\1\2...v${version}:" \
     CHANGELOG.md
 
 for crate in ${crates[@]}; do

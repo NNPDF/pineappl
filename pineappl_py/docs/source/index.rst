@@ -7,7 +7,7 @@ PineAPPL is a computer library that makes it possible to produce fast-interpolat
 
 The :doc:`installation` instructions are given :doc:`here <installation>`.
 
-A practical example can be found in the ``example/`` subfolder of the `repository <https://github.com/N3PDF/pineappl/>`_.
+A practical example can be found in the ``example/`` subfolder of the `repository <https://github.com/NNPDF/pineappl/>`_.
 The Python wrapper is also used in :yadism:`\ ` and :pineko:`\ `. We also list some common :doc:`recipes` here.
 
 .. toctree::

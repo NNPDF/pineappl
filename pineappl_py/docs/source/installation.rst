@@ -3,7 +3,7 @@ Installation
 
 Installing with pip
 -------------------
-Thanks to the `container build <https://github.com/N3PDF/pineappl/blob/master/pineappl_py/package/README.md>`_, installing should be as easy as
+Thanks to the `container build <https://github.com/NNPDF/pineappl/blob/master/pineappl_py/package/README.md>`_, installing should be as easy as
 
 .. code:: sh
 
