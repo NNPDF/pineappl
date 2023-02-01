@@ -11,6 +11,7 @@ Commands:
   delete     Deletes parts from a PineAPPL grid
   diff       Compares the numerical content of two grids with each other
   evolve     Evolve a grid with an evolution kernel operator to an FK table
+  help       Display a manpage for selected subcommands
   import     Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
   info       Shows information about the grid
   merge      Merges one or more PineAPPL grids together
