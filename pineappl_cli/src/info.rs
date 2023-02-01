@@ -16,7 +16,7 @@ pub struct Opts {
     #[arg(group = "mode", long)]
     ew: bool,
     /// Gets an internal key-value pair.
-    #[arg(group = "mode", long, num_args(1), value_name = "key")]
+    #[arg(group = "mode", long, num_args = 1, value_name = "key")]
     get: Option<String>,
     /// Show all keys stored in the grid.
     #[arg(group = "mode", long)]

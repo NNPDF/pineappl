@@ -20,7 +20,7 @@ pub struct Opts {
     #[arg(
         conflicts_with = "scale",
         long,
-        num_args(1),
+        num_args = 1,
         value_delimiter = ',',
         value_name = "ALPHAS,ALPHA,LOGXIR,LOGXIF,GLOBAL"
     )]

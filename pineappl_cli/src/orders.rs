@@ -24,7 +24,7 @@ pub struct Opts {
     #[arg(
         conflicts_with = "absolute",
         long,
-        num_args(1),
+        num_args = 1,
         short,
         value_delimiter = ',',
         value_parser = helpers::parse_order
