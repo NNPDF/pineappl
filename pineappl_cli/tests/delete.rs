@@ -3,15 +3,15 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Deletes parts from a PineAPPL grid
 
-Usage: pineappl delete <--bins <BINS>...> <INPUT> <OUTPUT>
+Usage: pineappl delete <--bins <BINS>> <INPUT> <OUTPUT>
 
 Arguments:
   <INPUT>   Path to the input grid
   <OUTPUT>  Path to the modified PineAPPL file
 
 Options:
-      --bins <BINS>...  Indices of bins that should be deleted
-  -h, --help            Print help information
+      --bins <BINS>  Indices of bins that should be deleted
+  -h, --help         Print help information
 ";
 
 const BINS_02_57_STR: &str = "b   etal    disg/detal  scale uncertainty

@@ -12,7 +12,7 @@ Options:
   -a, --absolute          Show absolute numbers of each contribution
   -l, --limit <LIMIT>     The maximum number of channels displayed [default: 10]
   -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
-      --lumis <LUMIS>...  Show only the listed channels
+      --lumis <LUMIS>     Show only the listed channels
   -o, --orders <ORDERS>   Select orders manually
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
