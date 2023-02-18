@@ -5,21 +5,9 @@ on: push
 jobs:
   capi:
     runs-on: ubuntu-latest
+    container: handgranatenherbert/pineappl-ci:1
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install LHAPDF
-        uses: ./.github/actions/lhapdf
-
-      - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          default: true
-          toolchain: 1.65.0
-
-      - name: Install cargo-c
-        run: |
-          cargo install cargo-c --version 0.9.14+cargo-0.67
 
       - name: Install PineAPPL's C API
         run: |
