@@ -11,7 +11,7 @@ jobs:
 
       - name: Install PineAPPL's C API
         run: |
-          cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+          cargo cinstall -vv --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
 
       - name: Test C example
         run: |
