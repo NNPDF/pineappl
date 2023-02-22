@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added `--orders` switch to pull to allow the selection of a subset of
   perturbative orders
+- added the subcommand `help` to show manpages of for each subcommand of
+  `pineappl`
 
 ### Changed
 
