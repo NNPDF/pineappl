@@ -532,8 +532,13 @@ impl Grid {
                     continue;
                 }
 
-                let Some(bin_index) = bin_indices.iter().position(|&index| index == bin)
-                    else { continue };
+                // TODO: use let-else statement when MSRV is 1.65
+                let bin_index =
+                    if let Some(bin) = bin_indices.iter().position(|&index| index == bin) {
+                        bin
+                    } else {
+                        continue;
+                    };
 
                 if subgrid.is_empty() {
                     continue;
