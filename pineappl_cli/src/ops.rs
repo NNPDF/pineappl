@@ -7,7 +7,7 @@ use clap::{
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
 use std::any::Any;
-use std::ops::Deref;
+use std::ops::{Deref, RangeInclusive};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -40,6 +40,13 @@ impl FromArgMatches for MoreArgs {
         for id in ids {
             let value = match id.as_str() {
                 "cc1" | "cc2" => Box::new(matches.remove_one::<bool>(&id).unwrap()) as Box<dyn Any>,
+                "delete_bins" => Box::new(
+                    matches
+                        .remove_many::<RangeInclusive<usize>>(&id)
+                        .unwrap()
+                        .flatten()
+                        .collect::<Vec<_>>(),
+                ) as Box<dyn Any>,
                 "scale_by_bin" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
                         as Box<dyn Any>
@@ -75,6 +82,16 @@ impl Args for MoreArgs {
                 .action(ArgAction::SetTrue)
                 .help("Charge conjugate the second initial state")
                 .long("cc2"),
+        )
+        .arg(
+            Arg::new("delete_bins")
+                .action(ArgAction::Append)
+                .help("Delete bins with the specified indices")
+                .long("delete-bins")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("BIN1-BIN2,...")
+                .value_parser(helpers::parse_integer_range),
         )
         .arg(
             Arg::new("scale_by_bin")
@@ -157,6 +174,7 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
+                "delete_bins" => grid.delete_bins(&value.downcast_ref::<Vec<_>>().unwrap()),
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
                 _ => unreachable!(),
             }

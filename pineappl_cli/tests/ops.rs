@@ -12,6 +12,7 @@ Arguments:
 Options:
       --cc1                           Charge conjugate the first initial state
       --cc2                           Charge conjugate the second initial state
+      --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
   -h, --help                          Print help
 ";
@@ -27,6 +28,22 @@ const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty
 5 3.25  3.5 1.2291115e2    -3.71     2.98
 6  3.5    4 5.7851018e1    -3.63     2.97
 7    4  4.5 1.3772029e1    -3.46     2.85
+";
+
+const DELETE_BINS_02_57_STR: &str = "b   etal    disg/detal  scale uncertainty
+     []        [pb]            [%]       
+-+----+----+-----------+--------+--------
+0 2.75    3 2.4257663e2    -3.77     2.92
+1    3 3.25 1.8093343e2    -3.74     2.95
+";
+
+const DELETE_BINS_25_STR: &str = "b   etal    disg/detal  scale uncertainty
+     []        [pb]            [%]       
+-+----+----+-----------+--------+--------
+0    2 2.25 3.7527620e2    -3.77     2.71
+1 2.25  2.5 3.4521553e2    -3.79     2.80
+2  3.5    4 5.7851018e1    -3.63     2.97
+3    4  4.5 1.3772029e1    -3.46     2.85
 ";
 
 const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -108,6 +125,64 @@ fn cc2() {
         .assert()
         .success()
         .stdout(DEFAULT_STR);
+}
+
+#[test]
+fn delete_bins_02_57() {
+    let output = NamedTempFile::new("deleted.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "ops",
+            "--delete-bins=0-2,5-7",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DELETE_BINS_02_57_STR);
+}
+
+#[test]
+fn delete_bins_25() {
+    let output = NamedTempFile::new("deleted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "ops",
+            "--delete-bins=2-5",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DELETE_BINS_25_STR);
 }
 
 #[test]

@@ -221,8 +221,8 @@ fn bin_number_differs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "delete",
-            "--bins=0,1",
+            "ops",
+            "--delete-bins=0,1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])

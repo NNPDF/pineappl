@@ -8,7 +8,6 @@ Commands:
   analyze    Perform various analyses with grids
   channels   Shows the contribution for each partonic channel
   convolute  Convolutes a PineAPPL grid with a PDF set
-  delete     Deletes parts from a PineAPPL grid
   diff       Compares the numerical content of two grids with each other
   evolve     Evolve a grid with an evolution kernel operator to an FK table
   help       Display a manpage for selected subcommands

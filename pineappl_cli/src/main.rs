@@ -3,7 +3,6 @@
 mod analyze;
 mod channels;
 mod convolute;
-mod delete;
 mod diff;
 mod evolve;
 mod help;
@@ -57,7 +56,6 @@ enum SubcommandEnum {
     Analyze(analyze::Opts),
     Channels(channels::Opts),
     Convolute(convolute::Opts),
-    Delete(delete::Opts),
     Diff(diff::Opts),
     Evolve(evolve::Opts),
     Help(help::Opts),
