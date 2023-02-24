@@ -21,7 +21,6 @@ mod remap;
 mod set;
 mod subgrids;
 mod sum;
-mod upgrade;
 
 use anyhow::Result;
 use clap::Parser;
@@ -73,7 +72,6 @@ enum SubcommandEnum {
     Set(set::Opts),
     Subgrids(subgrids::Opts),
     Sum(sum::Opts),
-    Upgrade(upgrade::Opts),
 }
 
 fn main() -> ExitCode {

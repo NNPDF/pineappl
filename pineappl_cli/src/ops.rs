@@ -39,7 +39,9 @@ impl FromArgMatches for MoreArgs {
 
         for id in ids {
             let value = match id.as_str() {
-                "cc1" | "cc2" => Box::new(matches.remove_one::<bool>(&id).unwrap()) as Box<dyn Any>,
+                "cc1" | "cc2" | "upgrade" => {
+                    Box::new(matches.remove_one::<bool>(&id).unwrap()) as Box<dyn Any>
+                }
                 "delete_bins" => Box::new(
                     matches
                         .remove_many::<RangeInclusive<usize>>(&id)
@@ -102,6 +104,12 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("BIN1,BIN2,...")
                 .value_parser(value_parser!(f64)),
+        )
+        .arg(
+            Arg::new("upgrade")
+                .action(ArgAction::SetTrue)
+                .help("Convert the file format to the most recent version")
+                .long("upgrade"),
         )
     }
 
@@ -176,6 +184,13 @@ impl Subcommand for Opts {
                 }
                 "delete_bins" => grid.delete_bins(&value.downcast_ref::<Vec<_>>().unwrap()),
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
+                "upgrade" => {
+                    if !value.downcast_ref::<bool>().copied().unwrap() {
+                        continue;
+                    }
+
+                    grid.upgrade();
+                }
                 _ => unreachable!(),
             }
         }

@@ -14,6 +14,7 @@ Options:
       --cc2                           Charge conjugate the second initial state
       --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
+      --upgrade                       Convert the file format to the most recent version
   -h, --help                          Print help
 ";
 
@@ -212,4 +213,21 @@ fn scale_by_bin() {
         .assert()
         .success()
         .stdout(SCALE_BY_BIN_STR);
+}
+
+#[test]
+fn upgrade() {
+    let output = NamedTempFile::new("upgraded.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "ops",
+            "--upgrade",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
 }

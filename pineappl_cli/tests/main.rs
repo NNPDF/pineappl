@@ -25,7 +25,6 @@ Commands:
   set        Modifies the internal key-value storage
   subgrids   Print information about the internal subgrid types
   sum        Sums two or more bins of a grid together
-  upgrade    Converts the file format to the most recent version
 
 Options:
       --silence-lhapdf  Prevents LHAPDF from printing banners
