@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - raised MSRV to 1.65.0
 - the switch `--force-positive` must be given at the same level as
   `--silence-lhapdf`
+- the CLI subcommands `delete`, `optimize`, `set` and `update` were merged into
+  the `ops` subcommand. Also the options `--merge-bins`, `--scale` and
+  `--scale-by-order` were merged into `ops`
 
 ### Fixed
 
