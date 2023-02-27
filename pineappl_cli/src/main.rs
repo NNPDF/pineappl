@@ -18,7 +18,6 @@ mod pdfunc;
 mod plot;
 mod pull;
 mod remap;
-mod set;
 mod subgrids;
 mod sum;
 
@@ -69,7 +68,6 @@ enum SubcommandEnum {
     Plot(plot::Opts),
     Pull(pull::Opts),
     Remap(remap::Opts),
-    Set(set::Opts),
     Subgrids(subgrids::Opts),
     Sum(sum::Opts),
 }

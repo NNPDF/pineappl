@@ -22,7 +22,6 @@ Commands:
   plot       Creates a matplotlib script plotting the contents of the grid
   pull       Calculates the pull between two different PDF sets
   remap      Modifies the bin dimensions, widths and normalizations
-  set        Modifies the internal key-value storage
   subgrids   Print information about the internal subgrid types
   sum        Sums two or more bins of a grid together
 

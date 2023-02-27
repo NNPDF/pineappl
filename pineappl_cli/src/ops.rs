@@ -7,6 +7,7 @@ use clap::{
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
 use std::any::Any;
+use std::fs;
 use std::ops::{Deref, RangeInclusive};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -49,11 +50,20 @@ impl FromArgMatches for MoreArgs {
                         .flatten()
                         .collect::<Vec<_>>(),
                 ) as Box<dyn Any>,
+                "delete_key" => {
+                    Box::new(matches.remove_one::<String>(&id).unwrap()) as Box<dyn Any>
+                }
                 "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
                 "scale_by_bin" | "scale_by_order" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
                         as Box<dyn Any>
                 }
+                "set_key_value" | "set_key_file" => Box::new(
+                    matches
+                        .remove_many::<String>(&id)
+                        .unwrap()
+                        .collect::<Vec<_>>(),
+                ) as Box<dyn Any>,
                 _ => unreachable!(),
             };
 
@@ -97,6 +107,13 @@ impl Args for MoreArgs {
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
+            Arg::new("delete_key")
+                .action(ArgAction::Set)
+                .help("Delete an internal key-value pair")
+                .long("delete-key")
+                .value_name("KEY"),
+        )
+        .arg(
             Arg::new("scale")
                 .action(ArgAction::Set)
                 .help("Scales all grids with the given factor")
@@ -124,6 +141,24 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("AS,AL,LR,LF")
                 .value_parser(value_parser!(f64)),
+        )
+        .arg(
+            Arg::new("set_key_value")
+                .action(ArgAction::Append)
+                .allow_hyphen_values(true)
+                .help("Set an internal key-value pair")
+                .long("set-key-value")
+                .num_args(2)
+                .value_names(["KEY", "VALUE"]),
+        )
+        .arg(
+            Arg::new("set_key_file")
+                .action(ArgAction::Append)
+                .allow_hyphen_values(true)
+                .help("Set an internal key-value pair, with value being read from a file")
+                .long("set-key-file")
+                .num_args(2)
+                .value_names(["KEY", "FILE"]),
         )
         .arg(
             Arg::new("upgrade")
@@ -203,6 +238,10 @@ impl Subcommand for Opts {
                     grid.set_lumis(lumis);
                 }
                 "delete_bins" => grid.delete_bins(&value.downcast_ref::<Vec<_>>().unwrap()),
+                "delete_key" => {
+                    grid.key_values_mut()
+                        .remove(value.downcast_ref::<String>().unwrap());
+                }
                 "scale" => grid.scale(value.downcast_ref().copied().unwrap()),
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
                 "scale_by_order" => {
@@ -214,6 +253,14 @@ impl Subcommand for Opts {
                         scale_by_order[3],
                         1.0,
                     );
+                }
+                "set_key_value" => {
+                    let key_value = value.downcast_ref::<Vec<String>>().unwrap();
+                    grid.set_key_value(&key_value[0], &key_value[1]);
+                }
+                "set_key_file" => {
+                    let key_file = value.downcast_ref::<Vec<String>>().unwrap();
+                    grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
                 "upgrade" => {
                     if !value.downcast_ref::<bool>().copied().unwrap() {
