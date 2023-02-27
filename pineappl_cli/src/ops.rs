@@ -122,7 +122,7 @@ impl Args for MoreArgs {
                 .long("scale-by-order")
                 .num_args(1)
                 .value_delimiter(',')
-                .value_name("AS,AL,LR,LF,GLOBAL")
+                .value_name("AS,AL,LR,LF")
                 .value_parser(value_parser!(f64)),
         )
         .arg(
@@ -212,7 +212,7 @@ impl Subcommand for Opts {
                         scale_by_order[1],
                         scale_by_order[2],
                         scale_by_order[3],
-                        scale_by_order[4],
+                        1.0,
                     );
                 }
                 "upgrade" => {

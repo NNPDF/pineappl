@@ -10,14 +10,14 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1                                  Charge conjugate the first initial state
-      --cc2                                  Charge conjugate the second initial state
-      --delete-bins <BIN1-BIN2,...>          Delete bins with the specified indices
-  -s, --scale <SCALE>                        Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>         Scale each bin with a different factor
-      --scale-by-order <AS,AL,LR,LF,GLOBAL>  Scales all grids with order-dependent factors
-      --upgrade                              Convert the file format to the most recent version
-  -h, --help                                 Print help
+      --cc1                           Charge conjugate the first initial state
+      --cc2                           Charge conjugate the second initial state
+      --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
+  -s, --scale <SCALE>                 Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
+      --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
+      --upgrade                       Convert the file format to the most recent version
+  -h, --help                          Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -237,7 +237,8 @@ fn scale_by_order() {
         .unwrap()
         .args([
             "ops",
-            "--scale-by-order=2,1,0.5,0.5,0.5",
+            "--scale-by-order=2,1,0.5,0.5",
+            "--scale=0.5",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
