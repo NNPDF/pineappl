@@ -49,7 +49,8 @@ impl FromArgMatches for MoreArgs {
                         .flatten()
                         .collect::<Vec<_>>(),
                 ) as Box<dyn Any>,
-                "scale_by_bin" => {
+                "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
+                "scale_by_bin" | "scale_by_order" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
                         as Box<dyn Any>
                 }
@@ -96,6 +97,15 @@ impl Args for MoreArgs {
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
+            Arg::new("scale")
+                .action(ArgAction::Set)
+                .help("Scales all grids with the given factor")
+                .long("scale")
+                .short('s')
+                .value_name("SCALE")
+                .value_parser(value_parser!(f64)),
+        )
+        .arg(
             Arg::new("scale_by_bin")
                 .action(ArgAction::Append)
                 .help("Scale each bin with a different factor")
@@ -103,6 +113,16 @@ impl Args for MoreArgs {
                 .num_args(1)
                 .value_delimiter(',')
                 .value_name("BIN1,BIN2,...")
+                .value_parser(value_parser!(f64)),
+        )
+        .arg(
+            Arg::new("scale_by_order")
+                .action(ArgAction::Append)
+                .help("Scales all grids with order-dependent factors")
+                .long("scale-by-order")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("AS,AL,LR,LF,GLOBAL")
                 .value_parser(value_parser!(f64)),
         )
         .arg(
@@ -183,7 +203,18 @@ impl Subcommand for Opts {
                     grid.set_lumis(lumis);
                 }
                 "delete_bins" => grid.delete_bins(&value.downcast_ref::<Vec<_>>().unwrap()),
+                "scale" => grid.scale(value.downcast_ref().copied().unwrap()),
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
+                "scale_by_order" => {
+                    let scale_by_order = value.downcast_ref::<Vec<_>>().unwrap();
+                    grid.scale_by_order(
+                        scale_by_order[0],
+                        scale_by_order[1],
+                        scale_by_order[2],
+                        scale_by_order[3],
+                        scale_by_order[4],
+                    );
+                }
                 "upgrade" => {
                     if !value.downcast_ref::<bool>().copied().unwrap() {
                         continue;

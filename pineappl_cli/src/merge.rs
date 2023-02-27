@@ -13,18 +13,6 @@ pub struct Opts {
     /// Path(s) of the files that should be merged.
     #[arg(required = true, value_hint = ValueHint::FilePath)]
     input: Vec<PathBuf>,
-    /// Scales all grids with the given factor.
-    #[arg(long, short)]
-    scale: Option<f64>,
-    /// Scales all grids with order-dependent factors.
-    #[arg(
-        conflicts_with = "scale",
-        long,
-        num_args = 1,
-        value_delimiter = ',',
-        value_name = "ALPHAS,ALPHA,LOGXIR,LOGXIF,GLOBAL"
-    )]
-    scale_by_order: Vec<f64>,
 }
 
 impl Subcommand for Opts {
@@ -34,18 +22,6 @@ impl Subcommand for Opts {
 
         for i in input_rest {
             grid0.merge(helpers::read_grid(i)?)?;
-        }
-
-        if let Some(scale) = self.scale {
-            grid0.scale(scale);
-        } else if !self.scale_by_order.is_empty() {
-            grid0.scale_by_order(
-                self.scale_by_order[0],
-                self.scale_by_order[1],
-                self.scale_by_order[2],
-                self.scale_by_order[3],
-                self.scale_by_order[4],
-            );
         }
 
         helpers::write_grid(&self.output, &grid0)
