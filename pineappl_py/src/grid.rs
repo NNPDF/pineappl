@@ -607,14 +607,15 @@ impl PyGrid {
         self.grid.optimize();
     }
 
-    /// Merge grid with another one, loaded from file
+    /// Merge grid with another one, loaded from file. If `ignore_bin_limits` is set to `true`, the
+    /// bin limits of both grids are ignored and only the number of bins must be equal.
     ///
     /// Note
     /// ----
     /// For a current limitation with the implementation of the bound object `Grid` is not possible
     /// to operate with two `Grid`s in memory, since is not possible to pass a `Grid` by argument
-    pub fn merge_from_file(&mut self, path: PathBuf) -> PyResult<()> {
-        match self.grid.merge(Self::read(path).grid) {
+    pub fn merge_from_file(&mut self, path: PathBuf, ignore_bin_limits: bool) -> PyResult<()> {
+        match self.grid.merge(Self::read(path).grid, ignore_bin_limits) {
             Ok(()) => Ok(()),
             Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
         }

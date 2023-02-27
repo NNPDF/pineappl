@@ -33,7 +33,7 @@ impl Subcommand for Opts {
         let mut grid0 = helpers::read_grid(input0)?;
 
         for i in input_rest {
-            grid0.merge(helpers::read_grid(i)?)?;
+            grid0.merge(helpers::read_grid(i)?, false)?;
         }
 
         if let Some(scale) = self.scale {

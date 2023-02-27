@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - raised MSRV to 1.65.0
 - the switch `--force-positive` must be given at the same level as
   `--silence-lhapdf`
+- added new parameter `ignore_bin_limits` to `Grid::merge`
 
 ### Fixed
 

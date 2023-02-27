@@ -650,7 +650,7 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_merge_and_delete(grid: *mut Grid, other: Option<Box<Grid>>) {
     if let Some(other) = other {
-        (*grid).merge(*other).unwrap();
+        (*grid).merge(*other, false).unwrap();
     }
 }
 
