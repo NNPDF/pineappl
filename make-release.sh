@@ -89,6 +89,7 @@ if [[ ${prerelease} == "" ]]; then
         -e "s:\(## \[Unreleased\]\):\1\n\n## [${version}] - $(date +%d/%m/%Y):" \
         -e "s:\[Unreleased\]\(\: https\://github.com/NNPDF/pineappl/compare/v\)\(.*\)...HEAD:[Unreleased]\1${version}...HEAD\n[${version}]\1\2...v${version}:" \
         CHANGELOG.md
+    git add CHANGELOG.md
 fi
 
 for crate in ${crates[@]}; do
@@ -98,11 +99,12 @@ for crate in ${crates[@]}; do
         -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"${version}\":" \
         -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"${version}\":" \
         ${crate}/Cargo.toml
+    git add ${crate}/Cargo.toml
 done
 
 echo ">>> Commiting and pushing changes ..."
 
-git commit -a -m "Release v${version}"
+git commit -m "Release v${version}"
 git tag -a v${version} -m v${version}
 git push --follow-tags
 
