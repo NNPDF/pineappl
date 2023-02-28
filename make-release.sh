@@ -102,6 +102,11 @@ for crate in . ${crates[@]}; do
     git add ${crate}/Cargo.toml
 done
 
+echo ">>> Updating Cargo.lock ..."
+
+echo ${crates[@]} | xargs printf ' -p %s' | xargs cargo update
+git add Cargo.lock
+
 echo ">>> Commiting and pushing changes ..."
 
 git commit -m "Release v${version}"
