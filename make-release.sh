@@ -92,7 +92,7 @@ if [[ ${prerelease} == "" ]]; then
     git add CHANGELOG.md
 fi
 
-for crate in ${crates[@]}; do
+for crate in . ${crates[@]}; do
     sed -i \
         -e "s:^version = \".*\":version = \"${version}\":" \
         -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"${version}\":" \
