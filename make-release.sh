@@ -29,7 +29,7 @@ if [[ -z ${version} ]]; then
     exit 1
 fi
 
-if [[ ! ${version} =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
+if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$') != ${version} ]]; then
     echo "Version string incorrect."
     exit 1
 fi
