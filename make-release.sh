@@ -130,9 +130,15 @@ echo ">>> Making a release on github"
 # extract the previous version number
 old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
 
-# extract news for the current version from the changelog file, dismissing
-# empty lines at the start and the end
-news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
-    CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
+prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
 
-gh release create v${version} -n "${news}"
+if [[ ${prerelease}  == "" ]]; then
+    # extract news for the current version from the changelog file, dismissing
+    # empty lines at the start and the end
+    news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
+        CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
+
+    gh release create v${version} -n "${news}"
+else
+    gh release create --prerelease v${version}
+fi
