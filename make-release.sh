@@ -66,13 +66,11 @@ fi
 
 echo ">>> Testing release configuration with default features ..."
 
-cargo build --release
 cargo test --release
 
 for feature in ${features[@]}; do
     echo ">>> Testing release configuration with \`${feature}\` feature ..."
 
-    cargo build --release --features=${feature}
     cargo test --release --features=${feature}
 done
 
