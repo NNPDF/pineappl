@@ -19,6 +19,7 @@ crates=(
 
 features=(
     applgrid
+    evolve
     fastnlo
     fktable
 )
