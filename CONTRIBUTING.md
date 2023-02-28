@@ -32,6 +32,7 @@ increasing the MSRV make sure to set it everywhere to the same value:
 - update the MSRV in `README.md` and `docs/installation.md`
 - update the MSRV in all Github workflows (`.github/workflows/`)
 - update `rust` in `.readthedocs.yml` and make sure RTD supports it
+- update the `cargo msrv` call in `make_release.sh`
 
 ## Making a new release
 
