@@ -147,5 +147,5 @@ if [[ ${prerelease}  == "" ]]; then
 
     gh release create v${version} -n "${news}"
 else
-    gh release create --prerelease v${version}
+    gh release create --prerelease v${version} -n ""
 fi
