@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-version=$1
-
 crates=(
     # this must always be the first item because all other crates depend on it
     pineappl
@@ -24,10 +22,12 @@ features=(
     fktable
 )
 
-if [[ -z ${version} ]]; then
+if [[ $# != 1 ]]; then
     echo "No version number given."
     exit 1
 fi
+
+version=$1
 
 if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$') != ${version} ]]; then
     echo "Version string incorrect."
