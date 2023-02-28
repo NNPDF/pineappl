@@ -15,6 +15,10 @@ crates=(
     pineappl_py
 )
 
+dont_publish=(
+    pineappl_py
+)
+
 features=(
     applgrid
     evolve
@@ -84,6 +88,8 @@ echo ">>> Updating version strings ..."
 
 prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
 
+# we don't want to create a changelog entry for prereleases, which are solely
+# for internal testing purposes
 if [[ ${prerelease} == "" ]]; then
     sed -i \
         -e "s:\(## \[Unreleased\]\):\1\n\n## [${version}] - $(date +%d/%m/%Y):" \
@@ -92,6 +98,7 @@ if [[ ${prerelease} == "" ]]; then
     git add CHANGELOG.md
 fi
 
+# the '.' is needed because we also need to modify the workspace
 for crate in . ${crates[@]}; do
     sed -i \
         -e "s:^version = \".*\":version = \"${version}\":" \
@@ -114,7 +121,8 @@ git tag -a v${version} -m v${version}
 git push --follow-tags
 
 for crate in ${crates[@]}; do
-    if [[ ${crate} == "pineappl_py" ]]; then
+    if [[ " ${dont_publish[*]} " =~ " ${crate} " ]]; then
+        echo ">>> Skipping crate '${crate}' ..."
         # don't publish this crate
         continue
     fi
@@ -147,5 +155,5 @@ if [[ ${prerelease}  == "" ]]; then
 
     gh release create v${version} -n "${news}"
 else
-    gh release create --prerelease v${version} -n ""
+    gh release create v${version} -n "" --prerelease
 fi
