@@ -23,8 +23,9 @@ jobs:
           python-version: '3.10'
       - name: Build wheels
         uses: PyO3/maturin-action@v1
-        env:
-          target_python: ${{ join(fromJSON(env.python_versions), " ") }} pypy3.8
+          # TODO: github doesn't like the following lines
+          #env:
+          #  target_python: ${{ join(fromJSON(env.python_versions), " ") }} pypy3.8
         with:
           target: ${{ matrix.target }}
           args: ${{ env.flags }} --interpreter ${{ target_python }}
