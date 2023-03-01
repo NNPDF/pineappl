@@ -5,6 +5,7 @@ on:
     types: [published]
   pull_request:
     types: [ready_for_review, review_requested]
+  push:
   workflow_dispatch:
 
 env:
@@ -32,11 +33,11 @@ jobs:
           target: ${{ matrix.target }}
           args: ${{ env.flags }} --interpreter ${{ target_python }}
           manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+            #- name: Upload wheels
+            #  uses: actions/upload-artifact@v3
+            #  with:
+            #    name: wheels
+            #    path: dist
 
   windows:
     runs-on: windows-latest
@@ -56,11 +57,11 @@ jobs:
         with:
           target: ${{ matrix.target }}
           args: ${{ env.flags }} --find-interpreter
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+            #- name: Upload wheels
+            #  uses: actions/upload-artifact@v3
+            #  with:
+            #    name: wheels
+            #    path: dist
 
   macos:
     runs-on: macos-latest
@@ -78,26 +79,26 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           args: ${{ env.flags }} --find-interpreter --universal2
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
+            #- name: Upload wheels
+            #  uses: actions/upload-artifact@v3
+            #  with:
+            #    name: wheels
+            #    path: dist
 
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux, windows, macos]
+            #release:
+            #  name: Release
+            #  runs-on: ubuntu-latest
+            #  if: "startsWith(github.ref, 'refs/tags/')"
+            #  needs: [linux, windows, macos]
 
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheels
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        with:
-          command: upload
-          args: --skip-existing *
+            #  steps:
+            #    - uses: actions/download-artifact@v3
+            #      with:
+            #        name: wheels
+            #    - name: Publish to PyPI
+            #      uses: PyO3/maturin-action@v1
+            #      env:
+            #        MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+            #      with:
+            #        command: upload
+            #        args: --skip-existing *
