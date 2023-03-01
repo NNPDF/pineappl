@@ -3,11 +3,13 @@ on:
   release:
     # run only on published, not for drafts
     types: [published]
+  pull_request:
+    types: [ready_for_review, review_requested]
+  workflow_dispatch:
 
 env:
-  TARGET_PYTHON:  3.7 3.8 3.9 3.10 pypy3.7
-  FLAGS: --release --out dist --manifest-path pineappl_py/Cargo.toml
-
+  python_versions: "['3.7', '3.8', '3.9', '3.10', '3.11']"
+  flags: --release --out dist --manifest-path pineappl_py/Cargo.toml
 
 jobs:
   linux:
@@ -15,6 +17,9 @@ jobs:
     strategy:
       matrix:
         target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
+
+    env:
+      target_python: ${{ join(fromJSON(env.python_versions), " ") }} pypy3.8
 
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +30,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: $FLAGS --interpreter $TARGET_PYTHON
+          args: ${{ env.flags }} --interpreter ${{ target_python }}
           manylinux: auto
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -38,18 +43,19 @@ jobs:
     strategy:
       matrix:
         target: [x64, x86]
+        target_python: ${{ fromJSON(env.python_versions) }} 
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.target_python }}
           architecture: ${{ matrix.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: $FLAGS --interpreter $TARGET_PYTHON
+          args: ${{ env.flags }} --find-interpreter
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
@@ -59,15 +65,19 @@ jobs:
   macos:
     runs-on: macos-latest
 
+    strategy:
+      matrix:
+        target_python: ${{ fromJSON(env.python_versions) }} 
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.target_python }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          args: $FLAGS --interpreter $TARGET_PYTHON --universal2
+          args: ${{ env.flags }} --find-interpreter --universal2
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
