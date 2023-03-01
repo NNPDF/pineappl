@@ -15,12 +15,13 @@ jobs:
     strategy:
       matrix:
         target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
+        target_python: ${{ fromJSON(env.python_versions) }}
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.target_python }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
           # TODO: github doesn't like the following lines
