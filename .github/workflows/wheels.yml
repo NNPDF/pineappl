@@ -4,8 +4,6 @@ on:
     # run only on published, not for drafts
     types: [published]
   pull_request:
-    types: [ready_for_review, review_requested]
-  push:
   workflow_dispatch:
 
 env:
