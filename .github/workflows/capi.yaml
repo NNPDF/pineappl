@@ -1,6 +1,9 @@
 name: CAPI
 
-on: push
+on:
+  push:
+    branches-ignore:
+      - 'replace-py-release'
 
 jobs:
   capi:

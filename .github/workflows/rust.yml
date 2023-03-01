@@ -2,9 +2,8 @@ name: Rust
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+    branches-ignore:
+      - 'replace-py-release'
 
 env:
   CARGO_TERM_COLOR: always
