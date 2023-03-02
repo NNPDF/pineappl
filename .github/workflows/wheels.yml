@@ -30,51 +30,44 @@ jobs:
             #    name: wheels
             #    path: dist
 
-            #windows:
-            #  runs-on: windows-latest
-            #  strategy:
-            #    matrix:
-            #      target: [x64, x86]
-            #      target_python: ${{ fromJSON(env.python_versions) }} 
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x64, x86]
+        python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
 
-            #  steps:
-            #    - uses: actions/checkout@v3
-            #    - uses: actions/setup-python@v4
-            #      with:
-            #        python-version: ${{ matrix.target_python }}
-            #        architecture: ${{ matrix.target }}
-            #    - name: Build wheels
-            #      uses: PyO3/maturin-action@v1
-            #      with:
-            #        target: ${{ matrix.target }}
-            #        args: ${{ env.flags }} --find-interpreter
-            #          #- name: Upload wheels
-            #          #  uses: actions/upload-artifact@v3
-            #          #  with:
-            #          #    name: wheels
-            #          #    path: dist
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+            #- name: Upload wheels
+            #  uses: actions/upload-artifact@v3
+            #  with:
+            #    name: wheels
+            #    path: dist
 
-            #macos:
-            #  runs-on: macos-latest
+  macos:
+    runs-on: macos-latest
 
-            #  strategy:
-            #    matrix:
-            #      target_python: ${{ fromJSON(env.python_versions) }} 
+    strategy:
+      matrix:
+        python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
 
-            #  steps:
-            #    - uses: actions/checkout@v3
-            #    - uses: actions/setup-python@v4
-            #      with:
-            #        python-version: ${{ matrix.target_python }}
-            #    - name: Build wheels
-            #      uses: PyO3/maturin-action@v1
-            #      with:
-            #        args: ${{ env.flags }} --find-interpreter --universal2
-            #          #- name: Upload wheels
-            #          #  uses: actions/upload-artifact@v3
-            #          #  with:
-            #          #    name: wheels
-            #          #    path: dist
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }} --universal2
+            #- name: Upload wheels
+            #  uses: actions/upload-artifact@v3
+            #  with:
+            #    name: wheels
+            #    path: dist
 
             #          #release:
             #          #  name: Release
