@@ -54,6 +54,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
+        target: [universal2-apple-darwin]
         python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
 
     steps:
@@ -61,7 +62,7 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          target: universal2-apple-darwin
+          target: ${{ matrix.target }}
           args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
