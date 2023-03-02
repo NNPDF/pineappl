@@ -14,15 +14,13 @@ jobs:
     strategy:
       matrix:
         target: [x86_64]
-        python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
-
     steps:
       - uses: actions/checkout@v3
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
+          args: ${{ env.flags }} --interpreter 3.7 3.8 3.9 3.10 3.11 pypy3.8
           manylinux: auto
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
@@ -35,18 +33,16 @@ jobs:
     strategy:
       matrix:
         target: [x64]
-        python_version: ['3.7', '3.8', '3.9', '3.10', '3.11']
-
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: 3.11
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
+          args: ${{ env.flags }} --interpreter 3.7 3.8 3.9 3.10 3.11
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
@@ -58,18 +54,16 @@ jobs:
     strategy:
       matrix:
         target: [universal2-apple-darwin]
-        python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
-
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: 3.11
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
+          args: ${{ env.flags }} --interpreter 3.7 3.8 3.9 3.10 3.11 pypy3.8
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
