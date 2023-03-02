@@ -22,7 +22,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+          args: ${{ env.flags }} --interpreter python${{ matrix.python-version }}
           manylinux: auto
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
@@ -43,7 +43,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+          args: ${{ env.flags }} --interpreter python${{ matrix.python-version }}
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
@@ -52,7 +52,6 @@ jobs:
 
   macos:
     runs-on: macos-latest
-
     strategy:
       matrix:
         python_version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
@@ -62,7 +61,8 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }} --universal2
+          target: universal2-apple-darwin
+          args: ${{ env.flags }} --interpreter python${{ matrix.python-version }}
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
