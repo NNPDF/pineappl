@@ -2,9 +2,8 @@ name: Python
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+    branches-ignore:
+      - 'replace-py-release'
 
 jobs:
   test:
