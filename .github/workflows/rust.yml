@@ -1,9 +1,6 @@
 name: Rust
 
-on:
-  push:
-    branches-ignore:
-      - 'replace-py-release'
+on: push
 
 env:
   CARGO_TERM_COLOR: always

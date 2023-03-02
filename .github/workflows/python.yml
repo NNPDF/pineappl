@@ -1,9 +1,6 @@
 name: Python
 
-on:
-  push:
-    branches-ignore:
-      - 'replace-py-release'
+on: push
 
 jobs:
   test:
