@@ -22,7 +22,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
           manylinux: auto
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
@@ -39,11 +39,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
@@ -59,11 +62,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: ${{ env.flags }} --interpreter ${{ matrix.python-version }}
+          args: ${{ env.flags }} --interpreter ${{ matrix.python_version }}
             #- name: Upload wheels
             #  uses: actions/upload-artifact@v3
             #  with:
