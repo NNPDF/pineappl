@@ -55,7 +55,7 @@ fi
 
 if ! cargo msrv --min 1.64.0 --max 1.64.0 >/dev/null; then
     echo "Minimum supported Rust version doesn't match avertised one."
-    exit
+    exit 1
 fi
 
 #if [[ -n $(git status --porcelain) ]]; then
