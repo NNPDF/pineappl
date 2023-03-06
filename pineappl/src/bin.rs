@@ -92,18 +92,6 @@ impl<'a> BinInfo<'a> {
         Self { limits, remapper }
     }
 
-    /// Return the bin limits for the bin with index `bin`.
-    pub fn bin_limits(&self, bin: usize) -> Vec<(f64, f64)> {
-        // TODO: make return type a Cow
-        if let Some(remapper) = self.remapper {
-            let dim = remapper.dimensions();
-            remapper.limits()[bin * dim..(bin + 1) * dim].to_vec()
-        } else {
-            let limits = &self.limits.limits()[bin..=bin + 1];
-            vec![(limits[0], limits[1])]
-        }
-    }
-
     /// Returns the number of bins.
     #[must_use]
     pub fn bins(&self) -> usize {
@@ -114,14 +102,6 @@ impl<'a> BinInfo<'a> {
     #[must_use]
     pub fn dimensions(&self) -> usize {
         self.remapper.map_or(1, BinRemapper::dimensions)
-    }
-
-    /// Return the index of the bin corresponding to `limits`. If no bin is found `None` is
-    /// returned.
-    pub fn find_bin(&self, limits: &[(f64, f64)]) -> Option<usize> {
-        (0..self.bins())
-            .map(|bin| self.bin_limits(bin))
-            .position(|lim| lim == limits)
     }
 
     /// Returns all left-limits for the specified dimension. If the dimension does not exist, an
@@ -229,7 +209,7 @@ impl<'a> BinInfo<'a> {
 
 impl PartialEq<BinInfo<'_>> for BinInfo<'_> {
     fn eq(&self, other: &BinInfo) -> bool {
-        (self.limits() == other.limits()) && (self.normalizations() == other.normalizations())
+        (self.limits == other.limits) && (self.remapper == other.remapper)
     }
 }
 
