@@ -839,16 +839,14 @@ impl Grid {
     ///
     /// TODO
     pub fn merge(&mut self, mut other: Self, ignore_bin_limits: bool) -> Result<(), GridError> {
+        // TODO: remove `ignore_bin_limits argument
+        assert!(!ignore_bin_limits);
+
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-        if ignore_bin_limits {
-            if self.bin_info().bins() != other.bin_info().bins() {
-                // TODO: return an error
-                todo!();
-            }
-        } else if self.bin_info() != other.bin_info() {
+        if self.bin_info() != other.bin_info() {
             let lhs_bins = self.bin_info().bins();
             new_bins = other.bin_info().bins();
 
@@ -912,22 +910,24 @@ impl Grid {
         self.orders.append(&mut new_orders);
         self.lumi.append(&mut new_entries);
 
+        let bin_indices: Vec<_> = (0..other.bin_info().bins())
+            .map(|bin| {
+                self.bin_info()
+                    .find_bin(&other.bin_info().bin_limits(bin))
+                    .expect(&format!("failed for {}", bin))
+            })
+            .collect();
+
         for ((i, j, k), subgrid) in other
             .subgrids
             .indexed_iter_mut()
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
-            let other_bin = other.bin_limits.limits()[j];
             let other_entry = &other.lumi[k];
 
             let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
-            let self_j = self
-                .bin_limits
-                .limits()
-                .iter()
-                .position(|x| approx_eq!(f64, *x, other_bin, ulps = 4))
-                .unwrap();
+            let self_j = bin_indices[j];
             let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
 
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
