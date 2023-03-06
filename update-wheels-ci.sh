@@ -36,6 +36,7 @@ EOF
 # - our secret taken has a different name
 # - add push event, even if it won't trigger an actual release
 # - and make sure it only runs on releases
+# - assign a suitable name to the workflow
 sed -i \
     -e 's/target: \[x86_64, x86, aarch64, armv7, s390x, ppc64le\]/target: [x86_64]/' \
     -e 's/target: \[x64, x86\]/target: [x64]/' \
@@ -44,5 +45,6 @@ sed -i \
     -e 's/PYPI_API_TOKEN/PYPI_TOKEN/' \
     -e 's/\(types: \[published\]\)/\1\n  push:/' \
     -e "s/\"startsWith(.*)\"/\"startsWith(github.event, 'release')\"/" \
+    -e 's/^on:/name: Wheels\n\n\0/' \
     -e "s/python-version: '3.10'/python-version: |\n            3.7\n            3.8\n            3.9\n            3.10\n            3.11/" \
     .github/workflows/wheels.yml
