@@ -501,7 +501,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
     let mut result = grids.remove(0);
     for grid in grids {
-        result.merge(grid, false)?;
+        result.merge(grid)?;
     }
 
     result.scale_by_order(1.0 / TAU, 1.0, 1.0, 1.0, 1.0);

@@ -206,7 +206,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     let mut grid0 = grids.remove(0);
     grids
         .into_iter()
-        .try_for_each(|g| grid0.merge(g, false).map_err(anyhow::Error::new))?;
+        .try_for_each(|g| grid0.merge(g).map_err(anyhow::Error::new))?;
 
     let combine = ffi::grid_combine(&grid);
 
