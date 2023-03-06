@@ -831,17 +831,13 @@ impl Grid {
     ///
     /// # Errors
     ///
-    /// If `ignore_bin_limits` is set to `false`, the bin limits of `self` and `other` must be
-    /// compatible with each other, otherwise an error is returned. If `ignore_bin_limits` is set
-    /// to `true`, only the number of bins of `self` and `other` must be the same.
+    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
+    /// not be merged with `self` an error is returned.
     ///
     /// # Panics
     ///
     /// TODO
-    pub fn merge(&mut self, mut other: Self, ignore_bin_limits: bool) -> Result<(), GridError> {
-        // TODO: remove `ignore_bin_limits argument
-        assert!(!ignore_bin_limits);
-
+    pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
@@ -863,7 +859,7 @@ impl Grid {
                     self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
                     other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
                 } else {
-                    // TODO: Return an error
+                    // Return an error
                     todo!();
                 }
             } else if rhs_remapper.is_none() {
@@ -871,7 +867,7 @@ impl Grid {
                     .merge(&other.bin_limits)
                     .map_err(GridError::InvalidBinLimits)?;
             } else {
-                // TODO: Return an error
+                // Return an error
                 todo!();
             }
         }
@@ -2282,7 +2278,7 @@ mod tests {
         );
 
         // merging with empty subgrids should not change the grid
-        assert!(grid.merge(other, false).is_ok());
+        assert!(grid.merge(other).is_ok());
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
@@ -2343,7 +2339,7 @@ mod tests {
         );
 
         // merge with four non-empty subgrids
-        assert!(grid.merge(other, false).is_ok());
+        assert!(grid.merge(other).is_ok());
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
@@ -2386,7 +2382,7 @@ mod tests {
             },
         );
 
-        assert!(grid.merge(other, false).is_ok());
+        assert!(grid.merge(other).is_ok());
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 3);
@@ -2432,7 +2428,7 @@ mod tests {
             &[2.0, 3.0],
         );
 
-        assert!(grid.merge(other, false).is_ok());
+        assert!(grid.merge(other).is_ok());
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);

@@ -169,10 +169,12 @@ fn perform_grid_tests(
     let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic)?;
 
     // TEST 1: `merge` and `scale`
-    grid.merge(
-        fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic)?,
-        false,
-    )?;
+    grid.merge(fill_drell_yan_lo_grid(
+        &mut rng,
+        500_000,
+        subgrid_type,
+        dynamic,
+    )?)?;
     grid.scale(0.5);
 
     // suppress LHAPDF banners
