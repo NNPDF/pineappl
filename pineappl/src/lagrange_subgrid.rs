@@ -156,6 +156,10 @@ impl Subgrid for LagrangeSubgridV1 {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        if ntuple.weight == 0.0 {
+            return;
+        }
+
         let y1 = fy(ntuple.x1);
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
@@ -521,6 +525,10 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        if ntuple.weight == 0.0 {
+            return;
+        }
+
         let y1 = fy(ntuple.x1);
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
@@ -861,6 +869,10 @@ impl Subgrid for LagrangeSparseSubgridV1 {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        if ntuple.weight == 0.0 {
+            return;
+        }
+
         let y1 = fy(ntuple.x1);
         let y2 = fy(ntuple.x2);
         let tau = ftau(ntuple.q2);
@@ -1290,6 +1302,52 @@ mod tests {
                 bytes_per_value: 8
             }
         );
+    }
+
+    #[test]
+    fn fill_zero_v1() {
+        let mut subgrid = LagrangeSubgridV1::new(&SubgridParams::default());
+
+        subgrid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 1000.0,
+            weight: 0.0,
+        });
+
+        assert!(subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 0);
+    }
+
+    #[test]
+    fn fill_zero_v1_sparse() {
+        let mut subgrid = LagrangeSparseSubgridV1::new(&SubgridParams::default());
+
+        subgrid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 1000.0,
+            weight: 0.0,
+        });
+
+        assert!(subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 0);
+    }
+
+    #[test]
+    fn fill_zero_v2() {
+        let mut subgrid =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+
+        subgrid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 1000.0,
+            weight: 0.0,
+        });
+
+        assert!(subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 0);
     }
 
     #[test]

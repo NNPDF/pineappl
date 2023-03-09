@@ -32,6 +32,10 @@ impl Subgrid for NtupleSubgridV1 {
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
+        if ntuple.weight == 0.0 {
+            return;
+        }
+
         self.ntuples.push(ntuple.clone());
     }
 
@@ -100,6 +104,20 @@ mod tests {
     #[should_panic(expected = "NtupleSubgridV1 doesn't support the convolute operation")]
     fn convolute() {
         let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
+    }
+
+    #[test]
+    fn fill_zero() {
+        let mut subgrid = NtupleSubgridV1::new();
+
+        subgrid.fill(&Ntuple {
+            x1: 0.5,
+            x2: 0.5,
+            q2: 1000.0,
+            weight: 0.0,
+        });
+
+        assert!(subgrid.is_empty());
     }
 
     #[test]
