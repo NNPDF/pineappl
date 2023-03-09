@@ -4,7 +4,6 @@ name: Wheels
 on:
   release:
     types: [published]
-  push:
 
 jobs:
   linux:
