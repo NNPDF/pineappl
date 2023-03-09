@@ -170,7 +170,7 @@ mod tests {
             x1: 0.0,
             x2: 0.0,
             q2: 0.0,
-            weight: 0.0,
+            weight: 1.0,
         });
 
         assert!(!subgrid1.is_empty());
@@ -188,7 +188,7 @@ mod tests {
             x1: 0.0,
             x2: 0.0,
             q2: 0.0,
-            weight: 0.0,
+            weight: 1.0,
         });
 
         subgrid2.merge(&mut subgrid1, false);
