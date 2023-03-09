@@ -83,6 +83,36 @@ def plot_abs(axis, **kwargs):
     if slice_label != '':
         axis.legend(fontsize='xx-small', frameon=False)
 
+def plot_ratio_pdf(axis, **kwargs):
+    x = kwargs['x']
+    ylog = kwargs['ylog']
+    ylabel = kwargs['ylabel']
+    slice_label = kwargs['slice_label']
+    pdf_uncertainties = kwargs['pdf_results']
+    channels = kwargs['channels']
+
+    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
+    axis.minorticks_on()
+    axis.set_axisbelow(True)
+    axis.grid(linestyle='dotted')
+    axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
+
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        y = y / pdf_uncertainties[0][1]
+        ymin = ymin / pdf_uncertainties[0][1]
+        ymax = ymax / pdf_uncertainties[0][1]
+
+        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2), fontsize='x-small', frameon=False, borderpad=0)
+
+    if slice_label != '':
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
+        t.set_bbox({{ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' }})
+
 def plot_abs_pdfs(axis, **kwargs):
     x = kwargs['x']
     ylog = kwargs['ylog']
@@ -268,6 +298,7 @@ def main():
 
     if len(data_slices[0]['pdf_results']) > 1:
         panels.extend([
+            plot_ratio_pdf,
             plot_rel_pdfunc,
             plot_rel_pdfpull,
         ])
