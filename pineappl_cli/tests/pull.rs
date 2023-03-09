@@ -13,7 +13,7 @@ Arguments:
 
 Options:
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
-  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 0]
+  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
   -o, --orders <ORDERS>    Select orders manually
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
@@ -110,7 +110,6 @@ fn default() {
             "--silence-lhapdf",
             "pull",
             "--threads=1",
-            "--limit=10",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180",
@@ -127,7 +126,6 @@ fn orders() {
         .args(&[
             "--silence-lhapdf",
             "pull",
-            "--limit=10",
             "--orders=a2",
             "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -147,7 +145,6 @@ fn cl_90() {
             "--silence-lhapdf",
             "pull",
             "--cl=90",
-            "--limit=10",
             "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -183,7 +180,6 @@ fn replica0() {
         .args(&[
             "--silence-lhapdf",
             "pull",
-            "--limit=10",
             "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",

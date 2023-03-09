@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   perturbative orders
 - added the subcommand `help` to show manpages of for each subcommand of
   `pineappl`
+- the switch `--limit` in `pull` now allows the value `0` for faster pull
+  computation
 
 ### Changed
 
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   results for more than two PDF sets
 - fixed a bug that caused `pineappl convolute` to ignore a possible `--order`
   parameter for additionally given PDF sets
+- fixed a bug that caused `pineappl plot` to show wrong pulls if the central
+  PDF set had asymmetric uncertainties
 
 ## [0.5.9] - 02/01/2023
 

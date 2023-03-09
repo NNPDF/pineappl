@@ -27,7 +27,7 @@ pub struct Opts {
     #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// The maximum number of luminosities displayed.
-    #[arg(default_value_t = 0, long, short)]
+    #[arg(default_value_t = 10, long, short)]
     limit: usize,
     /// Select orders manually.
     #[arg(

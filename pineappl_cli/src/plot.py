@@ -215,8 +215,8 @@ def plot_rel_pdfpull(axis, **kwargs):
         label, y, ymin, ymax = i
         diff = y - central_y
         yerr = np.where(diff > 0.0, y - ymin, ymax - y)
-        #pull_avg = (y - central_y) / np.sqrt(np.power(0.5 * (ymax - ymin), 2) + np.power(0.5 * (central_ymax - central_ymin), 2))
-        pull = (y - central_y) / np.sqrt(np.power(yerr, 2) + np.power(0.5 * (central_ymax - central_ymin), 2))
+        cerr = np.where(diff > 0.0, central_ymax - central_y, central_y - central_ymin)
+        pull = diff / np.sqrt(np.power(yerr, 2) + np.power(cerr, 2))
 
         #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\ pull', linewidth=0.5, step='post', zorder=2 * index)
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
