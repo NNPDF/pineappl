@@ -1,7 +1,6 @@
 use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::builder::TypedValueParser;
-use clap::{value_parser, Parser, ValueHint};
+use clap::{Parser, ValueHint};
 use lhapdf::{Pdf, PdfSet};
 use prettytable::{cell, Row};
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -28,13 +27,7 @@ pub struct Opts {
     #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// The maximum number of luminosities displayed.
-    #[arg(
-        default_value_t = 10,
-        long,
-        short,
-        // TODO: see https://github.com/clap-rs/clap/issues/4253
-        value_parser = value_parser!(u16).range(1..).map(usize::from)
-    )]
+    #[arg(default_value_t = 0, long, short)]
     limit: usize,
     /// Select orders manually.
     #[arg(
@@ -117,20 +110,34 @@ impl Subcommand for Opts {
         table.set_titles(title);
 
         for (bin, limits) in bin_limits.iter().enumerate() {
-            let values1: Vec<_> = results1
-                .iter()
-                .skip(bin)
-                .step_by(bin_limits.len())
-                .copied()
-                .collect();
-            let values2: Vec<_> = results2
-                .iter()
-                .skip(bin)
-                .step_by(bin_limits.len())
-                .copied()
-                .collect();
-            let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
-            let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
+            let (total, unc1, unc2) = {
+                let values1: Vec<_> = results1
+                    .iter()
+                    .skip(bin)
+                    .step_by(bin_limits.len())
+                    .copied()
+                    .collect();
+                let values2: Vec<_> = results2
+                    .iter()
+                    .skip(bin)
+                    .step_by(bin_limits.len())
+                    .copied()
+                    .collect();
+                let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
+                let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
+
+                // if requested use the given member instead of the central value
+                let diff = member2.map_or(uncertainty2.central, |member| values2[member])
+                    - member1.map_or(uncertainty1.central, |member| values1[member]);
+
+                // use the uncertainties in the direction in which they point to each other
+                let (unc1, unc2) = if diff > 0.0 {
+                    (uncertainty2.errminus, uncertainty1.errplus)
+                } else {
+                    (uncertainty1.errminus, uncertainty2.errplus)
+                };
+                (diff / unc1.hypot(unc2), unc1, unc2)
+            };
 
             let lumi_results =
                 |member: Option<usize>, pdfset: &mut Vec<Pdf>, set: &PdfSet| -> Vec<f64> {
@@ -198,32 +205,21 @@ impl Subcommand for Opts {
                     }
                 };
 
-            let lumi_results1: Vec<_> = lumi_results(member1, &mut pdfset1, &set1);
-            let lumi_results2: Vec<_> = lumi_results(member2, &mut pdfset2, &set2);
+            let mut pull_tuples = if self.limit == 0 {
+                vec![]
+            } else {
+                let lumi_results1 = lumi_results(member1, &mut pdfset1, &set1);
+                let lumi_results2 = lumi_results(member2, &mut pdfset2, &set2);
 
-            let mut pull_tuples: Vec<_> = lumi_results2
-                .iter()
-                .zip(lumi_results1.iter())
-                .map(|(res2, res1)| {
-                    // use the uncertainties in the direction in which the respective results differ
-                    let unc1 = if res1 > res2 {
-                        uncertainty1.errminus
-                    } else {
-                        uncertainty1.errplus
-                    };
-                    let unc2 = if res2 > res1 {
-                        uncertainty2.errminus
-                    } else {
-                        uncertainty2.errplus
-                    };
-                    (res2 - res1) / unc1.hypot(unc2)
-                })
-                .enumerate()
-                .collect();
+                let pull_tuples: Vec<_> = lumi_results2
+                    .iter()
+                    .zip(lumi_results1.iter())
+                    .map(|(res2, res1)| (res2 - res1) / unc1.hypot(unc2))
+                    .enumerate()
+                    .collect();
 
-            let total = pull_tuples
-                .iter()
-                .fold(0.0, |value, (_, pull)| value + pull);
+                pull_tuples
+            };
 
             let row = table.add_empty_row();
 

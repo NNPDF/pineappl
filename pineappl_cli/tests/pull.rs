@@ -13,7 +13,7 @@ Arguments:
 
 Options:
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
-  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
+  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 0]
   -o, --orders <ORDERS>    Select orders manually
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
@@ -72,11 +72,6 @@ const LIMIT_STR: &str = "b   etal    total l pull
 7    4  4.5 1.219 0 1.439
 ";
 
-const BAD_LIMIT_STR: &str = "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
-
-For more information try '--help'
-";
-
 const REPLICA0_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
@@ -115,6 +110,7 @@ fn default() {
             "--silence-lhapdf",
             "pull",
             "--threads=1",
+            "--limit=10",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180",
@@ -131,8 +127,9 @@ fn orders() {
         .args(&[
             "--silence-lhapdf",
             "pull",
-            "--threads=1",
+            "--limit=10",
             "--orders=a2",
+            "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF40_nnlo_as_01180/0",
@@ -150,6 +147,7 @@ fn cl_90() {
             "--silence-lhapdf",
             "pull",
             "--cl=90",
+            "--limit=10",
             "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -179,30 +177,13 @@ fn limit() {
 }
 
 #[test]
-fn bad_limit() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args(&[
-            "--silence-lhapdf",
-            "pull",
-            "--limit=0",
-            "--threads=1",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
-            "NNPDF40_nnlo_as_01180",
-        ])
-        .assert()
-        .failure()
-        .stderr(BAD_LIMIT_STR);
-}
-
-#[test]
 fn replica0() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args(&[
             "--silence-lhapdf",
             "pull",
+            "--limit=10",
             "--threads=1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
