@@ -15,6 +15,8 @@ Options:
       --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --delete-key <KEY>              Delete an internal key-value pair
       --merge-bins <BIN1-BIN2>        Merge specific bins together
+      --optimize                      Optimize internal data structure to minimize memory and disk usage
+      --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
   -s, --scale <SCALE>                 Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
       --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
@@ -313,6 +315,24 @@ fn merge_bins() {
         .assert()
         .success()
         .stdout(MERGE_BINS_STR);
+}
+
+#[test]
+fn optimize() {
+    // use `.pineappl` extension without `.lz4` to test `Grid::write` without compresssion
+    let output = NamedTempFile::new("optimized.pineappl").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "ops",
+            "--optimize",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
 }
 
 #[test]

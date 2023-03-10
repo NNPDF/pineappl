@@ -12,7 +12,6 @@ mod info;
 mod merge;
 mod obl;
 mod ops;
-mod optimize;
 mod orders;
 mod pdfunc;
 mod plot;
@@ -62,7 +61,6 @@ enum SubcommandEnum {
     Merge(merge::Opts),
     Obl(obl::Opts),
     Ops(ops::Opts),
-    Optimize(optimize::Opts),
     Orders(orders::Opts),
     Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),

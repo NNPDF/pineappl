@@ -1,9 +1,11 @@
 use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
+use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
     value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
     ValueHint,
 };
+use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
 use std::any::Any;
@@ -40,7 +42,7 @@ impl FromArgMatches for MoreArgs {
 
         for id in ids {
             let value = match id.as_str() {
-                "cc1" | "cc2" | "upgrade" => {
+                "cc1" | "cc2" | "optimize" | "upgrade" => {
                     Box::new(matches.remove_one::<bool>(&id).unwrap()) as Box<dyn Any>
                 }
                 "delete_bins" => Box::new(
@@ -55,6 +57,9 @@ impl FromArgMatches for MoreArgs {
                 }
                 "merge_bins" => Box::new(matches.remove_one::<RangeInclusive<usize>>(&id).unwrap())
                     as Box<dyn Any>,
+                "optimize-fk-table" => Box::new(Box::new(
+                    matches.remove_one::<FkAssumptions>(&id).unwrap(),
+                ) as Box<dyn Any>) as Box<dyn Any>,
                 "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
                 "scale_by_bin" | "scale_by_order" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
@@ -122,6 +127,27 @@ impl Args for MoreArgs {
                 .long("merge-bins")
                 .value_name("BIN1-BIN2")
                 .value_parser(helpers::parse_integer_range),
+        )
+        .arg(
+            Arg::new("optimize")
+                .action(ArgAction::SetTrue)
+                .help("Optimize internal data structure to minimize memory and disk usage")
+                .long("optimize"),
+        )
+        .arg(
+            Arg::new("optimize_fk_table")
+                .action(ArgAction::Append)
+                .help("Optimize internal data structure of an FkTable to minimize memory and disk usage")
+                .long("optimize-fk-table")
+                .num_args(1)
+                .value_name("OPTIMI")
+                .value_parser(
+                    PossibleValuesParser::new([
+                        "Nf6Ind", "Nf6Sym", "Nf5Ind", "Nf5Sym", "Nf4Ind", "Nf4Sym", "Nf3Ind",
+                        "Nf3Sym",
+                    ])
+                    .try_map(|s| s.parse::<FkAssumptions>()),
+                ),
         )
         .arg(
             Arg::new("scale")
@@ -257,6 +283,19 @@ impl Subcommand for Opts {
                     grid.merge_bins(*range.start()..(range.end() + 1))?;
                 }
                 "scale" => grid.scale(value.downcast_ref().copied().unwrap()),
+                "optimize" => {
+                    if !value.downcast_ref::<bool>().copied().unwrap() {
+                        continue;
+                    }
+
+                    grid.optimize();
+                }
+                "optimize_fk_table" => {
+                    let assumptions = value.downcast_ref::<FkAssumptions>().copied().unwrap();
+                    let mut fk_table = FkTable::try_from(grid)?;
+                    fk_table.optimize(assumptions);
+                    grid = fk_table.into_grid();
+                }
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
                 "scale_by_order" => {
                     let scale_by_order = value.downcast_ref::<Vec<_>>().unwrap();

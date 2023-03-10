@@ -16,7 +16,6 @@ Commands:
   merge      Merges one or more PineAPPL grids together
   obl        Shows information about orders (o), bins (b), or luminosities (l) of a grid
   ops        A collection of various modifying operations on grids
-  optimize   Optimizes the internal data structure to minimize memory usage
   orders     Shows the predictions for all bin for each order separately
   pdfunc     Calculates PDF uncertainties
   plot       Creates a matplotlib script plotting the contents of the grid
