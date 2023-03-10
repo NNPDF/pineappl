@@ -56,11 +56,6 @@ def ylimits(axis):
     return [min, max, inc]
 
 def plot_int(axis, **kwargs):
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
-
     xmin = np.array([])
     xmax = np.array([])
     x = np.array([])
@@ -91,17 +86,13 @@ def plot_abs(axis, **kwargs):
     ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
 
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
     axis.set_yscale('log' if ylog else 'linear')
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
     axis.step(x, y, 'royalblue', linewidth=1.0, where='post', label=slice_label)
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
     axis.set_ylabel(ylabel)
 
     if slice_label != '':
-        axis.legend(fontsize='xx-small', frameon=False)
+        axis.legend()
 
 def plot_ratio_pdf(axis, **kwargs):
     x = kwargs['x']
@@ -111,10 +102,6 @@ def plot_ratio_pdf(axis, **kwargs):
     pdf_uncertainties = kwargs['pdf_results']
     channels = kwargs['channels']
 
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
     axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
 
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -127,7 +114,7 @@ def plot_ratio_pdf(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2), fontsize='x-small', frameon=False, borderpad=0)
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2))
 
     if slice_label != '':
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
@@ -141,11 +128,7 @@ def plot_abs_pdfs(axis, **kwargs):
     pdf_uncertainties = kwargs['pdf_results']
     channels = kwargs['channels']
 
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
     axis.set_yscale('log' if ylog else 'linear')
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
     axis.set_ylabel(ylabel)
 
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -162,7 +145,7 @@ def plot_abs_pdfs(axis, **kwargs):
         label, y = i
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2), fontsize='x-small', frameon=False, borderpad=0)
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2))
 
     if slice_label != '':
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
@@ -180,17 +163,13 @@ def plot_rel_ewonoff(axis, **kwargs):
     pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
     mid = kwargs['mid']
 
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
     axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
     #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\ scale var.', linewidth=0.5, step='post')
     axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\ scale var.', linewidth=0.5, step='post')
     axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
     axis.set_ylabel('NLO EW on/off [\si{\percent}]')
-    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4, fontsize='x-small', frameon=False, borderpad=0)
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
 
 def plot_rel_pdfunc(axis, **kwargs):
     x = kwargs['x']
@@ -199,11 +178,6 @@ def plot_rel_pdfunc(axis, **kwargs):
 
     #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
     #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
-
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -255,11 +229,6 @@ def plot_rel_pdfpull(axis, **kwargs):
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     x = kwargs['x']
     y = kwargs['y']
-
-    axis.tick_params(axis='both', left=True, right=True, top=True, bottom=True, which='both', direction='in', width=0.5, zorder=10.0)
-    axis.minorticks_on()
-    axis.set_axisbelow(True)
-    axis.grid(linestyle='dotted')
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -323,11 +292,22 @@ def main():
             plot_rel_pdfpull,
         ])
 
+    plt.rc('axes', axisbelow=True, grid=True, labelsize='small')
+    plt.rc('figure.constrained_layout', hspace=0.0, use=True, wspace=0.0)
+    plt.rc('font', family='serif', size=14.0)
+    plt.rc('grid', linestyle='dotted')
+    plt.rc('legend', borderpad=0.0, fontsize='x-small', frameon=False)
+    plt.rc('pdf', compression=0)
     plt.rc('text', usetex=True)
     plt.rc('text.latex', preamble=r'\usepackage{siunitx}\usepackage{lmodern}')
-    plt.rc('font', family='serif', size=14.0)
-    plt.rc('axes', labelsize='small')
-    plt.rc('pdf', compression=0)
+    plt.rc('xtick', bottom=True, top=True)
+    plt.rc('xtick', direction='in')
+    plt.rc('xtick.major', width=0.5)
+    plt.rc('xtick.minor', bottom=True, top=True, width=0.5)
+    plt.rc('ytick', direction='in')
+    plt.rc('ytick', left=True, right=True)
+    plt.rc('ytick.major', width=0.5)
+    plt.rc('ytick.minor', visible=True, width=0.5)
 
     xaxis = 'x1'
     xunit = metadata().get(xaxis + '_unit', '')
@@ -348,8 +328,7 @@ def main():
         dict['ylabel'] = ylabel
         dict['ylog'] = ylog
 
-        figure, axes = plt.subplots(len(panels), 1, constrained_layout=True, sharex=True, squeeze=False)
-        figure.set_constrained_layout_pads(hspace=0, wspace=0)
+        figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
         if len(dict['x']) != 2 and xunit != '':
             axes[0, 0].set_xscale('log')
