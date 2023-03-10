@@ -53,6 +53,8 @@ impl FromArgMatches for MoreArgs {
                 "delete_key" => {
                     Box::new(matches.remove_one::<String>(&id).unwrap()) as Box<dyn Any>
                 }
+                "merge_bins" => Box::new(matches.remove_one::<RangeInclusive<usize>>(&id).unwrap())
+                    as Box<dyn Any>,
                 "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
                 "scale_by_bin" | "scale_by_order" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
@@ -112,6 +114,14 @@ impl Args for MoreArgs {
                 .help("Delete an internal key-value pair")
                 .long("delete-key")
                 .value_name("KEY"),
+        )
+        .arg(
+            Arg::new("merge_bins")
+                .action(ArgAction::Set)
+                .help("Merge specific bins together")
+                .long("merge-bins")
+                .value_name("BIN1-BIN2")
+                .value_parser(helpers::parse_integer_range),
         )
         .arg(
             Arg::new("scale")
@@ -241,6 +251,10 @@ impl Subcommand for Opts {
                 "delete_key" => {
                     grid.key_values_mut()
                         .remove(value.downcast_ref::<String>().unwrap());
+                }
+                "merge_bins" => {
+                    let range = value.downcast_ref::<RangeInclusive<usize>>().unwrap();
+                    grid.merge_bins(*range.start()..(range.end() + 1))?;
                 }
                 "scale" => grid.scale(value.downcast_ref().copied().unwrap()),
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),

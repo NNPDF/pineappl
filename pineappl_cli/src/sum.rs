@@ -2,7 +2,6 @@ use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::{bail, Result};
 use clap::{ArgGroup, Parser, ValueHint};
 use pineappl::bin::BinRemapper;
-use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -19,16 +18,6 @@ pub struct Opts {
     /// Sums all bins into a single bin.
     #[arg(long, group = "mode")]
     integrated: bool,
-    /// Merge specific bins together.
-    #[arg(
-        long,
-        group = "mode",
-        num_args = 1,
-        short,
-        value_delimiter = ',',
-        value_parser = helpers::parse_integer_range
-    )]
-    bins: Option<RangeInclusive<usize>>,
 }
 
 impl Subcommand for Opts {
@@ -53,10 +42,6 @@ impl Subcommand for Opts {
             key_values.remove("y_label");
             key_values.remove("y_label_tex");
             key_values.remove("y_unit");
-        } else if let Some(range) = self.bins.as_ref() {
-            if grid.merge_bins(*range.start()..(range.end() + 1)).is_err() {
-                bail!("TODO");
-            }
         } else {
             unreachable!();
         }
