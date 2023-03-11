@@ -468,9 +468,14 @@ impl Subcommand for Opts {
                 .get("description")
                 .map(String::as_str)
                 .unwrap_or("");
+            let bins = grid.bin_info().bins();
+            let pdfs = self.pdfsets.len();
 
             print!(
                 include_str!("plot.py"),
+                inte = if bins == 1 { "" } else { "#" },
+                nint = if bins == 1 { "#" } else { "" },
+                pdfs = if pdfs == 1 || bins == 1 { "#" } else { "" },
                 xaxis = xaxis,
                 xunit = xunit,
                 xlabel = xlabel,

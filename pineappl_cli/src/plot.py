@@ -258,21 +258,18 @@ def plot_rel_pdfpull(axis, **kwargs):
 
 def main():
     panels = [
-        plot_abs,
-        #plot_abs_pdfs,
-        plot_rel_ewonoff,
+        {inte}plot_int,
+        {nint}plot_abs,
+        {nint}plot_rel_ewonoff,
+        {pdfs}plot_abs_pdfs,
+        {pdfs}plot_ratio_pdf,
+        {pdfs}plot_rel_pdfunc,
+        {pdfs}plot_rel_pdfpull,
     ]
 
-    data_slices = data()
-
-    if len(data_slices[0]['pdf_results']) > 1:
-        panels.extend([
-            plot_ratio_pdf,
-            plot_rel_pdfunc,
-            plot_rel_pdfpull,
-        ])
-
     plt.rc('axes', axisbelow=True, grid=True, labelsize='small')
+    {nint}plt.rc('figure', figsize=(6.4,len(panels)*2.4))
+    {inte}plt.rc('figure', figsize=(4.2,2.6))
     plt.rc('figure.constrained_layout', hspace=0.0, use=True, wspace=0.0)
     plt.rc('font', family='serif', size=14.0)
     plt.rc('grid', linestyle='dotted')
@@ -296,12 +293,7 @@ def main():
     ylog = {ylog}
     description = r'{description}'
 
-    if len(data_slices[0]['x']) == 2:
-        panels = [ plot_int ]
-        xlabel = ylabel
-        plt.rc('figure', figsize=(4.2,2.6))
-    else:
-        plt.rc('figure', figsize=(6.4,len(panels)*2.4))
+    data_slices = data()
 
     for index, dict in enumerate(data_slices):
         dict['xlabel'] = xlabel
