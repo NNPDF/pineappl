@@ -32,28 +32,28 @@ def ylimits(axis):
     # extract the y limits *not* considering margins
     margins = axis.margins()
     axis.margins(y=0.0)
-    min, max = axis.get_ylim()
+    ymin, ymax = axis.get_ylim()
     axis.margins(y=margins[1])
 
     inc = 1.0
 
-    if (max - min) > 100.0:
-        min = -50.0
-        max = 50.0
+    if (ymax - ymin) > 100.0:
+        ymin = -50.0
+        ymax = 50.0
         inc = 25.0
-    elif (max - min) > 30.5:
+    elif (ymax - ymin) > 30.5:
         inc = 10.0
-    elif (max - min) > 20.5:
+    elif (ymax - ymin) > 20.5:
         inc = 5.0
-    elif (max - min) > 10.5:
+    elif (ymax - ymin) > 10.5:
         inc = 2.0
-    elif (max - min) < 3.0:
+    elif (ymax - ymin) < 3.0:
         inc = 0.5
 
-    min = math.floor(min / inc) * inc
-    max = math.ceil(max / inc) * inc
+    ymin = math.floor(ymin / inc) * inc
+    ymax = math.ceil(ymax / inc) * inc
 
-    return [min, max, inc]
+    return [ymin, ymax, inc]
 
 def plot_int(axis, **kwargs):
     xmin = np.array([])
@@ -315,21 +315,20 @@ def main():
 
     data_slices = data()
 
-    for index, dict in enumerate(data_slices):
-        dict['xlabel'] = xlabel
-        dict['ylabel'] = ylabel
-        dict['ylog'] = ylog
+    for index, kwargs in enumerate(data_slices):
+        kwargs['ylabel'] = ylabel
+        kwargs['ylog'] = ylog
 
         figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
-        if len(dict['x']) != 2 and xunit != '':
+        if len(kwargs['x']) != 2 and xunit != '':
             axes[0, 0].set_xscale('log')
 
         axes[ 0, 0].set_title(description)
         axes[-1, 0].set_xlabel(xlabel)
 
         for plot, axis in zip(panels, axes[:, 0]):
-            plot(axis, **dict)
+            plot(axis, **kwargs)
 
         name = 'LHCB_WP_7TEV' if len(data_slices) == 1 else 'LHCB_WP_7TEV-{}'.format(index)
         figure.savefig(name + '.pdf')
