@@ -79,28 +79,20 @@ def plot_int(axis, **kwargs):
 
 def plot_abs(axis, **kwargs):
     x = kwargs['x']
-    y = kwargs['y']
-    ymin = kwargs['ymin']
-    ymax = kwargs['ymax']
-    ylog = kwargs['ylog']
-    ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
 
-    axis.set_yscale('log' if ylog else 'linear')
-    axis.step(x, y, 'royalblue', linewidth=1.0, where='post', label=slice_label)
-    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', linewidth=0.5, step='post')
-    axis.set_ylabel(ylabel)
+    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
+    axis.step(x, kwargs['y'], 'royalblue', linewidth=1.0, where='post', label=slice_label)
+    axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color='royalblue', linewidth=0.5, step='post')
+    axis.set_ylabel(kwargs['ylabel'])
 
     if slice_label != '':
         axis.legend()
 
 def plot_ratio_pdf(axis, **kwargs):
     x = kwargs['x']
-    ylog = kwargs['ylog']
-    ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
     pdf_uncertainties = kwargs['pdf_results']
-    channels = kwargs['channels']
 
     axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
 
@@ -122,14 +114,12 @@ def plot_ratio_pdf(axis, **kwargs):
 
 def plot_abs_pdfs(axis, **kwargs):
     x = kwargs['x']
-    ylog = kwargs['ylog']
-    ylabel = kwargs['ylabel']
     slice_label = kwargs['slice_label']
     pdf_uncertainties = kwargs['pdf_results']
     channels = kwargs['channels']
 
-    axis.set_yscale('log' if ylog else 'linear')
-    axis.set_ylabel(ylabel)
+    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
+    axis.set_ylabel(kwargs['ylabel'])
 
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for index, i in enumerate(pdf_uncertainties):
@@ -161,13 +151,12 @@ def plot_rel_ewonoff(axis, **kwargs):
     ymax = percent_diff(kwargs['ymax'], kwargs['qcd_y'])
     pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
     pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
-    mid = kwargs['mid']
 
     axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
     #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\ scale var.', linewidth=0.5, step='post')
     axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')
     axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\ scale var.', linewidth=0.5, step='post')
-    axis.errorbar(mid, y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
+    axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
     axis.set_ylabel('NLO EW on/off [\si{\percent}]')
     axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
 
