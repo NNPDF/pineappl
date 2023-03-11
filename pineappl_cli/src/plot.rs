@@ -412,13 +412,7 @@ impl Subcommand for Opts {
             data_string.push_str("    ]");
 
             // prepare metadata
-            let mut key_values = grid.key_values().cloned().unwrap_or_default();
-            key_values.entry("description".to_string()).or_default();
-            key_values.entry("x1_label_tex".to_string()).or_default();
-            key_values.entry("x1_unit".to_string()).or_default();
-            key_values.entry("y_label_tex".to_string()).or_default();
-            key_values.entry("y_unit".to_string()).or_default();
-
+            let key_values = grid.key_values().cloned().unwrap_or_default();
             let mut vector: Vec<_> = key_values.iter().collect();
             vector.sort();
             let vector = vector;
@@ -439,9 +433,50 @@ impl Subcommand for Opts {
                 _ => {}
             }
 
+            let xaxis = format!("x{}", grid.bin_info().dimensions());
+            let xunit = key_values
+                .get(&format!("{xaxis}_unit"))
+                .map(String::as_str)
+                .unwrap_or("");
+            let xlabel = format!(
+                "{}{}",
+                key_values
+                    .get(&format!("{xaxis}_label_tex"))
+                    .map(String::as_str)
+                    .unwrap_or(""),
+                if xunit == "" {
+                    String::new()
+                } else {
+                    format!(" [\\si{{{xunit}}}]")
+                }
+            );
+            let yunit = key_values.get("y_unit").map(String::as_str).unwrap_or("");
+            let ylabel = format!(
+                "{}{}",
+                key_values
+                    .get("y_label_tex")
+                    .map(String::as_str)
+                    .unwrap_or(""),
+                if yunit == "" {
+                    String::new()
+                } else {
+                    format!(" [\\si{{{}}}]", yunit)
+                }
+            );
+            let ylog = if xlabel == "" { "True" } else { "False" };
+            let description = key_values
+                .get("description")
+                .map(String::as_str)
+                .unwrap_or("");
+
             print!(
                 include_str!("plot.py"),
-                xaxis = format!("x{}", grid.bin_info().dimensions()),
+                xaxis = xaxis,
+                xunit = xunit,
+                xlabel = xlabel,
+                ylabel = ylabel,
+                ylog = ylog,
+                description = description,
                 output = output.to_str().unwrap(),
                 data = data_string,
                 metadata = format_metadata(&vector),

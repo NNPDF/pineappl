@@ -290,11 +290,11 @@ def main():
     plt.rc('ytick.minor', visible=True, width=0.5)
 
     xaxis = '{xaxis}'
-    xunit = metadata().get(xaxis + '_unit', '')
-    xlabel = metadata()[xaxis + '_label_tex'] + (r' [\si{{' + xunit + r'}}]' if xunit != '' else '')
-    ylabel = metadata()['y_label_tex'] + r' [\si{{' + metadata()['y_unit'] + r'}}]'
-    ylog = xunit != ''
-    description = metadata()['description']
+    xunit = '{xunit}'
+    xlabel = r'{xlabel}'
+    ylabel = r'{ylabel}'
+    ylog = {ylog}
+    description = r'{description}'
 
     if len(data_slices[0]['x']) == 2:
         panels = [ plot_int ]

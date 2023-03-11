@@ -310,11 +310,11 @@ def main():
     plt.rc('ytick.minor', visible=True, width=0.5)
 
     xaxis = 'x1'
-    xunit = metadata().get(xaxis + '_unit', '')
-    xlabel = metadata()[xaxis + '_label_tex'] + (r' [\si{' + xunit + r'}]' if xunit != '' else '')
-    ylabel = metadata()['y_label_tex'] + r' [\si{' + metadata()['y_unit'] + r'}]'
-    ylog = xunit != ''
-    description = metadata()['description']
+    xunit = ''
+    xlabel = r'$\eta_{\bar{\ell}}$'
+    ylabel = r'$\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$ [\si{pb}]'
+    ylog = False
+    description = r'LHCb differential W-boson production cross section at 7 TeV'
 
     if len(data_slices[0]['x']) == 2:
         panels = [ plot_int ]
