@@ -463,8 +463,9 @@ impl Subcommand for Opts {
                     format!(" [\\si{{{}}}]", yunit)
                 }
             );
+            let xlog = if xunit == "" { "False" } else { "True" };
             let ylog = if xlabel == "" { "True" } else { "False" };
-            let description = key_values
+            let title = key_values
                 .get("description")
                 .map(String::as_str)
                 .unwrap_or("");
@@ -476,12 +477,11 @@ impl Subcommand for Opts {
                 inte = if bins == 1 { "" } else { "#" },
                 nint = if bins == 1 { "#" } else { "" },
                 pdfs = if pdfs == 1 || bins == 1 { "#" } else { "" },
-                xaxis = xaxis,
-                xunit = xunit,
                 xlabel = xlabel,
                 ylabel = ylabel,
+                xlog = xlog,
                 ylog = ylog,
-                description = description,
+                title = title,
                 output = output.to_str().unwrap(),
                 data = data_string,
                 metadata = format_metadata(&vector),

@@ -275,12 +275,11 @@ def main():
     plt.rc('ytick.major', width=0.5)
     plt.rc('ytick.minor', visible=True, width=0.5)
 
-    xaxis = '{xaxis}'
-    xunit = '{xunit}'
     xlabel = r'{xlabel}'
     ylabel = r'{ylabel}'
+    xlog = {xlog}
     ylog = {ylog}
-    description = r'{description}'
+    title = r'{title}'
 
     data_slices = data()
 
@@ -290,10 +289,10 @@ def main():
 
         figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
-        if len(kwargs['x']) != 2 and xunit != '':
+        if len(kwargs['x']) > 2 and xlog:
             axes[0, 0].set_xscale('log')
 
-        axes[ 0, 0].set_title(description)
+        axes[ 0, 0].set_title(title)
         axes[-1, 0].set_xlabel(xlabel)
 
         for plot, axis in zip(panels, axes[:, 0]):
