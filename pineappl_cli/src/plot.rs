@@ -464,7 +464,7 @@ impl Subcommand for Opts {
                 }
             );
             let xlog = if xunit == "" { "False" } else { "True" };
-            let ylog = if xlabel == "" { "True" } else { "False" };
+            let ylog = if xunit == "" { "False" } else { "True" };
             let title = key_values
                 .get("description")
                 .map(String::as_str)
