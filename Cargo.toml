@@ -20,7 +20,7 @@ keywords = ["high-energy-physics", "physics"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/NNPDF/pineappl"
 rust-version = "1.64.0"
-version = "0.6.0-alpha.3"
+version = "0.6.0-alpha.4"
 
 [profile.release]
 codegen-units = 1
