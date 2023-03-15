@@ -86,6 +86,66 @@ std::unique_ptr<appl::grid> make_grid(rust::Str filename)
     return std::unique_ptr<appl::grid>(new appl::grid(name));
 }
 
+std::unique_ptr<appl::grid> make_empty_grid(
+    rust::Slice<double const> bin_limits,
+    rust::Str genpdf,
+    int leading_order,
+    int loops,
+    rust::Str transform,
+    rust::Str qtransform
+) {
+    std::vector<double> obs(bin_limits.begin(), bin_limits.end());
+    auto g = static_cast <std::string> (genpdf);
+    auto t = static_cast <std::string> (transform);
+    auto q = static_cast <std::string> (qtransform);
+
+    return std::unique_ptr<appl::grid>(new appl::grid(obs, g, leading_order, loops, t, q));
+}
+
+std::unique_ptr<appl::igrid> make_igrid(
+    int NQ2,
+    double Q2min,
+    double Q2max,
+    int Q2order,
+    int Nx,
+    double xmin,
+    double xmax,
+    int xorder,
+    rust::Str transform,
+    rust::Str qtransform,
+    int Nproc,
+    bool disflag
+) {
+    return std::unique_ptr<appl::igrid>(new appl::igrid(
+        NQ2,
+        Q2min,
+        Q2max,
+        Q2order,
+        Nx,
+        xmin,
+        xmax,
+        xorder,
+        static_cast <std::string> (transform),
+        static_cast <std::string> (qtransform),
+        Nproc,
+        disflag
+    ));
+}
+
+std::unique_ptr<lumi_pdf> make_lumi_pdf(rust::Str s, rust::Slice<int const> combinations)
+{
+    return std::unique_ptr<lumi_pdf>(new lumi_pdf(
+        static_cast <std::string> (s),
+        std::vector<int>(combinations.begin(), combinations.end())
+    ));
+}
+
+void grid_add_igrid(appl::grid& grid, int bin, int order, std::unique_ptr<appl::igrid> igrid)
+{
+    // transfers ownership of `igrid` to `grid`
+    grid.add_igrid(bin, order, igrid.release());
+}
+
 rust::Vec<int> grid_combine(appl::grid const& grid)
 {
     return std_vector_to_rust_vec(grid.combine());

@@ -33,6 +33,7 @@ pub mod ffi {
         fn obslow_internal(&self, _: i32) -> f64;
         fn run(self: Pin<&mut Self>) -> &mut f64;
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
+        fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
     }
 
     #[namespace = "appl"]
@@ -41,6 +42,7 @@ pub mod ffi {
 
         type igrid;
 
+        unsafe fn fill_index(self: Pin<&mut Self>, _: i32, _: i32, _: i32, _: *const f64);
         fn getQ2(&self, _: i32) -> f64;
         fn getx1(&self, _: i32) -> f64;
         fn getx2(&self, _: i32) -> f64;
@@ -65,10 +67,34 @@ pub mod ffi {
     }
 
     unsafe extern "C++" {
+        include!("appl_grid/lumi_pdf.h");
+
+        type lumi_pdf;
+    }
+
+    unsafe extern "C++" {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
+        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
+            -> UniquePtr<grid>;
+        fn make_igrid(
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: &str,
+            _: &str,
+            _: i32,
+            _: bool,
+        ) -> Result<UniquePtr<igrid>>;
+        fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
+        fn grid_add_igrid(_: Pin<&mut grid>, _: i32, _: i32, _: UniquePtr<igrid>);
         fn grid_combine(_: &grid) -> Vec<i32>;
         fn grid_convolute(
             _: Pin<&mut grid>,

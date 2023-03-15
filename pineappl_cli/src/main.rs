@@ -6,6 +6,7 @@ mod convolute;
 mod delete;
 mod diff;
 mod evolve;
+mod export;
 mod help;
 mod helpers;
 mod import;
@@ -60,6 +61,7 @@ enum SubcommandEnum {
     Delete(delete::Opts),
     Diff(diff::Opts),
     Evolve(evolve::Opts),
+    Export(export::Opts),
     Help(help::Opts),
     Import(import::Opts),
     Info(info::Opts),

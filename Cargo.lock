@@ -946,6 +946,7 @@ dependencies = [
  "assert_fs",
  "clap",
  "clap_mangen",
+ "cxx",
  "enum_dispatch",
  "flate2",
  "git-version",

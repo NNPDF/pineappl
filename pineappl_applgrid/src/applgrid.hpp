@@ -11,6 +11,34 @@
 
 std::unique_ptr<appl::grid> make_grid(rust::Str filename);
 
+std::unique_ptr<appl::grid> make_empty_grid(
+    rust::Slice<double const> bin_limits,
+    rust::Str genpdf,
+    int leading_order,
+    int loops,
+    rust::Str transform,
+    rust::Str qtransform
+);
+
+std::unique_ptr<appl::igrid> make_igrid(
+    int NQ2,
+    double Q2min,
+    double Q2max,
+    int Q2order,
+    int Nx,
+    double xmin,
+    double xmax,
+    int xorder,
+    rust::Str transform,
+    rust::Str qtransform,
+    int Nproc,
+    bool disflag
+);
+
+std::unique_ptr<lumi_pdf> make_lumi_pdf(rust::Str s, rust::Slice<int const> combinations);
+
+void grid_add_igrid(appl::grid& grid, int bin, int order, std::unique_ptr<appl::igrid> igrid);
+
 rust::Vec<int> grid_combine(appl::grid const& grid);
 
 rust::Vec<double> grid_convolute(
