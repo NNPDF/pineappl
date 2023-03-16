@@ -128,9 +128,9 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
             for ((x1, x2, q2), value) in subgrid.indexed_iter() {
                 ffi::sparse_matrix_set(
                     weightgrid.as_mut(),
+                    q2.try_into().unwrap(),
                     x1.try_into().unwrap(),
                     x2.try_into().unwrap(),
-                    q2.try_into().unwrap(),
                     value,
                 );
             }
