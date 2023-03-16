@@ -77,11 +77,11 @@ impl Order {
         }
     }
 
-    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
-    /// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
-    /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
-    /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
-    /// the NNLO QCD.
+    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`],
+    /// [`Grid::evolve`] or [`Grid::evolve_info`]. The selection of `orders` is controlled using
+    /// the `max_as` and `max_al` parameters, for instance setting `max_as = 1` and `max_al = 0`
+    /// selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD; setting `max_as = 3`
+    /// and `max_al = 2` would select all NLOs, and the NNLO QCD.
     ///
     /// # Example
     ///
@@ -109,19 +109,19 @@ impl Order {
     /// ];
     ///
     /// // LO EW
-    /// assert_eq!(Order::create_mask(&orders, 0, 1), [true, false, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 1, false), [true, false, false, false, false, false]);
     /// // LO QCD
-    /// assert_eq!(Order::create_mask(&orders, 1, 0), [true, false, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 1, 0, false), [true, false, false, false, false, false]);
     /// // LO
-    /// assert_eq!(Order::create_mask(&orders, 1, 1), [true, false, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 1, 1, false), [true, false, false, false, false, false]);
     /// // NLO QCD
-    /// assert_eq!(Order::create_mask(&orders, 2, 0), [true, true, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 2, 0, false), [true, true, false, false, false, false]);
     /// // NLO EW
-    /// assert_eq!(Order::create_mask(&orders, 0, 2), [true, false, true, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 2, false), [true, false, true, false, false, false]);
     /// // NNLO QCD
-    /// assert_eq!(Order::create_mask(&orders, 3, 0), [true, true, false, true, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 3, 0, false), [true, true, false, true, false, false]);
     /// // NNLO EW
-    /// assert_eq!(Order::create_mask(&orders, 0, 3), [true, false, true, false, false, true]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 3, false), [true, false, true, false, false, true]);
     /// ```
     ///
     /// Although not shown in the example above, orders containing non-zero powers of logarithms
@@ -138,7 +138,7 @@ impl Order {
     ///     Order::new(0, 3, 1, 0), //  NLO  EW    :        alpha^3 logxif
     /// ];
     ///
-    /// assert_eq!(Order::create_mask(&orders, 0, 2), [true, false, false, true, true]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 2, false), [true, false, false, true, true]);
     /// ```
     ///
     /// For the more complicated example of top-pair production one can see the difference between
@@ -158,14 +158,14 @@ impl Order {
     /// ];
     ///
     /// // LO EW
-    /// assert_eq!(Order::create_mask(&orders, 0, 1), [false, false, true, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 1, false), [false, false, true, false, false, false, false]);
     /// // LO QCD
-    /// assert_eq!(Order::create_mask(&orders, 1, 0), [true, false, false, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 1, 0, false), [true, false, false, false, false, false, false]);
     /// // LO
-    /// assert_eq!(Order::create_mask(&orders, 1, 1), [true, true, true, false, false, false, false]);
+    /// assert_eq!(Order::create_mask(&orders, 1, 1, false), [true, true, true, false, false, false, false]);
     /// ```
     #[must_use]
-    pub fn create_mask(orders: &[Self], max_as: u32, max_al: u32) -> Vec<bool> {
+    pub fn create_mask(orders: &[Self], max_as: u32, max_al: u32, logs: bool) -> Vec<bool> {
         // smallest sum of alphas and alpha
         let lo = orders
             .iter()
@@ -196,17 +196,28 @@ impl Order {
 
         orders
             .iter()
-            .map(|Self { alphas, alpha, .. }| {
-                let pto = alphas + alpha - lo;
+            .map(
+                |&Self {
+                     alphas,
+                     alpha,
+                     logxir,
+                     logxif,
+                 }| {
+                    if !logs && (logxir > 0 || logxif > 0) {
+                        return false;
+                    }
 
-                alphas + alpha < min + lo
-                    || (alphas + alpha < max + lo
-                        && match max_as.cmp(&max_al) {
-                            Ordering::Greater => lo_as + pto == *alphas,
-                            Ordering::Less => lo_al + pto == *alpha,
-                            Ordering::Equal => false,
-                        })
-            })
+                    let pto = alphas + alpha - lo;
+
+                    alphas + alpha < min + lo
+                        || (alphas + alpha < max + lo
+                            && match max_as.cmp(&max_al) {
+                                Ordering::Greater => lo_as + pto == alphas,
+                                Ordering::Less => lo_al + pto == alpha,
+                                Ordering::Equal => false,
+                            })
+                },
+            )
             .collect()
     }
 }
@@ -2089,67 +2100,67 @@ mod tests {
         ];
 
         assert_eq!(
-            Order::create_mask(&orders, 0, 0),
+            Order::create_mask(&orders, 0, 0, false),
             [false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 1),
+            Order::create_mask(&orders, 0, 1, false),
             [true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 2),
+            Order::create_mask(&orders, 0, 2, false),
             [true, false, true, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 3),
+            Order::create_mask(&orders, 0, 3, false),
             [true, false, true, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 0),
+            Order::create_mask(&orders, 1, 0, false),
             [true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 1),
+            Order::create_mask(&orders, 1, 1, false),
             [true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 2),
+            Order::create_mask(&orders, 1, 2, false),
             [true, false, true, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 3),
+            Order::create_mask(&orders, 1, 3, false),
             [true, false, true, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 0),
+            Order::create_mask(&orders, 2, 0, false),
             [true, true, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 1),
+            Order::create_mask(&orders, 2, 1, false),
             [true, true, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 2),
+            Order::create_mask(&orders, 2, 2, false),
             [true, true, true, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 3),
+            Order::create_mask(&orders, 2, 3, false),
             [true, true, true, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 0),
+            Order::create_mask(&orders, 3, 0, false),
             [true, true, false, true, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 1),
+            Order::create_mask(&orders, 3, 1, false),
             [true, true, false, true, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 2),
+            Order::create_mask(&orders, 3, 2, false),
             [true, true, true, true, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 3),
+            Order::create_mask(&orders, 3, 3, false),
             [true, true, true, true, true, true]
         );
 
@@ -2170,67 +2181,67 @@ mod tests {
         ];
 
         assert_eq!(
-            Order::create_mask(&orders, 0, 0),
+            Order::create_mask(&orders, 0, 0, false),
             [false, false, false, false, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 1),
+            Order::create_mask(&orders, 0, 1, false),
             [false, false, true, false, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 2),
+            Order::create_mask(&orders, 0, 2, false),
             [false, false, true, false, false, false, true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 0, 3),
+            Order::create_mask(&orders, 0, 3, false),
             [false, false, true, false, false, false, true, false, false, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 0),
+            Order::create_mask(&orders, 1, 0, false),
             [true, false, false, false, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 1),
+            Order::create_mask(&orders, 1, 1, false),
             [true, true, true, false, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 2),
+            Order::create_mask(&orders, 1, 2, false),
             [true, true, true, false, false, false, true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 1, 3),
+            Order::create_mask(&orders, 1, 3, false),
             [true, true, true, false, false, false, true, false, false, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 0),
+            Order::create_mask(&orders, 2, 0, false),
             [true, false, false, true, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 1),
+            Order::create_mask(&orders, 2, 1, false),
             [true, true, true, true, false, false, false, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 2),
+            Order::create_mask(&orders, 2, 2, false),
             [true, true, true, true, true, true, true, false, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 2, 3),
+            Order::create_mask(&orders, 2, 3, false),
             [true, true, true, true, true, true, true, false, false, false, false, true]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 0),
+            Order::create_mask(&orders, 3, 0, false),
             [true, false, false, true, false, false, false, true, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 1),
+            Order::create_mask(&orders, 3, 1, false),
             [true, true, true, true, false, false, false, true, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 2),
+            Order::create_mask(&orders, 3, 2, false),
             [true, true, true, true, true, true, true, true, false, false, false, false]
         );
         assert_eq!(
-            Order::create_mask(&orders, 3, 3),
+            Order::create_mask(&orders, 3, 3, false),
             [true, true, true, true, true, true, true, true, true, true, true, true]
         );
     }

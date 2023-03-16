@@ -82,12 +82,14 @@ impl PyOrder {
         orders: Vec<PyRef<Self>>,
         max_as: u32,
         max_al: u32,
+        logs: bool,
         py: Python<'py>,
     ) -> &'py PyArray1<bool> {
         Order::create_mask(
             &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
             max_as,
             max_al,
+            logs,
         )
         .into_pyarray(py)
     }
