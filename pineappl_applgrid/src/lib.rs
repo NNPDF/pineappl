@@ -31,6 +31,7 @@ pub mod ffi {
         fn nloops(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
+        fn reweight(self: Pin<&mut Self>, _: bool) -> bool;
         fn run(self: Pin<&mut Self>) -> &mut f64;
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
         fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);

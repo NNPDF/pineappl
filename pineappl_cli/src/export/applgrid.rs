@@ -100,6 +100,9 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
         false, // TODO: implement the DIS case
     );
 
+    // disable reweighting, because `Subgrid::indexed_iter()` returns already reweighted results
+    applgrid.pin_mut().reweight(false);
+
     for Order {
         alphas,
         alpha,
