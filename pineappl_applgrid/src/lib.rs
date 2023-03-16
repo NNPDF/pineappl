@@ -49,6 +49,8 @@ pub mod ffi {
         fn Ntau(&self) -> i32;
         fn Ny1(&self) -> i32;
         fn Ny2(&self) -> i32;
+        fn setlimits(self: Pin<&mut Self>);
+        fn SubProcesses(&self) -> i32;
         fn weightgrid(&self, _: i32) -> *const SparseMatrix3d;
     }
 
@@ -64,6 +66,8 @@ pub mod ffi {
 
     unsafe extern "C++" {
         type SparseMatrix3d;
+
+        fn trim(self: Pin<&mut Self>);
     }
 
     unsafe extern "C++" {
@@ -76,9 +80,8 @@ pub mod ffi {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
-        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
-            -> UniquePtr<grid>;
-        fn make_igrid(
+        fn make_new_grid(
+            _: &[f64],
             _: i32,
             _: f64,
             _: f64,
@@ -88,13 +91,14 @@ pub mod ffi {
             _: f64,
             _: i32,
             _: &str,
-            _: &str,
             _: i32,
+            _: i32,
+            _: &str,
+            _: &str,
             _: bool,
-        ) -> Result<UniquePtr<igrid>>;
+        ) -> UniquePtr<grid>;
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
-        fn grid_add_igrid(_: Pin<&mut grid>, _: i32, _: i32, _: UniquePtr<igrid>);
         fn grid_combine(_: &grid) -> Vec<i32>;
         fn grid_convolute(
             _: Pin<&mut grid>,
@@ -107,11 +111,14 @@ pub mod ffi {
         ) -> Vec<f64>;
 
         fn sparse_matrix_get(_: &SparseMatrix3d, _: i32, _: i32, _: i32) -> f64;
+        fn sparse_matrix_set(_: Pin<&mut SparseMatrix3d>, _: i32, _: i32, _: i32, _: f64);
 
         // TODO: class member functions aren't supported yet by cxx, see
         // https://github.com/dtolnay/cxx/issues/447
         fn weightfun(_: f64) -> f64;
 
         fn igrid_m_reweight(_: &igrid) -> bool;
+        fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
+        fn grid_get_igrid(_: Pin<&mut grid>, _: usize, _: usize) -> Pin<&mut igrid>;
     }
 }

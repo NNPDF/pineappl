@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use ndarray::{s, Array4, Axis};
+use ndarray::Axis;
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
@@ -82,13 +82,22 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
         .unwrap()
         - lo_alphas;
 
-    let mut applgrid = ffi::make_empty_grid(
+    let mut applgrid = ffi::make_new_grid(
         &limits,
+        p.q2_bins().try_into().unwrap(),
+        p.q2_min(),
+        p.q2_max(),
+        p.q2_order().try_into().unwrap(),
+        p.x_bins().try_into().unwrap(),
+        p.x_min(),
+        p.x_max(),
+        p.x_order().try_into().unwrap(),
         id,
         lo_alphas.try_into().unwrap(),
         loops.try_into().unwrap(),
         xtrans,
         qtrans,
+        false, // TODO: implement the DIS case
     );
 
     for Order {
@@ -109,65 +118,37 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
     {
+        for ((bin, lumi), subgrid) in grid.subgrids().index_axis(Axis(0), order).indexed_iter() {
+            let mut igrid = ffi::grid_get_igrid(applgrid.pin_mut(), appl_order, bin);
+            let mut weightgrid = ffi::igrid_weightgrid(igrid.as_mut(), lumi);
+
+            for ((x1, x2, q2), value) in subgrid.indexed_iter() {
+                ffi::sparse_matrix_set(
+                    weightgrid.as_mut(),
+                    x1.try_into().unwrap(),
+                    x2.try_into().unwrap(),
+                    q2.try_into().unwrap(),
+                    value,
+                );
+            }
+
+            // TODO: is this call needed?
+            weightgrid.as_mut().trim();
+        }
+
         for bin in 0..bin_info.bins() {
-            // we need to convert this slice of subgrids ...
-            let subgrids = grid.subgrids().slice(s![order, bin, ..]);
-
-            // into this this igrid
-            let mut igrid = ffi::make_igrid(
-                p.q2_bins().try_into().unwrap(),
-                p.q2_min(),
-                p.q2_max(),
-                p.q2_order().try_into().unwrap(),
-                p.x_bins().try_into().unwrap(),
-                p.x_min(),
-                p.x_max(),
-                p.x_order().try_into().unwrap(),
-                xtrans,
-                qtrans,
-                lumis.try_into().unwrap(),
-                false, // TODO: implement the DIS case
-            )?;
-
-            let mut array = Array4::default((p.x_bins(), p.x_bins(), p.q2_bins(), lumis));
-
-            // TODO: find a better way to convert it
-            for (lumi, subgrid) in subgrids.iter().enumerate() {
-                for ((x1, x2, q2), value) in subgrid.indexed_iter() {
-                    array[[x1, x2, q2, lumi]] = value;
-                }
-            }
-
-            for ((x1, x2, q2), subview) in ndarray::indices_of(&array.slice(s![.., .., .., 0]))
-                .into_iter()
-                .zip(array.lanes(Axis(3)).into_iter())
-                .filter(|(_, subview)| subview.iter().any(|&value| value != 0.0))
-            {
-                unsafe {
-                    igrid.pin_mut().fill_index(
-                        i32::try_from(x1).unwrap(),
-                        i32::try_from(x2).unwrap(),
-                        i32::try_from(q2).unwrap(),
-                        subview.as_slice().unwrap().as_ptr(),
-                    );
-                }
-            }
-
-            ffi::grid_add_igrid(
-                applgrid.pin_mut(),
-                bin.try_into().unwrap(),
-                appl_order.try_into().unwrap(),
-                igrid,
-            );
+            let mut igrid = ffi::grid_get_igrid(applgrid.pin_mut(), appl_order, bin);
+            // TODO: is this call needed?
+            igrid.as_mut().setlimits();
         }
     }
 
     let_cxx_string!(filename = output.to_str().unwrap());
-    let_cxx_string!(dirname = "");
-    let_cxx_string!(pdfname = id);
+    let_cxx_string!(empty = "");
 
-    applgrid.pin_mut().Write(&filename, &dirname, &pdfname);
+    applgrid.pin_mut().Write(&filename, &empty, &empty);
 
+    // silence the warning that `lumi_pdf` isn't used
     mem::drop(lumi_pdf);
 
     Ok(applgrid)

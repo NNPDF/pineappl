@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <appl_igrid.h>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <iterator>
 #include <LHAPDF/LHAPDF.h>
@@ -86,23 +87,8 @@ std::unique_ptr<appl::grid> make_grid(rust::Str filename)
     return std::unique_ptr<appl::grid>(new appl::grid(name));
 }
 
-std::unique_ptr<appl::grid> make_empty_grid(
+std::unique_ptr<appl::grid> make_new_grid(
     rust::Slice<double const> bin_limits,
-    rust::Str genpdf,
-    int leading_order,
-    int loops,
-    rust::Str transform,
-    rust::Str qtransform
-) {
-    std::vector<double> obs(bin_limits.begin(), bin_limits.end());
-    auto g = static_cast <std::string> (genpdf);
-    auto t = static_cast <std::string> (transform);
-    auto q = static_cast <std::string> (qtransform);
-
-    return std::unique_ptr<appl::grid>(new appl::grid(obs, g, leading_order, loops, t, q));
-}
-
-std::unique_ptr<appl::igrid> make_igrid(
     int NQ2,
     double Q2min,
     double Q2max,
@@ -111,12 +97,16 @@ std::unique_ptr<appl::igrid> make_igrid(
     double xmin,
     double xmax,
     int xorder,
+    rust::Str genpdf,
+    int leading_order,
+    int loops,
     rust::Str transform,
     rust::Str qtransform,
-    int Nproc,
-    bool disflag
+    bool is_dis
 ) {
-    return std::unique_ptr<appl::igrid>(new appl::igrid(
+    return std::unique_ptr<appl::grid>(new appl::grid(
+        bin_limits.size() - 1,
+        bin_limits.data(),
         NQ2,
         Q2min,
         Q2max,
@@ -125,10 +115,12 @@ std::unique_ptr<appl::igrid> make_igrid(
         xmin,
         xmax,
         xorder,
+        static_cast <std::string> (genpdf),
+        leading_order,
+        loops,
         static_cast <std::string> (transform),
         static_cast <std::string> (qtransform),
-        Nproc,
-        disflag
+        is_dis
     ));
 }
 
@@ -138,12 +130,6 @@ std::unique_ptr<lumi_pdf> make_lumi_pdf(rust::Str s, rust::Slice<int const> comb
         static_cast <std::string> (s),
         std::vector<int>(combinations.begin(), combinations.end())
     ));
-}
-
-void grid_add_igrid(appl::grid& grid, int bin, int order, std::unique_ptr<appl::igrid> igrid)
-{
-    // transfers ownership of `igrid` to `grid`
-    grid.add_igrid(bin, order, igrid.release());
 }
 
 rust::Vec<int> grid_combine(appl::grid const& grid)
@@ -170,6 +156,11 @@ rust::Vec<double> grid_convolute(
 double sparse_matrix_get(SparseMatrix3d const& matrix, int x, int y, int z)
 {
     return matrix(x, y, z);
+}
+
+void sparse_matrix_set(SparseMatrix3d& matrix, int x, int y, int z, double value)
+{
+    matrix(x, y, z) = value;
 }
 
 double weightfun(double x)
@@ -199,4 +190,25 @@ bool igrid_m_reweight(appl::igrid const& igrid)
 {
 	// adapted from https://stackoverflow.com/a/3173080/812178
     return igrid.*access(appl_igrid_m_reweight());
+}
+
+SparseMatrix3d& igrid_weightgrid(appl::igrid& igrid, std::size_t lumi)
+{
+    assert(lumi < static_cast <std::size_t> (igrid.SubProcesses()));
+    return *igrid.weightgrid()[lumi];
+}
+
+struct appl_grid_m_grids
+{
+    using type = std::vector<appl::igrid*> (appl::grid::*) [appl::MAXGRIDS];
+    friend type access(appl_grid_m_grids);
+};
+
+template class access_private_member_variable<appl_grid_m_grids, &appl::grid::m_grids>;
+
+appl::igrid& grid_get_igrid(appl::grid& grid, std::size_t order, std::size_t bin)
+{
+    assert(order < static_cast <std::size_t> (appl::MAXGRIDS));
+
+    return *(grid.*access(appl_grid_m_grids()))[order].at(bin);
 }
