@@ -16,15 +16,14 @@ mod applgrid;
 fn convert_into_applgrid(
     output: &Path,
     grid: &Grid,
-    /*pdfset*/ _: &str,
-    /*member*/ _: usize,
+    pdfset: &str,
+    member: usize,
     _: usize,
 ) -> Result<(&'static str, Vec<f64>, usize)> {
     // TODO: check also scale-varied results
 
     let mut applgrid = applgrid::convert_into_applgrid(grid, output)?;
-    let results = vec![0.0; grid.bin_info().bins()];
-    //let results = applgrid::convolute_applgrid(applgrid.pin_mut(), pdfset, member);
+    let results = applgrid::convolute_applgrid(applgrid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", results, 1))
 }
