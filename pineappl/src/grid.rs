@@ -124,8 +124,8 @@ impl Order {
     /// assert_eq!(Order::create_mask(&orders, 0, 3, false), [true, false, true, false, false, true]);
     /// ```
     ///
-    /// Although not shown in the example above, orders containing non-zero powers of logarithms
-    /// are selected as well:
+    /// Orders containing non-zero powers of logarithms can be selected as well if `logs` is set to
+    /// `true`:
     ///
     /// ```rust
     /// use pineappl::grid::Order;
@@ -138,7 +138,7 @@ impl Order {
     ///     Order::new(0, 3, 1, 0), //  NLO  EW    :        alpha^3 logxif
     /// ];
     ///
-    /// assert_eq!(Order::create_mask(&orders, 0, 2, false), [true, false, false, true, true]);
+    /// assert_eq!(Order::create_mask(&orders, 0, 2, true), [true, false, false, true, true]);
     /// ```
     ///
     /// For the more complicated example of top-pair production one can see the difference between
