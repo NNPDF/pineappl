@@ -376,9 +376,8 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         } else if x < self.start + nx {
             let at = (x - self.start) * dim1;
             let offset = self.indices[at].1;
-            let dim2 = self.dimensions.1.max(self.dimensions.2);
             self.indices
-                .splice(at..at, iter::repeat((0, offset)).take(dim2));
+                .splice(at..at, iter::repeat((0, offset)).take(dim1));
         } else if x <= self.dimensions.0 {
             // nothing to do here
         } else {
@@ -1098,5 +1097,43 @@ mod tests {
         assert_eq!(other[[1, 8, 0]], 6.0);
         assert_eq!(other[[1, 9, 0]], 7.0);
         assert_eq!(other[[2, 0, 0]], 8.0);
+    }
+
+    // https://github.com/NNPDF/pineappl/issues/220
+    #[test]
+    fn regression_test_220() {
+        let mut array = SparseArray3::new(1, 2, 4);
+
+        array[[0, 0, 0]] = 1.0;
+
+        assert_eq!(array[[0, 0, 0]], 1.0);
+
+        assert_eq!(array.x_range(), 0..1);
+
+        let mut iter = array.indexed_iter();
+
+        assert_eq!(iter.next(), Some(((0, 0, 0), 1.0)));
+        assert_eq!(iter.next(), None);
+
+        array.increase_x_at(0);
+
+        array[[0, 0, 0]] = 2.0;
+
+        let mut iter = array.indexed_iter();
+
+        assert_eq!(iter.next(), Some(((0, 0, 0), 2.0)));
+        assert_eq!(iter.next(), Some(((1, 0, 0), 1.0)));
+        assert_eq!(iter.next(), None);
+
+        array.increase_x_at(1);
+
+        array[[1, 0, 0]] = 3.0;
+
+        let mut iter = array.indexed_iter();
+
+        assert_eq!(iter.next(), Some(((0, 0, 0), 2.0)));
+        assert_eq!(iter.next(), Some(((1, 0, 0), 3.0)));
+        assert_eq!(iter.next(), Some(((2, 0, 0), 1.0)));
+        assert_eq!(iter.next(), None);
     }
 }
