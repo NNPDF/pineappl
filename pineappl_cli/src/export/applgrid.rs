@@ -5,6 +5,7 @@ use ndarray::Axis;
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
+use std::f64::consts::TAU;
 use std::iter;
 use std::mem;
 use std::path::Path;
@@ -110,6 +111,8 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
     {
+        let factor = TAU.powi(grid.orders()[order].alphas.try_into().unwrap());
+
         for ((bin, lumi), subgrid) in grid
             .subgrids()
             .index_axis(Axis(0), order)
@@ -155,7 +158,7 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
                     q2.try_into().unwrap(),
                     x1.try_into().unwrap(),
                     x2.try_into().unwrap(),
-                    value,
+                    factor * value,
                 );
             }
 
