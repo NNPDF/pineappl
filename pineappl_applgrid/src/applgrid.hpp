@@ -12,6 +12,30 @@
 
 std::unique_ptr<appl::grid> make_grid(rust::Str filename);
 
+std::unique_ptr<appl::igrid> make_igrid(
+    int nq2,
+    double q2min,
+    double q2max,
+    int q2order,
+    int nx,
+    double xmin,
+    double xmax,
+    int xorder,
+    rust::Str transform,
+    rust::Str qtransform,
+    int nproc,
+    bool disflag
+);
+
+std::unique_ptr<appl::grid> make_empty_grid(
+    rust::Slice<double const> obs,
+    rust::Str genpdf,
+    int leading_order,
+    int nloops,
+    rust::Str transform,
+    rust::Str qtransform
+);
+
 std::unique_ptr<appl::grid> make_new_grid(
     rust::Slice<double const> bin_limits,
     int NQ2,

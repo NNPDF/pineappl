@@ -87,6 +87,56 @@ std::unique_ptr<appl::grid> make_grid(rust::Str filename)
     return std::unique_ptr<appl::grid>(new appl::grid(name));
 }
 
+std::unique_ptr<appl::igrid> make_igrid(
+    int nq2,
+    double q2min,
+    double q2max,
+    int q2order,
+    int nx,
+    double xmin,
+    double xmax,
+    int xorder,
+    rust::Str transform,
+    rust::Str qtransform,
+    int nproc,
+    bool disflag
+) {
+    return std::unique_ptr<appl::igrid>(new appl::igrid(
+        nq2,
+        q2min,
+        q2max,
+        q2order,
+        nx,
+        xmin,
+        xmax,
+        xorder,
+        static_cast <std::string> (transform),
+        static_cast <std::string> (qtransform),
+        nproc,
+        disflag
+    ));
+}
+
+std::unique_ptr<appl::grid> make_empty_grid(
+    rust::Slice<double const> obs,
+    rust::Str genpdf,
+    int leading_order,
+    int nloops,
+    rust::Str transform,
+    rust::Str qtransform
+) {
+    std::vector<double> limits(obs.begin(), obs.end());
+
+    return std::unique_ptr<appl::grid>(new appl::grid(
+        limits,
+        static_cast <std::string> (genpdf),
+        leading_order,
+        nloops,
+        static_cast <std::string> (transform),
+        static_cast <std::string> (qtransform)
+    ));
+}
+
 std::unique_ptr<appl::grid> make_new_grid(
     rust::Slice<double const> bin_limits,
     int NQ2,

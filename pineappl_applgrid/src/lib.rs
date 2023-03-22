@@ -20,6 +20,7 @@ pub mod ffi {
 
         type grid;
 
+        unsafe fn add_igrid(self: Pin<&mut Self>, _: i32, _: i32, _: *mut igrid);
         fn calculation(&self) -> grid_CALCULATION;
         fn genpdf(&self, _: i32, _: bool) -> *const appl_pdf;
         fn getApplyCorrection(&self, _: u32) -> bool;
@@ -81,6 +82,20 @@ pub mod ffi {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
+        fn make_igrid(
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: &str,
+            _: &str,
+            _: i32,
+            _: bool,
+        ) -> UniquePtr<igrid>;
         fn make_new_grid(
             _: &[f64],
             _: i32,
@@ -98,6 +113,8 @@ pub mod ffi {
             _: &str,
             _: bool,
         ) -> UniquePtr<grid>;
+        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
+            -> UniquePtr<grid>;
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;

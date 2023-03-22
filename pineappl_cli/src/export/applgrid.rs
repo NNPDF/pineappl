@@ -11,9 +11,22 @@ use std::mem;
 use std::path::Path;
 use std::pin::Pin;
 
-fn reconstruct_subgrid_params(_: &Grid) -> Result<(&str, &str, SubgridParams)> {
+fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<SubgridParams> {
+    let mut result = SubgridParams::default();
+
+    if let &[Mu2 { ren, fac }] = grid.subgrids()[[order, bin, 0]].mu2_grid().as_ref() {
+        if !approx_eq!(f64, ren, fac, ulps = 128) {
+            bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
+        }
+
+        result.set_q2_bins(1);
+        result.set_q2_max(fac);
+        result.set_q2_min(fac);
+        result.set_q2_order(0);
+    }
+
     // TODO: implement the general case
-    Ok(("f2", "h0", SubgridParams::default()))
+    Ok(result)
 }
 
 pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<grid>, Vec<bool>)> {
@@ -63,8 +76,6 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
         .chain(limits.last().map(|vec| vec[0].1))
         .collect();
 
-    let (xtrans, qtrans, p) = reconstruct_subgrid_params(grid)?;
-
     let order_mask = Order::create_mask(grid.orders(), 3, 0, false);
     let orders_with_mask: Vec<_> = grid
         .orders()
@@ -84,26 +95,14 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
         .unwrap()
         - lo_alphas;
 
-    let mut applgrid = ffi::make_new_grid(
+    let mut applgrid = ffi::make_empty_grid(
         &limits,
-        p.q2_bins().try_into().unwrap(),
-        p.q2_min(),
-        p.q2_max(),
-        p.q2_order().try_into().unwrap(),
-        p.x_bins().try_into().unwrap(),
-        p.x_min(),
-        p.x_max(),
-        p.x_order().try_into().unwrap(),
         id,
         lo_alphas.try_into().unwrap(),
         loops.try_into().unwrap(),
-        xtrans,
-        qtrans,
-        false, // TODO: implement the DIS case
+        "f2",
+        "h0",
     );
-
-    // disable reweighting, because `Subgrid::indexed_iter()` returns already reweighted results
-    applgrid.pin_mut().reweight(false);
 
     for (appl_order, order) in order_mask
         .iter()
@@ -113,13 +112,31 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
     {
         let factor = TAU.powi(grid.orders()[order].alphas.try_into().unwrap());
 
-        for ((bin, lumi), subgrid) in grid
+        for (bin, subgrids) in grid
             .subgrids()
             .index_axis(Axis(0), order)
-            .indexed_iter()
-            .filter(|(_, subgrid)| !subgrid.is_empty())
+            .axis_iter(Axis(0))
+            .enumerate()
         {
-            let mut igrid = ffi::grid_get_igrid(applgrid.pin_mut(), appl_order, bin);
+            let p = reconstruct_subgrid_params(grid, order, bin)?;
+
+            let mut igrid = ffi::make_igrid(
+                p.q2_bins().try_into().unwrap(),
+                p.q2_min(),
+                p.q2_max(),
+                p.q2_order().try_into().unwrap(),
+                p.x_bins().try_into().unwrap(),
+                p.x_min(),
+                p.x_max(),
+                p.x_order().try_into().unwrap(),
+                "f2",
+                "h0",
+                grid.lumi().len().try_into().unwrap(),
+                false, // TODO: implement the DIS case
+            );
+
+            // TODO: improve this
+            let subgrid = grid.subgrid(order, bin, 0);
 
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let appl_q2_idx: Vec<_> = subgrid
@@ -166,30 +183,36 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
                 })
                 .collect::<Result<_>>()?;
 
-            let mut weightgrid = ffi::igrid_weightgrid(igrid.as_mut(), lumi);
+            for (lumi, subgrid) in subgrids.iter().enumerate() {
+                let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
 
-            for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
-                debug_assert!(iq2 < subgrid.mu2_grid().len());
-                debug_assert!(ix1 < subgrid.x1_grid().len());
-                debug_assert!(ix2 < subgrid.x2_grid().len());
+                for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
+                    debug_assert!(iq2 < subgrid.mu2_grid().len());
+                    debug_assert!(ix1 < subgrid.x1_grid().len());
+                    debug_assert!(ix2 < subgrid.x2_grid().len());
 
-                ffi::sparse_matrix_set(
-                    weightgrid.as_mut(),
-                    appl_q2_idx[iq2].try_into().unwrap(),
-                    appl_x1_idx[ix1].try_into().unwrap(),
-                    appl_x2_idx[ix2].try_into().unwrap(),
-                    factor * value,
-                );
+                    ffi::sparse_matrix_set(
+                        weightgrid.as_mut(),
+                        appl_q2_idx[iq2].try_into().unwrap(),
+                        appl_x1_idx[ix1].try_into().unwrap(),
+                        appl_x2_idx[ix2].try_into().unwrap(),
+                        factor * value,
+                    );
+                }
+
+                // TODO: is this call needed?
+                weightgrid.trim();
             }
 
-            // TODO: is this call needed?
-            weightgrid.as_mut().trim();
-        }
+            igrid.pin_mut().setlimits();
 
-        for bin in 0..bin_info.bins() {
-            let mut igrid = ffi::grid_get_igrid(applgrid.pin_mut(), appl_order, bin);
-            // TODO: is this call needed?
-            igrid.as_mut().setlimits();
+            unsafe {
+                applgrid.pin_mut().add_igrid(
+                    bin.try_into().unwrap(),
+                    appl_order.try_into().unwrap(),
+                    igrid.into_raw(),
+                );
+            }
         }
     }
 
