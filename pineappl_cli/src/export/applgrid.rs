@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
+use float_cmp::assert_approx_eq;
 use ndarray::Axis;
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Subgrid, SubgridParams};
@@ -121,8 +122,43 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
     {
-        for ((bin, lumi), subgrid) in grid.subgrids().index_axis(Axis(0), order).indexed_iter() {
+        for ((bin, lumi), subgrid) in grid
+            .subgrids()
+            .index_axis(Axis(0), order)
+            .indexed_iter()
+            .filter(|(_, subgrid)| !subgrid.is_empty())
+        {
             let mut igrid = ffi::grid_get_igrid(applgrid.pin_mut(), appl_order, bin);
+
+            let q2 = (0..igrid.Ntau())
+                .map(|i| igrid.getQ2(i))
+                .collect::<Vec<_>>();
+            let pine_q2 = subgrid.mu2_grid();
+
+            assert_eq!(q2.len(), pine_q2.len());
+
+            for (&appl, pine) in q2.iter().zip(pine_q2.iter()) {
+                assert_approx_eq!(f64, appl, pine.fac, ulps = 128);
+            }
+
+            let x1 = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect::<Vec<_>>();
+            let pine_x1 = subgrid.x1_grid();
+
+            assert_eq!(x1.len(), pine_x1.len());
+
+            for (&appl, &pine) in x1.iter().zip(pine_x1.iter()) {
+                assert_approx_eq!(f64, appl, pine, ulps = 128);
+            }
+
+            let x2 = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect::<Vec<_>>();
+            let pine_x2 = subgrid.x2_grid();
+
+            assert_eq!(x2.len(), pine_x2.len());
+
+            for (&appl, &pine) in x2.iter().zip(pine_x2.iter()) {
+                assert_approx_eq!(f64, appl, pine, ulps = 128);
+            }
+
             let mut weightgrid = ffi::igrid_weightgrid(igrid.as_mut(), lumi);
 
             for ((x1, x2, q2), value) in subgrid.indexed_iter() {
