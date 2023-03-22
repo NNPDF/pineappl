@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use libc::{c_int, O_WRONLY, STDERR_FILENO, STDOUT_FILENO};
-use pineappl::grid::Grid;
+use pineappl::grid::{Grid, Order};
 use scopeguard::defer;
 use std::ffi::CStr;
 use std::path::{Path, PathBuf};
@@ -19,13 +19,13 @@ fn convert_into_applgrid(
     pdfset: &str,
     member: usize,
     _: usize,
-) -> Result<(&'static str, Vec<f64>, usize)> {
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     // TODO: check also scale-varied results
 
-    let mut applgrid = applgrid::convert_into_applgrid(grid, output)?;
+    let (mut applgrid, order_mask) = applgrid::convert_into_applgrid(grid, output)?;
     let results = applgrid::convolute_applgrid(applgrid.pin_mut(), pdfset, member);
 
-    Ok(("APPLgrid", results, 1))
+    Ok(("APPLgrid", results, 1, order_mask))
 }
 
 #[cfg(not(feature = "applgrid"))]
@@ -35,7 +35,7 @@ fn convert_into_applgrid(
     _: &str,
     _: usize,
     _: usize,
-) -> Result<(&'static str, Vec<f64>, usize)> {
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
     ))
@@ -68,7 +68,7 @@ fn convert_into_grid(
     member: usize,
     silence_libraries: bool,
     scales: usize,
-) -> Result<(&'static str, Vec<f64>, usize)> {
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     let (stdout, stderr) = if silence_libraries {
         (silence_fd(STDOUT_FILENO), silence_fd(STDERR_FILENO))
     } else {
@@ -132,7 +132,7 @@ impl Subcommand for Opts {
         let grid = helpers::read_grid(&self.input)?;
 
         // TODO: figure out `member` from `self.pdfset`
-        let (grid_type, results, scale_variations) = convert_into_grid(
+        let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
             &grid,
             &self.pdfset,
@@ -140,6 +140,39 @@ impl Subcommand for Opts {
             self.silence_libraries,
             self.scales,
         )?;
+
+        for Order {
+            alphas,
+            alpha,
+            logxir,
+            logxif,
+        } in grid
+            .orders()
+            .iter()
+            .zip(order_mask.iter())
+            .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
+        {
+            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif}) isn't supported by {grid_type} and will be skipped.");
+        }
+
+        let orders: Vec<_> = grid
+            .orders()
+            .iter()
+            .zip(order_mask.into_iter())
+            .filter_map(
+                |(
+                    &Order {
+                        alphas,
+                        alpha,
+                        logxir,
+                        logxif,
+                    },
+                    keep,
+                )| {
+                    (keep && (logxir == 0) && (logxif == 0)).then_some((alphas, alpha))
+                },
+            )
+            .collect();
 
         let mut different = false;
 
@@ -150,7 +183,7 @@ impl Subcommand for Opts {
             let reference_results = helpers::convolute(
                 &grid,
                 &mut pdf,
-                &[],
+                &orders,
                 &[],
                 &[],
                 scale_variations,

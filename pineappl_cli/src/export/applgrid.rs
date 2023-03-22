@@ -15,7 +15,7 @@ fn reconstruct_subgrid_params(_: &Grid) -> Result<(&str, &str, SubgridParams)> {
     Ok(("f2", "h0", SubgridParams::default()))
 }
 
-pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<grid>> {
+pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<grid>, Vec<bool>)> {
     let bin_info = grid.bin_info();
     let dim = bin_info.dimensions();
 
@@ -104,20 +104,8 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
     // disable reweighting, because `Subgrid::indexed_iter()` returns already reweighted results
     applgrid.pin_mut().reweight(false);
 
-    for Order {
-        alphas,
-        alpha,
-        logxir,
-        logxif,
-    } in orders_with_mask
-        .iter()
-        .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
-    {
-        println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif}) isn't supported by APPLgrid and will be skipped.");
-    }
-
     for (appl_order, order) in order_mask
-        .into_iter()
+        .iter()
         .enumerate()
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
@@ -190,7 +178,7 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<UniquePtr<gri
     // silence the warning that `lumi_pdf` isn't used
     mem::drop(lumi_pdf);
 
-    Ok(applgrid)
+    Ok((applgrid, order_mask))
 }
 
 // TODO: deduplicate this function from import
