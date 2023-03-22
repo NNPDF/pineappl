@@ -245,7 +245,7 @@ impl Subcommand for Opts {
         if different {
             Err(anyhow!("grids are different"))
         } else {
-            helpers::write_grid(&self.output, &grid)
+            Ok(ExitCode::SUCCESS)
         }
     }
 }
