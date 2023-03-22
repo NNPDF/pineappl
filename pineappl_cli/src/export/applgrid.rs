@@ -152,12 +152,16 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
 
             let mut weightgrid = ffi::igrid_weightgrid(igrid.as_mut(), lumi);
 
-            for ((x1, x2, q2), value) in subgrid.indexed_iter() {
+            for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
+                debug_assert!(iq2 < subgrid.mu2_grid().len());
+                debug_assert!(ix1 < subgrid.x1_grid().len());
+                debug_assert!(ix2 < subgrid.x2_grid().len());
+
                 ffi::sparse_matrix_set(
                     weightgrid.as_mut(),
-                    q2.try_into().unwrap(),
-                    x1.try_into().unwrap(),
-                    x2.try_into().unwrap(),
+                    iq2.try_into().unwrap(),
+                    ix1.try_into().unwrap(),
+                    ix2.try_into().unwrap(),
                     factor * value,
                 );
             }
