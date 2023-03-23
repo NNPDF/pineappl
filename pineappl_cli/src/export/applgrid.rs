@@ -216,6 +216,8 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
         }
     }
 
+    applgrid.pin_mut().include_photon(true);
+
     let_cxx_string!(filename = output.to_str().unwrap());
     let_cxx_string!(empty = "");
 

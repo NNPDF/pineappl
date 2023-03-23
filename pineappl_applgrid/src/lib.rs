@@ -27,6 +27,7 @@ pub mod ffi {
         fn getApplyCorrections(&self) -> bool;
         fn getDynamicScale(&self) -> f64;
         fn getNormalised(&self) -> bool;
+        fn include_photon(self: Pin<&mut Self>, _: bool);
         fn isDIS(&self) -> bool;
         fn leadingOrder(&self) -> i32;
         fn nloops(&self) -> i32;
