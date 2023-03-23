@@ -134,56 +134,51 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
                 grid.lumi().len().try_into().unwrap(),
                 false, // TODO: implement the DIS case
             );
-
-            // TODO: improve this
-            let subgrid = grid.subgrid(order, bin, 0);
-
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
-            let appl_q2_idx: Vec<_> = subgrid
-                .mu2_grid()
-                .iter()
-                .map(|&Mu2 { ren, fac }| {
-                    if !approx_eq!(f64, ren, fac, ulps = 128) {
-                        bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-                    }
-                    appl_q2
-                        .iter()
-                        .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
-                        .ok_or_else(|| {
-                            anyhow!("factorization scale muf2 = {} not found in APPLgrid", fac)
-                        })
-                })
-                .collect::<Result<_>>()?;
-
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
-            let appl_x1_idx: Vec<_> = subgrid
-                .x1_grid()
-                .iter()
-                .map(|&x1| {
-                    appl_x1
-                        .iter()
-                        .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
-                        .ok_or_else(|| {
-                            anyhow!("momentum fraction x1 = {} not found in APPLgrid", x1)
-                        })
-                })
-                .collect::<Result<_>>()?;
-
             let appl_x2: Vec<_> = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect();
-            let appl_x2_idx: Vec<_> = subgrid
-                .x2_grid()
-                .iter()
-                .map(|&x2| {
-                    appl_x2
-                        .iter()
-                        .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
-                        .ok_or_else(|| {
-                            anyhow!("momentum fraction x2 = {} not found in APPLgrid", x2)
-                        })
-                })
-                .collect::<Result<_>>()?;
 
             for (lumi, subgrid) in subgrids.iter().enumerate() {
+                let appl_q2_idx: Vec<_> = subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|&Mu2 { ren, fac }| {
+                        if !approx_eq!(f64, ren, fac, ulps = 128) {
+                            bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
+                        }
+                        appl_q2
+                            .iter()
+                            .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
+                            .ok_or_else(|| {
+                                anyhow!("factorization scale muf2 = {} not found in APPLgrid", fac)
+                            })
+                    })
+                    .collect::<Result<_>>()?;
+                let appl_x1_idx: Vec<_> = subgrid
+                    .x1_grid()
+                    .iter()
+                    .map(|&x1| {
+                        appl_x1
+                            .iter()
+                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
+                            .ok_or_else(|| {
+                                anyhow!("momentum fraction x1 = {} not found in APPLgrid", x1)
+                            })
+                    })
+                    .collect::<Result<_>>()?;
+                let appl_x2_idx: Vec<_> = subgrid
+                    .x2_grid()
+                    .iter()
+                    .map(|&x2| {
+                        appl_x2
+                            .iter()
+                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
+                            .ok_or_else(|| {
+                                anyhow!("momentum fraction x2 = {} not found in APPLgrid", x2)
+                            })
+                    })
+                    .collect::<Result<_>>()?;
+
                 let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
 
                 for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
