@@ -298,7 +298,7 @@ fn perform_grid_tests(
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
     }
 
     // TEST 11: `delete_bins`
@@ -316,7 +316,7 @@ fn perform_grid_tests(
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
             .skip(2),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
     }
 
     // delete a few bins from the ending

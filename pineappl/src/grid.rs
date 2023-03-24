@@ -1091,15 +1091,7 @@ impl Grid {
     ///
     /// TODO
     pub fn optimize(&mut self) {
-        if self
-            .key_values()
-            .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
-        {
-            self.symmetrize_lumi();
-        }
-
-        self.optimize_orders();
-        self.optimize_lumi();
+        // first convert everything into `ImportOnlySubgridV2`
 
         for subgrid in self.subgrids.iter_mut() {
             if subgrid.is_empty() {
@@ -1117,6 +1109,16 @@ impl Grid {
                 }
             }
         }
+
+        if self
+            .key_values()
+            .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
+        {
+            self.symmetrize_lumi();
+        }
+
+        self.optimize_orders();
+        self.optimize_lumi();
     }
 
     fn optimize_lumi(&mut self) {
@@ -1231,16 +1233,9 @@ impl Grid {
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
                             *lhs = rhs.clone_empty();
-                            lhs.merge(rhs, true);
-                        } else if (lhs.x1_grid() == rhs.x2_grid())
-                            && (lhs.x2_grid() == rhs.x1_grid())
-                        {
-                            lhs.merge(rhs, true);
-                        } else {
-                            // don't overwrite `rhs`
-                            continue;
                         }
 
+                        lhs.merge(rhs, true);
                         *rhs = EmptySubgridV1::default().into();
                     }
                 }
