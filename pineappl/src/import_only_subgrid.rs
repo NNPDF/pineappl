@@ -248,15 +248,25 @@ impl Subgrid for ImportOnlySubgridV2 {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
-                if self.x1_grid() != other_grid.x1_grid() || self.x2_grid() != other_grid.x2_grid()
-                {
+                let rhs_x1 = if transpose {
+                    other_grid.x2_grid()
+                } else {
+                    other_grid.x1_grid()
+                };
+                let rhs_x2 = if transpose {
+                    other_grid.x1_grid()
+                } else {
+                    other_grid.x2_grid()
+                };
+
+                if (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2) {
                     let mut x1_grid = self.x1_grid.clone();
                     let mut x2_grid = self.x2_grid.clone();
 
-                    x1_grid.extend_from_slice(&other_grid.x1_grid());
+                    x1_grid.extend_from_slice(&rhs_x1);
                     x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                     x1_grid.dedup();
-                    x2_grid.extend_from_slice(&other_grid.x2_grid());
+                    x2_grid.extend_from_slice(&rhs_x2);
                     x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                     x2_grid.dedup();
 
@@ -303,12 +313,12 @@ impl Subgrid for ImportOnlySubgridV2 {
                         let target_j = self
                             .x1_grid
                             .iter()
-                            .position(|&x| x == other_grid.x1_grid()[j])
+                            .position(|&x| x == rhs_x1[j])
                             .unwrap_or_else(|| unreachable!());
                         let target_k = self
                             .x2_grid
                             .iter()
-                            .position(|&x| x == other_grid.x2_grid()[k])
+                            .position(|&x| x == rhs_x2[k])
                             .unwrap_or_else(|| unreachable!());
 
                         self.array[[index, target_j, target_k]] += value;
