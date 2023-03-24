@@ -948,6 +948,7 @@ dependencies = [
  "clap_mangen",
  "enum_dispatch",
  "flate2",
+ "float-cmp",
  "git-version",
  "itertools",
  "lhapdf",
