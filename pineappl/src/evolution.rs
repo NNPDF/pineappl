@@ -330,7 +330,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
                 alphas.powi(order.alphas.try_into().unwrap())
             } else {
                 return Err(GridError::EvolutionFailure(format!(
-                    "could not find alphas for mur2 = {mur2}"
+                    "no alphas for mur2 = {mur2} found"
                 )));
             };
 
