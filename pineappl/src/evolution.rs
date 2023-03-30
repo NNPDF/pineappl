@@ -172,38 +172,32 @@ pub(crate) fn operators(
     x1: &[f64],
 ) -> Result<Vec<Array3<f64>>, GridError> {
     // permutation between the grid fac1 values and the operator fac1 values
-    let fac1_indices: Vec<_> = if let Some(fac1_indices) = fac1
+    let fac1_indices: Vec<_> = fac1
         .iter()
         .map(|&fac1p| {
             info.fac1
                 .iter()
                 .position(|&fac1| approx_eq!(f64, fac1p, fac1, ulps = 64))
+                .ok_or_else(|| {
+                    GridError::EvolutionFailure(format!("no operator for muf2 = {fac1p} found"))
+                })
         })
-        .collect()
-    {
-        fac1_indices
-    } else {
-        return Err(GridError::EvolutionFailure(
-            "operator information does not match grid's factorization scale values".to_string(),
-        ));
-    };
+        // TODO: use `try_collect` once stabilized
+        .collect::<Result<_, _>>()?;
 
     // permutation between the grid x values and the operator x1 values
-    let x1_indices: Vec<_> = if let Some(x1_indices) = x1
+    let x1_indices: Vec<_> = x1
         .iter()
         .map(|&x1p| {
             info.x1
                 .iter()
                 .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 64))
+                .ok_or_else(|| {
+                    GridError::EvolutionFailure(format!("no operator for x1 = {x1p} found"))
+                })
         })
-        .collect()
-    {
-        x1_indices
-    } else {
-        return Err(GridError::EvolutionFailure(
-            "operator information does not match grid's x-grid values".to_string(),
-        ));
-    };
+        // TODO: use `try_collect` once stabilized
+        .collect::<Result<_, _>>()?;
 
     // create the corresponding operators accessible in the form [muf2, x0, x1]
     let operators: Vec<_> = pid_indices
