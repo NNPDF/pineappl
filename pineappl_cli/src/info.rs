@@ -1,39 +1,45 @@
 use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::{ArgGroup, Parser, ValueHint};
+use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+#[derive(Args)]
+#[group(multiple = false, required = true)]
+struct Group {
+    /// For each order print a list of the largest EW order.
+    #[arg(long)]
+    ew: bool,
+    /// Gets an internal key-value pair.
+    #[arg(long, num_args = 1, value_name = "key")]
+    get: Option<String>,
+    /// Show all keys stored in the grid.
+    #[arg(long)]
+    keys: bool,
+    /// For each order print a list of the largest QCD order.
+    #[arg(long)]
+    qcd: bool,
+    /// Shows all key-value pairs stored in the grid.
+    #[arg(long)]
+    show: bool,
+}
+
 /// Shows information about the grid.
 #[derive(Parser)]
-#[command(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// For each order print a list of the largest EW order.
-    #[arg(group = "mode", long)]
-    ew: bool,
-    /// Gets an internal key-value pair.
-    #[arg(group = "mode", long, num_args = 1, value_name = "key")]
-    get: Option<String>,
-    /// Show all keys stored in the grid.
-    #[arg(group = "mode", long)]
-    keys: bool,
-    /// For each order print a list of the largest QCD order.
-    #[arg(group = "mode", long)]
-    qcd: bool,
-    /// Shows all key-value pairs stored in the grid.
-    #[arg(group = "mode", long)]
-    show: bool,
+    #[command(flatten)]
+    group: Group,
 }
 
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
-        if self.ew || self.qcd {
+        if self.group.ew || self.group.qcd {
             let mut sorted_grid_orders: Vec<_> = grid
                 .orders()
                 .iter()
@@ -46,7 +52,7 @@ impl Subcommand for Opts {
                 .group_by(|order| order.alphas + order.alpha)
                 .into_iter()
                 .map(|mut iter| {
-                    if self.qcd {
+                    if self.group.qcd {
                         iter.1.next().unwrap()
                     } else {
                         iter.1.last().unwrap()
@@ -65,7 +71,7 @@ impl Subcommand for Opts {
                 .join(",");
 
             println!("{orders}");
-        } else if let Some(ref key) = self.get {
+        } else if let Some(ref key) = self.group.get {
             grid.upgrade();
 
             grid.key_values().map_or_else(
@@ -76,7 +82,7 @@ impl Subcommand for Opts {
                     }
                 },
             );
-        } else if self.keys {
+        } else if self.group.keys {
             grid.upgrade();
 
             grid.key_values().map_or_else(
@@ -90,7 +96,7 @@ impl Subcommand for Opts {
                     }
                 },
             );
-        } else if self.show {
+        } else if self.group.show {
             grid.upgrade();
 
             grid.key_values().map_or_else(

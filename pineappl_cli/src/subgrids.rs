@@ -1,15 +1,43 @@
 use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::{ArgGroup, Parser, ValueHint};
+use clap::{Args, Parser, ValueHint};
 use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+#[derive(Args)]
+#[group(required = true)]
+struct Group {
+    /// Show the subgrid type.
+    #[arg(long = "type")]
+    type_: bool,
+    /// Show the renormalization grid values.
+    #[arg(long)]
+    mur: bool,
+    /// Show the squared renormalization grid values.
+    #[arg(long)]
+    mur2: bool,
+    /// Show the factorization grid values.
+    #[arg(long)]
+    muf: bool,
+    /// Show the squared factorization grid values.
+    #[arg(long)]
+    muf2: bool,
+    /// Show the x1 grid values.
+    #[arg(long)]
+    x1: bool,
+    /// Show the x2 grid values.
+    #[arg(long)]
+    x2: bool,
+    /// Show grid statistics (figures are the number of entries).
+    #[arg(long)]
+    stats: bool,
+}
+
 /// Print information about the internal subgrid types.
 #[derive(Parser)]
-#[command(group = ArgGroup::new("show").multiple(true).required(true))]
 pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
@@ -17,30 +45,8 @@ pub struct Opts {
     /// Show empty subgrids.
     #[arg(long = "show-empty")]
     show_empty: bool,
-    /// Show the subgrid type.
-    #[arg(group = "show", long = "type")]
-    type_: bool,
-    /// Show the renormalization grid values.
-    #[arg(group = "show", long)]
-    mur: bool,
-    /// Show the squared renormalization grid values.
-    #[arg(group = "show", long)]
-    mur2: bool,
-    /// Show the factorization grid values.
-    #[arg(group = "show", long)]
-    muf: bool,
-    /// Show the squared factorization grid values.
-    #[arg(group = "show", long)]
-    muf2: bool,
-    /// Show the x1 grid values.
-    #[arg(group = "show", long)]
-    x1: bool,
-    /// Show the x2 grid values.
-    #[arg(group = "show", long)]
-    x2: bool,
-    /// Show grid statistics (figures are the number of entries).
-    #[arg(group = "show", long)]
-    stats: bool,
+    #[command(flatten)]
+    group: Group,
     /// Set the number of digits shown for numerical values.
     #[arg(default_value_t = 3, long)]
     digits: usize,
@@ -52,28 +58,28 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         let mut titles = row![c => "o", "b", "l"];
 
-        if self.type_ {
+        if self.group.type_ {
             titles.add_cell(cell!(c->"type"));
         }
-        if self.mur {
+        if self.group.mur {
             titles.add_cell(cell!(c->"mur"));
         }
-        if self.mur2 {
+        if self.group.mur2 {
             titles.add_cell(cell!(c->"mur2"));
         }
-        if self.muf {
+        if self.group.muf {
             titles.add_cell(cell!(c->"muf"));
         }
-        if self.muf2 {
+        if self.group.muf2 {
             titles.add_cell(cell!(c->"muf2"));
         }
-        if self.x1 {
+        if self.group.x1 {
             titles.add_cell(cell!(c->"x1"));
         }
-        if self.x2 {
+        if self.group.x2 {
             titles.add_cell(cell!(c->"x2"));
         }
-        if self.stats {
+        if self.group.stats {
             titles.add_cell(cell!(c->"total"));
             titles.add_cell(cell!(c->"allocated"));
             titles.add_cell(cell!(c->"zeros"));
@@ -92,7 +98,7 @@ impl Subcommand for Opts {
             row.add_cell(cell!(l->format!("{bin}")));
             row.add_cell(cell!(l->format!("{lumi}")));
 
-            if self.type_ {
+            if self.group.type_ {
                 row.add_cell(cell!(l->
                     match subgrid {
                         SubgridEnum::LagrangeSubgridV1(_) => "LagrangeSubgridV1",
@@ -105,7 +111,7 @@ impl Subcommand for Opts {
                     }
                 ));
             }
-            if self.mur {
+            if self.group.mur {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
@@ -114,7 +120,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.mur2 {
+            if self.group.mur2 {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
@@ -123,7 +129,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.muf {
+            if self.group.muf {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
@@ -132,7 +138,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.muf2 {
+            if self.group.muf2 {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
@@ -141,7 +147,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.x1 {
+            if self.group.x1 {
                 let values: Vec<_> = subgrid
                     .x1_grid()
                     .iter()
@@ -150,7 +156,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.x2 {
+            if self.group.x2 {
                 let values: Vec<_> = subgrid
                     .x2_grid()
                     .iter()
@@ -159,7 +165,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.stats {
+            if self.group.stats {
                 let stats = subgrid.stats();
                 row.add_cell(cell!(r->stats.total.to_string()));
                 row.add_cell(cell!(r->stats.allocated.to_string()));

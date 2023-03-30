@@ -1,6 +1,6 @@
 use super::helpers::{self, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::{ArgGroup, Parser, ValueHint};
+use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Order;
@@ -8,31 +8,37 @@ use prettytable::{cell, row, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+#[derive(Args)]
+#[group(multiple = false, required = true)]
+struct Group {
+    /// Show the orders of a grid, stripping zero powers.
+    #[arg(long, short)]
+    orders: bool,
+    /// Show the orders of a grid, replacing zero powers with spaces.
+    #[arg(long)]
+    orders_spaces: bool,
+    /// Show the orders of a grid, including zero powers.
+    #[arg(long)]
+    orders_long: bool,
+    /// Show the bins of a grid.
+    #[arg(long, short)]
+    bins: bool,
+    /// Show the luminsities a grid.
+    #[arg(long, short)]
+    lumis: bool,
+    /// Check if input is an FK table.
+    #[arg(long)]
+    fktable: bool,
+}
+
 /// Shows information about orders (o), bins (b), or luminosities (l) of a grid.
 #[derive(Parser)]
-#[command(group = ArgGroup::new("mode").required(true))]
 pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// Show the orders of a grid, stripping zero powers.
-    #[arg(group = "mode", long, short)]
-    orders: bool,
-    /// Show the orders of a grid, replacing zero powers with spaces.
-    #[arg(group = "mode", long)]
-    orders_spaces: bool,
-    /// Show the orders of a grid, including zero powers.
-    #[arg(group = "mode", long)]
-    orders_long: bool,
-    /// Show the bins of a grid.
-    #[arg(group = "mode", long, short)]
-    bins: bool,
-    /// Show the luminsities a grid.
-    #[arg(group = "mode", long, short)]
-    lumis: bool,
-    /// Check if input is an FK table.
-    #[arg(group = "mode", long)]
-    fktable: bool,
+    #[command(flatten)]
+    group: Group,
 }
 
 impl Subcommand for Opts {
@@ -41,7 +47,7 @@ impl Subcommand for Opts {
 
         let mut table = helpers::create_table();
 
-        if self.bins {
+        if self.group.bins {
             let mut titles = Row::empty();
             titles.add_cell(cell!(c->"b"));
 
@@ -73,7 +79,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->format!("{}", normalizations[bin])));
             }
-        } else if self.fktable {
+        } else if self.group.fktable {
             if let Err(err) = FkTable::try_from(grid) {
                 println!("no\n{err}");
                 return Ok(ExitCode::FAILURE);
@@ -81,7 +87,7 @@ impl Subcommand for Opts {
 
             println!("yes");
             return Ok(ExitCode::SUCCESS);
-        } else if self.lumis {
+        } else if self.group.lumis {
             let mut titles = row![c => "l"];
             for _ in 0..grid
                 .lumi()
@@ -120,9 +126,9 @@ impl Subcommand for Opts {
                     .iter()
                     .zip(["as^", "a^", "lr^", "lf^"].iter())
                     .filter_map(|(num, string)| {
-                        if **num == 0 && self.orders {
+                        if **num == 0 && self.group.orders {
                             None
-                        } else if **num == 0 && self.orders_spaces {
+                        } else if **num == 0 && self.group.orders_spaces {
                             Some(" ".repeat(string.len() + 1))
                         } else {
                             let mut result = (*string).to_string();

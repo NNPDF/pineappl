@@ -75,6 +75,14 @@ const FKTABLE_STR: &str = "no
 multiple orders detected
 ";
 
+const WRONG_ARGUMENTS_STR: &str =
+    "error: the argument '--orders' cannot be used with '--orders-long'
+
+Usage: pineappl obl <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable> <INPUT>
+
+For more information, try '--help'.
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -143,4 +151,19 @@ fn fktable() {
         .assert()
         .failure()
         .stdout(FKTABLE_STR);
+}
+
+#[test]
+fn wrong_arguments() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&[
+            "obl",
+            "--orders",
+            "--orders-long",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
+        .assert()
+        .failure()
+        .stderr(WRONG_ARGUMENTS_STR);
 }

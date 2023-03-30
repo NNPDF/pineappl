@@ -476,6 +476,13 @@ y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb
 "#;
 
+const WRONG_ARGUMENTS_STR: &str = "error: the argument '--ew' cannot be used with '--qcd'
+
+Usage: pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
+
+For more information, try '--help'.
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -534,4 +541,14 @@ fn show() {
         .assert()
         .success()
         .stdout(SHOW_STR);
+}
+
+#[test]
+fn wrong_arguments() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(&["info", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .failure()
+        .stderr(WRONG_ARGUMENTS_STR);
 }
