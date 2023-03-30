@@ -11,6 +11,14 @@ use itertools::Itertools;
 use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView5, Axis};
 use std::iter;
 
+/// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
+pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 64;
+
+/// Number of ULPS used to search for grid values in this module. This value must be a large-enough
+/// multiple of [`EVOLVE_INFO_TOL_ULPS`], because otherwise similar values are not found in
+/// [`Grid::evolve`]. See <https://github.com/NNPDF/pineappl/issues/223> for details.
+const EVOLUTION_TOL_ULPS: i64 = 4 * EVOLVE_INFO_TOL_ULPS;
+
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
 /// a specific [`Grid`].
 pub struct EvolveInfo {
@@ -177,7 +185,7 @@ pub(crate) fn operators(
         .map(|&fac1p| {
             info.fac1
                 .iter()
-                .position(|&fac1| approx_eq!(f64, fac1p, fac1, ulps = 64))
+                .position(|&fac1| approx_eq!(f64, fac1p, fac1, ulps = EVOLUTION_TOL_ULPS))
                 .ok_or_else(|| {
                     GridError::EvolutionFailure(format!("no operator for muf2 = {fac1p} found"))
                 })
@@ -191,7 +199,7 @@ pub(crate) fn operators(
         .map(|&x1p| {
             info.x1
                 .iter()
-                .position(|&x1| approx_eq!(f64, x1p, x1, ulps = 64))
+                .position(|&x1| approx_eq!(f64, x1p, x1, ulps = EVOLUTION_TOL_ULPS))
                 .ok_or_else(|| {
                     GridError::EvolutionFailure(format!("no operator for x1 = {x1p} found"))
                 })
@@ -245,11 +253,11 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .collect();
 
     fac1.sort_by(f64::total_cmp);
-    fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+    fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
     x1_a.sort_by(f64::total_cmp);
-    x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+    x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
     x1_b.sort_by(f64::total_cmp);
-    x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+    x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
 
     let mut array = Array3::<f64>::zeros((fac1.len(), x1_a.len(), x1_b.len()));
 
@@ -287,7 +295,14 @@ pub(crate) fn ndarray_from_subgrid_orders(
             .iter()
             .map(|&Mu2 { fac, .. }| {
                 fac1.iter()
-                    .position(|&scale| approx_eq!(f64, info.xif * info.xif * fac, scale, ulps = 64))
+                    .position(|&scale| {
+                        approx_eq!(
+                            f64,
+                            info.xif * info.xif * fac,
+                            scale,
+                            ulps = EVOLUTION_TOL_ULPS
+                        )
+                    })
                     .ok_or_else(|| {
                         GridError::EvolutionFailure(format!("no operator for muf2 = {fac} found"))
                     })
@@ -298,7 +313,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
             .iter()
             .map(|&xa| {
                 x1_a.iter()
-                    .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = 64))
+                    .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = EVOLUTION_TOL_ULPS))
                     .ok_or_else(|| {
                         GridError::EvolutionFailure(format!("no operator for x1 = {xa} found"))
                     })
@@ -309,7 +324,7 @@ pub(crate) fn ndarray_from_subgrid_orders(
             .iter()
             .map(|&xb| {
                 x1_b.iter()
-                    .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = 64))
+                    .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = EVOLUTION_TOL_ULPS))
                     .ok_or_else(|| {
                         GridError::EvolutionFailure(format!("no operator for x1 = {xb} found"))
                     })
@@ -321,11 +336,13 @@ pub(crate) fn ndarray_from_subgrid_orders(
 
             let als = if order.alphas == 0 {
                 1.0
-            } else if let Some(alphas) = info
-                .ren1
-                .iter()
-                .zip(info.alphas.iter())
-                .find_map(|(&ren1, &alphas)| approx_eq!(f64, ren1, mur2, ulps = 64).then(|| alphas))
+            } else if let Some(alphas) =
+                info.ren1
+                    .iter()
+                    .zip(info.alphas.iter())
+                    .find_map(|(&ren1, &alphas)| {
+                        approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
+                    })
             {
                 alphas.powi(order.alphas.try_into().unwrap())
             } else {
@@ -382,12 +399,12 @@ pub(crate) fn evolve_with_one(
                 || last_fac1
                     .iter()
                     .zip(fac1.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
                 || (last_x1.len() != x1.len())
                 || last_x1
                     .iter()
                     .zip(x1.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
                 ops = operators(operator, info, &fac1, &pid_indices, &x1)?;
                 last_fac1 = fac1;
@@ -523,14 +540,14 @@ pub(crate) fn evolve_with_two(
                 || last_fac1
                     .iter()
                     .zip(fac1.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64));
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS));
 
             if fac1_diff
                 || (last_x1a.len() != x1_a.len())
                 || last_x1a
                     .iter()
                     .zip(x1_a.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
                 operators_a = operators(operator, info, &fac1, &pid_indices_a, &x1_a)?;
                 last_x1a = x1_a;
@@ -541,7 +558,7 @@ pub(crate) fn evolve_with_two(
                 || last_x1b
                     .iter()
                     .zip(x1_b.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = 64))
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
                 operators_b = operators(operator, info, &fac1, &pid_indices_b, &x1_b)?;
                 last_x1b = x1_b;

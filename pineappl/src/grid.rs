@@ -1774,6 +1774,8 @@ impl Grid {
     /// [`Grid::evolve`] with the parameter `order_mask`.
     #[must_use]
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
+        use super::evolution::EVOLVE_INFO_TOL_ULPS;
+
         let has_pdf1 = self.has_pdf1();
         let has_pdf2 = self.has_pdf2();
 
@@ -1792,11 +1794,11 @@ impl Grid {
         {
             ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
             ren1.sort_by(f64::total_cmp);
-            ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+            ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
             fac1.sort_by(f64::total_cmp);
-            fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+            fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             if has_pdf1 {
                 x1.extend(subgrid.x1_grid().iter().copied());
@@ -1806,7 +1808,7 @@ impl Grid {
             }
 
             x1.sort_by(f64::total_cmp);
-            x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 64));
+            x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             if has_pdf1 {
                 pids1.extend(self.lumi()[lumi].entry().iter().map(|(a, _, _)| a));
