@@ -14,7 +14,7 @@ Options:
   -b, --bins           Show the bins of a grid
   -l, --lumis          Show the luminsities a grid
       --fktable        Check if input is an FK table
-  -h, --help           Print help information
+  -h, --help           Print help
 ";
 
 const BINS_STR: &str = "b   etal    norm

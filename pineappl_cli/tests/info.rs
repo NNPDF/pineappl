@@ -13,7 +13,7 @@ Options:
       --keys       Show all keys stored in the grid
       --qcd        For each order print a list of the largest QCD order
       --show       Shows all key-value pairs stored in the grid
-  -h, --help       Print help information
+  -h, --help       Print help
 ";
 
 const KEYS_STR: &str = "arxiv

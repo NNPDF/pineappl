@@ -10,7 +10,7 @@ Arguments:
   <OUTPUT>  Path to the upgraded PineAPPL file
 
 Options:
-  -h, --help  Print help information
+  -h, --help  Print help
 ";
 
 #[test]

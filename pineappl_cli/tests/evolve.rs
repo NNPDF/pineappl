@@ -20,7 +20,7 @@ Options:
   -o, --orders <ORDERS>      Select which orders to evolve
       --xir <XIR>            Rescale the renormalization scale with this factor [default: 1]
       --xif <XIF>            Rescale the factorization scale with this factor [default: 1]
-  -h, --help                 Print help information
+  -h, --help                 Print help
 ";
 
 const E906NLO_BIN_00_STR: &str = "b     Grid       FkTable      rel. diff

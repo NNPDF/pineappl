@@ -16,7 +16,7 @@ Options:
   -o, --orders <ORDERS>   Select orders manually
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help              Print help information
+  -h, --help              Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    l  size  l  size  l size  l size l size
@@ -73,9 +73,9 @@ const LIMIT_3_STR: &str = "b   etal    l  size  l  size  l size
 7    4  4.5 0 115.79 3  -8.59 1 -7.23
 ";
 
-const BAD_LIMIT_STR: &str = "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
+const BAD_LIMIT_STR: &str = "error: invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
 
-For more information try '--help'
+For more information, try '--help'.
 ";
 
 const LUMIS_0123_STR: &str = "b   etal    l  size  l  size  l size  l size

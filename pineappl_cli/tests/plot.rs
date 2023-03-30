@@ -15,7 +15,7 @@ Options:
       --subgrid-pull <ORDER,BIN,LUMI>  Show the pull for a specific grid three-dimensionally
       --asymmetry                      Plot the asymmetry
       --threads <THREADS>              Number of threads to utilize [default: {}]
-  -h, --help                           Print help information
+  -h, --help                           Print help
 ";
 
 const DEFAULT_STR: &str = r#"#!/usr/bin/env python3

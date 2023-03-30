@@ -20,7 +20,7 @@ Options:
       --scale2 <SCALE2>    Scale all results of the second grid [default: 1.0]
       --digits-abs <ABS>   Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>   Set the number of fractional digits shown for relative numbers [default: 3]
-  -h, --help               Print help information
+  -h, --help               Print help
 ";
 
 const ORDERS1_A2_ORDERS2_A2_STR: &str = "b    x1               O(as^0 a^2)          

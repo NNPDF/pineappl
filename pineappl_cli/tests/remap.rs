@@ -16,7 +16,7 @@ Options:
       --norm <NORM>
           Normalization factor in addition to the given bin widths [default: 1.0]
   -h, --help
-          Print help information
+          Print help
 ";
 
 const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty

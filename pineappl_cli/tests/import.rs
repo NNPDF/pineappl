@@ -21,7 +21,7 @@ Options:
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
       --no-optimize          Do not optimize converted grid
       --dis-pid <DIS_PID>    Particle ID for the non-hadronic initial states if it cannot be determined from the grid [default: 11]
-  -h, --help                 Print help information
+  -h, --help                 Print help
 ";
 
 #[cfg(feature = "fastnlo")]

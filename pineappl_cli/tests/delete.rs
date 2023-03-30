@@ -11,7 +11,7 @@ Arguments:
 
 Options:
       --bins <BINS>  Indices of bins that should be deleted
-  -h, --help         Print help information
+  -h, --help         Print help
 ";
 
 const BINS_02_57_STR: &str = "b   etal    disg/detal  scale uncertainty

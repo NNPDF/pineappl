@@ -15,7 +15,7 @@ Options:
       --scale-by-order <ALPHAS,ALPHA,LOGXIR,LOGXIF,GLOBAL>
           Scales all grids with order-dependent factors
   -h, --help
-          Print help information
+          Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

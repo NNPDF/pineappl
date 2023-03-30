@@ -13,7 +13,7 @@ Options:
       --cc1                           Charge conjugate the first initial state
       --cc2                           Charge conjugate the second initial state
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
-  -h, --help                          Print help information
+  -h, --help                          Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty

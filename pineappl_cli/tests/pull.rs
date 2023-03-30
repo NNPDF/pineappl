@@ -17,7 +17,7 @@ Options:
   -o, --orders <ORDERS>    Select orders manually
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
-  -h, --help               Print help information
+  -h, --help               Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 

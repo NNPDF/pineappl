@@ -8,7 +8,7 @@ Commands:
   ckf  Compare K-factors with channel K factors (ckf)
 
 Options:
-  -h, --help  Print help information
+  -h, --help  Print help
 ";
 
 const CKF_HELP_STR: &str = "Compare K-factors with channel K factors (ckf)
@@ -24,7 +24,7 @@ Arguments:
 Options:
   -l, --limit <LIMIT>     The maximum number of channels displayed [default: 10]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help              Print help information
+  -h, --help              Print help
 ";
 
 const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K  
@@ -56,9 +56,9 @@ const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
 ";
 
 const CKF_WITH_BAD_LIMIT_STR: &str =
-    "error: Invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
+    "error: invalid value '0' for '--limit <LIMIT>': 0 is not in 1..=65535
 
-For more information try '--help'
+For more information, try '--help'.
 ";
 
 #[test]

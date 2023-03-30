@@ -12,7 +12,7 @@ Arguments:
 Options:
       --integrated   Sums all bins into a single bin
   -b, --bins <BINS>  Merge specific bins together
-  -h, --help         Print help information
+  -h, --help         Print help
 ";
 
 const BINS_STR: &str = "b   etal    disg/detal  scale uncertainty

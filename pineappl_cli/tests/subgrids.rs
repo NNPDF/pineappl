@@ -18,7 +18,7 @@ Options:
       --x2               Show the x2 grid values
       --stats            Show grid statistics (figures are the number of entries)
       --digits <DIGITS>  Set the number of digits shown for numerical values [default: 3]
-  -h, --help             Print help information
+  -h, --help             Print help
 ";
 
 const MUF_STR: &str = "o b l  muf

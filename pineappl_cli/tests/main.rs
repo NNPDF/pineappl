@@ -31,8 +31,8 @@ Commands:
 Options:
       --silence-lhapdf  Prevents LHAPDF from printing banners
       --force-positive  Forces negative PDF values to zero
-  -h, --help            Print help information
-  -V, --version         Print version information
+  -h, --help            Print help
+  -V, --version         Print version
 ";
 
 #[test]

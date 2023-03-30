@@ -16,7 +16,7 @@ Options:
   -s, --scales <SCALES>   Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help              Print help information
+  -h, --help              Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -115,15 +115,15 @@ const THREE_PDFS_STR: &str = "b   etal    disg/detal  scale uncertainty NNPDF31_
 ";
 
 const WRONG_LHAID_STR: &str =
-    "error: Invalid value '0' for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
+    "error: invalid value '0' for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
 
-For more information try '--help'
+For more information, try '--help'.
 ";
 
 const WRONG_PDFSET_STR: &str =
-    "error: Invalid value 'IDONTEXIST' for '<PDFSETS>...': The PDF set `IDONTEXIST` was not found
+    "error: invalid value 'IDONTEXIST' for '<PDFSETS>...': The PDF set `IDONTEXIST` was not found
 
-For more information try '--help'
+For more information, try '--help'.
 ";
 
 const ABSOLUTE_STR: &str =
@@ -204,9 +204,9 @@ const ORDERS_A2_A3_STR: &str = "b   etal    disg/detal  scale uncertainty
 7    4  4.5 1.1075878e1    -4.60     3.35
 ";
 
-const WRONG_ORDERS_STR: &str = "error: Invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
+const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
 
-For more information try '--help'
+For more information, try '--help'.
 ";
 
 const SCALES_9_STR: &str = "b   etal    disg/detal  scale uncertainty

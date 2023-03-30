@@ -11,7 +11,7 @@ Arguments:
 
 Options:
       --fk-table <ASSUMPTIONS>  [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-  -h, --help                    Print help information
+  -h, --help                    Print help
 ";
 
 #[test]

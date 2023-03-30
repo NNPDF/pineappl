@@ -13,7 +13,7 @@ Options:
       --delete <KEY>                  Deletes an internal key-value pair
       --entry <KEY> <VALUE>           Sets an internal key-value pair
       --entry-from-file <KEY> <FILE>  Sets an internal key-value pair, with value being read from a file
-  -h, --help                          Print help information
+  -h, --help                          Print help
 ";
 
 const DEFAULT_STR: &str = r#"arxiv: 1505.07024
