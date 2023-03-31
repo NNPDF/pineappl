@@ -24,7 +24,7 @@ pub struct GlobalConfiguration {
 }
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
-    let pdf = pdf.rsplit_once('=').map_or(pdf, |(name, _)| name);
+    let pdf = pdf.split_once('=').map_or(pdf, |(name, _)| name);
 
     Ok(pdf
         .parse()
@@ -32,7 +32,7 @@ pub fn create_pdf(pdf: &str) -> Result<Pdf> {
 }
 
 pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
-    let pdfset = pdfset.rsplit_once('=').map_or(pdfset, |(name, _)| name);
+    let pdfset = pdfset.split_once('=').map_or(pdfset, |(name, _)| name);
     let (pdfset, member) = pdfset
         .rsplit_once('/')
         .map_or((pdfset, None), |(set, member)| {
@@ -49,7 +49,7 @@ pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
 }
 
 pub fn pdf_label(pdf: &str) -> &str {
-    pdf.rsplit_once('=').map_or(pdf, |(_, label)| label)
+    pdf.split_once('=').map_or(pdf, |(_, label)| label)
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {
