@@ -487,7 +487,7 @@ For more information, try '--help'.
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--help"])
+        .args(["info", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -497,7 +497,7 @@ fn help() {
 fn ew() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--ew", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--ew", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,a3\n");
@@ -507,7 +507,7 @@ fn ew() {
 fn get_arxiv() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--get=arxiv", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--get=arxiv", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("1505.07024\n");
@@ -517,7 +517,7 @@ fn get_arxiv() {
 fn keys() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--keys", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--keys", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(KEYS_STR);
@@ -527,7 +527,7 @@ fn keys() {
 fn qcd() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,as1a2\n");
@@ -537,7 +537,7 @@ fn qcd() {
 fn show() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--show", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--show", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(SHOW_STR);
@@ -547,7 +547,7 @@ fn show() {
 fn wrong_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["info", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .failure()
         .stderr(WRONG_ARGUMENTS_STR);

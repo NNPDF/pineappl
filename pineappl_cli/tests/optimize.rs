@@ -18,7 +18,7 @@ Options:
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["optimize", "--help"])
+        .args(["optimize", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -31,7 +31,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "optimize",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),

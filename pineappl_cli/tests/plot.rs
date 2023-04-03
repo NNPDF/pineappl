@@ -451,7 +451,7 @@ figure.savefig('plot.pdf')
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["plot", "--help"])
+        .args(["plot", "--help"])
         .assert()
         .success()
         .stdout(
@@ -468,7 +468,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "plot",
             "--threads=1",
@@ -485,7 +485,7 @@ fn default() {
 fn subgrid_pull() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "plot",
             "--subgrid-pull=0,0,0",

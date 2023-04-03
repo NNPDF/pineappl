@@ -37,7 +37,7 @@ const INTEGRATED_STR: &str = "b x1     diff     scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["sum", "--help"])
+        .args(["sum", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -49,7 +49,7 @@ fn bins() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "sum",
             "--bins=6-7",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -61,7 +61,7 @@ fn bins() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -78,7 +78,7 @@ fn integrated() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "sum",
             "--integrated",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -90,7 +90,7 @@ fn integrated() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),

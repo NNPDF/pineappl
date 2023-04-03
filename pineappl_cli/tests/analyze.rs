@@ -65,7 +65,7 @@ For more information, try '--help'.
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["analyze", "--help"])
+        .args(["analyze", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -75,7 +75,7 @@ fn help() {
 fn ckf_help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["analyze", "ckf", "--help"])
+        .args(["analyze", "ckf", "--help"])
         .assert()
         .success()
         .stdout(CKF_HELP_STR);
@@ -85,7 +85,7 @@ fn ckf_help() {
 fn ckf() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "analyze",
             "ckf",
@@ -103,7 +103,7 @@ fn ckf() {
 fn ckf_with_default_denominator() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "analyze",
             "ckf",
@@ -120,7 +120,7 @@ fn ckf_with_default_denominator() {
 fn ckf_with_bad_limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "analyze",
             "ckf",

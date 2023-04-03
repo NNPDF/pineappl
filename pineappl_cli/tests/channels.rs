@@ -108,7 +108,7 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    l  size  l  size  l size  l size 
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["channels", "--help"])
+        .args(["channels", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -118,7 +118,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -133,7 +133,7 @@ fn default() {
 fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--absolute",
@@ -149,7 +149,7 @@ fn absolute() {
 fn absolute_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--absolute",
@@ -166,7 +166,7 @@ fn absolute_integrated() {
 fn limit_3() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--limit=3",
@@ -182,7 +182,7 @@ fn limit_3() {
 fn bad_limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--limit=0",
@@ -198,7 +198,7 @@ fn bad_limit() {
 fn lumis_0123() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--lumis=0-3",
@@ -214,7 +214,7 @@ fn lumis_0123() {
 fn orders_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "channels",
             "--orders=a2,as1a2",

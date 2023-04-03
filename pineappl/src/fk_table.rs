@@ -376,10 +376,8 @@ impl TryFrom<Grid> for FkTable {
 
                 if muf2 < 0.0 {
                     muf2 = mu2_grid[0].fac;
-                } else {
-                    if muf2 != mu2_grid[0].fac {
-                        return Err(TryFromGridError::MultipleScales);
-                    }
+                } else if muf2 != mu2_grid[0].fac {
+                    return Err(TryFromGridError::MultipleScales);
                 }
             }
         }

@@ -36,7 +36,7 @@ const DEFAULT_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["remap", "--help"])
+        .args(["remap", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -48,7 +48,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "remap",
             "--ignore-obs-norm=2",
             "--norm=5",
@@ -62,7 +62,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),

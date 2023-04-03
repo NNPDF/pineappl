@@ -27,6 +27,7 @@ use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::iter;
 use std::mem;
 use std::ops::Range;
+use std::slice;
 use thiserror::Error;
 
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
@@ -910,7 +911,7 @@ impl Grid {
             .map(|bin| {
                 self.bin_info()
                     .find_bin(&other.bin_info().bin_limits(bin))
-                    .expect(&format!("failed for {}", bin))
+                    .unwrap_or_else(|| panic!("failed for {bin}"))
             })
             .collect();
 
@@ -1403,25 +1404,25 @@ impl Grid {
         let has_pdf2 = self.has_pdf2();
 
         let pids1 = if has_pdf1 {
-            eko_info.grid_axes.pids.clone()
+            &eko_info.grid_axes.pids
         } else {
-            vec![initial_state_1]
+            slice::from_ref(&initial_state_1)
         };
         let pids2 = if has_pdf2 {
-            eko_info.grid_axes.pids.clone()
+            &eko_info.grid_axes.pids
         } else {
-            vec![initial_state_2]
+            slice::from_ref(&initial_state_2)
         };
         // create target luminosities
         let tgt_pids1 = if has_pdf1 {
-            eko_info.target_pids.clone()
+            &eko_info.target_pids
         } else {
-            vec![initial_state_1]
+            slice::from_ref(&initial_state_1)
         };
         let tgt_pids2 = if has_pdf2 {
-            eko_info.target_pids.clone()
+            &eko_info.target_pids
         } else {
-            vec![initial_state_2]
+            slice::from_ref(&initial_state_2)
         };
         let lumi: Vec<_> = tgt_pids1
             .iter()
@@ -2458,17 +2459,11 @@ mod tests {
         grid.set_key_value("initial_state_2", "-2212");
 
         assert_eq!(
-            grid.key_values()
-                .unwrap()
-                .get("initial_state_1".into())
-                .unwrap(),
+            grid.key_values().unwrap().get("initial_state_1").unwrap(),
             "-2212"
         );
         assert_eq!(
-            grid.key_values()
-                .unwrap()
-                .get("initial_state_2".into())
-                .unwrap(),
+            grid.key_values().unwrap().get("initial_state_2").unwrap(),
             "-2212"
         );
     }
@@ -2553,10 +2548,10 @@ mod tests {
             target_x_grid: target_x_grid.clone(),
             target_pids: target_pids.clone(),
             grid_axes: GridAxes {
-                x_grid: axes.x_grid.clone(),
-                pids: axes.pids.clone(),
+                x_grid: axes.x_grid,
+                pids: axes.pids,
                 mur2_grid: axes.mur2_grid.clone(),
-                muf2_grid: axes.muf2_grid.clone(),
+                muf2_grid: axes.muf2_grid,
             },
             lumi_id_types,
         };

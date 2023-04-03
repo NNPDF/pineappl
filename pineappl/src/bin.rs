@@ -93,15 +93,19 @@ impl<'a> BinInfo<'a> {
     }
 
     /// Return the bin limits for the bin with index `bin`.
+    #[must_use]
     pub fn bin_limits(&self, bin: usize) -> Vec<(f64, f64)> {
         // TODO: make return type a Cow
-        if let Some(remapper) = self.remapper {
-            let dim = remapper.dimensions();
-            remapper.limits()[bin * dim..(bin + 1) * dim].to_vec()
-        } else {
-            let limits = &self.limits.limits()[bin..=bin + 1];
-            vec![(limits[0], limits[1])]
-        }
+        self.remapper.map_or_else(
+            || {
+                let limits = &self.limits.limits()[bin..=bin + 1];
+                vec![(limits[0], limits[1])]
+            },
+            |remapper| {
+                let dim = remapper.dimensions();
+                remapper.limits()[bin * dim..(bin + 1) * dim].to_vec()
+            },
+        )
     }
 
     /// Returns the number of bins.
@@ -118,6 +122,7 @@ impl<'a> BinInfo<'a> {
 
     /// Return the index of the bin corresponding to `limits`. If no bin is found `None` is
     /// returned.
+    #[must_use]
     pub fn find_bin(&self, limits: &[(f64, f64)]) -> Option<usize> {
         (0..self.bins())
             .map(|bin| self.bin_limits(bin))

@@ -47,7 +47,7 @@ const SCALE_BY_ORDER_STR: &str = "b   etal    disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["merge", "--help"])
+        .args(["merge", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -59,7 +59,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "merge",
             "--scale=0.5",
             output.path().to_str().unwrap(),
@@ -72,7 +72,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -89,7 +89,7 @@ fn scale_by_order() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "merge",
             "--scale-by-order=2,1,0.5,0.5,0.25",
             output.path().to_str().unwrap(),
@@ -102,7 +102,7 @@ fn scale_by_order() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),

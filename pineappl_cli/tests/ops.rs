@@ -46,7 +46,7 @@ const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["ops", "--help"])
+        .args(["ops", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -58,7 +58,7 @@ fn cc1() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "ops",
             "--cc1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -70,7 +70,7 @@ fn cc1() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -87,7 +87,7 @@ fn cc2() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "ops",
             "--cc2",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -99,7 +99,7 @@ fn cc2() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -116,7 +116,7 @@ fn scale_by_bin() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "ops",
             "--scale-by-bin=1,2,3,4,5,6,7,8",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -128,7 +128,7 @@ fn scale_by_bin() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),

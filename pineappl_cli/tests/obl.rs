@@ -87,7 +87,7 @@ For more information, try '--help'.
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--help"])
+        .args(["obl", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -97,7 +97,7 @@ fn help() {
 fn bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--bins", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--bins", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(BINS_STR);
@@ -107,7 +107,7 @@ fn bins() {
 fn lumis() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--lumis", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--lumis", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(LUMIS_STR);
@@ -117,7 +117,7 @@ fn lumis() {
 fn orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--orders", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--orders", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(ORDERS_STR);
@@ -127,7 +127,7 @@ fn orders() {
 fn orders_long() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--orders-long", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--orders-long", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(ORDERS_LONG_STR);
@@ -137,7 +137,7 @@ fn orders_long() {
 fn orders_spaces() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--orders-spaces", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--orders-spaces", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(ORDERS_SPACES_STR);
@@ -147,7 +147,7 @@ fn orders_spaces() {
 fn fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["obl", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .failure()
         .stdout(FKTABLE_STR);
@@ -157,7 +157,7 @@ fn fktable() {
 fn wrong_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "obl",
             "--orders",
             "--orders-long",

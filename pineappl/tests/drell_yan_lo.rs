@@ -143,8 +143,7 @@ fn fill_drell_yan_lo_grid(
             || (yll.abs() > 2.4)
             || (ylp > 2.4)
             || (ylm > 2.4)
-            || (mll < 60.0)
-            || (mll > 120.0)
+            || !(60.0..=120.0).contains(&mll)
         {
             continue;
         }
@@ -182,9 +181,9 @@ fn perform_grid_tests(
 
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
-    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == &pdf_set));
+    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == pdf_set));
 
-    let pdf = Pdf::with_setname_and_member(&pdf_set, 0)?;
+    let pdf = Pdf::with_setname_and_member(pdf_set, 0)?;
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
 

@@ -148,7 +148,7 @@ const IMPORT_DOUBLE_HADRONIC_FASTNLO_STR: &str =
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["import", "--help"])
+        .args(["import", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -162,7 +162,7 @@ fn import_fix_grid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -183,7 +183,7 @@ fn import_flex_grid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -208,7 +208,7 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "../test-data/FK_POSXDQ.dat",
@@ -221,7 +221,7 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -233,7 +233,7 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["obl", "--fktable", output.path().to_str().unwrap()])
+        .args(["obl", "--fktable", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout("yes\n");
@@ -384,7 +384,7 @@ fn import_hadronic_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "../test-data/FK_ATLASTTBARTOT13TEV.dat",
@@ -397,7 +397,7 @@ fn import_hadronic_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -702,7 +702,7 @@ fn import_photon_grid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -723,7 +723,7 @@ fn import_applgrid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -744,7 +744,7 @@ fn import_new_applgrid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -761,7 +761,7 @@ fn import_new_applgrid() {
 fn import_file_format_failure() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "import",
             "file-doesnt.exist",
             "no.output",
@@ -778,7 +778,7 @@ fn import_file_format_failure() {
 fn import_grid_comparison_failure() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--accuracy=0",
@@ -801,7 +801,7 @@ fn import_dis_applgrid() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",
@@ -822,7 +822,7 @@ fn import_double_hadronic_fastnlo() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "import",
             "--silence-libraries",

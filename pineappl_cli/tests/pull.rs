@@ -89,7 +89,7 @@ const REPLICA0_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull 
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["pull", "--help"])
+        .args(["pull", "--help"])
         .assert()
         .success()
         .stdout(
@@ -106,7 +106,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pull",
             "--threads=1",
@@ -123,7 +123,7 @@ fn default() {
 fn orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pull",
             "--orders=a2",
@@ -141,7 +141,7 @@ fn orders() {
 fn cl_90() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pull",
             "--cl=90",
@@ -159,7 +159,7 @@ fn cl_90() {
 fn limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pull",
             "--limit=1",
@@ -177,7 +177,7 @@ fn limit() {
 fn replica0() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pull",
             "--threads=1",

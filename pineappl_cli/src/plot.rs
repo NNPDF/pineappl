@@ -436,39 +436,31 @@ impl Subcommand for Opts {
             let xaxis = format!("x{}", grid.bin_info().dimensions());
             let xunit = key_values
                 .get(&format!("{xaxis}_unit"))
-                .map(String::as_str)
-                .unwrap_or("");
+                .map_or("", String::as_str);
             let xlabel = format!(
                 "{}{}",
                 key_values
                     .get(&format!("{xaxis}_label_tex"))
-                    .map(String::as_str)
-                    .unwrap_or(""),
-                if xunit == "" {
+                    .map_or("", String::as_str),
+                if xunit.is_empty() {
                     String::new()
                 } else {
                     format!(" [\\si{{{xunit}}}]")
                 }
             );
-            let yunit = key_values.get("y_unit").map(String::as_str).unwrap_or("");
+            let yunit = key_values.get("y_unit").map_or("", String::as_str);
             let ylabel = format!(
                 "{}{}",
-                key_values
-                    .get("y_label_tex")
-                    .map(String::as_str)
-                    .unwrap_or(""),
-                if yunit == "" {
+                key_values.get("y_label_tex").map_or("", String::as_str),
+                if yunit.is_empty() {
                     String::new()
                 } else {
-                    format!(" [\\si{{{}}}]", yunit)
+                    format!(" [\\si{{{yunit}}}]")
                 }
             );
-            let xlog = if xunit == "" { "False" } else { "True" };
-            let ylog = if xunit == "" { "False" } else { "True" };
-            let title = key_values
-                .get("description")
-                .map(String::as_str)
-                .unwrap_or("");
+            let xlog = if xunit.is_empty() { "False" } else { "True" };
+            let ylog = if xunit.is_empty() { "False" } else { "True" };
+            let title = key_values.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let pdfs = self.pdfsets.len();
 

@@ -88,7 +88,7 @@ const LUMIS_DIFFER_STR: &str = "Error: luminosities differ
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["diff", "--help"])
+        .args(["diff", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -98,7 +98,7 @@ fn help() {
 fn orders1_a2_orders2_a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--orders1=a2",
@@ -116,7 +116,7 @@ fn orders1_a2_orders2_a2() {
 fn orders1_a2_a2as1_orders2_a2_a2as1() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
@@ -134,7 +134,7 @@ fn orders1_a2_a2as1_orders2_a2_a2as1() {
 fn orders1_a2_a2as1_ignore_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
@@ -152,7 +152,7 @@ fn orders1_a2_a2as1_ignore_orders() {
 fn scale2_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--scale2=2",
@@ -169,7 +169,7 @@ fn scale2_2() {
 fn orders_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--orders1=a2",
@@ -189,7 +189,7 @@ fn bin_limits_differ() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "remap",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -201,7 +201,7 @@ fn bin_limits_differ() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -220,7 +220,7 @@ fn bin_number_differs() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "delete",
             "--bins=0,1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -232,7 +232,7 @@ fn bin_number_differs() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "--ignore-bin-limits",
@@ -250,7 +250,7 @@ fn bin_number_differs() {
 fn lumis_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "diff",
             "data/LHCB_WP_7TEV.pineappl.lz4",

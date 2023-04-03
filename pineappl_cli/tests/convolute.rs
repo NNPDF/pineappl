@@ -226,7 +226,7 @@ const SCALES_9_STR: &str = "b   etal    disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["convolute", "--help"])
+        .args(["convolute", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -236,7 +236,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -251,7 +251,7 @@ fn default() {
 fn force_positive() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--force-positive",
             "--silence-lhapdf",
             "convolute",
@@ -267,7 +267,7 @@ fn force_positive() {
 fn default_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -283,7 +283,7 @@ fn default_multiple_pdfs() {
 fn multiple_pdfs_with_new_construction() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -299,7 +299,7 @@ fn multiple_pdfs_with_new_construction() {
 fn multiple_pdfs_with_relabeling() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -315,7 +315,7 @@ fn multiple_pdfs_with_relabeling() {
 fn two_pdfs_with_order_subset() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--orders=a2",
@@ -332,7 +332,7 @@ fn two_pdfs_with_order_subset() {
 fn three_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -349,7 +349,7 @@ fn three_pdfs() {
 fn wrong_lhaid() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -364,7 +364,7 @@ fn wrong_lhaid() {
 fn wrong_pdfset() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -379,7 +379,7 @@ fn wrong_pdfset() {
 fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--absolute",
@@ -395,7 +395,7 @@ fn absolute() {
 fn absolute_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--absolute",
@@ -412,7 +412,7 @@ fn absolute_integrated() {
 fn bins_13567() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--bins=1,3,5-7",
@@ -428,7 +428,7 @@ fn bins_13567() {
 fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--integrated",
@@ -444,7 +444,7 @@ fn integrated() {
 fn integrated_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--integrated",
@@ -461,7 +461,7 @@ fn integrated_multiple_pdfs() {
 fn orders_a2_a3() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--orders=a2,a3",
@@ -477,7 +477,7 @@ fn orders_a2_a3() {
 fn wrong_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--orders=a2a2as2",
@@ -493,7 +493,7 @@ fn wrong_orders() {
 fn scales_9() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--scales=9",

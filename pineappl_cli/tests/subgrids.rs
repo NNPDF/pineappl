@@ -1173,7 +1173,7 @@ const X2_STR: &str = "o b l                                                     
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--help"])
+        .args(["subgrids", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -1183,7 +1183,7 @@ fn help() {
 fn muf() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--muf", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--muf", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(MUF_STR);
@@ -1193,7 +1193,7 @@ fn muf() {
 fn muf2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--muf2", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--muf2", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(MUF2_STR);
@@ -1203,7 +1203,7 @@ fn muf2() {
 fn mur() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--mur", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--mur", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(MUR_STR);
@@ -1213,7 +1213,7 @@ fn mur() {
 fn mur2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--mur2", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--mur2", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(MUR2_STR);
@@ -1223,7 +1223,7 @@ fn mur2() {
 fn stats() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--stats", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--stats", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(STATS_STR);
@@ -1233,7 +1233,7 @@ fn stats() {
 fn type_() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--type", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--type", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(TYPE_STR);
@@ -1243,7 +1243,7 @@ fn type_() {
 fn type_show_empty() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "subgrids",
             "--show-empty",
             "--type",
@@ -1258,7 +1258,7 @@ fn type_show_empty() {
 fn x1() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--x1", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--x1", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(X1_STR);
@@ -1268,7 +1268,7 @@ fn x1() {
 fn x2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["subgrids", "--x2", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["subgrids", "--x2", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(X2_STR);

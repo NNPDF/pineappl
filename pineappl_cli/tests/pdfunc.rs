@@ -89,7 +89,7 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    disg/detal  PDF uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["pdfunc", "--help"])
+        .args(["pdfunc", "--help"])
         .assert()
         .success()
         .stdout(
@@ -106,7 +106,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pdfunc",
             "--threads=1",
@@ -122,7 +122,7 @@ fn default() {
 fn cl_90() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pdfunc",
             "--cl=90",
@@ -139,7 +139,7 @@ fn cl_90() {
 fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pdfunc",
             "--integrated",
@@ -156,7 +156,7 @@ fn integrated() {
 fn replica0() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pdfunc",
             "--threads=1",
@@ -172,7 +172,7 @@ fn replica0() {
 fn orders_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "pdfunc",
             "--orders=a2,as1a2",

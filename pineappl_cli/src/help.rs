@@ -5,17 +5,13 @@ use clap_mangen::Man;
 use std::io::Write;
 use std::process::{Command, ExitCode, Stdio};
 
-fn find_subcommand(cmd: clap::Command, args: &[String]) -> Option<clap::Command> {
-    if args.is_empty() {
-        Some(cmd)
-    } else {
-        let mut iter = args.iter();
-        let mut cmd = cmd;
-        while let Some(s) = iter.next() {
+fn find_subcommand(mut cmd: clap::Command, args: &[String]) -> Option<clap::Command> {
+    if !args.is_empty() {
+        for s in args.iter() {
             cmd = cmd.find_subcommand(s)?.clone();
         }
-        Some(cmd)
     }
+    Some(cmd)
 }
 
 /// Display a manpage for selected subcommands.

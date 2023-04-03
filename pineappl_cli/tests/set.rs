@@ -57,7 +57,7 @@ y_unit: pb
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["set", "--help"])
+        .args(["set", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -72,7 +72,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "set",
             "--delete=runcard",
             "--entry",
@@ -90,7 +90,7 @@ fn default() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["info", "--show", output.path().to_str().unwrap()])
+        .args(["info", "--show", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(DEFAULT_STR);

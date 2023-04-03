@@ -182,7 +182,7 @@ mod tests {
         subgrid1.symmetrize();
         subgrid1.scale(2.0);
 
-        let mut subgrid2: SubgridEnum = subgrid1.clone_empty().into();
+        let mut subgrid2: SubgridEnum = subgrid1.clone_empty();
 
         subgrid2.fill(&Ntuple {
             x1: 0.0,

@@ -133,7 +133,7 @@ const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. dif
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["evolve", "--help"])
+        .args(["evolve", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -146,7 +146,7 @@ fn lhcb_wp_7tev() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "evolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -163,7 +163,7 @@ fn lhcb_wp_7tev() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "optimize",
             "--fk-table",
             "Nf4Sym",
@@ -176,7 +176,7 @@ fn lhcb_wp_7tev() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             "--scales=1",
@@ -195,7 +195,7 @@ fn e906nlo_bin_00() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "evolve",
             "../test-data/E906nlo_bin_00.pineappl.lz4",
@@ -215,7 +215,7 @@ fn nutev_cc_nu_fe_sigmared() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "evolve",
             "../test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4",
@@ -236,7 +236,7 @@ fn lhcb_dy_8tev() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "evolve",
             "../test-data/LHCB_DY_8TEV.pineappl.lz4",

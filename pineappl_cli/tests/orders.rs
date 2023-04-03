@@ -87,7 +87,7 @@ const NORMALIZE_A2_AS1A2_STR: &str = "b   etal    disg/detal  O(as^0 a^2) O(as^1
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["orders", "--help"])
+        .args(["orders", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -97,7 +97,7 @@ fn help() {
 fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "orders",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -112,7 +112,7 @@ fn default() {
 fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "orders",
             "--absolute",
@@ -128,7 +128,7 @@ fn absolute() {
 fn absolute_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "orders",
             "--absolute",
@@ -145,7 +145,7 @@ fn absolute_integrated() {
 fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "orders",
             "--integrated",
@@ -161,7 +161,7 @@ fn integrated() {
 fn normalize_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "orders",
             "--normalize=a2,as1a2",

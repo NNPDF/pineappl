@@ -34,7 +34,7 @@ const BINS_25_STR: &str = "b   etal    disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["delete", "--help"])
+        .args(["delete", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -46,7 +46,7 @@ fn bins_02_57() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "delete",
             "--bins=0-2,5-7",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -58,7 +58,7 @@ fn bins_02_57() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
@@ -75,7 +75,7 @@ fn bins_25() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "delete",
             "--bins=2-5",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -87,7 +87,7 @@ fn bins_25() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),

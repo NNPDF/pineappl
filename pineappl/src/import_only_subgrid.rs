@@ -404,11 +404,10 @@ impl From<&SubgridEnum> for ImportOnlySubgridV2 {
             },
         );
 
-        let (mu2_grid, static_scale) = if let Some(scale) = subgrid.static_scale() {
-            (vec![scale], true)
-        } else {
-            (subgrid.mu2_grid()[mu2_range.clone()].to_vec(), false)
-        };
+        let (mu2_grid, static_scale) = subgrid.static_scale().map_or_else(
+            || (subgrid.mu2_grid()[mu2_range.clone()].to_vec(), false),
+            |scale| (vec![scale], true),
+        );
         let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
         let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();
 

@@ -17,7 +17,7 @@ Options:
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&["upgrade", "--help"])
+        .args(["upgrade", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -29,7 +29,7 @@ fn upgrade() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(&[
+        .args([
             "upgrade",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
