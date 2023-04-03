@@ -428,16 +428,6 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 }
 
-impl<T: Copy + Default + PartialEq> SparseArray3<T>{
-    /// Cast to array.
-    pub fn to_ndarray(&self) -> Array3<T> {
-        let mut arr = Array::from_elem(self.dimensions, T::default());
-        for ((a,b,c), value) in self.indexed_iter(){
-            arr[[a,b,c]] = value; 
-        }
-        arr
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;
