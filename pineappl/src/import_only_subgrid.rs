@@ -3,7 +3,6 @@
 use super::grid::Ntuple;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
@@ -209,9 +208,6 @@ impl ImportOnlySubgridV2 {
         &mut self.array
     }
 
-    pub fn dense(& self) -> Array3<f64> {
-        self.array.to_ndarray()
-    }
 }
 
 impl Subgrid for ImportOnlySubgridV2 {

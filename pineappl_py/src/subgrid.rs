@@ -162,7 +162,13 @@ impl PySubgridEnum {
         self.subgrid_enum.scale(factor);
     }
 
+    pub fn dense<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
+        self.subgrid_enum.dense().into_pyarray(py)
+    }
+
     pub fn into(&self) -> Self {
         self.clone()
     }
+
+    
 }
