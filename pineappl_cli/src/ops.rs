@@ -253,14 +253,8 @@ impl Subcommand for Opts {
                         })
                         .collect();
 
-                    let mut initial_state_1: i32 = grid
-                        .key_values()
-                        .map_or("2212", |kv| &kv["initial_state_1"])
-                        .parse()?;
-                    let mut initial_state_2: i32 = grid
-                        .key_values()
-                        .map_or("2212", |kv| &kv["initial_state_2"])
-                        .parse()?;
+                    let mut initial_state_1 = grid.initial_state_1();
+                    let mut initial_state_2 = grid.initial_state_2();
 
                     if cc1 {
                         initial_state_1 = pids::charge_conjugate_pdg_pid(initial_state_1);
