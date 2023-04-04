@@ -57,9 +57,9 @@ impl FromArgMatches for MoreArgs {
                 }
                 "merge_bins" => Box::new(matches.remove_one::<RangeInclusive<usize>>(&id).unwrap())
                     as Box<dyn Any>,
-                "optimize-fk-table" => Box::new(Box::new(
-                    matches.remove_one::<FkAssumptions>(&id).unwrap(),
-                ) as Box<dyn Any>) as Box<dyn Any>,
+                "optimize_fk_table" => {
+                    Box::new(matches.remove_one::<FkAssumptions>(&id).unwrap()) as Box<dyn Any>
+                }
                 "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
                 "scale_by_bin" | "scale_by_order" => {
                     Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
