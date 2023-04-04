@@ -267,7 +267,7 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
-                "delete_bins" => grid.delete_bins(&value.downcast_ref::<Vec<_>>().unwrap()),
+                "delete_bins" => grid.delete_bins(value.downcast_ref::<Vec<_>>().unwrap()),
                 "delete_key" => {
                     grid.key_values_mut()
                         .remove(value.downcast_ref::<String>().unwrap());
@@ -285,14 +285,14 @@ impl Subcommand for Opts {
                     grid.optimize();
                 }
                 "optimize_fk_table" => {
-                    let assumptions = value.downcast_ref::<FkAssumptions>().copied().unwrap();
+                    let assumptions: FkAssumptions = value.downcast_ref().copied().unwrap();
                     let mut fk_table = FkTable::try_from(grid)?;
                     fk_table.optimize(assumptions);
                     grid = fk_table.into_grid();
                 }
                 "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
                 "scale_by_order" => {
-                    let scale_by_order = value.downcast_ref::<Vec<_>>().unwrap();
+                    let scale_by_order: &Vec<_> = value.downcast_ref().unwrap();
                     grid.scale_by_order(
                         scale_by_order[0],
                         scale_by_order[1],
@@ -302,11 +302,11 @@ impl Subcommand for Opts {
                     );
                 }
                 "set_key_value" => {
-                    let key_value = value.downcast_ref::<Vec<String>>().unwrap();
+                    let key_value: &Vec<String> = value.downcast_ref().unwrap();
                     grid.set_key_value(&key_value[0], &key_value[1]);
                 }
                 "set_key_file" => {
-                    let key_file = value.downcast_ref::<Vec<String>>().unwrap();
+                    let key_file: &Vec<String> = value.downcast_ref().unwrap();
                     grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
                 "upgrade" => {
