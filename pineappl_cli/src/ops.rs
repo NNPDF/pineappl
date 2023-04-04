@@ -1,10 +1,11 @@
 use super::helpers::{self, GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
     value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
     ValueHint,
 };
+use pineappl::bin::BinRemapper;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
@@ -34,6 +35,9 @@ enum OpsArg {
     MergeBins(RangeInclusive<usize>),
     Optimize,
     OptimizeFkTable(FkAssumptions),
+    Remap(String),
+    RemapNorm(f64),
+    RemapNormIgnore(Vec<usize>),
     Scale(f64),
     ScaleByBin(Vec<f64>),
     ScaleByOrder(Vec<f64>),
@@ -85,6 +89,11 @@ impl FromArgMatches for MoreArgs {
                     OpsArg::Optimize
                 }
                 "optimize_fk_table" => OpsArg::OptimizeFkTable(matches.remove_one(&id).unwrap()),
+                "remap" => OpsArg::Remap(matches.remove_one(&id).unwrap()),
+                "remap_norm" => OpsArg::RemapNorm(matches.remove_one(&id).unwrap()),
+                "remap_norm_ignore" => {
+                    OpsArg::RemapNormIgnore(matches.remove_many(&id).unwrap().collect())
+                }
                 "scale" => OpsArg::Scale(matches.remove_one(&id).unwrap()),
                 "scale_by_bin" => OpsArg::ScaleByBin(matches.remove_many(&id).unwrap().collect()),
                 "scale_by_order" => {
@@ -173,6 +182,32 @@ impl Args for MoreArgs {
                     ])
                     .try_map(|s| s.parse::<FkAssumptions>()),
                 ),
+        )
+        .arg(
+            Arg::new("remap")
+                .action(ArgAction::Set)
+                .help("Modify the bin dimensions and widths")
+                .long("remap")
+                .value_name("REMAPPING"),
+        )
+        .arg(
+            Arg::new("remap_norm")
+                .action(ArgAction::Set)
+                .help("Modify the bin normalizations with a common factor")
+                .long("remap-norm")
+                .value_delimiter(',')
+                .value_name("NORM")
+                .value_parser(value_parser!(f64)),
+        )
+        .arg(
+            Arg::new("remap_norm_ignore")
+                .action(ArgAction::Append)
+                .help("Modify the bin normalizations by multiplying with the bin lengths for the given dimensions")
+                .long("remap-norm-ignore")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("DIMS")
+                .value_parser(value_parser!(usize)),
         )
         .arg(
             Arg::new("scale")
@@ -293,6 +328,43 @@ impl Subcommand for Opts {
                 }
                 OpsArg::MergeBins(range) => {
                     grid.merge_bins(*range.start()..(range.end() + 1))?;
+                }
+                OpsArg::Remap(remapping) => grid.set_remapper(str::parse(&remapping)?)?,
+                OpsArg::RemapNorm(factor) => {
+                    let remapper = grid.remapper().ok_or_else(|| {
+                        anyhow!("this argument requires a preceeding '--remap' argument")
+                    })?;
+                    let normalizations = remapper
+                        .normalizations()
+                        .iter()
+                        .copied()
+                        .map(|value| factor * value)
+                        .collect();
+
+                    grid.set_remapper(
+                        BinRemapper::new(normalizations, remapper.limits().to_vec()).unwrap(),
+                    )?;
+                }
+                OpsArg::RemapNormIgnore(dimensions) => {
+                    let remapper = grid.remapper().ok_or_else(|| {
+                        anyhow!("this argument requires a preceeding '--remap' argument")
+                    })?;
+                    let normalizations = remapper
+                        .limits()
+                        .chunks_exact(remapper.dimensions())
+                        .zip(remapper.normalizations())
+                        .map(|(limits, normalization)| {
+                            normalization
+                                / dimensions
+                                    .iter()
+                                    .map(|&index| limits[index].1 - limits[index].0)
+                                    .product::<f64>()
+                        })
+                        .collect();
+
+                    grid.set_remapper(
+                        BinRemapper::new(normalizations, remapper.limits().to_vec()).unwrap(),
+                    )?;
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize => grid.optimize(),

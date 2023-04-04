@@ -17,6 +17,9 @@ Options:
       --merge-bins <BIN1-BIN2>        Merge specific bins together
       --optimize                      Optimize internal data structure to minimize memory and disk usage
       --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --remap <REMAPPING>             Modify the bin dimensions and widths
+      --remap-norm <NORM>             Modify the bin normalizations with a common factor
+      --remap-norm-ignore <DIMS>      Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
   -s, --scale <SCALE>                 Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
       --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
@@ -102,6 +105,19 @@ const MERGE_BINS_STR: &str = "b   etal    disg/detal  scale uncertainty
 4    3 3.25 1.8093343e2    -3.74     2.95
 5 3.25  3.5 1.2291115e2    -3.71     2.98
 6  3.5  4.5 3.5811524e1    -3.59     2.95
+";
+
+const REMAP_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
+   []   []  []     [pb]            [%]       
+-+--+--+-+-+-+-+-----------+--------+--------
+0  0  1 0 2 1 2 1.8763810e1    -3.77     2.71
+1  0  1 0 2 2 3 1.7260776e1    -3.79     2.80
+2  0  1 0 2 3 4 1.5000703e1    -3.78     2.86
+3  0  1 0 2 4 5 1.2128831e1    -3.77     2.92
+4  0  1 2 4 1 2 9.0466716e0    -3.74     2.95
+5  1  2 0 2 8 9 6.1455576e0    -3.71     2.98
+6  1  2 2 4 3 4 5.7851018e0    -3.63     2.97
+7  1  2 2 4 4 5 1.3772029e0    -3.46     2.85
 ";
 
 const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal  scale uncertainty
@@ -333,6 +349,37 @@ fn optimize() {
         .assert()
         .success()
         .stdout("");
+}
+
+#[test]
+fn remap() {
+    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "ops",
+            "--remap=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
+            "--remap-norm-ignore=1",
+            "--remap-norm=5",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(REMAP_STR);
 }
 
 #[test]

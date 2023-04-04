@@ -16,7 +16,6 @@ mod orders;
 mod pdfunc;
 mod plot;
 mod pull;
-mod remap;
 mod subgrids;
 
 use anyhow::Result;
@@ -64,7 +63,6 @@ enum SubcommandEnum {
     Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
-    Remap(remap::Opts),
     Subgrids(subgrids::Opts),
 }
 

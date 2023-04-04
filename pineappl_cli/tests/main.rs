@@ -20,7 +20,6 @@ Commands:
   pdfunc     Calculates PDF uncertainties
   plot       Creates a matplotlib script plotting the contents of the grid
   pull       Calculates the pull between two different PDF sets
-  remap      Modifies the bin dimensions, widths and normalizations
   subgrids   Print information about the internal subgrid types
 
 Options:
