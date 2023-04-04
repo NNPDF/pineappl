@@ -2,10 +2,12 @@
 
 use super::convert::{f64_from_usize, usize_from_f64};
 use float_cmp::approx_eq;
+use itertools::izip;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::f64;
 use std::ops::Range;
+use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -83,6 +85,178 @@ pub struct BinRemapper {
 pub struct BinInfo<'a> {
     limits: &'a BinLimits,
     remapper: Option<&'a BinRemapper>,
+}
+
+/// Error type returned by [`BinRemapper::from_str`]
+#[derive(Debug, Error)]
+#[error("{0}")]
+pub struct ParseBinRemapperError(String);
+
+impl FromStr for BinRemapper {
+    type Err = ParseBinRemapperError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let remaps: Result<Vec<Vec<Vec<_>>>, Self::Err> = s
+            .split(';')
+            .map(|string| {
+                string
+                    .split('|')
+                    .map(|string| {
+                        string
+                            .find(':')
+                            .map_or(string, |index| {
+                                let (lhs, rhs) = string.split_at(index);
+                                let rhs = &rhs[1..]; // remove ':' which is contained with `split_at`
+
+                                // extract the part that doesn't belong to the ':' specification
+                                match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
+                                    (Err(_), Ok(_)) => lhs,
+                                    (Ok(_), Err(_)) => rhs,
+                                    _ => "",
+                                }
+                            })
+                            .split(',')
+                            .filter_map(|string| {
+                                let string = string.trim();
+                                if string.is_empty() {
+                                    None
+                                } else {
+                                    Some(string.parse::<f64>().map_err(|_| {
+                                        ParseBinRemapperError(format!(
+                                            "unable to parse limit '{string}'"
+                                        ))
+                                    }))
+                                }
+                            })
+                            .collect()
+                    })
+                    .collect()
+            })
+            .collect();
+        let mut remaps = remaps?;
+
+        if remaps[0].len() != 1 {
+            return Err(ParseBinRemapperError(
+                "'|' syntax not meaningful for first dimension".to_string(),
+            ));
+        }
+
+        // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
+        for vec in &mut remaps {
+            for i in 1..vec.len() {
+                if vec[i].is_empty() {
+                    if vec[i - 1].is_empty() {
+                        return Err(ParseBinRemapperError(
+                            "empty repetition with '|'".to_string(),
+                        ));
+                    }
+
+                    vec[i] = vec[i - 1].clone();
+                }
+            }
+        }
+
+        // go over `remaps` again, this time remove bin as requested with the `:N` or `N:` syntax
+        for (vec, string) in remaps.iter_mut().zip(s.split(';')) {
+            for (vec, string) in vec.iter_mut().zip(string.split('|')) {
+                let (lhs, rhs) = {
+                    let split: Vec<_> = string.split(':').collect();
+
+                    if split.len() == 1 {
+                        // there's no colon
+                        continue;
+                    }
+
+                    if split.len() != 2 {
+                        return Err(ParseBinRemapperError(format!(
+                            "too many ':' found: '{}'",
+                            string
+                        )));
+                    }
+
+                    (split[0].parse::<usize>(), split[1].parse::<usize>())
+                };
+
+                if let Ok(num) = rhs {
+                    vec.truncate(vec.len() - num);
+                }
+
+                if let Ok(num) = lhs {
+                    vec.drain(0..num);
+                }
+
+                if lhs.is_err() && rhs.is_err() {
+                    return Err(ParseBinRemapperError(format!(
+                        "unable to parse ':' syntax from: '{}'",
+                        string
+                    )));
+                }
+
+                if vec.len() <= 1 {
+                    return Err(ParseBinRemapperError(
+                        "no limits due to ':' syntax".to_string(),
+                    ));
+                }
+            }
+        }
+
+        let dimensions = remaps.len();
+        let mut normalizations = Vec::new();
+        let mut limits = Vec::new();
+        let mut buffer = Vec::with_capacity(dimensions);
+        let mut pipe_indices = vec![0; dimensions];
+        let mut last_indices = vec![0; dimensions];
+
+        'looop: for indices in remaps
+            .iter()
+            .map(|vec| 0..vec.iter().map(|vec| vec.len() - 1).max().unwrap())
+            .multi_cartesian_product()
+        {
+            // calculate `pipe_indices`, which stores the indices for the second dimension of `remaps`
+            for d in 0..dimensions - 1 {
+                if indices[d] > last_indices[d] {
+                    for dp in d + 1..dimensions {
+                        if remaps[dp].len() != 1 {
+                            pipe_indices[dp] += 1;
+                        }
+                    }
+                }
+            }
+
+            last_indices = indices.clone();
+
+            let mut normalization = 1.0;
+
+            for (remap, &pipe_index, &i) in izip!(&remaps, &pipe_indices, &indices) {
+                if let Some(r) = remap.get(pipe_index) {
+                    if r.len() <= (i + 1) {
+                        buffer.clear();
+
+                        // this index doesn't exist
+                        continue 'looop;
+                    }
+
+                    let left = r[i];
+                    let right = r[i + 1];
+
+                    buffer.push((left, right));
+                    normalization *= right - left;
+                } else {
+                    return Err(ParseBinRemapperError(
+                        "missing '|' specification: number of variants too small".to_string(),
+                    ));
+                }
+            }
+
+            limits.append(&mut buffer);
+            normalizations.push(normalization);
+        }
+
+        Ok(Self {
+            normalizations,
+            limits,
+        })
+    }
 }
 
 impl<'a> BinInfo<'a> {
@@ -937,4 +1111,46 @@ mod test {
     //    //assert_eq!(remapper.slices(), [(0, 1), (1, 3)]);
     //    remapper.merge_bins(0..3).unwrap();
     //}
+
+    #[test]
+    #[should_panic(expected = "'|' syntax not meaningful for first dimension")]
+    fn pipe_syntax_first_dimension() {
+        BinRemapper::from_str("|0,1,2").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "empty repetition with '|'")]
+    fn pipe_syntax_first_empty() {
+        BinRemapper::from_str("0,1,2;0,2,4;||").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "too many ':' found: '::'")]
+    fn colon_syntax_too_many_colons() {
+        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|::").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "unable to parse ':' syntax from: '2.5:'")]
+    fn colon_syntax_bad_lhs() {
+        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "unable to parse ':' syntax from: ':2.5'")]
+    fn colon_syntax_bad_rhs() {
+        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "no limits due to ':' syntax")]
+    fn colon_syntax_no_limits() {
+        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:4|:3|:3").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "missing '|' specification: number of variants too small")]
+    fn pipe_syntax_too_few_pipes() {
+        BinRemapper::from_str("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9").unwrap();
+    }
 }
