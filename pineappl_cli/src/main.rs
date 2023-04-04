@@ -18,7 +18,6 @@ mod plot;
 mod pull;
 mod remap;
 mod subgrids;
-mod sum;
 
 use anyhow::Result;
 use clap::Parser;
@@ -67,7 +66,6 @@ enum SubcommandEnum {
     Pull(pull::Opts),
     Remap(remap::Opts),
     Subgrids(subgrids::Opts),
-    Sum(sum::Opts),
 }
 
 fn main() -> ExitCode {

@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed a bug that caused `pineappl plot` to show wrong pulls if the central
   PDF set had asymmetric uncertainties
 
+### Removed
+
+- removed `pineappl sum --integrated`. This subcommand did not always work as
+  expected, use `pineappl obs --merge-bins` instead
+
 ## [0.5.9] - 02/01/2023
 
 ### Added

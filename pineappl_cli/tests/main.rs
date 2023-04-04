@@ -22,7 +22,6 @@ Commands:
   pull       Calculates the pull between two different PDF sets
   remap      Modifies the bin dimensions, widths and normalizations
   subgrids   Print information about the internal subgrid types
-  sum        Sums two or more bins of a grid together
 
 Options:
       --silence-lhapdf  Prevents LHAPDF from printing banners
