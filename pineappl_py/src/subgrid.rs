@@ -1,6 +1,7 @@
 use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
-
+use numpy::{IntoPyArray, PyArray3, PyArray1};
+use pineappl::subgrid::Mu2;
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
 ///
 /// **Usage**: `yadism`
@@ -160,6 +161,8 @@ impl PySubgridEnum {
     ///     scaling factor
     pub fn scale(&mut self, factor: f64) {
         self.subgrid_enum.scale(factor);
+
+
     }
 
     pub fn dense<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
@@ -170,5 +173,12 @@ impl PySubgridEnum {
         self.clone()
     }
 
+    pub fn mu2_ren_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        PyArray1::from_vec(py, self.subgrid_enum.mu2_grid().iter().map(|&Mu2 { ren, .. }| ren).collect())
+    }
+
+    pub fn mu2_fact_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        PyArray1::from_vec(py, self.subgrid_enum.mu2_grid().iter().map(|&Mu2 { ren , fac }| fac).collect())
+    }
     
 }
