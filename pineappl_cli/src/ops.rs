@@ -8,7 +8,6 @@ use clap::{
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
-use std::any::Any;
 use std::fs;
 use std::ops::{Deref, RangeInclusive};
 use std::path::PathBuf;
@@ -27,8 +26,24 @@ pub struct Opts {
     more_args: MoreArgs,
 }
 
+enum OpsArg {
+    Cc1,
+    Cc2,
+    DeleteBins(Vec<usize>),
+    DeleteKey(String),
+    MergeBins(RangeInclusive<usize>),
+    Optimize,
+    OptimizeFkTable(FkAssumptions),
+    Scale(f64),
+    ScaleByBin(Vec<f64>),
+    ScaleByOrder(Vec<f64>),
+    SetKeyFile(Vec<String>),
+    SetKeyValue(Vec<String>),
+    Upgrade,
+}
+
 struct MoreArgs {
-    stack: Vec<(String, Box<dyn Any>)>,
+    args: Vec<OpsArg>,
 }
 
 impl FromArgMatches for MoreArgs {
@@ -37,47 +52,57 @@ impl FromArgMatches for MoreArgs {
     }
 
     fn from_arg_matches_mut(matches: &mut ArgMatches) -> Result<Self, Error> {
-        let mut stack = Vec::new();
+        let mut args = Vec::new();
         let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_string()).collect();
 
         for id in ids {
-            let value = match id.as_str() {
-                "cc1" | "cc2" | "optimize" | "upgrade" => {
-                    Box::new(matches.remove_one::<bool>(&id).unwrap()) as Box<dyn Any>
+            args.push(match id.as_str() {
+                "cc1" => {
+                    if !matches.remove_one::<bool>(&id).unwrap() {
+                        continue;
+                    }
+                    OpsArg::Cc1
                 }
-                "delete_bins" => Box::new(
+                "cc2" => {
+                    if !matches.remove_one::<bool>(&id).unwrap() {
+                        continue;
+                    }
+                    OpsArg::Cc2
+                }
+                "delete_bins" => OpsArg::DeleteBins(
                     matches
                         .remove_many::<RangeInclusive<usize>>(&id)
                         .unwrap()
                         .flatten()
-                        .collect::<Vec<_>>(),
-                ) as Box<dyn Any>,
-                "delete_key" => {
-                    Box::new(matches.remove_one::<String>(&id).unwrap()) as Box<dyn Any>
+                        .collect(),
+                ),
+                "delete_key" => OpsArg::DeleteKey(matches.remove_one(&id).unwrap()),
+                "merge_bins" => OpsArg::MergeBins(matches.remove_one(&id).unwrap()),
+                "optimize" => {
+                    if !matches.remove_one::<bool>(&id).unwrap() {
+                        continue;
+                    }
+                    OpsArg::Optimize
                 }
-                "merge_bins" => Box::new(matches.remove_one::<RangeInclusive<usize>>(&id).unwrap())
-                    as Box<dyn Any>,
-                "optimize_fk_table" => {
-                    Box::new(matches.remove_one::<FkAssumptions>(&id).unwrap()) as Box<dyn Any>
+                "optimize_fk_table" => OpsArg::OptimizeFkTable(matches.remove_one(&id).unwrap()),
+                "scale" => OpsArg::Scale(matches.remove_one(&id).unwrap()),
+                "scale_by_bin" => OpsArg::ScaleByBin(matches.remove_many(&id).unwrap().collect()),
+                "scale_by_order" => {
+                    OpsArg::ScaleByOrder(matches.remove_many(&id).unwrap().collect())
                 }
-                "scale" => Box::new(matches.remove_one::<f64>(&id).unwrap()) as Box<dyn Any>,
-                "scale_by_bin" | "scale_by_order" => {
-                    Box::new(matches.remove_many::<f64>(&id).unwrap().collect::<Vec<_>>())
-                        as Box<dyn Any>
+                "set_key_value" => OpsArg::SetKeyValue(matches.remove_many(&id).unwrap().collect()),
+                "set_key_file" => OpsArg::SetKeyFile(matches.remove_many(&id).unwrap().collect()),
+                "upgrade" => {
+                    if !matches.remove_one::<bool>(&id).unwrap() {
+                        continue;
+                    }
+                    OpsArg::Upgrade
                 }
-                "set_key_value" | "set_key_file" => Box::new(
-                    matches
-                        .remove_many::<String>(&id)
-                        .unwrap()
-                        .collect::<Vec<_>>(),
-                ) as Box<dyn Any>,
                 _ => unreachable!(),
-            };
-
-            stack.push((id, value));
+            });
         }
 
-        Ok(Self { stack })
+        Ok(Self { args })
     }
 
     fn update_from_arg_matches(&mut self, _: &ArgMatches) -> Result<(), Error> {
@@ -213,16 +238,11 @@ impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;
 
-        for (id, value) in &self.more_args.stack {
-            match id.as_str() {
-                "cc1" | "cc2" => {
-                    // default value doesn't have an effect
-                    if !value.downcast_ref::<bool>().copied().unwrap() {
-                        continue;
-                    }
-
-                    let cc1 = id == "cc1";
-                    let cc2 = id == "cc2";
+        for arg in &self.more_args.args {
+            match arg {
+                OpsArg::Cc1 | OpsArg::Cc2 => {
+                    let cc1 = matches!(arg, OpsArg::Cc1);
+                    let cc2 = matches!(arg, OpsArg::Cc1);
 
                     let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
                         kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
@@ -267,56 +287,31 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
-                "delete_bins" => grid.delete_bins(value.downcast_ref::<Vec<_>>().unwrap()),
-                "delete_key" => {
-                    grid.key_values_mut()
-                        .remove(value.downcast_ref::<String>().unwrap());
+                OpsArg::DeleteBins(bins) => grid.delete_bins(bins),
+                OpsArg::DeleteKey(key) => {
+                    grid.key_values_mut().remove(key);
                 }
-                "merge_bins" => {
-                    let range = value.downcast_ref::<RangeInclusive<usize>>().unwrap();
+                OpsArg::MergeBins(range) => {
                     grid.merge_bins(*range.start()..(range.end() + 1))?;
                 }
-                "scale" => grid.scale(value.downcast_ref().copied().unwrap()),
-                "optimize" => {
-                    if !value.downcast_ref::<bool>().copied().unwrap() {
-                        continue;
-                    }
-
-                    grid.optimize();
-                }
-                "optimize_fk_table" => {
-                    let assumptions: FkAssumptions = value.downcast_ref().copied().unwrap();
+                OpsArg::Scale(factor) => grid.scale(*factor),
+                OpsArg::Optimize => grid.optimize(),
+                OpsArg::OptimizeFkTable(assumptions) => {
                     let mut fk_table = FkTable::try_from(grid)?;
-                    fk_table.optimize(assumptions);
+                    fk_table.optimize(*assumptions);
                     grid = fk_table.into_grid();
                 }
-                "scale_by_bin" => grid.scale_by_bin(value.downcast_ref::<Vec<_>>().unwrap()),
-                "scale_by_order" => {
-                    let scale_by_order: &Vec<_> = value.downcast_ref().unwrap();
-                    grid.scale_by_order(
-                        scale_by_order[0],
-                        scale_by_order[1],
-                        scale_by_order[2],
-                        scale_by_order[3],
-                        1.0,
-                    );
+                OpsArg::ScaleByBin(factors) => grid.scale_by_bin(factors),
+                OpsArg::ScaleByOrder(factors) => {
+                    grid.scale_by_order(factors[0], factors[1], factors[2], factors[3], 1.0);
                 }
-                "set_key_value" => {
-                    let key_value: &Vec<String> = value.downcast_ref().unwrap();
+                OpsArg::SetKeyValue(key_value) => {
                     grid.set_key_value(&key_value[0], &key_value[1]);
                 }
-                "set_key_file" => {
-                    let key_file: &Vec<String> = value.downcast_ref().unwrap();
+                OpsArg::SetKeyFile(key_file) => {
                     grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
-                "upgrade" => {
-                    if !value.downcast_ref::<bool>().copied().unwrap() {
-                        continue;
-                    }
-
-                    grid.upgrade();
-                }
-                _ => unreachable!(),
+                OpsArg::Upgrade => grid.upgrade(),
             }
         }
 
