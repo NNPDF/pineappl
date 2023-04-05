@@ -310,7 +310,6 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
         }
     }
 
-
     /// Clear the contents of the array.
     pub fn clear(&mut self) {
         self.entries.clear();
