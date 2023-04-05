@@ -3,7 +3,6 @@
 mod analyze;
 mod channels;
 mod convolute;
-mod delete;
 mod diff;
 mod evolve;
 mod help;
@@ -12,17 +11,12 @@ mod import;
 mod info;
 mod merge;
 mod obl;
-mod ops;
-mod optimize;
 mod orders;
 mod pdfunc;
 mod plot;
 mod pull;
-mod remap;
-mod set;
 mod subgrids;
-mod sum;
-mod upgrade;
+mod write;
 
 use anyhow::Result;
 use clap::Parser;
@@ -57,7 +51,6 @@ enum SubcommandEnum {
     Analyze(analyze::Opts),
     Channels(channels::Opts),
     Convolute(convolute::Opts),
-    Delete(delete::Opts),
     Diff(diff::Opts),
     Evolve(evolve::Opts),
     Help(help::Opts),
@@ -65,17 +58,12 @@ enum SubcommandEnum {
     Info(info::Opts),
     Merge(merge::Opts),
     Obl(obl::Opts),
-    Ops(ops::Opts),
-    Optimize(optimize::Opts),
     Orders(orders::Opts),
     Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
-    Remap(remap::Opts),
-    Set(set::Opts),
     Subgrids(subgrids::Opts),
-    Sum(sum::Opts),
-    Upgrade(upgrade::Opts),
+    Write(write::Opts),
 }
 
 fn main() -> ExitCode {

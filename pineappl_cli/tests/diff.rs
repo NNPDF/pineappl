@@ -190,10 +190,10 @@ fn bin_limits_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "remap",
+            "write",
+            "--remap=0,1,2,3,4,5,6,7,8",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
-            "0,1,2,3,4,5,6,7,8",
         ])
         .assert()
         .success()
@@ -221,8 +221,8 @@ fn bin_number_differs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "delete",
-            "--bins=0,1",
+            "write",
+            "--delete-bins=0,1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])

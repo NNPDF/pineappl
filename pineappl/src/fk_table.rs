@@ -131,6 +131,11 @@ impl FkTable {
         &self.grid
     }
 
+    /// Converts the `FkTable` back to a [`Grid`].
+    pub fn into_grid(self) -> Grid {
+        self.grid
+    }
+
     /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `lumi`,
     /// `x1` and `x2`, in this order.
     #[must_use]

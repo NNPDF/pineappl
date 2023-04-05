@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - raised MSRV to 1.64.0
 - the switch `--force-positive` must be given at the same level as
   `--silence-lhapdf`
+- the CLI subcommands `delete`, `optimize`, `set` and `update` were merged into
+  the new `write` subcommand. Also the options `--merge-bins`, `--scale` and
+  `--scale-by-order` were merged into `write`
+- the CLI subcommand `remap` was merged into `write` as the option `--remap`,
+  which expects as a single argument the remapping string. The option  `--norm`
+  was renamed to `--remap-norm`, and `--ignore-obs-norm` was renamed to
+  `--remap-norm-ignore`. Note that the latter now counts dimensions from zero
+  onward, instead from one (old behavior)
 
 ### Fixed
 
@@ -31,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parameter for additionally given PDF sets
 - fixed a bug that caused `pineappl plot` to show wrong pulls if the central
   PDF set had asymmetric uncertainties
+
+### Removed
+
+- removed `pineappl sum --integrated`. This subcommand did not always work as
+  expected, use `pineappl obs --merge-bins` instead
 
 ## [0.5.9] - 02/01/2023
 
