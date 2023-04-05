@@ -5,8 +5,8 @@ use super::grid::Ntuple;
 use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
-use ndarray::Array3;
 use enum_dispatch::enum_dispatch;
+use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -77,8 +77,12 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    fn dimensions(& self) -> (usize, usize, usize) {
-        (self.mu2_grid().len(), self.x1_grid().len(), self.x2_grid().len())
+    fn dimensions(&self) -> (usize, usize, usize) {
+        (
+            self.mu2_grid().len(),
+            self.x1_grid().len(),
+            self.x2_grid().len(),
+        )
     }
 
     /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
@@ -122,14 +126,13 @@ pub trait Subgrid {
     fn static_scale(&self) -> Option<Mu2>;
 
     /// Return the array
-    fn dense(& self) -> Array3<f64> {
+    fn dense(&self) -> Array3<f64> {
         let mut arr = Array3::from_elem(self.dimensions(), f64::default());
-        for ((a,b,c), value) in self.indexed_iter(){
-            arr[[a,b,c]] = value; 
+        for ((a, b, c), value) in self.indexed_iter() {
+            arr[[a, b, c]] = value;
         }
         arr
     }
-
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the

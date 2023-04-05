@@ -207,7 +207,6 @@ impl ImportOnlySubgridV2 {
     pub fn array_mut(&mut self) -> &mut SparseArray3<f64> {
         &mut self.array
     }
-
 }
 
 impl Subgrid for ImportOnlySubgridV2 {
