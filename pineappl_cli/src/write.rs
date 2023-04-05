@@ -331,9 +331,9 @@ impl Subcommand for Opts {
                 }
                 OpsArg::Remap(remapping) => grid.set_remapper(str::parse(&remapping)?)?,
                 OpsArg::RemapNorm(factor) => {
-                    let remapper = grid.remapper().ok_or_else(|| {
-                        anyhow!("this argument requires a preceeding '--remap' argument")
-                    })?;
+                    let remapper = grid
+                        .remapper()
+                        .ok_or_else(|| anyhow!("grid does not have a remapper"))?;
                     let normalizations = remapper
                         .normalizations()
                         .iter()
@@ -346,9 +346,9 @@ impl Subcommand for Opts {
                     )?;
                 }
                 OpsArg::RemapNormIgnore(dimensions) => {
-                    let remapper = grid.remapper().ok_or_else(|| {
-                        anyhow!("this argument requires a preceeding '--remap' argument")
-                    })?;
+                    let remapper = grid
+                        .remapper()
+                        .ok_or_else(|| anyhow!("grid does not have a remapper"))?;
                     let normalizations = remapper
                         .limits()
                         .chunks_exact(remapper.dimensions())

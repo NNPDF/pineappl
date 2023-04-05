@@ -120,6 +120,9 @@ const REMAP_STR: &str = "b etal  x2  x3  disg/detal  scale uncertainty
 7  1  2 2 4 4 5 1.3772029e0    -3.46     2.85
 ";
 
+const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
+";
+
 const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal  scale uncertainty
      []        [pb]            [%]       
 -+----+----+-----------+--------+--------
@@ -380,6 +383,40 @@ fn remap() {
         .assert()
         .success()
         .stdout(REMAP_STR);
+}
+
+#[test]
+fn remap_norm_no_remapper() {
+    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--remap-norm=1",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stderr(REMAP_NO_REMAPPER_STR);
+}
+
+#[test]
+fn remap_norm_ignore_no_remapper() {
+    let output = NamedTempFile::new("remapped.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--remap-norm-ignore=0",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stderr(REMAP_NO_REMAPPER_STR);
 }
 
 #[test]
