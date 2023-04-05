@@ -180,5 +180,12 @@ impl PySubgridEnum {
     pub fn mu2_fact_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         PyArray1::from_vec(py, self.subgrid_enum.mu2_grid().iter().map(|&Mu2 { ren , fac }| fac).collect())
     }
-    
+
+    pub fn x1_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        PyArray1::from_slice(py, &self.subgrid_enum.x1_grid())
+    }
+
+    pub fn x2_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
+        PyArray1::from_slice(py, &self.subgrid_enum.x2_grid())
+    }
 }

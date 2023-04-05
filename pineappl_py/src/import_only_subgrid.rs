@@ -6,6 +6,7 @@ use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
 ///
@@ -30,9 +31,9 @@ impl PyImportOnlySubgridV2 {
     #[new]
     pub fn new_import_only_subgrid(
         array: PyReadonlyArray3<f64>,
-        mu2_grid: Vec<(f64,f64)>,
-        x1_grid: Vec<f64>,
-        x2_grid: Vec<f64>,
+        mu2_grid: Vec<(f64, f64)>,
+        x1_grid: PyReadonlyArray1<f64>,
+        x2_grid: PyReadonlyArray1<f64>,
     ) -> Self {
         let mut sparse_array = SparseArray3::new(mu2_grid.len(), x1_grid.len(), x2_grid.len());
 
@@ -47,8 +48,8 @@ impl PyImportOnlySubgridV2 {
         Self::new(ImportOnlySubgridV2::new(
             sparse_array,
             mu2_grid.iter().map(| (ren, fac) | Mu2{ren:*ren,fac:*fac}).collect(),
-            x1_grid,
-            x2_grid,
+            x1_grid.to_vec().unwrap(),
+            x2_grid.to_vec().unwrap(),
         ))
     }
 
