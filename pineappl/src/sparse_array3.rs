@@ -1,6 +1,5 @@
 //! Module containing the `SparseArray3` struct.
 
-use ndarray::{Array, Array3};
 use ndarray::{ArrayView3, Axis};
 use serde::{Deserialize, Serialize};
 use std::iter;
