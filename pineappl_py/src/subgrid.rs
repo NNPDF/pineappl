@@ -143,6 +143,37 @@ impl PySubgridParams {
     }
 }
 
+#[pyclass]
+#[repr(transparent)]
+pub struct PyMu2 {
+    pub(crate) mu2: Mu2,
+}
+
+#[pymethods]
+impl PyMu2 {
+    #[getter]
+    fn ren(&self) -> PyResult<f64> {
+        Ok(self.mu2.ren)
+    }
+
+    #[setter]
+    fn set_ren(&mut self, value: f64) -> PyResult<()> {
+        self.mu2.ren = value;
+        Ok(())
+    }
+
+    #[getter]
+    fn fac(&self) -> PyResult<f64> {
+        Ok(self.mu2.fac)
+    }
+
+    #[setter]
+    fn set_fac(&mut self, value: f64) -> PyResult<()> {
+        self.mu2.fac = value;
+        Ok(())
+    }
+}
+
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
 #[pyclass]
 #[derive(Clone)]
@@ -171,26 +202,12 @@ impl PySubgridEnum {
         self.clone()
     }
 
-    pub fn mu2_ren_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        PyArray1::from_vec(
-            py,
-            self.subgrid_enum
-                .mu2_grid()
-                .iter()
-                .map(|&Mu2 { ren, .. }| ren)
-                .collect(),
-        )
-    }
-
-    pub fn mu2_fact_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        PyArray1::from_vec(
-            py,
-            self.subgrid_enum
-                .mu2_grid()
-                .iter()
-                .map(|&Mu2 { ren, fac }| fac)
-                .collect(),
-        )
+    pub fn mu2_grid(&self) -> Vec<PyMu2> {
+        self.subgrid_enum
+            .mu2_grid()
+            .iter()
+            .map(|mu2| PyMu2 { mu2: mu2.clone() })
+            .collect()
     }
 
     pub fn x1_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
