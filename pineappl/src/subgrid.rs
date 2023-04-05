@@ -77,6 +77,7 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
+    /// Return the dimension of the dense array of the subgrid
     fn dimensions(&self) -> (usize, usize, usize) {
         (
             self.mu2_grid().len(),
@@ -125,7 +126,7 @@ pub trait Subgrid {
     /// Return the static (single) scale, if this subgrid has one.
     fn static_scale(&self) -> Option<Mu2>;
 
-    /// Return the array
+    /// Fill a dense array with subgrid content
     fn dense(&self) -> Array3<f64> {
         let mut arr = Array3::from_elem(self.dimensions(), f64::default());
         for ((a, b, c), value) in self.indexed_iter() {

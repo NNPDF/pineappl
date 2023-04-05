@@ -7,7 +7,7 @@ use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
+/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`
 ///
 /// **Usage**: `pineko`
 #[pyclass]

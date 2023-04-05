@@ -195,6 +195,7 @@ impl PySubgridEnum {
         self.subgrid_enum.scale(factor);
     }
 
+    /// Return the dense array of the subgrid.
     pub fn dense<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
         self.subgrid_enum.dense().into_pyarray(py)
     }
@@ -202,7 +203,7 @@ impl PySubgridEnum {
     pub fn into(&self) -> Self {
         self.clone()
     }
-
+    /// Return the array of mu2 objects of a subgrid
     pub fn mu2_grid(&self) -> Vec<PyMu2> {
         self.subgrid_enum
             .mu2_grid()
@@ -210,11 +211,11 @@ impl PySubgridEnum {
             .map(|&mu2| PyMu2 { mu2 })
             .collect()
     }
-
+    /// Return the array of x1 of a subgrid
     pub fn x1_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         PyArray1::from_slice(py, &self.subgrid_enum.x1_grid())
     }
-
+    /// Return the array of x2 of a subgrid
     pub fn x2_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         PyArray1::from_slice(py, &self.subgrid_enum.x2_grid())
     }
