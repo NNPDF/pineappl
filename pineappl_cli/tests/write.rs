@@ -1,9 +1,9 @@
 use assert_cmd::Command;
 use assert_fs::{fixture::FileWriteStr, NamedTempFile};
 
-const HELP_STR: &str = "A collection of various modifying operations on grids
+const HELP_STR: &str = "Write a grid modified by various operations
 
-Usage: pineappl ops [OPTIONS] <INPUT> <OUTPUT>
+Usage: pineappl write [OPTIONS] <INPUT> <OUTPUT>
 
 Arguments:
   <INPUT>   Path to the input grid
@@ -149,7 +149,7 @@ const SCALE_BY_ORDER_STR: &str = "b   etal    disg/detal  scale uncertainty
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["ops", "--help"])
+        .args(["write", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -162,7 +162,7 @@ fn cc1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--cc1",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -191,7 +191,7 @@ fn cc2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--cc2",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -220,7 +220,7 @@ fn delete_bins_02_57() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--delete-bins=0-2,5-7",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -249,7 +249,7 @@ fn delete_bins_25() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--delete-bins=2-5",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -281,7 +281,7 @@ fn key_value() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--delete-key=runcard",
             "--set-key-value",
             "key",
@@ -311,7 +311,7 @@ fn merge_bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--merge-bins=6-7",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -341,7 +341,7 @@ fn optimize() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--optimize",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -358,7 +358,7 @@ fn remap() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--remap=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
             "--remap-norm-ignore=1",
             "--remap-norm=5",
@@ -389,7 +389,7 @@ fn scale_by_bin() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--scale-by-bin=1,2,3,4,5,6,7,8",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -418,7 +418,7 @@ fn scale_by_order() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--scale-by-order=2,1,0.5,0.5",
             "--scale=0.5",
             "data/LHCB_WP_7TEV.pineappl.lz4",
@@ -448,7 +448,7 @@ fn upgrade() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--upgrade",
             "data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),

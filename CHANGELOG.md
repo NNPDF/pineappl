@@ -23,13 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the switch `--force-positive` must be given at the same level as
   `--silence-lhapdf`
 - the CLI subcommands `delete`, `optimize`, `set` and `update` were merged into
-  the `ops` subcommand. Also the options `--merge-bins`, `--scale` and
-  `--scale-by-order` were merged into `ops`
-- the CLI subcommand `remap` was merged into `ops` as the option `--remap`,
-  which expects as a singular argument the remapping string. The option
-  `--norm` was renamed to `--remap-norm`, and `--ignore-obs-norm` was renamed
-  to `--remap-norm-ignore`. Note that the latter now counts dimensions from
-  zero onward, instead from one (old behavior)
+  the new `write` subcommand. Also the options `--merge-bins`, `--scale` and
+  `--scale-by-order` were merged into `write`
+- the CLI subcommand `remap` was merged into `write` as the option `--remap`,
+  which expects as a single argument the remapping string. The option  `--norm`
+  was renamed to `--remap-norm`, and `--ignore-obs-norm` was renamed to
+  `--remap-norm-ignore`. Note that the latter now counts dimensions from zero
+  onward, instead from one (old behavior)
 
 ### Fixed
 

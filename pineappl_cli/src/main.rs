@@ -11,12 +11,12 @@ mod import;
 mod info;
 mod merge;
 mod obl;
-mod ops;
 mod orders;
 mod pdfunc;
 mod plot;
 mod pull;
 mod subgrids;
+mod write;
 
 use anyhow::Result;
 use clap::Parser;
@@ -58,12 +58,12 @@ enum SubcommandEnum {
     Info(info::Opts),
     Merge(merge::Opts),
     Obl(obl::Opts),
-    Ops(ops::Opts),
     Orders(orders::Opts),
     Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
     Subgrids(subgrids::Opts),
+    Write(write::Opts),
 }
 
 fn main() -> ExitCode {

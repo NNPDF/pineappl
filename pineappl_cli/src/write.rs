@@ -14,7 +14,7 @@ use std::ops::{Deref, RangeInclusive};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-/// A collection of various modifying operations on grids.
+/// Write a grid modified by various operations.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.

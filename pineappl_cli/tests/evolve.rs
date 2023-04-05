@@ -164,7 +164,7 @@ fn lhcb_wp_7tev() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "ops",
+            "write",
             "--optimize-fk-table",
             "Nf4Sym",
             output.path().to_str().unwrap(),

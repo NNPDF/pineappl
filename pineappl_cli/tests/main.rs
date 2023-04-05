@@ -15,12 +15,12 @@ Commands:
   info       Shows information about the grid
   merge      Merges one or more PineAPPL grids together
   obl        Shows information about orders (o), bins (b), or luminosities (l) of a grid
-  ops        A collection of various modifying operations on grids
   orders     Shows the predictions for all bin for each order separately
   pdfunc     Calculates PDF uncertainties
   plot       Creates a matplotlib script plotting the contents of the grid
   pull       Calculates the pull between two different PDF sets
   subgrids   Print information about the internal subgrid types
+  write      Write a grid modified by various operations
 
 Options:
       --silence-lhapdf  Prevents LHAPDF from printing banners
