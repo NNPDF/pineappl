@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 use pyo3::prelude::*;
 
 pub mod bin;

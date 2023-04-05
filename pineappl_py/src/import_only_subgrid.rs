@@ -1,12 +1,11 @@
 use super::subgrid::PySubgridEnum;
 
-use numpy::{IntoPyArray, PyArray3, PyReadonlyArray1, PyReadonlyArray3};
+use numpy::{PyReadonlyArray1, PyReadonlyArray3};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
-use pyo3::types::PyTuple;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
 ///

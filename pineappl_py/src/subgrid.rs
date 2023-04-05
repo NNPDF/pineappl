@@ -143,6 +143,7 @@ impl PySubgridParams {
     }
 }
 
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::Mu2 <subgrid/struct.Mu2.html>`
 #[pyclass]
 #[repr(transparent)]
 pub struct PyMu2 {
