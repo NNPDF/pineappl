@@ -1,19 +1,90 @@
 use assert_cmd::Command;
 
-const HELP_STR: &str = "Shows information about the grid
+const HELP_STR: &str = "Read out information of a grid
 
-Usage: pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
 
 Options:
-      --ew         For each order print a list of the largest EW order
-      --get <key>  Gets an internal key-value pair
-      --keys       Show all keys stored in the grid
-      --qcd        For each order print a list of the largest QCD order
-      --show       Shows all key-value pairs stored in the grid
-  -h, --help       Print help
+  -o, --orders         Show the orders of a grid, stripping zero powers
+      --orders-spaces  Show the orders of a grid, replacing zero powers with spaces
+      --orders-long    Show the orders of a grid, including zero powers
+  -b, --bins           Show the bins of a grid
+  -l, --lumis          Show the luminsities a grid
+      --fktable        Check if input is an FK table
+      --ew             For each order print a list of the largest EW order
+      --get <KEY>      Gets an internal key-value pair
+      --keys           Show all keys stored in the grid
+      --qcd            For each order print a list of the largest QCD order
+      --show           Shows all key-value pairs stored in the grid
+  -h, --help           Print help
+";
+
+const BINS_STR: &str = "b   etal    norm
+-+----+----+----
+0    2 2.25 0.25
+1 2.25  2.5 0.25
+2  2.5 2.75 0.25
+3 2.75    3 0.25
+4    3 3.25 0.25
+5 3.25  3.5 0.25
+6  3.5    4  0.5
+7    4  4.5  0.5
+";
+
+const LUMIS_STR: &str = "l    entry        entry
+-+------------+------------
+0 1 × ( 2, -1) 1 × ( 4, -3)
+1 1 × ( 0, -3) 1 × ( 0, -1)
+2 1 × (22, -3) 1 × (22, -1)
+3 1 × ( 2,  0) 1 × ( 4,  0)
+4 1 × ( 2, 22) 1 × ( 4, 22)
+";
+
+const ORDERS_STR: &str = "o      order
+-+----------------
+0 O(a^2)
+1 O(as^1 a^2)
+2 O(as^1 a^2 lr^1)
+3 O(as^1 a^2 lf^1)
+4 O(a^3)
+5 O(a^3 lr^1)
+6 O(a^3 lf^1)
+";
+
+const ORDERS_LONG_STR: &str = "o         order
+-+---------------------
+0 O(as^0 a^2 lr^0 lf^0)
+1 O(as^1 a^2 lr^0 lf^0)
+2 O(as^1 a^2 lr^1 lf^0)
+3 O(as^1 a^2 lr^0 lf^1)
+4 O(as^0 a^3 lr^0 lf^0)
+5 O(as^0 a^3 lr^1 lf^0)
+6 O(as^0 a^3 lr^0 lf^1)
+";
+
+const ORDERS_SPACES_STR: &str = "o         order
+-+---------------------
+0 O(     a^2          )
+1 O(as^1 a^2          )
+2 O(as^1 a^2 lr^1     )
+3 O(as^1 a^2      lf^1)
+4 O(     a^3          )
+5 O(     a^3 lr^1     )
+6 O(     a^3      lf^1)
+";
+
+const FKTABLE_STR: &str = "no
+multiple orders detected
+";
+
+const WRONG_ORDERS_STR: &str = "error: the argument '--orders' cannot be used with '--orders-long'
+
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+
+For more information, try '--help'.
 ";
 
 const KEYS_STR: &str = "arxiv
@@ -478,7 +549,7 @@ y_unit: pb
 
 const WRONG_ARGUMENTS_STR: &str = "error: the argument '--ew' cannot be used with '--qcd'
 
-Usage: pineappl info <--ew|--get <key>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -487,17 +558,92 @@ For more information, try '--help'.
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--help"])
+        .args(["read", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
 }
 
 #[test]
+fn bins() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--bins", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(BINS_STR);
+}
+
+#[test]
+fn lumis() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--lumis", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(LUMIS_STR);
+}
+
+#[test]
+fn orders() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(ORDERS_STR);
+}
+
+#[test]
+fn orders_long() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders-long", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(ORDERS_LONG_STR);
+}
+
+#[test]
+fn orders_spaces() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders-spaces", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .success()
+        .stdout(ORDERS_SPACES_STR);
+}
+
+#[test]
+fn fktable() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .failure()
+        .stdout(FKTABLE_STR);
+}
+
+#[test]
+fn wrong_orders() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "read",
+            "--orders",
+            "--orders-long",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
+        .assert()
+        .failure()
+        .stderr(WRONG_ORDERS_STR);
+}
+
+#[test]
 fn ew() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--ew", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--ew", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,a3\n");
@@ -507,7 +653,7 @@ fn ew() {
 fn get_arxiv() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--get=arxiv", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--get=arxiv", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("1505.07024\n");
@@ -517,7 +663,7 @@ fn get_arxiv() {
 fn keys() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--keys", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--keys", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(KEYS_STR);
@@ -527,7 +673,7 @@ fn keys() {
 fn qcd() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,as1a2\n");
@@ -537,7 +683,7 @@ fn qcd() {
 fn show() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--show", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--show", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(SHOW_STR);
@@ -547,7 +693,7 @@ fn show() {
 fn wrong_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .failure()
         .stderr(WRONG_ARGUMENTS_STR);

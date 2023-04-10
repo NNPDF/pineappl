@@ -233,7 +233,7 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["obl", "--fktable", output.path().to_str().unwrap()])
+        .args(["read", "--fktable", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout("yes\n");

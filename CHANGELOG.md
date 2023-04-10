@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   was renamed to `--remap-norm`, and `--ignore-obs-norm` was renamed to
   `--remap-norm-ignore`. Note that the latter now counts dimensions from zero
   onward, instead from one (old behavior)
+- the CLI subcommand `info` and `obl` were merged into the new subcommand
+  `read`
 
 ### Fixed
 

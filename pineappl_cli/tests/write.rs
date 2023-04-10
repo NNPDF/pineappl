@@ -301,7 +301,7 @@ fn key_value() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["info", "--show", output.path().to_str().unwrap()])
+        .args(["read", "--show", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(KEY_VALUE_STR);

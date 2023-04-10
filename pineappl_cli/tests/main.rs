@@ -12,13 +12,12 @@ Commands:
   evolve     Evolve a grid with an evolution kernel operator to an FK table
   help       Display a manpage for selected subcommands
   import     Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
-  info       Shows information about the grid
   merge      Merges one or more PineAPPL grids together
-  obl        Shows information about orders (o), bins (b), or luminosities (l) of a grid
   orders     Shows the predictions for all bin for each order separately
   pdfunc     Calculates PDF uncertainties
   plot       Creates a matplotlib script plotting the contents of the grid
   pull       Calculates the pull between two different PDF sets
+  read       Read out information of a grid
   subgrids   Print information about the internal subgrid types
   write      Write a grid modified by various operations
 

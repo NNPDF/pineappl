@@ -8,13 +8,12 @@ mod evolve;
 mod help;
 mod helpers;
 mod import;
-mod info;
 mod merge;
-mod obl;
 mod orders;
 mod pdfunc;
 mod plot;
 mod pull;
+mod read;
 mod subgrids;
 mod write;
 
@@ -55,13 +54,12 @@ enum SubcommandEnum {
     Evolve(evolve::Opts),
     Help(help::Opts),
     Import(import::Opts),
-    Info(info::Opts),
     Merge(merge::Opts),
-    Obl(obl::Opts),
     Orders(orders::Opts),
     Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
+    Read(read::Opts),
     Subgrids(subgrids::Opts),
     Write(write::Opts),
 }

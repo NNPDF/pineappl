@@ -29,9 +29,25 @@ struct Group {
     /// Check if input is an FK table.
     #[arg(long)]
     fktable: bool,
+
+    /// For each order print a list of the largest EW order.
+    #[arg(long)]
+    ew: bool,
+    /// Gets an internal key-value pair.
+    #[arg(long, num_args = 1, value_name = "KEY")]
+    get: Option<String>,
+    /// Show all keys stored in the grid.
+    #[arg(long)]
+    keys: bool,
+    /// For each order print a list of the largest QCD order.
+    #[arg(long)]
+    qcd: bool,
+    /// Shows all key-value pairs stored in the grid.
+    #[arg(long)]
+    show: bool,
 }
 
-/// Shows information about orders (o), bins (b), or luminosities (l) of a grid.
+/// Read out information of a grid.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -43,7 +59,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
-        let grid = helpers::read_grid(&self.input)?;
+        let mut grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
 
@@ -109,6 +125,77 @@ impl Subcommand for Opts {
                     row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
                 }
             }
+        } else if self.group.ew || self.group.qcd {
+            let mut sorted_grid_orders: Vec<_> = grid
+                .orders()
+                .iter()
+                .filter(|order| (order.logxir == 0) && (order.logxif == 0))
+                .collect();
+            sorted_grid_orders.sort();
+
+            let orders = sorted_grid_orders
+                .into_iter()
+                .group_by(|order| order.alphas + order.alpha)
+                .into_iter()
+                .map(|mut iter| {
+                    if self.group.qcd {
+                        iter.1.next().unwrap()
+                    } else {
+                        iter.1.last().unwrap()
+                    }
+                })
+                .map(|order| {
+                    if order.alphas == 0 {
+                        format!("a{}", order.alpha)
+                    } else if order.alpha == 0 {
+                        format!("as{}", order.alphas)
+                    } else {
+                        format!("as{}a{}", order.alphas, order.alpha)
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(",");
+
+            println!("{orders}");
+        } else if let Some(ref key) = self.group.get {
+            grid.upgrade();
+
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    if let Some(value) = key_values.get(key) {
+                        println!("{value}");
+                    }
+                },
+            );
+        } else if self.group.keys {
+            grid.upgrade();
+
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    let mut vector = key_values.iter().collect::<Vec<_>>();
+                    vector.sort();
+
+                    for (key, _) in &vector {
+                        println!("{key}");
+                    }
+                },
+            );
+        } else if self.group.show {
+            grid.upgrade();
+
+            grid.key_values().map_or_else(
+                || unreachable!(),
+                |key_values| {
+                    let mut vector = key_values.iter().collect::<Vec<_>>();
+                    vector.sort();
+
+                    for (key, value) in &vector {
+                        println!("{key}: {value}");
+                    }
+                },
+            );
         } else {
             table.set_titles(row![c => "o", "order"]);
 
