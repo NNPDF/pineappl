@@ -3,19 +3,11 @@
 set -euo pipefail
 
 crates=(
-    # this must always be the first item because all other crates depend on it
     pineappl
-
-    # the CLI depends on the following two
     pineappl_applgrid
     pineappl_fastnlo
-
     pineappl_capi
     pineappl_cli
-    pineappl_py
-)
-
-dont_publish=(
     pineappl_py
 )
 
@@ -121,28 +113,6 @@ echo ">>> Commiting and pushing changes ..."
 git commit -m "Release v${version}"
 git tag -a v${version} -m v${version}
 git push --follow-tags
-
-for crate in ${crates[@]}; do
-    if [[ " ${dont_publish[*]} " =~ " ${crate} " ]]; then
-        echo ">>> Skipping crate '${crate}' ..."
-        # don't publish this crate
-        continue
-    fi
-
-    echo ">>> Publishing crate '${crate}' ..."
-
-    cd ${crate}
-    # cargo publish will block starting with 1.66:
-    # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
-    cargo publish
-    cd ..
-
-    # ... remove the following block
-    if [[ ${crate} == "pineappl" ]]; then
-        echo "Waiting for the 'pineappl' crate to become available on crates.io ..."
-        sleep 60
-    fi
-done
 
 echo ">>> Making a release on github"
 

@@ -1,0 +1,32 @@
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        # this must be at least Rust 1.66 to support waiting for dependencies to on crates.io:
+        # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
+        toolchain: stable
+
+    - name: Publish all crates
+      if: "startsWith(github.ref, 'refs/tags/')"
+      run: |
+        cd pineappl
+        cargo publish
+        cd ../pineappl_applgrid
+        cargo publish pineappl_applgrid
+        cd ../pineappl_fastnlo
+        cargo publish pineappl_fastnlo
+        cd ../pineappl_capi
+        cargo publish pineappl_capi
+        cd ../pineappl_cli
+        cargo publish pineappl_cli
