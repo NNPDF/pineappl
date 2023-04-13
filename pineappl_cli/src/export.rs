@@ -19,10 +19,12 @@ fn convert_into_applgrid(
     pdfset: &str,
     member: usize,
     _: usize,
+    discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     // TODO: check also scale-varied results
 
-    let (mut applgrid, order_mask) = applgrid::convert_into_applgrid(grid, output)?;
+    let (mut applgrid, order_mask) =
+        applgrid::convert_into_applgrid(grid, output, discard_non_matching_scales)?;
     let results = applgrid::convolute_applgrid(applgrid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", results, 1, order_mask))
@@ -35,6 +37,7 @@ fn convert_into_applgrid(
     _: &str,
     _: usize,
     _: usize,
+    _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `applgrid`"
@@ -68,6 +71,7 @@ fn convert_into_grid(
     member: usize,
     silence_libraries: bool,
     scales: usize,
+    discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
     let (stdout, stderr) = if silence_libraries {
         (silence_fd(STDOUT_FILENO), silence_fd(STDERR_FILENO))
@@ -84,7 +88,14 @@ fn convert_into_grid(
 
     if let Some(extension) = output.extension() {
         if extension == "appl" || extension == "root" {
-            return convert_into_applgrid(output, grid, pdfset, member, scales);
+            return convert_into_applgrid(
+                output,
+                grid,
+                pdfset,
+                member,
+                scales,
+                discard_non_matching_scales,
+            );
         }
     }
 
@@ -106,6 +117,9 @@ pub struct Opts {
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
+    /// Discard non-matching scales that would otherwise lead to panics.
+    #[arg(long)]
+    discard_non_matching_scales: bool,
     /// Set the number of scale variations to compare with if they are available.
     #[arg(
         default_value_t = 7,
@@ -139,6 +153,7 @@ impl Subcommand for Opts {
             0,
             self.silence_libraries,
             self.scales,
+            self.discard_non_matching_scales,
         )?;
 
         for Order {

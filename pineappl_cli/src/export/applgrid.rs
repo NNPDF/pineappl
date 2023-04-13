@@ -29,7 +29,11 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
     Ok(result)
 }
 
-pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<grid>, Vec<bool>)> {
+pub fn convert_into_applgrid(
+    grid: &Grid,
+    output: &Path,
+    discard_non_matching_scales: bool,
+) -> Result<(UniquePtr<grid>, Vec<bool>)> {
     let bin_info = grid.bin_info();
     let dim = bin_info.dimensions();
 
@@ -149,9 +153,19 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
                         appl_q2
                             .iter()
                             .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
-                            .ok_or_else(|| {
-                                anyhow!("factorization scale muf2 = {} not found in APPLgrid", fac)
-                            })
+                            .map_or_else(
+                                || {
+                                    if discard_non_matching_scales {
+                                        Ok(-1)
+                                    } else {
+                                        Err(anyhow!(
+                                            "factorization scale muf2 = {} not found in APPLgrid",
+                                            fac
+                                        ))
+                                    }
+                                },
+                                |idx| Ok(i32::try_from(idx).unwrap()),
+                            )
                     })
                     .collect::<Result<_>>()?;
                 let appl_x1_idx: Vec<_> = subgrid
@@ -186,9 +200,22 @@ pub fn convert_into_applgrid(grid: &Grid, output: &Path) -> Result<(UniquePtr<gr
                     debug_assert!(ix1 < subgrid.x1_grid().len());
                     debug_assert!(ix2 < subgrid.x2_grid().len());
 
+                    let appl_q2_idx = appl_q2_idx[iq2];
+
+                    if appl_q2_idx == -1 {
+                        if value != 0.0 {
+                            println!(
+                                "WARNING: discarding non-matching scale muf2 = {}",
+                                subgrid.mu2_grid()[iq2].fac
+                            );
+                        }
+
+                        continue;
+                    }
+
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
-                        appl_q2_idx[iq2].try_into().unwrap(),
+                        appl_q2_idx,
                         appl_x1_idx[ix1].try_into().unwrap(),
                         appl_x2_idx[ix2].try_into().unwrap(),
                         factor * value,
