@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
-use ndarray::Axis;
+use ndarray::{s, Axis};
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
@@ -13,11 +13,29 @@ use std::pin::Pin;
 fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<SubgridParams> {
     let mut result = SubgridParams::default();
 
-    if let &[Mu2 { ren, fac }] = grid.subgrids()[[order, bin, 0]].mu2_grid().as_ref() {
-        if !approx_eq!(f64, ren, fac, ulps = 128) {
-            bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-        }
+    let mu2_grid: Vec<_> = grid
+        .subgrids()
+        .slice(s![order, bin, ..])
+        .iter()
+        .map(|subgrid| {
+            subgrid
+                .mu2_grid()
+                .iter()
+                .map(|&Mu2 { ren, fac }| {
+                    if !approx_eq!(f64, ren, fac, ulps = 128) {
+                        bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
+                    }
 
+                    Ok(fac)
+                })
+                .collect::<Result<Vec<_>>>()
+        })
+        .collect::<Result<_>>()?;
+    let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
+    mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
+    let mu2_grid = mu2_grid.as_slice();
+
+    if let &[fac] = mu2_grid {
         result.set_q2_bins(1);
         result.set_q2_max(fac);
         result.set_q2_min(fac);
