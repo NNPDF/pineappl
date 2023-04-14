@@ -7,7 +7,6 @@ use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;
-use std::mem;
 use std::path::Path;
 use std::pin::Pin;
 
@@ -52,11 +51,11 @@ pub fn convert_into_applgrid(
 
     // TODO: check that PDG MC IDs are used
 
-    let combinations: Vec<_> = iter::once(i32::try_from(lumis).unwrap())
+    let combinations: Vec<_> = iter::once(lumis.try_into().unwrap())
         .chain(grid.lumi().iter().enumerate().flat_map(|(index, entry)| {
             [
-                i32::try_from(index).unwrap(),
-                i32::try_from(entry.entry().len()).unwrap(),
+                index.try_into().unwrap(),
+                entry.entry().len().try_into().unwrap(),
             ]
             .into_iter()
             .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
@@ -71,7 +70,8 @@ pub fn convert_into_applgrid(
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
     let id = "PineAPPL-Lumi.config";
-    let lumi_pdf = ffi::make_lumi_pdf(id, &combinations).into_raw();
+    // this object is managed by APPLgrid internally
+    let _ = ffi::make_lumi_pdf(id, &combinations).into_raw();
 
     let limits = &bin_info.limits();
     let limits: Vec<_> = limits
@@ -164,7 +164,7 @@ pub fn convert_into_applgrid(
                                         ))
                                     }
                                 },
-                                |idx| Ok(i32::try_from(idx).unwrap()),
+                                |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
                     .collect::<Result<_>>()?;
@@ -208,10 +208,6 @@ pub fn convert_into_applgrid(
                 let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
 
                 for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
-                    debug_assert!(iq2 < subgrid.mu2_grid().len());
-                    debug_assert!(ix1 < subgrid.x1_grid().len());
-                    debug_assert!(ix2 < subgrid.x2_grid().len());
-
                     let appl_q2_idx = appl_q2_idx[iq2];
 
                     if appl_q2_idx == -1 {
@@ -256,9 +252,6 @@ pub fn convert_into_applgrid(
     let_cxx_string!(empty = "");
 
     applgrid.pin_mut().Write(&filename, &empty, &empty);
-
-    // silence the warning that `lumi_pdf` isn't used
-    mem::drop(lumi_pdf);
 
     Ok((applgrid, order_mask))
 }
