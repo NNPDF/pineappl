@@ -175,9 +175,15 @@ pub fn convert_into_applgrid(
                         appl_x1
                             .iter()
                             .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
-                            .ok_or_else(|| {
-                                anyhow!("momentum fraction x1 = {} not found in APPLgrid", x1)
-                            })
+                            .map_or_else(
+                                || {
+                                    Err(anyhow!(
+                                        "momentum fraction x1 = {} not found in APPLgrid",
+                                        x1
+                                    ))
+                                },
+                                |idx| Ok(idx.try_into().unwrap()),
+                            )
                     })
                     .collect::<Result<_>>()?;
                 let appl_x2_idx: Vec<_> = subgrid
@@ -187,9 +193,15 @@ pub fn convert_into_applgrid(
                         appl_x2
                             .iter()
                             .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
-                            .ok_or_else(|| {
-                                anyhow!("momentum fraction x2 = {} not found in APPLgrid", x2)
-                            })
+                            .map_or_else(
+                                || {
+                                    Err(anyhow!(
+                                        "momentum fraction x2 = {} not found in APPLgrid",
+                                        x2
+                                    ))
+                                },
+                                |idx| Ok(idx.try_into().unwrap()),
+                            )
                     })
                     .collect::<Result<_>>()?;
 
@@ -216,8 +228,8 @@ pub fn convert_into_applgrid(
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
                         appl_q2_idx,
-                        appl_x1_idx[ix1].try_into().unwrap(),
-                        appl_x2_idx[ix2].try_into().unwrap(),
+                        appl_x1_idx[ix1],
+                        appl_x2_idx[ix2],
                         factor * value,
                     );
                 }
