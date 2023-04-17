@@ -233,7 +233,7 @@ impl Subcommand for Opts {
 
             // sort using the absolute value in descending order
             pull_tuples.sort_unstable_by(|(_, pull_left), (_, pull_right)| {
-                pull_right.abs().partial_cmp(&pull_left.abs()).unwrap()
+                pull_right.abs().total_cmp(&pull_left.abs())
             });
 
             for (lumi, pull) in pull_tuples.iter().take(self.limit) {

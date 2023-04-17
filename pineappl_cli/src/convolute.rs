@@ -142,11 +142,11 @@ impl Subcommand for Opts {
         {
             let min_value = values
                 .iter()
-                .min_by(|left, right| left.partial_cmp(right).unwrap())
+                .min_by(|left, right| left.total_cmp(right))
                 .unwrap();
             let max_value = values
                 .iter()
-                .max_by(|left, right| left.partial_cmp(right).unwrap())
+                .max_by(|left, right| left.total_cmp(right))
                 .unwrap();
             let bin = if bins.is_empty() { index } else { bins[index] };
 

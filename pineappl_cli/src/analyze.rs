@@ -151,8 +151,7 @@ impl Subcommand for CkfOpts {
             values.sort_unstable_by(|(_, left, left_den), (_, right, right_den)| {
                 (right + right_den)
                     .abs()
-                    .partial_cmp(&(left + left_den).abs())
-                    .unwrap()
+                    .total_cmp(&(left + left_den).abs())
             });
 
             let (total, total_den) = values

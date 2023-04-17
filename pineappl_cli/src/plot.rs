@@ -303,7 +303,7 @@ impl Subcommand for Opts {
                     .map(|variations| {
                         variations
                             .iter()
-                            .min_by(|a, b| a.partial_cmp(b).unwrap())
+                            .min_by(|a, b| a.total_cmp(b))
                             .copied()
                             .unwrap()
                     })
@@ -313,7 +313,7 @@ impl Subcommand for Opts {
                     .map(|variations| {
                         variations
                             .iter()
-                            .max_by(|a, b| a.partial_cmp(b).unwrap())
+                            .max_by(|a, b| a.total_cmp(b))
                             .copied()
                             .unwrap()
                     })
@@ -326,7 +326,7 @@ impl Subcommand for Opts {
                     .map(|variations| {
                         variations
                             .iter()
-                            .min_by(|a, b| a.partial_cmp(b).unwrap())
+                            .min_by(|a, b| a.total_cmp(b))
                             .copied()
                             .unwrap()
                     })
@@ -336,7 +336,7 @@ impl Subcommand for Opts {
                     .map(|variations| {
                         variations
                             .iter()
-                            .max_by(|a, b| a.partial_cmp(b).unwrap())
+                            .max_by(|a, b| a.total_cmp(b))
                             .copied()
                             .unwrap()
                     })
@@ -369,8 +369,7 @@ impl Subcommand for Opts {
                     channels.sort_by(|(_, lhs), (_, rhs)| {
                         let lhs = lhs.iter().fold(0.0, |prev, x| prev + x.abs());
                         let rhs = rhs.iter().fold(0.0, |prev, x| prev + x.abs());
-                        // TODO: use total_cmp once we can use Rust 1.62
-                        rhs.partial_cmp(&lhs).unwrap()
+                        rhs.total_cmp(&lhs)
                     });
                     channels
                 };

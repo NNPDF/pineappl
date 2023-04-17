@@ -139,9 +139,7 @@ impl Subcommand for Opts {
                     .collect();
 
                 // sort using the absolute value in descending order
-                values.sort_unstable_by(|(_, left), (_, right)| {
-                    right.abs().partial_cmp(&left.abs()).unwrap()
-                });
+                values.sort_unstable_by(|(_, left), (_, right)| right.abs().total_cmp(&left.abs()));
 
                 for (lumi, value) in values
                     .iter()
@@ -160,9 +158,8 @@ impl Subcommand for Opts {
                     .collect();
 
                 // sort using the absolute value in descending order
-                percentages.sort_unstable_by(|(_, left), (_, right)| {
-                    right.abs().partial_cmp(&left.abs()).unwrap()
-                });
+                percentages
+                    .sort_unstable_by(|(_, left), (_, right)| right.abs().total_cmp(&left.abs()));
 
                 for (lumi, percentage) in percentages
                     .iter()

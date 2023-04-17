@@ -296,7 +296,7 @@ impl Subcommand for Opts {
 
                 let max_rel_diff = rel_diffs
                     .iter()
-                    .max_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap())
+                    .max_by(|a, b| a.abs().total_cmp(&b.abs()))
                     .unwrap()
                     .abs();
 
