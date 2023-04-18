@@ -33,7 +33,6 @@ pub mod ffi {
         fn nloops(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
-        fn reweight(self: Pin<&mut Self>, _: bool) -> bool;
         fn run(self: Pin<&mut Self>) -> &mut f64;
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
         fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
@@ -45,7 +44,6 @@ pub mod ffi {
 
         type igrid;
 
-        unsafe fn fill_index(self: Pin<&mut Self>, _: i32, _: i32, _: i32, _: *const f64);
         fn getQ2(&self, _: i32) -> f64;
         fn getx1(&self, _: i32) -> f64;
         fn getx2(&self, _: i32) -> f64;
@@ -53,7 +51,6 @@ pub mod ffi {
         fn Ny1(&self) -> i32;
         fn Ny2(&self) -> i32;
         fn setlimits(self: Pin<&mut Self>);
-        fn SubProcesses(&self) -> i32;
         fn weightgrid(&self, _: i32) -> *const SparseMatrix3d;
     }
 
@@ -97,23 +94,6 @@ pub mod ffi {
             _: i32,
             _: bool,
         ) -> UniquePtr<igrid>;
-        fn make_new_grid(
-            _: &[f64],
-            _: i32,
-            _: f64,
-            _: f64,
-            _: i32,
-            _: i32,
-            _: f64,
-            _: f64,
-            _: i32,
-            _: &str,
-            _: i32,
-            _: i32,
-            _: &str,
-            _: &str,
-            _: bool,
-        ) -> UniquePtr<grid>;
         fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
             -> UniquePtr<grid>;
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
@@ -138,6 +118,5 @@ pub mod ffi {
 
         fn igrid_m_reweight(_: &igrid) -> bool;
         fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
-        fn grid_get_igrid(_: Pin<&mut grid>, _: usize, _: usize) -> Pin<&mut igrid>;
     }
 }
