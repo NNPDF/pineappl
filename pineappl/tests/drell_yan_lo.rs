@@ -71,6 +71,7 @@ fn fill_drell_yan_lo_grid(
     calls: usize,
     subgrid_type: &str,
     dynamic: bool,
+    reweight: bool,
 ) -> Result<Grid> {
     let lumi = vec![
         // photons
@@ -95,7 +96,7 @@ fn fill_drell_yan_lo_grid(
     subgrid_params.set_q2_max(1e6);
     subgrid_params.set_q2_min(1e2);
     subgrid_params.set_q2_order(3);
-    subgrid_params.set_reweight(true);
+    subgrid_params.set_reweight(reweight);
     subgrid_params.set_x_bins(50);
     subgrid_params.set_x_max(1.0);
     subgrid_params.set_x_min(2e-7);
@@ -104,7 +105,7 @@ fn fill_drell_yan_lo_grid(
     extra.set_x2_max(1.0);
     extra.set_x2_min(2e-7);
     extra.set_x2_order(3);
-    extra.set_reweight2(true);
+    extra.set_reweight2(reweight);
 
     // create the PineAPPL grid
     let mut grid = Grid::with_subgrid_type(
@@ -163,9 +164,10 @@ fn perform_grid_tests(
     reference: &[f64],
     reference_after_ssd: &[f64],
     x_grid: &[f64],
+    reweight: bool,
 ) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic)?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic, reweight)?;
 
     // TEST 1: `merge` and `scale`
     grid.merge(fill_drell_yan_lo_grid(
@@ -173,6 +175,7 @@ fn perform_grid_tests(
         500_000,
         subgrid_type,
         dynamic,
+        reweight,
     )?)?;
     grid.scale(0.5);
 
@@ -421,6 +424,33 @@ const DYNAMIC_REFERENCE: [f64; 24] = [
     6.880478270711603e-3,
 ];
 
+const DYNAMIC_REFERENCE_NO_REWEIGHT: [f64; 24] = [
+    5.07858012983822e-1,
+    5.175284452774326e-1,
+    5.450720052517568e-1,
+    4.831265401289246e-1,
+    4.714770822390454e-1,
+    4.7332381643255367e-1,
+    4.6911980551007526e-1,
+    4.274224757508723e-1,
+    4.2874742764343926e-1,
+    3.898631579204727e-1,
+    3.419807843167341e-1,
+    3.112011822819245e-1,
+    2.6582805074531396e-1,
+    2.3669405399362703e-1,
+    1.999186753344747e-1,
+    1.6877228654478332e-1,
+    1.4593203448521183e-1,
+    1.1312893772255903e-1,
+    8.906983809157609e-2,
+    6.368194887638147e-2,
+    4.852988118458943e-2,
+    3.369252022300261e-2,
+    1.943724748356927e-2,
+    6.8603903480790075e-3,
+];
+
 #[test]
 fn dy_aa_lagrange_static() -> Result<()> {
     perform_grid_tests(
@@ -436,6 +466,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
     )
 }
 
@@ -466,6 +497,7 @@ fn dy_aa_lagrange_v2_static() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
     )
 }
 
@@ -484,6 +516,7 @@ fn dy_aa_lagrange_dynamic() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
     )
 }
 
@@ -502,6 +535,26 @@ fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
+    )
+}
+
+#[test]
+fn dy_aa_lagrange_v1_dynamic_no_reweight() -> Result<()> {
+    perform_grid_tests(
+        "LagrangeSubgridV1",
+        true,
+        &DYNAMIC_REFERENCE_NO_REWEIGHT,
+        &DYNAMIC_REFERENCE_NO_REWEIGHT,
+        &[
+            0.030521584007828916,
+            0.02108918668378717,
+            0.014375068581090129,
+            0.009699159574043398,
+            0.006496206194633799,
+            0.004328500638820811,
+        ],
+        false,
     )
 }
 
@@ -520,6 +573,26 @@ fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
+    )
+}
+
+#[test]
+fn dy_aa_lagrange_v2_dynamic_no_reweight() -> Result<()> {
+    perform_grid_tests(
+        "LagrangeSubgridV2",
+        true,
+        &DYNAMIC_REFERENCE_NO_REWEIGHT,
+        &DYNAMIC_REFERENCE_NO_REWEIGHT,
+        &[
+            0.030521584007828916,
+            0.02108918668378717,
+            0.014375068581090129,
+            0.009699159574043398,
+            0.006496206194633799,
+            0.004328500638820811,
+        ],
+        false,
     )
 }
 
@@ -538,5 +611,6 @@ fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
             0.006496206194633799,
             0.004328500638820811,
         ],
+        true,
     )
 }
