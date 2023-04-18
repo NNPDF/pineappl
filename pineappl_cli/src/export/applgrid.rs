@@ -5,6 +5,7 @@ use ndarray::{s, Axis};
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
+use std::borrow::Cow;
 use std::f64::consts::TAU;
 use std::iter;
 use std::path::Path;
@@ -66,6 +67,8 @@ pub fn convert_into_applgrid(
     }
 
     let lumis = grid.lumi().len();
+    let has_pdf1 = grid.has_pdf1();
+    let has_pdf2 = grid.has_pdf2();
 
     // TODO: check that PDG MC IDs are used
 
@@ -81,7 +84,12 @@ pub fn convert_into_applgrid(
                 // propagate them
                 assert_eq!(factor, 1.0);
 
-                [a, b]
+                match (has_pdf1, has_pdf2) {
+                    (true, true) => [a, b],
+                    (true, false) => [a, 0],
+                    (false, true) => [b, 0],
+                    (false, false) => unreachable!(),
+                }
             }))
         }))
         .collect();
@@ -154,7 +162,7 @@ pub fn convert_into_applgrid(
                 "f2",
                 "h0",
                 grid.lumi().len().try_into().unwrap(),
-                false, // TODO: implement the DIS case
+                has_pdf1 != has_pdf2,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
@@ -186,8 +194,17 @@ pub fn convert_into_applgrid(
                             )
                     })
                     .collect::<Result<_>>()?;
-                let appl_x1_idx: Vec<_> = subgrid
-                    .x1_grid()
+
+                // in the DIS case APPLgrid always uses the first x dimension
+                let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
+                    (subgrid.x1_grid(), subgrid.x2_grid())
+                } else if has_pdf1 {
+                    (subgrid.x1_grid(), Cow::Owned(vec![]))
+                } else {
+                    (subgrid.x2_grid(), Cow::Owned(vec![]))
+                };
+
+                let appl_x1_idx: Vec<_> = x1_grid
                     .iter()
                     .map(|&x1| {
                         appl_x1
@@ -204,8 +221,7 @@ pub fn convert_into_applgrid(
                             )
                     })
                     .collect::<Result<_>>()?;
-                let appl_x2_idx: Vec<_> = subgrid
-                    .x2_grid()
+                let appl_x2_idx: Vec<_> = x2_grid
                     .iter()
                     .map(|&x2| {
                         appl_x2
@@ -243,7 +259,11 @@ pub fn convert_into_applgrid(
                         weightgrid.as_mut(),
                         appl_q2_idx,
                         appl_x1_idx[ix1],
-                        appl_x2_idx[ix2],
+                        if has_pdf1 && has_pdf2 {
+                            appl_x2_idx[ix2]
+                        } else {
+                            0
+                        },
                         factor * value,
                     );
                 }
