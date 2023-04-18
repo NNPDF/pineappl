@@ -19,7 +19,7 @@ Options:
       --silence-libraries            Prevents third-party libraries from printing output
       --digits-abs <ABS>             Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>             Set the number of fractional digits shown for relative numbers [default: 7]
-  -h, --help                         Print help information
+  -h, --help                         Print help
 ";
 
 #[cfg(feature = "applgrid")]
@@ -143,10 +143,10 @@ fn export_dis_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args(&[
-            "remap",
+            "write",
+            "--remap=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45",
             "../test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4",
             output1.path().to_str().unwrap(),
-            "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45",
         ])
         .assert()
         .success()
