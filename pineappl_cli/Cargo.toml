@@ -16,8 +16,10 @@ version.workspace = true
 anyhow = "1.0.48"
 clap = { features = ["deprecated", "derive", "unstable-v5"], version = "4.2.0" }
 clap_mangen = "0.2.7"
+cxx = "1.0.65"
 enum_dispatch = "0.3.7"
 flate2 = { optional = true, version = "1.0.22" }
+float-cmp = "0.9.0"
 git-version = "0.3.5"
 itertools = "0.10.1"
 lhapdf = "0.2.1"

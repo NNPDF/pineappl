@@ -20,19 +20,23 @@ pub mod ffi {
 
         type grid;
 
+        unsafe fn add_igrid(self: Pin<&mut Self>, _: i32, _: i32, _: *mut igrid);
         fn calculation(&self) -> grid_CALCULATION;
         fn genpdf(&self, _: i32, _: bool) -> *const appl_pdf;
         fn getApplyCorrection(&self, _: u32) -> bool;
         fn getApplyCorrections(&self) -> bool;
         fn getDynamicScale(&self) -> f64;
         fn getNormalised(&self) -> bool;
+        fn include_photon(self: Pin<&mut Self>, _: bool);
         fn isDIS(&self) -> bool;
         fn leadingOrder(&self) -> i32;
         fn nloops(&self) -> i32;
         fn Nobs_internal(&self) -> i32;
         fn obslow_internal(&self, _: i32) -> f64;
+        fn reweight(self: Pin<&mut Self>, _: bool) -> bool;
         fn run(self: Pin<&mut Self>) -> &mut f64;
         fn weightgrid(&self, _: i32, _: i32) -> *const igrid;
+        fn Write(self: Pin<&mut Self>, _: &CxxString, _: &CxxString, _: &CxxString);
     }
 
     #[namespace = "appl"]
@@ -41,12 +45,15 @@ pub mod ffi {
 
         type igrid;
 
+        unsafe fn fill_index(self: Pin<&mut Self>, _: i32, _: i32, _: i32, _: *const f64);
         fn getQ2(&self, _: i32) -> f64;
         fn getx1(&self, _: i32) -> f64;
         fn getx2(&self, _: i32) -> f64;
         fn Ntau(&self) -> i32;
         fn Ny1(&self) -> i32;
         fn Ny2(&self) -> i32;
+        fn setlimits(self: Pin<&mut Self>);
+        fn SubProcesses(&self) -> i32;
         fn weightgrid(&self, _: i32) -> *const SparseMatrix3d;
     }
 
@@ -62,12 +69,54 @@ pub mod ffi {
 
     unsafe extern "C++" {
         type SparseMatrix3d;
+
+        fn trim(self: Pin<&mut Self>);
+    }
+
+    unsafe extern "C++" {
+        include!("appl_grid/lumi_pdf.h");
+
+        type lumi_pdf;
     }
 
     unsafe extern "C++" {
         include!("pineappl_applgrid/src/applgrid.hpp");
 
         fn make_grid(_: &str) -> Result<UniquePtr<grid>>;
+        fn make_igrid(
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: &str,
+            _: &str,
+            _: i32,
+            _: bool,
+        ) -> UniquePtr<igrid>;
+        fn make_new_grid(
+            _: &[f64],
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: i32,
+            _: f64,
+            _: f64,
+            _: i32,
+            _: &str,
+            _: i32,
+            _: i32,
+            _: &str,
+            _: &str,
+            _: bool,
+        ) -> UniquePtr<grid>;
+        fn make_empty_grid(_: &[f64], _: &str, _: i32, _: i32, _: &str, _: &str)
+            -> UniquePtr<grid>;
+        fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;
         fn grid_convolute(
@@ -81,11 +130,14 @@ pub mod ffi {
         ) -> Vec<f64>;
 
         fn sparse_matrix_get(_: &SparseMatrix3d, _: i32, _: i32, _: i32) -> f64;
+        fn sparse_matrix_set(_: Pin<&mut SparseMatrix3d>, _: i32, _: i32, _: i32, _: f64);
 
         // TODO: class member functions aren't supported yet by cxx, see
         // https://github.com/dtolnay/cxx/issues/447
         fn weightfun(_: f64) -> f64;
 
         fn igrid_m_reweight(_: &igrid) -> bool;
+        fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
+        fn grid_get_igrid(_: Pin<&mut grid>, _: usize, _: usize) -> Pin<&mut igrid>;
     }
 }
