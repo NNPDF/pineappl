@@ -470,17 +470,24 @@ fn dy_aa_lagrange_static() -> Result<()> {
     )
 }
 
-// TODO: fix unexpected loss of precision after `optimize` in `dy_aa_lagrange_v1_static`
-
-//#[test]
-//fn dy_aa_lagrange_v1_static() -> Result<()> {
-//    perform_grid_tests(
-//        "LagrangeSubgridV1",
-//        false,
-//        &STATIC_REFERENCE,
-//        &STATIC_REFERENCE_AFTER_SSD,
-//    )
-//}
+#[test]
+fn dy_aa_lagrange_v1_static() -> Result<()> {
+    perform_grid_tests(
+        "LagrangeSubgridV1",
+        false,
+        &STATIC_REFERENCE,
+        &STATIC_REFERENCE, // LagrangeSubgridV1 doesn't have static-scale detection
+        &[
+            0.030521584007828916,
+            0.02108918668378717,
+            0.014375068581090129,
+            0.009699159574043398,
+            0.006496206194633799,
+            0.004328500638820811,
+        ],
+        true,
+    )
+}
 
 #[test]
 fn dy_aa_lagrange_v2_static() -> Result<()> {
