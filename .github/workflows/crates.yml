@@ -1,3 +1,5 @@
+name: Crates
+
 on:
   release:
     types: [published]
