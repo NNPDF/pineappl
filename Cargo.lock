@@ -975,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_applgrid"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "cc",
  "cxx",
@@ -1008,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_capi"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "itertools",
  "pineappl",
@@ -1016,7 +1016,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_cli"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_fastnlo"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_py"
-version = "0.6.0-alpha.7"
+version = "0.6.0-alpha.8"
 dependencies = [
  "itertools",
  "ndarray",
