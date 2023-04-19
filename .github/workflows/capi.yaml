@@ -5,7 +5,7 @@ on: push
 jobs:
   capi:
     runs-on: ubuntu-latest
-    container: handgranatenherbert/pineappl-ci:1
+    container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
       - uses: actions/checkout@v3
 
