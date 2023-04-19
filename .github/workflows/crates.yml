@@ -27,10 +27,10 @@ jobs:
         cd pineappl
         cargo publish
         cd ../pineappl_applgrid
-        cargo publish pineappl_applgrid
+        cargo publish
         cd ../pineappl_fastnlo
-        cargo publish pineappl_fastnlo
+        cargo publish
         cd ../pineappl_capi
-        cargo publish pineappl_capi
+        cargo publish
         cd ../pineappl_cli
-        cargo publish pineappl_cli
+        cargo publish
