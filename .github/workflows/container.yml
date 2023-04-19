@@ -23,6 +23,7 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           image: pineappl-ci
-          registry: ghcr.io/${{ github.repository_owner }}
+          # ${{ github.repository_owner }} == 'NNPDF' but the registry is 'nnpdf'
+          registry: ghcr.io/nnpdf
           username: ${{ github.actor }}
           password: ${{ github.token }}
