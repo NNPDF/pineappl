@@ -1,9 +1,10 @@
-FROM rust:1.65
+FROM rust:latest
 
 ARG APPLGRID_V=1.6.27
 ARG CARGOC_V=0.9.14+cargo-0.67
 ARG FASTNLO_V=2.5.0-2826
 ARG LHAPDF_V=6.4.0
+ARG RUST_V=1.64.0
 
 ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
 
@@ -28,4 +29,5 @@ RUN mkdir /build && cd build \
  && cd fastnlo_toolkit-${FASTNLO_V} \
  && ./configure --disable-static --prefix=/usr/local/ && make -j && make install && ldconfig \
  && cd .. \
+ && rustup default ${RUST_V} \
  && rm -r /build
