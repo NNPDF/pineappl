@@ -14,6 +14,7 @@ version.workspace = true
 
 [dependencies]
 anyhow = "1.0.48"
+base64 = { optional = true, version = "0.21.0" }
 clap = { features = ["deprecated", "derive", "unstable-v5"], version = "4.2.0" }
 clap_mangen = "0.2.7"
 cxx = "1.0.65"

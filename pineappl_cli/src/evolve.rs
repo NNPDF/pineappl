@@ -10,9 +10,10 @@ use std::process::ExitCode;
 #[cfg(feature = "evolve")]
 mod eko {
     use anyhow::{bail, Result};
+    use base64::Engine;
     use lz4_flex::frame::FrameDecoder;
-    use ndarray::Array5;
-    use ndarray_npy::ReadNpyExt;
+    use ndarray::{Array4, Array5, Axis};
+    use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::OperatorInfo;
     use serde::Deserialize;
     use std::fs::File;
@@ -31,10 +32,25 @@ mod eko {
         targetpids: Vec<i32>,
     }
 
+    #[derive(Default, Deserialize)]
+    struct Rotations {
+        #[serde(rename = "_targetgrid")]
+        targetgrid: Vec<f64>,
+        pids: Vec<i32>,
+        xgrid: Vec<f64>,
+    }
+
+    #[derive(Default, Deserialize)]
+    struct MetadataV1 {
+        mu20: f64,
+        rotations: Rotations,
+    }
+
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum Metadata {
         V0(MetadataV0),
+        V1(MetadataV1),
     }
 
     pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
@@ -42,6 +58,13 @@ mod eko {
 
         let mut metadata = None;
         let mut operator = None;
+        let mut operators = Vec::new();
+        let mut fac1 = Vec::new();
+
+        let base64 = base64::engine::GeneralPurpose::new(
+            &base64::alphabet::URL_SAFE,
+            base64::engine::general_purpose::PAD,
+        );
 
         for entry in archive.entries()? {
             let file = entry?;
@@ -56,9 +79,29 @@ mod eko {
                             BufReader::new(file),
                         ))?);
                     }
+                    x if x.ends_with(".npz.lz4") => {
+                        let name = x.strip_suffix(".npz.lz4").unwrap();
+                        let bytes = base64.decode(name.as_bytes())?;
+                        let array: [u8; 8] = bytes.as_slice().try_into().unwrap();
+                        let muf2 = f64::from_le_bytes(array);
+
+                        let mut reader = BufReader::new(FrameDecoder::new(BufReader::new(file)));
+                        let mut buffer = Vec::new();
+                        std::io::copy(&mut reader, &mut buffer)?;
+                        let mut npz = NpzReader::new(std::io::Cursor::new(buffer))?;
+                        let operator: Array4<f64> = npz.by_name("operator.npy")?;
+
+                        fac1.push(muf2);
+                        operators.push(operator);
+                    }
                     _ => {}
                 }
             }
+        }
+
+        if !operators.is_empty() {
+            let ops: Vec<_> = operators.iter().map(Array4::view).collect();
+            operator = Some(ndarray::stack(Axis(0), &ops).unwrap());
         }
 
         let info = match metadata {
@@ -69,6 +112,19 @@ mod eko {
                 pids1: metadata.targetpids,
                 x1: metadata.targetgrid,
                 fac0: metadata.q2_ref,
+                ren1: vec![],
+                alphas: vec![],
+                xir: 1.0,
+                xif: 1.0,
+                lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
+            },
+            Some(Metadata::V1(metadata)) => OperatorInfo {
+                fac1,
+                pids0: metadata.rotations.pids.clone(), // TODO: one of the PIDs is probably not right
+                x0: metadata.rotations.xgrid,
+                pids1: metadata.rotations.pids,
+                x1: metadata.rotations.targetgrid,
+                fac0: metadata.mu20,
                 ren1: vec![],
                 alphas: vec![],
                 xir: 1.0,
