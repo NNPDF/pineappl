@@ -34,7 +34,7 @@ mod eko {
 
     #[derive(Default, Deserialize)]
     struct Rotations {
-        #[serde(rename = "_targetgrid")]
+        #[serde(alias = "_targetgrid")]
         targetgrid: Vec<f64>,
         pids: Vec<i32>,
         xgrid: Vec<f64>,
