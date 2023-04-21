@@ -34,6 +34,8 @@ mod eko {
 
     #[derive(Default, Deserialize)]
     struct Rotations {
+        #[serde(alias = "_inputgrid")]
+        inputgrid: Option<Vec<f64>>,
         #[serde(alias = "_targetgrid")]
         targetgrid: Vec<f64>,
         pids: Vec<i32>,
@@ -121,7 +123,10 @@ mod eko {
             Some(Metadata::V1(metadata)) => OperatorInfo {
                 fac1,
                 pids0: metadata.rotations.pids.clone(), // TODO: one of the PIDs is probably not right
-                x0: metadata.rotations.xgrid,
+                x0: metadata
+                    .rotations
+                    .inputgrid
+                    .unwrap_or_else(|| metadata.rotations.xgrid.clone()),
                 pids1: metadata.rotations.pids,
                 x1: metadata.rotations.targetgrid,
                 fac0: metadata.mu20,
