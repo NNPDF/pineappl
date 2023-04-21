@@ -11,6 +11,7 @@ use std::process::ExitCode;
 mod eko {
     use anyhow::{bail, Result};
     use base64::Engine;
+    use either::Either;
     use lz4_flex::frame::FrameDecoder;
     use ndarray::{Array4, Array5, Axis};
     use ndarray_npy::{NpzReader, ReadNpyExt};
@@ -36,6 +37,8 @@ mod eko {
     struct Rotations {
         #[serde(alias = "_inputgrid")]
         inputgrid: Option<Vec<f64>>,
+        #[serde(alias = "_inputpids", with = "either::serde_untagged_optional")]
+        inputpids: Option<Either<Vec<Vec<f64>>, Vec<i32>>>,
         #[serde(alias = "_targetgrid")]
         targetgrid: Option<Vec<f64>>,
         #[serde(alias = "_targetpids")]
@@ -55,6 +58,16 @@ mod eko {
     enum Metadata {
         V0(MetadataV0),
         V1(MetadataV1),
+    }
+
+    fn reconstruct_basis(factors: &[Vec<f64>], pids: &[i32]) -> Vec<i32> {
+        factors
+            .iter()
+            .map(|f| {
+                assert_eq!(f.len(), pids.len());
+                todo!()
+            })
+            .collect()
     }
 
     pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
@@ -124,7 +137,14 @@ mod eko {
             },
             Some(Metadata::V1(metadata)) => OperatorInfo {
                 fac1,
-                pids0: metadata.rotations.pids.clone(), // TODO: one of the PIDs is probably not right
+                pids0: metadata.rotations.inputpids.map_or_else(
+                    || metadata.rotations.pids.clone(),
+                    |either| {
+                        either.right_or_else(|basis| {
+                            reconstruct_basis(basis.as_slice(), &metadata.rotations.pids)
+                        })
+                    },
+                ),
                 x0: metadata
                     .rotations
                     .inputgrid
