@@ -21,7 +21,7 @@ mod eko {
     use std::path::Path;
     use tar::Archive;
 
-    #[derive(Default, Deserialize)]
+    #[derive(Deserialize)]
     struct MetadataV0 {
         #[serde(rename = "Q2grid")]
         q2_grid: Vec<f64>,
@@ -32,7 +32,7 @@ mod eko {
         targetpids: Vec<i32>,
     }
 
-    #[derive(Default, Deserialize)]
+    #[derive(Deserialize)]
     struct Rotations {
         #[serde(alias = "_inputgrid")]
         inputgrid: Option<Vec<f64>>,
@@ -42,7 +42,7 @@ mod eko {
         xgrid: Vec<f64>,
     }
 
-    #[derive(Default, Deserialize)]
+    #[derive(Deserialize)]
     struct MetadataV1 {
         mu20: f64,
         rotations: Rotations,
