@@ -37,7 +37,9 @@ mod eko {
         #[serde(alias = "_inputgrid")]
         inputgrid: Option<Vec<f64>>,
         #[serde(alias = "_targetgrid")]
-        targetgrid: Vec<f64>,
+        targetgrid: Option<Vec<f64>>,
+        #[serde(alias = "_targetpids")]
+        targetpids: Option<Vec<i32>>,
         pids: Vec<i32>,
         xgrid: Vec<f64>,
     }
@@ -127,8 +129,14 @@ mod eko {
                     .rotations
                     .inputgrid
                     .unwrap_or_else(|| metadata.rotations.xgrid.clone()),
-                pids1: metadata.rotations.pids,
-                x1: metadata.rotations.targetgrid,
+                pids1: metadata
+                    .rotations
+                    .targetpids
+                    .unwrap_or_else(|| metadata.rotations.pids.clone()),
+                x1: metadata
+                    .rotations
+                    .targetgrid
+                    .unwrap_or_else(|| metadata.rotations.xgrid),
                 fac0: metadata.mu20,
                 ren1: vec![],
                 alphas: vec![],
