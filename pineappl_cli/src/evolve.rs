@@ -8,26 +8,20 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
-fn evolve_grid(
-    grid: &Grid,
-    eko: &Path,
-    pdf: &Pdf,
-    orders: &[(u32, u32)],
-    xir: f64,
-    xif: f64,
-) -> Result<FkTable> {
+mod eko {
+    use anyhow::{bail, Result};
     use lz4_flex::frame::FrameDecoder;
     use ndarray::Array5;
     use ndarray_npy::ReadNpyExt;
     use pineappl::evolution::OperatorInfo;
-    use pineappl::subgrid::{Mu2, Subgrid};
     use serde::Deserialize;
     use std::fs::File;
     use std::io::BufReader;
+    use std::path::Path;
     use tar::Archive;
 
     #[derive(Default, Deserialize)]
-    struct Metadata {
+    struct MetadataV0 {
         #[serde(rename = "Q2grid")]
         q2_grid: Vec<f64>,
         inputgrid: Vec<f64>,
@@ -37,28 +31,69 @@ fn evolve_grid(
         targetpids: Vec<i32>,
     }
 
-    let mut archive = Archive::new(File::open(eko)?);
-
-    let mut operator = Default::default();
-    let mut metadata = Metadata::default();
-
-    for entry in archive.entries()? {
-        let file = entry?;
-        let path = file.header().path()?;
-
-        if let Some(file_name) = path.file_name() {
-            // TODO: get rid of the unwrap
-            match file_name.to_str().unwrap() {
-                "metadata.yaml" => metadata = serde_yaml::from_reader(file)?,
-                "operators.npy.lz4" => {
-                    operator = Array5::<f64>::read_npy(FrameDecoder::new(BufReader::new(file)))?;
-                }
-                _ => {}
-            }
-        }
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Metadata {
+        V0(MetadataV0),
     }
 
-    // TODO: handle errors when files in the EKO are not present
+    pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
+        let mut archive = Archive::new(File::open(eko)?);
+
+        let mut metadata = None;
+        let mut operator = None;
+
+        for entry in archive.entries()? {
+            let file = entry?;
+            let path = file.header().path()?;
+
+            if let Some(file_name) = path.file_name() {
+                // TODO: get rid of the unwrap
+                match file_name.to_str().unwrap() {
+                    "metadata.yaml" => metadata = Some(serde_yaml::from_reader(file)?),
+                    "operators.npy.lz4" => {
+                        operator = Some(Array5::<f64>::read_npy(FrameDecoder::new(
+                            BufReader::new(file),
+                        ))?);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let info = match metadata {
+            Some(Metadata::V0(metadata)) => OperatorInfo {
+                fac1: metadata.q2_grid.clone(),
+                pids0: metadata.inputpids,
+                x0: metadata.inputgrid,
+                pids1: metadata.targetpids,
+                x1: metadata.targetgrid,
+                fac0: metadata.q2_ref,
+                ren1: vec![],
+                alphas: vec![],
+                xir: 1.0,
+                xif: 1.0,
+                lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
+            },
+            None => bail!("no `metadata.yaml` file found"),
+        };
+
+        Ok((info, operator.unwrap()))
+    }
+}
+
+#[cfg(feature = "evolve")]
+fn evolve_grid(
+    grid: &Grid,
+    eko: &Path,
+    pdf: &Pdf,
+    orders: &[(u32, u32)],
+    xir: f64,
+    xif: f64,
+) -> Result<FkTable> {
+    use pineappl::subgrid::{Mu2, Subgrid};
+
+    let (mut info, operator) = eko::read(eko)?;
 
     // TODO: the following should probably be a method of `Grid`
     let mut ren1: Vec<_> = grid
@@ -77,19 +112,10 @@ fn evolve_grid(
     let ren1 = ren1;
     let alphas: Vec<_> = ren1.iter().map(|&mur2| pdf.alphas_q2(mur2)).collect();
 
-    let info = OperatorInfo {
-        fac1: metadata.q2_grid.clone(),
-        pids0: metadata.inputpids,
-        x0: metadata.inputgrid,
-        pids1: metadata.targetpids,
-        x1: metadata.targetgrid,
-        fac0: metadata.q2_ref,
-        ren1,
-        alphas,
-        xir,
-        xif,
-        lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
-    };
+    info.ren1 = ren1;
+    info.alphas = alphas;
+    info.xir = xir;
+    info.xif = xif;
 
     let orders: Vec<_> = grid
         .orders()
