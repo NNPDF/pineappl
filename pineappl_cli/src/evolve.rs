@@ -156,7 +156,7 @@ mod eko {
                 pids1: metadata
                     .rotations
                     .targetpids
-                    .unwrap_or_else(|| metadata.rotations.pids.clone()),
+                    .unwrap_or_else(|| metadata.rotations.pids),
                 x1: metadata
                     .rotations
                     .targetgrid
