@@ -16,6 +16,7 @@ mod eko {
     use ndarray::{Array4, Array5, Axis};
     use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::OperatorInfo;
+    use pineappl::pids;
     use serde::Deserialize;
     use std::fs::File;
     use std::io::BufReader;
@@ -58,16 +59,6 @@ mod eko {
     enum Metadata {
         V0(MetadataV0),
         V1(MetadataV1),
-    }
-
-    fn reconstruct_basis(factors: &[Vec<f64>], pids: &[i32]) -> Vec<i32> {
-        factors
-            .iter()
-            .map(|f| {
-                assert_eq!(f.len(), pids.len());
-                todo!()
-            })
-            .collect()
     }
 
     pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
@@ -121,7 +112,7 @@ mod eko {
             operator = Some(ndarray::stack(Axis(0), &ops).unwrap());
         }
 
-        let info = match metadata {
+        let mut info = match metadata {
             Some(Metadata::V0(metadata)) => OperatorInfo {
                 fac1: metadata.q2_grid.clone(),
                 pids0: metadata.inputpids,
@@ -133,7 +124,7 @@ mod eko {
                 alphas: vec![],
                 xir: 1.0,
                 xif: 1.0,
-                lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
+                lumi_id_types: String::new(),
             },
             Some(Metadata::V1(metadata)) => OperatorInfo {
                 fac1,
@@ -141,7 +132,20 @@ mod eko {
                     || metadata.rotations.pids.clone(),
                     |either| {
                         either.right_or_else(|basis| {
-                            reconstruct_basis(basis.as_slice(), &metadata.rotations.pids)
+                            basis
+                                .into_iter()
+                                .map(|factors| {
+                                    let tuples: Vec<_> = metadata
+                                        .rotations
+                                        .pids
+                                        .iter()
+                                        .cloned()
+                                        .zip(factors.into_iter())
+                                        .collect();
+
+                                    pids::pdg_mc_ids_to_evol(&tuples).unwrap()
+                                })
+                                .collect()
                         })
                     },
                 ),
@@ -162,10 +166,12 @@ mod eko {
                 alphas: vec![],
                 xir: 1.0,
                 xif: 1.0,
-                lumi_id_types: "pdg_mc_ids".to_string(), // TODO: determine this from the operator
+                lumi_id_types: String::new(),
             },
             None => bail!("no `metadata.yaml` file found"),
         };
+
+        info.lumi_id_types = pids::determine_lumi_id_types(&info.pids0);
 
         Ok((info, operator.unwrap()))
     }
