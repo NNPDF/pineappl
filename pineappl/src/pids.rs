@@ -153,6 +153,23 @@ pub fn charge_conjugate(lumi_id_types: &str, pid: i32) -> (i32, f64) {
     }
 }
 
+/// Given the particle IDs in `pids`, determine the right string for `lumi_id_types` stored in
+/// `Grid`.
+pub fn determine_lumi_id_types(pids: &[i32]) -> String {
+    // if we find more than 3 pids that are recognized to be from the evolution basis, declare
+    // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
+    if pids
+        .iter()
+        .filter(|&pid| EVOL_BASIS_IDS.iter().any(|evol_pid| pid == evol_pid))
+        .count()
+        > 3
+    {
+        "evol".to_string()
+    } else {
+        "pdg_mc_ids".to_string()
+    }
+}
+
 /// Given `tuples` represting a linear combination of PDG MC IDs, return a PID for the `evol`
 /// basis. The order of each tuple in `tuples` is not relevant. This function inverts
 /// [`evol_to_pdg_mc_ids`]. If the inversion is not possible, `None` is returned.
@@ -673,6 +690,21 @@ mod tests {
                 (6, -5.0),
             ]),
             Some(235)
+        );
+    }
+
+    #[test]
+    fn test_determine_lumi_id_types() {
+        assert_eq!(
+            determine_lumi_id_types(&[22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]),
+            "pdg_mc_ids"
+        );
+
+        assert_eq!(
+            determine_lumi_id_types(&[
+                22, 100, 200, 21, 100, 103, 108, 115, 124, 135, 203, 208, 215, 224, 235
+            ]),
+            "evol"
         );
     }
 }
