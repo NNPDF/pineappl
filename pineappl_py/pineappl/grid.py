@@ -25,7 +25,7 @@ class Order(PyWrapper):
         self._raw = PyOrder(alphas, alpha, logxir, logxif)
 
     @staticmethod
-    def create_mask(orders, max_as, max_al):
+    def create_mask(orders, max_as, max_al, logs):
         r"""
         Return a mask suitable to pass as the `order_mask` parameter of
         :meth:`Grid.convolute`.
@@ -38,6 +38,8 @@ class Order(PyWrapper):
             maximum power of :math:`\alpha_s`
         max_al : int
             maximum power of :math:`\alpha`
+        logs : bool
+            whether to include log grids or not
 
         Returns
         -------
@@ -45,7 +47,7 @@ class Order(PyWrapper):
             boolean mask
 
         """
-        return PyOrder.create_mask([o._raw for o in orders], max_as, max_al)
+        return PyOrder.create_mask([o._raw for o in orders], max_as, max_al, logs)
 
 
 class Grid(PyWrapper):
