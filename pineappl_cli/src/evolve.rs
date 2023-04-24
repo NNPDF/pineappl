@@ -11,6 +11,9 @@ use std::process::ExitCode;
 mod eko {
     use anyhow::{bail, Result};
     use base64::Engine;
+    use base64::engine::GeneralPurpose;
+    use base64::engine::general_purpose::PAD;
+    use base64::alphabet::URL_SAFE;
     use either::Either;
     use lz4_flex::frame::FrameDecoder;
     use ndarray::{Array4, Array5, Axis};
@@ -69,10 +72,7 @@ mod eko {
         let mut operators = Vec::new();
         let mut fac1 = Vec::new();
 
-        let base64 = base64::engine::GeneralPurpose::new(
-            &base64::alphabet::URL_SAFE,
-            base64::engine::general_purpose::PAD,
-        );
+        let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
 
         for entry in archive.entries()? {
             let file = entry?;
