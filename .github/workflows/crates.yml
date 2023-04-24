@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
     - uses: actions/checkout@v3
 
