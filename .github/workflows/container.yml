@@ -18,6 +18,7 @@ jobs:
         with:
           image: pineappl-ci
           containerfiles: maintainer/pineappl-ci/Containerfile
+          context: maintainer/pineappl-ci/
           oci: true
       - name: Publish image
         uses: redhat-actions/push-to-registry@v2
