@@ -54,4 +54,4 @@ cd ..
 
 # set MSRV
 rustup default ${RUST_V}
-rustup component add llvm-tool-preview
+rustup component add llvm-tools-preview
