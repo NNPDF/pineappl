@@ -5,25 +5,14 @@ on: push
 jobs:
   capi:
     runs-on: ubuntu-latest
+    container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install LHAPDF
-        uses: ./.github/actions/lhapdf
-
-      - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          default: true
-          toolchain: 1.64.0
-
-      - name: Install cargo-c
-        run: |
-          cargo install cargo-c --version 0.9.14+cargo-0.67
-
       - name: Install PineAPPL's C API
         run: |
-          cargo cinstall -vv --prefix=$HOME/prefix --manifest-path pineappl_capi/Cargo.toml
+          cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
+          ldconfig
 
       - name: Test C example
         run: |

@@ -1,0 +1,29 @@
+name: Container
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: pineappl-ci
+          containerfiles: maintainer/pineappl-ci/Containerfile
+          context: maintainer/pineappl-ci/
+          oci: true
+      - name: Publish image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: pineappl-ci
+          # ${{ github.repository_owner }} == 'NNPDF' but the registry is 'nnpdf'
+          registry: ghcr.io/nnpdf
+          username: ${{ github.actor }}
+          password: ${{ github.token }}

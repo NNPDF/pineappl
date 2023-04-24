@@ -1,0 +1,13 @@
+FROM rust:latest
+
+ARG APPLGRID_V=1.6.27
+ARG CARGOC_V=0.9.14+cargo-0.67
+ARG FASTNLO_V=2.5.0-2826
+ARG LHAPDF_V=6.4.0
+ARG RUST_V=1.64.0
+
+ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
+
+COPY script.sh /tmp/
+
+RUN mkdir /build && cd build && /tmp/script.sh && rm /tmp/script.sh && cd / && rm -r /build

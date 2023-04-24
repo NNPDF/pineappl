@@ -2,6 +2,10 @@ name: Rust
 
 on: push
 
+defaults:
+  run:
+    shell: bash
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -10,37 +14,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install LHAPDF
-      uses: ./.github/actions/lhapdf
-
-    - name: Install APPLgrid 1.6.27
-      run: |
-        wget --no-verbose 'http://applgrid.hepforge.org/downloads/applgrid-1.6.27.tgz'
-        tar xzf applgrid-1.6.27.tgz
-        cd applgrid-1.6.27
-        ./configure --prefix=${HOME}/prefix --disable-static --without-root
-        make -j
-        make install
-        echo "APPL_IGRID_DIR=$(pwd)/src" >> $GITHUB_ENV
-
-    - name: Install fastNLO 2.5.0 rev. 2826
-      run: |
-        wget --no-verbose 'https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-2.5.0-2826.tar.gz'
-        tar xzf fastnlo_toolkit-2.5.0-2826.tar.gz
-        cd fastnlo_toolkit-2.5.0-2826
-        patch -p0 < "${GITHUB_WORKSPACE}"/.github/fix_fastnlo_warnings.patch
-        ./configure --prefix=${HOME}/prefix --disable-static
-        make -j
-        make install
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        default: true
-        toolchain: 1.65.0
-        components: llvm-tools-preview
     - name: Get test data
       id: cache-test-data
       uses: actions/cache@v3
