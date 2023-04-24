@@ -155,6 +155,7 @@ pub fn charge_conjugate(lumi_id_types: &str, pid: i32) -> (i32, f64) {
 
 /// Given the particle IDs in `pids`, determine the right string for `lumi_id_types` stored in
 /// `Grid`.
+#[must_use]
 pub fn determine_lumi_id_types(pids: &[i32]) -> String {
     // if we find more than 3 pids that are recognized to be from the evolution basis, declare
     // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
@@ -173,6 +174,7 @@ pub fn determine_lumi_id_types(pids: &[i32]) -> String {
 /// Given `tuples` represting a linear combination of PDG MC IDs, return a PID for the `evol`
 /// basis. The order of each tuple in `tuples` is not relevant. This function inverts
 /// [`evol_to_pdg_mc_ids`]. If the inversion is not possible, `None` is returned.
+#[must_use]
 pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
     let mut tuples = tuples.to_vec();
     tuples.retain(|&(_, factor)| factor != 0.0);

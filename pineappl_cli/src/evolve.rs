@@ -139,7 +139,7 @@ mod eko {
                                         .rotations
                                         .pids
                                         .iter()
-                                        .cloned()
+                                        .copied()
                                         .zip(factors.into_iter())
                                         .collect();
 
@@ -156,11 +156,11 @@ mod eko {
                 pids1: metadata
                     .rotations
                     .targetpids
-                    .unwrap_or_else(|| metadata.rotations.pids),
+                    .unwrap_or(metadata.rotations.pids),
                 x1: metadata
                     .rotations
                     .targetgrid
-                    .unwrap_or_else(|| metadata.rotations.xgrid),
+                    .unwrap_or(metadata.rotations.xgrid),
                 fac0: metadata.mu20,
                 ren1: vec![],
                 alphas: vec![],
