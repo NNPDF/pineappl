@@ -97,7 +97,7 @@ pub fn convert_into_applgrid(
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
     let id = "PineAPPL-Lumi.config";
     // this object is managed by APPLgrid internally
-    let _ = ffi::make_lumi_pdf(id, &combinations).into_raw();
+    ffi::make_lumi_pdf(id, &combinations).into_raw();
 
     let limits = &bin_info.limits();
     let limits: Vec<_> = limits

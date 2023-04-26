@@ -1891,7 +1891,7 @@ impl Grid {
         // write additional metadata
         grid.set_key_value("lumi_id_types", &info.lumi_id_types);
 
-        Ok(FkTable::try_from(grid).unwrap())
+        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
     }
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
@@ -2029,6 +2029,10 @@ impl Grid {
 
     /// Returns the particle identifier of the first initial state. This is usually but not always
     /// a proton, which is represented by the PDG ID `2212`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn initial_state_1(&self) -> i32 {
         self.key_values()
@@ -2042,6 +2046,10 @@ impl Grid {
 
     /// Returns the particle identifier of the second initial state. This is usually but not always
     /// a proton, which is represented by the PDG ID `2212`.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn initial_state_2(&self) -> i32 {
         self.key_values()
@@ -2556,8 +2564,8 @@ mod tests {
             alphas: vec![1.],
             xir: 1.,
             xif: 1.,
-            target_x_grid: target_x_grid.clone(),
-            target_pids: target_pids.clone(),
+            target_x_grid,
+            target_pids,
             grid_axes: GridAxes {
                 x_grid: axes.x_grid,
                 pids: axes.pids,

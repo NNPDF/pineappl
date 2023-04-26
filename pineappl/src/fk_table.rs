@@ -132,12 +132,17 @@ impl FkTable {
     }
 
     /// Converts the `FkTable` back to a [`Grid`].
+    #[must_use]
     pub fn into_grid(self) -> Grid {
         self.grid
     }
 
     /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `lumi`,
     /// `x1` and `x2`, in this order.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     #[must_use]
     pub fn table(&self) -> Array4<f64> {
         let has_pdf1 = self.grid.has_pdf1();

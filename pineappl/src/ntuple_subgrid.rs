@@ -103,7 +103,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "NtupleSubgridV1 doesn't support the convolute operation")]
     fn convolute() {
-        let _ = NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
+        NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
     }
 
     #[test]
@@ -123,7 +123,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "NtupleSubgridV1 doesn't support the indexed_iter operation")]
     fn indexed_iter() {
-        let _ = NtupleSubgridV1::new().indexed_iter();
+        // `next` isn't called because `indexed_iter` panics, but it suppresses a warning about an
+        // unused result
+        NtupleSubgridV1::new().indexed_iter().next();
     }
 
     #[test]

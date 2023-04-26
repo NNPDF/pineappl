@@ -169,8 +169,7 @@ impl FromStr for BinRemapper {
 
                     if split.len() != 2 {
                         return Err(ParseBinRemapperError(format!(
-                            "too many ':' found: '{}'",
-                            string
+                            "too many ':' found: '{string}'"
                         )));
                     }
 
@@ -187,8 +186,7 @@ impl FromStr for BinRemapper {
 
                 if lhs.is_err() && rhs.is_err() {
                     return Err(ParseBinRemapperError(format!(
-                        "unable to parse ':' syntax from: '{}'",
-                        string
+                        "unable to parse ':' syntax from: '{string}'"
                     )));
                 }
 

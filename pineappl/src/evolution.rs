@@ -101,12 +101,15 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         .unwrap_or(false)
 }
 
+type Pid01IndexTuples = Vec<(usize, usize)>;
+type Pid01Tuples = Vec<(i32, i32)>;
+
 pub(crate) fn pids(
     operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
-) -> Result<(Vec<(usize, usize)>, Vec<(i32, i32)>), GridError> {
+) -> Result<(Pid01IndexTuples, Pid01Tuples), GridError> {
     // list of all non-zero PID indices
     let pid_indices: Vec<_> = (0..operator.dim().3)
         .cartesian_product(0..operator.dim().1)
@@ -224,12 +227,14 @@ pub(crate) fn operators(
     Ok(operators)
 }
 
+type Fac1X1aX1bOp3Tuple = (Vec<f64>, Vec<f64>, Vec<f64>, Array3<f64>);
+
 pub(crate) fn ndarray_from_subgrid_orders(
     info: &OperatorInfo,
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
-) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>, Array3<f64>), GridError> {
+) -> Result<Fac1X1aX1bOp3Tuple, GridError> {
     // TODO: skip empty subgrids
 
     let mut fac1: Vec<_> = subgrids

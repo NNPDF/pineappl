@@ -10,10 +10,10 @@ use std::process::ExitCode;
 #[cfg(feature = "evolve")]
 mod eko {
     use anyhow::{bail, Result};
-    use base64::Engine;
-    use base64::engine::GeneralPurpose;
-    use base64::engine::general_purpose::PAD;
     use base64::alphabet::URL_SAFE;
+    use base64::engine::general_purpose::PAD;
+    use base64::engine::GeneralPurpose;
+    use base64::Engine;
     use either::Either;
     use lz4_flex::frame::FrameDecoder;
     use ndarray::{Array4, Array5, Axis};

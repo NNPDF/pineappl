@@ -487,7 +487,7 @@ mod tests {
 
         assert!(!grid1.is_empty());
 
-        assert_eq!(grid1.indexed_iter().nth(0), Some(((0, 1, 2), 1.0)));
+        assert_eq!(grid1.indexed_iter().next(), Some(((0, 1, 2), 1.0)));
         assert_eq!(grid1.indexed_iter().nth(1), Some(((0, 1, 3), 2.0)));
         assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
         assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
@@ -516,7 +516,7 @@ mod tests {
         }
         assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        assert_eq!(grid2.indexed_iter().nth(0), Some(((0, 1, 7), 8.0)));
+        assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
         assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
         assert_eq!(grid2.indexed_iter().nth(2), Some(((0, 3, 1), 2.0)));
         assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
@@ -584,7 +584,7 @@ mod tests {
 
         assert!(!grid1.is_empty());
 
-        assert_eq!(grid1.indexed_iter().nth(0), Some(((0, 1, 2), 1.0)));
+        assert_eq!(grid1.indexed_iter().next(), Some(((0, 1, 2), 1.0)));
         assert_eq!(grid1.indexed_iter().nth(1), Some(((0, 1, 3), 2.0)));
         assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
         assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
@@ -613,7 +613,7 @@ mod tests {
         }
         assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
 
-        assert_eq!(grid2.indexed_iter().nth(0), Some(((0, 1, 7), 8.0)));
+        assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
         assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
         assert_eq!(grid2.indexed_iter().nth(2), Some(((0, 3, 1), 2.0)));
         assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));

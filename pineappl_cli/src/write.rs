@@ -329,7 +329,7 @@ impl Subcommand for Opts {
                 OpsArg::MergeBins(range) => {
                     grid.merge_bins(*range.start()..(range.end() + 1))?;
                 }
-                OpsArg::Remap(remapping) => grid.set_remapper(str::parse(&remapping)?)?,
+                OpsArg::Remap(remapping) => grid.set_remapper(str::parse(remapping)?)?,
                 OpsArg::RemapNorm(factor) => {
                     let remapper = grid
                         .remapper()

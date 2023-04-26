@@ -1,9 +1,9 @@
+//! `PineAPPL` is not an extension of `APPLgrid`.
+
 #![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
 #![warn(missing_docs)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::similar_names)]
-
-//! `PineAPPL` is not an extension of `APPLgrid`.
 
 mod convert;
 
