@@ -129,7 +129,7 @@ with `[OPTIONS]`. If you read the help message carefully, you'll notice for
 instance that the scale uncertainty shown previously is a 7-point variation,
 because the default value of `--scales` is `7`.
 
-## `pineappl info`: What does this grid contain?
+## `pineappl read`: What does this grid contain?
 
 If you're experienced, you've already inferred from the file name of the grid
 and the observable name `etal` what the convoluted numbers will most likely
@@ -144,10 +144,10 @@ questions:
 5. Which program/generator was used to produce this grid? What version?
 6. Which runcards were used, which parameter values?
 
-The subcommand that'll answer all questions is `info`. It gives you access to
+The subcommand that'll answer all questions is `read`. It gives you access to
 what we call *metadata* (the data describing the interpolation grids):
 
-    pineappl info --show LHCB_WP_7TEV.pineappl.lz4
+    pineappl read --show LHCB_WP_7TEV.pineappl.lz4
 
 This will print out a very long list of (alphabetically sorted) key–value
 pairs, from which you can read off the answers to the questions above. Let's go
@@ -186,7 +186,7 @@ through them one by one:
 If you'd like a complete description of all recognized metadata, have a look at
 the [full list](metadata.md).
 
-## `pineappl obl`: Orders, bins and lumis
+### Orders, bins and lumis
 
 Each *grid* is—basically—a three-dimensional array of *subgrids*, which are the
 actual interpolation grids. The three dimensions are:
@@ -199,7 +199,7 @@ which we abbreviate as `obl`. You can use the subcommand with the same name to
 see exactly how each grid is built. Let's go through them one by one using our
 grid:
 
-    pineappl obl --orders LHCB_WP_7TEV.pineappl.lz4
+    pineappl read --orders LHCB_WP_7TEV.pineappl.lz4
 
 The output is:
 
@@ -232,7 +232,7 @@ scale-variation uncertainty should be calculated.
 
 Now let's look at the bins:
 
-    pineappl obl --bins LHCB_WP_7TEV.pineappl.lz4
+    pineappl read --bins LHCB_WP_7TEV.pineappl.lz4
 
 which prints:
 
@@ -254,7 +254,7 @@ this case, this is the bin width, but in general this can be different.
 
 Finally, let's have a look at the luminosities or *lumis*:
 
-    pineappl obl --lumis LHCB_WP_7TEV.pineappl.lz4
+    pineappl read --lumis LHCB_WP_7TEV.pineappl.lz4
 
 This prints all partonic initial states that contribute to this process:
 

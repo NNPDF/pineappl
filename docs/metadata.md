@@ -2,7 +2,8 @@ Metadata
 ========
 
 Metadata is stored in PineAPPL grids in the form of key–value pairs, which can
-be read with `pineappl info --get <KEY>`.
+be read indiviually with `pineappl read --get <KEY> <GRID>`, and `pineappl read
+--show <GRID>` shows all key–value pairs.
 
 Known keys
 ----------

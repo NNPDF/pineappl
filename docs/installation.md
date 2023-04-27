@@ -70,9 +70,10 @@ released version from [crates.io](https://crates.io).
 More functionality can be added by adding the `--feature=feature1,feature2,...`
 flag, see below.
 
-### Optional: APPLgrid converter
+### Optional: APPLgrid converters
 
-If you'd like to convert APPLgrids to PineAPPL grids, make sure to
+If you'd like to convert APPLgrids to PineAPPL grids, or vice versa, make sure
+to
 
 1. install [APPLgrid](https://applgrid.hepforge.org/) (you need at least
    version 1.6.27),
