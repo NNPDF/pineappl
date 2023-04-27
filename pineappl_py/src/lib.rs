@@ -25,6 +25,7 @@ fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<fk_table::PyFkAssumptions>()?;
     m.add_class::<subgrid::PySubgridEnum>()?;
     m.add_class::<subgrid::PySubgridParams>()?;
+    m.add_class::<subgrid::PyMu2>()?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;
 
     Ok(())
