@@ -25,6 +25,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
+# color cycler for different PDF results
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+# color for the first PDF result with QCD-only predictions
+colors0_qcd = 'red'
+
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
 
@@ -70,9 +75,9 @@ def plot_int(axis, **kwargs):
 
         # draw one- and two-sigma bands
         if label == 'CENTRAL-PDF':
-            axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color='royalblue', linewidth=0)
+            axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color=colors[i], linewidth=0)
             # TODO: this is only correct for MC PDF uncertainties
-            axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color='royalblue', linewidth=0)
+            axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color=colors[i], linewidth=0)
 
     axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
     axis.margins(x=0.1, y=0.1)
@@ -82,8 +87,8 @@ def plot_abs(axis, **kwargs):
     slice_label = kwargs['slice_label']
 
     axis.set_yscale('log' if kwargs['ylog'] else 'linear')
-    axis.step(x, kwargs['y'], 'royalblue', linewidth=1.0, where='post', label=slice_label)
-    axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color='royalblue', linewidth=0.5, step='post')
+    axis.step(x, kwargs['y'], colors[0], linewidth=1.0, where='post', label=slice_label)
+    axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color=colors[0], linewidth=0.5, step='post')
     axis.set_ylabel(kwargs['ylabel'])
 
     if slice_label != '':
@@ -96,7 +101,6 @@ def plot_ratio_pdf(axis, **kwargs):
 
     axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
 
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
         y = y / pdf_uncertainties[0][1]
@@ -121,7 +125,6 @@ def plot_abs_pdfs(axis, **kwargs):
     axis.set_yscale('log' if kwargs['ylog'] else 'linear')
     axis.set_ylabel(kwargs['ylabel'])
 
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
@@ -152,18 +155,17 @@ def plot_rel_ewonoff(axis, **kwargs):
     pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
     pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
 
-    axis.step(x, qcd_y, 'red', label='NLO QCD', linewidth=1.0, where='post')
-    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color='red', label='7-p.\ scale var.', linewidth=0.5, step='post')
-    axis.step(x, y, 'royalblue', label='NLO QCD+EW', linewidth=1.0, where='post')
-    axis.fill_between(x, ymin, ymax, alpha=0.4, color='royalblue', label='7-p.\ scale var.', linewidth=0.5, step='post')
-    axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color='royalblue', label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
+    axis.step(x, qcd_y, colors0_qcd, label='NLO QCD', linewidth=1.0, where='post')
+    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label='7-p.\ scale var.', linewidth=0.5, step='post')
+    axis.step(x, y, colors[0], label='NLO QCD+EW', linewidth=1.0, where='post')
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label='7-p.\ scale var.', linewidth=0.5, step='post')
+    axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
     axis.set_ylabel('NLO EW on/off [\si{\percent}]')
     axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
 
 def plot_rel_pdfunc(axis, **kwargs):
     x = kwargs['x']
     pdf_uncertainties = kwargs['pdf_results']
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
     #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
     #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
@@ -215,7 +217,6 @@ def plot_rel_pdfpull(axis, **kwargs):
     central_ymin = kwargs['pdf_results'][0][2]
     central_ymax = kwargs['pdf_results'][0][3]
     pdf_uncertainties = kwargs['pdf_results']
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     x = kwargs['x']
     y = kwargs['y']
 
