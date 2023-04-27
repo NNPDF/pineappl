@@ -159,7 +159,10 @@ impl PyMu2 {
 impl PyMu2 {
     #[new]
     pub fn default(ren: f64, fact: f64) -> Self {
-        let mu2 = Mu2{ren: ren, fac: fact};
+        let mu2 = Mu2 {
+            ren: ren,
+            fac: fact,
+        };
 
         Self::new(mu2)
     }
