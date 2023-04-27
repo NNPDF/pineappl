@@ -1,7 +1,9 @@
+use ndarray::Array3;
 use numpy::{IntoPyArray, PyArray1, PyArray3};
 use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
+
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
 ///
 /// **Usage**: `yadism`
@@ -211,8 +213,8 @@ impl PySubgridEnum {
     }
 
     /// Return the dense array of the subgrid.
-    pub fn dense<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
-        self.subgrid_enum.dense().into_pyarray(py)
+    pub fn to_array3<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
+        Array3::from(&self.subgrid_enum).into_pyarray(py)
     }
 
     pub fn into(&self) -> Self {

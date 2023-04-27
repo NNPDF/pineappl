@@ -77,15 +77,6 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Return the dimension of the dense array of the subgrid
-    fn dimensions(&self) -> (usize, usize, usize) {
-        (
-            self.mu2_grid().len(),
-            self.x1_grid().len(),
-            self.x2_grid().len(),
-        )
-    }
-
     /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
     /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
     fn convolute(
@@ -125,14 +116,21 @@ pub trait Subgrid {
 
     /// Return the static (single) scale, if this subgrid has one.
     fn static_scale(&self) -> Option<Mu2>;
+}
 
-    /// Fill a dense array with subgrid content
-    fn dense(&self) -> Array3<f64> {
-        let mut arr = Array3::from_elem(self.dimensions(), f64::default());
-        for ((a, b, c), value) in self.indexed_iter() {
-            arr[[a, b, c]] = value;
+impl From<&SubgridEnum> for Array3<f64> {
+    fn from(subgrid: &SubgridEnum) -> Self {
+        let mut result = Self::zeros((
+            subgrid.mu2_grid().len(),
+            subgrid.x1_grid().len(),
+            subgrid.x2_grid().len(),
+        ));
+
+        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
+            result[[imu2, ix1, ix2]] = value;
         }
-        arr
+
+        result
     }
 }
 

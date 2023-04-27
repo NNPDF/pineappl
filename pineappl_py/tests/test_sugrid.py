@@ -61,13 +61,13 @@ class TestSubgrid:
         np.testing.assert_allclose(extr_subgrid.x1_grid(), x1s)
         np.testing.assert_allclose(extr_subgrid.x2_grid(), x2s)
     
-    def test_dense(self):
+    def test_to_array3(self):
         grid = self.fake_grid()
         test_subgrid, infos = self.fake_importonlysubgrid()
         _, _, _, array = (obj for obj in infos)
         grid.set_subgrid(0,0,0, test_subgrid)
         extr_subgrid = grid.subgrid(0,0,0)
-        test_array = extr_subgrid.dense()
+        test_array = extr_subgrid.to_array3()
         print(test_array)
         print(array)
         np.testing.assert_allclose(test_array, array)
