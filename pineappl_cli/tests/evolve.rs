@@ -1,4 +1,4 @@
-#![cfg(feature = "fktable")]
+#![cfg(feature = "evolve")]
 
 use assert_cmd::Command;
 use assert_fs::NamedTempFile;
