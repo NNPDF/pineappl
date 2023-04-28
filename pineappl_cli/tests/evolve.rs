@@ -129,6 +129,11 @@ const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. dif
 44 4.9727490e0 4.9725844e0 -3.3104317e-5
 ";
 
+const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 2.1596192e2 2.1590144e2 -2.8005486e-4
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -248,4 +253,25 @@ fn lhcb_dy_8tev() {
         .assert()
         .success()
         .stdout(LHCB_DY_8TEV_STR);
+}
+
+#[test]
+#[ignore]
+fn cms_ttb_8tev_2d_ttm_trap_tot() {
+    let output = NamedTempFile::new("fktable5.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            "--orders=as2,as3,as4",
+            "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4",
+            "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR);
 }

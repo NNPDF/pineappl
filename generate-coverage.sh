@@ -1,6 +1,8 @@
 #!/bin/bash
 
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.appl'
+wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4'
+wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
