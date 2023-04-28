@@ -110,7 +110,7 @@ def plot_ratio_pdf(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2))
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
 
     if slice_label != '':
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
@@ -138,7 +138,7 @@ def plot_abs_pdfs(axis, **kwargs):
         label, y = i
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + 2))
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
 
     if slice_label != '':
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
@@ -230,7 +230,7 @@ def plot_rel_pdfpull(axis, **kwargs):
         #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\ pull', linewidth=0.5, step='post', zorder=2 * index)
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
 
-    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=len(pdf_uncertainties), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
     axis.set_ylabel('Pull [$\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={'fontsize': 9}, loc='left')
 
