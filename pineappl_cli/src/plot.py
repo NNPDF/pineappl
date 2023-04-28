@@ -111,12 +111,8 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
 
     linestyles = ['--', ':']
-    for index, i in enumerate(channels):
-        if index >= len(linestyles):
-            break
-
-        label, y = i
-        axis.step(x, y, color=colors[0], label=label, linestyle=linestyles[index], linewidth=1.0, where='post')
+    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+        axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where='post')
 
     axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
 
