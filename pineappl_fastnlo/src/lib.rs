@@ -150,7 +150,10 @@ pub mod ffi {
 
         fn GetCrossSection(_: Pin<&mut fastNLOReader>, _: bool) -> Vec<f64>;
         fn GetNx(_: &fastNLOCoeffAddFlex, _: usize) -> usize;
+        fn GetDimLabels(_: &fastNLOTable) -> Vec<String>;
         fn GetObsBinDimBounds(_: &fastNLOTable, _: u32, _: u32) -> pair_double_double;
+        fn GetScDescr(_: &fastNLOTable) -> Vec<String>;
+        fn GetXSDescr(_: &fastNLOTable) -> String;
         fn GetPDFCoeff(_: &fastNLOCoeffAddBase, index: usize) -> Vec<pair_int_int>;
         fn GetPDFCoeffSize(_: &fastNLOCoeffAddBase) -> usize;
         fn GetScaleNodes(_: &fastNLOCoeffAddFix, _: i32, _: i32) -> Vec<f64>;

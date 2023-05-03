@@ -13,6 +13,19 @@ rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
     return result;
 }
 
+rust::Vec<rust::String> std_vector_string_to_rust_vec_string(std::vector<std::string> const& vector)
+{
+    rust::Vec<rust::String> result;
+    result.reserve(vector.size());
+    std::transform(
+        vector.begin(),
+        vector.end(),
+        std::back_inserter(result),
+        [](std::string const& s) { return rust::String(s); }
+    );
+    return result;
+}
+
 rust::Vec<double> CalcPDFLinearCombination(
     fastNLOPDFLinearCombinations const& lc,
     fastNLOCoeffAddBase const& base,
@@ -55,6 +68,21 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
 {
     return std_vector_to_rust_vec(reader.GetCrossSection(lNorm));
+}
+
+rust::Vec<rust::String> GetDimLabels(fastNLOTable const& table)
+{
+    return std_vector_string_to_rust_vec_string(table.GetDimLabels());
+}
+
+rust::Vec<rust::String> GetScDescr(fastNLOTable const& table)
+{
+    return std_vector_string_to_rust_vec_string(table.GetScDescr());
+}
+
+rust::String GetXSDescr(fastNLOTable const& table)
+{
+    return rust::String(table.GetXSDescr());
 }
 
 rust::Vec<double> GetScaleNodes1(fastNLOCoeffAddFlex const& coeffs, int iObsBin)

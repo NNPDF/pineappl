@@ -37,6 +37,12 @@ rust::Vec<double> GetXNodes2(fastNLOCoeffAddBase const& coeffs, int iObsBin);
 
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm);
 
+rust::Vec<rust::String> GetDimLabels(fastNLOTable const& table);
+
+rust::Vec<rust::String> GetScDescr(fastNLOTable const& table);
+
+rust::String GetXSDescr(fastNLOTable const& table);
+
 rust::Vec<double> GetScaleNodes1(fastNLOCoeffAddFlex const& coeffs, int iObsBin);
 
 rust::Vec<double> GetScaleNodes2(fastNLOCoeffAddFlex const& coeffs, int iObsBin);

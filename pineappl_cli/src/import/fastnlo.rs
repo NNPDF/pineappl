@@ -525,5 +525,19 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
     result.set_remapper(BinRemapper::new(normalizations, limits).unwrap())?;
 
+    let labels = ffi::GetDimLabels(file_as_table);
+
+    assert_eq!(labels.len(), dimensions);
+
+    for (dimension, label) in labels.iter().enumerate() {
+        result.set_key_value(&format!("x{}_label", dimension + 1), label);
+    }
+
+    result.set_key_value("y_label", &ffi::GetXSDescr(file_as_table));
+    result.set_key_value(
+        "fastnlo_scenario",
+        &ffi::GetScDescr(file_as_table).join("\n"),
+    );
+
     Ok(result)
 }
