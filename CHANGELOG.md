@@ -21,9 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added support for [EKO](https://eko.readthedocs.io/en/latest/)'s new file
   formats (old file format is still supported) in `pineappl evolve`
 - `pineappl import` now also imports fastNLO's metadata:
-  `fastNLOTable::GetDimLabels()` is stored as the value of the key
-  `x{1,2,...}_labels` and `fastNLOTable::GetScDescr()` is stored as the value of
-  the key `fastnlo_scenario`
+  - `fastNLOTable::GetDimLabels()` is stored as the value of the key
+     `x{1,2,...}_labels`
+  - `fastNLOTable::GetXSDescr()` is stored as the value of the key `y_label`
+  - `fastNLOTable::GetScDescr()` is stored as the value of the key
+    `fastnlo_scenario`
 
 ### Changed
 
