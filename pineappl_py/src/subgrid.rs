@@ -149,7 +149,7 @@ impl PySubgridParams {
 #[pyclass]
 #[repr(transparent)]
 pub struct PyMu2 {
-    pub(crate) mu2: Mu2,
+    pub mu2: Mu2,
 }
 
 
