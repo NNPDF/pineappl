@@ -216,7 +216,8 @@ impl PySubgridEnum {
         self.subgrid_enum
             .mu2_grid()
             .iter()
-            .map(|&mu2| PyMu2 { mu2 })
+            .cloned()
+            .map(|mu2| PyMu2 { mu2 })
             .collect()
     }
     /// Return the array of x1 of a subgrid

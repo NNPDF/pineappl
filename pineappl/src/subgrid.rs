@@ -33,7 +33,7 @@ pub enum SubgridEnum {
 }
 
 /// Structure denoting renormalization and factorization scale values.
-#[derive(Debug, Deserialize, Clone, Copy, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, Serialize)]
 pub struct Mu2 {
     /// The (squared) renormalization scale value.
     pub ren: f64,
