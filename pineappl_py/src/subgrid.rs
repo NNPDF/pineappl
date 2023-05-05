@@ -149,22 +149,13 @@ impl PySubgridParams {
 pub struct PyMu2 {
     pub(crate) mu2: Mu2,
 }
-impl PyMu2 {
-    pub(crate) fn new(mu2: Mu2) -> Self {
-        Self { mu2 }
-    }
-}
+
 
 #[pymethods]
 impl PyMu2 {
     #[new]
-    pub fn default(ren: f64, fact: f64) -> Self {
-        let mu2 = Mu2 {
-            ren: ren,
-            fac: fact,
-        };
-
-        Self::new(mu2)
+    pub fn new(ren: f64, fac: f64) -> Self {
+        Self { mu2: Mu2 { ren, fac } }
     }
 
     #[getter]
