@@ -17,18 +17,10 @@ pub struct PyImportOnlySubgridV2 {
     pub(crate) import_only_subgrid: ImportOnlySubgridV2,
 }
 
-impl PyImportOnlySubgridV2 {
-    pub(crate) fn new(import_only_subgrid: ImportOnlySubgridV2) -> Self {
-        Self {
-            import_only_subgrid,
-        }
-    }
-}
-
 #[pymethods]
 impl PyImportOnlySubgridV2 {
     #[new]
-    pub fn new_import_only_subgrid(
+    pub fn new(
         array: PyReadonlyArray3<f64>,
         mu2_grid: Vec<(f64, f64)>,
         x1_grid: PyReadonlyArray1<f64>,
@@ -43,8 +35,8 @@ impl PyImportOnlySubgridV2 {
         {
             sparse_array[[imu2, ix1, ix2]] = *value;
         }
-
-        Self::new(ImportOnlySubgridV2::new(
+        Self{
+            import_only_subgrid: ImportOnlySubgridV2::new(
             sparse_array,
             mu2_grid
                 .iter()
@@ -55,7 +47,7 @@ impl PyImportOnlySubgridV2 {
                 .collect(),
             x1_grid.to_vec().unwrap(),
             x2_grid.to_vec().unwrap(),
-        ))
+        )}
     }
 
     /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`
