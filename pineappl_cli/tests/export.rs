@@ -16,7 +16,6 @@ Options:
       --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
       --discard-non-matching-scales  Discard non-matching scales that would otherwise lead to panics
   -s, --scales <SCALES>              Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
-      --silence-libraries            Prevents third-party libraries from printing output
       --digits-abs <ABS>             Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>             Set the number of fractional digits shown for relative numbers [default: 7]
   -h, --help                         Print help
@@ -124,14 +123,13 @@ fn export_applgrid() {
         .args([
             "--silence-lhapdf",
             "export",
-            "--silence-libraries",
             "../test-data/LHCB_DY_8TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(EXPORT_APPLGRID_STR);
+        .stdout(predicates::str::ends_with(EXPORT_APPLGRID_STR));
 }
 
 #[test]
@@ -159,12 +157,11 @@ fn export_dis_applgrid() {
         .args([
             "--silence-lhapdf",
             "export",
-            "--silence-libraries",
             output1.path().to_str().unwrap(),
             output2.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(EXPORT_DIS_APPLGRID_STR);
+        .stdout(predicates::str::ends_with(EXPORT_DIS_APPLGRID_STR));
 }

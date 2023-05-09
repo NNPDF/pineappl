@@ -16,7 +16,6 @@ Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
   -s, --scales <SCALES>      Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
-      --silence-libraries    Prevents third-party libraries from printing output
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
       --no-optimize          Do not optimize converted grid
@@ -165,14 +164,13 @@ fn import_fix_grid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/NJetEvents_0-0-2.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_FIX_GRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_FIX_GRID_STR));
 }
 
 #[test]
@@ -186,14 +184,13 @@ fn import_flex_grid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_FLEX_GRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_STR));
 }
 
 #[test]
@@ -705,14 +702,13 @@ fn import_photon_grid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/LHCBWZMU7TEV_PI_part1.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_PHOTON_GRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_PHOTON_GRID_STR));
 }
 
 #[test]
@@ -726,14 +722,13 @@ fn import_applgrid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/ATLASWPT11-Wplus_tot.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_APPLGRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_APPLGRID_STR));
 }
 
 #[test]
@@ -747,14 +742,13 @@ fn import_new_applgrid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_NEW_APPLGRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_NEW_APPLGRID_STR));
 }
 
 #[test]
@@ -782,7 +776,6 @@ fn import_grid_comparison_failure() {
             "--silence-lhapdf",
             "import",
             "--accuracy=0",
-            "--silence-libraries",
             "../test-data/NJetEvents_0-0-2.tab.gz",
             "this-file-wont-be-writen",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -790,7 +783,7 @@ fn import_grid_comparison_failure() {
         .assert()
         .failure()
         .stderr(IMPORT_GRID_COMPARISON_FAILURE_STR)
-        .stdout(IMPORT_FIX_GRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_FIX_GRID_STR));
 }
 
 #[test]
@@ -804,14 +797,13 @@ fn import_dis_applgrid() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_DIS_APPLGRID_STR);
+        .stdout(predicates::str::ends_with(IMPORT_DIS_APPLGRID_STR));
 }
 
 #[test]
@@ -825,12 +817,13 @@ fn import_double_hadronic_fastnlo() {
         .args([
             "--silence-lhapdf",
             "import",
-            "--silence-libraries",
             "../test-data/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(IMPORT_DOUBLE_HADRONIC_FASTNLO_STR);
+        .stdout(predicates::str::ends_with(
+            IMPORT_DOUBLE_HADRONIC_FASTNLO_STR,
+        ));
 }

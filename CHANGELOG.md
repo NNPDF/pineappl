@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `fastNLOTable::GetXSDescr()` is stored as the value of the key `y_label`
   - `fastNLOTable::GetScDescr()` is stored as the value of the key
     `fastnlo_scenario`
+- removed switch `--silence-libraries` which did not work properly and relied
+  on non-portable code
 
 ### Changed
 

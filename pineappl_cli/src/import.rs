@@ -2,10 +2,7 @@ use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
-use libc::{c_int, O_WRONLY, STDERR_FILENO, STDOUT_FILENO};
 use pineappl::grid::Grid;
-use scopeguard::defer;
-use std::ffi::CStr;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -130,48 +127,14 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, us
     ))
 }
 
-fn silence_fd(fd: c_int) -> (c_int, c_int) {
-    let backup = unsafe { libc::dup(fd) };
-
-    assert_ne!(backup, -1);
-
-    let path = CStr::from_bytes_with_nul(b"/dev/null\0").unwrap();
-    let null = unsafe { libc::open(path.as_ptr(), O_WRONLY) };
-
-    assert_ne!(null, -1);
-    assert_ne!(unsafe { libc::dup2(null, fd) }, -1);
-
-    (backup, null)
-}
-
-fn unsilence_fd(fd: c_int, (old, new): (c_int, c_int)) {
-    assert_ne!(unsafe { libc::close(new) }, -1);
-    assert_ne!(unsafe { libc::dup2(old, fd) }, -1);
-    assert_ne!(unsafe { libc::close(old) }, -1);
-}
-
 fn convert_grid(
     input: &Path,
     alpha: u32,
     pdfset: &str,
     member: usize,
     dis_pid: i32,
-    silence_libraries: bool,
     scales: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
-    let (stdout, stderr) = if silence_libraries {
-        (silence_fd(STDOUT_FILENO), silence_fd(STDERR_FILENO))
-    } else {
-        ((-1, -1), (-1, -1))
-    };
-
-    defer! {
-        if silence_libraries {
-            unsilence_fd(STDOUT_FILENO, stdout);
-            unsilence_fd(STDERR_FILENO, stderr);
-        }
-    }
-
     if let Some(extension) = input.extension() {
         if extension == "tab"
             || (extension == "gz"
@@ -217,9 +180,6 @@ pub struct Opts {
         value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())
     )]
     scales: usize,
-    /// Prevents third-party libraries from printing output.
-    #[arg(long)]
-    silence_libraries: bool,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -245,7 +205,6 @@ impl Subcommand for Opts {
             &self.pdfset,
             0,
             self.dis_pid,
-            self.silence_libraries,
             self.scales,
         )?;
 
