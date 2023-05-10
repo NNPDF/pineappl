@@ -3,11 +3,10 @@ name: Release
 on:
   push:
     tags:
-      - '*-?v[0-9]+*'
+      - 'v[0-9]+*'
 
 env:
   GH_TOKEN: ${{ github.token }}
-  version: ${{ github.ref_name }}
 
 jobs:
   create-release:
@@ -17,8 +16,8 @@ jobs:
       - name: Create new release
         run: |
           # remove leading 'v'
-          echo "version=${version#v}" >> ${GITHUB_ENV}
-          gh release create -d v${{ env.version }}
+          echo "version=${GITHUB_REF_NAME#v}" >> ${GITHUB_ENV}
+          gh release create -d v${version}
 
   linux:
     needs: [create-release]
@@ -51,17 +50,17 @@ jobs:
           path: artifacts
       - name: Create new release
         run: |
-          prerelease=$(echo ${{ env.version }} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
+          prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
           if [[ ${prerelease}  == "" ]]; then
               # extract the previous version number
               old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
               # extract news for the current version from the changelog file, dismissing
               # empty lines at the start and the end
-              news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
+              news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
                   CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
-              gh release edit v${{ env.version }} -n "${news}"
+              gh release edit v${version} -n "${news}"
           else
-              gh release edit v${{ env.version }} -n "" --prerelease
+              gh release edit v${version} -n "" --prerelease
           fi
           find artifacts -type f -exec gh release upload v${{ env.version }} {} +
-          gh release edit v${{ env.version }} --draft=false
+          gh release edit v${version} --draft=false
