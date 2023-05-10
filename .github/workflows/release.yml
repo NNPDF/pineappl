@@ -28,7 +28,8 @@ jobs:
         target: [x86_64-unknown-linux-gnu]
     steps:
       - uses: actions/checkout@v3
-      - run: |
+      - name: Compile library
+        run: |
           cd pineappl_capi
           cargo cinstall --verbose --destdir=/tmp/prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
           cd /tmp/prefix
