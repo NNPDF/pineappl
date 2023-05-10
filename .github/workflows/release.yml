@@ -6,6 +6,7 @@ on: [push]
   #    - '*-?v[0-9]+*'
 
 env:
+  GH_TOKEN: ${{ github.token }}
   #version: ${{ github.ref_name }}
   version: 0.6.0-alpha.999
 
