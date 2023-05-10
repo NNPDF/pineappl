@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Create new release
         run: |
+          # remove leading 'v'
+          echo "version=${version#v}" >> ${GITHUB_ENV}
           gh release create -d v${{ env.version }}
 
   linux:
