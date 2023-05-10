@@ -51,10 +51,10 @@ jobs:
           path: artifacts
       - name: Create new release
         run: |
-          # extract the previous version number
-          old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
           prerelease=$(echo ${{ env.version }} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
           if [[ ${prerelease}  == "" ]]; then
+              # extract the previous version number
+              old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
               # extract news for the current version from the changelog file, dismissing
               # empty lines at the start and the end
               news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
