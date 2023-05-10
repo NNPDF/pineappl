@@ -19,6 +19,7 @@ fi
 if [[ $# -eq 1 ]]; then
     version=$1
 else
+    # if no version is given, use the latest version
     version=$(curl -s https://api.github.com/repos/NNPDF/pineappl/releases/latest | \
         sed -n 's/[ ]*"tag_name"[ ]*:[ ]*"v\([^"]*\)"[ ]*,[ ]*$/\1/p')
 fi
