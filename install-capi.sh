@@ -30,7 +30,8 @@ echo "target:  ${target}"
 echo "version: ${version}"
 echo
 
-read -p "Enter installation path: " prefix
+# read from stdin (`<&1`), even if piped into a shell
+read -p "Enter installation path: " <&1 prefix
 prefix=${prefix%%/}
 
 wget --quiet "${base_url}"/v${version}/pineappl_capi-${version}-${target}.tar.gz -O- \
