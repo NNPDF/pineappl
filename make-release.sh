@@ -30,6 +30,11 @@ if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:
     exit 1
 fi
 
+if [[ $(git rev-parse --abbrev-ref HEAD) != master ]]; then
+    echo "You're not on master."
+    exit 1
+fi
+
 for crate in ${crates[@]}; do
     if [[ -n $(git status ${crate} --porcelain) ]]; then
         echo "This repository isn't clean. Make sure to add or delete the corresponding files."
@@ -46,11 +51,6 @@ if ! cargo msrv --min 1.64.0 --max 1.64.0 >/dev/null; then
     echo "Minimum supported Rust version doesn't match avertised one."
     exit 1
 fi
-
-#if [[ ]]; then
-#    echo "You're not on master."
-#    exit 1
-#fi
 
 echo ">>> Testing release configuration with default features ..."
 
