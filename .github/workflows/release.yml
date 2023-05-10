@@ -63,5 +63,4 @@ jobs:
           else
               gh release edit v${{ env.version }} -n "" --prerelease
           fi
-          # upload all generated libraries
-          gh release upload v${{ env.version }} artifacts/*
+          find artifacts -type f -exec gh release upload v${{ env.version }} {} +
