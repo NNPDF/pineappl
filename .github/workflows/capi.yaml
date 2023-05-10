@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: |
           cd pineappl_capi
-          cargo cinstall --verbose --destdir=/tmp/capi-destdir --library-type=cdylib --prefix=/usr --target=${{ matrix.target }}
+          cargo cinstall --verbose --destdir=/tmp/capi-destdir --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
       - name: Upload libraries
         uses: actions/upload-artifact@v3
         with:
