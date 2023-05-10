@@ -56,7 +56,8 @@ jobs:
               news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
                   CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
               #gh release create v${{ env.version }} -n "${news}"
+              env | sort
           else
+              env | sort
               #gh release create v${{ env.version }} -n "" --prerelease
           fi
-          env | sort
