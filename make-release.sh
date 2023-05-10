@@ -37,16 +37,6 @@ for crate in ${crates[@]}; do
     fi
 done
 
-if ! which gh >/dev/null; then
-    echo "Didn't find the \`gh\` binary."
-    exit 1
-fi
-
-if ! gh auth status 2>/dev/null; then
-    echo "Couldn't connect to the github repository."
-    exit 1
-fi
-
 if ! cargo msrv --help >/dev/null; then
     echo "Didn't find \`msrv\` applet of \`cargo\`. Run \`cargo install msrv\` to install it."
     exit 1
