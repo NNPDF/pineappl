@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*-?v[0-9]+*'
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  version: ${{ github.ref_name }}
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create new release
+        run: |
+          gh release create -d v${{ env.version }}
+
+  linux:
+    needs: [create-release]
+    runs-on: ubuntu-20.04
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Compile library
+        run: |
+          cd pineappl_capi
+          cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
+          cd prefix
+          tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_capi-${{ matrix.target }}
+          path: pineappl_capi-${{ matrix.target }}.tar.gz
+
+  publish-release:
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Create new release
+        run: |
+          # extract the previous version number
+          old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
+          prerelease=$(echo ${{ env.version }} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
+          if [[ ${prerelease}  == "" ]]; then
+              # extract news for the current version from the changelog file, dismissing
+              # empty lines at the start and the end
+              news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
+                  CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
+              gh release edit v${{ env.version }} -n "${news}"
+          else
+              gh release edit v${{ env.version }} -n "" --prerelease
+          fi
+          find artifacts -type f -exec gh release upload v${{ env.version }} {} +
+          gh release edit v${{ env.version }} --draft=false

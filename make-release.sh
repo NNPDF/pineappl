@@ -37,16 +37,6 @@ for crate in ${crates[@]}; do
     fi
 done
 
-if ! which gh >/dev/null; then
-    echo "Didn't find the \`gh\` binary."
-    exit 1
-fi
-
-if ! gh auth status 2>/dev/null; then
-    echo "Couldn't connect to the github repository."
-    exit 1
-fi
-
 if ! cargo msrv --help >/dev/null; then
     echo "Didn't find \`msrv\` applet of \`cargo\`. Run \`cargo install msrv\` to install it."
     exit 1
@@ -113,19 +103,3 @@ echo ">>> Commiting and pushing changes ..."
 git commit -m "Release v${version}"
 git tag -a v${version} -m v${version}
 git push --follow-tags
-
-echo ">>> Making a release on github"
-
-# extract the previous version number
-old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
-
-if [[ ${prerelease}  == "" ]]; then
-    # extract news for the current version from the changelog file, dismissing
-    # empty lines at the start and the end
-    news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
-        CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
-
-    gh release create v${version} -n "${news}"
-else
-    gh release create v${version} -n "" --prerelease
-fi
