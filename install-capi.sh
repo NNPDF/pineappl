@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-# TODO: get rid of bash-isms
-
-set -euo pipefail
+set -eu
 
 if command -v gcc >/dev/null; then
     target=$(gcc -dumpmachine)
@@ -16,7 +14,7 @@ else
     exit 1
 fi
 
-if [[ $# -eq 1 ]]; then
+if [ $# -eq 1 ]; then
     version=$1
 else
     # if no version is given, use the latest version
