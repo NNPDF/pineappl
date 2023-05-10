@@ -62,5 +62,5 @@ jobs:
           else
               gh release edit v${version} -n "" --prerelease
           fi
-          find artifacts -type f -exec gh release upload v${{ env.version }} {} +
+          find artifacts -type f -exec gh release upload v${version} {} +
           gh release edit v${version} --draft=false
