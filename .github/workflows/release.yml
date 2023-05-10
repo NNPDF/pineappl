@@ -47,7 +47,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
-        working-directory: artifacts
+        with:
+          path: artifacts
       - name: Create new release
         run: |
           # extract the previous version number
