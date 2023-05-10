@@ -34,3 +34,17 @@ jobs:
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
+
+  linux:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          cd pineappl_capi
+          cargo cinstall --verbose --prefix=/tmp/capi-installation
+      - name: Upload libraries
+        uses: actions/upload-artifact@v3
+        with:
+          name: capi
+          path: /tmp/capi-installation/
