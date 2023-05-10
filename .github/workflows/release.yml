@@ -1,14 +1,13 @@
 name: Release
 
-on: [push]
-  #push:
-  #  tags:
-  #    - '*-?v[0-9]+*'
+on:
+  push:
+    tags:
+      - '*-?v[0-9]+*'
 
 env:
   GH_TOKEN: ${{ github.token }}
-  #version: ${{ github.ref_name }}
-  version: '0.6.0-alpha.1000'
+  version: ${{ github.ref_name }}
 
 jobs:
   create-release:
@@ -59,7 +58,6 @@ jobs:
               news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
                   CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
               gh release edit v${{ env.version }} -n "${news}"
-              env | sort
           else
               gh release edit v${{ env.version }} -n "" --prerelease
           fi
