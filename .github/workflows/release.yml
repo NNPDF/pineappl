@@ -32,7 +32,7 @@ jobs:
           cd pineappl_capi
           cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
           cd prefix
-          tar czf ../pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz .
+          tar czf ../../pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
