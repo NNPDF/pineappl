@@ -16,7 +16,7 @@ else
     exit 1
 fi
 
-if [[ -n $1 ]]; then
+if [[ $# -eq 1 ]]; then
     version=$1
 else
     version=$(curl -s https://api.github.com/repos/NNPDF/pineappl/releases/latest | \
