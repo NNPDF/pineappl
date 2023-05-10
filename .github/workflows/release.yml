@@ -14,7 +14,6 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Create new release
         run: |
           gh release create -d v${{ env.version }}
