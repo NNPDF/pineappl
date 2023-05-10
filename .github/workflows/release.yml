@@ -32,10 +32,10 @@ jobs:
           cd pineappl_capi
           cargo cinstall --verbose --destdir=/tmp/prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
           cd /tmp/prefix
-          tar czf ${{ github.workspace }}/pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz .
+          tar czf ../pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz .
+          gh release upload v${{ env.version }} pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz
           cd -
           rm -r /tmp/prefix
-          gh release upload v${{ env.version }} pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz
 
   publish-release:
     # Only run after all the other tasks, but it's ok if upload-artifacts was skipped
