@@ -46,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        working-directory: artifacts
       - name: Create new release
         run: |
           # extract the previous version number
@@ -56,9 +58,10 @@ jobs:
               # empty lines at the start and the end
               news=$(sed -n "/\\[${{ env.version }}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
                   CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
-              #gh release create v${{ env.version }} -n "${news}"
+              gh release edit v${{ env.version }} -n "${news}"
               env | sort
           else
-              env | sort
-              #gh release create v${{ env.version }} -n "" --prerelease
+              gh release edit v${{ env.version }} -n "" --prerelease
           fi
+          # upload all generated libraries
+          gh release upload v${{ env.version }} artifacts/*
