@@ -113,19 +113,3 @@ echo ">>> Commiting and pushing changes ..."
 git commit -m "Release v${version}"
 git tag -a v${version} -m v${version}
 git push --follow-tags
-
-echo ">>> Making a release on github"
-
-# extract the previous version number
-old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
-
-if [[ ${prerelease}  == "" ]]; then
-    # extract news for the current version from the changelog file, dismissing
-    # empty lines at the start and the end
-    news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
-        CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
-
-    gh release create v${version} -n "${news}"
-else
-    gh release create v${version} -n "" --prerelease
-fi

@@ -1,0 +1,61 @@
+name: Release
+
+on: [push]
+  #push:
+  #  tags:
+  #    - '*-?v[0-9]+*'
+
+env:
+  #version: ${{ github.ref_name }}
+  version: 0.6.0-alpha.999
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create new release
+        run: |
+          gh release create -d ${version}
+
+  linux:
+    needs: [create-release]
+    runs-on: ubuntu-20.04
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
+    env:
+      artifact: pineappl_capi-${version}-${{ matrix.target }}.tar.gz
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          cd pineappl_capi
+          cargo cinstall --verbose --destdir=/tmp/prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
+          cd /tmp/prefix
+          tar czf ${{ github.workspace }}/${artifact} .
+          cd -
+          rm -r /tmp/prefix
+          gh release upload v${version} ${artifact}
+
+  publish-release:
+    # Only run after all the other tasks, but it's ok if upload-artifacts was skipped
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create new release
+        run: |
+          # extract the previous version number
+          old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
+          prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
+          if [[ ${prerelease}  == "" ]]; then
+              # extract news for the current version from the changelog file, dismissing
+              # empty lines at the start and the end
+              news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
+                  CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
+              #gh release create v${version} -n "${news}"
+          else
+              #gh release create v${version} -n "" --prerelease
+          fi
+          env | sort
