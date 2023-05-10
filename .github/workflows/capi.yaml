@@ -38,13 +38,16 @@ jobs:
   linux:
     runs-on: ubuntu-20.04
     container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
     steps:
       - uses: actions/checkout@v3
       - run: |
           cd pineappl_capi
-          cargo cinstall --verbose --prefix=/tmp/capi-installation
+          cargo cinstall --verbose --destdir=/tmp/capi-destdir --library-type=cdylib --prefix=/usr --target=${{ matrix.target }}
       - name: Upload libraries
         uses: actions/upload-artifact@v3
         with:
-          name: capi
-          path: /tmp/capi-installation/
+          name: libpineappl_capi-${{ matrix.target }}
+          path: /tmp/capi-destdir/
