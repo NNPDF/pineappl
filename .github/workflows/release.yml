@@ -41,7 +41,6 @@ jobs:
           path: pineappl_capi-${{ env.version }}-${{ matrix.target }}.tar.gz
 
   publish-release:
-    # Only run after all the other tasks, but it's ok if upload-artifacts was skipped
     needs: [linux]
     runs-on: ubuntu-latest
     steps:
