@@ -7,6 +7,8 @@ if [[ ! -x $(command -v maturin) ]]; then
     exit 1
 fi
 
+cd ..
+
 # TODO: check that maturin's version is larger than TODO
 
 maturin generate-ci github --manifest-path pineappl_py/Cargo.toml > .github/workflows/wheels.yml

@@ -18,6 +18,8 @@ features=(
     fktable
 )
 
+cd ..
+
 if [[ $# != 1 ]]; then
     echo "No version number given."
     exit 1
