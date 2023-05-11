@@ -32,6 +32,6 @@ echo
 read -p "Enter installation path: " <&1 prefix
 prefix=${prefix%%/}
 
-wget --quiet "${base_url}"/v${version}/pineappl_capi-${version}-${target}.tar.gz -O- \
+wget --quiet "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz -O- \
     | tar xzf - -C "${prefix}"
 sed -i s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc
