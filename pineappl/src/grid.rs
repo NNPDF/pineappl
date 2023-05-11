@@ -889,34 +889,11 @@ impl Grid {
             .indexed_iter_mut()
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
-            let other_order = &other.orders[i];
-            let other_entry = &other.lumi[k];
-
-            if !self
-                .orders
-                .iter()
-                .chain(new_orders.iter())
-                .any(|x| x == other_order)
-            {
-                new_orders.push(other_order.clone());
-            }
-
-            if !self
-                .lumi
-                .iter()
-                .chain(new_entries.iter())
-                .any(|y| y == other_entry)
-            {
-                new_entries.push(other_entry.clone());
-            }
+            new_orders.push(other.orders[i].clone());
+            new_entries.push(other.lumi[k].clone());
         }
 
-        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
-            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
-        }
-
-        self.orders.append(&mut new_orders);
-        self.lumi.append(&mut new_entries);
+        self.extend(&new_orders, &new_entries, new_bins);
 
         let bin_indices: Vec<_> = (0..other.bin_info().bins())
             .map(|bin| {
@@ -946,6 +923,50 @@ impl Grid {
         }
 
         Ok(())
+    }
+
+    /// Extend subgrids array with the given `orders`, luminosity `entries`, and number of `bins`.
+    ///
+    /// Returns the inserted orders and entries, i.e. those not already present.
+    pub fn extend(
+        &mut self,
+        orders: &[Order],
+        entries: &[LumiEntry],
+        bins: usize,
+    ) -> (Vec<Order>, Vec<LumiEntry>) {
+        let mut new_orders: Vec<Order> = Vec::new();
+        let mut new_entries: Vec<LumiEntry> = Vec::new();
+
+        for order in orders.iter() {
+            if !self
+                .orders
+                .iter()
+                .chain(new_orders.iter())
+                .any(|x| x == order)
+            {
+                new_orders.push(order.clone());
+            }
+        }
+
+        for entry in entries.iter() {
+            if !self
+                .lumi
+                .iter()
+                .chain(new_entries.iter())
+                .any(|y| y == entry)
+            {
+                new_entries.push(entry.clone());
+            }
+        }
+
+        if !new_orders.is_empty() || !new_entries.is_empty() || (bins != 0) {
+            self.increase_shape(&(new_orders.len(), bins, new_entries.len()));
+        }
+
+        self.orders.append(&mut new_orders);
+        self.lumi.append(&mut new_entries);
+
+        (new_orders, new_entries)
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
