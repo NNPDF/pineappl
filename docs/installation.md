@@ -22,6 +22,18 @@ likely use, here are a few guidelines:
 
 ## C, C++ and Fortran: the CAPI
 
+### Using pre-built binaries
+
+The fastest way to install the CAPI is to download the pre-built binaries:
+
+    curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh -s 0.6.0-alpha.15
+
+This currently works only for Linux on `x86_64` machines. If you'd like to have
+other operating system and architectures supported, please open an Issue for
+that.
+
+### From source
+
 You first need to install Rust and `cargo`, see the [instructions](#rust)
 below.
 
