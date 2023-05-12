@@ -851,12 +851,12 @@ impl Grid {
     /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bins = 0;
+        let mut new_bin_limits = BinLimits::new(Vec::new());
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
         if self.bin_info() != other.bin_info() {
             let lhs_bins = self.bin_info().bins();
-            new_bins = other.bin_info().bins();
+            let rhs_bins = other.bin_info().bins();
 
             let lhs_remapper = self.remapper_mut();
             let rhs_remapper = other.remapper();
@@ -866,22 +866,26 @@ impl Grid {
                     lhs.merge(rhs).map_err(GridError::MergeBinError)?;
 
                     let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
-                    let b = u32::try_from(lhs_bins + new_bins).unwrap_or_else(|_| unreachable!());
+                    let b = u32::try_from(lhs_bins + rhs_bins).unwrap_or_else(|_| unreachable!());
 
-                    self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
+                    new_bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
                     other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
                 } else {
                     // Return an error
                     todo!();
                 }
             } else if rhs_remapper.is_none() {
-                self.bin_limits
+                new_bin_limits = self.bin_limits.clone();
+                new_bin_limits
                     .merge(&other.bin_limits)
                     .map_err(GridError::InvalidBinLimits)?;
             } else {
                 // Return an error
                 todo!();
             }
+        }
+        if new_bin_limits.bins() == 0 {
+            new_bin_limits = self.bin_limits.clone();
         }
 
         for ((i, _, k), _) in other
@@ -893,7 +897,7 @@ impl Grid {
             new_entries.push(other.lumi[k].clone());
         }
 
-        self.extend(&new_orders, &new_entries, new_bins);
+        self.extend(&new_orders, &new_bin_limits, &new_entries);
 
         let bin_indices: Vec<_> = (0..other.bin_info().bins())
             .map(|bin| {
@@ -931,10 +935,11 @@ impl Grid {
     pub fn extend(
         &mut self,
         orders: &[Order],
+        bins: &BinLimits,
         entries: &[LumiEntry],
-        bins: usize,
     ) -> (Vec<Order>, Vec<LumiEntry>) {
         let mut new_orders: Vec<Order> = Vec::new();
+        let new_bins = bins.bins() - self.bin_limits.bins();
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
         for order in orders.iter() {
@@ -959,12 +964,13 @@ impl Grid {
             }
         }
 
-        if !new_orders.is_empty() || !new_entries.is_empty() || (bins != 0) {
-            self.increase_shape(&(new_orders.len(), bins, new_entries.len()));
+        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
+            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
         }
 
         self.orders.append(&mut new_orders);
         self.lumi.append(&mut new_entries);
+        self.bin_limits = bins.clone();
 
         (new_orders, new_entries)
     }
