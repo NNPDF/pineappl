@@ -851,7 +851,7 @@ impl Grid {
     /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bin_limits = BinLimits::new(Vec::new());
+        let mut new_bin_limits = BinLimits::new(vec![0.]);
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
         if self.bin_info() != other.bin_info() {
