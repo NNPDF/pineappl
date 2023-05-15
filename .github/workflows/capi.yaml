@@ -19,7 +19,7 @@ jobs:
       - name: Test C example
         run: |
           cd examples/basic-capi-usage
-          sed "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
+          sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
@@ -27,7 +27,7 @@ jobs:
       - name: Test Fortran example
         run: |
           cd examples/fortran
-          sed "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
+          sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
@@ -35,7 +35,7 @@ jobs:
       - name: Test C++ example
         run: |
           cd examples/object-oriented-cpp
-          sed "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
+          sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
