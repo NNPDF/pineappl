@@ -5,12 +5,12 @@ set -euo pipefail
 # install rustup
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-# install Fortran compiler
-apt update
-apt install gfortran -y
-
 # install LLVM tools needed for code coverage
 rustup component add llvm-tools-preview
+
+# # install Fortran compiler
+# apt update
+# apt install gfortran -y
 
 # install cargo-c needed for the CAPI
 cargo install cargo-c --version ${CARGOC_V}
