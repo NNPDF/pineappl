@@ -12,6 +12,7 @@ jobs:
       - name: Install PineAPPL's C API
         run: |
           cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
+          objdump -T /usr/local/lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
           ldconfig
 
       - name: Test C example
