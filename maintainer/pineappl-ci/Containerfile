@@ -9,10 +9,10 @@ ARG LHAPDF_V=6.4.0
 # 'warning: ./pineappl/default.profraw: failed to uncompress data (zlib)'
 ARG RUST_V=1.65.0
 
-ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src" \
-    CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:${PATH}" \
-    RUSTUP_HOME="/usr/local/rustup"
+ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
+ENV CARGO_HOME="/usr/local/cargo"
+ENV PATH="/usr/local/cargo/bin:${PATH}"
+ENV RUSTUP_HOME="/usr/local/rustup"
 
 COPY script.sh /tmp/
 
