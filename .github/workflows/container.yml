@@ -1,7 +1,6 @@
 name: Container
 
-on: [push]
-#  workflow_dispatch:
+on: push
 
 permissions:
   contents: read

@@ -1,8 +1,6 @@
 name: CAPI
 
-#on: push
-on:
-  workflow_dispatch:
+on: push
 
 jobs:
   capi:

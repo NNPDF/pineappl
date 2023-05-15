@@ -1,8 +1,6 @@
 name: Rust
 
-#on: push
-on:
-  workflow_dispatch:
+on: push
 
 defaults:
   run:
