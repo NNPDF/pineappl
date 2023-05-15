@@ -13,12 +13,11 @@ jobs:
         run: |
           cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
           ldconfig
-          make --version
-          sed --version
 
       - name: Test C example
         run: |
           cd examples/basic-capi-usage
+          # if `make` is too old, it doesn't support the `!=` operator
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           make
           ./dyaa
