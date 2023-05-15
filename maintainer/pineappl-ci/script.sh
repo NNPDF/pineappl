@@ -30,7 +30,7 @@ cd ..
 
 # install PDF sets
 for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180; do
-    wget --no-verbose "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" -O - | tar xzf - -C /usr/local/share/LHAPDF
+    curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 done
 
 # install APPLgrid
