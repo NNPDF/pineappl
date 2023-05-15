@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# install rustup
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
 # install Fortran compiler
 apt update
 apt install gfortran -y

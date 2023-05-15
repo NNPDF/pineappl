@@ -1,4 +1,4 @@
-FROM rust:latest
+FROM quay.io/pypa/manylinux2014_x86_64
 
 ARG APPLGRID_V=1.6.27
 ARG CARGOC_V=0.9.14+cargo-0.67
