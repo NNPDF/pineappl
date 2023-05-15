@@ -851,10 +851,9 @@ impl Grid {
     /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bin_limits = BinLimits::new(vec![0.]);
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-        if self.bin_info() != other.bin_info() {
+        let new_bin_limits = if self.bin_info() != other.bin_info() {
             let lhs_bins = self.bin_info().bins();
             let rhs_bins = other.bin_info().bins();
 
@@ -868,25 +867,25 @@ impl Grid {
                     let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
                     let b = u32::try_from(lhs_bins + rhs_bins).unwrap_or_else(|_| unreachable!());
 
-                    new_bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
                     other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
+                    BinLimits::new((0..=b).map(f64::from).collect())
                 } else {
                     // Return an error
                     todo!();
                 }
             } else if rhs_remapper.is_none() {
-                new_bin_limits = self.bin_limits.clone();
+                let mut new_bin_limits = self.bin_limits.clone();
                 new_bin_limits
                     .merge(&other.bin_limits)
                     .map_err(GridError::InvalidBinLimits)?;
+                new_bin_limits
             } else {
                 // Return an error
                 todo!();
             }
-        }
-        if new_bin_limits.bins() == 0 {
-            new_bin_limits = self.bin_limits.clone();
-        }
+        } else {
+            self.bin_limits.clone()
+        };
 
         for ((i, _, k), _) in other
             .subgrids
