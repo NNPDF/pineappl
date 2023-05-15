@@ -17,20 +17,20 @@ jobs:
       - name: Test C example
         run: |
           cd examples/basic-capi-usage
-          make
+          gmake
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
 
       - name: Test Fortran example
         run: |
           cd examples/fortran
-          make
+          gmake
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
 
       - name: Test C++ example
         run: |
           cd examples/object-oriented-cpp
-          make
+          gmake
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
