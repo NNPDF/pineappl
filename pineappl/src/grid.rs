@@ -937,9 +937,14 @@ impl Grid {
         bins: &BinLimits,
         entries: &[LumiEntry],
     ) -> (Vec<Order>, Vec<LumiEntry>) {
+        /// Extend collection with non-duplicated elements.
+        ///
+        /// Notice that this function does not modify the order of elements.
         fn unique<T: Clone + PartialEq>(current: &[T], update: &[T]) -> Vec<T> {
             let mut new = Vec::new();
 
+            // Since the order has to be preserved, this can't be achieved just by sorting and
+            // deduplicating.
             for el in update.iter() {
                 if !current
                     .iter()
