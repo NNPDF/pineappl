@@ -11,7 +11,7 @@ ARG RUST_V=1.65.0
 
 ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:${PATH}"
+    PATH="/usr/local/cargo/bin:${PATH}" \
     RUSTUP_HOME="/usr/local/rustup"
 
 COPY script.sh /tmp/
