@@ -34,7 +34,7 @@ for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180
 done
 
 # install APPLgrid
-curl "http://applgrid.hepforge.org/downloads/applgrid-${APPLGRID_V}.tgz" | tar xzf -
+curl "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
 cd applgrid-${APPLGRID_V}
 ./configure --disable-static --without-root
 make -j
