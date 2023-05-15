@@ -19,7 +19,7 @@ cargo install cargo-c --version ${CARGOC_V} --features=vendored-openssl
 rm -r /usr/local/cargo/registry
 
 # install LHAPDF
-curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" -O - | tar xzf -
+curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" | tar xzf -
 cd LHAPDF-${LHAPDF_V}
 ./configure --disable-python --disable-static
 make -j
@@ -34,7 +34,7 @@ for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180
 done
 
 # install APPLgrid
-curl "http://applgrid.hepforge.org/downloads/applgrid-${APPLGRID_V}.tgz" -O - | tar xzf -
+curl "http://applgrid.hepforge.org/downloads/applgrid-${APPLGRID_V}.tgz" | tar xzf -
 cd applgrid-${APPLGRID_V}
 ./configure --disable-static --without-root
 make -j
@@ -46,7 +46,7 @@ cp src/*.h ${APPL_IGRID_DIR}
 cd ..
 
 # install fastNLO
-curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" -O - | tar xzf -
+curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
 cd fastnlo_toolkit-${FASTNLO_V}
 ./configure --disable-static --prefix=/usr/local/
 make -j
