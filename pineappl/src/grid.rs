@@ -937,31 +937,24 @@ impl Grid {
         bins: &BinLimits,
         entries: &[LumiEntry],
     ) -> (Vec<Order>, Vec<LumiEntry>) {
-        let mut new_orders: Vec<Order> = Vec::new();
+        fn unique<T: Clone + PartialEq>(current: &[T], update: &[T]) -> Vec<T> {
+            let mut new = Vec::new();
+
+            for el in update.iter() {
+                if !current
+                    .iter()
+                    .chain(new.iter())
+                    .any(|x| x == el)
+                {
+                    new.push((*el).clone());
+                }
+            }
+            new
+        }
+
+        let mut new_orders = unique(&self.orders, &orders);
         let new_bins = bins.bins() - self.bin_limits.bins();
-        let mut new_entries: Vec<LumiEntry> = Vec::new();
-
-        for order in orders.iter() {
-            if !self
-                .orders
-                .iter()
-                .chain(new_orders.iter())
-                .any(|x| x == order)
-            {
-                new_orders.push(order.clone());
-            }
-        }
-
-        for entry in entries.iter() {
-            if !self
-                .lumi
-                .iter()
-                .chain(new_entries.iter())
-                .any(|y| y == entry)
-            {
-                new_entries.push(entry.clone());
-            }
-        }
+        let mut new_entries = unique(&self.lumi, &entries);
 
         if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
             self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
