@@ -1,3 +1,6 @@
+use std::str::FromStr;
+use thiserror::Error;
+
 #[cxx::bridge]
 pub mod ffi {
     #[namespace = "fastNLO"]
@@ -102,6 +105,8 @@ pub mod ffi {
         fn GetMuRFunctionalForm(&self) -> EScaleFunctionalForm;
         fn GetMuFFunctionalForm(&self) -> EScaleFunctionalForm;
         fn SetScaleFactorsMuRMuF(self: Pin<&mut Self>, _: f64, _: f64) -> bool;
+        fn SetMuRFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
+        fn SetMuFFunctionalForm(self: Pin<&mut fastNLOReader>, _: EScaleFunctionalForm);
     }
 
     unsafe extern "C++" {
@@ -192,5 +197,36 @@ pub mod ffi {
             _: &str,
             _: i32,
         ) -> UniquePtr<fastNLOLHAPDF>;
+    }
+}
+
+#[derive(Debug, Error)]
+#[error("invalid ScaleFunctionalForm syntax: {0}")]
+pub struct ScaleFunctionalFormParseError(String);
+
+impl FromStr for ffi::EScaleFunctionalForm {
+    type Err = ScaleFunctionalFormParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "kScale1" => Ok(Self::kScale1),
+            "kScale2" => Ok(Self::kScale2),
+            "kQuadraticSum" => Ok(Self::kQuadraticSum),
+            "kQuadraticMean" => Ok(Self::kQuadraticMean),
+            "kQuadraticSumOver4" => Ok(Self::kQuadraticSumOver4),
+            "kLinearMean" => Ok(Self::kLinearMean),
+            "kLinearSum" => Ok(Self::kLinearSum),
+            "kScaleMax" => Ok(Self::kScaleMax),
+            "kScaleMin" => Ok(Self::kScaleMin),
+            "kProd" => Ok(Self::kProd),
+            "kS2plusS1half" => Ok(Self::kS2plusS1half),
+            "kPow4Sum" => Ok(Self::kPow4Sum),
+            "kWgtAvg" => Ok(Self::kWgtAvg),
+            "kS2plusS1fourth" => Ok(Self::kS2plusS1fourth),
+            "kExpProd2" => Ok(Self::kExpProd2),
+            "kExtern" => Ok(Self::kExtern),
+            "kConst" => Ok(Self::kConst),
+            _ => Err(ScaleFunctionalFormParseError(s.to_string())),
+        }
     }
 }

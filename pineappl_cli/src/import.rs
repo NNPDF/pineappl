@@ -55,6 +55,8 @@ fn convert_fastnlo(
     member: usize,
     dis_pid: i32,
     scales: usize,
+    fnlo_mur: Option<&str>,
+    fnlo_muf: Option<&str>,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_fastnlo::ffi;
     use std::ptr;
@@ -64,6 +66,18 @@ fn convert_fastnlo(
         pdfset,
         member.try_into().unwrap(),
     );
+
+    {
+        let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
+
+        if let Some(mur) = fnlo_mur {
+            reader.as_mut().SetMuRFunctionalForm(mur.parse()?);
+        }
+        if let Some(muf) = fnlo_muf {
+            reader.as_mut().SetMuFFunctionalForm(muf.parse()?);
+        }
+    }
+
     let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
     let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
 
@@ -107,6 +121,8 @@ fn convert_fastnlo(
     _: usize,
     _: i32,
     _: usize,
+    _: Option<&str>,
+    _: Option<&str>,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fastnlo`"
@@ -134,6 +150,8 @@ fn convert_grid(
     member: usize,
     dis_pid: i32,
     scales: usize,
+    fnlo_mur: Option<&str>,
+    fnlo_muf: Option<&str>,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     if let Some(extension) = input.extension() {
         if extension == "tab"
@@ -143,7 +161,9 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(input, alpha, pdfset, member, dis_pid, scales);
+            return convert_fastnlo(
+                input, alpha, pdfset, member, dis_pid, scales, fnlo_mur, fnlo_muf,
+            );
         } else if extension == "dat" {
             return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
@@ -180,6 +200,14 @@ pub struct Opts {
         value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())
     )]
     scales: usize,
+    /// If importing a fastNLO flexible-scale grid, use the specified functional form for the
+    /// renormalization scale.
+    #[arg(long)]
+    fnlo_mur: Option<String>,
+    /// If importing a fastNLO flexible-scale grid, use the specified functional form for the
+    /// factorization scale.
+    #[arg(long)]
+    fnlo_muf: Option<String>,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -206,6 +234,8 @@ impl Subcommand for Opts {
             0,
             self.dis_pid,
             self.scales,
+            self.fnlo_mur.as_deref(),
+            self.fnlo_muf.as_deref(),
         )?;
 
         if !self.no_optimize {

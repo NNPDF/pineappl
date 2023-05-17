@@ -16,6 +16,8 @@ Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
   -s, --scales <SCALES>      Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
+      --fnlo-mur <FNLO_MUR>  If importing a fastNLO flexible-scale grid, use the specified functional form for the renormalization scale
+      --fnlo-muf <FNLO_MUF>  If importing a fastNLO flexible-scale grid, use the specified functional form for the factorization scale
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
       --no-optimize          Do not optimize converted grid
@@ -37,6 +39,44 @@ const IMPORT_FLEX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff    s
 1  3.6097335e1  3.6097335e1 -6.8833828e-15 8.8817842e-15
 2  8.0048746e0  8.0048746e0  5.3290705e-15 6.8833828e-15
 3 9.4319392e-1 9.4319392e-1  5.5511151e-15 5.5511151e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_SCALE_1_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.1965747e1  8.1965747e1  1.5543122e-15 7.6605389e-15
+1  3.6115068e1  3.6115068e1 -3.1086245e-15 1.4321877e-14
+2  8.1057136e0  8.1057136e0  8.8817842e-16 5.7731597e-15
+3 9.5444782e-1 9.5444782e-1  5.5511151e-15 5.5511151e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_SCALE_2_STR: &str = "b   PineAPPL     fastNLO      rel. diff   svmaxreldiff
+-+------------+------------+-------------+-------------
+0  8.3815533e1  8.3815533e1 4.8849813e-15 4.8849813e-15
+1  3.6084994e1  3.6084994e1 2.6645353e-15 7.7715612e-15
+2  7.8842272e0  7.8842272e0 1.9984014e-15 4.3298698e-15
+3 9.1960866e-1 9.1960866e-1 3.1086245e-15 5.3290705e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_QUADRATIC_SUM_STR: &str =
+    "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.1098571e1  8.1098571e1 -4.7739590e-15 7.3274720e-15
+1  3.5222658e1  3.5222658e1  1.1102230e-15 6.6613381e-15
+2  7.7939468e0  7.7939468e0  1.9984014e-15 4.5519144e-15
+3 9.1540624e-1 9.1540624e-1 -5.9952043e-15 7.7715612e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR: &str =
+    "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.2712488e1  8.2712488e1  2.2204460e-16 1.0214052e-14
+1  3.6091182e1  3.6091182e1 -7.7715612e-16 5.9952043e-15
+2  7.9809031e0  7.9809031e0 -6.9944051e-15 9.5479180e-15
+3 9.3467326e-1 9.3467326e-1  6.6613381e-16 2.4424907e-15
 ";
 
 #[cfg(feature = "fktable")]
@@ -191,6 +231,98 @@ fn import_flex_grid() {
         .assert()
         .success()
         .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_scale_1() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kScale1",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_SCALE_1_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_scale_2() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kScale2",
+            "--fnlo-muf=kScale2",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_SCALE_2_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_quadratic_sum() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kQuadraticSum",
+            "--fnlo-muf=kQuadraticSum",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(
+            IMPORT_FLEX_GRID_QUADRATIC_SUM_STR,
+        ));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_quadratic_mean() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kQuadraticMean",
+            "--fnlo-muf=kQuadraticMean",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(
+            IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR,
+        ));
 }
 
 #[test]
