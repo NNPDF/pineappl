@@ -79,6 +79,105 @@ const IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR: &str =
 3 9.3467326e-1 9.3467326e-1  6.6613381e-16 2.4424907e-15
 ";
 
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_5_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.4122343e1  8.4122343e1  8.6597396e-15 8.6597396e-15
+1  3.6813708e1  3.6813708e1  5.9952043e-15 7.3274720e-15
+2  8.1178188e0  8.1178188e0 -1.1102230e-15 1.3322676e-14
+3 9.5090947e-1 9.5090947e-1  6.6613381e-15 6.6613381e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_6_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.2853942e1  8.2853942e1    0.0000000e0 5.1070259e-15
+1  3.6103118e1  3.6103118e1  7.1054274e-15 9.2148511e-15
+2  8.0161351e0  8.0161351e0 -2.6645353e-15 1.1324275e-14
+3 9.4536395e-1 9.4536395e-1  5.1070259e-15 5.8841820e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_7_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  7.9163980e1  7.9163980e1  3.7747583e-15 1.2323476e-14
+1  3.4313126e1  3.4313126e1 -4.7739590e-15 9.2148511e-15
+2  7.7006079e0  7.7006079e0 -3.2196468e-15 1.1546319e-14
+3 9.2392932e-1 9.2392932e-1 -4.3298698e-15 5.5511151e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_8_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.1965747e1  8.1965747e1  1.5543122e-15 7.6605389e-15
+1  3.5968167e1  3.5968167e1    0.0000000e0 7.7715612e-15
+2  7.9289155e0  7.9289155e0  1.3322676e-15 1.0436096e-14
+3 9.3523838e-1 9.3523838e-1 -2.6645353e-15 9.5479180e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_9_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.3760665e1  8.3760665e1  3.5527137e-15 9.5479180e-15
+1  3.6243722e1  3.6243722e1 -7.4384943e-15 1.7430501e-14
+2  8.1057136e0  8.1057136e0  8.8817842e-16 5.7731597e-15
+3 9.5444782e-1 9.5444782e-1  5.5511151e-15 5.5511151e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_10_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  6.9429217e1  6.9429217e1 -2.6645353e-15 5.1070259e-15
+1  2.9273448e1  2.9273448e1 -8.8817842e-16 5.7731597e-15
+2  6.6031456e0  6.6031456e0  2.6645353e-15 5.5511151e-15
+3 8.2741590e-1 8.2741590e-1 -8.7707619e-15 8.7707619e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_11_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.2113143e1  8.2113143e1 -2.9976022e-15 6.4392935e-15
+1  3.5603233e1  3.5603233e1 -2.2204460e-16 1.2212453e-14
+2  7.8899185e0  7.8899185e0 -4.8849813e-15 8.4376950e-15
+3 9.3402696e-1 9.3402696e-1 -2.3314684e-15 6.8833828e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_12_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.1720563e1  8.1720563e1 -8.5487173e-15 1.0658141e-14
+1  3.5668000e1  3.5668000e1  3.9968029e-15 9.4368957e-15
+2  7.9130511e0  7.9130511e0 -1.6653345e-15 6.4392935e-15
+3 9.3503500e-1 9.3503500e-1 -2.2204460e-16 5.1070259e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_13_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.2403226e1  8.2403226e1 -4.6629367e-15 5.5511151e-15
+1  3.6074907e1  3.6074907e1 -4.4408921e-16 5.8841820e-15
+2  7.9668487e0  7.9668487e0 -6.6613381e-16 1.0880186e-14
+3 9.3711914e-1 9.3711914e-1 -3.3306691e-15 8.6597396e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_14_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  8.2850540e1  8.2850540e1  6.8833828e-15 7.1054274e-15
+1  3.5828674e1  3.5828674e1  2.6645353e-15 1.0103030e-14
+2  7.9087501e0  7.9087501e0 -8.1046281e-15 8.1046281e-15
+3 9.3462321e-1 9.3462321e-1  4.4408921e-16 8.2156504e-15
+";
+
+#[cfg(feature = "fastnlo")]
+const IMPORT_FLEX_GRID_15_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
+-+------------+------------+--------------+-------------
+0  6.6997861e1  6.6997861e1  5.7731597e-15 1.1879386e-14
+1  2.6049196e1  2.6049196e1 -7.7715612e-16 1.3100632e-14
+2  5.2022797e0  5.2022797e0  8.4376950e-15 8.4376950e-15
+3 7.2427500e-1 7.2427500e-1  1.9984014e-15 9.5479180e-15
+";
+
 #[cfg(feature = "fktable")]
 const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff      scale uncertainty
     []        []              [%]       
@@ -323,6 +422,248 @@ fn import_flex_grid_quadratic_mean() {
         .stdout(predicates::str::ends_with(
             IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR,
         ));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_5() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kQuadraticSumOver4",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_5_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_6() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kLinearMean",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_6_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_7() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kLinearSum",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_7_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_8() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kScaleMax",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_8_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_9() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kScaleMin",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_9_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_10() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kProd",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_10_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_11() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kS2plusS1half",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_11_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_12() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kPow4Sum",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_12_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_13() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kWgtAvg",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_13_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_14() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kS2plusS1fourth",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_14_STR));
+}
+
+#[test]
+#[ignore]
+#[cfg(feature = "fastnlo")]
+fn import_flex_grid_15() {
+    let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "import",
+            "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--fnlo-mur=kExpProd2",
+            "--fnlo-muf=kScale1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_15_STR));
 }
 
 #[test]

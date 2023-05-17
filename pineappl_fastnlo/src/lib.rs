@@ -230,3 +230,28 @@ impl FromStr for ffi::EScaleFunctionalForm {
         }
     }
 }
+
+impl ffi::EScaleFunctionalForm {
+    pub fn compute_scale(self, s1: f64, s2: f64) -> f64 {
+        match self {
+            ffi::EScaleFunctionalForm::kScale1 => s1 * s1,
+            ffi::EScaleFunctionalForm::kScale2 => s2 * s2,
+            ffi::EScaleFunctionalForm::kQuadraticSum => s1 * s1 + s2 * s2,
+            ffi::EScaleFunctionalForm::kQuadraticMean => 0.5 * (s1 * s1 + s2 * s2),
+            ffi::EScaleFunctionalForm::kQuadraticSumOver4 => 0.25 * (s1 * s1 + s2 * s2),
+            ffi::EScaleFunctionalForm::kLinearMean => 0.25 * (s1 + s2).powi(2),
+            ffi::EScaleFunctionalForm::kLinearSum => (s1 + s2).powi(2),
+            ffi::EScaleFunctionalForm::kScaleMax => s1.max(s2).powi(2),
+            ffi::EScaleFunctionalForm::kScaleMin => s1.min(s2).powi(2),
+            ffi::EScaleFunctionalForm::kProd => (s1 * s2).powi(2),
+            ffi::EScaleFunctionalForm::kS2plusS1half => 0.5 * (s1 * s1 + 2.0 * s2 * s2),
+            ffi::EScaleFunctionalForm::kPow4Sum => (s1.powi(4) + s2.powi(4)).sqrt(),
+            ffi::EScaleFunctionalForm::kWgtAvg => (s1.powi(4) + s2.powi(4)) / (s1 * s1 + s2 * s2),
+            ffi::EScaleFunctionalForm::kS2plusS1fourth => 0.25 * s1 * s1 + s2 * s2,
+            ffi::EScaleFunctionalForm::kExpProd2 => (s1 * (0.3 * s2).exp()).powi(2),
+            ffi::EScaleFunctionalForm::kExtern => todo!(),
+            ffi::EScaleFunctionalForm::kConst => todo!(),
+            _ => unreachable!(),
+        }
+    }
+}

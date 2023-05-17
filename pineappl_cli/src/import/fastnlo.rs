@@ -270,89 +270,14 @@ fn convert_coeff_add_flex(
             vec![1.0]
         };
 
-        let mut mur2_values = Vec::new();
-
-        match mur_ff {
-            EScaleFunctionalForm::kScale1 => {
-                for s1 in &scale_nodes1 {
-                    for _ in 0..scale_nodes2.len() {
-                        mur2_values.push(s1 * s1);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kScale2 => {
-                for _ in 0..scale_nodes1.len() {
-                    for s2 in &scale_nodes2 {
-                        mur2_values.push(s2 * s2);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kQuadraticSum => {
-                for s1 in &scale_nodes1 {
-                    for s2 in &scale_nodes2 {
-                        mur2_values.push(s1 * s1 + s2 * s2);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kQuadraticMean => {
-                for s1 in &scale_nodes1 {
-                    for s2 in &scale_nodes2 {
-                        mur2_values.push(0.5 * (s1 * s1 + s2 * s2));
-                    }
-                }
-            }
-            _ => {
-                // TODO: NYI
-                unimplemented!()
-            }
-        }
-
-        let mut muf2_values = Vec::new();
-
-        match muf_ff {
-            EScaleFunctionalForm::kScale1 => {
-                for s1 in &scale_nodes1 {
-                    for _ in 0..scale_nodes2.len() {
-                        muf2_values.push(s1 * s1);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kScale2 => {
-                for _ in 0..scale_nodes1.len() {
-                    for s2 in &scale_nodes2 {
-                        muf2_values.push(s2 * s2);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kQuadraticSum => {
-                for s1 in &scale_nodes1 {
-                    for s2 in &scale_nodes2 {
-                        muf2_values.push(s1 * s1 + s2 * s2);
-                    }
-                }
-            }
-            EScaleFunctionalForm::kQuadraticMean => {
-                for s1 in &scale_nodes1 {
-                    for s2 in &scale_nodes2 {
-                        muf2_values.push(0.5 * (s1 * s1 + s2 * s2));
-                    }
-                }
-            }
-            _ => {
-                // TODO: NYI
-                unimplemented!()
-            }
-        }
-
-        let mut mu2_values = Vec::new();
-
-        for i in 0..(scale_nodes1.len() * scale_nodes2.len()) {
-            mu2_values.push(Mu2 {
-                ren: mur2_values[i],
-                fac: muf2_values[i],
-            });
-        }
-
+        let mu2_values: Vec<_> = scale_nodes1
+            .iter()
+            .cartesian_product(scale_nodes2.iter())
+            .map(|(&s1, &s2)| Mu2 {
+                ren: mur_ff.compute_scale(s1, s2),
+                fac: muf_ff.compute_scale(s1, s2),
+            })
+            .collect();
         let nx = ffi::GetNx(table, obs);
 
         for subproc in 0..table_as_add_base.GetNSubproc() {
