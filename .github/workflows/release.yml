@@ -19,6 +19,27 @@ jobs:
           # remove leading 'v' in tag name
           gh release create -d v${GITHUB_REF_NAME#v}
 
+  macos-capi:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Compile library
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          cargo install cargo-c
+          cd pineappl_capi
+          cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
+          cd prefix
+          tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_capi-${{ matrix.target }}
+          path: pineappl_capi-${{ matrix.target }}.tar.gz
+
   linux-capi:
     needs: [create-release]
     runs-on: ubuntu-latest
@@ -43,7 +64,7 @@ jobs:
 
   # publish a release on github and upload pre-built CAPI
   publish-release:
-    needs: [linux-capi]
+    needs: [macos-capi, linux-capi]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
