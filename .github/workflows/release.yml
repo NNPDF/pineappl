@@ -41,7 +41,6 @@ jobs:
           path: pineappl_capi-${{ matrix.target }}.tar.gz
 
   linux-capi:
-    needs: [create-release]
     runs-on: ubuntu-latest
     container: ghcr.io/nnpdf/pineappl-ci:latest
     strategy:
