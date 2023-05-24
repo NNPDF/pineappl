@@ -1,4 +1,4 @@
-name: Release CAPI, Rust crates and Python wheels
+name: Release
 
 on:
   push:
