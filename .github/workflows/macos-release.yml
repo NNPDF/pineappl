@@ -2,7 +2,6 @@ on: [push]
 
 jobs:
   macos-capi:
-    needs: [create-release]
     runs-on: macos-latest
     strategy:
       matrix:
