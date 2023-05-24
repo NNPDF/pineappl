@@ -30,7 +30,16 @@ echo
 
 # read from stdin (`<&1`), even if piped into a shell
 read -p "Enter installation path: " <&1 prefix
-prefix=${prefix%%/}
+
+if test ! -d "${prefix}"; then
+    echo "'${prefix}' doesn't exist, can't install into non-existing directories."
+    exit 1
+fi
+
+# we need the absolute path
+cd "${prefix}"
+prefix=$(pwd)
+cd - >/dev/null
 
 wget --quiet "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz -O- \
     | tar xzf - -C "${prefix}"
