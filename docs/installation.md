@@ -26,16 +26,15 @@ likely use, here are a few guidelines:
 
 The fastest way to install the CAPI is to download the pre-built binaries:
 
-    curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh -s 0.6.0-alpha.15
+    curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh -s 0.6.0-alpha.17
 
-This currently works only for Linux on `x86_64` machines. If you'd like to have
-other operating system and architectures supported, please open an Issue for
-that.
+This may not work for the system you're working with. If that's the case,
+please open an [Issue](https://github.com/NNPDF/pineappl/issues/new) for that.
 
 ### From source
 
-You first need to install Rust and `cargo`, see the [instructions](#rust)
-below.
+If you want to build the CAPI from source instead, you first need to install
+Rust and `cargo`, see the [instructions](#rust) below.
 
 1. Then install `cargo-c`, which is required for the next step:
 
