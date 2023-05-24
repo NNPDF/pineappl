@@ -23,12 +23,12 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        target: [x86_64-apple-darwin]
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
     steps:
       - uses: actions/checkout@v3
       - name: Compile library
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
           cargo install cargo-c
           cd pineappl_capi
           cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
