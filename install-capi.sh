@@ -6,7 +6,7 @@ if command -v gcc >/dev/null; then
     target=$(gcc -dumpmachine)
 
     case ${target} in
-        x86_64-*-linux-gnu | x86_64-linux-gnu) target=x86_64-unknown-linux-gnu;;
+        x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
         *) echo "target '${target}' unknown."; exit 1;;
     esac
 else
