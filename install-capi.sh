@@ -7,6 +7,7 @@ if command -v gcc >/dev/null; then
 
     case ${target} in
         x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
+        x86_64-apple-darwin*) target=x86_64-apple-darwin;;
         *) echo "Error: target '${target}' unknown."; exit 1;;
     esac
 else
