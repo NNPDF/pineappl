@@ -7,10 +7,10 @@ if command -v gcc >/dev/null; then
 
     case ${target} in
         x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
-        *) echo "target '${target}' unknown."; exit 1;;
+        *) echo "Error: target '${target}' unknown."; exit 1;;
     esac
 else
-    echo "target unknown."
+    echo "Error: target unknown."
     exit 1
 fi
 
@@ -32,7 +32,7 @@ echo
 read -p "Enter installation path: " <&1 prefix
 
 if test ! -d "${prefix}"; then
-    echo "'${prefix}' doesn't exist, can't install into non-existing directories."
+    echo "Error: '${prefix}' doesn't exist, can't install into non-existing directories."
     exit 1
 fi
 
