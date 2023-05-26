@@ -262,7 +262,7 @@ def main():
     plt.rc('legend', borderpad=0.0, fontsize='x-small', frameon=False)
     plt.rc('pdf', compression=0)
     plt.rc('text', usetex=True)
-    plt.rc('text.latex', preamble=r'\usepackage{{siunitx}}\usepackage{{lmodern}}')
+    plt.rc('text.latex', preamble=r'\usepackage{{siunitx}}\usepackage{{lmodern}}\usepackage[T1]{{fontenc}}')
     plt.rc('xtick', bottom=True, top=True)
     plt.rc('xtick', direction='in')
     plt.rc('xtick.major', width=0.5)
