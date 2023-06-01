@@ -42,6 +42,6 @@ cd "${prefix}"
 prefix=$(pwd)
 cd - >/dev/null
 
-wget --quiet "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz -O- \
+curl -s -LJ "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz \
     | tar xzf - -C "${prefix}"
 sed -i s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc
