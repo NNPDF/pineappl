@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 01/06/2023
 
-## [0.6.0] - 01/06/2023
-
 ### Added
 
 - added `--orders` switch to pull to allow the selection of a subset of
@@ -407,7 +405,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - first release
 
 [Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/NNPDF/pineappl/compare/v0.6.0...v0.6.0
 [0.6.0]: https://github.com/NNPDF/pineappl/compare/v0.5.9...v0.6.0
 [0.5.9]: https://github.com/NNPDF/pineappl/compare/v0.5.8...v0.5.9
 [0.5.8]: https://github.com/NNPDF/pineappl/compare/v0.5.7...v0.5.8
