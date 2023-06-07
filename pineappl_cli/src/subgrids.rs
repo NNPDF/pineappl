@@ -43,7 +43,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Show empty subgrids.
-    #[arg(long = "show-empty")]
+    #[arg(long)]
     show_empty: bool,
     #[command(flatten)]
     group: Group,

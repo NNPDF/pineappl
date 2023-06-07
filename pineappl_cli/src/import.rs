@@ -215,10 +215,10 @@ pub struct Opts {
     #[arg(default_value_t = 7, long, value_name = "REL")]
     digits_rel: usize,
     /// Do not optimize converted grid.
-    #[arg(long = "no-optimize")]
+    #[arg(long)]
     no_optimize: bool,
     /// Particle ID for the non-hadronic initial states if it cannot be determined from the grid.
-    #[arg(long = "dis-pid", default_value_t = 11)]
+    #[arg(long, default_value_t = 11)]
     dis_pid: i32,
 }
 
