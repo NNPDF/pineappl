@@ -174,6 +174,32 @@ fn convert_grid(
     Err(anyhow!("could not detect file format"))
 }
 
+#[cfg(feature = "fastnlo")]
+fn fnlo_mu_possible_values() -> Vec<&'static str> {
+    vec![
+        "kScale1",
+        "kScale2",
+        "kQuadraticSum",
+        "kQuadraticMean",
+        "kQuadraticSumOver4",
+        "kLinearMean",
+        "kLinearSum",
+        "kScaleMax",
+        "kScaleMin",
+        "kProd",
+        "kS2plusS1half",
+        "kPow4Sum",
+        "kWgtAvg",
+        "kS2plusS1fourth",
+        "kExpProd2",
+    ]
+}
+
+#[cfg(not(feature = "fastnlo"))]
+fn fnlo_mu_possible_values() -> Vec<&'static str> {
+    vec![]
+}
+
 /// Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids.
 #[derive(Parser)]
 pub struct Opts {
@@ -202,11 +228,11 @@ pub struct Opts {
     scales: usize,
     /// If importing a fastNLO flexible-scale grid, use the specified functional form for the
     /// renormalization scale.
-    #[arg(long)]
+    #[arg(long, value_parser = PossibleValuesParser::new(fnlo_mu_possible_values()))]
     fnlo_mur: Option<String>,
     /// If importing a fastNLO flexible-scale grid, use the specified functional form for the
     /// factorization scale.
-    #[arg(long)]
+    #[arg(long, value_parser = PossibleValuesParser::new(fnlo_mu_possible_values()))]
     fnlo_muf: Option<String>,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
