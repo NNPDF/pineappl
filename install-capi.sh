@@ -15,27 +15,50 @@ else
     exit 1
 fi
 
-if [ $# -eq 1 ]; then
-    version=$1
-else
-    # if no version is given, use the latest version
+prefix=
+version=
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --version)
+            version=$2
+            shift
+            shift
+            ;;
+        --prefix)
+            prefix=$2
+            shift
+            shift
+            ;;
+        *)
+            echo "Error: argument '$1' unknown"
+            exit 1
+            ;;
+    esac
+done
+
+# if no prefix is given, prompt for one
+if [ -z ${prefix} ]; then
+    # read from stdin (`<&1`), even if piped into a shell
+    read -p "Enter installation path: " <&1 prefix
+
+    if [ ! -d "${prefix}" ]; then
+        echo "Error: '${prefix}' doesn't exist, can't install into non-existing directories."
+        exit 1
+    fi
+fi
+
+# if no version is given, use the latest version
+if [ -z ${version} ]; then
     version=$(curl -s https://api.github.com/repos/NNPDF/pineappl/releases/latest | \
         sed -n 's/[ ]*"tag_name"[ ]*:[ ]*"v\([^"]*\)"[ ]*,[ ]*$/\1/p')
 fi
 
 base_url=https://github.com/NNPDF/pineappl/releases/download
 
+echo "prefix:  ${prefix}"
 echo "target:  ${target}"
 echo "version: ${version}"
-echo
-
-# read from stdin (`<&1`), even if piped into a shell
-read -p "Enter installation path: " <&1 prefix
-
-if test ! -d "${prefix}"; then
-    echo "Error: '${prefix}' doesn't exist, can't install into non-existing directories."
-    exit 1
-fi
 
 # we need the absolute path
 cd "${prefix}"
