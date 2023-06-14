@@ -3,6 +3,30 @@ use assert_cmd::Command;
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
 
+#[cfg(feature = "fastnlo")]
+const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
+
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+
+Arguments:
+  <INPUT>   Path to the input grid
+  <OUTPUT>  Path to the converted grid
+  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+
+Options:
+      --alpha <ALPHA>        LO coupling power in alpha [default: 0]
+      --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
+  -s, --scales <SCALES>      Set the number of scale variations to compare with if they are available [default: 7] [possible values: 1, 3, 7, 9]
+      --fnlo-mur <FNLO_MUR>  If importing a fastNLO flexible-scale grid, use the specified functional form for the renormalization scale [possible values: kScale1, kScale2, kQuadraticSum, kQuadraticMean, kQuadraticSumOver4, kLinearMean, kLinearSum, kScaleMax, kScaleMin, kProd, kS2plusS1half, kPow4Sum, kWgtAvg, kS2plusS1fourth, kExpProd2]
+      --fnlo-muf <FNLO_MUF>  If importing a fastNLO flexible-scale grid, use the specified functional form for the factorization scale [possible values: kScale1, kScale2, kQuadraticSum, kQuadraticMean, kQuadraticSumOver4, kLinearMean, kLinearSum, kScaleMax, kScaleMin, kProd, kS2plusS1half, kPow4Sum, kWgtAvg, kS2plusS1fourth, kExpProd2]
+      --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
+      --no-optimize          Do not optimize converted grid
+      --dis-pid <DIS_PID>    Particle ID for the non-hadronic initial states if it cannot be determined from the grid [default: 11]
+  -h, --help                 Print help
+";
+
+#[cfg(not(feature = "fastnlo"))]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
 Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
