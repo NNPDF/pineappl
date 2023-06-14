@@ -8,10 +8,8 @@ use std::process::{Command, ExitCode};
 use tempfile::Builder;
 
 fn find_subcommand(mut cmd: clap::Command, args: &[String]) -> Option<clap::Command> {
-    if !args.is_empty() {
-        for s in args.iter() {
-            cmd = cmd.find_subcommand(s)?.clone();
-        }
+    for s in args.iter() {
+        cmd = cmd.find_subcommand(s)?.clone();
     }
     Some(cmd)
 }
@@ -50,6 +48,7 @@ impl Subcommand for Opts {
 
             child.wait()?;
         } else {
+            // TODO: this probably doesn't make much sense
             man.render(&mut io::stdout())?;
         }
 
