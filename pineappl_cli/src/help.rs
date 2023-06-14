@@ -3,7 +3,7 @@ use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_mangen::Man;
 use is_terminal::IsTerminal;
-use std::io::{self, Write};
+use std::io;
 use std::process::{Command, ExitCode, Stdio};
 
 fn find_subcommand(mut cmd: clap::Command, args: &[String]) -> Option<clap::Command> {
@@ -39,10 +39,6 @@ impl Subcommand for Opts {
         let man = Man::new(find_subcommand(cmd, &self.subcommand).unwrap());
 
         if io::stdout().is_terminal() {
-            let mut buffer = Vec::new();
-
-            man.render(&mut buffer)?;
-
             // TODO: if `man` can't be found display the usual `--help` message
             let mut child = Command::new("man")
                 .args(["/dev/stdin"])
@@ -50,7 +46,7 @@ impl Subcommand for Opts {
                 .stdout(Stdio::inherit())
                 .spawn()?;
 
-            child.stdin.take().unwrap().write_all(&buffer)?;
+            man.render(&mut child.stdin.take().unwrap())?;
             child.wait()?;
         } else {
             man.render(&mut io::stdout())?;
