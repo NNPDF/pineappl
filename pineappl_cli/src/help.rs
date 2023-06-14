@@ -2,7 +2,8 @@ use super::helpers::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_mangen::Man;
-use std::io::Write;
+use is_terminal::IsTerminal;
+use std::io::{self, Write};
 use std::process::{Command, ExitCode, Stdio};
 
 fn find_subcommand(mut cmd: clap::Command, args: &[String]) -> Option<clap::Command> {
@@ -36,19 +37,24 @@ impl Subcommand for Opts {
 
         // TODO: if `unwrap` fails the arguments were wrong
         let man = Man::new(find_subcommand(cmd, &self.subcommand).unwrap());
-        let mut buffer = Vec::new();
 
-        man.render(&mut buffer)?;
+        if io::stdout().is_terminal() {
+            let mut buffer = Vec::new();
 
-        // TODO: if `man` can't be found display the usual `--help` message
-        let mut child = Command::new("man")
-            .args(["/dev/stdin"])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::inherit())
-            .spawn()?;
+            man.render(&mut buffer)?;
 
-        child.stdin.take().unwrap().write_all(&buffer)?;
-        child.wait()?;
+            // TODO: if `man` can't be found display the usual `--help` message
+            let mut child = Command::new("man")
+                .args(["/dev/stdin"])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::inherit())
+                .spawn()?;
+
+            child.stdin.take().unwrap().write_all(&buffer)?;
+            child.wait()?;
+        } else {
+            man.render(&mut io::stdout())?;
+        }
 
         Ok(ExitCode::SUCCESS)
     }
