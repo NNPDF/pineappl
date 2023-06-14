@@ -1043,6 +1043,7 @@ dependencies = [
  "serde",
  "serde_yaml",
  "tar",
+ "tempfile",
 ]
 
 [[package]]

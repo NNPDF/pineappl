@@ -38,6 +38,7 @@ rayon = "1.5.1"
 serde = { features = ["derive"], optional = true, version = "1.0.130" }
 serde_yaml = { optional = true, version = "0.9.13" }
 tar = { optional = true, version = "0.4.38" }
+tempfile = "3.5.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.2"
