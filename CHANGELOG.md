@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added switch `--no-pdf-unc` to `plot` subcommand to skip the time-consuming
+  computation of PDF uncertainties
+
 ## [0.6.0] - 01/06/2023
 
 ### Added
