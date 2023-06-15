@@ -20,6 +20,7 @@ wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.tar'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/dy_high_mass/CMS_DY_14TEV_MLL_6000_COSTH.pineappl.lz4'
+wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/dy_high_mass/NNPDF_DY_14TEV_BSM_AFB.pineappl.lz4'
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-fnlo-arxiv-1312.3524/grids/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz'
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-dijets-appl-arxiv-0010054/grids/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl'
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
