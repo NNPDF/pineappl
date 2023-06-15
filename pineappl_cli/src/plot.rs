@@ -83,14 +83,20 @@ fn map_format_parton(parton: i32) -> &'static str {
         6 => r#"\mathrm{t}"#,
         0 | 21 => r#"\mathrm{g}"#,
         22 => r#"\gamma"#,
-        _ => unimplemented!(),
+        _ => unimplemented!("PID = {parton} unknown"),
     }
 }
 
-fn map_format_lumi(lumi: &LumiEntry) -> String {
+fn map_format_lumi(lumi: &LumiEntry, has_pdf1: bool, has_pdf2: bool) -> String {
     lumi.entry()
         .iter()
-        .map(|&(a, b, _)| format!("{}{}", map_format_parton(a), map_format_parton(b)))
+        .map(|&(a, b, _)| {
+            format!(
+                "{}{}",
+                if has_pdf1 { map_format_parton(a) } else { "" },
+                if has_pdf2 { map_format_parton(b) } else { "" }
+            )
+        })
         .join(" + ")
 }
 
@@ -371,7 +377,11 @@ impl Subcommand for Opts {
                             let mut lumi_mask = vec![false; grid.lumi().len()];
                             lumi_mask[lumi] = true;
                             (
-                                map_format_lumi(&grid.lumi()[lumi]),
+                                map_format_lumi(
+                                    &grid.lumi()[lumi],
+                                    grid.has_pdf1(),
+                                    grid.has_pdf2(),
+                                ),
                                 helpers::convolute(
                                     &grid,
                                     &mut pdf,

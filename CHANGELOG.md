@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added switch `--no-pdf-unc` to `plot` subcommand to skip the time-consuming
   computation of PDF uncertainties
 
+### Fixed
+
+- fixed panic when trying to plot DIS observables
+
 ## [0.6.0] - 01/06/2023
 
 ### Added
