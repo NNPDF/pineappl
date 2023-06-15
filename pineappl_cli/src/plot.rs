@@ -45,6 +45,9 @@ pub struct Opts {
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
+    /// Disable the (time-consuming) calculation of PDF uncertainties.
+    #[arg(long)]
+    no_pdf_unc: bool,
 }
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -252,48 +255,66 @@ impl Subcommand for Opts {
                     .pdfsets
                     .par_iter()
                     .map(|pdfset| {
-                        let (set, member) = helpers::create_pdfset(pdfset).unwrap();
+                        if self.no_pdf_unc {
+                            let mut pdf = helpers::create_pdf(pdfset).unwrap();
 
-                        let pdf_results: Vec<_> = set
-                            .mk_pdfs()
-                            .into_par_iter()
-                            .flat_map(|mut pdf| {
-                                helpers::convolute(
-                                    &grid,
-                                    &mut pdf,
-                                    &[],
-                                    &bins,
-                                    &[],
-                                    1,
-                                    mode,
-                                    cfg.force_positive,
-                                )
-                            })
-                            .collect();
+                            let results = helpers::convolute(
+                                &grid,
+                                &mut pdf,
+                                &[],
+                                &bins,
+                                &[],
+                                1,
+                                mode,
+                                cfg.force_positive,
+                            );
 
-                        let bins = mid.len();
+                            vec![results; 3]
+                        } else {
+                            let (set, member) = helpers::create_pdfset(pdfset).unwrap();
 
-                        let mut central = Vec::with_capacity(bins);
-                        let mut min = Vec::with_capacity(bins);
-                        let mut max = Vec::with_capacity(bins);
-
-                        for bin in 0..bins {
-                            let values: Vec<_> = pdf_results
-                                .iter()
-                                .skip(bin)
-                                .step_by(bins)
-                                .copied()
+                            let pdf_results: Vec<_> = set
+                                .mk_pdfs()
+                                .into_par_iter()
+                                .flat_map(|mut pdf| {
+                                    helpers::convolute(
+                                        &grid,
+                                        &mut pdf,
+                                        &[],
+                                        &bins,
+                                        &[],
+                                        1,
+                                        mode,
+                                        cfg.force_positive,
+                                    )
+                                })
                                 .collect();
 
-                            let uncertainty =
-                                set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
-                            central
-                                .push(member.map_or(uncertainty.central, |member| values[member]));
-                            min.push(uncertainty.central - uncertainty.errminus);
-                            max.push(uncertainty.central + uncertainty.errplus);
-                        }
+                            let bins = mid.len();
 
-                        vec![central, min, max]
+                            let mut central = Vec::with_capacity(bins);
+                            let mut min = Vec::with_capacity(bins);
+                            let mut max = Vec::with_capacity(bins);
+
+                            for bin in 0..bins {
+                                let values: Vec<_> = pdf_results
+                                    .iter()
+                                    .skip(bin)
+                                    .step_by(bins)
+                                    .copied()
+                                    .collect();
+
+                                let uncertainty =
+                                    set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
+                                central.push(
+                                    member.map_or(uncertainty.central, |member| values[member]),
+                                );
+                                min.push(uncertainty.central - uncertainty.errminus);
+                                max.push(uncertainty.central + uncertainty.errplus);
+                            }
+
+                            vec![central, min, max]
+                        }
                     })
                     .collect();
 
