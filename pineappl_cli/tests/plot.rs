@@ -446,357 +446,357 @@ figure.savefig('plot.pdf')
 
 const DRELL_YAN_AFB_STR: &str = r#"#!/usr/bin/env python3
 
-    import math
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pickle
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+import pickle
 
-    # color cycler for different PDF results
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-    # color for the first PDF result with QCD-only predictions
-    colors0_qcd = 'red'
+# color cycler for different PDF results
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+# color for the first PDF result with QCD-only predictions
+colors0_qcd = 'red'
 
-    def percent_diff(a, b):
-        return (a / b - 1.0) * 100.0
+def percent_diff(a, b):
+    return (a / b - 1.0) * 100.0
 
-    def ylimits(axis):
-        # extract the y limits *not* considering margins
-        margins = axis.margins()
-        axis.margins(y=0.0)
-        ymin, ymax = axis.get_ylim()
-        axis.margins(y=margins[1])
+def ylimits(axis):
+    # extract the y limits *not* considering margins
+    margins = axis.margins()
+    axis.margins(y=0.0)
+    ymin, ymax = axis.get_ylim()
+    axis.margins(y=margins[1])
 
-        inc = 1.0
+    inc = 1.0
 
-        if (ymax - ymin) > 100.0:
-            ymin = -50.0
-            ymax = 50.0
-            inc = 25.0
-        elif (ymax - ymin) > 30.5:
-            inc = 10.0
-        elif (ymax - ymin) > 20.5:
-            inc = 5.0
-        elif (ymax - ymin) > 10.5:
-            inc = 2.0
-        elif (ymax - ymin) < 3.0:
-            inc = 0.5
+    if (ymax - ymin) > 100.0:
+        ymin = -50.0
+        ymax = 50.0
+        inc = 25.0
+    elif (ymax - ymin) > 30.5:
+        inc = 10.0
+    elif (ymax - ymin) > 20.5:
+        inc = 5.0
+    elif (ymax - ymin) > 10.5:
+        inc = 2.0
+    elif (ymax - ymin) < 3.0:
+        inc = 0.5
 
-        ymin = math.floor(ymin / inc) * inc
-        ymax = math.ceil(ymax / inc) * inc
+    ymin = math.floor(ymin / inc) * inc
+    ymax = math.ceil(ymax / inc) * inc
 
-        return [ymin, ymax, inc]
+    return [ymin, ymax, inc]
 
-    def plot_int(axis, **kwargs):
-        xmin = np.array([])
-        xmax = np.array([])
-        x = np.array([])
-        y = np.array([])
+def plot_int(axis, **kwargs):
+    xmin = np.array([])
+    xmax = np.array([])
+    x = np.array([])
+    y = np.array([])
 
-        for index, i in enumerate(kwargs['pdf_results']):
-            label, ycentral, ymin, ymax = i
-            x = np.append(x, ycentral[:-1])
-            xmin = np.append(xmin, ymin[:-1])
-            xmax = np.append(xmax, ymax[:-1])
-            y = np.append(y, label)
+    for index, i in enumerate(kwargs['pdf_results']):
+        label, ycentral, ymin, ymax = i
+        x = np.append(x, ycentral[:-1])
+        xmin = np.append(xmin, ymin[:-1])
+        xmax = np.append(xmax, ymax[:-1])
+        y = np.append(y, label)
 
-            # draw one- and two-sigma bands
-            if label == 'CENTRAL-PDF':
-                axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color=colors[index], linewidth=0)
-                # TODO: this is only correct for MC PDF uncertainties
-                axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color=colors[index], linewidth=0)
+        # draw one- and two-sigma bands
+        if label == 'CENTRAL-PDF':
+            axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color=colors[index], linewidth=0)
+            # TODO: this is only correct for MC PDF uncertainties
+            axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color=colors[index], linewidth=0)
 
-        axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
-        axis.margins(x=0.1, y=0.1)
+    axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
+    axis.margins(x=0.1, y=0.1)
 
-    def plot_abs(axis, **kwargs):
-        x = kwargs['x']
-        slice_label = kwargs['slice_label']
+def plot_abs(axis, **kwargs):
+    x = kwargs['x']
+    slice_label = kwargs['slice_label']
 
-        axis.set_yscale('log' if kwargs['ylog'] else 'linear')
-        axis.step(x, kwargs['y'], colors[0], linewidth=1.0, where='post', label=slice_label)
-        axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color=colors[0], linewidth=0.5, step='post')
-        axis.set_ylabel(kwargs['ylabel'])
+    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
+    axis.step(x, kwargs['y'], colors[0], linewidth=1.0, where='post', label=slice_label)
+    axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color=colors[0], linewidth=0.5, step='post')
+    axis.set_ylabel(kwargs['ylabel'])
 
-        if slice_label != '':
-            axis.legend()
+    if slice_label != '':
+        axis.legend()
 
-    def plot_ratio_pdf(axis, **kwargs):
-        x = kwargs['x']
-        slice_label = kwargs['slice_label']
-        pdf_uncertainties = kwargs['pdf_results']
+def plot_ratio_pdf(axis, **kwargs):
+    x = kwargs['x']
+    slice_label = kwargs['slice_label']
+    pdf_uncertainties = kwargs['pdf_results']
 
-        axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
+    axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
 
-        for index, i in enumerate(pdf_uncertainties):
-            label, y, ymin, ymax = i
-            y = y / pdf_uncertainties[0][1]
-            ymin = ymin / pdf_uncertainties[0][1]
-            ymax = ymax / pdf_uncertainties[0][1]
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        y = y / pdf_uncertainties[0][1]
+        ymin = ymin / pdf_uncertainties[0][1]
+        ymax = ymax / pdf_uncertainties[0][1]
 
-            axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
-            axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
 
-        axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
 
-        if slice_label != '':
-            t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
-            t.set_bbox({ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' })
+    if slice_label != '':
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
+        t.set_bbox({ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' })
 
-    def plot_abs_pdfs(axis, **kwargs):
-        x = kwargs['x']
-        slice_label = kwargs['slice_label']
-        pdf_uncertainties = kwargs['pdf_results']
-        channels = kwargs['channels']
+def plot_abs_pdfs(axis, **kwargs):
+    x = kwargs['x']
+    slice_label = kwargs['slice_label']
+    pdf_uncertainties = kwargs['pdf_results']
+    channels = kwargs['channels']
 
-        axis.set_yscale('log' if kwargs['ylog'] else 'linear')
-        axis.set_ylabel(kwargs['ylabel'])
+    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
+    axis.set_ylabel(kwargs['ylabel'])
 
-        for index, i in enumerate(pdf_uncertainties):
-            label, y, ymin, ymax = i
-            axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
-            axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
 
-        linestyles = ['--', ':']
-        for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
-            axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where='post')
+    linestyles = ['--', ':']
+    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+        axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where='post')
 
-        axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
 
-        if slice_label != '':
-            t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
-            t.set_bbox({ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' })
+    if slice_label != '':
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
+        t.set_bbox({ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' })
 
-    def plot_rel_ewonoff(axis, **kwargs):
-        x = kwargs['x']
-        y = percent_diff(kwargs['y'], kwargs['qcd_y'])
-        qcd_y = percent_diff(kwargs['qcd_y'], kwargs['qcd_y'])
-        qcd_ymin = percent_diff(kwargs['qcd_min'], kwargs['qcd_y'])
-        qcd_ymax = percent_diff(kwargs['qcd_max'], kwargs['qcd_y'])
-        ymin = percent_diff(kwargs['ymin'], kwargs['qcd_y'])
-        ymax = percent_diff(kwargs['ymax'], kwargs['qcd_y'])
-        pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
-        pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
+def plot_rel_ewonoff(axis, **kwargs):
+    x = kwargs['x']
+    y = percent_diff(kwargs['y'], kwargs['qcd_y'])
+    qcd_y = percent_diff(kwargs['qcd_y'], kwargs['qcd_y'])
+    qcd_ymin = percent_diff(kwargs['qcd_min'], kwargs['qcd_y'])
+    qcd_ymax = percent_diff(kwargs['qcd_max'], kwargs['qcd_y'])
+    ymin = percent_diff(kwargs['ymin'], kwargs['qcd_y'])
+    ymax = percent_diff(kwargs['ymax'], kwargs['qcd_y'])
+    pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
+    pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
 
-        axis.step(x, qcd_y, colors0_qcd, label='NLO QCD', linewidth=1.0, where='post')
-        #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label='7-p.\ scale var.', linewidth=0.5, step='post')
-        axis.step(x, y, colors[0], label='NLO QCD+EW', linewidth=1.0, where='post')
-        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label='7-p.\ scale var.', linewidth=0.5, step='post')
-        axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
-        axis.set_ylabel('NLO EW on/off [\si{\percent}]')
-        axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
+    axis.step(x, qcd_y, colors0_qcd, label='NLO QCD', linewidth=1.0, where='post')
+    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label='7-p.\ scale var.', linewidth=0.5, step='post')
+    axis.step(x, y, colors[0], label='NLO QCD+EW', linewidth=1.0, where='post')
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label='7-p.\ scale var.', linewidth=0.5, step='post')
+    axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
+    axis.set_ylabel('NLO EW on/off [\si{\percent}]')
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
 
-    def plot_rel_pdfunc(axis, **kwargs):
-        x = kwargs['x']
-        pdf_uncertainties = kwargs['pdf_results']
+def plot_rel_pdfunc(axis, **kwargs):
+    x = kwargs['x']
+    pdf_uncertainties = kwargs['pdf_results']
 
-        #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
-        #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
+    #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
+    #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
 
-        for index, i in enumerate(pdf_uncertainties):
-            label, y, ymin, ymax = i
-            ymin = percent_diff(ymin, y)
-            ymax = percent_diff(ymax, y)
-            axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
-            axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        ymin = percent_diff(ymin, y)
+        ymax = percent_diff(ymax, y)
+        axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
+        axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
 
-        #axis.legend(fontsize='xx-small') #rel_pdfunc
-        axis.set_ylabel('PDF uncertainty [\si{\percent}]')
+    #axis.legend(fontsize='xx-small') #rel_pdfunc
+    axis.set_ylabel('PDF uncertainty [\si{\percent}]')
 
-        this_ylim = ylimits(axis)
+    this_ylim = ylimits(axis)
 
-        if False:#SAVE-YLIM-PDFUNC
+    if False:#SAVE-YLIM-PDFUNC
+        with open('ylim-pdfunc', 'wb') as f:
+            pickle.dump(this_ylim, f)
+
+    if False:#LOAD-YLIM-PDFUNC
+        resave = False
+
+        with open('ylim-pdfunc', 'rb') as f:
+            ylim = pickle.load(f)
+
+        if ylim[0] < this_ylim[0]:
+            this_ylim[0] = ylim[0]
+            resave = True
+
+        if ylim[1] > this_ylim[1]:
+            this_ylim[1] = ylim[1]
+            resave = True
+
+        if ylim[2] > this_ylim[2]:
+            this_ylim[2] = ylim[2]
+            resave = True
+
+        if resave:
             with open('ylim-pdfunc', 'wb') as f:
                 pickle.dump(this_ylim, f)
 
-        if False:#LOAD-YLIM-PDFUNC
-            resave = False
+    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
+    space = 0.05 * (this_ylim[1] - this_ylim[0])
+    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
 
-            with open('ylim-pdfunc', 'rb') as f:
-                ylim = pickle.load(f)
+def plot_rel_pdfpull(axis, **kwargs):
+    central_y = kwargs['pdf_results'][0][1]
+    central_ymin = kwargs['pdf_results'][0][2]
+    central_ymax = kwargs['pdf_results'][0][3]
+    pdf_uncertainties = kwargs['pdf_results']
+    x = kwargs['x']
+    y = kwargs['y']
 
-            if ylim[0] < this_ylim[0]:
-                this_ylim[0] = ylim[0]
-                resave = True
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        diff = y - central_y
+        yerr = np.where(diff > 0.0, y - ymin, ymax - y)
+        cerr = np.where(diff > 0.0, central_ymax - central_y, central_y - central_ymin)
+        pull = diff / np.sqrt(np.power(yerr, 2) + np.power(cerr, 2))
 
-            if ylim[1] > this_ylim[1]:
-                this_ylim[1] = ylim[1]
-                resave = True
+        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\ pull', linewidth=0.5, step='post', zorder=2 * index)
+        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
 
-            if ylim[2] > this_ylim[2]:
-                this_ylim[2] = ylim[2]
-                resave = True
+    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
+    axis.set_ylabel('Pull [$\sigma$]')
+    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={'fontsize': 9}, loc='left')
 
-            if resave:
-                with open('ylim-pdfunc', 'wb') as f:
-                    pickle.dump(this_ylim, f)
+    this_ylim = ylimits(axis)
 
-        axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
-        space = 0.05 * (this_ylim[1] - this_ylim[0])
-        axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
+    if False:#SAVE-YLIM-PDFPULL
+        with open('ylim-pdfpull', 'wb') as f:
+            pickle.dump(this_ylim, f)
 
-    def plot_rel_pdfpull(axis, **kwargs):
-        central_y = kwargs['pdf_results'][0][1]
-        central_ymin = kwargs['pdf_results'][0][2]
-        central_ymax = kwargs['pdf_results'][0][3]
-        pdf_uncertainties = kwargs['pdf_results']
-        x = kwargs['x']
-        y = kwargs['y']
+    if False:#LOAD-YLIM-PDFPULL
+        resave = False
 
-        for index, i in enumerate(pdf_uncertainties):
-            label, y, ymin, ymax = i
-            diff = y - central_y
-            yerr = np.where(diff > 0.0, y - ymin, ymax - y)
-            cerr = np.where(diff > 0.0, central_ymax - central_y, central_y - central_ymin)
-            pull = diff / np.sqrt(np.power(yerr, 2) + np.power(cerr, 2))
+        with open('ylim-pdfpull', 'rb') as f:
+            ylim = pickle.load(f)
 
-            #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\ pull', linewidth=0.5, step='post', zorder=2 * index)
-            axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
+        if ylim[0] < this_ylim[0]:
+            this_ylim[0] = ylim[0]
+            resave = True
 
-        axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
-        axis.set_ylabel('Pull [$\sigma$]')
-        #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={'fontsize': 9}, loc='left')
+        if ylim[1] > this_ylim[1]:
+            this_ylim[1] = ylim[1]
+            resave = True
 
-        this_ylim = ylimits(axis)
+        if ylim[2] > this_ylim[2]:
+            this_ylim[2] = ylim[2]
+            resave = True
 
-        if False:#SAVE-YLIM-PDFPULL
+        if resave:
             with open('ylim-pdfpull', 'wb') as f:
                 pickle.dump(this_ylim, f)
 
-        if False:#LOAD-YLIM-PDFPULL
-            resave = False
+    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
+    space = 0.05 * (this_ylim[1] - this_ylim[0])
+    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
 
-            with open('ylim-pdfpull', 'rb') as f:
-                ylim = pickle.load(f)
+def main():
+    panels = [
+        #plot_int,
+        plot_abs,
+        plot_rel_ewonoff,
+        #plot_abs_pdfs,
+        #plot_ratio_pdf,
+        #plot_rel_pdfunc,
+        #plot_rel_pdfpull,
+    ]
 
-            if ylim[0] < this_ylim[0]:
-                this_ylim[0] = ylim[0]
-                resave = True
+    plt.rc('axes', axisbelow=True, grid=True, labelsize='small')
+    plt.rc('figure', figsize=(6.4,len(panels)*2.4))
+    #plt.rc('figure', figsize=(4.2,2.6))
+    plt.rc('figure.constrained_layout', hspace=0.0, use=True, wspace=0.0)
+    plt.rc('font', family='serif', size=14.0)
+    plt.rc('grid', linestyle='dotted')
+    plt.rc('legend', borderpad=0.0, fontsize='x-small', frameon=False)
+    plt.rc('pdf', compression=0)
+    plt.rc('text', usetex=True)
+    plt.rc('text.latex', preamble=r'\usepackage{siunitx}\usepackage{lmodern}\usepackage[T1]{fontenc}')
+    plt.rc('xtick', bottom=True, top=True)
+    plt.rc('xtick', direction='in')
+    plt.rc('xtick.major', width=0.5)
+    plt.rc('xtick.minor', bottom=True, top=True, width=0.5)
+    plt.rc('ytick', direction='in')
+    plt.rc('ytick', left=True, right=True)
+    plt.rc('ytick.major', width=0.5)
+    plt.rc('ytick.minor', visible=True, width=0.5)
 
-            if ylim[1] > this_ylim[1]:
-                this_ylim[1] = ylim[1]
-                resave = True
+    xlabel = r'$\cos \theta^*$'
+    ylabel = r'$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]'
+    xlog = False
+    ylog = False
+    title = r''
 
-            if ylim[2] > this_ylim[2]:
-                this_ylim[2] = ylim[2]
-                resave = True
+    data_slices = data()
 
-            if resave:
-                with open('ylim-pdfpull', 'wb') as f:
-                    pickle.dump(this_ylim, f)
+    for index, kwargs in enumerate(data_slices):
+        kwargs['ylabel'] = ylabel
+        kwargs['ylog'] = ylog
 
-        axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
-        space = 0.05 * (this_ylim[1] - this_ylim[0])
-        axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
+        figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
-    def main():
-        panels = [
-            #plot_int,
-            plot_abs,
-            plot_rel_ewonoff,
-            #plot_abs_pdfs,
-            #plot_ratio_pdf,
-            #plot_rel_pdfunc,
-            #plot_rel_pdfpull,
-        ]
+        if len(kwargs['x']) > 2 and xlog:
+            axes[0, 0].set_xscale('log')
 
-        plt.rc('axes', axisbelow=True, grid=True, labelsize='small')
-        plt.rc('figure', figsize=(6.4,len(panels)*2.4))
-        #plt.rc('figure', figsize=(4.2,2.6))
-        plt.rc('figure.constrained_layout', hspace=0.0, use=True, wspace=0.0)
-        plt.rc('font', family='serif', size=14.0)
-        plt.rc('grid', linestyle='dotted')
-        plt.rc('legend', borderpad=0.0, fontsize='x-small', frameon=False)
-        plt.rc('pdf', compression=0)
-        plt.rc('text', usetex=True)
-        plt.rc('text.latex', preamble=r'\usepackage{siunitx}\usepackage{lmodern}\usepackage[T1]{fontenc}')
-        plt.rc('xtick', bottom=True, top=True)
-        plt.rc('xtick', direction='in')
-        plt.rc('xtick.major', width=0.5)
-        plt.rc('xtick.minor', bottom=True, top=True, width=0.5)
-        plt.rc('ytick', direction='in')
-        plt.rc('ytick', left=True, right=True)
-        plt.rc('ytick.major', width=0.5)
-        plt.rc('ytick.minor', visible=True, width=0.5)
+        axes[ 0, 0].set_title(title)
+        axes[-1, 0].set_xlabel(xlabel)
 
-        xlabel = r'$\cos \theta^*$'
-        ylabel = r'$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]'
-        xlog = False
-        ylog = False
-        title = r''
+        for plot, axis in zip(panels, axes[:, 0]):
+            plot(axis, **kwargs)
 
-        data_slices = data()
+        name = 'CMS_DY_14TEV_MLL_6000_COSTH' if len(data_slices) == 1 else 'CMS_DY_14TEV_MLL_6000_COSTH-{}'.format(index)
+        figure.savefig(name + '.pdf')
+        plt.close(figure)
 
-        for index, kwargs in enumerate(data_slices):
-            kwargs['ylabel'] = ylabel
-            kwargs['ylog'] = ylog
+def data():
+    return [
+        {
+            'slice_label'    : r'',
+            'x'        : np.array([0, 0.040000000000000036, 0.08000000000000007, 0.1200000000000001, 0.15999999999999992, 0.19999999999999996, 0.24, 0.28, 0.32000000000000006, 0.3600000000000001, 0.40000000000000013, 0.43999999999999995, 0.48, 0.52, 0.56, 0.6000000000000001, 0.6400000000000001, 0.6799999999999999, 0.72, 0.76, 0.8, 0.8400000000000001, 0.8800000000000001, 0.9199999999999999, 0.96, 1]),
+            'mid'      : np.array([0.020000000000000018, 0.06000000000000005, 0.10000000000000009, 0.14, 0.17999999999999994, 0.21999999999999997, 0.26, 0.30000000000000004, 0.3400000000000001, 0.3800000000000001, 0.42000000000000004, 0.45999999999999996, 0.5, 0.54, 0.5800000000000001, 0.6200000000000001, 0.66, 0.7, 0.74, 0.78, 0.8200000000000001, 0.8600000000000001, 0.9, 0.94, 0.98]),
+            'pdf_results' : [
+                (
+                    'NNPDF40\_nnlo\_as\_01180',
+                    np.array([-8.9073097e-3, -2.5258011e-2, -4.2074993e-2, -5.7119354e-2, -7.2072246e-2, -8.8769233e-2, -1.0168073e-1, -1.1291620e-1, -1.2694004e-1, -1.3981641e-1, -1.4822989e-1, -1.5828910e-1, -1.6656074e-1, -1.7672691e-1, -1.8106409e-1, -1.8604958e-1, -1.9264779e-1, -1.9711216e-1, -1.9947876e-1, -2.0333702e-1, -2.0602952e-1, -2.0751500e-1, -2.0920588e-1, -2.0522087e-1, -1.5755961e-1, -1.5755961e-1]),
+                    np.array([-1.3416731e-2, -3.8485931e-2, -6.4022917e-2, -8.7525834e-2, -1.1059996e-1, -1.3506164e-1, -1.5518895e-1, -1.7370393e-1, -1.9408882e-1, -2.1338899e-1, -2.2702283e-1, -2.4212719e-1, -2.5490585e-1, -2.6928706e-1, -2.7696185e-1, -2.8511886e-1, -2.9435668e-1, -3.0107075e-1, -3.0528544e-1, -3.1066117e-1, -3.1459806e-1, -3.1687573e-1, -3.1925830e-1, -3.1465864e-1, -2.4456638e-1, -2.4456638e-1]),
+                    np.array([-4.3978881e-3, -1.2030092e-2, -2.0127068e-2, -2.6712874e-2, -3.3544535e-2, -4.2476821e-2, -4.8172510e-2, -5.2128475e-2, -5.9791257e-2, -6.6243833e-2, -6.9436948e-2, -7.4451017e-2, -7.8215644e-2, -8.4166747e-2, -8.5166318e-2, -8.6980291e-2, -9.0938899e-2, -9.3153568e-2, -9.3672084e-2, -9.6012876e-2, -9.7460983e-2, -9.8154272e-2, -9.9153450e-2, -9.5783090e-2, -7.0552833e-2, -7.0552833e-2]),
+                ),
+            ],
+            'qcd_y'    : np.array([3.4060393e-1, 3.1239162e-1, 2.8236865e-1, 2.5204440e-1, 2.2027062e-1, 1.8330509e-1, 1.4809384e-1, 1.1425767e-1, 7.6660680e-2, 3.6421227e-2, -5.6702183e-4, -4.0067881e-2, -7.7065660e-2, -1.1699364e-1, -1.5433019e-1, -1.8771120e-1, -2.2252900e-1, -2.5882410e-1, -2.8999686e-1, -3.1960854e-1, -3.4892702e-1, -3.7642536e-1, -4.0195834e-1, -4.1633000e-1, 8.5196552e-2, 8.5196552e-2]),
+            'qcd_min'  : np.array([3.1393331e-1, 2.8541258e-1, 2.5453837e-1, 2.2520373e-1, 1.9153969e-1, 1.5373252e-1, 1.2091266e-1, 8.7441276e-2, 4.6199493e-2, 7.9795752e-3, -2.8815460e-2, -6.5868718e-2, -1.0377913e-1, -1.4454053e-1, -1.7755734e-1, -2.0974627e-1, -2.4690254e-1, -2.7952423e-1, -3.0808746e-1, -3.3785907e-1, -3.6546814e-1, -3.9154651e-1, -4.1471350e-1, -4.2763062e-1, 7.3979299e-2, 7.3979299e-2]),
+            'qcd_max'  : np.array([3.9324409e-1, 3.6614811e-1, 3.3723066e-1, 3.0795336e-1, 2.7714351e-1, 2.4117628e-1, 2.0668667e-1, 1.7348735e-1, 1.3640960e-1, 9.6619594e-2, 5.9739031e-2, 2.0285327e-2, -1.6727709e-2, -5.7013935e-2, -9.4783662e-2, -1.2872110e-1, -1.6418718e-1, -2.0140635e-1, -2.3348150e-1, -2.6407872e-1, -2.9445619e-1, -3.2302525e-1, -3.4972652e-1, -3.6499386e-1, 1.4337655e-1, 1.4337655e-1]),
+            'y'        : np.array([3.4060393e-1, 3.1239162e-1, 2.8236865e-1, 2.5204440e-1, 2.2027062e-1, 1.8330509e-1, 1.4809384e-1, 1.1425767e-1, 7.6660680e-2, 3.6421227e-2, -5.6702183e-4, -4.0067881e-2, -7.7065660e-2, -1.1699364e-1, -1.5433019e-1, -1.8771120e-1, -2.2252900e-1, -2.5882410e-1, -2.8999686e-1, -3.1960854e-1, -3.4892702e-1, -3.7642536e-1, -4.0195834e-1, -4.1633000e-1, 8.5196552e-2, 8.5196552e-2]),
+            'ymin'     : np.array([3.1393331e-1, 2.8541258e-1, 2.5453837e-1, 2.2520373e-1, 1.9153969e-1, 1.5373252e-1, 1.2091266e-1, 8.7441276e-2, 4.6199493e-2, 7.9795752e-3, -2.8815460e-2, -6.5868718e-2, -1.0377913e-1, -1.4454053e-1, -1.7755734e-1, -2.0974627e-1, -2.4690254e-1, -2.7952423e-1, -3.0808746e-1, -3.3785907e-1, -3.6546814e-1, -3.9154651e-1, -4.1471350e-1, -4.2763062e-1, 7.3979299e-2, 7.3979299e-2]),
+            'ymax'     : np.array([3.9324409e-1, 3.6614811e-1, 3.3723066e-1, 3.0795336e-1, 2.7714351e-1, 2.4117628e-1, 2.0668667e-1, 1.7348735e-1, 1.3640960e-1, 9.6619594e-2, 5.9739031e-2, 2.0285327e-2, -1.6727709e-2, -5.7013935e-2, -9.4783662e-2, -1.2872110e-1, -1.6418718e-1, -2.0140635e-1, -2.3348150e-1, -2.6407872e-1, -2.9445619e-1, -3.2302525e-1, -3.4972652e-1, -3.6499386e-1, 1.4337655e-1, 1.4337655e-1]),
+            'channels' : [
 
-            figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
+            ],
+        },
+    ]
 
-            if len(kwargs['x']) > 2 and xlog:
-                axes[0, 0].set_xscale('log')
+def metadata():
+    return {
+        'arxiv': r'',
+        'description': r'',
+        'hepdata': r'',
+        'initial_state_1': r'2212',
+        'initial_state_2': r'2212',
+        'lumi_id_types': r'pdg_mc_ids',
+        'mg5amc_repo': r'http://bazaar.launchpad.net/~maddevelopers/mg5amcnlo/3.3.1/',
+        'mg5amc_revno': r'981',
+        'patches': r'',
+        'pineappl_gitversion': r'v0.5.4-49-g04650d9',
+        'results_pdf': r'MSHT20nnlo_as118',
+        'runcard_gitversion': r'7b5180d',
+        'tau_min': r'',
+        'user_cuts': r'',
+        'x1_label': r'costh',
+        'x1_label_tex': r'$\cos \theta^*$',
+        'x1_unit': r'',
+        'y_label': r'dsig/dcosth',
+        'y_label_tex': r'$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$',
+        'y_unit': r'\pico\barn',
+    }
 
-            axes[ 0, 0].set_title(title)
-            axes[-1, 0].set_xlabel(xlabel)
-
-            for plot, axis in zip(panels, axes[:, 0]):
-                plot(axis, **kwargs)
-
-            name = 'CMS_DY_14TEV_MLL_6000_COSTH' if len(data_slices) == 1 else 'CMS_DY_14TEV_MLL_6000_COSTH-{}'.format(index)
-            figure.savefig(name + '.pdf')
-            plt.close(figure)
-
-    def data():
-        return [
-            {
-                'slice_label'    : r'',
-                'x'        : np.array([0, 0.040000000000000036, 0.08000000000000007, 0.1200000000000001, 0.15999999999999992, 0.19999999999999996, 0.24, 0.28, 0.32000000000000006, 0.3600000000000001, 0.40000000000000013, 0.43999999999999995, 0.48, 0.52, 0.56, 0.6000000000000001, 0.6400000000000001, 0.6799999999999999, 0.72, 0.76, 0.8, 0.8400000000000001, 0.8800000000000001, 0.9199999999999999, 0.96, 1]),
-                'mid'      : np.array([0.020000000000000018, 0.06000000000000005, 0.10000000000000009, 0.14, 0.17999999999999994, 0.21999999999999997, 0.26, 0.30000000000000004, 0.3400000000000001, 0.3800000000000001, 0.42000000000000004, 0.45999999999999996, 0.5, 0.54, 0.5800000000000001, 0.6200000000000001, 0.66, 0.7, 0.74, 0.78, 0.8200000000000001, 0.8600000000000001, 0.9, 0.94, 0.98]),
-                'pdf_results' : [
-                    (
-                        'NNPDF40\_nnlo\_as\_01180',
-                        np.array([-8.9073097e-3, -2.5258011e-2, -4.2074993e-2, -5.7119354e-2, -7.2072246e-2, -8.8769233e-2, -1.0168073e-1, -1.1291620e-1, -1.2694004e-1, -1.3981641e-1, -1.4822989e-1, -1.5828910e-1, -1.6656074e-1, -1.7672691e-1, -1.8106409e-1, -1.8604958e-1, -1.9264779e-1, -1.9711216e-1, -1.9947876e-1, -2.0333702e-1, -2.0602952e-1, -2.0751500e-1, -2.0920588e-1, -2.0522087e-1, -1.5755961e-1, -1.5755961e-1]),
-                        np.array([-1.3416731e-2, -3.8485931e-2, -6.4022917e-2, -8.7525834e-2, -1.1059996e-1, -1.3506164e-1, -1.5518895e-1, -1.7370393e-1, -1.9408882e-1, -2.1338899e-1, -2.2702283e-1, -2.4212719e-1, -2.5490585e-1, -2.6928706e-1, -2.7696185e-1, -2.8511886e-1, -2.9435668e-1, -3.0107075e-1, -3.0528544e-1, -3.1066117e-1, -3.1459806e-1, -3.1687573e-1, -3.1925830e-1, -3.1465864e-1, -2.4456638e-1, -2.4456638e-1]),
-                        np.array([-4.3978881e-3, -1.2030092e-2, -2.0127068e-2, -2.6712874e-2, -3.3544535e-2, -4.2476821e-2, -4.8172510e-2, -5.2128475e-2, -5.9791257e-2, -6.6243833e-2, -6.9436948e-2, -7.4451017e-2, -7.8215644e-2, -8.4166747e-2, -8.5166318e-2, -8.6980291e-2, -9.0938899e-2, -9.3153568e-2, -9.3672084e-2, -9.6012876e-2, -9.7460983e-2, -9.8154272e-2, -9.9153450e-2, -9.5783090e-2, -7.0552833e-2, -7.0552833e-2]),
-                    ),
-                ],
-                'qcd_y'    : np.array([3.4060393e-1, 3.1239162e-1, 2.8236865e-1, 2.5204440e-1, 2.2027062e-1, 1.8330509e-1, 1.4809384e-1, 1.1425767e-1, 7.6660680e-2, 3.6421227e-2, -5.6702183e-4, -4.0067881e-2, -7.7065660e-2, -1.1699364e-1, -1.5433019e-1, -1.8771120e-1, -2.2252900e-1, -2.5882410e-1, -2.8999686e-1, -3.1960854e-1, -3.4892702e-1, -3.7642536e-1, -4.0195834e-1, -4.1633000e-1, 8.5196552e-2, 8.5196552e-2]),
-                'qcd_min'  : np.array([3.1393331e-1, 2.8541258e-1, 2.5453837e-1, 2.2520373e-1, 1.9153969e-1, 1.5373252e-1, 1.2091266e-1, 8.7441276e-2, 4.6199493e-2, 7.9795752e-3, -2.8815460e-2, -6.5868718e-2, -1.0377913e-1, -1.4454053e-1, -1.7755734e-1, -2.0974627e-1, -2.4690254e-1, -2.7952423e-1, -3.0808746e-1, -3.3785907e-1, -3.6546814e-1, -3.9154651e-1, -4.1471350e-1, -4.2763062e-1, 7.3979299e-2, 7.3979299e-2]),
-                'qcd_max'  : np.array([3.9324409e-1, 3.6614811e-1, 3.3723066e-1, 3.0795336e-1, 2.7714351e-1, 2.4117628e-1, 2.0668667e-1, 1.7348735e-1, 1.3640960e-1, 9.6619594e-2, 5.9739031e-2, 2.0285327e-2, -1.6727709e-2, -5.7013935e-2, -9.4783662e-2, -1.2872110e-1, -1.6418718e-1, -2.0140635e-1, -2.3348150e-1, -2.6407872e-1, -2.9445619e-1, -3.2302525e-1, -3.4972652e-1, -3.6499386e-1, 1.4337655e-1, 1.4337655e-1]),
-                'y'        : np.array([3.4060393e-1, 3.1239162e-1, 2.8236865e-1, 2.5204440e-1, 2.2027062e-1, 1.8330509e-1, 1.4809384e-1, 1.1425767e-1, 7.6660680e-2, 3.6421227e-2, -5.6702183e-4, -4.0067881e-2, -7.7065660e-2, -1.1699364e-1, -1.5433019e-1, -1.8771120e-1, -2.2252900e-1, -2.5882410e-1, -2.8999686e-1, -3.1960854e-1, -3.4892702e-1, -3.7642536e-1, -4.0195834e-1, -4.1633000e-1, 8.5196552e-2, 8.5196552e-2]),
-                'ymin'     : np.array([3.1393331e-1, 2.8541258e-1, 2.5453837e-1, 2.2520373e-1, 1.9153969e-1, 1.5373252e-1, 1.2091266e-1, 8.7441276e-2, 4.6199493e-2, 7.9795752e-3, -2.8815460e-2, -6.5868718e-2, -1.0377913e-1, -1.4454053e-1, -1.7755734e-1, -2.0974627e-1, -2.4690254e-1, -2.7952423e-1, -3.0808746e-1, -3.3785907e-1, -3.6546814e-1, -3.9154651e-1, -4.1471350e-1, -4.2763062e-1, 7.3979299e-2, 7.3979299e-2]),
-                'ymax'     : np.array([3.9324409e-1, 3.6614811e-1, 3.3723066e-1, 3.0795336e-1, 2.7714351e-1, 2.4117628e-1, 2.0668667e-1, 1.7348735e-1, 1.3640960e-1, 9.6619594e-2, 5.9739031e-2, 2.0285327e-2, -1.6727709e-2, -5.7013935e-2, -9.4783662e-2, -1.2872110e-1, -1.6418718e-1, -2.0140635e-1, -2.3348150e-1, -2.6407872e-1, -2.9445619e-1, -3.2302525e-1, -3.4972652e-1, -3.6499386e-1, 1.4337655e-1, 1.4337655e-1]),
-                'channels' : [
-
-                ],
-            },
-        ]
-
-    def metadata():
-        return {
-            'arxiv': r'',
-            'description': r'',
-            'hepdata': r'',
-            'initial_state_1': r'2212',
-            'initial_state_2': r'2212',
-            'lumi_id_types': r'pdg_mc_ids',
-            'mg5amc_repo': r'http://bazaar.launchpad.net/~maddevelopers/mg5amcnlo/3.3.1/',
-            'mg5amc_revno': r'981',
-            'patches': r'',
-            'pineappl_gitversion': r'v0.5.4-49-g04650d9',
-            'results_pdf': r'MSHT20nnlo_as118',
-            'runcard_gitversion': r'7b5180d',
-            'tau_min': r'',
-            'user_cuts': r'',
-            'x1_label': r'costh',
-            'x1_label_tex': r'$\cos \theta^*$',
-            'x1_unit': r'',
-            'y_label': r'dsig/dcosth',
-            'y_label_tex': r'$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$',
-            'y_unit': r'\pico\barn',
-        }
-
-    if __name__ == '__main__':
-        main()
+if __name__ == '__main__':
+    main()
 "#;
 
 #[test]
