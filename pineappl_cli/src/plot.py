@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -9,6 +10,80 @@ import pickle
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 # color for the first PDF result with QCD-only predictions
 colors0_qcd = 'red'
+
+# stylesheet for plot
+stylesheet = {{
+    'axes.axisbelow': True,
+    'axes.grid': True,
+    'axes.labelsize': 'small',
+    'figure.constrained_layout.hspace': 0.0,
+    'figure.constrained_layout.use': True,
+    'figure.constrained_layout.wspace': 0.0,
+    'font.family': 'serif',
+    'font.size': 14.0,
+    'grid.linestyle': 'dotted',
+    'legend.borderpad': 0.0,
+    'legend.fontsize': 'x-small',
+    'legend.frameon': False,
+    'pdf.compression': 0,
+    'text.usetex': True,
+    'text.latex.preamble': r'\usepackage{{siunitx}}\usepackage{{lmodern}}\usepackage[T1]{{fontenc}}',
+    'xtick.bottom': True,
+    'xtick.top': True,
+    'xtick.direction': 'in',
+    'xtick.major.width': 0.5,
+    'xtick.minor.bottom': True,
+    'xtick.minor.top': True,
+    'xtick.minor.width': 0.5,
+    'ytick.direction': 'in',
+    'ytick.left': True,
+    'ytick.right': True,
+    'ytick.major.width': 0.5,
+    'ytick.minor.visible': True,
+    'ytick.minor.width': 0.5,
+}}
+
+# plot labels
+title = r'{title}'
+xlabel = r'{xlabel}'
+ylabel = r'{ylabel}'
+
+xlog = {xlog}
+ylog = {ylog}
+
+
+def main():
+    panels = [
+        {inte}plot_int,
+        {nint}plot_abs,
+        {nint}plot_rel_ewonoff,
+        {pdfs}plot_abs_pdfs,
+        {pdfs}plot_ratio_pdf,
+        {pdfs}plot_rel_pdfunc,
+        {pdfs}plot_rel_pdfpull,
+    ]
+
+    mpl.rcParams.update(stylesheet)
+    {nint}plt.rc('figure', figsize=(6.4, 2.4 * len(panels)))
+    {inte}plt.rc('figure', figsize=(4.2, 2.6))
+
+    data_slices = data()
+
+    for index, kwargs in enumerate(data_slices):
+        figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
+
+        if len(kwargs['x']) > 2 and xlog:
+            axes[0, 0].set_xscale('log')
+
+        axes[ 0, 0].set_title(title)
+        axes[-1, 0].set_xlabel(xlabel)
+
+        for plot, axis in zip(panels, axes[:, 0]):
+            plot(axis, **kwargs)
+
+        name = '{output}' if len(data_slices) == 1 else '{output}-{{}}'.format(index)
+        figure.savefig(name + '.pdf')
+        plt.close(figure)
 
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
@@ -66,10 +141,10 @@ def plot_abs(axis, **kwargs):
     x = kwargs['x']
     slice_label = kwargs['slice_label']
 
-    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
+    axis.set_yscale('log' if ylog else 'linear')
     axis.step(x, kwargs['y'], colors[0], linewidth=1.0, where='post', label=slice_label)
     axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color=colors[0], linewidth=0.5, step='post')
-    axis.set_ylabel(kwargs['ylabel'])
+    axis.set_ylabel(ylabel)
 
     if slice_label != '':
         axis.legend()
@@ -102,8 +177,8 @@ def plot_abs_pdfs(axis, **kwargs):
     pdf_uncertainties = kwargs['pdf_results']
     channels = kwargs['channels']
 
-    axis.set_yscale('log' if kwargs['ylog'] else 'linear')
-    axis.set_ylabel(kwargs['ylabel'])
+    axis.set_yscale('log' if ylog else 'linear')
+    axis.set_ylabel(ylabel)
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -241,63 +316,6 @@ def plot_rel_pdfpull(axis, **kwargs):
     axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
     space = 0.05 * (this_ylim[1] - this_ylim[0])
     axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
-
-def main():
-    panels = [
-        {inte}plot_int,
-        {nint}plot_abs,
-        {nint}plot_rel_ewonoff,
-        {pdfs}plot_abs_pdfs,
-        {pdfs}plot_ratio_pdf,
-        {pdfs}plot_rel_pdfunc,
-        {pdfs}plot_rel_pdfpull,
-    ]
-
-    plt.rc('axes', axisbelow=True, grid=True, labelsize='small')
-    {nint}plt.rc('figure', figsize=(6.4,len(panels)*2.4))
-    {inte}plt.rc('figure', figsize=(4.2,2.6))
-    plt.rc('figure.constrained_layout', hspace=0.0, use=True, wspace=0.0)
-    plt.rc('font', family='serif', size=14.0)
-    plt.rc('grid', linestyle='dotted')
-    plt.rc('legend', borderpad=0.0, fontsize='x-small', frameon=False)
-    plt.rc('pdf', compression=0)
-    plt.rc('text', usetex=True)
-    plt.rc('text.latex', preamble=r'\usepackage{{siunitx}}\usepackage{{lmodern}}\usepackage[T1]{{fontenc}}')
-    plt.rc('xtick', bottom=True, top=True)
-    plt.rc('xtick', direction='in')
-    plt.rc('xtick.major', width=0.5)
-    plt.rc('xtick.minor', bottom=True, top=True, width=0.5)
-    plt.rc('ytick', direction='in')
-    plt.rc('ytick', left=True, right=True)
-    plt.rc('ytick.major', width=0.5)
-    plt.rc('ytick.minor', visible=True, width=0.5)
-
-    xlabel = r'{xlabel}'
-    ylabel = r'{ylabel}'
-    xlog = {xlog}
-    ylog = {ylog}
-    title = r'{title}'
-
-    data_slices = data()
-
-    for index, kwargs in enumerate(data_slices):
-        kwargs['ylabel'] = ylabel
-        kwargs['ylog'] = ylog
-
-        figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
-
-        if len(kwargs['x']) > 2 and xlog:
-            axes[0, 0].set_xscale('log')
-
-        axes[ 0, 0].set_title(title)
-        axes[-1, 0].set_xlabel(xlabel)
-
-        for plot, axis in zip(panels, axes[:, 0]):
-            plot(axis, **kwargs)
-
-        name = '{output}' if len(data_slices) == 1 else '{output}-{{}}'.format(index)
-        figure.savefig(name + '.pdf')
-        plt.close(figure)
 
 def data():
     return {data}
