@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added switch `--no-pdf-unc` to `plot` subcommand to skip the time-consuming
   computation of PDF uncertainties
+- added new function `pineappl_grid_merge_bins` to the CAPI. This function
+  corresponds to `Grid::merge_bins` and merges a range of bins together into a
+  new bin.
 
 ### Fixed
 

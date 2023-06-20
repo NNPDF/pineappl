@@ -637,6 +637,22 @@ pub unsafe extern "C" fn pineappl_grid_read(filename: *const c_char) -> Box<Grid
     Box::new(Grid::read(reader).unwrap())
 }
 
+/// Merges the bins of corresponding to the indices from the half-open interval `[from, to]` into a
+/// single bin.
+///
+/// # Safety
+///
+/// The parameter `grid` must be valid `Grid` object created by either `pineappl_grid_new` or
+/// `pineappl_grid_read`.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_merge_bins(grid: *mut Grid, from: usize, to: usize) {
+    (*grid).merge_bins(from..to).unwrap();
+}
+
 /// Merges `other` into `grid` and subsequently deletes `other`.
 ///
 /// # Safety
