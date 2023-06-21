@@ -42,10 +42,10 @@ done
 if [ -z ${prefix} ]; then
     # read from stdin (`<&1`), even if piped into a shell
     read -p "Enter installation path: " <&1 prefix
+fi
 
-    if [ ! -d "${prefix}" ]; then
-        mkdir -p "${prefix}"
-    fi
+if [ ! -d "${prefix}" ]; then
+    mkdir -p "${prefix}"
 fi
 
 # if no version is given, use the latest version
