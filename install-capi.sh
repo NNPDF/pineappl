@@ -69,6 +69,6 @@ curl -s -LJ "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz \
     | tar xzf - -C "${prefix}"
 
 # sed -i doesn't work as expected with GNU sed
-sed s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc \
+sed s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc > \
     "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new
 mv "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new "${prefix}"/lib/pkgconfig/pineappl_capi.pc
