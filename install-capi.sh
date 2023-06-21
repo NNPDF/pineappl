@@ -44,8 +44,7 @@ if [ -z ${prefix} ]; then
     read -p "Enter installation path: " <&1 prefix
 
     if [ ! -d "${prefix}" ]; then
-        echo "Error: '${prefix}' doesn't exist, can't install into non-existing directories."
-        exit 1
+        mkdir -p "${prefix}"
     fi
 fi
 
