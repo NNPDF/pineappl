@@ -6,6 +6,7 @@ if command -v gcc >/dev/null; then
     target=$(gcc -dumpmachine)
 
     case ${target} in
+        arm64-apple-darwin*) target=aarch64-apple-darwin;;
         x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
         x86_64-apple-darwin*) target=x86_64-apple-darwin;;
         *) echo "Error: target '${target}' unknown."; exit 1;;
