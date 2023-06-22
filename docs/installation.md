@@ -3,20 +3,23 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/version.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
-`PineAPPL` is written in [`Rust`](https://www.rust-lang.org/), but besides Rust
-it also offers interfaces for the most popular programming languages: C and
-C++, Fortran and Python. Furthermore the program `pineappl` can be installed
-that will allow you to perform many operations on grids in your favorite shell:
-the command-line interface (CLI).
+`PineAPPL` and [its interface](https://docs.rs/pineappl/) is written in
+[Rust](https://www.rust-lang.org/), but besides Rust it also offers interfaces
+for the most popular programming languages: C, C++ and Fortran through its C
+API and Python through [PyO3](https://pyo3.rs/).
 
-Simply pick the interface(s) you're planning to use and follow the
-corresponding instructions below. If you don't know which interfaces you'll
-likely use, here are a few guidelines:
+Furthermore the program `pineappl` can be installed that will allow you to
+perform many operations on grids in your favorite shell: the command-line
+interface (CLI).
 
-- if you're planning to use PineAPPL within the NNPDF fitting framework, you'll
-  need the [Python interface](#python);
-- if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll need
-  the [C interface](#c-c-and-fortran-the-capi);
+Pick the interface(s) you're planning to use and follow the corresponding
+instructions below. If you don't know which interfaces you'll likely use, here
+are a few guidelines:
+
+- if you're planning to use PineAPPL with Python and/or within the NNPDF
+  fitting framework, you'll need the [Python interface](#python);
+- if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll likely
+  need the [CAPI](#c-c-and-fortran-the-capi);
 - if you want to quickly produce predictions, plots and small analyses install
   the [CLI](#cli-pineappl-for-your-shell).
 
@@ -28,14 +31,22 @@ The fastest way to install the CAPI is to download the pre-built binaries:
 
     curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh
 
-This may not work for the system you're working with. If that's the case,
-please open an [Issue](https://github.com/NNPDF/pineappl/issues/new) for that.
+The installation script will prompt you for the installation directory where
+the files shall be installed to. If you want to pass this directory on the
+command line, change the arguments to the shell:
+
+    .. | sh -s -- --prefix /my/custom/installation/path
+
+By default `install-capi.sh` will download the latest stable release. If you'd
+like a specific version, give it with `--version`:
+
+    .. | sh -s -- --version 0.6.0-alpha.18
 
 ### From source
 
-If you want to build the CAPI from source instead, you first need to install
-Rust and `cargo`, see the [instructions](#rust) below.
+If you want to build the CAPI from source instead, you first need to
 
+0. Install Rust, see the [instructions](#rust) below.
 1. Then install `cargo-c`, which is required for the next step:
 
        cargo install cargo-c
@@ -52,7 +63,6 @@ Rust and `cargo`, see the [instructions](#rust) below.
        cd ..
 
    where `${prefix}` points to the desired installation directory.
-
 3. Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
    `LD_LIBRARY_PATH` to the right directories. Adding
 
@@ -75,13 +85,13 @@ You need to install [Rust](#rust) first (see below). Then simply run
 
     cargo install pineappl_cli
 
-anywhere and you are done; this will automatically download the most-recently
+anywhere and you are done; this will automatically downloads the most-recently
 released version from [crates.io](https://crates.io).
 
 More functionality can be added by adding the `--feature=feature1,feature2,...`
 flag, see below.
 
-### Optional: APPLgrid converters
+### Optional: APPLgrid exporter/importer
 
 If you'd like to convert APPLgrids to PineAPPL grids, or vice versa, make sure
 to
@@ -97,13 +107,13 @@ to
 
 ### Optional: Evolution/EKO support
 
-If you'd like to convert PineAPPL grids into FK tables using evolution kernel
-operators (EKO), add the switch `--features=evolve` during the CLI's
-installation, for instance:
+If you'd like to convert PineAPPL grids into FK tables using [evolution kernel
+operators (EKO)](https://eko.readthedocs.io/), add the switch
+`--features=evolve` during the CLI's installation, for instance:
 
     cargo install --features=evolve pineappl_cli
 
-### Optional: fastNLO converter
+### Optional: fastNLO importer
 
 If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
 [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
