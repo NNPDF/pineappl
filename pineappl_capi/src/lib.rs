@@ -681,6 +681,18 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
     (*grid).scale(factor);
 }
 
+/// Splits the grid such that the luminosity function contains only a single combination per
+/// channel.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
+    (*grid).split_lumi();
+}
+
 /// Optimizes the grid representation for space efficiency.
 ///
 /// # Safety

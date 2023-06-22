@@ -2005,6 +2005,30 @@ impl Grid {
             .collect();
     }
 
+    /// Splits the grid such that the luminosity function contains only a single combination per
+    /// channel.
+    pub fn split_lumi(&mut self) {
+        let indices: Vec<_> = self
+            .lumi
+            .iter()
+            .enumerate()
+            .flat_map(|(index, entry)| iter::repeat(index).take(entry.entry().len()))
+            .collect();
+
+        self.subgrids = self.subgrids.select(Axis(2), &indices);
+        self.lumi = self
+            .lumi
+            .iter()
+            .flat_map(|entry| {
+                entry
+                    .entry()
+                    .iter()
+                    .cloned()
+                    .map(move |entry| LumiEntry::new(vec![entry]))
+            })
+            .collect();
+    }
+
     /// Returns `true` if the first initial state needs a convolution, `false` otherwise.
     #[must_use]
     pub fn has_pdf1(&self) -> bool {

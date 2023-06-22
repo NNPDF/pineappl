@@ -43,6 +43,7 @@ enum OpsArg {
     ScaleByOrder(Vec<f64>),
     SetKeyFile(Vec<String>),
     SetKeyValue(Vec<String>),
+    SplitLumi,
     Upgrade,
 }
 
@@ -101,6 +102,12 @@ impl FromArgMatches for MoreArgs {
                 }
                 "set_key_value" => OpsArg::SetKeyValue(matches.remove_many(&id).unwrap().collect()),
                 "set_key_file" => OpsArg::SetKeyFile(matches.remove_many(&id).unwrap().collect()),
+                "split_lumi" => {
+                    if !matches.remove_one::<bool>(&id).unwrap() {
+                        continue;
+                    }
+                    OpsArg::SplitLumi
+                }
                 "upgrade" => {
                     if !matches.remove_one::<bool>(&id).unwrap() {
                         continue;
@@ -257,6 +264,12 @@ impl Args for MoreArgs {
                 .value_names(["KEY", "FILE"]),
         )
         .arg(
+            Arg::new("split_lumi")
+                .action(ArgAction::SetTrue)
+                .help("Split the grid such that the luminosity function contains only a single combination per channel")
+                .long("split-lumi"),
+        )
+        .arg(
             Arg::new("upgrade")
                 .action(ArgAction::SetTrue)
                 .help("Convert the file format to the most recent version")
@@ -383,6 +396,7 @@ impl Subcommand for Opts {
                 OpsArg::SetKeyFile(key_file) => {
                     grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
+                OpsArg::SplitLumi => grid.split_lumi(),
                 OpsArg::Upgrade => grid.upgrade(),
             }
         }

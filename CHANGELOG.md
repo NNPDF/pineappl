@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new function `pineappl_grid_merge_bins` to the CAPI. This function
   corresponds to `Grid::merge_bins` and merges a range of bins together into a
   new bin.
+- added new function `Grid::split_lumi`, which splits the luminosity such that
+  it contains a single combination per partonic channel. This function is
+  available through the CAPI via `pineappl_grid_split_lumi` and via the CLI
+  through `pineappl write --split-lumi`
 
 ### Fixed
 

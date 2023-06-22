@@ -25,6 +25,7 @@ Options:
       --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
       --set-key-value <KEY> <VALUE>   Set an internal key-value pair
       --set-key-file <KEY> <FILE>     Set an internal key-value pair, with value being read from a file
+      --split-lumi                    Split the grid such that the luminosity function contains only a single combination per channel
       --upgrade                       Convert the file format to the most recent version
   -h, --help                          Print help
 ";
@@ -148,6 +149,21 @@ const SCALE_BY_ORDER_STR: &str = "b   etal    disg/detal  scale uncertainty
 6  3.5    4 3.3881527e1    -4.01     3.50
 7    4  4.5 8.2340900e0    -3.70     3.92
 ";
+
+const SPLIT_LUMI_STR: &str = "l    entry
+-+------------
+0 1 × ( 2, -1)
+1 1 × ( 4, -3)
+2 1 × ( 0, -3)
+3 1 × ( 0, -1)
+4 1 × (22, -3)
+5 1 × (22, -1)
+6 1 × ( 2,  0)
+7 1 × ( 4,  0)
+8 1 × ( 2, 22)
+9 1 × ( 4, 22)
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -476,6 +492,47 @@ fn scale_by_order() {
         .assert()
         .success()
         .stdout(SCALE_BY_ORDER_STR);
+}
+
+#[test]
+fn split_lumi() {
+    let output = NamedTempFile::new("split-lumi.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--split-lumi",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DEFAULT_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "read",
+            "--lumis",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout(SPLIT_LUMI_STR);
 }
 
 #[test]
