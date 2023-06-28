@@ -131,6 +131,10 @@ impl FkTable {
         &self.grid
     }
 
+    // TODO: when trying to convert the following function to `const` as per clippy's suggestion,
+    // the compiler errors out with: 'the destructor for this type cannot be evaluated in constant
+    // functions'
+
     /// Converts the `FkTable` back to a [`Grid`].
     #[must_use]
     pub fn into_grid(self) -> Grid {

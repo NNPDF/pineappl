@@ -462,17 +462,15 @@ impl Subcommand for Opts {
             let mut output = self.input.clone();
 
             // remove ".lz4" and ".pineappl" extension
-            match output.extension() {
-                Some(x) if x == "lz4" => {
+            if let Some(x) = output.extension() {
+                if x == "lz4" {
                     output = Path::new(output.file_stem().unwrap()).to_path_buf();
                 }
-                _ => {}
             }
-            match output.extension() {
-                Some(x) if x == "pineappl" => {
+            if let Some(x) = output.extension() {
+                if x == "pineappl" {
                     output = Path::new(output.file_stem().unwrap()).to_path_buf();
                 }
-                _ => {}
             }
 
             let xaxis = format!("x{}", grid.bin_info().dimensions());
@@ -501,7 +499,7 @@ impl Subcommand for Opts {
                 }
             );
             let xlog = if xunit.is_empty() { "False" } else { "True" };
-            let ylog = if xunit.is_empty() { "False" } else { "True" };
+            let ylog = xlog;
             let title = key_values.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let pdfs = self.pdfsets.len();

@@ -2023,7 +2023,7 @@ impl Grid {
                 entry
                     .entry()
                     .iter()
-                    .cloned()
+                    .copied()
                     .map(move |entry| LumiEntry::new(vec![entry]))
             })
             .collect();

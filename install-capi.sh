@@ -68,7 +68,7 @@ cd - >/dev/null
 curl -s -LJ "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz \
     | tar xzf - -C "${prefix}"
 
-# sed -i doesn't work as expected with GNU sed
+# instead of `sed` and `mv` we could use `sed -i`, but on Mac it doesn't work as expected from GNU sed
 sed s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc > \
     "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new
 mv "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new "${prefix}"/lib/pkgconfig/pineappl_capi.pc
