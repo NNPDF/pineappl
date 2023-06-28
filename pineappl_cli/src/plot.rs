@@ -88,13 +88,13 @@ fn map_format_parton(parton: i32) -> &'static str {
         108 => r#"\mathrm{T}_8"#,
         115 => r#"\mathrm{T}_{15}"#,
         124 => r#"\mathrm{T}_{24}"#,
-        135 => r#"\mathrm{T}_{15}"#,
+        135 => r#"\mathrm{T}_{35}"#,
         200 => r#"\mathrm{V}"#,
         203 => r#"\mathrm{V}_3"#,
         208 => r#"\mathrm{V}_8"#,
         215 => r#"\mathrm{V}_{15}"#,
         224 => r#"\mathrm{V}_{24}"#,
-        235 => r#"\mathrm{V}_{15}"#,
+        235 => r#"\mathrm{V}_{35}"#,
         _ => unimplemented!("PID = {parton} unknown"),
     }
 }
