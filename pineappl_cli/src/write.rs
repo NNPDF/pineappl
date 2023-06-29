@@ -134,15 +134,23 @@ impl Args for MoreArgs {
     fn augment_args(cmd: Command) -> Command {
         cmd.arg(
             Arg::new("cc1")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::Append)
+                .default_missing_value("true")
                 .help("Charge conjugate the first initial state")
-                .long("cc1"),
+                .long("cc1")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             Arg::new("cc2")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::Append)
+                .default_missing_value("true")
                 .help("Charge conjugate the second initial state")
-                .long("cc2"),
+                .long("cc2")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             Arg::new("delete_bins")
@@ -171,9 +179,13 @@ impl Args for MoreArgs {
         )
         .arg(
             Arg::new("optimize")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::Append)
+                .default_missing_value("true")
                 .help("Optimize internal data structure to minimize memory and disk usage")
-                .long("optimize"),
+                .long("optimize")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             Arg::new("optimize_fk_table")
@@ -265,15 +277,23 @@ impl Args for MoreArgs {
         )
         .arg(
             Arg::new("split_lumi")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::Append)
+                .default_missing_value("true")
                 .help("Split the grid such that the luminosity function contains only a single combination per channel")
-                .long("split-lumi"),
+                .long("split-lumi")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             Arg::new("upgrade")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::Append)
+                .default_missing_value("true")
                 .help("Convert the file format to the most recent version")
-                .long("upgrade"),
+                .long("upgrade")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_parser(clap::value_parser!(bool)),
         )
     }
 
@@ -290,7 +310,7 @@ impl Subcommand for Opts {
             match arg {
                 OpsArg::Cc1 | OpsArg::Cc2 => {
                     let cc1 = matches!(arg, OpsArg::Cc1);
-                    let cc2 = matches!(arg, OpsArg::Cc1);
+                    let cc2 = matches!(arg, OpsArg::Cc2);
 
                     let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
                         kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
