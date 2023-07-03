@@ -88,7 +88,7 @@ def main():
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
 
-def ylimits(axis):
+def set_ylim(axis, save, load, filename):
     # extract the y limits *not* considering margins
     margins = axis.margins()
     axis.margins(y=0.0)
@@ -113,7 +113,35 @@ def ylimits(axis):
     ymin = math.floor(ymin / inc) * inc
     ymax = math.ceil(ymax / inc) * inc
 
-    return [ymin, ymax, inc]
+    if save:
+        with open(filename, 'wb') as f:
+            pickle.dump([ymin, ymax, inc], f)
+
+    if load:
+        resave = False
+
+        with open(filename, 'rb') as f:
+            [saved_ymin, saved_ymax, saved_inc] = pickle.load(f)
+
+        if saved_ymin < ymin:
+            ymin = saved_ymin
+            resave = True
+
+        if saved_ymax > ymax:
+            ymax = saved_ymax
+            resave = True
+
+        if saved_inc > inc:
+            inc = saved_inc
+            resave = True
+
+        if resave:
+            with open(filename, 'wb') as f:
+                pickle.dump([ymin, ymax, inc], f)
+
+    axis.set_yticks(np.arange(ymin, ymax + inc, inc))
+    space = 0.05 * (ymax - ymin)
+    axis.set_ylim((ymin - space, ymax + space))
 
 def plot_int(axis, **kwargs):
     xmin = np.array([])
@@ -231,37 +259,7 @@ def plot_rel_pdfunc(axis, **kwargs):
     #axis.legend(fontsize='xx-small') #rel_pdfunc
     axis.set_ylabel('PDF uncertainty [\si{{\percent}}]')
 
-    this_ylim = ylimits(axis)
-
-    if False:#SAVE-YLIM-PDFUNC
-        with open('ylim-pdfunc', 'wb') as f:
-            pickle.dump(this_ylim, f)
-
-    if False:#LOAD-YLIM-PDFUNC
-        resave = False
-
-        with open('ylim-pdfunc', 'rb') as f:
-            ylim = pickle.load(f)
-
-        if ylim[0] < this_ylim[0]:
-            this_ylim[0] = ylim[0]
-            resave = True
-
-        if ylim[1] > this_ylim[1]:
-            this_ylim[1] = ylim[1]
-            resave = True
-
-        if ylim[2] > this_ylim[2]:
-            this_ylim[2] = ylim[2]
-            resave = True
-
-        if resave:
-            with open('ylim-pdfunc', 'wb') as f:
-                pickle.dump(this_ylim, f)
-
-    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
-    space = 0.05 * (this_ylim[1] - this_ylim[0])
-    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
+    set_ylim(axis, False, False, 'rel_pdfunc')
 
 def plot_rel_pdfpull(axis, **kwargs):
     central_y = kwargs['pdf_results'][0][1]
@@ -285,37 +283,7 @@ def plot_rel_pdfpull(axis, **kwargs):
     axis.set_ylabel('Pull [$\sigma$]')
     #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
 
-    this_ylim = ylimits(axis)
-
-    if False:#SAVE-YLIM-PDFPULL
-        with open('ylim-pdfpull', 'wb') as f:
-            pickle.dump(this_ylim, f)
-
-    if False:#LOAD-YLIM-PDFPULL
-        resave = False
-
-        with open('ylim-pdfpull', 'rb') as f:
-            ylim = pickle.load(f)
-
-        if ylim[0] < this_ylim[0]:
-            this_ylim[0] = ylim[0]
-            resave = True
-
-        if ylim[1] > this_ylim[1]:
-            this_ylim[1] = ylim[1]
-            resave = True
-
-        if ylim[2] > this_ylim[2]:
-            this_ylim[2] = ylim[2]
-            resave = True
-
-        if resave:
-            with open('ylim-pdfpull', 'wb') as f:
-                pickle.dump(this_ylim, f)
-
-    axis.set_yticks(np.arange(this_ylim[0], this_ylim[1] + this_ylim[2], this_ylim[2]))
-    space = 0.05 * (this_ylim[1] - this_ylim[0])
-    axis.set_ylim((this_ylim[0] - space, this_ylim[1] + space))
+    set_ylim(axis, False, False, 'rel_pdfpull')
 
 def data():
     return {data}
