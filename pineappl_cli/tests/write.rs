@@ -14,7 +14,7 @@ Options:
       --cc2[=<cc2>]                   Charge conjugate the second initial state [possible values: true, false]
       --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --delete-key <KEY>              Delete an internal key-value pair
-      --merge-bins <BIN1-BIN2>        Merge specific bins together
+      --merge-bins <BIN1-BIN2,...>    Merge specific bins together
       --optimize[=<optimize>]         Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
       --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
       --remap <REMAPPING>             Modify the bin dimensions and widths
@@ -162,6 +162,17 @@ const SPLIT_LUMI_STR: &str = "l    entry
 7 1 × ( 4,  0)
 8 1 × ( 2, 22)
 9 1 × ( 4, 22)
+";
+
+const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    disg/detal  scale uncertainty
+     []        [pb]            [%]       
+-+----+----+-----------+--------+--------
+0    2  2.5 3.7627688e2    -3.74     2.73
+1  2.5    3 2.8214731e2    -3.76     2.87
+2    3 3.25 1.8696821e2    -3.73     2.94
+3 3.25  3.5 1.2647520e2    -3.70     2.96
+4  3.5    4 5.9463128e1    -3.64     2.96
+5    4  4.5 1.4511966e1    -3.58     2.93
 ";
 
 #[test]
@@ -550,4 +561,36 @@ fn upgrade() {
         .assert()
         .success()
         .stdout("");
+}
+
+#[test]
+fn multiple_arguments() {
+    let output = NamedTempFile::new("multiple.merge.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "--merge-bins=0-1,2-3",
+            "--scale=2",
+            "--merge-bins=0-0",
+            "--scale=0.5",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(MULTIPLE_ARGUMENTS_STR);
 }

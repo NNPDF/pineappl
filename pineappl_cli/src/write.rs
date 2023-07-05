@@ -27,13 +27,14 @@ pub struct Opts {
     more_args: MoreArgs,
 }
 
+#[derive(Clone)]
 enum OpsArg {
-    Cc1,
-    Cc2,
-    DeleteBins(Vec<usize>),
+    Cc1(bool),
+    Cc2(bool),
+    DeleteBins(Vec<RangeInclusive<usize>>),
     DeleteKey(String),
-    MergeBins(RangeInclusive<usize>),
-    Optimize,
+    MergeBins(Vec<RangeInclusive<usize>>),
+    Optimize(bool),
     OptimizeFkTable(FkAssumptions),
     Remap(String),
     RemapNorm(f64),
@@ -43,8 +44,8 @@ enum OpsArg {
     ScaleByOrder(Vec<f64>),
     SetKeyFile(Vec<String>),
     SetKeyValue(Vec<String>),
-    SplitLumi,
-    Upgrade,
+    SplitLumi(bool),
+    Upgrade(bool),
 }
 
 struct MoreArgs {
@@ -61,64 +62,143 @@ impl FromArgMatches for MoreArgs {
         let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_string()).collect();
 
         for id in ids {
-            args.push(match id.as_str() {
-                "cc1" => {
-                    if !matches.remove_one::<bool>(&id).unwrap() {
-                        continue;
-                    }
-                    OpsArg::Cc1
-                }
-                "cc2" => {
-                    if !matches.remove_one::<bool>(&id).unwrap() {
-                        continue;
-                    }
-                    OpsArg::Cc2
-                }
-                "delete_bins" => OpsArg::DeleteBins(
-                    matches
-                        .remove_many::<RangeInclusive<usize>>(&id)
+            let indices: Vec<_> = matches.indices_of(&id).unwrap().collect();
+            args.resize(indices.iter().max().unwrap() + 1, None);
+
+            match id.as_str() {
+                "cc1" | "cc2" | "optimize" | "split_lumi" | "upgrade" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
                         .unwrap()
-                        .flatten()
-                        .collect(),
-                ),
-                "delete_key" => OpsArg::DeleteKey(matches.remove_one(&id).unwrap()),
-                "merge_bins" => OpsArg::MergeBins(matches.remove_one(&id).unwrap()),
-                "optimize" => {
-                    if !matches.remove_one::<bool>(&id).unwrap() {
-                        continue;
+                        .map(Iterator::collect)
+                        .collect();
+                    assert_eq!(arguments.len(), indices.len());
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "cc1" => OpsArg::Cc1(arg[0]),
+                            "cc2" => OpsArg::Cc2(arg[0]),
+                            "optimize" => OpsArg::Optimize(arg[0]),
+                            "split_lumi" => OpsArg::SplitLumi(arg[0]),
+                            "upgrade" => OpsArg::Upgrade(arg[0]),
+                            _ => unreachable!(),
+                        });
                     }
-                    OpsArg::Optimize
                 }
-                "optimize_fk_table" => OpsArg::OptimizeFkTable(matches.remove_one(&id).unwrap()),
-                "remap" => OpsArg::Remap(matches.remove_one(&id).unwrap()),
-                "remap_norm" => OpsArg::RemapNorm(matches.remove_one(&id).unwrap()),
                 "remap_norm_ignore" => {
-                    OpsArg::RemapNormIgnore(matches.remove_many(&id).unwrap().collect())
-                }
-                "scale" => OpsArg::Scale(matches.remove_one(&id).unwrap()),
-                "scale_by_bin" => OpsArg::ScaleByBin(matches.remove_many(&id).unwrap().collect()),
-                "scale_by_order" => {
-                    OpsArg::ScaleByOrder(matches.remove_many(&id).unwrap().collect())
-                }
-                "set_key_value" => OpsArg::SetKeyValue(matches.remove_many(&id).unwrap().collect()),
-                "set_key_file" => OpsArg::SetKeyFile(matches.remove_many(&id).unwrap().collect()),
-                "split_lumi" => {
-                    if !matches.remove_one::<bool>(&id).unwrap() {
-                        continue;
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        args[index] = Some(match id.as_str() {
+                            "remap_norm_ignore" => OpsArg::RemapNormIgnore(arg),
+                            _ => unreachable!(),
+                        });
                     }
-                    OpsArg::SplitLumi
                 }
-                "upgrade" => {
-                    if !matches.remove_one::<bool>(&id).unwrap() {
-                        continue;
+                "delete_key" | "remap" => {
+                    let arguments: Vec<Vec<String>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, mut arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "delete_key" => OpsArg::DeleteKey(arg.pop().unwrap()),
+                            "remap" => OpsArg::Remap(arg.pop().unwrap()),
+                            _ => unreachable!(),
+                        });
                     }
-                    OpsArg::Upgrade
+                }
+                "delete_bins" | "merge_bins" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        args[index] = Some(match id.as_str() {
+                            "delete_bins" => OpsArg::DeleteBins(arg),
+                            "merge_bins" => OpsArg::MergeBins(arg),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "optimize_fk_table" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "optimize_fk_table" => OpsArg::OptimizeFkTable(arg[0]),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "remap_norm" | "scale" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "remap_norm" => OpsArg::RemapNorm(arg[0]),
+                            "scale" => OpsArg::Scale(arg[0]),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "scale_by_bin" | "scale_by_order" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        args[index] = Some(match id.as_str() {
+                            "scale_by_bin" => OpsArg::ScaleByBin(arg),
+                            "scale_by_order" => OpsArg::ScaleByOrder(arg),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "set_key_file" | "set_key_value" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        args[index] = Some(match id.as_str() {
+                            "set_key_file" => OpsArg::SetKeyFile(arg),
+                            "set_key_value" => OpsArg::SetKeyValue(arg),
+                            _ => unreachable!(),
+                        });
+                    }
                 }
                 _ => unreachable!(),
-            });
+            }
         }
 
-        Ok(Self { args })
+        Ok(Self {
+            args: args.into_iter().flatten().collect(),
+        })
     }
 
     fn update_from_arg_matches(&mut self, _: &ArgMatches) -> Result<(), Error> {
@@ -164,17 +244,19 @@ impl Args for MoreArgs {
         )
         .arg(
             Arg::new("delete_key")
-                .action(ArgAction::Set)
+                .action(ArgAction::Append)
                 .help("Delete an internal key-value pair")
                 .long("delete-key")
                 .value_name("KEY"),
         )
         .arg(
             Arg::new("merge_bins")
-                .action(ArgAction::Set)
+                .action(ArgAction::Append)
                 .help("Merge specific bins together")
                 .long("merge-bins")
-                .value_name("BIN1-BIN2")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("BIN1-BIN2,...")
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
@@ -204,14 +286,14 @@ impl Args for MoreArgs {
         )
         .arg(
             Arg::new("remap")
-                .action(ArgAction::Set)
+                .action(ArgAction::Append)
                 .help("Modify the bin dimensions and widths")
                 .long("remap")
                 .value_name("REMAPPING"),
         )
         .arg(
             Arg::new("remap_norm")
-                .action(ArgAction::Set)
+                .action(ArgAction::Append)
                 .help("Modify the bin normalizations with a common factor")
                 .long("remap-norm")
                 .value_delimiter(',')
@@ -230,7 +312,7 @@ impl Args for MoreArgs {
         )
         .arg(
             Arg::new("scale")
-                .action(ArgAction::Set)
+                .action(ArgAction::Append)
                 .help("Scales all grids with the given factor")
                 .long("scale")
                 .short('s')
@@ -308,9 +390,9 @@ impl Subcommand for Opts {
 
         for arg in &self.more_args.args {
             match arg {
-                OpsArg::Cc1 | OpsArg::Cc2 => {
-                    let cc1 = matches!(arg, OpsArg::Cc1);
-                    let cc2 = matches!(arg, OpsArg::Cc2);
+                OpsArg::Cc1(true) | OpsArg::Cc2(true) => {
+                    let cc1 = matches!(arg, OpsArg::Cc1(true));
+                    let cc2 = matches!(arg, OpsArg::Cc2(true));
 
                     let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
                         kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
@@ -355,12 +437,20 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
-                OpsArg::DeleteBins(bins) => grid.delete_bins(bins),
+                OpsArg::DeleteBins(ranges) => grid.delete_bins(
+                    &ranges
+                        .into_iter()
+                        .flat_map(|r| r.clone().into_iter())
+                        .collect::<Vec<_>>(),
+                ),
                 OpsArg::DeleteKey(key) => {
                     grid.key_values_mut().remove(key);
                 }
-                OpsArg::MergeBins(range) => {
-                    grid.merge_bins(*range.start()..(range.end() + 1))?;
+                OpsArg::MergeBins(ranges) => {
+                    // TODO: sort after increasing start indices
+                    for range in ranges.iter().rev() {
+                        grid.merge_bins(*range.start()..(range.end() + 1))?;
+                    }
                 }
                 OpsArg::Remap(remapping) => grid.set_remapper(str::parse(remapping)?)?,
                 OpsArg::RemapNorm(factor) => {
@@ -400,7 +490,7 @@ impl Subcommand for Opts {
                     )?;
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
-                OpsArg::Optimize => grid.optimize(),
+                OpsArg::Optimize(true) => grid.optimize(),
                 OpsArg::OptimizeFkTable(assumptions) => {
                     let mut fk_table = FkTable::try_from(grid)?;
                     fk_table.optimize(*assumptions);
@@ -416,8 +506,13 @@ impl Subcommand for Opts {
                 OpsArg::SetKeyFile(key_file) => {
                     grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
-                OpsArg::SplitLumi => grid.split_lumi(),
-                OpsArg::Upgrade => grid.upgrade(),
+                OpsArg::SplitLumi(true) => grid.split_lumi(),
+                OpsArg::Upgrade(true) => grid.upgrade(),
+                OpsArg::Cc1(false)
+                | OpsArg::Cc2(false)
+                | OpsArg::Optimize(false)
+                | OpsArg::SplitLumi(false)
+                | OpsArg::Upgrade(false) => {}
             }
         }
 
