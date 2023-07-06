@@ -220,6 +220,7 @@ impl Args for MoreArgs {
                 .long("cc1")
                 .num_args(0..=1)
                 .require_equals(true)
+                .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
         )
         .arg(
@@ -230,6 +231,7 @@ impl Args for MoreArgs {
                 .long("cc2")
                 .num_args(0..=1)
                 .require_equals(true)
+                .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
         )
         .arg(
@@ -267,6 +269,7 @@ impl Args for MoreArgs {
                 .long("optimize")
                 .num_args(0..=1)
                 .require_equals(true)
+                .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
         )
         .arg(
@@ -307,7 +310,7 @@ impl Args for MoreArgs {
                 .long("remap-norm-ignore")
                 .num_args(1)
                 .value_delimiter(',')
-                .value_name("DIMS")
+                .value_name("DIM1,...")
                 .value_parser(value_parser!(usize)),
         )
         .arg(
@@ -365,6 +368,7 @@ impl Args for MoreArgs {
                 .long("split-lumi")
                 .num_args(0..=1)
                 .require_equals(true)
+                .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
         )
         .arg(
@@ -375,6 +379,7 @@ impl Args for MoreArgs {
                 .long("upgrade")
                 .num_args(0..=1)
                 .require_equals(true)
+                .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
         )
     }

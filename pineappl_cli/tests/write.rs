@@ -10,23 +10,23 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<cc1>]                   Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<cc2>]                   Charge conjugate the second initial state [possible values: true, false]
+      --cc1[=<ENABLE>]                Charge conjugate the first initial state [possible values: true, false]
+      --cc2[=<ENABLE>]                Charge conjugate the second initial state [possible values: true, false]
       --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --delete-key <KEY>              Delete an internal key-value pair
       --merge-bins <BIN1-BIN2,...>    Merge specific bins together
-      --optimize[=<optimize>]         Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize[=<ENABLE>]           Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
       --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
       --remap <REMAPPING>             Modify the bin dimensions and widths
       --remap-norm <NORM>             Modify the bin normalizations with a common factor
-      --remap-norm-ignore <DIMS>      Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
+      --remap-norm-ignore <DIM1,...>  Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
   -s, --scale <SCALE>                 Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
       --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
       --set-key-value <KEY> <VALUE>   Set an internal key-value pair
       --set-key-file <KEY> <FILE>     Set an internal key-value pair, with value being read from a file
-      --split-lumi[=<split_lumi>]     Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
-      --upgrade[=<upgrade>]           Convert the file format to the most recent version [possible values: true, false]
+      --split-lumi[=<ENABLE>]         Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
+      --upgrade[=<ENABLE>]            Convert the file format to the most recent version [possible values: true, false]
   -h, --help                          Print help
 ";
 
