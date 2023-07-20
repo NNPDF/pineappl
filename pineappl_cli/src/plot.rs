@@ -117,7 +117,7 @@ fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
         .iter()
         .map(|(label, bins)| {
             format!(
-                "                (r'${}$', np.array([{}]))",
+                "                (r\"${}$\", np.array([{}]))",
                 label,
                 map_format_e_join_repeat_last(bins)
             )
@@ -132,7 +132,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -
         .map(|(values, pdfset)| {
             format!(
                 "                (
-                    '{}',
+                    \"{}\",
                     np.array([{}]),
                     np.array([{}]),
                     np.array([{}]),
@@ -155,7 +155,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
                 None
             } else {
                 Some(format!(
-                    "        '{}': r'{}',",
+                    "        \"{}\": r\"{}\",",
                     key,
                     if *key == "description" {
                         value.replace('\u{2013}', "--").replace('\u{2014}', "---")
@@ -420,19 +420,19 @@ impl Subcommand for Opts {
                 writeln!(
                     &mut data_string,
                     "        {{
-            'slice_label'    : r'{slice_label}',
-            'x'        : np.array([{x}]),
-            'mid'      : np.array([{mid}]),
-            'pdf_results' : [
+            \"slice_label\"    : r\"{slice_label}\",
+            \"x\"        : np.array([{x}]),
+            \"mid\"      : np.array([{mid}]),
+            \"pdf_results\" : [
 {pdf_results}
             ],
-            'qcd_y'    : np.array([{qcd_y}]),
-            'qcd_min'  : np.array([{qcd_min}]),
-            'qcd_max'  : np.array([{qcd_max}]),
-            'y'        : np.array([{y}]),
-            'ymin'     : np.array([{ymin}]),
-            'ymax'     : np.array([{ymax}]),
-            'channels' : [
+            \"qcd_y\"    : np.array([{qcd_y}]),
+            \"qcd_min\"  : np.array([{qcd_min}]),
+            \"qcd_max\"  : np.array([{qcd_max}]),
+            \"y\"        : np.array([{y}]),
+            \"ymin\"     : np.array([{ymin}]),
+            \"ymax\"     : np.array([{ymax}]),
+            \"channels\" : [
 {channels}
             ],
         }},",
@@ -506,9 +506,9 @@ impl Subcommand for Opts {
 
             print!(
                 include_str!("plot.py"),
-                inte = if bins == 1 { "" } else { "#" },
-                nint = if bins == 1 { "#" } else { "" },
-                pdfs = if pdfs == 1 || bins == 1 { "#" } else { "" },
+                inte = if bins == 1 { "" } else { "# " },
+                nint = if bins == 1 { "# " } else { "" },
+                pdfs = if pdfs == 1 || bins == 1 { "# " } else { "" },
                 xlabel = xlabel,
                 ylabel = ylabel,
                 xlog = xlog,

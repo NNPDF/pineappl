@@ -7,46 +7,46 @@ import numpy as np
 import pickle
 
 # color cycler for different PDF results
-colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 # color for the first PDF result with QCD-only predictions
-colors0_qcd = 'red'
+colors0_qcd = "red"
 
 # stylesheet for plot
 stylesheet = {{
-    'axes.axisbelow': True,
-    'axes.grid': True,
-    'axes.labelsize': 'small',
-    'figure.constrained_layout.hspace': 0.0,
-    'figure.constrained_layout.use': True,
-    'figure.constrained_layout.wspace': 0.0,
-    'font.family': 'serif',
-    'font.size': 14.0,
-    'grid.linestyle': 'dotted',
-    'legend.borderpad': 0.0,
-    'legend.fontsize': 'x-small',
-    'legend.frameon': False,
-    'pdf.compression': 0,
-    'text.usetex': True,
-    'text.latex.preamble': r'\usepackage{{siunitx}}\usepackage{{lmodern}}\usepackage[T1]{{fontenc}}',
-    'xtick.bottom': True,
-    'xtick.top': True,
-    'xtick.direction': 'in',
-    'xtick.major.width': 0.5,
-    'xtick.minor.bottom': True,
-    'xtick.minor.top': True,
-    'xtick.minor.width': 0.5,
-    'ytick.direction': 'in',
-    'ytick.left': True,
-    'ytick.right': True,
-    'ytick.major.width': 0.5,
-    'ytick.minor.visible': True,
-    'ytick.minor.width': 0.5,
+    "axes.axisbelow": True,
+    "axes.grid": True,
+    "axes.labelsize": "small",
+    "figure.constrained_layout.hspace": 0.0,
+    "figure.constrained_layout.use": True,
+    "figure.constrained_layout.wspace": 0.0,
+    "font.family": "serif",
+    "font.size": 14.0,
+    "grid.linestyle": "dotted",
+    "legend.borderpad": 0.0,
+    "legend.fontsize": "x-small",
+    "legend.frameon": False,
+    "pdf.compression": 0,
+    "text.usetex": True,
+    "text.latex.preamble": r"\usepackage{{siunitx}}\usepackage{{lmodern}}\usepackage[T1]{{fontenc}}",
+    "xtick.bottom": True,
+    "xtick.top": True,
+    "xtick.direction": "in",
+    "xtick.major.width": 0.5,
+    "xtick.minor.bottom": True,
+    "xtick.minor.top": True,
+    "xtick.minor.width": 0.5,
+    "ytick.direction": "in",
+    "ytick.left": True,
+    "ytick.right": True,
+    "ytick.major.width": 0.5,
+    "ytick.minor.visible": True,
+    "ytick.minor.width": 0.5,
 }}
 
 # plot labels
-title = r'{title}'
-xlabel = r'{xlabel}'
-ylabel = r'{ylabel}'
+title = r"{title}"
+xlabel = r"{xlabel}"
+ylabel = r"{ylabel}"
 
 xlog = {xlog}
 ylog = {ylog}
@@ -64,29 +64,31 @@ def main():
     ]
 
     mpl.rcParams.update(stylesheet)
-    {nint}plt.rc('figure', figsize=(6.4, 2.4 * len(panels)))
-    {inte}plt.rc('figure', figsize=(4.2, 2.6))
+    {nint}plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
+    {inte}plt.rc("figure", figsize=(4.2, 2.6))
 
     data_slices = data()
 
     for index, kwargs in enumerate(data_slices):
         figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
-        if len(kwargs['x']) > 2 and xlog:
-            axes[0, 0].set_xscale('log')
+        if len(kwargs["x"]) > 2 and xlog:
+            axes[0, 0].set_xscale("log")
 
-        axes[ 0, 0].set_title(title)
+        axes[0, 0].set_title(title)
         axes[-1, 0].set_xlabel(xlabel)
 
         for plot, axis in zip(panels, axes[:, 0]):
             plot(axis, **kwargs)
 
-        name = '{output}' if len(data_slices) == 1 else '{output}-{{}}'.format(index)
-        figure.savefig(name + '.pdf')
+        name = "{output}" if len(data_slices) == 1 else "{output}-{{}}".format(index)
+        figure.savefig(name + ".pdf")
         plt.close(figure)
+
 
 def percent_diff(a, b):
     return (a / b - 1.0) * 100.0
+
 
 def set_ylim(axis, save, load, filename):
     # extract the y limits *not* considering margins
@@ -114,13 +116,13 @@ def set_ylim(axis, save, load, filename):
     ymax = math.ceil(ymax / inc) * inc
 
     if save:
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             pickle.dump([ymin, ymax, inc], f)
 
     if load:
         resave = False
 
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             [saved_ymin, saved_ymax, saved_inc] = pickle.load(f)
 
         if saved_ymin < ymin:
@@ -136,12 +138,13 @@ def set_ylim(axis, save, load, filename):
             resave = True
 
         if resave:
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 pickle.dump([ymin, ymax, inc], f)
 
     axis.set_yticks(np.arange(ymin, ymax + inc, inc))
     space = 0.05 * (ymax - ymin)
     axis.set_ylim((ymin - space, ymax + space))
+
 
 def plot_int(axis, **kwargs):
     xmin = np.array([])
@@ -149,7 +152,7 @@ def plot_int(axis, **kwargs):
     x = np.array([])
     y = np.array([])
 
-    for index, i in enumerate(kwargs['pdf_results']):
+    for index, i in enumerate(kwargs["pdf_results"]):
         label, ycentral, ymin, ymax = i
         x = np.append(x, ycentral[:-1])
         xmin = np.append(xmin, ymin[:-1])
@@ -157,32 +160,34 @@ def plot_int(axis, **kwargs):
         y = np.append(y, label)
 
         # draw one- and two-sigma bands
-        if label == 'CENTRAL-PDF':
+        if label == "CENTRAL-PDF":
             axis.axvspan(xmin[-1], xmax[-1], alpha=0.3, color=colors[index], linewidth=0)
             # TODO: this is only correct for MC PDF uncertainties
             axis.axvspan(x[-1] - 2.0 * (x[-1] - xmin[-1]), x[-1] + 2.0 * (xmax[-1] - x[-1]), alpha=0.1, color=colors[index], linewidth=0)
 
-    axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt='.', capsize=3, markersize=5, linewidth=1.5)
+    axis.errorbar(x, y, xerr=(x - xmin, xmax - x), fmt=".", capsize=3, markersize=5, linewidth=1.5)
     axis.margins(x=0.1, y=0.1)
 
-def plot_abs(axis, **kwargs):
-    x = kwargs['x']
-    slice_label = kwargs['slice_label']
 
-    axis.set_yscale('log' if ylog else 'linear')
-    axis.step(x, kwargs['y'], colors[0], linewidth=1.0, where='post', label=slice_label)
-    axis.fill_between(x, kwargs['ymin'], kwargs['ymax'], alpha=0.4, color=colors[0], linewidth=0.5, step='post')
+def plot_abs(axis, **kwargs):
+    x = kwargs["x"]
+    slice_label = kwargs["slice_label"]
+
+    axis.set_yscale("log" if ylog else "linear")
+    axis.step(x, kwargs["y"], colors[0], linewidth=1.0, where="post", label=slice_label)
+    axis.fill_between(x, kwargs["ymin"], kwargs["ymax"], alpha=0.4, color=colors[0], linewidth=0.5, step="post")
     axis.set_ylabel(ylabel)
 
-    if slice_label != '':
+    if slice_label != "":
         axis.legend()
 
-def plot_ratio_pdf(axis, **kwargs):
-    x = kwargs['x']
-    slice_label = kwargs['slice_label']
-    pdf_uncertainties = kwargs['pdf_results']
 
-    axis.set_ylabel('Ratio to ' + pdf_uncertainties[0][0])
+def plot_ratio_pdf(axis, **kwargs):
+    x = kwargs["x"]
+    slice_label = kwargs["slice_label"]
+    pdf_uncertainties = kwargs["pdf_results"]
+
+    axis.set_ylabel("Ratio to " + pdf_uncertainties[0][0])
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -190,61 +195,64 @@ def plot_ratio_pdf(axis, **kwargs):
         ymin = ymin / pdf_uncertainties[0][1]
         ymax = ymax / pdf_uncertainties[0][1]
 
-        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
-        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+        axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
 
-    if slice_label != '':
-        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
-        t.set_bbox({{ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' }})
+    if slice_label != "":
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
+        t.set_bbox({{ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" }})
+
 
 def plot_abs_pdfs(axis, **kwargs):
-    x = kwargs['x']
-    slice_label = kwargs['slice_label']
-    pdf_uncertainties = kwargs['pdf_results']
-    channels = kwargs['channels']
+    x = kwargs["x"]
+    slice_label = kwargs["slice_label"]
+    pdf_uncertainties = kwargs["pdf_results"]
+    channels = kwargs["channels"]
 
-    axis.set_yscale('log' if ylog else 'linear')
+    axis.set_yscale("log" if ylog else "linear")
     axis.set_ylabel(ylabel)
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
-        axis.step(x, y, color=colors[index], linewidth=1.0, where='post')
-        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step='post')
+        axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ['--', ':']
+    linestyles = ["--", ":"]
     for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
-        axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where='post')
+        axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0,-0.24,1,0.2), loc='upper left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
 
-    if slice_label != '':
-        t = axis.text(0.98, 0.98, slice_label, horizontalalignment='right', verticalalignment='top', transform=axis.transAxes, fontsize='x-small')
-        t.set_bbox({{ 'alpha': 0.7, 'boxstyle': 'square, pad=0.0', 'edgecolor': 'white', 'facecolor': 'white' }})
+    if slice_label != "":
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
+        t.set_bbox({{ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" }})
+
 
 def plot_rel_ewonoff(axis, **kwargs):
-    x = kwargs['x']
-    y = percent_diff(kwargs['y'], kwargs['qcd_y'])
-    qcd_y = percent_diff(kwargs['qcd_y'], kwargs['qcd_y'])
-    qcd_ymin = percent_diff(kwargs['qcd_min'], kwargs['qcd_y'])
-    qcd_ymax = percent_diff(kwargs['qcd_max'], kwargs['qcd_y'])
-    ymin = percent_diff(kwargs['ymin'], kwargs['qcd_y'])
-    ymax = percent_diff(kwargs['ymax'], kwargs['qcd_y'])
-    pdf_min = abs(percent_diff(kwargs['pdf_results'][0][2], kwargs['pdf_results'][0][1]))[:-1]
-    pdf_max = abs(percent_diff(kwargs['pdf_results'][0][3], kwargs['pdf_results'][0][1]))[:-1]
+    x = kwargs["x"]
+    y = percent_diff(kwargs["y"], kwargs["qcd_y"])
+    qcd_y = percent_diff(kwargs["qcd_y"], kwargs["qcd_y"])
+    qcd_ymin = percent_diff(kwargs["qcd_min"], kwargs["qcd_y"])
+    qcd_ymax = percent_diff(kwargs["qcd_max"], kwargs["qcd_y"])
+    ymin = percent_diff(kwargs["ymin"], kwargs["qcd_y"])
+    ymax = percent_diff(kwargs["ymax"], kwargs["qcd_y"])
+    pdf_min = abs(percent_diff(kwargs["pdf_results"][0][2], kwargs["pdf_results"][0][1]))[:-1]
+    pdf_max = abs(percent_diff(kwargs["pdf_results"][0][3], kwargs["pdf_results"][0][1]))[:-1]
 
-    axis.step(x, qcd_y, colors0_qcd, label='NLO QCD', linewidth=1.0, where='post')
-    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label='7-p.\ scale var.', linewidth=0.5, step='post')
-    axis.step(x, y, colors[0], label='NLO QCD+EW', linewidth=1.0, where='post')
-    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label='7-p.\ scale var.', linewidth=0.5, step='post')
-    axis.errorbar(kwargs['mid'], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label='PDF uncertainty', fmt='.', capsize=1, markersize=0, linewidth=1)
-    axis.set_ylabel('NLO EW on/off [\si{{\percent}}]')
-    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=4)
+    axis.step(x, qcd_y, colors0_qcd, label="NLO QCD", linewidth=1.0, where="post")
+    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label="7-p.\ scale var.", linewidth=0.5, step="post")
+    axis.step(x, y, colors[0], label="NLO QCD+EW", linewidth=1.0, where="post")
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label="7-p.\ scale var.", linewidth=0.5, step="post")
+    axis.errorbar(kwargs["mid"], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label="PDF uncertainty", fmt=".", capsize=1, markersize=0, linewidth=1)
+    axis.set_ylabel("NLO EW on/off [\si{{\percent}}]")
+    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=4)
+
 
 def plot_rel_pdfunc(axis, **kwargs):
-    x = kwargs['x']
-    pdf_uncertainties = kwargs['pdf_results']
+    x = kwargs["x"]
+    pdf_uncertainties = kwargs["pdf_results"]
 
     #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
     #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
@@ -253,21 +261,22 @@ def plot_rel_pdfunc(axis, **kwargs):
         label, y, ymin, ymax = i
         ymin = percent_diff(ymin, y)
         ymax = percent_diff(ymax, y)
-        axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where='post')
-        axis.step(x, ymin, color=colors[index], linewidth=1, where='post')
+        axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where="post")
+        axis.step(x, ymin, color=colors[index], linewidth=1, where="post")
 
-    #axis.legend(fontsize='xx-small') #rel_pdfunc
-    axis.set_ylabel('PDF uncertainty [\si{{\percent}}]')
+    #axis.legend(fontsize="xx-small") #rel_pdfunc
+    axis.set_ylabel("PDF uncertainty [\si{{\percent}}]")
 
-    set_ylim(axis, False, False, 'rel_pdfunc')
+    set_ylim(axis, False, False, "rel_pdfunc")
+
 
 def plot_rel_pdfpull(axis, **kwargs):
-    central_y = kwargs['pdf_results'][0][1]
-    central_ymin = kwargs['pdf_results'][0][2]
-    central_ymax = kwargs['pdf_results'][0][3]
-    pdf_uncertainties = kwargs['pdf_results']
-    x = kwargs['x']
-    y = kwargs['y']
+    central_y = kwargs["pdf_results"][0][1]
+    central_ymin = kwargs["pdf_results"][0][2]
+    central_ymax = kwargs["pdf_results"][0][3]
+    pdf_uncertainties = kwargs["pdf_results"]
+    x = kwargs["x"]
+    y = kwargs["y"]
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -276,22 +285,25 @@ def plot_rel_pdfpull(axis, **kwargs):
         cerr = np.where(diff > 0.0, central_ymax - central_y, central_y - central_ymin)
         pull = diff / np.sqrt(np.power(yerr, 2) + np.power(cerr, 2))
 
-        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label='sym.\ pull', linewidth=0.5, step='post', zorder=2 * index)
-        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where='post', zorder=2 * index + 1)
+        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label="sym.\ pull", linewidth=0.5, step="post", zorder=2 * index)
+        axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
-    axis.legend(bbox_to_anchor=(0,1.03,1,0.2), loc='lower left', mode='expand', borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize='x-small', frameon=False, borderpad=0) #rel_pdfpull
-    axis.set_ylabel('Pull [$\sigma$]')
-    #axis.set_title('Comparison with ' + pdf_uncertainties[0][0], fontdict={{'fontsize': 9}}, loc='left')
+    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
+    axis.set_ylabel("Pull [$\sigma$]")
+    #axis.set_title("Comparison with " + pdf_uncertainties[0][0], fontdict={{"fontsize": 9}}, loc="left")
 
-    set_ylim(axis, False, False, 'rel_pdfpull')
+    set_ylim(axis, False, False, "rel_pdfpull")
+
 
 def data():
     return {data}
+
 
 def metadata():
     return {{
 {metadata}
     }}
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
