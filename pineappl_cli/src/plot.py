@@ -43,10 +43,21 @@ stylesheet = {{
     "ytick.minor.width": 0.5,
 }}
 
-# plot labels
-title = r"{title}"
+# global plot labels
+title  = r"{title}"
 xlabel = r"{xlabel}"
 ylabel = r"{ylabel}"
+
+# panel plot labels
+ylabel_ratio_pdf   = "Ratio to {{central_pdf}}"
+ylabel_rel_ewonoff = "NLO EW on/off [\si{{\percent}}]"
+ylabel_rel_pdfunc  = "PDF uncertainty [\si{{\percent}}]"
+ylabel_rel_pdfpull = "Pull [$\sigma$]"
+
+label_rel_ewonoff_qcd       = "NLO QCD"
+label_rel_ewonoff_ew        = "NLO QCD+EW"
+label_rel_ewonoff_scale_unc = "7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
 
 xlog = {xlog}
 ylog = {ylog}
@@ -81,8 +92,10 @@ def main():
         for plot, axis in zip(panels, axes[:, 0]):
             plot(axis, **kwargs)
 
-        name = "{output}" if len(data_slices) == 1 else "{output}-{{}}".format(index)
-        figure.savefig(name + ".pdf")
+        if len(data_slices) == 1:
+            figure.savefig("{output}.pdf")
+        else:
+            figure.savefig("{output}-{{}}.pdf".format(index))
         plt.close(figure)
 
 
@@ -187,7 +200,7 @@ def plot_ratio_pdf(axis, **kwargs):
     slice_label = kwargs["slice_label"]
     pdf_uncertainties = kwargs["pdf_results"]
 
-    axis.set_ylabel("Ratio to " + pdf_uncertainties[0][0])
+    axis.set_ylabel(ylabel_ratio_pdf.format(central_pdf=pdf_uncertainties[0][0]))
 
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
@@ -241,12 +254,12 @@ def plot_rel_ewonoff(axis, **kwargs):
     pdf_min = abs(percent_diff(kwargs["pdf_results"][0][2], kwargs["pdf_results"][0][1]))[:-1]
     pdf_max = abs(percent_diff(kwargs["pdf_results"][0][3], kwargs["pdf_results"][0][1]))[:-1]
 
-    axis.step(x, qcd_y, colors0_qcd, label="NLO QCD", linewidth=1.0, where="post")
-    # axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label="7-p.\ scale var.", linewidth=0.5, step="post")
-    axis.step(x, y, colors[0], label="NLO QCD+EW", linewidth=1.0, where="post")
-    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label="7-p.\ scale var.", linewidth=0.5, step="post")
-    axis.errorbar(kwargs["mid"], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label="PDF uncertainty", fmt=".", capsize=1, markersize=0, linewidth=1)
-    axis.set_ylabel("NLO EW on/off [\si{{\percent}}]")
+    axis.step(x, qcd_y, colors0_qcd, label=label_rel_ewonoff_qcd, linewidth=1.0, where="post")
+    # axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label=label_rel_ewonoff_scale_unc, linewidth=0.5, step="post")
+    axis.step(x, y, colors[0], label=label_rel_ewonoff_ew, linewidth=1.0, where="post")
+    axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label=label_rel_ewonoff_scale_unc, linewidth=0.5, step="post")
+    axis.errorbar(kwargs["mid"], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label=label_rel_ewonoff_pdf_unc, fmt=".", capsize=1, markersize=0, linewidth=1)
+    axis.set_ylabel(ylabel_rel_ewonoff)
     axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=4)
 
 
@@ -261,7 +274,7 @@ def plot_rel_pdfunc(axis, **kwargs):
         axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where="post")
         axis.step(x, ymin, color=colors[index], linewidth=1, where="post")
 
-    axis.set_ylabel("PDF uncertainty [\si{{\percent}}]")
+    axis.set_ylabel(ylabel_rel_pdfunc)
 
     set_ylim(axis, False, False, "rel_pdfunc")
 
@@ -284,7 +297,7 @@ def plot_rel_pdfpull(axis, **kwargs):
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
     axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
-    axis.set_ylabel("Pull [$\sigma$]")
+    axis.set_ylabel(ylabel_rel_pdfpull)
 
     set_ylim(axis, False, False, "rel_pdfpull")
 
