@@ -317,7 +317,7 @@ def plot_rel_pdfpull(axis, **kwargs):
 
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
-    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
+    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties))) #rel_pdfpull
     axis.set_ylabel(ylabel_rel_pdfpull)
 
     set_ylim(axis, False, False, "rel_pdfpull")
@@ -748,7 +748,7 @@ def plot_rel_pdfpull(axis, **kwargs):
 
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
-    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
+    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties))) #rel_pdfpull
     axis.set_ylabel(ylabel_rel_pdfpull)
 
     set_ylim(axis, False, False, "rel_pdfpull")
@@ -1108,7 +1108,7 @@ def plot_rel_pdfpull(axis, **kwargs):
 
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
-    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
+    axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties))) #rel_pdfpull
     axis.set_ylabel(ylabel_rel_pdfpull)
 
     set_ylim(axis, False, False, "rel_pdfpull")
