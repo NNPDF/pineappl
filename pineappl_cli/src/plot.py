@@ -242,7 +242,7 @@ def plot_rel_ewonoff(axis, **kwargs):
     pdf_max = abs(percent_diff(kwargs["pdf_results"][0][3], kwargs["pdf_results"][0][1]))[:-1]
 
     axis.step(x, qcd_y, colors0_qcd, label="NLO QCD", linewidth=1.0, where="post")
-    #axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label="7-p.\ scale var.", linewidth=0.5, step="post")
+    # axis.fill_between(x, qcd_ymin, qcd_ymax, alpha=0.4, color=colors0_qcd, label="7-p.\ scale var.", linewidth=0.5, step="post")
     axis.step(x, y, colors[0], label="NLO QCD+EW", linewidth=1.0, where="post")
     axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[0], label="7-p.\ scale var.", linewidth=0.5, step="post")
     axis.errorbar(kwargs["mid"], y[:-1], yerr=(pdf_min, pdf_max), color=colors[0], label="PDF uncertainty", fmt=".", capsize=1, markersize=0, linewidth=1)
@@ -254,9 +254,6 @@ def plot_rel_pdfunc(axis, **kwargs):
     x = kwargs["x"]
     pdf_uncertainties = kwargs["pdf_results"]
 
-    #ymins = np.asmatrix([(ymin / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
-    #ymaxs = np.asmatrix([(ymax / y - 1.0) * 100 for label, y, ymin, ymax in pdf_uncertainties])
-
     for index, i in enumerate(pdf_uncertainties):
         label, y, ymin, ymax = i
         ymin = percent_diff(ymin, y)
@@ -264,7 +261,6 @@ def plot_rel_pdfunc(axis, **kwargs):
         axis.step(x, ymax, color=colors[index], label=label, linewidth=1, where="post")
         axis.step(x, ymin, color=colors[index], linewidth=1, where="post")
 
-    #axis.legend(fontsize="xx-small") #rel_pdfunc
     axis.set_ylabel("PDF uncertainty [\si{{\percent}}]")
 
     set_ylim(axis, False, False, "rel_pdfunc")
@@ -285,12 +281,10 @@ def plot_rel_pdfpull(axis, **kwargs):
         cerr = np.where(diff > 0.0, central_ymax - central_y, central_y - central_ymin)
         pull = diff / np.sqrt(np.power(yerr, 2) + np.power(cerr, 2))
 
-        #axis.fill_between(x, pull, pull_avg, alpha=0.4, color=colors[index], label="sym.\ pull", linewidth=0.5, step="post", zorder=2 * index)
         axis.step(x, pull, color=colors[index], label=label, linewidth=1, where="post", zorder=2 * index + 1)
 
     axis.legend(bbox_to_anchor=(0, 1.03, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)), fontsize="x-small", frameon=False, borderpad=0) #rel_pdfpull
     axis.set_ylabel("Pull [$\sigma$]")
-    #axis.set_title("Comparison with " + pdf_uncertainties[0][0], fontdict={{"fontsize": 9}}, loc="left")
 
     set_ylim(axis, False, False, "rel_pdfpull")
 
