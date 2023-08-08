@@ -21,7 +21,7 @@ classifiers = [
 dependencies = ["numpy>=1.16.0,<2.0.0"]
 
 [project.optional-dependencies]
-docs = ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-bibtex", "nbsphinx"]
+docs = ["sphinx>=6.2.1", "sphinx_rtd_theme>=1.2.2", "sphinxcontrib-bibtex>=2.5.0", "nbsphinx>=0.9.2"]
 test = ["pytest", "pytest-cov"]
 
 [project.urls]
