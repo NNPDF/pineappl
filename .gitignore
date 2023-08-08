@@ -1,4 +1,6 @@
 .gdb_history
 /target
 
+.devenv/
+
 .vscode
