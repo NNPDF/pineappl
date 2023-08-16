@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v[0-9]+*'
+  workflow_dispatch:
 
 env:
   GH_TOKEN: ${{ github.token }}
@@ -12,6 +13,7 @@ jobs:
   # create a release on github
   create-release:
     runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
     steps:
       - uses: actions/checkout@v3
       - name: Create new release
@@ -65,6 +67,7 @@ jobs:
   publish-release:
     needs: [macos-capi, linux-capi]
     runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -91,6 +94,7 @@ jobs:
 
   publish-crates:
     runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
     - uses: actions/checkout@v3
