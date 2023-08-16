@@ -56,7 +56,8 @@ jobs:
           cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
-          objdump -T /usr/local/lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
+          # print the glibc version requirement
+          objdump -T lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
