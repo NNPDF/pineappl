@@ -119,7 +119,8 @@ jobs:
         cargo publish
 
   linux-wheels:
-    runs-on: ubuntu-latest
+    # starting from ubuntu-22.04 Python 3.6 isn't available anymore
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target: [x86_64]
@@ -138,7 +139,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
+          args: --release --out dist --manifest-path pineappl_py/Cargo.toml
           sccache: 'true'
           manylinux: auto
           maturin-version: 0.12.20
@@ -169,7 +170,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
+          args: --release --out dist --manifest-path pineappl_py/Cargo.toml
           sccache: 'true'
           maturin-version: 0.12.20
       - name: Upload wheels
@@ -198,7 +199,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
+          args: --release --out dist --manifest-path pineappl_py/Cargo.toml
           sccache: 'true'
           maturin-version: 0.12.20
       - name: Upload wheels
