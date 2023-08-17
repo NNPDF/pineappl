@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added support for Python 3.6 on Linux and PyPy 3.7, 3.8, 3.9 and 3.10 on
+  MacOS and Windows for packages from <https://pypi.org/project/pineappl/>
+
+### Changed
+
+- `pineappl plot` now produces a more cleaned-up matplotlib script, in which
+  the most important information, which a user may whish to change, is at the
+  top of the file
+
 ## [0.6.1] - 18/07/2023
 
 ### Added
