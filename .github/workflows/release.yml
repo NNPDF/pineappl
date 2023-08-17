@@ -159,6 +159,7 @@ jobs:
         run: |
           # - older maturin versions don't support metadata inheritance - overwrite it explicitly
           # - use '@' separator since 'repository' contains slashes
+          # - downgrade both `numpy` and `pyo3` to the last version that support Python 3.6
           sed -i \
               -e "s@categories.workspace = true@$(grep '^categories' Cargo.toml)@" \
               -e "s@edition.workspace = true@$(grep '^edition' Cargo.toml)@" \
@@ -167,6 +168,8 @@ jobs:
               -e "s@repository.workspace = true@$(grep '^repository' Cargo.toml)@" \
               -e "s@rust-version.workspace = true@$(grep '^rust-version' Cargo.toml)@" \
               -e "s@version.workspace = true@$(grep '^version' Cargo.toml)@" \
+              -e "s@^numpy = .*@numpy = \"0.14.1\"@" \
+              -e "s@^pyo3 = .*@pyo3 = { features = [\"extension-module\"], version = \"0.14.5\" }@" \
               pineappl_py/Cargo.toml
           # the previous command is very fragile, so print the file contents to check it
           cat pineappl_py/Cargo.toml
