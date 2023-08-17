@@ -148,8 +148,7 @@ jobs:
           path: dist
 
   linux-eol-wheels:
-    # starting from ubuntu-22.04 Python 3.6 isn't available anymore
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         target: [x86_64]
