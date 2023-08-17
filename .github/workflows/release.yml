@@ -125,21 +125,55 @@ jobs:
         target: [x86_64]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: |
-            3.7
-            3.8
-            3.9
-            3.10
-            3.11
+      # for Linux the wheels are built in a container, so we don't need the `setup-python` action
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
+          # `--find-interpreter` is needed to generate wheels for *all* Python versions
           args: --release --out dist --find-interpreter --manifest-path pineappl_py/Cargo.toml
           sccache: 'true'
           manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+  linux-eol-wheels:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Patch Cargo.toml
+        run: |
+          # - older maturin versions don't support metadata inheritance - overwrite it explicitly
+          # - use '@' separator since 'repository' contains slashes
+          # - downgrade both `numpy` and `pyo3` to the last version that support Python 3.6
+          sed -i \
+              -e "s@categories.workspace = true@$(grep '^categories' Cargo.toml)@" \
+              -e "s@edition.workspace = true@$(grep '^edition' Cargo.toml)@" \
+              -e "s@keywords.workspace = true@$(grep '^keywords' Cargo.toml)@" \
+              -e "s@license.workspace = true@$(grep '^license' Cargo.toml)@" \
+              -e "s@repository.workspace = true@$(grep '^repository' Cargo.toml)@" \
+              -e "s@rust-version.workspace = true@$(grep '^rust-version' Cargo.toml)@" \
+              -e "s@version.workspace = true@$(grep '^version' Cargo.toml)@" \
+              -e "s@^numpy = .*@numpy = \"0.14.1\"@" \
+              -e "s@^pyo3 = .*@pyo3 = { features = [\"extension-module\"], version = \"0.14.5\" }@" \
+              pineappl_py/Cargo.toml
+          # the previous command is very fragile, so print the file contents to check it
+          cat pineappl_py/Cargo.toml
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release -i python3.6 --out dist --no-sdist --manifest-path pineappl_py/Cargo.toml
+          sccache: 'true'
+          manylinux: auto
+          # this is the latest version to support Python 3.6
+          maturin-version: 0.12.20
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
@@ -161,6 +195,10 @@ jobs:
             3.9
             3.10
             3.11
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
           architecture: ${{ matrix.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -189,6 +227,10 @@ jobs:
             3.9
             3.10
             3.11
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
