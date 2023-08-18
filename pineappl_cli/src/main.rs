@@ -11,11 +11,11 @@ mod helpers;
 mod import;
 mod merge;
 mod orders;
-mod pdfunc;
 mod plot;
 mod pull;
 mod read;
 mod subgrids;
+mod uncert;
 mod write;
 
 use anyhow::Result;
@@ -58,11 +58,11 @@ enum SubcommandEnum {
     Import(import::Opts),
     Merge(merge::Opts),
     Orders(orders::Opts),
-    Pdfunc(pdfunc::Opts),
     Plot(plot::Opts),
     Pull(pull::Opts),
     Read(read::Opts),
     Subgrids(subgrids::Opts),
+    Uncert(uncert::Opts),
     Write(write::Opts),
 }
 

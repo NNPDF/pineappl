@@ -17,13 +17,10 @@ const HELP_CONVOLUTE_STR: &str = r#".ie \n(.g .ds Aq \(aq
 .SH NAME
 convolute \- Convolutes a PineAPPL grid with a PDF set
 .SH SYNOPSIS
-\fBconvolute\fR [\fB\-a\fR|\fB\-\-absolute\fR] [\fB\-b\fR|\fB\-\-bins\fR] [\fB\-i\fR|\fB\-\-integrated\fR] [\fB\-o\fR|\fB\-\-orders\fR] [\fB\-s\fR|\fB\-\-scales\fR] [\fB\-\-digits\-abs\fR] [\fB\-\-digits\-rel\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIINPUT\fR> <\fIPDFSETS\fR> 
+\fBconvolute\fR [\fB\-b\fR|\fB\-\-bins\fR] [\fB\-i\fR|\fB\-\-integrated\fR] [\fB\-o\fR|\fB\-\-orders\fR] [\fB\-\-digits\-abs\fR] [\fB\-\-digits\-rel\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIINPUT\fR> <\fIPDFSETS\fR> 
 .SH DESCRIPTION
 Convolutes a PineAPPL grid with a PDF set
 .SH OPTIONS
-.TP
-\fB\-a\fR, \fB\-\-absolute\fR=\fIABSOLUTE\fR
-Show absolute numbers of the scale variation
 .TP
 \fB\-b\fR, \fB\-\-bins\fR=\fIBINS\fR
 Selects a subset of bins
@@ -33,13 +30,6 @@ Show integrated numbers (without bin widths) instead of differential ones
 .TP
 \fB\-o\fR, \fB\-\-orders\fR=\fIORDERS\fR
 Select orders manually
-.TP
-\fB\-s\fR, \fB\-\-scales\fR=\fISCALES\fR [default: 7]
-Set the number of scale variations
-.br
-
-.br
-[\fIpossible values: \fR1, 3, 7, 9]
 .TP
 \fB\-\-digits\-abs\fR=\fIABS\fR [default: 7]
 Set the number of fractional digits shown for absolute numbers

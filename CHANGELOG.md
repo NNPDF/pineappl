@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pineappl plot` now produces a more cleaned-up matplotlib script, in which
   the most important information, which a user may whish to change, is at the
   top of the file
+- `pineappl pdfunc` was renamed into `pineappl uncert`, which is now also able
+  to calculate scale uncertainties, which in turn have been removed from
+  `pineappl convolute`
 
 ## [0.6.1] - 18/07/2023
 

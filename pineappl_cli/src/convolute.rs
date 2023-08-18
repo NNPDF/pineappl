@@ -1,6 +1,5 @@
 use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
 use anyhow::Result;
-use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
@@ -16,9 +15,6 @@ pub struct Opts {
     /// LHAPDF id(s) or name of the PDF set(s).
     #[arg(required = true, value_parser = helpers::parse_pdfset)]
     pdfsets: Vec<String>,
-    /// Show absolute numbers of the scale variation.
-    #[arg(long, short)]
-    absolute: bool,
     /// Selects a subset of bins.
     #[arg(
         long,
@@ -40,14 +36,6 @@ pub struct Opts {
         value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
-    /// Set the number of scale variations.
-    #[arg(
-        default_value_t = 7,
-        long,
-        short,
-        value_parser = PossibleValuesParser::new(["1", "3", "7", "9"]).try_map(|s| s.parse::<usize>())
-    )]
-    scales: usize,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -68,7 +56,7 @@ impl Subcommand for Opts {
             &self.orders,
             &bins,
             &[],
-            self.scales,
+            1,
             if self.integrated {
                 ConvoluteMode::Integrated
             } else {
@@ -118,14 +106,6 @@ impl Subcommand for Opts {
         }
         title.add_cell(cell!(c->format!("{y_label}\n[{y_unit}]")));
 
-        if self.absolute {
-            for scale in &helpers::SCALES_VECTOR[0..self.scales] {
-                title.add_cell(cell!(c->format!("({},{})\n[{}]", scale.0, scale.1, y_unit)));
-            }
-        } else if self.scales != 1 {
-            title.add_cell(cell!(c->"scale uncertainty\n[%]").with_hspan(2));
-        }
-
         for other in self.pdfsets[1..].iter().map(|pdf| helpers::pdf_label(pdf)) {
             let mut cell = cell!(c->format!("{other}\n[{y_unit}] [%]"));
             cell.set_hspan(2);
@@ -135,19 +115,7 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         table.set_titles(title);
 
-        for (index, (limits, values)) in limits
-            .into_iter()
-            .zip(results.chunks_exact(self.scales))
-            .enumerate()
-        {
-            let min_value = values
-                .iter()
-                .min_by(|left, right| left.total_cmp(right))
-                .unwrap();
-            let max_value = values
-                .iter()
-                .max_by(|left, right| left.total_cmp(right))
-                .unwrap();
+        for (index, (limits, value)) in limits.into_iter().zip(results.iter()).enumerate() {
             let bin = if bins.is_empty() { index } else { bins[index] };
 
             let row = table.add_empty_row();
@@ -157,21 +125,12 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{left}")));
                 row.add_cell(cell!(r->format!("{right}")));
             }
-            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, values[0])));
-
-            if self.absolute {
-                for &value in values.iter() {
-                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
-                }
-            } else if self.scales != 1 {
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, (min_value / values[0] - 1.0) * 100.0)));
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, (max_value / values[0] - 1.0) * 100.0)));
-            }
+            row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
 
             for &other in other_results.iter().skip(index).step_by(bin_count) {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, other)));
                 row.add_cell(
-                    cell!(r->format!("{:.*}", self.digits_rel, (other / values[0] - 1.0) * 100.0)),
+                    cell!(r->format!("{:.*}", self.digits_rel, (other / value - 1.0) * 100.0)),
                 );
             }
         }
