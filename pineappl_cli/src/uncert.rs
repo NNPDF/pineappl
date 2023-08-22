@@ -15,6 +15,16 @@ struct Group {
     /// Calculate the PDF uncertainties.
     #[arg(long)]
     pdf: bool,
+    /// Calculate the combined PDF and scale uncertainty using the covariance method.
+    #[arg(
+        default_missing_value = "7",
+        num_args = 0..=1,
+        long,
+        require_equals = true,
+        value_name = "SCALES",
+        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+    )]
+    pdf_with_scale_cov: Option<u16>,
     /// Show absolute numbers of the scale-varied results.
     #[arg(
         default_missing_value = "7",
@@ -25,6 +35,16 @@ struct Group {
         value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
     )]
     scale_abs: Option<u16>,
+    /// Calculate scale uncertainties using the covariance method.
+    #[arg(
+        default_missing_value = "7",
+        num_args = 0..=1,
+        long,
+        require_equals = true,
+        value_name = "SCALES",
+        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+    )]
+    scale_cov: Option<u16>,
     /// Calculate the envelope of results where renormalization and factorization scales varied.
     #[arg(
         default_missing_value = "7",
@@ -89,7 +109,7 @@ impl Subcommand for Opts {
             },
         );
 
-        let pdf_results = if self.group.pdf {
+        let pdf_results = if self.group.pdf || self.group.pdf_with_scale_cov.is_some() {
             ThreadPoolBuilder::new()
                 .num_threads(self.threads)
                 .build_global()
@@ -122,6 +142,8 @@ impl Subcommand for Opts {
             .scale_env
             .iter()
             .chain(self.group.scale_abs.iter())
+            .chain(self.group.scale_cov.iter())
+            .chain(self.group.pdf_with_scale_cov.iter())
             .map(|&x| usize::from(x))
             .max()
             .unwrap_or(1);
@@ -155,10 +177,19 @@ impl Subcommand for Opts {
             title.add_cell(cell!(c->"PDF\n[%]").with_hspan(2));
         }
 
+        if let Some(scales) = self.group.pdf_with_scale_cov {
+            title.add_cell(cell!(c->"PDF central"));
+            title.add_cell(cell!(c->format!("PDF w/ {}pt scale (cov)\n[%]", scales)).with_hspan(2));
+        }
+
         if let Some(scales) = self.group.scale_abs {
             for scale in &helpers::SCALES_VECTOR[0..scales.into()] {
                 title.add_cell(cell!(c->format!("(r={},f={})\n[{}]", scale.0, scale.1, y_unit)));
             }
+        }
+
+        if let Some(scales) = self.group.scale_cov {
+            title.add_cell(cell!(c->format!("{}pt scale (cov)\n[%]", scales)).with_hspan(2));
         }
 
         if let Some(scales) = self.group.scale_env {
@@ -173,23 +204,24 @@ impl Subcommand for Opts {
             .zip(scale_results.chunks_exact(scales_max))
             .enumerate()
         {
-            let (pdf_cen, pdf_neg, pdf_pos) = if self.group.pdf {
-                let values: Vec<_> = pdf_results
-                    .iter()
-                    .skip(bin)
-                    .step_by(limits.len())
-                    .copied()
-                    .collect();
-                let uncertainty = set.uncertainty(&values, self.cl, false)?;
+            let (pdf_cen, pdf_neg, pdf_pos) =
+                if self.group.pdf || self.group.pdf_with_scale_cov.is_some() {
+                    let values: Vec<_> = pdf_results
+                        .iter()
+                        .skip(bin)
+                        .step_by(limits.len())
+                        .copied()
+                        .collect();
+                    let uncertainty = set.uncertainty(&values, self.cl, false)?;
 
-                (
-                    uncertainty.central,
-                    -100.0 * uncertainty.errminus / uncertainty.central,
-                    100.0 * uncertainty.errplus / uncertainty.central,
-                )
-            } else {
-                (0.0, 0.0, 0.0)
-            };
+                    (
+                        uncertainty.central,
+                        -100.0 * uncertainty.errminus / uncertainty.central,
+                        100.0 * uncertainty.errplus / uncertainty.central,
+                    )
+                } else {
+                    (0.0, 0.0, 0.0)
+                };
 
             let row = table.add_empty_row();
             row.add_cell(cell!(r->format!("{bin}")));
@@ -206,10 +238,46 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, pdf_pos)));
             }
 
+            if let Some(scales) = self.group.pdf_with_scale_cov {
+                let ns = if scales == 3 { 1.0 } else { 2.0 } / f64::from(scales - 1);
+                let unc = (ns
+                    * scale_res
+                        .iter()
+                        .take(scales.into())
+                        .skip(1)
+                        .map(|x| (x - scale_res[0]).powi(2))
+                        .sum::<f64>())
+                .sqrt();
+                let rel_unc = 100.0 * unc / scale_res[0];
+
+                let total_neg = -(pdf_neg * pdf_neg + rel_unc * rel_unc).sqrt();
+                let total_pos = (pdf_pos * pdf_pos + rel_unc * rel_unc).sqrt();
+
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, pdf_cen)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, total_neg)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, total_pos)));
+            }
+
             if let Some(scales) = self.group.scale_abs {
                 for result in scale_res.iter().take(scales.into()) {
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result)));
                 }
+            }
+
+            if let Some(scales) = self.group.scale_cov {
+                let ns = if scales == 3 { 1.0 } else { 2.0 } / f64::from(scales - 1);
+                let unc = (ns
+                    * scale_res
+                        .iter()
+                        .take(scales.into())
+                        .skip(1)
+                        .map(|x| (x - scale_res[0]).powi(2))
+                        .sum::<f64>())
+                .sqrt();
+                let rel_unc = 100.0 * unc / scale_res[0];
+
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, -rel_unc)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, rel_unc)));
             }
 
             if let Some(scales) = self.group.scale_env {

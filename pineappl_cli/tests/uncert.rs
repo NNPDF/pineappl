@@ -4,23 +4,25 @@ use std::thread;
 
 const HELP_STR: &str = "Calculates scale and PDF uncertainties
 
-Usage: pineappl uncert [OPTIONS] <--pdf|--scale-abs[=<SCALES>]|--scale-env[=<SCALES>]> <INPUT> <PDFSET>
+Usage: pineappl uncert [OPTIONS] <--pdf|--pdf-with-scale-cov[=<SCALES>]|--scale-abs[=<SCALES>]|--scale-cov[=<SCALES>]|--scale-env[=<SCALES>]> <INPUT> <PDFSET>
 
 Arguments:
   <INPUT>   Path to the input grid
   <PDFSET>  LHAPDF id or name of the PDF set
 
 Options:
-      --pdf                   Calculate the PDF uncertainties
-      --scale-abs[=<SCALES>]  Show absolute numbers of the scale-varied results [possible values: 3, 7, 9]
-      --scale-env[=<SCALES>]  Calculate the envelope of results where renormalization and factorization scales varied [possible values: 3, 7, 9]
-      --cl <CL>               Confidence level in per cent, for PDF uncertainties [default: 68.26894921370858]
-  -i, --integrated            Show integrated numbers (without bin widths) instead of differential ones
-  -o, --orders <ORDERS>       Select orders manually
-      --threads <THREADS>     Number of threads to utilize [default: {}]
-      --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers [default: 7]
-      --digits-rel <REL>      Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help                  Print help
+      --pdf                            Calculate the PDF uncertainties
+      --pdf-with-scale-cov[=<SCALES>]  Calculate the combined PDF and scale uncertainty using the covariance method [possible values: 3, 7, 9]
+      --scale-abs[=<SCALES>]           Show absolute numbers of the scale-varied results [possible values: 3, 7, 9]
+      --scale-cov[=<SCALES>]           Calculate scale uncertainties using the covariance method [possible values: 3, 7, 9]
+      --scale-env[=<SCALES>]           Calculate the envelope of results where renormalization and factorization scales varied [possible values: 3, 7, 9]
+      --cl <CL>                        Confidence level in per cent, for PDF uncertainties [default: 68.26894921370858]
+  -i, --integrated                     Show integrated numbers (without bin widths) instead of differential ones
+  -o, --orders <ORDERS>                Select orders manually
+      --threads <THREADS>              Number of threads to utilize [default: {}]
+      --digits-abs <ABS>               Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>               Set the number of fractional digits shown for relative numbers [default: 2]
+  -h, --help                           Print help
 ";
 
 const DEFAULT_STR: &str = "b   etal    disg/detal  PDF central    PDF    
@@ -89,6 +91,32 @@ const SCALE_ABS_STR: &str =
 7    4  4.5 1.3772029e1 1.3772029e1 1.3903642e1   1.3622752e1 1.3512675e1 1.4165115e1 1.4094674e1 1.3296051e1
 ";
 
+const SCALE_COV_STR: &str = "b   etal    disg/detal  7pt scale (cov)
+     []        [pb]           [%]      
+-+----+----+-----------+-------+-------
+0    2 2.25 3.7527620e2   -3.26    3.26
+1 2.25  2.5 3.4521553e2   -3.31    3.31
+2  2.5 2.75 3.0001406e2   -3.33    3.33
+3 2.75    3 2.4257663e2   -3.35    3.35
+4    3 3.25 1.8093343e2   -3.35    3.35
+5 3.25  3.5 1.2291115e2   -3.35    3.35
+6  3.5    4 5.7851018e1   -3.31    3.31
+7    4  4.5 1.3772029e1   -3.23    3.23
+";
+
+const SCALE_COV_9_STR: &str = "b   etal    disg/detal  9pt scale (cov)
+     []        [pb]           [%]      
+-+----+----+-----------+-------+-------
+0    2 2.25 3.7527620e2   -4.42    4.42
+1 2.25  2.5 3.4521553e2   -4.49    4.49
+2  2.5 2.75 3.0001406e2   -4.54    4.54
+3 2.75    3 2.4257663e2   -4.57    4.57
+4    3 3.25 1.8093343e2   -4.60    4.60
+5 3.25  3.5 1.2291115e2   -4.63    4.63
+6  3.5    4 5.7851018e1   -4.64    4.64
+7    4  4.5 1.3772029e1   -4.67    4.67
+";
+
 const SCALE_ENV_STR: &str = "b   etal    disg/detal  7pt-svar (env) 
      []        [pb]           [%]      
 -+----+----+-----------+-------+-------
@@ -113,6 +141,19 @@ const SCALE_ENV_9_STR: &str = "b   etal    disg/detal  9pt-svar (env)
 5 3.25  3.5 1.2291115e2   -5.42    4.76
 6  3.5    4 5.7851018e1   -5.37    4.95
 7    4  4.5 1.3772029e1   -5.36    5.22
+";
+
+const PDF_WITH_SCALE_COV_STR: &str = "b   etal    disg/detal  PDF central PDF w/ 7pt scale (cov) 
+     []        [pb]                           [%]          
+-+----+----+-----------+-----------+-----------+-----------
+0    2 2.25 3.7527620e2 3.7528868e2       -3.45        3.45
+1 2.25  2.5 3.4521553e2 3.4521365e2       -3.50        3.50
+2  2.5 2.75 3.0001406e2 3.0000102e2       -3.54        3.54
+3 2.75    3 2.4257663e2 2.4255656e2       -3.57        3.57
+4    3 3.25 1.8093343e2 1.8091118e2       -3.58        3.58
+5 3.25  3.5 1.2291115e2 1.2289094e2       -3.61        3.61
+6  3.5    4 5.7851018e1 5.7837137e1       -3.64        3.64
+7    4  4.5 1.3772029e1 1.3765722e1       -4.25        4.25
 ";
 
 #[test]
@@ -220,6 +261,38 @@ fn scale_abs() {
 }
 
 #[test]
+fn scale_cov() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "uncert",
+            "--scale-cov",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(SCALE_COV_STR);
+}
+
+#[test]
+fn scale_cov_9() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "uncert",
+            "--scale-cov=9",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(SCALE_COV_9_STR);
+}
+
+#[test]
 fn scale_env() {
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -234,6 +307,7 @@ fn scale_env() {
         .success()
         .stdout(SCALE_ENV_STR);
 }
+
 #[test]
 fn scale_env_9() {
     Command::cargo_bin("pineappl")
@@ -248,4 +322,20 @@ fn scale_env_9() {
         .assert()
         .success()
         .stdout(SCALE_ENV_9_STR);
+}
+
+#[test]
+fn pdf_with_scale_cov() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "uncert",
+            "--pdf-with-scale-cov",
+            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(PDF_WITH_SCALE_COV_STR);
 }

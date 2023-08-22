@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added support for Python 3.6 on Linux and PyPy 3.7, 3.8, 3.9 and 3.10 on
   MacOS and Windows for packages from <https://pypi.org/project/pineappl/>
+- added support for scale uncertainties calculated with the covariance method,
+  and for combined PDF and scale uncertainties
 
 ### Changed
 
