@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to calculate scale uncertainties, which in turn have been removed from
   `pineappl convolute`
 
+### Fixed
+
+- fixed a bug in the calculation of asymmetries when multiple scales had been
+  used
+
 ## [0.6.1] - 18/07/2023
 
 ### Added

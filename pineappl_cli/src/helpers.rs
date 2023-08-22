@@ -191,11 +191,11 @@ pub fn convolute_scales(
             let bin_count = grid.bin_info().bins();
 
             // calculating the asymmetry for a subset of bins doesn't work
-            assert!(bins.is_empty() || (bins.len() == bin_count));
+            assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
 
             results
                 .iter()
-                .skip(bin_count / 2)
+                .skip((bin_count / 2) * scales.len())
                 .zip(
                     results
                         .chunks_exact(scales.len())
