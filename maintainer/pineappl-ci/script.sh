@@ -5,8 +5,12 @@ set -euo pipefail
 # install rustup
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-# install LLVM tools needed for code coverage
-rustup component add llvm-tools-preview
+for version in ${RUST_V}; do
+    # the last command will be the default
+    rustup default ${version}
+    # install LLVM tools needed for code coverage
+    rustup component add llvm-tools-preview
+done
 
 # # install Fortran compiler
 # apt update
@@ -54,7 +58,3 @@ make install
 ldconfig
 
 cd ..
-
-# set MSRV
-rustup default ${RUST_V}
-rustup component add llvm-tools-preview

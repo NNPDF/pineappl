@@ -5,9 +5,7 @@ ARG CARGOC_V=0.9.14+cargo-0.67
 ARG FASTNLO_V=2.5.0-2826
 ARG LHAPDF_V=6.4.0
 
-# MSRV is 1.64.0, but 1.64.0 suffers from a bug that prevents us to use code coverage:
-# 'warning: ./pineappl/default.profraw: failed to uncompress data (zlib)'
-ARG RUST_V=1.65.0
+ARG RUST_V="1.64.0 1.71.1"
 
 ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
 ENV CARGO_HOME="/usr/local/cargo"
