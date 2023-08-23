@@ -52,6 +52,11 @@ jobs:
         curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
         curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
 
+    - name: Set RUSTDOCFLAGS
+      run: |
+        # relative paths sometimes don't work, so use an absolute path
+        echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
+
     - name: Run tests
       run: |
         # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
@@ -62,7 +67,7 @@ jobs:
     - name: Generate code coverage
       run: |
         find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        sed -nE 's/  Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr | \
+        ( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
             xargs printf ' --object %s' | \
             xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
                 --ignore-filename-regex='/.cargo/registry' \

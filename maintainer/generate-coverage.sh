@@ -26,15 +26,20 @@ wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/plo
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
 
+# relative paths sometimes don't work, so use an absolute path
+dir=$(pwd)/target/debug/doctestbins
+
 export RUSTFLAGS='-Cinstrument-coverage'
+export RUSTDOCFLAGS="-Cinstrument-coverage -Z unstable-options --persist-doctests ${dir}"
 
 cargo clean
-cargo test --all-features -- --include-ignored 2> >(tee stderr 1>&2)
+# -Z doctest-in-workspace is enabled by default starting from 1.72.0
+cargo test -Z doctest-in-workspace --all-features -- --include-ignored 2> >(tee stderr 1>&2)
 # from https://stackoverflow.com/a/51141872/812178
 sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 
 find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-sed -nE 's/  Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr | \
+( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
     xargs printf ' --object %s' | \
     xargs $(rustc --print target-libdir)/../bin/llvm-cov show \
         --ignore-filename-regex='/.cargo/registry' \
