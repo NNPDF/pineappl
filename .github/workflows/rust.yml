@@ -9,7 +9,6 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
   RUSTFLAGS: '-Cinstrument-coverage'
 
 jobs:
