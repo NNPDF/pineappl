@@ -12,6 +12,7 @@ default-members = [
     "pineappl_capi",
     "pineappl_cli",
 ]
+resolver = "2"
 
 [workspace.package]
 categories = ["science"]
