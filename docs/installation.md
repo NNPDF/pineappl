@@ -79,17 +79,24 @@ If you want to build the CAPI from source instead, you first need to
    environment and that it points to a directory containing the
    `pineappl_capi.pc` file.
 
+If you want to update the CAPI, first update the repository and then repeat
+step 2.
+
 ## CLI: `pineappl` for your shell
 
 You need to install [Rust](#rust) first (see below). Then simply run
 
     cargo install pineappl_cli
 
-anywhere and you are done; this will automatically downloads the most-recently
+anywhere and you are done; this will automatically download the most-recently
 released version from [crates.io](https://crates.io).
 
-More functionality can be added by adding the `--feature=feature1,feature2,...`
-flag, see below.
+More functionality can be added by appending the `--feature=feature1,...` flag,
+see below.
+
+To update the CLI simply repeat the `cargo install` step; if a newer version is
+available it will be automatically downloaded, otherwise `cargo` will exit with
+a message saying that the most recent version is already installed.
 
 ### Optional: APPLgrid exporter/importer
 

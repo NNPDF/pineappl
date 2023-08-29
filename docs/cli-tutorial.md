@@ -193,11 +193,10 @@ actual interpolation grids. The three dimensions are:
 
 - orders (`o`),
 - bins (`b`) and
-- luminosities/lumis (`l`),
+- luminosities/lumis (`l`).
 
-which we abbreviate as `obl`. You can use the subcommand with the same name to
-see exactly how each grid is built. Let's go through them one by one using our
-grid:
+You can use the subcommand `read` to see exactly how each grid is built. Let's
+go through them one by one using our grid:
 
     pineappl read --orders LHCB_WP_7TEV.pineappl.lz4
 
