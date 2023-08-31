@@ -16,14 +16,12 @@ version.workspace = true
 anyhow = "1.0.48"
 base64 = { optional = true, version = "0.21.0" }
 clap = { features = ["deprecated", "derive", "unstable-v5"], version = "4.2.0" }
-clap_mangen = "0.2.7"
 cxx = "1.0.65"
 either = { features = ["serde"], version = "1.8.0" }
 enum_dispatch = "0.3.7"
 flate2 = { optional = true, version = "1.0.22" }
 float-cmp = "0.9.0"
 git-version = "0.3.5"
-is-terminal = "0.4.6"
 itertools = "0.10.1"
 lhapdf = "0.2.1"
 lz4_flex = { optional = true, version = "0.9.2" }
@@ -38,7 +36,6 @@ rayon = "1.5.1"
 serde = { features = ["derive"], optional = true, version = "1.0.130" }
 serde_yaml = { optional = true, version = "0.9.13" }
 tar = { optional = true, version = "0.4.38" }
-tempfile = "3.5.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.2"

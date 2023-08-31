@@ -1023,14 +1023,12 @@ dependencies = [
  "assert_fs",
  "base64",
  "clap",
- "clap_mangen",
  "cxx",
  "either",
  "enum_dispatch",
  "flate2",
  "float-cmp",
  "git-version",
- "is-terminal",
  "itertools",
  "lhapdf",
  "lz4_flex",
@@ -1045,7 +1043,6 @@ dependencies = [
  "serde",
  "serde_yaml",
  "tar",
- "tempfile",
 ]
 
 [[package]]
