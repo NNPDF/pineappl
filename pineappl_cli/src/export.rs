@@ -1,4 +1,5 @@
-use super::helpers::{self, ConvoluteMode, GlobalConfiguration, Subcommand};
+use super::helpers::{self, ConvoluteMode};
+use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};

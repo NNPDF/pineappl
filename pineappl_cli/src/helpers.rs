@@ -1,6 +1,4 @@
 use anyhow::{ensure, Context, Result};
-use clap::Parser;
-use enum_dispatch::enum_dispatch;
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::grid::Grid;
@@ -12,16 +10,6 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
-
-#[derive(Parser)]
-pub struct GlobalConfiguration {
-    /// Prevents LHAPDF from printing banners.
-    #[arg(long)]
-    pub silence_lhapdf: bool,
-    /// Forces negative PDF values to zero.
-    #[arg(long)]
-    pub force_positive: bool,
-}
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
     let pdf = pdf.split_once('=').map_or(pdf, |(name, _)| name);
@@ -71,11 +59,6 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
     }
 
     Ok(ExitCode::SUCCESS)
-}
-
-#[enum_dispatch]
-pub trait Subcommand {
-    fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode>;
 }
 
 pub fn create_table() -> Table {
