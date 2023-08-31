@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MacOS and Windows for packages from <https://pypi.org/project/pineappl/>
 - added support for scale uncertainties calculated with the covariance method,
   and for combined PDF and scale uncertainties
+- added support for installing man pages. See installation instructions for
+  more information
 
 ### Changed
 
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pineappl pdfunc` was renamed into `pineappl uncert`, which is now also able
   to calculate scale uncertainties, which in turn have been removed from
   `pineappl convolute`
+- `pineappl help` now relies on installed man pages
 
 ### Fixed
 

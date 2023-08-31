@@ -148,6 +148,13 @@ this repository and run
 
 inside it.
 
+### Man pages
+
+Man pages for the CLI can be installed from a repository with
+
+    mkdir -p $(dirname $(which pineappl))/../share/man/man1/
+    cargo xtask install-manpages $(dirname $(which pineappl))/../share/man/man1/
+
 ## Python
 
 [![PyPI version](https://badge.fury.io/py/pineappl.svg)](https://badge.fury.io/py/pineappl)
