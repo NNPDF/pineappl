@@ -1761,6 +1761,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "xtask"
+version = "0.6.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_mangen",
+ "pineappl_cli",
+]
+
+[[package]]
 name = "zip"
 version = "0.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
