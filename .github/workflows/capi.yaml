@@ -12,7 +12,7 @@ jobs:
 
       - name: Install PineAPPL's C API
         run: |
-          cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
+          RUSTFLAGS="-Cinstrument-coverage" cargo cinstall --debug --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
           ldconfig
 
       - name: Test C example
@@ -39,3 +39,21 @@ jobs:
           make
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
+
+      - name: Generate code coverage
+        run: |
+          find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
+          $(rustc --print target-libdir)/../bin/llvm-cov export \
+                  --ignore-filename-regex='/.cargo/registry' \
+                  --ignore-filename-regex='/cargo/registry' \
+                  --ignore-filename-regex='rustc' \
+                  --instr-profile=pineappl.profdata \
+                  --skip-functions \
+                  --object /usr/local/lib/libpineappl_capi.so.*.*.* \
+                  --format lcov > lcov.info
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          flags: capi
