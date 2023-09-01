@@ -25,6 +25,13 @@ are a few guidelines:
 
 ## C, C++ and Fortran: the CAPI
 
+You can install the CAPI in two different ways:
+
+- [using pre-built binaries](#using-pre-built-binaries), which doesn't require
+  installing Rust or any compilation, or
+- alternatively [from source](#from-source), which needs an installation of
+  Rust.
+
 ### Using pre-built binaries
 
 The fastest way to install the CAPI is to download the pre-built binaries:
@@ -38,7 +45,7 @@ command line, change the arguments to the shell:
     .. | sh -s -- --prefix /my/custom/installation/path
 
 By default `install-capi.sh` will download the latest stable release. If you'd
-like a specific version, give it with `--version`:
+like a specific version, pass the version along with `--version`:
 
     .. | sh -s -- --version 0.6.0-alpha.18
 
@@ -56,14 +63,19 @@ If you want to build the CAPI from source instead, you first need to
 
        cargo install cargo-c --version 0.9.14+cargo-0.67
 
-2. Now install `pineappl_capi`, PineAPPL's C API:
+2. Next, check out PineAPPL's repository, for instance with
+
+       git clone https://github.com/NNPDF/pineappl.git
+       cd pineappl
+
+3. Now install `pineappl_capi`, PineAPPL's C API:
 
        cd pineappl_capi
        cargo cinstall --release --prefix=${prefix}
        cd ..
 
    where `${prefix}` points to the desired installation directory.
-3. Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
+4. Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
    `LD_LIBRARY_PATH` to the right directories. Adding
 
        export LD_LIBRARY_PATH=${prefix}/lib:$LD_LIBRARY_PATH
@@ -79,8 +91,8 @@ If you want to build the CAPI from source instead, you first need to
    environment and that it points to a directory containing the
    `pineappl_capi.pc` file.
 
-If you want to update the CAPI, first update the repository and then repeat
-step 2.
+If you want to update the CAPI, first update the PineAPPL repository with `git
+pull` and then repeat step 3.
 
 ## CLI: `pineappl` for your shell
 
@@ -150,9 +162,26 @@ inside it.
 
 ### Man pages
 
-Man pages for the CLI can be installed from a repository with
+Most of PineAPPL's help is available as `pineappl --help` and as `pineappl
+convolute --help`, for example. However, the same information can also be
+installed as man pages, which can then be used as either
+
+    man pineappl
+    man pineappl-convolute
+
+or
+
+    pineappl help
+    pineappl help convolute
+
+For this to work first install the [CLI](#cli-pineappl-for-your-shell). Next,
+go to your local copy of PineAPPL's repository and create the man page
+directory relative to the CLI,
 
     mkdir -p $(dirname $(which pineappl))/../share/man/man1/
+
+and finally install the manpages there:
+
     cargo xtask install-manpages $(dirname $(which pineappl))/../share/man/man1/
 
 ## Python
@@ -165,8 +194,8 @@ To install the Python interface, run
 
     pip install pineappl
 
-For more documentation and more information see its
-[README](../pineappl_py/README.md).
+This will not require any previous installation of Rust. For more documentation
+and more information see its [README](../pineappl_py/README.md).
 
 ## Rust
 
