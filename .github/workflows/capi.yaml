@@ -13,7 +13,7 @@ jobs:
       - name: Install PineAPPL's C API
         run: |
           export RUSTFLAGS="-Cinstrument-coverage"
-          cargo cinstall --debug --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
+          cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
           ldconfig
 
       - name: Test C example
