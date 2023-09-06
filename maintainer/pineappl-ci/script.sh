@@ -16,6 +16,9 @@ done
 # apt update
 # apt install gfortran -y
 
+# needed by the vendored OpenSSL used by `cargo-c`
+yum install perl-IPC-Cmd
+
 # install cargo-c needed for the CAPI
 cargo install cargo-c --version ${CARGOC_V} --features=vendored-openssl
 
