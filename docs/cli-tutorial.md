@@ -21,7 +21,7 @@ a fresh directory. For instance, run
 
 to create a temporary directory. Finally, you'll need a grid,
 
-    wget 'https://github.com/NNPDF/pineappl/raw/master/pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4'
+    wget 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
 
 which you'll use with the CLI.
 
@@ -40,25 +40,26 @@ install the PDF set with LHAPDF, or use a different PDF set—the numbers won't
 matter for the sake of the tutorial. If the command was successful, you should
 see the following output:
 
-    LHAPDF 6.4.1a loading /home/cschwan/prefix/share/LHAPDF/CT18NNLO/CT18NNLO_0000.dat
+    LHAPDF 6.5.1 loading /home/cschwan/prefix/share/LHAPDF/CT18NNLO/CT18NNLO_0000.dat
     CT18NNLO PDF set, member #0, version 1; LHAPDF ID = 14000
-    b   etal    disg/detal  scale uncertainty
-         []        [pb]            [%]
-    -+----+----+-----------+--------+--------
-    0    2 2.25 3.8562616e2    -3.69     2.65
-    1 2.25  2.5 3.5553189e2    -3.70     2.73
-    2  2.5 2.75 3.0928086e2    -3.68     2.79
-    3 2.75    3 2.4991572e2    -3.66     2.83
-    4    3 3.25 1.8610527e2    -3.62     2.85
-    5 3.25  3.5 1.2614289e2    -3.57     2.87
-    6  3.5    4 5.9206239e1    -3.47     2.84
-    7    4  4.5 1.3881523e1    -3.29     2.75
-    Thanks for using LHAPDF 6.4.1a. Please make sure to cite the paper:
+    b   etal    dsig/detal
+         []        [pb]
+    -+----+----+-----------
+    0    2 2.25 7.7526895e2
+    1 2.25  2.5 7.1092145e2
+    2  2.5 2.75 6.1876958e2
+    3 2.75    3 5.0017809e2
+    4    3 3.25 3.7228440e2
+    5 3.25  3.5 2.5236943e2
+    6  3.5    4 1.1857770e2
+    7    4  4.5 2.7740964e1
+    Thanks for using LHAPDF 6.5.1. Please make sure to cite the paper:
       Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
 
 On your computer the output will be slightly different depending on your LHAPDF
-installation. If you don't want to see LHAPDF messages, add the option
-`--silence-lhapdf` after `pineappl` and before `convolute`:
+installation. If you don't want to see LHAPDF messages (first and last two
+lines), add the option `--silence-lhapdf` after `pineappl` and before
+`convolute`:
 
     pineappl --silence-lhapdf convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
@@ -67,21 +68,18 @@ Let's have a closer look at what the output shows:
 - the `b` column shows there are 8 bins, indexed `0` through `7`,
 - the next two columns labelled `etal` shows the observable used to define the
   bins and its left and right bin limits,
-- `disg/detal` has a spelling mistake, unfortunately, and should read
-  `dsig/detal`. It shows the differential cross section (`dsig`) for the bin
-  limits given in the previous two columns. Finally,
-- the last two columns show the scale uncertainty, which typically is
-  asymmetric.
+- the last column `dsig/detal` shows the differential cross section (`dsig`)
+  for the bin limits given in the previous two columns.
 
-## `pineappl --help`: Getting help
+## `pineappl -h`: Getting help
 
 One of the most difficult aspects of learning a new program is remembering how
-to achieve certain tasks and what to type. This should be easy with `pineappl`:
+to achieve certain tasks and what to type. This should be easy with `pineappl`;
 just remember that you can type
 
     pineappl
 
-which is a shortcut for `pineappl --help`. This will give you a list of program
+which is a shortcut for `pineappl -h`. This will give you a list of program
 options and *subcommands*, under which all operations in `pineappl` are
 grouped, and a corresponding description. You'll be familiar with the concept
 of subcommand if you're using `git`: `add`, `commit` and `push` are well-known
@@ -90,52 +88,42 @@ subcommands of it.
 To get more help on a specific subcommand, for instance `convolute`, which
 we've used already, run
 
-    pineappl convolute --help
+    pineappl convolute -h
 
 Depending on the version of PineAPPL this will show output similar to the
 following:
 
-    pineappl-convolute
     Convolutes a PineAPPL grid with a PDF set
 
-    USAGE:
-        pineappl convolute [OPTIONS] <INPUT> <PDFSETS>...
+    Usage: pineappl convolute [OPTIONS] <INPUT> <PDFSETS>...
 
-    ARGS:
-        <INPUT>         Path of the input grid
-        <PDFSETS>...    LHAPDF id(s) or name of the PDF set(s)
+    Arguments:
+      <INPUT>       Path of the input grid
+      <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
 
-    OPTIONS:
-        -a, --absolute              Show absolute numbers of the scale variation
-        -b, --bins <BINS>...        Selects a subset of bins
-            --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers
-                                    [default: 7]
-            --digits-rel <REL>      Set the number of fractional digits shown for relative numbers
-                                    [default: 2]
-        -h, --help                  Print help information
-        -i, --integrated            Show integrated numbers (without bin widths) instead of differential
-                                    ones
-        -o, --orders <ORDERS>...    Select orders manually
-        -s, --scales <SCALES>       Set the number of scale variations [default: 7] [possible values: 1,
-                                    3, 7, 9]
+    Options:
+      -b, --bins <BINS>       Selects a subset of bins
+      -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
+      -o, --orders <ORDERS>   Select orders manually
+          --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
+          --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
+      -h, --help              Print help
 
-This explains that `pineappl` needs at least two arguments, the first being the
-grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`, which
-determines the PDF set. Note that the argument has three dots, `...`, meaning
-that you're allowed to pass multiple PDF sets, in which case `pineappl` will
-perform the convolution with each PDF set, such that you can compare them with
-each other. This subcommand also accepts a few optional parameters, denoted
-with `[OPTIONS]`. If you read the help message carefully, you'll notice for
-instance that the scale uncertainty shown previously is a 7-point variation,
-because the default value of `--scales` is `7`.
+This explains that `pineappl convolute` needs at least two arguments, the first
+being the grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`,
+which determines the PDF set. Note that this argument has three dots, `...`,
+meaning that you're allowed to pass multiple PDF sets, in which case `pineappl`
+will perform the convolution with each PDF set, such that you can compare them
+with each other. This subcommand also accepts a few optional parameters,
+denoted with `[OPTIONS]`.
 
 ## `pineappl read`: What does this grid contain?
 
-If you're experienced, you've already inferred from the file name of the grid
-and the observable name `etal` what the convoluted numbers will most likely
-show. However, how can you be certain? Specifically, if you didn't generate the
-grid yourself you'll probably want to know the answers to the following
-questions:
+If you're experienced enough in high-energy physics, you've already inferred
+from the file name of the grid and the observable name `etal` what the
+convoluted numbers will most likely show. However, how can you be certain?
+Specifically, if you didn't generate the grid yourself you'll probably want to
+know the answers to the following questions:
 
 1. For which process is the prediction for?
 2. Which observable is shown?
@@ -260,9 +248,9 @@ This prints all partonic initial states that contribute to this process:
     l    entry        entry
     -+------------+------------
     0 1 × ( 2, -1) 1 × ( 4, -3)
-    1 1 × ( 0, -3) 1 × ( 0, -1)
+    1 1 × (21, -3) 1 × (21, -1)
     2 1 × (22, -3) 1 × (22, -1)
-    3 1 × ( 2,  0) 1 × ( 4,  0)
+    3 1 × ( 2, 21) 1 × ( 4, 21)
     4 1 × ( 2, 22) 1 × ( 4, 22)
 
 In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4,
@@ -278,8 +266,7 @@ anti-down—up, are merged with each other, which always works if the two
 initial-state hadrons are the same; this is an optimization step, also to keep
 the size of the grid files small.
 
-All remaining lumis are the ones with a gluon (in this case denoted with
-`0`) or with a photon, `22`.
+All remaining lumis are the ones with a gluon, `21`, or with a photon, `22`.
 
 ## `pineappl orders`: What's the size of each perturbative order?
 
@@ -290,17 +277,17 @@ means you can perform convolutions separately for each order:
 
 which prints
 
-    b   etal    disg/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+    b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
          []        [pb]         [%]         [%]         [%]
     -+----+----+-----------+-----------+-----------+-----------
-    0    2 2.25 3.8562616e2      100.00       17.21       -1.23
-    1 2.25  2.5 3.5553189e2      100.00       17.67       -1.13
-    2  2.5 2.75 3.0928086e2      100.00       18.15       -1.03
-    3 2.75    3 2.4991572e2      100.00       18.54       -0.91
-    4    3 3.25 1.8610527e2      100.00       19.17       -0.85
-    5 3.25  3.5 1.2614289e2      100.00       20.00       -0.78
-    6  3.5    4 5.9206239e1      100.00       21.34       -0.90
-    7    4  4.5 1.3881523e1      100.00       24.77       -1.02
+    0    2 2.25 7.7526895e2      100.00       17.63       -1.25
+    1 2.25  2.5 7.1092145e2      100.00       17.47       -1.13
+    2  2.5 2.75 6.1876958e2      100.00       18.07       -1.04
+    3 2.75    3 5.0017809e2      100.00       18.53       -0.92
+    4    3 3.25 3.7228440e2      100.00       19.12       -0.85
+    5 3.25  3.5 2.5236943e2      100.00       19.84       -0.81
+    6  3.5    4 1.1857770e2      100.00       21.32       -0.83
+    7    4  4.5 2.7740964e1      100.00       24.59       -1.01
 
 By default all higher orders are shown relative to the sum of all LOs. However,
 this can be changed using the switches `--normalize` or `-n`, which asks for
@@ -311,17 +298,17 @@ normalized to NLO QCD, we'd run
 
 which will show
 
-    b   etal    disg/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
+    b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
          []        [pb]         [%]         [%]         [%]
     -+----+----+-----------+-----------+-----------+-----------
-    0    2 2.25 3.8562616e2       85.32       14.68       -1.05
-    1 2.25  2.5 3.5553189e2       84.98       15.02       -0.96
-    2  2.5 2.75 3.0928086e2       84.64       15.36       -0.87
-    3 2.75    3 2.4991572e2       84.36       15.64       -0.76
-    4    3 3.25 1.8610527e2       83.91       16.09       -0.72
-    5 3.25  3.5 1.2614289e2       83.33       16.67       -0.65
-    6  3.5    4 5.9206239e1       82.41       17.59       -0.75
-    7    4  4.5 1.3881523e1       80.14       19.86       -0.82
+    0    2 2.25 7.7526895e2       85.01       14.99       -1.06
+    1 2.25  2.5 7.1092145e2       85.13       14.87       -0.96
+    2  2.5 2.75 6.1876958e2       84.69       15.31       -0.88
+    3 2.75    3 5.0017809e2       84.37       15.63       -0.78
+    4    3 3.25 3.7228440e2       83.95       16.05       -0.71
+    5 3.25  3.5 2.5236943e2       83.45       16.55       -0.67
+    6  3.5    4 1.1857770e2       82.42       17.58       -0.69
+    7    4  4.5 2.7740964e1       80.26       19.74       -0.81
 
 ## `pineappl channels`: What's the size of each channel?
 
@@ -335,61 +322,68 @@ This will show the following table,
     b   etal    l  size  l  size  l size  l size l size
          []        [%]      [%]      [%]    [%]    [%]
     -+----+----+-+------+-+------+-+-----+-+----+-+----
-    0    2 2.25 0 111.09 3  -7.96 1 -3.13 2 0.00 4 0.00
-    1 2.25  2.5 0 111.83 3  -8.68 1 -3.15 2 0.00 4 0.00
-    2  2.5 2.75 0 112.66 3  -9.40 1 -3.25 2 0.00 4 0.00
-    3 2.75    3 0 113.49 3  -9.95 1 -3.54 2 0.00 4 0.00
-    4    3 3.25 0 114.24 3 -10.36 1 -3.89 2 0.00 4 0.00
-    5 3.25  3.5 0 114.96 3 -10.57 1 -4.39 2 0.00 4 0.00
-    6  3.5    4 0 115.63 3 -10.25 1 -5.38 2 0.00 4 0.00
-    7    4  4.5 0 115.74 3  -8.56 1 -7.18 2 0.00 4 0.00
+    0    2 2.25 0 111.00 3  -7.91 1 -3.10 2 0.00 4 0.00
+    1 2.25  2.5 0 111.83 3  -8.69 1 -3.15 2 0.00 4 0.00
+    2  2.5 2.75 0 112.68 3  -9.37 1 -3.31 2 0.00 4 0.00
+    3 2.75    3 0 113.49 3  -9.97 1 -3.53 2 0.00 4 0.00
+    4    3 3.25 0 114.26 3 -10.36 1 -3.90 2 0.00 4 0.00
+    5 3.25  3.5 0 115.00 3 -10.58 1 -4.42 2 0.00 4 0.00
+    6  3.5    4 0 115.65 3 -10.25 1 -5.39 2 0.00 4 0.00
+    7    4  4.5 0 115.81 3  -8.58 1 -7.23 2 0.00 4 0.00
 
 The most important lumi is `0`, which is the up-type–anti-down-type
 combination. The channels with gluons are much smaller and negative. Channels
 with a photon are zero, because the PDF set that we've chosen doesn't have a
-photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` as the PDF set:
+photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` (remember to
+install the set first) as the PDF set:
 
     b   etal    l  size  l  size  l size  l size l size
          []        [%]      [%]      [%]    [%]    [%]
     -+----+----+-+------+-+------+-+-----+-+----+-+----
-    0    2 2.25 0 111.13 3  -7.89 1 -3.27 4 0.02 2 0.01
-    1 2.25  2.5 0 111.88 3  -8.62 1 -3.29 4 0.02 2 0.01
-    2  2.5 2.75 0 112.72 3  -9.34 1 -3.40 4 0.01 2 0.01
-    3 2.75    3 0 113.56 3  -9.89 1 -3.70 4 0.01 2 0.01
-    4    3 3.25 0 114.32 3 -10.29 1 -4.05 4 0.01 2 0.01
-    5 3.25  3.5 0 115.01 3 -10.51 1 -4.53 2 0.02 4 0.01
-    6  3.5    4 0 115.57 3 -10.18 1 -5.41 4 0.01 2 0.01
-    7    4  4.5 0 115.08 3  -8.22 1 -6.89 4 0.03 2 0.01
+    0    2 2.25 0 111.04 3  -7.84 1 -3.23 4 0.02 2 0.01
+    1 2.25  2.5 0 111.87 3  -8.62 1 -3.29 4 0.02 2 0.01
+    2  2.5 2.75 0 112.73 3  -9.31 1 -3.45 4 0.02 2 0.01
+    3 2.75    3 0 113.56 3  -9.90 1 -3.69 4 0.01 2 0.01
+    4    3 3.25 0 114.34 3 -10.30 1 -4.07 4 0.01 2 0.01
+    5 3.25  3.5 0 115.07 3 -10.52 1 -4.57 4 0.02 2 0.01
+    6  3.5    4 0 115.59 3 -10.18 1 -5.43 2 0.01 4 0.01
+    7    4  4.5 0 115.16 3  -8.23 1 -6.94 4 0.01 2 0.01
 
-## `pineappl pdfunc`: How large are the PDF uncertainties?
+## `pineappl uncert`: How large are the scale and PDF uncertainties?
 
-Let's calculate the PDF uncertainties for our grid:
+Let's calculate the scale and PDF uncertainties for our grid:
 
-    pineappl pdfunc LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+    pineappl uncert --pdf --scale-env=7 LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
 
 This will show a table very similar to `pineappl convolute`:
 
-    b   etal    disg/detal  PDF uncertainty
-         []        [pb]           [%]
-    -+----+----+-----------+-------+-------
-    0    2 2.25 3.8562616e2   -3.04    2.24
-    1 2.25  2.5 3.5553189e2   -3.02    2.34
-    2  2.5 2.75 3.0928086e2   -2.98    2.44
-    3 2.75    3 2.4991572e2   -2.93    2.55
-    4    3 3.25 1.8610527e2   -2.90    2.72
-    5 3.25  3.5 1.2614289e2   -2.90    3.00
-    6  3.5    4 5.9206239e1   -3.08    3.67
-    7    4  4.5 1.3881523e1   -4.01    5.62
+    b   etal    dsig/detal  PDF central    PDF     7pt-svar (env)
+         []        [pb]                    [%]           [%]
+    -+----+----+-----------+-----------+-----+----+-------+-------
+    0    2 2.25 7.7651327e2 7.7650499e2 -1.01 1.01   -3.69    2.64
+    1 2.25  2.5 7.1011428e2 7.1008027e2 -1.01 1.01   -3.67    2.69
+    2  2.5 2.75 6.1683947e2 6.1679433e2 -1.01 1.01   -3.67    2.76
+    3 2.75    3 4.9791036e2 4.9786461e2 -1.03 1.03   -3.64    2.78
+    4    3 3.25 3.7016249e2 3.7012355e2 -1.07 1.07   -3.60    2.80
+    5 3.25  3.5 2.5055318e2 2.5052366e2 -1.13 1.13   -3.55    2.81
+    6  3.5    4 1.1746882e2 1.1745148e2 -1.33 1.33   -3.48    2.80
+    7    4  4.5 2.8023753e1 2.8018010e1 -4.05 4.05   -3.40    2.74
 
-The PDF uncertainty is calculated using LHAPDF, so `pineappl` always uses the
-correct algorithm no matter what type of PDF sets you use: Hessian, Monte
-Carlo, etc.
+The first three columns are exactly the one that `pineappl convolute` shows.
+The next columns are the PDF central predictions, and negative and positive PDF
+uncertainties. These uncertainties are calculated using LHAPDF, so `pineappl`
+always uses the correct algorithm no matter what type of PDF sets you use:
+Hessian, Monte Carlo, etc. Note that we've chosen a PDF set with Monte Carlo
+replicas which means that the results shown in `dsig/detal` and `PDF central`
+aren't exactly the same. The first number is calculated from the zeroth replica
+of the set and the second number is the average of all replicas (except the
+zeroth). You'll notice that the PDF uncertainties are symmetric, which will not
+necessarily be the case with Hessian PDF sets, for instance.
 
-In particular this means that in the case of `CT18NNLO` the numbers will be
-exactly the same as the one you saw in `pineappl convolute`. This will not be
-case for a Monte Carlo PDF set, however, for which `pineappl convolute` uses
-the `0`-member PDF, whereas `pineappl pdfunc` uses the average over all
-replicas. However, this is expected and the difference is typically small.
+The two remaining columns show the scale-variation uncertainty which is
+estimated from taking the envelope of a 7-point scale variation. By changing
+the parameter of `--scale-env` to a different value (`3` or `9`), you can
+change the scale-variation procedure.
 
 ## `pineappl pull`: Are two PDF sets compatible with each other?
 
@@ -412,26 +406,26 @@ calculated using the different channels:
     b   etal    total  l  pull  l  pull  l  pull  l pull  l pull
          []      [σ]      [σ]      [σ]      [σ]      [σ]     [σ]
     -+----+----+------+-+------+-+------+-+------+-+-----+-+-----
-    0    2 2.25  0.072 0  0.081 1 -0.045 3  0.024 4 0.008 2 0.004
-    1 2.25  2.5 -0.029 1 -0.043 3  0.030 0 -0.027 4 0.008 2 0.003
-    2  2.5 2.75 -0.096 0 -0.097 1 -0.043 3  0.036 4 0.005 2 0.002
-    3 2.75    3 -0.145 0 -0.148 1 -0.045 3  0.040 4 0.005 2 0.002
-    4    3 3.25 -0.187 0 -0.190 1 -0.045 3  0.042 4 0.004 2 0.002
-    5 3.25  3.5 -0.234 0 -0.249 3  0.043 1 -0.037 2 0.005 4 0.003
-    6  3.5    4 -0.293 0 -0.345 3  0.043 1  0.004 4 0.004 2 0.001
-    7    4  4.5  0.145 0  0.071 3  0.037 1  0.031 4 0.004 2 0.001
+    0    2 2.25  0.065 0  0.086 1 -0.058 3  0.024 4 0.009 2 0.005
+    1 2.25  2.5 -0.037 1 -0.042 0 -0.029 3  0.024 4 0.006 2 0.004
+    2  2.5 2.75 -0.102 0 -0.097 1 -0.043 3  0.030 4 0.006 2 0.002
+    3 2.75    3 -0.149 0 -0.148 1 -0.045 3  0.036 4 0.005 2 0.004
+    4    3 3.25 -0.188 0 -0.190 1 -0.045 3  0.039 4 0.004 2 0.003
+    5 3.25  3.5 -0.235 0 -0.250 3  0.044 1 -0.037 4 0.005 2 0.002
+    6  3.5    4 -0.283 0 -0.344 3  0.050 1  0.004 2 0.003 4 0.003
+    7    4  4.5  0.144 0  0.073 3  0.037 1  0.031 4 0.002 2 0.001
 
 Looking at the `total` column you can see that the numbers are much smaller
-than `1`, which would correspond to a one sigma difference. This we'd expect
-knowing that this dataset is used to fit both PDF sets. The remaining columns
-show how the different luminosities (with indices in the `l` column) contribute
-to the total pull. For the last bin, for instance, we see lumi `0` contributes
-roughly half to the total pull, the remaining pull coming from lumis `3` and
-`1`.
+than `1`, where `1` corresponds to a one sigma difference. This we expect
+knowing that this dataset is used in the fit of both PDF sets. The remaining
+columns show how the different luminosities (with indices in the `l` column)
+contribute to the total pull. For the last bin, for instance, we see lumi `0`
+contributes roughly half to the total pull, the remaining pull coming from
+lumis `3` and `1`.
 
-Note that the chosen CT18 set doesn't have a photon PDF, where the NNPDF set
-*does* have one. However, for these observables the photon PDF contribution is
-too small to make a difference in the pull.
+Note that CT18NNLO doesn't have a photon PDF, but the NNPDF set *has* one.
+However, for these observables the photon PDF contribution is too small to make
+a difference in the pull.
 
 ## `pineappl plot`: Show me a plot of the predictions!
 
@@ -462,23 +456,28 @@ sets, for instance
     pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED \
         CT18NNLO=CT18 MSHT20nnlo_as118=MSHT20 > plot.py
 
-in which case two more insets are plotted, which show the PDF uncertainty for
+in which case more insets are plotted, which show the PDF uncertainty for
 each set and also the pull using the first PDF set. As shown above, you can use
 `=plotlabel` after the LHAPDF name to change the labels in the plot:
 
 ![plot](LHCB_WP_7TEV_2.jpeg)
 
+Note that you easily customize the generated script, `plot.py` in this case. It
+is generated in such a way that style choices, plot labels and panel selection
+is at the top of the script and separated from plotting routines and data,
+which are found at the end of the file.
+
 ## Conclusion
 
 This is the end of the tutorial, but there are many more subcommands left that
-we didn't discuss, and many more switches for subcommands that were part of the
-tutorial. Remember that you can always run
+we didn't discuss, and many more switches for subcommands that weren't part of
+the tutorial. Remember that you can always run
 
     pineappl
 
 to get an overview of what's there and what you might need, and that
 
-    pineappl <SUBCOMMAND> --help
+    pineappl <SUBCOMMAND> -h
 
 gives you a more detailed description of the options and switches for each
 subcommand.
