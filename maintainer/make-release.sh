@@ -9,6 +9,7 @@ crates=(
     pineappl_capi
     pineappl_cli
     pineappl_py
+    xtask
 )
 
 features=(
@@ -90,6 +91,7 @@ for crate in . ${crates[@]}; do
         -e "s:^version = \".*\":version = \"${version}\":" \
         -e "s:^\(pineappl = .*\)version = \".*\":\1version = \"${version}\":" \
         -e "s:^\(pineappl_applgrid = .*\)version = \".*\":\1version = \"${version}\":" \
+        -e "s:^\(pineappl_cli = .*\)version = \".*\":\1version = \"${version}\":" \
         -e "s:^\(pineappl_fastnlo = .*\)version = \".*\":\1version = \"${version}\":" \
         ${crate}/Cargo.toml
     git add ${crate}/Cargo.toml
