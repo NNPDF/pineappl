@@ -13,7 +13,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "0.6.1" }
+pineappl = { path = "../pineappl", version = "=0.6.1" }
 itertools = "0.10.1"
 
 [features]

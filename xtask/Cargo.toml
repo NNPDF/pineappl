@@ -16,4 +16,4 @@ clap = { features = ["string"], version = "4.2.0" }
 clap_mangen = "0.2.7"
 #git2 = "0.17.2"
 #semver = "1.0.17"
-pineappl_cli = { path = "../pineappl_cli", version = "0.6.1" }
+pineappl_cli = { path = "../pineappl_cli", version = "=0.6.1" }
