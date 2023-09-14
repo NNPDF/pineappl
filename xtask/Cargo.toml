@@ -1,5 +1,6 @@
 [package]
 name = "xtask"
+description = "Cargo applet for PineAPPL specific tasks"
 publish = false
 
 categories.workspace = true
