@@ -15,7 +15,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.48"
 base64 = { optional = true, version = "0.21.0" }
-clap = { features = ["deprecated", "derive", "unstable-v5"], version = "4.2.0" }
+clap = { features = ["derive"], version = ">=4.2, <4.4" } # 4.4 requires MSRV 1.70
 cxx = "1.0.65"
 either = { features = ["serde"], optional = true, version = "1.8.0" }
 enum_dispatch = "0.3.7"
