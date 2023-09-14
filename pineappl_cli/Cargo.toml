@@ -30,7 +30,6 @@ ndarray-npy = { optional = true, version = "0.8.1" }
 pineappl = { path = "../pineappl", version = "=0.6.1" }
 pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "=0.6.1" }
 pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "=0.6.1" }
-predicates = "2.1.1"
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.10.0" }
 rayon = "1.5.1"
 serde = { features = ["derive"], optional = true, version = "1.0.130" }
@@ -41,6 +40,7 @@ tar = { optional = true, version = "0.4.38" }
 assert_cmd = "2.0.2"
 assert_fs = "1.0.6"
 float-cmp = "0.9.0"
+predicates = "2.1.1"
 
 [[bin]]
 name = "pineappl"
