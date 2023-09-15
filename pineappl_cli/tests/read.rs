@@ -37,9 +37,9 @@ const BINS_STR: &str = "b   etal    norm
 const LUMIS_STR: &str = "l    entry        entry
 -+------------+------------
 0 1 × ( 2, -1) 1 × ( 4, -3)
-1 1 × ( 0, -3) 1 × ( 0, -1)
+1 1 × (21, -3) 1 × (21, -1)
 2 1 × (22, -3) 1 × (22, -1)
-3 1 × ( 2,  0) 1 × ( 4,  0)
+3 1 × ( 2, 21) 1 × ( 4, 21)
 4 1 × ( 2, 22) 1 × ( 4, 22)
 ";
 
@@ -114,22 +114,22 @@ hepdata: 10.17182/hepdata.2114.v1/t4
 initial_state_1: 2212
 initial_state_2: 2212
 lumi_id_types: pdg_mc_ids
-mg5amc_repo: 
-mg5amc_revno: 
+mg5amc_repo: http://bazaar.launchpad.net/~maddevelopers/mg5amcnlo/3.1.2/
+mg5amc_revno: 983
 nnpdf_id: LHCBWZMU7TEV
-pineappl_gitversion: v0.4.1-36-gdbdb5d0
+pineappl_gitversion: v0.4.1-114-gdce19e0
 results: ----------------------------------------------------------------------
    PineAPPL         MC        sigma      central         min      max 
                               1/100   sigma   1/1000   1/1000   1/1000
 ----------------------------------------------------------------------
- 1.876381e+02  1.876313e+02   0.082   0.044   0.0360   0.0396   0.0317
- 1.726078e+02  1.726041e+02   0.082   0.026   0.0211   0.0246   0.0166
- 1.500070e+02  1.500056e+02   0.051   0.019   0.0095   0.0103   0.0075
- 1.212883e+02  1.212890e+02   0.047   0.012   0.0056   0.0052   0.0068
- 9.046672e+01  9.046795e+01   0.057   0.024   0.0136   0.0127   0.0146
- 6.145558e+01  6.145650e+01   0.063   0.024   0.0151   0.0116   0.0193
- 5.785102e+01  5.784687e+01   0.075   0.095   0.0717   0.0874   0.0518
- 1.377203e+01  1.376219e+01   0.119   0.599   0.7153   0.7646   0.6465
+ 3.772955e+02  3.772821e+02   0.165   0.022   0.0357   0.0392   0.0313
+ 3.451417e+02  3.451342e+02   0.179   0.012   0.0217   0.0251   0.0172
+ 3.001260e+02  3.001231e+02   0.029   0.033   0.0096   0.0104   0.0076
+ 2.427612e+02  2.427624e+02   0.024   0.021   0.0049   0.0046   0.0060
+ 1.809773e+02  1.809799e+02   0.023   0.062   0.0143   0.0134   0.0154
+ 1.229334e+02  1.229354e+02   0.028   0.056   0.0157   0.0120   0.0200
+ 1.158685e+02  1.158603e+02   0.029   0.245   0.0708   0.0859   0.0514
+ 2.751727e+01  2.749798e+01   0.074   0.944   0.7014   0.7554   0.6281
 
 runcard: <LesHouchesEvents version="3.0">
 <header>
@@ -163,7 +163,7 @@ runcard: <LesHouchesEvents version="3.0">
 #*********************************************************************
 -->
 <MGVersion>
-3.1.0
+3.1.1
 </MGVersion>
 <MGRunCard>
 <![CDATA[
@@ -212,7 +212,7 @@ runcard: <LesHouchesEvents version="3.0">
 #***********************************************************************
 # Number of points per itegration channel (ignored for aMC@NLO runs)   *
 #***********************************************************************
-  0.0002	= req_acc_fo ! Required accuracy (-1=ignored, and use the 
+  0.0001	= req_acc_fo ! Required accuracy (-1=ignored, and use the 
  	                   ! number of points and iter. below)
 # These numbers are ignored except if req_acc_FO is equal to -1
   5000	= npoints_fo_grid ! number of points to setup grids
@@ -415,7 +415,7 @@ DECAY 15 0.000000e+00 # ta- : 0.0
 DECAY 16 0.000000e+00 # vt : 0.0
 DECAY 21 0.000000e+00 # g : 0.0
 DECAY 22 0.000000e+00 # a : 0.0
-DECAY 250 2.504790e+00 # g0 : wz
+DECAY 250 2.498770e+00 # g0 : wz
 DECAY 251 2.092910e+00 # g+ : ww
 ###################################
 ## INFORMATION FOR QNUMBERS 9000001
@@ -538,11 +538,11 @@ FO_ANALYSE = LHCB_WP_7TEV.o
 </header>
 </LesHouchesEvents>
 
-runcard_gitversion: 7b42083
+runcard_gitversion: 82de4ad
 x1_label: etal
 x1_label_tex: $\eta_{\bar{\ell}}$
 x1_unit: 
-y_label: disg/detal
+y_label: dsig/detal
 y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb
 "#;
@@ -568,7 +568,7 @@ fn help() {
 fn bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--bins", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--bins", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(BINS_STR);
@@ -578,7 +578,7 @@ fn bins() {
 fn lumis() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--lumis", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(LUMIS_STR);
@@ -588,7 +588,7 @@ fn lumis() {
 fn orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--orders", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--orders", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(ORDERS_STR);
@@ -598,7 +598,11 @@ fn orders() {
 fn orders_long() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--orders-long", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--orders-long",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(ORDERS_LONG_STR);
@@ -608,7 +612,11 @@ fn orders_long() {
 fn orders_spaces() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--orders-spaces", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--orders-spaces",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(ORDERS_SPACES_STR);
@@ -618,7 +626,11 @@ fn orders_spaces() {
 fn fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--fktable", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--fktable",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .failure()
         .stdout(FKTABLE_STR);
@@ -632,7 +644,7 @@ fn wrong_orders() {
             "read",
             "--orders",
             "--orders-long",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
         ])
         .assert()
         .failure()
@@ -643,7 +655,7 @@ fn wrong_orders() {
 fn ew() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--ew", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--ew", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,a3\n");
@@ -653,7 +665,11 @@ fn ew() {
 fn get_arxiv() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--get=arxiv", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--get=arxiv",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout("1505.07024\n");
@@ -663,7 +679,7 @@ fn get_arxiv() {
 fn keys() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--keys", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--keys", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(KEYS_STR);
@@ -673,7 +689,7 @@ fn keys() {
 fn qcd() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--qcd", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,as1a2\n");
@@ -683,7 +699,7 @@ fn qcd() {
 fn show() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--show", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--show", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
         .assert()
         .success()
         .stdout(SHOW_STR);
@@ -693,7 +709,12 @@ fn show() {
 fn wrong_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--ew", "--qcd", "data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--ew",
+            "--qcd",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .failure()
         .stderr(WRONG_ARGUMENTS_STR);

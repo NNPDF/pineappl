@@ -2615,14 +2615,13 @@ mod tests {
     #[test]
     fn evolve_info() {
         let grid =
-            Grid::read(File::open("../pineappl_cli/data/LHCB_WP_7TEV.pineappl.lz4").unwrap())
-                .unwrap();
+            Grid::read(File::open("../test-data/LHCB_WP_7TEV.pineappl.lz4").unwrap()).unwrap();
         let info = grid.evolve_info(&[]);
 
         assert_eq!(info.fac1.len(), 1);
         assert_approx_eq!(f64, info.fac1[0], 6456.443904000001, ulps = 64);
 
-        assert_eq!(info.pids1, [-3, -1, 0, 2, 4, 22]);
+        assert_eq!(info.pids1, [-3, -1, 2, 4, 21, 22]);
 
         assert_eq!(info.x1.len(), 50);
         assert_approx_eq!(f64, info.x1[0], 1.9999999999999954e-7, ulps = 64);

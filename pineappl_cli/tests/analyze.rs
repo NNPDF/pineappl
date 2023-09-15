@@ -32,12 +32,12 @@ const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K
 -+----+----+-----+-+----+-+----+-+----+-+----+-+----
 0    2 2.25  1.17 0 1.30 3 -inf 1 -inf 2 0.00 4 0.00
 1 2.25  2.5  1.17 0 1.31 3 -inf 1 -inf 2 0.00 4 0.00
-2  2.5 2.75  1.18 0 1.33 3 -inf 1 -inf 2 0.00 4 0.00
+2  2.5 2.75  1.17 0 1.33 3 -inf 1 -inf 2 0.00 4 0.00
 3 2.75    3  1.18 0 1.34 3 -inf 1 -inf 2 0.00 4 0.00
 4    3 3.25  1.18 0 1.36 3 -inf 1 -inf 2 0.00 4 0.00
-5 3.25  3.5  1.19 0 1.38 3 -inf 1 -inf 2 0.00 4 0.00
+5 3.25  3.5  1.19 0 1.37 3 -inf 1 -inf 2 0.00 4 0.00
 6  3.5    4  1.20 0 1.40 3 -inf 1 -inf 2 0.00 4 0.00
-7    4  4.5  1.24 0 1.44 3 -inf 1 -inf 2 0.00 4 0.00
+7    4  4.5  1.24 0 1.43 3 -inf 1 -inf 2 0.00 4 0.00
 ";
 
 // TODO: understand these factors
@@ -45,14 +45,14 @@ const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
     "b   etal    bin-K  l   K    l  K   l  K   l  K   l  K  
      []                                                
 -+----+----+------+-+------+-+----+-+----+-+----+-+----
-0    2 2.25 -12.92 0 -23.21 3 -inf 1 -inf 4 1.00 2 1.00
-1 2.25  2.5 -14.53 0 -26.59 3 -inf 1 -inf 4 1.00 2 1.00
-2  2.5 2.75 -16.29 0 -30.64 3 -inf 1 -inf 4 1.00 2 1.00
-3 2.75    3 -18.84 0 -36.08 3 -inf 1 -inf 4 1.00 2 1.00
-4    3 3.25 -20.56 0 -40.00 3 -inf 1 -inf 4 1.00 2 1.00
-5 3.25  3.5 -23.70 0 -45.54 3 -inf 1 -inf 2 1.00 4 1.00
-6  3.5    4 -21.29 0 -41.40 3 -inf 1 -inf 4 1.00 2 1.00
-7    4  4.5 -23.63 0 -41.69 3 -inf 1 -inf 4 1.00 2 1.00
+0    2 2.25 -13.20 0 -23.29 3 -inf 1 -inf 4 1.00 2 1.00
+1 2.25  2.5 -14.37 0 -26.28 3 -inf 1 -inf 4 1.00 2 1.00
+2  2.5 2.75 -16.17 0 -30.26 3 -inf 1 -inf 4 1.00 2 1.00
+3 2.75    3 -18.67 0 -35.49 3 -inf 1 -inf 4 1.00 2 1.00
+4    3 3.25 -20.81 0 -40.24 3 -inf 1 -inf 4 1.00 2 1.00
+5 3.25  3.5 -22.55 0 -43.96 3 -inf 1 -inf 4 1.00 2 1.00
+6  3.5    4 -23.46 0 -45.26 3 -inf 1 -inf 2 1.00 4 1.00
+7    4  4.5 -23.31 0 -42.13 3 -inf 1 -inf 4 1.00 2 1.00
 ";
 
 const CKF_WITH_BAD_LIMIT_STR: &str =
@@ -89,7 +89,7 @@ fn ckf() {
             "--silence-lhapdf",
             "analyze",
             "ckf",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
             "a2",
@@ -107,7 +107,7 @@ fn ckf_with_default_denominator() {
             "--silence-lhapdf",
             "analyze",
             "ckf",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
         ])
@@ -125,7 +125,7 @@ fn ckf_with_bad_limit() {
             "analyze",
             "ckf",
             "--limit=0",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
         ])

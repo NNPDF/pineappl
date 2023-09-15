@@ -17,97 +17,97 @@ Options:
   -h, --help              Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    disg/detal 
+const DEFAULT_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7527620e2
-1 2.25  2.5 3.4521553e2
-2  2.5 2.75 3.0001406e2
-3 2.75    3 2.4257663e2
-4    3 3.25 1.8093343e2
-5 3.25  3.5 1.2291115e2
-6  3.5    4 5.7851018e1
-7    4  4.5 1.3772029e1
+0    2 2.25 7.5459110e2
+1 2.25  2.5 6.9028342e2
+2  2.5 2.75 6.0025198e2
+3 2.75    3 4.8552235e2
+4    3 3.25 3.6195456e2
+5 3.25  3.5 2.4586691e2
+6  3.5    4 1.1586851e2
+7    4  4.5 2.7517266e1
 ";
 
-const FORCE_POSITIVE_STR: &str = "b   etal    disg/detal 
+const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7528881e2
-1 2.25  2.5 3.4523428e2
-2  2.5 2.75 3.0004398e2
-3 2.75    3 2.4262216e2
-4    3 3.25 1.8101238e2
-5 3.25  3.5 1.2304887e2
-6  3.5    4 5.8141170e1
-7    4  4.5 1.4224044e1
+0    2 2.25 7.5461571e2
+1 2.25  2.5 6.9032107e2
+2  2.5 2.75 6.0031056e2
+3 2.75    3 4.8561541e2
+4    3 3.25 3.6211174e2
+5 3.25  3.5 2.4614249e2
+6  3.5    4 1.1644853e2
+7    4  4.5 2.8422453e1
 ";
 
-const DEFAULT_MULTIPLE_PDFS_STR: &str = "b   etal    disg/detal  NNPDF31_nlo_as_0118_luxqed 
+const DEFAULT_MULTIPLE_PDFS_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed 
      []        [pb]              [pb] [%]          
 -+----+----+-----------+-------------+-------------
-0    2 2.25 3.7527620e2   3.7527620e2          0.00
-1 2.25  2.5 3.4521553e2   3.4521553e2          0.00
-2  2.5 2.75 3.0001406e2   3.0001406e2          0.00
-3 2.75    3 2.4257663e2   2.4257663e2          0.00
-4    3 3.25 1.8093343e2   1.8093343e2          0.00
-5 3.25  3.5 1.2291115e2   1.2291115e2          0.00
-6  3.5    4 5.7851018e1   5.7851018e1          0.00
-7    4  4.5 1.3772029e1   1.3772029e1          0.00
+0    2 2.25 7.5459110e2   7.5459110e2          0.00
+1 2.25  2.5 6.9028342e2   6.9028342e2          0.00
+2  2.5 2.75 6.0025198e2   6.0025198e2          0.00
+3 2.75    3 4.8552235e2   4.8552235e2          0.00
+4    3 3.25 3.6195456e2   3.6195456e2          0.00
+5 3.25  3.5 2.4586691e2   2.4586691e2          0.00
+6  3.5    4 1.1586851e2   1.1586851e2          0.00
+7    4  4.5 2.7517266e1   2.7517266e1          0.00
 ";
 
 const MULTIPLE_PDFS_WITH_NEW_CONSTRUCTION_STR: &str =
-    "b   etal    disg/detal  NNPDF31_nlo_as_0118_luxqed/1 
+    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1 
      []        [pb]               [pb] [%]           
 -+----+----+-----------+--------------+--------------
-0    2 2.25 3.7527620e2    3.7379477e2          -0.39
-1 2.25  2.5 3.4521553e2    3.4316002e2          -0.60
-2  2.5 2.75 3.0001406e2    2.9780437e2          -0.74
-3 2.75    3 2.4257663e2    2.4059099e2          -0.82
-4    3 3.25 1.8093343e2    1.7941535e2          -0.84
-5 3.25  3.5 1.2291115e2    1.2195463e2          -0.78
-6  3.5    4 5.7851018e1    5.7551676e1          -0.52
-7    4  4.5 1.3772029e1    1.3640796e1          -0.95
+0    2 2.25 7.5459110e2    7.5169067e2          -0.38
+1 2.25  2.5 6.9028342e2    6.8612437e2          -0.60
+2  2.5 2.75 6.0025198e2    5.9582118e2          -0.74
+3 2.75    3 4.8552235e2    4.8155744e2          -0.82
+4    3 3.25 3.6195456e2    3.5891650e2          -0.84
+5 3.25  3.5 2.4586691e2    2.4395886e2          -0.78
+6  3.5    4 1.1586851e2    1.1526800e2          -0.52
+7    4  4.5 2.7517266e1    2.7259743e1          -0.94
 ";
 
-const MULTIPLE_PDFS_WITH_RELABELING_STR: &str = "b   etal    disg/detal     other mc=1.4   
+const MULTIPLE_PDFS_WITH_RELABELING_STR: &str = "b   etal    dsig/detal     other mc=1.4   
      []        [pb]          [pb] [%]     
 -+----+----+-----------+-----------+------
-0    2 2.25 3.7527620e2 3.7379477e2  -0.39
-1 2.25  2.5 3.4521553e2 3.4316002e2  -0.60
-2  2.5 2.75 3.0001406e2 2.9780437e2  -0.74
-3 2.75    3 2.4257663e2 2.4059099e2  -0.82
-4    3 3.25 1.8093343e2 1.7941535e2  -0.84
-5 3.25  3.5 1.2291115e2 1.2195463e2  -0.78
-6  3.5    4 5.7851018e1 5.7551676e1  -0.52
-7    4  4.5 1.3772029e1 1.3640796e1  -0.95
+0    2 2.25 7.5459110e2 7.5169067e2  -0.38
+1 2.25  2.5 6.9028342e2 6.8612437e2  -0.60
+2  2.5 2.75 6.0025198e2 5.9582118e2  -0.74
+3 2.75    3 4.8552235e2 4.8155744e2  -0.82
+4    3 3.25 3.6195456e2 3.5891650e2  -0.84
+5 3.25  3.5 2.4586691e2 2.4395886e2  -0.78
+6  3.5    4 1.1586851e2 1.1526800e2  -0.52
+7    4  4.5 2.7517266e1 2.7259743e1  -0.94
 ";
 
-const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str = "b   etal    disg/detal  NNPDF31_nlo_as_0118_luxqed/1 
+const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1 
      []        [pb]               [pb] [%]           
 -+----+----+-----------+--------------+--------------
-0    2 2.25 3.2482657e2    3.2399084e2          -0.26
-1 2.25  2.5 2.9755128e2    2.9619757e2          -0.45
-2  2.5 2.75 2.5751142e2    2.5598573e2          -0.59
-3 2.75    3 2.0748091e2    2.0608487e2          -0.67
-4    3 3.25 1.5397599e2    1.5289865e2          -0.70
-5 3.25  3.5 1.0384063e2    1.0317243e2          -0.64
-6  3.5    4 4.8383606e1    4.8189863e1          -0.40
-7    4  4.5 1.1185365e1    1.1083933e1          -0.91
+0    2 2.25 6.5070305e2    6.4903968e2          -0.26
+1 2.25  2.5 5.9601236e2    5.9329838e2          -0.46
+2  2.5 2.75 5.1561247e2    5.1256355e2          -0.59
+3 2.75    3 4.1534629e2    4.1255233e2          -0.67
+4    3 3.25 3.0812719e2    3.0597140e2          -0.70
+5 3.25  3.5 2.0807482e2    2.0674262e2          -0.64
+6  3.5    4 9.6856769e1    9.6469932e1          -0.40
+7    4  4.5 2.2383492e1    2.2182749e1          -0.90
 ";
 
 const THREE_PDFS_STR: &str =
-    "b   etal    disg/detal  NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2 
+    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2 
      []        [pb]               [pb] [%]                      [pb] [%]           
 -+----+----+-----------+--------------+--------------+--------------+--------------
-0    2 2.25 3.7527620e2    3.7379477e2          -0.39    3.7670804e2           0.38
-1 2.25  2.5 3.4521553e2    3.4316002e2          -0.60    3.4596819e2           0.22
-2  2.5 2.75 3.0001406e2    2.9780437e2          -0.74    3.0023944e2           0.08
-3 2.75    3 2.4257663e2    2.4059099e2          -0.82    2.4259549e2           0.01
-4    3 3.25 1.8093343e2    1.7941535e2          -0.84    1.8095662e2           0.01
-5 3.25  3.5 1.2291115e2    1.2195463e2          -0.78    1.2308878e2           0.14
-6  3.5    4 5.7851018e1    5.7551676e1          -0.52    5.8229565e1           0.65
-7    4  4.5 1.3772029e1    1.3640796e1          -0.95    1.4234097e1           3.36
+0    2 2.25 7.5459110e2    7.5169067e2          -0.38    7.5748758e2           0.38
+1 2.25  2.5 6.9028342e2    6.8612437e2          -0.60    6.9177921e2           0.22
+2  2.5 2.75 6.0025198e2    5.9582118e2          -0.74    6.0069567e2           0.07
+3 2.75    3 4.8552235e2    4.8155744e2          -0.82    4.8555961e2           0.01
+4    3 3.25 3.6195456e2    3.5891650e2          -0.84    3.6199676e2           0.01
+5 3.25  3.5 2.4586691e2    2.4395886e2          -0.78    2.4622502e2           0.15
+6  3.5    4 1.1586851e2    1.1526800e2          -0.52    1.1661992e2           0.65
+7    4  4.5 2.7517266e1    2.7259743e1          -0.94    2.8446007e1           3.38
 ";
 
 const WRONG_LHAID_STR: &str =
@@ -122,53 +122,53 @@ const WRONG_PDFSET_STR: &str =
 For more information, try '--help'.
 ";
 
-const BINS_13567_STR: &str = "b   etal   disg/detal 
+const BINS_13567_STR: &str = "b   etal   dsig/detal 
      []       [pb]    
 -+----+---+-----------
-1 2.25 2.5 3.4521553e2
-3 2.75   3 2.4257663e2
-5 3.25 3.5 1.2291115e2
-6  3.5   4 5.7851018e1
-7    4 4.5 1.3772029e1
+1 2.25 2.5 6.9028342e2
+3 2.75   3 4.8552235e2
+5 3.25 3.5 2.4586691e2
+6  3.5   4 1.1586851e2
+7    4 4.5 2.7517266e1
 ";
 
 const INTEGRATED_STR: &str = "b   etal       integ   
      []         []     
 -+----+----+-----------
-0    2 2.25 9.3819050e1
-1 2.25  2.5 8.6303882e1
-2  2.5 2.75 7.5003515e1
-3 2.75    3 6.0644157e1
-4    3 3.25 4.5233358e1
-5 3.25  3.5 3.0727788e1
-6  3.5    4 2.8925509e1
-7    4  4.5 6.8860146e0
+0    2 2.25 1.8864777e2
+1 2.25  2.5 1.7257086e2
+2  2.5 2.75 1.5006300e2
+3 2.75    3 1.2138059e2
+4    3 3.25 9.0488640e1
+5 3.25  3.5 6.1466727e1
+6  3.5    4 5.7934254e1
+7    4  4.5 1.3758633e1
 ";
 
 const INTEGRATED_MULTIPLE_PDFS_STR: &str = "b   etal       integ    NNPDF31_nlo_as_0118_luxqed 
      []         []                [] [%]           
 -+----+----+-----------+-------------+-------------
-0    2 2.25 9.3819050e1   9.3819050e1          0.00
-1 2.25  2.5 8.6303882e1   8.6303882e1          0.00
-2  2.5 2.75 7.5003515e1   7.5003515e1          0.00
-3 2.75    3 6.0644157e1   6.0644157e1          0.00
-4    3 3.25 4.5233358e1   4.5233358e1          0.00
-5 3.25  3.5 3.0727788e1   3.0727788e1          0.00
-6  3.5    4 2.8925509e1   2.8925509e1          0.00
-7    4  4.5 6.8860146e0   6.8860146e0          0.00
+0    2 2.25 1.8864777e2   1.8864777e2          0.00
+1 2.25  2.5 1.7257086e2   1.7257086e2          0.00
+2  2.5 2.75 1.5006300e2   1.5006300e2          0.00
+3 2.75    3 1.2138059e2   1.2138059e2          0.00
+4    3 3.25 9.0488640e1   9.0488640e1          0.00
+5 3.25  3.5 6.1466727e1   6.1466727e1          0.00
+6  3.5    4 5.7934254e1   5.7934254e1          0.00
+7    4  4.5 1.3758633e1   1.3758633e1          0.00
 ";
 
-const ORDERS_A2_A3_STR: &str = "b   etal    disg/detal 
+const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.2092052e2
-1 2.25  2.5 2.9427151e2
-2  2.5 2.75 2.5490261e2
-3 2.75    3 2.0561831e2
-4    3 3.25 1.5266481e2
-5 3.25  3.5 1.0303603e2
-6  3.5    4 4.7938981e1
-7    4  4.5 1.1075878e1
+0    2 2.25 6.4283381e2
+1 2.25  2.5 5.8945001e2
+2  2.5 2.75 5.1037764e2
+3 2.75    3 4.1158725e2
+4    3 3.25 3.0554001e2
+5 3.25  3.5 2.0639857e2
+6  3.5    4 9.6046494e1
+7    4  4.5 2.2163265e1
 ";
 
 const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
@@ -193,7 +193,7 @@ fn default() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -209,7 +209,7 @@ fn force_positive() {
             "--force-positive",
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -224,7 +224,7 @@ fn default_multiple_pdfs() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "324900=NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -240,7 +240,7 @@ fn multiple_pdfs_with_new_construction() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
         ])
@@ -256,7 +256,7 @@ fn multiple_pdfs_with_relabeling() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF31_nlo_as_0118_luxqed/1=other mc=1.4",
         ])
@@ -273,7 +273,7 @@ fn two_pdfs_with_order_subset() {
             "--silence-lhapdf",
             "convolute",
             "--orders=a2",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
         ])
@@ -289,7 +289,7 @@ fn three_pdfs() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
             "NNPDF31_nlo_as_0118_luxqed/2",
@@ -306,7 +306,7 @@ fn wrong_lhaid() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "0",
         ])
         .assert()
@@ -321,7 +321,7 @@ fn wrong_pdfset() {
         .args([
             "--silence-lhapdf",
             "convolute",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "IDONTEXIST",
         ])
         .assert()
@@ -337,7 +337,7 @@ fn bins_13567() {
             "--silence-lhapdf",
             "convolute",
             "--bins=1,3,5-7",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -353,7 +353,7 @@ fn integrated() {
             "--silence-lhapdf",
             "convolute",
             "--integrated",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -369,7 +369,7 @@ fn integrated_multiple_pdfs() {
             "--silence-lhapdf",
             "convolute",
             "--integrated",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -386,7 +386,7 @@ fn orders_a2_a3() {
             "--silence-lhapdf",
             "convolute",
             "--orders=a2,a3",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -402,7 +402,7 @@ fn wrong_orders() {
             "--silence-lhapdf",
             "convolute",
             "--orders=a2a2as2",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

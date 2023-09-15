@@ -30,33 +30,33 @@ Options:
   -h, --help                          Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    disg/detal 
+const DEFAULT_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7527620e2
-1 2.25  2.5 3.4521553e2
-2  2.5 2.75 3.0001406e2
-3 2.75    3 2.4257663e2
-4    3 3.25 1.8093343e2
-5 3.25  3.5 1.2291115e2
-6  3.5    4 5.7851018e1
-7    4  4.5 1.3772029e1
+0    2 2.25 7.5459110e2
+1 2.25  2.5 6.9028342e2
+2  2.5 2.75 6.0025198e2
+3 2.75    3 4.8552235e2
+4    3 3.25 3.6195456e2
+5 3.25  3.5 2.4586691e2
+6  3.5    4 1.1586851e2
+7    4  4.5 2.7517266e1
 ";
 
-const DELETE_BINS_02_57_STR: &str = "b   etal    disg/detal 
+const DELETE_BINS_02_57_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0 2.75    3 2.4257663e2
-1    3 3.25 1.8093343e2
+0 2.75    3 4.8552235e2
+1    3 3.25 3.6195456e2
 ";
 
-const DELETE_BINS_25_STR: &str = "b   etal    disg/detal 
+const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7527620e2
-1 2.25  2.5 3.4521553e2
-2  3.5    4 5.7851018e1
-3    4  4.5 1.3772029e1
+0    2 2.25 7.5459110e2
+1 2.25  2.5 6.9028342e2
+2  3.5    4 1.1586851e2
+3    4  4.5 2.7517266e1
 ";
 
 const KEY_VALUE_STR: &str = r#"arxiv: 1505.07024
@@ -66,113 +66,113 @@ initial_state_1: 2212
 initial_state_2: 2212
 key: value
 lumi_id_types: pdg_mc_ids
-mg5amc_repo: 
-mg5amc_revno: 
+mg5amc_repo: http://bazaar.launchpad.net/~maddevelopers/mg5amcnlo/3.1.2/
+mg5amc_revno: 983
 multiline: one
 two
 three
 four
 nnpdf_id: LHCBWZMU7TEV
-pineappl_gitversion: v0.4.1-36-gdbdb5d0
+pineappl_gitversion: v0.4.1-114-gdce19e0
 results: ----------------------------------------------------------------------
    PineAPPL         MC        sigma      central         min      max 
                               1/100   sigma   1/1000   1/1000   1/1000
 ----------------------------------------------------------------------
- 1.876381e+02  1.876313e+02   0.082   0.044   0.0360   0.0396   0.0317
- 1.726078e+02  1.726041e+02   0.082   0.026   0.0211   0.0246   0.0166
- 1.500070e+02  1.500056e+02   0.051   0.019   0.0095   0.0103   0.0075
- 1.212883e+02  1.212890e+02   0.047   0.012   0.0056   0.0052   0.0068
- 9.046672e+01  9.046795e+01   0.057   0.024   0.0136   0.0127   0.0146
- 6.145558e+01  6.145650e+01   0.063   0.024   0.0151   0.0116   0.0193
- 5.785102e+01  5.784687e+01   0.075   0.095   0.0717   0.0874   0.0518
- 1.377203e+01  1.376219e+01   0.119   0.599   0.7153   0.7646   0.6465
+ 3.772955e+02  3.772821e+02   0.165   0.022   0.0357   0.0392   0.0313
+ 3.451417e+02  3.451342e+02   0.179   0.012   0.0217   0.0251   0.0172
+ 3.001260e+02  3.001231e+02   0.029   0.033   0.0096   0.0104   0.0076
+ 2.427612e+02  2.427624e+02   0.024   0.021   0.0049   0.0046   0.0060
+ 1.809773e+02  1.809799e+02   0.023   0.062   0.0143   0.0134   0.0154
+ 1.229334e+02  1.229354e+02   0.028   0.056   0.0157   0.0120   0.0200
+ 1.158685e+02  1.158603e+02   0.029   0.245   0.0708   0.0859   0.0514
+ 2.751727e+01  2.749798e+01   0.074   0.944   0.7014   0.7554   0.6281
 
-runcard_gitversion: 7b42083
+runcard_gitversion: 82de4ad
 x1_label: etal
 x1_label_tex: $\eta_{\bar{\ell}}$
 x1_unit: 
-y_label: disg/detal
+y_label: dsig/detal
 y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb
 "#;
 
-const MERGE_BINS_STR: &str = "b   etal    disg/detal 
+const MERGE_BINS_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7527620e2
-1 2.25  2.5 3.4521553e2
-2  2.5 2.75 3.0001406e2
-3 2.75    3 2.4257663e2
-4    3 3.25 1.8093343e2
-5 3.25  3.5 1.2291115e2
-6  3.5  4.5 3.5811524e1
+0    2 2.25 7.5459110e2
+1 2.25  2.5 6.9028342e2
+2  2.5 2.75 6.0025198e2
+3 2.75    3 4.8552235e2
+4    3 3.25 3.6195456e2
+5 3.25  3.5 2.4586691e2
+6  3.5  4.5 7.1692887e1
 ";
 
-const REMAP_STR: &str = "b etal  x2  x3  disg/detal 
+const REMAP_STR: &str = "b etal  x2  x3  dsig/detal 
    []   []  []     [pb]    
 -+--+--+-+-+-+-+-----------
-0  0  1 0 2 1 2 1.8763810e1
-1  0  1 0 2 2 3 1.7260776e1
-2  0  1 0 2 3 4 1.5000703e1
-3  0  1 0 2 4 5 1.2128831e1
-4  0  1 2 4 1 2 9.0466716e0
-5  1  2 0 2 8 9 6.1455576e0
-6  1  2 2 4 3 4 5.7851018e0
-7  1  2 2 4 4 5 1.3772029e0
+0  0  1 0 2 1 2 3.7729555e1
+1  0  1 0 2 2 3 3.4514171e1
+2  0  1 0 2 3 4 3.0012599e1
+3  0  1 0 2 4 5 2.4276118e1
+4  0  1 2 4 1 2 1.8097728e1
+5  1  2 0 2 8 9 1.2293345e1
+6  1  2 2 4 3 4 1.1586851e1
+7  1  2 2 4 4 5 2.7517266e0
 ";
 
 const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
 ";
 
-const SCALE_BY_BIN_STR: &str = "b   etal    disg/detal 
+const SCALE_BY_BIN_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 3.7527620e2
-1 2.25  2.5 6.9043106e2
-2  2.5 2.75 9.0004217e2
-3 2.75    3 9.7030651e2
-4    3 3.25 9.0466716e2
-5 3.25  3.5 7.3746691e2
-6  3.5    4 4.0495712e2
-7    4  4.5 1.1017623e2
+0    2 2.25 7.5459110e2
+1 2.25  2.5 1.3805668e3
+2  2.5 2.75 1.8007559e3
+3 2.75    3 1.9420894e3
+4    3 3.25 1.8097728e3
+5 3.25  3.5 1.4752015e3
+6  3.5    4 8.1107956e2
+7    4  4.5 2.2013813e2
 ";
 
-const SCALE_BY_ORDER_STR: &str = "b   etal    disg/detal 
+const SCALE_BY_ORDER_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2 2.25 2.1481594e2
-1 2.25  2.5 1.9807977e2
-2  2.5 2.75 1.7256275e2
-3 2.75    3 1.3976747e2
-4    3 3.25 1.0460103e2
-5 3.25  3.5 7.1393138e1
-6  3.5    4 3.3881527e1
-7    4  4.5 8.2340900e0
+0    2 2.25 4.3317419e2
+1 2.25  2.5 3.9555841e2
+2  2.5 2.75 3.4506316e2
+3 2.75    3 2.7972873e2
+4    3 3.25 2.0918456e2
+5 3.25  3.5 1.4266762e2
+6  3.5    4 6.7845261e1
+7    4  4.5 1.6435633e1
 ";
 
 const SPLIT_LUMI_STR: &str = "l    entry
 -+------------
 0 1 × ( 2, -1)
 1 1 × ( 4, -3)
-2 1 × ( 0, -3)
-3 1 × ( 0, -1)
+2 1 × (21, -3)
+3 1 × (21, -1)
 4 1 × (22, -3)
 5 1 × (22, -1)
-6 1 × ( 2,  0)
-7 1 × ( 4,  0)
+6 1 × ( 2, 21)
+7 1 × ( 4, 21)
 8 1 × ( 2, 22)
 9 1 × ( 4, 22)
 ";
 
-const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    disg/detal 
+const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
-0    2  2.5 3.7627688e2
-1  2.5    3 2.8214731e2
-2    3 3.25 1.8696821e2
-3 3.25  3.5 1.2647520e2
-4  3.5    4 5.9463128e1
-5    4  4.5 1.4511966e1
+0    2  2.5 7.5454524e2
+1  2.5    3 5.6456123e2
+2    3 3.25 3.7400170e2
+3 3.25  3.5 2.5300890e2
+4  3.5    4 1.1909464e2
+5    4  4.5 2.9004607e1
 ";
 
 #[test]
@@ -194,7 +194,7 @@ fn cc1() {
         .args([
             "write",
             "--cc1",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -223,7 +223,7 @@ fn cc2() {
         .args([
             "write",
             "--cc2",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -252,7 +252,7 @@ fn delete_bins_02_57() {
         .args([
             "write",
             "--delete-bins=0-2,5-7",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -281,7 +281,7 @@ fn delete_bins_25() {
         .args([
             "write",
             "--delete-bins=2-5",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -319,7 +319,7 @@ fn key_value() {
             "--set-key-file",
             "multiline",
             file.path().to_str().unwrap(),
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -343,7 +343,7 @@ fn merge_bins() {
         .args([
             "write",
             "--merge-bins=6-7",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -373,7 +373,7 @@ fn optimize() {
         .args([
             "write",
             "--optimize",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -392,7 +392,7 @@ fn remap() {
             "--remap=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
             "--remap-norm-ignore=1",
             "--remap-norm=5",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -421,7 +421,7 @@ fn remap_norm_no_remapper() {
         .args([
             "write",
             "--remap-norm=1",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -438,7 +438,7 @@ fn remap_norm_ignore_no_remapper() {
         .args([
             "write",
             "--remap-norm-ignore=0",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -455,7 +455,7 @@ fn scale_by_bin() {
         .args([
             "write",
             "--scale-by-bin=1,2,3,4,5,6,7,8",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -485,7 +485,7 @@ fn scale_by_order() {
             "write",
             "--scale-by-order=2,1,0.5,0.5",
             "--scale=0.5",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -514,7 +514,7 @@ fn split_lumi() {
         .args([
             "write",
             "--split-lumi",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -555,7 +555,7 @@ fn upgrade() {
         .args([
             "write",
             "--upgrade",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -571,7 +571,7 @@ fn multiple_arguments() {
         .unwrap()
         .args([
             "write",
-            "data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "--merge-bins=0-1,2-3",
             "--scale=2",
             "--merge-bins=0-0",
