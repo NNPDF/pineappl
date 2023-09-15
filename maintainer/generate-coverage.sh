@@ -35,7 +35,7 @@ export RUSTDOCFLAGS="-Cinstrument-coverage -Z unstable-options --persist-doctest
 
 cargo clean
 # -Z doctest-in-workspace is enabled by default starting from 1.72.0
-cargo test -Z doctest-in-workspace --all-features -- --include-ignored 2> >(tee stderr 1>&2)
+cargo test -Z doctest-in-workspace --all-features 2> >(tee stderr 1>&2)
 # from https://stackoverflow.com/a/51141872/812178
 sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 

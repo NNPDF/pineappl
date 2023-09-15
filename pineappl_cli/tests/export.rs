@@ -113,7 +113,6 @@ fn help() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "applgrid")]
 fn export_applgrid() {
     let output = NamedTempFile::new("converted.appl").unwrap();
@@ -133,7 +132,6 @@ fn export_applgrid() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "applgrid")]
 fn export_dis_applgrid() {
     let output1 = NamedTempFile::new("remapped.pineappl.lz4").unwrap();

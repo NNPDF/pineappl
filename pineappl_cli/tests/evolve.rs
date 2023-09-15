@@ -145,7 +145,6 @@ fn help() {
 }
 
 #[test]
-#[ignore]
 fn lhcb_wp_7tev() {
     let output = NamedTempFile::new("fktable1a.lz4").unwrap();
 
@@ -193,7 +192,6 @@ fn lhcb_wp_7tev() {
 }
 
 #[test]
-#[ignore]
 fn e906nlo_bin_00() {
     let output = NamedTempFile::new("fktable2.lz4").unwrap();
 
@@ -213,7 +211,6 @@ fn e906nlo_bin_00() {
 }
 
 #[test]
-#[ignore]
 fn nutev_cc_nu_fe_sigmared() {
     let output = NamedTempFile::new("fktable3.lz4").unwrap();
 
@@ -234,7 +231,6 @@ fn nutev_cc_nu_fe_sigmared() {
 }
 
 #[test]
-#[ignore]
 fn lhcb_dy_8tev() {
     let output = NamedTempFile::new("fktable4.lz4").unwrap();
 
@@ -255,7 +251,6 @@ fn lhcb_dy_8tev() {
 }
 
 #[test]
-#[ignore]
 fn cms_ttb_8tev_2d_ttm_trap_tot() {
     let output = NamedTempFile::new("fktable5.lz4").unwrap();
 
