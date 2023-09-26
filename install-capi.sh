@@ -26,9 +26,17 @@ while [ $# -gt 0 ]; do
             shift
             shift
             ;;
+        --version=*)
+            version=${1#--version=}
+            shift
+            ;;
         --prefix)
             prefix=$2
             shift
+            shift
+            ;;
+        --prefix=*)
+            prefix=${1#--prefix=}
             shift
             ;;
         *)
