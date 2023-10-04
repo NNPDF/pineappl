@@ -980,6 +980,7 @@ dependencies = [
  "anyhow",
  "arrayvec",
  "bincode",
+ "bitflags",
  "enum_dispatch",
  "float-cmp",
  "git-version",

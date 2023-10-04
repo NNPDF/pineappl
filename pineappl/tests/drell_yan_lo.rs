@@ -2,10 +2,10 @@ use anyhow::Result;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::lumi::LumiCache;
 use pineappl::lumi_entry;
-use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridParams};
+use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
@@ -76,15 +76,35 @@ fn fill_drell_yan_lo_grid(
     let lumi = vec![
         // photons
         lumi_entry![22, 22, 1.0],
+        // quark-antiquark entries that won't be filled, but affected by the optimization
+        lumi_entry![2, -2, 1.0; 4, -4, 1.0],
+        lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
+        lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
+        lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
     ];
 
-    // only LO alpha^2
-    let orders = vec![Order {
-        alphas: 0,
-        alpha: 2,
-        logxir: 0,
-        logxif: 0,
-    }];
+    let orders = vec![
+        // LO
+        Order {
+            alphas: 0,
+            alpha: 2,
+            logxir: 0,
+            logxif: 0,
+        },
+        // NLO QCD - won't be filled
+        Order {
+            alphas: 1,
+            alpha: 2,
+            logxir: 0,
+            logxif: 0,
+        },
+        Order {
+            alphas: 1,
+            alpha: 2,
+            logxir: 0,
+            logxif: 1,
+        },
+    ];
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     let bin_limits: Vec<_> = (0..=24).map(|x| x as f64 / 10.0).collect();
@@ -339,6 +359,11 @@ fn perform_grid_tests(
     }
 
     Ok(())
+}
+
+fn generate_grid(subgrid_type: &str, dynamic: bool, reweight: bool) -> Result<Grid> {
+    let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
+    fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic, reweight)
 }
 
 const STATIC_REFERENCE: [f64; 24] = [
@@ -620,4 +645,67 @@ fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
         ],
         true,
     )
+}
+
+#[test]
+fn grid_optimize() -> Result<()> {
+    let mut grid = generate_grid("LagrangeSubgridV2", false, false)?;
+
+    assert_eq!(grid.orders().len(), 3);
+    assert_eq!(grid.lumi().len(), 5);
+    assert!(matches!(
+        grid.subgrids()[[0, 0, 0]],
+        SubgridEnum::LagrangeSubgridV2 { .. }
+    ));
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().len(), 50);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().len(), 50);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].mu2_grid().len(), 30);
+
+    let mut grid2 = grid.clone();
+    grid2.optimize_using(GridOptFlags::OPTIMIZE_SUBGRID_TYPE);
+
+    // `OPTIMIZE_SUBGRID_TYPE` changes the subgrid type ...
+    assert!(matches!(
+        grid2.subgrids()[[0, 0, 0]],
+        SubgridEnum::ImportOnlySubgridV2 { .. }
+    ));
+    // and the dimensions of the subgrid
+    assert_eq!(grid2.subgrids()[[0, 0, 0]].x1_grid().len(), 6);
+    assert_eq!(grid2.subgrids()[[0, 0, 0]].x2_grid().len(), 6);
+    assert_eq!(grid2.subgrids()[[0, 0, 0]].mu2_grid().len(), 4);
+
+    grid.optimize_using(GridOptFlags::OPTIMIZE_SUBGRID_TYPE | GridOptFlags::STATIC_SCALE_DETECTION);
+
+    assert!(matches!(
+        grid.subgrids()[[0, 0, 0]],
+        SubgridEnum::ImportOnlySubgridV2 { .. }
+    ));
+    // if `STATIC_SCALE_DETECTION` is present the `mu2_grid` dimension are better optimized
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().len(), 6);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().len(), 6);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].mu2_grid().len(), 1);
+
+    // has no effect for this test
+    grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
+
+    assert_eq!(grid.orders().len(), 3);
+    assert_eq!(grid.lumi().len(), 5);
+
+    grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
+
+    assert_eq!(grid.orders().len(), 1);
+    assert_eq!(grid.lumi().len(), 5);
+
+    // has no effect for this test
+    grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
+
+    assert_eq!(grid.orders().len(), 1);
+    assert_eq!(grid.lumi().len(), 5);
+
+    grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
+
+    assert_eq!(grid.orders().len(), 1);
+    assert_eq!(grid.lumi().len(), 1);
+
+    Ok(())
 }

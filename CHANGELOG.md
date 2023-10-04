@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and for combined PDF and scale uncertainties
 - added support for installing man pages. See installation instructions for
   more information
+- added new method `Grid::optimize_using` and its corresponding C function
+  `pineappl_grid_optimize_using`, which optimize a `Grid` like
+  `Grid::optimize`, but allow for more fine-grained selection of optimization
+  options, which are listed in the new bitflags `GridOptFlags`
 
 ### Changed
 

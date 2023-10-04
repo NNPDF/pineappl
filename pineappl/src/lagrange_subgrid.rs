@@ -412,7 +412,7 @@ pub struct LagrangeSubgridV2 {
     y2max: f64,
     taumin: f64,
     taumax: f64,
-    static_q2: f64,
+    pub(crate) static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {

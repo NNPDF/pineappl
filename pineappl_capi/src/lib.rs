@@ -61,7 +61,7 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::empty_subgrid::EmptySubgridV1;
-use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::{LumiCache, LumiEntry};
 use pineappl::sparse_array3::SparseArray3;
@@ -702,6 +702,18 @@ pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_optimize(grid: *mut Grid) {
     (*grid).optimize();
+}
+
+/// Optimizes the grid representation for space efficiency. The parameter `flags` determines which
+/// optimizations are applied, see [`GridOptFlags`].
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_optimize_using(grid: *mut Grid, flags: GridOptFlags) {
+    (*grid).optimize_using(flags);
 }
 
 /// Scales each subgrid by a bin-dependent factor given in `factors`. If a bin does not have a

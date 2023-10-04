@@ -33,9 +33,13 @@ usize_is_size_t = true
 "Lumi" = "pineappl_lumi"
 "KeyVal" = "pineappl_keyval"
 "SubGrid" = "pineappl_subgrid"
+"GridOptFlags" = "pineappl_gof"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 
 [parse]
 parse_deps = true
 include = ["pineappl"]
+
+[macro_expansion]
+bitflags = true

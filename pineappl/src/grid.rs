@@ -12,6 +12,7 @@ use super::ntuple_subgrid::NtupleSubgridV1;
 use super::pids;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
+use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -402,6 +403,29 @@ pub struct EkoInfo {
     pub grid_axes: GridAxes,
     /// TODO: replace this member with the actual data
     pub lumi_id_types: String,
+}
+
+bitflags! {
+    /// Bitflags for optimizing a [`Grid`]. See [`Grid::optimize_using`].
+    #[repr(transparent)]
+    pub struct GridOptFlags: u32 {
+        /// Change the [`Subgrid`] type to optimize storage effeciency.
+        const OPTIMIZE_SUBGRID_TYPE = 0b1;
+        /// Recognize whether a subgrid was filled with events with a static scale and if this is
+        /// the case, optimize it by undoing the interpolation in the scale. This flag requires
+        /// [`Self::OPTIMIZE_SUBGRID_TYPE`] to be active.
+        const STATIC_SCALE_DETECTION = 0b10;
+        /// If two channels differ by transposition of the two initial states and the functions
+        /// this grid is convoluted with are the same for both initial states, this will merge one
+        /// channel into the other, with the correct transpositions.
+        const SYMMETRIZE_CHANNELS = 0b100;
+        /// Remove all orders ([`Grid::orders`]), which do not contain any non-zero subgrids.
+        const STRIP_EMPTY_ORDERS = 0b1000;
+        /// Merge the subgrids of channels which have the same definition.
+        const MERGE_SAME_CHANNELS = 0b10000;
+        /// Remove all channels ([`Grid::lumi`]), which do not contain any non-zero subgrids.
+        const STRIP_EMPTY_CHANNELS = 0b10_0000;
+    }
 }
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
@@ -1096,44 +1120,60 @@ impl Grid {
         BinInfo::new(&self.bin_limits, self.remapper())
     }
 
-    /// Optimize the internal datastructures for space efficiency. This changes all subgrids of
-    /// type `LagrangeSubgrid` to `LagrangeSparseSubgrid`.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// Calls [`Self::optimize_using`] with all possible optimization options
+    /// ([`GridOptFlags::all`]).
     pub fn optimize(&mut self) {
-        // first convert everything into `ImportOnlySubgridV2`
+        self.optimize_using(GridOptFlags::all());
+    }
 
-        for subgrid in self.subgrids.iter_mut() {
-            if subgrid.is_empty() {
-                *subgrid = EmptySubgridV1::default().into();
-            } else {
-                match subgrid {
-                    // can't be reach because we already caught empty grids above
-                    SubgridEnum::EmptySubgridV1(_) => unreachable!(),
-                    // can't be optimized without losing information
-                    SubgridEnum::NtupleSubgridV1(_) => continue,
-                    _ => {
-                        let mut new_subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
-                        mem::swap(subgrid, &mut new_subgrid);
+    /// Optimizes the internal datastructures for space efficiency. The parameter `flags`
+    /// determines which optimizations are applied, see [`GridOptFlags`].
+    pub fn optimize_using(&mut self, flags: GridOptFlags) {
+        if flags.contains(GridOptFlags::OPTIMIZE_SUBGRID_TYPE) {
+            let ssd = flags.contains(GridOptFlags::STATIC_SCALE_DETECTION);
+            self.optimize_subgrid_type(ssd);
+        }
+        if flags.contains(GridOptFlags::SYMMETRIZE_CHANNELS) {
+            self.symmetrize_channels();
+        }
+        if flags.contains(GridOptFlags::STRIP_EMPTY_ORDERS) {
+            self.strip_empty_orders();
+        }
+        if flags.contains(GridOptFlags::MERGE_SAME_CHANNELS) {
+            self.merge_same_channels();
+        }
+        if flags.contains(GridOptFlags::STRIP_EMPTY_CHANNELS) {
+            self.strip_empty_channels();
+        }
+    }
+
+    fn optimize_subgrid_type(&mut self, static_scale_detection: bool) {
+        for subgrid in &mut self.subgrids {
+            match subgrid {
+                // replace empty subgrids of any type with `EmptySubgridV1`
+                _ if subgrid.is_empty() => {
+                    *subgrid = EmptySubgridV1::default().into();
+                }
+                // can't be optimized without losing information
+                SubgridEnum::NtupleSubgridV1(_) => continue,
+                _ => {
+                    // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
+                    // replace this with a method
+                    if !static_scale_detection {
+                        if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
+                            // disable static-scale detection
+                            subgrid.static_q2 = -1.0;
+                        }
                     }
+
+                    let mut new_subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
+                    mem::swap(subgrid, &mut new_subgrid);
                 }
             }
         }
-
-        if self
-            .key_values()
-            .map_or(true, |map| map["initial_state_1"] == map["initial_state_2"])
-        {
-            self.symmetrize_lumi();
-        }
-
-        self.optimize_orders();
-        self.optimize_lumi();
     }
 
-    fn optimize_lumi(&mut self) {
+    fn merge_same_channels(&mut self) {
         let mut indices: Vec<_> = (0..self.lumi.len()).rev().collect();
 
         // merge luminosities that are the same
@@ -1158,7 +1198,9 @@ impl Grid {
                 }
             }
         }
+    }
 
+    fn strip_empty_channels(&mut self) {
         let mut keep_lumi_indices = vec![];
         let mut new_lumi_entries = vec![];
 
@@ -1196,7 +1238,7 @@ impl Grid {
         self.subgrids = new_subgrids;
     }
 
-    fn optimize_orders(&mut self) {
+    fn strip_empty_orders(&mut self) {
         let mut indices: Vec<_> = (0..self.orders().len()).collect();
 
         while let Some(index) = indices.pop() {
@@ -1212,7 +1254,13 @@ impl Grid {
         }
     }
 
-    fn symmetrize_lumi(&mut self) {
+    fn symmetrize_channels(&mut self) {
+        if self.key_values().map_or(false, |map| {
+            map["initial_state_1"] != map["initial_state_2"]
+        }) {
+            return;
+        }
+
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
