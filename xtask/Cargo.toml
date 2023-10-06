@@ -14,7 +14,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.68"
 clap = { features = ["string"], version = "4.2.0" }
-clap_mangen = "0.2.7"
+clap_mangen = "0.2.7, <0.2.14" # TODO: 0.2.14 has MSRV >=1.70.0
 #git2 = "0.17.2"
 #semver = "1.0.17"
 pineappl_cli = { path = "../pineappl_cli", version = "=0.6.1" }
