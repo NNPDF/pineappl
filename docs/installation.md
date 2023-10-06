@@ -98,7 +98,7 @@ pull` and then repeat step 3.
 
 You need to install [Rust](#rust) first (see below). Then simply run
 
-    cargo install pineappl_cli
+    cargo install --locked pineappl_cli
 
 anywhere and you are done; this will automatically download the most-recently
 released version from [crates.io](https://crates.io).
@@ -122,7 +122,7 @@ to
 3. add the switch `--features=applgrid` during the CLI's installation, for
    instance:
 
-       APPL_IGRID_DIR=/tmp/applgrid-1.6.27/src cargo install --features=applgrid pineappl_cli
+       APPL_IGRID_DIR=/tmp/applgrid-1.6.27/src cargo install --locked --features=applgrid pineappl_cli
 
 ### Optional: Evolution/EKO support
 
@@ -130,7 +130,7 @@ If you'd like to convert PineAPPL grids into FK tables using [evolution kernel
 operators (EKO)](https://eko.readthedocs.io/), add the switch
 `--features=evolve` during the CLI's installation, for instance:
 
-    cargo install --features=evolve pineappl_cli
+    cargo install --locked --features=evolve pineappl_cli
 
 ### Optional: fastNLO importer
 
@@ -138,25 +138,25 @@ If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
 [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
 `--features=fastnlo` during the CLI's installation, for instance:
 
-    cargo install --features=fastnlo pineappl_cli
+    cargo install --locked --features=fastnlo pineappl_cli
 
 ### Optional: FK table converter
 
 If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, add the switch
 `--features=fktable` during the CLI's installation, for instance:
 
-    cargo install --features=fktable pineappl_cli
+    cargo install --locked --features=fktable pineappl_cli
 
 ### Alternative: development version
 
 To use the most recent version available run
 
-    cargo install --git https://github.com/NNPDF/pineappl.git
+    cargo install --locked --git https://github.com/NNPDF/pineappl.git pineappl_cli
 
 Instead, if you plan to make changes to the source code it's better to checkout
 this repository and run
 
-    cargo install --path pineappl_cli
+    cargo install --locked --path pineappl_cli
 
 inside it.
 
