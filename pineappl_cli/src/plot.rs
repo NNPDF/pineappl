@@ -70,32 +70,32 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
 // TODO: this function should take into account what type the particle IDs are
 fn map_format_parton(parton: i32) -> &'static str {
     match parton {
-        -6 => r#"\bar{\mathrm{t}}"#,
-        -5 => r#"\bar{\mathrm{b}}"#,
-        -4 => r#"\bar{\mathrm{c}}"#,
-        -3 => r#"\bar{\mathrm{s}}"#,
-        -2 => r#"\bar{\mathrm{u}}"#,
-        -1 => r#"\bar{\mathrm{d}}"#,
-        1 => r#"\mathrm{d}"#,
-        2 => r#"\mathrm{u}"#,
-        3 => r#"\mathrm{s}"#,
-        4 => r#"\mathrm{c}"#,
-        5 => r#"\mathrm{b}"#,
-        6 => r#"\mathrm{t}"#,
-        0 | 21 => r#"\mathrm{g}"#,
-        22 => r#"\gamma"#,
-        100 => r#"\Sigma"#,
-        103 => r#"\mathrm{T}_3"#,
-        108 => r#"\mathrm{T}_8"#,
-        115 => r#"\mathrm{T}_{15}"#,
-        124 => r#"\mathrm{T}_{24}"#,
-        135 => r#"\mathrm{T}_{35}"#,
-        200 => r#"\mathrm{V}"#,
-        203 => r#"\mathrm{V}_3"#,
-        208 => r#"\mathrm{V}_8"#,
-        215 => r#"\mathrm{V}_{15}"#,
-        224 => r#"\mathrm{V}_{24}"#,
-        235 => r#"\mathrm{V}_{35}"#,
+        -6 => r"\bar{\mathrm{t}}",
+        -5 => r"\bar{\mathrm{b}}",
+        -4 => r"\bar{\mathrm{c}}",
+        -3 => r"\bar{\mathrm{s}}",
+        -2 => r"\bar{\mathrm{u}}",
+        -1 => r"\bar{\mathrm{d}}",
+        1 => r"\mathrm{d}",
+        2 => r"\mathrm{u}",
+        3 => r"\mathrm{s}",
+        4 => r"\mathrm{c}",
+        5 => r"\mathrm{b}",
+        6 => r"\mathrm{t}",
+        0 | 21 => r"\mathrm{g}",
+        22 => r"\gamma",
+        100 => r"\Sigma",
+        103 => r"\mathrm{T}_3",
+        108 => r"\mathrm{T}_8",
+        115 => r"\mathrm{T}_{15}",
+        124 => r"\mathrm{T}_{24}",
+        135 => r"\mathrm{T}_{35}",
+        200 => r"\mathrm{V}",
+        203 => r"\mathrm{V}_3",
+        208 => r"\mathrm{V}_8",
+        215 => r"\mathrm{V}_{15}",
+        224 => r"\mathrm{V}_{24}",
+        235 => r"\mathrm{V}_{35}",
         _ => unimplemented!("PID = {parton} unknown"),
     }
 }
@@ -138,7 +138,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -
                     np.array([{}]),
                     np.array([{}]),
                 ),",
-                helpers::pdf_label(pdfset).replace('_', r#"\_"#),
+                helpers::pdf_label(pdfset).replace('_', r"\_"),
                 map_format_e_join_repeat_last(&values[0]),
                 map_format_e_join_repeat_last(&values[1]),
                 map_format_e_join_repeat_last(&values[2]),
@@ -162,9 +162,9 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
                         value.replace('\u{2013}', "--").replace('\u{2014}', "---")
                     } else if key.ends_with("_unit") {
                         value
-                            .replace("GeV", r#"\giga\electronvolt"#)
-                            .replace('/', r#"\per"#)
-                            .replace("pb", r#"\pico\barn"#)
+                            .replace("GeV", r"\giga\electronvolt")
+                            .replace('/', r"\per")
+                            .replace("pb", r"\pico\barn")
                     } else {
                         (*value).clone()
                     }
@@ -213,7 +213,7 @@ impl Subcommand for Opts {
                                 .unwrap_or_default()
                         )
                     })
-                    .join(r#"\\"#)
+                    .join(r"\\")
             })) {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 

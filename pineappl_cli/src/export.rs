@@ -133,7 +133,7 @@ impl Subcommand for Opts {
         let orders: Vec<_> = grid
             .orders()
             .iter()
-            .zip(order_mask.into_iter())
+            .zip(order_mask)
             .filter_map(
                 |(
                     &Order {

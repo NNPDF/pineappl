@@ -443,12 +443,9 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
-                OpsArg::DeleteBins(ranges) => grid.delete_bins(
-                    &ranges
-                        .into_iter()
-                        .flat_map(|r| r.clone().into_iter())
-                        .collect::<Vec<_>>(),
-                ),
+                OpsArg::DeleteBins(ranges) => {
+                    grid.delete_bins(&ranges.iter().flat_map(|r| r.clone()).collect::<Vec<_>>())
+                }
                 OpsArg::DeleteKey(key) => {
                     grid.key_values_mut().remove(key);
                 }

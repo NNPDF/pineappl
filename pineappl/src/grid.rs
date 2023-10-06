@@ -1370,7 +1370,8 @@ impl Grid {
             // the renormalization and factorization grid must be the same, ...
             if !lane
                 .iter()
-                .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.mu2_grid()))
+                .filter(|subgrid| !subgrid.is_empty())
+                .map(|subgrid| subgrid.mu2_grid())
                 .all_equal()
             {
                 return None;
@@ -1380,7 +1381,8 @@ impl Grid {
             if has_pdf1
                 && !lane
                     .iter()
-                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x1_grid()))
+                    .filter(|subgrid| !subgrid.is_empty())
+                    .map(|subgrid| subgrid.x1_grid())
                     .all_equal()
             {
                 return None;
@@ -1390,14 +1392,15 @@ impl Grid {
             if has_pdf2
                 && !lane
                     .iter()
-                    .filter_map(|subgrid| (!subgrid.is_empty()).then(|| subgrid.x2_grid()))
+                    .filter(|subgrid| !subgrid.is_empty())
+                    .map(|subgrid| subgrid.x2_grid())
                     .all_equal()
             {
                 return None;
             }
 
             // not all luminosities are equal (some appear only at higher orders)
-            for subgrid in lane.iter() {
+            for subgrid in lane {
                 mur2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.ren).collect());
                 muf2_grid.append(&mut subgrid.mu2_grid().iter().map(|mu2| mu2.fac).collect());
                 if has_pdf1 {
@@ -1690,7 +1693,7 @@ impl Grid {
                     .cartesian_product(0..pids2.len())
                     .enumerate()
                 {
-                    for (src_pid1, src_pid2, factor) in src_entries.entry().iter() {
+                    for (src_pid1, src_pid2, factor) in src_entries.entry() {
                         // find source lumi position
                         let src_pid1_idx = if has_pdf1 {
                             eko_info

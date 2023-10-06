@@ -313,7 +313,6 @@ impl<'a> BinInfo<'a> {
                     self.limits
                         .limits()
                         .iter()
-                        .skip(0)
                         .take(self.bins())
                         .copied()
                         .collect()

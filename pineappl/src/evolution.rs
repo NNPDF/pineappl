@@ -243,7 +243,6 @@ pub(crate) fn ndarray_from_subgrid_orders(
             subgrid
                 .mu2_grid()
                 .iter()
-                .cloned()
                 .map(|mu2| info.xif * info.xif * mu2.fac)
                 .collect::<Vec<_>>()
         })
@@ -488,7 +487,7 @@ pub(crate) fn evolve_with_one(
     };
 
     Ok((
-        Array1::from_iter(sub_fk_tables.into_iter())
+        Array1::from_iter(sub_fk_tables)
             .into_shape((1, grid.bin_info().bins(), lumi0.len()))
             .unwrap(),
         lumi0
@@ -623,7 +622,7 @@ pub(crate) fn evolve_with_two(
     }
 
     Ok((
-        Array1::from_iter(sub_fk_tables.into_iter())
+        Array1::from_iter(sub_fk_tables)
             .into_shape((1, grid.bin_info().bins(), lumi0.len()))
             .unwrap(),
         lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
