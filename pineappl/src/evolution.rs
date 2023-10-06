@@ -204,7 +204,7 @@ pub(crate) fn operators(
                 .iter()
                 .position(|&x1| approx_eq!(f64, x1p, x1, ulps = EVOLUTION_TOL_ULPS))
                 .ok_or_else(|| {
-                    GridError::EvolutionFailure(format!("no operator for x1 = {x1p} found"))
+                    GridError::EvolutionFailure(format!("no operator for x = {x1p} found"))
                 })
         })
         // TODO: use `try_collect` once stabilized
