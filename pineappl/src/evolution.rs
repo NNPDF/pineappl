@@ -239,7 +239,9 @@ pub(crate) fn ndarray_from_subgrid_orders(
 
     let mut fac1: Vec<_> = subgrids
         .iter()
-        .flat_map(|subgrid| {
+        .enumerate()
+        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
+        .flat_map(|(_, subgrid)| {
             subgrid
                 .mu2_grid()
                 .iter()
@@ -249,11 +251,15 @@ pub(crate) fn ndarray_from_subgrid_orders(
         .collect();
     let mut x1_a: Vec<_> = subgrids
         .iter()
-        .flat_map(|subgrid| subgrid.x1_grid().into_owned())
+        .enumerate()
+        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
+        .flat_map(|(_, subgrid)| subgrid.x1_grid().into_owned())
         .collect();
     let mut x1_b: Vec<_> = subgrids
         .iter()
-        .flat_map(|subgrid| subgrid.x2_grid().into_owned())
+        .enumerate()
+        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
+        .flat_map(|(_, subgrid)| subgrid.x2_grid().into_owned())
         .collect();
 
     fac1.sort_by(f64::total_cmp);

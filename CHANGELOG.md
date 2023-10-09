@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed a bug in the calculation of asymmetries when multiple scales had been
   used
+- fixed a bug causing `Grid::evolve` to require more x-grid values than needed;
+  this result in errors similar to the following: 'no operator for x =
+  0.0018585113621881083 found' where this x-grid value is a point that is used
+  in a masked order
 
 ## [0.6.1] - 18/07/2023
 
