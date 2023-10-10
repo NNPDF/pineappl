@@ -67,6 +67,18 @@ const LHCB_WP_7TEV_STR: &str = "b    Grid       FkTable     rel. diff
 7 2.9272102e1 2.9268451e1 -1.2474967e-4
 ";
 
+const LHCB_WP_7TEV_V2_STR: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 7.8752127e2 7.8731064e2 -2.6745204e-4
+1 7.1872113e2 7.1853123e2 -2.6421837e-4
+2 6.2322357e2 6.2306010e2 -2.6230496e-4
+3 5.0216763e2 5.0203737e2 -2.5938800e-4
+4 3.7314506e2 3.7305090e2 -2.5233796e-4
+5 2.5302044e2 2.5295968e2 -2.4013733e-4
+6 1.1971046e2 1.1968525e2 -2.1055575e-4
+7 2.9272102e1 2.9268443e1 -1.2499435e-4
+";
+
 const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
@@ -189,6 +201,41 @@ fn lhcb_wp_7tev() {
         .assert()
         .success()
         .stdout(LHCB_WP_7TEV_OPTIMIZED_STR);
+}
+
+#[test]
+fn lhcb_wp_7tev_v2() {
+    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            input.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    let output = NamedTempFile::new("fktable2a.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_v2.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+            "--orders=a2,as1a2",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_7TEV_V2_STR);
 }
 
 #[test]

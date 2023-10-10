@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added support for new EKO format introduced with EKO v0.13
+
 ## [0.6.2] - 09/10/2023
 
 ### Added

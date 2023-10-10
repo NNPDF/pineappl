@@ -22,6 +22,7 @@ mod eko {
     use pineappl::evolution::OperatorInfo;
     use pineappl::pids;
     use serde::Deserialize;
+    use std::collections::HashMap;
     use std::fs::File;
     use std::io::BufReader;
     use std::path::Path;
@@ -59,10 +60,37 @@ mod eko {
     }
 
     #[derive(Deserialize)]
+    struct OperatorV1 {
+        mu0: f64,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorInfoV1 {
+        scale: f64,
+    }
+
+    const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
+
+    #[derive(Deserialize)]
+    struct BasesV1 {
+        inputgrid: Option<Vec<f64>>,
+        inputpids: Option<Vec<Vec<f64>>>,
+        targetgrid: Option<Vec<f64>>,
+        targetpids: Option<Vec<i32>>,
+        xgrid: Vec<f64>,
+    }
+
+    #[derive(Deserialize)]
+    struct MetadataV2 {
+        bases: BasesV1,
+    }
+
+    #[derive(Deserialize)]
     #[serde(untagged)]
     enum Metadata {
         V0(MetadataV0),
         V1(MetadataV1),
+        V2(MetadataV2),
     }
 
     pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
@@ -72,6 +100,9 @@ mod eko {
         let mut operator = None;
         let mut operators = Vec::new();
         let mut fac1 = Vec::new();
+        let mut fac0 = None;
+        let mut fac1_order = Vec::new();
+        let mut fac1_translator = HashMap::new();
 
         let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
 
@@ -83,12 +114,18 @@ mod eko {
                 // TODO: get rid of the unwrap
                 match file_name.to_str().unwrap() {
                     "metadata.yaml" => metadata = Some(serde_yaml::from_reader(file)?),
+                    "operator.yaml" => {
+                        let operator: OperatorV1 = serde_yaml::from_reader(file)?;
+                        fac0 = Some(operator.mu0 * operator.mu0);
+                    }
                     "operators.npy.lz4" => {
                         operator = Some(Array5::<f64>::read_npy(FrameDecoder::new(
                             BufReader::new(file),
                         ))?);
                     }
                     x if x.ends_with(".npz.lz4") => {
+                        fac1_order.push(x.strip_suffix(".npz.lz4").unwrap().to_string());
+
                         let name = x.strip_suffix(".npz.lz4").unwrap();
                         let bytes = base64.decode(name.as_bytes())?;
                         let array: [u8; 8] = bytes.as_slice().try_into().unwrap();
@@ -103,6 +140,11 @@ mod eko {
                         fac1.push(muf2);
                         operators.push(operator);
                     }
+                    x if x.ends_with("=.yaml") => {
+                        let name = x.strip_suffix(".yaml").unwrap().to_string();
+                        let op_info: OperatorInfoV1 = serde_yaml::from_reader(file)?;
+                        fac1_translator.insert(name, op_info.scale);
+                    }
                     _ => {}
                 }
             }
@@ -111,6 +153,12 @@ mod eko {
         if !operators.is_empty() {
             let ops: Vec<_> = operators.iter().map(Array4::view).collect();
             operator = Some(ndarray::stack(Axis(0), &ops).unwrap());
+        }
+
+        if !fac1_translator.is_empty() {
+            for (fac1, fac1_name) in fac1.iter_mut().zip(&fac1_order) {
+                *fac1 = fac1_translator[fac1_name];
+            }
         }
 
         let mut info = match metadata {
@@ -163,6 +211,44 @@ mod eko {
                     .targetgrid
                     .unwrap_or(metadata.rotations.xgrid),
                 fac0: metadata.mu20,
+                ren1: vec![],
+                alphas: vec![],
+                xir: 1.0,
+                xif: 1.0,
+                lumi_id_types: String::new(),
+            },
+            Some(Metadata::V2(metadata)) => OperatorInfo {
+                fac1,
+                pids0: metadata.bases.inputpids.map_or_else(
+                    || BASES_V1_DEFAULT_PIDS.to_vec(),
+                    |basis| {
+                        basis
+                            .into_iter()
+                            .map(|factors| {
+                                let tuples: Vec<_> = BASES_V1_DEFAULT_PIDS
+                                    .iter()
+                                    .copied()
+                                    .zip(factors.into_iter())
+                                    .collect();
+
+                                pids::pdg_mc_ids_to_evol(&tuples).unwrap()
+                            })
+                            .collect()
+                    },
+                ),
+                x0: metadata
+                    .bases
+                    .inputgrid
+                    .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                pids1: metadata
+                    .bases
+                    .targetpids
+                    .unwrap_or_else(|| BASES_V1_DEFAULT_PIDS.to_vec()),
+                x1: metadata
+                    .bases
+                    .targetgrid
+                    .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                fac0: fac0.unwrap(),
                 ren1: vec![],
                 alphas: vec![],
                 xir: 1.0,
