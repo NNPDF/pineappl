@@ -2,7 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::empty_subgrid::EmptySubgridV1;
-use super::evolution::{self, EvolveInfo, OperatorInfo};
+use super::evolution::{self, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
@@ -18,7 +18,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, Array5, ArrayView5, Axis, Dimension};
+use ndarray::{s, Array3, Array5, ArrayView4, ArrayView5, Axis, Dimension};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1928,6 +1928,59 @@ impl Grid {
             evolution::evolve_with_two(self, &operator, info, order_mask)
         } else {
             evolution::evolve_with_one(self, &operator, info, order_mask)
+        }?;
+
+        let mut grid = Self {
+            subgrids,
+            lumi,
+            bin_limits: self.bin_limits.clone(),
+            orders: vec![Order::new(0, 0, 0, 0)],
+            subgrid_params: SubgridParams::default(),
+            more_members: self.more_members.clone(),
+        };
+
+        // write additional metadata
+        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
+
+        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+    }
+
+    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) slice
+    /// given as `operator`. The dimensions and properties of this operator must be described using
+    /// `info`. The parameter `order_mask` can be used to include or exclude orders from this
+    /// operation, and must correspond to the ordering given by [`Grid::orders`]. Orders that are
+    /// not given are enabled, and in particular if `order_mask` is empty all orders are activated.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
+    /// incompatible with this `Grid`.
+    pub fn evolve_slice(
+        &self,
+        operator: ArrayView4<f64>,
+        info: &OperatorSliceInfo,
+        order_mask: &[bool],
+    ) -> Result<FkTable, GridError> {
+        let op_info_dim = (
+            info.pids1.len(),
+            info.x1.len(),
+            info.pids0.len(),
+            info.x0.len(),
+        );
+
+        if operator.dim() != op_info_dim {
+            return Err(GridError::EvolutionFailure(format!(
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim,
+                operator.dim(),
+            )));
+        }
+
+        let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
+            evolution::evolve_slice_with_two(self, &operator, info, order_mask)
+        } else {
+            todo!()
+            //evolution::evolve_slice_with_one(self, &operator, info, order_mask)
         }?;
 
         let mut grid = Self {

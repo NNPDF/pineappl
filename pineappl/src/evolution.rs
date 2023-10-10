@@ -8,8 +8,9 @@ use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::Itertools;
-use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView5, Axis};
+use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, ArrayView5, Axis, Slice};
 use std::iter;
+use std::slice;
 
 /// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
 pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 64;
@@ -70,6 +71,62 @@ pub struct OperatorInfo {
     pub x0: Vec<f64>,
     /// Squared factorization scales of the `Grid`.
     pub fac1: Vec<f64>,
+    /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
+    /// given here, the contributions of them are silently ignored.
+    pub pids1: Vec<i32>,
+    /// `x`-grid coordinates of the `Grid`.
+    pub x1: Vec<f64>,
+
+    /// Renormalization scales of the `Grid`.
+    pub ren1: Vec<f64>,
+    /// Strong couplings corresponding to the order given in [`ren1`](Self::ren1).
+    pub alphas: Vec<f64>,
+    /// Multiplicative factor for the central renormalization scale.
+    pub xir: f64,
+    /// Multiplicative factor for the central factorization scale.
+    pub xif: f64,
+    /// Identifier of the particle basis for the `FkTable`.
+    pub lumi_id_types: String,
+}
+
+/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve_slice`] as
+/// `operator`, which is used to convert a [`Grid`] into an [`FkTable`]. The dimensions of the EKO
+/// must correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`],
+/// exactly in this order. Members with a `1` are defined at the squared factorization scale given
+/// as [`fac1`] (often called process scale) and are found in the [`Grid`] that
+/// [`Grid::evolve_slice`] is called with. Members with a `0` are defined at the squared
+/// factorization scale [`fac0`] (often called fitting scale or starting scale) and are found in
+/// the [`FkTable`] resulting from [`Grid::evolve`].
+///
+/// The EKO slice may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to
+/// a possibly different basis given by [`pids0`]. This basis must also be identified using
+/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The members
+/// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
+/// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
+/// scales, respectively, around their central values.
+///
+/// [`FkTable::convolute`]: super::fk_table::FkTable::convolute
+/// [`FkTable`]: super::fk_table::FkTable
+/// [`alphas`]: Self::alphas
+/// [`fac0`]: Self::fac0
+/// [`fac1`]: Self::fac1
+/// [`lumi_id_types`]: Self::lumi_id_types
+/// [`pids0`]: Self::pids0
+/// [`pids1`]: Self::pids1
+/// [`ren1`]: Self::ren1
+/// [`x0`]: Self::x0
+/// [`x1`]: Self::x1
+/// [`xif`]: Self::xif
+/// [`xir`]: Self::xir
+pub struct OperatorSliceInfo {
+    /// Squared factorization scale of the `FkTable`.
+    pub fac0: f64,
+    /// Particle identifiers of the `FkTable`.
+    pub pids0: Vec<i32>,
+    /// `x`-grid coordinates of the `FkTable`
+    pub x0: Vec<f64>,
+    /// Squared factorization scale of the slice of `Grid` that should be evolved.
+    pub fac1: f64,
     /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
     /// given here, the contributions of them are silently ignored.
     pub pids1: Vec<i32>,
@@ -368,6 +425,127 @@ pub(crate) fn ndarray_from_subgrid_orders(
     Ok((fac1, x1_a, x1_b, array))
 }
 
+type X1aX1bOp3Tuple = (Vec<f64>, Vec<f64>, Array3<f64>);
+
+fn ndarray_from_subgrid_orders_slice(
+    info: &OperatorSliceInfo,
+    subgrids: &ArrayView1<SubgridEnum>,
+    orders: &[Order],
+    order_mask: &[bool],
+) -> Result<X1aX1bOp3Tuple, GridError> {
+    // TODO: skip empty subgrids
+
+    let fac1 = info.xif * info.xif * info.fac1;
+    let mut x1_a: Vec<_> = subgrids
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
+        .flat_map(|(_, subgrid)| subgrid.x1_grid().into_owned())
+        .collect();
+    let mut x1_b: Vec<_> = subgrids
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
+        .flat_map(|(_, subgrid)| subgrid.x2_grid().into_owned())
+        .collect();
+
+    x1_a.sort_by(f64::total_cmp);
+    x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
+    x1_b.sort_by(f64::total_cmp);
+    x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
+
+    let mut array = Array3::<f64>::zeros((1, x1_a.len(), x1_b.len()));
+
+    // add subgrids for different orders, but the same bin and lumi, using the right
+    // couplings
+    for (subgrid, order) in subgrids
+        .iter()
+        .zip(orders.iter())
+        .zip(order_mask.iter().chain(iter::repeat(&true)))
+        .filter_map(|((subgrid, order), &enabled)| {
+            (enabled && !subgrid.is_empty()).then_some((subgrid, order))
+        })
+    {
+        let mut logs = 1.0;
+
+        if order.logxir > 0 {
+            if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
+                continue;
+            }
+
+            logs *= (info.xir * info.xir).ln();
+        }
+
+        if order.logxif > 0 {
+            if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
+                continue;
+            }
+
+            logs *= (info.xif * info.xif).ln();
+        }
+
+        // TODO: use `try_collect` once stabilized
+        let xa_indices: Vec<_> = subgrid
+            .x1_grid()
+            .iter()
+            .map(|&xa| {
+                x1_a.iter()
+                    .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = EVOLUTION_TOL_ULPS))
+                    .ok_or_else(|| {
+                        GridError::EvolutionFailure(format!("no operator for x1 = {xa} found"))
+                    })
+            })
+            .collect::<Result<_, _>>()?;
+        let xb_indices: Vec<_> = subgrid
+            .x2_grid()
+            .iter()
+            .map(|&xb| {
+                x1_b.iter()
+                    .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = EVOLUTION_TOL_ULPS))
+                    .ok_or_else(|| {
+                        GridError::EvolutionFailure(format!("no operator for x1 = {xb} found"))
+                    })
+            })
+            .collect::<Result<_, _>>()?;
+
+        for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
+            let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
+
+            if !approx_eq!(
+                f64,
+                info.xif * info.xif * fac,
+                fac1,
+                ulps = EVOLUTION_TOL_ULPS
+            ) {
+                continue;
+            }
+
+            let mur2 = info.xir * info.xir * ren;
+
+            let als = if order.alphas == 0 {
+                1.0
+            } else if let Some(alphas) =
+                info.ren1
+                    .iter()
+                    .zip(info.alphas.iter())
+                    .find_map(|(&ren1, &alphas)| {
+                        approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
+                    })
+            {
+                alphas.powi(order.alphas.try_into().unwrap())
+            } else {
+                return Err(GridError::EvolutionFailure(format!(
+                    "no alphas for mur2 = {mur2} found"
+                )));
+            };
+
+            array[[0, xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
+        }
+    }
+
+    Ok((x1_a, x1_b, array))
+}
+
 pub(crate) fn evolve_with_one(
     grid: &Grid,
     operator: &ArrayView5<f64>,
@@ -577,6 +755,157 @@ pub(crate) fn evolve_with_two(
             if fac1_diff {
                 last_fac1 = fac1;
             };
+
+            // TODO: get rid of array-index access
+            for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
+                for (fk_table, opa, opb) in
+                    lumi0
+                        .iter()
+                        .zip(tables.iter_mut())
+                        .filter_map(|(&(pida0, pidb0), fk_table)| {
+                            pids_a
+                                .iter()
+                                .zip(operators_a.iter())
+                                .cartesian_product(pids_b.iter().zip(operators_b.iter()))
+                                .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
+                                    (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
+                                        .then_some((opa, opb))
+                                })
+                                .map(|(opa, opb)| (fk_table, opa, opb))
+                        })
+                {
+                    let mut result = Array2::zeros((info.x0.len(), info.x0.len()));
+
+                    for imu2 in 0..array.dim().0 {
+                        let opa = opa.index_axis(Axis(0), imu2);
+                        let opb = opb.index_axis(Axis(0), imu2);
+                        let arr = array.index_axis(Axis(0), imu2);
+
+                        result += &opa.dot(&arr.dot(&opb.t()));
+                    }
+
+                    fk_table.scaled_add(factor, &result);
+                }
+            }
+        }
+
+        sub_fk_tables.extend(tables.into_iter().map(|table| {
+            ImportOnlySubgridV2::new(
+                SparseArray3::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
+                vec![Mu2 {
+                    // TODO: FK tables don't depend on the renormalization scale
+                    //ren: -1.0,
+                    ren: info.fac0,
+                    fac: info.fac0,
+                }],
+                info.x0.clone(),
+                info.x0.clone(),
+            )
+            .into()
+        }));
+    }
+
+    Ok((
+        Array1::from_iter(sub_fk_tables)
+            .into_shape((1, grid.bin_info().bins(), lumi0.len()))
+            .unwrap(),
+        lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
+    ))
+}
+
+pub(crate) fn evolve_slice_with_two(
+    grid: &Grid,
+    operator: &ArrayView4<f64>,
+    info: &OperatorSliceInfo,
+    order_mask: &[bool],
+) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
+    let op5 = operator.insert_axis(Axis(0));
+    let inf = OperatorInfo {
+        fac0: info.fac0,
+        pids0: info.pids0.clone(),
+        x0: info.x0.clone(),
+        fac1: vec![info.fac1],
+        pids1: info.pids1.clone(),
+        x1: info.x1.clone(),
+        ren1: info.ren1.clone(),
+        alphas: info.alphas.clone(),
+        xir: info.xir,
+        xif: info.xif,
+        lumi_id_types: info.lumi_id_types.clone(),
+    };
+    let gluon_has_pid_zero = gluon_has_pid_zero(grid);
+
+    let (pid_indices_a, pids_a) = pids(&op5, &inf, gluon_has_pid_zero, &|pid1| {
+        grid.lumi()
+            .iter()
+            .flat_map(LumiEntry::entry)
+            .any(|&(a, _, _)| a == pid1)
+    })?;
+    let (pid_indices_b, pids_b) = pids(&op5, &inf, gluon_has_pid_zero, &|pid1| {
+        grid.lumi()
+            .iter()
+            .flat_map(LumiEntry::entry)
+            .any(|&(_, b, _)| b == pid1)
+    })?;
+
+    let lumi0 = lumi0_with_two(&pids_a, &pids_b);
+    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
+
+    let mut last_x1a = Vec::new();
+    let mut last_x1b = Vec::new();
+    let mut operators_a = Vec::new();
+    let mut operators_b = Vec::new();
+
+    for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
+        let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
+
+        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+            let (x1_a, x1_b, array) =
+                ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
+
+            if (last_x1a.len() != x1_a.len())
+                || last_x1a
+                    .iter()
+                    .zip(x1_a.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+            {
+                operators_a = operators(
+                    &op5,
+                    &inf,
+                    slice::from_ref(&info.fac1),
+                    &pid_indices_a,
+                    &x1_a,
+                )?
+                .into_iter()
+                .map(|mut op| {
+                    op.slice_axis_inplace(Axis(0), Slice::from(0..1));
+                    op
+                })
+                .collect();
+                last_x1a = x1_a;
+            }
+
+            if (last_x1b.len() != x1_b.len())
+                || last_x1b
+                    .iter()
+                    .zip(x1_b.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+            {
+                operators_b = operators(
+                    &op5,
+                    &inf,
+                    slice::from_ref(&info.fac1),
+                    &pid_indices_b,
+                    &x1_b,
+                )?
+                .into_iter()
+                .map(|mut op| {
+                    op.slice_axis_inplace(Axis(0), Slice::from(0..1));
+                    op
+                })
+                .collect();
+                last_x1b = x1_b;
+            }
 
             // TODO: get rid of array-index access
             for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
