@@ -23,7 +23,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: test-data
-        key: test-data-v8
+        key: test-data-v9
     - name: Download test data
       if: steps.cache-test-data.outputs.cache-hit != 'true'
       run: |
@@ -39,6 +39,7 @@ jobs:
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
+        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV_v2.tar'
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_old.pineappl.lz4'
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
         curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
