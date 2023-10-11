@@ -8,9 +8,8 @@ use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::Itertools;
-use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, ArrayView5, Axis, Slice};
+use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, ArrayView5, Axis};
 use std::iter;
-use std::slice;
 
 /// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
 pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 64;
@@ -869,19 +868,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_a.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_a = operators(
-                    &op5,
-                    &inf,
-                    slice::from_ref(&info.fac1),
-                    &pid_indices_a,
-                    &x1_a,
-                )?
-                .into_iter()
-                .map(|mut op| {
-                    op.slice_axis_inplace(Axis(0), Slice::from(0..1));
-                    op
-                })
-                .collect();
+                operators_a = operators(&op5, &inf, &inf.fac1, &pid_indices_a, &x1_a)?;
                 last_x1a = x1_a;
             }
 
@@ -891,19 +878,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_b.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_b = operators(
-                    &op5,
-                    &inf,
-                    slice::from_ref(&info.fac1),
-                    &pid_indices_b,
-                    &x1_b,
-                )?
-                .into_iter()
-                .map(|mut op| {
-                    op.slice_axis_inplace(Axis(0), Slice::from(0..1));
-                    op
-                })
-                .collect();
+                operators_b = operators(&op5, &inf, &inf.fac1, &pid_indices_b, &x1_b)?;
                 last_x1b = x1_b;
             }
 
