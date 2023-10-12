@@ -68,8 +68,6 @@ mod eko {
         V2(MetadataV2),
     }
 
-    // --- EKO FORMAT INTRODUCED WITH EKO v0.13 ---
-
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
 
     #[derive(Deserialize)]
@@ -96,13 +94,30 @@ mod eko {
         bases: BasesV1,
     }
 
-    pub struct EkoSlices {
-        fac1: HashMap<OsString, f64>,
-        info: OperatorSliceInfo,
-        archive: Archive<File>,
+    pub enum EkoSlices {
+        V2 {
+            fac1: HashMap<OsString, f64>,
+            info: OperatorSliceInfo,
+            archive: Archive<File>,
+        },
     }
 
     impl EkoSlices {
+        /// Read the EKO at `eko_path` and return the contents of the `metadata.yaml` file
+        /// deserialized into a [`Metadata`] object.
+        fn read_metadata(eko_path: &Path) -> Result<Metadata> {
+            for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
+                let entry = entry?;
+                let path = entry.path()?;
+
+                if path.ends_with("metadata.yaml") {
+                    return Ok(serde_yaml::from_reader(entry)?);
+                }
+            }
+
+            Err(anyhow!("no file 'metadata.yaml' in EKO archive found"))
+        }
+
         pub fn new(
             eko_path: &Path,
             ren1: &[f64],
@@ -110,8 +125,24 @@ mod eko {
             xir: f64,
             xif: f64,
         ) -> Result<Self> {
+            let metadata = Self::read_metadata(eko_path)?;
+
+            match metadata {
+                Metadata::V0(v0) => todo!(),
+                Metadata::V1(v1) => todo!(),
+                Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas, xir, xif),
+            }
+        }
+
+        fn with_v2(
+            metadata: MetadataV2,
+            eko_path: &Path,
+            ren1: &[f64],
+            alphas: &[f64],
+            xir: f64,
+            xif: f64,
+        ) -> Result<Self> {
             let mut fac1 = HashMap::new();
-            let mut metadata: Option<MetadataV2> = None;
             let mut operator: Option<OperatorV1> = None;
 
             for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
@@ -129,15 +160,11 @@ mod eko {
 
                     let op_info: OperatorInfoV1 = serde_yaml::from_reader(entry)?;
                     fac1.insert(file_stem, op_info.scale);
-                } else if path.as_os_str() == OsStr::new("./metadata.yaml") {
-                    metadata = Some(serde_yaml::from_reader(entry)?);
                 } else if path.as_os_str() == OsStr::new("./operator.yaml") {
                     operator = Some(serde_yaml::from_reader(entry)?);
                 }
             }
 
-            let metadata =
-                metadata.ok_or_else(|| anyhow!("no file 'metadata.yaml' in EKO archive found"))?;
             let operator =
                 operator.ok_or_else(|| anyhow!("no file 'operator.yaml' in EKO archive found"))?;
 
@@ -161,7 +188,7 @@ mod eko {
                 },
             );
 
-            Ok(Self {
+            Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
                     lumi_id_types: pids::determine_lumi_id_types(&pids0),
@@ -189,66 +216,88 @@ mod eko {
             })
         }
 
+        // TODO: we could make this a Cow<'_, [f64]>
         pub fn fac1(&self) -> Vec<f64> {
-            self.fac1.values().copied().collect()
+            match self {
+                Self::V2 { fac1, .. } => fac1.values().copied().collect(),
+            }
         }
 
         pub fn iter_mut(&mut self) -> EkoSlicesIter {
-            // UNWRAP: short of changing the return type we can't propagate the error, so we must
-            // panic here
-            EkoSlicesIter {
-                fac1: self.fac1.clone(),
-                info: self.info.clone(),
-                entries: self.archive.entries_with_seek().unwrap(),
+            match self {
+                Self::V2 {
+                    fac1,
+                    info,
+                    archive,
+                } => {
+                    EkoSlicesIter::V2 {
+                        fac1: fac1.clone(),
+                        info: info.clone(),
+                        // UNWRAP: short of changing the return type of this method we can't
+                        // propagate the error, so we must panic here
+                        entries: archive.entries_with_seek().unwrap(),
+                    }
+                }
             }
         }
     }
 
-    pub struct EkoSlicesIter<'a> {
-        fac1: HashMap<OsString, f64>,
-        info: OperatorSliceInfo,
-        entries: Entries<'a, File>,
+    pub enum EkoSlicesIter<'a> {
+        V2 {
+            fac1: HashMap<OsString, f64>,
+            info: OperatorSliceInfo,
+            entries: Entries<'a, File>,
+        },
     }
 
     impl<'a> Iterator for EkoSlicesIter<'a> {
         type Item = Result<(OperatorSliceInfo, Array4<f64>)>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let mut fun = || {
-                while let Some(entry) = self.entries.next() {
-                    let entry = entry?;
-                    let path = entry.path()?;
+            match self {
+                Self::V2 {
+                    fac1,
+                    info,
+                    entries,
+                } => {
+                    let mut fun = || {
+                        while let Some(entry) = entries.next() {
+                            let entry = entry?;
+                            let path = entry.path()?;
 
-                    // here we're only interested in the operators themselves
-                    if path.starts_with("./operators")
-                        && (path.extension() == Some(OsStr::new("lz4")))
-                        && (path.with_extension("").extension() == Some(OsStr::new("npz")))
-                    {
-                        // TODO: use let-else when available in MSRV
-                        let file_stem = if let Some(file_stem) = path.with_extension("").file_stem()
-                        {
-                            file_stem.to_os_string()
-                        } else {
-                            continue;
-                        };
+                            // here we're only interested in the operators themselves
+                            if path.starts_with("./operators")
+                                && (path.extension() == Some(OsStr::new("lz4")))
+                                && (path.with_extension("").extension() == Some(OsStr::new("npz")))
+                            {
+                                // TODO: use let-else when available in MSRV
+                                let file_stem =
+                                    if let Some(file_stem) = path.with_extension("").file_stem() {
+                                        file_stem.to_os_string()
+                                    } else {
+                                        continue;
+                                    };
 
-                        let mut reader = BufReader::new(FrameDecoder::new(BufReader::new(entry)));
-                        let mut buffer = Vec::new();
-                        io::copy(&mut reader, &mut buffer)?;
-                        let mut npz = NpzReader::new(Cursor::new(buffer))?;
-                        let operator: Array4<f64> = npz.by_name("operator.npy")?;
+                                let mut reader =
+                                    BufReader::new(FrameDecoder::new(BufReader::new(entry)));
+                                let mut buffer = Vec::new();
+                                io::copy(&mut reader, &mut buffer)?;
+                                let mut npz = NpzReader::new(Cursor::new(buffer))?;
+                                let operator: Array4<f64> = npz.by_name("operator.npy")?;
 
-                        let mut info = self.info.clone();
-                        info.fac1 = self.fac1.get(&file_stem).copied().ok_or_else(|| anyhow!("file '{}.yaml' not found, could not determine the operator's factorization scale", file_stem.to_string_lossy()))?;
+                                let mut info = info.clone();
+                                info.fac1 = fac1.get(&file_stem).copied().ok_or_else(|| anyhow!("file '{}.yaml' not found, could not determine the operator's factorization scale", file_stem.to_string_lossy()))?;
 
-                        return Ok(Some((info, operator)));
-                    }
+                                return Ok(Some((info, operator)));
+                            }
+                        }
+
+                        Ok(None)
+                    };
+
+                    fun().transpose()
                 }
-
-                Ok(None)
-            };
-
-            fun().transpose()
+            }
         }
     }
 
