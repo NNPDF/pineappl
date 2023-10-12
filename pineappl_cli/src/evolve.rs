@@ -10,7 +10,7 @@ use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
 mod eko {
-    use anyhow::{bail, Result};
+    use anyhow::{anyhow, bail, Result};
     use base64::alphabet::URL_SAFE;
     use base64::engine::general_purpose::PAD;
     use base64::engine::GeneralPurpose;
@@ -19,14 +19,15 @@ mod eko {
     use lz4_flex::frame::FrameDecoder;
     use ndarray::{Array4, Array5, Axis};
     use ndarray_npy::{NpzReader, ReadNpyExt};
-    use pineappl::evolution::OperatorInfo;
+    use pineappl::evolution::{OperatorInfo, OperatorSliceInfo};
     use pineappl::pids;
     use serde::Deserialize;
     use std::collections::HashMap;
+    use std::ffi::{OsStr, OsString};
     use std::fs::File;
-    use std::io::BufReader;
+    use std::io::{self, BufReader, Cursor};
     use std::path::Path;
-    use tar::Archive;
+    use tar::{Archive, Entries};
 
     #[derive(Deserialize)]
     struct MetadataV0 {
@@ -60,6 +61,18 @@ mod eko {
     }
 
     #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Metadata {
+        V0(MetadataV0),
+        V1(MetadataV1),
+        V2(MetadataV2),
+    }
+
+    // --- EKO FORMAT INTRODUCED WITH EKO v0.13 ---
+
+    const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
+
+    #[derive(Deserialize)]
     struct OperatorV1 {
         mu0: f64,
     }
@@ -68,8 +81,6 @@ mod eko {
     struct OperatorInfoV1 {
         scale: f64,
     }
-
-    const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
 
     #[derive(Deserialize)]
     struct BasesV1 {
@@ -85,13 +96,163 @@ mod eko {
         bases: BasesV1,
     }
 
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Metadata {
-        V0(MetadataV0),
-        V1(MetadataV1),
-        V2(MetadataV2),
+    pub struct EkoSlices {
+        fac1: HashMap<OsString, f64>,
+        info: OperatorSliceInfo,
+        archive: Archive<File>,
     }
+
+    impl EkoSlices {
+        pub fn new(
+            eko_path: &Path,
+            ren1: &[f64],
+            alphas: &[f64],
+            xir: f64,
+            xif: f64,
+        ) -> Result<Self> {
+            let mut fac1 = HashMap::new();
+            let mut metadata: Option<MetadataV2> = None;
+            let mut operator: Option<OperatorV1> = None;
+
+            for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
+                let entry = entry?;
+                let path = entry.path()?;
+
+                if path.starts_with("./operators") && (path.extension() == Some(OsStr::new("yaml")))
+                {
+                    // TODO: use let-else when available in MSRV
+                    let file_stem = if let Some(file_stem) = path.file_stem() {
+                        file_stem.to_os_string()
+                    } else {
+                        continue;
+                    };
+
+                    let op_info: OperatorInfoV1 = serde_yaml::from_reader(entry)?;
+                    fac1.insert(file_stem, op_info.scale);
+                } else if path.as_os_str() == OsStr::new("./metadata.yaml") {
+                    metadata = Some(serde_yaml::from_reader(entry)?);
+                } else if path.as_os_str() == OsStr::new("./operator.yaml") {
+                    operator = Some(serde_yaml::from_reader(entry)?);
+                }
+            }
+
+            let metadata =
+                metadata.ok_or_else(|| anyhow!("no file 'metadata.yaml' in EKO archive found"))?;
+            let operator =
+                operator.ok_or_else(|| anyhow!("no file 'operator.yaml' in EKO archive found"))?;
+
+            let pids0 = metadata.bases.inputpids.map_or_else(
+                || BASES_V1_DEFAULT_PIDS.to_vec(),
+                |basis| {
+                    basis
+                        .into_iter()
+                        .map(|factors| {
+                            let tuples: Vec<_> = BASES_V1_DEFAULT_PIDS
+                                .iter()
+                                .copied()
+                                .zip(factors.into_iter())
+                                .collect();
+
+                            // UNWRAP: we assume that an evolution basis is specified, if that's
+                            // not the case we must make the algorithm more generic
+                            pids::pdg_mc_ids_to_evol(&tuples).unwrap()
+                        })
+                        .collect()
+                },
+            );
+
+            Ok(Self {
+                fac1,
+                info: OperatorSliceInfo {
+                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    fac0: operator.mu0 * operator.mu0,
+                    pids0,
+                    x0: metadata
+                        .bases
+                        .inputgrid
+                        .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                    fac1: 0.0,
+                    pids1: metadata
+                        .bases
+                        .targetpids
+                        .unwrap_or_else(|| BASES_V1_DEFAULT_PIDS.to_vec()),
+                    x1: metadata
+                        .bases
+                        .targetgrid
+                        .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                    ren1: ren1.to_vec(),
+                    alphas: alphas.to_vec(),
+                    xir,
+                    xif,
+                },
+                archive: Archive::new(File::open(eko_path)?),
+            })
+        }
+
+        pub fn fac1(&self) -> Vec<f64> {
+            self.fac1.values().copied().collect()
+        }
+
+        pub fn iter_mut(&mut self) -> EkoSlicesIter {
+            // UNWRAP: short of changing the return type we can't propagate the error, so we must
+            // panic here
+            EkoSlicesIter {
+                fac1: self.fac1.clone(),
+                info: self.info.clone(),
+                entries: self.archive.entries_with_seek().unwrap(),
+            }
+        }
+    }
+
+    pub struct EkoSlicesIter<'a> {
+        fac1: HashMap<OsString, f64>,
+        info: OperatorSliceInfo,
+        entries: Entries<'a, File>,
+    }
+
+    impl<'a> Iterator for EkoSlicesIter<'a> {
+        type Item = Result<(OperatorSliceInfo, Array4<f64>)>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let mut fun = || {
+                while let Some(entry) = self.entries.next() {
+                    let entry = entry?;
+                    let path = entry.path()?;
+
+                    // here we're only interested in the operators themselves
+                    if path.starts_with("./operators")
+                        && (path.extension() == Some(OsStr::new("lz4")))
+                        && (path.with_extension("").extension() == Some(OsStr::new("npz")))
+                    {
+                        // TODO: use let-else when available in MSRV
+                        let file_stem = if let Some(file_stem) = path.with_extension("").file_stem()
+                        {
+                            file_stem.to_os_string()
+                        } else {
+                            continue;
+                        };
+
+                        let mut reader = BufReader::new(FrameDecoder::new(BufReader::new(entry)));
+                        let mut buffer = Vec::new();
+                        io::copy(&mut reader, &mut buffer)?;
+                        let mut npz = NpzReader::new(Cursor::new(buffer))?;
+                        let operator: Array4<f64> = npz.by_name("operator.npy")?;
+
+                        let mut info = self.info.clone();
+                        info.fac1 = self.fac1.get(&file_stem).copied().ok_or_else(|| anyhow!("file '{}.yaml' not found, could not determine the operator's factorization scale", file_stem.to_string_lossy()))?;
+
+                        return Ok(Some((info, operator)));
+                    }
+                }
+
+                Ok(None)
+            };
+
+            fun().transpose()
+        }
+    }
+
+    // ---
 
     pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
         let mut archive = Archive::new(File::open(eko)?);

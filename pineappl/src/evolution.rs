@@ -117,6 +117,7 @@ pub struct OperatorInfo {
 /// [`x1`]: Self::x1
 /// [`xif`]: Self::xif
 /// [`xir`]: Self::xir
+#[derive(Clone)]
 pub struct OperatorSliceInfo {
     /// Squared factorization scale of the `FkTable`.
     pub fac0: f64,
