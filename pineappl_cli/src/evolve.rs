@@ -103,6 +103,7 @@ mod eko {
             info: OperatorSliceInfo,
             operator: Array5<f64>,
         },
+        // V1 is a special case of V2
         V2 {
             fac1: HashMap<OsString, f64>,
             info: OperatorSliceInfo,
@@ -137,7 +138,7 @@ mod eko {
 
             match metadata {
                 Metadata::V0(v0) => Self::with_v0(v0, eko_path, ren1, alphas, xir, xif),
-                Metadata::V1(v1) => todo!(),
+                Metadata::V1(v1) => Self::with_v1(v1, eko_path, ren1, alphas, xir, xif),
                 Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas, xir, xif),
             }
         }
@@ -180,6 +181,92 @@ mod eko {
                     xif,
                 },
                 operator,
+            })
+        }
+
+        fn with_v1(
+            metadata: MetadataV1,
+            eko_path: &Path,
+            ren1: &[f64],
+            alphas: &[f64],
+            xir: f64,
+            xif: f64,
+        ) -> Result<Self> {
+            let mut fac1 = HashMap::new();
+            let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
+
+            for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
+                let entry = entry?;
+                let path = entry.path()?;
+
+                if path.starts_with("./operators")
+                    && (path.extension() == Some(OsStr::new("lz4")))
+                    && (path.with_extension("").extension() == Some(OsStr::new("npz")))
+                {
+                    // TODO: use let-else when available in MSRV
+                    let file_stem = if let Some(file_stem) = path.with_extension("").file_stem() {
+                        file_stem.to_os_string()
+                    } else {
+                        continue;
+                    };
+
+                    let bytes = base64.decode(file_stem.to_string_lossy().as_bytes())?;
+                    let array: [u8; 8] = bytes.as_slice().try_into().unwrap();
+                    let scale = f64::from_le_bytes(array);
+
+                    fac1.insert(file_stem, scale);
+                }
+            }
+
+            let pids0 = metadata.rotations.inputpids.map_or_else(
+                || metadata.rotations.pids.clone(),
+                |either| {
+                    either.right_or_else(|basis| {
+                        basis
+                            .into_iter()
+                            .map(|factors| {
+                                let tuples: Vec<_> = metadata
+                                    .rotations
+                                    .pids
+                                    .iter()
+                                    .copied()
+                                    .zip(factors.into_iter())
+                                    .collect();
+
+                                // UNWRAP: we assume that an evolution basis is specified, if
+                                // that's not the case we must make the algorithm more generic
+                                pids::pdg_mc_ids_to_evol(&tuples).unwrap()
+                            })
+                            .collect()
+                    })
+                },
+            );
+
+            Ok(Self::V2 {
+                fac1,
+                info: OperatorSliceInfo {
+                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    fac0: metadata.mu20,
+                    pids0,
+                    x0: metadata
+                        .rotations
+                        .inputgrid
+                        .unwrap_or_else(|| metadata.rotations.xgrid.clone()),
+                    fac1: 0.0,
+                    pids1: metadata
+                        .rotations
+                        .targetpids
+                        .unwrap_or(metadata.rotations.pids),
+                    x1: metadata
+                        .rotations
+                        .targetgrid
+                        .unwrap_or(metadata.rotations.xgrid),
+                    ren1: ren1.to_vec(),
+                    alphas: alphas.to_vec(),
+                    xir,
+                    xif,
+                },
+                archive: Archive::new(File::open(eko_path)?),
             })
         }
 
