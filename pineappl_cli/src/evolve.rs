@@ -17,7 +17,8 @@ mod eko {
     use base64::Engine;
     use either::Either;
     use lz4_flex::frame::FrameDecoder;
-    use ndarray::{Array4, Array5, Axis};
+    use ndarray::iter::AxisIter;
+    use ndarray::{Array4, Array5, Axis, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::{OperatorInfo, OperatorSliceInfo};
     use pineappl::pids;
@@ -26,7 +27,9 @@ mod eko {
     use std::ffi::{OsStr, OsString};
     use std::fs::File;
     use std::io::{self, BufReader, Cursor};
+    use std::iter::Zip;
     use std::path::Path;
+    use std::slice::Iter;
     use tar::{Archive, Entries};
 
     #[derive(Deserialize)]
@@ -95,6 +98,11 @@ mod eko {
     }
 
     pub enum EkoSlices {
+        V0 {
+            fac1: Vec<f64>,
+            info: OperatorSliceInfo,
+            operator: Array5<f64>,
+        },
         V2 {
             fac1: HashMap<OsString, f64>,
             info: OperatorSliceInfo,
@@ -128,10 +136,51 @@ mod eko {
             let metadata = Self::read_metadata(eko_path)?;
 
             match metadata {
-                Metadata::V0(v0) => todo!(),
+                Metadata::V0(v0) => Self::with_v0(v0, eko_path, ren1, alphas, xir, xif),
                 Metadata::V1(v1) => todo!(),
                 Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas, xir, xif),
             }
+        }
+
+        fn with_v0(
+            metadata: MetadataV0,
+            eko_path: &Path,
+            ren1: &[f64],
+            alphas: &[f64],
+            xir: f64,
+            xif: f64,
+        ) -> Result<Self> {
+            let mut operator = None;
+
+            for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
+                let entry = entry?;
+                let path = entry.path()?;
+
+                if path.ends_with("operators.npy.lz4") {
+                    operator = Some(Array5::read_npy(FrameDecoder::new(BufReader::new(entry)))?);
+                }
+            }
+
+            let operator =
+                operator.ok_or_else(|| anyhow!("no file 'operator.yaml' in EKO archive found"))?;
+
+            Ok(Self::V0 {
+                fac1: metadata.q2_grid,
+                info: OperatorSliceInfo {
+                    lumi_id_types: pids::determine_lumi_id_types(&metadata.inputpids),
+                    fac0: metadata.q2_ref,
+                    pids0: metadata.inputpids,
+                    x0: metadata.inputgrid,
+                    fac1: 0.0,
+                    pids1: metadata.targetpids,
+                    x1: metadata.targetgrid,
+                    ren1: ren1.to_vec(),
+                    alphas: alphas.to_vec(),
+                    xir,
+                    xif,
+                },
+                operator,
+            })
         }
 
         fn with_v2(
@@ -219,12 +268,21 @@ mod eko {
         // TODO: we could make this a Cow<'_, [f64]>
         pub fn fac1(&self) -> Vec<f64> {
             match self {
+                Self::V0 { fac1, .. } => fac1.clone(),
                 Self::V2 { fac1, .. } => fac1.values().copied().collect(),
             }
         }
 
         pub fn iter_mut(&mut self) -> EkoSlicesIter {
             match self {
+                Self::V0 {
+                    fac1,
+                    info,
+                    operator,
+                } => EkoSlicesIter::V0 {
+                    info: info.clone(),
+                    iter: fac1.iter().zip(operator.axis_iter(Axis(0))),
+                },
                 Self::V2 {
                     fac1,
                     info,
@@ -243,6 +301,10 @@ mod eko {
     }
 
     pub enum EkoSlicesIter<'a> {
+        V0 {
+            info: OperatorSliceInfo,
+            iter: Zip<Iter<'a, f64>, AxisIter<'a, f64, Ix4>>,
+        },
         V2 {
             fac1: HashMap<OsString, f64>,
             info: OperatorSliceInfo,
@@ -255,6 +317,17 @@ mod eko {
 
         fn next(&mut self) -> Option<Self::Item> {
             match self {
+                Self::V0 { info, iter } => {
+                    if let Some((fac1, operator)) = iter.next() {
+                        let mut info = info.clone();
+                        info.fac1 = *fac1;
+
+                        // TODO: see if we can replace this some kind of Cow structure
+                        Some(Ok((info, operator.to_owned())))
+                    } else {
+                        None
+                    }
+                }
                 Self::V2 {
                     fac1,
                     info,
