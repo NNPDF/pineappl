@@ -10,7 +10,7 @@ use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
 mod eko {
-    use anyhow::{anyhow, bail, Result};
+    use anyhow::{anyhow, Result};
     use base64::alphabet::URL_SAFE;
     use base64::engine::general_purpose::PAD;
     use base64::engine::GeneralPurpose;
@@ -20,7 +20,7 @@ mod eko {
     use ndarray::iter::AxisIter;
     use ndarray::{Array4, Array5, Axis, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
-    use pineappl::evolution::{OperatorInfo, OperatorSliceInfo};
+    use pineappl::evolution::OperatorSliceInfo;
     use pineappl::pids;
     use serde::Deserialize;
     use std::collections::HashMap;
@@ -460,178 +460,6 @@ mod eko {
             }
         }
     }
-
-    // ---
-
-    pub fn read(eko: &Path) -> Result<(OperatorInfo, Array5<f64>)> {
-        let mut archive = Archive::new(File::open(eko)?);
-
-        let mut metadata = None;
-        let mut operator = None;
-        let mut operators = Vec::new();
-        let mut fac1 = Vec::new();
-        let mut fac0 = None;
-        let mut fac1_order = Vec::new();
-        let mut fac1_translator = HashMap::new();
-
-        let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
-
-        for entry in archive.entries()? {
-            let file = entry?;
-            let path = file.header().path()?;
-
-            if let Some(file_name) = path.file_name() {
-                // TODO: get rid of the unwrap
-                match file_name.to_str().unwrap() {
-                    "metadata.yaml" => metadata = Some(serde_yaml::from_reader(file)?),
-                    "operator.yaml" => {
-                        let operator: OperatorV1 = serde_yaml::from_reader(file)?;
-                        fac0 = Some(operator.mu0 * operator.mu0);
-                    }
-                    "operators.npy.lz4" => {
-                        operator = Some(Array5::<f64>::read_npy(FrameDecoder::new(
-                            BufReader::new(file),
-                        ))?);
-                    }
-                    x if x.ends_with(".npz.lz4") => {
-                        fac1_order.push(x.strip_suffix(".npz.lz4").unwrap().to_string());
-
-                        let name = x.strip_suffix(".npz.lz4").unwrap();
-                        let bytes = base64.decode(name.as_bytes())?;
-                        let array: [u8; 8] = bytes.as_slice().try_into().unwrap();
-                        let muf2 = f64::from_le_bytes(array);
-
-                        let mut reader = BufReader::new(FrameDecoder::new(BufReader::new(file)));
-                        let mut buffer = Vec::new();
-                        std::io::copy(&mut reader, &mut buffer)?;
-                        let mut npz = NpzReader::new(std::io::Cursor::new(buffer))?;
-                        let operator: Array4<f64> = npz.by_name("operator.npy")?;
-
-                        fac1.push(muf2);
-                        operators.push(operator);
-                    }
-                    x if x.ends_with("=.yaml") => {
-                        let name = x.strip_suffix(".yaml").unwrap().to_string();
-                        let op_info: OperatorInfoV1 = serde_yaml::from_reader(file)?;
-                        fac1_translator.insert(name, op_info.scale);
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        if !operators.is_empty() {
-            let ops: Vec<_> = operators.iter().map(Array4::view).collect();
-            operator = Some(ndarray::stack(Axis(0), &ops).unwrap());
-        }
-
-        if !fac1_translator.is_empty() {
-            for (fac1, fac1_name) in fac1.iter_mut().zip(&fac1_order) {
-                *fac1 = fac1_translator[fac1_name];
-            }
-        }
-
-        let mut info = match metadata {
-            Some(Metadata::V0(metadata)) => OperatorInfo {
-                fac1: metadata.q2_grid.clone(),
-                pids0: metadata.inputpids,
-                x0: metadata.inputgrid,
-                pids1: metadata.targetpids,
-                x1: metadata.targetgrid,
-                fac0: metadata.q2_ref,
-                ren1: vec![],
-                alphas: vec![],
-                xir: 1.0,
-                xif: 1.0,
-                lumi_id_types: String::new(),
-            },
-            Some(Metadata::V1(metadata)) => OperatorInfo {
-                fac1,
-                pids0: metadata.rotations.inputpids.map_or_else(
-                    || metadata.rotations.pids.clone(),
-                    |either| {
-                        either.right_or_else(|basis| {
-                            basis
-                                .into_iter()
-                                .map(|factors| {
-                                    let tuples: Vec<_> = metadata
-                                        .rotations
-                                        .pids
-                                        .iter()
-                                        .copied()
-                                        .zip(factors.into_iter())
-                                        .collect();
-
-                                    pids::pdg_mc_ids_to_evol(&tuples).unwrap()
-                                })
-                                .collect()
-                        })
-                    },
-                ),
-                x0: metadata
-                    .rotations
-                    .inputgrid
-                    .unwrap_or_else(|| metadata.rotations.xgrid.clone()),
-                pids1: metadata
-                    .rotations
-                    .targetpids
-                    .unwrap_or(metadata.rotations.pids),
-                x1: metadata
-                    .rotations
-                    .targetgrid
-                    .unwrap_or(metadata.rotations.xgrid),
-                fac0: metadata.mu20,
-                ren1: vec![],
-                alphas: vec![],
-                xir: 1.0,
-                xif: 1.0,
-                lumi_id_types: String::new(),
-            },
-            Some(Metadata::V2(metadata)) => OperatorInfo {
-                fac1,
-                pids0: metadata.bases.inputpids.map_or_else(
-                    || BASES_V1_DEFAULT_PIDS.to_vec(),
-                    |basis| {
-                        basis
-                            .into_iter()
-                            .map(|factors| {
-                                let tuples: Vec<_> = BASES_V1_DEFAULT_PIDS
-                                    .iter()
-                                    .copied()
-                                    .zip(factors.into_iter())
-                                    .collect();
-
-                                pids::pdg_mc_ids_to_evol(&tuples).unwrap()
-                            })
-                            .collect()
-                    },
-                ),
-                x0: metadata
-                    .bases
-                    .inputgrid
-                    .unwrap_or_else(|| metadata.bases.xgrid.clone()),
-                pids1: metadata
-                    .bases
-                    .targetpids
-                    .unwrap_or_else(|| BASES_V1_DEFAULT_PIDS.to_vec()),
-                x1: metadata
-                    .bases
-                    .targetgrid
-                    .unwrap_or_else(|| metadata.bases.xgrid.clone()),
-                fac0: fac0.unwrap(),
-                ren1: vec![],
-                alphas: vec![],
-                xir: 1.0,
-                xif: 1.0,
-                lumi_id_types: String::new(),
-            },
-            None => bail!("no `metadata.yaml` file found"),
-        };
-
-        info.lumi_id_types = pids::determine_lumi_id_types(&info.pids0);
-
-        Ok((info, operator.unwrap()))
-    }
 }
 
 #[cfg(feature = "evolve")]
@@ -643,11 +471,10 @@ fn evolve_grid(
     xir: f64,
     xif: f64,
 ) -> Result<FkTable> {
+    use eko::EkoSlices;
+    use float_cmp::approx_eq;
     use pineappl::subgrid::{Mu2, Subgrid};
 
-    let (mut info, operator) = eko::read(eko)?;
-
-    // TODO: the following should probably be a method of `Grid`
     let mut ren1: Vec<_> = grid
         .subgrids()
         .iter()
@@ -664,12 +491,7 @@ fn evolve_grid(
     let ren1 = ren1;
     let alphas: Vec<_> = ren1.iter().map(|&mur2| pdf.alphas_q2(mur2)).collect();
 
-    info.ren1 = ren1;
-    info.alphas = alphas;
-    info.xir = xir;
-    info.xif = xif;
-
-    let orders: Vec<_> = grid
+    let order_mask: Vec<_> = grid
         .orders()
         .iter()
         .map(|order| {
@@ -680,7 +502,35 @@ fn evolve_grid(
         })
         .collect();
 
-    Ok(grid.evolve(operator.view(), &info, &orders)?)
+    let mut eko_slices = EkoSlices::new(eko, &ren1, &alphas, xir, xif)?;
+    let grid_muf2 = grid.evolve_info(&order_mask).fac1;
+
+    // check that every factorization-scale value in the grid has an operator
+    assert!(!grid_muf2
+        .iter()
+        .any(|&muf2| !eko_slices.fac1().iter().any(|&op_muf2| approx_eq!(
+            f64,
+            muf2,
+            op_muf2,
+            ulps = 64
+        ))));
+
+    let mut lhs: Option<Grid> = None;
+
+    for item in eko_slices.iter_mut() {
+        let (info, operator) = item?;
+        let rhs = grid
+            .evolve_slice(operator.view(), &info, &order_mask)?
+            .into_grid();
+
+        if let Some(lhs) = &mut lhs {
+            lhs.merge(rhs)?;
+        } else {
+            lhs = Some(rhs);
+        }
+    }
+
+    Ok(FkTable::try_from(lhs.unwrap()).unwrap())
 }
 
 #[cfg(not(feature = "evolve"))]
