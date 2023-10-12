@@ -1979,8 +1979,7 @@ impl Grid {
         let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
             evolution::evolve_slice_with_two(self, &operator, info, order_mask)
         } else {
-            todo!()
-            //evolution::evolve_slice_with_one(self, &operator, info, order_mask)
+            evolution::evolve_slice_with_one(self, &operator, info, order_mask)
         }?;
 
         let mut grid = Self {

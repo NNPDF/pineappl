@@ -687,6 +687,154 @@ pub(crate) fn evolve_with_one(
     ))
 }
 
+pub(crate) fn evolve_slice_with_one(
+    grid: &Grid,
+    operator: &ArrayView4<f64>,
+    info: &OperatorSliceInfo,
+    order_mask: &[bool],
+) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
+    let op5 = operator.insert_axis(Axis(0));
+    let inf = OperatorInfo {
+        fac0: info.fac0,
+        pids0: info.pids0.clone(),
+        x0: info.x0.clone(),
+        fac1: vec![info.fac1],
+        pids1: info.pids1.clone(),
+        x1: info.x1.clone(),
+        ren1: info.ren1.clone(),
+        alphas: info.alphas.clone(),
+        xir: info.xir,
+        xif: info.xif,
+        lumi_id_types: info.lumi_id_types.clone(),
+    };
+    let gluon_has_pid_zero = gluon_has_pid_zero(grid);
+    let has_pdf1 = grid.has_pdf1();
+
+    let (pid_indices, pids) = pids(&op5, &inf, gluon_has_pid_zero, &|pid| {
+        grid.lumi()
+            .iter()
+            .flat_map(LumiEntry::entry)
+            .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
+    })?;
+
+    let lumi0 = lumi0_with_one(&pids);
+    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
+    let new_axis = if has_pdf1 { 2 } else { 1 };
+
+    let mut last_x1 = Vec::new();
+    let mut ops = Vec::new();
+
+    for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
+        let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
+
+        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+            let (x1_a, x1_b, array) =
+                ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
+
+            let x1 = if has_pdf1 { x1_a } else { x1_b };
+
+            if x1.is_empty() {
+                continue;
+            }
+
+            if (last_x1.len() != x1.len())
+                || last_x1
+                    .iter()
+                    .zip(x1.iter())
+                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+            {
+                ops = operators(&op5, &inf, &inf.fac1, &pid_indices, &x1)?;
+                last_x1 = x1;
+            }
+
+            // TODO: get rid of array-index access
+            for (&pid1, &factor) in
+                grid.lumi()[lumi1].entry().iter().map(
+                    |(a, b, f)| {
+                        if has_pdf1 {
+                            (a, f)
+                        } else {
+                            (b, f)
+                        }
+                    },
+                )
+            {
+                for (fk_table, op) in
+                    lumi0
+                        .iter()
+                        .zip(tables.iter_mut())
+                        .filter_map(|(&pid0, fk_table)| {
+                            pids.iter()
+                                .zip(ops.iter())
+                                .find_map(|(&(p0, p1), op)| {
+                                    (p0 == pid0 && p1 == pid1).then_some(op)
+                                })
+                                .map(|op| (fk_table, op))
+                        })
+                {
+                    let mut result = Array1::zeros(info.x0.len());
+
+                    for imu2 in 0..array.dim().0 {
+                        let op = op.index_axis(Axis(0), imu2);
+
+                        result += &op.dot(
+                            &array
+                                .index_axis(Axis(0), imu2)
+                                .index_axis(Axis(new_axis - 1), 0),
+                        );
+                    }
+
+                    fk_table.scaled_add(factor, &result);
+                }
+            }
+        }
+
+        sub_fk_tables.extend(tables.into_iter().map(|table| {
+            ImportOnlySubgridV2::new(
+                SparseArray3::from_ndarray(
+                    table
+                        .insert_axis(Axis(0))
+                        .insert_axis(Axis(new_axis))
+                        .view(),
+                    0,
+                    1,
+                ),
+                vec![Mu2 {
+                    // TODO: FK tables don't depend on the renormalization scale
+                    //ren: -1.0,
+                    ren: info.fac0,
+                    fac: info.fac0,
+                }],
+                if has_pdf1 { info.x0.clone() } else { vec![1.0] },
+                if has_pdf1 { vec![1.0] } else { info.x0.clone() },
+            )
+            .into()
+        }));
+    }
+
+    let pid = if has_pdf1 {
+        grid.initial_state_2()
+    } else {
+        grid.initial_state_1()
+    };
+
+    Ok((
+        Array1::from_iter(sub_fk_tables)
+            .into_shape((1, grid.bin_info().bins(), lumi0.len()))
+            .unwrap(),
+        lumi0
+            .iter()
+            .map(|&a| {
+                lumi_entry![
+                    if has_pdf1 { a } else { pid },
+                    if has_pdf1 { pid } else { a },
+                    1.0
+                ]
+            })
+            .collect(),
+    ))
+}
+
 pub(crate) fn evolve_with_two(
     grid: &Grid,
     operator: &ArrayView5<f64>,
