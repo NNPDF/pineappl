@@ -100,6 +100,7 @@ impl PyOrder {
 /// **Usage**: `yadism`, `pineko`, FKTable interface
 #[pyclass]
 #[repr(transparent)]
+#[derive(Clone)]
 pub struct PyGrid {
     pub(crate) grid: Grid,
 }
@@ -609,12 +610,21 @@ impl PyGrid {
         self.grid.optimize();
     }
 
+    /// Merge grid with another one
+    pub fn merge(&mut self, other: Self) -> PyResult<()> {
+        match self.grid.merge(other.grid) {
+            Ok(()) => Ok(()),
+            Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
+        }
+    }
+
     /// Merge grid with another one, loaded from file
     ///
     /// Note
     /// ----
     /// For a current limitation with the implementation of the bound object `Grid` is not possible
     /// to operate with two `Grid`s in memory, since is not possible to pass a `Grid` by argument
+    #[deprecated = "Deprecated in favor of PyGrid::merge"]
     pub fn merge_from_file(&mut self, path: PathBuf) -> PyResult<()> {
         match self.grid.merge(Self::read(path).grid) {
             Ok(()) => Ok(()),
