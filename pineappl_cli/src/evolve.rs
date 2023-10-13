@@ -211,6 +211,7 @@ mod eko {
                     };
 
                     let bytes = base64.decode(file_stem.to_string_lossy().as_bytes())?;
+                    // UNWRAP: we assume that the filenames represent exactly 8 bytes
                     let array: [u8; 8] = bytes.as_slice().try_into().unwrap();
                     let scale = f64::from_le_bytes(array);
 
