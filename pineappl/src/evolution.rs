@@ -209,6 +209,54 @@ pub(crate) fn pids(
     Ok((pid_indices, pids))
 }
 
+pub(crate) fn pid_slices(
+    operator: &ArrayView4<f64>,
+    info: &OperatorSliceInfo,
+    gluon_has_pid_zero: bool,
+    pid1_nonzero: &dyn Fn(i32) -> bool,
+) -> Result<(Pid01IndexTuples, Pid01Tuples), GridError> {
+    // list of all non-zero PID indices
+    let pid_indices: Vec<_> = (0..operator.dim().2)
+        .cartesian_product(0..operator.dim().0)
+        .filter(|&(pid0_idx, pid1_idx)| {
+            // 1) at least one element of the operator must be non-zero, and 2) the pid must be
+            // contained in the lumi somewhere
+            operator
+                .slice(s![pid1_idx, .., pid0_idx, ..])
+                .iter()
+                .any(|&value| value != 0.0)
+                && pid1_nonzero(if gluon_has_pid_zero && info.pids1[pid1_idx] == 21 {
+                    0
+                } else {
+                    info.pids1[pid1_idx]
+                })
+        })
+        .collect();
+
+    if pid_indices.is_empty() {
+        return Err(GridError::EvolutionFailure(
+            "no non-zero operator found; result would be an empty FkTable".to_string(),
+        ));
+    }
+
+    // list of all non-zero (pid0, pid1) combinations
+    let pids = pid_indices
+        .iter()
+        .map(|&(pid0_idx, pid1_idx)| {
+            (
+                info.pids0[pid0_idx],
+                if gluon_has_pid_zero && info.pids1[pid1_idx] == 21 {
+                    0
+                } else {
+                    info.pids1[pid1_idx]
+                },
+            )
+        })
+        .collect();
+
+    Ok((pid_indices, pids))
+}
+
 pub(crate) fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
     let mut pids0: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
     pids0.sort_unstable();
@@ -276,6 +324,42 @@ pub(crate) fn operators(
                 .select(Axis(0), &fac1_indices)
                 .select(Axis(1), &x1_indices)
                 .permuted_axes([0, 2, 1])
+                .as_standard_layout()
+                .into_owned()
+        })
+        .collect();
+
+    Ok(operators)
+}
+
+pub(crate) fn operator_slices(
+    operator: &ArrayView4<f64>,
+    info: &OperatorSliceInfo,
+    pid_indices: &[(usize, usize)],
+    x1: &[f64],
+) -> Result<Vec<Array2<f64>>, GridError> {
+    // permutation between the grid x values and the operator x1 values
+    let x1_indices: Vec<_> = x1
+        .iter()
+        .map(|&x1p| {
+            info.x1
+                .iter()
+                .position(|&x1| approx_eq!(f64, x1p, x1, ulps = EVOLUTION_TOL_ULPS))
+                .ok_or_else(|| {
+                    GridError::EvolutionFailure(format!("no operator for x = {x1p} found"))
+                })
+        })
+        // TODO: use `try_collect` once stabilized
+        .collect::<Result<_, _>>()?;
+
+    // create the corresponding operators accessible in the form [muf2, x0, x1]
+    let operators: Vec<_> = pid_indices
+        .iter()
+        .map(|&(pid0_idx, pid1_idx)| {
+            operator
+                .slice(s![pid1_idx, .., pid0_idx, ..])
+                .select(Axis(0), &x1_indices)
+                .permuted_axes([1, 0])
                 .as_standard_layout()
                 .into_owned()
         })
@@ -425,14 +509,14 @@ pub(crate) fn ndarray_from_subgrid_orders(
     Ok((fac1, x1_a, x1_b, array))
 }
 
-type X1aX1bOp3Tuple = (Vec<f64>, Vec<f64>, Array3<f64>);
+type X1aX1bOp2Tuple = (Vec<f64>, Vec<f64>, Array2<f64>);
 
 fn ndarray_from_subgrid_orders_slice(
     info: &OperatorSliceInfo,
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
-) -> Result<X1aX1bOp3Tuple, GridError> {
+) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
 
     let fac1 = info.xif * info.xif * info.fac1;
@@ -454,7 +538,7 @@ fn ndarray_from_subgrid_orders_slice(
     x1_b.sort_by(f64::total_cmp);
     x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
 
-    let mut array = Array3::<f64>::zeros((1, x1_a.len(), x1_b.len()));
+    let mut array = Array2::<f64>::zeros((x1_a.len(), x1_b.len()));
 
     // add subgrids for different orders, but the same bin and lumi, using the right
     // couplings
@@ -539,7 +623,7 @@ fn ndarray_from_subgrid_orders_slice(
                 )));
             };
 
-            array[[0, xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
+            array[[xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
         }
     }
 
@@ -693,24 +777,10 @@ pub(crate) fn evolve_slice_with_one(
     info: &OperatorSliceInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
-    let op5 = operator.insert_axis(Axis(0));
-    let inf = OperatorInfo {
-        fac0: info.fac0,
-        pids0: info.pids0.clone(),
-        x0: info.x0.clone(),
-        fac1: vec![info.fac1],
-        pids1: info.pids1.clone(),
-        x1: info.x1.clone(),
-        ren1: info.ren1.clone(),
-        alphas: info.alphas.clone(),
-        xir: info.xir,
-        xif: info.xif,
-        lumi_id_types: info.lumi_id_types.clone(),
-    };
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
 
-    let (pid_indices, pids) = pids(&op5, &inf, gluon_has_pid_zero, &|pid| {
+    let (pid_indices, pids) = pid_slices(operator, info, gluon_has_pid_zero, &|pid| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
@@ -743,7 +813,7 @@ pub(crate) fn evolve_slice_with_one(
                     .zip(x1.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                ops = operators(&op5, &inf, &inf.fac1, &pid_indices, &x1)?;
+                ops = operator_slices(operator, info, &pid_indices, &x1)?;
                 last_x1 = x1;
             }
 
@@ -772,19 +842,7 @@ pub(crate) fn evolve_slice_with_one(
                                 .map(|op| (fk_table, op))
                         })
                 {
-                    let mut result = Array1::zeros(info.x0.len());
-
-                    for imu2 in 0..array.dim().0 {
-                        let op = op.index_axis(Axis(0), imu2);
-
-                        result += &op.dot(
-                            &array
-                                .index_axis(Axis(0), imu2)
-                                .index_axis(Axis(new_axis - 1), 0),
-                        );
-                    }
-
-                    fk_table.scaled_add(factor, &result);
+                    fk_table.scaled_add(factor, &op.dot(&array.index_axis(Axis(new_axis - 1), 0)));
                 }
             }
         }
@@ -967,29 +1025,15 @@ pub(crate) fn evolve_slice_with_two(
     info: &OperatorSliceInfo,
     order_mask: &[bool],
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
-    let op5 = operator.insert_axis(Axis(0));
-    let inf = OperatorInfo {
-        fac0: info.fac0,
-        pids0: info.pids0.clone(),
-        x0: info.x0.clone(),
-        fac1: vec![info.fac1],
-        pids1: info.pids1.clone(),
-        x1: info.x1.clone(),
-        ren1: info.ren1.clone(),
-        alphas: info.alphas.clone(),
-        xir: info.xir,
-        xif: info.xif,
-        lumi_id_types: info.lumi_id_types.clone(),
-    };
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    let (pid_indices_a, pids_a) = pids(&op5, &inf, gluon_has_pid_zero, &|pid1| {
+    let (pid_indices_a, pids_a) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(a, _, _)| a == pid1)
     })?;
-    let (pid_indices_b, pids_b) = pids(&op5, &inf, gluon_has_pid_zero, &|pid1| {
+    let (pid_indices_b, pids_b) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
@@ -1017,7 +1061,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_a.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_a = operators(&op5, &inf, &inf.fac1, &pid_indices_a, &x1_a)?;
+                operators_a = operator_slices(operator, info, &pid_indices_a, &x1_a)?;
                 last_x1a = x1_a;
             }
 
@@ -1027,7 +1071,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_b.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_b = operators(&op5, &inf, &inf.fac1, &pid_indices_b, &x1_b)?;
+                operators_b = operator_slices(operator, info, &pid_indices_b, &x1_b)?;
                 last_x1b = x1_b;
             }
 
@@ -1049,17 +1093,7 @@ pub(crate) fn evolve_slice_with_two(
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         })
                 {
-                    let mut result = Array2::zeros((info.x0.len(), info.x0.len()));
-
-                    for imu2 in 0..array.dim().0 {
-                        let opa = opa.index_axis(Axis(0), imu2);
-                        let opb = opb.index_axis(Axis(0), imu2);
-                        let arr = array.index_axis(Axis(0), imu2);
-
-                        result += &opa.dot(&arr.dot(&opb.t()));
-                    }
-
-                    fk_table.scaled_add(factor, &result);
+                    fk_table.scaled_add(factor, &opa.dot(&array.dot(&opb.t())));
                 }
             }
         }
