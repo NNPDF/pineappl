@@ -26,11 +26,8 @@ Options:
 const E906NLO_BIN_00_STR: &str = "b     Grid       FkTable      rel. diff
 -+------------+------------+-------------
 0 1.0659807e-1 1.0657904e-1 -1.7851986e-4
-1 1.0659807e-1 1.0657904e-1 -1.7851986e-4
-2 1.0659807e-1 1.0657904e-1 -1.7851986e-4
-3 1.0659807e-1 1.0657904e-1 -1.7851986e-4
-4  3.2698655e0  3.2711890e0  4.0477586e-4
-5  1.6039253e0  1.6047566e0  5.1825508e-4
+1  3.2698655e0  3.2711890e0  4.0477586e-4
+2  1.6039253e0  1.6047566e0  5.1825508e-4
 ";
 
 const LHCB_DY_8TEV_STR: &str = "b      Grid       FkTable      rel. diff
@@ -242,14 +239,28 @@ fn lhcb_wp_7tev_v2() {
 
 #[test]
 fn e906nlo_bin_00() {
+    let input = NamedTempFile::new("E906nlo_bin_00_unique_bin_limits.pineappl.lz4").unwrap();
     let output = NamedTempFile::new("fktable2.lz4").unwrap();
+
+    // we need to delete bins with the same bin limits for `Grid::merge` to work properly
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--delete-bins=1-3",
+            "../test-data/E906nlo_bin_00.pineappl.lz4",
+            input.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "--silence-lhapdf",
             "evolve",
-            "../test-data/E906nlo_bin_00.pineappl.lz4",
+            input.path().to_str().unwrap(),
             "../test-data/E906nlo_bin_00.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
