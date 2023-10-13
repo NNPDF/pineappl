@@ -231,7 +231,7 @@ mod eko {
                                     .pids
                                     .iter()
                                     .copied()
-                                    .zip(factors.into_iter())
+                                    .zip(factors)
                                     .collect();
 
                                 // UNWRAP: we assume that an evolution basis is specified, if
@@ -311,11 +311,8 @@ mod eko {
                     basis
                         .into_iter()
                         .map(|factors| {
-                            let tuples: Vec<_> = BASES_V1_DEFAULT_PIDS
-                                .iter()
-                                .copied()
-                                .zip(factors.into_iter())
-                                .collect();
+                            let tuples: Vec<_> =
+                                BASES_V1_DEFAULT_PIDS.iter().copied().zip(factors).collect();
 
                             // UNWRAP: we assume that an evolution basis is specified, if that's
                             // not the case we must make the algorithm more generic
@@ -388,6 +385,15 @@ mod eko {
         }
     }
 
+    impl<'a> IntoIterator for &'a mut EkoSlices {
+        type Item = Result<(OperatorSliceInfo, Array4<f64>)>;
+        type IntoIter = EkoSlicesIter<'a>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            self.iter_mut()
+        }
+    }
+
     pub enum EkoSlicesIter<'a> {
         V0 {
             info: OperatorSliceInfo,
@@ -421,8 +427,8 @@ mod eko {
                     info,
                     entries,
                 } => {
-                    let mut fun = || {
-                        while let Some(entry) = entries.next() {
+                    let fun = || {
+                        for entry in entries {
                             let entry = entry?;
                             let path = entry.path()?;
 
