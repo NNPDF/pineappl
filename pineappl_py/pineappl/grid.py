@@ -6,8 +6,7 @@ from .utils import PyWrapper
 
 
 class Order(PyWrapper):
-    r"""
-    Python wrapper object to interface :class:`~pineappl.pineappl.PyOrder`.
+    r"""Python wrapper object to interface :class:`~pineappl.pineappl.PyOrder`.
 
     Parameters
     ----------
@@ -51,8 +50,7 @@ class Order(PyWrapper):
 
 
 class Grid(PyWrapper):
-    r"""
-    Python wrapper object to interface :class:`~pineappl.pineappl.PyGrid`.
+    r"""Python wrapper object to interface :class:`~pineappl.pineappl.PyGrid`.
 
     To create an object, you should call either :meth:`create`
     or :meth:`read`.
@@ -68,8 +66,7 @@ class Grid(PyWrapper):
 
     @classmethod
     def create(cls, lumi, orders, bin_limits, subgrid_params):
-        """
-        Create a grid object from its ingredients
+        """Create a grid object from its ingredients.
 
         Parameters
         ---------
@@ -87,8 +84,7 @@ class Grid(PyWrapper):
         return cls(PyGrid(lumi, orders, np.array(bin_limits), subgrid_params.raw))
 
     def subgrid(self, order, bin_, lumi):
-        """
-        Retrieve the subgrid at the given position.
+        """Retrieve the subgrid at the given position.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
 
@@ -109,8 +105,7 @@ class Grid(PyWrapper):
         return self.raw.subgrid(order, bin_, lumi)
 
     def __getitem__(self, key):
-        """
-        Retrieve the subgrid at the given position.
+        """Retrieve the subgrid at the given position.
 
         Syntactic sugar for :meth:`subgrid`
 
@@ -130,8 +125,7 @@ class Grid(PyWrapper):
         return self.subgrid(*key)
 
     def set_subgrid(self, order, bin_, lumi, subgrid):
-        """
-        Set the subgrid at the given position.
+        """Set the subgrid at the given position.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
 
@@ -149,8 +143,7 @@ class Grid(PyWrapper):
         self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
 
     def __setitem__(self, key, subgrid):
-        """
-        Set the subgrid at the given position.
+        """Set the subgrid at the given position.
 
         Syntactic sugar for :meth:`set_subgrid`
 
@@ -167,8 +160,7 @@ class Grid(PyWrapper):
         self.set_subgrid(*key, subgrid)
 
     def set_remapper(self, remapper):
-        """
-        Set the normalizations.
+        """Set the normalizations.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_remapper()`.
 
@@ -180,8 +172,7 @@ class Grid(PyWrapper):
         self.raw.set_remapper(remapper.raw)
 
     def orders(self):
-        """
-        Extract the available perturbative orders and scale variations.
+        """Extract the available perturbative orders and scale variations.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.orders()`.
 
@@ -202,8 +193,7 @@ class Grid(PyWrapper):
         lumi_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
-        r"""
-        Convolute grid with pdf.
+        r"""Convolute grid with pdf.
 
         Parameters
         ----------
@@ -235,7 +225,6 @@ class Grid(PyWrapper):
             list(float) :
                 cross sections for all bins, for each scale-variation tuple (first all bins, then
                 the scale variation)
-
         """
         return self.raw.convolute_with_one(
             pdg_id,
@@ -247,9 +236,16 @@ class Grid(PyWrapper):
             xi,
         )
 
-    def convolute_eko(self, operators, mur2_grid, alphas_values, lumi_id_types="pdg_mc_ids", order_mask=(), xi=(1.0, 1.0)):
-        """
-        Create an FKTable with the EKO.
+    def convolute_eko(
+        self,
+        operators,
+        mur2_grid,
+        alphas_values,
+        lumi_id_types="pdg_mc_ids",
+        order_mask=(),
+        xi=(1.0, 1.0),
+    ):
+        """Create an FKTable with the EKO.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.convolute_eko()`.
 
@@ -296,13 +292,20 @@ class Grid(PyWrapper):
                 np.array(operator_grid),
                 lumi_id_types,
                 np.array(order_mask, dtype=bool),
-                xi
+                xi,
             )
         )
 
-    def evolve(self, operators, mur2_grid, alphas_values, lumi_id_types="pdg_mc_ids", order_mask=(), xi=(1.0, 1.0)):
-        """
-        Create an FKTable with the EKO.
+    def evolve(
+        self,
+        operators,
+        mur2_grid,
+        alphas_values,
+        lumi_id_types="pdg_mc_ids",
+        order_mask=(),
+        xi=(1.0, 1.0),
+    ):
+        """Create an FKTable with the EKO.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.evolve()`.
 
@@ -355,8 +358,7 @@ class Grid(PyWrapper):
 
     @classmethod
     def read(cls, path):
-        """
-        Load an existing grid from file.
+        """Load an existing grid from file.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.read()`.
 
@@ -372,6 +374,10 @@ class Grid(PyWrapper):
         """
         return cls(PyGrid.read(path))
 
+    def merge(self, other: "Grid"):
+        """Merge a second grid in the current one."""
+        self.raw.merge(other.raw)
+
     def delete_bins(self, bin_indices):
         """Delete bins.
 
@@ -381,6 +387,5 @@ class Grid(PyWrapper):
         ----------
         bin_indices : sequence(int)
             list of indices of bins to removed
-
         """
         self.raw.delete_bins(np.array(bin_indices, dtype=np.uint))
