@@ -957,11 +957,14 @@ pub(crate) fn evolve_with_two(
                             pids_a
                                 .iter()
                                 .zip(operators_a.iter())
-                                .cartesian_product(pids_b.iter().zip(operators_b.iter()))
-                                .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
-                                    (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
-                                        .then_some((opa, opb))
+                                .find_map(|(&(pa0, pa1), opa)| {
+                                    (pa0 == pida0 && pa1 == pida1).then_some(opa)
                                 })
+                                .zip(pids_b.iter().zip(operators_b.iter()).find_map(
+                                    |(&(pb0, pb1), opb)| {
+                                        (pb0 == pidb0 && pb1 == pidb1).then_some(opb)
+                                    },
+                                ))
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         })
                 {
@@ -1069,11 +1072,14 @@ pub(crate) fn evolve_slice_with_two(
                             pids_a
                                 .iter()
                                 .zip(operators_a.iter())
-                                .cartesian_product(pids_b.iter().zip(operators_b.iter()))
-                                .find_map(|((&(pa0, pa1), opa), (&(pb0, pb1), opb))| {
-                                    (pa0 == pida0 && pa1 == pida1 && pb0 == pidb0 && pb1 == pidb1)
-                                        .then_some((opa, opb))
+                                .find_map(|(&(pa0, pa1), opa)| {
+                                    (pa0 == pida0 && pa1 == pida1).then_some(opa)
                                 })
+                                .zip(pids_b.iter().zip(operators_b.iter()).find_map(
+                                    |(&(pb0, pb1), opb)| {
+                                        (pb0 == pidb0 && pb1 == pidb1).then_some(opb)
+                                    },
+                                ))
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         })
                 {
