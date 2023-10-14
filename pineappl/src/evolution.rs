@@ -657,7 +657,7 @@ pub(crate) fn evolve_with_one(
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
 
-        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
             let (fac1, x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders(info, &subgrids_o, grid.orders(), order_mask)?;
 
@@ -683,17 +683,10 @@ pub(crate) fn evolve_with_one(
                 last_x1 = x1;
             }
 
-            // TODO: get rid of array-index access
-            for (&pid1, &factor) in
-                grid.lumi()[lumi1].entry().iter().map(
-                    |(a, b, f)| {
-                        if has_pdf1 {
-                            (a, f)
-                        } else {
-                            (b, f)
-                        }
-                    },
-                )
+            for (&pid1, &factor) in lumi1
+                .entry()
+                .iter()
+                .map(|(a, b, f)| if has_pdf1 { (a, f) } else { (b, f) })
             {
                 for (fk_table, op) in
                     lumi0
@@ -797,7 +790,7 @@ pub(crate) fn evolve_slice_with_one(
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
 
-        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
             let (x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
 
@@ -817,17 +810,10 @@ pub(crate) fn evolve_slice_with_one(
                 last_x1 = x1;
             }
 
-            // TODO: get rid of array-index access
-            for (&pid1, &factor) in
-                grid.lumi()[lumi1].entry().iter().map(
-                    |(a, b, f)| {
-                        if has_pdf1 {
-                            (a, f)
-                        } else {
-                            (b, f)
-                        }
-                    },
-                )
+            for (&pid1, &factor) in lumi1
+                .entry()
+                .iter()
+                .map(|(a, b, f)| if has_pdf1 { (a, f) } else { (b, f) })
             {
                 for (fk_table, op) in
                     lumi0
@@ -926,7 +912,7 @@ pub(crate) fn evolve_with_two(
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
-        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
             let (fac1, x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders(info, &subgrids_o, grid.orders(), order_mask)?;
 
@@ -962,8 +948,7 @@ pub(crate) fn evolve_with_two(
                 last_fac1 = fac1;
             };
 
-            // TODO: get rid of array-index access
-            for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
+            for &(pida1, pidb1, factor) in lumi1.entry() {
                 for (fk_table, opa, opb) in
                     lumi0
                         .iter()
@@ -1051,7 +1036,7 @@ pub(crate) fn evolve_slice_with_two(
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
         let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
-        for (lumi1, subgrids_o) in subgrids_ol.axis_iter(Axis(1)).enumerate() {
+        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
             let (x1_a, x1_b, array) =
                 ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
 
@@ -1075,8 +1060,7 @@ pub(crate) fn evolve_slice_with_two(
                 last_x1b = x1_b;
             }
 
-            // TODO: get rid of array-index access
-            for &(pida1, pidb1, factor) in grid.lumi()[lumi1].entry() {
+            for &(pida1, pidb1, factor) in lumi1.entry() {
                 for (fk_table, opa, opb) in
                     lumi0
                         .iter()
