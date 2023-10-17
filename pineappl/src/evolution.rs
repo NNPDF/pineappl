@@ -161,7 +161,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
 type Pid01IndexTuples = Vec<(usize, usize)>;
 type Pid01Tuples = Vec<(i32, i32)>;
 
-pub(crate) fn pids(
+fn pids(
     operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     gluon_has_pid_zero: bool,
@@ -209,7 +209,7 @@ pub(crate) fn pids(
     Ok((pid_indices, pids))
 }
 
-pub(crate) fn pid_slices(
+fn pid_slices(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     gluon_has_pid_zero: bool,
@@ -257,7 +257,7 @@ pub(crate) fn pid_slices(
     Ok((pid_indices, pids))
 }
 
-pub(crate) fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
+fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
     let mut pids0: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
     pids0.sort_unstable();
     pids0.dedup();
@@ -265,7 +265,7 @@ pub(crate) fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
     pids0
 }
 
-pub(crate) fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
+fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
     let mut pids0_a: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
     pids0_a.sort_unstable();
     pids0_a.dedup();
@@ -280,7 +280,7 @@ pub(crate) fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Ve
         .collect()
 }
 
-pub(crate) fn operators(
+fn operators(
     operator: &ArrayView5<f64>,
     info: &OperatorInfo,
     fac1: &[f64],
@@ -332,7 +332,7 @@ pub(crate) fn operators(
     Ok(operators)
 }
 
-pub(crate) fn operator_slices(
+fn operator_slices(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     pid_indices: &[(usize, usize)],
@@ -370,7 +370,7 @@ pub(crate) fn operator_slices(
 
 type Fac1X1aX1bOp3Tuple = (Vec<f64>, Vec<f64>, Vec<f64>, Array3<f64>);
 
-pub(crate) fn ndarray_from_subgrid_orders(
+fn ndarray_from_subgrid_orders(
     info: &OperatorInfo,
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
