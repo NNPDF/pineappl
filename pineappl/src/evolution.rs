@@ -8,6 +8,7 @@ use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::Itertools;
+use ndarray::linalg;
 use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, ArrayView5, Axis};
 use std::iter;
 
@@ -1063,6 +1064,8 @@ pub(crate) fn evolve_slice_with_two(
                 last_x1b = x1_b;
             }
 
+            let mut tmp = Array2::zeros((last_x1a.len(), info.x0.len()));
+
             for &(pida1, pidb1, factor) in lumi1.entry() {
                 for (fk_table, opa, opb) in
                     lumi0
@@ -1083,7 +1086,8 @@ pub(crate) fn evolve_slice_with_two(
                                 .map(|(opa, opb)| (fk_table, opa, opb))
                         })
                 {
-                    fk_table.scaled_add(factor, &opa.dot(&array.dot(&opb.t())));
+                    linalg::general_mat_mul(1.0, &array, &opb.t(), 0.0, &mut tmp);
+                    linalg::general_mat_mul(factor, opa, &tmp, 1.0, fk_table);
                 }
             }
         }
