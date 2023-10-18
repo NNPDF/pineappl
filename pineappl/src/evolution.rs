@@ -359,7 +359,7 @@ fn operator_slices(
             operator
                 .slice(s![pid1_idx, .., pid0_idx, ..])
                 .select(Axis(0), &x1_indices)
-                .permuted_axes([1, 0])
+                .reversed_axes()
                 .as_standard_layout()
                 .into_owned()
         })
