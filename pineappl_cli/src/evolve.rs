@@ -479,7 +479,6 @@ fn evolve_grid(
     xif: f64,
 ) -> Result<FkTable> {
     use eko::EkoSlices;
-    use float_cmp::approx_eq;
     use pineappl::subgrid::{Mu2, Subgrid};
 
     let mut ren1: Vec<_> = grid
@@ -510,34 +509,8 @@ fn evolve_grid(
         .collect();
 
     let mut eko_slices = EkoSlices::new(eko, &ren1, &alphas, xir, xif)?;
-    let grid_muf2 = grid.evolve_info(&order_mask).fac1;
 
-    // check that every factorization-scale value in the grid has an operator
-    assert!(!grid_muf2
-        .iter()
-        .any(|&muf2| !eko_slices.fac1().iter().any(|&op_muf2| approx_eq!(
-            f64,
-            muf2,
-            op_muf2,
-            ulps = 64
-        ))));
-
-    let mut lhs: Option<Grid> = None;
-
-    for item in eko_slices.iter_mut() {
-        let (info, operator) = item?;
-        let rhs = grid
-            .evolve_slice(operator.view(), &info, &order_mask)?
-            .into_grid();
-
-        if let Some(lhs) = &mut lhs {
-            lhs.merge(rhs)?;
-        } else {
-            lhs = Some(rhs);
-        }
-    }
-
-    Ok(FkTable::try_from(lhs.unwrap()).unwrap())
+    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask)?)
 }
 
 #[cfg(not(feature = "evolve"))]
