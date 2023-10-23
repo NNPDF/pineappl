@@ -1,7 +1,7 @@
-import pineappl
-
 import numpy as np
 import pytest
+
+import pineappl
 
 
 class TestOrder:
@@ -15,10 +15,10 @@ class TestOrder:
 
 
 class TestGrid:
-    def fake_grid(self):
+    def fake_grid(self, bins=None):
         lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
-        bin_limits = np.array([1e-7, 1e-3, 1])
+        bin_limits = np.array([1e-7, 1e-3, 1] if bins is not None else bins)
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
         return g
@@ -184,3 +184,14 @@ class TestGrid:
         g.fill_all(1.0, 1.0, 1.0, 0, 1e-2, np.array([10.0]))
         res = g.convolute_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
         pytest.approx(res) == 0.0
+
+    def test_merge(self):
+        g = self.fake_grid([1, 2, 3])
+        g.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
+        g1 = self.fake_grid([4, 5, 6])
+        g1.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
+        assert g.bins() == 2
+        assert g1.bins() == 2
+
+        g.merge(g1)
+        assert g.bins() == 4
