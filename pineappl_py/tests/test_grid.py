@@ -187,9 +187,7 @@ class TestGrid:
 
     def test_merge(self):
         g = self.fake_grid([1, 2, 3])
-        g.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
-        g1 = self.fake_grid([4, 5, 6])
-        g1.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
+        g1 = self.fake_grid([2, 3, 4, 5])
         assert g.bins() == 2
         assert g1.bins() == 2
 
