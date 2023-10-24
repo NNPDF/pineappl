@@ -193,3 +193,11 @@ class TestGrid:
 
         g.merge(g1)
         assert g.bins() == 4
+
+        g2 = self.fake_grid([1, 2, 3])
+        g3 = self.fake_grid([1, 2, 3])
+        assert g2.bins() == 2
+        assert g3.bins() == 2
+
+        g2.merge(g3)
+        assert g2.bins() == 2
