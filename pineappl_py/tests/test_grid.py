@@ -192,4 +192,4 @@ class TestGrid:
         assert g1.bins() == 2
 
         g.merge(g1)
-        assert g.bins() == 3
+        assert g.bins() == 4
