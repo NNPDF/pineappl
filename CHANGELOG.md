@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a new panel `double_ratio_pdf` to the `pineappl plot` tool
+- added a Python binding for the `Grid::merge` method
+
 ## [0.6.2] - 09/10/2023
 
 ### Added
