@@ -71,6 +71,7 @@ def main():
         {nint}plot_rel_ewonoff,
         {pdfs}plot_abs_pdfs,
         {pdfs}plot_ratio_pdf,
+        {pdfs}plot_double_ratio_pdf,
         {pdfs}plot_rel_pdfunc,
         {pdfs}plot_rel_pdfpull,
     ]
