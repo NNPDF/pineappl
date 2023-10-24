@@ -201,3 +201,14 @@ class TestGrid:
 
         g2.merge(g3)
         assert g2.bins() == 2
+
+        g4 = self.fake_grid([2, 3, 4])
+        g5 = self.fake_grid([4, 5, 6])
+        assert g4.bins() == 2
+        assert g5.bins() == 2
+
+        with pytest.raises(ValueError, match="NonConsecutiveBins"):
+            g2.merge(g4)
+
+        with pytest.raises(ValueError, match="NonConsecutiveBins"):
+            g2.merge(g5)
