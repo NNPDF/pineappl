@@ -219,6 +219,7 @@ def plot_ratio_pdf(axis, **kwargs):
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
         t.set_bbox({{ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" }})
 
+
 def plot_double_ratio_pdf(axis, **kwargs):
     x = kwargs["x"]
     slice_label = kwargs["slice_label"]
@@ -244,6 +245,7 @@ def plot_double_ratio_pdf(axis, **kwargs):
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
         t.set_bbox({{ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" }})
+
 
 def plot_abs_pdfs(axis, **kwargs):
     x = kwargs["x"]
