@@ -1911,41 +1911,30 @@ impl Grid {
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        let op_info_dim = (
-            info.fac1.len(),
-            info.pids1.len(),
-            info.x1.len(),
-            info.pids0.len(),
-            info.x0.len(),
-        );
-
-        if operator.dim() != op_info_dim {
-            return Err(GridError::EvolutionFailure(format!(
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim,
-                operator.dim(),
-            )));
-        }
-
-        let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
-            evolution::evolve_with_two(self, &operator, info, order_mask)
-        } else {
-            evolution::evolve_with_one(self, &operator, info, order_mask)
-        }?;
-
-        let mut grid = Self {
-            subgrids,
-            lumi,
-            bin_limits: self.bin_limits.clone(),
-            orders: vec![Order::new(0, 0, 0, 0)],
-            subgrid_params: SubgridParams::default(),
-            more_members: self.more_members.clone(),
-        };
-
-        // write additional metadata
-        grid.set_key_value("lumi_id_types", &info.lumi_id_types);
-
-        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+        self.evolve_with_slice_iter(
+            info.fac1
+                .iter()
+                .zip(operator.axis_iter(Axis(0)))
+                .map(|(&fac1, op)| {
+                    Ok::<_, GridError>((
+                        OperatorSliceInfo {
+                            fac0: info.fac0.clone(),
+                            pids0: info.pids0.clone(),
+                            x0: info.x0.clone(),
+                            fac1,
+                            pids1: info.pids1.clone(),
+                            x1: info.x1.clone(),
+                            ren1: info.ren1.clone(),
+                            alphas: info.alphas.clone(),
+                            xir: info.xir,
+                            xif: info.xif,
+                            lumi_id_types: info.lumi_id_types.clone(),
+                        },
+                        op.into_owned(),
+                    ))
+                }),
+            order_mask,
+        )
     }
 
     // TODO:
