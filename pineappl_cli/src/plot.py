@@ -50,6 +50,7 @@ ylabel = r"{ylabel}"
 
 # panel plot labels
 ylabel_ratio_pdf   = "Ratio to {{central_pdf}}"
+ylabel_double_ratio_pdf = "Ratio to NLO"
 ylabel_rel_ewonoff = "NLO EW on/off [\si{{\percent}}]"
 ylabel_rel_pdfunc  = "PDF uncertainty [\si{{\percent}}]"
 ylabel_rel_pdfpull = "Pull [$\sigma$]"
@@ -217,6 +218,31 @@ def plot_ratio_pdf(axis, **kwargs):
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
         t.set_bbox({{ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" }})
 
+def plot_double_ratio_pdf(axis, **kwargs):
+    x = kwargs["x"]
+    slice_label = kwargs["slice_label"]
+    pdf_uncertainties = kwargs["pdf_results"]
+
+    axis.set_ylabel(ylabel_double_ratio_pdf)
+
+    for index, i in enumerate(pdf_uncertainties):
+        label, y, ymin, ymax = i
+        if index == 0 or index == 2:
+            y = y / pdf_uncertainties[0][1]
+            ymin = ymin / pdf_uncertainties[0][1]
+            ymax = ymax / pdf_uncertainties[0][1]
+        else:
+            y = y / pdf_uncertainties[1][1]
+            ymin = ymin / pdf_uncertainties[1][1]
+            ymax = ymax / pdf_uncertainties[1][1]
+        axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
+        axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
+
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties)))
+
+    if slice_label != "":
+        t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
+        t.set_bbox({ "alpha": 0.7, "boxstyle": "square, pad=0.0", "edgecolor": "white", "facecolor": "white" })
 
 def plot_abs_pdfs(axis, **kwargs):
     x = kwargs["x"]
