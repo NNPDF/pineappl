@@ -2024,6 +2024,8 @@ impl Grid {
         // UNWRAP: if we can't compare two numbers there's a bug
         fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+        // TODO: here there's possibly is a bug if xif isn't one
+
         // make sure we've evolved all slices
         if let Some(muf2) = self.evolve_info(&order_mask).fac1.into_iter().find(|&x| {
             !fac1
