@@ -409,6 +409,14 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     ));
 }
 
+/// Try to deduplicate channels of `grid` by detecting pairs of them that contain the same
+/// subgrids. The numerical equality is tested using a tolerance of `ulps`, given in [units of
+/// least precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_dedup_channels(grid: *mut Grid, ulps: i64) {
+    (*grid).dedup_channels(ulps);
+}
+
 /// Delete a grid previously created with `pineappl_grid_new`.
 #[no_mangle]
 #[allow(unused_variables)]
