@@ -1177,10 +1177,10 @@ impl Grid {
     /// numerical equality is tested using a tolerance of `ulps`, given in [units of least
     /// precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
     pub fn dedup_channels(&mut self, ulps: i64) {
-        let mut indices: Vec<_> = (0..self.lumi.len()).rev().collect();
+        let mut indices: Vec<_> = (0..self.lumi.len()).collect();
 
-        'next_channel: while let Some(index) = indices.pop() {
-            for &other_index in indices.iter() {
+        while let Some(index) = indices.pop() {
+            'next_channel: for &other_index in indices.iter() {
                 let (mut a, mut b) = self
                     .subgrids
                     .multi_slice_mut((s![.., .., other_index], s![.., .., index]));
@@ -1220,6 +1220,7 @@ impl Grid {
                 let mut new_channel = self.lumi[other_index].entry().to_vec();
                 new_channel.extend(old_channel);
                 self.lumi[other_index] = LumiEntry::new(new_channel);
+                self.subgrids.remove_index(Axis(2), index);
             }
         }
     }
