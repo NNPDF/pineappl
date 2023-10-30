@@ -12,6 +12,7 @@ Arguments:
 Options:
       --cc1[=<ENABLE>]                Charge conjugate the first initial state [possible values: true, false]
       --cc2[=<ENABLE>]                Charge conjugate the second initial state [possible values: true, false]
+      --dedup-channels[=<ULPS>]       Deduplicate channels assuming numbers differing by ULPS are the same
       --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
       --delete-key <KEY>              Delete an internal key-value pair
       --merge-bins <BIN1-BIN2,...>    Merge specific bins together
@@ -28,6 +29,27 @@ Options:
       --split-lumi[=<ENABLE>]         Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
       --upgrade[=<ENABLE>]            Convert the file format to the most recent version [possible values: true, false]
   -h, --help                          Print help
+";
+
+const CHANNEL_STR: &str = "l    entry        entry
+-+------------+------------
+0 1 × ( 2, -1) 1 × ( 4, -3)
+1 1 × (21, -3) 1 × (21, -1)
+2 1 × (22, -3) 1 × (22, -1)
+3 1 × ( 2, 21) 1 × ( 4, 21)
+4 1 × ( 2, 22) 1 × ( 4, 22)
+";
+
+const DEDUP_CHANNEL_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+-+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
+0    2 2.25 6.5070305e2 6.5070305e2 0.000e0  -7.8692484e0  -7.8692484e0 0.000e0 1.1175729e2 1.1175729e2 0.000e0
+1 2.25  2.5 5.9601236e2 5.9601236e2 0.000e0  -6.5623495e0  -6.5623495e0 0.000e0 1.0083341e2 1.0083341e2 0.000e0
+2  2.5 2.75 5.1561247e2 5.1561247e2 0.000e0  -5.2348261e0  -5.2348261e0 0.000e0 8.9874343e1 8.9874343e1 0.000e0
+3 2.75    3 4.1534629e2 4.1534629e2 0.000e0  -3.7590420e0  -3.7590420e0 0.000e0 7.3935106e1 7.3935106e1 0.000e0
+4    3 3.25 3.0812719e2 3.0812719e2 0.000e0  -2.5871885e0  -2.5871885e0 0.000e0 5.6414554e1 5.6414554e1 0.000e0
+5 3.25  3.5 2.0807482e2 2.0807482e2 0.000e0  -1.6762487e0  -1.6762487e0 0.000e0 3.9468336e1 3.9468336e1 0.000e0
+6  3.5    4 9.6856769e1 9.6856769e1 0.000e0 -8.1027456e-1 -8.1027456e-1 0.000e0 1.9822014e1 1.9822014e1 0.000e0
+7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 -2.2022770e-1 -2.2022770e-1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
 ";
 
 const DEFAULT_STR: &str = "b   etal    dsig/detal 
@@ -544,6 +566,49 @@ fn split_lumi() {
         .assert()
         .success()
         .stdout(SPLIT_LUMI_STR);
+}
+
+#[test]
+fn dedup_channels() {
+    let output = NamedTempFile::new("dedup-channels.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--split-lumi",
+            "--dedup-channels",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DEDUP_CHANNEL_DIFF_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "read",
+            "--lumis",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout(CHANNEL_STR);
 }
 
 #[test]

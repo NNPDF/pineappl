@@ -32,6 +32,7 @@ pub struct Opts {
 enum OpsArg {
     Cc1(bool),
     Cc2(bool),
+    DedupChannels(i64),
     DeleteBins(Vec<RangeInclusive<usize>>),
     DeleteKey(String),
     MergeBins(Vec<RangeInclusive<usize>>),
@@ -97,6 +98,21 @@ impl FromArgMatches for MoreArgs {
                     for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
                         args[index] = Some(match id.as_str() {
                             "remap_norm_ignore" => OpsArg::RemapNormIgnore(arg),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "dedup_channels" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "dedup_channels" => OpsArg::DedupChannels(arg[0]),
                             _ => unreachable!(),
                         });
                     }
@@ -234,6 +250,17 @@ impl Args for MoreArgs {
                 .require_equals(true)
                 .value_name("ENABLE")
                 .value_parser(clap::value_parser!(bool)),
+        )
+        .arg(
+            Arg::new("dedup_channels")
+                .action(ArgAction::Append)
+                .default_missing_value("64")
+                .help("Deduplicate channels assuming numbers differing by ULPS are the same")
+                .long("dedup-channels")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_name("ULPS")
+                .value_parser(value_parser!(i64)),
         )
         .arg(
             Arg::new("delete_bins")
@@ -442,6 +469,9 @@ impl Subcommand for Opts {
                     grid.set_key_value("initial_state_1", &initial_state_1.to_string());
                     grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
+                }
+                OpsArg::DedupChannels(ulps) => {
+                    grid.dedup_channels(*ulps);
                 }
                 OpsArg::DeleteBins(ranges) => {
                     grid.delete_bins(&ranges.iter().flat_map(|r| r.clone()).collect::<Vec<_>>())
