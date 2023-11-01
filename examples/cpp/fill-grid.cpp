@@ -1,11 +1,9 @@
 #include <pineappl_capi.h>
-#include <LHAPDF/LHAPDF.h>
 
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <random>
-#include <vector>
 
 double int_photo(double s, double t, double u) {
     double alpha0 = 1.0 / 137.03599911;
@@ -93,70 +91,97 @@ void fill_grid(pineappl_grid* grid, std::size_t calls) {
         }
 
         auto weight = jacobian * int_photo(s, t, u);
-        double  q2 = 90.0 * 90.0;
+        double q2 = 90.0 * 90.0;
+        std::size_t order = 0;
+        std::size_t channel = 0;
 
-        pineappl_grid_fill(grid, x1, x2, q2, 0, fabs(yll), 0, weight);
+        // fill the LO `weight` into `grid` for parton fractions `x1` and `x2`, and the (squared)
+        // renormalization/factorization scale `q2`. The parameters `order` and `channel` are
+        // indices defined from the arrays `orders` and `channel` used in creating the grid. In this
+        // case they are both `0` and denote the order #0 (leading order) and the channel #0
+        // (photon-photon channel), respectively
+        pineappl_grid_fill(grid, x1, x2, q2, order, fabs(yll), channel, weight);
     }
 }
 
 int main() {
-    // create a new luminosity function for the $\gamma\gamma$ initial state
-    auto* lumi = pineappl_lumi_new();
-    int32_t pdg_ids[] = { 22, 22 };
-    double ckm_factors[] = { 1.0 };
-    pineappl_lumi_add(lumi, 1, pdg_ids, ckm_factors);
+    // ---
+    // Create all channels
 
-    // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R}) \log^0(\xi_\mathrm{F})$
-    uint32_t orders[] = { 0, 2, 0, 0 };
+    // this object will contain all channels (initial states) that we define
+    auto* channels = pineappl_lumi_new();
 
-    // we bin in rapidity from 0 to 2.4 in steps of 0.1
+    // photon-photon initial state, where `22` is the photon (PDG MC ids)
+    int32_t pids1[] = { 22, 22 };
+
+    // factor that each channel is multiplied with when convoluting with PDFs
+    double factors1[] = { 1.0 };
+
+    // define the channel #0
+    pineappl_lumi_add(channels, 1, pids1, factors1);
+
+    // create another channel, which we won't fill, however
+
+    // this channel is the down-type-antidown-type quark channel; here we combine down-antidown,
+    // strange-antistrange and bottom-antibottom into a single channel, which is often done if the
+    // CKM matrix is taken to be diagonal
+    int32_t pids2[] = { 1, -1, 3, -3, 5, -5 };
+
+    // for each pair of particle ids we need to give a factor; in case of a non-diagonal CKM matrix
+    // we could factor out the CKM matrix elements here
+    double factors2[] = { 1.0, 1.0, 1.0 };
+
+    // define the channel #1
+    pineappl_lumi_add(channels, 3, pids2, factors2);
+
+    // ---
+    // Specify the perturbative orders that will be filled into the grid
+
+    // in this example we only fill the LO, which has the exponents
+    // - 0 of alphas,
+    // - 2 of alpha (electroweak coupling),
+    // - 0 of log (xiR^2) (renormalization scale logarithm) and
+    // - 0 of log (xiF^2) (factorization scale logarithm)
+    uint32_t orders[] = {
+        0, 2, 0, 0, // order #0: LO
+        1, 2, 0, 0, // order #1: NLO QCD
+        1, 2, 0, 1  // order #2: NLO QCD factorization log
+    };
+
+    // ---
+    // Specify the bin limits
+
+    // Similar to many Monte Carlo integrators PineAPPL supports only one-dimensional differential
+    // distributions, and only one distribution for each grid. However, one can generate multiple
+    // grids to support multiple distributions, and since every n-dimensional distribution can be
+    // written as a one-dimensional one (by using the bin index as a new binning variable, for
+    // instance), this isn't a limitation.
+
+    // we bin the rapidity of the final-state lepton pair from 0 to 2.4 in steps of 0.1
     double bins[] = {
         0.0,
         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
         1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4
     };
 
+    // ---
+    // Create the grid using the previously set information about orders, bins and channels
+
     // create the PineAPPL grid with default interpolation and binning parameters
     auto* keyval = pineappl_keyval_new();
-    auto* grid = pineappl_grid_new(lumi, 1, orders, 24, bins, keyval);
+    auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
 
     // now we no longer need `keyval` and `lumi`
     pineappl_keyval_delete(keyval);
-    pineappl_lumi_delete(lumi);
+    pineappl_lumi_delete(channels);
 
-    // fill the grid with phase-space points
+    // ---
+    // Fill the grid with phase-space points
     fill_grid(grid, 10000000);
 
-    // perform a convolution of the grid with PDFs
-    auto* pdf = LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0);
-    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
-    };
-
-    std::vector<double> dxsec(24);
-    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf, nullptr,
-        nullptr, 1.0, 1.0, dxsec.data());
-
-    // print the results
-    for (std::size_t i = 0; i != 24; ++i) {
-        std::printf("%02u %.1f %.1f %.3e\n", i, bins[i], bins[i + 1], dxsec[i]);
-    }
-
-    // store some metadata in the grid
-    pineappl_grid_set_key_value(grid, "events", "10000000");
-
-    // read out the stored value and print it on stdout
-    auto* value = pineappl_grid_key_value(grid, "events");
-    std::printf("Finished running %s events.\n", value);
-
-    // delete the allocated object
-    pineappl_string_delete(value);
-
-    // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    char const* filename = "DY-LO-AA.pineappl.lz4";
+    // ---
+    // Write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
+    char const* filename = "drell-yan-rap-ll.pineappl.lz4";
     pineappl_grid_write(grid, filename);
 
     // destroy the object

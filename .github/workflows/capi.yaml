@@ -16,14 +16,12 @@ jobs:
           cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
           ldconfig
 
-      - name: Test C example
+      - name: Test C++ example
         run: |
-          cd examples/basic-capi-usage
+          cd examples/cpp
           # if `make` is too old, it doesn't support the `!=` operator
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make
-          ./dyaa
-          test -f ./DY-LO-AA.pineappl.lz4
+          make test-examples
 
       - name: Test Fortran example
         run: |
@@ -33,7 +31,7 @@ jobs:
           ./dyaa
           test -f ./DY-LO-AA.pineappl.lz4
 
-      - name: Test C++ example
+      - name: Test OO C++ example
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
