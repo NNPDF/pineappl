@@ -75,6 +75,13 @@ int main(int argc, char* argv[]) {
     pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
         channel_mask, xir, xif, dxsec.data());
 
+    std::vector<double> normalizations(bins);
+
+    // read out the bin normalizations, which is usually the size of each bin
+    pineappl_grid_bin_normalizations(grid, normalizations.data());
+
+    std::cout << "idx   left  right      dsig/dx     dx\n";
+
     for (std::size_t bin = 0; bin != bins; ++bin) {
         // print the bin index
         std::cout << std::setw(3) << bin << ' ';
@@ -87,8 +94,9 @@ int main(int argc, char* argv[]) {
             std::cout << std::setw(6) << left_limit << ' ' << std::setw(6) << right_limit << ' ';
         }
 
-        // print the result
-        std::cout << std::scientific << dxsec.at(bin) << std::defaultfloat << '\n';
+        // print the result together with the normalization
+        std::cout << std::scientific << dxsec.at(bin) << std::defaultfloat << ' '
+            << std::setw(6) << normalizations.at(bin) << '\n';
     }
 
     pineappl_grid_delete(grid);
