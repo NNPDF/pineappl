@@ -171,6 +171,34 @@ int main() {
     auto* keyval = pineappl_keyval_new();
     auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
 
+#ifdef USE_CUSTOM_GRID_PARAMETERS
+    // set custom grid parameters. If left out, the standard values will be used, which are the ones
+    // used below
+    pineappl_keyval_set_int(keyval, "q2_bins", 40);
+    pineappl_keyval_set_double(keyval, "q2_max", 1e8);
+    pineappl_keyval_set_double(keyval, "q2_min", 1e2);
+    pineappl_keyval_set_int(keyval, "q2_order", 3);
+    pineappl_keyval_set_bool(keyval, "reweight", true);
+
+    // Settings for all x-values (x1 and x2)
+    pineappl_keyval_set_int(keyval, "x_bins", 50);
+    pineappl_keyval_set_double(keyval, "x_max", 1.0);
+    pineappl_keyval_set_double(keyval, "x_min", 2e-7);
+    pineappl_keyval_set_int(keyval, "x_order", 3);
+
+    // these parameters can be used to override the values specifically for x1
+    pineappl_keyval_set_int(keyval, "x1_bins", 50);
+    pineappl_keyval_set_double(keyval, "x1_max", 1.0);
+    pineappl_keyval_set_double(keyval, "x1_min", 2e-7);
+    pineappl_keyval_set_int(keyval, "x1_order", 3);
+
+    // these parameters can be used to override the values specifically for x2
+    pineappl_keyval_set_int(keyval, "x2_bins", 50);
+    pineappl_keyval_set_double(keyval, "x2_max", 1.0);
+    pineappl_keyval_set_double(keyval, "x2_min", 2e-7);
+    pineappl_keyval_set_int(keyval, "x2_order", 3);
+#endif
+
     // now we no longer need `keyval` and `lumi`
     pineappl_keyval_delete(keyval);
     pineappl_lumi_delete(channels);
@@ -181,7 +209,12 @@ int main() {
 
     // ---
     // Write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    char const* filename = "drell-yan-rap-ll.pineappl.lz4";
+    char const* filename =
+#ifdef USE_CUSTOM_GRID_PARAMETERS
+        "drell-yan-rap-ll-custom-grid.pineappl.lz4";
+#else
+        "drell-yan-rap-ll.pineappl.lz4";
+#endif
     pineappl_grid_write(grid, filename);
 
     // destroy the object
