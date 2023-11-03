@@ -90,4 +90,6 @@ int main(int argc, char* argv[]) {
         // print the result
         std::cout << std::scientific << dxsec.at(bin) << std::defaultfloat << '\n';
     }
+
+    pineappl_grid_delete(grid);
 }
