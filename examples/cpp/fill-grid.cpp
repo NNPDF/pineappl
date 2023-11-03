@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
+#include <iostream>
 #include <random>
 
 double int_photo(double s, double t, double u) {
@@ -187,9 +187,10 @@ int main() {
     // destroy the object
     pineappl_grid_delete(grid);
 
-    std::printf("Generated %s containing a a -> l+ l-.\n\n"
+    std::cout << "Generated " << filename << " containing a a -> l+ l-.\n\n"
         "Try running (PDF sets must contain non-zero photon PDF):\n"
-        "  - pineappl convolute %s NNPDF31_nnlo_as_0118_luxqed\n"
-        "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
-        "  - pineappl --help\n", filename, filename, filename);
+        "  - pineappl convolute " << filename << " NNPDF31_nnlo_as_0118_luxqed\n"
+        "  - pineappl --silence-lhapdf plot " << filename
+        << " NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
+        "  - pineappl --help\n";
 }
