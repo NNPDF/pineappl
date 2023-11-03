@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <iostream>
 #include <random>
+#include <string>
 
 double int_photo(double s, double t, double u) {
     double alpha0 = 1.0 / 137.03599911;
@@ -212,15 +213,21 @@ int main() {
     // Fill the grid with phase-space points
     fill_grid(grid, 10000000);
 
-    // ---
-    // Write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    char const* filename =
+    std::string filename =
 #ifdef USE_CUSTOM_GRID_PARAMETERS
-        "drell-yan-rap-ll-custom-grid.pineappl.lz4";
+        "drell-yan-rap-ll-custom-grid.pineappl";
 #else
-        "drell-yan-rap-ll.pineappl.lz4";
+        "drell-yan-rap-ll.pineappl";
 #endif
-    pineappl_grid_write(grid, filename);
+
+    // ---
+    // Write the grid to disk - the filename can be anything ...
+    pineappl_grid_write(grid, filename.c_str());
+
+    // but if it has an `.lz4` suffix ...
+    filename.append(".lz4");
+    // the grid is automatically LZ4 compressed
+    pineappl_grid_write(grid, filename.c_str());
 
     // destroy the object
     pineappl_grid_delete(grid);
