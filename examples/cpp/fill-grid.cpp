@@ -128,11 +128,12 @@ int main() {
     int32_t pids2[] = { 1, -1, 3, -3, 5, -5 };
 
     // for each pair of particle ids we need to give a factor; in case of a non-diagonal CKM matrix
-    // we could factor out the CKM matrix elements here
-    double factors2[] = { 1.0, 1.0, 1.0 };
+    // we could factor out the CKM matrix elements in this array and still treat the down-type
+    // contributions in a single channel. In this case, however, all factors are `1.0`, for which we
+    // can also pass `nullptr`
 
     // define the channel #1
-    pineappl_lumi_add(channels, 3, pids2, factors2);
+    pineappl_lumi_add(channels, 3, pids2, nullptr);
 
     // ---
     // Specify the perturbative orders that will be filled into the grid
