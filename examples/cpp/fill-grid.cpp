@@ -196,6 +196,9 @@ int main() {
     pineappl_keyval_set_double(keyval, "x2_max", 1.0);
     pineappl_keyval_set_double(keyval, "x2_min", 2e-7);
     pineappl_keyval_set_int(keyval, "x2_order", 3);
+
+    // determine the subgrid which are being filled
+    pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
 #endif
 
     auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
