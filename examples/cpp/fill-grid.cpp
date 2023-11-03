@@ -169,7 +169,6 @@ int main() {
 
     // create the PineAPPL grid with default interpolation and binning parameters
     auto* keyval = pineappl_keyval_new();
-    auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
 
 #ifdef USE_CUSTOM_GRID_PARAMETERS
     // set custom grid parameters. If left out, the standard values will be used, which are the ones
@@ -198,6 +197,8 @@ int main() {
     pineappl_keyval_set_double(keyval, "x2_min", 2e-7);
     pineappl_keyval_set_int(keyval, "x2_order", 3);
 #endif
+
+    auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
 
     // now we no longer need `keyval` and `lumi`
     pineappl_keyval_delete(keyval);
