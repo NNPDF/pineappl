@@ -41,6 +41,9 @@ program dyaa
     key_vals = pineappl_keyval_new()
     grid = pineappl_grid_new(lumi, 1, orders, 24, bins, key_vals)
 
+    call pineappl_keyval_delete(key_vals)
+    call pineappl_lumi_delete(lumi)
+
     ! number of phase-space points that are generated before cuts
     calls = 10000000
 
@@ -113,6 +116,8 @@ program dyaa
     print *, '  - pineappl convolute DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed'
     print *, '  - pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py'
     print *, '  - pineappl --help'
+
+    call pineappl_grid_delete(grid)
 
 contains
     ! photon-photon initiated lepton-pair production

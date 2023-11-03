@@ -1,26 +1,20 @@
 module pineappl
-    use iso_c_binding, only: c_ptr
+    use iso_c_binding, only: c_null_ptr, c_ptr
 
     implicit none
 
     integer, parameter, private :: dp = kind(0.0d0)
 
     type pineappl_grid
-        type (c_ptr) :: ptr
-    contains
-        final :: pineappl_grid_delete
+        type (c_ptr) :: ptr = c_null_ptr
     end type
 
     type pineappl_keyval
-        type (c_ptr) :: ptr
-    contains
-        final :: pineappl_keyval_delete
+        type (c_ptr) :: ptr = c_null_ptr
     end type
 
     type pineappl_lumi
-        type (c_ptr) :: ptr
-    contains
-        final :: pineappl_lumi_delete
+        type (c_ptr) :: ptr = c_null_ptr
     end type
 
     interface
