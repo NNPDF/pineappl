@@ -80,7 +80,17 @@ int main(int argc, char* argv[]) {
     // read out the bin normalizations, which is usually the size of each bin
     pineappl_grid_bin_normalizations(grid, normalizations.data());
 
-    std::cout << "idx   left  right      dsig/dx     dx\n";
+    // print table header
+    std::cout << "idx";
+    for (std::size_t dim = 0; dim != dims; ++dim) {
+        std::cout << "   left  right";
+    }
+    std::cout << "    dsig/dx     dx\n";
+    std::cout << "---";
+    for (std::size_t dim = 0; dim != dims; ++dim) {
+        std::cout << " ----dim #" << dim << "---";
+    }
+    std::cout << " ------------ ------\n";
 
     for (std::size_t bin = 0; bin != bins; ++bin) {
         // print the bin index
