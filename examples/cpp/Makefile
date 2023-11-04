@@ -9,6 +9,8 @@ PROGRAMS = \
 	convolute-grid \
 	display-channels \
 	display-orders \
+	merge-grids \
+	modify-grid
 
 test-examples: $(PROGRAMS)
 	for i in $(PROGRAMS); do ./$${i}; done
@@ -26,6 +28,12 @@ fill-custom-grid: fill-grid.cpp
 	$(CXX) $(CXXFLAGS) $< -DUSE_CUSTOM_GRID_PARAMETERS $(PINEAPPL_DEPS) -o $@
 
 fill-grid: fill-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+merge-grids: merge-grids.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+modify-grid: modify-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 PHONY: clean
