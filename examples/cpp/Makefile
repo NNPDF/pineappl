@@ -3,15 +3,19 @@ CXXFLAGS = -std=c++11 -O3 -Wall -Wextra
 PINEAPPL_DEPS != pkg-config --cflags --libs pineappl_capi
 LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
-all: convolute-grid fill-custom-grid fill-grid
+all: convolute-grid display-channels fill-custom-grid fill-grid
 
-test-examples: convolute-grid fill-custom-grid fill-grid
+test-examples: convolute-grid display-channels fill-custom-grid fill-grid
 	./fill-grid
 	./fill-custom-grid
 	./convolute-grid
+	./display-channels
 
 convolute-grid: convolute-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+display-channels: display-channels.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 fill-custom-grid: fill-grid.cpp
 	$(CXX) $(CXXFLAGS) $< -DUSE_CUSTOM_GRID_PARAMETERS $(PINEAPPL_DEPS) -o $@
@@ -22,4 +26,4 @@ fill-grid: fill-grid.cpp
 PHONY: clean
 
 clean:
-	rm -f convolute-grid fill-custom-grid fill-grid
+	rm -f convolute-grid display-channels fill-custom-grid fill-grid
