@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
         std::vector<double> factors(combinations);
         std::vector<int> pids(2 * combinations);
 
+        // read out the channel with index given by `channel`, writing the particle identifiers into
+        // `pids` and the corresponding factors into `factors`
         pineappl_lumi_entry(channels, channel, pids.data(), factors.data());
 
         for (std::size_t combination = 0; combination != combinations; ++combination) {
@@ -49,6 +51,7 @@ int main(int argc, char* argv[]) {
                 std::cout << " + ";
             }
 
+            // print factor and particle ids
             std::cout << factor << " x (" << std::setw(3) << pida << ',' << std::setw(4) << pidb
                 << ")";
         }

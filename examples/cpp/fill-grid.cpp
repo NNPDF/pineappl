@@ -160,7 +160,7 @@ int main() {
     // instance), this isn't a limitation.
 
     // we bin the rapidity of the final-state lepton pair from 0 to 2.4 in steps of 0.1
-    double bins[] = {
+    std::vector<double> bins = {
         0.0,
         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
         1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4
@@ -203,7 +203,11 @@ int main() {
     pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
 #endif
 
-    auto* grid = pineappl_grid_new(channels, orders.size() / 4, orders.data(), 24, bins, keyval);
+    // create a new grid with the previously defined channels, 3 perturbative orders defined by the
+    // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
+    // parameters in `keyval`.
+    auto* grid = pineappl_grid_new(channels, orders.size() / 4, orders.data(), bins.size() - 1,
+        bins.data(), keyval);
 
     // now we no longer need `keyval` and `lumi`
     pineappl_keyval_delete(keyval);
