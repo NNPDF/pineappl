@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
         break;
 
     default:
-        std::printf("Usage: %s [grid] [pdf]", argv[0]);
+        std::cout << "Usage: " << argv[0] << " [grid] [pdf]\n";
     }
 
     // disable LHAPDF banners to guarantee deterministic output
