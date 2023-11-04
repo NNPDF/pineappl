@@ -144,7 +144,7 @@ int main() {
     // - 2 of alpha (electroweak coupling),
     // - 0 of log (xiR^2) (renormalization scale logarithm) and
     // - 0 of log (xiF^2) (factorization scale logarithm)
-    uint32_t orders[] = {
+    std::vector<uint32_t> orders = {
         0, 2, 0, 0, // order #0: LO
         1, 2, 0, 0, // order #1: NLO QCD
         1, 2, 0, 1  // order #2: NLO QCD factorization log
@@ -203,7 +203,7 @@ int main() {
     pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
 #endif
 
-    auto* grid = pineappl_grid_new(channels, 1, orders, 24, bins, keyval);
+    auto* grid = pineappl_grid_new(channels, orders.size() / 4, orders.data(), 24, bins, keyval);
 
     // now we no longer need `keyval` and `lumi`
     pineappl_keyval_delete(keyval);

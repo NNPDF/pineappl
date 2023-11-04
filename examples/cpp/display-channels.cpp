@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         break;
 
     default:
-        std::cout << "Usage: " << argv[0] << " [grid] [pdf]\n";
+        std::cout << "Usage: " << argv[0] << " [grid]\n";
     }
 
     // read the grid from a file
