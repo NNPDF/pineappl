@@ -65,7 +65,7 @@ use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::{LumiCache, LumiEntry};
 use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridParams};
+use pineappl::subgrid::{ExtraSubgridParams, Mu2, SubgridParams};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
@@ -962,62 +962,31 @@ pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
     Box::default()
 }
 
-/// Fills `buffer` with the q2-slice for the index `q2_slice` of the grid for the specified
-/// `order`, `bin`, and `lumi`.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. `buffer` must be as large as the square of the return value
-/// of `pineappl_subgrid_x_grid_count`.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_export_mu2_slice(
-    grid: *const Grid,
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    q2_slice: usize,
-    buffer: *mut f64,
+    _: *const Grid,
+    _: usize,
+    _: usize,
+    _: usize,
+    _: usize,
+    _: *mut f64,
 ) {
-    let subgrid = (*grid).subgrid(order, bin, lumi);
-    let x1_len = subgrid.x1_grid().len();
-    let slice = slice::from_raw_parts_mut(buffer, x1_len * subgrid.x2_grid().len());
-    subgrid
-        .indexed_iter()
-        .filter(|((imu2, _, _), _)| *imu2 == q2_slice)
-        .for_each(|((_, ix1, ix2), value)| slice[ix1 + x1_len * ix2] = value);
+    unreachable!();
 }
 
-/// Write into `tuple` the lower and upper limit of filled q2 slices for the grid with the
-/// specified indices. The last slice that is filled is one minus the upper limit.
-///
-/// # Safety
-///
-/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. `tuple` must point to an array with two elements.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_nonzero_mu2_slices(
-    grid: *const Grid,
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    tuple: *mut usize,
+pub extern "C" fn pineappl_grid_nonzero_mu2_slices(
+    _: *const Grid,
+    _: usize,
+    _: usize,
+    _: usize,
+    _: *mut usize,
 ) {
-    let tuple = slice::from_raw_parts_mut(tuple, 2);
-    let mut iter = (*grid).subgrid(order, bin, lumi).indexed_iter();
-
-    if let Some(((first, _, _), _)) = iter.next() {
-        tuple[0] = first;
-
-        if let Some(((last, _, _), _)) = iter.last() {
-            tuple[1] = last + 1;
-        } else {
-            tuple[0] = first + 1;
-        }
-    } else {
-        tuple[0] = 0;
-        tuple[1] = 0;
-    }
+    unreachable!();
 }
 
 /// Deletes a subgrid created with [`pineappl_subgrid_new2`]. If `subgrid` is the null pointer,
