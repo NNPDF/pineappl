@@ -7,6 +7,7 @@ PROGRAMS = \
 	fill-grid \
 	fill-custom-grid \
 	advanced-convolution \
+	advanced-filling \
 	convolute-grid \
 	display-channels \
 	display-orders \
@@ -18,6 +19,9 @@ test-examples: $(PROGRAMS)
 
 advanced-convolution: advanced-convolution.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+advanced-filling: advanced-filling.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 convolute-grid: convolute-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
