@@ -1,5 +1,6 @@
 #include <pineappl_capi.h>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <iostream>
@@ -201,6 +202,12 @@ int main() {
 
     // determine the subgrid which are being filled
     pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
+
+    // check the getter functions
+    assert( pineappl_keyval_bool(keyval, "reweight") == true );
+    assert( pineappl_keyval_double(keyval, "q2_max") == 1e8 );
+    assert( pineappl_keyval_int(keyval, "q2_bins") == 40 );
+    assert( std::string(pineappl_keyval_string(keyval, "subgrid_type")) == "LagrangeSubgrid" );
 #endif
 
     // create a new grid with the previously defined channels, 3 perturbative orders defined by the
