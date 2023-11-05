@@ -60,12 +60,10 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::empty_subgrid::EmptySubgridV1;
 use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::{LumiCache, LumiEntry};
-use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::{ExtraSubgridParams, Mu2, SubgridParams};
+use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
@@ -199,7 +197,7 @@ unsafe fn grid_params(key_vals: *const KeyVal) -> (String, SubgridParams, ExtraS
 #[derive(Default)]
 pub struct Lumi(Vec<LumiEntry>);
 
-/// Type for reading and accessing subgrids.
+/// DO NOT USE. This type had been used internally.
 pub struct SubGrid(ImportOnlySubgridV2);
 
 /// Returns the number of bins in `grid`.
@@ -989,99 +987,49 @@ pub extern "C" fn pineappl_grid_nonzero_mu2_slices(
     unreachable!();
 }
 
-/// Deletes a subgrid created with [`pineappl_subgrid_new2`]. If `subgrid` is the null pointer,
-/// nothing is done.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn pineappl_subgrid_delete(subgrid: Option<Box<SubGrid>>) {}
+pub extern "C" fn pineappl_subgrid_delete(_: Option<Box<SubGrid>>) {
+    unreachable!();
+}
 
-/// This function takes replaces the subgrid in `grid` with the corresponding indices `order`,
-/// `bin` and `lumi` with the one given in `subgrid`. If `subgrid` is the null pointer, the specied
-/// subgrid is replaced with an empty one.
-///
-/// # Safety
-///
-/// Both `grid` and `subgrid` must point to valid objects. The parameter `subgrid` can be the null
-/// pointer.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_replace_and_delete(
-    grid: *mut Grid,
-    subgrid: Option<Box<SubGrid>>,
-    order: usize,
-    bin: usize,
-    lumi: usize,
+pub extern "C" fn pineappl_grid_replace_and_delete(
+    _: *mut Grid,
+    _: Option<Box<SubGrid>>,
+    _: usize,
+    _: usize,
+    _: usize,
 ) {
-    (*grid).set_subgrid(
-        order,
-        bin,
-        lumi,
-        subgrid.map_or_else(
-            || EmptySubgridV1::default().into(),
-            |subgrid| subgrid.0.into(),
-        ),
-    );
+    unreachable!();
 }
 
-/// Creates a new subgrid, which can be filled with [`pineappl_subgrid_import_mu2_slice`]. The
-/// array `mu2_grid` must contain the (squared) values of the renormalization and then the
-/// factorization scale, such that twice the value of `mu2_grid_len` gives the length of the array.
-///
-/// # Safety
-///
-/// The pointers `mu2_grid`, `x1_grid` and `x2_grid` must be non-`NULL` and array. Furthermore, the
-/// array `mu2_grid` must be *twice* as long as given in `mu2_grid_len`, and the arrays `x1_grid`
-/// and `x2_grid` as long as specified by `x1_grid_len` and `x2_grid_len`, respectively.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_new2(
-    mu2_grid_len: usize,
-    mu2_grid: *const f64,
-    x1_grid_len: usize,
-    x1_grid: *const f64,
-    x2_grid_len: usize,
-    x2_grid: *const f64,
+pub extern "C" fn pineappl_subgrid_new2(
+    _: usize,
+    _: *const f64,
+    _: usize,
+    _: *const f64,
+    _: usize,
+    _: *const f64,
 ) -> Box<SubGrid> {
-    let mu2: Vec<_> = slice::from_raw_parts(mu2_grid, 2 * mu2_grid_len)
-        .chunks_exact(2)
-        .map(|mu2| Mu2 {
-            ren: mu2[0],
-            fac: mu2[1],
-        })
-        .collect();
-    let x1 = slice::from_raw_parts(x1_grid, x1_grid_len).to_vec();
-    let x2 = slice::from_raw_parts(x2_grid, x2_grid_len).to_vec();
-
-    Box::new(SubGrid(ImportOnlySubgridV2::new(
-        SparseArray3::new(mu2.len(), x1.len(), x2.len()),
-        mu2,
-        x1,
-        x2,
-    )))
+    unreachable!()
 }
 
-/// Imports `slice` for the given index into `subgrid`.
-///
-/// # Safety
-///
-/// The parameter `subgrid` and the array `slice` must be non-`NULL` and `slice` must be at least
-/// as long as the product `x1_grid_len * x2_grid_len` that were used to create the subgrid with.
-/// The index `mu2_slice` must be smaller than `mu2_grid_len` that was used in
-/// [`pineappl_subgrid_new2`] to create `subgrid`.
+/// DO NOT USE. This function had been used internally.
+#[deprecated(since = "0.7.0", note = "this function no longer serves a purpose")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_subgrid_import_mu2_slice(
-    subgrid: *mut SubGrid,
-    mu2_slice: usize,
-    slice: *const f64,
+    _: *mut SubGrid,
+    _: usize,
+    _: *const f64,
 ) {
-    let array = (*subgrid).0.array_mut();
-    let (_, nx1, nx2) = array.dimensions();
-    let slice = slice::from_raw_parts(slice, nx1 * nx2);
-
-    for (index, &value) in slice.iter().enumerate().filter(|(_, &value)| value != 0.0) {
-        let ix1 = index / nx2;
-        let ix2 = index % nx2;
-
-        array[[mu2_slice, ix1, ix2]] = value;
-    }
+    unreachable!();
 }
 
 /// Key-value storage for passing optional information during grid creation with
