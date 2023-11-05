@@ -6,6 +6,7 @@ LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 PROGRAMS = \
 	fill-grid \
 	fill-custom-grid \
+	advanced-convolution \
 	convolute-grid \
 	display-channels \
 	display-orders \
@@ -14,6 +15,9 @@ PROGRAMS = \
 
 test-examples: $(PROGRAMS)
 	for i in $(PROGRAMS); do ./$${i}; done
+
+advanced-convolution: advanced-convolution.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 convolute-grid: convolute-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
