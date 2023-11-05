@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added a new panel `double_ratio_pdf` to the `pineappl plot` tool
 - added a Python binding for the `Grid::merge` method
 
+### Removed
+
+- deprecated and removed the function bodies of
+  `pineappl_grid_nonzero_mu2_slices` and `pineappl_grid_export_mu2_slice`,
+  which were in fact unusable because related funcitons had been remove before
+
 ## [0.6.2] - 09/10/2023
 
 ### Added
