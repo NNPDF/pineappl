@@ -14,8 +14,10 @@ PROGRAMS = \
 	merge-grids \
 	modify-grid
 
+all: $(PROGRAMS)
+
 test-examples: $(PROGRAMS)
-	for i in $(PROGRAMS); do ./$${i}; done
+	set -e && for i in $(PROGRAMS); do ./$${i}; done > test-output && diff -u output test-output && rm test-output
 
 advanced-convolution: advanced-convolution.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
