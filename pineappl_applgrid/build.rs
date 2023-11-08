@@ -78,10 +78,24 @@ fn main() {
 
     println!("cargo:rerun-if-env-changed=APPL_IGRID_DIR");
 
+    let lhapdf = pkg_config::Config::new()
+        .atleast_version("6")
+        .probe("lhapdf")
+        .unwrap();
+
+    for lib_path in lhapdf.link_paths {
+        println!("cargo:rustc-link-search={}", lib_path.to_str().unwrap());
+    }
+
+    for lib in lhapdf.libs {
+        println!("cargo:rustc-link-lib={}", lib);
+    }
+
     cxx_build::bridge("src/lib.rs")
         .file("src/applgrid.cpp")
         .include(include_path.trim())
         .include(appl_igrid_dir)
+        .includes(lhapdf.include_paths)
         .compile("appl-bridge");
 
     println!("cargo:rerun-if-changed=src/lib.rs");

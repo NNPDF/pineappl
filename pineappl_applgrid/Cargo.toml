@@ -18,3 +18,4 @@ cxx = "1.0.65"
 [build-dependencies]
 cc = "1.0.49"
 cxx-build = "1.0.65"
+pkg-config = "0.3.26"
