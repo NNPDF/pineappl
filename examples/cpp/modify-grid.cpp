@@ -49,9 +49,13 @@ int main(int argc, char* argv[]) {
     double global = 1.0;
     pineappl_grid_scale_by_order(grid, alphas, alpha, logxir, logxif, global);
 
-    // 3. split channels. A grid with multiple initial states in a single channel will then have
+    // 3a. split channels. A grid with multiple initial states in a single channel will then have
     // multiple channels with one initial state
     pineappl_grid_split_lumi(grid);
+
+    // 3b. undo the previous operation, detecting equal subgrids by allowing them to differ by up to
+    // 64 ULPS
+    pineappl_grid_dedup_channels(grid, 64);
 
     // 4. optimize grid selectively. The following example removes all perturbative orders whose
     // subgrids are empty
