@@ -1177,10 +1177,10 @@ impl Grid {
     /// numerical equality is tested using a tolerance of `ulps`, given in [units of least
     /// precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
     pub fn dedup_channels(&mut self, ulps: i64) {
-        let mut indices: Vec<_> = (0..self.lumi.len()).collect();
+        let mut indices: Vec<usize> = (0..self.lumi.len()).collect();
 
         while let Some(index) = indices.pop() {
-            'next_channel: for &other_index in indices.iter() {
+            if let Some(other_index) = indices.iter().copied().find(|&other_index| {
                 let (mut a, mut b) = self
                     .subgrids
                     .multi_slice_mut((s![.., .., other_index], s![.., .., index]));
@@ -1194,28 +1194,25 @@ impl Grid {
                         let a = it_a.next();
                         let b = it_b.next();
 
-                        if a.is_none() != b.is_none() {
-                            continue 'next_channel;
-                        }
+                        match (a, b) {
+                            (Some((tuple_a, value_a)), Some((tuple_b, value_b))) => {
+                                if tuple_a != tuple_b {
+                                    return false;
+                                }
 
-                        if a.is_none() {
-                            break;
-                        }
-
-                        let (tuple_a, value_a) = a.unwrap();
-                        let (tuple_b, value_b) = b.unwrap();
-
-                        if tuple_a != tuple_b {
-                            continue 'next_channel;
-                        }
-
-                        let u = ulps;
-                        if !approx_eq!(f64, value_a, value_b, ulps = u) {
-                            continue 'next_channel;
+                                let u = ulps;
+                                if !approx_eq!(f64, value_a, value_b, ulps = u) {
+                                    return false;
+                                }
+                            }
+                            (None, None) => break,
+                            _ => return false,
                         }
                     }
                 }
 
+                true
+            }) {
                 let old_channel = self.lumi.remove(index).entry().to_vec();
                 let mut new_channel = self.lumi[other_index].entry().to_vec();
                 new_channel.extend(old_channel);
