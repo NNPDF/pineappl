@@ -31,7 +31,8 @@ If you use PineAPPL, please cite
 
 # Similar projects
 
-`PineAPPL` is not the only or first grid interpolation library. There are also:
+`PineAPPL` is the most recent addition to the family of grid interpolation
+libraries:
 
 - [APPLgrid](https://applgrid.hepforge.org/) and
 - [fastNLO](https://fastnlo.hepforge.org/).
