@@ -262,7 +262,10 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference, ulps = 24);
     }
 
-    // TEST 7: `optimize`
+    // TEST 7a: `optimize_using` - tests `symmetrize` for each subgrid type
+    grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
+
+    // TEST 7b: `optimize`
     grid.optimize();
 
     assert_eq!(grid.subgrid(0, 0, 0).x1_grid().as_ref(), x_grid);
