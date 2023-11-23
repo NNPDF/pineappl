@@ -27,20 +27,22 @@ wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/plo
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
 wget --no-verbose --no-clobber -P test-data 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
 
-# relative paths sometimes don't work, so use an absolute path
-dir=$(pwd)/target/debug/doctestbins
+# we compile with different flags and don't want to destroy the other target directory
+export CARGO_TARGET_DIR="$(mktemp -d)"
 
-export RUSTFLAGS='-Cinstrument-coverage'
+# relative paths sometimes don't work, so use an absolute path
+dir="${CARGO_TARGET_DIR}"/debug/doctestbins
+
+export RUSTFLAGS="-Cinstrument-coverage"
 export RUSTDOCFLAGS="-Cinstrument-coverage -Z unstable-options --persist-doctests ${dir}"
 
-cargo clean
 # -Z doctest-in-workspace is enabled by default starting from 1.72.0
 cargo test -Z doctest-in-workspace --all-features 2> >(tee stderr 1>&2)
 # from https://stackoverflow.com/a/51141872/812178
 sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 
 find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
+( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo "${dir}"/*/rust_out | tr ' ' "\n" ) | \
     xargs printf ' --object %s' | \
     xargs $(rustc --print target-libdir)/../bin/llvm-cov show \
         --ignore-filename-regex='/.cargo/registry' \
@@ -49,10 +51,11 @@ find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profda
         --ignore-filename-regex='pineappl_capi' \
         --ignore-filename-regex='pineappl_cli/tests' \
         --instr-profile=pineappl.profdata \
-        --object target/debug/pineappl \
+        --object "${CARGO_TARGET_DIR}"/debug/pineappl \
         --format html \
         --output-dir cov \
         -Xdemangler=rustfilt
 
 rm pineappl.profdata
 find . -name '*.profraw' -delete
+rm -rf "${CARGO_TARGET_DIR}"
