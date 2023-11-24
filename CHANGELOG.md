@@ -17,11 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- removed the functions of `pineappl_grid_nonzero_mu2_slices`,
-  `pineappl_grid_export_mu2_slice`, `pineappl_subgrid_delete`,
-  `pineappl_grid_replace_and_delete` and `pineappl_grid_replace_and_delete`,
-  which were only used in the C++ programs that were the predecessors of the
-  `export` and `import` functionality now implemented in the CLI
+- removed the functions of `pineappl_grid_export_mu2_slice`,
+  `pineappl_grid_nonzero_mu2_slices`, `pineappl_subgrid_delete`,
+  `pineappl_grid_replace_and_delete`, `pineappl_subgrid_import_mu2_slice` and
+  `pineappl_subgrid_new2`, which were only used in the C++ programs that were
+  the predecessors of the `export` and `import` functionality now implemented
+  in the CLI
 
 ## [0.6.2] - 09/10/2023
 
