@@ -843,9 +843,9 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.4.2"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ae39348c8bc5fbd7f40c727a9925f03517afd2ab27d46702108b6a7e5414c19"
+checksum = "1ba157ca0885411de85d6ca030ba7e2a83a28636056c7c699b07c8b6f7383214"
 dependencies = [
  "num-traits",
 ]
@@ -990,6 +990,7 @@ dependencies = [
  "lz4_flex",
  "ndarray",
  "ndarray-npy",
+ "num-complex",
  "rand",
  "rand_pcg",
  "rustc-hash",

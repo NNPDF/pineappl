@@ -1,6 +1,7 @@
 use anyhow::Result;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
+use num_complex::Complex;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::lumi::LumiCache;
@@ -12,13 +13,58 @@ use std::f64::consts::PI;
 use std::io::Cursor;
 use std::mem;
 
-// If equation numbers are given, they are from Max Huber's PhD thesis:
-//   'Radiative corrections to the neutral-current Drell-Yan process'
+// If equation numbers are given, they are from Stefan Dittmaier and Max Huber's paper:
+//   'Radiative corrections to the neutral-current Drell–Yan process in the Standard Model and its
+//    minimal supersymmetric extension' (https://arxiv.org/abs/0911.2329)
 
-// Eq. (2.9) - gamma-gamma contribution to DY pair production
+// Eq. (2.13) - gamma-gamma contribution to DY lepton pair production
 fn int_photo(s: f64, t: f64, u: f64) -> f64 {
     let alpha0: f64 = 1.0 / 137.03599911;
     alpha0.powi(2) / 2.0 / s * (t / u + u / t)
+}
+
+// Eq. (2.12) - quark-antiquark contribution to DY lepton pair production
+fn int_quark(s: f64, t: f64, u: f64, qq: f64, i3_wq: f64) -> f64 {
+    let alphagf: f64 = 1.0 / 132.30818655547878;
+    let mw = 80.35198454966643;
+    let mz = 91.15348061918276;
+    let gw = 2.083799397775285;
+    let gz = 2.494266378772824;
+
+    // lepton charge
+    let ql: f64 = -1.0;
+    // lepton weak isospin
+    let i3_wl = -0.5;
+
+    // weak mixing angles
+    let cw = (Complex::new(mw * mw, -mw * gw) / Complex::new(mz * mz, -mz * gz)).sqrt();
+    let sw = (Complex::new(1.0, 0.0) - cw * cw).sqrt();
+
+    // Eq. (2.8)
+    let chi_z = Complex::new(s, 0.0) / Complex::new(s - mz * mz, mz * gz);
+
+    // Eq. (2.7)
+    let gp_qqz = -sw / cw * qq;
+    let gm_qqz = (i3_wq - sw * sw * qq) / (sw * cw);
+    let gp_llz = -sw / cw * ql;
+    let gm_llz = (i3_wl - sw * sw * ql) / (sw * cw);
+
+    alphagf.powi(2) / 12.0 / s.powi(3)
+        * (2.0 * qq.powi(2) * ql.powi(2) * (t * t + u * u)
+            + 2.0
+                * qq
+                * ql
+                * (((gp_qqz * gp_llz + gm_qqz * gm_llz) * u * u
+                    + (gp_qqz * gm_llz + gm_qqz * gp_llz) * t * t)
+                    * chi_z)
+                    .re
+            + ((gp_qqz.norm_sqr() * gp_llz.norm_sqr() + gm_qqz.norm_sqr() * gm_llz.norm_sqr())
+                * u
+                * u
+                + (gp_qqz.norm_sqr() * gm_llz.norm_sqr() + gm_qqz.norm_sqr() * gp_llz.norm_sqr())
+                    * t
+                    * t)
+                * chi_z.norm_sqr())
 }
 
 struct Psp2to2 {
@@ -76,10 +122,13 @@ fn fill_drell_yan_lo_grid(
     let lumi = vec![
         // photons
         lumi_entry![22, 22, 1.0],
-        // quark-antiquark entries that won't be filled, but affected by the optimization
+        // up-antiup
         lumi_entry![2, -2, 1.0; 4, -4, 1.0],
+        // antiup-up
         lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
+        // down-antidown
         lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
+        // antidown-down
         lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
     ];
 
@@ -169,10 +218,42 @@ fn fill_drell_yan_lo_grid(
             continue;
         }
 
-        let weight = jacobian * int_photo(s, u, t);
         let q2 = if dynamic { mll * mll } else { 90.0 * 90.0 };
 
-        grid.fill(0, yll.abs(), 0, &Ntuple { x1, x2, q2, weight });
+        // LO photon-photon channel
+        let weight = jacobian * int_photo(s, t, u);
+        let pto = 0;
+        let channel = 0;
+
+        grid.fill(pto, yll.abs(), channel, &Ntuple { x1, x2, q2, weight });
+
+        // LO up-antiup-type channel
+        let weight = jacobian * int_quark(s, t, u, 2.0 / 3.0, 0.5);
+        let pto = 0;
+        let channel = 1;
+
+        grid.fill(pto, yll.abs(), channel, &Ntuple { x1, x2, q2, weight });
+
+        // LO antiup-up-type channel - swap (x1 <-> x2) and (t <-> u)
+        let weight = jacobian * int_quark(s, u, t, 2.0 / 3.0, 0.5);
+        let pto = 0;
+        let channel = 2;
+
+        grid.fill(pto, yll.abs(), channel, &Ntuple { x2, x1, q2, weight });
+
+        // LO down-antidown-type channel
+        let weight = jacobian * int_quark(s, t, u, -1.0 / 3.0, -0.5);
+        let pto = 0;
+        let channel = 3;
+
+        grid.fill(pto, yll.abs(), channel, &Ntuple { x1, x2, q2, weight });
+
+        // LO antidown-down-type channel - swap (x1 <-> x2) and (t <-> u)
+        let weight = jacobian * int_quark(s, u, t, -1.0 / 3.0, -0.5);
+        let pto = 0;
+        let channel = 4;
+
+        grid.fill(pto, yll.abs(), channel, &Ntuple { x2, x1, q2, weight });
     }
 
     Ok(grid)
@@ -253,7 +334,11 @@ fn perform_grid_tests(
     // TEST 6: `convolute_subgrid`
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+            (0..grid.lumi().len())
+                .map(|channel| {
+                    grid.convolute_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
+                        .sum()
+                })
                 .sum()
         })
         .collect();
@@ -274,7 +359,11 @@ fn perform_grid_tests(
     // TEST 8: `convolute_subgrid` for the optimized subgrids
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            grid.convolute_subgrid(&mut lumi_cache, 0, bin, 0, 1.0, 1.0)
+            (0..grid.lumi().len())
+                .map(|channel| {
+                    grid.convolute_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
+                        .sum()
+                })
                 .sum()
         })
         .collect();
@@ -370,117 +459,117 @@ fn generate_grid(subgrid_type: &str, dynamic: bool, reweight: bool) -> Result<Gr
 }
 
 const STATIC_REFERENCE: [f64; 24] = [
-    5.29438499470369e-1,
-    5.407794857747981e-1,
-    5.696902048421408e-1,
-    5.028293125183927e-1,
-    4.91700010813869e-1,
-    4.946801648085449e-1,
-    4.9188982902741324e-1,
-    4.486342876707396e-1,
-    4.5078095484478575e-1,
-    4.106209790738961e-1,
-    3.602582665914635e-1,
-    3.275794060602094e-1,
-    2.7928887723972295e-1,
-    2.498545969916396e-1,
-    2.108027399225483e-1,
-    1.7799404895027734e-1,
-    1.5411875388722898e-1,
-    1.1957877908479132e-1,
-    9.39935306988927e-2,
-    6.719034949888109e-2,
-    5.136619446064035e-2,
-    3.5716156871884834e-2,
-    2.067251421406746e-2,
-    7.300411258011377e-3,
+    270.032948077419,
+    266.53042891661994,
+    290.18415971698766,
+    257.18920263434893,
+    238.1024311020346,
+    297.4043699884724,
+    260.05082619542054,
+    239.86180454132813,
+    242.8044656290245,
+    231.94005409799632,
+    224.546005767585,
+    186.30387872772653,
+    216.22804109717634,
+    178.11604807980913,
+    171.36239656080207,
+    145.5738494644204,
+    144.15628290390123,
+    96.98346155489186,
+    87.02664966484767,
+    72.24178056556343,
+    63.34788350688179,
+    45.150098574761095,
+    31.786673143908388,
+    10.508579490820983,
 ];
 
 // numbers are slightly different from `STATIC_REFERENCE` because the static scale detection (SSD)
 // removes the Q^2 interpolation error
 const STATIC_REFERENCE_AFTER_SSD: [f64; 24] = [
-    5.2943850298637385e-1,
-    5.4077949153675209e-1,
-    5.6969021381443985e-1,
-    5.0282932188764318e-1,
-    4.9170002525140877e-1,
-    4.9468018558433052e-1,
-    4.918898576307103e-1,
-    4.4863432083118493e-1,
-    4.5078099648970371e-1,
-    4.1062102518688581e-1,
-    3.602583146986339e-1,
-    3.2757945699703028e-1,
-    2.7928892704491243e-1,
-    2.4985464964922635e-1,
-    2.1080278995465099e-1,
-    1.7799409692247298e-1,
-    1.5411880069615053e-1,
-    1.1957881962307169e-1,
-    9.3993565751843353e-2,
-    6.7190377322845676e-2,
-    5.1366217946639786e-2,
-    3.5716174780312381e-2,
-    2.0672525560241309e-2,
-    7.3004155738883077e-3,
+    270.033098990359,
+    266.5305770813254,
+    290.1843197471277,
+    257.18934283371163,
+    238.10255893783074,
+    297.4045259189172,
+    260.05095854131497,
+    239.8619225312395,
+    242.8045800917593,
+    231.94015804152133,
+    224.54610060526701,
+    186.30395209734667,
+    216.22811962577862,
+    178.11610617693407,
+    171.36244639833768,
+    145.57388533569656,
+    144.1563115005831,
+    96.98347582894642,
+    87.02665819940937,
+    72.24178332992076,
+    63.34788220165245,
+    45.15009496754392,
+    31.786668442718938,
+    10.508577299430973,
 ];
 
 const DYNAMIC_REFERENCE: [f64; 24] = [
-    5.093090431949207e-1,
-    5.191668797562395e-1,
-    5.467930909144878e-1,
-    4.845000146366871e-1,
-    4.7279670245192884e-1,
-    4.7481525429115445e-1,
-    4.7060007393610065e-1,
-    4.286009571276975e-1,
-    4.2997427448811987e-1,
-    3.911121604214181e-1,
-    3.430494924416351e-1,
-    3.1204501485640446e-1,
-    2.6656633773109056e-1,
-    2.3745772514449243e-1,
-    2.0055415662593068e-1,
-    1.692229208614707e-1,
-    1.4635749293124972e-1,
-    1.1348804559115269e-1,
-    8.934261002200886e-2,
-    6.385631160399488e-2,
-    4.866968827833745e-2,
-    3.379282482821324e-2,
-    1.9494720220040448e-2,
-    6.880478270711603e-3,
+    270.10748821350154,
+    266.5411133114593,
+    290.17831196525697,
+    257.2279175882498,
+    238.19001761554745,
+    297.4774293868129,
+    260.05099925772,
+    239.8847562882569,
+    242.8256504711324,
+    231.93841366438,
+    224.55846883004486,
+    186.25680820137552,
+    216.31250247378915,
+    178.08658436751017,
+    171.38330537962523,
+    145.56521694168075,
+    144.1389036069047,
+    96.95384922315318,
+    87.01668160609148,
+    72.24037917990188,
+    63.351600701502775,
+    45.15589233137642,
+    31.78895816514695,
+    10.507668133626103,
 ];
 
 const DYNAMIC_REFERENCE_NO_REWEIGHT: [f64; 24] = [
-    5.07858012983822e-1,
-    5.175284452774326e-1,
-    5.450720052517568e-1,
-    4.831265401289246e-1,
-    4.714770822390454e-1,
-    4.7332381643255367e-1,
-    4.6911980551007526e-1,
-    4.274224757508723e-1,
-    4.2874742764343926e-1,
-    3.898631579204727e-1,
-    3.419807843167341e-1,
-    3.112011822819245e-1,
-    2.6582805074531396e-1,
-    2.3669405399362703e-1,
-    1.999186753344747e-1,
-    1.6877228654478332e-1,
-    1.4593203448521183e-1,
-    1.1312893772255903e-1,
-    8.906983809157609e-2,
-    6.368194887638147e-2,
-    4.852988118458943e-2,
-    3.369252022300261e-2,
-    1.943724748356927e-2,
-    6.8603903480790075e-3,
+    269.0260807547221,
+    265.6228062891378,
+    289.20276155574334,
+    256.20635007483935,
+    237.32408404334382,
+    296.4119556601695,
+    259.1570057084532,
+    239.0354655497739,
+    242.00432881806023,
+    231.0153726768181,
+    223.77970088158807,
+    185.74115061906738,
+    215.5756627252798,
+    177.31781780498287,
+    170.85988900722407,
+    145.28303184463408,
+    143.54049829751125,
+    96.55784208406595,
+    86.82029114390203,
+    72.05416364844432,
+    63.125656746209586,
+    45.02250707871406,
+    31.699275851444902,
+    10.491000144711,
 ];
 
 #[test]
-fn dy_aa_lagrange_static() -> Result<()> {
+fn drell_yan_lagrange_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgrid",
         false,
@@ -499,7 +588,7 @@ fn dy_aa_lagrange_static() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v1_static() -> Result<()> {
+fn drell_yan_lagrange_v1_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV1",
         false,
@@ -518,7 +607,7 @@ fn dy_aa_lagrange_v1_static() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v2_static() -> Result<()> {
+fn drell_yan_lagrange_v2_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
         false,
@@ -537,7 +626,7 @@ fn dy_aa_lagrange_v2_static() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_dynamic() -> Result<()> {
+fn drell_yan_lagrange_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgrid",
         true,
@@ -556,7 +645,7 @@ fn dy_aa_lagrange_dynamic() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
+fn drell_yan_lagrange_v1_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV1",
         true,
@@ -575,7 +664,7 @@ fn dy_aa_lagrange_v1_dynamic() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v1_dynamic_no_reweight() -> Result<()> {
+fn drell_yan_lagrange_v1_dynamic_no_reweight() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV1",
         true,
@@ -594,7 +683,7 @@ fn dy_aa_lagrange_v1_dynamic_no_reweight() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
+fn drell_yan_lagrange_v2_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
         true,
@@ -613,7 +702,7 @@ fn dy_aa_lagrange_v2_dynamic() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_v2_dynamic_no_reweight() -> Result<()> {
+fn drell_yan_lagrange_v2_dynamic_no_reweight() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
         true,
@@ -632,7 +721,7 @@ fn dy_aa_lagrange_v2_dynamic_no_reweight() -> Result<()> {
 }
 
 #[test]
-fn dy_aa_lagrange_sparse_dynamic() -> Result<()> {
+fn drell_yan_lagrange_sparse_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSparseSubgrid",
         true,
@@ -708,7 +797,7 @@ fn grid_optimize() -> Result<()> {
     grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 1);
+    assert_eq!(grid.lumi().len(), 3);
 
     Ok(())
 }

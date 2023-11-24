@@ -30,6 +30,7 @@ thiserror = "1.0.30"
 [dev-dependencies]
 anyhow = "1.0.48"
 lhapdf = "0.2.0"
+num-complex = "0.4.4"
 rand = { default-features = false, version = "0.8.4" }
 rand_pcg = { default-features = false, version = "0.3.1" }
 serde_yaml = "0.9.13"
