@@ -203,6 +203,10 @@ int main() {
     // determine the subgrid which are being filled
     pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
 
+    // set the PDG ids of hadrons whose PDFs should be used to convolute the grid with
+    pineappl_keyval_set_string(keyval, "initial_state_1", "2212");
+    pineappl_keyval_set_string(keyval, "initial_state_2", "2212");
+
     // check the getter functions
     assert( pineappl_keyval_bool(keyval, "reweight") == true );
     assert( pineappl_keyval_double(keyval, "q2_max") == 1e8 );
