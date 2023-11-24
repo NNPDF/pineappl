@@ -56,6 +56,9 @@ find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profda
         --output-dir cov \
         -Xdemangler=rustfilt
 
-rm pineappl.profdata
+# remove merged profile data and standard error output
+rm pineappl.profdata stderr
+# remove profile data
 find . -name '*.profraw' -delete
+# remove build directory
 rm -rf "${CARGO_TARGET_DIR}"
