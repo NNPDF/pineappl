@@ -146,6 +146,7 @@ struct Order {
   std::uint32_t logxif;
 };
 
+/** @brief The central grid object */
 struct Grid {
 
   /** @brief underlying raw object */
@@ -287,6 +288,22 @@ struct Grid {
     // delete the allocated object
     pineappl_string_delete(value);
     return res;
+  }
+
+  /**
+   * @brief Scale grid with a number
+   * This multiplies all subgrids with the given number.
+   * @param s factor
+   */
+  void scale(const double s) const {
+    pineappl_grid_scale(this->raw, s);
+  }
+
+  /**
+   * @brief Optimizes the grid representation for space efficiency.
+   */
+  void optimize() const {
+    pineappl_grid_optimize(this->raw);
   }
 };
 
