@@ -6,6 +6,8 @@ use super::subgrid::{Mu2, Subgrid};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use thiserror::Error;
 
 /// This structure represents an entry of a luminosity function. Each entry consists of a tuple,
 /// which contains, in the following order, the PDG id of the first incoming parton, then the PDG
@@ -127,6 +129,59 @@ impl LumiEntry {
     #[must_use]
     pub fn transpose(&self) -> Self {
         Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
+    }
+}
+
+/// Error type keeping information if [`LumiEntry::from_str`] went wrong.
+#[derive(Debug, Error)]
+#[error("{0}")]
+pub struct ParseLumiEntryError(String);
+
+impl FromStr for LumiEntry {
+    type Err = ParseLumiEntryError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(LumiEntry::new(
+            s.split('+')
+                .map(|sub| {
+                    sub.split_once('*').map_or_else(
+                        || Err(ParseLumiEntryError("missing '*'".to_owned())),
+                        |(factor, pids)| {
+                            let tuple = pids.split_once(',').map_or_else(
+                                || Err(ParseLumiEntryError("missing ','".to_owned())),
+                                |(a, b)| {
+                                    Ok((
+                                        a.trim()
+                                            .strip_prefix('(')
+                                            .ok_or_else(|| {
+                                                ParseLumiEntryError("missing '('".to_owned())
+                                            })?
+                                            .trim()
+                                            .parse::<i32>()
+                                            .map_err(|err| ParseLumiEntryError(err.to_string()))?,
+                                        b.trim()
+                                            .strip_suffix(')')
+                                            .ok_or_else(|| {
+                                                ParseLumiEntryError("missing ')'".to_owned())
+                                            })?
+                                            .trim()
+                                            .parse::<i32>()
+                                            .map_err(|err| ParseLumiEntryError(err.to_string()))?,
+                                    ))
+                                },
+                            )?;
+
+                            Ok((
+                                tuple.0,
+                                tuple.1,
+                                str::parse::<f64>(factor.trim())
+                                    .map_err(|err| ParseLumiEntryError(err.to_string()))?,
+                            ))
+                        },
+                    )
+                })
+                .collect::<Result<_, _>>()?,
+        ))
     }
 }
 
@@ -511,6 +566,42 @@ mod tests {
                         -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
                          1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
                         -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
+        );
+    }
+
+    #[test]
+    fn from_str() {
+        assert_eq!(
+            str::parse::<LumiEntry>(" 1   * (  2 , -2) + 2* (4,-4)").unwrap(),
+            lumi_entry![2, -2, 1.0; 4, -4, 2.0]
+        );
+
+        assert_eq!(
+            str::parse::<LumiEntry>("* (  2, -2) + 2* (4,-4)")
+                .unwrap_err()
+                .to_string(),
+            "cannot parse float from empty string"
+        );
+
+        assert_eq!(
+            str::parse::<LumiEntry>(" 1   * (  2 -2) + 2* (4,-4)")
+                .unwrap_err()
+                .to_string(),
+            "missing ','"
+        );
+
+        assert_eq!(
+            str::parse::<LumiEntry>(" 1   *   2, -2) + 2* (4,-4)")
+                .unwrap_err()
+                .to_string(),
+            "missing '('"
+        );
+
+        assert_eq!(
+            str::parse::<LumiEntry>(" 1   * (  2, -2 + 2* (4,-4)")
+                .unwrap_err()
+                .to_string(),
+            "missing ')'"
         );
     }
 }
