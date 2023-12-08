@@ -19,10 +19,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, Array5, ArrayView5, Axis, Dimension};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::convert::{TryFrom, TryInto};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::iter;
@@ -291,9 +291,22 @@ struct Mmv2 {
     key_value_db: HashMap<String, String>,
 }
 
+fn ordered_map_serialize<S, K: Ord + Serialize, V: Serialize>(
+    value: &HashMap<K, V>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let ordered: BTreeMap<_, _> = value.iter().collect();
+    ordered.serialize(serializer)
+}
+
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv3 {
     remapper: Option<BinRemapper>,
+    // order the HashMap before serializing it to make the output stable
+    #[serde(serialize_with = "ordered_map_serialize")]
     key_value_db: HashMap<String, String>,
     subgrid_template: SubgridEnum,
 }
