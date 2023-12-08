@@ -21,6 +21,7 @@ Options:
       --remap <REMAPPING>             Modify the bin dimensions and widths
       --remap-norm <NORM>             Modify the bin normalizations with a common factor
       --remap-norm-ignore <DIM1,...>  Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
+      --rewrite-channel <IDX> <CHAN>  Rewrite the definition of the channel with index IDX
   -s, --scale <SCALE>                 Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
       --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
@@ -144,6 +145,28 @@ const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
 ";
 
 const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
+";
+
+const REWRITE_CHANNELS_CONVOLUTE_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 7.5534392e2
+1 2.25  2.5 6.9342538e2
+2  2.5 2.75 6.0526279e2
+3 2.75    3 4.9140786e2
+4    3 3.25 3.6782869e2
+5 3.25  3.5 2.5085041e2
+6  3.5    4 1.1874486e2
+7    4  4.5 2.8214633e1
+";
+
+const REWRITE_CHANNELS_LUMIS_STR: &str = "l              entry                            entry                       entry                       entry                        entry                  entry
+-+--------------------------------+-------------------------------+-----------------------+--------------------------------+-----------------------+---------------------
+0 0.0000128881 × ( 2, -5)          0.050940490000000005 × ( 2, -3) 0.9490461561 × ( 2, -1) 0.0017222500000000003 × ( 4, -5) 0.9473907556 × ( 4, -3) 0.05089536 × ( 4, -1)
+1 0.0017351381000000003 × (-5, 21) 0.9983312456 × (-3, 21)         0.9999415161 × (-1, 21)                                                          
+2 1 × (22, -3)                     1 × (22, -1)                                                                                                     
+3 0.9999995342 × ( 2, 21)          1.0000083656 × ( 4, 21)                                                                                          
+4 1 × ( 2, 22)                     1 × ( 4, 22)                                                                                                     
 ";
 
 const SCALE_BY_BIN_STR: &str = "b   etal    dsig/detal 
@@ -658,4 +681,48 @@ fn multiple_arguments() {
         .assert()
         .success()
         .stdout(MULTIPLE_ARGUMENTS_STR);
+}
+
+#[test]
+fn rewrite_channels() {
+    let output = NamedTempFile::new("ckm_channels.pineappl.lz4").unwrap();
+
+    // 0 1 × ( 2, -1) 1 × ( 4, -3)
+    // 1 1 × (21, -3) 1 × (21, -1)
+    // 2 1 × (22, -3) 1 × (22, -1)
+    // 3 1 × ( 2, 21) 1 × ( 4, 21)
+    // 4 1 × ( 2, 22) 1 × ( 4, 22)
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rewrite-channel", "0", "0.9490461561 * ( 2, -1) + 0.050940490000000005 * (2, -3) + 0.0000128881 * (2, -5) + 0.05089536 * (4, -1) + 0.9473907556 * (4, -3) + 0.0017222500000000003 * (4, -5)",
+            "--rewrite-channel", "1", "0.9999415161 * (-1, 21) + 0.9983312456 * (-3, 21) + 0.0017351381000000003 * (-5, 21)",
+            "--rewrite-channel", "3", "0.9999995342 * ( 2, 21) + 1.0000083656 * ( 4, 21)",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(REWRITE_CHANNELS_LUMIS_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "convolute",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(REWRITE_CHANNELS_CONVOLUTE_STR);
 }

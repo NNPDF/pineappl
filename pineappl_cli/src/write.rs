@@ -41,6 +41,7 @@ enum OpsArg {
     Remap(String),
     RemapNorm(f64),
     RemapNormIgnore(Vec<usize>),
+    RewriteChannel((usize, LumiEntry)),
     Scale(f64),
     ScaleByBin(Vec<f64>),
     ScaleByOrder(Vec<f64>),
@@ -177,6 +178,22 @@ impl FromArgMatches for MoreArgs {
                             "scale" => OpsArg::Scale(arg[0]),
                             _ => unreachable!(),
                         });
+                    }
+                }
+                "rewrite_channel" => {
+                    let arguments: Vec<Vec<String>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 2);
+
+                        args[index] = Some(OpsArg::RewriteChannel((
+                            str::parse(&arg[0]).unwrap(),
+                            str::parse(&arg[1]).unwrap(),
+                        )));
                     }
                 }
                 "scale_by_bin" | "scale_by_order" => {
@@ -340,6 +357,14 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("DIM1,...")
                 .value_parser(value_parser!(usize)),
+        )
+        .arg(
+            Arg::new("rewrite_channel")
+                .action(ArgAction::Append)
+                .help("Rewrite the definition of the channel with index IDX")
+                .long("rewrite-channel")
+                .num_args(2)
+                .value_names(["IDX", "CHAN"])
         )
         .arg(
             Arg::new("scale")
@@ -521,6 +546,12 @@ impl Subcommand for Opts {
                     grid.set_remapper(
                         BinRemapper::new(normalizations, remapper.limits().to_vec()).unwrap(),
                     )?;
+                }
+                OpsArg::RewriteChannel((index, new_channel)) => {
+                    let mut channels = grid.lumi().to_vec();
+                    // TODO: check that `index` is valid
+                    channels[*index] = new_channel.clone();
+                    grid.set_lumis(channels);
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize(true) => grid.optimize(),
