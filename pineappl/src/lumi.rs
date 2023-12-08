@@ -145,16 +145,18 @@ impl FromStr for LumiEntry {
             s.split('+')
                 .map(|sub| {
                     sub.split_once('*').map_or_else(
-                        || Err(ParseLumiEntryError("missing '*'".to_owned())),
+                        || Err(ParseLumiEntryError(format!("missing '*' in '{sub}'"))),
                         |(factor, pids)| {
                             let tuple = pids.split_once(',').map_or_else(
-                                || Err(ParseLumiEntryError("missing ','".to_owned())),
+                                || Err(ParseLumiEntryError(format!("missing ',' in '{pids}'"))),
                                 |(a, b)| {
                                     Ok((
                                         a.trim()
                                             .strip_prefix('(')
                                             .ok_or_else(|| {
-                                                ParseLumiEntryError("missing '('".to_owned())
+                                                ParseLumiEntryError(format!(
+                                                    "missing '(' in '{pids}'"
+                                                ))
                                             })?
                                             .trim()
                                             .parse::<i32>()
@@ -162,7 +164,9 @@ impl FromStr for LumiEntry {
                                         b.trim()
                                             .strip_suffix(')')
                                             .ok_or_else(|| {
-                                                ParseLumiEntryError("missing ')'".to_owned())
+                                                ParseLumiEntryError(format!(
+                                                    "missing ')' in '{pids}'"
+                                                ))
                                             })?
                                             .trim()
                                             .parse::<i32>()
@@ -584,24 +588,31 @@ mod tests {
         );
 
         assert_eq!(
+            str::parse::<LumiEntry>(" 1    (  2 -2) + 2* (4,-4)")
+                .unwrap_err()
+                .to_string(),
+            "missing '*' in ' 1    (  2 -2) '"
+        );
+
+        assert_eq!(
             str::parse::<LumiEntry>(" 1   * (  2 -2) + 2* (4,-4)")
                 .unwrap_err()
                 .to_string(),
-            "missing ','"
+            "missing ',' in ' (  2 -2) '"
         );
 
         assert_eq!(
             str::parse::<LumiEntry>(" 1   *   2, -2) + 2* (4,-4)")
                 .unwrap_err()
                 .to_string(),
-            "missing '('"
+            "missing '(' in '   2, -2) '"
         );
 
         assert_eq!(
             str::parse::<LumiEntry>(" 1   * (  2, -2 + 2* (4,-4)")
                 .unwrap_err()
                 .to_string(),
-            "missing ')'"
+            "missing ')' in ' (  2, -2 '"
         );
     }
 }
