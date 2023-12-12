@@ -147,16 +147,16 @@ pub struct OperatorSliceInfo {
 }
 
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
-    grid.key_values()
-        .and_then(|key_values| key_values.get("lumi_id_types"))
-        .and_then(|value| {
-            (value == "pdg_mc_ids").then(|| {
-                grid.lumi()
-                    .iter()
-                    .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
-            })
-        })
-        .unwrap_or(false)
+    // if there are any PID zero particles ...
+    grid.lumi()
+        .iter()
+        .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
+        // and if lumi_id_types = pdg_mc_ids or if the key-value pair doesn't exist
+        && grid
+            .key_values()
+            .and_then(|key_values| key_values.get("lumi_id_types"))
+            .map(|value| value == "pdg_mc_ids")
+            .unwrap_or(true)
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;
