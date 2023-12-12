@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the predecessors of the `export` and `import` functionality now implemented
   in the CLI
 
+### Fixed
+
+- fixed a bug that caused channels with PID=0 gluons to not evolve when the
+  metadata key-value pair `lumi_id_types=pdg_mc_ids` was not present. Now when
+  this metadata is not present it is assumed PDG MC IDs are used
+
 ## [0.6.2] - 09/10/2023
 
 ### Added
