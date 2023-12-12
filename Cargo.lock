@@ -975,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -1001,7 +1001,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_applgrid"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "cc",
  "cxx",
@@ -1011,7 +1011,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_capi"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "itertools",
  "pineappl",
@@ -1019,7 +1019,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_cli"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_fastnlo"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_py"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "itertools",
  "ndarray",
@@ -1762,7 +1762,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "anyhow",
  "clap",
