@@ -81,7 +81,7 @@ shared = here / "shared"
 rst_prolog = "\n".join([open(x).read() for x in os.scandir(shared)])
 
 extlinks = {
-    "yadism": ("https://n3pdf.github.io/yadism/%s", "yadism - %s"),
+    "yadism": ("https://nnpdf.github.io/yadism/%s", "yadism - %s"),
     "rustdoc": ("https://docs.rs/pineappl/latest/pineappl/%s", "PineAPPL - %s"),
     "pineko": ("https://github.com/NNPDF/pineko/%s", "pineko - %s"),
 }

@@ -25,9 +25,9 @@ docs = ["sphinx>=6.2.1", "sphinx_rtd_theme>=1.2.2", "sphinxcontrib-bibtex>=2.5.0
 test = ["pytest", "pytest-cov"]
 
 [project.urls]
-homepage = "https://n3pdf.github.io/pineappl/"
+homepage = "https://nnpdf.github.io/pineappl/"
 documentation = "https://pineappl.readthedocs.io/"
-changelog = "https://github.com/NNPDF/pineappl/blob/master/CHANGELOG.md"
+changelog = "https://nnpdf.github.io/pineappl/CHANGELOG.html"
 
 [tool.maturin]
 bindings = "pyo3"

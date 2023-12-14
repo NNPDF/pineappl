@@ -1,7 +1,7 @@
 Welcome to PineAPPL
 ===================
 
-This is the Python wrapper for the `Rust PineAPPL library <https://n3pdf.github.io/pineappl/>`_.
+This is the Python wrapper for the `Rust PineAPPL library <https://nnpdf.github.io/pineappl/>`_.
 
 PineAPPL is a computer library that makes it possible to produce fast-interpolation grids for fitting parton distribution functions (PDFs) including corrections of strong and electroweak origin.
 
