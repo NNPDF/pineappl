@@ -16,7 +16,7 @@ version.workspace = true
 anyhow = "1.0.48"
 base64 = { optional = true, version = "0.21.0" }
 clap = { features = ["derive"], version = ">=4.2, <4.4" } # 4.4 requires MSRV 1.70
-cxx = "1.0.65"
+cxx = { optional = true, version = "1.0.65" }
 either = { features = ["serde"], optional = true, version = "1.8.0" }
 enum_dispatch = "0.3.7"
 flate2 = { optional = true, version = "1.0.22" }
@@ -49,7 +49,7 @@ path = "src/main.rs"
 rustc-args = [ "--cfg feature=\"docs-only\"" ]
 
 [features]
-applgrid = ["dep:pineappl_applgrid"]
+applgrid = ["dep:cxx", "dep:pineappl_applgrid"]
 evolve = ["dep:base64", "dep:either", "dep:tar", "dep:lz4_flex", "dep:ndarray-npy", "dep:serde", "dep:serde_yaml"]
 fastnlo = ["dep:pineappl_fastnlo"]
 fktable = ["dep:flate2",  "dep:tar"]
