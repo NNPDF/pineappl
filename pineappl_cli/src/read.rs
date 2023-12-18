@@ -106,12 +106,14 @@ impl Subcommand for Opts {
             return Ok(ExitCode::SUCCESS);
         } else if self.group.lumis {
             let mut titles = row![c => "l"];
+
+            // if there are no channels print at least one column
             for _ in 0..grid
                 .lumi()
                 .iter()
                 .map(|lumi| lumi.entry().len())
                 .max()
-                .unwrap()
+                .unwrap_or(1)
             {
                 titles.add_cell(cell!(c->"entry"));
             }
