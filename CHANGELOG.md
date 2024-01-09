@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added `Grid::dedup_channels`, the C function `pineappl_grid_dedup_channels`
-  the new switch `--dedup-channels` to the CLI to detect equal subgrids and
-  reduce the space requirements of a grid
+  and the new switch `--dedup-channels` to the CLI that detect equal subgrids
+  and reduce the space requirements of a grid
 - added a new panel `double_ratio_pdf` to the `pineappl plot` tool
 - added a Python binding for the `Grid::merge` method
 
