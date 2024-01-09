@@ -8,6 +8,21 @@
 - Make sure not to use Rust features newer than the specified minimum supported
   Rust Version (MSRV), which is documented in the [README](README.md). You can
   use `cargo-msrv` to check the crates. However, the Github CI also checks this.
+- Make sure to follow the [Rust API
+  Guidelines](https://rust-lang.github.io/api-guidelines/checklist.html)
+
+### Increasing the minimum supported Rust version (MSRV)
+
+Do not change the MSRV for releases with increased patch version number. When
+increasing the MSRV make sure to set it everywhere to the same value:
+
+- update `rust-version` in the top-level `Cargo.toml`; all other projects in
+  the workspace should inherit the setting
+- update the MSRV in `README.md` and `docs/installation.md`
+- update the MSRV in all Github workflows (`.github/workflows/`)
+- update `rust` in `.readthedocs.yml` and make sure [RTD supports
+  it](https://docs.readthedocs.io/en/stable/config-file/v2.html#build-tools-rust)
+- update the `cargo msrv` call in `make_release.sh`
 
 ### Coding guidelines
 
@@ -23,20 +38,9 @@
   blogpost explains it nicely: <https://chris.beams.io/posts/git-commit/>.
 - Whenever possible, prefer rebase over merge.
 
-## Increasing the minimum supported Rust version (MSRV)
-
-Do not change the MSRV for releases with increased patch version number. When
-increasing the MSRV make sure to set it everywhere to the same value:
-
-- update `rust-version` in each crate of the workspace
-- update the MSRV in `README.md` and `docs/installation.md`
-- update the MSRV in all Github workflows (`.github/workflows/`)
-- update `rust` in `.readthedocs.yml` and make sure RTD supports it
-- update the `cargo msrv` call in `make_release.sh`
-
 ## Making a new release
 
-Run
+In the `maintainers` directory run
 
     ./make_release 0.5.4
 
