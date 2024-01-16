@@ -103,27 +103,29 @@ impl FromStr for BinRemapper {
                     .split('|')
                     .map(|string| {
                         string
-                            .find(':')
-                            .map_or(string, |index| {
-                                let (lhs, rhs) = string.split_at(index);
-                                let rhs = &rhs[1..]; // remove ':' which is contained with `split_at`
-
-                                // extract the part that doesn't belong to the ':' specification
+                            .split_once(':')
+                            .map_or(Ok(string), |(lhs, rhs)| {
                                 match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
-                                    (Err(_), Ok(_)) => lhs,
-                                    (Ok(_), Err(_)) => rhs,
-                                    _ => "",
+                                    (Err(lhs), Err(rhs)) => Err(ParseBinRemapperError(format!(
+                                        "unable to parse 'N:M' syntax from: '{string}' (N: '{lhs}', M: '{rhs}')"
+                                    ))),
+                                    // skip :N specification
+                                    (Err(_), Ok(_)) => Ok(lhs),
+                                    // skip N: specification
+                                    (Ok(_), Err(_)) => Ok(rhs),
+                                    // skip N:M specification
+                                    (Ok(_), Ok(_)) => Ok(""),
                                 }
-                            })
+                            })?
                             .split(',')
                             .filter_map(|string| {
                                 let string = string.trim();
                                 if string.is_empty() {
                                     None
                                 } else {
-                                    Some(string.parse::<f64>().map_err(|_| {
+                                    Some(string.parse::<f64>().map_err(|err| {
                                         ParseBinRemapperError(format!(
-                                            "unable to parse limit '{string}'"
+                                            "unable to parse limit '{string}': '{err}')"
                                         ))
                                     }))
                                 }
@@ -135,10 +137,12 @@ impl FromStr for BinRemapper {
             .collect();
         let mut remaps = remaps?;
 
-        if remaps[0].len() != 1 {
-            return Err(ParseBinRemapperError(
-                "'|' syntax not meaningful for first dimension".to_string(),
-            ));
+        if let Some(first) = remaps.first() {
+            if first.len() != 1 {
+                return Err(ParseBinRemapperError(
+                    "'|' syntax not meaningful for first dimension".to_string(),
+                ));
+            }
         }
 
         // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
@@ -160,20 +164,12 @@ impl FromStr for BinRemapper {
         for (vec, string) in remaps.iter_mut().zip(s.split(';')) {
             for (vec, string) in vec.iter_mut().zip(string.split('|')) {
                 let (lhs, rhs) = {
-                    let split: Vec<_> = string.split(':').collect();
-
-                    if split.len() == 1 {
+                    if let Some((lhs, rhs)) = string.split_once(':') {
+                        (lhs.parse::<usize>(), rhs.parse::<usize>())
+                    } else {
                         // there's no colon
                         continue;
                     }
-
-                    if split.len() != 2 {
-                        return Err(ParseBinRemapperError(format!(
-                            "too many ':' found: '{string}'"
-                        )));
-                    }
-
-                    (split[0].parse::<usize>(), split[1].parse::<usize>())
                 };
 
                 if let Ok(num) = rhs {
@@ -182,12 +178,6 @@ impl FromStr for BinRemapper {
 
                 if let Ok(num) = lhs {
                     vec.drain(0..num);
-                }
-
-                if lhs.is_err() && rhs.is_err() {
-                    return Err(ParseBinRemapperError(format!(
-                        "unable to parse ':' syntax from: '{string}'"
-                    )));
                 }
 
                 if vec.len() <= 1 {
@@ -1122,19 +1112,25 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "too many ':' found: '::'")]
-    fn colon_syntax_too_many_colons() {
+    #[should_panic(
+        expected = "unable to parse 'N:M' syntax from: '::' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+    )]
+    fn colon_syntax_bad_string() {
         BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|::").unwrap();
     }
 
     #[test]
-    #[should_panic(expected = "unable to parse ':' syntax from: '2.5:'")]
+    #[should_panic(
+        expected = "unable to parse 'N:M' syntax from: '2.5:' (N: 'invalid digit found in string', M: 'cannot parse integer from empty string')"
+    )]
     fn colon_syntax_bad_lhs() {
         BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3").unwrap();
     }
 
     #[test]
-    #[should_panic(expected = "unable to parse ':' syntax from: ':2.5'")]
+    #[should_panic(
+        expected = "unable to parse 'N:M' syntax from: ':2.5' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+    )]
     fn colon_syntax_bad_rhs() {
         BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3").unwrap();
     }
