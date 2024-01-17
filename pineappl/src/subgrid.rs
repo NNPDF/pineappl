@@ -118,6 +118,7 @@ pub trait Subgrid {
     fn static_scale(&self) -> Option<Mu2>;
 }
 
+// this is needed in the Python interface
 impl From<&SubgridEnum> for Array3<f64> {
     fn from(subgrid: &SubgridEnum) -> Self {
         let mut result = Self::zeros((
