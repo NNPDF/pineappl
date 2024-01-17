@@ -95,8 +95,18 @@ pub struct BinInfo<'a> {
 
 /// Error type returned by [`BinRemapper::from_str`]
 #[derive(Debug, Error)]
-#[error("{0}")]
-pub struct ParseBinRemapperError(String);
+pub enum ParseBinRemapperError {
+    /// An error that occured while parsing the string in [`BinRemapper::from_str`].
+    #[error("{0}")]
+    Error(String),
+    /// An error that occured while constructing the remapper with [`BinRemapper::new`].
+    #[error("{source}")]
+    BinRemapperNewError {
+        // TODO: enable #[backtrace] whenever the feature is stable
+        /// The error returned by [`BinRemapper::new`].
+        source: BinRemapperNewError,
+    },
+}
 
 impl FromStr for BinRemapper {
     type Err = ParseBinRemapperError;
@@ -112,7 +122,7 @@ impl FromStr for BinRemapper {
                             .split_once(':')
                             .map_or(Ok(string), |(lhs, rhs)| {
                                 match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
-                                    (Err(lhs), Err(rhs)) => Err(ParseBinRemapperError(format!(
+                                    (Err(lhs), Err(rhs)) => Err(ParseBinRemapperError::Error(format!(
                                         "unable to parse 'N:M' syntax from: '{string}' (N: '{lhs}', M: '{rhs}')"
                                     ))),
                                     // skip :N specification
@@ -130,7 +140,7 @@ impl FromStr for BinRemapper {
                                     None
                                 } else {
                                     Some(string.parse::<f64>().map_err(|err| {
-                                        ParseBinRemapperError(format!(
+                                        ParseBinRemapperError::Error(format!(
                                             "unable to parse limit '{string}': '{err}')"
                                         ))
                                     }))
@@ -145,7 +155,7 @@ impl FromStr for BinRemapper {
 
         if let Some(first) = remaps.first() {
             if first.len() != 1 {
-                return Err(ParseBinRemapperError(
+                return Err(ParseBinRemapperError::Error(
                     "'|' syntax not meaningful for first dimension".to_string(),
                 ));
             }
@@ -156,7 +166,7 @@ impl FromStr for BinRemapper {
             for i in 1..vec.len() {
                 if vec[i].is_empty() {
                     if vec[i - 1].is_empty() {
-                        return Err(ParseBinRemapperError(
+                        return Err(ParseBinRemapperError::Error(
                             "empty repetition with '|'".to_string(),
                         ));
                     }
@@ -187,7 +197,7 @@ impl FromStr for BinRemapper {
                 }
 
                 if vec.len() <= 1 {
-                    return Err(ParseBinRemapperError(
+                    return Err(ParseBinRemapperError::Error(
                         "no limits due to ':' syntax".to_string(),
                     ));
                 }
@@ -236,7 +246,7 @@ impl FromStr for BinRemapper {
                     buffer.push((left, right));
                     normalization *= right - left;
                 } else {
-                    return Err(ParseBinRemapperError(
+                    return Err(ParseBinRemapperError::Error(
                         "missing '|' specification: number of variants too small".to_string(),
                     ));
                 }
@@ -246,10 +256,8 @@ impl FromStr for BinRemapper {
             normalizations.push(normalization);
         }
 
-        Ok(Self {
-            normalizations,
-            limits,
-        })
+        BinRemapper::new(normalizations, limits)
+            .map_err(|err| ParseBinRemapperError::BinRemapperNewError { source: err })
     }
 }
 
