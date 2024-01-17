@@ -1134,51 +1134,71 @@ mod test {
     //}
 
     #[test]
-    #[should_panic(expected = "'|' syntax not meaningful for first dimension")]
     fn pipe_syntax_first_dimension() {
-        BinRemapper::from_str("|0,1,2").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("|0,1,2").unwrap_err().to_string(),
+            "'|' syntax not meaningful for first dimension"
+        );
     }
 
     #[test]
-    #[should_panic(expected = "empty repetition with '|'")]
     fn pipe_syntax_first_empty() {
-        BinRemapper::from_str("0,1,2;0,2,4;||").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;||")
+                .unwrap_err()
+                .to_string(),
+            "empty repetition with '|'"
+        );
     }
 
     #[test]
-    #[should_panic(
-        expected = "unable to parse 'N:M' syntax from: '::' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
-    )]
     fn colon_syntax_bad_string() {
-        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|::").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|::")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: '::' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+        );
     }
 
     #[test]
-    #[should_panic(
-        expected = "unable to parse 'N:M' syntax from: '2.5:' (N: 'invalid digit found in string', M: 'cannot parse integer from empty string')"
-    )]
     fn colon_syntax_bad_lhs() {
-        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: '2.5:' (N: 'invalid digit found in string', M: 'cannot parse integer from empty string')"
+        );
     }
 
     #[test]
-    #[should_panic(
-        expected = "unable to parse 'N:M' syntax from: ':2.5' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
-    )]
     fn colon_syntax_bad_rhs() {
-        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: ':2.5' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+        );
     }
 
     #[test]
-    #[should_panic(expected = "no limits due to ':' syntax")]
     fn colon_syntax_no_limits() {
-        BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:4|:3|:3").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;1,2,3,4,5|:4|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "no limits due to ':' syntax"
+        );
     }
 
     #[test]
-    #[should_panic(expected = "missing '|' specification: number of variants too small")]
     fn pipe_syntax_too_few_pipes() {
-        BinRemapper::from_str("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9").unwrap();
+        assert_eq!(
+            BinRemapper::from_str("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9")
+                .unwrap_err()
+                .to_string(),
+            "missing '|' specification: number of variants too small"
+        );
     }
 
     #[test]
