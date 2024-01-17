@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - removed the type `SubGrid` that was exported in the CAPI as the type
   `pineappl_subgrid`. This type was not used anymore and was a left-over of the
-  changes in the previous version.
+  changes in the previous version
+- removed trait `From<&SubgridEnum>` for `Array3`. This trait was never used
 
 ## [0.6.3] - 12/12/2023
 

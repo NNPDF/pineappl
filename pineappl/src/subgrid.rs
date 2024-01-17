@@ -6,7 +6,6 @@ use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
 use enum_dispatch::enum_dispatch;
-use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -116,22 +115,6 @@ pub trait Subgrid {
 
     /// Return the static (single) scale, if this subgrid has one.
     fn static_scale(&self) -> Option<Mu2>;
-}
-
-impl From<&SubgridEnum> for Array3<f64> {
-    fn from(subgrid: &SubgridEnum) -> Self {
-        let mut result = Self::zeros((
-            subgrid.mu2_grid().len(),
-            subgrid.x1_grid().len(),
-            subgrid.x2_grid().len(),
-        ));
-
-        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
-            result[[imu2, ix1, ix2]] = value;
-        }
-
-        result
-    }
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
