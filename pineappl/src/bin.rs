@@ -1174,6 +1174,19 @@ mod test {
     }
 
     #[test]
+    fn bin_remapper_new_dimension_unknown() {
+        assert_eq!(
+            BinRemapper::new(
+                vec![1.0, 1.0, 1.0],
+                vec![(1.0, 2.0), (2.0, 3.0), (3.0, 4.0), (4.0, 5.0)],
+            )
+            .unwrap_err()
+            .to_string(),
+            "could not determine the dimensions from a normalization vector with length 3 and limits vector with length 4"
+        );
+    }
+
+    #[test]
     fn bin_remapper_new_overlapping_bins() {
         assert_eq!(
             BinRemapper::new(
