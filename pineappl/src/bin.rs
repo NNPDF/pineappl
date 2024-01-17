@@ -1134,6 +1134,14 @@ mod test {
     //}
 
     #[test]
+    fn limit_parsing_failure() {
+        assert_eq!(
+            BinRemapper::from_str("0,1,2,x").unwrap_err().to_string(),
+            "unable to parse limit 'x': 'invalid float literal')"
+        );
+    }
+
+    #[test]
     fn pipe_syntax_first_dimension() {
         assert_eq!(
             BinRemapper::from_str("|0,1,2").unwrap_err().to_string(),
