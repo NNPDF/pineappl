@@ -62,7 +62,6 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::{LumiCache, LumiEntry};
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
@@ -195,9 +194,6 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
 /// Type for defining a luminosity function.
 #[derive(Default)]
 pub struct Lumi(Vec<LumiEntry>);
-
-/// DO NOT USE. This type had been used internally.
-pub struct SubGrid(ImportOnlySubgridV2);
 
 /// Returns the number of bins in `grid`.
 ///
