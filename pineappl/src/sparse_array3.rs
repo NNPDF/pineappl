@@ -223,24 +223,6 @@ impl<'a, T: Copy + Default + PartialEq> Iterator for IndexedIter<'a, T> {
     }
 }
 
-impl<'a, T> IndexedIter<'a, T> {
-    fn new(array: &'a SparseArray3<T>) -> Self {
-        let mut result = Self {
-            entry_iter: array.entries.iter(),
-            index_iter: array.indices.iter(),
-            offset_a: None,
-            offset_b: None,
-            tuple: (array.start, 0, 0),
-            dimensions: array.dimensions,
-        };
-
-        result.offset_a = result.index_iter.next();
-        result.offset_b = result.index_iter.next();
-
-        result
-    }
-}
-
 impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     /// Constructs a new and empty `SparseArray3` with the specified dimensions `nx`, `ny` and
     /// `nz`.
@@ -351,7 +333,19 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     /// type is `((usize, usize, usize), T)`.
     #[must_use]
     pub fn indexed_iter(&self) -> IndexedIter<'_, T> {
-        IndexedIter::new(self)
+        let mut result = IndexedIter {
+            entry_iter: self.entries.iter(),
+            index_iter: self.indices.iter(),
+            offset_a: None,
+            offset_b: None,
+            tuple: (self.start, 0, 0),
+            dimensions: self.dimensions,
+        };
+
+        result.offset_a = result.index_iter.next();
+        result.offset_b = result.index_iter.next();
+
+        result
     }
 
     /// Return an iterator over the elements, including zero elements.
