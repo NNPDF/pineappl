@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn static_scale() {
         let subgrid = NtupleSubgridV1::new();
         subgrid.static_scale();

@@ -1394,7 +1394,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_dense_v1_with_sparse() {
         let mut dense = LagrangeSubgridV1::new(&SubgridParams::default());
         let sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
@@ -1403,7 +1403,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_dense_v1_with_dense_v2() {
         let mut one = LagrangeSubgridV1::new(&SubgridParams::default());
         let two = LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
@@ -1412,7 +1412,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_dense_v2_with_dense_v1() {
         let mut two =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
@@ -1422,7 +1422,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_dense_v2_with_sparse() {
         let mut dense =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
@@ -1432,7 +1432,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_sparse_with_dense_v1() {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
         let dense = LagrangeSubgridV1::new(&SubgridParams::default());
@@ -1441,7 +1441,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "not yet implemented")]
     fn merge_sparse_with_dense_v2() {
         let mut sparse = LagrangeSparseSubgridV1::new(&SubgridParams::default());
         let dense =

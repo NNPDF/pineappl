@@ -620,7 +620,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "explicit panic")]
     fn index_mut_panic_dim0() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -628,7 +628,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: index[1] < dim1")]
     fn index_mut_panic_dim1() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -636,7 +636,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "explicit panic")]
     fn index_mut_panic_dim2() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -644,7 +644,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: index[0] >= self.start")]
     fn index_panic_dim0_0() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -654,7 +654,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "assertion failed: index[0] < (self.start + (self.indices.len() - 1) / dim1)"
+    )]
     fn index_panic_dim0_1() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -664,7 +666,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: index[1] < dim1")]
     fn index_panic_dim1() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -674,7 +676,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: index[2] >= zeros_left")]
     fn index_panic_dim2_0() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -684,7 +686,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: index[2] < (non_zeros + zeros_left)")]
     fn index_panic_dim2_1() {
         let mut array = SparseArray3::new(40, 50, 50);
 
@@ -835,7 +837,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "assertion failed: (x >= self.start) && (x < self.start + nx)")]
     fn remove_x_panic() {
         let mut array = SparseArray3::<f64>::new(40, 50, 50);
 
