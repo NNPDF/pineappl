@@ -71,6 +71,12 @@ pub enum BinRemapperNewError {
         /// Length of the limits vector.
         limits_len: usize,
     },
+    /// Returned if bins overlap.
+    #[error("the bin limits for the bins with indices {} overlap with other bins", overlaps.iter().map(ToString::to_string).join(","))]
+    OverlappingBins {
+        /// Indices of the bins that overlap with other bins.
+        overlaps: Vec<usize>,
+    },
 }
 
 /// Structure for remapping bin limits.
@@ -406,16 +412,36 @@ impl BinRemapper {
     /// # Errors
     ///
     /// Returns an error if the length of `limits` is not a multiple of the length of
-    /// `normalizations`.
+    /// `normalizations`, or if the limits of at least two bins overlap.
     pub fn new(
         normalizations: Vec<f64>,
         limits: Vec<(f64, f64)>,
     ) -> Result<Self, BinRemapperNewError> {
         if limits.len() % normalizations.len() == 0 {
-            Ok(Self {
-                normalizations,
-                limits,
-            })
+            let dimensions = limits.len() / normalizations.len();
+            let mut overlaps = Vec::new();
+
+            for (i, bin_i) in limits.chunks_exact(dimensions).enumerate() {
+                for (j, bin_j) in limits.chunks_exact(dimensions).enumerate().skip(i + 1) {
+                    if bin_i.iter().zip(bin_j).all(|((l1, r1), (l2, r2))| {
+                        ((l2 >= l1) && (l2 < r1)) || ((l1 >= l2) && (l1 < r2))
+                    }) {
+                        overlaps.push(j);
+                    }
+                }
+            }
+
+            overlaps.sort();
+            overlaps.dedup();
+
+            if !overlaps.is_empty() {
+                Err(BinRemapperNewError::OverlappingBins { overlaps })
+            } else {
+                Ok(Self {
+                    normalizations,
+                    limits,
+                })
+            }
         } else {
             Err(BinRemapperNewError::DimensionUnknown {
                 normalizations_len: normalizations.len(),
@@ -1145,5 +1171,18 @@ mod test {
     #[should_panic(expected = "missing '|' specification: number of variants too small")]
     fn pipe_syntax_too_few_pipes() {
         BinRemapper::from_str("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9").unwrap();
+    }
+
+    #[test]
+    fn bin_remapper_new_overlapping_bins() {
+        assert_eq!(
+            BinRemapper::new(
+                vec![1.0, 1.0, 1.0],
+                vec![(1.0, 2.0), (2.0, 3.0), (1.0, 2.0)],
+            )
+            .unwrap_err()
+            .to_string(),
+            "the bin limits for the bins with indices 2 overlap with other bins"
+        );
     }
 }
