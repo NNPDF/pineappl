@@ -49,6 +49,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-gnu]
     steps:
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
       - uses: actions/checkout@v3
       - name: Compile library
         run: |
