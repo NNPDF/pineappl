@@ -16,75 +16,75 @@ jobs:
     runs-on: ubuntu-20.04
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
-    # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-    - uses: actions/checkout@v3
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
 
-    - name: Get test data
-      id: cache-test-data
-      uses: actions/cache@v3
-      with:
-        path: test-data
-        key: test-data-v8
-    - name: Download test data
-      if: steps.cache-test-data.outputs.cache-hit != 'true'
-      run: |
-        test -d test-data || mkdir test-data
-        cd test-data
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.appl'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_old.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NJetEvents_0-0-2.tab.gz'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.tar'
-        curl -s -C - -O 'https://data.nnpdf.science/dy_high_mass/CMS_DY_14TEV_MLL_6000_COSTH.pineappl.lz4'
-        curl -s -C - -O 'https://data.nnpdf.science/dy_high_mass/NNPDF_DY_14TEV_BSM_AFB.pineappl.lz4'
-        curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-fnlo-arxiv-1312.3524/grids/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz'
-        curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-dijets-appl-arxiv-0010054/grids/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl'
-        curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
-        curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
+      - name: Get test data
+        id: cache-test-data
+        uses: actions/cache@v3
+        with:
+          path: test-data
+          key: test-data-v8
+      - name: Download test data
+        if: steps.cache-test-data.outputs.cache-hit != 'true'
+        run: |
+          test -d test-data || mkdir test-data
+          cd test-data
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/ATLASWPT11-Wplus_tot.appl'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_old.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NJetEvents_0-0-2.tab.gz'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/NUTEV_CC_NU_FE_SIGMARED.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/dy_high_mass/CMS_DY_14TEV_MLL_6000_COSTH.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/dy_high_mass/NNPDF_DY_14TEV_BSM_AFB.pineappl.lz4'
+          curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-fnlo-arxiv-1312.3524/grids/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz'
+          curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-dijets-appl-arxiv-0010054/grids/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl'
+          curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
+          curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
 
-    - name: Set RUSTDOCFLAGS
-      run: |
-        # relative paths sometimes don't work, so use an absolute path
-        echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
+      - name: Set RUSTDOCFLAGS
+        run: |
+          # relative paths sometimes don't work, so use an absolute path
+          echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
 
-    - name: Run tests
-      run: |
-        # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
-        cargo test --all-features --no-fail-fast 2> >(tee stderr 1>&2)
-        # from https://stackoverflow.com/a/51141872/812178
-        sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
+      - name: Run tests
+        run: |
+          # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
+          cargo test --all-features --no-fail-fast 2> >(tee stderr 1>&2)
+          # from https://stackoverflow.com/a/51141872/812178
+          sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 
-    - name: Generate code coverage
-      run: |
-        find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
-        ( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
-            xargs printf ' --object %s' | \
-            xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
-                --ignore-filename-regex='/.cargo/registry' \
-                --ignore-filename-regex='/cargo/registry' \
-                --ignore-filename-regex='rustc' \
-                --ignore-filename-regex='pineappl/tests' \
-                --ignore-filename-regex='pineappl_capi' \
-                --ignore-filename-regex='pineappl_cli/tests' \
-                --instr-profile=pineappl.profdata \
-                --skip-functions \
-                --object target/debug/pineappl \
-                --format lcov > lcov.info
+      - name: Generate code coverage
+        run: |
+          find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
+          ( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
+              xargs printf ' --object %s' | \
+              xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
+                  --ignore-filename-regex='/.cargo/registry' \
+                  --ignore-filename-regex='/cargo/registry' \
+                  --ignore-filename-regex='rustc' \
+                  --ignore-filename-regex='pineappl/tests' \
+                  --ignore-filename-regex='pineappl_capi' \
+                  --ignore-filename-regex='pineappl_cli/tests' \
+                  --instr-profile=pineappl.profdata \
+                  --skip-functions \
+                  --object target/debug/pineappl \
+                  --format lcov > lcov.info
 
-    - name: Upload to codecov.io
-      # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
-      uses: codecov/codecov-action@v3.1.4
-      with:
-        token: ${{secrets.CODECOV_TOKEN}}
-        flags: rust
+      - name: Upload to codecov.io
+        # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
+        uses: codecov/codecov-action@v3.1.4
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          flags: rust

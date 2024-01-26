@@ -99,25 +99,26 @@ jobs:
     if: "startsWith(github.ref, 'refs/tags/')"
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
-    - uses: actions/checkout@v3
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
 
-    - name: Publish all crates
-      env:
-        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-      run: |
-        # this must be at least Rust 1.66 to support waiting for dependencies to on crates.io:
-        # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
-        rustup default stable
-        cd pineappl
-        cargo publish
-        cd ../pineappl_applgrid
-        cargo publish
-        cd ../pineappl_fastnlo
-        cargo publish
-        cd ../pineappl_capi
-        cargo publish
-        cd ../pineappl_cli
-        cargo publish
+      - name: Publish all crates
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          # this must be at least Rust 1.66 to support waiting for dependencies to on crates.io:
+          # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
+          rustup default stable
+          cd pineappl
+          cargo publish
+          cd ../pineappl_applgrid
+          cargo publish
+          cd ../pineappl_fastnlo
+          cargo publish
+          cd ../pineappl_capi
+          cargo publish
+          cd ../pineappl_cli
+          cargo publish
 
   linux-wheels:
     runs-on: ubuntu-latest
