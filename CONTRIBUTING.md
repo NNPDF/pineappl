@@ -16,13 +16,22 @@
 Do not change the MSRV for releases with increased patch version number. When
 increasing the MSRV make sure to set it everywhere to the same value:
 
-- update `rust-version` in the top-level `Cargo.toml`; all other projects in
-  the workspace should inherit the setting
-- update the MSRV in `README.md` and `docs/installation.md`
-- update the MSRV in all Github workflows (`.github/workflows/`)
-- update `rust` in `.readthedocs.yml` and make sure [RTD supports
-  it](https://docs.readthedocs.io/en/stable/config-file/v2.html#build-tools-rust)
-- update the `cargo msrv` call in `make_release.sh`
+1. first update the `pineappl-ci` container, by
+   - adding the new MSRV to the variable `RUST_V`,
+   - making sure the nightly version is the last entry and
+   - leaving in the previous MSRV to not break the CI in between the transition
+     from it
+2. commit the previous changes and manually run the `Container` Github action
+3. next, update the MSRV in the following files:
+   - in the top-level `Cargo.toml`; all other projects in the workspace should
+     inherit the setting in their respective `Cargo.toml` files
+   - in `README.md` and `docs/installation.md`
+   - in all Github workflows (`.github/workflows/`)
+   - in `.readthedocs.yml` update the value of the `rust` field and make sure
+     [RTD supports it](https://docs.readthedocs.io/en/stable/config-file/v2.html#build-tools-rust)
+   - in `make_release.sh` update the `cargo msrv` call
+4. commit the previous changes and push them *after* the container created by
+   step 2 is ready
 
 ### Coding guidelines
 
