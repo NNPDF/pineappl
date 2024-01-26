@@ -52,7 +52,8 @@ jobs:
                   --format lcov > lcov.info
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+        # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
+        uses: codecov/codecov-action@v3.1.4
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           flags: capi
