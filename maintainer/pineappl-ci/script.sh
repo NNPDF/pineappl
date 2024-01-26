@@ -9,7 +9,7 @@ for version in ${RUST_V}; do
     # the last command will be the default
     rustup default ${version}
     # install LLVM tools needed for code coverage
-    rustup component add llvm-tools-preview
+    rustup component add llvm-tools
 done
 
 # # install Fortran compiler
