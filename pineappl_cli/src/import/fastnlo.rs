@@ -378,10 +378,7 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
         // NULL pointer is returned
         let coeff_base = file_as_table.GetCoeffTable(id);
 
-        // TODO: use let-else statement when MSRV is 1.65
-        let coeff_base = if let Some(base) = unsafe { coeff_base.as_ref() } {
-            base
-        } else {
+        let Some(coeff_base) = (unsafe { coeff_base.as_ref() }) else {
             break;
         };
 
