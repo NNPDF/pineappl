@@ -21,7 +21,7 @@ edition = "2021"
 keywords = ["high-energy-physics", "physics"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/NNPDF/pineappl"
-rust-version = "1.64.0"
+rust-version = "1.70.0"
 version = "0.6.3"
 
 [profile.release]

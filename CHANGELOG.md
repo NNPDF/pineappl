@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- raised MSRV to 1.70.0
 - when calling `BinRemapper::new`, the limits are now checked for overlaps, in
   which case a new error is returned
 - changed the type `ParseBinRemapperError` to allow capturing errors from

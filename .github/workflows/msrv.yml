@@ -17,5 +17,5 @@ jobs:
       - name: Run check
         run: |
           # enable the MSRV
-          rustup default 1.64.0
+          rustup default 1.70.0
           cargo check --all-features --all-targets

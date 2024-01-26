@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/NNPDF/pineappl/branch/master/graph/badge.svg)](https://codecov.io/gh/NNPDF/pineappl)
 [![Documentation](https://docs.rs/pineappl/badge.svg)](https://docs.rs/pineappl)
 [![crates.io](https://img.shields.io/crates/v/pineappl.svg)](https://crates.io/crates/pineappl)
-[![MSRV](https://img.shields.io/badge/Rust-1.64+-lightgray.svg)](docs/installation.md)
+[![MSRV](https://img.shields.io/badge/Rust-1.70+-lightgray.svg)](docs/installation.md)
 
 # What is PineAPPL?
 
