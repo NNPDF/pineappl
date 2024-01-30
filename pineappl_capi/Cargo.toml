@@ -20,4 +20,7 @@ itertools = "0.10.1"
 capi = []
 
 [package.metadata.capi]
-min_version = "0.6.16+cargo-0.45"
+min_version = "0.9.0"
+
+[package.metadata.capi.install.include]
+asset = [{from = "include/PineAPPL.hpp"}]
