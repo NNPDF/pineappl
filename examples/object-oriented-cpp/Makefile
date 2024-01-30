@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++11 -Wall -Wextra -O3
 PINEAPPL_DEPS != pkg-config --cflags --libs pineappl_capi
 LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
-dyaa: dyaa.cpp PineAPPL.hpp
+dyaa: dyaa.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) $(LHAPDF_DEPS) -o $@
 
 PHONY: clean
