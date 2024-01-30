@@ -1,6 +1,5 @@
 /**
- * @file PineAPPL.hpp
- * @brief object oriented interface to PineAPPL
+ * @brief Object oriented interface to PineAPPL.
  */
 #ifndef PineAPPL_HPP_
 #define PineAPPL_HPP_
@@ -13,16 +12,16 @@
 #include <memory>
 #include <algorithm>
 
-/** @brief object oriented interface to PineAPPL  */
+/** @brief Object oriented interface to PineAPPL.  */
 namespace PineAPPL {
 
 /** @brief Key-value storage for passing optional information during grid
- * creation */
+ * creation. */
 struct KeyVal {
-  /** @brief underlying raw object */
+  /** @brief Underlying raw object. */
   pineappl_keyval *raw;
 
-  /** @brief constructor */
+  /** @brief Constructor. */
   KeyVal() : raw(pineappl_keyval_new()) {}
 
   KeyVal(const KeyVal &) = delete;
@@ -33,10 +32,10 @@ struct KeyVal {
 
   KeyVal &operator=(KeyVal &&) = delete;
 
-  /** @brief destructor */
+  /** @brief Destructor. */
   ~KeyVal() { pineappl_keyval_delete(this->raw); }
 
-  /** @name setter */
+  /** @name Setter. */
   ///@{
   void set_double(const std::string &key, const double value) const {
     pineappl_keyval_set_double(this->raw, key.c_str(), value);
@@ -52,7 +51,7 @@ struct KeyVal {
   }
   ///@}
 
-  /** @name getter */
+  /** @name Getter. */
   ///@{
   double get_double(const std::string &key) const {
     return pineappl_keyval_double(this->raw, key.c_str());
@@ -69,24 +68,24 @@ struct KeyVal {
   ///@}
 };
 
-/** @brief Entry in luminosity function  */
+/** @brief Entry in luminosity function.  */
 struct LumiEntry {
-  /** @brief first parton id */
+  /** @brief First parton id. */
   std::int32_t pid1;
 
-  /** @brief second parton id */
+  /** @brief Second parton id. */
   std::int32_t pid2;
 
-  /** @brief relative weight */
+  /** @brief Relative weight. */
   double weight;
 };
 
-/** @brief Luminosity function */
+/** @brief Luminosity function. */
 struct Lumi {
-  /** @brief underlying raw object */
+  /** @brief Underlying raw object. */
   pineappl_lumi *raw;
 
-  /** @brief constructor */
+  /** @brief Constructor. */
   Lumi() : raw(pineappl_lumi_new()) {}
 
   Lumi(const Lumi &) = delete;
@@ -97,14 +96,14 @@ struct Lumi {
 
   Lumi &operator=(Lumi &&) = delete;
 
-  /** @brief destructor */
+  /** @brief Destructor. */
   ~Lumi() { pineappl_lumi_delete(this->raw); }
 
-  /** @brief number of elements */
+  /** @brief Number of elements. */
   std::size_t count() const { return pineappl_lumi_count(this->raw); }
 
   /**
-   * @brief add a luminosity function
+   * @brief Add a luminosity function.
    * @param c luminosity function
    */
   void add(const std::vector<LumiEntry> &c) const {
@@ -146,14 +145,14 @@ struct Order {
   std::uint32_t logxif;
 };
 
-/** @brief The central grid object */
+/** @brief The central grid object. */
 struct Grid {
 
-  /** @brief underlying raw object */
+  /** @brief Underlying raw object. */
   pineappl_grid *raw;
 
   /**
-   * @brief constructor
+   * @brief Constructor.
    * @param lumi luminosity
    * @param orders orders
    * @param bin_limits bin limits
@@ -185,11 +184,11 @@ struct Grid {
 
   Grid &operator=(Grid &&) = delete;
 
-  /** @brief destructor */
+  /** @brief Destructor. */
   ~Grid() { pineappl_grid_delete(this->raw); }
 
   /**
-   * @brief Number of orders
+   * @brief Number of orders.
    * @return number of orders
    */
   std::size_t order_count() const {
@@ -197,13 +196,13 @@ struct Grid {
   }
 
   /**
-   * @brief Number of bins
+   * @brief Number of bins.
    * @return number of bins
    */
   std::size_t bin_count() const { return pineappl_grid_bin_count(this->raw); }
 
   /**
-   * @brief Fill grid for the given parameters
+   * @brief Fill grid for the given parameters.
    * @param x1 first momentum fraction
    * @param x2 second momentum fraction
    * @param q2 scale
@@ -219,7 +218,7 @@ struct Grid {
   }
 
   /**
-   * @brief perform a convolution of the grid with PDFs
+   * @brief Perform a convolution of the grid with PDFs.
    * @param pdg_id hadron ID
    * @param pdf PDF
    * @param xi_ren renormalization scale variation
@@ -261,7 +260,7 @@ struct Grid {
   }
 
   /**
-   * @brief Write grid to file
+   * @brief Write grid to file.
    * @param filename file name
    */
   void write(const std::string &filename) const {
@@ -269,7 +268,7 @@ struct Grid {
   }
 
   /**
-   * @brief Set a metadata entry
+   * @brief Set a metadata entry.
    * @param key key
    * @param value value
    */
@@ -278,7 +277,7 @@ struct Grid {
   }
 
   /**
-   * @brief Get a metadata entry
+   * @brief Get a metadata entry.
    * @param key key
    * @return value
    */
@@ -291,7 +290,7 @@ struct Grid {
   }
 
   /**
-   * @brief Scale grid with a number
+   * @brief Scale grid with a number.
    * This multiplies all subgrids with the given number.
    * @param s factor
    */
