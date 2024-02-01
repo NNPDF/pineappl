@@ -1,2 +1,9 @@
 *.pineappl
 *.pineappl.lz4
+
+fortran/dyaa
+fortran/test
+fortran/lhapdf_example
+
+**/*.o
+**/*.mod
