@@ -366,7 +366,7 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    ///     numpu.ndarray(float) :
+    ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
     pub fn convolute_with_one<'py>(
@@ -383,6 +383,72 @@ impl PyGrid {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        self.grid
+            .convolute(
+                &mut lumi_cache,
+                &order_mask.to_vec().unwrap(),
+                &bin_indices.to_vec().unwrap(),
+                &lumi_mask.to_vec().unwrap(),
+                &xi,
+            )
+            .into_pyarray(py)
+    }
+
+    /// Convolute grid with two pdfs.
+    ///
+    /// **Usage:** `pineko`
+    ///
+    /// Parameters
+    /// ----------
+    ///     pdg_id1 : int
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx1` is the PDF for
+    ///     xfx1 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    ///     pdg_id2 : int
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx2` is the PDF for
+    ///     xfx2 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    ///     alphas : callable
+    ///         lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+    ///     order_mask : numpy.ndarray(bool)
+    ///         Mask for selecting specific orders. The value `True` means the corresponding order
+    ///         is included. An empty list corresponds to all orders being enabled.
+    ///     bin_indices : numpy.ndarray(int)
+    ///         A list with the indices of the corresponding bins that should be calculated. An
+    ///         empty list means that all orders should be calculated.
+    ///     lumi_mask : numpy.ndarray(bool)
+    ///         Mask for selecting specific luminosity channels. The value `True` means the
+    ///         corresponding channel is included. An empty list corresponds to all channels being
+    ///         enabled.
+    ///     xi : list((float, float))
+    ///         A list with the scale variation factors that should be used to calculate
+    ///         scale-varied results. The first entry of a tuple corresponds to the variation of
+    ///         the renormalization scale, the second entry to the variation of the factorization
+    ///         scale. If only results for the central scale are need the list should contain
+    ///         `(1.0, 1.0)`.
+    ///
+    /// Returns
+    /// -------
+    ///     numpy.ndarray(float) :
+    ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
+    ///         the scale variation)
+    pub fn convolute_with_two<'py>(
+        &self,
+        pdg_id1: i32,
+        xfx1: &PyAny,
+        pdg_id2: i32,
+        xfx2: &PyAny,
+        alphas: &PyAny,
+        order_mask: PyReadonlyArray1<bool>,
+        bin_indices: PyReadonlyArray1<usize>,
+        lumi_mask: PyReadonlyArray1<bool>,
+        xi: Vec<(f64, f64)>,
+        py: Python<'py>,
+    ) -> &'py PyArray1<f64> {
+        let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
+        let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
+        let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
+        let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
         self.grid
             .convolute(
                 &mut lumi_cache,
