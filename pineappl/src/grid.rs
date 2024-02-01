@@ -18,7 +18,7 @@ use git_version::git_version;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, Array4, Array5, ArrayView5, Axis, Dimension};
+use ndarray::{s, Array3, Array5, ArrayView5, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -1930,7 +1930,7 @@ impl Grid {
                             xif: info.xif,
                             lumi_id_types: info.lumi_id_types.clone(),
                         },
-                        op.into_owned(),
+                        CowArray::from(op),
                     ))
                 }),
             order_mask,
@@ -1940,7 +1940,6 @@ impl Grid {
     // TODO:
     // - try to find a better solution than to require that E must be convertible into
     //   anyhow::Error
-    // - change the iterator to a `CowArray`?
 
     /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
     /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
@@ -1953,9 +1952,9 @@ impl Grid {
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
     /// return an error.
-    pub fn evolve_with_slice_iter<E: Into<anyhow::Error>>(
+    pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
-        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, Array4<f64>), E>>,
+        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;

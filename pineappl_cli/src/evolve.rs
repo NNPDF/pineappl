@@ -18,7 +18,7 @@ mod eko {
     use either::Either;
     use lz4_flex::frame::FrameDecoder;
     use ndarray::iter::AxisIter;
-    use ndarray::{Array4, Array5, Axis, Ix4};
+    use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::OperatorSliceInfo;
     use pineappl::pids;
@@ -386,7 +386,7 @@ mod eko {
     }
 
     impl<'a> IntoIterator for &'a mut EkoSlices {
-        type Item = Result<(OperatorSliceInfo, Array4<f64>)>;
+        type Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>)>;
         type IntoIter = EkoSlicesIter<'a>;
 
         fn into_iter(self) -> Self::IntoIter {
@@ -407,7 +407,7 @@ mod eko {
     }
 
     impl<'a> Iterator for EkoSlicesIter<'a> {
-        type Item = Result<(OperatorSliceInfo, Array4<f64>)>;
+        type Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>)>;
 
         fn next(&mut self) -> Option<Self::Item> {
             match self {
@@ -416,8 +416,7 @@ mod eko {
                         let mut info = info.clone();
                         info.fac1 = *fac1;
 
-                        // TODO: see if we can replace this some kind of Cow structure
-                        Some(Ok((info, operator.to_owned())))
+                        Some(Ok((info, CowArray::from(operator))))
                     } else {
                         None
                     }
@@ -455,7 +454,7 @@ mod eko {
                                 let mut info = info.clone();
                                 info.fac1 = fac1.get(&file_stem).copied().ok_or_else(|| anyhow!("file '{}.yaml' not found, could not determine the operator's factorization scale", file_stem.to_string_lossy()))?;
 
-                                return Ok(Some((info, operator)));
+                                return Ok(Some((info, CowArray::from(operator))));
                             }
                         }
 
