@@ -236,6 +236,67 @@ class Grid(PyWrapper):
             xi,
         )
 
+    def convolute_with_two(
+        self,
+        pdg_id1,
+        xfx1,
+        pdg_id2,
+        xfx2,
+        alphas,
+        order_mask=np.array([], dtype=bool),
+        bin_indices=np.array([], dtype=np.uint64),
+        lumi_mask=np.array([], dtype=bool),
+        xi=((1.0, 1.0),),
+    ):
+        r"""Convolute grid with two pdfs.
+
+        Parameters
+        ----------
+            pdg_id1 : int
+                PDG Monte Carlo ID of the hadronic particle `xfx1` is the PDF for
+            xfx1 : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+            pdg_id2 : int
+                PDG Monte Carlo ID of the hadronic particle `xfx2` is the PDF for
+            xfx2 : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+            alphas : callable
+                lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+            order_mask : sequence(bool)
+                Mask for selecting specific orders. The value `True` means the corresponding order
+                is included. An empty list corresponds to all orders being enabled.
+            bin_indices : sequence(int)
+                A list with the indices of the corresponding bins that should be calculated. An
+                empty list means that all orders should be calculated.
+            lumi_mask : sequence(bool)
+                Mask for selecting specific luminosity channels. The value `True` means the
+                corresponding channel is included. An empty list corresponds to all channels being
+                enabled.
+            xi : list((float, float))
+                A list with the scale variation factors that should be used to calculate
+                scale-varied results. The first entry of a tuple corresponds to the variation of
+                the renormalization scale, the second entry to the variation of the factorization
+                scale. If only results for the central scale are need the list should contain
+                `(1.0, 1.0)`.
+
+        Returns
+        -------
+            list(float) :
+                cross sections for all bins, for each scale-variation tuple (first all bins, then
+                the scale variation)
+        """
+        return self.raw.convolute_with_two(
+            pdg_id1,
+            xfx1,
+            pdg_id2,
+            xfx2,
+            alphas,
+            np.array(order_mask),
+            np.array(bin_indices),
+            np.array(lumi_mask),
+            xi,
+        )
+
     def convolute_eko(
         self,
         operators,
