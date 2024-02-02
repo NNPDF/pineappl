@@ -14,4 +14,4 @@ lhapdf_example: pineappl.o lhapdf_example.o
 	$(FC) $(FFLAGS) lhapdf_example.o pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o lhapdf_example
 
 clean:
-	rm -f *.o *.mod dyaa test
+	rm -f *.o *.mod dyaa test lhapdf_example
