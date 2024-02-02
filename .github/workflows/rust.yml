@@ -71,8 +71,7 @@ jobs:
           ( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
               xargs printf ' --object %s' | \
               xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
-                  --ignore-filename-regex='/.cargo/registry' \
-                  --ignore-filename-regex='/cargo/registry' \
+                  --ignore-filename-regex='index.crates.io' \
                   --ignore-filename-regex='rustc' \
                   --ignore-filename-regex='pineappl/tests' \
                   --ignore-filename-regex='pineappl_capi' \
@@ -81,6 +80,8 @@ jobs:
                   --skip-functions \
                   --object target/debug/pineappl \
                   --format lcov > lcov.info
+          # print all files for which coverage has been generated
+          grep SF lcov.info | sort -u | sed 's/SF://'
 
       - name: Upload to codecov.io
         # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
