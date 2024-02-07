@@ -44,13 +44,14 @@ jobs:
         run: |
           find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
           $(rustc --print target-libdir)/../bin/llvm-cov export \
-                  --ignore-filename-regex='/.cargo/registry' \
-                  --ignore-filename-regex='/cargo/registry' \
+                  --ignore-filename-regex='index.crates.io' \
                   --ignore-filename-regex='rustc' \
                   --instr-profile=pineappl.profdata \
                   --skip-functions \
                   --object /usr/local/lib/libpineappl_capi.so.*.*.* \
                   --format lcov > lcov.info
+          # print all files for which coverage has been generated
+          grep SF lcov.info | sort -u | sed 's/SF://'
 
       - name: Upload to codecov.io
         # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
