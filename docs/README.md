@@ -38,3 +38,5 @@ Another way to learn using the APIs is to have a look/modify the
 
 - [Contribution guidelines](../CONTRIBUTING.md): technical guidelines for how
   to contribute to PineAPPL's development.
+- [Maintainer's guide](maintainers-guide.md): Notes for maintainers:
+  explanations and where to find documentation
