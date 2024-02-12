@@ -48,7 +48,7 @@
   PineAPPL's pre-built CAPI
 
 [cargo-xtask]: https://github.com/matklad/cargo-xtask
-[release-page]: https://github.com/NNPDF/pineappl/releases
+[release page]: https://github.com/NNPDF/pineappl/releases
 [codecov page]: https://app.codecov.io/gh/NNPDF/pineappl
 [maintainer-specific tools]: ../maintainer/README.md
 [APPLgrid]: https://applgrid.hepforge.org/
@@ -63,7 +63,7 @@
 - CAPI: C application programmer's interface, a bunch of C functions that allow
   to PineAPPL without Rust. The CAPI allows C, C++ and Fortran programmers to
   use PineAPPL
-- [Cargo]: Rust's package manager
+- Cargo: Rust's [package manager]
 - CI: continuous integration, the Github actions that run for every commit
   pushed to the PineAPPL repository
 - CLI: command-line interface, the program `pineappl` that allow quick
@@ -77,4 +77,4 @@
   compiler toolchain with which PineAPPL can be built. Run `cargo --version` to
   figure which version you've got
 
-[Cargo]: https://doc.rust-lang.org/cargo/index.html
+[package manager]: https://doc.rust-lang.org/cargo/index.html
