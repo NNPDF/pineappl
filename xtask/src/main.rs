@@ -17,39 +17,44 @@ fn install_manpages(path: &Path) -> Result<()> {
     use std::fs::File;
     use std::io::BufWriter;
 
-    fn render_manpages(path: &Path, cmd: &clap::Command) -> Result<()> {
+    fn render_manpages(path: &Path, cmd: &clap::Command, version: &str) -> Result<()> {
         let name = cmd
             .get_bin_name()
             .unwrap_or(cmd.get_name())
             .replace(" ", "-");
-        let version = cmd
-            .get_version()
-            .map(|version| version.strip_prefix('v').unwrap().to_string());
 
-        // set the correct name of the command
-        let mut man_cmd = cmd.clone().name(name.clone());
-
-        // if there is a version, remove the 'v'
-        if let Some(version) = version {
-            man_cmd = man_cmd.version(version);
-        }
-
-        Man::new(man_cmd).render(&mut BufWriter::new(File::create(
-            path.join(format!("{name}.1")),
-        )?))?;
+        Man::new(cmd.clone())
+            // pass space, otherwise the ordering of the remaining arguments is incorrect
+            .date(" ")
+            .manual("PineAPPL CLI Manual")
+            .source(format!("PineAPPL {version}"))
+            .title(name.to_ascii_uppercase())
+            .render(&mut BufWriter::new(File::create(
+                path.join(format!("{name}.1")),
+            )?))?;
 
         for subcmd in cmd.get_subcommands() {
-            render_manpages(path, subcmd)?;
+            render_manpages(path, subcmd, version)?;
         }
 
         Ok(())
     }
 
-    let mut cmd = pineappl_cli::Opts::command();
+    let cmd = pineappl_cli::Opts::command();
+    let version: String = cmd
+        .get_version()
+        // UNWRAP: the command must have a version
+        .unwrap()
+        .strip_prefix('v')
+        // UNWRAP: the version string must start with a 'v'
+        .unwrap()
+        .to_string();
+    let mut cmd = cmd.version(version.clone());
+
     // this is needed so subcommands return the correct `bin_name`
     cmd.build();
 
-    render_manpages(path, &cmd)?;
+    render_manpages(path, &cmd, &version)?;
 
     Ok(())
 }
