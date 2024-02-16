@@ -1712,6 +1712,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_mangen",
+ "enum_dispatch",
  "pineappl_cli",
 ]
 

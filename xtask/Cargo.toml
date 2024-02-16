@@ -15,6 +15,7 @@ version.workspace = true
 anyhow = "1.0.68"
 clap = { features = ["string"], version = "4.4.18" }
 clap_mangen = "0.2.18"
+enum_dispatch = "0.3.7"
 #git2 = "0.17.2"
 #semver = "1.0.17"
 pineappl_cli = { path = "../pineappl_cli", version = "=0.6.3" }
