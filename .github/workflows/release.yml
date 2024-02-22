@@ -218,7 +218,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        target: [universal2-apple-darwin]
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
