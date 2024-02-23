@@ -289,7 +289,7 @@ impl Subcommand for Opts {
             &[],
             &[(self.xir, self.xif)],
             ConvoluteMode::Normal,
-            cfg.force_positive,
+            cfg,
         );
 
         let fk_table = evolve_grid(&grid, &self.eko, &pdf, &self.orders, self.xir, self.xif)?;
@@ -301,7 +301,7 @@ impl Subcommand for Opts {
             &[],
             &[(1.0, 1.0)],
             ConvoluteMode::Normal,
-            cfg.force_positive,
+            cfg,
         );
 
         // if both grids don't have the same number of bins there's a bug in the program

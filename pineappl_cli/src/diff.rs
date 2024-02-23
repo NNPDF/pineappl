@@ -154,7 +154,7 @@ impl Subcommand for Opts {
                 &[],
                 1,
                 ConvoluteMode::Normal,
-                cfg.force_positive,
+                cfg,
             );
             let results2 = helpers::convolute(
                 &grid2,
@@ -164,7 +164,7 @@ impl Subcommand for Opts {
                 &[],
                 1,
                 ConvoluteMode::Normal,
-                cfg.force_positive,
+                cfg,
             );
 
             for (bin, (limits1, (result1, result2))) in limits1
@@ -210,7 +210,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        cfg.force_positive,
+                        cfg,
                     )
                 })
                 .collect();
@@ -225,7 +225,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        cfg.force_positive,
+                        cfg,
                     )
                 })
                 .collect();

@@ -93,7 +93,7 @@ impl Subcommand for CkfOpts {
                     &lumi_mask,
                     1,
                     ConvoluteMode::Normal,
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();
@@ -109,7 +109,7 @@ impl Subcommand for CkfOpts {
                     &lumi_mask,
                     1,
                     ConvoluteMode::Normal,
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();

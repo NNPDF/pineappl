@@ -74,7 +74,7 @@ impl Subcommand for Opts {
                     &[],
                     1,
                     ConvoluteMode::Normal,
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();
@@ -89,7 +89,7 @@ impl Subcommand for Opts {
                     &[],
                     1,
                     ConvoluteMode::Normal,
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();
@@ -155,7 +155,7 @@ impl Subcommand for Opts {
                                     &lumi_mask,
                                     1,
                                     ConvoluteMode::Normal,
-                                    cfg.force_positive,
+                                    cfg,
                                 )
                                 .as_slice()
                                 {
@@ -180,7 +180,7 @@ impl Subcommand for Opts {
                                             &lumi_mask,
                                             1,
                                             ConvoluteMode::Normal,
-                                            cfg.force_positive,
+                                            cfg,
                                         )
                                         .as_slice()
                                         {

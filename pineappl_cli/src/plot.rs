@@ -217,16 +217,8 @@ impl Subcommand for Opts {
             })) {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 
-                let results = helpers::convolute(
-                    &grid,
-                    &mut pdf,
-                    &[],
-                    &bins,
-                    &[],
-                    self.scales,
-                    mode,
-                    cfg.force_positive,
-                );
+                let results =
+                    helpers::convolute(&grid, &mut pdf, &[], &bins, &[], self.scales, mode, cfg);
 
                 let qcd_results = {
                     let mut orders = grid.orders().to_vec();
@@ -251,7 +243,7 @@ impl Subcommand for Opts {
                         &[],
                         self.scales,
                         mode,
-                        cfg.force_positive,
+                        cfg,
                     )
                 };
 
@@ -277,16 +269,8 @@ impl Subcommand for Opts {
                         if self.no_pdf_unc {
                             let mut pdf = helpers::create_pdf(pdfset).unwrap();
 
-                            let results = helpers::convolute(
-                                &grid,
-                                &mut pdf,
-                                &[],
-                                &bins,
-                                &[],
-                                1,
-                                mode,
-                                cfg.force_positive,
-                            );
+                            let results =
+                                helpers::convolute(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
 
                             vec![results; 3]
                         } else {
@@ -304,7 +288,7 @@ impl Subcommand for Opts {
                                         &[],
                                         1,
                                         mode,
-                                        cfg.force_positive,
+                                        cfg,
                                     )
                                 })
                                 .collect();
@@ -403,7 +387,7 @@ impl Subcommand for Opts {
                                     &lumi_mask,
                                     1,
                                     mode,
-                                    cfg.force_positive,
+                                    cfg,
                                 ),
                             )
                         })
@@ -547,7 +531,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        cfg.force_positive,
+                        cfg,
                     )
                     .as_slice()
                     {
@@ -567,7 +551,7 @@ impl Subcommand for Opts {
                         &[],
                         1,
                         ConvoluteMode::Normal,
-                        cfg.force_positive,
+                        cfg,
                     )
                     .as_slice()
                     {
@@ -598,24 +582,10 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(
-                &grid,
-                &mut pdfset1[0],
-                order,
-                bin,
-                lumi,
-                cfg.force_positive,
-            )
-            .sum_axis(Axis(0));
-            let res2 = helpers::convolute_subgrid(
-                &grid,
-                &mut pdfset2[0],
-                order,
-                bin,
-                lumi,
-                cfg.force_positive,
-            )
-            .sum_axis(Axis(0));
+            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi, cfg)
+                .sum_axis(Axis(0));
+            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi, cfg)
+                .sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();

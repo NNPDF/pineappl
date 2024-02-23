@@ -63,7 +63,7 @@ impl Subcommand for Opts {
             } else {
                 ConvoluteMode::Normal
             },
-            cfg.force_positive,
+            cfg,
         );
         let limits = helpers::convolute_limits(
             &grid,
@@ -92,7 +92,7 @@ impl Subcommand for Opts {
                     } else {
                         ConvoluteMode::Normal
                     },
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();

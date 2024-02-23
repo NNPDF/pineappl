@@ -30,6 +30,9 @@ pub struct GlobalConfiguration {
     /// Forces negative PDF values to zero.
     #[arg(long)]
     pub force_positive: bool,
+    /// Allow extrapolation of PDFs outside their region of validity.
+    #[arg(long)]
+    pub allow_extrapolation: bool,
 }
 
 #[enum_dispatch]

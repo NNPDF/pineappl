@@ -1,3 +1,4 @@
+use super::GlobalConfiguration;
 use anyhow::{ensure, Context, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
@@ -132,7 +133,7 @@ pub fn convolute_scales(
     lumis: &[bool],
     scales: &[(f64, f64)],
     mode: ConvoluteMode,
-    force_positive: bool,
+    cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -152,14 +153,14 @@ pub fn convolute_scales(
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
 
-    if force_positive {
+    if cfg.force_positive {
         lhapdf.set_force_positive(1);
     }
 
     let x_max = lhapdf.x_max();
     let x_min = lhapdf.x_min();
     let mut pdf = |id, x, q2| {
-        if x < x_min || x > x_max {
+        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
             0.0
         } else {
             lhapdf.xfx_q2(id, x, q2)
@@ -217,7 +218,7 @@ pub fn convolute(
     lumis: &[bool],
     scales: usize,
     mode: ConvoluteMode,
-    force_positive: bool,
+    cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
     convolute_scales(
         grid,
@@ -227,7 +228,7 @@ pub fn convolute(
         lumis,
         &SCALES_VECTOR[0..scales],
         mode,
-        force_positive,
+        cfg,
     )
 }
 
@@ -252,7 +253,7 @@ pub fn convolute_subgrid(
     order: usize,
     bin: usize,
     lumi: usize,
-    force_positive: bool,
+    cfg: &GlobalConfiguration,
 ) -> Array3<f64> {
     // if the field 'Particle' is missing we assume it's a proton PDF
     let pdf_pdg_id = lhapdf
@@ -261,14 +262,14 @@ pub fn convolute_subgrid(
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
 
-    if force_positive {
+    if cfg.force_positive {
         lhapdf.set_force_positive(1);
     }
 
     let x_max = lhapdf.x_max();
     let x_min = lhapdf.x_min();
     let mut pdf = |id, x, q2| {
-        if x < x_min || x > x_max {
+        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
             0.0
         } else {
             lhapdf.xfx_q2(id, x, q2)

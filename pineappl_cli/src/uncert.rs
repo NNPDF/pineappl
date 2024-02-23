@@ -131,7 +131,7 @@ impl Subcommand for Opts {
                         } else {
                             ConvoluteMode::Normal
                         },
-                        cfg.force_positive,
+                        cfg,
                     )
                 })
                 .collect()
@@ -160,7 +160,7 @@ impl Subcommand for Opts {
             } else {
                 ConvoluteMode::Normal
             },
-            cfg.force_positive,
+            cfg,
         );
 
         let (x, y_label, y_unit) = helpers::labels_and_units(&grid, self.integrated);

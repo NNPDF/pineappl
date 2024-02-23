@@ -163,7 +163,7 @@ impl Subcommand for Opts {
                 &[],
                 scale_variations,
                 ConvoluteMode::Normal,
-                cfg.force_positive,
+                cfg,
             );
 
             // if both grids don't have the same number of bins there's bug in the program

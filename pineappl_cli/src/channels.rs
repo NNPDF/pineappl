@@ -99,7 +99,7 @@ impl Subcommand for Opts {
                     } else {
                         ConvoluteMode::Normal
                     },
-                    cfg.force_positive,
+                    cfg,
                 )
             })
             .collect();
