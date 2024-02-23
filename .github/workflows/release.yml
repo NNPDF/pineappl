@@ -273,7 +273,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux-wheels, windows-wheels, macos-wheels, sdist]
+    needs: [linux-eol-wheels, linux-wheels, windows-wheels, macos-wheels, sdist]
     steps:
       - uses: actions/download-artifact@v4
         with:
