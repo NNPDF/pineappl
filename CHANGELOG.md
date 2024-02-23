@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a new global option `--allow-extrapolation`, which, when present,
+  allows LHAPDF to extrapolate PDF values outside its valid region in `x`.
+  If this option is not present the PDFs are set to zero, which remains the
+  default behavior
+
 ### Changed
 
 - the Python interface for MacOS is now shipped separately for the two targets
