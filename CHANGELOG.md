@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 23/02/2024
+
 ### Fixed
 
 - fixed a problem that prevent the Python interface for Python 3.6 from being
@@ -528,7 +530,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/NNPDF/pineappl/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/NNPDF/pineappl/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/NNPDF/pineappl/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/NNPDF/pineappl/compare/v0.6.3...v0.7.0
