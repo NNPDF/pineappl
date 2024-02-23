@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed the type `ParseBinRemapperError` to allow capturing errors from
   `BinRemapper::new`
 
+### Fixed
+
+- fixed the missing generation of CPython 3.7 to 3.10 wheels for MacOS targets
+
 ### Removed
 
 - removed the type `SubGrid` that was exported in the CAPI as the type
