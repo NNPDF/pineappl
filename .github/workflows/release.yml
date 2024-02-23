@@ -192,12 +192,16 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: |
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
             3.7
             3.8
             3.9
-            3.10
             3.11
             3.12
+            3.10
           architecture: ${{ matrix.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -221,12 +225,16 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: |
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
             3.7
             3.8
             3.9
-            3.10
             3.11
             3.12
+            3.10
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
