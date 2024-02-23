@@ -598,10 +598,24 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi)
-                .sum_axis(Axis(0));
-            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi)
-                .sum_axis(Axis(0));
+            let res1 = helpers::convolute_subgrid(
+                &grid,
+                &mut pdfset1[0],
+                order,
+                bin,
+                lumi,
+                cfg.force_positive,
+            )
+            .sum_axis(Axis(0));
+            let res2 = helpers::convolute_subgrid(
+                &grid,
+                &mut pdfset2[0],
+                order,
+                bin,
+                lumi,
+                cfg.force_positive,
+            )
+            .sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);
             //let q2 = subgrid.q2_grid();

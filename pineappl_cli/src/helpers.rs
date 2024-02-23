@@ -252,6 +252,7 @@ pub fn convolute_subgrid(
     order: usize,
     bin: usize,
     lumi: usize,
+    force_positive: bool,
 ) -> Array3<f64> {
     // if the field 'Particle' is missing we assume it's a proton PDF
     let pdf_pdg_id = lhapdf
@@ -259,6 +260,10 @@ pub fn convolute_subgrid(
         .entry("Particle")
         .map_or(Ok(2212), |string| string.parse::<i32>())
         .unwrap();
+
+    if force_positive {
+        lhapdf.set_force_positive(1);
+    }
 
     let x_max = lhapdf.x_max();
     let x_min = lhapdf.x_min();
