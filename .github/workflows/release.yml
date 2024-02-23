@@ -21,7 +21,7 @@ jobs:
           # remove leading 'v' in tag name
           gh release create -d v${GITHUB_REF_NAME#v}
 
-  macos-capi:
+  capi-macos:
     runs-on: macos-latest
     strategy:
       matrix:
@@ -42,7 +42,7 @@ jobs:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
 
-  linux-capi:
+  capi-linux:
     runs-on: ubuntu-latest
     container: ghcr.io/nnpdf/pineappl-ci:latest
     strategy:
@@ -68,7 +68,7 @@ jobs:
 
   # publish a release on github and upload pre-built CAPI
   publish-release:
-    needs: [macos-capi, linux-capi]
+    needs: [capi-macos, capi-linux]
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
     steps:
