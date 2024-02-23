@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 23/02/2024
+
 ### Added
 
 - added a new global option `--allow-extrapolation`, which, when present,
@@ -508,7 +510,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/NNPDF/pineappl/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/NNPDF/pineappl/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/NNPDF/pineappl/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/NNPDF/pineappl/compare/v0.6.0...v0.6.1
