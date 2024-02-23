@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the Python interface for MacOS is now shipped separately for the two targets
+  (aarch64 and x86_64) instead of a single universal wheel previously
 - raised MSRV to 1.70.0
 - when calling `BinRemapper::new`, the limits are now checked for overlaps, in
   which case a new error is returned
