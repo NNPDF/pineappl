@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed yet another problem that prevent the Python interface for Python 3.6
+  from being successfully installed
+
 ## [0.7.3] - 23/02/2024
 
 ### Fixed

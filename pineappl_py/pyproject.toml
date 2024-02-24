@@ -4,7 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "pineappl"
-requires-python = ">=3.7"
+# due to a bug in warehouse, https://github.com/pypi/warehouse/issues/8090, this file must be the
+# same across all wheels of a single version and therefore `requires-python` must give the minimum
+# Python version that we support
+requires-python = ">=3.6"
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
