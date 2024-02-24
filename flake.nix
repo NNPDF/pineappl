@@ -21,12 +21,25 @@
       forEachSystem
       (system: let
         pkgs = nixpkgs.legacyPackages.${system};
+        pwd = builtins.getEnv "PWD";
+        path = builtins.getEnv "PATH";
+        prefix = "${pwd}/target/prefix";
+        lhapath = "${prefix}/share/LHAPDF";
       in {
         default = devenv.lib.mkShell {
           inherit inputs pkgs;
           modules = [
             {
-              packages = with pkgs; [maturin];
+              packages = with pkgs; [maturin lhapdf];
+
+              env = {
+                PREFIX = prefix;
+                PATH = "${path}:${prefix}/bin";
+                LHAPDF_DATA_PATH = lhapath;
+              };
+              enterShell = ''
+                mkdir -p ${lhapath}
+              '';
 
               languages.python = {
                 enable = true;
