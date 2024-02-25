@@ -29,8 +29,14 @@
         default = devenv.lib.mkShell {
           inherit inputs pkgs;
           modules = [
-            {
-              packages = with pkgs; [maturin lhapdf];
+            ({config, ...}: {
+              packages = with pkgs; [
+                maturin
+                (lhapdf.override {
+                  python =
+                    config.languages.python.package;
+                })
+              ];
 
               env = {
                 PREFIX = prefix;
@@ -50,7 +56,7 @@
                 enable = true;
                 channel = "stable";
               };
-            }
+            })
           ];
         };
       });
