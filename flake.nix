@@ -42,6 +42,9 @@
                 LHAPDF_DATA_PATH = lhapath;
               };
               enterShell = ''
+                # update path before entering the shell, when Nix packages updates
+                # already happened
+                export PATH=${prefix}/bin:$PATH
                 mkdir -p ${lhapath}
               '';
 
