@@ -22,14 +22,15 @@
       (system: let
         pkgs = nixpkgs.legacyPackages.${system};
         pwd = builtins.getEnv "PWD";
-        path = builtins.getEnv "PATH";
         prefix = "${pwd}/target/prefix";
         lhapath = "${prefix}/share/LHAPDF";
       in {
         default = devenv.lib.mkShell {
           inherit inputs pkgs;
           modules = [
-            ({config, ...}: {
+            ({config, ...}: let
+              path = config.system.path;
+            in {
               packages = with pkgs; [
                 maturin
                 (lhapdf.override {
