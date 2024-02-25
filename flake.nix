@@ -28,9 +28,7 @@
         default = devenv.lib.mkShell {
           inherit inputs pkgs;
           modules = [
-            ({config, ...}: let
-              path = config.system.path;
-            in {
+            ({config, ...}: {
               packages = with pkgs; [
                 maturin
                 (lhapdf.override {
@@ -41,7 +39,6 @@
 
               env = {
                 PREFIX = prefix;
-                PATH = "${path}:${prefix}/bin";
                 LHAPDF_DATA_PATH = lhapath;
               };
               enterShell = ''
