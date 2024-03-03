@@ -2015,16 +2015,20 @@ impl Grid {
         // UNWRAP: if we can't compare two numbers there's a bug
         fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        // TODO: here there's possibly is a bug if xif isn't one
-
         // make sure we've evolved all slices
-        if let Some(muf2) = self.evolve_info(&order_mask).fac1.into_iter().find(|&x| {
-            !fac1
-                .iter()
-                .any(|&y| approx_eq!(f64, x, y, ulps = EVOLVE_INFO_TOL_ULPS))
-        }) {
+        if let Some(muf2) = self
+            .evolve_info(&order_mask)
+            .fac1
+            .into_iter()
+            .map(|mu2| xi.1 * xi.1 * mu2)
+            .find(|&grid_mu2| {
+                !fac1
+                    .iter()
+                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+            })
+        {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:#?}"
+                "no operator for muf2 = {muf2} found in {fac1:?}"
             )));
         }
 

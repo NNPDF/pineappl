@@ -76,6 +76,34 @@ const LHCB_WP_7TEV_V2_STR: &str = "b         Grid               FkTable         
 7 2.9272102213930090e1 2.9268443366651141e1 -1.2499434622803562e-4
 ";
 
+const LHCB_WP_7TEV_V2_XIR2_STR: &str = "b         Grid               FkTable              rel. diff
+-+--------------------+--------------------+----------------------
+0 7.7634833292737017e2 7.7614037816519419e2 -2.6786270203205120e-4
+1 7.0866199875124983e2 7.0847444839781781e2 -2.6465417048249229e-4
+2 6.1427556024981789e2 6.1411417374531106e2 -2.6272655946324441e-4
+3 4.9482819982783724e2 4.9469964081143053e2 -2.5980535557890150e-4
+4 3.6756257449354945e2 3.6746967569489709e2 -2.5274281196974169e-4
+5 2.4912642701834142e2 2.4906651029915440e2 -2.4050727939273209e-4
+6 1.1776254040032327e2 1.1773772039493417e2 -2.1076316207790935e-4
+7 2.8749891297668260e1 2.8746299479656258e1 -1.2493327278395583e-4
+";
+
+const LHCB_WP_7TEV_V2_XIF_2_STR: &str =
+    "b         Grid               FkTable              rel. diff
+-+--------------------+--------------------+----------------------
+0 8.0902449713533758e2 8.0880109089579207e2 -2.7614273774967391e-4
+1 7.3869242569893402e2 7.3849113100483919e2 -2.7250136469769703e-4
+2 6.4102495904778243e2 6.4085178025871448e2 -2.7015919836448354e-4
+3 5.1668563837653949e2 5.1654786167667771e2 -2.6665478896348294e-4
+4 3.8405066991124284e2 3.8395127677619655e2 -2.5880213949180941e-4
+5 2.6047697125229388e2 2.6041295913273854e2 -2.4574963094659008e-4
+6 1.2324364745022301e2 1.2321715784184289e2 -2.1493690691698486e-4
+7 3.0134629982656573e1 3.0130872371345841e1 -1.2469412476256991e-4
+";
+
+const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str = "Error: failed to evolve grid: no operator for muf2 = 25825.775616000003 found in [6456.443904000001]
+";
+
 const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
@@ -235,6 +263,121 @@ fn lhcb_wp_7tev_v2() {
         .assert()
         .success()
         .stdout(LHCB_WP_7TEV_V2_STR);
+}
+
+#[test]
+fn lhcb_wp_7tev_v2_xir_2() {
+    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            input.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    let output = NamedTempFile::new("fktable2b.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            "--digits-abs=16",
+            "--digits-rel=16",
+            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_v2.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+            "--orders=a2,as1a2",
+            "--xir=2",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_7TEV_V2_XIR2_STR);
+}
+
+#[test]
+fn lhcb_wp_7tev_v2_xif_2() {
+    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            input.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    let output = NamedTempFile::new("fktable2c.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            "--digits-abs=16",
+            "--digits-rel=16",
+            input.path().to_str().unwrap(),
+            "../test-data/myeko.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+            "--orders=a2,as1a2",
+            "--xif=2",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_7TEV_V2_XIF_2_STR);
+}
+
+#[test]
+fn lhcb_wp_7tev_v2_xif_2_error() {
+    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
+
+    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--optimize",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            input.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    let output = NamedTempFile::new("fktable2c.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            "--digits-abs=16",
+            "--digits-rel=16",
+            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_v2.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+            "--orders=a2,as1a2",
+            "--xif=2",
+        ])
+        .assert()
+        .failure()
+        .stderr(LHCB_WP_7TEV_V2_XIF_2_ERROR_STR)
+        .stdout("");
 }
 
 #[test]

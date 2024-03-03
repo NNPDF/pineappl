@@ -293,7 +293,6 @@ fn ndarray_from_subgrid_orders_slice(
 ) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
 
-    let fac1 = xif * xif * info.fac1;
     let mut x1_a: Vec<_> = subgrids
         .iter()
         .enumerate()
@@ -369,7 +368,7 @@ fn ndarray_from_subgrid_orders_slice(
         for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
             let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
 
-            if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
+            if !approx_eq!(f64, xif * xif * fac, info.fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
             }
 
