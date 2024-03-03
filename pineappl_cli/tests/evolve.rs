@@ -330,7 +330,7 @@ fn lhcb_wp_7tev_v2_xif_2() {
             "--digits-abs=16",
             "--digits-rel=16",
             input.path().to_str().unwrap(),
-            "../test-data/myeko.tar",
+            "../test-data/LHCB_WP_7TEV_v2_xif_2.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
             "--orders=a2,as1a2",
