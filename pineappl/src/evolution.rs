@@ -134,12 +134,43 @@ pub struct OperatorSliceInfo {
     /// `x`-grid coordinates of the `Grid`.
     pub x1: Vec<f64>,
 
+    /// Identifier of the particle basis for the `FkTable`.
+    pub lumi_id_types: String,
+}
+
+/// A mapping of squared renormalization scales in `ren1` to strong couplings in `alphas`. The
+/// ordering of both members defines the mapping.
+pub struct AlphasTable {
     /// Renormalization scales of the `Grid`.
     pub ren1: Vec<f64>,
     /// Strong couplings corresponding to the order given in [`ren1`](Self::ren1).
     pub alphas: Vec<f64>,
-    /// Identifier of the particle basis for the `FkTable`.
-    pub lumi_id_types: String,
+}
+
+impl AlphasTable {
+    /// Create an `AlphasTable` for `grid`, varying the renormalization scale by `xir` for the
+    /// strong couplings given by `alphas`. The only argument of `alphas` must be the squared
+    /// renormalization scale.
+    pub fn from_grid(grid: &Grid, xir: f64, alphas: &dyn Fn(f64) -> f64) -> Self {
+        let mut ren1: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .flat_map(|subgrid| {
+                subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|Mu2 { ren, .. }| xir * xir * ren)
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        // UNWRAP: if we can't sort numbers the grid is fishy
+        ren1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        ren1.dedup();
+        let ren1 = ren1;
+        let alphas: Vec<_> = ren1.iter().map(|&mur2| alphas(mur2)).collect();
+
+        Self { ren1, alphas }
+    }
 }
 
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
@@ -273,6 +304,7 @@ fn ndarray_from_subgrid_orders_slice(
     orders: &[Order],
     order_mask: &[bool],
     (xir, xif): (f64, f64),
+    alphas_table: &AlphasTable,
 ) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
 
@@ -360,13 +392,13 @@ fn ndarray_from_subgrid_orders_slice(
 
             let als = if order.alphas == 0 {
                 1.0
-            } else if let Some(alphas) =
-                info.ren1
-                    .iter()
-                    .zip(info.alphas.iter())
-                    .find_map(|(&ren1, &alphas)| {
-                        approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
-                    })
+            } else if let Some(alphas) = alphas_table
+                .ren1
+                .iter()
+                .zip(alphas_table.alphas.iter())
+                .find_map(|(&ren1, &alphas)| {
+                    approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
+                })
             {
                 alphas.powi(order.alphas.try_into().unwrap())
             } else {
@@ -388,6 +420,7 @@ pub(crate) fn evolve_slice_with_one(
     info: &OperatorSliceInfo,
     order_mask: &[bool],
     xi: (f64, f64),
+    alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
@@ -416,6 +449,7 @@ pub(crate) fn evolve_slice_with_one(
                 grid.orders(),
                 order_mask,
                 xi,
+                alphas_table,
             )?;
 
             let x1 = if has_pdf1 { x1_a } else { x1_b };
@@ -509,6 +543,7 @@ pub(crate) fn evolve_slice_with_two(
     info: &OperatorSliceInfo,
     order_mask: &[bool],
     xi: (f64, f64),
+    alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
@@ -543,6 +578,7 @@ pub(crate) fn evolve_slice_with_two(
                 grid.orders(),
                 order_mask,
                 xi,
+                alphas_table,
             )?;
 
             if (last_x1a.len() != x1_a.len())

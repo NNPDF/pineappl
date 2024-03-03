@@ -127,22 +127,17 @@ mod eko {
             Err(anyhow!("no file 'metadata.yaml' in EKO archive found"))
         }
 
-        pub fn new(eko_path: &Path, ren1: &[f64], alphas: &[f64]) -> Result<Self> {
+        pub fn new(eko_path: &Path) -> Result<Self> {
             let metadata = Self::read_metadata(eko_path)?;
 
             match metadata {
-                Metadata::V0(v0) => Self::with_v0(v0, eko_path, ren1, alphas),
-                Metadata::V1(v1) => Self::with_v1(v1, eko_path, ren1, alphas),
-                Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas),
+                Metadata::V0(v0) => Self::with_v0(v0, eko_path),
+                Metadata::V1(v1) => Self::with_v1(v1, eko_path),
+                Metadata::V2(v2) => Self::with_v2(v2, eko_path),
             }
         }
 
-        fn with_v0(
-            metadata: MetadataV0,
-            eko_path: &Path,
-            ren1: &[f64],
-            alphas: &[f64],
-        ) -> Result<Self> {
+        fn with_v0(metadata: MetadataV0, eko_path: &Path) -> Result<Self> {
             let mut operator = None;
 
             for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
@@ -167,19 +162,12 @@ mod eko {
                     fac1: 0.0,
                     pids1: metadata.targetpids,
                     x1: metadata.targetgrid,
-                    ren1: ren1.to_vec(),
-                    alphas: alphas.to_vec(),
                 },
                 operator,
             })
         }
 
-        fn with_v1(
-            metadata: MetadataV1,
-            eko_path: &Path,
-            ren1: &[f64],
-            alphas: &[f64],
-        ) -> Result<Self> {
+        fn with_v1(metadata: MetadataV1, eko_path: &Path) -> Result<Self> {
             let mut fac1 = HashMap::new();
             let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
 
@@ -250,19 +238,12 @@ mod eko {
                         .rotations
                         .targetgrid
                         .unwrap_or(metadata.rotations.xgrid),
-                    ren1: ren1.to_vec(),
-                    alphas: alphas.to_vec(),
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
         }
 
-        fn with_v2(
-            metadata: MetadataV2,
-            eko_path: &Path,
-            ren1: &[f64],
-            alphas: &[f64],
-        ) -> Result<Self> {
+        fn with_v2(metadata: MetadataV2, eko_path: &Path) -> Result<Self> {
             let mut fac1 = HashMap::new();
             let mut operator: Option<OperatorV1> = None;
 
@@ -325,8 +306,6 @@ mod eko {
                         .bases
                         .targetgrid
                         .unwrap_or_else(|| metadata.bases.xgrid.clone()),
-                    ren1: ren1.to_vec(),
-                    alphas: alphas.to_vec(),
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -460,23 +439,9 @@ fn evolve_grid(
     xif: f64,
 ) -> Result<FkTable> {
     use eko::EkoSlices;
-    use pineappl::subgrid::{Mu2, Subgrid};
+    use pineappl::evolution::AlphasTable;
 
-    let mut ren1: Vec<_> = grid
-        .subgrids()
-        .iter()
-        .flat_map(|subgrid| {
-            subgrid
-                .mu2_grid()
-                .iter()
-                .map(|Mu2 { ren, .. }| xir * xir * ren)
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    ren1.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    ren1.dedup();
-    let ren1 = ren1;
-    let alphas: Vec<_> = ren1.iter().map(|&mur2| pdf.alphas_q2(mur2)).collect();
+    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
     let order_mask: Vec<_> = grid
         .orders()
@@ -489,9 +454,9 @@ fn evolve_grid(
         })
         .collect();
 
-    let mut eko_slices = EkoSlices::new(eko, &ren1, &alphas)?;
+    let mut eko_slices = EkoSlices::new(eko)?;
 
-    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif))?)
+    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif), &alphas_table)?)
 }
 
 #[cfg(not(feature = "evolve"))]

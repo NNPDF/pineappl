@@ -2,7 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::empty_subgrid::EmptySubgridV1;
-use super::evolution::{self, EvolveInfo, OperatorInfo, OperatorSliceInfo};
+use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
@@ -1924,8 +1924,6 @@ impl Grid {
                             fac1,
                             pids1: info.pids1.clone(),
                             x1: info.x1.clone(),
-                            ren1: info.ren1.clone(),
-                            alphas: info.alphas.clone(),
                             lumi_id_types: info.lumi_id_types.clone(),
                         },
                         CowArray::from(op),
@@ -1933,6 +1931,10 @@ impl Grid {
                 }),
             order_mask,
             (info.xir, info.xif),
+            &AlphasTable {
+                ren1: info.ren1.clone(),
+                alphas: info.alphas.clone(),
+            },
         )
     }
 
@@ -1956,6 +1958,7 @@ impl Grid {
         slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
         xi: (f64, f64),
+        alphas_table: &AlphasTable,
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
@@ -1983,9 +1986,9 @@ impl Grid {
             let view = operator.view();
 
             let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
-                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi)
+                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
             } else {
-                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi)
+                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
             }?;
 
             let mut rhs = Self {
