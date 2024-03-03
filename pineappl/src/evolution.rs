@@ -89,35 +89,21 @@ pub struct OperatorInfo {
     pub lumi_id_types: String,
 }
 
-/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve_slice`] as
-/// `operator`, which is used to convert a [`Grid`] into an [`FkTable`]. The dimensions of the EKO
-/// must correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`],
-/// exactly in this order. Members with a `1` are defined at the squared factorization scale given
-/// as [`fac1`] (often called process scale) and are found in the [`Grid`] that
-/// [`Grid::evolve_slice`] is called with. Members with a `0` are defined at the squared
-/// factorization scale [`fac0`] (often called fitting scale or starting scale) and are found in
-/// the [`FkTable`] resulting from [`Grid::evolve`].
+/// Information about the evolution kernel operator slice (EKO) passed to
+/// [`Grid::evolve_with_slice_iter`](super::grid::Grid::evolve_with_slice_iter) as `operator`,
+/// which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable). The
+/// dimensions of the EKO must correspond to the values given in [`fac1`](Self::fac1),
+/// [`pids0`](Self::pids0), [`x0`](Self::x0), [`pids1`](Self::pids1) and [`x1`](Self::x1), exactly
+/// in this order. Members with a `1` are defined at the squared factorization scale given as
+/// `fac1` (often called process scale) and are found in the [`Grid`] that
+/// `Grid::evolve_with_slice_iter` is called with. Members with a `0` are defined at the squared
+/// factorization scale [`fac0`](Self::fac0) (often called fitting scale or starting scale) and are
+/// found in the `FkTable` resulting from [`Grid::evolve`].
 ///
-/// The EKO slice may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to
-/// a possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The members
-/// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
-/// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
-/// scales, respectively, around their central values.
-///
-/// [`FkTable::convolute`]: super::fk_table::FkTable::convolute
-/// [`FkTable`]: super::fk_table::FkTable
-/// [`alphas`]: Self::alphas
-/// [`fac0`]: Self::fac0
-/// [`fac1`]: Self::fac1
-/// [`lumi_id_types`]: Self::lumi_id_types
-/// [`pids0`]: Self::pids0
-/// [`pids1`]: Self::pids1
-/// [`ren1`]: Self::ren1
-/// [`x0`]: Self::x0
-/// [`x1`]: Self::x1
-/// [`xif`]: Self::xif
-/// [`xir`]: Self::xir
+/// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
+/// possibly different basis given by `pids0`. This basis must also be identified using
+/// [`lumi_id_types`](Self::lumi_id_types), which tells
+/// [`FkTable::convolute`](super::fk_table::FkTable::convolute) how to perform a convolution.
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
     /// Squared factorization scale of the `FkTable`.
