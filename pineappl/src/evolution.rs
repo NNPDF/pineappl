@@ -140,8 +140,6 @@ pub struct OperatorSliceInfo {
     pub alphas: Vec<f64>,
     /// Multiplicative factor for the central renormalization scale.
     pub xir: f64,
-    /// Multiplicative factor for the central factorization scale.
-    pub xif: f64,
     /// Identifier of the particle basis for the `FkTable`.
     pub lumi_id_types: String,
 }
@@ -276,10 +274,11 @@ fn ndarray_from_subgrid_orders_slice(
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
+    xif: f64,
 ) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
 
-    let fac1 = info.xif * info.xif * info.fac1;
+    let fac1 = xif * xif * info.fac1;
     let mut x1_a: Vec<_> = subgrids
         .iter()
         .enumerate()
@@ -321,11 +320,11 @@ fn ndarray_from_subgrid_orders_slice(
         }
 
         if order.logxif > 0 {
-            if approx_eq!(f64, info.xif, 1.0, ulps = 4) {
+            if approx_eq!(f64, xif, 1.0, ulps = 4) {
                 continue;
             }
 
-            logs *= (info.xif * info.xif).ln();
+            logs *= (xif * xif).ln();
         }
 
         // TODO: use `try_collect` once stabilized
@@ -355,12 +354,7 @@ fn ndarray_from_subgrid_orders_slice(
         for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
             let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
 
-            if !approx_eq!(
-                f64,
-                info.xif * info.xif * fac,
-                fac1,
-                ulps = EVOLUTION_TOL_ULPS
-            ) {
+            if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
             }
 
@@ -395,6 +389,7 @@ pub(crate) fn evolve_slice_with_one(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
+    xif: f64,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
@@ -417,8 +412,13 @@ pub(crate) fn evolve_slice_with_one(
         let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
 
         for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
-            let (x1_a, x1_b, array) =
-                ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
+            let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
+                info,
+                &subgrids_o,
+                grid.orders(),
+                order_mask,
+                xif,
+            )?;
 
             let x1 = if has_pdf1 { x1_a } else { x1_b };
 
@@ -510,6 +510,7 @@ pub(crate) fn evolve_slice_with_two(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
+    xif: f64,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
@@ -538,8 +539,13 @@ pub(crate) fn evolve_slice_with_two(
         let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
 
         for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
-            let (x1_a, x1_b, array) =
-                ndarray_from_subgrid_orders_slice(info, &subgrids_o, grid.orders(), order_mask)?;
+            let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
+                info,
+                &subgrids_o,
+                grid.orders(),
+                order_mask,
+                xif,
+            )?;
 
             if (last_x1a.len() != x1_a.len())
                 || last_x1a

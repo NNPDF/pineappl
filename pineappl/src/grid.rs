@@ -1927,13 +1927,13 @@ impl Grid {
                             ren1: info.ren1.clone(),
                             alphas: info.alphas.clone(),
                             xir: info.xir,
-                            xif: info.xif,
                             lumi_id_types: info.lumi_id_types.clone(),
                         },
                         CowArray::from(op),
                     ))
                 }),
             order_mask,
+            info.xif,
         )
     }
 
@@ -1956,6 +1956,7 @@ impl Grid {
         &self,
         slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
+        xif: f64,
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
@@ -1983,9 +1984,9 @@ impl Grid {
             let view = operator.view();
 
             let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
-                evolution::evolve_slice_with_two(self, &view, &info, order_mask)
+                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xif)
             } else {
-                evolution::evolve_slice_with_one(self, &view, &info, order_mask)
+                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xif)
             }?;
 
             let mut rhs = Self {
