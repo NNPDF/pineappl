@@ -127,13 +127,13 @@ mod eko {
             Err(anyhow!("no file 'metadata.yaml' in EKO archive found"))
         }
 
-        pub fn new(eko_path: &Path, ren1: &[f64], alphas: &[f64], xir: f64) -> Result<Self> {
+        pub fn new(eko_path: &Path, ren1: &[f64], alphas: &[f64]) -> Result<Self> {
             let metadata = Self::read_metadata(eko_path)?;
 
             match metadata {
-                Metadata::V0(v0) => Self::with_v0(v0, eko_path, ren1, alphas, xir),
-                Metadata::V1(v1) => Self::with_v1(v1, eko_path, ren1, alphas, xir),
-                Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas, xir),
+                Metadata::V0(v0) => Self::with_v0(v0, eko_path, ren1, alphas),
+                Metadata::V1(v1) => Self::with_v1(v1, eko_path, ren1, alphas),
+                Metadata::V2(v2) => Self::with_v2(v2, eko_path, ren1, alphas),
             }
         }
 
@@ -142,7 +142,6 @@ mod eko {
             eko_path: &Path,
             ren1: &[f64],
             alphas: &[f64],
-            xir: f64,
         ) -> Result<Self> {
             let mut operator = None;
 
@@ -170,7 +169,6 @@ mod eko {
                     x1: metadata.targetgrid,
                     ren1: ren1.to_vec(),
                     alphas: alphas.to_vec(),
-                    xir,
                 },
                 operator,
             })
@@ -181,7 +179,6 @@ mod eko {
             eko_path: &Path,
             ren1: &[f64],
             alphas: &[f64],
-            xir: f64,
         ) -> Result<Self> {
             let mut fac1 = HashMap::new();
             let base64 = GeneralPurpose::new(&URL_SAFE, PAD);
@@ -255,7 +252,6 @@ mod eko {
                         .unwrap_or(metadata.rotations.xgrid),
                     ren1: ren1.to_vec(),
                     alphas: alphas.to_vec(),
-                    xir,
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -266,7 +262,6 @@ mod eko {
             eko_path: &Path,
             ren1: &[f64],
             alphas: &[f64],
-            xir: f64,
         ) -> Result<Self> {
             let mut fac1 = HashMap::new();
             let mut operator: Option<OperatorV1> = None;
@@ -332,7 +327,6 @@ mod eko {
                         .unwrap_or_else(|| metadata.bases.xgrid.clone()),
                     ren1: ren1.to_vec(),
                     alphas: alphas.to_vec(),
-                    xir,
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -495,9 +489,9 @@ fn evolve_grid(
         })
         .collect();
 
-    let mut eko_slices = EkoSlices::new(eko, &ren1, &alphas, xir)?;
+    let mut eko_slices = EkoSlices::new(eko, &ren1, &alphas)?;
 
-    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, xif)?)
+    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif))?)
 }
 
 #[cfg(not(feature = "evolve"))]

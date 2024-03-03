@@ -138,8 +138,6 @@ pub struct OperatorSliceInfo {
     pub ren1: Vec<f64>,
     /// Strong couplings corresponding to the order given in [`ren1`](Self::ren1).
     pub alphas: Vec<f64>,
-    /// Multiplicative factor for the central renormalization scale.
-    pub xir: f64,
     /// Identifier of the particle basis for the `FkTable`.
     pub lumi_id_types: String,
 }
@@ -274,6 +272,7 @@ fn ndarray_from_subgrid_orders_slice(
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
+    xir: f64,
     xif: f64,
 ) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
@@ -312,11 +311,11 @@ fn ndarray_from_subgrid_orders_slice(
         let mut logs = 1.0;
 
         if order.logxir > 0 {
-            if approx_eq!(f64, info.xir, 1.0, ulps = 4) {
+            if approx_eq!(f64, xir, 1.0, ulps = 4) {
                 continue;
             }
 
-            logs *= (info.xir * info.xir).ln();
+            logs *= (xir * xir).ln();
         }
 
         if order.logxif > 0 {
@@ -358,7 +357,7 @@ fn ndarray_from_subgrid_orders_slice(
                 continue;
             }
 
-            let mur2 = info.xir * info.xir * ren;
+            let mur2 = xir * xir * ren;
 
             let als = if order.alphas == 0 {
                 1.0
@@ -389,7 +388,7 @@ pub(crate) fn evolve_slice_with_one(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
-    xif: f64,
+    (xir, xif): (f64, f64),
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
@@ -417,6 +416,7 @@ pub(crate) fn evolve_slice_with_one(
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
+                xir,
                 xif,
             )?;
 
@@ -510,7 +510,7 @@ pub(crate) fn evolve_slice_with_two(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
-    xif: f64,
+    (xir, xif): (f64, f64),
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
@@ -544,6 +544,7 @@ pub(crate) fn evolve_slice_with_two(
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
+                xir,
                 xif,
             )?;
 
