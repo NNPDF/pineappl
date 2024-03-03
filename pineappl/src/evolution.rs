@@ -272,8 +272,7 @@ fn ndarray_from_subgrid_orders_slice(
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
-    xir: f64,
-    xif: f64,
+    (xir, xif): (f64, f64),
 ) -> Result<X1aX1bOp2Tuple, GridError> {
     // TODO: skip empty subgrids
 
@@ -388,7 +387,7 @@ pub(crate) fn evolve_slice_with_one(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
-    (xir, xif): (f64, f64),
+    xi: (f64, f64),
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
     let has_pdf1 = grid.has_pdf1();
@@ -416,8 +415,7 @@ pub(crate) fn evolve_slice_with_one(
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
-                xir,
-                xif,
+                xi,
             )?;
 
             let x1 = if has_pdf1 { x1_a } else { x1_b };
@@ -510,7 +508,7 @@ pub(crate) fn evolve_slice_with_two(
     operator: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
-    (xir, xif): (f64, f64),
+    xi: (f64, f64),
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
@@ -544,8 +542,7 @@ pub(crate) fn evolve_slice_with_two(
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
-                xir,
-                xif,
+                xi,
             )?;
 
             if (last_x1a.len() != x1_a.len())
