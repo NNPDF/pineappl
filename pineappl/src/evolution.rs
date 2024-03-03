@@ -150,7 +150,7 @@ impl AlphasTable {
             })
             .collect();
         // UNWRAP: if we can't sort numbers the grid is fishy
-        ren1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        ren1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         ren1.dedup();
         let ren1 = ren1;
         let alphas: Vec<_> = ren1.iter().map(|&mur2| alphas(mur2)).collect();
@@ -168,8 +168,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         && grid
             .key_values()
             .and_then(|key_values| key_values.get("lumi_id_types"))
-            .map(|value| value == "pdg_mc_ids")
-            .unwrap_or(true)
+            .map_or(true, |value| value == "pdg_mc_ids")
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;
