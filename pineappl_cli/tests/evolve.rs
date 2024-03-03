@@ -229,6 +229,27 @@ fn lhcb_wp_7tev() {
 }
 
 #[test]
+fn lhcb_wp_7tev_use_old_evolve() {
+    let output = NamedTempFile::new("fktable1c.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--silence-lhapdf",
+            "evolve",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nlo_as_01180",
+            "--orders=a2,as1a2",
+            "--use-old-evolve",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_7TEV_STR);
+}
+
+#[test]
 fn lhcb_wp_7tev_v2() {
     let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
 

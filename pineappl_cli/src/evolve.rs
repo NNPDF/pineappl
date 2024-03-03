@@ -437,11 +437,10 @@ fn evolve_grid(
     orders: &[(u32, u32)],
     xir: f64,
     xif: f64,
+    use_old_evolve: bool,
 ) -> Result<FkTable> {
     use eko::EkoSlices;
-    use pineappl::evolution::AlphasTable;
-
-    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
+    use pineappl::evolution::{AlphasTable, OperatorInfo};
 
     let order_mask: Vec<_> = grid
         .orders()
@@ -455,12 +454,48 @@ fn evolve_grid(
         .collect();
 
     let mut eko_slices = EkoSlices::new(eko)?;
+    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
-    Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif), &alphas_table)?)
+    if use_old_evolve {
+        if let EkoSlices::V0 {
+            fac1,
+            info,
+            operator,
+        } = eko_slices
+        {
+            let op_info = OperatorInfo {
+                fac0: info.fac0,
+                pids0: info.pids0.clone(),
+                x0: info.x0.clone(),
+                fac1: fac1.clone(),
+                pids1: info.pids1.clone(),
+                x1: info.x1.clone(),
+                ren1: alphas_table.ren1,
+                alphas: alphas_table.alphas,
+                xir,
+                xif,
+                lumi_id_types: info.lumi_id_types,
+            };
+
+            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
+        } else {
+            unimplemented!();
+        }
+    } else {
+        Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif), &alphas_table)?)
+    }
 }
 
 #[cfg(not(feature = "evolve"))]
-fn evolve_grid(_: &Grid, _: &Path, _: &Pdf, _: &[(u32, u32)], _: f64, _: f64) -> Result<FkTable> {
+fn evolve_grid(
+    _: &Grid,
+    _: &Path,
+    _: &Pdf,
+    _: &[(u32, u32)],
+    _: f64,
+    _: f64,
+    _: bool,
+) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `evolve`"
     ))
@@ -505,6 +540,8 @@ pub struct Opts {
     /// Rescale the factorization scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xif: f64,
+    #[arg(hide = true, long)]
+    use_old_evolve: bool,
 }
 
 impl Subcommand for Opts {
@@ -524,7 +561,15 @@ impl Subcommand for Opts {
             cfg.force_positive,
         );
 
-        let fk_table = evolve_grid(&grid, &self.eko, &pdf, &self.orders, self.xir, self.xif)?;
+        let fk_table = evolve_grid(
+            &grid,
+            &self.eko,
+            &pdf,
+            &self.orders,
+            self.xir,
+            self.xif,
+            self.use_old_evolve,
+        )?;
         let evolved_results = helpers::convolute_scales(
             fk_table.grid(),
             &mut pdf,
