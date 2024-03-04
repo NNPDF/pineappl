@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added support for new EKO format introduced with EKO v0.13
 
+### Changed
+
+- `Grid::evolve` has now been marked deprecated
+
 ## [0.6.2] - 09/10/2023
 
 ### Added

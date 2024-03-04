@@ -477,6 +477,7 @@ fn evolve_grid(
                 lumi_id_types: info.lumi_id_types,
             };
 
+            #[allow(deprecated)]
             Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
         } else {
             unimplemented!();

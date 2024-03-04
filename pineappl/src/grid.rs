@@ -1905,6 +1905,7 @@ impl Grid {
     ///
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`.
+    #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
     pub fn evolve(
         &self,
         operator: ArrayView5<f64>,
