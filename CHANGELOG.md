@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added support for new EKO format introduced with EKO v0.13
+- added `Grid::evolve_with_slice_iter`, `AlphasTable` and `OperatorSliceInfo`,
+  which define a new interface supporting very large evolution kernels that
+  have been introduced in EKO v0.13. This interface will replace `Grid::evolve`
 
 ### Changed
 
