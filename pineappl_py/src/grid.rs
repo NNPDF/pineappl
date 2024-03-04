@@ -7,21 +7,25 @@ use pineappl::grid::{EkoInfo, GridAxes};
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
-use super::evolution::PyEvolveInfo;
+use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
 
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::{PyIterator, PyTuple};
+
+use ndarray::CowArray;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
@@ -560,6 +564,44 @@ impl PyGrid {
         PyEvolveInfo {
             evolve_info: self.grid.evolve_info(order_mask.as_slice().unwrap()),
         }
+    }
+
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// slices : TODO
+    /// order_mask : TODO
+    ///
+    /// Returns
+    /// -------
+    /// TODO
+    pub fn evolve_with_slice_iter(
+        &self,
+        slices: &PyIterator,
+        order_mask: PyReadonlyArray1<bool>,
+    ) -> PyResult<PyFkTable> {
+        Ok(self
+            .grid
+            .evolve_with_slice_iter(
+                slices.map(|result| {
+                    // TODO: check whether we can avoid the `.unwrap` calls
+                    let any = result.unwrap();
+                    let tuple = any.downcast::<PyTuple>().unwrap();
+                    let item0 = tuple.get_item(0).unwrap();
+                    let item1 = tuple.get_item(1).unwrap();
+                    let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
+                    let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
+
+                    // TODO: change `PyErr` into something appropriate
+                    Ok::<_, PyErr>((slice_info.slice_info, CowArray::from(operator.as_array())))
+                }),
+                // TODO: what if it's non-contiguous?
+                order_mask.as_slice().unwrap(),
+            )
+            .map(|fk_table| PyFkTable { fk_table })
+            // TODO: get rid of this `.unwrap` call
+            .unwrap())
     }
 
     /// Load grid from file.

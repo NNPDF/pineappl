@@ -1,5 +1,5 @@
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::evolution::EvolveInfo;
+use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
 
 use pyo3::prelude::*;
 
@@ -35,4 +35,12 @@ impl PyEvolveInfo {
     fn ren1<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
         self.evolve_info.ren1.clone().into_pyarray(py)
     }
+}
+
+/// TODO
+#[pyclass]
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct PyOperatorSliceInfo {
+    pub(crate) slice_info: OperatorSliceInfo,
 }
