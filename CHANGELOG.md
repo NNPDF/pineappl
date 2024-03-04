@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added `Grid::evolve_with_slice_iter`, `AlphasTable` and `OperatorSliceInfo`,
+  which define a new interface supporting very large evolution kernels that
+  have been introduced in EKO v0.13. This interface will replace `Grid::evolve`
+
+### Changed
+
+- `Grid::evolve` has now been marked deprecated
+
 ### Fixed
 
 - fixed yet another problem that prevent the Python interface for Python 3.6
