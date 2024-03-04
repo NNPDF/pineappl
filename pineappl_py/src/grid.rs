@@ -1,4 +1,4 @@
-use pineappl::evolution::OperatorInfo;
+use pineappl::evolution::{AlphasTable, OperatorInfo};
 use pineappl::grid::{Grid, Ntuple, Order};
 
 #[allow(deprecated)]
@@ -16,7 +16,6 @@ use itertools::izip;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
 
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -580,6 +579,9 @@ impl PyGrid {
         &self,
         slices: &PyIterator,
         order_mask: PyReadonlyArray1<bool>,
+        xi: (f64, f64),
+        ren1: Vec<f64>,
+        alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
         Ok(self
             .grid
@@ -592,12 +594,16 @@ impl PyGrid {
                     let item1 = tuple.get_item(1).unwrap();
                     let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
                     let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
+                    // TODO: can we get rid of the `into_owned` call?
+                    let array = CowArray::from(operator.as_array().into_owned());
 
                     // TODO: change `PyErr` into something appropriate
-                    Ok::<_, PyErr>((slice_info.slice_info, CowArray::from(operator.as_array())))
+                    Ok::<_, PyErr>((slice_info.slice_info, array))
                 }),
                 // TODO: what if it's non-contiguous?
                 order_mask.as_slice().unwrap(),
+                xi,
+                &AlphasTable { ren1, alphas },
             )
             .map(|fk_table| PyFkTable { fk_table })
             // TODO: get rid of this `.unwrap` call
