@@ -311,14 +311,6 @@ mod eko {
             })
         }
 
-        // TODO: we could make this a Cow<'_, [f64]>
-        pub fn fac1(&self) -> Vec<f64> {
-            match self {
-                Self::V0 { fac1, .. } => fac1.clone(),
-                Self::V2 { fac1, .. } => fac1.values().copied().collect(),
-            }
-        }
-
         pub fn iter_mut(&mut self) -> EkoSlicesIter {
             match self {
                 Self::V0 {
