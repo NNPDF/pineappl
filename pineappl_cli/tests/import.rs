@@ -854,6 +854,11 @@ fn import_dis_fktable() {
 #[cfg(feature = "fktable")]
 fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
+    use lhapdf::Pdf;
+    use pineappl::fk_table::{FkAssumptions, FkTable};
+    use pineappl::grid::Grid;
+    use pineappl::lumi::LumiCache;
+    use std::fs::File;
 
     let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();
 
@@ -881,12 +886,6 @@ fn import_hadronic_fktable() {
         .assert()
         .success()
         .stdout(IMPORT_HADRONIC_FKTABLE_STR);
-
-    use lhapdf::Pdf;
-    use pineappl::fk_table::{FkAssumptions, FkTable};
-    use pineappl::grid::Grid;
-    use pineappl::lumi::LumiCache;
-    use std::fs::File;
 
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 

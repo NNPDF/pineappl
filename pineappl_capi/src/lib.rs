@@ -65,7 +65,6 @@ use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
 use pineappl::lumi::{LumiCache, LumiEntry};
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
@@ -977,7 +976,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
 
-    (*lumi).0.len()
+    lumi.0.len()
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.

@@ -90,13 +90,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "remap_norm_ignore" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         args[index] = Some(match id.as_str() {
                             "remap_norm_ignore" => OpsArg::RemapNormIgnore(arg),
                             _ => unreachable!(),
@@ -104,13 +103,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "dedup_channels" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "dedup_channels" => OpsArg::DedupChannels(arg[0]),
@@ -119,13 +117,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "delete_key" | "remap" => {
-                    let arguments: Vec<Vec<String>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, mut arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, mut arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "delete_key" => OpsArg::DeleteKey(arg.pop().unwrap()),
@@ -135,13 +132,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "delete_bins" | "merge_bins" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect),
+                    ) {
                         args[index] = Some(match id.as_str() {
                             "delete_bins" => OpsArg::DeleteBins(arg),
                             "merge_bins" => OpsArg::MergeBins(arg),
@@ -150,13 +146,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "optimize_fk_table" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "optimize_fk_table" => OpsArg::OptimizeFkTable(arg[0]),
@@ -165,13 +160,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "remap_norm" | "scale" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "remap_norm" => OpsArg::RemapNorm(arg[0]),
@@ -181,13 +175,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "rewrite_channel" => {
-                    let arguments: Vec<Vec<String>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<String>>),
+                    ) {
                         assert_eq!(arg.len(), 2);
 
                         args[index] = Some(OpsArg::RewriteChannel((
@@ -197,13 +190,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "scale_by_bin" | "scale_by_order" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         args[index] = Some(match id.as_str() {
                             "scale_by_bin" => OpsArg::ScaleByBin(arg),
                             "scale_by_order" => OpsArg::ScaleByOrder(arg),
@@ -212,13 +204,12 @@ impl FromArgMatches for MoreArgs {
                     }
                 }
                 "set_key_file" | "set_key_value" => {
-                    let arguments: Vec<Vec<_>> = matches
-                        .remove_occurrences(&id)
-                        .unwrap()
-                        .map(Iterator::collect)
-                        .collect();
-
-                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
                         args[index] = Some(match id.as_str() {
                             "set_key_file" => OpsArg::SetKeyFile(arg),
                             "set_key_value" => OpsArg::SetKeyValue(arg),
@@ -499,7 +490,7 @@ impl Subcommand for Opts {
                     grid.dedup_channels(*ulps);
                 }
                 OpsArg::DeleteBins(ranges) => {
-                    grid.delete_bins(&ranges.iter().flat_map(|r| r.clone()).collect::<Vec<_>>())
+                    grid.delete_bins(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
                 }
                 OpsArg::DeleteKey(key) => {
                     grid.key_values_mut().remove(key);

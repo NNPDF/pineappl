@@ -25,8 +25,8 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
     let mut lumis = vec![Vec::new(); nproc];
-    let mut xfx1 = vec![0.0; 14];
-    let mut xfx2 = vec![0.0; 14];
+    let mut xfx1 = [0.0; 14];
+    let mut xfx2 = [0.0; 14];
     let mut results = vec![0.0; nproc];
 
     for a in 0..=13 {
@@ -105,8 +105,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     // this setting isn't supported
     assert_eq!(grid.getDynamicScale(), 0.0);
 
-    let mut grids = Vec::new();
-    grids.reserve(orders.len());
+    let mut grids = Vec::with_capacity(orders.len());
 
     for (i, order) in orders.into_iter().enumerate() {
         let lumis = reconstruct_luminosity_function(&grid, i.try_into().unwrap(), dis_pid);

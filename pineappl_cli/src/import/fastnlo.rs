@@ -10,7 +10,6 @@ use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
 };
-use std::convert::{TryFrom, TryInto};
 use std::f64::consts::TAU;
 
 fn pid_to_pdg_id(pid: i32) -> i32 {

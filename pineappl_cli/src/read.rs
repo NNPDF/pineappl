@@ -124,7 +124,7 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(format!("{index}")));
 
-                for (id1, id2, factor) in entry.entry().iter() {
+                for (id1, id2, factor) in entry.entry() {
                     row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
                 }
             }

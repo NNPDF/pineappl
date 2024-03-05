@@ -415,7 +415,7 @@ if __name__ == "__main__":
     main()
 "#;
 
-const SUBGRID_PULL_STR: &str = r#"#!/usr/bin/env python3
+const SUBGRID_PULL_STR: &str = r"#!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -477,7 +477,7 @@ axes[1].set_ylabel(r'$x_2$')
 
 figure.colorbar(mesh, ax=axes, extend='min')
 figure.savefig('plot.pdf')
-"#;
+";
 
 const DRELL_YAN_AFB_STR: &str = r#"#!/usr/bin/env python3
 

@@ -40,15 +40,13 @@ fn main() {
     )
     .unwrap();
 
-    let appl_igrid_dir = if let Ok(dir) = env::var("APPL_IGRID_DIR") {
-        dir
-    } else {
+    let appl_igrid_dir = env::var("APPL_IGRID_DIR").unwrap_or_else(|_| {
         Path::new(&include_path)
             .join("appl_grid")
             .to_str()
             .unwrap()
             .to_owned()
-    };
+    });
 
     let libs = String::from_utf8(
         Command::new("applgrid-config")
@@ -88,7 +86,7 @@ fn main() {
     }
 
     for lib in lhapdf.libs {
-        println!("cargo:rustc-link-lib={}", lib);
+        println!("cargo:rustc-link-lib={lib}");
     }
 
     cxx_build::bridge("src/lib.rs")

@@ -141,7 +141,7 @@ impl FromStr for LumiEntry {
     type Err = ParseLumiEntryError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(LumiEntry::new(
+        Ok(Self::new(
             s.split('+')
                 .map(|sub| {
                     sub.split_once('*').map_or_else(
@@ -558,7 +558,6 @@ impl<'a> LumiCache<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pids;
 
     #[test]
     fn translate() {

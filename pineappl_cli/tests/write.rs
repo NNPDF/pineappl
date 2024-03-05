@@ -82,7 +82,7 @@ const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal
 3    4  4.5 2.7517266e1
 ";
 
-const KEY_VALUE_STR: &str = r#"arxiv: 1505.07024
+const KEY_VALUE_STR: &str = r"arxiv: 1505.07024
 description: LHCb differential W-boson production cross section at 7 TeV
 hepdata: 10.17182/hepdata.2114.v1/t4
 initial_state_1: 2212
@@ -117,7 +117,7 @@ x1_unit:
 y_label: dsig/detal
 y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb
-"#;
+";
 
 const MERGE_BINS_STR: &str = "b   etal    dsig/detal 
      []        [pb]    

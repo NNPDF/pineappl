@@ -23,7 +23,6 @@ use serde::{Deserialize, Serialize, Serializer};
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
-use std::convert::{TryFrom, TryInto};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::iter;
 use std::mem;
@@ -1977,7 +1976,7 @@ impl Grid {
                 .map(|(&fac1, op)| {
                     Ok::<_, GridError>((
                         OperatorSliceInfo {
-                            fac0: info.fac0.clone(),
+                            fac0: info.fac0,
                             pids0: info.pids0.clone(),
                             x0: info.x0.clone(),
                             fac1,
@@ -2021,7 +2020,7 @@ impl Grid {
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
-        let mut lhs: Option<Grid> = None;
+        let mut lhs: Option<Self> = None;
         let mut fac1 = Vec::new();
 
         for result in slices {
@@ -2072,11 +2071,11 @@ impl Grid {
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
         if let Some(muf2) = self
-            .evolve_info(&order_mask)
+            .evolve_info(order_mask)
             .fac1
             .into_iter()
             .map(|mu2| xi.1 * xi.1 * mu2)
@@ -2091,7 +2090,7 @@ impl Grid {
             )));
         }
 
-        // UNWRAP: should panick when all subgrids are empty
+        // TODO: convert this unwrap into error
         let grid = lhs.unwrap();
 
         // UNWRAP: merging evolved slices should be a proper FkTable again
@@ -2300,7 +2299,7 @@ mod tests {
 
     #[test]
     fn order_cmp() {
-        let mut orders = vec![
+        let mut orders = [
             Order::new(1, 2, 1, 0),
             Order::new(1, 2, 0, 1),
             Order::new(1, 2, 0, 0),

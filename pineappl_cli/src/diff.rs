@@ -175,7 +175,7 @@ impl Subcommand for Opts {
                 let row = table.add_empty_row();
 
                 row.add_cell(cell!(r->bin));
-                for (left, right) in limits1.iter() {
+                for (left, right) in limits1 {
                     row.add_cell(cell!(r->format!("{left}")));
                     row.add_cell(cell!(r->format!("{right}")));
                 }

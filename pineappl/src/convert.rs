@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 #[allow(clippy::cast_possible_truncation)]
 #[allow(clippy::cast_sign_loss)]
 pub fn usize_from_f64(x: f64) -> usize {

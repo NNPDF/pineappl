@@ -459,7 +459,7 @@ fn evolve_grid(
                 fac0: info.fac0,
                 pids0: info.pids0.clone(),
                 x0: info.x0.clone(),
-                fac1: fac1.clone(),
+                fac1,
                 pids1: info.pids1.clone(),
                 x1: info.x1.clone(),
                 ren1: alphas_table.ren1,

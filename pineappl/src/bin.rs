@@ -256,7 +256,7 @@ impl FromStr for BinRemapper {
             normalizations.push(normalization);
         }
 
-        BinRemapper::new(normalizations, limits)
+        Self::new(normalizations, limits)
             .map_err(|err| ParseBinRemapperError::BinRemapperNewError { source: err })
     }
 }
@@ -439,16 +439,16 @@ impl BinRemapper {
                 }
             }
 
-            overlaps.sort();
+            overlaps.sort_unstable();
             overlaps.dedup();
 
-            if !overlaps.is_empty() {
-                Err(BinRemapperNewError::OverlappingBins { overlaps })
-            } else {
+            if overlaps.is_empty() {
                 Ok(Self {
                     normalizations,
                     limits,
                 })
+            } else {
+                Err(BinRemapperNewError::OverlappingBins { overlaps })
             }
         } else {
             Err(BinRemapperNewError::DimensionUnknown {

@@ -114,7 +114,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 
 fn fill_drell_yan_lo_grid(
     rng: &mut impl Rng,
-    calls: usize,
+    calls: u32,
     subgrid_type: &str,
     dynamic: bool,
     reweight: bool,
@@ -156,7 +156,7 @@ fn fill_drell_yan_lo_grid(
     ];
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
-    let bin_limits: Vec<_> = (0..=24).map(|x| x as f64 / 10.0).collect();
+    let bin_limits: Vec<_> = (0..=24).map(|x: u32| f64::from(x) / 10.0).collect();
 
     let mut subgrid_params = SubgridParams::default();
     let mut extra = ExtraSubgridParams::default();
@@ -206,7 +206,7 @@ fn fill_drell_yan_lo_grid(
         let ylp = (yll + (0.5 * mll / ptl).acosh()).abs();
         let ylm = (yll - (0.5 * mll / ptl).acosh()).abs();
 
-        jacobian *= hbarc2 / (calls as f64);
+        jacobian *= hbarc2 / f64::from(calls);
 
         // cuts for LO for the invariant-mass slice containing the Z-peak from CMSDY2D11
         if (ptl < 14.0)

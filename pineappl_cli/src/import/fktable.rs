@@ -74,24 +74,22 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 nx2 = if hadronic { nx1 } else { 1 };
 
                 // FK tables are always in the flavor basis
-                let basis = vec![
+                let basis = [
                     22, 100, 21, 200, 203, 208, 215, 224, 235, 103, 108, 115, 124, 135,
                 ];
                 let lumis = if hadronic {
                     flavor_mask
                         .iter()
                         .enumerate()
-                        .filter_map(|(index, value)| {
-                            value.then(|| lumi_entry![basis[index / 14], basis[index % 14], 1.0])
-                        })
+                        .filter(|&(_, &value)| value)
+                        .map(|(index, _)| lumi_entry![basis[index / 14], basis[index % 14], 1.0])
                         .collect()
                 } else {
                     flavor_mask
                         .iter()
                         .enumerate()
-                        .filter_map(|(index, value)| {
-                            value.then(|| lumi_entry![basis[index], dis_pid, 1.0])
-                        })
+                        .filter(|&(_, &value)| value)
+                        .map(|(index, _)| lumi_entry![basis[index], dis_pid, 1.0])
                         .collect()
                 };
 
@@ -208,11 +206,10 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .skip(if hadronic { 3 } else { 2 })
                         .zip(flavor_mask.iter())
-                        .filter_map(|(string, &mask)| {
-                            mask.then(|| {
-                                string.parse().with_context(|| {
-                                    format!("failed to parse floating point number from '{string}'")
-                                })
+                        .filter(|&(_, &mask)| mask)
+                        .map(|(string, _)| {
+                            string.parse().with_context(|| {
+                                format!("failed to parse floating point number from '{string}'")
                             })
                         })
                         .collect::<Result<_>>()?;

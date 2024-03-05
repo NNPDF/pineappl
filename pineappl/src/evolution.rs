@@ -168,8 +168,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         && grid
             .key_values()
             .and_then(|key_values| key_values.get("lumi_id_types"))
-            .map(|value| value == "pdg_mc_ids")
-            .unwrap_or(true)
+            .map_or(true, |value| value == "pdg_mc_ids")
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;
