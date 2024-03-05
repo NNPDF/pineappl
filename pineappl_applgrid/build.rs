@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use cc::Build;
 use std::env;
 use std::path::Path;

@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
+#![allow(missing_docs)]
 
 use clap::Parser;
 use pineappl_cli::{Opts, Subcommand};

@@ -1,7 +1,3 @@
-#![warn(clippy::all, clippy::cargo, clippy::nursery, clippy::pedantic)]
-#![warn(missing_docs)]
-#![deny(unsafe_op_in_unsafe_fn)]
-
 //! The C-language interface for `PineAPPL`.
 //!
 //! The `PineAPPL` Application Programming Interface for the C language (CAPI) defines types and

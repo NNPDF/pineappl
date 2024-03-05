@@ -1,3 +1,7 @@
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::struct_excessive_bools)]
+#![allow(missing_docs)]
+
 mod analyze;
 mod channels;
 mod convolute;

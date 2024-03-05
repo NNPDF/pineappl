@@ -1,5 +1,9 @@
 //! TODO
 
+#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::must_use_candidate)]
+#![allow(missing_docs)]
+
 use std::str::FromStr;
 use thiserror::Error;
 

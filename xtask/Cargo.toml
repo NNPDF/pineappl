@@ -11,6 +11,9 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0.68"
 clap = { features = ["string"], version = "4.4.18" }

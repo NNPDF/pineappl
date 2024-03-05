@@ -12,6 +12,9 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 cxx = { version = "1.0.65" }
 thiserror = "1.0.30"
