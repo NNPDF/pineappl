@@ -2,20 +2,6 @@
 
 set -eu
 
-if command -v gcc >/dev/null; then
-    target=$(gcc -dumpmachine)
-
-    case ${target} in
-        arm64-apple-darwin*) target=aarch64-apple-darwin;;
-        x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
-        x86_64-apple-darwin*) target=x86_64-apple-darwin;;
-        *) echo "Error: target '${target}' unknown."; exit 1;;
-    esac
-else
-    echo "Error: target unknown."
-    exit 1
-fi
-
 prefix=
 version=
 
@@ -39,12 +25,37 @@ while [ $# -gt 0 ]; do
             prefix=${1#--prefix=}
             shift
             ;;
+        --target)
+            target=$2
+            shift
+            shift
+            ;;
+        --target=*)
+            target=${1#--target=}
+            shift
+            ;;
         *)
             echo "Error: argument '$1' unknown"
             exit 1
             ;;
     esac
 done
+
+if [ -z ${target+x} ]; then
+    if command -v gcc >/dev/null; then
+        target=$(gcc -dumpmachine)
+
+        case ${target} in
+            arm64-apple-darwin*) target=aarch64-apple-darwin;;
+            x86_64-*-linux-gnu | x86_64-linux-gnu | x86_64-*-linux) target=x86_64-unknown-linux-gnu;;
+            x86_64-apple-darwin*) target=x86_64-apple-darwin;;
+            *) echo "Error: target '${target}' unknown."; exit 1;;
+        esac
+    else
+        echo "Error: target unknown, try setting it manually with '--target'"
+        exit 1
+    fi
+fi
 
 # if no prefix is given, prompt for one
 if [ -z ${prefix} ]; then
