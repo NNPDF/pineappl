@@ -31,15 +31,14 @@ nursery = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 
 cognitive-complexity = "allow"
-float-cmp = "allow"
-module_name_repetitions = "allow"
+module-name-repetitions = "allow"
 similar-names = "allow"
 too-many-lines = "allow"
 unreadable-literal = "allow"
 
 [workspace.lints.rust]
-missing_docs = "warn"
-unsafe_op_in_unsafe_fn = "deny"
+missing-docs = "warn"
+unsafe-op-in-unsafe-fn = "deny"
 
 [profile.release]
 codegen-units = 1
