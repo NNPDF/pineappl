@@ -67,6 +67,7 @@ fn main() {
     }
 
     Build::new()
+        .cpp(true)
         .file("src/check_appl_igrid.cpp")
         .include(include_path.trim())
         .include(&appl_igrid_dir)

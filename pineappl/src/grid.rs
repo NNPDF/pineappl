@@ -400,7 +400,7 @@ pub struct GridAxes {
 /// [`Grid::convolute_eko`].
 #[deprecated(since = "0.6.0", note = "use OperatorInfo instead")]
 pub struct EkoInfo {
-    /// Scale of the FkTable.
+    /// Scale of the `FkTable`.
     pub muf2_0: f64,
     /// Strong coupling constants for the renormalization scales in the same ordering as given in
     /// [`GridAxes`].
@@ -422,6 +422,7 @@ pub struct EkoInfo {
 
 bitflags! {
     /// Bitflags for optimizing a [`Grid`]. See [`Grid::optimize_using`].
+    #[derive(Clone, Copy)]
     #[repr(transparent)]
     pub struct GridOptFlags: u32 {
         /// Change the [`Subgrid`] type to optimize storage effeciency.

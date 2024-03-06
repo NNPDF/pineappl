@@ -1,5 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::struct_excessive_bools)]
+#![allow(clippy::too_many_arguments)]
 #![allow(missing_docs)]
 
 mod analyze;

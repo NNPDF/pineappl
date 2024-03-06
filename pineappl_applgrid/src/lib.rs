@@ -3,6 +3,7 @@
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::too_many_arguments)]
 #![allow(missing_docs)]
 
 #[cxx::bridge]
