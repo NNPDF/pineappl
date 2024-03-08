@@ -33,7 +33,9 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
         xfx1[a] = 1.0;
 
         if grid.isDIS() {
-            unsafe { (*pdf).evaluate(xfx1.as_ptr(), ptr::null(), results.as_mut_ptr()) };
+            unsafe {
+                (*pdf).evaluate(xfx1.as_ptr(), ptr::null(), results.as_mut_ptr());
+            }
 
             for i in 0..nproc {
                 if results[i] != 0.0 {
@@ -44,7 +46,9 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
             for b in 0..=13 {
                 xfx2[b] = 1.0;
 
-                unsafe { (*pdf).evaluate(xfx1.as_ptr(), xfx2.as_ptr(), results.as_mut_ptr()) };
+                unsafe {
+                    (*pdf).evaluate(xfx1.as_ptr(), xfx2.as_ptr(), results.as_mut_ptr());
+                }
 
                 for i in 0..nproc {
                     if results[i] != 0.0 {

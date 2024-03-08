@@ -927,14 +927,8 @@ fn import_hadronic_fktable() {
     assert_eq!(fk_table.bin_dimensions(), 1);
     assert_eq!(fk_table.bin_left(0), [0.0]);
     assert_eq!(fk_table.bin_right(0), [1.0]);
-    assert_eq!(
-        fk_table.key_values().unwrap()["initial_state_1"],
-        "2212".to_string()
-    );
-    assert_eq!(
-        fk_table.key_values().unwrap()["initial_state_2"],
-        "2212".to_string()
-    );
+    assert_eq!(&fk_table.key_values().unwrap()["initial_state_1"], "2212");
+    assert_eq!(&fk_table.key_values().unwrap()["initial_state_2"], "2212");
     let lumi = fk_table.lumi();
     assert_eq!(
         lumi,

@@ -285,7 +285,7 @@ pub enum GridError {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-struct Mmv1 {}
+struct Mmv1;
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv2 {
@@ -364,6 +364,8 @@ impl Mmv3 {
     }
 }
 
+// ALLOW: fixing the warning will break the file format
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Deserialize, Serialize)]
 enum MoreMembers {
     V1(Mmv1),
@@ -468,7 +470,7 @@ impl Grid {
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || EmptySubgridV1::default().into(),
+                || EmptySubgridV1.into(),
             ),
             orders,
             lumi,
@@ -505,13 +507,13 @@ impl Grid {
             "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
             "NtupleSubgrid" => NtupleSubgridV1::new().into(),
             "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
-            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_string())),
+            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
         };
 
         Ok(Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, lumi.len()),
-                || EmptySubgridV1::default().into(),
+                || EmptySubgridV1.into(),
             ),
             orders,
             lumi,
@@ -844,7 +846,7 @@ impl Grid {
         let mut old_subgrids = mem::replace(
             &mut self.subgrids,
             Array3::from_shape_simple_fn((self.orders.len(), bin_count, self.lumi.len()), || {
-                EmptySubgridV1::default().into()
+                EmptySubgridV1.into()
             }),
         );
 
@@ -992,7 +994,7 @@ impl Grid {
                 old_dim.1 + new_dim.1,
                 old_dim.2 + new_dim.2,
             ),
-            || EmptySubgridV1::default().into(),
+            || EmptySubgridV1.into(),
         );
 
         for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
@@ -1164,7 +1166,7 @@ impl Grid {
             match subgrid {
                 // replace empty subgrids of any type with `EmptySubgridV1`
                 _ if subgrid.is_empty() => {
-                    *subgrid = EmptySubgridV1::default().into();
+                    *subgrid = EmptySubgridV1.into();
                 }
                 // can't be optimized without losing information
                 SubgridEnum::NtupleSubgridV1(_) => continue,
@@ -1254,7 +1256,7 @@ impl Grid {
                         }
                         lhs.merge(rhs, false);
 
-                        *rhs = EmptySubgridV1::default().into();
+                        *rhs = EmptySubgridV1.into();
                     }
                 }
             }
@@ -1290,7 +1292,7 @@ impl Grid {
             |(order, bin, new_lumi)| {
                 mem::replace(
                     &mut self.subgrids[[order, bin, keep_lumi_indices[new_lumi]]],
-                    EmptySubgridV1::default().into(),
+                    EmptySubgridV1.into(),
                 )
             },
         );
@@ -1357,7 +1359,7 @@ impl Grid {
                         }
 
                         lhs.merge(rhs, true);
-                        *rhs = EmptySubgridV1::default().into();
+                        *rhs = EmptySubgridV1.into();
                     }
                 }
             }
@@ -1572,7 +1574,7 @@ impl Grid {
         // create target grid
         let mut result = Self {
             subgrids: Array3::from_shape_simple_fn((1, self.bin_info().bins(), lumi.len()), || {
-                EmptySubgridV1::default().into()
+                EmptySubgridV1.into()
             }),
             lumi,
             bin_limits: self.bin_limits.clone(),
@@ -1593,7 +1595,8 @@ impl Grid {
 
         // Setup progress bar
         let bar = ProgressBar::new(
-            (self.bin_info().bins() * self.lumi.len() * pids1.len() * pids2.len()) as u64,
+            u64::try_from(self.bin_info().bins() * self.lumi.len() * pids1.len() * pids2.len())
+                .unwrap(),
         );
         bar.set_style(ProgressStyle::default_bar().template(
             "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} - ETA: {eta_precise} {msg}",
@@ -1726,7 +1729,7 @@ impl Grid {
                 let src_array = src_array;
 
                 if src_array.is_empty() {
-                    bar.inc((pids1.len() * pids2.len()) as u64);
+                    bar.inc(u64::try_from(pids1.len() * pids2.len()).unwrap());
                     continue;
                 }
 
@@ -1854,7 +1857,7 @@ impl Grid {
                         if !tgt_array.is_empty() {
                             let mut tgt_subgrid = mem::replace(
                                 &mut result.subgrids[[0, bin, tgt_lumi]],
-                                EmptySubgridV1::default().into(),
+                                EmptySubgridV1.into(),
                             );
 
                             let mut subgrid = match tgt_subgrid {
@@ -2523,7 +2526,7 @@ mod tests {
         );
 
         // merging with empty subgrids should not change the grid
-        assert!(grid.merge(other).is_ok());
+        grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
@@ -2584,7 +2587,7 @@ mod tests {
         );
 
         // merge with four non-empty subgrids
-        assert!(grid.merge(other).is_ok());
+        grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);
@@ -2627,7 +2630,7 @@ mod tests {
             },
         );
 
-        assert!(grid.merge(other).is_ok());
+        grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 3);
@@ -2673,7 +2676,7 @@ mod tests {
             &[2.0, 3.0],
         );
 
-        assert!(grid.merge(other).is_ok());
+        grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
         assert_eq!(grid.lumi().len(), 2);

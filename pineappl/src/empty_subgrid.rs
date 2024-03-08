@@ -8,7 +8,7 @@ use std::iter;
 
 /// A subgrid type that is always empty.
 #[derive(Clone, Default, Deserialize, Serialize)]
-pub struct EmptySubgridV1 {}
+pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
     fn convolute(
@@ -53,7 +53,7 @@ impl Subgrid for EmptySubgridV1 {
     fn symmetrize(&mut self) {}
 
     fn clone_empty(&self) -> SubgridEnum {
-        Self::default().into()
+        Self.into()
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
@@ -81,10 +81,10 @@ mod tests {
 
     #[test]
     fn create_empty() {
-        let mut subgrid = EmptySubgridV1::default();
+        let mut subgrid = EmptySubgridV1;
         assert_eq!(subgrid.convolute(&[], &[], &[], &mut |_, _, _| 0.0), 0.0,);
         assert!(subgrid.is_empty());
-        subgrid.merge(&mut EmptySubgridV1::default().into(), false);
+        subgrid.merge(&mut EmptySubgridV1.into(), false);
         subgrid.scale(2.0);
         subgrid.symmetrize();
         assert!(subgrid.clone_empty().is_empty());
@@ -104,7 +104,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
-        let mut subgrid = EmptySubgridV1::default();
+        let mut subgrid = EmptySubgridV1;
         subgrid.fill(&Ntuple {
             x1: 0.0,
             x2: 0.0,
@@ -115,16 +115,16 @@ mod tests {
 
     #[test]
     fn q2_grid() {
-        assert!(EmptySubgridV1::default().mu2_grid().is_empty());
+        assert!(EmptySubgridV1.mu2_grid().is_empty());
     }
 
     #[test]
     fn x1_grid() {
-        assert!(EmptySubgridV1::default().x1_grid().is_empty());
+        assert!(EmptySubgridV1.x1_grid().is_empty());
     }
 
     #[test]
     fn x2_grid() {
-        assert!(EmptySubgridV1::default().x2_grid().is_empty());
+        assert!(EmptySubgridV1.x2_grid().is_empty());
     }
 }

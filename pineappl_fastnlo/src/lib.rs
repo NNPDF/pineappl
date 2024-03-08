@@ -1,6 +1,10 @@
 //! TODO
 
 #![allow(clippy::missing_safety_doc)]
+// doesn't work with cxx
+#![allow(clippy::multiple_inherent_impl)]
+// doesn't work with cxx
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(clippy::must_use_candidate)]
 #![allow(missing_docs)]
 
@@ -232,7 +236,7 @@ impl FromStr for ffi::EScaleFunctionalForm {
             "kExpProd2" => Ok(Self::kExpProd2),
             "kExtern" => Ok(Self::kExtern),
             "kConst" => Ok(Self::kConst),
-            _ => Err(ScaleFunctionalFormParseError(s.to_string())),
+            _ => Err(ScaleFunctionalFormParseError(s.to_owned())),
         }
     }
 }

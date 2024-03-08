@@ -115,7 +115,7 @@ impl Subcommand for Opts {
         for _ in 0..limit {
             title.add_cell(cell!(c->"l"));
             title.add_cell(
-                cell!(c->&if self.absolute { format!("{y_label}\n[{y_unit}]") } else { "size\n[%]".to_string() }),
+                cell!(c->&if self.absolute { format!("{y_label}\n[{y_unit}]") } else { "size\n[%]".to_owned() }),
             );
         }
 

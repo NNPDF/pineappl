@@ -156,7 +156,7 @@ impl FromStr for BinRemapper {
         if let Some(first) = remaps.first() {
             if first.len() != 1 {
                 return Err(ParseBinRemapperError::Error(
-                    "'|' syntax not meaningful for first dimension".to_string(),
+                    "'|' syntax not meaningful for first dimension".to_owned(),
                 ));
             }
         }
@@ -167,7 +167,7 @@ impl FromStr for BinRemapper {
                 if vec[i].is_empty() {
                     if vec[i - 1].is_empty() {
                         return Err(ParseBinRemapperError::Error(
-                            "empty repetition with '|'".to_string(),
+                            "empty repetition with '|'".to_owned(),
                         ));
                     }
 
@@ -198,7 +198,7 @@ impl FromStr for BinRemapper {
 
                 if vec.len() <= 1 {
                     return Err(ParseBinRemapperError::Error(
-                        "no limits due to ':' syntax".to_string(),
+                        "no limits due to ':' syntax".to_owned(),
                     ));
                 }
             }
@@ -247,7 +247,7 @@ impl FromStr for BinRemapper {
                     normalization *= right - left;
                 } else {
                     return Err(ParseBinRemapperError::Error(
-                        "missing '|' specification: number of variants too small".to_string(),
+                        "missing '|' specification: number of variants too small".to_owned(),
                     ));
                 }
             }
@@ -797,14 +797,14 @@ mod test {
         let mut limits = BinLimits::new(vec![0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]);
 
         // right merge
-        assert!(limits
+        limits
             .merge(&BinLimits::new(vec![
                 1.0,
                 1.0 + 1.0 / 3.0,
                 1.0 + 2.0 / 3.0,
-                2.0
+                2.0,
             ]))
-            .is_ok());
+            .unwrap();
 
         assert_eq!(limits.left(), 0.0);
         assert_eq!(limits.right(), 2.0);
@@ -1039,7 +1039,7 @@ mod test {
     #[test]
     fn merge_bins() {
         let mut limits = BinLimits::new(vec![0.0, 0.4, 0.7, 0.9, 1.0]);
-        assert!(limits.merge_bins(0..4).is_ok());
+        limits.merge_bins(0..4).unwrap();
 
         assert_eq!(limits.bins(), 1);
         assert_eq!(limits.index(-1.0), None);

@@ -71,7 +71,7 @@ use std::slice;
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
 fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgridParams) {
-    let mut subgrid_type = "LagrangeSubgrid".to_string();
+    let mut subgrid_type = "LagrangeSubgrid".to_owned();
     let mut subgrid_params = SubgridParams::default();
     let mut extra = ExtraSubgridParams::default();
 
@@ -179,7 +179,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
         }
 
         if let Some(value) = keyval.strings.get("subgrid_type") {
-            subgrid_type = value.to_str().unwrap().to_string();
+            subgrid_type = value.to_str().unwrap().to_owned();
         }
     }
 
@@ -329,7 +329,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     let order_mask = if order_mask.is_null() {
         vec![]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
     };
     let lumi_mask = if lumi_mask.is_null() {
         vec![]

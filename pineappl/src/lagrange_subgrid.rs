@@ -111,9 +111,7 @@ impl LagrangeSubgridV1 {
     fn gettau(&self, iy: usize) -> f64 {
         f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
     }
-}
 
-impl LagrangeSubgridV1 {
     fn increase_tau(&mut self, new_itaumin: usize, new_itaumax: usize) {
         let min_diff = self.itaumin - new_itaumin;
 
@@ -782,14 +780,10 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn static_scale(&self) -> Option<Mu2> {
-        if self.static_q2 > 0.0 {
-            Some(Mu2 {
-                ren: self.static_q2,
-                fac: self.static_q2,
-            })
-        } else {
-            None
-        }
+        (self.static_q2 > 0.0).then_some(Mu2 {
+            ren: self.static_q2,
+            fac: self.static_q2,
+        })
     }
 }
 

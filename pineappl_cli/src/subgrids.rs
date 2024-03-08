@@ -116,7 +116,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren, fac: _ }| format!("{:.*}", self.digits, ren.sqrt()))
+                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren.sqrt()))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -125,7 +125,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren, fac: _ }| format!("{:.*}", self.digits, ren))
+                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -134,7 +134,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren: _, fac }| format!("{:.*}", self.digits, fac.sqrt()))
+                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac.sqrt()))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
@@ -143,7 +143,7 @@ impl Subcommand for Opts {
                 let values: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|Mu2 { ren: _, fac }| format!("{:.*}", self.digits, fac))
+                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));

@@ -1,7 +1,11 @@
 //! TODO
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_safety_doc)]
+// doesn't work with cxx
+#![allow(clippy::multiple_inherent_impl)]
+// doesn't work with cxx
+#![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::too_many_arguments)]
 #![allow(missing_docs)]

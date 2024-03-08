@@ -160,7 +160,7 @@ impl Subcommand for Opts {
                 .join(",");
 
             println!("{orders}");
-        } else if let Some(ref key) = self.group.get {
+        } else if let Some(key) = &self.group.get {
             grid.upgrade();
 
             grid.key_values().map_or_else(
@@ -221,7 +221,7 @@ impl Subcommand for Opts {
                         } else if **num == 0 && self.group.orders_spaces {
                             Some(" ".repeat(string.len() + 1))
                         } else {
-                            let mut result = (*string).to_string();
+                            let mut result = (*string).to_owned();
                             result.push_str(&num.to_string());
                             Some(result)
                         }

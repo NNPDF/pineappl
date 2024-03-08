@@ -200,7 +200,7 @@ fn pid_slices(
 
     if pid_indices.is_empty() {
         return Err(GridError::EvolutionFailure(
-            "no non-zero operator found; result would be an empty FkTable".to_string(),
+            "no non-zero operator found; result would be an empty FkTable".to_owned(),
         ));
     }
 

@@ -109,15 +109,15 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 // explicitly set the evolution basis
                 fktable
                     .key_values_mut()
-                    .insert("lumi_id_types".to_string(), "evol".to_string());
+                    .insert("lumi_id_types".to_owned(), "evol".to_owned());
 
                 fktable
                     .key_values_mut()
-                    .insert("initial_state_1".to_string(), "2212".to_string());
+                    .insert("initial_state_1".to_owned(), "2212".to_owned());
                 if !hadronic {
                     fktable
                         .key_values_mut()
-                        .insert("initial_state_2".to_string(), dis_pid.to_string());
+                        .insert("initial_state_2".to_owned(), dis_pid.to_string());
                 }
 
                 grid = Some(fktable);

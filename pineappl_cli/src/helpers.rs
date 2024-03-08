@@ -30,7 +30,7 @@ pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
 
     Ok((
         PdfSet::new(&pdfset.parse().map_or_else(
-            |_| pdfset.to_string(),
+            |_| pdfset.to_owned(),
             |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
         ))?,
         member,
@@ -286,7 +286,7 @@ pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
 
     if let Ok(lhaid) = lhapdf_name.parse() {
         if lhapdf::lookup_pdf(lhaid).is_some() {
-            return Ok(argument.to_string());
+            return Ok(argument.to_owned());
         }
 
         return Err(format!(
@@ -299,7 +299,7 @@ pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
             .split_once('/')
             .map_or(lhapdf_name, |(setname, _)| setname)
     }) {
-        return Ok(argument.to_string());
+        return Ok(argument.to_owned());
     }
 
     Err(format!("The PDF set `{lhapdf_name}` was not found"))

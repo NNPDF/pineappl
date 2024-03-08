@@ -165,9 +165,9 @@ pub fn determine_lumi_id_types(pids: &[i32]) -> String {
         .count()
         > 3
     {
-        "evol".to_string()
+        "evol".to_owned()
     } else {
-        "pdg_mc_ids".to_string()
+        "pdg_mc_ids".to_owned()
     }
 }
 

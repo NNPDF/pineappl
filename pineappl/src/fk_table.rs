@@ -117,7 +117,7 @@ impl FromStr for FkAssumptions {
             "Nf3Sym" => Self::Nf3Sym,
             _ => {
                 return Err(UnknownFkAssumption {
-                    variant: s.to_string(),
+                    variant: s.to_owned(),
                 });
             }
         })
@@ -410,9 +410,9 @@ impl TryFrom<Grid> for FkTable {
 
         if let Some(key_values) = grid.key_values() {
             let keys = vec![
-                "initial_state_1".to_string(),
-                "initial_state_2".to_string(),
-                "lumi_id_types".to_string(),
+                "initial_state_1".to_owned(),
+                "initial_state_2".to_owned(),
+                "lumi_id_types".to_owned(),
             ];
 
             for key in keys {
@@ -422,7 +422,7 @@ impl TryFrom<Grid> for FkTable {
             }
         } else {
             return Err(TryFromGridError::MetadataMissing(
-                "initial_states_1".to_string(),
+                "initial_states_1".to_owned(),
             ));
         }
 
@@ -447,7 +447,7 @@ mod tests {
         assert_eq!(
             FkAssumptions::from_str("XXXXXX"),
             Err(UnknownFkAssumption {
-                variant: "XXXXXX".to_string()
+                variant: "XXXXXX".to_owned()
             })
         );
     }

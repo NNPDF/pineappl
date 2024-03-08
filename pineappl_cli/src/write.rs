@@ -62,7 +62,7 @@ impl FromArgMatches for MoreArgs {
 
     fn from_arg_matches_mut(matches: &mut ArgMatches) -> Result<Self, Error> {
         let mut args = Vec::new();
-        let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_string()).collect();
+        let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_owned()).collect();
 
         for id in ids {
             let indices: Vec<_> = matches.indices_of(&id).unwrap().collect();
