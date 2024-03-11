@@ -21,12 +21,6 @@ grid=${dataset}.pineappl
 # download link for Madgraph5_aMC@NLO
 MG5_AMC_AT_NLO=https://launchpad.net/mg5amcnlo/3.0/3.3.x/+download/MG5_aMC_v3.3.2.tar.gz
 
-# try to find pineappl
-if ! which pineappl 2> /dev/null; then
-    echo "The binary \`pineappl\` wasn't found. Please install it." >&2
-    exit 1
-fi
-
 # step 0: install Madgraph5_aMC@NLO
 TMP=$(mktemp -d)
 wget -q ${MG5_AMC_AT_NLO} -O - | tar xz -C "${TMP}"
@@ -373,21 +367,25 @@ EOF
 
 mg5_aMC launch.txt
 
-# step 6: change the bin limits from 0,1,2,3,... to the actual values
-pineappl remap ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000'
-mv "${grid}".tmp "${grid}"
+# try to find pineappl
+if which pineappl 2> /dev/null; then
+    # step 6: change the bin limits from 0,1,2,3,... to the actual values
+    pineappl write --remap '40,45,50,55,60,64,68,72,76,81,86,91,96,101,106,110,115,120,126,133,141,150,160,171,185,200,220,243,273,320,380,440,510,600,700,830,1000,1500,3000' ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}".tmp
 
-# step 7: add some metadata (used mainly by the plot script)
-pineappl set "${grid}" "${grid}".lz4 \
-    --entry description 'Differential Drell–Yan cross section at 14 TeV' \
-    --entry x1_label 'Mll' \
-    --entry x1_label_tex '$M_{\ell\bar{\ell}}$' \
-    --entry x1_unit 'GeV' \
-    --entry y_label 'dsig/dMll' \
-    --entry y_label_tex '$\frac{\mathrm{d}\sigma}{\mathrm{d}M_{\ell\bar{\ell}}}$' \
-    --entry y_unit 'pb/GeV'
+    # step 7: add some metadata (used mainly by the plot script)
+    pineappl write "${grid}".tmp "${grid}" \
+        --set-key-value description 'Differential Drell–Yan cross section at 14 TeV' \
+        --set-key-value x1_label 'Mll' \
+        --set-key-value x1_label_tex '$M_{\ell\bar{\ell}}$' \
+        --set-key-value x1_unit 'GeV' \
+        --set-key-value y_label 'dsig/dMll' \
+        --set-key-value y_label_tex '$\frac{\mathrm{d}\sigma}{\mathrm{d}M_{\ell\bar{\ell}}}$' \
+        --set-key-value y_unit 'pb/GeV'
 
-cat <<EOF
+    # remove temporary file
+    rm "${grid}".tmp
+
+    cat <<EOF
 Generated ${grid}.
 
 Try using:
@@ -395,3 +393,8 @@ Try using:
   - pineappl --silence-lhapdf plot ${grid} LHAPDF_SET_NAME1 LHAPDF_SET_NAME2 ... > plot_script.py
   - pineappl --help
 EOF
+else
+    mv ${dataset}/Events/run_01/amcblast_obs_0.pineappl "${grid}"
+fi
+
+echo "Your interpolation grid is in '${grid}'"
