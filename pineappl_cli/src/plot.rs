@@ -523,7 +523,7 @@ impl Subcommand for Opts {
             let values1: Vec<_> = pdfset1
                 .par_iter_mut()
                 .map(|pdf| {
-                    match helpers::convolute(
+                    let values = helpers::convolute(
                         &grid,
                         pdf,
                         &[],
@@ -532,18 +532,15 @@ impl Subcommand for Opts {
                         1,
                         ConvoluteMode::Normal,
                         cfg,
-                    )
-                    .as_slice()
-                    {
-                        [value] => *value,
-                        _ => unreachable!(),
-                    }
+                    );
+                    assert_eq!(values.len(), 1);
+                    values[0]
                 })
                 .collect();
             let values2: Vec<_> = pdfset2
                 .par_iter_mut()
                 .map(|pdf| {
-                    match helpers::convolute(
+                    let values = helpers::convolute(
                         &grid,
                         pdf,
                         &[],
@@ -552,12 +549,9 @@ impl Subcommand for Opts {
                         1,
                         ConvoluteMode::Normal,
                         cfg,
-                    )
-                    .as_slice()
-                    {
-                        [value] => *value,
-                        _ => unreachable!(),
-                    }
+                    );
+                    assert_eq!(values.len(), 1);
+                    values[0]
                 })
                 .collect();
 
