@@ -91,3 +91,15 @@ curl -s -LJ "${base_url}"/v${version}/pineappl_capi-${target}.tar.gz \
 sed s:prefix=/:prefix=${prefix}: "${prefix}"/lib/pkgconfig/pineappl_capi.pc > \
     "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new
 mv "${prefix}"/lib/pkgconfig/pineappl_capi.pc.new "${prefix}"/lib/pkgconfig/pineappl_capi.pc
+
+if command -v pkg-config >/dev/null; then
+    if ! pkg-config --libs pineappl_capi >/dev/null; then
+        echo
+        echo "Warning: Your PKG_CONFIG_PATH environment variable isn't properly set. Try adding"
+        echo "  export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig"
+        echo "to your shell configuration file"
+    fi
+else
+    echo
+    echo "Warning: \`pkg-config\` binary not found. Without it the CAPI may not be found."
+fi

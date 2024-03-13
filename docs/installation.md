@@ -49,6 +49,10 @@ like a specific version, pass the version along with `--version`:
 
     .. | sh -s -- --version 0.6.0-alpha.18
 
+After the installation the script will check whether certain environment
+variables are set correctly and will complain if this is not the case. Read and
+follow the instructions of the script.
+
 ### From source
 
 If you want to build the CAPI from source instead, you first need to
@@ -75,8 +79,9 @@ If you want to build the CAPI from source instead, you first need to
        cd ..
 
    where `${prefix}` points to the desired installation directory.
-4. Finally, you need to set the environment variables `PKG_CONFIG_PATH` and
-   `LD_LIBRARY_PATH` to the right directories. Adding
+4. Finally, if you installed the library into a non-standard prefix you need to
+   set the environment variables `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH` to the
+   right directories. Adding
 
        export LD_LIBRARY_PATH=${prefix}/lib:$LD_LIBRARY_PATH
        export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:$PKG_CONFIG_PATH
