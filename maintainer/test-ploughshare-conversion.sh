@@ -100,7 +100,7 @@ for grid in ${grids[@]}; do
         fi
 
         converted_grid="${grid}".pineappl.lz4
-        pineappl --silence-lhapdf import --silence-libraries --accuracy 1e-12 "${grid}" "${converted_grid}" NNPDF31_nnlo_as_0118_luxqed
+        pineappl --silence-lhapdf import --accuracy 1e-12 "${grid}" "${converted_grid}" NNPDF31_nnlo_as_0118_luxqed
         du -h "${grid}" "${converted_grid}"
     done
     rm -r ${archive%.tgz}
