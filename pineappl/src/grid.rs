@@ -889,12 +889,11 @@ impl Grid {
     /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bins = 0;
         let mut new_entries: Vec<LumiEntry> = Vec::new();
 
-        if self.bin_info() != other.bin_info() {
+        let new_bin_limits = if self.bin_info() != other.bin_info() {
             let lhs_bins = self.bin_info().bins();
-            new_bins = other.bin_info().bins();
+            let rhs_bins = other.bin_info().bins();
 
             let lhs_remapper = self.remapper_mut();
             let rhs_remapper = other.remapper();
@@ -904,57 +903,38 @@ impl Grid {
                     lhs.merge(rhs).map_err(GridError::MergeBinError)?;
 
                     let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
-                    let b = u32::try_from(lhs_bins + new_bins).unwrap_or_else(|_| unreachable!());
+                    let b = u32::try_from(lhs_bins + rhs_bins).unwrap_or_else(|_| unreachable!());
 
-                    self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
                     other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
+                    BinLimits::new((0..=b).map(f64::from).collect())
                 } else {
                     // Return an error
                     todo!();
                 }
             } else if rhs_remapper.is_none() {
-                self.bin_limits
+                let mut new_bin_limits = self.bin_limits.clone();
+                new_bin_limits
                     .merge(&other.bin_limits)
                     .map_err(GridError::InvalidBinLimits)?;
+                new_bin_limits
             } else {
                 // Return an error
                 todo!();
             }
-        }
+        } else {
+            self.bin_limits.clone()
+        };
 
         for ((i, _, k), _) in other
             .subgrids
             .indexed_iter_mut()
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
-            let other_order = &other.orders[i];
-            let other_entry = &other.lumi[k];
-
-            if !self
-                .orders
-                .iter()
-                .chain(new_orders.iter())
-                .any(|x| x == other_order)
-            {
-                new_orders.push(other_order.clone());
-            }
-
-            if !self
-                .lumi
-                .iter()
-                .chain(new_entries.iter())
-                .any(|y| y == other_entry)
-            {
-                new_entries.push(other_entry.clone());
-            }
+            new_orders.push(other.orders[i].clone());
+            new_entries.push(other.lumi[k].clone());
         }
 
-        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
-            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
-        }
-
-        self.orders.append(&mut new_orders);
-        self.lumi.append(&mut new_entries);
+        self.extend(&new_orders, &new_bin_limits, &new_entries);
 
         let bin_indices: Vec<_> = (0..other.bin_info().bins())
             .map(|bin| {
@@ -984,6 +964,50 @@ impl Grid {
         }
 
         Ok(())
+    }
+
+    /// Extend subgrids array with the given `orders`, luminosity `entries`, and number of `bins`.
+    ///
+    /// Returns the inserted orders and entries, i.e. those not already present.
+    pub fn extend(
+        &mut self,
+        orders: &[Order],
+        bins: &BinLimits,
+        entries: &[LumiEntry],
+    ) -> (Vec<Order>, Vec<LumiEntry>) {
+        /// Extend collection with non-duplicated elements.
+        ///
+        /// Notice that this function does not modify the order of elements.
+        fn unique<T: Clone + PartialEq>(current: &[T], update: &[T]) -> Vec<T> {
+            let mut new = Vec::new();
+
+            // Since the order has to be preserved, this can't be achieved just by sorting and
+            // deduplicating.
+            for el in update.iter() {
+                if !current
+                    .iter()
+                    .chain(new.iter())
+                    .any(|x| x == el)
+                {
+                    new.push((*el).clone());
+                }
+            }
+            new
+        }
+
+        let mut new_orders = unique(&self.orders, &orders);
+        let new_bins = bins.bins() - self.bin_limits.bins();
+        let mut new_entries = unique(&self.lumi, &entries);
+
+        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
+            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
+        }
+
+        self.orders.append(&mut new_orders);
+        self.lumi.append(&mut new_entries);
+        self.bin_limits = bins.clone();
+
+        (new_orders, new_entries)
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
