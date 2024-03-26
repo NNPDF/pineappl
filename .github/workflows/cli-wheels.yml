@@ -1,4 +1,4 @@
-name: Release
+name: Publish CLI wheels
 
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
       - name: Install non-Rust dependencies
         run: |
           for script in {install,download,variables}; do
-            curl \
+            curl -O \
               https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
           done
           sh install.sh
@@ -95,7 +95,7 @@ jobs:
       - name: Install non-Rust dependencies
         run: |
           for script in {install,download,variables}; do
-            curl \
+            curl -O \
               https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
           done
           sh install.sh
@@ -145,7 +145,7 @@ jobs:
       - name: Install non-Rust dependencies
         run: |
           for script in {install,download,variables}; do
-            curl \
+            curl -O \
               https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
           done
           sh install.sh
