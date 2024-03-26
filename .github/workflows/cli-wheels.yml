@@ -45,11 +45,7 @@ jobs:
           pip install maturin auditwheel
       - name: Install non-Rust dependencies
         run: |
-          for script in {install,download,variables}; do
-            curl -O \
-              https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
-          done
-          sh install.sh
+          python maintainer/install-lhapdf.py
       - name: Build wheels
         run: |
           # `--find-interpreter` is needed to generate wheels for
@@ -94,11 +90,7 @@ jobs:
           pip install maturin delocate
       - name: Install non-Rust dependencies
         run: |
-          for script in {install,download,variables}; do
-            curl -O \
-              https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
-          done
-          sh install.sh
+          python maintainer/install-lhapdf.py
       - name: Build wheels
         run: |
           # `--find-interpreter` is needed to generate wheels for
@@ -144,11 +136,7 @@ jobs:
           pip install maturin delvewheel
       - name: Install non-Rust dependencies
         run: |
-          for script in {install,download,variables}; do
-            curl -O \
-              https://raw.githubusercontent.com/NNPDF/workflows/v2/packages/lhapdf/${script}.sh
-          done
-          sh install.sh
+          python maintainer/install-lhapdf.py
       - name: Build wheels
         run: |
           # `--find-interpreter` is needed to generate wheels for
