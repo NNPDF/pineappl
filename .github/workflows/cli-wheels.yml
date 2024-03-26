@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v4
         with:
           # WARNING: be careful with the ordering - the last version is the
           # default one. Apparently maturin doesn't find all Python versions
@@ -100,6 +100,7 @@ jobs:
       - name: Patch wheels
         run: |
           delocate-wheel dist/*
+          python maintainer/patch-macos-wheel.py
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
