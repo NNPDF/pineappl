@@ -6,14 +6,17 @@ on:
     #   - "v[0-9]+*"
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
   wheels-linux:
     runs-on: ubuntu-latest
-    # TODO: maybe I just need manylinux
-    container: ghcr.io/nnpdf/pineappl-ci:latest
+    container: quay.io/pypa/manylinux2014_x86_64
     strategy:
       matrix:
         target: [x86_64]
@@ -67,6 +70,7 @@ jobs:
     strategy:
       matrix:
         target: [aarch64, x86_64]
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -115,6 +119,7 @@ jobs:
     strategy:
       matrix:
         target: [x64]
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
