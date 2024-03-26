@@ -22,7 +22,7 @@ jobs:
         target: [x86_64]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
