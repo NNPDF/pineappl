@@ -48,7 +48,7 @@ jobs:
         working-directory: pineappl_cli
         run: |
           export CIBW_SKIP="cp36-*"
-          cibuildwheel --out ../dist
+          cibuildwheel --output-dir ../dist .
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -76,7 +76,6 @@ jobs:
             pypy3.8
             pypy3.9
             pypy3.10
-            3.8
             3.9
             3.11
             3.12
