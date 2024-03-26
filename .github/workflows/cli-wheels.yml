@@ -12,20 +12,40 @@ env:
 jobs:
   wheels-linux:
     runs-on: ubuntu-latest
+    # TODO: maybe I just need manylinux
+    container: ghcr.io/nnpdf/pineappl-ci:latest
     strategy:
       matrix:
         target: [x86_64]
+
     steps:
       - uses: actions/checkout@v4
-      # for Linux the wheels are built in a container, so we don't need the `setup-python` action
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
+      - uses: actions/setup-python@v5
         with:
-          target: ${{ matrix.target }}
-          # `--find-interpreter` is needed to generate wheels for *all* Python versions
-          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
-          sccache: "true"
-          manylinux: auto
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
+          python-version: |
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
+            3.7
+            3.8
+            3.9
+            3.11
+            3.12
+            3.10
+          architecture: ${{ matrix.target }}
+      - name: Install build tools
+        run: |
+          pip install maturin auditwheel
+      - name: Build wheels
+        run: |
+          # `--find-interpreter` is needed to generate wheels for
+          # *all* Python versions
+          maturin build --release --out dist --find-interpreter \
+            --manifest-path pineappl_cli/Cargo.toml
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -41,9 +61,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
           python-version: |
             pypy3.7
             pypy3.8
@@ -55,12 +75,15 @@ jobs:
             3.11
             3.12
             3.10
+      - name: Install build tools
+        run: |
+          pip install maturin delocate
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
-          sccache: "true"
+        run: |
+          # `--find-interpreter` is needed to generate wheels for
+          # *all* Python versions
+          maturin build --release --out dist --find-interpreter \
+            --manifest-path pineappl_cli/Cargo.toml
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -76,9 +99,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # WARNING: be careful with the ordering - the last version is the default one. Apparently
-          # maturin doesn't find all Python versions when one chooses a PyPy version instead of
-          # CPython as default
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
           python-version: |
             pypy3.7
             pypy3.8
@@ -91,12 +114,15 @@ jobs:
             3.12
             3.10
           architecture: ${{ matrix.target }}
+      - name: Install build tools
+        run: |
+          pip install maturin delvewheel
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
-          sccache: "true"
+        run: |
+          # `--find-interpreter` is needed to generate wheels for
+          # *all* Python versions
+          maturin build --release --out dist --find-interpreter \
+            --manifest-path pineappl_cli/Cargo.toml
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
