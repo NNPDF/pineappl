@@ -22,6 +22,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -76,7 +77,6 @@ jobs:
             pypy3.8
             pypy3.9
             pypy3.10
-            3.9
             3.11
             3.12
             3.10
