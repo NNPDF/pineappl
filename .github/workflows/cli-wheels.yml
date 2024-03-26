@@ -92,10 +92,20 @@ jobs:
           python maintainer/install-lhapdf.py
       - name: Build wheels
         run: |
+          case ${{ matrix.target }} in
+            aarch64)
+              TARGET="aarch64-apple-darwin"
+              ;;
+            x86_64)
+              TARGET="x86_64-apple-darwin"
+              ;;
+            *)
+              exit 1
+          esac
           # `--find-interpreter` is needed to generate wheels for
           # *all* Python versions
           maturin build --release --out dist --find-interpreter \
-            --manifest-path pineappl_cli/Cargo.toml
+            --target $TARGET --manifest-path pineappl_cli/Cargo.toml
       - name: Patch wheels
         run: |
           delocate-wheel dist/*
