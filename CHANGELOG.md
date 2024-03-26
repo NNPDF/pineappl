@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `Grid::evolve` has now been marked deprecated
+- switched from `lhapdf` to `managed-lhapdf` crate which automatically
+  downloads PDF sets when they are needed
 
 ### Fixed
 

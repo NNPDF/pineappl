@@ -282,27 +282,8 @@ pub fn convolute_subgrid(
 }
 
 pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
-    let lhapdf_name = argument.rsplit_once('=').map_or(argument, |(name, _)| name);
-
-    if let Ok(lhaid) = lhapdf_name.parse() {
-        if lhapdf::lookup_pdf(lhaid).is_some() {
-            return Ok(argument.to_owned());
-        }
-
-        return Err(format!(
-            "The PDF set for the LHAPDF ID `{lhapdf_name}` was not found"
-        ));
-    } else if lhapdf::available_pdf_sets().iter().any(|set| {
-        // there's no function in LHAPDF to validate the 'setname/member' syntax; there is a
-        // function that returns the LHAPDF ID, but that ID might not exist
-        *set == lhapdf_name
-            .split_once('/')
-            .map_or(lhapdf_name, |(setname, _)| setname)
-    }) {
-        return Ok(argument.to_owned());
-    }
-
-    Err(format!("The PDF set `{lhapdf_name}` was not found"))
+    // TODO: figure out how to validate `argument` with `managed-lhapdf`
+    Ok(argument.to_owned())
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {

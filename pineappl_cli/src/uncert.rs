@@ -116,7 +116,7 @@ impl Subcommand for Opts {
                 .build_global()
                 .unwrap();
 
-            set.mk_pdfs()
+            set.mk_pdfs()?
                 .into_par_iter()
                 .flat_map(|mut pdf| {
                     helpers::convolute(

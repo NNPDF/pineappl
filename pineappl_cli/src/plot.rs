@@ -272,12 +272,12 @@ impl Subcommand for Opts {
                             let results =
                                 helpers::convolute(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
 
-                            vec![results; 3]
+                            Ok(vec![results; 3])
                         } else {
                             let (set, member) = helpers::create_pdfset(pdfset).unwrap();
 
                             let pdf_results: Vec<_> = set
-                                .mk_pdfs()
+                                .mk_pdfs()?
                                 .into_par_iter()
                                 .flat_map(|mut pdf| {
                                     helpers::convolute(
@@ -316,10 +316,10 @@ impl Subcommand for Opts {
                                 max.push(uncertainty.central + uncertainty.errplus);
                             }
 
-                            vec![central, min, max]
+                            Ok(vec![central, min, max])
                         }
                     })
-                    .collect();
+                    .collect::<Result<_>>()?;
 
                 let central: Vec<_> = results.iter().step_by(self.scales).copied().collect();
                 let min: Vec<_> = results
@@ -517,8 +517,8 @@ impl Subcommand for Opts {
 
             let (set1, member1) = helpers::create_pdfset(pdfset1)?;
             let (set2, member2) = helpers::create_pdfset(pdfset2)?;
-            let mut pdfset1 = set1.mk_pdfs();
-            let mut pdfset2 = set2.mk_pdfs();
+            let mut pdfset1 = set1.mk_pdfs()?;
+            let mut pdfset2 = set2.mk_pdfs()?;
 
             let values1: Vec<_> = pdfset1
                 .par_iter_mut()

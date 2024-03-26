@@ -110,18 +110,6 @@ const THREE_PDFS_STR: &str =
 7    4  4.5 2.7517266e1    2.7259743e1          -0.94    2.8446007e1           3.38
 ";
 
-const WRONG_LHAID_STR: &str =
-    "error: invalid value '0' for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
-
-For more information, try '--help'.
-";
-
-const WRONG_PDFSET_STR: &str =
-    "error: invalid value 'IDONTEXIST' for '<PDFSETS>...': The PDF set `IDONTEXIST` was not found
-
-For more information, try '--help'.
-";
-
 const BINS_13567_STR: &str = "b   etal   dsig/detal 
      []       [pb]    
 -+----+---+-----------
@@ -297,36 +285,6 @@ fn three_pdfs() {
         .assert()
         .success()
         .stdout(THREE_PDFS_STR);
-}
-
-#[test]
-fn wrong_lhaid() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "convolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "0",
-        ])
-        .assert()
-        .failure()
-        .stderr(WRONG_LHAID_STR);
-}
-
-#[test]
-fn wrong_pdfset() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "convolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "IDONTEXIST",
-        ])
-        .assert()
-        .failure()
-        .stderr(WRONG_PDFSET_STR);
 }
 
 #[test]

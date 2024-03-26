@@ -53,8 +53,8 @@ impl Subcommand for Opts {
 
         let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
         let (set2, member2) = helpers::create_pdfset(&self.pdfset2)?;
-        let mut pdfset1 = set1.mk_pdfs();
-        let mut pdfset2 = set2.mk_pdfs();
+        let mut pdfset1 = set1.mk_pdfs()?;
+        let mut pdfset2 = set2.mk_pdfs()?;
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
