@@ -46,6 +46,9 @@ jobs:
           # *all* Python versions
           maturin build --release --out dist --find-interpreter \
             --manifest-path pineappl_cli/Cargo.toml
+      - name: Patch wheels
+        run: |
+          auditwheel repair dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -84,6 +87,9 @@ jobs:
           # *all* Python versions
           maturin build --release --out dist --find-interpreter \
             --manifest-path pineappl_cli/Cargo.toml
+      - name: Patch wheels
+        run: |
+          delocate-wheel dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
