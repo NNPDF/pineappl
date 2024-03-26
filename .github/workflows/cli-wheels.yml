@@ -22,34 +22,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-python@v5
-        with:
-          # WARNING: be careful with the ordering - the last version is the
-          # default one. Apparently maturin doesn't find all Python versions
-          # when one chooses a PyPy version instead of CPython as default
-          python-version: |
-            pypy3.7
-            pypy3.8
-            pypy3.9
-            pypy3.10
-            3.7
-            3.8
-            3.9
-            3.11
-            3.12
-            3.10
-      - name: Install build tools
-        run: |
-          pip install cibuildwheel
-      - name: Install non-Rust dependencies
-        run: |
-          python maintainer/install-lhapdf.py
       - name: Build wheels
-        working-directory: pineappl_cli
-        run: |
-          export CIBW_SKIP="cp36-*"
-          cibuildwheel --output-dir ../dist .
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          before-script-linux: |
+            python maintainer/install-lhapdf.py
+          # `--find-interpreter` is needed to generate wheels for *all* Python versions
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+          manylinux: auto
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -85,6 +67,8 @@ jobs:
           pip install maturin delocate
       - name: Install non-Rust dependencies
         run: |
+          brew update
+          brew install autoconf automake libtool
           python maintainer/install-lhapdf.py
       - name: Build wheels
         run: |
