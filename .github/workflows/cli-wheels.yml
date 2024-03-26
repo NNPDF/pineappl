@@ -16,7 +16,6 @@ env:
 jobs:
   wheels-linux:
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64
     strategy:
       matrix:
         target: [x86_64]
@@ -41,19 +40,14 @@ jobs:
           architecture: ${{ matrix.target }}
       - name: Install build tools
         run: |
-          pip install maturin auditwheel
+          pip install cibuildwheel
       - name: Install non-Rust dependencies
         run: |
           python maintainer/install-lhapdf.py
       - name: Build wheels
+        working-directory: pineappl_cli
         run: |
-          # `--find-interpreter` is needed to generate wheels for
-          # *all* Python versions
-          maturin build --release --out dist --find-interpreter \
-            --manifest-path pineappl_cli/Cargo.toml
-      - name: Patch wheels
-        run: |
-          auditwheel repair dist/*
+          cibuildwheel --out ../dist
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -121,6 +115,7 @@ jobs:
     strategy:
       matrix:
         target: [x64]
+    if: false
 
     steps:
       - uses: actions/checkout@v4
