@@ -6,10 +6,6 @@ on:
     #   - "v[0-9]+*"
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
-
 env:
   GH_TOKEN: ${{ github.token }}
 
@@ -92,10 +88,18 @@ jobs:
     strategy:
       matrix:
         target: [x64]
-    # if: false
+    # if: false    defaults:
+    defaults:
+      run:
+        shell: msys2 {0}
 
     steps:
       - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-gcc autoconf
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -114,7 +118,6 @@ jobs:
             3.10
       - name: Install non-Rust dependencies
         run: |
-          choco install msys2
           python maintainer/install_lhapdf.py
       - name: Build wheels
         uses: PyO3/maturin-action@v1
