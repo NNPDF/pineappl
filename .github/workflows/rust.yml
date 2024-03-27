@@ -9,7 +9,7 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: '-Cinstrument-coverage'
+  RUSTFLAGS: '-Cinstrument-coverage -Crelocation-model=static'
 
 jobs:
   build:
