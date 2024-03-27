@@ -27,7 +27,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           before-script-linux: |
-            python maintainer/install-lhapdf.py
+            python3 maintainer/install-lhapdf.py
           # `--find-interpreter` is needed to generate wheels for *all* Python versions
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
           sccache: "true"
