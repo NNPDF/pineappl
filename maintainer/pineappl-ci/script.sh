@@ -21,7 +21,7 @@ done
 yum -y install perl-IPC-Cmd
 
 # needed by `pineappl_applgrid` with `--features=static`
-yum install zlib-static
+yum -y install zlib-static
 
 # install cargo-c needed for the CAPI
 cargo install --locked cargo-c --version ${CARGOC_V} --features=vendored-openssl
