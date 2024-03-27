@@ -1,0 +1,141 @@
+name: Publish CLI wheels
+
+on:
+  push:
+    # tags:
+    #   - "v[0-9]+*"
+  workflow_dispatch:
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  wheels-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          before-script-linux: |
+            yum update
+            yum -y install gcc-c++ make
+            python3 maintainer/install_lhapdf.py
+          # `--find-interpreter` is needed to generate wheels for *all* Python versions
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+          manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
+
+  wheels-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [aarch64, x86_64]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
+          python-version: |
+            pypy3.8
+            pypy3.9
+            pypy3.10
+            3.8
+            3.9
+            3.11
+            3.12
+            3.10
+      - name: Install build tools
+        run: |
+          pip install delocate
+      - name: Install non-Rust dependencies
+        run: |
+          brew update
+          brew install autoconf automake libtool
+          python maintainer/install_lhapdf.py
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+      - name: Patch wheels
+        run: |
+          delocate-wheel dist/*
+          python maintainer/patch_binary_wheel.py dist/*
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
+
+  wheels-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x64]
+    # if: false    defaults:
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-make
+            autoconf
+            python3
+      - uses: actions/setup-python@v5
+        with:
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
+          python-version: |
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
+            3.7
+            3.8
+            3.9
+            3.11
+            3.12
+            3.10
+      - name: Install non-Rust dependencies
+        run: |
+          python3 maintainer/install_lhapdf.py
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+      - name: Patch wheels
+        run: |
+          delvewheel repair dist/*
+          python3 maintainer/patch_binary_wheel.py dist/*
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
