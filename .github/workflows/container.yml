@@ -27,12 +27,10 @@ jobs:
           sudo apt-get remove -y '^llvm-.*-dev'
           sudo apt-get remove -y firefox
           sudo apt-get remove -y powershell
+          sudo apt-get remove -y mono-devel
           sudo apt-get autoremove -y
           sudo apt-get clean
           # disk space after removing packages
-          df -h
-          # remove .NET
-          rm -rf /usr/share/dotnet/
           df -h
       - name: Build image
         uses: redhat-actions/buildah-build@v2
