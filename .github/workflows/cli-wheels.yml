@@ -99,7 +99,12 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: git mingw-w64-ucrt-x86_64-gcc autoconf python3
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-make
+            autoconf
+            python3
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
