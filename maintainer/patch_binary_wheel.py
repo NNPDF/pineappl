@@ -15,11 +15,12 @@ logging.basicConfig()
 log = logging.getLogger("binary-patch")
 log.setLevel(logging.INFO)
 
-WRAPPER = """
+WRAPPER = """\
 #!python
 import os
 import sys
 import sysconfig
+
 if __name__ == "__main__":
     os.execv(
         os.path.join(sysconfig.get_path("platlib"), {binary_path!r}),

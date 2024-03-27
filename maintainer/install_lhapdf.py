@@ -37,14 +37,16 @@ def install(path: Path):
         cmd = cmd.split() if isinstance(cmd, str) else cmd
         run(cmd, *args, cwd=path / SRC_DIR, **kwargs)
 
+    log.info("Autoreconf...")
     run_("autoreconf -f -i")
     prefix = os.environ.get("PREFIX")
     prefix_ = ["--prefix", prefix] if prefix is not None else []
+    log.info("Configuring...")
     run_(["./configure"] + prefix_, env={"PYTHON": sys.executable})
-    log.info("Configured")
+    log.info("Building...")
     run_("make clean")
     run_("make -j")
-    log.info("Built")
+    log.info("Installing...")
     run_("make install")
     log.info("Installed")
 
@@ -55,7 +57,7 @@ def main():
     log.info(f"Downloaded {HOST}{PATH}")
     with tempfile.TemporaryDirectory() as tmpd:
         tarfile.open(fileobj=io.BytesIO(tar), mode="r:gz").extractall(tmpd)
-        log.info(f"Extracted LHAPDF tarbal in {tmpd}")
+        log.info(f"Extracted LHAPDF tarball in {tmpd}")
         install(Path(tmpd))
 
 

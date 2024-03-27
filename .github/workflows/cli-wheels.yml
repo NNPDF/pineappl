@@ -114,6 +114,7 @@ jobs:
             3.10
       - name: Install non-Rust dependencies
         run: |
+          choco install cygwin
           python maintainer/install-lhapdf.py
       - name: Build wheels
         uses: PyO3/maturin-action@v1
