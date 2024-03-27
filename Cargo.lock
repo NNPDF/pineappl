@@ -950,7 +950,7 @@ dependencies = [
 [[package]]
 name = "managed-lhapdf"
 version = "0.2.4"
-source = "git+https://github.com/cschwan/managed-lhapdf.git#e3b18307adf41d82baceaebad995d542e6a3811e"
+source = "git+https://github.com/cschwan/managed-lhapdf.git#789512841c3e6e1bb82216b83806a59702b18a5f"
 dependencies = [
  "anyhow",
  "cxx",
