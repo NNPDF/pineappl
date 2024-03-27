@@ -9,7 +9,7 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: '-Cinstrument-coverage -Clink-args=-no-pie'
+  RUSTFLAGS: '-Cinstrument-coverage -Crelocation-model=static -Clink-args=-no-pie'
 
 jobs:
   build:
