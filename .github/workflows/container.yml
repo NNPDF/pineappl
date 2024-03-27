@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          df -h
+          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
       - name: Build image
         uses: redhat-actions/buildah-build@v2
         with:
