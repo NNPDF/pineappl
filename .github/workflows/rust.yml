@@ -60,6 +60,11 @@ jobs:
           # relative paths sometimes don't work, so use an absolute path
           echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
 
+      - name: Print some compiler information
+        run: |
+          echo "int main() {}" > test.c
+          cc -Q -v test.c
+
       - name: Run tests
         run: |
           # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
