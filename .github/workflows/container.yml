@@ -12,9 +12,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Free disk space
+        run: |
+          # inspired by: https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
           df -h
+          # 100 largest packages, in ascending order
           dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
+          sudo apt-get remove -y google-cloud-cli
+          sudo apt-get remove -y azure-cli
+          sudo apt-get remove -y microsoft-edge-stable
+          sudo apt-get remove -y '^dotnet-.*'
+          sudo apt-get remove -y '^temurin-.*-jdk'
+          sudo apt-get remove -y google-chrome-stable
+          sudo apt-get remove -y '^llvm-.*-dev'
+          sudo apt-get remove -y firefox
+          sudo apt-get remove -y powershell
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          # disk space after removing packages
+          df -h
+          # remove .NET
+          rm -rf /usr/share/dotnet/
+          df -h
       - name: Build image
         uses: redhat-actions/buildah-build@v2
         with:
