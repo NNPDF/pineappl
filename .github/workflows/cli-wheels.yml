@@ -80,7 +80,7 @@ jobs:
       - name: Patch wheels
         run: |
           delocate-wheel dist/*
-          python maintainer/patch-macos-wheel.py dist/*
+          python maintainer/patch-binary-wheel.py dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -92,7 +92,7 @@ jobs:
     strategy:
       matrix:
         target: [x64]
-    if: false
+    # if: false
 
     steps:
       - uses: actions/checkout@v4
@@ -112,18 +112,19 @@ jobs:
             3.11
             3.12
             3.10
-      - name: Install build tools
-        run: |
-          pip install maturin delvewheel
       - name: Install non-Rust dependencies
         run: |
           python maintainer/install-lhapdf.py
       - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+      - name: Patch wheels
         run: |
-          # `--find-interpreter` is needed to generate wheels for
-          # *all* Python versions
-          maturin build --release --out dist --find-interpreter \
-            --manifest-path pineappl_cli/Cargo.toml
+          delvewheel repair dist/*
+          python maintainer/patch-binary-wheel.py dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:

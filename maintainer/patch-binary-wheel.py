@@ -1,4 +1,4 @@
-"""Patch MacOS wheel to allow executable binaries.
+"""Patch binary wheel to allow executable binaries.
 
 Following the patch in https://github.com/pypa/auditwheel/pull/443/
 """
@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 logging.basicConfig()
-log = logging.getLogger("Patch MacOS wheels")
+log = logging.getLogger("binary-patch")
 log.setLevel(logging.INFO)
 
 WRAPPER = """
