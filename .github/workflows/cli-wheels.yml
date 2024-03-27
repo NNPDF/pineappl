@@ -53,11 +53,9 @@ jobs:
           # default one. Apparently maturin doesn't find all Python versions
           # when one chooses a PyPy version instead of CPython as default
           python-version: |
-            pypy3.7
             pypy3.8
             pypy3.9
             pypy3.10
-            3.7
             3.8
             3.9
             3.11
