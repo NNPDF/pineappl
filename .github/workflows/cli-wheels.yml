@@ -29,7 +29,7 @@ jobs:
           before-script-linux: |
             yum update
             yum -y install gcc-c++ make
-            python3 maintainer/install-lhapdf.py
+            python3 maintainer/install_lhapdf.py
           # `--find-interpreter` is needed to generate wheels for *all* Python versions
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
           sccache: "true"
@@ -70,7 +70,7 @@ jobs:
         run: |
           brew update
           brew install autoconf automake libtool
-          python maintainer/install-lhapdf.py
+          python maintainer/install_lhapdf.py
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -80,7 +80,7 @@ jobs:
       - name: Patch wheels
         run: |
           delocate-wheel dist/*
-          python maintainer/patch-binary-wheel.py dist/*
+          python maintainer/patch_binary_wheel.py dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -115,7 +115,7 @@ jobs:
       - name: Install non-Rust dependencies
         run: |
           choco install cygwin
-          python maintainer/install-lhapdf.py
+          python maintainer/install_lhapdf.py
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -125,7 +125,7 @@ jobs:
       - name: Patch wheels
         run: |
           delvewheel repair dist/*
-          python maintainer/patch-binary-wheel.py dist/*
+          python maintainer/patch_binary_wheel.py dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
