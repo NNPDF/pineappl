@@ -7,7 +7,7 @@ ARG FASTNLO_V=2.5.0-2826
 ARG LHAPDF_V=6.4.0
 
 # the last version is the default Rust version used in the container
-ARG RUST_V="1.64.0 1.70.0 nightly-2024-01-25"
+ARG RUST_V="1.70.0"
 
 ENV APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
 ENV CARGO_HOME="/usr/local/cargo"
