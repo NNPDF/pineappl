@@ -71,7 +71,7 @@ def patch(wheel: Path):
         installed.write_text(WRAPPER.format(binary_path=str(binary.relative_to(tmpd))))
         next(Path(tmpd).glob("**/RECORD")).write_text(record(tmpd))
         shutil.make_archive(wheel.name, format="zip", base_dir=".", root_dir=tmpd)
-        shutil.move(str(wheel) + ".zip", wheel)
+        shutil.move(wheel.name + ".zip", wheel)
         log.info(f"Patched {wheel} in-place")
 
 

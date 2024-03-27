@@ -39,14 +39,10 @@ jobs:
           path: dist
 
   wheels-macos:
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     strategy:
       matrix:
-        include:
-          - os: macos-13
-            target: x86_64
-          # - os: macos-14
-          #   target: aarch64
+        target: [aarch64, x86_64]
 
     steps:
       - uses: actions/checkout@v4
@@ -64,22 +60,22 @@ jobs:
             3.10
       - name: Install build tools
         run: |
-          pip install maturin delocate
+          pip install delocate
       - name: Install non-Rust dependencies
         run: |
           brew update
           brew install autoconf automake libtool
           python maintainer/install-lhapdf.py
       - name: Build wheels
-        run: |
-          # `--find-interpreter` is needed to generate wheels for
-          # *all* Python versions
-          maturin build --release --out dist --find-interpreter \
-             --manifest-path pineappl_cli/Cargo.toml
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
       - name: Patch wheels
         run: |
           delocate-wheel dist/*
-          python maintainer/patch-macos-wheel.py
+          python maintainer/patch-macos-wheel.py dist/*
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
