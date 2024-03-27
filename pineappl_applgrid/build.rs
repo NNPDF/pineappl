@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use cc::Build;
+use pkg_config::Config;
 use std::env;
 use std::path::Path;
 use std::process::Command;
@@ -59,11 +60,26 @@ fn main() {
     )
     .unwrap();
 
+    let link_modifier = if cfg!(feature = "static") {
+        // for some reason `libz.a` isn't found, although `libz.so` is
+        for link_path in Config::new().probe("zlib").unwrap().link_paths {
+            println!("cargo:rustc-link-search={}", link_path.to_str().unwrap());
+        }
+
+        "static="
+    } else {
+        ""
+    };
+
     for lib in libs
         .split_whitespace()
         .filter_map(|token| token.strip_prefix("-l"))
     {
-        println!("cargo:rustc-link-lib={lib}");
+        match lib {
+            // we can't link gfortran statically - to avoid it compile APPLgrid without HOPPET
+            "gfortran" => println!("cargo:rustc-link-lib={lib}"),
+            _ => println!("cargo:rustc-link-lib={link_modifier}{lib}"),
+        }
     }
 
     Build::new()
@@ -79,17 +95,14 @@ fn main() {
 
     println!("cargo:rerun-if-env-changed=APPL_IGRID_DIR");
 
-    let lhapdf = pkg_config::Config::new()
-        .atleast_version("6")
-        .probe("lhapdf")
-        .unwrap();
+    let lhapdf = Config::new().atleast_version("6").probe("lhapdf").unwrap();
 
     for lib_path in lhapdf.link_paths {
         println!("cargo:rustc-link-search={}", lib_path.to_str().unwrap());
     }
 
     for lib in lhapdf.libs {
-        println!("cargo:rustc-link-lib={lib}");
+        println!("cargo:rustc-link-lib={link_modifier}{lib}");
     }
 
     cxx_build::bridge("src/lib.rs")

@@ -23,7 +23,13 @@ fn main() {
     )
     .unwrap();
 
-    println!("cargo:rustc-link-lib=fastnlotoolkit");
+    let link_modifier = if cfg!(feature = "static") {
+        "static="
+    } else {
+        ""
+    };
+
+    println!("cargo:rustc-link-lib={link_modifier}fastnlotoolkit");
 
     cxx_build::bridge("src/lib.rs")
         .file("src/fastnlo.cpp")
