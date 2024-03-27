@@ -37,8 +37,8 @@ def install(path: Path):
         cmd = cmd.split() if isinstance(cmd, str) else cmd
         run(cmd, *args, cwd=path / SRC_DIR, **kwargs)
 
-    log.info("Autoreconf...")
-    run_("autoreconf -f -i")
+    # log.info("Autoreconf...")
+    # run_("autoreconf -f -i")
     prefix = os.environ.get("PREFIX")
     prefix_ = ["--prefix", prefix] if prefix is not None else []
     log.info("Configuring...")
