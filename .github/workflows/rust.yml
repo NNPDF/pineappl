@@ -66,7 +66,7 @@ jobs:
 
       - name: Build CLI
         run: |
-          cargo install --features=static --path pineappl_cli --locked -vvv
+          cargo install --all-features --path pineappl_cli --locked -vvv
           # result is in /usr/local/cargo/bin/pineappl
 
       - name: Run tests
