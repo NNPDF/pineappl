@@ -65,12 +65,6 @@ jobs:
           cc -Q -v test.c
 
       - name: Build CLI
-        env:
-          # this flag shouldn't make a difference according to
-          # https://doc.rust-lang.org/rustc/codegen-options/index.html#special-relocation-models,
-          # but run in a container on my laptop it makes the following errors go away:
-          # "relocation R_X86_64_32 against `...' can not be used when making a PIE object; recompile with -fPIE"
-          RUSTFLAGS: '-Crelocation-model=dynamic-no-pic'
         run: |
           cargo install --features=static --path pineappl_cli --locked -vvv
           # result is in /usr/local/cargo/bin/pineappl
