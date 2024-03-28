@@ -9,7 +9,6 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: '-Cinstrument-coverage -Crelocation-model=pic'
 
 jobs:
   build:
@@ -66,10 +65,19 @@ jobs:
           cc -Q -v test.c
 
       - name: Build CLI
+        env:
+          # this flag shouldn't make a difference according to
+          # https://doc.rust-lang.org/rustc/codegen-options/index.html#special-relocation-models,
+          # but run in a container on my laptop it makes the following errors go away:
+          # "relocation R_X86_64_32 against `...' can not be used when making a PIE object; recompile with -fPIE"
+          RUSTFLAGS: '-Crelocation-model=dynamic-no-pic'
         run: |
-          cargo install --features=static --path pineappl_cli --locked
+          cargo install --features=static --path pineappl_cli --locked -vvv
+          # result is in /usr/local/cargo/bin/pineappl
 
       - name: Run tests
+        env:
+          RUSTFLAGS: '-Cinstrument-coverage'
         run: |
           # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
           cargo test --features=applgrid,evolve,fastnlo,fktable --no-fail-fast 2> >(tee stderr 1>&2)
