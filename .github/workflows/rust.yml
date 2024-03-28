@@ -67,7 +67,7 @@ jobs:
 
       - name: Build CLI
         run: |
-          cargo install --features=static --path pineappl_cli
+          cargo install --features=static --path pineappl_cli --locked
 
       - name: Run tests
         run: |
