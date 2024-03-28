@@ -33,7 +33,7 @@ rm -r /usr/local/cargo/registry
 ( curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" || \
     curl "https://web.archive.org/web/20211018095814/https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.0.tar.gz" ) | tar xzf -
 cd LHAPDF-${LHAPDF_V}
-./configure --disable-dynamic --disable-python --with-pic=no
+./configure --disable-python
 make -j V=1
 make install
 ldconfig
@@ -48,7 +48,7 @@ done
 # install APPLgrid
 curl "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
 cd applgrid-${APPLGRID_V}
-./configure --disable-dynamic --without-root --with-pic=no
+./configure --without-root
 make -j
 make install
 ldconfig
@@ -60,7 +60,7 @@ cd ..
 # install fastNLO
 curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
 cd fastnlo_toolkit-${FASTNLO_V}
-./configure --disable-dynamic --prefix=/usr/local/ --with-pic=no
+./configure --prefix=/usr/local/
 make -j V=1
 make install
 ldconfig
