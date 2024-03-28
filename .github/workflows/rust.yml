@@ -9,7 +9,6 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: '-Cinstrument-coverage'
 
 jobs:
   build:
@@ -60,10 +59,18 @@ jobs:
           # relative paths sometimes don't work, so use an absolute path
           echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
 
+
+      - name: Build CLI
+        run: |
+          cargo install --all-features --path pineappl_cli --locked -vvv
+          # result is in /usr/local/cargo/bin/pineappl
+
       - name: Run tests
+        env:
+          RUSTFLAGS: '-Cinstrument-coverage'
         run: |
           # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
-          cargo test --all-features --no-fail-fast 2> >(tee stderr 1>&2)
+          cargo test --features=applgrid,evolve,fastnlo,fktable --no-fail-fast 2> >(tee stderr 1>&2)
           # from https://stackoverflow.com/a/51141872/812178
           sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' stderr
 
