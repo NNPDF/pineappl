@@ -59,10 +59,6 @@ jobs:
           # relative paths sometimes don't work, so use an absolute path
           echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
 
-      - name: Print some compiler information
-        run: |
-          echo "int main() {}" > test.c
-          cc -Q -v test.c
 
       - name: Build CLI
         run: |

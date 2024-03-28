@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+# print this so we can see whether the compiler/linker has `--enable-default-pie` enabled; if it's
+# not enabled we need to build our dependencies with `--with-pic=yes` (see below)
+echo "--- COMPILER/LINKER INFORMATION"
+echo "int main() {}" > test.c
+cc -Q -v test.c
+echo "---"
+
 # install rustup
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
@@ -34,17 +41,26 @@ rm -r /usr/local/cargo/registry
     curl "https://web.archive.org/web/20211018095814/https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.4.0.tar.gz" ) | tar xzf -
 cd LHAPDF-${LHAPDF_V}
 # compile static libraries with PIC to make statically linking PineAPPL's CLI work
+# see also https://users.rust-lang.org/t/why-does-crelocation-model-dynamic-no-pic-help-although-it-shouldnt/109012
 ./configure --disable-python --with-pic=yes
 make -j V=1
 make install
 ldconfig
-
 cd ..
 
 # install PDF sets
 for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180; do
     curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 done
+
+# install zlib compiled with `-fPIC`
+curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
+cd zlib-${ZLIB_V}
+CFLAGS=-fPIC ./configure --prefix=/usr/local
+make -j
+make install
+ldconfig
+cd ..
 
 # install APPLgrid
 curl "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
@@ -56,7 +72,6 @@ make install
 ldconfig
 mkdir -p ${APPL_IGRID_DIR}
 cp src/*.h ${APPL_IGRID_DIR}
-
 cd ..
 
 # install fastNLO
@@ -67,5 +82,4 @@ cd fastnlo_toolkit-${FASTNLO_V}
 make -j V=1
 make install
 ldconfig
-
 cd ..
