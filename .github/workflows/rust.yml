@@ -65,6 +65,10 @@ jobs:
           echo "int main() {}" > test.c
           cc -Q -v test.c
 
+      - name: Build CLI
+        run: |
+          cargo install --features=static --path pineappl_cli
+
       - name: Run tests
         run: |
           # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
