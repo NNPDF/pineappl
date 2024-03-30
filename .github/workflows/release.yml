@@ -48,7 +48,6 @@ jobs:
   cli-macos:
     strategy:
       matrix:
-        os: [macos-latest, macos-14]
         include:
           - os: macos-latest
             target: x86_64-apple-darwin
