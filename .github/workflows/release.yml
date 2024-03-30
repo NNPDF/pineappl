@@ -67,13 +67,37 @@ jobs:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
 
+  cli-linux:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
+    steps:
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
+      - name: Compile binary
+      - run: |
+          cargo build --release --all-features --bin pineappl
+          mkdir -p prefix/bin
+          cp target/release/pineappl prefix/bin/
+          cd prefix
+          tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_cli-${{ matrix.target }}
+          path: pineappl_cli-${{ matrix.target }}.tar.gz
+
   # publish a release on github and upload pre-built CAPI
   publish-release:
-    needs: [capi-macos, capi-linux]
+    needs: [capi-macos, capi-linux, cli-linux]
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
     steps:
       - uses: actions/checkout@v4
+      # version must match the one used in `actions/upload-artifact`
       - uses: actions/download-artifact@v3
         with:
           path: artifacts
@@ -94,6 +118,7 @@ jobs:
               gh release edit v${version} -n "" --prerelease
           fi
           find artifacts -name 'pineappl_capi*' -type f -exec gh release upload v${version} {} +
+          find artifacts -name 'pineappl_cli*' -type f -exec gh release upload v${version} {} +
           gh release edit v${version} --draft=false
 
   publish-crates:
