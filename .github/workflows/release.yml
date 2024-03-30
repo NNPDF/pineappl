@@ -61,7 +61,7 @@ jobs:
           # install LHAPDF
           curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${{ env.LHAPDF_V }}.tar.gz" | tar xzf -
           cd LHAPDF-${{ env.LHAPDF_V }}
-          ./configure --disable-dynamic --disable-python --enable-static
+          ./configure --disable-python --disable-shared --enable-static
           make -j V=1
           make install
           cd ..
