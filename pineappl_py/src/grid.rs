@@ -451,7 +451,8 @@ impl PyGrid {
         let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
         let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
-        let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
+        let mut lumi_cache =
+            LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
         self.grid
             .convolute(
                 &mut lumi_cache,
