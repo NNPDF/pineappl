@@ -59,12 +59,6 @@ jobs:
           # relative paths sometimes don't work, so use an absolute path
           echo "RUSTDOCFLAGS=-Cinstrument-coverage -Z unstable-options --persist-doctests $(pwd)/target/debug/doctestbins" >> "$GITHUB_ENV"
 
-
-      - name: Build CLI
-        run: |
-          cargo install --all-features --path pineappl_cli --locked -vvv
-          # result is in /usr/local/cargo/bin/pineappl
-
       - name: Run tests
         env:
           RUSTFLAGS: '-Cinstrument-coverage'
