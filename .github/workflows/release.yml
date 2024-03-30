@@ -77,7 +77,7 @@ jobs:
       # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
       - uses: actions/checkout@v3
       - name: Compile binary
-      - run: |
+        run: |
           cargo build --release --all-features --bin pineappl
           mkdir -p prefix/bin
           cp target/release/pineappl prefix/bin/
