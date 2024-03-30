@@ -650,31 +650,33 @@ impl PyGrid {
         ren1: Vec<f64>,
         alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
-        Ok(self
-            .grid
-            .evolve_with_slice_iter(
-                slices.map(|result| {
-                    // TODO: check whether we can avoid the `.unwrap` calls
-                    let any = result.unwrap();
-                    let tuple = any.downcast::<PyTuple>().unwrap();
-                    let item0 = tuple.get_item(0).unwrap();
-                    let item1 = tuple.get_item(1).unwrap();
-                    let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
-                    let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
-                    // TODO: can we get rid of the `into_owned` call?
-                    let array = CowArray::from(operator.as_array().into_owned());
+        todo!()
+        //Ok(self
+        //    .grid
+        //    .evolve_with_slice_iter(
+        //        slices.map(|result| {
+        //            // TODO: check whether we can avoid the `.unwrap` calls
+        //            let any = result.unwrap();
+        //            let tuple = any.downcast::<PyTuple>().unwrap();
+        //            // TODO: `get_item` changes return type from pyo3-0.14 to 0.15
+        //            let item0 = tuple.get_item(0).unwrap();
+        //            let item1 = tuple.get_item(1).unwrap();
+        //            let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
+        //            let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
+        //            // TODO: can we get rid of the `into_owned` call?
+        //            let array = CowArray::from(operator.as_array().into_owned());
 
-                    // TODO: change `PyErr` into something appropriate
-                    Ok::<_, PyErr>((slice_info.slice_info, array))
-                }),
-                // TODO: what if it's non-contiguous?
-                order_mask.as_slice().unwrap(),
-                xi,
-                &AlphasTable { ren1, alphas },
-            )
-            .map(|fk_table| PyFkTable { fk_table })
-            // TODO: get rid of this `.unwrap` call
-            .unwrap())
+        //            // TODO: change `PyErr` into something appropriate
+        //            Ok::<_, PyErr>((slice_info.slice_info, array))
+        //        }),
+        //        // TODO: what if it's non-contiguous?
+        //        order_mask.as_slice().unwrap(),
+        //        xi,
+        //        &AlphasTable { ren1, alphas },
+        //    )
+        //    .map(|fk_table| PyFkTable { fk_table })
+        //    // TODO: get rid of this `.unwrap` call
+        //    .unwrap())
     }
 
     /// Load grid from file.
