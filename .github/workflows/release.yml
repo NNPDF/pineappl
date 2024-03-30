@@ -8,6 +8,7 @@ on:
 
 env:
   GH_TOKEN: ${{ github.token }}
+  LHAPDF_V: '6.4.0'
 
 jobs:
   # create a release on github
@@ -57,8 +58,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compile binary
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
+          # install LHAPDF
+          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${{ env.LHAPDF_V }}.tar.gz" | tar xzf -
+          cd LHAPDF-${{ env.LHAPDF_V }}
+          ./configure --disable-dynamic --enable-static
+          make -j V=1
+          make install
+          cd ..
+          # install Rust
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
+          # build the CLI
           cargo build --release --features=evolve,fktable,static --bin pineappl --target=${{ matrix.target }}
+          # package the CLI
           cp target/release/pineappl prefix/bin/
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
