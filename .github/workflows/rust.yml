@@ -74,11 +74,12 @@ jobs:
           ( sed -nE 's/[[:space:]]+Running( unittests|) [^[:space:]]+ \(([^)]+)\)/\2/p' stderr && echo target/debug/doctestbins/*/rust_out | tr ' ' "\n" ) | \
               xargs printf ' --object %s' | \
               xargs $(rustc --print target-libdir)/../bin/llvm-cov export \
-                  --ignore-filename-regex='index.crates.io' \
-                  --ignore-filename-regex='rustc' \
-                  --ignore-filename-regex='pineappl/tests' \
-                  --ignore-filename-regex='pineappl_capi' \
-                  --ignore-filename-regex='pineappl_cli/tests' \
+                  --ignore-filename-regex=index.crates.io \
+                  --ignore-filename-regex=rustc \
+                  --ignore-filename-regex=managed-lhapdf \
+                  --ignore-filename-regex=pineappl/tests \
+                  --ignore-filename-regex=pineappl_capi \
+                  --ignore-filename-regex=pineappl_cli/tests \
                   --instr-profile=pineappl.profdata \
                   --skip-functions \
                   --object target/debug/pineappl \
