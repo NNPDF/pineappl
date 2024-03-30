@@ -43,6 +43,27 @@ jobs:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
 
+  cli-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile binary
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
+          cargo build --release --all-features --bin pineappl --target=${{ matrix.target }}
+          cp target/release/pineappl prefix/bin/
+          cd prefix
+          tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        # as long as we need v3 in `cli-linux` we also must use it here
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_cli-${{ matrix.target }}
+          path: pineappl_cli-${{ matrix.target }}.tar.gz
+
   capi-linux:
     runs-on: ubuntu-latest
     container: ghcr.io/nnpdf/pineappl-ci:latest
@@ -92,7 +113,7 @@ jobs:
 
   # publish a release on github and upload pre-built CAPI
   publish-release:
-    needs: [capi-macos, capi-linux, cli-linux]
+    needs: [capi-macos, cli-macos, capi-linux, cli-linux]
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
     steps:
@@ -117,8 +138,7 @@ jobs:
           else
               gh release edit v${version} -n "" --prerelease
           fi
-          find artifacts -name 'pineappl_capi*' -type f -exec gh release upload v${version} {} +
-          find artifacts -name 'pineappl_cli*' -type f -exec gh release upload v${version} {} +
+          find artifacts -name 'pineappl*' -type f -exec gh release upload v${version} {} +
           gh release edit v${version} --draft=false
 
   publish-crates:
