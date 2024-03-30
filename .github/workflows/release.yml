@@ -64,10 +64,7 @@ jobs:
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
-          cargo build --release --features=evolve,fktable,static --bin pineappl --target=${{ matrix.target }}
-          # package the CLI
-          mkdir -p prefix/bin
-          cp target/release/pineappl prefix/bin/
+          cargo install --features=evolve,fktable,static --path pineappl_cli --root=prefix --target=${{ matrix.target }}
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
