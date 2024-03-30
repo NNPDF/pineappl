@@ -8,7 +8,6 @@ on:
 
 env:
   GH_TOKEN: ${{ github.token }}
-  LHAPDF_V: '6.4.0'
 
 jobs:
   # create a release on github
@@ -59,12 +58,8 @@ jobs:
       - name: Compile binary
         run: |
           # install LHAPDF
-          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${{ env.LHAPDF_V }}.tar.gz" | tar xzf -
-          cd LHAPDF-${{ env.LHAPDF_V }}
-          ./configure --disable-python --disable-shared --enable-static
-          make -j V=1
-          make install
-          cd ..
+          brew tap davidchall/hep
+          brew install lhapdf
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
