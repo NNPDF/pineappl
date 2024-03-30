@@ -67,6 +67,7 @@ jobs:
           # build the CLI
           cargo build --release --features=evolve,fktable,static --bin pineappl --target=${{ matrix.target }}
           # package the CLI
+          mkdir -p prefix/bin
           cp target/release/pineappl prefix/bin/
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
