@@ -34,22 +34,39 @@ fn main() {
 
     println!("cargo:rustc-link-search={}", lib_path.trim());
 
-    let include_path = String::from_utf8(
+    let appl_igrid_dir = env::var("APPL_IGRID_DIR").unwrap_or_else(|_| {
+        Path::new(
+            &String::from_utf8(
+                Command::new("applgrid-config")
+                    .arg("--incdir")
+                    .output()
+                    .expect("did not find `applgrid-config`, please install APPLgrid")
+                    .stdout,
+            )
+            .unwrap(),
+        )
+        .join("appl_grid")
+        .to_str()
+        .unwrap()
+        .to_owned()
+    });
+
+    let cxx_flags: Vec<_> = String::from_utf8(
         Command::new("applgrid-config")
-            .arg("--incdir")
+            .arg("--cxxflags")
             .output()
             .expect("did not find `applgrid-config`, please install APPLgrid")
             .stdout,
     )
-    .unwrap();
+    .unwrap()
+    .split_ascii_whitespace()
+    .map(ToOwned::to_owned)
+    .collect();
 
-    let appl_igrid_dir = env::var("APPL_IGRID_DIR").unwrap_or_else(|_| {
-        Path::new(&include_path)
-            .join("appl_grid")
-            .to_str()
-            .unwrap()
-            .to_owned()
-    });
+    let include_dirs: Vec<_> = cxx_flags
+        .iter()
+        .filter_map(|token| token.strip_prefix("-I").map(ToOwned::to_owned))
+        .collect();
 
     let libs = String::from_utf8(
         Command::new("applgrid-config")
@@ -85,7 +102,7 @@ fn main() {
     Build::new()
         .cpp(true)
         .file("src/check_appl_igrid.cpp")
-        .include(include_path.trim())
+        .includes(&include_dirs)
         .include(&appl_igrid_dir)
         .try_compile("appl_igrid")
         .expect(
@@ -107,7 +124,7 @@ fn main() {
 
     cxx_build::bridge("src/lib.rs")
         .file("src/applgrid.cpp")
-        .include(include_path.trim())
+        .includes(&include_dirs)
         .include(appl_igrid_dir)
         .includes(lhapdf.include_paths)
         .compile("appl-bridge");
