@@ -69,6 +69,10 @@ jobs:
           mkdir -p ${HOMEBREW_TEMP}
           brew install --build-from-source --keep-tmp applgrid
           export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
+          # try to find root header path
+          cat $(command -v applgrid-config)
+          pkg-config --cflags-only-I root || true
+          root-config --cflags || true
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
