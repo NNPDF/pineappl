@@ -16,7 +16,14 @@ fn main() {
     )
     .unwrap();
 
-    if version.trim() != "1.6.27" {
+    let tested_versions = [
+        "1.6.27", "1.6.28", "1.6.29", "1.6.30", "1.6.31", "1.6.32", "1.6.35",
+    ];
+
+    if !tested_versions
+        .iter()
+        .any(|&tested| tested == version.trim())
+    {
         println!(
             "cargo:warning=found APPLgrid version {}, which has not been tested",
             version.trim()
