@@ -59,13 +59,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compile binary
         run: |
-          # install LHAPDF
           brew tap davidchall/hep
+          # install LHAPDF
           brew install lhapdf
+          # install APPLgrid
+          brew install applgrid
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
-          cargo install --features=evolve,fktable,static --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
+          cargo install --features=applgrid,evolve,fktable,static --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
