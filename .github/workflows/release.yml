@@ -64,12 +64,11 @@ jobs:
           brew install lhapdf
           # install APPLgrid's dependencies
           brew install --only-dependencies applgrid
+          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
-          echo "HOMEBREW_TEMP = ${HOMEBREW_TEMP}"
           brew install --build-from-source --keep-tmp applgrid
-          find ${HOMEBREW_TEMP}
-          export APPL_IGRID_DIR=${HOMEBREW_TEMP}/applgrid-1.6.35/src
+          export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
