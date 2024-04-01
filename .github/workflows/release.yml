@@ -67,7 +67,7 @@ jobs:
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
           echo "HOMEBREW_TEMP = ${HOMEBREW_TEMP}"
-          brew install --build-from-source applgrid
+          brew install --build-from-source --keep-tmp applgrid
           find ${HOMEBREW_TEMP}
           export APPL_IGRID_DIR=${HOMEBREW_TEMP}/applgrid-1.6.35/src
           # install Rust
