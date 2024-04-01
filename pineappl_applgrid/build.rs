@@ -6,6 +6,14 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 
+fn conditional_std<'a>(build: &'a mut Build, std: Option<&str>) -> &'a mut Build {
+    if let Some(std) = std {
+        build.std(std)
+    } else {
+        build
+    }
+}
+
 fn main() {
     let version = String::from_utf8(
         Command::new("applgrid-config")
@@ -72,8 +80,13 @@ fn main() {
 
     let include_dirs: Vec<_> = cxx_flags
         .iter()
-        .filter_map(|token| token.strip_prefix("-I").map(ToOwned::to_owned))
+        .filter_map(|token| token.strip_prefix("-I"))
         .collect();
+
+    let std = cxx_flags
+        .iter()
+        .filter_map(|token| token.strip_prefix("-std="))
+        .last();
 
     let libs = String::from_utf8(
         Command::new("applgrid-config")
@@ -106,16 +119,19 @@ fn main() {
         }
     }
 
-    Build::new()
-        .cpp(true)
-        .file("src/check_appl_igrid.cpp")
-        .includes(&include_dirs)
-        .include(&appl_igrid_dir)
-        .try_compile("appl_igrid")
-        .expect(
-            "could not find file `appl_igrid.h`, please set the environment variable \
+    conditional_std(
+        Build::new()
+            .cpp(true)
+            .file("src/check_appl_igrid.cpp")
+            .includes(&include_dirs)
+            .include(&appl_igrid_dir),
+        std,
+    )
+    .try_compile("appl_igrid")
+    .expect(
+        "could not find file `appl_igrid.h`, please set the environment variable \
                 `APPL_IGRID_DIR` to the directory containing it",
-        );
+    );
 
     println!("cargo:rerun-if-env-changed=APPL_IGRID_DIR");
 
@@ -129,12 +145,15 @@ fn main() {
         println!("cargo:rustc-link-lib={link_modifier}{lib}");
     }
 
-    cxx_build::bridge("src/lib.rs")
-        .file("src/applgrid.cpp")
-        .includes(&include_dirs)
-        .include(appl_igrid_dir)
-        .includes(lhapdf.include_paths)
-        .compile("appl-bridge");
+    conditional_std(
+        cxx_build::bridge("src/lib.rs")
+            .file("src/applgrid.cpp")
+            .includes(&include_dirs)
+            .include(appl_igrid_dir)
+            .includes(lhapdf.include_paths),
+        std,
+    )
+    .compile("appl-bridge");
 
     println!("cargo:rerun-if-changed=src/lib.rs");
     println!("cargo:rerun-if-changed=src/applgrid.cpp");
