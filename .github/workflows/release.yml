@@ -62,11 +62,14 @@ jobs:
           brew tap davidchall/hep
           # install LHAPDF
           brew install lhapdf
-          # install APPLgrid
-          brew install applgrid
-          # install APPLgrid's sources - TODO: find a better version independent way to do this
-          wget 'https://applgrid.hepforge.org/downloads/applgrid-1.6.35.tgz' -O- | tar xzf - -C /tmp
-          export APPL_IGRID_DIR=/tmp/applgrid-1.6.35/src
+          # install APPLgrid's dependencies
+          brew install --only-dependencies applgrid
+          export HOMEBREW_TEMP="$(pwd)"/tmp
+          mkdir -p ${HOMEBREW_TEMP}
+          echo "HOMEBREW_TEMP = ${HOMEBREW_TEMP}"
+          brew install --build-from-source applgrid
+          find ${HOMEBREW_TEMP}
+          export APPL_IGRID_DIR=${HOMEBREW_TEMP}/applgrid-1.6.35/src
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
