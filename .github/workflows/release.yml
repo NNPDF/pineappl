@@ -68,7 +68,7 @@ jobs:
           brew install pkg-config
           brew reinstall zlib
           brew ls --verbose zlib
-          pkg-config --libs-only-L --keep-system-libs pkg-config
+          pkg-config --libs-only-L pkg-config || true
           # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
