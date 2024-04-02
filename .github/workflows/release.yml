@@ -63,16 +63,14 @@ jobs:
           # install LHAPDF
           brew install lhapdf
           # install APPLgrid's dependencies
-          brew install --only-dependencies applgrid
+          brew install --only-dependencies --without-hoppet --without-lhapdf applgrid
+          # install zlib, system doesn't seem to have static library
+          brew install zlib
           # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
-          brew install --build-from-source --keep-tmp applgrid
+          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf applgrid
           export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
-          # try to find root header path
-          cat $(command -v applgrid-config)
-          pkg-config --cflags-only-I root || true
-          root-config --cflags || true
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
