@@ -65,8 +65,10 @@ jobs:
           # install APPLgrid's dependencies
           brew install --only-dependencies --without-hoppet --without-lhapdf applgrid
           # install zlib, system doesn't seem to have static library
+          brew install pkg-config
           brew reinstall zlib
           brew ls --verbose zlib
+          pkg-config --libs-only-L --keep-system-libs pkg-config
           # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}

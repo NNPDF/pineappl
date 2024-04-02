@@ -100,7 +100,6 @@ fn main() {
     let link_modifier = if cfg!(feature = "static") {
         // for some reason `libz.a` isn't found, although `libz.so` is
         for link_path in Config::new().probe("zlib").unwrap().link_paths {
-            println!("cargo:warning={}", link_path.to_str().unwrap());
             println!("cargo:rustc-link-search={}", link_path.to_str().unwrap());
         }
 
