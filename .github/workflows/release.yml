@@ -63,17 +63,12 @@ jobs:
           # install LHAPDF
           brew install lhapdf
           # install APPLgrid's dependencies
-          brew install --only-dependencies --without-hoppet --without-lhapdf applgrid
-          # print ROOT diagnostics
-          echo "1:"
-          ls /opt/homebrew/Cellar/root/6.30.04/lib/root
-          echo "2:"
-          ls /opt/homebrew/Cellar/root/6.30.04/lib
-          echo "3:"
-          ls /opt/homebrew/Cellar/root/6.30.04
-          # find all brew *.pc files and make them available
+          # - disable HOPPET because don't need evolution
+          # - disable ROOT because its static libraries are missing
+          brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
+          # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
           export PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
-          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
+          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
           brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf applgrid
