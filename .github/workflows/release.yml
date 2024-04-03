@@ -76,6 +76,18 @@ jobs:
           echo ">>> ---"
           cat $(which applgrid-config)
           echo ">>> ---"
+          ls -al $(command -v applgrid-config)
+          echo ">>> ---"
+          sed 's/-lgfortran//g' $(command -v applgrid-config) > tmp
+          echo ">>> ---"
+          ls -al tmp
+          echo ">>> ---"
+          mv tmp $(command -v applgrid-config)
+          echo ">>> ---"
+          ls -al $(command -v applgrid-config)
+          echo ">>> ---"
+          chmod +x $(command -v applgrid-config)
+          echo ">>> ---"
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
