@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use std::process::Command;
+use pkg_config::Config;
 
 fn main() {
     let fnlo_lib_path = String::from_utf8(
@@ -31,9 +32,12 @@ fn main() {
 
     println!("cargo:rustc-link-lib={link_modifier}fastnlotoolkit");
 
+    let lhapdf = Config::new().atleast_version("6").probe("lhapdf").unwrap();
+
     cxx_build::bridge("src/lib.rs")
         .file("src/fastnlo.cpp")
         .include(fnlo_include_path.trim())
+        .includes(lhapdf.include_paths)
         .std("c++11") // apparently not supported by MSVC, but fastNLO probably can't be compiled on Windows
         .compile("fnlo-bridge");
 
