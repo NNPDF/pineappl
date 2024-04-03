@@ -78,11 +78,11 @@ jobs:
           echo ">>> ---"
           ls -al $(command -v applgrid-config)
           echo ">>> ---"
-          sed 's/-lgfortran//g' $(command -v applgrid-config) > tmp
+          sed 's/-lgfortran//g' $(command -v applgrid-config) > new
           echo ">>> ---"
-          ls -al tmp
+          ls -al new
           echo ">>> ---"
-          mv tmp $(command -v applgrid-config)
+          mv new $(command -v applgrid-config)
           echo ">>> ---"
           ls -al $(command -v applgrid-config)
           echo ">>> ---"
