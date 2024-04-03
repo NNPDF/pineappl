@@ -64,15 +64,12 @@ jobs:
           brew install lhapdf
           # install APPLgrid's dependencies
           brew install --only-dependencies --without-hoppet --without-lhapdf applgrid
-          # install zlib, system doesn't seem to have static library
-          brew install pkg-config
-          brew reinstall zlib
-          brew ls --verbose zlib
-          which -a pkg-config
-          which pkg-config
-          echo "PATH = ${PATH}"
+          ## diagnostics
+          export PKG_CONFIG_PATH=$(find /opt/homebrew/Cellar/ -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
+          echo "cellar = $(brew --cellar)"
           echo "PKG_CONFIG_PATH = ${PKG_CONFIG_PATH}"
-          pkg-config --libs-only-L pkg-config || true
+          pkg-config --libs-only-L zlib || true
+          ## end diagnostics
           # manually compile APPLgrid, because we need the file `appl_igrid.h` and the file it includes
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
