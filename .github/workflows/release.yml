@@ -62,16 +62,14 @@ jobs:
           brew tap davidchall/hep
           # install LHAPDF
           brew install lhapdf
-          # install APPLgrid's dependencies
-          # - disable HOPPET because don't need evolution
-          # - disable ROOT because its static libraries are missing
+          # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
           brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
           # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
           export PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
           # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
           export HOMEBREW_TEMP="$(pwd)"/tmp
           mkdir -p ${HOMEBREW_TEMP}
-          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf applgrid
+          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
           export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
