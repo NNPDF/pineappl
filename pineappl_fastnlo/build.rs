@@ -34,6 +34,7 @@ fn main() {
     cxx_build::bridge("src/lib.rs")
         .file("src/fastnlo.cpp")
         .include(fnlo_include_path.trim())
+        .std("c++11") // apparently not supported by MSVC, but fastNLO probably can't be compiled on Windows
         .compile("fnlo-bridge");
 
     println!("cargo:rerun-if-changed=src/lib.rs");
