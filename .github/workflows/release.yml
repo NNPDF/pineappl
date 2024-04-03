@@ -73,21 +73,9 @@ jobs:
           mkdir -p ${HOMEBREW_TEMP}
           brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
           export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
-          echo ">>> ---"
-          cat $(which applgrid-config)
-          echo ">>> ---"
-          ls -al $(command -v applgrid-config)
-          echo ">>> ---"
-          sed 's/-lgfortran//g' $(command -v applgrid-config) > new
-          echo ">>> ---"
-          ls -al new
-          echo ">>> ---"
-          mv new $(command -v applgrid-config)
-          echo ">>> ---"
-          ls -al $(command -v applgrid-config)
-          echo ">>> ---"
-          chmod +x $(command -v applgrid-config)
-          echo ">>> ---"
+          # do not link against `gfortran`
+          sed -i.bak 's/-lgfortran//g' $(command -v applgrid-config)
+          rm $(command -v applgrid-config).bak
           # install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
