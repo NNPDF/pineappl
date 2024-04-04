@@ -83,6 +83,9 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
           # build the CLI
           cargo install --all-features --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
@@ -128,6 +131,9 @@ jobs:
       - name: Compile binary
         run: |
           cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }}
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
