@@ -41,14 +41,13 @@ fn render_manpages(path: &Path, cmd: &clap::Command, version: &str) -> Result<()
 impl Subcommand for Opts {
     fn run(&self) -> Result<()> {
         let cmd = pineappl_cli::Opts::command();
-        let version: String = cmd
+        let version = cmd
             .get_version()
             // UNWRAP: the command must have a version
-            .unwrap()
-            .strip_prefix('v')
-            // UNWRAP: the version string must start with a 'v'
-            .expect(&format!("version string should contain 'v': {:?}", cmd.get_version()))
-            .to_string();
+            .unwrap();
+
+        // TODO: why does the version string not start with a 'v' on GitHub?
+        let version = version.strip_prefix('v').unwrap_or(version).to_string();
         let mut cmd = cmd.version(version.clone());
 
         // this is needed so subcommands return the correct `bin_name`
