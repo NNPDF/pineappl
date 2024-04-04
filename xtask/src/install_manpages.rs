@@ -47,7 +47,7 @@ impl Subcommand for Opts {
             .unwrap()
             .strip_prefix('v')
             // UNWRAP: the version string must start with a 'v'
-            .unwrap()
+            .expect(&format!("version string should contain 'v': {:?}", cmd.get_version()))
             .to_string();
         let mut cmd = cmd.version(version.clone());
 
