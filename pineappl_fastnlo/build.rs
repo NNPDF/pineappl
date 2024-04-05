@@ -25,6 +25,17 @@ fn main() {
     .unwrap();
 
     let link_modifier = if cfg!(feature = "static") {
+        let zlib = Config::new().probe("zlib").unwrap();
+
+        // for some reason `libz.a` isn't found, although `libz.so` is
+        for link_path in zlib.link_paths {
+            println!("cargo:rustc-link-search={}", link_path.to_str().unwrap());
+        }
+
+        for lib in zlib.libs {
+            println!("cargo:rustc-link-lib=static={lib}");
+        }
+
         "static="
     } else {
         ""
