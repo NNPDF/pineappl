@@ -2176,6 +2176,41 @@ impl Grid {
         }
     }
 
+    /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
+    /// larger or equal than the number of channels are ignored.
+    pub fn delete_channels(&mut self, channel_indices: &[usize]) {
+        let mut channel_indices: Vec<_> = channel_indices
+            .iter()
+            .copied()
+            // ignore indices corresponding to bin that don't exist
+            .filter(|&index| index < self.lumi().len())
+            .collect();
+
+        // sort and remove repeated indices
+        channel_indices.sort_unstable();
+        channel_indices.dedup();
+        let channel_indices = channel_indices;
+
+        let mut channel_ranges: Vec<Range<_>> = Vec::new();
+
+        // convert indices into consecutive ranges
+        for &channel_index in &channel_indices {
+            match channel_ranges.last_mut() {
+                Some(range) if range.end == channel_index => range.end += 1,
+                _ => channel_ranges.push(channel_index..(channel_index + 1)),
+            }
+        }
+
+        // reverse order so we don't invalidate indices
+        channel_ranges.reverse();
+        let channel_ranges = channel_ranges;
+
+        for range in channel_ranges.into_iter() {
+            self.lumi.drain(range.clone());
+            self.subgrids.slice_axis_inplace(Axis(2), range.into());
+        }
+    }
+
     pub(crate) fn rewrite_lumi(&mut self, add: &[(i32, i32)], del: &[i32]) {
         self.lumi = self
             .lumi

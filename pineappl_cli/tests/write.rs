@@ -10,26 +10,27 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<ENABLE>]                Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<ENABLE>]                Charge conjugate the second initial state [possible values: true, false]
-      --dedup-channels[=<ULPS>]       Deduplicate channels assuming numbers differing by ULPS are the same
-      --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
-      --delete-key <KEY>              Delete an internal key-value pair
-      --merge-bins <BIN1-BIN2,...>    Merge specific bins together
-      --optimize[=<ENABLE>]           Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
-      --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-      --remap <REMAPPING>             Modify the bin dimensions and widths
-      --remap-norm <NORM>             Modify the bin normalizations with a common factor
-      --remap-norm-ignore <DIM1,...>  Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
-      --rewrite-channel <IDX> <CHAN>  Rewrite the definition of the channel with index IDX
-  -s, --scale <SCALE>                 Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
-      --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
-      --set-key-value <KEY> <VALUE>   Set an internal key-value pair
-      --set-key-file <KEY> <FILE>     Set an internal key-value pair, with value being read from a file
-      --split-lumi[=<ENABLE>]         Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
-      --upgrade[=<ENABLE>]            Convert the file format to the most recent version [possible values: true, false]
-  -h, --help                          Print help
+      --cc1[=<ENABLE>]                 Charge conjugate the first initial state [possible values: true, false]
+      --cc2[=<ENABLE>]                 Charge conjugate the second initial state [possible values: true, false]
+      --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
+      --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
+      --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
+      --delete-key <KEY>               Delete an internal key-value pair
+      --merge-bins <BIN1-BIN2,...>     Merge specific bins together
+      --optimize[=<ENABLE>]            Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize-fk-table <OPTIMI>     Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --remap <REMAPPING>              Modify the bin dimensions and widths
+      --remap-norm <NORM>              Modify the bin normalizations with a common factor
+      --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
+      --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
+  -s, --scale <SCALE>                  Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
+      --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
+      --set-key-value <KEY> <VALUE>    Set an internal key-value pair
+      --set-key-file <KEY> <FILE>      Set an internal key-value pair, with value being read from a file
+      --split-lumi[=<ENABLE>]          Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
+      --upgrade[=<ENABLE>]             Convert the file format to the most recent version [possible values: true, false]
+  -h, --help                           Print help
 ";
 
 const CHANNEL_STR: &str = "l    entry        entry
@@ -80,6 +81,12 @@ const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal
 1 2.25  2.5 6.9028342e2
 2  3.5    4 1.1586851e2
 3    4  4.5 2.7517266e1
+";
+
+const DELETE_CHANNELS_STR: &str = "l    entry        entry
+-+------------+------------
+0 1 × ( 2, -1) 1 × ( 4, -3)
+1 1 × (22, -3) 1 × (22, -1)
 ";
 
 const KEY_VALUE_STR: &str = r"arxiv: 1505.07024
@@ -344,6 +351,30 @@ fn delete_bins_25() {
         .assert()
         .success()
         .stdout(DELETE_BINS_25_STR);
+}
+
+#[test]
+fn delete_channels() {
+    let output = NamedTempFile::new("deleted3.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--delete-channels=1,3-4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(DELETE_CHANNELS_STR);
 }
 
 #[test]
