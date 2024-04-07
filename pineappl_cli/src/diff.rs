@@ -186,7 +186,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
             }
         } else {
             let orders = orders1;
@@ -245,7 +245,7 @@ impl Subcommand for Opts {
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                    if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                    if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
                 }
             }
         }
