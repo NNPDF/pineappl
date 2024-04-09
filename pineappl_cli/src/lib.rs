@@ -29,9 +29,9 @@ use std::process::ExitCode;
 
 #[derive(Parser)]
 pub struct GlobalConfiguration {
-    /// Prevents LHAPDF from printing banners.
+    /// Allow LHAPDF to print banners.
     #[arg(long)]
-    pub silence_lhapdf: bool,
+    pub lhapdf_banner: bool,
     /// Forces negative PDF values to zero.
     #[arg(long)]
     pub force_positive: bool,

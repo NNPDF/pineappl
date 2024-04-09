@@ -120,7 +120,6 @@ fn export_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "export",
             "../test-data/LHCB_DY_8TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -153,7 +152,6 @@ fn export_dis_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "export",
             output1.path().to_str().unwrap(),
             output2.path().to_str().unwrap(),

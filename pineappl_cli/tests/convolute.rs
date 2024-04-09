@@ -179,7 +179,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -195,7 +194,6 @@ fn force_positive() {
         .unwrap()
         .args([
             "--force-positive",
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -210,7 +208,6 @@ fn default_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -226,7 +223,6 @@ fn multiple_pdfs_with_new_construction() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
@@ -242,7 +238,6 @@ fn multiple_pdfs_with_relabeling() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -258,7 +253,6 @@ fn two_pdfs_with_order_subset() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--orders=a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -275,7 +269,6 @@ fn three_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
@@ -292,7 +285,6 @@ fn bins_13567() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--bins=1,3,5-7",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -308,7 +300,6 @@ fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--integrated",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -324,7 +315,6 @@ fn integrated_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--integrated",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -341,7 +331,6 @@ fn orders_a2_a3() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--orders=a2,a3",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -357,7 +346,6 @@ fn wrong_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             "--orders=a2a2as2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",

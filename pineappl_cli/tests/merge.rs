@@ -55,7 +55,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF40_nnlo_as_01180",

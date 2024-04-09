@@ -324,7 +324,6 @@ fn import_fix_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/NJetEvents_0-0-2.tab.gz",
             output.path().to_str().unwrap(),
@@ -343,7 +342,6 @@ fn import_flex_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -362,7 +360,6 @@ fn import_flex_grid_scale_1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -383,7 +380,6 @@ fn import_flex_grid_scale_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -404,7 +400,6 @@ fn import_flex_grid_quadratic_sum() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -427,7 +422,6 @@ fn import_flex_grid_quadratic_mean() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -450,7 +444,6 @@ fn import_flex_grid_5() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -471,7 +464,6 @@ fn import_flex_grid_6() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -492,7 +484,6 @@ fn import_flex_grid_7() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -513,7 +504,6 @@ fn import_flex_grid_8() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -534,7 +524,6 @@ fn import_flex_grid_9() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -555,7 +544,6 @@ fn import_flex_grid_10() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -576,7 +564,6 @@ fn import_flex_grid_11() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -597,7 +584,6 @@ fn import_flex_grid_12() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -618,7 +604,6 @@ fn import_flex_grid_13() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -639,7 +624,6 @@ fn import_flex_grid_14() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -660,7 +644,6 @@ fn import_flex_grid_15() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -685,7 +668,6 @@ fn import_dis_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/FK_POSXDQ.dat",
             output.path().to_str().unwrap(),
@@ -698,7 +680,6 @@ fn import_dis_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -865,7 +846,6 @@ fn import_hadronic_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/FK_ATLASTTBARTOT13TEV.dat",
             output.path().to_str().unwrap(),
@@ -878,7 +858,6 @@ fn import_hadronic_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -1170,7 +1149,6 @@ fn import_photon_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/LHCBWZMU7TEV_PI_part1.appl",
             output.path().to_str().unwrap(),
@@ -1189,7 +1167,6 @@ fn import_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/ATLASWPT11-Wplus_tot.appl",
             output.path().to_str().unwrap(),
@@ -1208,7 +1185,6 @@ fn import_new_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
             output.path().to_str().unwrap(),
@@ -1240,7 +1216,6 @@ fn import_grid_comparison_failure() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "--accuracy=0",
             "../test-data/NJetEvents_0-0-2.tab.gz",
@@ -1261,7 +1236,6 @@ fn import_dis_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl",
             output.path().to_str().unwrap(),
@@ -1280,7 +1254,6 @@ fn import_double_hadronic_fastnlo() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz",
             output.path().to_str().unwrap(),

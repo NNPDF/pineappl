@@ -23,7 +23,7 @@ Commands:
   write      Write a grid modified by various operations
 
 Options:
-      --silence-lhapdf       Prevents LHAPDF from printing banners
+      --lhapdf-banner        Allow LHAPDF to print banners
       --force-positive       Forces negative PDF values to zero
       --allow-extrapolation  Allow extrapolation of PDFs outside their region of validity
   -h, --help                 Print help

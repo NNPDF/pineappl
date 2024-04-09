@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- changed switch `--silence-lhapdf` to `--lhapdf-banner` and suppress LHAPDF's
+  banners by default, unless `--lhapdf-banner` is given
 - `Grid::evolve` has now been marked deprecated
 - switched from `lhapdf` to `managed-lhapdf` crate which automatically
   downloads PDF sets when they are needed

@@ -1421,7 +1421,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -1438,7 +1437,6 @@ fn subgrid_pull() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
@@ -1456,7 +1454,6 @@ fn drell_yan_afb() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--asymmetry",
             "--threads=1",
@@ -1473,7 +1470,6 @@ fn drell_yan_mass_slices() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--no-pdf-unc",
             "--threads=1",

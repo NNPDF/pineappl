@@ -119,7 +119,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -134,7 +133,6 @@ fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--absolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -150,7 +148,6 @@ fn absolute_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--absolute",
             "--integrated",
@@ -167,7 +164,6 @@ fn limit_3() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--limit=3",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -183,7 +179,6 @@ fn bad_limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--limit=0",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -199,7 +194,6 @@ fn lumis_0123() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--lumis=0-3",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -215,7 +209,6 @@ fn orders_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "channels",
             "--orders=a2,as1a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",

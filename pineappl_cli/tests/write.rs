@@ -256,7 +256,6 @@ fn cc1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -285,7 +284,6 @@ fn cc2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -314,7 +312,6 @@ fn delete_bins_02_57() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -343,7 +340,6 @@ fn delete_bins_25() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -429,7 +425,6 @@ fn merge_bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -478,7 +473,6 @@ fn remap() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -541,7 +535,6 @@ fn scale_by_bin() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -571,7 +564,6 @@ fn scale_by_order() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -600,7 +592,6 @@ fn split_lumi() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
@@ -611,12 +602,7 @@ fn split_lumi() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "read",
-            "--lumis",
-            output.path().to_str().unwrap(),
-        ])
+        .args(["read", "--lumis", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(SPLIT_LUMI_STR);
@@ -642,7 +628,6 @@ fn dedup_channels() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -654,12 +639,7 @@ fn dedup_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "read",
-            "--lumis",
-            output.path().to_str().unwrap(),
-        ])
+        .args(["read", "--lumis", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(CHANNEL_STR);
@@ -704,7 +684,6 @@ fn multiple_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF40_nnlo_as_01180",
@@ -748,7 +727,6 @@ fn rewrite_channels() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "convolute",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",

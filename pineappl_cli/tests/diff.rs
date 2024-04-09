@@ -99,7 +99,6 @@ fn orders1_a2_orders2_a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2",
             "--orders2=a2",
@@ -117,7 +116,6 @@ fn orders1_a2_a2as1_orders2_a2_a2as1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
             "--orders2=a2,a2as1",
@@ -135,7 +133,6 @@ fn orders1_a2_a2as1_ignore_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
             "--ignore-orders",
@@ -153,7 +150,6 @@ fn scale2_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--scale2=2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -170,7 +166,6 @@ fn orders_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -202,7 +197,6 @@ fn bin_limits_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -233,7 +227,6 @@ fn bin_number_differs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--ignore-bin-limits",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -251,7 +244,6 @@ fn lumis_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV_old.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
