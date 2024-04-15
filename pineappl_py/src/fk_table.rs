@@ -2,7 +2,7 @@ use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
 use pineappl::lumi::LumiCache;
 
-use numpy::{IntoPyArray, PyArray1, PyArray4};
+use numpy::{IntoPyArray, PyArray1, PyArray4, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 use std::collections::HashMap;
@@ -218,13 +218,19 @@ impl PyFkTable {
         &self,
         pdg_id: i32,
         xfx: &PyAny,
+        bin_indices: PyReadonlyArray1<usize>,
+        lumi_mask: PyReadonlyArray1<bool>,
         py: Python<'py>,
     ) -> &'py PyArray1<f64> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.fk_table
-            .convolute(&mut lumi_cache, &[], &[])
+            .convolute(
+                &mut lumi_cache,
+                &bin_indices.to_vec().unwrap(),
+                &lumi_mask.to_vec().unwrap(),
+            )
             .into_pyarray(py)
     }
 
