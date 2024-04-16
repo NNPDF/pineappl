@@ -43,7 +43,7 @@ impl PyFkTable {
     #[new]
     pub fn new(grid: PyGrid) -> Self {
         Self {
-            fk_table: FkTable::try_from(grid.grid),
+            fk_table: FkTable::try_from(grid.grid).unwrap(),
         }
     }
 
