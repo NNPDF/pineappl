@@ -680,7 +680,7 @@ fn import_dis_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -858,7 +858,7 @@ fn import_hadronic_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])

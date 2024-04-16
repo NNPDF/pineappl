@@ -256,7 +256,7 @@ fn cc1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -284,7 +284,7 @@ fn cc2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -312,7 +312,7 @@ fn delete_bins_02_57() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -340,7 +340,7 @@ fn delete_bins_25() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -425,7 +425,7 @@ fn merge_bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -473,7 +473,7 @@ fn remap() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -535,7 +535,7 @@ fn scale_by_bin() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -564,7 +564,7 @@ fn scale_by_order() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -592,7 +592,7 @@ fn split_lumi() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -684,7 +684,7 @@ fn multiple_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF40_nnlo_as_01180",
         ])
@@ -727,7 +727,7 @@ fn rewrite_channels() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])

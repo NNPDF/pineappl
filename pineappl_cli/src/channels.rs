@@ -74,7 +74,7 @@ impl Subcommand for Opts {
         } else {
             limit.min(lumis.len())
         };
-        let limits = helpers::convolute_limits(
+        let limits = helpers::convolve_limits(
             &grid,
             &[],
             if self.integrated {
@@ -87,7 +87,7 @@ impl Subcommand for Opts {
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     &mut pdf,
                     &self.orders,

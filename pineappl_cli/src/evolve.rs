@@ -543,7 +543,7 @@ impl Subcommand for Opts {
 
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
-        let results = helpers::convolute_scales(
+        let results = helpers::convolve_scales(
             &grid,
             &mut pdf,
             &self.orders,
@@ -563,7 +563,7 @@ impl Subcommand for Opts {
             self.xif,
             self.use_old_evolve,
         )?;
-        let evolved_results = helpers::convolute_scales(
+        let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
             &mut pdf,
             &[],

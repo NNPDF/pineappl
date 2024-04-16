@@ -55,7 +55,7 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF40_nnlo_as_01180",
         ])

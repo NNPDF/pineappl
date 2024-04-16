@@ -100,7 +100,7 @@ impl Subcommand for Opts {
         let grid = helpers::read_grid(&self.input)?;
         let (set, _) = helpers::create_pdfset(&self.pdfset)?;
 
-        let limits = helpers::convolute_limits(
+        let limits = helpers::convolve_limits(
             &grid,
             &[],
             if self.integrated {
@@ -119,7 +119,7 @@ impl Subcommand for Opts {
             set.mk_pdfs()?
                 .into_par_iter()
                 .flat_map(|mut pdf| {
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid,
                         &mut pdf,
                         &self.orders,
@@ -148,7 +148,7 @@ impl Subcommand for Opts {
             .map(|&x| usize::from(x))
             .max()
             .unwrap_or(1);
-        let scale_results = helpers::convolute(
+        let scale_results = helpers::convolve(
             &grid,
             &mut helpers::create_pdf(&self.pdfset)?,
             &self.orders,

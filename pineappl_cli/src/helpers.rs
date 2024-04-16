@@ -125,7 +125,7 @@ pub enum ConvoluteMode {
     Normal,
 }
 
-pub fn convolute_scales(
+pub fn convolve_scales(
     grid: &Grid,
     lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
@@ -210,7 +210,7 @@ pub fn convolute_scales(
     }
 }
 
-pub fn convolute(
+pub fn convolve(
     grid: &Grid,
     lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
@@ -220,7 +220,7 @@ pub fn convolute(
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
-    convolute_scales(
+    convolve_scales(
         grid,
         lhapdf,
         orders,
@@ -232,7 +232,7 @@ pub fn convolute(
     )
 }
 
-pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
+pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
     let limits: Vec<_> = grid
         .bin_info()
         .limits()
@@ -247,7 +247,7 @@ pub fn convolute_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec
     }
 }
 
-pub fn convolute_subgrid(
+pub fn convolve_subgrid(
     grid: &Grid,
     lhapdf: &mut Pdf,
     order: usize,

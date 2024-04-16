@@ -217,7 +217,7 @@ fn lhcb_wp_7tev() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "convolute",
+            "convolve",
             optimized.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
         ])

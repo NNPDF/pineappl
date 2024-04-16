@@ -5,7 +5,7 @@
 
 mod analyze;
 mod channels;
-mod convolute;
+mod convolve;
 mod diff;
 mod evolve;
 mod export;
@@ -50,7 +50,7 @@ pub trait Subcommand {
 pub enum SubcommandEnum {
     Analyze(analyze::Opts),
     Channels(channels::Opts),
-    Convolute(convolute::Opts),
+    Convolve(convolve::Opts),
     Diff(diff::Opts),
     Evolve(evolve::Opts),
     Export(export::Opts),
