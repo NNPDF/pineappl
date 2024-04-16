@@ -3,7 +3,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
     systems.url = "github:nix-systems/default";
     devenv.url = "github:cachix/devenv";
-    nixpkgs-python.url = "github:cachix/nixpkgs-python";
     fenix.url = "github:nix-community/fenix";
     fenix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -51,7 +50,6 @@
               languages.python = {
                 enable = true;
                 venv.enable = true;
-                version = "3.11";
               };
               languages.rust = {
                 enable = true;
