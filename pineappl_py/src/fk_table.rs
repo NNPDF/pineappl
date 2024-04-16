@@ -226,18 +226,12 @@ impl PyFkTable {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
-        let bin_indices = if let Some(b) = bin_indices {
-            b.to_vec().unwrap()
-        } else {
-            vec![]
-        };
-        let lumi_mask = if let Some(l) = lumi_mask {
-            l.to_vec().unwrap()
-        } else {
-            vec![]
-        };
         self.fk_table
-            .convolute(&mut lumi_cache, &bin_indices, &lumi_mask)
+            .convolute(
+                &mut lumi_cache,
+                &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
+                &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+            )
             .into_pyarray(py)
     }
 
