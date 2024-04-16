@@ -214,24 +214,30 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins
-    #[pyo3(signature = (pdf_id, xfx, bin_indices = pyarray![].readonly(), lumi_cache = pyarray![].readonly()))]
+    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, lumi_mask= None))]
     pub fn convolute_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
-        bin_indices: PyReadonlyArray1<usize>,
-        lumi_mask: PyReadonlyArray1<bool>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        lumi_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> &'py PyArray1<f64> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        let bin_indices = if let Some(b) = bin_indices {
+            b.to_vec().unwrap()
+        } else {
+            vec![]
+        };
+        let lumi_mask = if let Some(l) = lumi_mask {
+            l.to_vec().unwrap()
+        } else {
+            vec![]
+        };
         self.fk_table
-            .convolute(
-                &mut lumi_cache,
-                &bin_indices.to_vec().unwrap(),
-                &lumi_mask.to_vec().unwrap(),
-            )
+            .convolute(&mut lumi_cache, &bin_indices, &lumi_mask)
             .into_pyarray(py)
     }
 
