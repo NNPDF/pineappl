@@ -11,6 +11,8 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use crate::grid::PyGrid;
+
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
 /// *Usage*: `pineko`, `yadism`
@@ -38,6 +40,13 @@ impl PyFkAssumptions {
 
 #[pymethods]
 impl PyFkTable {
+    #[new]
+    pub fn new(grid: PyGrid) -> Self {
+        Self {
+            fk_table: FkTable::try_from(grid.grid),
+        }
+    }
+
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
         Self {
