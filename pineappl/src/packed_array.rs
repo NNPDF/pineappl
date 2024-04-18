@@ -93,7 +93,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
     }
 }
 
-fn ravel_multi_index<const D: usize>(indices: &[usize], dimensions: &[usize]) -> usize {
+fn ravel_multi_index<const D: usize>(indices: &[usize; D], dimensions: &[usize]) -> usize {
     assert_eq!(indices.len(), dimensions.len());
 
     indices
@@ -129,7 +129,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
             self.shape
         );
 
-        let raveled_index = ravel_multi_index::<D>(&index, &self.shape);
+        let raveled_index = ravel_multi_index(&index, &self.shape);
         let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
         assert!(
@@ -165,7 +165,7 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             self.shape
         );
 
-        let raveled_index = ravel_multi_index::<D>(&index, &self.shape);
+        let raveled_index = ravel_multi_index(&index, &self.shape);
 
         // if self.entries.is_empty() {
         //     self.start_indices.push(raveled_index);
@@ -274,12 +274,12 @@ mod tests {
 
     #[test]
     fn ravel_multi_index() {
-        assert_eq!(super::ravel_multi_index::<2>(&[0, 0], &[3, 2]), 0);
-        assert_eq!(super::ravel_multi_index::<2>(&[0, 1], &[3, 2]), 1);
-        assert_eq!(super::ravel_multi_index::<2>(&[1, 0], &[3, 2]), 2);
-        assert_eq!(super::ravel_multi_index::<2>(&[1, 1], &[3, 2]), 3);
-        assert_eq!(super::ravel_multi_index::<2>(&[2, 0], &[3, 2]), 4);
-        assert_eq!(super::ravel_multi_index::<2>(&[2, 1], &[3, 2]), 5);
+        assert_eq!(super::ravel_multi_index(&[0, 0], &[3, 2]), 0);
+        assert_eq!(super::ravel_multi_index(&[0, 1], &[3, 2]), 1);
+        assert_eq!(super::ravel_multi_index(&[1, 0], &[3, 2]), 2);
+        assert_eq!(super::ravel_multi_index(&[1, 1], &[3, 2]), 3);
+        assert_eq!(super::ravel_multi_index(&[2, 0], &[3, 2]), 4);
+        assert_eq!(super::ravel_multi_index(&[2, 1], &[3, 2]), 5);
     }
 
     #[test]
