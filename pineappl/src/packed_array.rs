@@ -4,7 +4,7 @@ use std::{mem, vec};
 use ndarray::ArrayView3;
 use serde::{Deserialize, Serialize};
 
-/// `D`-dimensional array similar to ndarray::ArrayBase, except that `T::default()` is not stored to save space. Instead, adjacent elements are grouped together and only the index of their first element (`start_index`) and the length of the group (`lengths`) is stored.
+/// `D`-dimensional array similar to ndarray::ArrayBase, except that `T::default()` is not stored to save space. Instead, adjacent non-default elements are grouped together and the index of their first element (`start_index`) and the length of the group (`lengths`) is stored.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct PackedArray<T, const D: usize> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the elements in `lengths`.
@@ -56,7 +56,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
             / mem::size_of::<f64>()
     }
 
-    /// Returns the number of default (zero) elements that are explicitly stored in `entries`. If there is one default elements between adjacent groups, it is more economical to store the one default element explicitly and merge the two groups, than to store the `start_indices` and `lengths` of those groups. 
+    /// Returns the number of default (zero) elements that are explicitly stored in `entries`. If there is one default element between adjacent groups, it is more economical to store the one default element explicitly and merge the two groups, than to store the `start_indices` and `lengths` of both groups.
     #[must_use]
     pub fn explicit_zeros(&self) -> usize {
         self.entries.iter().filter(|x| **x == T::default()).count()
@@ -68,7 +68,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
-    /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of an iterator element is `([usize; D], T)`.
+    /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of an iterator element is `([usize; D], T)` where the first element of the tuple is the index and the second element is the value.
     pub fn indexed_iter(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
         self.start_indices
             .iter()
@@ -83,7 +83,6 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
 }
 
 impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> {
-
     /// Perform `self *= rhs` as elementwise multiplication (in place).
     fn mul_assign(&mut self, rhs: T) {
         self.entries.iter_mut().for_each(|x| *x *= rhs);
@@ -91,7 +90,6 @@ impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> 
 }
 
 impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
-
     /// Converts `array` into a `PackedArray` of dimension 3.
     #[must_use]
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
@@ -110,15 +108,15 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
     }
 }
 
-/// Converts a `multi_index` into an flat index.
+/// Converts a `multi_index` into a flat index.
 fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], dimensions: &[usize]) -> usize {
     assert_eq!(multi_index.len(), dimensions.len());
-    
+
     multi_index
-    .iter()
-    .skip(1)
-    .zip(dimensions.iter().skip(1))
-    .fold(multi_index[0], |acc, (i, d)| acc * d + i)
+        .iter()
+        .skip(1)
+        .zip(dimensions.iter().skip(1))
+        .fold(multi_index[0], |acc, (i, d)| acc * d + i)
 }
 
 /// Converts a flat `index` into a multi_index.
@@ -247,7 +245,6 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
         &mut self.entries[point_entries]
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -663,5 +660,4 @@ mod tests {
 
         assert_eq!(array.explicit_zeros(), 1);
     }
-
 }
