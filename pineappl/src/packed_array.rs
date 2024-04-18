@@ -29,6 +29,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
         self.entries.is_empty()
     }
 
+    #[must_use]
     pub fn shape(&self) -> &[usize] {
         &self.shape
     }
@@ -50,6 +51,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
         self.entries.iter().filter(|x| **x == T::default()).count()
     }
 
+    #[must_use]
     pub fn non_zeros(&self) -> usize {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
@@ -74,6 +76,7 @@ impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> 
 }
 
 impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
+    #[must_use]
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
 
