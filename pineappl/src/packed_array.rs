@@ -4,15 +4,21 @@ use std::{mem, vec};
 use ndarray::ArrayView3;
 use serde::{Deserialize, Serialize};
 
+/// `D`-dimensional array similar to ndarray::ArrayBase, except that `T::default()` is not stored to save space. Instead, adjacent elements are grouped together and only the index of their first element (`start_index`) and the length of the group (`lengths`) is stored.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct PackedArray<T, const D: usize> {
+    /// The actual values stored in the array. The length of `entries` is always the sum of the elements in `lengths`.
     entries: Vec<T>,
+    /// The indices of the first elements in each group.
     start_indices: Vec<usize>,
+    /// The length of each group.
     lengths: Vec<usize>,
+    /// The shape (dimensions) of the array.
     shape: Vec<usize>,
 }
 
 impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
+    /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
     pub fn new(shape: [usize; D]) -> Self {
         Self {
@@ -24,38 +30,45 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
         }
     }
 
+    /// Returns `true` if the array contains no element.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    /// Returns the shape of the array.
     #[must_use]
     pub fn shape(&self) -> &[usize] {
         &self.shape
     }
 
+    /// Clears the contents of the array.
     pub fn clear(&mut self) {
         self.entries.clear();
         self.start_indices.clear();
         self.lengths.clear();
     }
 
+    /// Returns the overhead of storing the `start_indices` and the `lengths` of the groups, in units of `f64`.
     #[must_use]
     pub fn overhead(&self) -> usize {
         ((self.start_indices.len() + self.lengths.len()) * mem::size_of::<usize>())
             / mem::size_of::<f64>()
     }
 
+    /// Returns the number of default (zero) elements that are explicitly stored in `entries`. If there is one default elements between adjacent groups, it is more economical to store the one default element explicitly and merge the two groups, than to store the `start_indices` and `lengths` of those groups. 
     #[must_use]
     pub fn explicit_zeros(&self) -> usize {
         self.entries.iter().filter(|x| **x == T::default()).count()
     }
 
+    /// Returns the number of non-default (non-zero) elements stored in the array.
     #[must_use]
     pub fn non_zeros(&self) -> usize {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
+    /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of an iterator element is `([usize; D], T)`.
     pub fn indexed_iter(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
         self.start_indices
             .iter()
@@ -70,12 +83,16 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
 }
 
 impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> {
+
+    /// Perform `self *= rhs` as elementwise multiplication (in place).
     fn mul_assign(&mut self, rhs: T) {
         self.entries.iter_mut().for_each(|x| *x *= rhs);
     }
 }
 
 impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
+
+    /// Converts `array` into a `PackedArray` of dimension 3.
     #[must_use]
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
@@ -93,16 +110,18 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
     }
 }
 
-fn ravel_multi_index<const D: usize>(indices: &[usize; D], dimensions: &[usize]) -> usize {
-    assert_eq!(indices.len(), dimensions.len());
-
-    indices
-        .iter()
-        .skip(1)
-        .zip(dimensions.iter().skip(1))
-        .fold(indices[0], |acc, (i, d)| acc * d + i)
+/// Converts a `multi_index` into an flat index.
+fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], dimensions: &[usize]) -> usize {
+    assert_eq!(multi_index.len(), dimensions.len());
+    
+    multi_index
+    .iter()
+    .skip(1)
+    .zip(dimensions.iter().skip(1))
+    .fold(multi_index[0], |acc, (i, d)| acc * d + i)
 }
 
+/// Converts a flat `index` into a multi_index.
 fn unravel_index<const D: usize>(index: usize, dimensions: &[usize]) -> [usize; D] {
     assert!(index < dimensions.iter().product());
     let mut indices = [0; D];
@@ -152,7 +171,6 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
     }
 }
 
-// TODO: implement axis swapping optimization
 impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
     for PackedArray<T, D>
 {
@@ -167,21 +185,11 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
 
         let raveled_index = ravel_multi_index(&index, &self.shape);
 
-        // if self.entries.is_empty() {
-        //     self.start_indices.push(raveled_index);
-        //     self.lengths.push(1);
-        //     self.entries.push(Default::default());
-
-        //     return &mut self.entries[0];
-        // }
-
         // the closest start_index that is greater than raveled_index
         let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
         // the index that is stored in `point`, translated to the indices of the entries
         let point_entries = self.lengths.iter().take(point).sum::<usize>();
-
-        // println!("test 1");
 
         // maximum distance for merging regions
         let threshold_distance = 2;
@@ -191,14 +199,11 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             let length = self.lengths[point - 1];
 
             if raveled_index < start_index + length {
-                // println!("test 2");
                 return &mut self.entries[point_entries - length + raveled_index - start_index];
             } else if raveled_index < start_index + length + threshold_distance {
-                // println!("test 3");
-
                 let distance = raveled_index - (start_index + length) + 1;
-                // println!("distance: {}", distance);
                 self.lengths[point - 1] += distance;
+
                 for _ in 0..(distance) {
                     self.entries.insert(point_entries, Default::default());
                 }
@@ -223,7 +228,6 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
 
         if let Some(start_index_next) = self.start_indices.get(point) {
             if raveled_index + threshold_distance >= *start_index_next {
-                // println!("test 5");
                 let distance = start_index_next - raveled_index;
 
                 self.start_indices[point] = raveled_index;
@@ -235,8 +239,6 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             }
         }
 
-        // println!("test 6");
-
         // in the most general case we have to insert a new start_index
         self.start_indices.insert(point, raveled_index);
         self.lengths.insert(point, 1);
@@ -246,14 +248,6 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
     }
 }
 
-// impl<T> IntoIterator for &JaggedArray<T> {
-//     type Item = (Vec<usize>, T);
-//     type IntoIter = Iterator<Item = (Vec<usize>, T)>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
@@ -287,20 +281,12 @@ mod tests {
         let mut a = PackedArray::<f64, 2>::new([4, 2]);
 
         a[[0, 0]] = 1.0;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
         assert_eq!(a[[0, 0]], 1.0);
         assert_eq!(a.entries, vec![1.0]);
         assert_eq!(a.start_indices, vec![0]);
         assert_eq!(a.lengths, vec![1]);
 
         a[[3, 0]] = 2.0;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
         assert_eq!(a[[0, 0]], 1.0);
         assert_eq!(a[[3, 0]], 2.0);
         assert_eq!(a.entries, vec![1.0, 2.0]);
@@ -308,11 +294,6 @@ mod tests {
         assert_eq!(a.lengths, vec![1, 1]);
 
         a[[3, 1]] = 3.0;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
-
         assert_eq!(a[[0, 0]], 1.0);
         assert_eq!(a[[3, 0]], 2.0);
         assert_eq!(a[[3, 1]], 3.0);
@@ -321,30 +302,19 @@ mod tests {
         assert_eq!(a.lengths, vec![1, 2]);
 
         a[[2, 0]] = 3.5;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
         assert_eq!(a[[0, 0]], 1.0);
         assert_eq!(a[[3, 0]], 2.0);
         assert_eq!(a[[3, 1]], 3.0);
         assert_eq!(a[[2, 0]], 3.5);
-        // assert_eq!(a[[2, 1]], 0.0);
         assert_eq!(a.entries, vec![1.0, 3.5, 0.0, 2.0, 3.0]);
         assert_eq!(a.start_indices, vec![0, 4]);
         assert_eq!(a.lengths, vec![1, 4]);
 
         a[[2, 0]] = 4.0;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
-
         assert_eq!(a[[0, 0]], 1.0);
         assert_eq!(a[[3, 0]], 2.0);
         assert_eq!(a[[3, 1]], 3.0);
         assert_eq!(a[[2, 0]], 4.0);
-        // assert_eq!(a[[2, 1]], 0.0);
         assert_eq!(a.entries, vec![1.0, 4.0, 0.0, 2.0, 3.0]);
         assert_eq!(a.start_indices, vec![0, 4]);
         assert_eq!(a.lengths, vec![1, 4]);
@@ -354,16 +324,10 @@ mod tests {
         assert_eq!(a[[3, 0]], 2.0);
         assert_eq!(a[[3, 1]], 3.0);
         assert_eq!(a[[2, 0]], 4.0);
-        // assert_eq!(a[[2, 1]], 0.0);
         assert_eq!(a[[1, 0]], 5.0);
         assert_eq!(a.entries, vec![1.0, 0.0, 5.0, 0.0, 4.0, 0.0, 2.0, 3.0]);
         assert_eq!(a.start_indices, vec![0]);
         assert_eq!(a.lengths, vec![8]);
-
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
     }
 
     #[test]
@@ -373,15 +337,7 @@ mod tests {
         a[[2, 4]] = 2;
         a[[4, 1]] = 3;
         a[[4, 4]] = 4;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
         a[[5, 0]] = 5;
-        println!(
-            "entries: {:?}, start_indices: {:?}, lengths: {:?}",
-            a.entries, a.start_indices, a.lengths
-        );
         assert_eq!(
             a.indexed_iter().collect::<Vec<_>>(),
             &[
@@ -699,19 +655,13 @@ mod tests {
 
         assert_eq!(array[[3, 4, 3]], 1.0);
         assert_eq!(array[[3, 4, 4]], 2.0);
-        // assert_eq!(array[[3, 4, 5]], 0.0);
+        assert_eq!(array[[3, 4, 5]], 0.0);
         assert_eq!(array[[3, 4, 6]], 3.0);
         assert_eq!(array[[3, 5, 1]], 4.0);
-        // assert_eq!(array[[3, 5, 2]], 0.0);
-        // assert_eq!(array[[3, 5, 3]], 0.0);
-        // assert_eq!(array[[3, 5, 4]], 0.0);
-        // assert_eq!(array[[3, 5, 5]], 0.0);
-        // assert_eq!(array[[3, 5, 6]], 0.0);
         assert_eq!(array[[3, 5, 7]], 5.0);
         assert_eq!(array[[4, 3, 9]], 6.0);
 
-        // assert_eq!(array.len(), 6);
-        // assert_eq!(array.zeros(), 6);
+        assert_eq!(array.explicit_zeros(), 1);
     }
 
 }
