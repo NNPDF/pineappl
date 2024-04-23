@@ -122,8 +122,8 @@ fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], dimensions: &[usi
 
     multi_index
         .iter()
+        .zip(dimensions)
         .skip(1)
-        .zip(dimensions.iter().skip(1))
         .fold(multi_index[0], |acc, (i, d)| acc * d + i)
 }
 
@@ -133,8 +133,8 @@ fn unravel_index<const D: usize>(index: usize, dimensions: &[usize]) -> [usize; 
     let mut indices = [0; D];
     indices
         .iter_mut()
+        .zip(dimensions)
         .rev()
-        .zip(dimensions.iter().rev())
         .fold(index, |acc, (i, d)| {
             *i = acc % d;
             acc / d
