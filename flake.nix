@@ -26,17 +26,16 @@
       craneLib = crane.lib.${system};
 
       src = craneLib.cleanCargoSource (craneLib.path ./.);
-      # Common arguments can be set here to avoid repeating them later
       commonArgs = {
         inherit src;
-        strictDeps = true;
+        strictDeps = false;
+        buildInputs = with pkgs; [lhapdf];
+        nativeBuildInputs = with pkgs; [pkg-config];
       };
 
-      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
       individualCrateArgs =
         commonArgs
         // {
-          inherit cargoArtifacts;
           inherit
             ((builtins.fromTOML (builtins.readFile (src
                     + "/Cargo.toml")))
@@ -44,6 +43,7 @@
               .package)
             version
             ;
+          doCheck = false;
         };
 
       fileSetForCrate = crate:
@@ -53,21 +53,30 @@
             ./Cargo.toml
             ./Cargo.lock
             crate
+            # TODO: avoid passing all the folders
+            # (if strictly needed, at least avoid doing it explicitly)
+            ./pineappl
+            ./pineappl_applgrid
+            ./pineappl_capi
+            ./pineappl_fastnlo
+            ./pineappl_py
+            ./xtask
           ];
         };
 
-      pineappl = craneLib.buildPackage (individualCrateArgs
-        // {
-          pname = "pineappl";
-          cargoExtraArgs = "-p pineappl";
-          src = fileSetForCrate ./pineappl;
-        });
+      pineappl =
+        craneLib.buildPackage
+        (individualCrateArgs
+          // {
+            pname = "pineappl";
+            cargoExtraArgs = "-p pineappl";
+            src = fileSetForCrate ./pineappl;
+          });
       cli = craneLib.buildPackage (individualCrateArgs
         // {
           pname = "pineappl_cli";
           cargoExtraArgs = "-p pineappl_cli";
           src = fileSetForCrate ./pineappl_cli;
-          buildInputs = with pkgs; [pkg-config lhapdf];
         });
       # TODO: build with maturin
       py = null;
