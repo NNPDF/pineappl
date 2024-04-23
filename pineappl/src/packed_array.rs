@@ -1,10 +1,9 @@
 //! Provides the [`PackedArray`] struct.
 
-use std::ops::{Index, IndexMut, MulAssign};
-use std::{mem, vec};
-
 use ndarray::ArrayView3;
 use serde::{Deserialize, Serialize};
+use std::mem;
+use std::ops::{Index, IndexMut, MulAssign};
 
 /// `D`-dimensional array similar to [`ndarray::ArrayBase`], except that `T::default()` is not
 /// stored to save space. Instead, adjacent non-default elements are grouped together and the index
