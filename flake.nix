@@ -37,7 +37,13 @@
         commonArgs
         // {
           inherit cargoArtifacts;
-          inherit (craneLib.crateNameFromCargoToml {inherit src;}) version;
+          inherit
+            ((builtins.fromTOML (builtins.readFile (src
+                    + "/Cargo.toml")))
+              .workspace
+              .package)
+            version
+            ;
         };
 
       fileSetForCrate = crate:
@@ -61,7 +67,7 @@
           pname = "pineappl_cli";
           cargoExtraArgs = "-p pineappl_cli";
           src = fileSetForCrate ./pineappl_cli;
-          buildInputs = with pkgs; [lhapdf];
+          buildInputs = with pkgs; [pkg-config lhapdf];
         });
       # TODO: build with maturin
       py = null;
