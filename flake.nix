@@ -58,23 +58,16 @@
             ./pineappl
             ./pineappl_applgrid
             ./pineappl_capi
+            ./pineappl_cli
             ./pineappl_fastnlo
             ./pineappl_py
             ./xtask
           ];
         };
 
-      pineappl =
-        craneLib.buildPackage
-        (individualCrateArgs
-          // {
-            pname = "pineappl";
-            cargoExtraArgs = "-p pineappl";
-            src = fileSetForCrate ./pineappl;
-          });
       cli = craneLib.buildPackage (individualCrateArgs
         // {
-          pname = "pineappl_cli";
+          pname = "pineappl";
           cargoExtraArgs = "-p pineappl_cli";
           src = fileSetForCrate ./pineappl_cli;
         });
@@ -85,7 +78,6 @@
         packages = {
           default = cli;
           cli = cli;
-          lib = pineappl;
           pineappl-py = py;
         };
 
