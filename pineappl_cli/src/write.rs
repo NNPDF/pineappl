@@ -34,6 +34,7 @@ enum OpsArg {
     Cc2(bool),
     DedupChannels(i64),
     DeleteBins(Vec<RangeInclusive<usize>>),
+    DeleteChannels(Vec<RangeInclusive<usize>>),
     DeleteKey(String),
     MergeBins(Vec<RangeInclusive<usize>>),
     Optimize(bool),
@@ -131,7 +132,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "delete_bins" | "merge_bins" => {
+                "delete_bins" | "delete_channels" | "merge_bins" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -140,6 +141,7 @@ impl FromArgMatches for MoreArgs {
                     ) {
                         args[index] = Some(match id.as_str() {
                             "delete_bins" => OpsArg::DeleteBins(arg),
+                            "delete_channels" => OpsArg::DeleteChannels(arg),
                             "merge_bins" => OpsArg::MergeBins(arg),
                             _ => unreachable!(),
                         });
@@ -278,6 +280,16 @@ impl Args for MoreArgs {
                 .num_args(1)
                 .value_delimiter(',')
                 .value_name("BIN1-BIN2,...")
+                .value_parser(helpers::parse_integer_range),
+        )
+        .arg(
+            Arg::new("delete_channels")
+                .action(ArgAction::Append)
+                .help("Delete channels with the specified indices")
+                .long("delete-channels")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("CH1-CH2,...")
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
@@ -491,6 +503,9 @@ impl Subcommand for Opts {
                 }
                 OpsArg::DeleteBins(ranges) => {
                     grid.delete_bins(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
+                }
+                OpsArg::DeleteChannels(ranges) => {
+                    grid.delete_channels(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
                 }
                 OpsArg::DeleteKey(key) => {
                     grid.key_values_mut().remove(key);

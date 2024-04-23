@@ -137,7 +137,7 @@ impl Subcommand for Opts {
             title.add_cell(cell);
         }
 
-        let limits1 = helpers::convolute_limits(&grid1, &[], ConvoluteMode::Normal);
+        let limits1 = helpers::convolve_limits(&grid1, &[], ConvoluteMode::Normal);
 
         if self.ignore_orders {
             let mut cell = cell!(c->"diff");
@@ -146,7 +146,7 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(
+            let results1 = helpers::convolve(
                 &grid1,
                 &mut pdf,
                 &orders1,
@@ -156,7 +156,7 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal,
                 cfg,
             );
-            let results2 = helpers::convolute(
+            let results2 = helpers::convolve(
                 &grid2,
                 &mut pdf,
                 &orders2,
@@ -186,7 +186,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
             }
         } else {
             let orders = orders1;
@@ -202,7 +202,7 @@ impl Subcommand for Opts {
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid1,
                         &mut pdf,
                         &[order],
@@ -217,7 +217,7 @@ impl Subcommand for Opts {
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid2,
                         &mut pdf,
                         &[order],
@@ -245,7 +245,7 @@ impl Subcommand for Opts {
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                    if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                    if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
                 }
             }
         }

@@ -155,7 +155,7 @@ impl Subcommand for Opts {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
             let mut pdf = helpers::create_pdf(&self.pdfset)?;
-            let reference_results = helpers::convolute(
+            let reference_results = helpers::convolve(
                 &grid,
                 &mut pdf,
                 &orders,

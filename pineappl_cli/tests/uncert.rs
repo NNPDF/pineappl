@@ -178,7 +178,6 @@ fn pdf_default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--pdf",
             "--threads=1",
@@ -195,7 +194,6 @@ fn pdf_cl_90() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--pdf",
             "--cl=90",
@@ -213,7 +211,6 @@ fn pdf_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--pdf",
             "--integrated",
@@ -231,7 +228,6 @@ fn pdf_orders_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--pdf",
             "--orders=a2,as1a2",
@@ -249,7 +245,6 @@ fn scale_abs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--scale-abs",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -265,7 +260,6 @@ fn scale_cov() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--scale-cov",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -281,7 +275,6 @@ fn scale_cov_9() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--scale-cov=9",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -297,7 +290,6 @@ fn scale_env() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--scale-env",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -313,7 +305,6 @@ fn scale_env_9() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--scale-env=9",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -329,7 +320,6 @@ fn pdf_with_scale_cov() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "uncert",
             "--pdf-with-scale-cov",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",

@@ -86,7 +86,6 @@ fn ckf() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -104,7 +103,6 @@ fn ckf_with_default_denominator() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -121,7 +119,6 @@ fn ckf_with_bad_limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "--limit=0",

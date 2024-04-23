@@ -107,7 +107,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "pull",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -124,7 +123,6 @@ fn orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "pull",
             "--orders=a2",
             "--threads=1",
@@ -142,7 +140,6 @@ fn cl_90() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "pull",
             "--cl=90",
             "--threads=1",
@@ -160,7 +157,6 @@ fn limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "pull",
             "--limit=1",
             "--threads=1",
@@ -178,7 +174,6 @@ fn replica0() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "pull",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",

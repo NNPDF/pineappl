@@ -52,7 +52,7 @@ impl Subcommand for Opts {
         orders.sort();
         let orders = orders;
 
-        let limits = helpers::convolute_limits(
+        let limits = helpers::convolve_limits(
             &grid,
             &[],
             if self.integrated {
@@ -64,7 +64,7 @@ impl Subcommand for Opts {
         let results: Vec<Vec<f64>> = orders
             .iter()
             .map(|order| {
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     &mut pdf,
                     &[(order.alphas, order.alpha)],

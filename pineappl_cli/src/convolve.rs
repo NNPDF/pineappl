@@ -9,6 +9,7 @@ use std::process::ExitCode;
 
 /// Convolutes a PineAPPL grid with a PDF set.
 #[derive(Parser)]
+#[command(alias = "convolute")]
 pub struct Opts {
     /// Path of the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
@@ -51,7 +52,7 @@ impl Subcommand for Opts {
         let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
         let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
 
-        let results = helpers::convolute(
+        let results = helpers::convolve(
             &grid,
             &mut pdf,
             &self.orders,
@@ -65,7 +66,7 @@ impl Subcommand for Opts {
             },
             cfg,
         );
-        let limits = helpers::convolute_limits(
+        let limits = helpers::convolve_limits(
             &grid,
             &bins,
             if self.integrated {
@@ -80,7 +81,7 @@ impl Subcommand for Opts {
             .iter()
             .flat_map(|pdfset| {
                 let mut pdf = helpers::create_pdf(pdfset).unwrap();
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     &mut pdf,
                     &self.orders,

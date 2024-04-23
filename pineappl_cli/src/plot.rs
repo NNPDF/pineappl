@@ -218,7 +218,7 @@ impl Subcommand for Opts {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 
                 let results =
-                    helpers::convolute(&grid, &mut pdf, &[], &bins, &[], self.scales, mode, cfg);
+                    helpers::convolve(&grid, &mut pdf, &[], &bins, &[], self.scales, mode, cfg);
 
                 let qcd_results = {
                     let mut orders = grid.orders().to_vec();
@@ -235,7 +235,7 @@ impl Subcommand for Opts {
                         })
                         .collect();
 
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid,
                         &mut pdf,
                         &qcd_orders,
@@ -247,7 +247,7 @@ impl Subcommand for Opts {
                     )
                 };
 
-                let bin_limits: Vec<_> = helpers::convolute_limits(&grid, &bins, mode)
+                let bin_limits: Vec<_> = helpers::convolve_limits(&grid, &bins, mode)
                     .into_iter()
                     .map(|limits| limits.last().copied().unwrap())
                     .collect();
@@ -270,7 +270,7 @@ impl Subcommand for Opts {
                             let mut pdf = helpers::create_pdf(pdfset).unwrap();
 
                             let results =
-                                helpers::convolute(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
+                                helpers::convolve(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
 
                             Ok(vec![results; 3])
                         } else {
@@ -280,7 +280,7 @@ impl Subcommand for Opts {
                                 .mk_pdfs()?
                                 .into_par_iter()
                                 .flat_map(|mut pdf| {
-                                    helpers::convolute(
+                                    helpers::convolve(
                                         &grid,
                                         &mut pdf,
                                         &[],
@@ -379,7 +379,7 @@ impl Subcommand for Opts {
                                     grid.has_pdf1(),
                                     grid.has_pdf2(),
                                 ),
-                                helpers::convolute(
+                                helpers::convolve(
                                     &grid,
                                     &mut pdf,
                                     &[],
@@ -523,7 +523,7 @@ impl Subcommand for Opts {
             let values1: Vec<_> = pdfset1
                 .par_iter_mut()
                 .map(|pdf| {
-                    let values = helpers::convolute(
+                    let values = helpers::convolve(
                         &grid,
                         pdf,
                         &[],
@@ -540,7 +540,7 @@ impl Subcommand for Opts {
             let values2: Vec<_> = pdfset2
                 .par_iter_mut()
                 .map(|pdf| {
-                    let values = helpers::convolute(
+                    let values = helpers::convolve(
                         &grid,
                         pdf,
                         &[],
@@ -576,9 +576,9 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi, cfg)
+            let res1 = helpers::convolve_subgrid(&grid, &mut pdfset1[0], order, bin, lumi, cfg)
                 .sum_axis(Axis(0));
-            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi, cfg)
+            let res2 = helpers::convolve_subgrid(&grid, &mut pdfset2[0], order, bin, lumi, cfg)
                 .sum_axis(Axis(0));
 
             let subgrid = grid.subgrid(order, bin, lumi);

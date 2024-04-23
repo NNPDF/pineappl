@@ -80,12 +80,12 @@ impl Subcommand for CkfOpts {
         };
 
         let limit = grid.lumi().len().min(self.limit);
-        let limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
+        let limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
         let results: Vec<_> = (0..grid.lumi().len())
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     &mut pdf,
                     &[self.order],
@@ -101,7 +101,7 @@ impl Subcommand for CkfOpts {
             .map(|lumi| {
                 let mut lumi_mask = vec![false; grid.lumi().len()];
                 lumi_mask[lumi] = true;
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     &mut pdf,
                     &orders_den,

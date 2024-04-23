@@ -62,11 +62,11 @@ impl Subcommand for Opts {
             .unwrap();
 
         let limit = grid.lumi().len().min(self.limit);
-        let bin_limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
+        let bin_limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
         let results1: Vec<_> = pdfset1
             .par_iter_mut()
             .flat_map(|pdf| {
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     pdf,
                     &self.orders,
@@ -81,7 +81,7 @@ impl Subcommand for Opts {
         let results2: Vec<_> = pdfset2
             .par_iter_mut()
             .flat_map(|pdf| {
-                helpers::convolute(
+                helpers::convolve(
                     &grid,
                     pdf,
                     &self.orders,
@@ -147,7 +147,7 @@ impl Subcommand for Opts {
                             .map(|lumi| {
                                 let mut lumi_mask = vec![false; grid.lumi().len()];
                                 lumi_mask[lumi] = true;
-                                match helpers::convolute(
+                                match helpers::convolve(
                                     &grid,
                                     &mut pdfset[member],
                                     &self.orders,
@@ -172,7 +172,7 @@ impl Subcommand for Opts {
                                     .map(|lumi| {
                                         let mut lumi_mask = vec![false; grid.lumi().len()];
                                         lumi_mask[lumi] = true;
-                                        match helpers::convolute(
+                                        match helpers::convolve(
                                             &grid,
                                             pdf,
                                             &self.orders,
