@@ -233,7 +233,7 @@ struct appl_igrid_m_reweight
     friend type access(appl_igrid_m_reweight);
 };
 
-template class access_private_member_variable<appl_igrid_m_reweight, &appl::igrid::m_reweight>;
+template struct access_private_member_variable<appl_igrid_m_reweight, &appl::igrid::m_reweight>;
 
 // we need access to `m_reweight`, but it is private
 bool igrid_m_reweight(appl::igrid const& igrid)
@@ -254,7 +254,7 @@ struct appl_grid_m_grids
     friend type access(appl_grid_m_grids);
 };
 
-template class access_private_member_variable<appl_grid_m_grids, &appl::grid::m_grids>;
+template struct access_private_member_variable<appl_grid_m_grids, &appl::grid::m_grids>;
 
 appl::igrid& grid_get_igrid(appl::grid& grid, std::size_t order, std::size_t bin)
 {

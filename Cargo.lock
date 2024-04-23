@@ -1328,6 +1328,7 @@ version = "0.7.4-rc.1"
 dependencies = [
  "cxx",
  "cxx-build",
+ "pkg-config",
  "thiserror",
 ]
 
