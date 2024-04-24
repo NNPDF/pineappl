@@ -26,25 +26,22 @@
       craneLib = crane.lib.${system};
 
       src = craneLib.cleanCargoSource (craneLib.path ./.);
+      # The following could be done automatically by Crane, but it will look for a
+      # top-level package name as well (not present in PineAPPL). Thus, doing it
+      # manually will save a Crane warning.
+      version =
+        (builtins.fromTOML (builtins.readFile (src
+              + "/Cargo.toml")))
+        .workspace
+        .package
+        .version;
       commonArgs = {
-        inherit src;
+        inherit src version;
         strictDeps = false;
         buildInputs = with pkgs; [lhapdf];
         nativeBuildInputs = with pkgs; [pkg-config];
+        doCheck = false;
       };
-
-      individualCrateArgs =
-        commonArgs
-        // {
-          inherit
-            ((builtins.fromTOML (builtins.readFile (src
-                    + "/Cargo.toml")))
-              .workspace
-              .package)
-            version
-            ;
-          doCheck = false;
-        };
 
       fileSetForCrate = crate:
         lib.fileset.toSource {
@@ -65,12 +62,17 @@
           ];
         };
 
-      cli = craneLib.buildPackage (individualCrateArgs
+      defaultName = "pineappl";
+      cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {pname = defaultName;});
+      cli = craneLib.buildPackage (
+        commonArgs
         // {
-          pname = "pineappl";
+          pname = defaultName;
           cargoExtraArgs = "-p pineappl_cli";
+          inherit cargoArtifacts;
           src = fileSetForCrate ./pineappl_cli;
-        });
+        }
+      );
       # TODO: build with maturin
       py = null;
     in
