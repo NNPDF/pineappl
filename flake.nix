@@ -74,7 +74,25 @@
         }
       );
       # TODO: build with maturin
-      py = null;
+      py =
+        (craneLib.buildPackage (commonArgs
+          // {
+            pname = "pineappl-py";
+            inherit cargoArtifacts;
+          }))
+        .overrideAttrs (old: {
+          nativeBuildInputs = old.nativeBuildInputs ++ [pkgs.maturin];
+          buildPhase =
+            old.buildPhase
+            + ''
+              maturin build --offline --target-dir ./target
+            '';
+          installPhase =
+            old.installPhase
+            + ''
+              cp target/wheels/pineappl $out/
+            '';
+        });
     in
       {
         packages = {
