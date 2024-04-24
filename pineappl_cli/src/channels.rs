@@ -50,6 +50,9 @@ pub struct Opts {
         value_parser = helpers::parse_order
     )]
     orders: Vec<(u32, u32)>,
+    /// Do not sort the channels according to their size.
+    #[arg(long)]
+    dont_sort: bool,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -139,8 +142,12 @@ impl Subcommand for Opts {
                     .map(|(lumi, vec)| (lumi, vec[bin]))
                     .collect();
 
-                // sort using the absolute value in descending order
-                values.sort_unstable_by(|(_, left), (_, right)| right.abs().total_cmp(&left.abs()));
+                if !self.dont_sort {
+                    // sort using the absolute value in descending order
+                    values.sort_unstable_by(|(_, left), (_, right)| {
+                        right.abs().total_cmp(&left.abs())
+                    });
+                }
 
                 for (lumi, value) in values
                     .iter()
@@ -158,9 +165,12 @@ impl Subcommand for Opts {
                     .map(|(lumi, vec)| (lumi, vec[bin] / sum * 100.0))
                     .collect();
 
-                // sort using the absolute value in descending order
-                percentages
-                    .sort_unstable_by(|(_, left), (_, right)| right.abs().total_cmp(&left.abs()));
+                if !self.dont_sort {
+                    // sort using the absolute value in descending order
+                    percentages.sort_unstable_by(|(_, left), (_, right)| {
+                        right.abs().total_cmp(&left.abs())
+                    });
+                }
 
                 for (lumi, percentage) in percentages
                     .iter()

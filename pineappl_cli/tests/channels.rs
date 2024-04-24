@@ -14,6 +14,7 @@ Options:
   -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
       --lumis <LUMIS>     Show only the listed channels
   -o, --orders <ORDERS>   Select orders manually
+      --dont-sort         Do not sort the channels according to their size
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
   -h, --help              Print help
@@ -102,6 +103,33 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    l  size  l  size  l size  l size 
 5 3.25  3.5 0 115.54 3 -10.74 1 -4.80 2 0.00 4 0.00
 6  3.5    4 0 116.17 3 -10.41 1 -5.76 2 0.00 4 0.00
 7    4  4.5 0 115.77 3  -8.54 1 -7.23 2 0.00 4 0.00
+";
+
+const DONT_SORT_ABSOLUTE_STR: &str =
+    "b   etal    l dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal 
+     []          [pb]           [pb]           [pb]           [pb]           [pb]    
+-+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
+0    2 2.25 0 8.4002759e2 1 -2.4969360e1 2 8.8565923e-2 3 -6.0727462e1 4 1.7176328e-1
+1 2.25  2.5 0 7.7448295e2 1 -2.3319483e1 2 8.3802762e-2 3 -6.1109036e1 4 1.4518685e-1
+2  2.5 2.75 0 6.7891182e2 1 -2.1436419e1 2 4.7074109e-2 3 -5.7385834e1 4 1.1534278e-1
+3 2.75    3 0 5.5341626e2 1 -1.8639887e1 2 5.8147927e-2 3 -4.9385114e1 4 7.2943823e-2
+4    3 3.25 0 4.1562095e2 1 -1.5462782e1 2 3.4452663e-2 3 -3.8287410e1 4 4.9352954e-2
+5 3.25  3.5 0 2.8427837e2 1 -1.1889878e1 2 1.8643688e-2 3 -2.6578788e1 4 3.8564621e-2
+6  3.5    4 0 1.3470473e2 1 -6.7199873e0 2 1.3223117e-2 3 -1.2142190e1 4 1.2734974e-2
+7    4  4.5 0 3.1886258e1 1 -2.0056686e0 2 1.9334685e-3 3 -2.3686722e0 4 3.4154203e-3
+";
+
+const DONT_SORT_STR: &str = "b   etal    l  size  l size  l size l  size  l size
+     []        [%]      [%]    [%]     [%]     [%] 
+-+----+----+-+------+-+-----+-+----+-+------+-+----
+0    2 2.25 0 111.32 1 -3.31 2 0.01 3  -8.05 4 0.02
+1 2.25  2.5 0 112.20 1 -3.38 2 0.01 3  -8.85 4 0.02
+2  2.5 2.75 0 113.10 1 -3.57 2 0.01 3  -9.56 4 0.02
+3 2.75    3 0 113.98 1 -3.84 2 0.01 3 -10.17 4 0.02
+4    3 3.25 0 114.83 1 -4.27 2 0.01 3 -10.58 4 0.01
+5 3.25  3.5 0 115.62 1 -4.84 2 0.01 3 -10.81 4 0.02
+6  3.5    4 0 116.26 1 -5.80 2 0.01 3 -10.48 4 0.01
+7    4  4.5 0 115.88 1 -7.29 2 0.01 3  -8.61 4 0.01
 ";
 
 #[test]
@@ -217,4 +245,35 @@ fn orders_a2_as1a2() {
         .assert()
         .success()
         .stdout(ORDERS_A2_AS1A2_STR);
+}
+
+#[test]
+fn dont_sort_absolute() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "channels",
+            "--absolute",
+            "--dont-sort",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DONT_SORT_ABSOLUTE_STR);
+}
+
+#[test]
+fn dont_sort() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "channels",
+            "--dont-sort",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(DONT_SORT_STR);
 }
