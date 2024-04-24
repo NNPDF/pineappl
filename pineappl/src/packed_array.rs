@@ -117,23 +117,23 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
 }
 
 /// Converts a `multi_index` into a flat index.
-fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], dimensions: &[usize]) -> usize {
-    assert_eq!(multi_index.len(), dimensions.len());
+fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) -> usize {
+    assert_eq!(multi_index.len(), shape.len());
 
     multi_index
         .iter()
-        .zip(dimensions)
+        .zip(shape)
         .skip(1)
         .fold(multi_index[0], |acc, (i, d)| acc * d + i)
 }
 
 /// Converts a flat `index` into a `multi_index`.
-fn unravel_index<const D: usize>(index: usize, dimensions: &[usize]) -> [usize; D] {
-    assert!(index < dimensions.iter().product());
+fn unravel_index<const D: usize>(index: usize, shape: &[usize]) -> [usize; D] {
+    assert!(index < shape.iter().product());
     let mut indices = [0; D];
     indices
         .iter_mut()
-        .zip(dimensions)
+        .zip(shape)
         .rev()
         .fold(index, |acc, (i, d)| {
             *i = acc % d;
@@ -210,13 +210,12 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
                 let distance = raveled_index - (start_index + length) + 1;
                 self.lengths[point - 1] += distance;
 
-                for _ in 0..(distance) {
+                for _ in 0..distance {
                     self.entries.insert(point_entries, Default::default());
                 }
 
                 if let Some(start_index_next) = self.start_indices.get(point) {
                     if raveled_index + threshold_distance >= *start_index_next {
-                        // println!("test 4");
                         let distance_next = start_index_next - raveled_index;
 
                         self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
@@ -256,10 +255,9 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use ndarray::Array3;
     use std::mem;
-
-    use super::*;
 
     #[test]
     fn unravel_index() {
