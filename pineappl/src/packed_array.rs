@@ -141,7 +141,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
     type Output = T;
 
     fn index(&self, index: [usize; D]) -> &Self::Output {
-        debug_assert_eq!(index.len(), self.shape.len());
+        assert_eq!(index.len(), self.shape.len());
         assert!(
             index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
             "index {:?} is out of bounds for array of shape {:?}",
@@ -176,7 +176,7 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
     for PackedArray<T, D>
 {
     fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
-        debug_assert_eq!(index.len(), self.shape.len());
+        assert_eq!(index.len(), self.shape.len());
         assert!(
             index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
             "index {:?} is out of bounds for array of shape {:?}",
