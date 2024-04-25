@@ -123,22 +123,17 @@ fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) 
     multi_index
         .iter()
         .zip(shape)
-        .skip(1)
-        .fold(multi_index[0], |acc, (i, d)| acc * d + i)
+        .fold(0, |acc, (i, d)| acc * d + i)
 }
 
 /// Converts a flat `index` into a `multi_index`.
-fn unravel_index<const D: usize>(index: usize, shape: &[usize]) -> [usize; D] {
+fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
     assert!(index < shape.iter().product());
     let mut indices = [0; D];
-    indices
-        .iter_mut()
-        .zip(shape)
-        .rev()
-        .fold(index, |acc, (i, d)| {
-            *i = acc % d;
-            acc / d
-        });
+    for (i, d) in indices.iter_mut().zip(shape).rev() {
+        *i = index % d;
+        index /= d;
+    }
     indices
 }
 
