@@ -2,6 +2,7 @@
 
 use ndarray::ArrayView3;
 use serde::{Deserialize, Serialize};
+use std::iter;
 use std::mem;
 use std::ops::{Index, IndexMut, MulAssign};
 
@@ -204,10 +205,10 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             } else if raveled_index < start_index + length + threshold_distance {
                 let distance = raveled_index - (start_index + length) + 1;
                 self.lengths[point - 1] += distance;
-
-                for _ in 0..distance {
-                    self.entries.insert(point_entries, Default::default());
-                }
+                self.entries.splice(
+                    point_entries..point_entries,
+                    iter::repeat(Default::default()).take(distance),
+                );
 
                 if let Some(start_index_next) = self.start_indices.get(point) {
                     if raveled_index + threshold_distance >= *start_index_next {
@@ -216,9 +217,10 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
                         self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
                         self.lengths.remove(point);
                         self.start_indices.remove(point);
-                        for _ in 0..(distance_next - 1) {
-                            self.entries.insert(point_entries, Default::default());
-                        }
+                        self.entries.splice(
+                            point_entries..point_entries,
+                            iter::repeat(Default::default()).take(distance_next - 1),
+                        );
                     }
                 }
 
@@ -232,9 +234,10 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
 
                 self.start_indices[point] = raveled_index;
                 self.lengths[point] += distance;
-                for _ in 0..distance {
-                    self.entries.insert(point_entries, Default::default());
-                }
+                self.entries.splice(
+                    point_entries..point_entries,
+                    iter::repeat(Default::default()).take(distance),
+                );
                 return &mut self.entries[point_entries];
             }
         }
