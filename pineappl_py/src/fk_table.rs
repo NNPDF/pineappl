@@ -223,7 +223,6 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins
-    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, lumi_mask= None))]
     pub fn convolute_with_one<'py>(
         &self,
         pdg_id: i32,
