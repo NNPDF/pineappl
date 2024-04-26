@@ -5,8 +5,8 @@ from .utils import PyWrapper
 
 
 class FkTable(PyWrapper):
-    """
-    Python wrapper object to interface :class:`~pineappl.pineappl.PyFkTable`.
+    """Python wrapper object to interface
+    :class:`~pineappl.pineappl.PyFkTable`.
 
     Parameters
     ----------
@@ -18,9 +18,12 @@ class FkTable(PyWrapper):
         self._raw = pyfktable
 
     @classmethod
+    def from_grid(cls, grid):
+        return cls(PyFkTable(grid.raw))
+
+    @classmethod
     def read(cls, path):
-        """
-        Load an existing grid from file.
+        """Load an existing grid from file.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyFkTable.read()`.
 
@@ -36,19 +39,19 @@ class FkTable(PyWrapper):
         """
         return cls(PyFkTable.read(path))
 
-    def optimize(self, assumptions = "Nf6Ind"):
+    def optimize(self, assumptions="Nf6Ind"):
         """Optimize FK table storage.
 
         In order to perform any relevant optimization, assumptions are needed, and they are passed
         as parameters to the function.
-        
+
         Parameters
         ----------
         assumptions : FkAssumptions or str
             assumptions about the FkTable properties, declared by the user, deciding which
             optimizations are possible
         """
-        if not isinstance(assumptions,FkAssumptions):
+        if not isinstance(assumptions, FkAssumptions):
             assumptions = FkAssumptions(assumptions)
         return self._raw.optimize(assumptions._raw)
 
@@ -90,8 +93,7 @@ class FkTable(PyWrapper):
 
 
 class FkAssumptions(PyWrapper):
-    """
-    Python wrapper object to interface
+    """Python wrapper object to interface
     :class:`~pineappl.pineappl.PyFkAssumptions`.
 
     Parameters
