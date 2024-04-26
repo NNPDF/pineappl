@@ -3,6 +3,7 @@
 use super::grid::Grid;
 use super::pids;
 use super::subgrid::{Mu2, Subgrid};
+use float_cmp::approx_eq;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -129,6 +130,50 @@ impl LumiEntry {
     #[must_use]
     pub fn transpose(&self) -> Self {
         Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
+    }
+
+    /// If `other` is the same channel when only comparing PIDs and neglecting the factors, return
+    /// the number `f1 / f2`, where `f1` is the factor from `self` and `f2` is the factor from
+    /// `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use pineappl::lumi::LumiEntry;
+    ///
+    /// let entry1 = LumiEntry::new(vec![(2, 2, 2.0), (4, 4, 2.0)]);
+    /// let entry2 = LumiEntry::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
+    /// let entry3 = LumiEntry::new(vec![(3, 4, 1.0), (2, 2, 1.0)]);
+    /// let entry4 = LumiEntry::new(vec![(4, 3, 1.0), (2, 3, 2.0)]);
+    ///
+    /// assert_eq!(entry1.common_factor(&entry2), Some(2.0));
+    /// assert_eq!(entry1.common_factor(&entry3), None);
+    /// assert_eq!(entry1.common_factor(&entry4), None);
+    /// ```
+    pub fn common_factor(&self, other: &Self) -> Option<f64> {
+        if self.entry.len() != other.entry.len() {
+            return None;
+        }
+
+        let result: Option<Vec<_>> = self
+            .entry
+            .iter()
+            .zip(&other.entry)
+            .map(|(a, b)| ((a.0 == b.0) && (a.1 == b.1)).then_some(a.2 / b.2))
+            .collect();
+
+        if let Some(factors) = result {
+            if factors
+                .windows(2)
+                .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
+            {
+                factors.first().copied()
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
