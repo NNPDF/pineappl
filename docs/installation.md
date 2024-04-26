@@ -202,6 +202,22 @@ To install the Python interface, run
 This will not require any previous installation of Rust. For more documentation
 and more information see its [README](../pineappl_py/README.md).
 
+### Python 3.6
+
+Python 3.6 is at the end of its life since 2021 December, but we still support
+its installation, which however is a bit trickier. First upgrade your
+installation of `pip`:
+
+    pip install --upgrade pip
+
+For this to work you may have to add the switch `--user` after `install`. Next,
+make sure you call the newly upgraded `pip` as follows:
+
+    pip install --ignore-requires-python pineappl
+
+The switch `--ignore-requires-python` is needed because for an unknown reason
+the `requires-python` version is incorrectly determined by `pip`.
+
 ## Rust
 
 You will need the Rust compiler and its build system `cargo`. If `cargo` is
