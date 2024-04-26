@@ -2211,7 +2211,11 @@ impl Grid {
 
         for range in channel_ranges.into_iter() {
             self.lumi.drain(range.clone());
-            self.subgrids.slice_axis_inplace(Axis(2), range.into());
+            // TODO: the following line should be equivalent to the loop but it isn't
+            //self.subgrids.slice_axis_inplace(Axis(2), range.into());
+            for index in range.rev() {
+                self.subgrids.remove_index(Axis(2), index);
+            }
         }
     }
 
