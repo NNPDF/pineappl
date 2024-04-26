@@ -1,3 +1,5 @@
+import numpy as np
+
 from .pineappl import PyFkTable, PyFkAssumptions
 from .utils import PyWrapper
 
@@ -49,6 +51,42 @@ class FkTable(PyWrapper):
         if not isinstance(assumptions,FkAssumptions):
             assumptions = FkAssumptions(assumptions)
         return self._raw.optimize(assumptions._raw)
+
+    def convolute_with_one(
+        self,
+        pdg_id,
+        xfx,
+        bin_indices=np.array([], dtype=np.uint64),
+        lumi_mask=np.array([], dtype=bool),
+    ):
+        r"""Convolute FkTable with a pdf.
+
+        Parameters
+        ----------
+            pdg_id : int
+                PDG Monte Carlo ID of the hadronic particle `xfx` is the PDF for
+            xfx : callable
+                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+            bin_indices : sequence(int)
+                A list with the indices of the corresponding bins that should be calculated. An
+                empty list means that all orders should be calculated.
+            lumi_mask : sequence(bool)
+                Mask for selecting specific luminosity channels. The value `True` means the
+                corresponding channel is included. An empty list corresponds to all channels being
+                enabled.
+
+        Returns
+        -------
+            list(float) :
+                cross sections for all bins, for each scale-variation tuple (first all bins, then
+                the scale variation)
+        """
+        return self.raw.convolute_with_one(
+            pdg_id,
+            xfx,
+            np.array(bin_indices),
+            np.array(lumi_mask),
+        )
 
 
 class FkAssumptions(PyWrapper):
