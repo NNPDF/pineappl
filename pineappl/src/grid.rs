@@ -2193,29 +2193,12 @@ impl Grid {
         // sort and remove repeated indices
         channel_indices.sort_unstable();
         channel_indices.dedup();
+        channel_indices.reverse();
         let channel_indices = channel_indices;
 
-        let mut channel_ranges: Vec<Range<_>> = Vec::new();
-
-        // convert indices into consecutive ranges
-        for &channel_index in &channel_indices {
-            match channel_ranges.last_mut() {
-                Some(range) if range.end == channel_index => range.end += 1,
-                _ => channel_ranges.push(channel_index..(channel_index + 1)),
-            }
-        }
-
-        // reverse order so we don't invalidate indices
-        channel_ranges.reverse();
-        let channel_ranges = channel_ranges;
-
-        for range in channel_ranges.into_iter() {
-            self.lumi.drain(range.clone());
-            // TODO: the following line should be equivalent to the loop but it isn't
-            //self.subgrids.slice_axis_inplace(Axis(2), range.into());
-            for index in range.rev() {
-                self.subgrids.remove_index(Axis(2), index);
-            }
+        for index in channel_indices {
+            self.lumi.remove(index);
+            self.subgrids.remove_index(Axis(2), index);
         }
     }
 
