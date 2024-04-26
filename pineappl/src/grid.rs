@@ -1253,7 +1253,7 @@ impl Grid {
                 // check if in all cases the limits are compatible with merging
                 for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
                     if !rhs.is_empty() {
-                        rhs.scale(factor);
+                        rhs.scale(1.0 / factor);
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
                             *lhs = rhs.clone_empty();
