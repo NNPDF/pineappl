@@ -49,7 +49,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
           - os: macos-14
             # we cannot cross-compile, because we need also all dependencies for the specified target
@@ -262,7 +262,7 @@ jobs:
           path: dist
 
   wheels-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
         target: [aarch64, x86_64]
