@@ -14,9 +14,10 @@ pub struct PackedArray<T, const D: usize> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the
     /// elements in `lengths`.
     entries: Vec<T>,
-    /// The indices of the first elements in each group.
+    /// The indices of the first elements in each group. `start_indices[i]` corresponds to the
+    /// group with index `i`.
     start_indices: Vec<usize>,
-    /// The length of each group.
+    /// The length of each group. `lengths[i]` corresponds to the group with index `i`.
     lengths: Vec<usize>,
     /// The shape (dimensions) of the array.
     shape: Vec<usize>,
@@ -178,6 +179,9 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
 {
     fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
         assert_eq!(index.len(), self.shape.len());
+
+        // Panic if the index value for any dimension is greater or equal than the length of this
+        // dimension.
         assert!(
             index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
             "index {:?} is out of bounds for array of shape {:?}",
@@ -185,38 +189,73 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             self.shape
         );
 
+        // The insertion cases are:
+        // 1. this array already stores an element at `index`:
+        //    -> we just have to update this element
+        // 2. this array does not store an element at `index`:
+        //    a. the distance of the (raveled) `index` is `threshold_distance` away from the next
+        //       or previous element that is already stored:
+        //       -> we can merge the new element into already stored groups, potentially padding
+        //          with `T::default()` elements
+        //    b. the distance of the (raveled) `index` from the existing elements is greater than
+        //       `threshold_distance`:
+        //       -> we insert the element as a new group
+
         let raveled_index = ravel_multi_index(&index, &self.shape);
 
-        // the closest start_index that is greater than raveled_index
+        // To determine which groups the new element is close to, `point` is the index of the
+        // start_index of the first group after the new element. `point` is 0 if no elements before
+        // the new element are stored, and point is `self.start_indices.len()` if no elements after
+        // the new element are stored.
         let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
-        // the index that is stored in `point`, translated to the indices of the entries
+        // `point_entries` is the index of the first element of the next group, given in
+        // `self.entries`, i.e. the element at index `self.start_indices[point]`.
         let point_entries = self.lengths.iter().take(point).sum::<usize>();
 
-        // maximum distance for merging regions
+        // Maximum distance for merging groups. If the new element is within `threshold_distance`
+        // of an existing group (i.e. there are `threshold_distance - 1` implicit elements
+        // between them), we merge the new element into the existing group. We choose 2 as the
+        // `threshold_distance` based on memory: in the case of `T` = `f64`, it is more economical
+        // to store one zero explicitly than to store the start_index and length of a new group.
         let threshold_distance = 2;
 
+        // If `point > 0`, there is at least one group preceding the new element. Thus, in the
+        // following we determine if we can insert the new element into this group.
         if point > 0 {
+            // start_index and length of the group before the new element, i.e. the group
+            // (potentially) getting the new element
             let start_index = self.start_indices[point - 1];
             let length = self.lengths[point - 1];
 
+            // Case 1: an element is already stored at this `index`
             if raveled_index < start_index + length {
                 return &mut self.entries[point_entries - length + raveled_index - start_index];
+            // Case 2a: the new element can be merged into the preceding group
             } else if raveled_index < start_index + length + threshold_distance {
                 let distance = raveled_index - (start_index + length) + 1;
+                // Merging happens by increasing the length of the group
                 self.lengths[point - 1] += distance;
+                // and inserting the necessary number of default elements.
                 self.entries.splice(
                     point_entries..point_entries,
                     iter::repeat(Default::default()).take(distance),
                 );
 
+                // If the new element is within `threshold_distance` of the *next* group, we merge
+                // the next group into this group.
                 if let Some(start_index_next) = self.start_indices.get(point) {
                     if raveled_index + threshold_distance >= *start_index_next {
                         let distance_next = start_index_next - raveled_index;
 
+                        // Increase the length of this group
                         self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
+                        // and remove the next group. we don't have to manipulate `self.entries`,
+                        // since the grouping of the elements is handled only by
+                        // `self.start_indices` and `self.lengths`
                         self.lengths.remove(point);
                         self.start_indices.remove(point);
+                        // Insert the default elements between the groups.
                         self.entries.splice(
                             point_entries..point_entries,
                             iter::repeat(Default::default()).take(distance_next - 1),
@@ -228,6 +267,8 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             }
         }
 
+        // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
+        // `self.start_indices.remove` here, since we are not merging two groups.
         if let Some(start_index_next) = self.start_indices.get(point) {
             if raveled_index + threshold_distance >= *start_index_next {
                 let distance = start_index_next - raveled_index;
@@ -242,7 +283,7 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
             }
         }
 
-        // in the most general case we have to insert a new start_index
+        // Case 2b: we insert a new group of length 1
         self.start_indices.insert(point, raveled_index);
         self.lengths.insert(point, 1);
         self.entries.insert(point_entries, Default::default());
