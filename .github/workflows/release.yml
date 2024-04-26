@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v[0-9]+*'
+    branches:
+      - fix-macos-cli-generation
   workflow_dispatch:
 
 env:
@@ -31,9 +33,9 @@ jobs:
       - name: Compile library
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
-          cargo install cargo-c
+          cargo install --locked cargo-c
           cd pineappl_capi
-          cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
+          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
@@ -46,20 +48,44 @@ jobs:
   cli-macos:
     strategy:
       matrix:
-        os: [macos-latest, macos-14]
         include:
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
           - os: macos-14
+            # we cannot cross-compile, because we need also all dependencies for the specified target
             target: aarch64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Compile binary
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
-          cargo build --release --features=evolve,fktable,static --bin pineappl --target=${{ matrix.target }}
-          cp target/release/pineappl prefix/bin/
+          brew tap davidchall/hep
+          # install LHAPDF
+          brew install lhapdf
+          # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
+          brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
+          # install zlib, which is a dependency of APPLgrid but somehow missing
+          brew install zlib
+          # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
+          export PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
+          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
+          export HOMEBREW_TEMP="$(pwd)"/tmp
+          mkdir -p ${HOMEBREW_TEMP}
+          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
+          export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
+          # do not link against `gfortran`
+          sed 's/-lgfortran//g' $(command -v applgrid-config) > applgrid-config.new
+          mv applgrid-config.new $(command -v applgrid-config)
+          chmod +x $(command -v applgrid-config)
+          # install fastNLO
+          brew install --without-fastjet fastnlo
+          # install Rust
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
+          # build the CLI
+          cargo install --all-features --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
@@ -81,7 +107,7 @@ jobs:
       - name: Compile library
         run: |
           cd pineappl_capi
-          cargo cinstall --verbose --destdir=prefix --library-type=cdylib --prefix=/ --target=${{ matrix.target }}
+          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
           # print the glibc version requirement
@@ -104,9 +130,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Compile binary
         run: |
-          cargo build --release --all-features --bin pineappl
-          mkdir -p prefix/bin
-          cp target/release/pineappl prefix/bin/
+          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }}
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
@@ -235,7 +262,7 @@ jobs:
           path: dist
 
   wheels-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
         target: [aarch64, x86_64]
