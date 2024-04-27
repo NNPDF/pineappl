@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed yet another problem that prevent the Python interface for Python 3.6
   from being successfully installed
+- fixed `Grid::delete_channels` and its CLI variant `pineappl write
+  --delete-channels`. This command wasn't working properly before
 
 ## [0.7.3] - 23/02/2024
 
