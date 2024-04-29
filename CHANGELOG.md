@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   have been introduced in EKO v0.13. This interface will replace `Grid::evolve`
 - added `--dont-sort` switch to `pineappl channels`, which displays the channel
   sizes orderd by channel index (instead of channel size)
+- added `Grid::rotate_pid_basis` and `pineappl write --rotate-pid-basis`. This
+  allows to change the meaning of the used particle IDs, and supported formats
+  are PDG MC IDs and the evolution basis
 
 ### Changed
 

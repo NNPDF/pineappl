@@ -10,6 +10,7 @@ use pineappl::bin::BinRemapper;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
+use pineappl::pids::PidBasis;
 use std::fs;
 use std::ops::{Deref, RangeInclusive};
 use std::path::PathBuf;
@@ -43,6 +44,7 @@ enum OpsArg {
     RemapNorm(f64),
     RemapNormIgnore(Vec<usize>),
     RewriteChannel((usize, LumiEntry)),
+    RotatePidBasis(PidBasis),
     Scale(f64),
     ScaleByBin(Vec<f64>),
     ScaleByOrder(Vec<f64>),
@@ -189,6 +191,20 @@ impl FromArgMatches for MoreArgs {
                             str::parse(&arg[0]).unwrap(),
                             str::parse(&arg[1]).unwrap(),
                         )));
+                    }
+                }
+                "rotate_pid_basis" => {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "rotate_pid_basis" => OpsArg::RotatePidBasis(arg[0]),
+                            _ => unreachable!(),
+                        });
                     }
                 }
                 "scale_by_bin" | "scale_by_order" => {
@@ -368,6 +384,17 @@ impl Args for MoreArgs {
                 .long("rewrite-channel")
                 .num_args(2)
                 .value_names(["IDX", "CHAN"])
+        )
+        .arg(
+            Arg::new("rotate_pid_basis")
+                .action(ArgAction::Append)
+                .help("Rotate the PID basis for this grid")
+                .long("rotate-pid-basis")
+                .value_name("BASIS")
+                .value_parser(
+                    PossibleValuesParser::new(["PDG", "EVOL"])
+                    .try_map(|s| s.parse::<PidBasis>()),
+                ),
         )
         .arg(
             Arg::new("scale")
@@ -558,6 +585,9 @@ impl Subcommand for Opts {
                     // TODO: check that `index` is valid
                     channels[*index] = new_channel.clone();
                     grid.set_lumis(channels);
+                }
+                OpsArg::RotatePidBasis(pid_basis) => {
+                    grid.rotate_pid_basis(pid_basis.clone());
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize(true) => grid.optimize(),

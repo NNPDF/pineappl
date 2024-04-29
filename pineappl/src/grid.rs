@@ -2187,6 +2187,33 @@ impl Grid {
         }
     }
 
+    /// Change the particle ID convention.
+    pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
+        match (self.pid_basis(), pid_basis) {
+            (PidBasis::Pdg, PidBasis::Evol) => {
+                self.lumi = self
+                    .lumi
+                    .iter()
+                    .map(|channel| LumiEntry::translate(channel, &pids::pdg_mc_pids_to_evol))
+                    .collect();
+
+                self.set_key_value("lumi_id_types", "evol");
+            }
+            (PidBasis::Evol, PidBasis::Pdg) => {
+                self.lumi = self
+                    .lumi
+                    .iter()
+                    .map(|channel| LumiEntry::translate(channel, &pids::evol_to_pdg_mc_ids))
+                    .collect();
+
+                self.set_key_value("lumi_id_types", "pdg_mc_ids");
+            }
+            (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
+                // here's nothing to do
+            }
+        }
+    }
+
     /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
     /// larger or equal than the number of channels are ignored.
     pub fn delete_channels(&mut self, channel_indices: &[usize]) {

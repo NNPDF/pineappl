@@ -23,6 +23,7 @@ Options:
       --remap-norm <NORM>              Modify the bin normalizations with a common factor
       --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
       --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
+      --rotate-pid-basis <BASIS>       Rotate the PID basis for this grid [possible values: PDG, EVOL]
   -s, --scale <SCALE>                  Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
       --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
