@@ -76,6 +76,9 @@ impl LumiEntry {
                         Err((lhs, rhs))
                     }
                 })
+                // filter zeros
+                // TODO: find a better than to hardcode the epsilon limit
+                .filter(|&(_, _, f)| !approx_eq!(f64, f.abs(), 0.0, epsilon = 1e-14))
                 .collect(),
         }
     }
