@@ -1,9 +1,30 @@
 #![allow(missing_docs)]
 
-use std::process::Command;
 use pkg_config::Config;
+use std::process::Command;
 
 fn main() {
+    let version = String::from_utf8(
+        Command::new("applgrid-config")
+            .arg("--version")
+            .output()
+            .expect("did not find `fnlo-tk-config`, please install fastNLO")
+            .stdout,
+    )
+    .unwrap();
+
+    let tested_versions = ["2.5.0_2826"];
+
+    if !tested_versions
+        .iter()
+        .any(|&tested| tested == version.trim())
+    {
+        println!(
+            "cargo:warning=found fastNLO version {}, which has not been tested",
+            version.trim()
+        );
+    }
+
     let fnlo_lib_path = String::from_utf8(
         Command::new("fnlo-tk-config")
             .arg("--libdir")
