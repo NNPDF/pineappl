@@ -1,6 +1,45 @@
 //! TODO
 
+use std::str::FromStr;
+use thiserror::Error;
+
 const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 215, 224, 235];
+
+/// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
+/// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is
+/// interpreted.
+#[derive(Clone, Copy)]
+pub enum PidBasis {
+    /// This basis uses the [particle data group](https://pdg.lbl.gov/) (PDG) PIDs. For a complete
+    /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
+    /// instance the [2023 review](https://pdg.lbl.gov/2023/mcdata/mc_particle_id_contents.html).
+    Pdg,
+    /// This basis specifies the evolution basis, which is the same as [`PidConv::Pdg`], except the
+    /// following values have a special meaning: `100`, `103`, `108`, `115`, `124`, `135`, `200`,
+    /// `203`, `208`, `215`, `224`, `235`.
+    Evol,
+}
+
+impl FromStr for PidBasis {
+    type Err = UnknownPidBasis;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Pdg" | "PDG" | "pdg_mc_ids" => Ok(PidBasis::Pdg),
+            "Evol" | "EVOL" | "evol" => Ok(PidBasis::Evol),
+            _ => Err(UnknownPidBasis {
+                basis: s.to_owned(),
+            }),
+        }
+    }
+}
+
+/// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
+#[derive(Debug, Error)]
+#[error("unknown PID basis: {basis}")]
+pub struct UnknownPidBasis {
+    basis: String,
+}
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
 #[must_use]

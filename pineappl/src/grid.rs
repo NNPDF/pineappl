@@ -9,7 +9,7 @@ use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, Lagran
 use super::lumi::{LumiCache, LumiEntry};
 use super::lumi_entry;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::pids;
+use super::pids::{self, PidBasis};
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
 use bitflags::bitflags;
@@ -523,24 +523,31 @@ impl Grid {
         })
     }
 
-    fn pdg_lumi(&self) -> Cow<[LumiEntry]> {
+    /// Return by which convention the particle IDs are encoded.
+    pub fn pid_basis(&self) -> PidBasis {
         if let Some(key_values) = self.key_values() {
             if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
                 match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => {}
-                    "evol" => {
-                        return self
-                            .lumi
-                            .iter()
-                            .map(|entry| LumiEntry::translate(entry, &pids::evol_to_pdg_mc_ids))
-                            .collect();
-                    }
-                    _ => unimplemented!(),
+                    "pdg_mc_ids" => return PidBasis::Pdg,
+                    "evol" => return PidBasis::Evol,
+                    _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
                 }
             }
         }
 
-        Cow::Borrowed(self.lumi())
+        // if there's no basis explicitly set we're assuming to use PDG IDs
+        return PidBasis::Pdg;
+    }
+
+    fn pdg_lumi(&self) -> Cow<[LumiEntry]> {
+        match self.pid_basis() {
+            PidBasis::Evol => self
+                .lumi
+                .iter()
+                .map(|entry| LumiEntry::translate(entry, &pids::evol_to_pdg_mc_ids))
+                .collect(),
+            PidBasis::Pdg => Cow::Borrowed(self.lumi()),
+        }
     }
 
     /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
