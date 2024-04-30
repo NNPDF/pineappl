@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
+use itertools::Itertools;
 use ndarray::{s, Axis};
 use pineappl::grid::{Grid, Order};
 use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
@@ -18,10 +19,10 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
         .subgrids()
         .slice(s![order, bin, ..])
         .iter()
-        .map(|subgrid| {
+        .flat_map(|subgrid| {
             subgrid
                 .mu2_grid()
-                .iter()
+                .into_iter()
                 .map(|&Mu2 { ren, fac }| {
                     if !approx_eq!(f64, ren, fac, ulps = 128) {
                         bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
@@ -29,21 +30,50 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
 
                     Ok(fac)
                 })
-                .collect::<Result<Vec<_>>>()
+                .collect_vec()
         })
-        .collect::<Result<_>>()?;
-    let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
-    mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
-    let mu2_grid = mu2_grid.as_slice();
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .sorted_unstable_by(|a, b| a.total_cmp(b))
+        .dedup_by(|&a, &b| approx_eq!(f64, a, b, ulps = 128))
+        .collect_vec();
 
-    if let &[fac] = mu2_grid {
-        result.set_q2_bins(1);
-        result.set_q2_max(fac);
-        result.set_q2_min(fac);
+    let x_grid = grid
+        .subgrids()
+        .slice(s![order, bin, ..])
+        .iter()
+        .flat_map(|subgrid| {
+            [
+                subgrid.x1_grid().into_owned(),
+                subgrid.x2_grid().into_owned(),
+            ]
+            .into_iter()
+        })
+        .flatten()
+        .sorted_unstable_by(|a, b| a.total_cmp(b))
+        .dedup_by(|&a, &b| approx_eq!(f64, a, b, ulps = 128))
+        .collect_vec();
+    
+    result.set_q2_bins(mu2_grid.len());
+    result.set_q2_min(*mu2_grid.first().unwrap());
+    result.set_q2_max(*mu2_grid.last().unwrap());
+    if mu2_grid.len() == 1 {
         result.set_q2_order(0);
+    } else {
+        // TODO: reconstruct the interpolation order. for now leave it as the default
+        // result.set_q2_order(...);
+    }
+    
+    result.set_x_bins(x_grid.len());
+    result.set_x_min(*x_grid.first().unwrap());
+    result.set_x_max(*x_grid.last().unwrap());
+    if x_grid.len() == 1 {
+        result.set_x_order(0);
+    } else {
+        // TODO: reconstruct the interpolation order. for now leave it as the default
+        // result.set_x_order(...);
     }
 
-    // TODO: implement the general case
     Ok(result)
 }
 
@@ -55,15 +85,9 @@ pub fn convert_into_applgrid(
     let bin_info = grid.bin_info();
     let dim = bin_info.dimensions();
 
-    if dim > 1 {
-        bail!(
-            "grid has {} dimensions, but APPLgrid only supports one-dimensional distributions",
-            dim
-        );
-    }
-
-    if bin_info.slices().len() != 1 {
-        bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
+    let integer_bin_limits = dim > 1 || bin_info.slices().len() > 1;
+    if integer_bin_limits {
+        println!("Info: APPLgrid only supports one-dimensional consecutive bin limits, so the bin limits will be set to [0, {}] in steps of 1, corresponding to the ordering given by `pineappl read --bins <GRID>`.", bin_info.bins());
     }
 
     let lumis = grid.lumi().len();
@@ -100,11 +124,15 @@ pub fn convert_into_applgrid(
     ffi::make_lumi_pdf(id, &combinations).into_raw();
 
     let limits = &bin_info.limits();
-    let limits: Vec<_> = limits
-        .iter()
-        .map(|vec| vec[0].0)
-        .chain(limits.last().map(|vec| vec[0].1))
-        .collect();
+    let limits = if integer_bin_limits {
+        (0..=limits.len()).map(|x| x as f64).collect::<Vec<_>>()
+    } else {
+        limits
+            .iter()
+            .map(|vec| vec[0].0)
+            .chain(limits.last().map(|vec| vec[0].1))
+            .collect_vec()
+    };
 
     let order_mask = Order::create_mask(grid.orders(), 3, 0, false);
     let orders_with_mask: Vec<_> = grid
@@ -209,12 +237,12 @@ pub fn convert_into_applgrid(
                     .map(|&x1| {
                         appl_x1
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
+                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128, epsilon = 1e-12))
                             .map_or_else(
                                 || {
                                     Err(anyhow!(
-                                        "momentum fraction x1 = {} not found in APPLgrid",
-                                        x1
+                                        "momentum fraction x1 = {} not found in APPLgrid, the closest is {}",
+                                        x1, appl_x1.iter().min_by(|&a, &b| (a - x1).abs().total_cmp(&(b - x1).abs())).unwrap()
                                     ))
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -226,12 +254,12 @@ pub fn convert_into_applgrid(
                     .map(|&x2| {
                         appl_x2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
+                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128, epsilon = 1e-12))
                             .map_or_else(
                                 || {
                                     Err(anyhow!(
-                                        "momentum fraction x2 = {} not found in APPLgrid",
-                                        x2
+                                        "momentum fraction x2 = {} not found in APPLgrid, the closest is {}",
+                                        x2, appl_x2.iter().min_by(|&a, &b| (a - x2).abs().total_cmp(&(b - x2).abs())).unwrap()
                                     ))
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
