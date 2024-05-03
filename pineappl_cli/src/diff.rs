@@ -122,6 +122,7 @@ impl Subcommand for Opts {
             bail!("number of bins differ");
         }
 
+        // TODO: use approximate comparison
         if !self.ignore_lumis && (grid1.lumi() != grid2.lumi()) {
             bail!("luminosities differ");
         }

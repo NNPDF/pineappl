@@ -228,6 +228,18 @@ const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal
 5    4  4.5 2.9004607e1
 ";
 
+const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+-+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
+0    2 2.25 6.5070305e2 6.5070305e2 0.000e0  -7.8692484e0  -7.8692484e0 0.000e0 1.1175729e2 1.1175729e2 0.000e0
+1 2.25  2.5 5.9601236e2 5.9601236e2 0.000e0  -6.5623495e0  -6.5623495e0 0.000e0 1.0083341e2 1.0083341e2 0.000e0
+2  2.5 2.75 5.1561247e2 5.1561247e2 0.000e0  -5.2348261e0  -5.2348261e0 0.000e0 8.9874343e1 8.9874343e1 0.000e0
+3 2.75    3 4.1534629e2 4.1534629e2 0.000e0  -3.7590420e0  -3.7590420e0 0.000e0 7.3935106e1 7.3935106e1 0.000e0
+4    3 3.25 3.0812719e2 3.0812719e2 0.000e0  -2.5871885e0  -2.5871885e0 0.000e0 5.6414554e1 5.6414554e1 0.000e0
+5 3.25  3.5 2.0807482e2 2.0807482e2 0.000e0  -1.6762487e0  -1.6762487e0 0.000e0 3.9468336e1 3.9468336e1 0.000e0
+6  3.5    4 9.6856769e1 9.6856769e1 0.000e0 -8.1027456e-1 -8.1027456e-1 0.000e0 1.9822014e1 1.9822014e1 0.000e0
+7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 -2.2022770e-1 -2.2022770e-1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
+";
+
 const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)            
 -+----+----+-----------+-----------+----------+-------------+-------------+----------+-----------+-----------+----------
 0    2 2.25 6.5070305e2 6.5070305e2 -2.220e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
@@ -913,15 +925,15 @@ fn rewrite_channels() {
 
 #[test]
 fn rotate_pid_basis() {
-    let output = NamedTempFile::new("evolution-basis.pineappl.lz4").unwrap();
+    let pdg_to_pdg = NamedTempFile::new("pdg-to-pdg.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--rotate-pid-basis=EVOL",
+            "--rotate-pid-basis=PDG",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            output.path().to_str().unwrap(),
+            pdg_to_pdg.path().to_str().unwrap(),
         ])
         .assert()
         .success()
@@ -932,7 +944,33 @@ fn rotate_pid_basis() {
         .args([
             "diff",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            output.path().to_str().unwrap(),
+            pdg_to_pdg.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let pdg_to_evol = NamedTempFile::new("pdg-to-evol.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=EVOL",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_evol.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_evol.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
             "--ignore-lumis",
         ])
@@ -940,7 +978,63 @@ fn rotate_pid_basis() {
         .success()
         .stdout(ROTATE_PID_BASIS_DIFF_STR);
 
-    let output2 = NamedTempFile::new("evolution-basis.pineappl.lz4").unwrap();
+    let evol_to_evol = NamedTempFile::new("evol-to-evol.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=EVOL",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_evol.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_evol.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let evol_to_pdg = NamedTempFile::new("evol-to-pdg.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=PDG",
+            // fix factors that are almost '1' to exact '1's
+            "--rewrite-channel",
+            "0",
+            "1 * ( 2, -1) + 1 * ( 4, -3)",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_pdg.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            evol_to_pdg.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let evol_to_evol_optimize = NamedTempFile::new("evol-to-evol-optimize.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -950,7 +1044,7 @@ fn rotate_pid_basis() {
             "--split-lumi",
             "--optimize",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            output2.path().to_str().unwrap(),
+            evol_to_evol_optimize.path().to_str().unwrap(),
         ])
         .assert()
         .success()
@@ -958,33 +1052,12 @@ fn rotate_pid_basis() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output2.path().to_str().unwrap()])
+        .args([
+            "read",
+            "--lumis",
+            evol_to_evol_optimize.path().to_str().unwrap(),
+        ])
         .assert()
         .success()
         .stdout(ROTATE_PID_BASIS_READ_LUMIS_STR);
-
-    let output3 = NamedTempFile::new("evolution-basis.pineappl.lz4").unwrap();
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--rotate-pid-basis=PDG",
-            output2.path().to_str().unwrap(),
-            output3.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout("");
-
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "convolve",
-            output3.path().to_str().unwrap(),
-            "NNPDF31_nlo_as_0118_luxqed",
-        ])
-        .assert()
-        .success()
-        .stdout(DEFAULT_STR);
 }
