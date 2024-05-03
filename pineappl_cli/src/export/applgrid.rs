@@ -53,7 +53,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
         .sorted_unstable_by(|a, b| a.total_cmp(b))
         .dedup_by(|&a, &b| approx_eq!(f64, a, b, ulps = 128))
         .collect_vec();
-    
+
     result.set_q2_bins(mu2_grid.len());
     result.set_q2_min(*mu2_grid.first().unwrap());
     result.set_q2_max(*mu2_grid.last().unwrap());
@@ -63,7 +63,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
         // TODO: reconstruct the interpolation order. for now leave it as the default
         // result.set_q2_order(...);
     }
-    
+
     result.set_x_bins(x_grid.len());
     result.set_x_min(*x_grid.first().unwrap());
     result.set_x_max(*x_grid.last().unwrap());
@@ -237,7 +237,7 @@ pub fn convert_into_applgrid(
                     .map(|&x1| {
                         appl_x1
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128, epsilon = 1e-12))
+                            .position(|&x| approx_eq!(f64, x, x1, ulps = 512))
                             .map_or_else(
                                 || {
                                     Err(anyhow!(
@@ -254,7 +254,8 @@ pub fn convert_into_applgrid(
                     .map(|&x2| {
                         appl_x2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128, epsilon = 1e-12))
+                            // .position(|&x| approx_eq!(f64, x, x2, ulps = 128, epsilon = 1e-12))
+                            .position(|&x| approx_eq!(f64, x, x2, ulps = 512))
                             .map_or_else(
                                 || {
                                     Err(anyhow!(
