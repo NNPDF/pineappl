@@ -14,9 +14,9 @@ pub enum PidBasis {
     /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
     /// instance the [2023 review](https://pdg.lbl.gov/2023/mcdata/mc_particle_id_contents.html).
     Pdg,
-    /// This basis specifies the evolution basis, which is the same as [`PidConv::Pdg`], except the
-    /// following values have a special meaning: `100`, `103`, `108`, `115`, `124`, `135`, `200`,
-    /// `203`, `208`, `215`, `224`, `235`.
+    /// This basis specifies the evolution basis, which is the same as [`PidBasis::Pdg`], except
+    /// the following values have a special meaning: `100`, `103`, `108`, `115`, `124`, `135`,
+    /// `200`, `203`, `208`, `215`, `224`, `235`.
     Evol,
 }
 
