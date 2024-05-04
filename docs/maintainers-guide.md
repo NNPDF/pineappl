@@ -80,3 +80,14 @@
   figure which version you've got
 
 [package manager]: https://doc.rust-lang.org/cargo/index.html
+
+# Connected accounts
+
+- Codecov: <https://app.codecov.io/gh/NNPDF/pineappl>
+- Conda: <https://github.com/conda-forge/pineappl-feedstock>
+- Crates.io: <https://crates.io/crates/pineappl>
+- PyPI: <https://pypi.org/project/pineappl>
+- ReadTheDocs: <https://pineappl.readthedocs.io>
+- Zenodo: <https://zenodo.org/records/10700087>
+
+We also store testing data in <https://data.nnpdf.science/pineappl/test-data>.
