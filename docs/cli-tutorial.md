@@ -40,8 +40,6 @@ install the PDF set with LHAPDF, or use a different PDF set—the numbers won't
 matter for the sake of the tutorial. If the command was successful, you should
 see the following output:
 
-    LHAPDF 6.5.1 loading /home/cschwan/prefix/share/LHAPDF/CT18NNLO/CT18NNLO_0000.dat
-    CT18NNLO PDF set, member #0, version 1; LHAPDF ID = 14000
     b   etal    dsig/detal
          []        [pb]
     -+----+----+-----------
@@ -53,15 +51,6 @@ see the following output:
     5 3.25  3.5 2.5236943e2
     6  3.5    4 1.1857770e2
     7    4  4.5 2.7740964e1
-    Thanks for using LHAPDF 6.5.1. Please make sure to cite the paper:
-      Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
-
-On your computer the output will be slightly different depending on your LHAPDF
-installation. If you don't want to see LHAPDF messages (first and last two
-lines), add the option `--silence-lhapdf` after `pineappl` and before
-`convolve`:
-
-    pineappl --silence-lhapdf convolve LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 Let's have a closer look at what the output shows:
 
@@ -432,14 +421,12 @@ a difference in the pull.
 Often a good way to start understanding predictions is to plot them.
 Fortunately, this is easy with PineAPPL:
 
-    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 CT18NNLO > plot.py
+    pineappl plot LHCB_WP_7TEV.pineappl.lz4 CT18NNLO > plot.py
 
 This will write a [matplotlib] script in Python. Note that the script is
-written to the standard output and redirected into `plot.py`. For this reason
-you must add `--silence-lhapdf`, because otherwise LHAPDF's banner would end up
-in the script and break it. The advantage of writing a plotting script instead
-of directly producing the plot is that you can change it according to your
-needs. Finally, let's run the plotting script:
+written to the standard output and redirected into `plot.py`. The advantage of
+writing a plotting script instead of directly producing the plot is that you
+can change it according to your needs. Finally, let's run the plotting script:
 
     python3 plot.py
 
@@ -453,7 +440,7 @@ Here's how the result for `.jpeg` looks:
 The `plot` subcommand is much more powerful, however. It accepts multiple PDF
 sets, for instance
 
-    pineappl --silence-lhapdf plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED \
+    pineappl plot LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed=NNPDF31luxQED \
         CT18NNLO=CT18 MSHT20nnlo_as118=MSHT20 > plot.py
 
 in which case more insets are plotted, which show the PDF uncertainty for
