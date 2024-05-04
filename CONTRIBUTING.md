@@ -38,8 +38,11 @@ increasing the MSRV make sure to set it everywhere to the same value:
 - avoid the use of indices whenever possible; use `Iterator` instead.
 - use the `unwrap` methods whenever a panic would signal a bug in the program,
   and use `Result` instead if errors should be propagated down to the user.
+  When using `unwrap`, document the nature of the bug if a panic happens with a
+  comment of the form: `// UNWRAP: ...`.
 - in APIs prefer `unwrap_or_else(|| unreachable!())` over `unwrap` whenever
-  this avoids the clippy warning that a Panic section is missing
+  this avoids the clippy warning that a Panic section is missing. Also document
+  this with `// UNWRAP: ...`
 
 ## Git
 
