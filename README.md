@@ -37,13 +37,16 @@ If you use PineAPPL, please cite
 1. the software itself using its [zenodo DOI] and
 2. the [paper] introducing it.
 
+By using PineAPPL, you're probably also using
+
+- [APPLgrid],
+- [fastNLO] and/or
+- [LHAPDF].
+
+If that is the case, please cite these accordingly.
+
+[APPLgrid]: https://applgrid.hepforge.org
+[fastNLO]: https://fastnlo.hepforge.org
+[LHAPDF]: https://lhapdf.hepforge.org
 [zenodo DOI]: https://zenodo.org/badge/latestdoi/248306479
 [paper]: https://inspirehep.net/literature/1814432
-
-# Similar projects
-
-`PineAPPL` is the most recent addition to the family of grid interpolation
-libraries:
-
-- [APPLgrid](https://applgrid.hepforge.org/) and
-- [fastNLO](https://fastnlo.hepforge.org/).
