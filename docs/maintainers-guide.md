@@ -24,14 +24,16 @@
 - `examples`: contains examples programs to learn how to use PineAPPL's C, C++,
   Fortran and Python APIs
 - `maintainer`: contains [maintainer-specific tools]
-- `pineappl`: the main Rust crate
+- `pineappl`: the main Rust crate, documentation at <https://docs.rs/pineappl>
 - `pineappl_applgrid`: interface to [APPLgrid], which the CLI uses to convert
   APPLgrids to PineAPPL grids (and vice versa)
-- `pineappl_capi`: the crate that builds PineAPPL's CAPI
+- `pineappl_capi`: the crate that builds PineAPPL's CAPI, documentation at
+  <https://docs.rs/pineappl_capi>
 - `pineappl_cli`: the crate that builds PineAPPL's CLI
 - `pineappl_fastnlo`: interface to [fastNLO], which the CLI uses to convert
   fastNLO tables to PineAPPL grids
-- `pineappl_py`: the crate that builds PineAPPL's Python interface
+- `pineappl_py`: the crate that builds PineAPPL's Python interface,
+  documentation at <https://pineappl.readthedocs.io>
 - `xtask`: crate for [cargo-xtask] commands
 - `.gitignore`: PineAPPL's Git ignore rules
 - `.readthedocs.yml`: configuration for PineAPPL's [Read-the-Docs] Python
