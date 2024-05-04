@@ -1,10 +1,10 @@
 # Tutorial for PineAPPL's CLI
 
 Welcome to PineAPPL's CLI tutorial! Here we'll explain the basics of PineAPPL's
-command-line interface (CLI): that's the program `pineappl` that you can you use
-inside your shell to convolute grids with PDFs and to perform other operations.
-This tutorial will also introduce and explain the terminology needed to
-understand the C, Fortran, Python and Rust API.
+command-line interface (CLI): that's the program `pineappl` that you can you
+use inside your shell to convolve grids with PDFs and to perform other
+operations. This tutorial will also introduce and explain the terminology
+needed to understand the C, Fortran, Python and Rust API.
 
 This tutorial assumes that you understand the basics of interpolation grids. If
 you'd like to refresh your memory read the short
@@ -25,11 +25,11 @@ to create a temporary directory. Finally, you'll need a grid,
 
 which you'll use with the CLI.
 
-## `pineappl convolute`: Performing convolutions
+## `pineappl convolve`: Performing convolutions
 
 Now that you've got a grid, you can perform a convolution with a PDF set:
 
-    pineappl convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+    pineappl convolve LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 We chose to use the default CT18 PDF set for this tutorial, because it's the
 shortest to type. If you get an error that reads
@@ -59,9 +59,9 @@ see the following output:
 On your computer the output will be slightly different depending on your LHAPDF
 installation. If you don't want to see LHAPDF messages (first and last two
 lines), add the option `--silence-lhapdf` after `pineappl` and before
-`convolute`:
+`convolve`:
 
-    pineappl --silence-lhapdf convolute LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
+    pineappl --silence-lhapdf convolve LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 Let's have a closer look at what the output shows:
 
@@ -85,17 +85,17 @@ grouped, and a corresponding description. You'll be familiar with the concept
 of subcommand if you're using `git`: `add`, `commit` and `push` are well-known
 subcommands of it.
 
-To get more help on a specific subcommand, for instance `convolute`, which
-we've used already, run
+To get more help on a specific subcommand, for instance `convolve`, which we've
+used already, run
 
-    pineappl convolute -h
+    pineappl convolve -h
 
 Depending on the version of PineAPPL this will show output similar to the
 following:
 
     Convolutes a PineAPPL grid with a PDF set
 
-    Usage: pineappl convolute [OPTIONS] <INPUT> <PDFSETS>...
+    Usage: pineappl convolve [OPTIONS] <INPUT> <PDFSETS>...
 
     Arguments:
       <INPUT>       Path of the input grid
@@ -109,7 +109,7 @@ following:
           --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
       -h, --help              Print help
 
-This explains that `pineappl convolute` needs at least two arguments, the first
+This explains that `pineappl convolve` needs at least two arguments, the first
 being the grid file, denoted as `<INPUT>` and a second argument `<PDFSETS>`,
 which determines the PDF set. Note that this argument has three dots, `...`,
 meaning that you're allowed to pass multiple PDF sets, in which case `pineappl`
@@ -121,9 +121,9 @@ denoted with `[OPTIONS]`.
 
 If you're experienced enough in high-energy physics, you've already inferred
 from the file name of the grid and the observable name `etal` what the
-convoluted numbers will most likely show. However, how can you be certain?
-Specifically, if you didn't generate the grid yourself you'll probably want to
-know the answers to the following questions:
+numbers will most likely show. However, how can you be certain? Specifically,
+if you didn't generate the grid yourself you'll probably want to know the
+answers to the following questions:
 
 1. For which process is the prediction for?
 2. Which observable is shown?
@@ -146,7 +146,7 @@ through them one by one:
    section at 7 TeV`.
 2. The keys `x1_label` contains the name of the observable, and `y_label` the
    name of the corresponding (differential) cross section. These strings are
-   being used by `convolute` and other subcommands that perform convolutions to
+   being used by `convolve` and other subcommands that perform convolutions to
    label the columns with the corresponding numbers. If grids contain two- or
    even higher-dimensional distributions there would be additional labels, for
    instance `x2_label`, etc. Furthermore, for plots there are the corresponding
@@ -235,7 +235,7 @@ which prints:
     7    4  4.5  0.5
 
 this shows the bin indices `b` for the observable `etal`, with their left and
-right bin limits, which you've already seen in `convolute`. The column `norm`
+right bin limits, which you've already seen in `convolve`. The column `norm`
 shows the factor that all convolutions are divided with. Typically, as shown in
 this case, this is the bin width, but in general this can be different.
 
@@ -355,7 +355,7 @@ Let's calculate the scale and PDF uncertainties for our grid:
 
     pineappl uncert --pdf --scale-env=7 LHCB_WP_7TEV.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
 
-This will show a table very similar to `pineappl convolute`:
+This will show a table very similar to `pineappl convolve`:
 
     b   etal    dsig/detal  PDF central    PDF     7pt-svar (env)
          []        [pb]                    [%]           [%]
@@ -369,8 +369,8 @@ This will show a table very similar to `pineappl convolute`:
     6  3.5    4 1.1746882e2 1.1745148e2 -1.33 1.33   -3.48    2.80
     7    4  4.5 2.8023753e1 2.8018010e1 -4.05 4.05   -3.40    2.74
 
-The first three columns are exactly the one that `pineappl convolute` shows.
-The next columns are the PDF central predictions, and negative and positive PDF
+The first three columns are exactly the one that `pineappl convolve` shows. The
+next columns are the PDF central predictions, and negative and positive PDF
 uncertainties. These uncertainties are calculated using LHAPDF, so `pineappl`
 always uses the correct algorithm no matter what type of PDF sets you use:
 Hessian, Monte Carlo, etc. Note that we've chosen a PDF set with Monte Carlo
