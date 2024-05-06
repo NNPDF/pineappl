@@ -254,7 +254,6 @@ pub fn convert_into_applgrid(
                     .map(|&x2| {
                         appl_x2
                             .iter()
-                            // .position(|&x| approx_eq!(f64, x, x2, ulps = 128, epsilon = 1e-12))
                             .position(|&x| approx_eq!(f64, x, x2, ulps = 512))
                             .map_or_else(
                                 || {
