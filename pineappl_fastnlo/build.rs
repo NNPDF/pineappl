@@ -5,7 +5,7 @@ use std::process::Command;
 
 fn main() {
     let version = String::from_utf8(
-        Command::new("applgrid-config")
+        Command::new("fnlo-tk-config")
             .arg("--version")
             .output()
             .expect("did not find `fnlo-tk-config`, please install fastNLO")
