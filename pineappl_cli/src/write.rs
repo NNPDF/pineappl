@@ -8,6 +8,7 @@ use clap::{
 };
 use pineappl::bin::BinRemapper;
 use pineappl::fk_table::{FkAssumptions, FkTable};
+use pineappl::grid::Order;
 use pineappl::lumi::LumiEntry;
 use pineappl::pids;
 use pineappl::pids::PidBasis;
@@ -44,6 +45,7 @@ enum OpsArg {
     RemapNorm(f64),
     RemapNormIgnore(Vec<usize>),
     RewriteChannel((usize, LumiEntry)),
+    RewriteOrder((usize, Order)),
     RotatePidBasis(PidBasis),
     Scale(f64),
     ScaleByBin(Vec<f64>),
@@ -178,7 +180,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "rewrite_channel" => {
+                "rewrite_channel" | "rewrite_order" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -187,10 +189,17 @@ impl FromArgMatches for MoreArgs {
                     ) {
                         assert_eq!(arg.len(), 2);
 
-                        args[index] = Some(OpsArg::RewriteChannel((
-                            str::parse(&arg[0]).unwrap(),
-                            str::parse(&arg[1]).unwrap(),
-                        )));
+                        args[index] = Some(match id.as_str() {
+                            "rewrite_channel" => OpsArg::RewriteChannel((
+                                str::parse(&arg[0]).unwrap(),
+                                str::parse(&arg[1]).unwrap(),
+                            )),
+                            "rewrite_order" => OpsArg::RewriteOrder((
+                                str::parse(&arg[0]).unwrap(),
+                                str::parse(&arg[1]).unwrap(),
+                            )),
+                            _ => unreachable!(),
+                        });
                     }
                 }
                 "rotate_pid_basis" => {
@@ -384,6 +393,14 @@ impl Args for MoreArgs {
                 .long("rewrite-channel")
                 .num_args(2)
                 .value_names(["IDX", "CHAN"])
+        )
+        .arg(
+            Arg::new("rewrite_order")
+                .action(ArgAction::Append)
+                .help("Rewrite the definition of the order with index IDX")
+                .long("rewrite-order")
+                .num_args(2)
+                .value_names(["IDX", "ORDER"])
         )
         .arg(
             Arg::new("rotate_pid_basis")
@@ -585,6 +602,9 @@ impl Subcommand for Opts {
                     // TODO: check that `index` is valid
                     channels[*index] = new_channel.clone();
                     grid.set_lumis(channels);
+                }
+                OpsArg::RewriteOrder((index, order)) => {
+                    grid.orders_mut()[*index] = order.clone();
                 }
                 OpsArg::RotatePidBasis(pid_basis) => {
                     grid.rotate_pid_basis(pid_basis.clone());

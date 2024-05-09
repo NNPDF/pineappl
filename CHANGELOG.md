@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `Grid::rotate_pid_basis` and `pineappl write --rotate-pid-basis`. This
   allows to change the meaning of the used particle IDs, and supported formats
   are PDG MC IDs and the evolution basis
+- added `pineappl write --rewrite-orders` that lets the user change the
+  exponents of each order
 
 ### Changed
 

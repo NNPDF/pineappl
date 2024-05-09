@@ -23,6 +23,7 @@ Options:
       --remap-norm <NORM>              Modify the bin normalizations with a common factor
       --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
       --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
+      --rewrite-order <IDX> <ORDER>    Rewrite the definition of the order with index IDX
       --rotate-pid-basis <BASIS>       Rotate the PID basis for this grid [possible values: PDG, EVOL]
   -s, --scale <SCALE>                  Scales all grids with the given factor
       --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
@@ -412,6 +413,30 @@ const ROTATE_PID_BASIS_READ_LUMIS_STR: &str = " l                 entry
 155 -0.08333333333333334 × (215, 22)
 156 0.05 × (224, 22)
 157 0.03333333333333333 × (235, 22)
+";
+
+const REWRITE_ORDER_CONVOLVE_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 1.8216658e2
+1 2.25  2.5 1.6597039e2
+2  2.5 2.75 1.4666687e2
+3 2.75    3 1.2014156e2
+4    3 3.25 9.0894574e1
+5 3.25  3.5 6.2823156e1
+6  3.5    4 3.0663454e1
+7    4  4.5 7.8264717e0
+";
+
+const REWRITE_ORDER_READ_STR: &str = "o      order
+-+----------------
+0 O(as^1 a^1)
+1 O(as^1 a^2)
+2 O(as^1 a^2 lr^1)
+3 O(as^1 a^2 lf^1)
+4 O(a^3)
+5 O(a^3 lr^1)
+6 O(a^3 lf^1)
 ";
 
 #[test]
@@ -1060,4 +1085,41 @@ fn rotate_pid_basis() {
         .assert()
         .success()
         .stdout(ROTATE_PID_BASIS_READ_LUMIS_STR);
+}
+
+#[test]
+fn rewrite_order() {
+    let output = NamedTempFile::new("rewrite-order.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rewrite-order",
+            "0",
+            "as1a1",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(REWRITE_ORDER_READ_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(REWRITE_ORDER_CONVOLVE_STR);
 }
