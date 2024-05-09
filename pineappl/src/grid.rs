@@ -28,7 +28,13 @@ use std::iter;
 use std::mem;
 use std::ops::Range;
 use std::slice;
+use std::str::FromStr;
 use thiserror::Error;
+
+/// Error type keeping information if [`Order::from_str`] went wrong.
+#[derive(Debug, Error, PartialEq)]
+#[error("{0}")]
+pub struct ParseOrderError(String);
 
 // TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
 
@@ -43,6 +49,54 @@ pub struct Order {
     pub logxir: u32,
     /// Exponent of the logarithm of the scale factor of the factorization scale.
     pub logxif: u32,
+}
+
+impl FromStr for Order {
+    type Err = ParseOrderError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut result = Self {
+            alphas: 0,
+            alpha: 0,
+            logxir: 0,
+            logxif: 0,
+        };
+
+        for tuple in s
+            .split(|c: char| c.is_ascii_digit())
+            .filter(|s| !s.is_empty())
+            .zip(
+                s.split(|c: char| !c.is_ascii_digit())
+                    .filter(|s| !s.is_empty())
+                    .map(str::parse),
+            )
+        {
+            match tuple {
+                ("as", Ok(num)) => {
+                    result.alphas = num;
+                }
+                ("a", Ok(num)) => {
+                    result.alpha = num;
+                }
+                ("lr", Ok(num)) => {
+                    result.logxir = num;
+                }
+                ("lf", Ok(num)) => {
+                    result.logxif = num;
+                }
+                (label, Err(err)) => {
+                    return Err(ParseOrderError(format!(
+                        "error while parsing exponent of '{label}': {err}"
+                    )));
+                }
+                (label, Ok(_)) => {
+                    return Err(ParseOrderError(format!("unknown coupling: '{label}'")));
+                }
+            }
+        }
+
+        Ok(result)
+    }
 }
 
 impl Ord for Order {
@@ -2360,6 +2414,25 @@ mod tests {
     use crate::lumi_entry;
     use float_cmp::assert_approx_eq;
     use std::fs::File;
+
+    #[test]
+    fn order_from_str() {
+        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0)));
+        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0)));
+        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0)));
+        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1)));
+        assert_eq!(
+            "ab12".parse::<Order>(),
+            Err(ParseOrderError("unknown coupling: 'ab'".to_owned()))
+        );
+        assert_eq!(
+            "ab123456789000000".parse::<Order>(),
+            Err(ParseOrderError(
+                "error while parsing exponent of 'ab': number too large to fit in target type"
+                    .to_owned()
+            ))
+        );
+    }
 
     #[test]
     fn order_cmp() {
