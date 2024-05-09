@@ -1116,6 +1116,12 @@ impl Grid {
         &self.orders
     }
 
+    /// Return a mutable reference to the subgrid parameters.
+    #[must_use]
+    pub fn orders_mut(&mut self) -> &mut [Order] {
+        &mut self.orders
+    }
+
     /// Set the luminosity function for this grid.
     pub fn set_lumis(&mut self, lumis: Vec<LumiEntry>) {
         self.lumi = lumis;
