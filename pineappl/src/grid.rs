@@ -1390,19 +1390,32 @@ impl Grid {
 
     fn symmetrize_channels(&mut self) {
         let map = self.key_values();
-        if map.is_some() {
-            let map = map.unwrap();
-            if map.contains_key("convolution_particle_1")
-                && map.contains_key("convolution_type_1")
-                && map.contains_key("convolution_particle_2")
-                && map.contains_key("convolution_type_2")
-            {
-                if map["convolution_particle_1"] != map["convolution_particle_2"]
-                    || map["convolution_type_1"] != map["convolution_type_2"]
-                {
-                    return;
+        if let Some(map) = map {
+            match (
+                map.get("convolution_particle_1"),
+                map.get("convolution_particle_2"),
+                map.get("convolution_type_1"),
+                map.get("convolution_type_2"),
+            ) {
+                (
+                    Some(convolution_particle_1),
+                    Some(convolution_particle_2),
+                    Some(convolution_type_1),
+                    Some(convolution_type_2),
+                ) => {
+                    if convolution_particle_1 != convolution_particle_2
+                        || convolution_type_1 != convolution_type_2
+                    {
+                        return;
+                    }
                 }
-            } else if map["initial_state_1"] != map["initial_state_2"] {
+                (None, None, None, None) => {}
+                _ => {
+                    // TODO: if only some of the metadata is set, we should consider this an error
+                    todo!();
+                }
+            }
+            if map["initial_state_1"] != map["initial_state_2"] {
                 return;
             }
         }
