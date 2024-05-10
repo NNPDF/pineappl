@@ -1389,10 +1389,22 @@ impl Grid {
     }
 
     fn symmetrize_channels(&mut self) {
-        if self.key_values().map_or(false, |map| {
-            map["initial_state_1"] != map["initial_state_2"]
-        }) {
-            return;
+        let map = self.key_values();
+        if map.is_some() {
+            let map = map.unwrap();
+            if map.contains_key("convolution_particle_1")
+                && map.contains_key("convolution_type_1")
+                && map.contains_key("convolution_particle_2")
+                && map.contains_key("convolution_type_2")
+            {
+                if map["convolution_particle_1"] != map["convolution_particle_2"]
+                    || map["convolution_type_1"] != map["convolution_type_2"]
+                {
+                    return;
+                }
+            } else if map["initial_state_1"] != map["initial_state_2"] {
+                return;
+            }
         }
 
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
