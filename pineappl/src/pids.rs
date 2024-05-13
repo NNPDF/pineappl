@@ -25,8 +25,8 @@ impl FromStr for PidBasis {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Pdg" | "PDG" | "pdg_mc_ids" => Ok(PidBasis::Pdg),
-            "Evol" | "EVOL" | "evol" => Ok(PidBasis::Evol),
+            "Pdg" | "PDG" | "pdg_mc_ids" => Ok(Self::Pdg),
+            "Evol" | "EVOL" | "evol" => Ok(Self::Evol),
             _ => Err(UnknownPidBasis {
                 basis: s.to_owned(),
             }),
@@ -168,6 +168,7 @@ pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
 }
 
 /// Translates PDG Monte Carlo IDs to particle IDs from the evolution basis.
+#[must_use]
 pub fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
     match pid {
         -6 => vec![

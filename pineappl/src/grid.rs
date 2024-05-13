@@ -32,7 +32,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// Error type keeping information if [`Order::from_str`] went wrong.
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error, Eq, PartialEq)]
 #[error("{0}")]
 pub struct ParseOrderError(String);
 
@@ -578,6 +578,7 @@ impl Grid {
     }
 
     /// Return by which convention the particle IDs are encoded.
+    #[must_use]
     pub fn pid_basis(&self) -> PidBasis {
         if let Some(key_values) = self.key_values() {
             if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
@@ -590,7 +591,7 @@ impl Grid {
         }
 
         // if there's no basis explicitly set we're assuming to use PDG IDs
-        return PidBasis::Pdg;
+        PidBasis::Pdg
     }
 
     fn pdg_lumi(&self) -> Cow<[LumiEntry]> {

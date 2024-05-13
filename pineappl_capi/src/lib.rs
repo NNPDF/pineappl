@@ -179,7 +179,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
         }
 
         if let Some(value) = keyval.strings.get("subgrid_type") {
-            subgrid_type = value.to_str().unwrap().to_owned();
+            value.to_str().unwrap().clone_into(&mut subgrid_type);
         }
     }
 

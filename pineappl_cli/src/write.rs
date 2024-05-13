@@ -607,7 +607,7 @@ impl Subcommand for Opts {
                     grid.orders_mut()[*index] = order.clone();
                 }
                 OpsArg::RotatePidBasis(pid_basis) => {
-                    grid.rotate_pid_basis(pid_basis.clone());
+                    grid.rotate_pid_basis(*pid_basis);
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize(true) => grid.optimize(),
