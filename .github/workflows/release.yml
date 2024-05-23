@@ -219,46 +219,6 @@ jobs:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
 
-  wheels-eol-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [x86_64]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Patch Cargo.toml
-        run: |
-          # - older maturin versions don't support metadata inheritance - overwrite it explicitly
-          # - use '@' separator since 'repository' contains slashes
-          # - downgrade both `numpy` and `pyo3` to the last version that support Python 3.6
-          sed -i \
-              -e "s@categories.workspace = true@$(grep '^categories' Cargo.toml)@" \
-              -e "s@edition.workspace = true@$(grep '^edition' Cargo.toml)@" \
-              -e "s@keywords.workspace = true@$(grep '^keywords' Cargo.toml)@" \
-              -e "s@license.workspace = true@$(grep '^license' Cargo.toml)@" \
-              -e "s@repository.workspace = true@$(grep '^repository' Cargo.toml)@" \
-              -e "s@rust-version.workspace = true@$(grep '^rust-version' Cargo.toml)@" \
-              -e "s@version.workspace = true@$(grep '^version' Cargo.toml)@" \
-              -e "s@^numpy = .*@numpy = \"0.14.1\"@" \
-              -e "s@^pyo3 = .*@pyo3 = { features = [\"extension-module\"], version = \"0.14.5\" }@" \
-              pineappl_py/Cargo.toml
-          # the previous command is very fragile, so print the file contents to check it
-          cat pineappl_py/Cargo.toml
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release -i python3.6 --out dist --no-sdist --manifest-path pineappl_py/Cargo.toml
-          sccache: 'true'
-          manylinux: auto
-          # this is the latest version to support Python 3.6
-          maturin-version: 0.12.20
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.job }}-${{ matrix.target }}
-          path: dist
-
   wheels-macos:
     runs-on: macos-13
     strategy:
@@ -348,7 +308,7 @@ jobs:
   release-wheels:
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [wheels-eol-linux, wheels-linux, wheels-macos, wheels-sdist, wheels-windows]
+    needs: [wheels-linux, wheels-macos, wheels-sdist, wheels-windows]
     steps:
       - uses: actions/download-artifact@v4
         with:
