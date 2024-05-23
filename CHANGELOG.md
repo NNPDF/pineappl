@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - removed support for Python 3.6
+- removed deprecated evolution methods `Grid::axes`, `Grid::convolute_eko` and
+  the structs `EkoInfo` and `GridAxes`
 
 ## [0.7.4] - 23/05/2024
 

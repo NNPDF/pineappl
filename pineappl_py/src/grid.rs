@@ -1,9 +1,6 @@
 use pineappl::evolution::{AlphasTable, OperatorInfo};
 use pineappl::grid::{Grid, Ntuple, Order};
 
-#[allow(deprecated)]
-use pineappl::grid::{EkoInfo, GridAxes};
-
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
@@ -299,45 +296,6 @@ impl PyGrid {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
     }
 
-    /// Extract the necessary informations for EKO.
-    ///
-    /// **Usage:** `pineko`
-    ///
-    /// Returns
-    /// -------
-    ///     x_grid: numpy.ndarray(float)
-    ///         interpolation grid
-    ///     pids: numpy.ndarray(int)
-    ///         particle ids
-    ///     mur2_grid : numpy.ndarray(float)
-    ///         factorization scale list
-    ///     muf2_grid : numpy.ndarray(float)
-    ///         factorization scale list
-    #[deprecated(since = "0.6.0", note = "use evolve_info instead")]
-    #[allow(deprecated)]
-    pub fn axes<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> (
-        &'py PyArray1<f64>,
-        &'py PyArray1<i32>,
-        &'py PyArray1<f64>,
-        &'py PyArray1<f64>,
-    ) {
-        let GridAxes {
-            x_grid,
-            pids,
-            mur2_grid,
-            muf2_grid,
-        } = self.grid.axes().unwrap();
-        (
-            x_grid.into_pyarray(py),
-            pids.into_pyarray(py),
-            mur2_grid.into_pyarray(py),
-            muf2_grid.into_pyarray(py),
-        )
-    }
-
     /// Convolute grid with pdf.
     ///
     /// **Usage:** `pineko`
@@ -462,83 +420,6 @@ impl PyGrid {
                 &xi,
             )
             .into_pyarray(py)
-    }
-
-    /// Convolute with with an evolution operator.
-    ///
-    /// **Usage:** `pineko`
-    ///
-    /// Parameters
-    /// ----------
-    ///     muf2_0 : float
-    ///         reference scale
-    ///     alphas : numpy.ndarray(float)
-    ///         list with :math:`\alpha_s(Q2)` for the process scales
-    ///     pids : numpy.ndarray(int)
-    ///         sorting of the particles in the tensor
-    ///     x_grid : numpy.ndarray(float)
-    ///         interpolation grid
-    ///     target_pids : numpy.ndarray(int)
-    ///         sorting of the particles in the tensor for final FkTable
-    ///     target_x_grid : numpy.ndarray(float)
-    ///         final FKTable interpolation grid
-    ///     mur2_grid : numpy.ndarray(float)
-    ///         list of renormalization scales
-    ///     muf2_grid : numpy.ndarray(float)
-    ///         list of factorization scales
-    ///     operator : numpy.ndarray(int, rank=5)
-    ///         evolution tensor
-    ///     orders_mask: numpy.ndarray(bool)
-    ///         boolean mask to activate orders
-    ///
-    /// Returns
-    /// -------
-    ///     PyFkTable :
-    ///         produced FK table
-    #[deprecated(since = "0.6.0", note = "use evolve instead")]
-    #[allow(deprecated)]
-    pub fn convolute_eko(
-        &self,
-        muf2_0: f64,
-        alphas: PyReadonlyArray1<f64>,
-        pids: PyReadonlyArray1<i32>,
-        x_grid: PyReadonlyArray1<f64>,
-        target_pids: PyReadonlyArray1<i32>,
-        target_x_grid: PyReadonlyArray1<f64>,
-        mur2_grid: PyReadonlyArray1<f64>,
-        muf2_grid: PyReadonlyArray1<f64>,
-        operator: PyReadonlyArray5<f64>,
-        lumi_id_types: String,
-        order_mask: PyReadonlyArray1<bool>,
-        xi: (f64, f64),
-    ) -> PyFkTable {
-        let eko_info = EkoInfo {
-            muf2_0,
-            alphas: alphas.to_vec().unwrap(),
-            xir: xi.0,
-            xif: xi.1,
-            target_pids: target_pids.to_vec().unwrap(),
-            target_x_grid: target_x_grid.to_vec().unwrap(),
-            grid_axes: GridAxes {
-                x_grid: x_grid.to_vec().unwrap(),
-                pids: pids.to_vec().unwrap(),
-                mur2_grid: mur2_grid.to_vec().unwrap(),
-                muf2_grid: muf2_grid.to_vec().unwrap(),
-            },
-            lumi_id_types,
-        };
-
-        let evolved_grid = self
-            .grid
-            .convolute_eko(
-                operator.as_array().to_owned(),
-                eko_info,
-                &order_mask.to_vec().unwrap(),
-            )
-            .expect("Nothing returned from evolution.");
-        PyFkTable {
-            fk_table: evolved_grid,
-        }
     }
 
     /// Convolute with grid with an evolution operator.
