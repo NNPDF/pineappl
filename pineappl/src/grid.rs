@@ -1098,16 +1098,17 @@ impl Grid {
                                 {
                                     Some(Ok(pid)) => {
                                         let condition = !self.lumi().iter().all(|entry| {
-                                            entry
-                                                .entry()
-                                                .iter()
-                                                .all(|&channels| channels[index - 1] == pid)
+                                            entry.entry().iter().all(|&channels| match index {
+                                                1 => channels.0 == pid,
+                                                2 => channels.1 == pid,
+                                                _ => false,
+                                            })
                                         });
 
                                         if condition {
                                             Convolution::UnpolPDF(pid)
                                         } else {
-                                            Convolution::None(pid)
+                                            Convolution::None
                                         }
                                     }
                                     None => Convolution::UnpolPDF(2212),
