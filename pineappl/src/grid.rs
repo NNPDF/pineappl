@@ -1096,7 +1096,20 @@ impl Grid {
                                     .get(&format!("initial_state_{index}"))
                                     .map(|s| s.parse::<i32>())
                                 {
-                                    Some(Ok(pid)) => Convolution::UnpolPDF(pid),
+                                    Some(Ok(pid)) => {
+                                        let condition = !self.lumi().iter().all(|entry| {
+                                            entry
+                                                .entry()
+                                                .iter()
+                                                .all(|&channels| channels[index - 1] == pid)
+                                        });
+
+                                        if condition {
+                                            Convolution::UnpolPDF(pid)
+                                        } else {
+                                            Convolution::None(pid)
+                                        }
+                                    }
                                     None => Convolution::UnpolPDF(2212),
                                     Some(Err(_err)) => todo!(),
                                 }
