@@ -1065,70 +1065,54 @@ impl Grid {
         Ok(())
     }
 
-    /// Returns a vector containing the type of convolution
-    /// object (PDF or FF, Unpol or Pol) and the PDG ID of the hadron.
-    ///
-    /// Todo: will need to be modified to accomoodate upcoming v1.
+    /// Return a vector containing the type of convolutions performed with this grid.
+    #[must_use]
     pub fn convolutions(&self) -> Vec<Convolution> {
-        let mut convolutions = Vec::new();
-        let map = self.key_values();
-        if let Some(map) = map {
-            match (
-                map.get("convolution_particle_1")
-                    .and_then(|s| s.parse::<i32>().ok()),
-                map.get("convolution_particle_2")
-                    .and_then(|s| s.parse::<i32>().ok()),
-                map.get("convolution_type_1"),
-                map.get("convolution_type_2"),
-            ) {
-                (
-                    Some(convolution_particle_1),
-                    Some(convolution_particle_2),
-                    Some(convolution_type_1),
-                    Some(convolution_type_2),
-                ) => {
-                    match convolution_type_1.as_str() {
-                        "UnpolPDF" => {
-                            convolutions.push(Convolution::UnpolPDF(convolution_particle_1))
+        self.key_values().map_or_else(
+            // if there isn't any metadata, we assume that proton-PDFs are used
+            || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+            |kv| {
+                // the current file format only supports exactly two convolutions
+                (1..=2)
+                    .map(|index| {
+                        match (
+                            kv.get(&format!("convolution_particle_{index}"))
+                                .map(|s| s.parse::<i32>()),
+                            kv.get(&format!("convolution_type_{index}"))
+                                .map(String::as_str),
+                        ) {
+                            (_, Some("None")) => Convolution::None,
+                            (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
+                            (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
+                            (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
+                            (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
+                            (None, None) => {
+                                match kv
+                                    .get(&format!("initial_state_{index}"))
+                                    .map(|s| s.parse::<i32>())
+                                {
+                                    Some(Ok(pid)) => Convolution::UnpolPDF(pid),
+                                    None => Convolution::UnpolPDF(2212),
+                                    Some(Err(_err)) => todo!(),
+                                }
+                            }
+                            (None, Some(_)) => {
+                                panic!("metadata 'convolution_type_{index}' is missing")
+                            }
+                            (Some(_), None) => {
+                                panic!("metadata 'convolution_particle_{index}' is missing")
+                            }
+                            (Some(Ok(_)), Some(type_)) => {
+                                panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
+                            }
+                            (Some(Err(err)), Some(_)) => panic!(
+                                "metadata 'convolution_particle_{index}' could not be parsed: {err}"
+                            ),
                         }
-                        "PolPDF" => convolutions.push(Convolution::PolPDF(convolution_particle_1)),
-                        "UnpolFF" => {
-                            convolutions.push(Convolution::UnpolFF(convolution_particle_1))
-                        }
-                        "PolFF" => convolutions.push(Convolution::PolFF(convolution_particle_1)),
-                        _ => (),
-                    }
-                    match convolution_type_2.as_str() {
-                        "UnpolPDF" => {
-                            convolutions.push(Convolution::UnpolPDF(convolution_particle_2))
-                        }
-                        "PolPDF" => convolutions.push(Convolution::PolPDF(convolution_particle_2)),
-                        "UnpolFF" => {
-                            convolutions.push(Convolution::UnpolFF(convolution_particle_2))
-                        }
-                        "PolFF" => convolutions.push(Convolution::PolFF(convolution_particle_2)),
-                        _ => (),
-                    }
-                }
-                (None, None, None, None) => {
-                    // assumes old format
-                    if let (Some(initial_state_1), Some(initial_state_2)) = (
-                        map.get("initial_state_1")
-                            .and_then(|s| s.parse::<i32>().ok()),
-                        map.get("initial_state_2")
-                            .and_then(|s| s.parse::<i32>().ok()),
-                    ) {
-                        convolutions.push(Convolution::UnpolPDF(initial_state_1));
-                        convolutions.push(Convolution::UnpolPDF(initial_state_2));
-                    }
-                }
-                _ => {
-                    // TODO: if only some of the metadata is set, we should consider this an error
-                    todo!();
-                }
-            }
-        }
-        convolutions
+                    })
+                    .collect()
+            },
+        )
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
@@ -1474,7 +1458,7 @@ impl Grid {
 
     fn symmetrize_channels(&mut self) {
         let convolutions = self.convolutions();
-        if convolutions.get(0) != convolutions.get(1) {
+        if convolutions[0] != convolutions[1] {
             return;
         }
 
