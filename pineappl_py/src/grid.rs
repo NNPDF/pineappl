@@ -1,5 +1,6 @@
 use pineappl::evolution::{AlphasTable, OperatorInfo};
-use pineappl::grid::{Grid, Ntuple, Order};
+use pineappl::grid::{Grid, Ntuple};
+use pineappl::order::Order;
 
 use pineappl::lumi::LumiCache;
 
