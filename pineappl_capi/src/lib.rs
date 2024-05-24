@@ -57,8 +57,9 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
+use pineappl::grid::{Grid, GridOptFlags, Ntuple};
 use pineappl::lumi::{LumiCache, LumiEntry};
+use pineappl::order::Order;
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};

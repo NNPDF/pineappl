@@ -8,8 +8,8 @@ use clap::{
 };
 use pineappl::bin::BinRemapper;
 use pineappl::fk_table::{FkAssumptions, FkTable};
-use pineappl::grid::Order;
 use pineappl::lumi::LumiEntry;
+use pineappl::order::Order;
 use pineappl::pids;
 use pineappl::pids::PidBasis;
 use std::fs;

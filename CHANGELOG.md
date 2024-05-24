@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- moved `Order` and `ParseOrderError` to their own module `order`
+
 ### Removed
 
 - removed support for Python 3.6

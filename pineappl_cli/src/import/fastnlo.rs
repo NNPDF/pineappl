@@ -1,9 +1,10 @@
 use anyhow::Result;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, Order};
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::LumiEntry;
+use pineappl::order::Order;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{

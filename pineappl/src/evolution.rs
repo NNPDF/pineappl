@@ -1,9 +1,10 @@
 //! Supporting classes and functions for [`Grid::evolve`].
 
-use super::grid::{Grid, GridError, Order};
+use super::grid::{Grid, GridError};
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lumi::LumiEntry;
 use super::lumi_entry;
+use super::order::Order;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
