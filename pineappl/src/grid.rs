@@ -1066,6 +1066,11 @@ impl Grid {
     }
 
     /// Return a vector containing the type of convolutions performed with this grid.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the metadata key--value pairs `convolution_particle_1` and `convolution_type_1`,
+    /// or `convolution_particle_2` and `convolution_type_2` are not correctly set.
     #[must_use]
     pub fn convolutions(&self) -> Vec<Convolution> {
         self.key_values().map_or_else(
