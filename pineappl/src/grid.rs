@@ -513,11 +513,11 @@ pub struct Grid {
 }
 
 #[derive(Eq, PartialEq)]
-enum Convolution {
-    unpolPDF(i32),
-    polPDF(i32),
-    unpolFF(i32),
-    polFF(i32),
+pub enum Convolution {
+    UnpolPDF(i32),
+    PolPDF(i32),
+    UnpolFF(i32),
+    PolFF(i32),
     // we can add more types as they are needed
 }
 
@@ -1065,8 +1065,10 @@ impl Grid {
         let map = self.key_values();
         if let Some(map) = map {
             match (
-                map.get("convolution_particle_1").and_then(|s| s.parse::<i32>().ok()),
-                map.get("convolution_particle_2").and_then(|s| s.parse::<i32>().ok()),
+                map.get("convolution_particle_1")
+                    .and_then(|s| s.parse::<i32>().ok()),
+                map.get("convolution_particle_2")
+                    .and_then(|s| s.parse::<i32>().ok()),
                 map.get("convolution_type_1"),
                 map.get("convolution_type_2"),
             ) {
@@ -1077,26 +1079,39 @@ impl Grid {
                     Some(convolution_type_2),
                 ) => {
                     match convolution_type_1.as_str() {
-                        "unpolPDF" => convolutions.push(Convolution::unpolPDF(convolution_particle_1)),
-                        "polPDF" => convolutions.push(Convolution::polPDF(convolution_particle_1)),
-                        "unpolFF" => convolutions.push(Convolution::unpolFF(convolution_particle_1)),
-                        "polFF" => convolutions.push(Convolution::polFF(convolution_particle_1)),
+                        "UnpolPDF" => {
+                            convolutions.push(Convolution::UnpolPDF(convolution_particle_1))
+                        }
+                        "PolPDF" => convolutions.push(Convolution::PolPDF(convolution_particle_1)),
+                        "UnpolFF" => {
+                            convolutions.push(Convolution::UnpolFF(convolution_particle_1))
+                        }
+                        "PolFF" => convolutions.push(Convolution::PolFF(convolution_particle_1)),
                         _ => (),
                     }
                     match convolution_type_2.as_str() {
-                        "unpolPDF" => convolutions.push(Convolution::unpolPDF(convolution_particle_2)),
-                        "polPDF" => convolutions.push(Convolution::polPDF(convolution_particle_2)),
-                        "unpolFF" => convolutions.push(Convolution::unpolFF(convolution_particle_2)),
-                        "polFF" => convolutions.push(Convolution::polFF(convolution_particle_2)),
+                        "UnpolPDF" => {
+                            convolutions.push(Convolution::UnpolPDF(convolution_particle_2))
+                        }
+                        "PolPDF" => convolutions.push(Convolution::PolPDF(convolution_particle_2)),
+                        "UnpolFF" => {
+                            convolutions.push(Convolution::UnpolFF(convolution_particle_2))
+                        }
+                        "PolFF" => convolutions.push(Convolution::PolFF(convolution_particle_2)),
                         _ => (),
                     }
                 }
                 (None, None, None, None) => {
                     // assumes old format
-                    map.get("initial_state_1").and_then(|s| s.parse::<i32>().ok()),
-                    map.get("initial_state_2").and_then(|s| s.parse::<i32>().ok()),
-                    convolutions.push(Convolution::unpolPDF(initial_state_1));
-                    convolutions.push(Convolution::unpolPDF(initial_state_2));
+                    if let (Some(initial_state_1), Some(initial_state_2)) = (
+                        map.get("initial_state_1")
+                            .and_then(|s| s.parse::<i32>().ok()),
+                        map.get("initial_state_2")
+                            .and_then(|s| s.parse::<i32>().ok()),
+                    ) {
+                        convolutions.push(Convolution::UnpolPDF(initial_state_1));
+                        convolutions.push(Convolution::UnpolPDF(initial_state_2));
+                    }
                 }
                 _ => {
                     // TODO: if only some of the metadata is set, we should consider this an error
@@ -1453,7 +1468,7 @@ impl Grid {
         if convolutions.get(0) != convolutions.get(1) {
             return;
         }
-        
+
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
