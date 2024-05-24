@@ -512,13 +512,22 @@ pub struct Grid {
     more_members: MoreMembers,
 }
 
+/// Data type that indentifies different types of convolutions.
 #[derive(Eq, PartialEq)]
 pub enum Convolution {
+    /// No convolution.
+    None,
+    /// Unpolarized parton distribution function. The integer denotes the type of hadron with a PDG
+    /// MC ID.
     UnpolPDF(i32),
+    /// Polarized parton distribution function. The integer denotes the type of hadron with a PDG
+    /// MC ID.
     PolPDF(i32),
+    /// Unpolarized fragmentation function. The integer denotes the type of hadron with a PDG MC
+    /// ID.
     UnpolFF(i32),
+    /// Polarized fragmentation function. The integer denotes the type of hadron with a PDG MC ID.
     PolFF(i32),
-    // we can add more types as they are needed
 }
 
 impl Grid {
