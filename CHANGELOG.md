@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - removed support for Python 3.6
-- removed deprecated evolution methods `Grid::axes`, `Grid::convolute_eko` and
-  the structs `EkoInfo` and `GridAxes`
+- removed the deprecated evolution methods `Grid::axes`, `Grid::convolute_eko`
+  and the structs `EkoInfo` and `GridAxes`
 
 ## [0.7.4] - 23/05/2024
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which define a new interface supporting very large evolution kernels that
   have been introduced in EKO v0.13. This interface will replace `Grid::evolve`
 - added `--dont-sort` switch to `pineappl channels`, which displays the channel
-  sizes orderd by channel index (instead of channel size)
+  sizes ordered by channel index (instead of channel size)
 - added `Grid::rotate_pid_basis` and `pineappl write --rotate-pid-basis`. This
   allows to change the meaning of the used particle IDs, and supported formats
   are PDG MC IDs and the evolution basis

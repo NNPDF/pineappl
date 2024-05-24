@@ -3,7 +3,9 @@
 ## Rust
 
 - Before you commit, make sure that your code compiles with `cargo check` and
-  that it has been formatted properly; `cargo fmt` does that for you.
+  that it has been formatted properly; `cargo fmt` does that for you. Also
+  check if your changes introduce any new linter warnings by running `cargo
+  clippy`
 - Make sure to keep `CHANGELOG.md` up-to-date.
 - Make sure not to use Rust features newer than the specified minimum supported
   Rust Version (MSRV), which is documented in the [README](README.md). You can
@@ -48,7 +50,12 @@ increasing the MSRV make sure to set it everywhere to the same value:
 
 - When you commit, make sure the commit message is written properly. This
   blogpost explains it nicely: <https://chris.beams.io/posts/git-commit/>.
-- Whenever possible, prefer rebase over merge.
+- Whenever you have unpushed local commits that are behind `origin/master`, use
+  `git pull --rebase` to rebase them
+- When editing Github workflow files, use a separate branch, because usually
+  many commits are needed to get something working. When merging this branch
+  into `master` (or any other branch), squash-merge the commits; the exact
+  history in this case is not important
 
 ## Making a new release
 
