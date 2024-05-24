@@ -512,6 +512,15 @@ pub struct Grid {
     more_members: MoreMembers,
 }
 
+#[derive(Eq, PartialEq)]
+enum Convolution {
+    unpolPDF(i32),
+    polPDF(i32),
+    unpolFF(i32),
+    polFF(i32),
+    // we can add more types as they are needed
+}
+
 impl Grid {
     /// Constructor.
     #[must_use]
@@ -1047,6 +1056,57 @@ impl Grid {
         Ok(())
     }
 
+    /// Returns a vector containing the type of convolution
+    /// object (PDF or FF, Unpol or Pol) and the PDG ID of the hadron.
+    ///
+    /// Todo: will need to be modified to accomoodate upcoming v1.
+    pub fn convolutions(&self) -> Vec<Convolution> {
+        let mut convolutions = Vec::new();
+        let map = self.key_values();
+        if let Some(map) = map {
+            match (
+                map.get("convolution_particle_1").and_then(|s| s.parse::<i32>().ok()),
+                map.get("convolution_particle_2").and_then(|s| s.parse::<i32>().ok()),
+                map.get("convolution_type_1"),
+                map.get("convolution_type_2"),
+            ) {
+                (
+                    Some(convolution_particle_1),
+                    Some(convolution_particle_2),
+                    Some(convolution_type_1),
+                    Some(convolution_type_2),
+                ) => {
+                    match convolution_type_1.as_str() {
+                        "unpolPDF" => convolutions.push(Convolution::unpolPDF(convolution_particle_1)),
+                        "polPDF" => convolutions.push(Convolution::polPDF(convolution_particle_1)),
+                        "unpolFF" => convolutions.push(Convolution::unpolFF(convolution_particle_1)),
+                        "polFF" => convolutions.push(Convolution::polFF(convolution_particle_1)),
+                        _ => (),
+                    }
+                    match convolution_type_2.as_str() {
+                        "unpolPDF" => convolutions.push(Convolution::unpolPDF(convolution_particle_2)),
+                        "polPDF" => convolutions.push(Convolution::polPDF(convolution_particle_2)),
+                        "unpolFF" => convolutions.push(Convolution::unpolFF(convolution_particle_2)),
+                        "polFF" => convolutions.push(Convolution::polFF(convolution_particle_2)),
+                        _ => (),
+                    }
+                }
+                (None, None, None, None) => {
+                    // assumes old format
+                    map.get("initial_state_1").and_then(|s| s.parse::<i32>().ok()),
+                    map.get("initial_state_2").and_then(|s| s.parse::<i32>().ok()),
+                    convolutions.push(Convolution::unpolPDF(initial_state_1));
+                    convolutions.push(Convolution::unpolPDF(initial_state_2));
+                }
+                _ => {
+                    // TODO: if only some of the metadata is set, we should consider this an error
+                    todo!();
+                }
+            }
+        }
+        convolutions
+    }
+
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
         let old_dim = self.subgrids.raw_dim().into_pattern();
         let mut new_subgrids = Array3::from_shape_simple_fn(
@@ -1389,37 +1449,11 @@ impl Grid {
     }
 
     fn symmetrize_channels(&mut self) {
-        let map = self.key_values();
-        if let Some(map) = map {
-            match (
-                map.get("convolution_particle_1"),
-                map.get("convolution_particle_2"),
-                map.get("convolution_type_1"),
-                map.get("convolution_type_2"),
-            ) {
-                (
-                    Some(convolution_particle_1),
-                    Some(convolution_particle_2),
-                    Some(convolution_type_1),
-                    Some(convolution_type_2),
-                ) => {
-                    if convolution_particle_1 != convolution_particle_2
-                        || convolution_type_1 != convolution_type_2
-                    {
-                        return;
-                    }
-                }
-                (None, None, None, None) => {}
-                _ => {
-                    // TODO: if only some of the metadata is set, we should consider this an error
-                    todo!();
-                }
-            }
-            if map["initial_state_1"] != map["initial_state_2"] {
-                return;
-            }
+        let convolutions = self.convolutions();
+        if convolutions.get(0) != convolutions.get(1) {
+            return;
         }
-
+        
         let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
