@@ -1281,8 +1281,14 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
-        let has_pdf1 = self.has_pdf1();
-        let has_pdf2 = self.has_pdf2();
+        let has_pdf1 = self
+            .convolutions()
+            .get(0)
+            .map_or(false, |conv| !matches!(conv, Convolution::None));
+        let has_pdf2 = self
+            .convolutions()
+            .get(1)
+            .map_or(false, |conv| !matches!(conv, Convolution::None));
 
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
@@ -1425,7 +1431,15 @@ impl Grid {
 
             let view = operator.view();
 
-            let (subgrids, lumi) = if self.has_pdf1() && self.has_pdf2() {
+            let (subgrids, lumi) = if self
+                .convolutions()
+                .get(0)
+                .map_or(false, |conv| !matches!(conv, Convolution::None))
+                && self
+                    .convolutions()
+                    .get(1)
+                    .map_or(false, |conv| !matches!(conv, Convolution::None))
+            {
                 evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
             } else {
                 evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
