@@ -1101,7 +1101,7 @@ impl Grid {
                                             entry.entry().iter().all(|&channels| match index {
                                                 1 => channels.0 == pid,
                                                 2 => channels.1 == pid,
-                                                _ => false,
+                                                _ => unreachable!(),
                                             })
                                         });
 
@@ -1112,7 +1112,7 @@ impl Grid {
                                         }
                                     }
                                     None => Convolution::UnpolPDF(2212),
-                                    Some(Err(_err)) => todo!(),
+                                    Some(Err(err)) => panic!("metadata 'initial_state_{index}' could not be parsed: {err}"),
                                 }
                             }
                             (None, Some(_)) => {
