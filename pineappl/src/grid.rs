@@ -1281,14 +1281,8 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
-        let has_pdf1 = self
-            .convolutions()
-            .get(0)
-            .map_or(false, |conv| !matches!(conv, Convolution::None));
-        let has_pdf2 = self
-            .convolutions()
-            .get(1)
-            .map_or(false, |conv| !matches!(conv, Convolution::None));
+        let has_pdf1 = self.convolutions()[0] != Convolution::None;
+        let has_pdf2 = self.convolutions()[1] != Convolution::None;
 
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
@@ -1431,14 +1425,8 @@ impl Grid {
 
             let view = operator.view();
 
-            let (subgrids, lumi) = if self
-                .convolutions()
-                .get(0)
-                .map_or(false, |conv| !matches!(conv, Convolution::None))
-                && self
-                    .convolutions()
-                    .get(1)
-                    .map_or(false, |conv| !matches!(conv, Convolution::None))
+            let (subgrids, lumi) = if self.convolutions()[0] != Convolution::None
+                && self.convolutions()[1] != Convolution::None
             {
                 evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
             } else {
@@ -1675,62 +1663,6 @@ impl Grid {
                     .map(move |entry| LumiEntry::new(vec![entry]))
             })
             .collect();
-    }
-
-    /// Returns `true` if the first initial state needs a convolution, `false` otherwise.
-    #[must_use]
-    pub fn has_pdf1(&self) -> bool {
-        let initial_state_1 = self.initial_state_1();
-
-        !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == initial_state_1))
-    }
-
-    /// Returns `true` if the second initial state needs a convolution, `false` otherwise.
-    #[must_use]
-    pub fn has_pdf2(&self) -> bool {
-        let initial_state_2 = self.initial_state_2();
-
-        !self
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == initial_state_2))
-    }
-
-    /// Returns the particle identifier of the first initial state. This is usually but not always
-    /// a proton, which is represented by the PDG ID `2212`.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    #[must_use]
-    pub fn initial_state_1(&self) -> i32 {
-        self.key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_1").map(String::as_str)
-            })
-            .map(str::parse)
-            .unwrap()
-            .unwrap()
-    }
-
-    /// Returns the particle identifier of the second initial state. This is usually but not always
-    /// a proton, which is represented by the PDG ID `2212`.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    #[must_use]
-    pub fn initial_state_2(&self) -> i32 {
-        self.key_values()
-            .map_or(Some("2212"), |kv| {
-                kv.get("initial_state_2").map(String::as_str)
-            })
-            .map(str::parse)
-            .unwrap()
-            .unwrap()
     }
 }
 
