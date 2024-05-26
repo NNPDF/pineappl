@@ -126,7 +126,7 @@ impl Order {
     ///   - the mixed NNLO QCD—EW.
     ///
     /// ```rust
-    /// use pineappl::grid::Order;
+    /// use pineappl::order::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //   LO        :          alpha^2
@@ -157,7 +157,7 @@ impl Order {
     /// `true`:
     ///
     /// ```rust
-    /// use pineappl::grid::Order;
+    /// use pineappl::order::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //  LO         :        alpha^2
@@ -174,7 +174,7 @@ impl Order {
     /// the selection for different LOs:
     ///
     /// ```rust
-    /// use pineappl::grid::Order;
+    /// use pineappl::order::Order;
     ///
     /// let orders = [
     ///     Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
