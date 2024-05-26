@@ -1,6 +1,6 @@
 //! Provides the [`FkTable`] type.
 
-use super::grid::{Grid, GridError};
+use super::grid::{Convolution, Grid, GridError};
 use super::lumi::LumiCache;
 use super::order::Order;
 use super::subgrid::Subgrid;
@@ -150,8 +150,8 @@ impl FkTable {
     /// TODO
     #[must_use]
     pub fn table(&self) -> Array4<f64> {
-        let has_pdf1 = self.grid.has_pdf1();
-        let has_pdf2 = self.grid.has_pdf2();
+        let has_pdf1 = self.grid.convolutions()[0] != Convolution::None;
+        let has_pdf2 = self.grid.convolutions()[0] != Convolution::None;
         let x_grid = self.x_grid();
 
         let mut result = Array4::zeros((
