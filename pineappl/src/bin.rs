@@ -227,7 +227,7 @@ impl FromStr for BinRemapper {
                 }
             }
 
-            last_indices = indices.clone();
+            last_indices.clone_from(&indices);
 
             let mut normalization = 1.0;
 

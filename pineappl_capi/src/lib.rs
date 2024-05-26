@@ -57,8 +57,9 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
+use pineappl::grid::{Grid, GridOptFlags, Ntuple};
 use pineappl::lumi::{LumiCache, LumiEntry};
+use pineappl::order::Order;
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -179,7 +180,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
         }
 
         if let Some(value) = keyval.strings.get("subgrid_type") {
-            subgrid_type = value.to_str().unwrap().to_owned();
+            value.to_str().unwrap().clone_into(&mut subgrid_type);
         }
     }
 

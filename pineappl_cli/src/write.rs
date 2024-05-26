@@ -8,8 +8,8 @@ use clap::{
 };
 use pineappl::bin::BinRemapper;
 use pineappl::fk_table::{FkAssumptions, FkTable};
-use pineappl::grid::Order;
 use pineappl::lumi::LumiEntry;
+use pineappl::order::Order;
 use pineappl::pids;
 use pineappl::pids::PidBasis;
 use std::fs;
@@ -607,7 +607,7 @@ impl Subcommand for Opts {
                     grid.orders_mut()[*index] = order.clone();
                 }
                 OpsArg::RotatePidBasis(pid_basis) => {
-                    grid.rotate_pid_basis(pid_basis.clone());
+                    grid.rotate_pid_basis(*pid_basis);
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize(true) => grid.optimize(),

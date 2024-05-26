@@ -7,17 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- moved `Order` and `ParseOrderError` to their own module `order`
+
+### Removed
+
+- removed support for Python 3.6
+- removed the deprecated evolution methods `Grid::axes`, `Grid::convolute_eko`
+  and the structs `EkoInfo` and `GridAxes`
+
+## [0.7.4] - 23/05/2024
+
 ### Added
 
 - added `Grid::evolve_with_slice_iter`, `AlphasTable` and `OperatorSliceInfo`,
   which define a new interface supporting very large evolution kernels that
   have been introduced in EKO v0.13. This interface will replace `Grid::evolve`
 - added `--dont-sort` switch to `pineappl channels`, which displays the channel
-  sizes orderd by channel index (instead of channel size)
+  sizes ordered by channel index (instead of channel size)
 - added `Grid::rotate_pid_basis` and `pineappl write --rotate-pid-basis`. This
   allows to change the meaning of the used particle IDs, and supported formats
   are PDG MC IDs and the evolution basis
-- added `pineappl write --rewrite-orders` that lets the user change the
+- added `pineappl write --rewrite-order` that lets the user change the
   exponents of each order
 
 ### Changed
@@ -563,7 +575,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/NNPDF/pineappl/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/NNPDF/pineappl/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/NNPDF/pineappl/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/NNPDF/pineappl/compare/v0.7.0...v0.7.1

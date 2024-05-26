@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
 use pineappl::fk_table::FkTable;
-use pineappl::grid::Order;
+use pineappl::order::Order;
 use prettytable::{cell, row, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;

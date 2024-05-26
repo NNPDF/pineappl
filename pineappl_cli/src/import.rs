@@ -197,7 +197,7 @@ fn fnlo_mu_possible_values() -> Vec<&'static str> {
 }
 
 #[cfg(not(feature = "fastnlo"))]
-fn fnlo_mu_possible_values() -> Vec<&'static str> {
+const fn fnlo_mu_possible_values() -> Vec<&'static str> {
     vec![]
 }
 

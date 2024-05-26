@@ -153,6 +153,7 @@ impl LumiEntry {
     /// assert_eq!(entry1.common_factor(&entry3), None);
     /// assert_eq!(entry1.common_factor(&entry4), None);
     /// ```
+    #[must_use]
     pub fn common_factor(&self, other: &Self) -> Option<f64> {
         if self.entry.len() != other.entry.len() {
             return None;
@@ -165,7 +166,7 @@ impl LumiEntry {
             .map(|(a, b)| ((a.0 == b.0) && (a.1 == b.1)).then_some(a.2 / b.2))
             .collect();
 
-        if let Some(factors) = result {
+        result.and_then(|factors| {
             if factors
                 .windows(2)
                 .all(|win| approx_eq!(f64, win[0], win[1], ulps = 4))
@@ -174,9 +175,7 @@ impl LumiEntry {
             } else {
                 None
             }
-        } else {
-            None
-        }
+        })
     }
 }
 

@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
-use pineappl::grid::{Grid, Order};
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::lumi_entry;
+use pineappl::order::Order;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::SubgridParams;
 use std::fs::File;

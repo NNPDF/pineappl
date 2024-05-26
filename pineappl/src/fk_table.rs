@@ -1,7 +1,8 @@
 //! Provides the [`FkTable`] type.
 
-use super::grid::{Grid, GridError, Order};
+use super::grid::{Grid, GridError};
 use super::lumi::LumiCache;
+use super::order::Order;
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
 use ndarray::Array4;
