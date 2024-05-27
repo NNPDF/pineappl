@@ -154,11 +154,10 @@ impl Mmv3 {
                     )
                     .to_owned(),
                 ),
-                // by default we assume there are protons in the initial state
-                ("convolution_particle_1".to_owned(), "2212".to_owned()),
-                ("convolution_type_1".to_owned(), "UnpolPDF".to_owned()),
-                ("convolution_particle_2".to_owned(), "2212".to_owned()),
-                ("convolution_type_2".to_owned(), "UnpolPDF".to_owned()),
+                // by default we assume there are unpolarized protons in the initial state
+                // do not change these to the new metadata to not break backwards compatibility
+                ("initial_state_1".to_owned(), "2212".to_owned()),
+                ("initial_state_2".to_owned(), "2212".to_owned()),
             ]
             .iter()
             .cloned()
