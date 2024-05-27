@@ -499,6 +499,7 @@ impl Subcommand for Opts {
                     let cc1 = matches!(arg, OpsArg::Cc1(true));
                     let cc2 = matches!(arg, OpsArg::Cc2(true));
 
+                    // TODO: make this a member function of `Grid`
                     let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
                         kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
                     });
@@ -528,18 +529,13 @@ impl Subcommand for Opts {
                         })
                         .collect();
 
-                    let mut initial_state_1 = grid.initial_state_1();
-                    let mut initial_state_2 = grid.initial_state_2();
-
                     if cc1 {
-                        initial_state_1 = pids::charge_conjugate_pdg_pid(initial_state_1);
+                        grid.set_convolution(0, grid.convolutions()[0].cc())
                     }
                     if cc2 {
-                        initial_state_2 = pids::charge_conjugate_pdg_pid(initial_state_2);
+                        grid.set_convolution(1, grid.convolutions()[1].cc())
                     }
 
-                    grid.set_key_value("initial_state_1", &initial_state_1.to_string());
-                    grid.set_key_value("initial_state_2", &initial_state_2.to_string());
                     grid.set_lumis(lumis);
                 }
                 OpsArg::DedupChannels(ulps) => {

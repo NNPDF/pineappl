@@ -410,11 +410,7 @@ impl TryFrom<Grid> for FkTable {
         }
 
         if let Some(key_values) = grid.key_values() {
-            let keys = vec![
-                "initial_state_1".to_owned(),
-                "initial_state_2".to_owned(),
-                "lumi_id_types".to_owned(),
-            ];
+            let keys = vec!["lumi_id_types".to_owned()];
 
             for key in keys {
                 if !key_values.contains_key(&key) {

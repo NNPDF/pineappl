@@ -375,44 +375,35 @@ impl<'a> LumiCache<'a> {
     }
 
     pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64)]) -> Result<(), ()> {
-        // PDG identifiers of the initial states
-        let pdga = grid.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_1")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
-        let pdgb = grid.key_values().map_or(2212, |kv| {
-            kv.get("initial_state_2")
-                .map_or(2212, |s| s.parse::<i32>().unwrap())
-        });
+        let convolutions = grid.convolutions();
 
-        // are the initial states hadrons?
-        let has_pdfa = !grid
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(a, _, _)| a == pdga));
-        let has_pdfb = !grid
-            .lumi()
-            .iter()
-            .all(|entry| entry.entry().iter().all(|&(_, b, _)| b == pdgb));
+        // TODO: the following code only works with exactly two convolutions
+        assert_eq!(convolutions.len(), 2);
 
         // do we have to charge-conjugate the initial states?
-        let cc1 = if !has_pdfa {
-            0
-        } else if self.pdg1 == pdga {
-            1
-        } else if self.pdg1 == -pdga {
-            -1
+        let cc1 = if let Some(pid) = convolutions[0].pid() {
+            if self.pdg1 == pid {
+                1
+            } else if self.pdg1 == pids::charge_conjugate_pdg_pid(pid) {
+                -1
+            } else {
+                // TODO: return a proper error
+                return Err(());
+            }
         } else {
-            return Err(());
+            0
         };
-        let cc2 = if !has_pdfb {
-            0
-        } else if self.pdg2 == pdgb {
-            1
-        } else if self.pdg2 == -pdgb {
-            -1
+        let cc2 = if let Some(pid) = convolutions[1].pid() {
+            if self.pdg2 == pid {
+                1
+            } else if self.pdg2 == pids::charge_conjugate_pdg_pid(pid) {
+                -1
+            } else {
+                // TODO: return a proper error
+                return Err(());
+            }
         } else {
-            return Err(());
+            0
         };
 
         // TODO: try to avoid calling clear

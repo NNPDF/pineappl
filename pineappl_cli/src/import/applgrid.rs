@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pineappl::grid::Grid;
+use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::LumiEntry;
 use pineappl::order::Order;
@@ -122,8 +122,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             SubgridParams::default(),
         );
 
+        // from APPLgrid alone we don't know what type of convolution we have
+        pgrid.set_convolution(0, Convolution::UnpolPDF(2212));
+
         if grid.isDIS() {
-            pgrid.set_key_value("initial_state_2", &dis_pid.to_string());
+            pgrid.set_convolution(1, Convolution::None);
         }
 
         for bin in 0..grid.Nobs_internal() {

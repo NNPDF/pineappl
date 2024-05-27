@@ -1,7 +1,7 @@
 use anyhow::Result;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::Grid;
+use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::lumi::LumiEntry;
 use pineappl::order::Order;
@@ -110,6 +110,22 @@ fn convert_coeff_add_fix(
             .collect(),
         SubgridParams::default(),
     );
+
+    // UNWRAP: shouldn't be larger than `2`
+    let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
+    assert!(npdf <= 2);
+
+    for index in 0..2 {
+        grid.set_convolution(
+            index,
+            if index < npdf {
+                // TODO: how do we determined the PID/type of the convolution for fixed tables?
+                Convolution::UnpolPDF(2212)
+            } else {
+                Convolution::None
+            },
+        );
+    }
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
@@ -248,15 +264,19 @@ fn convert_coeff_add_flex(
     );
 
     let npdf = table_as_add_base.GetNPDF();
-    let pdf_pdg1 = table.GetPDFPDG(0).to_string();
-    let pdf_pdg2 = if npdf == 2 {
-        table.GetPDFPDG(1).to_string()
-    } else {
-        dis_pid.to_string()
-    };
+    assert!(npdf <= 2);
 
-    grid.set_key_value("initial_state_1", &pdf_pdg1);
-    grid.set_key_value("initial_state_2", &pdf_pdg2);
+    for index in 0..2 {
+        grid.set_convolution(
+            // UNWRAP: index is smaller than 2
+            index.try_into().unwrap(),
+            if index < npdf {
+                Convolution::UnpolPDF(table.GetPDFPDG(index))
+            } else {
+                Convolution::None
+            },
+        );
+    }
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 

@@ -155,8 +155,10 @@ impl Mmv3 {
                     .to_owned(),
                 ),
                 // by default we assume there are protons in the initial state
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
+                ("convolution_particle_1".to_owned(), "2212".to_owned()),
+                ("convolution_type_1".to_owned(), "UnpolPDF".to_owned()),
+                ("convolution_particle_2".to_owned(), "2212".to_owned()),
+                ("convolution_type_2".to_owned(), "UnpolPDF".to_owned()),
             ]
             .iter()
             .cloned()
@@ -223,8 +225,9 @@ pub struct Grid {
 }
 
 /// Data type that indentifies different types of convolutions.
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Convolution {
+    // TODO: eventually get rid of this value
     /// No convolution.
     None,
     /// Unpolarized parton distribution function. The integer denotes the type of hadron with a PDG
@@ -238,6 +241,32 @@ pub enum Convolution {
     UnpolFF(i32),
     /// Polarized fragmentation function. The integer denotes the type of hadron with a PDG MC ID.
     PolFF(i32),
+}
+
+impl Convolution {
+    /// Return the convolution if the PID is charged conjugated.
+    pub fn cc(&self) -> Convolution {
+        match *self {
+            Convolution::None => Convolution::None,
+            Convolution::UnpolPDF(pid) => {
+                Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid))
+            }
+            Convolution::PolPDF(pid) => Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Convolution::UnpolFF(pid) => Convolution::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
+            Convolution::PolFF(pid) => Convolution::PolFF(pids::charge_conjugate_pdg_pid(pid)),
+        }
+    }
+
+    /// Return the PID of the convolution if it has any.
+    pub fn pid(&self) -> Option<i32> {
+        match *self {
+            Convolution::None => None,
+            Convolution::UnpolPDF(pid)
+            | Convolution::PolPDF(pid)
+            | Convolution::UnpolFF(pid)
+            | Convolution::PolFF(pid) => Some(pid),
+        }
+    }
 }
 
 impl Grid {
@@ -843,6 +872,24 @@ impl Grid {
                     .collect()
             },
         )
+    }
+
+    /// Set the convolution type for this grid for the corresponding `index`.
+    pub fn set_convolution(&mut self, index: usize, convolution: Convolution) {
+        // remove outdated metadata
+        self.key_values_mut()
+            .remove(&format!("initial_state_{}", index + 1));
+
+        let (type_, particle) = match convolution {
+            Convolution::UnpolPDF(pid) => ("UnpolPDF".to_owned(), pid.to_string()),
+            Convolution::PolPDF(pid) => ("PolPDF".to_owned(), pid.to_string()),
+            Convolution::UnpolFF(pid) => ("UnpolFF".to_owned(), pid.to_string()),
+            Convolution::PolFF(pid) => ("PolFF".to_owned(), pid.to_string()),
+            Convolution::None => ("None".to_owned(), String::new()),
+        };
+
+        self.set_key_value(&format!("convolution_type_{}", index + 1), &type_);
+        self.set_key_value(&format!("convolution_particle_{}", index + 1), &particle);
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
@@ -1876,7 +1923,7 @@ mod tests {
     // TODO: convolute_subgrid, merge_bins, subgrid, set_subgrid
 
     #[test]
-    fn grid_key_value() {
+    fn grid_convolutions() {
         let mut grid = Grid::new(
             vec![lumi_entry![21, 21, 1.0]],
             vec![Order {
@@ -1889,22 +1936,18 @@ mod tests {
             SubgridParams::default(),
         );
 
+        // by default we assume unpolarized proton PDFs are used
         assert_eq!(
-            grid.key_values().unwrap().get("initial_state_1").unwrap(),
-            "2212"
+            grid.convolutions(),
+            [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
         );
 
-        grid.key_values_mut()
-            .insert("initial_state_1".into(), "-2212".into());
-        grid.set_key_value("initial_state_2", "-2212");
+        grid.set_convolution(0, Convolution::UnpolPDF(-2212));
+        grid.set_convolution(1, Convolution::UnpolPDF(-2212));
 
         assert_eq!(
-            grid.key_values().unwrap().get("initial_state_1").unwrap(),
-            "-2212"
-        );
-        assert_eq!(
-            grid.key_values().unwrap().get("initial_state_2").unwrap(),
-            "-2212"
+            grid.convolutions(),
+            [Convolution::UnpolPDF(-2212), Convolution::UnpolPDF(-2212)]
         );
     }
 

@@ -499,10 +499,10 @@ pub(crate) fn evolve_slice_with_one(
         }));
     }
 
-    let pid = if has_pdf1 {
-        grid.initial_state_2()
+    let pid = if grid.convolutions()[0] != Convolution::None {
+        grid.lumi()[0].entry()[0].1
     } else {
-        grid.initial_state_1()
+        grid.lumi()[0].entry()[0].0
     };
 
     Ok((

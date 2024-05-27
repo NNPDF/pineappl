@@ -837,7 +837,7 @@ fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
     use pineappl::fk_table::{FkAssumptions, FkTable};
-    use pineappl::grid::Grid;
+    use pineappl::grid::{Convolution, Grid};
     use pineappl::lumi::LumiCache;
     use std::fs::File;
 
@@ -906,8 +906,10 @@ fn import_hadronic_fktable() {
     assert_eq!(fk_table.bin_dimensions(), 1);
     assert_eq!(fk_table.bin_left(0), [0.0]);
     assert_eq!(fk_table.bin_right(0), [1.0]);
-    assert_eq!(&fk_table.key_values().unwrap()["initial_state_1"], "2212");
-    assert_eq!(&fk_table.key_values().unwrap()["initial_state_2"], "2212");
+    assert_eq!(
+        fk_table.grid().convolutions(),
+        [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+    );
     let lumi = fk_table.lumi();
     assert_eq!(
         lumi,
