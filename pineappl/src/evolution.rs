@@ -1,6 +1,6 @@
 //! Supporting classes and functions for [`Grid::evolve`].
 
-use super::grid::{Grid, GridError};
+use super::grid::{Convolution, Grid, GridError};
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lumi::LumiEntry;
 use super::lumi_entry;
@@ -408,7 +408,7 @@ pub(crate) fn evolve_slice_with_one(
     alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
-    let has_pdf1 = grid.has_pdf1();
+    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
 
     let (pid_indices, pids) = pid_slices(operator, info, gluon_has_pid_zero, &|pid| {
         grid.lumi()
@@ -499,10 +499,10 @@ pub(crate) fn evolve_slice_with_one(
         }));
     }
 
-    let pid = if has_pdf1 {
-        grid.initial_state_2()
+    let pid = if grid.convolutions()[0] != Convolution::None {
+        grid.lumi()[0].entry()[0].1
     } else {
-        grid.initial_state_1()
+        grid.lumi()[0].entry()[0].0
     };
 
     Ok((

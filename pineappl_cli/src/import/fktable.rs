@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
-use pineappl::grid::Grid;
+use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::lumi_entry;
 use pineappl::order::Order;
@@ -112,13 +112,13 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                     .key_values_mut()
                     .insert("lumi_id_types".to_owned(), "evol".to_owned());
 
-                fktable
-                    .key_values_mut()
-                    .insert("initial_state_1".to_owned(), "2212".to_owned());
-                if !hadronic {
-                    fktable
-                        .key_values_mut()
-                        .insert("initial_state_2".to_owned(), dis_pid.to_string());
+                // legacy FK-tables only support unpolarized proton PDFs
+                fktable.set_convolution(0, Convolution::UnpolPDF(2212));
+
+                if hadronic {
+                    fktable.set_convolution(1, Convolution::UnpolPDF(2212));
+                } else {
+                    fktable.set_convolution(1, Convolution::None);
                 }
 
                 grid = Some(fktable);

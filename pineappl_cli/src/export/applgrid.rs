@@ -2,7 +2,7 @@ use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
 use ndarray::{s, Axis};
-use pineappl::grid::Grid;
+use pineappl::grid::{Convolution, Grid};
 use pineappl::order::Order;
 use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
@@ -68,8 +68,8 @@ pub fn convert_into_applgrid(
     }
 
     let lumis = grid.lumi().len();
-    let has_pdf1 = grid.has_pdf1();
-    let has_pdf2 = grid.has_pdf2();
+    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
+    let has_pdf2 = grid.convolutions()[1] != Convolution::None;
 
     // TODO: check that PDG MC IDs are used
 

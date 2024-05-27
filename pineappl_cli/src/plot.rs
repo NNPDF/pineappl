@@ -5,6 +5,7 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
+use pineappl::grid::Convolution;
 use pineappl::lumi::LumiEntry;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -376,8 +377,8 @@ impl Subcommand for Opts {
                             (
                                 map_format_lumi(
                                     &grid.lumi()[lumi],
-                                    grid.has_pdf1(),
-                                    grid.has_pdf2(),
+                                    grid.convolutions()[0] != Convolution::None,
+                                    grid.convolutions()[1] != Convolution::None,
                                 ),
                                 helpers::convolve(
                                     &grid,
