@@ -112,6 +112,10 @@ impl Order {
     /// selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD; setting `max_as = 3`
     /// and `max_al = 2` would select all NLOs, and the NNLO QCD.
     ///
+    /// [`Grid::convolve`]: super::grid::Grid::convolve
+    /// [`Grid::evolve`]: super::grid::Grid::evolve
+    /// [`Grid::evolve_info`]: super::grid::Grid::evolve_info
+    ///
     /// # Example
     ///
     /// In the case of Drell—Yan, there are the following orders:

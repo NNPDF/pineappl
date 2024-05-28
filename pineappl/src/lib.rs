@@ -21,7 +21,7 @@
 //! [`Grid::orders()`]: grid::Grid::orders
 //! [`Subgrid`]: subgrid::Subgrid
 //! [`SubgridEnum`]: subgrid::SubgridEnum
-//! [`Order`]: grid::Order
+//! [`Order`]: order::Order
 //!
 //! ## Metadata
 //!
