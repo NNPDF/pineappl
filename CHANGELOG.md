@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new methods `Grid::convolutions` and `Grid::set_convolution`
+
 ### Changed
 
 - moved `Order` and `ParseOrderError` to their own module `order`
@@ -16,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed support for Python 3.6
 - removed the deprecated evolution methods `Grid::axes`, `Grid::convolute_eko`
   and the structs `EkoInfo` and `GridAxes`
+- removed methods `Grid::has_pdf1`, `Grid::has_pdf2`, `Grid::initial_state_1`
+  and `Grid::initial_state_2`
 
 ## [0.7.4] - 23/05/2024
 
