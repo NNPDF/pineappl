@@ -813,12 +813,15 @@ impl Grid {
     #[must_use]
     pub fn convolutions(&self) -> Vec<Convolution> {
         self.key_values().map_or_else(
-            // if there isn't any metadata, we assume that proton-PDFs are used
+            // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
             || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
             |kv| {
                 // the current file format only supports exactly two convolutions
                 (1..=2)
                     .map(|index| {
+                        // if there are key-value pairs `convolution_particle_1` and
+                        // `convolution_type_1` and the same with a higher index, we convert this
+                        // metadata into `Convolution`
                         match (
                             kv.get(&format!("convolution_particle_{index}"))
                                 .map(|s| s.parse::<i32>()),
@@ -831,6 +834,7 @@ impl Grid {
                             (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
                             (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
                             (None, None) => {
+                                // if these key-value pairs are missing use the old metadata
                                 match kv
                                     .get(&format!("initial_state_{index}"))
                                     .map(|s| s.parse::<i32>())
