@@ -7,9 +7,9 @@ use clap::{
     ValueHint,
 };
 use pineappl::bin::BinRemapper;
+use pineappl::boc::Order;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::lumi::LumiEntry;
-use pineappl::order::Order;
 use pineappl::pids;
 use pineappl::pids::PidBasis;
 use std::fs;

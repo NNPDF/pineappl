@@ -3,8 +3,8 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use pineappl::boc::Order;
 use pineappl::grid::Grid;
-use pineappl::order::Order;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 

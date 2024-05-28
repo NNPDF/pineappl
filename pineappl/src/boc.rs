@@ -1,4 +1,5 @@
-//! TODO
+//! Module containing structures for the 3 dimensions of a [`Grid`]: bins, [`Order`] and channels
+//! (`boc`).
 
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -130,7 +131,7 @@ impl Order {
     ///   - the mixed NNLO QCD—EW.
     ///
     /// ```rust
-    /// use pineappl::order::Order;
+    /// use pineappl::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //   LO        :          alpha^2
@@ -161,7 +162,7 @@ impl Order {
     /// `true`:
     ///
     /// ```rust
-    /// use pineappl::order::Order;
+    /// use pineappl::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(0, 2, 0, 0), //  LO         :        alpha^2
@@ -178,7 +179,7 @@ impl Order {
     /// the selection for different LOs:
     ///
     /// ```rust
-    /// use pineappl::order::Order;
+    /// use pineappl::boc::Order;
     ///
     /// let orders = [
     ///     Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2

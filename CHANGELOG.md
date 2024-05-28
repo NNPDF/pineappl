@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- moved `Order` and `ParseOrderError` to their own module `order`
+- moved `Order` and `ParseOrderError` to the new module `boc`
 
 ### Removed
 
