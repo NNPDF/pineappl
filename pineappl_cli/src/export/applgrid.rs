@@ -296,10 +296,10 @@ pub fn convert_into_applgrid(
 }
 
 // TODO: deduplicate this function from import
-pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolute(
+    ffi::grid_convolve(
         grid,
         pdfset,
         member.try_into().unwrap(),

@@ -66,7 +66,7 @@ impl PyOrder {
             self.order.logxif,
         )
     }
-    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
+    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`]. The
     /// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
     /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
     /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
@@ -331,7 +331,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute_with_one<'py>(
+    pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
@@ -346,7 +346,7 @@ impl PyGrid {
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.grid
-            .convolute(
+            .convolve(
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),
@@ -394,7 +394,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute_with_two<'py>(
+    pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
         xfx1: &PyAny,
@@ -413,7 +413,7 @@ impl PyGrid {
         let mut lumi_cache =
             LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
         self.grid
-            .convolute(
+            .convolve(
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),

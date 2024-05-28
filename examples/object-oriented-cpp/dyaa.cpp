@@ -124,7 +124,7 @@ int main() {
 
     // perform a convolution of the grid with PDFs
     std::unique_ptr<LHAPDF::PDF> pdf (LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
-    std::vector<double> dxsec = grid.convolute_with_one(2212, *pdf.get());
+    std::vector<double> dxsec = grid.convolve_with_one(2212, *pdf.get());
 
     // print the results
     for (std::size_t j = 0; j != dxsec.size(); ++j) {
@@ -144,7 +144,7 @@ int main() {
 
     std::printf("Generated %s containing a a -> l+ l-.\n\n"
         "Try running (PDF sets must contain non-zero photon PDF):\n"
-        "  - pineappl convolute %s NNPDF31_nnlo_as_0118_luxqed\n"
+        "  - pineappl convolve %s NNPDF31_nnlo_as_0118_luxqed\n"
         "  - pineappl --silence-lhapdf plot %s NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
         "  - pineappl --help\n", filename.c_str(), filename.c_str(), filename.c_str());
 }

@@ -168,7 +168,7 @@ pub fn convolve_scales(
     };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolute(&mut cache, &orders, bins, lumis, scales);
+    let mut results = grid.convolve(&mut cache, &orders, bins, lumis, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {
@@ -278,7 +278,7 @@ pub fn convolve_subgrid(
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
-    grid.convolute_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+    grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
 }
 
 pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {

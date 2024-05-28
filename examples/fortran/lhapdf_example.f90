@@ -27,19 +27,19 @@ program lhapdf_example
     call lhapdf_initpdfset_byname(0, "nCTEQ15_1_1")
     call lhapdf_initpdfset_byname(1, "nCTEQ15FullNuc_208_82")
     
-    ! calling pineappl_grid_convolute without any flags
+    ! calling pineappl_grid_convolve without any flags
     xfx => xfx_test1
     alphas => alphas_test1
-    write(*, *) "first pineappl_grid_convolute_with_one: "
-    write(*, *) pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, &
+    write(*, *) "first pineappl_grid_convolve_with_one: "
+    write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
         [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
 
-    ! calling pineappl_grid_convolute with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
+    ! calling pineappl_grid_convolve with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
     xfx => xfx_test2
     alphas => alphas_test2
     flags = [1, 0]
-    write(*, *) "second pineappl_grid_convolute_with_one: "
-    write(*, *) pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, &
+    write(*, *) "second pineappl_grid_convolve_with_one: "
+    write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
         [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
 contains
 

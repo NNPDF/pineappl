@@ -13,7 +13,7 @@ class TestFkTable:
         g.set_key_value("lumi_id_types", "pdg_mc_ids")
         return g
 
-    def test_convolute_with_one(self):
+    def test_convolve_with_one(self):
         g = self.fake_grid()
 
         # DIS grid
@@ -28,10 +28,10 @@ class TestFkTable:
         g.set_subgrid(0, 0, 0, subgrid)
         fk = pineappl.fk_table.FkTable.from_grid(g)
         np.testing.assert_allclose(
-            fk.convolute_with_one(2212, lambda pid, x, q2: 0.0),
+            fk.convolve_with_one(2212, lambda pid, x, q2: 0.0),
             [0.0] * 2,
         )
         np.testing.assert_allclose(
-            fk.convolute_with_one(2212, lambda pid, x, q2: 1),
+            fk.convolve_with_one(2212, lambda pid, x, q2: 1),
             [5e7 / 9999, 0.0],
         )

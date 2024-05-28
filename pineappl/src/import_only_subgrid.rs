@@ -40,7 +40,7 @@ impl ImportOnlySubgridV1 {
 }
 
 impl Subgrid for ImportOnlySubgridV1 {
-    fn convolute(
+    fn convolve(
         &self,
         _: &[f64],
         _: &[f64],
@@ -210,7 +210,7 @@ impl ImportOnlySubgridV2 {
 }
 
 impl Subgrid for ImportOnlySubgridV2 {
-    fn convolute(
+    fn convolve(
         &self,
         _: &[f64],
         _: &[f64],
@@ -496,7 +496,7 @@ mod tests {
         let lumi =
             &mut (|ix1, ix2, _| x[ix1] * x[ix2]) as &mut dyn FnMut(usize, usize, usize) -> f64;
 
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 0.228515625);
 
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = ImportOnlySubgridV1::new(
@@ -514,7 +514,7 @@ mod tests {
         } else {
             unreachable!();
         }
-        assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
+        assert_eq!(grid2.convolve(&x, &x, &mu2, lumi), 0.228515625);
 
         assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
         assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
@@ -523,7 +523,7 @@ mod tests {
 
         grid1.merge(&mut grid2, false);
 
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         let mut grid1 = {
             let mut g = grid1.clone_empty();
@@ -534,10 +534,10 @@ mod tests {
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
         grid1.symmetrize();
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         grid1.scale(2.0);
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
 
         assert_eq!(
             grid1.stats(),
@@ -593,7 +593,7 @@ mod tests {
         let lumi =
             &mut (|ix1, ix2, _| x[ix1] * x[ix2]) as &mut dyn FnMut(usize, usize, usize) -> f64;
 
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 0.228515625);
 
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = ImportOnlySubgridV2::new(
@@ -611,7 +611,7 @@ mod tests {
         } else {
             unreachable!();
         }
-        assert_eq!(grid2.convolute(&x, &x, &mu2, lumi), 0.228515625);
+        assert_eq!(grid2.convolve(&x, &x, &mu2, lumi), 0.228515625);
 
         assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
         assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
@@ -620,7 +620,7 @@ mod tests {
 
         grid1.merge(&mut grid2, false);
 
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         let mut grid1 = {
             let mut g = grid1.clone_empty();
@@ -631,10 +631,10 @@ mod tests {
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
         grid1.symmetrize();
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         grid1.scale(2.0);
-        assert_eq!(grid1.convolute(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
+        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
 
         assert_eq!(
             grid1.stats(),
@@ -719,10 +719,10 @@ mod tests {
         let mu2 = lagrange.mu2_grid().to_vec();
 
         let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
-        let reference = lagrange.convolute(&x1, &x2, &mu2, lumi);
+        let reference = lagrange.convolve(&x1, &x2, &mu2, lumi);
 
         let imported = ImportOnlySubgridV2::from(&lagrange.into());
-        let test = imported.convolute(&x1, &x2, &mu2, lumi);
+        let test = imported.convolve(&x1, &x2, &mu2, lumi);
 
         // make sure the conversion did not change the results
         assert_approx_eq!(f64, reference, test, ulps = 8);
@@ -762,14 +762,14 @@ mod tests {
         }
 
         let lumi = &mut (|_, _, _| 1.0) as &mut dyn FnMut(usize, usize, usize) -> f64;
-        let result1 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
-        let result2 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
+        let result1 = grid1.convolve(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+        let result2 = grid2.convolve(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
 
         let mut grid1: SubgridEnum = ImportOnlySubgridV2::from(&grid1.into()).into();
         let mut grid2: SubgridEnum = ImportOnlySubgridV2::from(&grid2.into()).into();
 
-        let result3 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
-        let result4 = grid2.convolute(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
+        let result3 = grid1.convolve(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+        let result4 = grid2.convolve(&grid2.x1_grid(), &grid2.x2_grid(), &grid2.mu2_grid(), lumi);
 
         // conversion from LangrangeSubgridV2 to ImportOnlySubgridV2 shouldn't change the results
         assert!((result3 / result1 - 1.0).abs() < 1e-13);
@@ -777,7 +777,7 @@ mod tests {
 
         grid1.merge(&mut grid2, false);
 
-        let result5 = grid1.convolute(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
+        let result5 = grid1.convolve(&grid1.x1_grid(), &grid1.x2_grid(), &grid1.mu2_grid(), lumi);
 
         // merging the two grids should give the sum of the two results
         assert!((result5 / (result3 + result4) - 1.0).abs() < 1e-12);

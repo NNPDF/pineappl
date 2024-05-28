@@ -224,7 +224,7 @@ impl PyFkTable {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins
     #[pyo3(signature = (pdg_id, xfx, bin_indices = None, lumi_mask= None))]
-    pub fn convolute_with_one<'py>(
+    pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
@@ -236,7 +236,7 @@ impl PyFkTable {
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.fk_table
-            .convolute(
+            .convolve(
                 &mut lumi_cache,
                 &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
                 &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),

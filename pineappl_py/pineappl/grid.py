@@ -27,7 +27,7 @@ class Order(PyWrapper):
     def create_mask(orders, max_as, max_al, logs):
         r"""
         Return a mask suitable to pass as the `order_mask` parameter of
-        :meth:`Grid.convolute`.
+        :meth:`Grid.convolve`.
 
         Parameters
         ----------
@@ -183,7 +183,7 @@ class Grid(PyWrapper):
         """
         return [Order(*pyorder.as_tuple()) for pyorder in self.raw.orders()]
 
-    def convolute_with_one(
+    def convolve_with_one(
         self,
         pdg_id,
         xfx,
@@ -226,7 +226,7 @@ class Grid(PyWrapper):
                 cross sections for all bins, for each scale-variation tuple (first all bins, then
                 the scale variation)
         """
-        return self.raw.convolute_with_one(
+        return self.raw.convolve_with_one(
             pdg_id,
             xfx,
             alphas,
@@ -236,7 +236,7 @@ class Grid(PyWrapper):
             xi,
         )
 
-    def convolute_with_two(
+    def convolve_with_two(
         self,
         pdg_id1,
         xfx1,
@@ -285,7 +285,7 @@ class Grid(PyWrapper):
                 cross sections for all bins, for each scale-variation tuple (first all bins, then
                 the scale variation)
         """
-        return self.raw.convolute_with_two(
+        return self.raw.convolve_with_two(
             pdg_id1,
             xfx1,
             pdg_id2,

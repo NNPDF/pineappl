@@ -24,7 +24,7 @@ fn convert_into_applgrid(
 
     let (mut applgrid, order_mask) =
         applgrid::convert_into_applgrid(grid, output, discard_non_matching_scales)?;
-    let results = applgrid::convolute_applgrid(applgrid.pin_mut(), pdfset, member);
+    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", results, 1, order_mask))
 }

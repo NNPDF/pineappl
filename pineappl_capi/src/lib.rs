@@ -291,6 +291,59 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
     Box::new(grid.clone())
 }
 
+/// Wrapper for [`pineappl_grid_convolve_with_one`].
+#[deprecated(
+    since = "0.8.0",
+    note = "please use `pineappl_grid_convolve_with_one` instead"
+)]
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
+    grid: *const Grid,
+    pdg_id: i32,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: *const bool,
+    lumi_mask: *const bool,
+    xi_ren: f64,
+    xi_fac: f64,
+    results: *mut f64,
+) {
+    unsafe {
+        pineappl_grid_convolve_with_one(
+            grid, pdg_id, xfx, alphas, state, order_mask, lumi_mask, xi_ren, xi_fac, results,
+        );
+    }
+}
+
+/// Wrapper for [`pineappl_grid_convolve_with_two`].
+#[deprecated(
+    since = "0.8.0",
+    note = "please use `pineappl_grid_convolve_with_two` instead"
+)]
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
+    grid: *const Grid,
+    pdg_id1: i32,
+    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    pdg_id2: i32,
+    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: *const bool,
+    lumi_mask: *const bool,
+    xi_ren: f64,
+    xi_fac: f64,
+    results: *mut f64,
+) {
+    unsafe {
+        pineappl_grid_convolve_with_two(
+            grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, state, order_mask, lumi_mask, xi_ren,
+            xi_fac, results,
+        );
+    }
+}
+
 /// Convolutes the specified grid with the PDF `xfx`, which is the PDF for a hadron with the PDG id
 /// `pdg_id`, and strong coupling `alphas`. These functions must evaluate the PDFs for the given
 /// `x` and `q2` for the parton with the given PDG id, `pdg_id`, and return the result. Note that
@@ -312,7 +365,7 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 /// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
 /// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
+pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     grid: *const Grid,
     pdg_id: i32,
     xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
@@ -340,7 +393,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
 
-    results.copy_from_slice(&grid.convolute(
+    results.copy_from_slice(&grid.convolve(
         &mut lumi_cache,
         &order_mask,
         &[],
@@ -371,7 +424,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 /// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
 /// entries, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
+pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     grid: *const Grid,
     pdg_id1: i32,
     xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
@@ -402,7 +455,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
 
-    results.copy_from_slice(&grid.convolute(
+    results.copy_from_slice(&grid.convolve(
         &mut lumi_cache,
         &order_mask,
         &[],

@@ -286,7 +286,7 @@ impl<'a> Pdfs<'a> {
     }
 }
 
-/// A cache for evaluating PDFs. Methods like [`Grid::convolute`] accept instances of this `struct`
+/// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
 /// instead of the PDFs themselves.
 pub struct LumiCache<'a> {
     pdfs: Pdfs<'a>,

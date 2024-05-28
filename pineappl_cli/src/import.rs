@@ -29,7 +29,7 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
-    let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
+    let results = applgrid::convolve_applgrid(grid.pin_mut(), pdfset, member);
 
     Ok(("APPLgrid", pgrid, results, 1))
 }

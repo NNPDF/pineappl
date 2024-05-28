@@ -4,9 +4,9 @@ This document explains what interpolation grids are and what PineAPPL is.
 
 ## What are interpolation grids?
 
-Interpolation grids store theoretical predictions that are not convoluted with
+Interpolation grids store theoretical predictions that are not convolved with
 PDFs yet. After the predictions have been generated once, the grids can be
-convoluted with arbitrary PDFs in a fraction of a second. This is very
+convolved with arbitrary PDFs in a fraction of a second. This is very
 advantageous for the following applications:
 
 - *PDF set dependence* of a prediction. Are the predictions with CT18, MSHT20

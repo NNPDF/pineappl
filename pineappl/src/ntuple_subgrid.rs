@@ -21,14 +21,14 @@ impl NtupleSubgridV1 {
 }
 
 impl Subgrid for NtupleSubgridV1 {
-    fn convolute(
+    fn convolve(
         &self,
         _: &[f64],
         _: &[f64],
         _: &[Mu2],
         _: &mut dyn FnMut(usize, usize, usize) -> f64,
     ) -> f64 {
-        panic!("NtupleSubgridV1 doesn't support the convolute operation");
+        panic!("NtupleSubgridV1 doesn't support the convolve operation");
     }
 
     fn fill(&mut self, ntuple: &Ntuple<f64>) {
@@ -101,9 +101,9 @@ mod tests {
     use crate::subgrid::{ExtraSubgridParams, SubgridParams};
 
     #[test]
-    #[should_panic(expected = "NtupleSubgridV1 doesn't support the convolute operation")]
-    fn convolute() {
-        NtupleSubgridV1::new().convolute(&[], &[], &[], &mut |_, _, _| 0.0);
+    #[should_panic(expected = "NtupleSubgridV1 doesn't support the convolve operation")]
+    fn convolve() {
+        NtupleSubgridV1::new().convolve(&[], &[], &[], &mut |_, _, _| 0.0);
     }
 
     #[test]

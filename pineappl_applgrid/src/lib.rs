@@ -111,7 +111,7 @@ pub mod ffi {
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;
-        fn grid_convolute(
+        fn grid_convolve(
             _: Pin<&mut grid>,
             _: &str,
             _: i32,

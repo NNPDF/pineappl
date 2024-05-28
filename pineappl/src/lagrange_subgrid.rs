@@ -129,7 +129,7 @@ impl LagrangeSubgridV1 {
 }
 
 impl Subgrid for LagrangeSubgridV1 {
-    fn convolute(
+    fn convolve(
         &self,
         x1: &[f64],
         x2: &[f64],
@@ -495,7 +495,7 @@ impl LagrangeSubgridV2 {
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn convolute(
+    fn convolve(
         &self,
         x1: &[f64],
         x2: &[f64],
@@ -843,7 +843,7 @@ impl LagrangeSparseSubgridV1 {
 }
 
 impl Subgrid for LagrangeSparseSubgridV1 {
-    fn convolute(
+    fn convolve(
         &self,
         x1: &[f64],
         x2: &[f64],
@@ -1097,8 +1097,7 @@ mod tests {
         let x2 = grid.x2_grid();
         let mu2 = grid.mu2_grid();
 
-        let reference =
-            grid.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let reference = grid.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         let mut test = 0.0;
 
@@ -1149,13 +1148,13 @@ mod tests {
         let mu2 = grid1.mu2_grid().into_owned();
 
         let reference =
-            grid1.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+            grid1.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         // merge filled grid into empty one
         grid2.merge(&mut grid1.into(), false);
         assert!(!grid2.is_empty());
 
-        let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let merged = grid2.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert_approx_eq!(f64, reference, merged, ulps = 8);
 
@@ -1186,7 +1185,7 @@ mod tests {
 
         grid2.merge(&mut grid3.into(), false);
 
-        let merged = grid2.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+        let merged = grid2.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert_approx_eq!(f64, 2.0 * reference, merged, ulps = 8);
     }
@@ -1241,7 +1240,7 @@ mod tests {
         let x2 = grid.x2_grid();
         let mu2 = grid.mu2_grid();
 
-        let result = grid.convolute(&x1, &x2, &mu2, &mut |_, _, _| 1.0);
+        let result = grid.convolve(&x1, &x2, &mu2, &mut |_, _, _| 1.0);
 
         assert_eq!(result, 0.0);
     }
@@ -1380,9 +1379,9 @@ mod tests {
         assert!(!sparse.is_empty());
 
         let reference =
-            dense.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+            dense.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
         let converted =
-            sparse.convolute(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
+            sparse.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
 
         assert_approx_eq!(f64, reference, converted, ulps = 8);
     }

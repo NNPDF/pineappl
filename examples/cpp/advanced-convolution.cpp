@@ -78,10 +78,10 @@ int main(int argc, char* argv[]) {
     // `xfx1` and `alphas` are *proton* PDFs. If the grid contains cross sections of either a
     // proton-proton, proton-antiproton or antiproton-antiproton collision PineAPPL will perform the
     // necessary charge conjugations to yield the correct convolutions
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec1.data());
 
-    // how does the grid know which PDFs it must be convoluted with? This is determined by the
+    // how does the grid know which PDFs it must be convolved with? This is determined by the
     // metadata keys `initial_state_1` and `initial_state_2`, which are by default set to `2212`,
     // the PDG MC ID for the proton. Let's change the second value to an antiproton:
     pineappl_grid_set_key_value(grid, "initial_state_2", "-2212");
@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
 
     // this calculates the corresponding proton-antiproton differential cross sections. Since the
     // grid itself is unchanged, this change effectively means that for the second PDF the charge
-    // convoluted PDFs are used
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    // convolved PDFs are used
+    pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec2.data());
 
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
@@ -102,13 +102,13 @@ int main(int argc, char* argv[]) {
 
     // For proton-deuteron collisions we can't easily relate the PDFs and have to actually pass two
     // different PDFs, each with their ID of the particle they represent:
-    pineappl_grid_convolute_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf,
+    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf,
         order_mask.get(), channel_mask.get(), xir, xif, dxsec3.data());
 
     std::vector<double> dxsec4(bins);
 
     // test with both masks set to `nullptr`
-    pineappl_grid_convolute_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf, nullptr,
+    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf, nullptr,
         nullptr, xir, xif, dxsec4.data());
 
     std::vector<double> normalizations(bins);

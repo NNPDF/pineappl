@@ -45,12 +45,12 @@ pub struct EvolveInfo {
 ///
 /// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
 /// possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The members
+/// [`lumi_id_types`], which tells [`FkTable::convolve`] how to perform a convolution. The members
 /// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
 /// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
 /// scales, respectively, around their central values.
 ///
-/// [`FkTable::convolute`]: super::fk_table::FkTable::convolute
+/// [`FkTable::convolve`]: super::fk_table::FkTable::convolve
 /// [`FkTable`]: super::fk_table::FkTable
 /// [`alphas`]: Self::alphas
 /// [`fac0`]: Self::fac0
@@ -104,7 +104,7 @@ pub struct OperatorInfo {
 /// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
 /// possibly different basis given by `pids0`. This basis must also be identified using
 /// [`lumi_id_types`](Self::lumi_id_types), which tells
-/// [`FkTable::convolute`](super::fk_table::FkTable::convolute) how to perform a convolution.
+/// [`FkTable::convolve`](super::fk_table::FkTable::convolve) how to perform a convolution.
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
     /// Squared factorization scale of the `FkTable`.

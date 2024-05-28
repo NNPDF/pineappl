@@ -199,7 +199,7 @@ bitflags! {
         /// [`Self::OPTIMIZE_SUBGRID_TYPE`] to be active.
         const STATIC_SCALE_DETECTION = 0b10;
         /// If two channels differ by transposition of the two initial states and the functions
-        /// this grid is convoluted with are the same for both initial states, this will merge one
+        /// this grid is convolved with are the same for both initial states, this will merge one
         /// channel into the other, with the correct transpositions.
         const SYMMETRIZE_CHANNELS = 0b100;
         /// Remove all orders ([`Grid::orders`]), which do not contain any non-zero subgrids.
@@ -371,7 +371,7 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn convolute(
+    pub fn convolve(
         &self,
         lumi_cache: &mut LumiCache,
         order_mask: &[bool],
@@ -420,7 +420,7 @@ impl Grid {
                 lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
 
                 let mut value =
-                    subgrid.convolute(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
+                    subgrid.convolve(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
                         let x1 = x1_grid[ix1];
                         let x2 = x2_grid[ix2];
                         let mut lumi = 0.0;
@@ -460,7 +460,7 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn convolute_subgrid(
+    pub fn convolve_subgrid(
         &self,
         lumi_cache: &mut LumiCache,
         ord: usize,
@@ -1923,7 +1923,7 @@ mod tests {
         assert_eq!(grid.orders().len(), 1);
     }
 
-    // TODO: convolute_subgrid, merge_bins, subgrid, set_subgrid
+    // TODO: convolve_subgrid, merge_bins, subgrid, set_subgrid
 
     #[test]
     fn grid_convolutions() {

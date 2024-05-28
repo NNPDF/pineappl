@@ -17,18 +17,18 @@ def test_issue_164(pdf):
     orders = [pineappl.grid.Order(0, 0, 0, 0)]
     params = pineappl.subgrid.SubgridParams()
 
-    def convolute_grid():
+    def convolve_grid():
         grid = pineappl.grid.Grid.create(luminosities, orders, [0.0, 1.0], params)
         grid.fill(0.2, 0.2, 10, 0, 0.5, 0, 0.5)
-        return grid.convolute_with_one(2212, pdf.xfxQ, pdf.alphasQ)
+        return grid.convolve_with_one(2212, pdf.xfxQ, pdf.alphasQ)
 
     # default minimum is q2=100
-    res = convolute_grid()
+    res = convolve_grid()
     assert res == 0.0
 
     # lower minimum to q2=1
     params.set_q2_min(1.0)
-    res = convolute_grid()
+    res = convolve_grid()
     assert pytest.approx(res) != 0.0
 
 class TestSubgrid:

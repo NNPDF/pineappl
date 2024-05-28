@@ -79,7 +79,7 @@ pub trait Subgrid {
 
     /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
     /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
-    fn convolute(
+    fn convolve(
         &self,
         x1: &[f64],
         x2: &[f64],

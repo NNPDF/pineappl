@@ -8,7 +8,7 @@ PROGRAMS = \
 	fill-custom-grid \
 	advanced-convolution \
 	advanced-filling \
-	convolute-grid \
+	convolve-grid \
 	display-channels \
 	display-orders \
 	merge-grids \
@@ -25,7 +25,7 @@ advanced-convolution: advanced-convolution.cpp
 advanced-filling: advanced-filling.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
-convolute-grid: convolute-grid.cpp
+convolve-grid: convolve-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 display-channels: display-channels.cpp

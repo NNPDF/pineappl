@@ -68,11 +68,11 @@ int main(int argc, char* argv[]) {
     // parameter. The integer `2212` is the PDG MC id for a proton and signals and `xfx` is the PDF
     // of a proton. In this case we assume that both initial state hadrons' PDFs can derived from
     // that of a proton. If this isn't the case, for instance for a proton-lead collision, both PDFs
-    // must be given separately and the function `pineappl_grid_convolute_with_two` must be used.
+    // must be given separately and the function `pineappl_grid_convolve_with_two` must be used.
     // The parameters `order_mask` and `channel_mask` can be used to select specific orders and
     // channels, respectively. Using `xir` and `xif` the renormalization and factorization scales
     // can be varied around its central values, respectively.
-    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
+    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
         channel_mask, xir, xif, dxsec.data());
 
     std::vector<double> normalizations(bins);

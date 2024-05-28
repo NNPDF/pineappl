@@ -228,7 +228,7 @@ struct Grid {
    * @return prediction for each bin
    */
   std::vector<double>
-  convolute_with_one(const std::int32_t pdg_id, LHAPDF::PDF &pdf,
+  convolve_with_one(const std::int32_t pdg_id, LHAPDF::PDF &pdf,
                      const double xi_ren = 1.0, const double xi_fac = 1.0,
                      const std::vector<bool> &order_mask = {},
                      const std::vector<bool> &lumi_mask = {}) const {
@@ -253,7 +253,7 @@ struct Grid {
     }
     // do it!
     std::vector<double> results(this->bin_count());
-    pineappl_grid_convolute_with_one(this->raw, pdg_id, xfx, alphas, &pdf,
+    pineappl_grid_convolve_with_one(this->raw, pdg_id, xfx, alphas, &pdf,
                                      raw_order_mask.get(), raw_lumi_mask.get(),
                                      xi_ren, xi_fac, results.data());
     return results;

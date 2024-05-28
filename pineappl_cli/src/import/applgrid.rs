@@ -249,10 +249,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     Ok(grid0)
 }
 
-pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolute(
+    ffi::grid_convolve(
         grid,
         pdfset,
         member.try_into().unwrap(),

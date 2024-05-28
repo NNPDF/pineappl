@@ -276,15 +276,16 @@ impl FkTable {
         self.grid.write_lz4(writer)
     }
 
-    /// Propagate convolute to grid
-    pub fn convolute(
+    /// Convolve the FK-table. This method has fewer arguments than [`Grid::convolve`], because
+    /// FK-tables have all orders merged together and do not support scale variations.
+    pub fn convolve(
         &self,
         lumi_cache: &mut LumiCache,
         bin_indices: &[usize],
         lumi_mask: &[bool],
     ) -> Vec<f64> {
         self.grid
-            .convolute(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
+            .convolve(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
     }
 
     /// Set a metadata key-value pair
