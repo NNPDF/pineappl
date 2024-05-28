@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added new methods `Grid::convolutions` and `Grid::set_convolution`
+- added the function `pineappl_grid_convolve_with_one` and
+  `pineappl_grid_convolve_with_two` which replace the deprecated function
+  similarly named with `convolute` in CAPI
 
 ### Changed
 
