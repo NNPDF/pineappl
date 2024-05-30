@@ -458,7 +458,8 @@ impl PyGrid {
     ///     produced FK table
     pub fn evolve(
         &self,
-        operator: PyReadonlyArray5<f64>,
+        operator_a: PyReadonlyArray5<f64>,
+        operator_b: PyReadonlyArray5<f64>,
         fac0: f64,
         pids0: PyReadonlyArray1<i32>,
         x0: PyReadonlyArray1<f64>,
@@ -488,7 +489,8 @@ impl PyGrid {
         let evolved_grid = self
             .grid
             .evolve(
-                operator.as_array(),
+                operator_a.as_array(),
+                operator_b.as_array(),
                 &op_info,
                 order_mask.as_slice().unwrap(),
             )

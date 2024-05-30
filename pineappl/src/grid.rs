@@ -1385,6 +1385,7 @@ impl Grid {
     }
 
     /// TODO: Fix to account for the different EKOs
+    /// TODO: Does the info have to be different?
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
     /// `operator`. The dimensions and properties of this operator must be described using `info`.
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
@@ -1398,14 +1399,15 @@ impl Grid {
     #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
     pub fn evolve(
         &self,
-        operator: ArrayView5<f64>,
+        operator_a: ArrayView5<f64>,
+        operator_b: ArrayView5<f64>,
         info: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
         self.evolve_with_slice_iter(
             info.fac1
                 .iter()
-                .zip(operator.axis_iter(Axis(0)))
+                .zip(operator_a.axis_iter(Axis(0)))
                 .map(|(&fac1, op)| {
                     Ok::<_, GridError>((
                         OperatorSliceInfo {
@@ -1422,7 +1424,7 @@ impl Grid {
                 }),
             info.fac1
                 .iter()
-                .zip(operator.axis_iter(Axis(0)))
+                .zip(operator_b.axis_iter(Axis(0)))
                 .map(|(&fac1, op)| {
                     Ok::<_, GridError>((
                         OperatorSliceInfo {

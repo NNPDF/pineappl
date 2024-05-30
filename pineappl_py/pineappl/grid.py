@@ -344,6 +344,7 @@ class Grid(PyWrapper):
             self.raw.evolve(
                 np.array(operator_grid),
                 operators["q2_ref"],
+                operators["q2_ref"], # TODO: Modify the input EKO
                 np.array(operators["inputpids"], dtype=np.int32),
                 np.array(operators["inputgrid"]),
                 np.array(q2grid, dtype=np.float64),
