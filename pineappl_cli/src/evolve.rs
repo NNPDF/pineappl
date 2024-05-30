@@ -425,6 +425,7 @@ mod eko {
 fn evolve_grid(
     grid: &Grid,
     eko: &Path,
+    extra_eko: &Path,
     pdf: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
@@ -446,8 +447,10 @@ fn evolve_grid(
         .collect();
 
     let mut eko_slices = EkoSlices::new(eko)?;
+    let mut extra_eko_slices = EkoSlices::new(extra_eko)?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
+    // TODO: Take care of the old EKO behavior
     if use_old_evolve {
         if let EkoSlices::V0 {
             fac1,
@@ -475,13 +478,20 @@ fn evolve_grid(
             unimplemented!();
         }
     } else {
-        Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif), &alphas_table)?)
+        Ok(grid.evolve_with_slice_iter(
+            &mut eko_slices,
+            extra_eko_slices,
+            &order_mask,
+            (xir, xif),
+            &alphas_table,
+        )?)
     }
 }
 
 #[cfg(not(feature = "evolve"))]
 fn evolve_grid(
     _: &Grid,
+    _: &Path,
     _: &Path,
     _: &Pdf,
     _: &[(u32, u32)],
@@ -554,8 +564,10 @@ impl Subcommand for Opts {
             cfg,
         );
 
+        // TODO: properly pass the additional EKO from input args
         let fk_table = evolve_grid(
             &grid,
+            &self.eko,
             &self.eko,
             &pdf,
             &self.orders,

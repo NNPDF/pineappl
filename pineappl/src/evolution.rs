@@ -524,7 +524,8 @@ pub(crate) fn evolve_slice_with_one(
 
 pub(crate) fn evolve_slice_with_two(
     grid: &Grid,
-    operator: &ArrayView4<f64>,
+    operator_a: &ArrayView4<f64>,
+    operator_b: &ArrayView4<f64>,
     info: &OperatorSliceInfo,
     order_mask: &[bool],
     xi: (f64, f64),
@@ -532,13 +533,13 @@ pub(crate) fn evolve_slice_with_two(
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    let (pid_indices_a, pids_a) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
+    let (pid_indices_a, pids_a) = pid_slices(operator_a, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
             .any(|&(a, _, _)| a == pid1)
     })?;
-    let (pid_indices_b, pids_b) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
+    let (pid_indices_b, pids_b) = pid_slices(operator_b, info, gluon_has_pid_zero, &|pid1| {
         grid.lumi()
             .iter()
             .flat_map(LumiEntry::entry)
@@ -572,7 +573,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_a.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_a = operator_slices(operator, info, &pid_indices_a, &x1_a)?;
+                operators_a = operator_slices(operator_a, info, &pid_indices_a, &x1_a)?;
                 last_x1a = x1_a;
             }
 
@@ -582,7 +583,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_b.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_b = operator_slices(operator, info, &pid_indices_b, &x1_b)?;
+                operators_b = operator_slices(operator_b, info, &pid_indices_b, &x1_b)?;
                 last_x1b = x1_b;
             }
 

@@ -1384,6 +1384,7 @@ impl Grid {
         }
     }
 
+    /// TODO: Fix to account for the different EKOs
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
     /// `operator`. The dimensions and properties of this operator must be described using `info`.
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
@@ -1402,6 +1403,23 @@ impl Grid {
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
         self.evolve_with_slice_iter(
+            info.fac1
+                .iter()
+                .zip(operator.axis_iter(Axis(0)))
+                .map(|(&fac1, op)| {
+                    Ok::<_, GridError>((
+                        OperatorSliceInfo {
+                            fac0: info.fac0,
+                            pids0: info.pids0.clone(),
+                            x0: info.x0.clone(),
+                            fac1,
+                            pids1: info.pids1.clone(),
+                            x1: info.x1.clone(),
+                            lumi_id_types: info.lumi_id_types.clone(),
+                        },
+                        CowArray::from(op),
+                    ))
+                }),
             info.fac1
                 .iter()
                 .zip(operator.axis_iter(Axis(0)))
@@ -1446,16 +1464,21 @@ impl Grid {
     pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
         slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        extra_slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
         xi: (f64, f64),
         alphas_table: &AlphasTable,
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
+        use itertools::izip;
 
         let mut lhs: Option<Self> = None;
         let mut fac1 = Vec::new();
 
-        for result in slices {
+        // TODO: simplify the ugly repetition below
+        // TODO: what to do about the info? Shoulb they be the same?
+        for (result, extra_result) in izip!(slices, extra_slices) {
+            // Deal with the main EKO
             let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
 
             let op_info_dim = (
@@ -1475,10 +1498,39 @@ impl Grid {
 
             let view = operator.view();
 
+            // Deal with the additional EKO
+            let (extra_info, extra_operator) =
+                extra_result.map_err(|err| GridError::Other(err.into()))?;
+
+            let op_info_dim_extra = (
+                extra_info.pids1.len(),
+                extra_info.x1.len(),
+                extra_info.pids0.len(),
+                extra_info.x0.len(),
+            );
+
+            if extra_operator.dim() != op_info_dim_extra {
+                return Err(GridError::EvolutionFailure(format!(
+                    "operator information {:?} does not match the operator's dimensions: {:?}",
+                    op_info_dim_extra,
+                    extra_operator.dim(),
+                )));
+            }
+
+            let extra_view = extra_operator.view();
+
             let (subgrids, lumi) = if self.convolutions()[0] != Convolution::None
                 && self.convolutions()[1] != Convolution::None
             {
-                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
+                evolution::evolve_slice_with_two(
+                    self,
+                    &view,
+                    &extra_view,
+                    &info,
+                    order_mask,
+                    xi,
+                    alphas_table,
+                )
             } else {
                 evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
             }?;
