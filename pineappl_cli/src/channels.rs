@@ -34,13 +34,14 @@ pub struct Opts {
     integrated: bool,
     /// Show only the listed channels.
     #[arg(
+        alias = "lumis",
         conflicts_with = "limit",
         long,
         num_args = 1,
         value_delimiter = ',',
         value_parser = helpers::parse_integer_range
     )]
-    lumis: Vec<RangeInclusive<usize>>,
+    channels: Vec<RangeInclusive<usize>>,
     /// Select orders manually.
     #[arg(
         long,
@@ -66,16 +67,16 @@ impl Subcommand for Opts {
         let grid = helpers::read_grid(&self.input)?;
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
 
-        let mut lumis: Vec<_> = self.lumis.iter().cloned().flatten().collect();
-        lumis.sort_unstable();
-        lumis.dedup();
-        let lumis = lumis;
+        let mut channels: Vec<_> = self.channels.iter().cloned().flatten().collect();
+        channels.sort_unstable();
+        channels.dedup();
+        let channels = channels;
 
-        let limit = grid.lumi().len().min(self.limit);
-        let limit = if lumis.is_empty() {
+        let limit = grid.channels().len().min(self.limit);
+        let limit = if channels.is_empty() {
             limit
         } else {
-            limit.min(lumis.len())
+            limit.min(channels.len())
         };
         let limits = helpers::convolve_limits(
             &grid,
@@ -86,16 +87,16 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal
             },
         );
-        let results: Vec<_> = (0..grid.lumi().len())
-            .map(|lumi| {
-                let mut lumi_mask = vec![false; grid.lumi().len()];
-                lumi_mask[lumi] = true;
+        let results: Vec<_> = (0..grid.channels().len())
+            .map(|channel| {
+                let mut channel_mask = vec![false; grid.channels().len()];
+                channel_mask[channel] = true;
                 helpers::convolve(
                     &grid,
                     &mut pdf,
                     &self.orders,
                     &[],
-                    &lumi_mask,
+                    &channel_mask,
                     1,
                     if self.integrated {
                         ConvoluteMode::Integrated
@@ -116,7 +117,7 @@ impl Subcommand for Opts {
             title.add_cell(cell);
         }
         for _ in 0..limit {
-            title.add_cell(cell!(c->"l"));
+            title.add_cell(cell!(c->"c"));
             title.add_cell(
                 cell!(c->&if self.absolute { format!("{y_label}\n[{y_unit}]") } else { "size\n[%]".to_owned() }),
             );
@@ -139,7 +140,7 @@ impl Subcommand for Opts {
                 let mut values: Vec<_> = results
                     .iter()
                     .enumerate()
-                    .map(|(lumi, vec)| (lumi, vec[bin]))
+                    .map(|(channel, vec)| (channel, vec[bin]))
                     .collect();
 
                 if !self.dont_sort {
@@ -149,12 +150,14 @@ impl Subcommand for Opts {
                     });
                 }
 
-                for (lumi, value) in values
+                for (channel, value) in values
                     .iter()
-                    .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
+                    .filter(|(channel, _)| {
+                        channels.is_empty() || channels.iter().any(|c| c == channel)
+                    })
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->format!("{lumi}")));
+                    row.add_cell(cell!(r->format!("{channel}")));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, value)));
                 }
             } else {
@@ -162,7 +165,7 @@ impl Subcommand for Opts {
                 let mut percentages: Vec<_> = results
                     .iter()
                     .enumerate()
-                    .map(|(lumi, vec)| (lumi, vec[bin] / sum * 100.0))
+                    .map(|(channel, vec)| (channel, vec[bin] / sum * 100.0))
                     .collect();
 
                 if !self.dont_sort {
@@ -172,12 +175,14 @@ impl Subcommand for Opts {
                     });
                 }
 
-                for (lumi, percentage) in percentages
+                for (channel, percentage) in percentages
                     .iter()
-                    .filter(|(lumi, _)| lumis.is_empty() || lumis.iter().any(|l| l == lumi))
+                    .filter(|(channel, _)| {
+                        channels.is_empty() || channels.iter().any(|c| c == channel)
+                    })
                     .take(limit)
                 {
-                    row.add_cell(cell!(r->format!("{lumi}")));
+                    row.add_cell(cell!(r->format!("{channel}")));
                     row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, percentage)));
                 }
             }

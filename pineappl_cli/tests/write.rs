@@ -30,12 +30,12 @@ Options:
       --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
       --set-key-value <KEY> <VALUE>    Set an internal key-value pair
       --set-key-file <KEY> <FILE>      Set an internal key-value pair, with value being read from a file
-      --split-lumi[=<ENABLE>]          Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
+      --split-channels[=<ENABLE>]      Split the grid such that each channel contains only a single PID combination [possible values: true, false]
       --upgrade[=<ENABLE>]             Convert the file format to the most recent version [possible values: true, false]
   -h, --help                           Print help
 ";
 
-const CHANNEL_STR: &str = "l    entry        entry
+const CHANNEL_STR: &str = "c    entry        entry
 -+------------+------------
 0 1 × ( 2, -1) 1 × ( 4, -3)
 1 1 × (21, -3) 1 × (21, -1)
@@ -85,7 +85,7 @@ const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal
 3    4  4.5 2.7517266e1
 ";
 
-const DELETE_CHANNELS_STR: &str = "l    entry        entry
+const DELETE_CHANNELS_STR: &str = "c    entry        entry
 -+------------+------------
 0 1 × ( 2, -1) 1 × ( 4, -3)
 1 1 × (22, -3) 1 × (22, -1)
@@ -156,7 +156,7 @@ const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
 const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
 ";
 
-const REWRITE_CHANNELS_CONVOLUTE_STR: &str = "b   etal    dsig/detal 
+const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
 0    2 2.25 7.5534392e2
@@ -169,7 +169,7 @@ const REWRITE_CHANNELS_CONVOLUTE_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.8214633e1
 ";
 
-const REWRITE_CHANNELS_LUMIS_STR: &str = "l              entry                            entry                       entry                       entry                        entry                  entry
+const REWRITE_CHANNELS_STR: &str = "c              entry                            entry                       entry                       entry                        entry                  entry
 -+--------------------------------+-------------------------------+-----------------------+--------------------------------+-----------------------+---------------------
 0 0.0000128881 × ( 2, -5)          0.050940490000000005 × ( 2, -3) 0.9490461561 × ( 2, -1) 0.0017222500000000003 × ( 4, -5) 0.9473907556 × ( 4, -3) 0.05089536 × ( 4, -1)
 1 0.0017351381000000003 × (-5, 21) 0.9983312456 × (-3, 21)         0.9999415161 × (-1, 21)                                                          
@@ -204,7 +204,7 @@ const SCALE_BY_ORDER_STR: &str = "b   etal    dsig/detal
 7    4  4.5 1.6435633e1
 ";
 
-const SPLIT_LUMI_STR: &str = "l    entry
+const SPLIT_CHANNELS_STR: &str = "c    entry
 -+------------
 0 1 × ( 2, -1)
 1 1 × ( 4, -3)
@@ -253,7 +253,7 @@ const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)     
 7    4  4.5 2.2383492e1 2.2383492e1 -4.441e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -3.331e-16
 ";
 
-const ROTATE_PID_BASIS_READ_LUMIS_STR: &str = " l                 entry
+const ROTATE_PID_BASIS_READ_CHANNELS_STR: &str = " c                 entry
 ---+-----------------------------------
 0   0.013888888888888888 × (100, 100)
 1   -0.020833333333333332 × (100, 103)
@@ -579,7 +579,7 @@ fn delete_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(DELETE_CHANNELS_STR);
@@ -786,14 +786,14 @@ fn scale_by_order() {
 }
 
 #[test]
-fn split_lumi() {
-    let output = NamedTempFile::new("split-lumi.pineappl.lz4").unwrap();
+fn split_channels() {
+    let output = NamedTempFile::new("split-channels.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--split-lumi",
+            "--split-channels",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -814,10 +814,10 @@ fn split_lumi() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
-        .stdout(SPLIT_LUMI_STR);
+        .stdout(SPLIT_CHANNELS_STR);
 }
 
 #[test]
@@ -828,7 +828,7 @@ fn dedup_channels() {
         .unwrap()
         .args([
             "write",
-            "--split-lumi",
+            "--split-channels",
             "--dedup-channels",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -851,7 +851,7 @@ fn dedup_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(CHANNEL_STR);
@@ -931,10 +931,10 @@ fn rewrite_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
-        .stdout(REWRITE_CHANNELS_LUMIS_STR);
+        .stdout(REWRITE_CHANNELS_STR);
 
     Command::cargo_bin("pineappl")
         .unwrap()
@@ -945,7 +945,7 @@ fn rewrite_channels() {
         ])
         .assert()
         .success()
-        .stdout(REWRITE_CHANNELS_CONVOLUTE_STR);
+        .stdout(REWRITE_CHANNELS_CONVOLVE_STR);
 }
 
 #[test]
@@ -997,7 +997,7 @@ fn rotate_pid_basis() {
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             pdg_to_evol.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
-            "--ignore-lumis",
+            "--ignore-channels",
         ])
         .assert()
         .success()
@@ -1066,6 +1066,7 @@ fn rotate_pid_basis() {
         .args([
             "write",
             "--rotate-pid-basis=EVOL",
+            // use the old name instead of `--split-channels` to test the alias
             "--split-lumi",
             "--optimize",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -1079,12 +1080,13 @@ fn rotate_pid_basis() {
         .unwrap()
         .args([
             "read",
-            "--lumis",
+            // use the old name instead of `--channels` to test the alias
+            "--channels",
             evol_to_evol_optimize.path().to_str().unwrap(),
         ])
         .assert()
         .success()
-        .stdout(ROTATE_PID_BASIS_READ_LUMIS_STR);
+        .stdout(ROTATE_PID_BASIS_READ_CHANNELS_STR);
 }
 
 #[test]

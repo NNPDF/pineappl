@@ -79,11 +79,11 @@ impl Subcommand for CkfOpts {
             self.orders_den.clone()
         };
 
-        let limit = grid.lumi().len().min(self.limit);
+        let limit = grid.channels().len().min(self.limit);
         let limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
-        let results: Vec<_> = (0..grid.lumi().len())
+        let results: Vec<_> = (0..grid.channels().len())
             .map(|lumi| {
-                let mut lumi_mask = vec![false; grid.lumi().len()];
+                let mut lumi_mask = vec![false; grid.channels().len()];
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
@@ -97,9 +97,9 @@ impl Subcommand for CkfOpts {
                 )
             })
             .collect();
-        let results_den: Vec<_> = (0..grid.lumi().len())
+        let results_den: Vec<_> = (0..grid.channels().len())
             .map(|lumi| {
-                let mut lumi_mask = vec![false; grid.lumi().len()];
+                let mut lumi_mask = vec![false; grid.channels().len()];
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
@@ -124,7 +124,7 @@ impl Subcommand for CkfOpts {
         }
         title.add_cell(cell!(c->"bin-K"));
         for _ in 0..limit {
-            title.add_cell(cell!(c->"l"));
+            title.add_cell(cell!(c->"c"));
             title.add_cell(cell!(c->"K"));
         }
 

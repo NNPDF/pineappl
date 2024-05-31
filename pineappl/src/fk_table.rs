@@ -19,9 +19,9 @@ use thiserror::Error;
 ///   [`FkTable::muf2`].
 /// - all subgrids, for both hadronic initial states (if both initial states are hadronic), share
 ///   the same `x` grid. See [`FkTable::x_grid`].
-/// - the luminosity function is *simple*, meaning that every entry consists of a single pair of
+/// - the channel definitions are *simple*, meaning that every entry consists of a single pair of
 ///   partons with trivial factor `1.0`, and all tuples are distinct from each other. See
-///   [`Grid::lumi`].
+///   [`Grid::channels`].
 /// - the FK table's grid contains only a single [`Order`], whose exponents are all zero.
 #[repr(transparent)]
 pub struct FkTable {
@@ -34,8 +34,8 @@ pub enum TryFromGridError {
     /// Error if the grid contains multiple scales instead of a single one.
     #[error("multiple scales detected")]
     MultipleScales,
-    /// Error if the luminosity is not simple.
-    #[error("complicated luminosity function detected")]
+    /// Error if the channels are not simple.
+    #[error("complicated channel function detected")]
     InvalidLumi,
     /// Error if the order of the grid was not a single one with all zeros in the exponents.
     #[error("multiple orders detected")]
@@ -142,7 +142,7 @@ impl FkTable {
         self.grid
     }
 
-    /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `lumi`,
+    /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `channel`,
     /// `x1` and `x2`, in this order.
     ///
     /// # Panics
@@ -156,14 +156,14 @@ impl FkTable {
 
         let mut result = Array4::zeros((
             self.bins(),
-            self.grid.lumi().len(),
+            self.grid.channels().len(),
             if has_pdf1 { x_grid.len() } else { 1 },
             if has_pdf2 { x_grid.len() } else { 1 },
         ));
 
         for bin in 0..self.bins() {
-            for lumi in 0..self.grid.lumi().len() {
-                let subgrid = self.grid().subgrid(0, bin, lumi);
+            for channel in 0..self.grid.channels().len() {
+                let subgrid = self.grid().subgrid(0, bin, channel);
 
                 let indices1 = if has_pdf1 {
                     subgrid
@@ -187,7 +187,7 @@ impl FkTable {
                 };
 
                 for ((_, ix1, ix2), value) in subgrid.indexed_iter() {
-                    result[[bin, lumi, indices1[ix1], indices2[ix2]]] = value;
+                    result[[bin, channel, indices1[ix1], indices2[ix2]]] = value;
                 }
             }
         }
@@ -231,11 +231,11 @@ impl FkTable {
         self.grid.key_values()
     }
 
-    /// Returns the (simplified) luminosity function for this `FkTable`. All factors are `1.0`.
+    /// Return the channel definition for this `FkTable`. All factors are `1.0`.
     #[must_use]
-    pub fn lumi(&self) -> Vec<(i32, i32)> {
+    pub fn channels(&self) -> Vec<(i32, i32)> {
         self.grid
-            .lumi()
+            .channels()
             .iter()
             .map(|entry| (entry.entry()[0].0, entry.entry()[0].1))
             .collect()
@@ -282,10 +282,10 @@ impl FkTable {
         &self,
         lumi_cache: &mut LumiCache,
         bin_indices: &[usize],
-        lumi_mask: &[bool],
+        channel_mask: &[bool],
     ) -> Vec<f64> {
         self.grid
-            .convolve(lumi_cache, &[], bin_indices, lumi_mask, &[(1.0, 1.0)])
+            .convolve(lumi_cache, &[], bin_indices, channel_mask, &[(1.0, 1.0)])
     }
 
     /// Set a metadata key-value pair
@@ -350,7 +350,7 @@ impl FkTable {
             }
         }
 
-        self.grid.rewrite_lumi(&add, &[]);
+        self.grid.rewrite_channels(&add, &[]);
 
         // store the assumption so that we can check it later on
         self.grid
@@ -377,8 +377,8 @@ impl TryFrom<Grid> for FkTable {
         }
 
         for bin in 0..grid.bin_info().bins() {
-            for lumi in 0..grid.lumi().len() {
-                let subgrid = grid.subgrid(0, bin, lumi);
+            for channel in 0..grid.channels().len() {
+                let subgrid = grid.subgrid(0, bin, channel);
 
                 if subgrid.is_empty() {
                     continue;
@@ -398,15 +398,17 @@ impl TryFrom<Grid> for FkTable {
             }
         }
 
-        for lumi in grid.lumi() {
-            let entry = lumi.entry();
+        for channel in grid.channels() {
+            let entry = channel.entry();
 
             if entry.len() != 1 || entry[0].2 != 1.0 {
                 return Err(TryFromGridError::InvalidLumi);
             }
         }
 
-        if (1..grid.lumi().len()).any(|i| grid.lumi()[i..].contains(&grid.lumi()[i - 1])) {
+        if (1..grid.channels().len())
+            .any(|i| grid.channels()[i..].contains(&grid.channels()[i - 1]))
+        {
             return Err(TryFromGridError::InvalidLumi);
         }
 

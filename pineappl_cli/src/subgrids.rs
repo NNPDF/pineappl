@@ -57,7 +57,7 @@ impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
         let mut table = helpers::create_table();
-        let mut titles = row![c => "o", "b", "l"];
+        let mut titles = row![c => "o", "b", "c"];
 
         if self.group.type_ {
             titles.add_cell(cell!(c->"type"));
@@ -88,7 +88,7 @@ impl Subcommand for Opts {
         }
         table.set_titles(titles);
 
-        for ((order, bin, lumi), subgrid) in grid.subgrids().indexed_iter() {
+        for ((order, bin, channel), subgrid) in grid.subgrids().indexed_iter() {
             if !self.show_empty && subgrid.is_empty() {
                 continue;
             }
@@ -97,7 +97,7 @@ impl Subcommand for Opts {
 
             row.add_cell(cell!(l->format!("{order}")));
             row.add_cell(cell!(l->format!("{bin}")));
-            row.add_cell(cell!(l->format!("{lumi}")));
+            row.add_cell(cell!(l->format!("{channel}")));
 
             if self.group.type_ {
                 row.add_cell(cell!(l->

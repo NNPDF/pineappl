@@ -1,6 +1,6 @@
+use pineappl::boc::Order;
 use pineappl::evolution::{AlphasTable, OperatorInfo};
 use pineappl::grid::{Grid, Ntuple};
-use pineappl::order::Order;
 
 use pineappl::lumi::LumiCache;
 
@@ -724,9 +724,9 @@ impl PyGrid {
     ///     list(list(tuple(float,float))) :
     ///         luminosity functions as pid tuples (multiple tuples can bee associated to the same
     ///         contribution)
-    pub fn lumi(&self) -> Vec<Vec<(i32, i32, f64)>> {
+    pub fn channels(&self) -> Vec<Vec<(i32, i32, f64)>> {
         self.grid
-            .lumi()
+            .channels()
             .iter()
             .map(|entry| entry.entry().to_vec())
             .collect()

@@ -910,9 +910,9 @@ fn import_hadronic_fktable() {
         fk_table.grid().convolutions(),
         [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
     );
-    let lumi = fk_table.lumi();
+    let channels = fk_table.channels();
     assert_eq!(
-        lumi,
+        channels,
         [
             (100, 100),
             (100, 21),
@@ -1001,7 +1001,7 @@ fn import_hadronic_fktable() {
     assert_eq!(results, fk_table.convolve(&mut lumi_cache, &[], &[]));
 
     fk_table.optimize(FkAssumptions::Nf6Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
@@ -1009,7 +1009,7 @@ fn import_hadronic_fktable() {
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf6Sym);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
@@ -1017,21 +1017,21 @@ fn import_hadronic_fktable() {
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf5Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
         fk_table.convolve(&mut lumi_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf5Sym);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
         fk_table.convolve(&mut lumi_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf4Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
@@ -1040,7 +1040,7 @@ fn import_hadronic_fktable() {
 
     fk_table.optimize(FkAssumptions::Nf4Sym);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 100),
             (100, 21),
@@ -1082,7 +1082,7 @@ fn import_hadronic_fktable() {
     );
     fk_table.optimize(FkAssumptions::Nf3Ind);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 21),
             (100, 203),
@@ -1116,7 +1116,7 @@ fn import_hadronic_fktable() {
     );
     fk_table.optimize(FkAssumptions::Nf3Sym);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 21),
             (100, 203),

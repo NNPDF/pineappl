@@ -1,8 +1,7 @@
 use anyhow::Result;
-use pineappl::boc::Order;
+use pineappl::boc::{Channel, Order};
 use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::lumi::LumiEntry;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
@@ -21,7 +20,7 @@ fn convert_to_pdg_id(pid: usize) -> i32 {
     }
 }
 
-fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<LumiEntry> {
+fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
@@ -64,7 +63,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
         xfx1[a] = 0.0;
     }
 
-    lumis.into_iter().map(LumiEntry::new).collect()
+    lumis.into_iter().map(Channel::new).collect()
 }
 
 pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {

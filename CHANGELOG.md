@@ -17,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - moved `Order` and `ParseOrderError` to the new module `boc`
+- renamed switch `--split-lumi` of `pineappl write` to `--split-channels`. The
+  old switch can still be used
+- renamed switch `--lumis` of `pineappl read` to `--channels`. The old switch
+  can still be used
+- renamed switch `--ignore-lumis` of `pineappl diff` to `--ignore-channels`.
+  The old switch can still be used
+- renamed `Grid::lumi` to `Grid::channels`, `Grid::split_lumi` to
+  `Grid::split_channels`, `Grid::rewrite_lumi` to `Grid::rewrite_channels` and
+  `Grid::set_lumis` to `Grid::set_channels`. The term 'channel' is now used
+  everywhere instead of 'lumi', 'luminosity function', etc.
+- renamed the struct `LumiEntry` to `Channel` and `ParseLumiEntryError` to
+  `ParseChannelError`. Both structures have been moved to the module `boc`
+- renamed the macro `lumi_entry` to `channel`
 
 ### Removed
 

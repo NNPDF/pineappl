@@ -383,8 +383,8 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lumi::LumiEntry;
-    use crate::lumi_entry;
+    use crate::boc::Channel;
+    use crate::channel;
     use float_cmp::assert_approx_eq;
 
     #[test]
@@ -891,8 +891,8 @@ mod tests {
     #[test]
     fn inverse_inverse_evol() {
         for pid in [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6] {
-            let result = LumiEntry::translate(
-                &LumiEntry::translate(&lumi_entry![pid, pid, 1.0], &pdg_mc_pids_to_evol),
+            let result = Channel::translate(
+                &Channel::translate(&channel![pid, pid, 1.0], &pdg_mc_pids_to_evol),
                 &evol_to_pdg_mc_ids,
             );
 

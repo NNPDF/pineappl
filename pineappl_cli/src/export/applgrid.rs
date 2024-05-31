@@ -67,32 +67,37 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
-    let lumis = grid.lumi().len();
+    let lumis = grid.channels().len();
     let has_pdf1 = grid.convolutions()[0] != Convolution::None;
     let has_pdf2 = grid.convolutions()[1] != Convolution::None;
 
     // TODO: check that PDG MC IDs are used
 
     let combinations: Vec<_> = iter::once(lumis.try_into().unwrap())
-        .chain(grid.lumi().iter().enumerate().flat_map(|(index, entry)| {
-            [
-                index.try_into().unwrap(),
-                entry.entry().len().try_into().unwrap(),
-            ]
-            .into_iter()
-            .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
-                // TODO: if the factors aren't trivial, we have to find some other way to
-                // propagate them
-                assert_eq!(factor, 1.0);
+        .chain(
+            grid.channels()
+                .iter()
+                .enumerate()
+                .flat_map(|(index, entry)| {
+                    [
+                        index.try_into().unwrap(),
+                        entry.entry().len().try_into().unwrap(),
+                    ]
+                    .into_iter()
+                    .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
+                        // TODO: if the factors aren't trivial, we have to find some other way to
+                        // propagate them
+                        assert_eq!(factor, 1.0);
 
-                match (has_pdf1, has_pdf2) {
-                    (true, true) => [a, b],
-                    (true, false) => [a, 0],
-                    (false, true) => [b, 0],
-                    (false, false) => unreachable!(),
-                }
-            }))
-        }))
+                        match (has_pdf1, has_pdf2) {
+                            (true, true) => [a, b],
+                            (true, false) => [a, 0],
+                            (false, true) => [b, 0],
+                            (false, false) => unreachable!(),
+                        }
+                    }))
+                }),
+        )
         .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
@@ -162,7 +167,7 @@ pub fn convert_into_applgrid(
                 p.x_order().try_into().unwrap(),
                 "f2",
                 "h0",
-                grid.lumi().len().try_into().unwrap(),
+                grid.channels().len().try_into().unwrap(),
                 has_pdf1 != has_pdf2,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();

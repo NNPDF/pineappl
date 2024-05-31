@@ -4,9 +4,9 @@ use lhapdf::Pdf;
 use num_complex::Complex;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::Order;
+use pineappl::channel;
 use pineappl::grid::{Grid, GridOptFlags, Ntuple};
 use pineappl::lumi::LumiCache;
-use pineappl::lumi_entry;
 use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -120,17 +120,17 @@ fn fill_drell_yan_lo_grid(
     dynamic: bool,
     reweight: bool,
 ) -> Result<Grid> {
-    let lumi = vec![
+    let channels = vec![
         // photons
-        lumi_entry![22, 22, 1.0],
+        channel![22, 22, 1.0],
         // up-antiup
-        lumi_entry![2, -2, 1.0; 4, -4, 1.0],
+        channel![2, -2, 1.0; 4, -4, 1.0],
         // antiup-up
-        lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
+        channel![-2, 2, 1.0; -4, 4, 1.0],
         // down-antidown
-        lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
+        channel![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
         // antidown-down
-        lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
+        channel![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
     ];
 
     let orders = vec![
@@ -179,7 +179,7 @@ fn fill_drell_yan_lo_grid(
 
     // create the PineAPPL grid
     let mut grid = Grid::with_subgrid_type(
-        lumi,
+        channels,
         orders,
         bin_limits,
         subgrid_params,
@@ -353,7 +353,7 @@ fn perform_grid_tests(
     // TEST 6: `convolve_subgrid`
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            (0..grid.lumi().len())
+            (0..grid.channels().len())
                 .map(|channel| {
                     grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
                         .sum()
@@ -378,7 +378,7 @@ fn perform_grid_tests(
     // TEST 8: `convolve_subgrid` for the optimized subgrids
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            (0..grid.lumi().len())
+            (0..grid.channels().len())
                 .map(|channel| {
                     grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
                         .sum()
@@ -763,7 +763,7 @@ fn grid_optimize() -> Result<()> {
     let mut grid = generate_grid("LagrangeSubgridV2", false, false)?;
 
     assert_eq!(grid.orders().len(), 3);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
         SubgridEnum::LagrangeSubgridV2 { .. }
@@ -800,23 +800,23 @@ fn grid_optimize() -> Result<()> {
     grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
 
     assert_eq!(grid.orders().len(), 3);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     // has no effect for this test
     grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 3);
+    assert_eq!(grid.channels().len(), 3);
 
     Ok(())
 }

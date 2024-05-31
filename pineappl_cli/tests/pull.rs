@@ -13,14 +13,14 @@ Arguments:
 
 Options:
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
-  -l, --limit <LIMIT>      The maximum number of luminosities displayed [default: 10]
+  -l, --limit <LIMIT>      The maximum number of channels displayed [default: 10]
   -o, --orders <ORDERS>    Select orders manually
       --threads <THREADS>  Number of threads to utilize [default: {}]
       --digits <DIGITS>    Set the number of digits shown for numerical values [default: 3]
   -h, --help               Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+const DEFAULT_STR: &str = "b   etal    total c pull  c  pull  c  pull  c  pull  c  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
 0    2 2.25 3.578 0 3.765 1 -0.108 3 -0.052 4 -0.018 2 -0.009
@@ -33,7 +33,7 @@ const DEFAULT_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  
 7    4  4.5 1.224 0 1.435 1 -0.353 3  0.147 4 -0.003 2 -0.002
 ";
 
-const ORDERS_STR: &str = "b   etal    total l pull  l pull  l pull  l pull  l pull 
+const ORDERS_STR: &str = "b   etal    total c pull  c pull  c pull  c pull  c pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}] 
 -+----+----+-----+-+-----+-+-----+-+-----+-+-----+-+-----
 0    2 2.25 3.631 0 3.631 1 0.000 2 0.000 3 0.000 4 0.000
@@ -46,7 +46,7 @@ const ORDERS_STR: &str = "b   etal    total l pull  l pull  l pull  l pull  l pu
 7    4  4.5 1.202 0 1.202 1 0.000 2 0.000 3 0.000 4 0.000
 ";
 
-const CL_90_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+const CL_90_STR: &str = "b   etal    total c pull  c  pull  c  pull  c  pull  c  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
 0    2 2.25 2.175 0 2.289 1 -0.065 3 -0.031 4 -0.011 2 -0.006
@@ -59,7 +59,7 @@ const CL_90_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l 
 7    4  4.5 0.744 0 0.872 1 -0.215 3  0.089 4 -0.002 2 -0.001
 ";
 
-const LIMIT_STR: &str = "b   etal    total l pull 
+const LIMIT_STR: &str = "b   etal    total c pull 
      []      [\u{3c3}]     [\u{3c3}] 
 -+----+----+-----+-+-----
 0    2 2.25 3.578 0 3.765
@@ -72,7 +72,7 @@ const LIMIT_STR: &str = "b   etal    total l pull
 7    4  4.5 1.224 0 1.435
 ";
 
-const REPLICA0_STR: &str = "b   etal    total l pull  l  pull  l  pull  l  pull  l  pull 
+const REPLICA0_STR: &str = "b   etal    total c pull  c  pull  c  pull  c  pull  c  pull 
      []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]      [\u{3c3}]  
 -+----+----+-----+-+-----+-+------+-+------+-+------+-+------
 0    2 2.25 3.583 0 3.770 1 -0.108 3 -0.052 4 -0.018 2 -0.009

@@ -8,8 +8,7 @@
 //! 1. (perturbative) orders, represented by the type [`Order`] and accessible by
 //!    [`Grid::orders()`],
 //! 2. bins, whose limits can be accessed by [`Grid::bin_info()`], and
-//! 3. channels, whose definition is returned by [`Grid::lumi()`]. Note that in older parts of
-//!    `PineAPPL` channels are often also called 'luminosities' or 'lumi'.
+//! 3. channels, whose definition is returned by [`Grid::channels()`].
 //!
 //! `Subgrid` is a `trait` and objects that implement it are of the type [`SubgridEnum`]. The
 //! latter is an `enum` of different types that are optimized to different scenarios: fast event
@@ -17,7 +16,7 @@
 //!
 //! [`Grid`]: grid::Grid
 //! [`Grid::bin_info()`]: grid::Grid::bin_info
-//! [`Grid::lumi()`]: grid::Grid::lumi
+//! [`Grid::channels()`]: grid::Grid::channels
 //! [`Grid::orders()`]: grid::Grid::orders
 //! [`Subgrid`]: subgrid::Subgrid
 //! [`SubgridEnum`]: subgrid::SubgridEnum

@@ -12,7 +12,7 @@ Arguments:
 
 Options:
   -s, --scales <SCALES>                Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
-      --subgrid-pull <ORDER,BIN,LUMI>  Show the pull for a specific grid three-dimensionally
+      --subgrid-pull <ORDER,BIN,CHAN>  Show the pull for a specific grid three-dimensionally
       --asymmetry                      Plot the asymmetry
       --threads <THREADS>              Number of threads to utilize [default: {}]
       --no-pdf-unc                     Disable the (time-consuming) calculation of PDF uncertainties

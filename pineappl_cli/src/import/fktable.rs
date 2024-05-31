@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use pineappl::boc::Order;
+use pineappl::channel;
 use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
-use pineappl::lumi_entry;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::SubgridParams;
 use std::fs::File;
@@ -83,14 +83,14 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| lumi_entry![basis[index / 14], basis[index % 14], 1.0])
+                        .map(|(index, _)| channel![basis[index / 14], basis[index % 14], 1.0])
                         .collect()
                 } else {
                     flavor_mask
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| lumi_entry![basis[index], dis_pid, 1.0])
+                        .map(|(index, _)| channel![basis[index], dis_pid, 1.0])
                         .collect()
                 };
 
