@@ -450,7 +450,7 @@ fn evolve_grid(
     let mut extra_eko_slices = EkoSlices::new(extra_eko)?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
-    // TODO: Take care of the old EKO behavior
+    // TODO: Modify old Evolve to account for multiple EKOs
     if use_old_evolve {
         if let EkoSlices::V0 {
             fac1,
@@ -473,14 +473,14 @@ fn evolve_grid(
             };
 
             #[allow(deprecated)]
-            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
+            Ok(grid.evolve(operator.view(), operator.view(), &op_info, &order_mask)?)
         } else {
             unimplemented!();
         }
     } else {
         Ok(grid.evolve_with_slice_iter(
             &mut eko_slices,
-            extra_eko_slices,
+            &mut extra_eko_slices,
             &order_mask,
             (xir, xif),
             &alphas_table,
