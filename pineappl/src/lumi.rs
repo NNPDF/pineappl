@@ -279,7 +279,7 @@ impl<'a> LumiCache<'a> {
 
     /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],
     /// in the grid `mu2_grid` at the index `imu2`.
-    pub fn alphas(&mut self, imu2: usize) -> f64 {
+    pub fn alphas(&self, imu2: usize) -> f64 {
         self.alphas_cache[self.imur2[imu2]]
     }
 

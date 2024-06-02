@@ -244,26 +244,25 @@ pub enum Convolution {
 
 impl Convolution {
     /// Return the convolution if the PID is charged conjugated.
-    pub fn cc(&self) -> Convolution {
+    #[must_use]
+    pub const fn cc(&self) -> Self {
         match *self {
-            Convolution::None => Convolution::None,
-            Convolution::UnpolPDF(pid) => {
-                Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid))
-            }
-            Convolution::PolPDF(pid) => Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Convolution::UnpolFF(pid) => Convolution::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
-            Convolution::PolFF(pid) => Convolution::PolFF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::None => Self::None,
+            Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::PolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::PolFF(pid) => Self::PolFF(pids::charge_conjugate_pdg_pid(pid)),
         }
     }
 
     /// Return the PID of the convolution if it has any.
-    pub fn pid(&self) -> Option<i32> {
+    #[must_use]
+    pub const fn pid(&self) -> Option<i32> {
         match *self {
-            Convolution::None => None,
-            Convolution::UnpolPDF(pid)
-            | Convolution::PolPDF(pid)
-            | Convolution::UnpolFF(pid)
-            | Convolution::PolFF(pid) => Some(pid),
+            Self::None => None,
+            Self::UnpolPDF(pid) | Self::PolPDF(pid) | Self::UnpolFF(pid) | Self::PolFF(pid) => {
+                Some(pid)
+            }
         }
     }
 }

@@ -37,18 +37,19 @@ impl FromStr for PidBasis {
 impl PidBasis {
     /// Return the charge-conjugated particle ID of `pid` given in the basis of `self`. The
     /// returned tuple contains a factor that possibly arises during the charge conjugation.
-    pub fn charge_conjugate(&self, pid: i32) -> (i32, f64) {
+    #[must_use]
+    pub const fn charge_conjugate(&self, pid: i32) -> (i32, f64) {
         match (*self, pid) {
             // TODO: in the general case we should allow to return a vector of tuples
             (Self::Evol, 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
             (Self::Evol, 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
-            (Self::Evol, _) | (Self::Pdg, _) => (charge_conjugate_pdg_pid(pid), 1.0),
+            (Self::Evol | Self::Pdg, _) => (charge_conjugate_pdg_pid(pid), 1.0),
         }
     }
 
     /// Given the particle IDs in `pids`, guess the [`PidBasis`].
     #[must_use]
-    pub fn guess(pids: &[i32]) -> PidBasis {
+    pub fn guess(pids: &[i32]) -> Self {
         // if we find more than 3 pids that are recognized to be from the evolution basis, declare
         // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
         if pids
@@ -57,9 +58,9 @@ impl PidBasis {
             .count()
             > 3
         {
-            PidBasis::Evol
+            Self::Evol
         } else {
-            PidBasis::Pdg
+            Self::Pdg
         }
     }
 }

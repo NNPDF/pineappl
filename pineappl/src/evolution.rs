@@ -497,10 +497,10 @@ pub(crate) fn evolve_slice_with_one(
         }));
     }
 
-    let pid = if grid.convolutions()[0] != Convolution::None {
-        grid.channels()[0].entry()[0].1
-    } else {
+    let pid = if grid.convolutions()[0] == Convolution::None {
         grid.channels()[0].entry()[0].0
+    } else {
+        grid.channels()[0].entry()[0].1
     };
 
     Ok((
