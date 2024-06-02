@@ -424,8 +424,8 @@ mod eko {
 #[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
-    eko: &Path,
-    extra_eko: &Path,
+    eko_a: &Path,
+    eko_b: &Path,
     pdf: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
@@ -446,8 +446,8 @@ fn evolve_grid(
         })
         .collect();
 
-    let mut eko_slices = EkoSlices::new(eko)?;
-    let mut extra_eko_slices = EkoSlices::new(extra_eko)?;
+    let mut eko_slices_a = EkoSlices::new(eko_a)?;
+    let mut eko_slices_b = EkoSlices::new(eko_b)?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
     // TODO: Check that cloning the `alphas_table` does not cause performance
@@ -457,12 +457,12 @@ fn evolve_grid(
             fac1,
             info,
             operator,
-        } = eko_slices
+        } = eko_slices_a
         {
             // TODO: Check if the `operator` object is actually mutable
             let original_operator = operator;
 
-            let op_info = OperatorInfo {
+            let op_info_a = OperatorInfo {
                 fac0: info.fac0,
                 pids0: info.pids0.clone(),
                 x0: info.x0.clone(),
@@ -480,10 +480,10 @@ fn evolve_grid(
                 fac1,
                 info,
                 operator,
-            } = extra_eko_slices
+            } = eko_slices_b
             {
                 // TODO: change the info object
-                let _extra_op_info = OperatorInfo {
+                let op_info_b = OperatorInfo {
                     fac0: info.fac0,
                     pids0: info.pids0.clone(),
                     x0: info.x0.clone(),
@@ -501,7 +501,8 @@ fn evolve_grid(
                 Ok(grid.evolve(
                     original_operator.view(),
                     operator.view(),
-                    &op_info,
+                    &op_info_a,
+                    &op_info_b,
                     &order_mask,
                 )?)
             } else {
@@ -512,8 +513,8 @@ fn evolve_grid(
         }
     } else {
         Ok(grid.evolve_with_slice_iter(
-            &mut eko_slices,
-            &mut extra_eko_slices,
+            &mut eko_slices_a,
+            &mut eko_slices_b,
             &order_mask,
             (xir, xif),
             &alphas_table,

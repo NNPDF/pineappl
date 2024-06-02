@@ -524,27 +524,30 @@ pub(crate) fn evolve_slice_with_one(
 
 pub(crate) fn evolve_slice_with_two(
     grid: &Grid,
-    operator_a: &ArrayView4<f64>,
-    operator_b: &ArrayView4<f64>,
-    info: &OperatorSliceInfo,
+    input_operator_a: &ArrayView4<f64>,
+    input_operator_b: &ArrayView4<f64>,
+    info_a: &OperatorSliceInfo,
+    info_b: &OperatorSliceInfo,
     order_mask: &[bool],
     xi: (f64, f64),
     alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    let (pid_indices_a, pids_a) = pid_slices(operator_a, info, gluon_has_pid_zero, &|pid1| {
-        grid.lumi()
-            .iter()
-            .flat_map(LumiEntry::entry)
-            .any(|&(a, _, _)| a == pid1)
-    })?;
-    let (pid_indices_b, pids_b) = pid_slices(operator_b, info, gluon_has_pid_zero, &|pid1| {
-        grid.lumi()
-            .iter()
-            .flat_map(LumiEntry::entry)
-            .any(|&(_, b, _)| b == pid1)
-    })?;
+    let (pid_indices_a, pids_a) =
+        pid_slices(input_operator_a, info_a, gluon_has_pid_zero, &|pid1| {
+            grid.lumi()
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(a, _, _)| a == pid1)
+        })?;
+    let (pid_indices_b, pids_b) =
+        pid_slices(input_operator_b, info_a, gluon_has_pid_zero, &|pid1| {
+            grid.lumi()
+                .iter()
+                .flat_map(LumiEntry::entry)
+                .any(|&(_, b, _)| b == pid1)
+        })?;
 
     let lumi0 = lumi0_with_two(&pids_a, &pids_b);
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
@@ -555,11 +558,11 @@ pub(crate) fn evolve_slice_with_two(
     let mut operators_b = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
-        let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
+        let mut tables = vec![Array2::zeros((info_a.x0.len(), info_a.x0.len())); lumi0.len()];
 
         for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
             let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
-                info,
+                info_a,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -573,7 +576,7 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_a.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_a = operator_slices(operator_a, info, &pid_indices_a, &x1_a)?;
+                operators_a = operator_slices(input_operator_a, info_a, &pid_indices_a, &x1_a)?;
                 last_x1a = x1_a;
             }
 
@@ -583,11 +586,11 @@ pub(crate) fn evolve_slice_with_two(
                     .zip(x1_b.iter())
                     .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
             {
-                operators_b = operator_slices(operator_b, info, &pid_indices_b, &x1_b)?;
+                operators_b = operator_slices(input_operator_b, info_b, &pid_indices_b, &x1_b)?;
                 last_x1b = x1_b;
             }
 
-            let mut tmp = Array2::zeros((last_x1a.len(), info.x0.len()));
+            let mut tmp = Array2::zeros((last_x1a.len(), info_a.x0.len()));
 
             for &(pida1, pidb1, factor) in lumi1.entry() {
                 for (fk_table, opa, opb) in
@@ -621,11 +624,11 @@ pub(crate) fn evolve_slice_with_two(
                 vec![Mu2 {
                     // TODO: FK tables don't depend on the renormalization scale
                     //ren: -1.0,
-                    ren: info.fac0,
-                    fac: info.fac0,
+                    ren: info_a.fac0,
+                    fac: info_a.fac0,
                 }],
-                info.x0.clone(),
-                info.x0.clone(),
+                info_a.x0.clone(),
+                info_a.x0.clone(),
             )
             .into()
         }));

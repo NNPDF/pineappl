@@ -1401,49 +1401,52 @@ impl Grid {
         &self,
         operator_a: ArrayView5<f64>,
         operator_b: ArrayView5<f64>,
-        info: &OperatorInfo,
+        info_a: &OperatorInfo,
+        info_b: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
         self.evolve_with_slice_iter(
-            info.fac1
+            info_a
+                .fac1
                 .iter()
                 .zip(operator_a.axis_iter(Axis(0)))
                 .map(|(&fac1, op)| {
                     Ok::<_, GridError>((
                         OperatorSliceInfo {
-                            fac0: info.fac0,
-                            pids0: info.pids0.clone(),
-                            x0: info.x0.clone(),
+                            fac0: info_a.fac0,
+                            pids0: info_a.pids0.clone(),
+                            x0: info_a.x0.clone(),
                             fac1,
-                            pids1: info.pids1.clone(),
-                            x1: info.x1.clone(),
-                            lumi_id_types: info.lumi_id_types.clone(),
+                            pids1: info_a.pids1.clone(),
+                            x1: info_a.x1.clone(),
+                            lumi_id_types: info_a.lumi_id_types.clone(),
                         },
                         CowArray::from(op),
                     ))
                 }),
-            info.fac1
+            info_b
+                .fac1
                 .iter()
                 .zip(operator_b.axis_iter(Axis(0)))
                 .map(|(&fac1, op)| {
                     Ok::<_, GridError>((
                         OperatorSliceInfo {
-                            fac0: info.fac0,
-                            pids0: info.pids0.clone(),
-                            x0: info.x0.clone(),
+                            fac0: info_b.fac0,
+                            pids0: info_b.pids0.clone(),
+                            x0: info_b.x0.clone(),
                             fac1,
-                            pids1: info.pids1.clone(),
-                            x1: info.x1.clone(),
-                            lumi_id_types: info.lumi_id_types.clone(),
+                            pids1: info_b.pids1.clone(),
+                            x1: info_b.x1.clone(),
+                            lumi_id_types: info_b.lumi_id_types.clone(),
                         },
                         CowArray::from(op),
                     ))
                 }),
             order_mask,
-            (info.xir, info.xif),
+            (info_a.xir, info_a.xif),
             &AlphasTable {
-                ren1: info.ren1.clone(),
-                alphas: info.alphas.clone(),
+                ren1: info_a.ren1.clone(),
+                alphas: info_a.alphas.clone(),
             },
         )
     }
@@ -1465,8 +1468,8 @@ impl Grid {
     /// return an error.
     pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
-        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
-        extra_slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        slices_b: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
         xi: (f64, f64),
         alphas_table: &AlphasTable,
@@ -1478,22 +1481,21 @@ impl Grid {
         let mut fac1 = Vec::new();
 
         // TODO: simplify the ugly repetition below
-        // TODO: what to do about the info? Shoulb they be the same?
-        for (result, extra_result) in izip!(slices, extra_slices) {
+        for (result_a, result_b) in izip!(slices_a, slices_b) {
             // Deal with the main EKO
-            let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+            let (info_a, operator) = result_a.map_err(|err| GridError::Other(err.into()))?;
 
-            let op_info_dim = (
-                info.pids1.len(),
-                info.x1.len(),
-                info.pids0.len(),
-                info.x0.len(),
+            let op_info_dim_a = (
+                info_a.pids1.len(),
+                info_a.x1.len(),
+                info_a.pids0.len(),
+                info_a.x0.len(),
             );
 
-            if operator.dim() != op_info_dim {
+            if operator.dim() != op_info_dim_a {
                 return Err(GridError::EvolutionFailure(format!(
                     "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim,
+                    op_info_dim_a,
                     operator.dim(),
                 )));
             }
@@ -1501,25 +1503,24 @@ impl Grid {
             let view = operator.view();
 
             // Deal with the additional EKO
-            let (extra_info, extra_operator) =
-                extra_result.map_err(|err| GridError::Other(err.into()))?;
+            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
-            let op_info_dim_extra = (
-                extra_info.pids1.len(),
-                extra_info.x1.len(),
-                extra_info.pids0.len(),
-                extra_info.x0.len(),
+            let op_info_dim_b = (
+                info_b.pids1.len(),
+                info_b.x1.len(),
+                info_b.pids0.len(),
+                info_b.x0.len(),
             );
 
-            if extra_operator.dim() != op_info_dim_extra {
+            if operator_b.dim() != op_info_dim_b {
                 return Err(GridError::EvolutionFailure(format!(
                     "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim_extra,
-                    extra_operator.dim(),
+                    op_info_dim_b,
+                    operator_b.dim(),
                 )));
             }
 
-            let extra_view = extra_operator.view();
+            let extra_view = operator_b.view();
 
             let (subgrids, lumi) = if self.convolutions()[0] != Convolution::None
                 && self.convolutions()[1] != Convolution::None
@@ -1528,13 +1529,14 @@ impl Grid {
                     self,
                     &view,
                     &extra_view,
-                    &info,
+                    &info_a,
+                    &info_b,
                     order_mask,
                     xi,
                     alphas_table,
                 )
             } else {
-                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
+                evolution::evolve_slice_with_one(self, &view, &info_a, order_mask, xi, alphas_table)
             }?;
 
             let mut rhs = Self {
@@ -1547,7 +1549,7 @@ impl Grid {
             };
 
             // write additional metadata
-            rhs.set_key_value("lumi_id_types", &info.lumi_id_types);
+            rhs.set_key_value("lumi_id_types", &info_a.lumi_id_types);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1555,7 +1557,7 @@ impl Grid {
                 lhs = Some(rhs);
             }
 
-            fac1.push(info.fac1);
+            fac1.push(info_a.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
