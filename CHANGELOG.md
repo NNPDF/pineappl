@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new function `PidBasis::charge_conjugate`
 - removed `pids::determine_lumi_id_types`; this function has been replaced with
   the new function `PidBasis::guess`
+- removed `TryFromGridError::MetadataMissing`
 
 ## [0.7.4] - 23/05/2024
 

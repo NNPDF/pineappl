@@ -40,9 +40,6 @@ pub enum TryFromGridError {
     /// Error if the order of the grid was not a single one with all zeros in the exponents.
     #[error("multiple orders detected")]
     NonTrivialOrder,
-    /// Error if the certain metadata is missing.
-    #[error("metadata is missing: expected key `{0}` to have a value")]
-    MetadataMissing(String),
 }
 
 /// The optimization assumptions for an [`FkTable`], needed for [`FkTable::optimize`]. Since FK
@@ -410,20 +407,6 @@ impl TryFrom<Grid> for FkTable {
             .any(|i| grid.channels()[i..].contains(&grid.channels()[i - 1]))
         {
             return Err(TryFromGridError::InvalidChannel);
-        }
-
-        if let Some(key_values) = grid.key_values() {
-            let keys = vec!["lumi_id_types".to_owned()];
-
-            for key in keys {
-                if !key_values.contains_key(&key) {
-                    return Err(TryFromGridError::MetadataMissing(key));
-                }
-            }
-        } else {
-            return Err(TryFromGridError::MetadataMissing(
-                "initial_states_1".to_owned(),
-            ));
         }
 
         Ok(Self { grid })
