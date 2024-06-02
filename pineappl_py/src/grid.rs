@@ -1,17 +1,17 @@
 use pineappl::boc::Order;
-use pineappl::evolution::{AlphasTable, OperatorInfo};
+use pineappl::evolution::OperatorInfo;
 use pineappl::grid::{Grid, Ntuple};
 
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
-use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
+use super::evolution::PyEvolveInfo;
 use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -20,9 +20,7 @@ use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyIterator, PyTuple};
-
-use ndarray::CowArray;
+use pyo3::types::PyIterator;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
@@ -527,11 +525,11 @@ impl PyGrid {
     /// TODO
     pub fn evolve_with_slice_iter(
         &self,
-        slices: &PyIterator,
-        order_mask: PyReadonlyArray1<bool>,
-        xi: (f64, f64),
-        ren1: Vec<f64>,
-        alphas: Vec<f64>,
+        _slices: &PyIterator,
+        _order_mask: PyReadonlyArray1<bool>,
+        _xi: (f64, f64),
+        _ren1: Vec<f64>,
+        _alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
         todo!()
         //Ok(self
