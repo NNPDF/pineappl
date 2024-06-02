@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - renamed the macro `lumi_entry` to `channel`
 - renamed `Grid::set_channels` to `Grid::channels_mut`
 - renamed `TryFromGridError::InvalidLumi` to `TryFromGridError::InvalidChannel`
+- changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
+  `pid_basis`, which is now of type `PidBasis`
 
 ### Removed
 
