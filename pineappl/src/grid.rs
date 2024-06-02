@@ -350,6 +350,14 @@ impl Grid {
         PidBasis::Pdg
     }
 
+    /// TODO
+    pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
+        match pid_basis {
+            PidBasis::Pdg => self.set_key_value("lumi_id_types", "pdg_mc_ids"),
+            PidBasis::Evol => self.set_key_value("lumi_id_types", "evol"),
+        }
+    }
+
     fn pdg_channels(&self) -> Cow<[Channel]> {
         match self.pid_basis() {
             PidBasis::Evol => self
@@ -1415,7 +1423,7 @@ impl Grid {
                             fac1,
                             pids1: info.pids1.clone(),
                             x1: info.x1.clone(),
-                            lumi_id_types: info.lumi_id_types.clone(),
+                            pid_basis: info.pid_basis,
                         },
                         CowArray::from(op),
                     ))
@@ -1493,8 +1501,8 @@ impl Grid {
                 more_members: self.more_members.clone(),
             };
 
-            // write additional metadata
-            rhs.set_key_value("lumi_id_types", &info.lumi_id_types);
+            // TODO: use a new constructor to set this information
+            rhs.set_pid_basis(info.pid_basis);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1617,7 +1625,7 @@ impl Grid {
                     .map(|channel| Channel::translate(channel, &pids::pdg_mc_pids_to_evol))
                     .collect();
 
-                self.set_key_value("lumi_id_types", "evol");
+                self.set_pid_basis(PidBasis::Evol);
             }
             (PidBasis::Evol, PidBasis::Pdg) => {
                 self.channels = self
@@ -1626,7 +1634,7 @@ impl Grid {
                     .map(|channel| Channel::translate(channel, &pids::evol_to_pdg_mc_ids))
                     .collect();
 
-                self.set_key_value("lumi_id_types", "pdg_mc_ids");
+                self.set_pid_basis(PidBasis::Pdg);
             }
             (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
                 // here's nothing to do

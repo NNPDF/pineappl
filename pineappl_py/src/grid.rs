@@ -480,7 +480,7 @@ impl PyGrid {
             alphas: alphas.to_vec().unwrap(),
             xir: xi.0,
             xif: xi.1,
-            lumi_id_types: lumi_id_types,
+            pid_basis: lumi_id_types.parse().unwrap(),
         };
 
         let evolved_grid = self

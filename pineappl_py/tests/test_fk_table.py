@@ -10,7 +10,6 @@ class TestFkTable:
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
-        g.set_key_value("lumi_id_types", "pdg_mc_ids")
         return g
 
     def test_convolve_with_one(self):

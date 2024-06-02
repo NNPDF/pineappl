@@ -4,6 +4,7 @@ use pineappl::boc::Order;
 use pineappl::channel;
 use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
+use pineappl::pids::PidBasis;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::SubgridParams;
 use std::fs::File;
@@ -108,9 +109,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 );
 
                 // explicitly set the evolution basis
-                fktable
-                    .key_values_mut()
-                    .insert("lumi_id_types".to_owned(), "evol".to_owned());
+                fktable.set_pid_basis(PidBasis::Evol);
 
                 // legacy FK-tables only support unpolarized proton PDFs
                 fktable.set_convolution(0, Convolution::UnpolPDF(2212));

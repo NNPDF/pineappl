@@ -4,6 +4,7 @@ use super::boc::{Channel, Order};
 use super::channel;
 use super::grid::{Convolution, Grid, GridError};
 use super::import_only_subgrid::ImportOnlySubgridV2;
+use super::pids::PidBasis;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
@@ -44,7 +45,7 @@ pub struct EvolveInfo {
 ///
 /// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
 /// possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`lumi_id_types`], which tells [`FkTable::convolve`] how to perform a convolution. The members
+/// [`pid_basis`], which tells [`FkTable::convolve`] how to perform a convolution. The members
 /// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
 /// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
 /// scales, respectively, around their central values.
@@ -54,7 +55,7 @@ pub struct EvolveInfo {
 /// [`alphas`]: Self::alphas
 /// [`fac0`]: Self::fac0
 /// [`fac1`]: Self::fac1
-/// [`lumi_id_types`]: Self::lumi_id_types
+/// [`pid_basis`]: Self::pid_basis
 /// [`pids0`]: Self::pids0
 /// [`pids1`]: Self::pids1
 /// [`ren1`]: Self::ren1
@@ -85,8 +86,8 @@ pub struct OperatorInfo {
     pub xir: f64,
     /// Multiplicative factor for the central factorization scale.
     pub xif: f64,
-    /// Identifier of the particle basis for the `FkTable`.
-    pub lumi_id_types: String,
+    /// Particle ID basis for `FkTable`.
+    pub pid_basis: PidBasis,
 }
 
 /// Information about the evolution kernel operator slice (EKO) passed to
@@ -102,7 +103,7 @@ pub struct OperatorInfo {
 ///
 /// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
 /// possibly different basis given by `pids0`. This basis must also be identified using
-/// [`lumi_id_types`](Self::lumi_id_types), which tells
+/// [`pid_basis`](Self::pid_basis), which tells
 /// [`FkTable::convolve`](super::fk_table::FkTable::convolve) how to perform a convolution.
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
@@ -120,8 +121,8 @@ pub struct OperatorSliceInfo {
     /// `x`-grid coordinates of the `Grid`.
     pub x1: Vec<f64>,
 
-    /// Identifier of the particle basis for the `FkTable`.
-    pub lumi_id_types: String,
+    /// Particle ID basis for `FkTable`.
+    pub pid_basis: PidBasis,
 }
 
 /// A mapping of squared renormalization scales in `ren1` to strong couplings in `alphas`. The
@@ -164,11 +165,8 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
     grid.channels()
         .iter()
         .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
-        // and if lumi_id_types = pdg_mc_ids or if the key-value pair doesn't exist
-        && grid
-            .key_values()
-            .and_then(|key_values| key_values.get("lumi_id_types"))
-            .map_or(true, |value| value == "pdg_mc_ids")
+        // and if the particle IDs are encoded using PDG MC IDs
+        && grid.pid_basis() == PidBasis::Pdg
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;

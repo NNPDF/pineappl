@@ -342,24 +342,6 @@ pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     }
 }
 
-/// Given the particle IDs in `pids`, determine the right string for `lumi_id_types` stored in
-/// `Grid`.
-#[must_use]
-pub fn determine_lumi_id_types(pids: &[i32]) -> String {
-    // if we find more than 3 pids that are recognized to be from the evolution basis, declare
-    // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
-    if pids
-        .iter()
-        .filter(|&pid| EVOL_BASIS_IDS.iter().any(|evol_pid| pid == evol_pid))
-        .count()
-        > 3
-    {
-        "evol".to_owned()
-    } else {
-        "pdg_mc_ids".to_owned()
-    }
-}
-
 /// Given `tuples` represting a linear combination of PDG MC IDs, return a PID for the `evol`
 /// basis. The order of each tuple in `tuples` is not relevant. This function inverts
 /// [`evol_to_pdg_mc_ids`]. If the inversion is not possible, `None` is returned.
