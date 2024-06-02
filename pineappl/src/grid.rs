@@ -249,7 +249,7 @@ impl Convolution {
         match *self {
             Self::None => Self::None,
             Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::PolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::PolPDF(pid) => Self::PolPDF(pids::charge_conjugate_pdg_pid(pid)),
             Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
             Self::PolFF(pid) => Self::PolFF(pids::charge_conjugate_pdg_pid(pid)),
         }
