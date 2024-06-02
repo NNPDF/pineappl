@@ -1445,8 +1445,6 @@ impl Grid {
                             fac1,
                             pids1: info_b.pids1.clone(),
                             x1: info_b.x1.clone(),
-                            pids1: info_b.pids1.clone(),
-                            x1: info_b.x1.clone(),
                             pid_basis: info_b.pid_basis,
                         },
                         CowArray::from(op),
@@ -1512,7 +1510,6 @@ impl Grid {
 
             let view = operator.view();
 
-<<<<<<< HEAD
             // Deal with the additional EKO
             let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
@@ -1533,10 +1530,7 @@ impl Grid {
 
             let extra_view = operator_b.view();
 
-            let (subgrids, lumi) = if self.convolutions()[0] != Convolution::None
-=======
             let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
->>>>>>> master
                 && self.convolutions()[1] != Convolution::None
             {
                 evolution::evolve_slice_with_two(
@@ -1562,13 +1556,9 @@ impl Grid {
                 more_members: self.more_members.clone(),
             };
 
-<<<<<<< HEAD
-            // write additional metadata
-            rhs.set_key_value("lumi_id_types", &info_a.lumi_id_types);
-=======
             // TODO: use a new constructor to set this information
-            rhs.set_pid_basis(info.pid_basis);
->>>>>>> master
+            // TODO: Verify if we need to differentiate `info` here
+            rhs.set_pid_basis(info_a.pid_basis);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;

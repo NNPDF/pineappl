@@ -494,7 +494,7 @@ fn evolve_grid(
                     alphas: alphas_table.alphas.clone(),
                     xir,
                     xif,
-                    lumi_id_types: info.lumi_id_types,
+                    pid_basis: info.pid_basis,
                 };
 
                 #[allow(deprecated)]
