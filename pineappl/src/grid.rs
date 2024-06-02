@@ -349,7 +349,7 @@ impl Grid {
         PidBasis::Pdg
     }
 
-    /// TODO
+    /// Set the convention by which PIDs of channels are interpreted.
     pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
         match pid_basis {
             PidBasis::Pdg => self.set_key_value("lumi_id_types", "pdg_mc_ids"),
