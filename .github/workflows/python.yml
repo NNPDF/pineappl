@@ -20,8 +20,7 @@ jobs:
       - name: Test
         run: |
           cd pineappl_py
-          pip install virtualenv
-          virtualenv env
+          python -m venv env
           . env/bin/activate
           pip install maturin
           maturin develop --extras test
