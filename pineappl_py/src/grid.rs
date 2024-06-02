@@ -424,6 +424,7 @@ impl PyGrid {
     }
 
     /// Convolute with grid with an evolution operator.
+    /// TODO: Modify the passed `info` from higher level (pineko)
     ///
     /// Parameters
     /// ----------
@@ -491,6 +492,7 @@ impl PyGrid {
             .evolve(
                 operator_a.as_array(),
                 operator_b.as_array(),
+                &op_info,
                 &op_info,
                 order_mask.as_slice().unwrap(),
             )
