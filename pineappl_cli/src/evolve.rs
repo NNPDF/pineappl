@@ -450,7 +450,8 @@ fn evolve_grid(
     let mut extra_eko_slices = EkoSlices::new(extra_eko)?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
 
-    // TODO: Modify old Evolve to account for multiple EKOs
+    // TODO: Check that cloning the `alphas_table` does not cause performance
+    // issue when cloned.
     if use_old_evolve {
         if let EkoSlices::V0 {
             fac1,
@@ -458,6 +459,9 @@ fn evolve_grid(
             operator,
         } = eko_slices
         {
+            // TODO: Check if the `operator` object is actually mutable
+            let original_operator = operator;
+
             let op_info = OperatorInfo {
                 fac0: info.fac0,
                 pids0: info.pids0.clone(),
@@ -465,15 +469,44 @@ fn evolve_grid(
                 fac1,
                 pids1: info.pids1.clone(),
                 x1: info.x1.clone(),
-                ren1: alphas_table.ren1,
-                alphas: alphas_table.alphas,
+                ren1: alphas_table.ren1.clone(),
+                alphas: alphas_table.alphas.clone(),
                 xir,
                 xif,
                 lumi_id_types: info.lumi_id_types,
             };
 
-            #[allow(deprecated)]
-            Ok(grid.evolve(operator.view(), operator.view(), &op_info, &order_mask)?)
+            if let EkoSlices::V0 {
+                fac1,
+                info,
+                operator,
+            } = extra_eko_slices
+            {
+                // TODO: change the info object
+                let _extra_op_info = OperatorInfo {
+                    fac0: info.fac0,
+                    pids0: info.pids0.clone(),
+                    x0: info.x0.clone(),
+                    fac1,
+                    pids1: info.pids1.clone(),
+                    x1: info.x1.clone(),
+                    ren1: alphas_table.ren1.clone(),
+                    alphas: alphas_table.alphas.clone(),
+                    xir,
+                    xif,
+                    lumi_id_types: info.lumi_id_types,
+                };
+
+                #[allow(deprecated)]
+                Ok(grid.evolve(
+                    original_operator.view(),
+                    operator.view(),
+                    &op_info,
+                    &order_mask,
+                )?)
+            } else {
+                unimplemented!();
+            }
         } else {
             unimplemented!();
         }
