@@ -25,9 +25,9 @@ pub struct Opts {
     /// Ignore bin limits (but not number of bins).
     #[arg(long)]
     ignore_bin_limits: bool,
-    /// Ignore differences in the luminosity functions.
-    #[arg(long)]
-    ignore_lumis: bool,
+    /// Ignore differences in the channel definition.
+    #[arg(alias = "ignore-lumis", long)]
+    ignore_channels: bool,
     /// Select orders of the first grid.
     #[arg(
         long,
@@ -123,8 +123,8 @@ impl Subcommand for Opts {
         }
 
         // TODO: use approximate comparison
-        if !self.ignore_lumis && (grid1.lumi() != grid2.lumi()) {
-            bail!("luminosities differ");
+        if !self.ignore_channels && (grid1.channels() != grid2.channels()) {
+            bail!("channels differ");
         }
 
         let mut pdf = helpers::create_pdf(&self.pdfset)?;

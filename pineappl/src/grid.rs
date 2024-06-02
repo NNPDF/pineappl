@@ -1,14 +1,14 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
+use super::boc::{Channel, Order};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::lumi::{LumiCache, LumiEntry};
+use super::lumi::LumiCache;
 use super::ntuple_subgrid::NtupleSubgridV1;
-use super::order::Order;
 use super::pids::{self, PidBasis};
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
 use bitflags::bitflags;
@@ -206,7 +206,7 @@ bitflags! {
         const STRIP_EMPTY_ORDERS = 0b1000;
         /// Merge the subgrids of channels which have the same definition.
         const MERGE_SAME_CHANNELS = 0b10000;
-        /// Remove all channels ([`Grid::lumi`]), which do not contain any non-zero subgrids.
+        /// Remove all channels ([`Grid::channels`]), which do not contain any non-zero subgrids.
         const STRIP_EMPTY_CHANNELS = 0b10_0000;
     }
 }
@@ -216,7 +216,7 @@ bitflags! {
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
-    lumi: Vec<LumiEntry>,
+    channels: Vec<Channel>,
     bin_limits: BinLimits,
     orders: Vec<Order>,
     subgrid_params: SubgridParams,
@@ -244,26 +244,25 @@ pub enum Convolution {
 
 impl Convolution {
     /// Return the convolution if the PID is charged conjugated.
-    pub fn cc(&self) -> Convolution {
+    #[must_use]
+    pub const fn cc(&self) -> Self {
         match *self {
-            Convolution::None => Convolution::None,
-            Convolution::UnpolPDF(pid) => {
-                Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid))
-            }
-            Convolution::PolPDF(pid) => Convolution::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Convolution::UnpolFF(pid) => Convolution::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
-            Convolution::PolFF(pid) => Convolution::PolFF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::None => Self::None,
+            Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::PolPDF(pid) => Self::PolPDF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
+            Self::PolFF(pid) => Self::PolFF(pids::charge_conjugate_pdg_pid(pid)),
         }
     }
 
     /// Return the PID of the convolution if it has any.
-    pub fn pid(&self) -> Option<i32> {
+    #[must_use]
+    pub const fn pid(&self) -> Option<i32> {
         match *self {
-            Convolution::None => None,
-            Convolution::UnpolPDF(pid)
-            | Convolution::PolPDF(pid)
-            | Convolution::UnpolFF(pid)
-            | Convolution::PolFF(pid) => Some(pid),
+            Self::None => None,
+            Self::UnpolPDF(pid) | Self::PolPDF(pid) | Self::UnpolFF(pid) | Self::PolFF(pid) => {
+                Some(pid)
+            }
         }
     }
 }
@@ -272,18 +271,18 @@ impl Grid {
     /// Constructor.
     #[must_use]
     pub fn new(
-        lumi: Vec<LumiEntry>,
+        channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
         subgrid_params: SubgridParams,
     ) -> Self {
         Self {
             subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, lumi.len()),
+                (orders.len(), bin_limits.len() - 1, channels.len()),
                 || EmptySubgridV1.into(),
             ),
             orders,
-            lumi,
+            channels,
             bin_limits: BinLimits::new(bin_limits),
             more_members: MoreMembers::V3(Mmv3::new(
                 LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
@@ -303,7 +302,7 @@ impl Grid {
     ///
     /// If `subgrid_type` is none of the values listed above, an error is returned.
     pub fn with_subgrid_type(
-        lumi: Vec<LumiEntry>,
+        channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
         subgrid_params: SubgridParams,
@@ -322,11 +321,11 @@ impl Grid {
 
         Ok(Self {
             subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, lumi.len()),
+                (orders.len(), bin_limits.len() - 1, channels.len()),
                 || EmptySubgridV1.into(),
             ),
             orders,
-            lumi,
+            channels,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
@@ -350,23 +349,30 @@ impl Grid {
         PidBasis::Pdg
     }
 
-    fn pdg_lumi(&self) -> Cow<[LumiEntry]> {
+    /// Set the convention by which PIDs of channels are interpreted.
+    pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
+        match pid_basis {
+            PidBasis::Pdg => self.set_key_value("lumi_id_types", "pdg_mc_ids"),
+            PidBasis::Evol => self.set_key_value("lumi_id_types", "evol"),
+        }
+    }
+
+    fn pdg_channels(&self) -> Cow<[Channel]> {
         match self.pid_basis() {
             PidBasis::Evol => self
-                .lumi
+                .channels
                 .iter()
-                .map(|entry| LumiEntry::translate(entry, &pids::evol_to_pdg_mc_ids))
+                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
                 .collect(),
-            PidBasis::Pdg => Cow::Borrowed(self.lumi()),
+            PidBasis::Pdg => Cow::Borrowed(self.channels()),
         }
     }
 
     /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
-    /// selecting only the orders, bins and luminosities corresponding to `order_mask`,
-    /// `bin_indices` and `lumi_mask`. A variation of the scales
-    /// is performed using the factors in `xi`; the first factor varies the renormalization scale,
-    /// the second the factorization scale. Note that for the variation to be trusted all non-zero
-    /// log-grids must be contained.
+    /// selecting only the orders, bins and channels corresponding to `order_mask`, `bin_indices`
+    /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the
+    /// first factor varies the renormalization scale, the second the factorization scale. Note
+    /// that for the variation to be trusted all non-zero log-grids must be contained.
     ///
     /// # Panics
     ///
@@ -376,7 +382,7 @@ impl Grid {
         lumi_cache: &mut LumiCache,
         order_mask: &[bool],
         bin_indices: &[usize],
-        lumi_mask: &[bool],
+        channel_mask: &[bool],
         xi: &[(f64, f64)],
     ) -> Vec<f64> {
         lumi_cache.setup(self, xi).unwrap();
@@ -388,10 +394,10 @@ impl Grid {
         };
         let mut bins = vec![0.0; bin_indices.len() * xi.len()];
         let normalizations = self.bin_info().normalizations();
-        let self_lumi = self.pdg_lumi();
+        let pdg_channels = self.pdg_channels();
 
         for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
-            for ((ord, bin, lumi), subgrid) in self.subgrids.indexed_iter() {
+            for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
                 if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
@@ -399,7 +405,7 @@ impl Grid {
                 }
 
                 if (!order_mask.is_empty() && !order_mask[ord])
-                    || (!lumi_mask.is_empty() && !lumi_mask[lumi])
+                    || (!channel_mask.is_empty() && !channel_mask[chan])
                 {
                     continue;
                 }
@@ -412,7 +418,7 @@ impl Grid {
                     continue;
                 }
 
-                let lumi_entry = &self_lumi[lumi];
+                let channel = &pdg_channels[chan];
                 let mu2_grid = subgrid.mu2_grid();
                 let x1_grid = subgrid.x1_grid();
                 let x2_grid = subgrid.x2_grid();
@@ -425,7 +431,7 @@ impl Grid {
                         let x2 = x2_grid[ix2];
                         let mut lumi = 0.0;
 
-                        for entry in lumi_entry.entry() {
+                        for entry in channel.entry() {
                             let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
                             let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
                             lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
@@ -452,7 +458,7 @@ impl Grid {
         bins
     }
 
-    /// Convolutes a single subgrid `(order, bin, lumi)` with the PDFs strong coupling given by
+    /// Convolutes a single subgrid `(order, bin, channel)` with the PDFs strong coupling given by
     /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
     /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
     /// values.
@@ -465,19 +471,19 @@ impl Grid {
         lumi_cache: &mut LumiCache,
         ord: usize,
         bin: usize,
-        lumi: usize,
+        channel: usize,
         xir: f64,
         xif: f64,
     ) -> Array3<f64> {
         lumi_cache.setup(self, &[(xir, xif)]).unwrap();
 
         let normalizations = self.bin_info().normalizations();
-        let self_lumi = self.pdg_lumi();
+        let pdg_channels = self.pdg_channels();
 
-        let subgrid = &self.subgrids[[ord, bin, lumi]];
+        let subgrid = &self.subgrids[[ord, bin, channel]];
         let order = &self.orders[ord];
 
-        let lumi_entry = &self_lumi[lumi];
+        let channel = &pdg_channels[channel];
         let mu2_grid = subgrid.mu2_grid();
         let x1_grid = subgrid.x1_grid();
         let x2_grid = subgrid.x2_grid();
@@ -491,7 +497,7 @@ impl Grid {
             let x2 = x2_grid[ix2];
             let mut lumi = 0.0;
 
-            for entry in lumi_entry.entry() {
+            for entry in channel.entry() {
                 let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
                 let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
                 lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
@@ -516,14 +522,14 @@ impl Grid {
         array
     }
 
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `lumi`.
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`.
     ///
     /// # Panics
     ///
     /// TODO
-    pub fn fill(&mut self, order: usize, observable: f64, lumi: usize, ntuple: &Ntuple<f64>) {
+    pub fn fill(&mut self, order: usize, observable: f64, channel: usize, ntuple: &Ntuple<f64>) {
         if let Some(bin) = self.bin_limits.index(observable) {
-            let subgrid = &mut self.subgrids[[order, bin, lumi]];
+            let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
                 if let MoreMembers::V3(mmv3) = &self.more_members {
                     *subgrid = mmv3.subgrid_template.clone_empty();
@@ -614,8 +620,8 @@ impl Grid {
     }
 
     /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
-    /// and the `order` and `observable`. The events are stored in `weights` and must be ordered as
-    /// the corresponding luminosity function was created.
+    /// and the `order` and `observable`. The events are stored in `weights` and their ordering
+    /// corresponds to the ordering of [`Grid::channels`].
     pub fn fill_all(
         &mut self,
         order: usize,
@@ -623,11 +629,11 @@ impl Grid {
         ntuple: &Ntuple<()>,
         weights: &[f64],
     ) {
-        for (lumi, weight) in weights.iter().enumerate() {
+        for (channel, weight) in weights.iter().enumerate() {
             self.fill(
                 order,
                 observable,
-                lumi,
+                channel,
                 &Ntuple {
                     x1: ntuple.x1,
                     x2: ntuple.x2,
@@ -638,10 +644,10 @@ impl Grid {
         }
     }
 
-    /// Returns the luminosity function.
+    /// Return the channels for this `Grid`.
     #[must_use]
-    pub fn lumi(&self) -> &[LumiEntry] {
-        &self.lumi
+    pub fn channels(&self) -> &[Channel] {
+        &self.channels
     }
 
     /// Merges the bins for the corresponding range together in a single one.
@@ -663,18 +669,19 @@ impl Grid {
         let bin_count = self.bin_info().bins();
         let mut old_subgrids = mem::replace(
             &mut self.subgrids,
-            Array3::from_shape_simple_fn((self.orders.len(), bin_count, self.lumi.len()), || {
-                EmptySubgridV1.into()
-            }),
+            Array3::from_shape_simple_fn(
+                (self.orders.len(), bin_count, self.channels.len()),
+                || EmptySubgridV1.into(),
+            ),
         );
 
-        for ((order, bin, lumi), subgrid) in old_subgrids.indexed_iter_mut() {
+        for ((order, bin, channel), subgrid) in old_subgrids.indexed_iter_mut() {
             if subgrid.is_empty() {
                 continue;
             }
 
             if bins.contains(&bin) {
-                let new_subgrid = &mut self.subgrids[[order, bins.start, lumi]];
+                let new_subgrid = &mut self.subgrids[[order, bins.start, channel]];
 
                 if new_subgrid.is_empty() {
                     mem::swap(new_subgrid, subgrid);
@@ -688,7 +695,7 @@ impl Grid {
                     bin
                 };
 
-                mem::swap(&mut self.subgrids[[order, new_bin, lumi]], subgrid);
+                mem::swap(&mut self.subgrids[[order, new_bin, channel]], subgrid);
             }
         }
 
@@ -708,7 +715,7 @@ impl Grid {
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
-        let mut new_entries: Vec<LumiEntry> = Vec::new();
+        let mut new_entries: Vec<Channel> = Vec::new();
 
         if self.bin_info() != other.bin_info() {
             let lhs_bins = self.bin_info().bins();
@@ -746,7 +753,7 @@ impl Grid {
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
-            let other_entry = &other.lumi[k];
+            let other_entry = &other.channels[k];
 
             if !self
                 .orders
@@ -758,7 +765,7 @@ impl Grid {
             }
 
             if !self
-                .lumi
+                .channels()
                 .iter()
                 .chain(new_entries.iter())
                 .any(|y| y == other_entry)
@@ -772,7 +779,7 @@ impl Grid {
         }
 
         self.orders.append(&mut new_orders);
-        self.lumi.append(&mut new_entries);
+        self.channels.append(&mut new_entries);
 
         let bin_indices: Vec<_> = (0..other.bin_info().bins())
             .map(|bin| {
@@ -788,11 +795,11 @@ impl Grid {
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
-            let other_entry = &other.lumi[k];
+            let other_entry = &other.channels[k];
 
             let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
             let self_j = bin_indices[j];
-            let self_k = self.lumi.iter().position(|y| y == other_entry).unwrap();
+            let self_k = self.channels.iter().position(|y| y == other_entry).unwrap();
 
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
@@ -840,7 +847,7 @@ impl Grid {
                                     .map(|s| s.parse::<i32>())
                                 {
                                     Some(Ok(pid)) => {
-                                        let condition = !self.lumi().iter().all(|entry| {
+                                        let condition = !self.channels().iter().all(|entry| {
                                             entry.entry().iter().all(|&channels| match index {
                                                 1 => channels.0 == pid,
                                                 2 => channels.1 == pid,
@@ -970,15 +977,15 @@ impl Grid {
         &mut self.orders
     }
 
-    /// Set the luminosity function for this grid.
-    pub fn set_lumis(&mut self, lumis: Vec<LumiEntry>) {
-        self.lumi = lumis;
+    /// Return a mutable reference to the grid's channels.
+    pub fn channels_mut(&mut self) -> &mut [Channel] {
+        &mut self.channels
     }
 
-    /// Returns the subgrid with the specified indices `order`, `bin`, and `lumi`.
+    /// Returns the subgrid with the specified indices `order`, `bin`, and `channel`.
     #[must_use]
-    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> &SubgridEnum {
-        &self.subgrids[[order, bin, lumi]]
+    pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> &SubgridEnum {
+        &self.subgrids[[order, bin, channel]]
     }
 
     /// Returns all subgrids as an `Array3`.
@@ -987,9 +994,10 @@ impl Grid {
         &self.subgrids
     }
 
-    /// Replaces the subgrid for the specified indices `order`, `bin`, and `lumi` with `subgrid`.
-    pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: SubgridEnum) {
-        self.subgrids[[order, bin, lumi]] = subgrid;
+    /// Replaces the subgrid for the specified indices `order`, `bin`, and `channel` with
+    /// `subgrid`.
+    pub fn set_subgrid(&mut self, order: usize, bin: usize, channel: usize, subgrid: SubgridEnum) {
+        self.subgrids[[order, bin, channel]] = subgrid;
     }
 
     /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
@@ -1106,7 +1114,7 @@ impl Grid {
     /// numerical equality is tested using a tolerance of `ulps`, given in [units of least
     /// precision](https://docs.rs/float-cmp/latest/float_cmp/index.html#some-explanation).
     pub fn dedup_channels(&mut self, ulps: i64) {
-        let mut indices: Vec<usize> = (0..self.lumi.len()).collect();
+        let mut indices: Vec<usize> = (0..self.channels.len()).collect();
 
         while let Some(index) = indices.pop() {
             if let Some(other_index) = indices.iter().copied().find(|&other_index| {
@@ -1142,23 +1150,23 @@ impl Grid {
 
                 true
             }) {
-                let old_channel = self.lumi.remove(index).entry().to_vec();
-                let mut new_channel = self.lumi[other_index].entry().to_vec();
+                let old_channel = self.channels.remove(index).entry().to_vec();
+                let mut new_channel = self.channels[other_index].entry().to_vec();
                 new_channel.extend(old_channel);
-                self.lumi[other_index] = LumiEntry::new(new_channel);
+                self.channels[other_index] = Channel::new(new_channel);
                 self.subgrids.remove_index(Axis(2), index);
             }
         }
     }
 
     fn merge_same_channels(&mut self) {
-        let mut indices: Vec<_> = (0..self.lumi.len()).rev().collect();
+        let mut indices: Vec<_> = (0..self.channels.len()).rev().collect();
 
-        // merge luminosities that are the same
+        // merge channels that are the same
         while let Some(index) = indices.pop() {
             if let Some((other_index, factor)) = indices.iter().find_map(|&i| {
-                self.lumi[i]
-                    .common_factor(&self.lumi[index])
+                self.channels[i]
+                    .common_factor(&self.channels[index])
                     .map(|factor| (i, factor))
             }) {
                 let (mut a, mut b) = self
@@ -1183,21 +1191,21 @@ impl Grid {
     }
 
     fn strip_empty_channels(&mut self) {
-        let mut keep_lumi_indices = vec![];
-        let mut new_lumi_entries = vec![];
+        let mut keep_channel_indices = vec![];
+        let mut new_channel_entries = vec![];
 
-        // only keep luminosities that have non-zero factors and for which at least one subgrid is
+        // only keep channels that have non-zero factors and for which at least one subgrid is
         // non-empty
-        for (lumi, entry) in self.lumi.iter().enumerate() {
+        for (channel, entry) in self.channels.iter().enumerate() {
             if !entry.entry().iter().all(|&(_, _, factor)| factor == 0.0)
                 && !self
                     .subgrids
-                    .slice(s![.., .., lumi])
+                    .slice(s![.., .., channel])
                     .iter()
                     .all(Subgrid::is_empty)
             {
-                keep_lumi_indices.push(lumi);
-                new_lumi_entries.push(entry.clone());
+                keep_channel_indices.push(channel);
+                new_channel_entries.push(entry.clone());
             }
         }
 
@@ -1206,17 +1214,17 @@ impl Grid {
             (
                 self.orders.len(),
                 self.bin_info().bins(),
-                keep_lumi_indices.len(),
+                keep_channel_indices.len(),
             ),
-            |(order, bin, new_lumi)| {
+            |(order, bin, new_channel)| {
                 mem::replace(
-                    &mut self.subgrids[[order, bin, keep_lumi_indices[new_lumi]]],
+                    &mut self.subgrids[[order, bin, keep_channel_indices[new_channel]]],
                     EmptySubgridV1.into(),
                 )
             },
         );
 
-        self.lumi = new_lumi_entries;
+        self.channels = new_channel_entries;
         self.subgrids = new_subgrids;
     }
 
@@ -1242,12 +1250,12 @@ impl Grid {
             return;
         }
 
-        let mut indices: Vec<usize> = (0..self.lumi.len()).rev().collect();
+        let mut indices: Vec<usize> = (0..self.channels.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
-            let lumi_entry = &self.lumi[index];
+            let channel_entry = &self.channels[index];
 
-            if *lumi_entry == lumi_entry.transpose() {
+            if *channel_entry == channel_entry.transpose() {
                 // check if in all cases the limits are compatible with merging
                 self.subgrids
                     .slice_mut(s![.., .., index])
@@ -1260,7 +1268,7 @@ impl Grid {
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
-                .find(|(_, i)| self.lumi[**i] == lumi_entry.transpose())
+                .find(|(_, i)| self.channels[**i] == channel_entry.transpose())
             {
                 indices.remove(j);
 
@@ -1339,7 +1347,7 @@ impl Grid {
         let mut x1 = Vec::new();
         let mut pids1 = Vec::new();
 
-        for (lumi, subgrid) in self
+        for (channel, subgrid) in self
             .subgrids()
             .indexed_iter()
             .filter_map(|(tuple, subgrid)| {
@@ -1366,10 +1374,10 @@ impl Grid {
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             if has_pdf1 {
-                pids1.extend(self.lumi()[lumi].entry().iter().map(|(a, _, _)| a));
+                pids1.extend(self.channels()[channel].entry().iter().map(|(a, _, _)| a));
             }
             if has_pdf2 {
-                pids1.extend(self.lumi()[lumi].entry().iter().map(|(_, b, _)| b));
+                pids1.extend(self.channels()[channel].entry().iter().map(|(_, b, _)| b));
             }
 
             pids1.sort_unstable();
@@ -1419,7 +1427,7 @@ impl Grid {
                             fac1,
                             pids1: info_a.pids1.clone(),
                             x1: info_a.x1.clone(),
-                            lumi_id_types: info_a.lumi_id_types.clone(),
+                            pid_basis: info_a.pid_basis,
                         },
                         CowArray::from(op),
                     ))
@@ -1437,7 +1445,9 @@ impl Grid {
                             fac1,
                             pids1: info_b.pids1.clone(),
                             x1: info_b.x1.clone(),
-                            lumi_id_types: info_b.lumi_id_types.clone(),
+                            pids1: info_b.pids1.clone(),
+                            x1: info_b.x1.clone(),
+                            pid_basis: info_b.pid_basis,
                         },
                         CowArray::from(op),
                     ))
@@ -1502,6 +1512,7 @@ impl Grid {
 
             let view = operator.view();
 
+<<<<<<< HEAD
             // Deal with the additional EKO
             let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
@@ -1523,6 +1534,9 @@ impl Grid {
             let extra_view = operator_b.view();
 
             let (subgrids, lumi) = if self.convolutions()[0] != Convolution::None
+=======
+            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
+>>>>>>> master
                 && self.convolutions()[1] != Convolution::None
             {
                 evolution::evolve_slice_with_two(
@@ -1541,15 +1555,20 @@ impl Grid {
 
             let mut rhs = Self {
                 subgrids,
-                lumi,
+                channels,
                 bin_limits: self.bin_limits.clone(),
                 orders: vec![Order::new(0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
                 more_members: self.more_members.clone(),
             };
 
+<<<<<<< HEAD
             // write additional metadata
             rhs.set_key_value("lumi_id_types", &info_a.lumi_id_types);
+=======
+            // TODO: use a new constructor to set this information
+            rhs.set_pid_basis(info.pid_basis);
+>>>>>>> master
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1666,22 +1685,22 @@ impl Grid {
     pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
         match (self.pid_basis(), pid_basis) {
             (PidBasis::Pdg, PidBasis::Evol) => {
-                self.lumi = self
-                    .lumi
+                self.channels = self
+                    .channels()
                     .iter()
-                    .map(|channel| LumiEntry::translate(channel, &pids::pdg_mc_pids_to_evol))
+                    .map(|channel| Channel::translate(channel, &pids::pdg_mc_pids_to_evol))
                     .collect();
 
-                self.set_key_value("lumi_id_types", "evol");
+                self.set_pid_basis(PidBasis::Evol);
             }
             (PidBasis::Evol, PidBasis::Pdg) => {
-                self.lumi = self
-                    .lumi
+                self.channels = self
+                    .channels()
                     .iter()
-                    .map(|channel| LumiEntry::translate(channel, &pids::evol_to_pdg_mc_ids))
+                    .map(|channel| Channel::translate(channel, &pids::evol_to_pdg_mc_ids))
                     .collect();
 
-                self.set_key_value("lumi_id_types", "pdg_mc_ids");
+                self.set_pid_basis(PidBasis::Pdg);
             }
             (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
                 // here's nothing to do
@@ -1696,7 +1715,7 @@ impl Grid {
             .iter()
             .copied()
             // ignore indices corresponding to bin that don't exist
-            .filter(|&index| index < self.lumi().len())
+            .filter(|&index| index < self.channels().len())
             .collect();
 
         // sort and remove repeated indices
@@ -1706,17 +1725,17 @@ impl Grid {
         let channel_indices = channel_indices;
 
         for index in channel_indices {
-            self.lumi.remove(index);
+            self.channels.remove(index);
             self.subgrids.remove_index(Axis(2), index);
         }
     }
 
-    pub(crate) fn rewrite_lumi(&mut self, add: &[(i32, i32)], del: &[i32]) {
-        self.lumi = self
-            .lumi
+    pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
+        self.channels = self
+            .channels()
             .iter()
             .map(|entry| {
-                LumiEntry::new(
+                Channel::new(
                     entry
                         .entry()
                         .iter()
@@ -1747,26 +1766,25 @@ impl Grid {
             .collect();
     }
 
-    /// Splits the grid such that the luminosity function contains only a single combination per
-    /// channel.
-    pub fn split_lumi(&mut self) {
+    /// Splits the grid such that each channel contains only a single tuple of PIDs.
+    pub fn split_channels(&mut self) {
         let indices: Vec<_> = self
-            .lumi
+            .channels()
             .iter()
             .enumerate()
             .flat_map(|(index, entry)| iter::repeat(index).take(entry.entry().len()))
             .collect();
 
         self.subgrids = self.subgrids.select(Axis(2), &indices);
-        self.lumi = self
-            .lumi
+        self.channels = self
+            .channels()
             .iter()
             .flat_map(|entry| {
                 entry
                     .entry()
                     .iter()
                     .copied()
-                    .map(move |entry| LumiEntry::new(vec![entry]))
+                    .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
     }
@@ -1775,7 +1793,7 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lumi_entry;
+    use crate::channel;
     use float_cmp::assert_approx_eq;
     use std::fs::File;
 
@@ -1798,8 +1816,8 @@ mod tests {
     fn grid_merge_empty_subgrids() {
         let mut grid = Grid::new(
             vec![
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1807,14 +1825,14 @@ mod tests {
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let other = Grid::new(
             vec![
                 // differently ordered than `grid`
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
             ],
             vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1825,7 +1843,7 @@ mod tests {
         grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
 
@@ -1833,8 +1851,8 @@ mod tests {
     fn grid_merge_orders() {
         let mut grid = Grid::new(
             vec![
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1842,13 +1860,13 @@ mod tests {
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
             vec![
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![
                 Order::new(1, 2, 0, 0),
@@ -1886,16 +1904,16 @@ mod tests {
         grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 3);
     }
 
     #[test]
-    fn grid_merge_lumi_entries() {
+    fn grid_merge_channels_entries() {
         let mut grid = Grid::new(
             vec![
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1903,11 +1921,11 @@ mod tests {
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
-            vec![lumi_entry![22, 22, 1.0], lumi_entry![2, 2, 1.0; 4, 4, 1.0]],
+            vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
@@ -1929,7 +1947,7 @@ mod tests {
         grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 3);
+        assert_eq!(grid.channels().len(), 3);
         assert_eq!(grid.orders().len(), 1);
     }
 
@@ -1937,8 +1955,8 @@ mod tests {
     fn grid_merge_bins() {
         let mut grid = Grid::new(
             vec![
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.0, 0.25, 0.5],
@@ -1946,14 +1964,14 @@ mod tests {
         );
 
         assert_eq!(grid.bin_info().bins(), 2);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
             vec![
-                // luminosity function is differently sorted
-                lumi_entry![1, 1, 1.0; 3, 3, 1.0],
-                lumi_entry![2, 2, 1.0; 4, 4, 1.0],
+                // channels are differently sorted
+                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![2, 2, 1.0; 4, 4, 1.0],
             ],
             vec![Order::new(0, 2, 0, 0)],
             vec![0.5, 0.75, 1.0],
@@ -1975,7 +1993,7 @@ mod tests {
         grid.merge(other).unwrap();
 
         assert_eq!(grid.bin_info().bins(), 4);
-        assert_eq!(grid.lumi().len(), 2);
+        assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
 
@@ -1984,7 +2002,7 @@ mod tests {
     #[test]
     fn grid_convolutions() {
         let mut grid = Grid::new(
-            vec![lumi_entry![21, 21, 1.0]],
+            vec![channel![21, 21, 1.0]],
             vec![Order {
                 alphas: 0,
                 alpha: 0,

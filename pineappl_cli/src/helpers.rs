@@ -130,7 +130,7 @@ pub fn convolve_scales(
     lhapdf: &mut Pdf,
     orders: &[(u32, u32)],
     bins: &[usize],
-    lumis: &[bool],
+    channels: &[bool],
     scales: &[(f64, f64)],
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
@@ -168,7 +168,7 @@ pub fn convolve_scales(
     };
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolve(&mut cache, &orders, bins, lumis, scales);
+    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {

@@ -1,17 +1,17 @@
-use pineappl::evolution::{AlphasTable, OperatorInfo};
+use pineappl::boc::Order;
+use pineappl::evolution::OperatorInfo;
 use pineappl::grid::{Grid, Ntuple};
-use pineappl::order::Order;
 
 use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
-use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
+use super::evolution::PyEvolveInfo;
 use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -20,9 +20,7 @@ use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyIterator, PyTuple};
-
-use ndarray::CowArray;
+use pyo3::types::PyIterator;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
@@ -484,7 +482,7 @@ impl PyGrid {
             alphas: alphas.to_vec().unwrap(),
             xir: xi.0,
             xif: xi.1,
-            lumi_id_types: lumi_id_types,
+            pid_basis: lumi_id_types.parse().unwrap(),
         };
 
         let evolved_grid = self
@@ -531,11 +529,11 @@ impl PyGrid {
     /// TODO
     pub fn evolve_with_slice_iter(
         &self,
-        slices: &PyIterator,
-        order_mask: PyReadonlyArray1<bool>,
-        xi: (f64, f64),
-        ren1: Vec<f64>,
-        alphas: Vec<f64>,
+        _slices: &PyIterator,
+        _order_mask: PyReadonlyArray1<bool>,
+        _xi: (f64, f64),
+        _ren1: Vec<f64>,
+        _alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
         todo!()
         //Ok(self
@@ -728,9 +726,9 @@ impl PyGrid {
     ///     list(list(tuple(float,float))) :
     ///         luminosity functions as pid tuples (multiple tuples can bee associated to the same
     ///         contribution)
-    pub fn lumi(&self) -> Vec<Vec<(i32, i32, f64)>> {
+    pub fn channels(&self) -> Vec<Vec<(i32, i32, f64)>> {
         self.grid
-            .lumi()
+            .channels()
             .iter()
             .map(|entry| entry.entry().to_vec())
             .collect()

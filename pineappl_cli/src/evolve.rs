@@ -21,7 +21,7 @@ mod eko {
     use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::OperatorSliceInfo;
-    use pineappl::pids;
+    use pineappl::pids::{self, PidBasis};
     use serde::Deserialize;
     use std::collections::HashMap;
     use std::ffi::{OsStr, OsString};
@@ -155,7 +155,7 @@ mod eko {
             Ok(Self::V0 {
                 fac1: metadata.q2_grid,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&metadata.inputpids),
+                    pid_basis: PidBasis::guess(&metadata.inputpids),
                     fac0: metadata.q2_ref,
                     pids0: metadata.inputpids,
                     x0: metadata.inputgrid,
@@ -222,7 +222,7 @@ mod eko {
             Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    pid_basis: PidBasis::guess(&pids0),
                     fac0: metadata.mu20,
                     pids0,
                     x0: metadata
@@ -290,7 +290,7 @@ mod eko {
             Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    pid_basis: PidBasis::guess(&pids0),
                     fac0: operator.mu0 * operator.mu0,
                     pids0,
                     x0: metadata
@@ -473,7 +473,7 @@ fn evolve_grid(
                 alphas: alphas_table.alphas.clone(),
                 xir,
                 xif,
-                lumi_id_types: info.lumi_id_types,
+                pid_basis: info.pid_basis,
             };
 
             if let EkoSlices::V0 {

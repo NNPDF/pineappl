@@ -163,14 +163,14 @@ through them one by one:
 If you'd like a complete description of all recognized metadata, have a look at
 the [full list](metadata.md).
 
-### Orders, bins and lumis
+### Orders, bins and channels
 
 Each *grid* is—basically—a three-dimensional array of *subgrids*, which are the
 actual interpolation grids. The three dimensions are:
 
 - orders (`o`),
 - bins (`b`) and
-- luminosities/lumis (`l`).
+- channels (`c`).
 
 You can use the subcommand `read` to see exactly how each grid is built. Let's
 go through them one by one using our grid:
@@ -228,13 +228,13 @@ right bin limits, which you've already seen in `convolve`. The column `norm`
 shows the factor that all convolutions are divided with. Typically, as shown in
 this case, this is the bin width, but in general this can be different.
 
-Finally, let's have a look at the luminosities or *lumis*:
+Finally, let's have a look at the channel definition:
 
-    pineappl read --lumis LHCB_WP_7TEV.pineappl.lz4
+    pineappl read --channels LHCB_WP_7TEV.pineappl.lz4
 
 This prints all partonic initial states that contribute to this process:
 
-    l    entry        entry
+    c    entry        entry
     -+------------+------------
     0 1 × ( 2, -1) 1 × ( 4, -3)
     1 1 × (21, -3) 1 × (21, -1)
@@ -246,16 +246,16 @@ In this case you see that the up–anti-down (2, -1) and charm–anti-strange (4
 -3) initial states (the numbers are [PDG](https://pdg.lbl.gov/) MC IDs) are
 grouped together in a single *channel*, each with a factor of `1`. In general
 this number can be different from `1`, if the Monte Carlo decides to factor out
-CKM values or electric charges, for instance, to group more lumis with the same
-matrix elements together into a single channel. This is an optimization step,
-as fewer lumis result in a smaller grid file.
+CKM values or electric charges, for instance, to group more contributions with
+the same matrix elements together into a single channel. This is an
+optimization step, as fewer channels result in a smaller grid file.
 
-Note that lumis with the transposed initial states, for instance
+Note that channels with the transposed initial states, for instance
 anti-down—up, are merged with each other, which always works if the two
 initial-state hadrons are the same; this is an optimization step, also to keep
 the size of the grid files small.
 
-All remaining lumis are the ones with a gluon, `21`, or with a photon, `22`.
+All remaining channels are the ones with a gluon, `21`, or with a photon, `22`.
 
 ## `pineappl orders`: What's the size of each perturbative order?
 
@@ -301,14 +301,13 @@ which will show
 
 ## `pineappl channels`: What's the size of each channel?
 
-You can also show a convolution separately for each lumi, or in other words
-show the size of each partonic channel:
+You can also show a convolution separately for each channel:
 
     pineappl channels LHCB_WP_7TEV.pineappl.lz4 CT18NNLO
 
 This will show the following table,
 
-    b   etal    l  size  l  size  l size  l size l size
+    b   etal    c  size  c  size  c size  c size c size
          []        [%]      [%]      [%]    [%]    [%]
     -+----+----+-+------+-+------+-+-----+-+----+-+----
     0    2 2.25 0 111.00 3  -7.91 1 -3.10 2 0.00 4 0.00
@@ -320,13 +319,13 @@ This will show the following table,
     6  3.5    4 0 115.65 3 -10.25 1 -5.39 2 0.00 4 0.00
     7    4  4.5 0 115.81 3  -8.58 1 -7.23 2 0.00 4 0.00
 
-The most important lumi is `0`, which is the up-type–anti-down-type
+The most important channel is `0`, which is the up-type–anti-down-type
 combination. The channels with gluons are much smaller and negative. Channels
 with a photon are zero, because the PDF set that we've chosen doesn't have a
 photon PDF. Let's try again with `NNPDF31_nnlo_as_0118_luxqed` (remember to
 install the set first) as the PDF set:
 
-    b   etal    l  size  l  size  l size  l size l size
+    b   etal    c  size  c  size  c size  c size c size
          []        [%]      [%]      [%]    [%]    [%]
     -+----+----+-+------+-+------+-+-----+-+----+-+----
     0    2 2.25 0 111.04 3  -7.84 1 -3.23 4 0.02 2 0.01
@@ -392,7 +391,7 @@ and `NNPDF31_nnlo_as_0118_luxqed` for $\sigma_2$ and $\delta \sigma_2$. This
 will show not only the pull, in the column `total`, but also how this pull is
 calculated using the different channels:
 
-    b   etal    total  l  pull  l  pull  l  pull  l pull  l pull
+    b   etal    total  c  pull  c  pull  c  pull  c pull  c pull
          []      [σ]      [σ]      [σ]      [σ]      [σ]     [σ]
     -+----+----+------+-+------+-+------+-+------+-+-----+-+-----
     0    2 2.25  0.065 0  0.086 1 -0.058 3  0.024 4 0.009 2 0.005
@@ -407,10 +406,10 @@ calculated using the different channels:
 Looking at the `total` column you can see that the numbers are much smaller
 than `1`, where `1` corresponds to a one sigma difference. This we expect
 knowing that this dataset is used in the fit of both PDF sets. The remaining
-columns show how the different luminosities (with indices in the `l` column)
-contribute to the total pull. For the last bin, for instance, we see lumi `0`
+columns show how different channels (with indices in the `c` column) contribute
+to the total pull. For the last bin, for instance, we see channel `0`
 contributes roughly half to the total pull, the remaining pull coming from
-lumis `3` and `1`.
+channels `3` and `1`.
 
 Note that CT18NNLO doesn't have a photon PDF, but the NNPDF set *has* one.
 However, for these observables the photon PDF contribution is too small to make

@@ -158,8 +158,8 @@ impl PyFkTable {
     /// -------
     ///     list(tuple(float,float)) :
     ///         luminosity functions as pid tuples
-    pub fn lumi(&self) -> Vec<(i32, i32)> {
-        self.fk_table.lumi()
+    pub fn channels(&self) -> Vec<(i32, i32)> {
+        self.fk_table.channels()
     }
 
     /// Get reference (fitting) scale.

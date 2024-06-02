@@ -57,9 +57,9 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
+use pineappl::boc::{Channel, Order};
 use pineappl::grid::{Grid, GridOptFlags, Ntuple};
-use pineappl::lumi::{LumiCache, LumiEntry};
-use pineappl::order::Order;
+use pineappl::lumi::LumiCache;
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -189,7 +189,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
 
 /// Type for defining a luminosity function.
 #[derive(Default)]
-pub struct Lumi(Vec<LumiEntry>);
+pub struct Lumi(Vec<Channel>);
 
 /// Returns the number of bins in `grid`.
 ///
@@ -304,14 +304,23 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: *const bool,
-    lumi_mask: *const bool,
+    channel_mask: *const bool,
     xi_ren: f64,
     xi_fac: f64,
     results: *mut f64,
 ) {
     unsafe {
         pineappl_grid_convolve_with_one(
-            grid, pdg_id, xfx, alphas, state, order_mask, lumi_mask, xi_ren, xi_fac, results,
+            grid,
+            pdg_id,
+            xfx,
+            alphas,
+            state,
+            order_mask,
+            channel_mask,
+            xi_ren,
+            xi_fac,
+            results,
         );
     }
 }
@@ -331,15 +340,25 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: *const bool,
-    lumi_mask: *const bool,
+    channel_mask: *const bool,
     xi_ren: f64,
     xi_fac: f64,
     results: *mut f64,
 ) {
     unsafe {
         pineappl_grid_convolve_with_two(
-            grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, state, order_mask, lumi_mask, xi_ren,
-            xi_fac, results,
+            grid,
+            pdg_id1,
+            xfx1,
+            pdg_id2,
+            xfx2,
+            alphas,
+            state,
+            order_mask,
+            channel_mask,
+            xi_ren,
+            xi_fac,
+            results,
         );
     }
 }
@@ -351,19 +370,19 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
 /// provided to these functions is the same one given to this function. The parameter `order_mask`
 /// must be as long as there are perturbative orders contained in `grid` and is used to selectively
 /// disable (`false`) or enable (`true`) individual orders. If `order_mask` is set to `NULL`, all
-/// orders are active. The parameter `lumi_mask` can be used similarly, but must be as long as the
-/// luminosity function `grid` was created with has entries, or `NULL` to enable all luminosities.
-/// The values `xi_ren` and `xi_fac` can be used to vary the renormalization and factorization from
-/// its central value, which corresponds to `1.0`. After convolution of the grid with the PDFs the
+/// orders are active. The parameter `channel_mask` can be used similarly, but must be as long as
+/// the channels `grid` was created with has entries, or `NULL` to enable all channels. The values
+/// `xi_ren` and `xi_fac` can be used to vary the renormalization and factorization from its
+/// central value, which corresponds to `1.0`. After convolution of the grid with the PDFs the
 /// differential cross section for each bin is written into `results`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
-/// be null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
-/// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
-/// entries, respectively. Finally, `results` must be as long as `grid` has bins.
+/// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
+/// must either be null pointers or point to arrays that are as long as `grid` has orders and
+/// channels, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     grid: *const Grid,
@@ -372,7 +391,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: *const bool,
-    lumi_mask: *const bool,
+    channel_mask: *const bool,
     xi_ren: f64,
     xi_fac: f64,
     results: *mut f64,
@@ -385,10 +404,10 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     } else {
         unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
     };
-    let lumi_mask = if lumi_mask.is_null() {
+    let channel_mask = if channel_mask.is_null() {
         vec![]
     } else {
-        unsafe { slice::from_raw_parts(lumi_mask, grid.lumi().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
@@ -397,7 +416,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         &mut lumi_cache,
         &order_mask,
         &[],
-        &lumi_mask,
+        &channel_mask,
         &[(xi_ren, xi_fac)],
     ));
 }
@@ -410,19 +429,19 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 /// given to this function. The parameter `order_mask` must be as long as there are perturbative
 /// orders contained in `grid` and is used to selectively disable (`false`) or enable (`true`)
 /// individual orders. If `order_mask` is set to `NULL`, all orders are active. The parameter
-/// `lumi_mask` can be used similarly, but must be as long as the luminosity function `grid` was
-/// created with has entries, or `NULL` to enable all luminosities. The values `xi_ren` and
-/// `xi_fac` can be used to vary the renormalization and factorization from its central value,
-/// which corresponds to `1.0`. After convolution of the grid with the PDFs the differential cross
-/// section for each bin is written into `results`.
+/// `channel_mask` can be used similarly, but must be as long as the channels `grid` was created
+/// with has entries, or `NULL` to enable all channels. The values `xi_ren` and `xi_fac` can be
+/// used to vary the renormalization and factorization from its central value, which corresponds to
+/// `1.0`. After convolution of the grid with the PDFs the differential cross section for each bin
+/// is written into `results`.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
-/// be null pointers and point to valid functions. The parameters `order_mask` and `lumi_mask` must
-/// either be null pointers or point to arrays that are as long as `grid` has orders and lumi
-/// entries, respectively. Finally, `results` must be as long as `grid` has bins.
+/// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
+/// must either be null pointers or point to arrays that are as long as `grid` has orders and
+/// channels, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     grid: *const Grid,
@@ -433,7 +452,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     state: *mut c_void,
     order_mask: *const bool,
-    lumi_mask: *const bool,
+    channel_mask: *const bool,
     xi_ren: f64,
     xi_fac: f64,
     results: *mut f64,
@@ -447,10 +466,10 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     } else {
         unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
     };
-    let lumi_mask = if lumi_mask.is_null() {
+    let channel_mask = if channel_mask.is_null() {
         vec![]
     } else {
-        unsafe { slice::from_raw_parts(lumi_mask, grid.lumi().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
@@ -459,7 +478,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         &mut lumi_cache,
         &order_mask,
         &[],
-        &lumi_mask,
+        &channel_mask,
         &[(xi_ren, xi_fac)],
     ));
 }
@@ -526,7 +545,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
     weights: *const f64,
 ) {
     let grid = unsafe { &mut *grid };
-    let weights = unsafe { slice::from_raw_parts(weights, grid.lumi().len()) };
+    let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
 
     grid.fill_all(
         order,
@@ -586,7 +605,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
 pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
     let grid = unsafe { &*grid };
 
-    Box::new(Lumi(grid.lumi().to_vec()))
+    Box::new(Lumi(grid.channels().to_vec()))
 }
 
 /// Write the order parameters of `grid` into `order_params`.
@@ -778,7 +797,7 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
 
-    grid.split_lumi();
+    grid.split_channels();
 }
 
 /// Optimizes the grid representation for space efficiency.
@@ -994,7 +1013,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
         unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
     };
 
-    lumi.0.push(LumiEntry::new(
+    lumi.0.push(Channel::new(
         pdg_id_pairs
             .chunks(2)
             .zip(factors)

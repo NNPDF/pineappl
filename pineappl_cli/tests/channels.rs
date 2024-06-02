@@ -9,18 +9,18 @@ Arguments:
   <PDFSET>  LHAPDF id or name of the PDF set
 
 Options:
-  -a, --absolute          Show absolute numbers of each contribution
-  -l, --limit <LIMIT>     The maximum number of channels displayed [default: 10]
-  -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
-      --lumis <LUMIS>     Show only the listed channels
-  -o, --orders <ORDERS>   Select orders manually
-      --dont-sort         Do not sort the channels according to their size
-      --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
-      --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help              Print help
+  -a, --absolute             Show absolute numbers of each contribution
+  -l, --limit <LIMIT>        The maximum number of channels displayed [default: 10]
+  -i, --integrated           Show integrated numbers (without bin widths) instead of differential ones
+      --channels <CHANNELS>  Show only the listed channels
+  -o, --orders <ORDERS>      Select orders manually
+      --dont-sort            Do not sort the channels according to their size
+      --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 2]
+  -h, --help                 Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    l  size  l  size  l size  l size l size
+const DEFAULT_STR: &str = "b   etal    c  size  c  size  c size  c size c size
      []        [%]      [%]      [%]    [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----+-+----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31 4 0.02 2 0.01
@@ -34,7 +34,7 @@ const DEFAULT_STR: &str = "b   etal    l  size  l  size  l size  l size l size
 ";
 
 const ABSOLUTE_STR: &str =
-    "b   etal    l dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal 
+    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal 
      []          [pb]           [pb]           [pb]           [pb]           [pb]    
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 8.4002759e2 3 -6.0727462e1 1 -2.4969360e1 4 1.7176328e-1 2 8.8565923e-2
@@ -48,7 +48,7 @@ const ABSOLUTE_STR: &str =
 ";
 
 const ABSOLUTE_INTEGRATED_STR: &str =
-    "b   etal    l    integ    l    integ     l    integ     l    integ     l    integ    
+    "b   etal    c    integ    c    integ     c    integ     c    integ     c    integ    
      []           []             []             []             []             []     
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 2.1000690e2 3 -1.5181865e1 1 -6.2423401e0 4 4.2940819e-2 2 2.2141481e-2
@@ -61,7 +61,7 @@ const ABSOLUTE_INTEGRATED_STR: &str =
 7    4  4.5 0 1.5943129e1 3 -1.1843361e0 1 -1.0028343e0 4 1.7077102e-3 2 9.6673424e-4
 ";
 
-const LIMIT_3_STR: &str = "b   etal    l  size  l  size  l size 
+const LIMIT_3_STR: &str = "b   etal    c  size  c  size  c size 
      []        [%]      [%]      [%] 
 -+----+----+-+------+-+------+-+-----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31
@@ -79,7 +79,7 @@ const BAD_LIMIT_STR: &str = "error: invalid value '0' for '--limit <LIMIT>': 0 i
 For more information, try '--help'.
 ";
 
-const LUMIS_0123_STR: &str = "b   etal    l  size  l  size  l size  l size
+const LUMIS_0123_STR: &str = "b   etal    c  size  c  size  c size  c size
      []        [%]      [%]      [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31 2 0.01
@@ -92,7 +92,7 @@ const LUMIS_0123_STR: &str = "b   etal    l  size  l  size  l size  l size
 7    4  4.5 0 115.88 3  -8.61 1 -7.29 2 0.01
 ";
 
-const ORDERS_A2_AS1A2_STR: &str = "b   etal    l  size  l  size  l size  l size l size
+const ORDERS_A2_AS1A2_STR: &str = "b   etal    c  size  c  size  c size  c size c size
      []        [%]      [%]      [%]    [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----+-+----
 0    2 2.25 0 111.24 3  -7.96 1 -3.27 2 0.00 4 0.00
@@ -106,7 +106,7 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    l  size  l  size  l size  l size 
 ";
 
 const DONT_SORT_ABSOLUTE_STR: &str =
-    "b   etal    l dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal  l  dsig/detal 
+    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal 
      []          [pb]           [pb]           [pb]           [pb]           [pb]    
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 8.4002759e2 1 -2.4969360e1 2 8.8565923e-2 3 -6.0727462e1 4 1.7176328e-1
@@ -119,7 +119,7 @@ const DONT_SORT_ABSOLUTE_STR: &str =
 7    4  4.5 0 3.1886258e1 1 -2.0056686e0 2 1.9334685e-3 3 -2.3686722e0 4 3.4154203e-3
 ";
 
-const DONT_SORT_STR: &str = "b   etal    l  size  l size  l size l  size  l size
+const DONT_SORT_STR: &str = "b   etal    c  size  c size  c size c  size  c size
      []        [%]      [%]    [%]     [%]     [%] 
 -+----+----+-+------+-+-----+-+----+-+------+-+----
 0    2 2.25 0 111.32 1 -3.31 2 0.01 3  -8.05 4 0.02
@@ -218,12 +218,12 @@ fn bad_limit() {
 }
 
 #[test]
-fn lumis_0123() {
+fn channels_0123() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "channels",
-            "--lumis=0-3",
+            "--channels=0-3",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])

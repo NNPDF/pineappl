@@ -5,8 +5,8 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
+use pineappl::boc::Channel;
 use pineappl::grid::Convolution;
-use pineappl::lumi::LumiEntry;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -38,7 +38,7 @@ pub struct Opts {
         long,
         num_args = 1,
         value_delimiter = ',',
-        value_name = "ORDER,BIN,LUMI"
+        value_name = "ORDER,BIN,CHAN"
     )]
     subgrid_pull: Vec<String>,
     /// Plot the asymmetry.
@@ -101,8 +101,9 @@ fn map_format_parton(parton: i32) -> &'static str {
     }
 }
 
-fn map_format_lumi(lumi: &LumiEntry, has_pdf1: bool, has_pdf2: bool) -> String {
-    lumi.entry()
+fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> String {
+    channel
+        .entry()
         .iter()
         .map(|&(a, b, _)| {
             format!(
@@ -370,13 +371,13 @@ impl Subcommand for Opts {
                 let channels = if matches!(mode, ConvoluteMode::Asymmetry) {
                     vec![]
                 } else {
-                    let mut channels: Vec<_> = (0..grid.lumi().len())
-                        .map(|lumi| {
-                            let mut lumi_mask = vec![false; grid.lumi().len()];
-                            lumi_mask[lumi] = true;
+                    let mut channels: Vec<_> = (0..grid.channels().len())
+                        .map(|channel| {
+                            let mut channel_mask = vec![false; grid.channels().len()];
+                            channel_mask[channel] = true;
                             (
-                                map_format_lumi(
-                                    &grid.lumi()[lumi],
+                                map_format_channel(
+                                    &grid.channels()[channel],
                                     grid.convolutions()[0] != Convolution::None,
                                     grid.convolutions()[1] != Convolution::None,
                                 ),
@@ -385,7 +386,7 @@ impl Subcommand for Opts {
                                     &mut pdf,
                                     &[],
                                     &bins,
-                                    &lumi_mask,
+                                    &channel_mask,
                                     1,
                                     mode,
                                     cfg,
@@ -506,7 +507,7 @@ impl Subcommand for Opts {
             );
         } else {
             let (pdfset1, pdfset2) = self.pdfsets.iter().collect_tuple().unwrap();
-            let (order, bin, lumi) = self
+            let (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
                 .map(|num| num.parse::<usize>().unwrap())
@@ -577,12 +578,12 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolve_subgrid(&grid, &mut pdfset1[0], order, bin, lumi, cfg)
+            let res1 = helpers::convolve_subgrid(&grid, &mut pdfset1[0], order, bin, channel, cfg)
                 .sum_axis(Axis(0));
-            let res2 = helpers::convolve_subgrid(&grid, &mut pdfset2[0], order, bin, lumi, cfg)
+            let res2 = helpers::convolve_subgrid(&grid, &mut pdfset2[0], order, bin, channel, cfg)
                 .sum_axis(Axis(0));
 
-            let subgrid = grid.subgrid(order, bin, lumi);
+            let subgrid = grid.subgrid(order, bin, channel);
             //let q2 = subgrid.q2_grid();
             let x1 = subgrid.x1_grid();
             let x2 = subgrid.x2_grid();

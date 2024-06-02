@@ -1,10 +1,9 @@
 use anyhow::Result;
 use itertools::Itertools;
 use pineappl::bin::BinRemapper;
+use pineappl::boc::{Channel, Order};
 use pineappl::grid::{Convolution, Grid};
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::lumi::LumiEntry;
-use pineappl::order::Order;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
@@ -25,7 +24,7 @@ fn create_lumi(
     table: &fastNLOCoeffAddBase,
     comb: &fastNLOPDFLinearCombinations,
     dis_pid: i32,
-) -> Vec<LumiEntry> {
+) -> Vec<Channel> {
     let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
     let mut lumis = Vec::new();
 
@@ -46,7 +45,7 @@ fn create_lumi(
             entries.push((a, b, f));
         }
 
-        lumis.push(LumiEntry::new(entries));
+        lumis.push(Channel::new(entries));
     }
 
     // if the PDF coefficient vector was empty, we must reconstruct the lumi function
@@ -82,7 +81,7 @@ fn create_lumi(
             xfx1[a] = 0.0;
         }
 
-        lumis = entries.into_iter().map(LumiEntry::new).collect();
+        lumis = entries.into_iter().map(Channel::new).collect();
     }
 
     lumis

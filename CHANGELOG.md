@@ -10,10 +10,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added new methods `Grid::convolutions` and `Grid::set_convolution`
+- added the function `pineappl_grid_convolve_with_one` and
+  `pineappl_grid_convolve_with_two` which replace the deprecated function
+  similarly named with `convolute` in CAPI
+- added `PidBasis::charge_conjugate` and `PidBasis::guess`
+- added `Grid::set_pid_basis` method
 
 ### Changed
 
-- moved `Order` and `ParseOrderError` to their own module `order`
+- moved `Order` and `ParseOrderError` to the new module `boc`
+- renamed switch `--split-lumi` of `pineappl write` to `--split-channels`. The
+  old switch can still be used
+- renamed switch `--lumis` of `pineappl read` to `--channels`. The old switch
+  can still be used
+- renamed switch `--ignore-lumis` of `pineappl diff` to `--ignore-channels`.
+  The old switch can still be used
+- renamed `Grid::lumi` to `Grid::channels`, `Grid::split_lumi` to
+  `Grid::split_channels`, `Grid::rewrite_lumi` to `Grid::rewrite_channels` and
+  `Grid::set_lumis` to `Grid::set_channels`. The term 'channel' is now used
+  everywhere instead of 'lumi', 'luminosity function', etc.
+- renamed the struct `LumiEntry` to `Channel` and `ParseLumiEntryError` to
+  `ParseChannelError`. Both structures have been moved to the module `boc`
+- renamed the macro `lumi_entry` to `channel`
+- renamed `Grid::set_channels` to `Grid::channels_mut`
+- renamed `TryFromGridError::InvalidLumi` to `TryFromGridError::InvalidChannel`
+- changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
+  `pid_basis`, which is now of type `PidBasis`
 
 ### Removed
 
@@ -22,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the structs `EkoInfo` and `GridAxes`
 - removed methods `Grid::has_pdf1`, `Grid::has_pdf2`, `Grid::initial_state_1`
   and `Grid::initial_state_2`
+- removed `pids::charge_conjugate`; this function has been replaced with the
+  new function `PidBasis::charge_conjugate`
+- removed `pids::determine_lumi_id_types`; this function has been replaced with
+  the new function `PidBasis::guess`
+- removed `TryFromGridError::MetadataMissing`
 
 ## [0.7.4] - 23/05/2024
 

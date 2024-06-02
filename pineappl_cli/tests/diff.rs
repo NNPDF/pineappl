@@ -13,7 +13,7 @@ Arguments:
 Options:
       --ignore-orders      Ignore differences in the orders and sum them
       --ignore-bin-limits  Ignore bin limits (but not number of bins)
-      --ignore-lumis       Ignore differences in the luminosity functions
+      --ignore-channels    Ignore differences in the channel definition
       --orders1 <ORDERS1>  Select orders of the first grid
       --orders2 <ORDERS2>  Select orders of the second grid
       --scale1 <SCALE1>    Scale all results of the first grid [default: 1.0]
@@ -81,7 +81,7 @@ const BIN_LIMITS_DIFFER_STR: &str = "Error: bins limits differ
 const BIN_NUMBER_DIFFERS_STR: &str = "Error: number of bins differ
 ";
 
-const LUMIS_DIFFER_STR: &str = "Error: luminosities differ
+const CHANNELS_DIFFER_STR: &str = "Error: channels differ
 ";
 
 #[test]
@@ -240,7 +240,7 @@ fn bin_number_differs() {
 }
 
 #[test]
-fn lumis_differ() {
+fn channels_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
@@ -251,6 +251,6 @@ fn lumis_differ() {
         ])
         .assert()
         .failure()
-        .stderr(LUMIS_DIFFER_STR)
+        .stderr(CHANNELS_DIFFER_STR)
         .stdout("");
 }
