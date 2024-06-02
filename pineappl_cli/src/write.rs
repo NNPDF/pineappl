@@ -9,10 +9,9 @@ use clap::{
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
 use pineappl::fk_table::{FkAssumptions, FkTable};
-use pineappl::pids;
 use pineappl::pids::PidBasis;
 use std::fs;
-use std::ops::{Deref, RangeInclusive};
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -499,35 +498,29 @@ impl Subcommand for Opts {
                     let cc1 = matches!(arg, OpsArg::Cc1(true));
                     let cc2 = matches!(arg, OpsArg::Cc2(true));
 
-                    // TODO: make this a member function of `Grid`
-                    let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
-                        kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
-                    });
-                    let channels = grid
-                        .channels()
-                        .iter()
-                        .map(|entry| {
-                            Channel::new(
-                                entry
-                                    .entry()
-                                    .iter()
-                                    .map(|&(a, b, f)| {
-                                        let (ap, f1) = if cc1 {
-                                            pids::charge_conjugate(lumi_id_types, a)
-                                        } else {
-                                            (a, 1.0)
-                                        };
-                                        let (bp, f2) = if cc2 {
-                                            pids::charge_conjugate(lumi_id_types, b)
-                                        } else {
-                                            (b, 1.0)
-                                        };
-                                        (ap, bp, f * f1 * f2)
-                                    })
-                                    .collect(),
-                            )
-                        })
-                        .collect();
+                    let pid_basis = grid.pid_basis();
+
+                    for channel in grid.channels_mut() {
+                        *channel = Channel::new(
+                            channel
+                                .entry()
+                                .iter()
+                                .map(|&(a, b, f)| {
+                                    let (ap, f1) = if cc1 {
+                                        pid_basis.charge_conjugate(a)
+                                    } else {
+                                        (a, 1.0)
+                                    };
+                                    let (bp, f2) = if cc2 {
+                                        pid_basis.charge_conjugate(b)
+                                    } else {
+                                        (b, 1.0)
+                                    };
+                                    (ap, bp, f * f1 * f2)
+                                })
+                                .collect(),
+                        );
+                    }
 
                     if cc1 {
                         grid.set_convolution(0, grid.convolutions()[0].cc())
@@ -535,8 +528,6 @@ impl Subcommand for Opts {
                     if cc2 {
                         grid.set_convolution(1, grid.convolutions()[1].cc())
                     }
-
-                    grid.set_channels(channels);
                 }
                 OpsArg::DedupChannels(ulps) => {
                     grid.dedup_channels(*ulps);
@@ -594,10 +585,8 @@ impl Subcommand for Opts {
                     )?;
                 }
                 OpsArg::RewriteChannel((index, new_channel)) => {
-                    let mut channels = grid.channels().to_vec();
                     // TODO: check that `index` is valid
-                    channels[*index] = new_channel.clone();
-                    grid.set_channels(channels);
+                    grid.channels_mut()[*index] = new_channel.clone();
                 }
                 OpsArg::RewriteOrder((index, order)) => {
                     grid.orders_mut()[*index] = order.clone();

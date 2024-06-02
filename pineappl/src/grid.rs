@@ -970,9 +970,9 @@ impl Grid {
         &mut self.orders
     }
 
-    /// Set the channels for this grid.
-    pub fn set_channels(&mut self, channels: Vec<Channel>) {
-        self.channels = channels;
+    /// Return a mutable reference to the grid's channels.
+    pub fn channels_mut(&mut self) -> &mut [Channel] {
+        &mut self.channels
     }
 
     /// Returns the subgrid with the specified indices `order`, `bin`, and `channel`.

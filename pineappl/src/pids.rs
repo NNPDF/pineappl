@@ -8,7 +8,7 @@ const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 
 /// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
 /// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is
 /// interpreted.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PidBasis {
     /// This basis uses the [particle data group](https://pdg.lbl.gov/) (PDG) PIDs. For a complete
     /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
@@ -30,6 +30,36 @@ impl FromStr for PidBasis {
             _ => Err(UnknownPidBasis {
                 basis: s.to_owned(),
             }),
+        }
+    }
+}
+
+impl PidBasis {
+    /// Return the charge-conjugated particle ID of `pid` given in the basis of `self`. The
+    /// returned tuple contains a factor that possibly arises during the charge conjugation.
+    pub fn charge_conjugate(&self, pid: i32) -> (i32, f64) {
+        match (*self, pid) {
+            // TODO: in the general case we should allow to return a vector of tuples
+            (Self::Evol, 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
+            (Self::Evol, 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
+            (Self::Evol, _) | (Self::Pdg, _) => (charge_conjugate_pdg_pid(pid), 1.0),
+        }
+    }
+
+    /// Given the particle IDs in `pids`, guess the [`PidBasis`].
+    #[must_use]
+    pub fn guess(pids: &[i32]) -> PidBasis {
+        // if we find more than 3 pids that are recognized to be from the evolution basis, declare
+        // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
+        if pids
+            .iter()
+            .filter(|&pid| EVOL_BASIS_IDS.iter().any(|evol_pid| pid == evol_pid))
+            .count()
+            > 3
+        {
+            PidBasis::Evol
+        } else {
+            PidBasis::Pdg
         }
     }
 }
@@ -309,22 +339,6 @@ pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     match pid {
         21 | 22 => pid,
         _ => -pid,
-    }
-}
-
-/// Return the charge-conjugated particle ID of `pid` for the basis `lumi_id_types`. The returned
-/// tuple contains a factor that possible arises during the carge conjugation.
-///
-/// # Panics
-///
-/// TODO
-#[must_use]
-pub fn charge_conjugate(lumi_id_types: &str, pid: i32) -> (i32, f64) {
-    match (lumi_id_types, pid) {
-        ("evol", 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
-        ("evol", 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
-        ("evol" | "pdg_mc_ids", _) => (charge_conjugate_pdg_pid(pid), 1.0),
-        _ => todo!(),
     }
 }
 
@@ -874,17 +888,17 @@ mod tests {
     }
 
     #[test]
-    fn test_determine_lumi_id_types() {
+    fn pid_basis_guess() {
         assert_eq!(
-            determine_lumi_id_types(&[22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]),
-            "pdg_mc_ids"
+            PidBasis::guess(&[22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]),
+            PidBasis::Pdg,
         );
 
         assert_eq!(
-            determine_lumi_id_types(&[
+            PidBasis::guess(&[
                 22, 100, 200, 21, 100, 103, 108, 115, 124, 135, 203, 208, 215, 224, 235
             ]),
-            "evol"
+            PidBasis::Evol,
         );
     }
 

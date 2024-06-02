@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added the function `pineappl_grid_convolve_with_one` and
   `pineappl_grid_convolve_with_two` which replace the deprecated function
   similarly named with `convolute` in CAPI
+- added `PidBasis::charge_conjugate` and `PidBasis::guess`
 
 ### Changed
 
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - renamed the struct `LumiEntry` to `Channel` and `ParseLumiEntryError` to
   `ParseChannelError`. Both structures have been moved to the module `boc`
 - renamed the macro `lumi_entry` to `channel`
+- renamed `Grid::set_channels` to `Grid::channels_mut`
 
 ### Removed
 
@@ -38,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the structs `EkoInfo` and `GridAxes`
 - removed methods `Grid::has_pdf1`, `Grid::has_pdf2`, `Grid::initial_state_1`
   and `Grid::initial_state_2`
+- removed `pids::charge_conjugate`; this function has been replaced with the
+  new function `PidBasis::charge_conjugate`
 
 ## [0.7.4] - 23/05/2024
 
