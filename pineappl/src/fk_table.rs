@@ -36,7 +36,7 @@ pub enum TryFromGridError {
     MultipleScales,
     /// Error if the channels are not simple.
     #[error("complicated channel function detected")]
-    InvalidLumi,
+    InvalidChannel,
     /// Error if the order of the grid was not a single one with all zeros in the exponents.
     #[error("multiple orders detected")]
     NonTrivialOrder,
@@ -402,14 +402,14 @@ impl TryFrom<Grid> for FkTable {
             let entry = channel.entry();
 
             if entry.len() != 1 || entry[0].2 != 1.0 {
-                return Err(TryFromGridError::InvalidLumi);
+                return Err(TryFromGridError::InvalidChannel);
             }
         }
 
         if (1..grid.channels().len())
             .any(|i| grid.channels()[i..].contains(&grid.channels()[i - 1]))
         {
-            return Err(TryFromGridError::InvalidLumi);
+            return Err(TryFromGridError::InvalidChannel);
         }
 
         if let Some(key_values) = grid.key_values() {

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ParseChannelError`. Both structures have been moved to the module `boc`
 - renamed the macro `lumi_entry` to `channel`
 - renamed `Grid::set_channels` to `Grid::channels_mut`
+- renamed `TryFromGridError::InvalidLumi` to `TryFromGridError::InvalidChannel`
 
 ### Removed
 
