@@ -299,9 +299,10 @@ class Grid(PyWrapper):
 
     def evolve(
         self,
-        operators,
+        operators_a,
         mur2_grid,
         alphas_values,
+        operators_b=None,
         lumi_id_types="pdg_mc_ids",
         order_mask=(),
         xi=(1.0, 1.0),
@@ -312,12 +313,14 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-        operators : dict
+        operators_a : dict
             EKO Output
         mur2_grid : list[float]
             renormalization scales
         alphas_values : list[float]
             alpha_s values associated to the renormalization scales
+        operator_b: Optional[dict]
+            an optional EKO Output
         lumi_id_types : str
             kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
             for evolution basis)
@@ -336,20 +339,27 @@ class Grid(PyWrapper):
         PyFkTable :
             raw grid as an FKTable
         """
-        operator_grid = np.array(
-            [op["operators"] for op in operators["Q2grid"].values()]
+        operator_grid_a = np.array(
+            [op["operators"] for op in operators_a["Q2grid"].values()]
         )
-        q2grid = list(operators["Q2grid"].keys())
+        if operators_b is not None:
+            operator_grid_b = np.array(
+                [op["operators"] for op in operators_b["Q2grid"].values()]
+            )
+        else:
+            operator_grid_b = operator_grid_a
+
+        q2grid = list(operators_a["Q2grid"].keys())
         return FkTable(
             self.raw.evolve(
-                np.array(operator_grid),
-                operators["q2_ref"],
-                operators["q2_ref"], # TODO: Modify the input EKO
-                np.array(operators["inputpids"], dtype=np.int32),
-                np.array(operators["inputgrid"]),
+                np.array(operator_grid_a),
+                np.array(operator_grid_b),
+                operators_a["q2_ref"],
+                np.array(operators_a["inputpids"], dtype=np.int32),
+                np.array(operators_a["inputgrid"]),
                 np.array(q2grid, dtype=np.float64),
-                np.array(operators["targetpids"], dtype=np.int32),
-                np.array(operators["targetgrid"]),
+                np.array(operators_a["targetpids"], dtype=np.int32),
+                np.array(operators_a["targetgrid"]),
                 np.array(mur2_grid, dtype=np.float64),
                 np.array(alphas_values, dtype=np.float64),
                 xi,

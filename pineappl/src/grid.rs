@@ -1392,8 +1392,6 @@ impl Grid {
         }
     }
 
-    /// TODO: Fix to account for the different EKOs
-    /// TODO: Does the info have to be different?
     /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
     /// `operator`. The dimensions and properties of this operator must be described using `info`.
     /// The parameter `order_mask` can be used to include or exclude orders from this operation,
@@ -1488,9 +1486,9 @@ impl Grid {
         let mut lhs: Option<Self> = None;
         let mut fac1 = Vec::new();
 
-        // TODO: simplify the ugly repetition below
+        // TODO: simplify the ugly repetition below by offloading some ops into fn
         for (result_a, result_b) in izip!(slices_a, slices_b) {
-            // Deal with the main EKO
+            // Operate on `slices_a`
             let (info_a, operator) = result_a.map_err(|err| GridError::Other(err.into()))?;
 
             let op_info_dim_a = (
@@ -1510,7 +1508,7 @@ impl Grid {
 
             let view = operator.view();
 
-            // Deal with the additional EKO
+            // Operate on `slices_b`
             let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
             let op_info_dim_b = (

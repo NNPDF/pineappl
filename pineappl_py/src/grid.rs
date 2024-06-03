@@ -422,7 +422,6 @@ impl PyGrid {
     }
 
     /// Convolute with grid with an evolution operator.
-    /// TODO: Modify the passed `info` from higher level (pineko)
     ///
     /// Parameters
     /// ----------
@@ -471,7 +470,21 @@ impl PyGrid {
         lumi_id_types: String,
         order_mask: PyReadonlyArray1<bool>,
     ) -> PyFkTable {
-        let op_info = OperatorInfo {
+        let op_info_a = OperatorInfo {
+            fac0: fac0,
+            pids0: pids0.to_vec().unwrap(),
+            x0: x0.to_vec().unwrap(),
+            fac1: fac1.to_vec().unwrap(),
+            pids1: pids1.to_vec().unwrap(),
+            x1: x1.to_vec().unwrap(),
+            ren1: ren1.to_vec().unwrap(),
+            alphas: alphas.to_vec().unwrap(),
+            xir: xi.0,
+            xif: xi.1,
+            pid_basis: lumi_id_types.parse().unwrap(),
+        };
+
+        let op_info_b = OperatorInfo {
             fac0: fac0,
             pids0: pids0.to_vec().unwrap(),
             x0: x0.to_vec().unwrap(),
@@ -490,8 +503,8 @@ impl PyGrid {
             .evolve(
                 operator_a.as_array(),
                 operator_b.as_array(),
-                &op_info,
-                &op_info,
+                &op_info_a,
+                &op_info_b,
                 order_mask.as_slice().unwrap(),
             )
             .expect("Nothing returned from evolution.");

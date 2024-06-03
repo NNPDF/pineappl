@@ -538,6 +538,7 @@ fn evolve_grid(
     ))
 }
 
+/// TODO: pass the additional EKO as an optional input args
 /// Evolve a grid with an evolution kernel operator to an FK table.
 #[derive(Parser)]
 pub struct Opts {
