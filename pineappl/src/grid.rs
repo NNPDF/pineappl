@@ -1564,6 +1564,7 @@ impl Grid {
                 lhs = Some(rhs);
             }
 
+            // NOTE: The following should be shared by the 2 EKOs(?)
             fac1.push(info_a.fac1);
         }
 
