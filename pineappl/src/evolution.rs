@@ -540,7 +540,7 @@ pub(crate) fn evolve_slice_with_two(
                 .any(|&(a, _, _)| a == pid1)
         })?;
     let (pid_indices_b, pids_b) =
-        pid_slices(input_operator_b, info_a, gluon_has_pid_zero, &|pid1| {
+        pid_slices(input_operator_b, info_b, gluon_has_pid_zero, &|pid1| {
             grid.channels()
                 .iter()
                 .flat_map(Channel::entry)
