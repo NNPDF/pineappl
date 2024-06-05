@@ -158,34 +158,30 @@ impl FkTable {
             if has_pdf2 { x_grid.len() } else { 1 },
         ));
 
-        for bin in 0..self.bins() {
-            for channel in 0..self.grid.channels().len() {
-                let subgrid = self.grid().subgrid(0, bin, channel);
+        for ((_, bin, channel), subgrid) in self.grid().subgrids().indexed_iter() {
+            let indices1 = if has_pdf1 {
+                subgrid
+                    .x1_grid()
+                    .iter()
+                    .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
+                    .collect::<Option<_>>()
+                    .unwrap()
+            } else {
+                vec![0]
+            };
+            let indices2 = if has_pdf2 {
+                subgrid
+                    .x2_grid()
+                    .iter()
+                    .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
+                    .collect::<Option<_>>()
+                    .unwrap()
+            } else {
+                vec![0]
+            };
 
-                let indices1 = if has_pdf1 {
-                    subgrid
-                        .x1_grid()
-                        .iter()
-                        .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
-                        .collect::<Option<_>>()
-                        .unwrap()
-                } else {
-                    vec![0]
-                };
-                let indices2 = if has_pdf2 {
-                    subgrid
-                        .x2_grid()
-                        .iter()
-                        .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
-                        .collect::<Option<_>>()
-                        .unwrap()
-                } else {
-                    vec![0]
-                };
-
-                for ((_, ix1, ix2), value) in subgrid.indexed_iter() {
-                    result[[bin, channel, indices1[ix1], indices2[ix2]]] = value;
-                }
+            for ((_, ix1, ix2), value) in subgrid.indexed_iter() {
+                result[[bin, channel, indices1[ix1], indices2[ix2]]] = value;
             }
         }
 
@@ -373,25 +369,21 @@ impl TryFrom<Grid> for FkTable {
             return Err(TryFromGridError::NonTrivialOrder);
         }
 
-        for bin in 0..grid.bin_info().bins() {
-            for channel in 0..grid.channels().len() {
-                let subgrid = grid.subgrid(0, bin, channel);
+        for subgrid in grid.subgrids() {
+            if subgrid.is_empty() {
+                continue;
+            }
 
-                if subgrid.is_empty() {
-                    continue;
-                }
+            let mu2_grid = subgrid.mu2_grid();
 
-                let mu2_grid = subgrid.mu2_grid();
+            if mu2_grid.len() > 1 {
+                return Err(TryFromGridError::MultipleScales);
+            }
 
-                if mu2_grid.len() > 1 {
-                    return Err(TryFromGridError::MultipleScales);
-                }
-
-                if muf2 < 0.0 {
-                    muf2 = mu2_grid[0].fac;
-                } else if muf2 != mu2_grid[0].fac {
-                    return Err(TryFromGridError::MultipleScales);
-                }
+            if muf2 < 0.0 {
+                muf2 = mu2_grid[0].fac;
+            } else if muf2 != mu2_grid[0].fac {
+                return Err(TryFromGridError::MultipleScales);
             }
         }
 

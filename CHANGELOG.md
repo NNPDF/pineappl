@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   similarly named with `convolute` in CAPI
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
+- added `Grid::subgrids` and `Grid::subgrids_mut` methods
 
 ### Changed
 
@@ -49,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed `pids::determine_lumi_id_types`; this function has been replaced with
   the new function `PidBasis::guess`
 - removed `TryFromGridError::MetadataMissing`
+- removed `Grid::subgrid` and `Grid::set_subgrid` methods; these functions have
+  been replaced with `Grid::subgrids` and `Grid::subgrids_mut`
 
 ## [0.7.4] - 23/05/2024
 

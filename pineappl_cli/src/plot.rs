@@ -583,7 +583,7 @@ impl Subcommand for Opts {
             let res2 = helpers::convolve_subgrid(&grid, &mut pdfset2[0], order, bin, channel, cfg)
                 .sum_axis(Axis(0));
 
-            let subgrid = grid.subgrid(order, bin, channel);
+            let subgrid = &grid.subgrids()[[order, bin, channel]];
             //let q2 = subgrid.q2_grid();
             let x1 = subgrid.x1_grid();
             let x2 = subgrid.x2_grid();

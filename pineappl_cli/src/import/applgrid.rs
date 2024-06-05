@@ -190,18 +190,14 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 }
 
                 if !array.is_empty() {
-                    pgrid.set_subgrid(
-                        0,
-                        bin.try_into().unwrap(),
-                        lumi,
+                    pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
                         ImportOnlySubgridV2::new(
                             array,
                             mu2_values.clone(),
                             x1_values.clone(),
                             x2_values.clone(),
                         )
-                        .into(),
-                    );
+                        .into();
                 }
             }
         }

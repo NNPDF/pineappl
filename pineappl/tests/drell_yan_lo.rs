@@ -372,8 +372,8 @@ fn perform_grid_tests(
     // TEST 7b: `optimize`
     grid.optimize();
 
-    assert_eq!(grid.subgrid(0, 0, 0).x1_grid().as_ref(), x_grid);
-    assert_eq!(grid.subgrid(0, 0, 0).x2_grid().as_ref(), x_grid);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().as_ref(), x_grid);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().as_ref(), x_grid);
 
     // TEST 8: `convolve_subgrid` for the optimized subgrids
     let bins: Vec<_> = (0..grid.bin_info().bins())

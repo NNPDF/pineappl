@@ -15,7 +15,7 @@ use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayView5, Axis, CowArray, Dimension, Ix4};
+use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize, Serializer};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
@@ -982,22 +982,16 @@ impl Grid {
         &mut self.channels
     }
 
-    /// Returns the subgrid with the specified indices `order`, `bin`, and `channel`.
+    /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> &SubgridEnum {
-        &self.subgrids[[order, bin, channel]]
+    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+        self.subgrids.view()
     }
 
-    /// Returns all subgrids as an `Array3`.
+    /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub const fn subgrids(&self) -> &Array3<SubgridEnum> {
-        &self.subgrids
-    }
-
-    /// Replaces the subgrid for the specified indices `order`, `bin`, and `channel` with
-    /// `subgrid`.
-    pub fn set_subgrid(&mut self, order: usize, bin: usize, channel: usize, subgrid: SubgridEnum) {
-        self.subgrids[[order, bin, channel]] = subgrid;
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+        self.subgrids.view_mut()
     }
 
     /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
