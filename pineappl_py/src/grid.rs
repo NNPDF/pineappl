@@ -1,8 +1,7 @@
 use pineappl::boc::Order;
+use pineappl::convolutions::LumiCache;
 use pineappl::evolution::OperatorInfo;
 use pineappl::grid::{Grid, Ntuple};
-
-use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
 use super::evolution::PyEvolveInfo;

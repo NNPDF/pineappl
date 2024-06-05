@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - renamed `TryFromGridError::InvalidLumi` to `TryFromGridError::InvalidChannel`
 - changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
   `pid_basis`, which is now of type `PidBasis`
+- renamed module `pineappl::lumi` to `pineappl::convolutions`
 
 ### Removed
 

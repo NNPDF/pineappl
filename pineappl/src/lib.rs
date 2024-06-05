@@ -37,13 +37,13 @@ mod convert;
 
 pub mod bin;
 pub mod boc;
+pub mod convolutions;
 pub mod empty_subgrid;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
 pub mod lagrange_subgrid;
-pub mod lumi;
 pub mod ntuple_subgrid;
 pub mod packed_array;
 pub mod pids;

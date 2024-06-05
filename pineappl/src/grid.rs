@@ -2,12 +2,12 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Order};
+use super::convolutions::LumiCache;
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::lumi::LumiCache;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::pids::{self, PidBasis};
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
