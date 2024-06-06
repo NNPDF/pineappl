@@ -363,7 +363,7 @@ pub enum Convolution {
 impl Convolution {
     /// Return the convolution if the PID is charged conjugated.
     #[must_use]
-    pub const fn cc(&self) -> Self {
+    pub const fn charge_conjugate(&self) -> Self {
         match *self {
             Self::None => Self::None,
             Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
@@ -390,15 +390,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn convolution_cc() {
-        assert_eq!(Convolution::None.cc(), Convolution::None);
+    fn convolution_charge_conjugate() {
+        assert_eq!(Convolution::None.charge_conjugate(), Convolution::None);
         assert_eq!(
-            Convolution::UnpolPDF(2212).cc(),
+            Convolution::UnpolPDF(2212).charge_conjugate(),
             Convolution::UnpolPDF(-2212)
         );
-        assert_eq!(Convolution::PolPDF(2212).cc(), Convolution::PolPDF(-2212));
-        assert_eq!(Convolution::UnpolFF(2212).cc(), Convolution::UnpolFF(-2212));
-        assert_eq!(Convolution::PolFF(2212).cc(), Convolution::PolFF(-2212));
+        assert_eq!(
+            Convolution::PolPDF(2212).charge_conjugate(),
+            Convolution::PolPDF(-2212)
+        );
+        assert_eq!(
+            Convolution::UnpolFF(2212).charge_conjugate(),
+            Convolution::UnpolFF(-2212)
+        );
+        assert_eq!(
+            Convolution::PolFF(2212).charge_conjugate(),
+            Convolution::PolFF(-2212)
+        );
     }
 
     #[test]

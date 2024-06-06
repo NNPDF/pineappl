@@ -523,10 +523,10 @@ impl Subcommand for Opts {
                     }
 
                     if cc1 {
-                        grid.set_convolution(0, grid.convolutions()[0].cc());
+                        grid.set_convolution(0, grid.convolutions()[0].charge_conjugate());
                     }
                     if cc2 {
-                        grid.set_convolution(1, grid.convolutions()[1].cc());
+                        grid.set_convolution(1, grid.convolutions()[1].charge_conjugate());
                     }
                 }
                 OpsArg::DedupChannels(ulps) => {
