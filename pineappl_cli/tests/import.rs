@@ -836,9 +836,10 @@ fn import_dis_fktable() {
 fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
+    use pineappl::convolutions::Convolution;
     use pineappl::convolutions::LumiCache;
     use pineappl::fk_table::{FkAssumptions, FkTable};
-    use pineappl::grid::{Convolution, Grid};
+    use pineappl::grid::Grid;
     use std::fs::File;
 
     let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();

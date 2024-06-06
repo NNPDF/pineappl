@@ -6,7 +6,7 @@ use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
 use pineappl::boc::Channel;
-use pineappl::grid::Convolution;
+use pineappl::convolutions::Convolution;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;

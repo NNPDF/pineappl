@@ -1,6 +1,7 @@
 use anyhow::Result;
 use pineappl::boc::{Channel, Order};
-use pineappl::grid::{Convolution, Grid};
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
