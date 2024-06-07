@@ -1489,7 +1489,7 @@ impl Grid {
         // TODO: simplify the ugly repetition below by offloading some ops into fn
         for (result_a, result_b) in izip!(slices_a, slices_b) {
             // Operate on `slices_a`
-            let (info_a, operator) = result_a.map_err(|err| GridError::Other(err.into()))?;
+            let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
 
             let op_info_dim_a = (
                 info_a.pids1.len(),
@@ -1498,15 +1498,15 @@ impl Grid {
                 info_a.x0.len(),
             );
 
-            if operator.dim() != op_info_dim_a {
+            if operator_a.dim() != op_info_dim_a {
                 return Err(GridError::EvolutionFailure(format!(
                     "operator information {:?} does not match the operator's dimensions: {:?}",
                     op_info_dim_a,
-                    operator.dim(),
+                    operator_a.dim(),
                 )));
             }
 
-            let view = operator.view();
+            let view_a = operator_a.view();
 
             // Operate on `slices_b`
             let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
@@ -1526,15 +1526,15 @@ impl Grid {
                 )));
             }
 
-            let extra_view = operator_b.view();
+            let view_b = operator_b.view();
 
             let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
                 && self.convolutions()[1] != Convolution::None
             {
                 evolution::evolve_slice_with_two(
                     self,
-                    &view,
-                    &extra_view,
+                    &view_a,
+                    &view_b,
                     &info_a,
                     &info_b,
                     order_mask,
@@ -1542,7 +1542,14 @@ impl Grid {
                     alphas_table,
                 )
             } else {
-                evolution::evolve_slice_with_one(self, &view, &info_a, order_mask, xi, alphas_table)
+                evolution::evolve_slice_with_one(
+                    self,
+                    &view_a,
+                    &info_a,
+                    order_mask,
+                    xi,
+                    alphas_table,
+                )
             }?;
 
             let mut rhs = Self {
@@ -1555,7 +1562,7 @@ impl Grid {
             };
 
             // TODO: use a new constructor to set this information
-            // TODO: Verify if we need to differentiate `info` here
+            // NOTE: `info_a.pid_basis` and `info_b.pid_basis` are the same
             rhs.set_pid_basis(info_a.pid_basis);
 
             if let Some(lhs) = &mut lhs {

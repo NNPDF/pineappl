@@ -556,6 +556,7 @@ pub(crate) fn evolve_slice_with_two(
     let mut operators_b = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
+        // NOTE: `info_a.x0.len()` and `info_b.x0.len()` are the same
         let mut tables = vec![Array2::zeros((info_a.x0.len(), info_a.x0.len())); channels0.len()];
 
         for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
