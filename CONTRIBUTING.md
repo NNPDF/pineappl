@@ -46,6 +46,16 @@ increasing the MSRV make sure to set it everywhere to the same value:
   this avoids the clippy warning that a Panic section is missing. Also document
   this with `// UNWRAP: ...`
 
+### Writing tests that need test data
+
+- if you write a test that needs test data (grids, EKOs, etc.) store them at
+  <https://data.nnpdf.science/pineappl/test-data/>. Ask one of the maintainers
+  to upload the data for you if you don't have access to this location). Then
+  add a line to `maintainer/generate-coverage.sh` that downloads the data with
+  `wget` and a similar line to `.github/workflows/rust.yml` that downloads the
+  data with `curl`. To make Github refresh the cached test data when running
+  the CI, increase the integer `XX` in the line `key: test-data-vXX` by one.
+
 ## Git
 
 - When you commit, make sure the commit message is written properly. This
