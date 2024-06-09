@@ -2,7 +2,8 @@
 
 use super::boc::{Channel, Order};
 use super::channel;
-use super::grid::{Convolution, Grid, GridError};
+use super::convolutions::Convolution;
+use super::grid::{Grid, GridError};
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::pids::PidBasis;
 use super::sparse_array3::SparseArray3;

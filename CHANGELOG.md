@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added new type `Convolution`
 - added new methods `Grid::convolutions` and `Grid::set_convolution`
 - added the function `pineappl_grid_convolve_with_one` and
   `pineappl_grid_convolve_with_two` which replace the deprecated function
   similarly named with `convolute` in CAPI
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
+- added `Grid::subgrids` and `Grid::subgrids_mut` methods
 
 ### Changed
 
@@ -36,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - renamed `TryFromGridError::InvalidLumi` to `TryFromGridError::InvalidChannel`
 - changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
   `pid_basis`, which is now of type `PidBasis`
+- renamed module `pineappl::lumi` to `pineappl::convolutions`
 
 ### Removed
 
@@ -49,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed `pids::determine_lumi_id_types`; this function has been replaced with
   the new function `PidBasis::guess`
 - removed `TryFromGridError::MetadataMissing`
+- removed `Grid::subgrid` and `Grid::set_subgrid` methods; these functions have
+  been replaced with `Grid::subgrids` and `Grid::subgrids_mut`
 
 ## [0.7.4] - 23/05/2024
 

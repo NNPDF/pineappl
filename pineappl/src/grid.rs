@@ -2,12 +2,12 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Order};
+use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::lumi::LumiCache;
 use super::ntuple_subgrid::NtupleSubgridV1;
 use super::pids::{self, PidBasis};
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
@@ -15,7 +15,7 @@ use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayView5, Axis, CowArray, Dimension, Ix4};
+use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize, Serializer};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
@@ -221,50 +221,6 @@ pub struct Grid {
     orders: Vec<Order>,
     subgrid_params: SubgridParams,
     more_members: MoreMembers,
-}
-
-/// Data type that indentifies different types of convolutions.
-#[derive(Debug, Eq, PartialEq)]
-pub enum Convolution {
-    // TODO: eventually get rid of this value
-    /// No convolution.
-    None,
-    /// Unpolarized parton distribution function. The integer denotes the type of hadron with a PDG
-    /// MC ID.
-    UnpolPDF(i32),
-    /// Polarized parton distribution function. The integer denotes the type of hadron with a PDG
-    /// MC ID.
-    PolPDF(i32),
-    /// Unpolarized fragmentation function. The integer denotes the type of hadron with a PDG MC
-    /// ID.
-    UnpolFF(i32),
-    /// Polarized fragmentation function. The integer denotes the type of hadron with a PDG MC ID.
-    PolFF(i32),
-}
-
-impl Convolution {
-    /// Return the convolution if the PID is charged conjugated.
-    #[must_use]
-    pub const fn cc(&self) -> Self {
-        match *self {
-            Self::None => Self::None,
-            Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::PolPDF(pid) => Self::PolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::PolFF(pid) => Self::PolFF(pids::charge_conjugate_pdg_pid(pid)),
-        }
-    }
-
-    /// Return the PID of the convolution if it has any.
-    #[must_use]
-    pub const fn pid(&self) -> Option<i32> {
-        match *self {
-            Self::None => None,
-            Self::UnpolPDF(pid) | Self::PolPDF(pid) | Self::UnpolFF(pid) | Self::PolFF(pid) => {
-                Some(pid)
-            }
-        }
-    }
 }
 
 impl Grid {
@@ -982,22 +938,16 @@ impl Grid {
         &mut self.channels
     }
 
-    /// Returns the subgrid with the specified indices `order`, `bin`, and `channel`.
+    /// Return all subgrids as an `ArrayView3`.
     #[must_use]
-    pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> &SubgridEnum {
-        &self.subgrids[[order, bin, channel]]
+    pub fn subgrids(&self) -> ArrayView3<SubgridEnum> {
+        self.subgrids.view()
     }
 
-    /// Returns all subgrids as an `Array3`.
+    /// Return all subgrids as an `ArrayViewMut3`.
     #[must_use]
-    pub const fn subgrids(&self) -> &Array3<SubgridEnum> {
-        &self.subgrids
-    }
-
-    /// Replaces the subgrid for the specified indices `order`, `bin`, and `channel` with
-    /// `subgrid`.
-    pub fn set_subgrid(&mut self, order: usize, bin: usize, channel: usize, subgrid: SubgridEnum) {
-        self.subgrids[[order, bin, channel]] = subgrid;
+    pub fn subgrids_mut(&mut self) -> ArrayViewMut3<SubgridEnum> {
+        self.subgrids.view_mut()
     }
 
     /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.

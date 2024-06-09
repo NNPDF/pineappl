@@ -1,8 +1,10 @@
 use anyhow::Result;
 use itertools::Itertools;
+use ndarray::s;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
-use pineappl::grid::{Convolution, Grid};
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
@@ -201,18 +203,15 @@ fn convert_coeff_add_fix(
                 }
 
                 if !array.is_empty() {
-                    grid.set_subgrid(
-                        0,
-                        obs.try_into().unwrap(),
-                        subproc.try_into().unwrap(),
+                    grid.subgrids_mut()
+                        [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
                         ImportOnlySubgridV2::new(
                             array,
                             mu2_values,
                             x1_values.clone(),
                             x2_values.clone(),
                         )
-                        .into(),
-                    );
+                        .into();
                 }
             }
         }
@@ -361,23 +360,23 @@ fn convert_coeff_add_flex(
                 }
             }
 
-            for (order, array) in arrays
-                .into_iter()
-                .enumerate()
-                .filter(|(_, array)| !array.is_empty())
+            for (subgrid, array) in grid
+                .subgrids_mut()
+                .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
+                .iter_mut()
+                .zip(arrays.into_iter())
             {
-                grid.set_subgrid(
-                    order,
-                    obs,
-                    subproc.try_into().unwrap(),
-                    ImportOnlySubgridV2::new(
-                        array,
-                        mu2_values.clone(),
-                        x1_values.clone(),
-                        x2_values.clone(),
-                    )
-                    .into(),
-                );
+                if array.is_empty() {
+                    continue;
+                }
+
+                *subgrid = ImportOnlySubgridV2::new(
+                    array,
+                    mu2_values.clone(),
+                    x1_values.clone(),
+                    x2_values.clone(),
+                )
+                .into();
             }
         }
     }
