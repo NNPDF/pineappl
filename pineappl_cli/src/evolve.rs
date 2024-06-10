@@ -7,6 +7,7 @@ use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::slice;
 
 #[cfg(feature = "evolve")]
 mod eko {
@@ -545,7 +546,7 @@ impl Subcommand for Opts {
         let mut pdf = helpers::create_pdf(&self.pdfset)?;
         let results = helpers::convolve_scales(
             &grid,
-            &mut pdf,
+            slice::from_mut(&mut pdf),
             &self.orders,
             &[],
             &[],
@@ -565,7 +566,7 @@ impl Subcommand for Opts {
         )?;
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
-            &mut pdf,
+            slice::from_mut(&mut pdf),
             &[],
             &[],
             &[],

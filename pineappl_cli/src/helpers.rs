@@ -127,7 +127,7 @@ pub enum ConvoluteMode {
 
 pub fn convolve_scales(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     orders: &[(u32, u32)],
     bins: &[usize],
     channels: &[bool],
@@ -146,29 +146,37 @@ pub fn convolve_scales(
         })
         .collect();
 
-    // if the field 'Particle' is missing we assume it's a proton PDF
-    let pdf_pdg_id = lhapdf
-        .set()
-        .entry("Particle")
-        .map_or(Ok(2212), |string| string.parse::<i32>())
-        .unwrap();
+    let mut results = match conv_funs {
+        [fun] => {
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            let pdf_pdg_id = fun
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
 
-    if cfg.force_positive {
-        lhapdf.set_force_positive(1);
-    }
+            if cfg.force_positive {
+                fun.set_force_positive(1);
+            }
 
-    let x_max = lhapdf.x_max();
-    let x_min = lhapdf.x_min();
-    let mut pdf = |id, x, q2| {
-        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-            0.0
-        } else {
-            lhapdf.xfx_q2(id, x, q2)
+            let x_max = fun.x_max();
+            let x_min = fun.x_min();
+            let mut alphas = |q2| fun.alphas_q2(q2);
+            let mut fun = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                    0.0
+                } else {
+                    fun.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache = LumiCache::with_one(pdf_pdg_id, &mut fun, &mut alphas);
+
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
+        [_fun0, _fun1] => todo!(),
+        _ => unimplemented!(),
     };
-    let mut alphas = |q2| lhapdf.alphas_q2(q2);
-    let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {
@@ -212,7 +220,7 @@ pub fn convolve_scales(
 
 pub fn convolve(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
@@ -222,7 +230,7 @@ pub fn convolve(
 ) -> Vec<f64> {
     convolve_scales(
         grid,
-        lhapdf,
+        conv_funs,
         orders,
         bins,
         lumis,

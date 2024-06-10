@@ -6,6 +6,7 @@ use clap::{value_parser, Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 
 /// Perform various analyses with grids.
 #[derive(Parser)]
@@ -87,7 +88,7 @@ impl Subcommand for CkfOpts {
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    slice::from_mut(&mut pdf),
                     &[self.order],
                     &[],
                     &lumi_mask,
@@ -103,7 +104,7 @@ impl Subcommand for CkfOpts {
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    slice::from_mut(&mut pdf),
                     &orders_den,
                     &[],
                     &lumi_mask,

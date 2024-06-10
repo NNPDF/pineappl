@@ -13,6 +13,7 @@ use std::fmt::Write;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::slice;
 use std::thread;
 
 /// Creates a matplotlib script plotting the contents of the grid.
@@ -219,8 +220,16 @@ impl Subcommand for Opts {
             })) {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 
-                let results =
-                    helpers::convolve(&grid, &mut pdf, &[], &bins, &[], self.scales, mode, cfg);
+                let results = helpers::convolve(
+                    &grid,
+                    slice::from_mut(&mut pdf),
+                    &[],
+                    &bins,
+                    &[],
+                    self.scales,
+                    mode,
+                    cfg,
+                );
 
                 let qcd_results = {
                     let mut orders = grid.orders().to_vec();
@@ -239,7 +248,7 @@ impl Subcommand for Opts {
 
                     helpers::convolve(
                         &grid,
-                        &mut pdf,
+                        slice::from_mut(&mut pdf),
                         &qcd_orders,
                         &bins,
                         &[],
@@ -271,8 +280,16 @@ impl Subcommand for Opts {
                         if self.no_pdf_unc {
                             let mut pdf = helpers::create_pdf(pdfset).unwrap();
 
-                            let results =
-                                helpers::convolve(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
+                            let results = helpers::convolve(
+                                &grid,
+                                slice::from_mut(&mut pdf),
+                                &[],
+                                &bins,
+                                &[],
+                                1,
+                                mode,
+                                cfg,
+                            );
 
                             Ok(vec![results; 3])
                         } else {
@@ -284,7 +301,7 @@ impl Subcommand for Opts {
                                 .flat_map(|mut pdf| {
                                     helpers::convolve(
                                         &grid,
-                                        &mut pdf,
+                                        slice::from_mut(&mut pdf),
                                         &[],
                                         &bins,
                                         &[],
@@ -383,7 +400,7 @@ impl Subcommand for Opts {
                                 ),
                                 helpers::convolve(
                                     &grid,
-                                    &mut pdf,
+                                    slice::from_mut(&mut pdf),
                                     &[],
                                     &bins,
                                     &channel_mask,
@@ -527,7 +544,7 @@ impl Subcommand for Opts {
                 .map(|pdf| {
                     let values = helpers::convolve(
                         &grid,
-                        pdf,
+                        slice::from_mut(pdf),
                         &[],
                         &[bin],
                         &[],
@@ -544,7 +561,7 @@ impl Subcommand for Opts {
                 .map(|pdf| {
                     let values = helpers::convolve(
                         &grid,
-                        pdf,
+                        slice::from_mut(pdf),
                         &[],
                         &[bin],
                         &[],

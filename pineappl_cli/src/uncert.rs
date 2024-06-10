@@ -8,6 +8,7 @@ use rayon::{prelude::*, ThreadPoolBuilder};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 use std::thread;
 
 #[derive(Args)]
@@ -121,7 +122,7 @@ impl Subcommand for Opts {
                 .flat_map(|mut pdf| {
                     helpers::convolve(
                         &grid,
-                        &mut pdf,
+                        slice::from_mut(&mut pdf),
                         &self.orders,
                         &[],
                         &[],
@@ -150,7 +151,7 @@ impl Subcommand for Opts {
             .unwrap_or(1);
         let scale_results = helpers::convolve(
             &grid,
-            &mut helpers::create_pdf(&self.pdfset)?,
+            slice::from_mut(&mut helpers::create_pdf(&self.pdfset)?),
             &self.orders,
             &[],
             &[],

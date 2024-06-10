@@ -8,6 +8,7 @@ use rayon::{prelude::*, ThreadPoolBuilder};
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 use std::thread;
 
 // TODO: do we need the CL parameter?
@@ -68,7 +69,7 @@ impl Subcommand for Opts {
             .flat_map(|pdf| {
                 helpers::convolve(
                     &grid,
-                    pdf,
+                    slice::from_mut(pdf),
                     &self.orders,
                     &[],
                     &[],
@@ -83,7 +84,7 @@ impl Subcommand for Opts {
             .flat_map(|pdf| {
                 helpers::convolve(
                     &grid,
-                    pdf,
+                    slice::from_mut(pdf),
                     &self.orders,
                     &[],
                     &[],
@@ -149,7 +150,7 @@ impl Subcommand for Opts {
                                 channel_mask[channel] = true;
                                 match helpers::convolve(
                                     &grid,
-                                    &mut pdfset[member],
+                                    slice::from_mut(&mut pdfset[member]),
                                     &self.orders,
                                     &[bin],
                                     &channel_mask,
@@ -174,7 +175,7 @@ impl Subcommand for Opts {
                                         channel_mask[channel] = true;
                                         match helpers::convolve(
                                             &grid,
-                                            pdf,
+                                            slice::from_mut(pdf),
                                             &self.orders,
                                             &[bin],
                                             &channel_mask,

@@ -7,6 +7,7 @@ use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 
 /// Shows the contribution for each partonic channel.
 #[derive(Parser)]
@@ -93,7 +94,7 @@ impl Subcommand for Opts {
                 channel_mask[channel] = true;
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    slice::from_mut(&mut pdf),
                     &self.orders,
                     &[],
                     &channel_mask,

@@ -7,6 +7,7 @@ use pineappl::boc::Order;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::slice;
 
 #[cfg(feature = "applgrid")]
 mod applgrid;
@@ -158,7 +159,7 @@ impl Subcommand for Opts {
             let mut pdf = helpers::create_pdf(&self.pdfset)?;
             let reference_results = helpers::convolve(
                 &grid,
-                &mut pdf,
+                slice::from_mut(&mut pdf),
                 &orders,
                 &[],
                 &[],

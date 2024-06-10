@@ -6,6 +6,7 @@ use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 
 /// Convolutes a PineAPPL grid with a PDF set.
 #[derive(Parser)]
@@ -54,7 +55,7 @@ impl Subcommand for Opts {
 
         let results = helpers::convolve(
             &grid,
-            &mut pdf,
+            slice::from_mut(&mut pdf),
             &self.orders,
             &bins,
             &[],
@@ -83,7 +84,7 @@ impl Subcommand for Opts {
                 let mut pdf = helpers::create_pdf(pdfset).unwrap();
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    slice::from_mut(&mut pdf),
                     &self.orders,
                     &bins,
                     &[],

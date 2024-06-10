@@ -5,6 +5,7 @@ use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 
 /// Shows the predictions for all bin for each order separately.
 #[derive(Parser)]
@@ -66,7 +67,7 @@ impl Subcommand for Opts {
             .map(|order| {
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    slice::from_mut(&mut pdf),
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],

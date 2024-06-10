@@ -6,6 +6,7 @@ use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::slice;
 
 /// Compares the numerical content of two grids with each other.
 #[derive(Parser)]
@@ -149,7 +150,7 @@ impl Subcommand for Opts {
 
             let results1 = helpers::convolve(
                 &grid1,
-                &mut pdf,
+                slice::from_mut(&mut pdf),
                 &orders1,
                 &[],
                 &[],
@@ -159,7 +160,7 @@ impl Subcommand for Opts {
             );
             let results2 = helpers::convolve(
                 &grid2,
-                &mut pdf,
+                slice::from_mut(&mut pdf),
                 &orders2,
                 &[],
                 &[],
@@ -205,7 +206,7 @@ impl Subcommand for Opts {
                 .map(|&order| {
                     helpers::convolve(
                         &grid1,
-                        &mut pdf,
+                        slice::from_mut(&mut pdf),
                         &[order],
                         &[],
                         &[],
@@ -220,7 +221,7 @@ impl Subcommand for Opts {
                 .map(|&order| {
                     helpers::convolve(
                         &grid2,
-                        &mut pdf,
+                        slice::from_mut(&mut pdf),
                         &[order],
                         &[],
                         &[],
