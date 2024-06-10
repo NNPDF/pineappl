@@ -186,7 +186,7 @@ pub fn convolve_scales(
     let mut results = match conv_funs {
         [fun] => {
             // if the field 'Particle' is missing we assume it's a proton PDF
-            let pdf_pdg_id = fun
+            let pdg_id = fun
                 .set()
                 .entry("Particle")
                 .map_or(Ok(2212), |string| string.parse::<i32>())
@@ -207,11 +207,55 @@ pub fn convolve_scales(
                 }
             };
 
-            let mut cache = LumiCache::with_one(pdf_pdg_id, &mut fun, &mut alphas);
+            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
 
             grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
-        [_fun0, _fun1] => todo!(),
+        [fun1, fun2] => {
+            let pdg_id1 = fun1
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let pdg_id2 = fun2
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            if cfg.force_positive {
+                fun1.set_force_positive(1);
+                fun2.set_force_positive(1);
+            }
+
+            let x_max1 = fun1.x_max();
+            let x_min1 = fun1.x_min();
+            let mut alphas1 = |q2| fun1.alphas_q2(q2);
+            let mut fun1 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
+                    0.0
+                } else {
+                    fun1.xfx_q2(id, x, q2)
+                }
+            };
+            let x_max2 = fun2.x_max();
+            let x_min2 = fun2.x_min();
+            // is the following line needed?
+            // let mut alphas2 = |q2| fun2.alphas_q2(q2);
+            let mut fun2 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
+                    0.0
+                } else {
+                    fun2.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache =
+                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas1);
+
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
+        }
         _ => unimplemented!(),
     };
 
