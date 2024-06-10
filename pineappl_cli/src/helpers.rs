@@ -6,11 +6,48 @@ use pineappl::convolutions::LumiCache;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
+use std::convert::Infallible;
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
+use std::str::FromStr;
+
+#[derive(Clone)]
+pub struct ConvFun {
+    lhapdf_name: String,
+    label: String,
+}
+
+impl FromStr for ConvFun {
+    type Err = Infallible;
+
+    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(arg.split_once('=').map_or_else(
+            || ConvFun {
+                lhapdf_name: arg.to_owned(),
+                label: arg.to_owned(),
+            },
+            |(lhapdf_name, label)| ConvFun {
+                lhapdf_name: lhapdf_name.to_owned(),
+                label: label.to_owned(),
+            },
+        ))
+    }
+}
+
+pub fn create_conv_funs(funs: &[ConvFun]) -> Result<Vec<Pdf>> {
+    Ok(funs
+        .iter()
+        .map(|fun| {
+            fun.lhapdf_name.parse().map_or_else(
+                |_| Pdf::with_setname_and_nmem(&fun.lhapdf_name),
+                Pdf::with_lhaid,
+            )
+        })
+        .collect::<Result<_, _>>()?)
+}
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
     let pdf = pdf.split_once('=').map_or(pdf, |(name, _)| name);
