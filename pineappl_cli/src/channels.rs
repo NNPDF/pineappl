@@ -15,8 +15,8 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id or name of the PDF set.
-    #[arg(num_args = 1, value_delimiter = ',', value_parser = helpers::parse_pdfset)]
-    pdfset: Vec<String>,
+    #[arg(value_parser = helpers::parse_pdfset)]
+    pdfset: String,
     /// Show absolute numbers of each contribution.
     #[arg(long, short)]
     absolute: bool,

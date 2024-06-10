@@ -16,7 +16,7 @@ pub struct Opts {
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
     #[arg(required = true, value_parser = helpers::parse_pdfset)]
-    pdfsets: Vec<Vec<String>>,
+    pdfsets: Vec<String>,
     /// Selects a subset of bins.
     #[arg(
         long,
