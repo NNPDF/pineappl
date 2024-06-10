@@ -50,7 +50,7 @@ increasing the MSRV make sure to set it everywhere to the same value:
 
 - if you write a test that needs test data (grids, EKOs, etc.) store them at
   <https://data.nnpdf.science/pineappl/test-data/>. Ask one of the maintainers
-  to upload the data for you if you don't have access to this location). Then
+  to upload the data for you if you don't have access to this location. Then
   add a line to `maintainer/generate-coverage.sh` that downloads the data with
   `wget` and a similar line to `.github/workflows/rust.yml` that downloads the
   data with `curl`. To make Github refresh the cached test data when running
