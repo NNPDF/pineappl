@@ -183,6 +183,10 @@ pub fn convolve_scales(
         })
         .collect();
 
+    for fun in conv_funs.iter_mut() {
+        fun.set_force_positive(1);
+    }
+
     let mut results = match conv_funs {
         [fun] => {
             // if the field 'Particle' is missing we assume it's a proton PDF
@@ -191,10 +195,6 @@ pub fn convolve_scales(
                 .entry("Particle")
                 .map_or(Ok(2212), |string| string.parse::<i32>())
                 .unwrap();
-
-            if cfg.force_positive {
-                fun.set_force_positive(1);
-            }
 
             let x_max = fun.x_max();
             let x_min = fun.x_min();
@@ -223,11 +223,6 @@ pub fn convolve_scales(
                 .entry("Particle")
                 .map_or(Ok(2212), |string| string.parse::<i32>())
                 .unwrap();
-
-            if cfg.force_positive {
-                fun1.set_force_positive(1);
-                fun2.set_force_positive(1);
-            }
 
             let x_max1 = fun1.x_max();
             let x_min1 = fun1.x_min();
