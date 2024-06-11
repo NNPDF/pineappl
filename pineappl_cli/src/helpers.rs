@@ -183,8 +183,10 @@ pub fn convolve_scales(
         })
         .collect();
 
-    for fun in conv_funs.iter_mut() {
-        fun.set_force_positive(1);
+    if cfg.force_positive {
+        for fun in conv_funs.iter_mut() {
+            fun.set_force_positive(1);
+        }
     }
 
     let mut results = match conv_funs {
