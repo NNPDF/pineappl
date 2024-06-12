@@ -40,7 +40,7 @@ pub struct GlobalConfiguration {
     pub allow_extrapolation: bool,
     /// Choose the PDF/FF set for alpha_s.
     #[arg(long)]
-    pub use_alphas_from: usize
+    pub use_alphas_from: usize,
 }
 
 #[enum_dispatch]
