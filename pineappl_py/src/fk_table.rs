@@ -1,6 +1,6 @@
+use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
-use pineappl::lumi::LumiCache;
 
 use numpy::{IntoPyArray, PyArray1, PyArray4, PyReadonlyArray1};
 use pyo3::prelude::*;

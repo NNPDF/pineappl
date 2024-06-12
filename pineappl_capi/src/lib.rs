@@ -58,8 +58,8 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
+use pineappl::convolutions::LumiCache;
 use pineappl::grid::{Grid, GridOptFlags, Ntuple};
-use pineappl::lumi::LumiCache;
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};

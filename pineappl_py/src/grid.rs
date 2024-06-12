@@ -1,8 +1,7 @@
 use pineappl::boc::Order;
+use pineappl::convolutions::LumiCache;
 use pineappl::evolution::OperatorInfo;
 use pineappl::grid::{Grid, Ntuple};
-
-use pineappl::lumi::LumiCache;
 
 use super::bin::PyBinRemapper;
 use super::evolution::PyEvolveInfo;
@@ -271,7 +270,7 @@ impl PyGrid {
     /// **Usage:** `yadism`
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
         PySubgridEnum {
-            subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
+            subgrid_enum: self.grid.subgrids()[[order, bin, lumi]].clone(),
         }
     }
 
@@ -279,8 +278,7 @@ impl PyGrid {
     ///
     /// **Usage:** `yadism`
     pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
-        self.grid
-            .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
+        self.grid.subgrids_mut()[[order, bin, lumi]] = subgrid.subgrid_enum;
     }
 
     /// Set the normalizations.
