@@ -38,6 +38,9 @@ pub struct GlobalConfiguration {
     /// Allow extrapolation of PDFs outside their region of validity.
     #[arg(long)]
     pub allow_extrapolation: bool,
+    /// Choose the PDF/FF set for alpha_s.
+    #[arg(long)]
+    pub use_alphas_from: usize
 }
 
 #[enum_dispatch]
