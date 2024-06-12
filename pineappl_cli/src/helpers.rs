@@ -134,6 +134,7 @@ pub fn convolve_scales(
     scales: &[(f64, f64)],
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
+    lhapdfb: Option<&mut Pdf>,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -146,6 +147,10 @@ pub fn convolve_scales(
         })
         .collect();
 
+    // Quantities defined to be shared by the PDFs
+    let x_max = lhapdf.x_max();
+    let x_min = lhapdf.x_min();
+
     // if the field 'Particle' is missing we assume it's a proton PDF
     let pdf_pdg_id = lhapdf
         .set()
@@ -157,8 +162,6 @@ pub fn convolve_scales(
         lhapdf.set_force_positive(1);
     }
 
-    let x_max = lhapdf.x_max();
-    let x_min = lhapdf.x_min();
     let mut pdf = |id, x, q2| {
         if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
             0.0
@@ -166,9 +169,32 @@ pub fn convolve_scales(
             lhapdf.xfx_q2(id, x, q2)
         }
     };
+
     let mut alphas = |q2| lhapdf.alphas_q2(q2);
-    let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
+
+    let mut cache;
+    let mut results;
+    if let Some(tmp_lhapdfb) = lhapdfb {
+        let pdf_pdg_idb = tmp_lhapdfb
+            .set()
+            .entry("Particle")
+            .map_or(Ok(2212), |string| string.parse::<i32>())
+            .unwrap();
+        let mut pdfb = |id, x, q2| {
+            if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                0.0
+            } else {
+                tmp_lhapdfb.xfx_q2(id, x, q2)
+            }
+        };
+        // let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
+        cache = LumiCache::with_two(pdf_pdg_id, &mut pdf, pdf_pdg_idb, &mut pdfb, &mut alphas);
+        results = grid.convolve(&mut cache, &orders, bins, channels, scales);
+    } else {
+        // let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
+        cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
+        results = grid.convolve(&mut cache, &orders, bins, channels, scales);
+    }
 
     match mode {
         ConvoluteMode::Asymmetry => {
@@ -229,6 +255,7 @@ pub fn convolve(
         &SCALES_VECTOR[0..scales],
         mode,
         cfg,
+        None,
     )
 }
 

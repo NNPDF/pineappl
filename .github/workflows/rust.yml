@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: test-data
-          key: test-data-v11
+          key: test-data-v12
       - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
         run: |
@@ -53,6 +53,9 @@ jobs:
           curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-dijets-appl-arxiv-0010054/grids/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl'
           curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
           curl -s -C - -O 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-arxiv-1109.5141/grids/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar'
 
       - name: Set RUSTDOCFLAGS
         run: |

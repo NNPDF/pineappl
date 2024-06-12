@@ -171,6 +171,16 @@ const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel.
 0 2.1596192e2 2.1590144e2 -2.8005486e-4
 ";
 
+const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 8.0318967e2 8.0327463e2  1.0578078e-4
+1 5.8647900e3 5.8646218e3 -2.8680797e-5
+2 1.4206825e4 1.4206381e4 -3.1254383e-5
+3 2.0815526e4 2.0814997e4 -2.5446033e-5
+4 1.9517370e4 1.9516283e4 -5.5658012e-5
+5 7.5310726e3 7.5296943e3 -1.8301933e-4
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -481,4 +491,27 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
         .assert()
         .success()
         .stdout(CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR);
+}
+
+#[test]
+fn star_wmwp_510gev_wm_al_pol() {
+    let output = NamedTempFile::new("fktable6.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "--orders=as2,as3,as4",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
+            output.path().to_str().unwrap(),
+            "240608-tr-pol-nlo-100",
+            "--ekob",
+            "STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
+            "--pdfsetb",
+            "NNPDF40_nlo_pch_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(STAR_WMWP_510GEV_WM_AL_POL);
 }

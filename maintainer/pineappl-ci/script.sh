@@ -49,9 +49,11 @@ ldconfig
 cd ..
 
 # install PDF sets
-for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180; do
+for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180 NNPDF40_nlo_pch_as_01180; do
     curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 done
+# Download PDF set available only on the NNPDF server
+curl "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 
 # install zlib compiled with `-fPIC`
 curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
