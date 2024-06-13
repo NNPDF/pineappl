@@ -24,7 +24,7 @@ jobs:
         with:
           path: test-data
           key: test-data-v12
-      - name: Download test data
+      - name: Download test data and additional PDFs
         if: steps.cache-test-data.outputs.cache-hit != 'true'
         run: |
           test -d test-data || mkdir test-data
@@ -56,6 +56,7 @@ jobs:
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar'
+          curl "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 
       - name: Set RUSTDOCFLAGS
         run: |
