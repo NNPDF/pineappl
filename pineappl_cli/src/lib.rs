@@ -39,7 +39,7 @@ pub struct GlobalConfiguration {
     #[arg(long)]
     pub allow_extrapolation: bool,
     /// Choose the PDF/FF set for alpha_s.
-    #[arg(long)]
+    #[arg(default_value = "1", long)]
     pub use_alphas_from: usize,
 }
 

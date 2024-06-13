@@ -228,7 +228,18 @@ pub fn convolve_scales(
 
             let x_max1 = fun1.x_max();
             let x_min1 = fun1.x_min();
-            let mut alphas1 = |q2| fun1.alphas_q2(q2);
+            let x_max2 = fun2.x_max();
+            let x_min2 = fun2.x_min();
+
+            let mut alphas = |q2| {
+                if cfg.use_alphas_from == 1 {
+                    fun1.alphas_q2(q2)
+                } else if cfg.use_alphas_from == 2 {
+                    fun2.alphas_q2(q2)
+                } else {
+                    panic!("Invalid value for use_alphas_from, please use '1' or '2'")
+                }
+            };
             let mut fun1 = |id, x, q2| {
                 if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
                     0.0
@@ -236,10 +247,7 @@ pub fn convolve_scales(
                     fun1.xfx_q2(id, x, q2)
                 }
             };
-            let x_max2 = fun2.x_max();
-            let x_min2 = fun2.x_min();
-            // is the following line needed?
-            // let mut alphas2 = |q2| fun2.alphas_q2(q2);
+
             let mut fun2 = |id, x, q2| {
                 if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
                     0.0
@@ -249,7 +257,7 @@ pub fn convolve_scales(
             };
 
             let mut cache =
-                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas1);
+                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
 
             grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
