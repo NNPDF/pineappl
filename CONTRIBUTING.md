@@ -81,3 +81,14 @@ This will take care of almost everything: the C, Python and Rust interfaces and
 their documentation. After some time also a new [Conda
 package](https://github.com/conda-forge/pineappl-feedstock) will be generated,
 for which the pull request will have to be accepted manually though.
+
+## Updating the CI's container
+
+To update the software the CI runs with, modify the files in
+`maintainer/pineappl-ci`. See `maintainer/README.md` for a description of what
+these files do. To generate a new container, you need to manually run the
+[Container action] from the branch in which you modified the container files.
+After the container has been generated, all following commits in *every* branch
+will use the new container.
+
+[Container action]: https://github.com/NNPDF/pineappl/actions/workflows/container.yml
