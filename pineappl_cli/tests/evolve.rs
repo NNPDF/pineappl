@@ -14,6 +14,8 @@ Arguments:
   <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
 
 Options:
+      --ekob <EKOB>          Additional path to the 2nd evolution kernel operator
+      --pdfsetb <PDFSETB>    LHAPDF id or name of the 2nd PDF set to check the converted grid with
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
@@ -173,12 +175,12 @@ const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel.
 
 const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
 -+-----------+-----------+-------------
-0 8.0318967e2 8.0327463e2  1.0578078e-4
-1 5.8647900e3 5.8646218e3 -2.8680797e-5
-2 1.4206825e4 1.4206381e4 -3.1254383e-5
-3 2.0815526e4 2.0814997e4 -2.5446033e-5
-4 1.9517370e4 1.9516283e4 -5.5658012e-5
-5 7.5310726e3 7.5296943e3 -1.8301933e-4
+0 3.2222870e2 3.2226654e2  1.1745654e-4
+1 1.8038157e3 1.8037829e3 -1.8192479e-5
+2 3.4767572e3 3.4762728e3 -1.3933339e-4
+3 4.3157563e3 4.3154783e3 -6.4409623e-5
+4 3.6443947e3 3.6443481e3 -1.2807044e-5
+5 5.8386697e2 5.8336795e2 -8.5468266e-4
 ";
 
 #[test]
@@ -501,15 +503,12 @@ fn star_wmwp_510gev_wm_al_pol() {
         .unwrap()
         .args([
             "evolve",
-            "--orders=as2,as3,as4",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
             "240608-tr-pol-nlo-100",
-            "--ekob",
-            "STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
-            "--pdfsetb",
-            "NNPDF40_nlo_pch_as_01180",
+            "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
+            "--pdfsetb=NNPDF40_nlo_pch_as_01180",
         ])
         .assert()
         .success()
