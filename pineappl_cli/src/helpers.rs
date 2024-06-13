@@ -191,6 +191,9 @@ pub fn convolve_scales(
 
     let mut results = match conv_funs {
         [fun] => {
+            // there's only one convolution function from which we can use the strong coupling
+            assert_eq!(cfg.use_alphas_from, 0);
+
             // if the field 'Particle' is missing we assume it's a proton PDF
             let pdg_id = fun
                 .set()
@@ -231,14 +234,13 @@ pub fn convolve_scales(
             let x_max2 = fun2.x_max();
             let x_min2 = fun2.x_min();
 
-            let mut alphas = |q2| {
-                if cfg.use_alphas_from == 1 {
-                    fun1.alphas_q2(q2)
-                } else if cfg.use_alphas_from == 2 {
-                    fun2.alphas_q2(q2)
-                } else {
-                    panic!("Invalid value for use_alphas_from, please use '1' or '2'")
-                }
+            let mut alphas = |q2| match cfg.use_alphas_from {
+                0 => fun1.alphas_q2(q2),
+                1 => fun2.alphas_q2(q2),
+                _ => panic!(
+                    "expected `use_alphas_from` to be `0` or `1`, is {}",
+                    cfg.use_alphas_from
+                ),
             };
             let mut fun1 = |id, x, q2| {
                 if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {

@@ -38,8 +38,8 @@ pub struct GlobalConfiguration {
     /// Allow extrapolation of PDFs outside their region of validity.
     #[arg(long)]
     pub allow_extrapolation: bool,
-    /// Choose the PDF/FF set for alpha_s.
-    #[arg(default_value = "1", long)]
+    /// Choose the PDF/FF set for the strong coupling.
+    #[arg(default_value = "0", long)]
     pub use_alphas_from: usize,
 }
 
