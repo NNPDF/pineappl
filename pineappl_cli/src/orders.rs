@@ -1,11 +1,10 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFun, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
 use prettytable::{cell, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::slice;
 
 /// Shows the predictions for all bin for each order separately.
 #[derive(Parser)]
@@ -13,9 +12,9 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    #[arg(num_args = 1, required = true, value_delimiter = ',')]
+    conv_funs: Vec<ConvFun>,
     /// Show absolute numbers of each perturbative order.
     #[arg(long, short)]
     absolute: bool,
@@ -43,7 +42,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let mut orders: Vec<_> = grid
             .orders()
@@ -67,7 +66,7 @@ impl Subcommand for Opts {
             .map(|order| {
                 helpers::convolve(
                     &grid,
-                    slice::from_mut(&mut pdf),
+                    &mut conv_funs,
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],

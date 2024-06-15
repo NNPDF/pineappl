@@ -39,7 +39,7 @@ pub struct GlobalConfiguration {
     #[arg(long)]
     pub allow_extrapolation: bool,
     /// Choose the PDF/FF set for the strong coupling.
-    #[arg(default_value = "0", long)]
+    #[arg(default_value = "0", long, value_name = "IDX")]
     pub use_alphas_from: usize,
 }
 

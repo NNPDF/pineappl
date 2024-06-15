@@ -6,7 +6,7 @@ Usage: pineappl channels [OPTIONS] <INPUT> <CONV_FUNS>...
 
 Arguments:
   <INPUT>         Path to the input grid
-  <CONV_FUNS>...  LHAPDF ID(s) or name of the PDF(s)/FF(s)
+  <CONV_FUNS>...  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
   -a, --absolute             Show absolute numbers of each contribution

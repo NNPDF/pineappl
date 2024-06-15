@@ -1,5 +1,5 @@
 use super::GlobalConfiguration;
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::convolutions::LumiCache;
@@ -16,7 +16,7 @@ use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct ConvFun {
-    lhapdf_name: String,
+    pub lhapdf_name: String,
     label: String,
 }
 

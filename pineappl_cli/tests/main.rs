@@ -23,11 +23,12 @@ Commands:
   write     Write a grid modified by various operations
 
 Options:
-      --lhapdf-banner        Allow LHAPDF to print banners
-      --force-positive       Forces negative PDF values to zero
-      --allow-extrapolation  Allow extrapolation of PDFs outside their region of validity
-  -h, --help                 Print help
-  -V, --version              Print version
+      --lhapdf-banner          Allow LHAPDF to print banners
+      --force-positive         Forces negative PDF values to zero
+      --allow-extrapolation    Allow extrapolation of PDFs outside their region of validity
+      --use-alphas-from <IDX>  Choose the PDF/FF set for the strong coupling [default: 0]
+  -h, --help                   Print help
+  -V, --version                Print version
 ";
 
 #[test]

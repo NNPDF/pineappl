@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFun, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
@@ -6,7 +6,6 @@ use prettytable::{cell, Row};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::slice;
 
 /// Compares the numerical content of two grids with each other.
 #[derive(Parser)]
@@ -17,9 +16,9 @@ pub struct Opts {
     /// Path to the second grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input2: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    #[arg(num_args = 1, required = true, value_delimiter = ',')]
+    conv_funs: Vec<ConvFun>,
     /// Ignore differences in the orders and sum them.
     #[arg(long)]
     ignore_orders: bool,
@@ -128,7 +127,7 @@ impl Subcommand for Opts {
             bail!("channels differ");
         }
 
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let mut table = helpers::create_table();
         let mut title = Row::empty();
@@ -150,7 +149,7 @@ impl Subcommand for Opts {
 
             let results1 = helpers::convolve(
                 &grid1,
-                slice::from_mut(&mut pdf),
+                &mut conv_funs,
                 &orders1,
                 &[],
                 &[],
@@ -160,7 +159,7 @@ impl Subcommand for Opts {
             );
             let results2 = helpers::convolve(
                 &grid2,
-                slice::from_mut(&mut pdf),
+                &mut conv_funs,
                 &orders2,
                 &[],
                 &[],
@@ -206,7 +205,7 @@ impl Subcommand for Opts {
                 .map(|&order| {
                     helpers::convolve(
                         &grid1,
-                        slice::from_mut(&mut pdf),
+                        &mut conv_funs,
                         &[order],
                         &[],
                         &[],
@@ -221,7 +220,7 @@ impl Subcommand for Opts {
                 .map(|&order| {
                     helpers::convolve(
                         &grid2,
-                        slice::from_mut(&mut pdf),
+                        &mut conv_funs,
                         &[order],
                         &[],
                         &[],

@@ -14,7 +14,7 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
     #[arg(num_args = 1, required = true, value_delimiter = ',')]
     conv_funs: Vec<ConvFun>,
     /// Show absolute numbers of each contribution.

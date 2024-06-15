@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFun, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
@@ -7,7 +7,6 @@ use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::slice;
 
 #[cfg(feature = "evolve")]
 mod eko {
@@ -426,7 +425,7 @@ mod eko {
 fn evolve_grid(
     grid: &Grid,
     eko: &Path,
-    pdf: &Pdf,
+    use_alphas_from: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
     xif: f64,
@@ -447,7 +446,7 @@ fn evolve_grid(
         .collect();
 
     let mut eko_slices = EkoSlices::new(eko)?;
-    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
+    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
     if use_old_evolve {
         if let EkoSlices::V0 {
@@ -507,9 +506,9 @@ pub struct Opts {
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
+    #[arg(num_args = 1, required = true, value_delimiter = ',')]
+    conv_funs: Vec<ConvFun>,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -543,10 +542,10 @@ impl Subcommand for Opts {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
         let results = helpers::convolve_scales(
             &grid,
-            slice::from_mut(&mut pdf),
+            &mut conv_funs,
             &self.orders,
             &[],
             &[],
@@ -558,7 +557,7 @@ impl Subcommand for Opts {
         let fk_table = evolve_grid(
             &grid,
             &self.eko,
-            &pdf,
+            &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
             self.xif,
@@ -566,7 +565,7 @@ impl Subcommand for Opts {
         )?;
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
-            slice::from_mut(&mut pdf),
+            &mut conv_funs,
             &[],
             &[],
             &[],

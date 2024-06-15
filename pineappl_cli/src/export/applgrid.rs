@@ -1,3 +1,4 @@
+use super::helpers::ConvFun;
 use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
@@ -302,12 +303,15 @@ pub fn convert_into_applgrid(
 }
 
 // TODO: deduplicate this function from import
-pub fn convolve_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &[ConvFun], member: usize) -> Vec<f64> {
     let nloops = grid.nloops();
+
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
 
     ffi::grid_convolve(
         grid,
-        pdfset,
+        &conv_funs[0].lhapdf_name,
         member.try_into().unwrap(),
         nloops,
         1.0,
