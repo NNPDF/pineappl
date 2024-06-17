@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFun, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
@@ -15,7 +15,7 @@ mod applgrid;
 fn convert_into_applgrid(
     output: &Path,
     grid: &Grid,
-    conv_funs: &[ConvFun],
+    conv_funs: &ConvFuns,
     member: usize,
     _: usize,
     discard_non_matching_scales: bool,
@@ -33,7 +33,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &Grid,
-    _: &[ConvFun],
+    _: &ConvFuns,
     _: usize,
     _: usize,
     _: bool,
@@ -46,7 +46,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &Grid,
-    conv_funs: &[ConvFun],
+    conv_funs: &ConvFuns,
     member: usize,
     scales: usize,
     discard_non_matching_scales: bool,
@@ -77,8 +77,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with.
-    #[arg(num_args = 1, required = true, value_delimiter = ',')]
-    conv_funs: Vec<ConvFun>,
+    conv_funs: ConvFuns,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,

@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFun, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
@@ -18,7 +18,7 @@ mod fktable;
 fn convert_applgrid(
     input: &Path,
     alpha: u32,
-    conv_funs: &[ConvFun],
+    conv_funs: &ConvFuns,
     member: usize,
     dis_pid: i32,
     _: usize,
@@ -38,7 +38,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u32,
-    _: &[ConvFun],
+    _: &ConvFuns,
     _: usize,
     _: i32,
     _: usize,
@@ -52,7 +52,7 @@ fn convert_applgrid(
 fn convert_fastnlo(
     input: &Path,
     alpha: u32,
-    conv_funs: &[ConvFun],
+    conv_funs: &ConvFuns,
     member: usize,
     dis_pid: i32,
     scales: usize,
@@ -63,11 +63,11 @@ fn convert_fastnlo(
     use std::ptr;
 
     // TODO: convert this into an error?
-    assert_eq!(conv_funs.len(), 1);
+    assert_eq!(conv_funs.lhapdf_names.len(), 1);
 
     let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
         input.to_str().unwrap(),
-        &conv_funs[0].lhapdf_name,
+        &conv_funs.lhapdf_names[0],
         member.try_into().unwrap(),
     );
 
@@ -121,7 +121,7 @@ fn convert_fastnlo(
 fn convert_fastnlo(
     _: &Path,
     _: u32,
-    _: &str,
+    _: &ConvFuns,
     _: usize,
     _: i32,
     _: usize,
@@ -150,7 +150,7 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, us
 fn convert_grid(
     input: &Path,
     alpha: u32,
-    conv_funs: &[ConvFun],
+    conv_funs: &ConvFuns,
     member: usize,
     dis_pid: i32,
     scales: usize,
@@ -214,8 +214,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with.
-    #[arg(num_args = 1, required = true, value_delimiter = ',')]
-    conv_funs: Vec<ConvFun>,
+    conv_funs: ConvFuns,
     /// LO coupling power in alpha.
     #[arg(default_value_t = 0, long)]
     alpha: u32,

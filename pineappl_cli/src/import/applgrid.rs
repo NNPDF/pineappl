@@ -1,4 +1,4 @@
-use super::helpers::ConvFun;
+use super::helpers::ConvFuns;
 use anyhow::Result;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
@@ -246,15 +246,15 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     Ok(grid0)
 }
 
-pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &[ConvFun], member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &ConvFuns, member: usize) -> Vec<f64> {
     let nloops = grid.nloops();
 
     // TODO: add support for convolving an APPLgrid with two functions
-    assert_eq!(conv_funs.len(), 1);
+    assert_eq!(conv_funs.lhapdf_names.len(), 1);
 
     ffi::grid_convolve(
         grid,
-        &conv_funs[0].lhapdf_name,
+        &conv_funs.lhapdf_names[0],
         member.try_into().unwrap(),
         nloops,
         1.0,

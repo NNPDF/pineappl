@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFun, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
@@ -507,8 +507,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
-    #[arg(num_args = 1, required = true, value_delimiter = ',')]
-    conv_funs: Vec<ConvFun>,
+    conv_funs: ConvFuns,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,

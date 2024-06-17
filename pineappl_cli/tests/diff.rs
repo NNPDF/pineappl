@@ -3,12 +3,12 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Compares the numerical content of two grids with each other
 
-Usage: pineappl diff [OPTIONS] <INPUT1> <INPUT2> <CONV_FUNS>...
+Usage: pineappl diff [OPTIONS] <INPUT1> <INPUT2> <CONV_FUNS>
 
 Arguments:
-  <INPUT1>        Path to the first grid
-  <INPUT2>        Path to the second grid
-  <CONV_FUNS>...  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
+  <INPUT1>     Path to the first grid
+  <INPUT2>     Path to the second grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
       --ignore-orders      Ignore differences in the orders and sum them

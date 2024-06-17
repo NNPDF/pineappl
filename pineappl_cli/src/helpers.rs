@@ -15,47 +15,36 @@ use std::process::ExitCode;
 use std::str::FromStr;
 
 #[derive(Clone)]
-pub struct ConvFun {
-    pub lhapdf_name: String,
-    label: String,
+pub struct ConvFuns {
+    pub lhapdf_names: Vec<String>,
+    pub label: String,
 }
 
-impl FromStr for ConvFun {
+impl FromStr for ConvFuns {
     type Err = Infallible;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
         Ok(arg.split_once('=').map_or_else(
-            || ConvFun {
-                lhapdf_name: arg.to_owned(),
+            || Self {
+                lhapdf_names: arg.split(',').map(ToOwned::to_owned).collect(),
                 label: arg.to_owned(),
             },
-            |(lhapdf_name, label)| ConvFun {
-                lhapdf_name: lhapdf_name.to_owned(),
+            |(lhapdf_names, label)| Self {
+                lhapdf_names: lhapdf_names.split(',').map(ToOwned::to_owned).collect(),
                 label: label.to_owned(),
             },
         ))
     }
 }
 
-#[derive(Clone)]
-pub struct VecConvFun(pub Vec<ConvFun>);
-
-pub fn parse_conv_funs(arg: &str) -> std::result::Result<VecConvFun, String> {
-    Ok(VecConvFun(
-        arg.split(',')
-            .map(|conv_fun| ConvFun::from_str(conv_fun).map_err(|err| format!("{err}")))
-            .collect::<Result<_, _>>()?,
-    ))
-}
-
-pub fn create_conv_funs(funs: &[ConvFun]) -> Result<Vec<Pdf>> {
+pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
     Ok(funs
+        .lhapdf_names
         .iter()
-        .map(|fun| {
-            fun.lhapdf_name.parse().map_or_else(
-                |_| Pdf::with_setname_and_nmem(&fun.lhapdf_name),
-                Pdf::with_lhaid,
-            )
+        .map(|lhapdf_name| {
+            lhapdf_name
+                .parse()
+                .map_or_else(|_| Pdf::with_setname_and_nmem(lhapdf_name), Pdf::with_lhaid)
         })
         .collect::<Result<_, _>>()?)
 }

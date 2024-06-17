@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFun, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
@@ -17,8 +17,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input2: PathBuf,
     /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
-    #[arg(num_args = 1, required = true, value_delimiter = ',')]
-    conv_funs: Vec<ConvFun>,
+    conv_funs: ConvFuns,
     /// Ignore differences in the orders and sum them.
     #[arg(long)]
     ignore_orders: bool,

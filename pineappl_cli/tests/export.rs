@@ -5,12 +5,12 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Converts PineAPPL grids to APPLgrid files
 
-Usage: pineappl export [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>...
+Usage: pineappl export [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>         Path to the input grid
-  <OUTPUT>        Path to the converted grid
-  <CONV_FUNS>...  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]

@@ -2,11 +2,11 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Shows the predictions for all bin for each order separately
 
-Usage: pineappl orders [OPTIONS] <INPUT> <CONV_FUNS>...
+Usage: pineappl orders [OPTIONS] <INPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>         Path to the input grid
-  <CONV_FUNS>...  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
+  <INPUT>      Path to the input grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
   -a, --absolute               Show absolute numbers of each perturbative order
