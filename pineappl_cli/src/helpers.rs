@@ -1,5 +1,5 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::convolutions::LumiCache;
@@ -35,6 +35,17 @@ impl FromStr for ConvFun {
             },
         ))
     }
+}
+
+#[derive(Clone)]
+pub struct VecConvFun(pub Vec<ConvFun>);
+
+pub fn parse_conv_funs(arg: &str) -> std::result::Result<VecConvFun, String> {
+    Ok(VecConvFun(
+        arg.split(',')
+            .map(|conv_fun| ConvFun::from_str(conv_fun).map_err(|err| format!("{err}")))
+            .collect::<Result<_, _>>()?,
+    ))
 }
 
 pub fn create_conv_funs(funs: &[ConvFun]) -> Result<Vec<Pdf>> {
