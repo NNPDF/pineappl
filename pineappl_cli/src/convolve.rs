@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
@@ -6,7 +6,6 @@ use prettytable::{cell, Row};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::slice;
 
 /// Convolutes a PineAPPL grid with a PDF set.
 #[derive(Parser)]
@@ -16,8 +15,8 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[arg(required = true, value_parser = helpers::parse_pdfset)]
-    pdfsets: Vec<String>,
+    #[arg(required = true)]
+    conv_funs: Vec<ConvFuns>,
     /// Selects a subset of bins.
     #[arg(
         long,
@@ -50,12 +49,12 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
+        let mut conv_funs_0 = helpers::create_conv_funs(&self.conv_funs[0])?;
         let bins: Vec<_> = self.bins.iter().cloned().flatten().collect();
 
         let results = helpers::convolve(
             &grid,
-            slice::from_mut(&mut pdf),
+            &mut conv_funs_0,
             &self.orders,
             &bins,
             &[],
@@ -78,13 +77,13 @@ impl Subcommand for Opts {
         );
         let bin_count = limits.len();
 
-        let other_results: Vec<_> = self.pdfsets[1..]
+        let other_results: Vec<_> = self.conv_funs[1..]
             .iter()
-            .flat_map(|pdfset| {
-                let mut pdf = helpers::create_pdf(pdfset).unwrap();
+            .flat_map(|conv_funs| {
+                let mut conv_funs = helpers::create_conv_funs(conv_funs).unwrap();
                 helpers::convolve(
                     &grid,
-                    slice::from_mut(&mut pdf),
+                    &mut conv_funs,
                     &self.orders,
                     &bins,
                     &[],
@@ -109,7 +108,7 @@ impl Subcommand for Opts {
         }
         title.add_cell(cell!(c->format!("{y_label}\n[{y_unit}]")));
 
-        for other in self.pdfsets[1..].iter().map(|pdf| helpers::pdf_label(pdf)) {
+        for other in self.conv_funs[1..].iter().map(|conv_funs| &conv_funs.label) {
             let mut cell = cell!(c->format!("{other}\n[{y_unit}] [%]"));
             cell.set_hspan(2);
             title.add_cell(cell);
