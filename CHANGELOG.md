@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed `TryFromGridError::MetadataMissing`
 - removed `Grid::subgrid` and `Grid::set_subgrid` methods; these functions have
   been replaced with `Grid::subgrids` and `Grid::subgrids_mut`
+- removed the switch `--pdf-with-scale-cov` from `pineappl uncert`
 
 ## [0.7.4] - 23/05/2024
 
