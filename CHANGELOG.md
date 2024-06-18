@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
   `pid_basis`, which is now of type `PidBasis`
 - renamed module `pineappl::lumi` to `pineappl::convolutions`
+- renamed switch `--pdf` to `--conv-fun` in the subcommand `uncert`. This
+  switch now optionally accepts a list of indices, which determines the
+  corresponding convolution function (PDF/FF), for which the uncertainty should
+  calculated
 
 ### Removed
 
