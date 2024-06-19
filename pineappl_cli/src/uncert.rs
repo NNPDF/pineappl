@@ -55,7 +55,7 @@ struct Group {
     scale_env: Option<u16>,
 }
 
-/// Calculates scale and convolution function uncertainties.
+/// Calculate scale and convolution function uncertainties.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.

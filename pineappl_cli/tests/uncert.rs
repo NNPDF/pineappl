@@ -2,7 +2,7 @@ use assert_cmd::Command;
 use std::num::NonZeroUsize;
 use std::thread;
 
-const HELP_STR: &str = "Calculates scale and convolution function uncertainties
+const HELP_STR: &str = "Calculate scale and convolution function uncertainties
 
 Usage: pineappl uncert [OPTIONS] <--conv-fun[=<IDX>]|--scale-abs[=<SCALES>]|--scale-cov[=<SCALES>]|--scale-env[=<SCALES>]> <INPUT> <CONV_FUNS>
 

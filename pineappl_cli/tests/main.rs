@@ -19,7 +19,7 @@ Commands:
   pull      Calculates the pull between two different PDF sets
   read      Read out information of a grid
   subgrids  Print information about the internal subgrid types
-  uncert    Calculates scale and PDF uncertainties
+  uncert    Calculate scale and convolution function uncertainties
   write     Write a grid modified by various operations
 
 Options:
