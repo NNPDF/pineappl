@@ -34,7 +34,9 @@ impl FromStr for ConvFuns {
                     (fun.to_owned(), None)
                 })
             })
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<Vec<(_, _)>, _>>()?
+            .into_iter()
+            .unzip();
 
         Ok(Self {
             lhapdf_names,
