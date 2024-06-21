@@ -22,7 +22,7 @@ pub struct Opts {
     conv_funs1: ConvFuns,
     /// LHAPDF ID(s) or name(s) of the second PDF(s)/FF(s).
     conv_funs2: ConvFuns,
-    /// Index for the convolution function for which the pull should be calculated.
+    /// Index of the convolution functions for which the pull should be calculated.
     #[arg(default_value = "0", long, value_name = "IDX")]
     pull_from: usize,
     /// Confidence level in per cent.

@@ -12,7 +12,7 @@ Arguments:
   <CONV_FUNS2>  LHAPDF ID(s) or name(s) of the second PDF(s)/FF(s)
 
 Options:
-      --pull-from <IDX>    Index for the convolution function for which the pull should be calculated [default: 0]
+      --pull-from <IDX>    Index of the convolution functions for which the pull should be calculated [default: 0]
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
   -l, --limit <LIMIT>      The maximum number of channels displayed [default: 10]
   -o, --orders <ORDERS>    Select orders manually
