@@ -116,18 +116,13 @@ impl Subcommand for Opts {
             .conv_fun
             .iter()
             .map(|&index| {
-                let set = conv_funs[index].set();
-                let results: Vec<_> = set
-                    .mk_pdfs()?
+                let (set, funs) = helpers::create_conv_funs_for_set(&self.conv_funs, index)?;
+                let results: Vec<_> = funs
                     .into_par_iter()
-                    .map(|fun| {
-                        // TODO: do not create objects that are getting overwritten in any case
-                        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
-                        conv_funs[index] = fun;
-
+                    .map(|mut funs| {
                         Ok::<_, Error>(helpers::convolve(
                             &grid,
-                            &mut conv_funs,
+                            &mut funs,
                             &self.orders,
                             &[],
                             &[],

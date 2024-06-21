@@ -1,5 +1,5 @@
 use super::GlobalConfiguration;
-use anyhow::{ensure, Context, Error, Result};
+use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::convolutions::LumiCache;
@@ -60,6 +60,39 @@ pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
             )
         })
         .collect::<Result<_, _>>()?)
+}
+
+pub fn create_conv_funs_for_set(
+    funs: &ConvFuns,
+    index_of_set: usize,
+) -> Result<(PdfSet, Vec<Vec<Pdf>>)> {
+    let setname = &funs.lhapdf_names[index_of_set];
+    let set = setname.parse().map_or_else(
+        |_| Ok::<_, Error>(PdfSet::new(setname)?),
+        |lhaid| {
+            Ok(PdfSet::new(
+                &lhapdf::lookup_pdf(lhaid)
+                    .map(|(set, _)| set)
+                    .ok_or(anyhow!(
+                        "no convolution function for LHAID = `{lhaid}` found"
+                    ))?,
+            )?)
+        },
+    )?;
+
+    let conv_funs = set
+        .mk_pdfs()?
+        .into_iter()
+        .map(|conv_fun| {
+            // TODO: do not create objects that are getting overwritten in any case
+            let mut conv_funs = create_conv_funs(funs)?;
+            conv_funs[index_of_set] = conv_fun;
+
+            Ok::<_, Error>(conv_funs)
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok((set, conv_funs))
 }
 
 pub fn create_pdf(pdf: &str) -> Result<Pdf> {
