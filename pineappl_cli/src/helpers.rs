@@ -1,12 +1,11 @@
 use super::GlobalConfiguration;
-use anyhow::{ensure, Context, Result};
+use anyhow::{ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::convolutions::LumiCache;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
-use std::convert::Infallible;
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
@@ -14,26 +13,34 @@ use std::path::Path;
 use std::process::ExitCode;
 use std::str::FromStr;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
+    pub members: Vec<Option<usize>>,
     pub label: String,
 }
 
 impl FromStr for ConvFuns {
-    type Err = Infallible;
+    type Err = Error;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(arg.split_once('=').map_or_else(
-            || Self {
-                lhapdf_names: arg.split(',').map(ToOwned::to_owned).collect(),
-                label: arg.to_owned(),
-            },
-            |(lhapdf_names, label)| Self {
-                lhapdf_names: lhapdf_names.split(',').map(ToOwned::to_owned).collect(),
-                label: label.to_owned(),
-            },
-        ))
+        let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
+        let (lhapdf_names, members) = names
+            .split(',')
+            .map(|fun| {
+                Ok::<_, Error>(if let Some((name, mem)) = fun.split_once('/') {
+                    (name.to_owned(), Some(mem.parse()?))
+                } else {
+                    (fun.to_owned(), None)
+                })
+            })
+            .collect::<Result<_, _>>()?;
+
+        Ok(Self {
+            lhapdf_names,
+            members,
+            label: label.to_owned(),
+        })
     }
 }
 
@@ -41,10 +48,16 @@ pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
     Ok(funs
         .lhapdf_names
         .iter()
-        .map(|lhapdf_name| {
-            lhapdf_name
-                .parse()
-                .map_or_else(|_| Pdf::with_setname_and_nmem(lhapdf_name), Pdf::with_lhaid)
+        .zip(&funs.members)
+        .map(|(lhapdf_name, member)| {
+            lhapdf_name.parse().map_or_else(
+                |_| {
+                    let member = member.unwrap_or(0);
+                    // UNWRAP: we don't support sets with more members than `i32`
+                    Pdf::with_setname_and_member(lhapdf_name, member.try_into().unwrap())
+                },
+                Pdf::with_lhaid,
+            )
         })
         .collect::<Result<_, _>>()?)
 }
@@ -432,4 +445,26 @@ pub fn parse_order(order: &str) -> Result<(u32, u32)> {
     }
 
     Ok((alphas, alpha))
+}
+
+#[cfg(test)]
+mod test {
+    use super::ConvFuns;
+
+    #[test]
+    fn conv_fun_from_str() {
+        assert_eq!(
+            "A/2,B/1,C/0,D=X".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec![
+                    "A".to_owned(),
+                    "B".to_owned(),
+                    "C".to_owned(),
+                    "D".to_owned()
+                ],
+                members: vec![Some(2), Some(1), Some(0), None],
+                label: "X".to_owned()
+            }
+        );
+    }
 }
