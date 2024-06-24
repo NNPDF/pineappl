@@ -1,4 +1,5 @@
 use anyhow::Result;
+use lhapdf::Pdf;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
@@ -245,16 +246,8 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     Ok(grid0)
 }
 
-pub fn convolve_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, pdf: &mut Pdf) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolve(
-        grid,
-        pdfset,
-        member.try_into().unwrap(),
-        nloops,
-        1.0,
-        1.0,
-        1.0,
-    )
+    pineappl_applgrid::grid_convolve_with_one(grid, pdf, nloops, 1.0, 1.0, 1.0)
 }

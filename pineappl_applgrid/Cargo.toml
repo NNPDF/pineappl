@@ -17,6 +17,7 @@ workspace = true
 
 [dependencies]
 cxx = "1.0.65"
+lhapdf = { package = "managed-lhapdf", version = "0.3.0" }
 
 [build-dependencies]
 cc = "1.0.49"

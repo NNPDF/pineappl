@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
+use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::Order;
 use pineappl::convolutions::Convolution;
@@ -302,16 +303,8 @@ pub fn convert_into_applgrid(
 }
 
 // TODO: deduplicate this function from import
-pub fn convolve_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, pdf: &mut Pdf) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolve(
-        grid,
-        pdfset,
-        member.try_into().unwrap(),
-        nloops,
-        1.0,
-        1.0,
-        1.0,
-    )
+    pineappl_applgrid::grid_convolve_with_one(grid, pdf, nloops, 1.0, 1.0, 1.0)
 }
