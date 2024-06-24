@@ -645,18 +645,18 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 
 /// Creates a new and empty grid. The creation requires four different sets of parameters:
 /// - The luminosity function `lumi`: A pointer to the luminosity function that specifies how the
-/// cross section should be reconstructed.
+///   cross section should be reconstructed.
 /// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
-/// different perturbative orders, specified by `orders`. The array `order_params` stores the
-/// exponent of each perturbative order and must contain 4 integers denoting the exponent of the
-/// string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
-/// scale, and finally of the logarithm of the factorization scale.
+///   different perturbative orders, specified by `orders`. The array `order_params` stores the
+///   exponent of each perturbative order and must contain 4 integers denoting the exponent of the
+///   string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+///   scale, and finally of the logarithm of the factorization scale.
 /// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
-/// from a one-dimensional distribution. To this end `bins` specifies how many observables are
-/// stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
-/// each bin.
+///   from a one-dimensional distribution. To this end `bins` specifies how many observables are
+///   stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
+///   each bin.
 /// - More (optional) information can be given in a key-value storage `key_vals`, which might be
-/// a null pointer, to signal there are no further parameters that need to be set.
+///   a null pointer, to signal there are no further parameters that need to be set.
 ///
 /// # Safety
 ///
