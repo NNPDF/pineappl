@@ -135,7 +135,7 @@ jobs:
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
           # print the dynamically linked libraries
-          ldd prefix/bin/pineappl
+          ldd bin/pineappl
       - name: Upload artifact
         # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
         uses: actions/upload-artifact@v3
