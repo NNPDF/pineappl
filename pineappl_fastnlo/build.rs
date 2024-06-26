@@ -53,12 +53,18 @@ fn main() {
 
     println!("cargo:rustc-link-lib={link_modifier}fastnlotoolkit");
 
-    let lhapdf = Config::new().atleast_version("6").probe("lhapdf").unwrap();
+    let lhapdf_include_paths = Config::new()
+        .atleast_version("6")
+        .statik(cfg!(feature = "static"))
+        .cargo_metadata(false)
+        .probe("lhapdf")
+        .unwrap()
+        .include_paths;
 
     cxx_build::bridge("src/lib.rs")
         .file("src/fastnlo.cpp")
         .include(fnlo_include_path.trim())
-        .includes(lhapdf.include_paths)
+        .includes(lhapdf_include_paths)
         .std("c++11") // apparently not supported by MSVC, but fastNLO probably can't be compiled on Windows
         .compile("fnlo-bridge");
 
