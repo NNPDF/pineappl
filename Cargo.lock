@@ -929,9 +929,9 @@ dependencies = [
 
 [[package]]
 name = "managed-lhapdf"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "188f1953ebeb0286d1d129c075e43d61f592e8c8e555aa631a92164c44384964"
+checksum = "9c513a8fe45b2e88dfd5c73b87ac20979b4bc5af8ca6acd4aff7082d79195be0"
 dependencies = [
  "anyhow",
  "cxx",
