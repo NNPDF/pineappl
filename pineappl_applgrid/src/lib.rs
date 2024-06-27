@@ -10,6 +10,14 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(missing_docs)]
 
+use lhapdf::Pdf;
+use std::mem;
+use std::pin::Pin;
+use std::slice;
+use std::sync::{Mutex, OnceLock};
+
+static MUTEX: OnceLock<Mutex<()>> = OnceLock::new();
+
 #[cxx::bridge]
 pub mod ffi {
     #[repr(u32)]
@@ -21,9 +29,14 @@ pub mod ffi {
 
     unsafe extern "C++" {
         // this header is needed to make the enum a member of the class `appl::grid`
-        include!("pineappl_applgrid/src/calculation.hpp");
+        include!("pineappl_applgrid/src/helpers.hpp");
 
         type grid_CALCULATION;
+
+        // TODO: `std::ffi::c_void` isn't support by cxx, see:
+        // https://github.com/dtolnay/cxx/issues/1049, though there is a PR:
+        // https://github.com/dtolnay/cxx/pull/1204
+        type c_void;
     }
 
     #[namespace = "appl"]
@@ -111,10 +124,12 @@ pub mod ffi {
         fn make_lumi_pdf(_: &str, _: &[i32]) -> UniquePtr<lumi_pdf>;
 
         fn grid_combine(_: &grid) -> Vec<i32>;
-        fn grid_convolve(
+
+        unsafe fn grid_convolve_with_one(
             _: Pin<&mut grid>,
-            _: &str,
-            _: i32,
+            _: unsafe fn(&f64, &f64, *mut f64, *mut c_void),
+            _: unsafe fn(&f64, *mut c_void) -> f64,
+            _: *mut c_void,
             _: i32,
             _: f64,
             _: f64,
@@ -131,4 +146,54 @@ pub mod ffi {
         fn igrid_m_reweight(_: &igrid) -> bool;
         fn igrid_weightgrid(_: Pin<&mut igrid>, _: usize) -> Pin<&mut SparseMatrix3d>;
     }
+}
+
+pub fn grid_convolve_with_one(
+    grid: Pin<&mut ffi::grid>,
+    pdf: &mut Pdf,
+    nloops: i32,
+    rscale: f64,
+    fscale: f64,
+    escale: f64,
+) -> Vec<f64> {
+    let xfx = |x: &f64, q: &f64, results: *mut f64, pdf: *mut ffi::c_void| {
+        let pdf = unsafe { &mut *pdf.cast::<Pdf>() };
+        let results = unsafe { slice::from_raw_parts_mut(results, 14) };
+        for (pid, result) in [-6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6, 22]
+            .into_iter()
+            .zip(results.iter_mut())
+        {
+            // some grids have x-nodes at slightly larger values than `1.0`; in that cases these
+            // are numerical problems which we 'fix' by evaluating at exactly `1.0` instead
+            *result = pdf.xfx_q2(pid, x.min(1.0), *q * *q);
+        }
+    };
+
+    let alphas = |q: &f64, pdf: *mut ffi::c_void| -> f64 {
+        let pdf = unsafe { &mut *pdf.cast::<Pdf>() };
+        pdf.alphas_q2(*q * *q)
+    };
+
+    let lock = MUTEX
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        // UNWRAP: if this fails there's an unexpected bug somewhere
+        .unwrap_or_else(|_| unreachable!());
+
+    let results = unsafe {
+        ffi::grid_convolve_with_one(
+            grid,
+            xfx,
+            alphas,
+            (pdf as *mut Pdf).cast::<ffi::c_void>(),
+            nloops,
+            rscale,
+            fscale,
+            escale,
+        )
+    };
+
+    mem::drop(lock);
+
+    results
 }

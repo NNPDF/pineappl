@@ -32,9 +32,12 @@ thiserror = "1.0.30"
 
 [dev-dependencies]
 anyhow = "1.0.48"
-lhapdf = { package = "managed-lhapdf", version = "0.3.0" }
+lhapdf = { package = "managed-lhapdf", version = "0.3.2" }
 num-complex = "0.4.4"
 rand = { default-features = false, version = "0.8.4" }
 rand_pcg = { default-features = false, version = "0.3.1" }
 serde_yaml = "0.9.13"
 ndarray-npy = "0.8.1"
+
+[features]
+static = ["lhapdf/static"]

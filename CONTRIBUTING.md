@@ -10,8 +10,9 @@
 - Make sure not to use Rust features newer than the specified minimum supported
   Rust Version (MSRV), which is documented in the [README](README.md). You can
   use `cargo-msrv` to check the crates. However, the Github CI also checks this.
-- Make sure to follow the [Rust API
-  Guidelines](https://rust-lang.github.io/api-guidelines/checklist.html)
+- Make sure to follow the [Rust API Guidelines]
+
+[Rust API Guidelines]: https://rust-lang.github.io/api-guidelines/checklist.html
 
 ### Increasing the minimum supported Rust version (MSRV)
 
@@ -50,7 +51,7 @@ increasing the MSRV make sure to set it everywhere to the same value:
 
 - if you write a test that needs test data (grids, EKOs, etc.) store them at
   <https://data.nnpdf.science/pineappl/test-data/>. Ask one of the maintainers
-  to upload the data for you if you don't have access to this location). Then
+  to upload the data for you if you don't have access to this location. Then
   add a line to `maintainer/generate-coverage.sh` that downloads the data with
   `wget` and a similar line to `.github/workflows/rust.yml` that downloads the
   data with `curl`. To make Github refresh the cached test data when running
@@ -74,10 +75,22 @@ In the `maintainers` directory run
     ./make_release 0.5.4
 
 and replace `0.5.4` with a version string, *not* including `v` at the start.
-The version strings must adhere to [Semantic
-Versioning](https://semver.org/spec/v2.0.0.html).
+The version strings must adhere to [Semantic Versioning].
 
 This will take care of almost everything: the C, Python and Rust interfaces and
-their documentation. After some time also a new [Conda
-package](https://github.com/conda-forge/pineappl-feedstock) will be generated,
-for which the pull request will have to be accepted manually though.
+their documentation. After some time also a new [Conda package] will be
+generated, for which the pull request will have to be accepted manually though.
+
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
+[Conda package]: https://github.com/conda-forge/pineappl-feedstock
+
+## Updating the CI's container
+
+To update the software the CI runs with, modify the files in
+`maintainer/pineappl-ci`. See `maintainer/README.md` for a description of what
+these files do. To generate a new container, you need to manually run the
+[Container action] from the branch in which you modified the container files.
+After the container has been generated, all following commits in *every* branch
+will use the new container.
+
+[Container action]: https://github.com/NNPDF/pineappl/actions/workflows/container.yml

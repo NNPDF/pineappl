@@ -128,12 +128,14 @@ jobs:
       - uses: actions/checkout@v3
       - name: Compile binary
         run: |
-          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }}
+          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
           # build manpages
           mkdir -p prefix/share/man/man1
           cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+          # print the dynamically linked libraries
+          ldd bin/pineappl
       - name: Upload artifact
         # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
         uses: actions/upload-artifact@v3

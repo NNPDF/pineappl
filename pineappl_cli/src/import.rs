@@ -3,6 +3,7 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -18,8 +19,7 @@ mod fktable;
 fn convert_applgrid(
     input: &Path,
     alpha: u32,
-    conv_funs: &ConvFuns,
-    member: usize,
+    conv_funs: &mut [Pdf],
     dis_pid: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -29,7 +29,7 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
-    let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs, member);
+    let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", pgrid, results, 1))
 }
@@ -38,8 +38,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u32,
-    _: &ConvFuns,
-    _: usize,
+    _: &mut [Pdf],
     _: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -150,7 +149,8 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, us
 fn convert_grid(
     input: &Path,
     alpha: u32,
-    conv_funs: &ConvFuns,
+    conv_funs: &mut [Pdf],
+    fun_names: &ConvFuns,
     member: usize,
     dis_pid: i32,
     scales: usize,
@@ -166,12 +166,12 @@ fn convert_grid(
                     .map_or(false, |ext| ext == "tab"))
         {
             return convert_fastnlo(
-                input, alpha, conv_funs, member, dis_pid, scales, fnlo_mur, fnlo_muf,
+                input, alpha, fun_names, member, dis_pid, scales, fnlo_mur, fnlo_muf,
             );
         } else if extension == "dat" {
             return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, conv_funs, member, dis_pid, scales);
+            return convert_applgrid(input, alpha, conv_funs, dis_pid, scales);
         }
     }
 
@@ -255,10 +255,13 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
             &self.input,
             self.alpha,
+            &mut conv_funs,
             &self.conv_funs,
             0,
             self.dis_pid,
@@ -276,7 +279,6 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
-            let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
             let results = helpers::convolve(
                 &grid,
                 &mut conv_funs,
