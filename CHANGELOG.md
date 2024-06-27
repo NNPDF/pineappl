@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
+- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
+  choosing with convolution function uncertainty should be plotted
 
 ### Changed
 
@@ -43,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   switch now optionally accepts a list of indices, which determines the
   corresponding convolution function (PDF/FF), for which the uncertainty should
   calculated
+- renamed `no_pdf_unc` to `no_conv_fun_unc` in subcommand `plot`
 
 ### Removed
 

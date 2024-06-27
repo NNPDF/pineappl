@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
@@ -23,8 +23,11 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[arg(required = true, value_parser = helpers::parse_pdfset)]
-    pdfsets: Vec<String>,
+    #[arg(required = true)]
+    conv_funs: Vec<ConvFuns>,
+    /// Choose for which convolution function the uncertainty should be calculated.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    conv_fun_uncert_from: usize,
     /// Set the number of scale variations.
     #[arg(
         default_value_t = 7,
@@ -50,7 +53,7 @@ pub struct Opts {
     threads: usize,
     /// Disable the (time-consuming) calculation of PDF uncertainties.
     #[arg(long)]
-    no_pdf_unc: bool,
+    no_conv_fun_unc: bool,
 }
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -129,11 +132,11 @@ fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
         .join(",\n")
 }
 
-fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -> String {
+fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
     pdf_uncertainties
         .iter()
-        .zip(pdfsets.iter())
-        .map(|(values, pdfset)| {
+        .zip(conv_funs.iter().map(|fun| &fun.label))
+        .map(|(values, label)| {
             format!(
                 "                (
                     \"{}\",
@@ -141,7 +144,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -
                     np.array([{}]),
                     np.array([{}]),
                 ),",
-                helpers::pdf_label(pdfset).replace('_', r"\_"),
+                label.replace('_', r"\_"),
                 map_format_e_join_repeat_last(&values[0]),
                 map_format_e_join_repeat_last(&values[1]),
                 map_format_e_join_repeat_last(&values[2]),
@@ -192,7 +195,7 @@ impl Subcommand for Opts {
             };
 
             let grid = helpers::read_grid(&self.input)?;
-            let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
+            let mut conv_funs = helpers::create_conv_funs(&self.conv_funs[0])?;
             let slices = grid.bin_info().slices();
             let mut data_string = String::new();
 
@@ -222,7 +225,7 @@ impl Subcommand for Opts {
 
                 let results = helpers::convolve(
                     &grid,
-                    slice::from_mut(&mut pdf),
+                    &mut conv_funs,
                     &[],
                     &bins,
                     &[],
@@ -248,7 +251,7 @@ impl Subcommand for Opts {
 
                     helpers::convolve(
                         &grid,
-                        slice::from_mut(&mut pdf),
+                        &mut conv_funs,
                         &qcd_orders,
                         &bins,
                         &[],
@@ -273,16 +276,16 @@ impl Subcommand for Opts {
                     .map(|limits| 0.5 * (limits[0] + limits[1]))
                     .collect();
 
-                let pdf_uncertainties: Vec<Vec<Vec<_>>> = self
-                    .pdfsets
+                let conv_fun_uncertainties: Vec<Vec<Vec<_>>> = self
+                    .conv_funs
                     .par_iter()
-                    .map(|pdfset| {
-                        if self.no_pdf_unc {
-                            let mut pdf = helpers::create_pdf(pdfset).unwrap();
+                    .map(|conv_funs| {
+                        if self.no_conv_fun_unc {
+                            let mut conv_funs = helpers::create_conv_funs(conv_funs)?;
 
                             let results = helpers::convolve(
                                 &grid,
-                                slice::from_mut(&mut pdf),
+                                &mut conv_funs,
                                 &[],
                                 &bins,
                                 &[],
@@ -293,15 +296,17 @@ impl Subcommand for Opts {
 
                             Ok(vec![results; 3])
                         } else {
-                            let (set, member) = helpers::create_pdfset(pdfset).unwrap();
+                            let (set, funs) = helpers::create_conv_funs_for_set(
+                                conv_funs,
+                                self.conv_fun_uncert_from,
+                            )?;
 
-                            let pdf_results: Vec<_> = set
-                                .mk_pdfs()?
+                            let pdf_results: Vec<_> = funs
                                 .into_par_iter()
-                                .flat_map(|mut pdf| {
+                                .flat_map(|mut funs| {
                                     helpers::convolve(
                                         &grid,
-                                        slice::from_mut(&mut pdf),
+                                        &mut funs,
                                         &[],
                                         &bins,
                                         &[],
@@ -329,7 +334,8 @@ impl Subcommand for Opts {
                                 let uncertainty =
                                     set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
                                 central.push(
-                                    member.map_or(uncertainty.central, |member| values[member]),
+                                    conv_funs.members[self.conv_fun_uncert_from]
+                                        .map_or(uncertainty.central, |member| values[member]),
                                 );
                                 min.push(uncertainty.central - uncertainty.errminus);
                                 max.push(uncertainty.central + uncertainty.errplus);
@@ -400,7 +406,7 @@ impl Subcommand for Opts {
                                 ),
                                 helpers::convolve(
                                     &grid,
-                                    slice::from_mut(&mut pdf),
+                                    &mut conv_funs,
                                     &[],
                                     &bins,
                                     &channel_mask,
@@ -442,7 +448,7 @@ impl Subcommand for Opts {
         }},",
                     slice_label = label,
                     mid = map_format_join(&mid),
-                    pdf_results = format_pdf_results(&pdf_uncertainties, &self.pdfsets),
+                    pdf_results = format_pdf_results(&conv_fun_uncertainties, &self.conv_funs),
                     qcd_y = map_format_e_join_repeat_last(&qcd_central),
                     qcd_min = map_format_e_join_repeat_last(&qcd_min),
                     qcd_max = map_format_e_join_repeat_last(&qcd_max),
@@ -506,13 +512,13 @@ impl Subcommand for Opts {
             let ylog = xlog;
             let title = key_values.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
-            let pdfs = self.pdfsets.len();
+            let nconvs = self.conv_funs.len();
 
             print!(
                 include_str!("plot.py"),
                 inte = if bins == 1 { "" } else { "# " },
                 nint = if bins == 1 { "# " } else { "" },
-                pdfs = if pdfs == 1 || bins == 1 { "# " } else { "" },
+                nconvs = if nconvs == 1 || bins == 1 { "# " } else { "" },
                 xlabel = xlabel,
                 ylabel = ylabel,
                 xlog = xlog,
@@ -523,7 +529,19 @@ impl Subcommand for Opts {
                 metadata = format_metadata(&vector),
             );
         } else {
-            let (pdfset1, pdfset2) = self.pdfsets.iter().collect_tuple().unwrap();
+            let (pdfset1, pdfset2) = self
+                .conv_funs
+                .iter()
+                .map(|fun| {
+                    assert_eq!(fun.lhapdf_names.len(), 1);
+                    if let Some(member) = fun.members[0] {
+                        format!("{}/{member}", fun.lhapdf_names[0])
+                    } else {
+                        fun.lhapdf_names[0].clone()
+                    }
+                })
+                .collect_tuple()
+                .unwrap();
             let (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
@@ -534,8 +552,8 @@ impl Subcommand for Opts {
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let (set1, member1) = helpers::create_pdfset(pdfset1)?;
-            let (set2, member2) = helpers::create_pdfset(pdfset2)?;
+            let (set1, member1) = helpers::create_pdfset(&pdfset1)?;
+            let (set2, member2) = helpers::create_pdfset(&pdfset2)?;
             let mut pdfset1 = set1.mk_pdfs()?;
             let mut pdfset2 = set2.mk_pdfs()?;
 
