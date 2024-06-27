@@ -2,79 +2,79 @@ use assert_cmd::Command;
 use std::num::NonZeroUsize;
 use std::thread;
 
-const HELP_STR: &str = "Calculates scale and PDF uncertainties
+const HELP_STR: &str = "Calculate scale and convolution function uncertainties
 
-Usage: pineappl uncert [OPTIONS] <--pdf|--pdf-with-scale-cov[=<SCALES>]|--scale-abs[=<SCALES>]|--scale-cov[=<SCALES>]|--scale-env[=<SCALES>]> <INPUT> <PDFSET>
+Usage: pineappl uncert [OPTIONS] <--conv-fun[=<IDX>]|--scale-abs[=<SCALES>]|--scale-cov[=<SCALES>]|--scale-env[=<SCALES>]> <INPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <PDFSET>  LHAPDF id or name of the PDF set
+  <INPUT>      Path to the input grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
-      --pdf                            Calculate the PDF uncertainties
-      --pdf-with-scale-cov[=<SCALES>]  Calculate the combined PDF and scale uncertainty using the covariance method [possible values: 3, 7, 9]
-      --scale-abs[=<SCALES>]           Show absolute numbers of the scale-varied results [possible values: 3, 7, 9]
-      --scale-cov[=<SCALES>]           Calculate scale uncertainties using the covariance method [possible values: 3, 7, 9]
-      --scale-env[=<SCALES>]           Calculate the envelope of results where renormalization and factorization scales varied [possible values: 3, 7, 9]
-      --cl <CL>                        Confidence level in per cent, for PDF uncertainties [default: 68.26894921370858]
-  -i, --integrated                     Show integrated numbers (without bin widths) instead of differential ones
-  -o, --orders <ORDERS>                Select orders manually
-      --threads <THREADS>              Number of threads to utilize [default: {}]
-      --digits-abs <ABS>               Set the number of fractional digits shown for absolute numbers [default: 7]
-      --digits-rel <REL>               Set the number of fractional digits shown for relative numbers [default: 2]
-  -h, --help                           Print help
+      --conv-fun[=<IDX>]      Calculate convolution function uncertainties
+      --scale-abs[=<SCALES>]  Show absolute numbers of the scale-varied results [possible values: 3, 7, 9]
+      --scale-cov[=<SCALES>]  Calculate scale uncertainties using the covariance method [possible values: 3, 7, 9]
+      --scale-env[=<SCALES>]  Calculate the envelope of results where renormalization and factorization scales varied [possible values: 3, 7, 9]
+      --cl <CL>               Confidence level in per cent, for convolution function uncertainties [default: 68.26894921370858]
+  -i, --integrated            Show integrated numbers (without bin widths) instead of differential ones
+  -o, --orders <ORDERS>       Select orders manually
+      --threads <THREADS>     Number of threads to utilize [default: {}]
+      --digits-abs <ABS>      Set the number of fractional digits shown for absolute numbers [default: 7]
+      --digits-rel <REL>      Set the number of fractional digits shown for relative numbers [default: 2]
+  -h, --help                  Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    dsig/detal  PDF central    PDF    
-     []        [pb]                    [%]    
--+----+----+-----------+-----------+-----+----
-0    2 2.25 7.5459110e2 7.5461655e2 -1.14 1.14
-1 2.25  2.5 6.9028342e2 6.9027941e2 -1.16 1.16
-2  2.5 2.75 6.0025198e2 6.0022595e2 -1.18 1.18
-3 2.75    3 4.8552235e2 4.8548211e2 -1.22 1.22
-4    3 3.25 3.6195456e2 3.6191001e2 -1.27 1.27
-5 3.25  3.5 2.4586691e2 2.4582640e2 -1.35 1.35
-6  3.5    4 1.1586851e2 1.1584074e2 -1.51 1.51
-7    4  4.5 2.7517266e1 2.7504644e1 -2.77 2.77
+const DEFAULT_STR: &str =
+    "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed        NNPDF40_nnlo_as_01180    
+     []        [pb]        [pb]          [%]     [%]      [pb]          [%]     [%]  
+-+----+----+-----------+-----------+---------+---------+-----------+--------+--------
+0    2 2.25 7.7302788e2 7.7302788e2     -0.67      0.67 7.7302788e2    -0.62     0.62
+1 2.25  2.5 7.0634852e2 7.0634851e2     -0.72      0.72 7.0634851e2    -0.62     0.62
+2  2.5 2.75 6.1354750e2 6.1354750e2     -0.78      0.78 6.1354750e2    -0.64     0.64
+3 2.75    3 4.9584391e2 4.9584391e2     -0.86      0.86 4.9584391e2    -0.68     0.68
+4    3 3.25 3.6957893e2 3.6957893e2     -0.97      0.97 3.6957893e2    -0.76     0.76
+5 3.25  3.5 2.5143057e2 2.5143057e2     -1.14      1.14 2.5143057e2    -0.89     0.89
+6  3.5    4 1.1962468e2 1.1962468e2     -1.55      1.55 1.1962468e2    -1.34     1.34
+7    4  4.5 2.9665790e1 2.9665790e1     -2.56      2.56 2.9665789e1    -3.51     3.51
 ";
 
-const CL_90_STR: &str = "b   etal    dsig/detal  PDF central    PDF    
-     []        [pb]                    [%]    
--+----+----+-----------+-----------+-----+----
-0    2 2.25 7.5459110e2 7.5461655e2 -1.87 1.87
-1 2.25  2.5 6.9028342e2 6.9027941e2 -1.90 1.90
-2  2.5 2.75 6.0025198e2 6.0022595e2 -1.95 1.95
-3 2.75    3 4.8552235e2 4.8548211e2 -2.00 2.00
-4    3 3.25 3.6195456e2 3.6191001e2 -2.08 2.08
-5 3.25  3.5 2.4586691e2 2.4582640e2 -2.22 2.22
-6  3.5    4 1.1586851e2 1.1584074e2 -2.48 2.48
-7    4  4.5 2.7517266e1 2.7504644e1 -4.55 4.55
+const CL_90_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed   
+     []        [pb]        [pb]          [%]     [%]   
+-+----+----+-----------+-----------+---------+---------
+0    2 2.25 7.5459110e2 7.5461655e2     -1.87      1.87
+1 2.25  2.5 6.9028342e2 6.9027941e2     -1.90      1.90
+2  2.5 2.75 6.0025198e2 6.0022595e2     -1.95      1.95
+3 2.75    3 4.8552235e2 4.8548211e2     -2.00      2.00
+4    3 3.25 3.6195456e2 3.6191001e2     -2.08      2.08
+5 3.25  3.5 2.4586691e2 2.4582640e2     -2.22      2.22
+6  3.5    4 1.1586851e2 1.1584074e2     -2.48      2.48
+7    4  4.5 2.7517266e1 2.7504644e1     -4.55      4.55
 ";
 
-const INTEGRATED_STR: &str = "b   etal       integ    PDF central    PDF    
-     []         []                     [%]    
--+----+----+-----------+-----------+-----+----
-0    2 2.25 1.8864777e2 1.8865414e2 -1.14 1.14
-1 2.25  2.5 1.7257086e2 1.7256985e2 -1.16 1.16
-2  2.5 2.75 1.5006300e2 1.5005649e2 -1.18 1.18
-3 2.75    3 1.2138059e2 1.2137053e2 -1.22 1.22
-4    3 3.25 9.0488640e1 9.0477502e1 -1.27 1.27
-5 3.25  3.5 6.1466727e1 6.1456599e1 -1.35 1.35
-6  3.5    4 5.7934254e1 5.7920368e1 -1.51 1.51
-7    4  4.5 1.3758633e1 1.3752322e1 -2.77 2.77
+const INTEGRATED_STR: &str = "b   etal       integ      NNPDF31_nlo_as_0118_luxqed   
+     []         []          []          [%]     [%]    
+-+----+----+-----------+-----------+---------+---------
+0    2 2.25 1.8864777e2 1.8865414e2     -1.14      1.14
+1 2.25  2.5 1.7257086e2 1.7256985e2     -1.16      1.16
+2  2.5 2.75 1.5006300e2 1.5005649e2     -1.18      1.18
+3 2.75    3 1.2138059e2 1.2137053e2     -1.22      1.22
+4    3 3.25 9.0488640e1 9.0477502e1     -1.27      1.27
+5 3.25  3.5 6.1466727e1 6.1456599e1     -1.35      1.35
+6  3.5    4 5.7934254e1 5.7920368e1     -1.51      1.51
+7    4  4.5 1.3758633e1 1.3752322e1     -2.77      2.77
 ";
 
-const ORDERS_A2_AS1A2_STR: &str = "b   etal    dsig/detal  PDF central    PDF    
-     []        [pb]                    [%]    
--+----+----+-----------+-----------+-----+----
-0    2 2.25 7.6246034e2 7.6248591e2 -1.14 1.14
-1 2.25  2.5 6.9684577e2 6.9684166e2 -1.16 1.16
-2  2.5 2.75 6.0548681e2 6.0546059e2 -1.18 1.18
-3 2.75    3 4.8928139e2 4.8924093e2 -1.22 1.22
-4    3 3.25 3.6454175e2 3.6449702e2 -1.27 1.27
-5 3.25  3.5 2.4754316e2 2.4750254e2 -1.35 1.35
-6  3.5    4 1.1667878e2 1.1665095e2 -1.50 1.50
-7    4  4.5 2.7737493e1 2.7724826e1 -2.77 2.77
+const ORDERS_A2_AS1A2_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed   
+     []        [pb]        [pb]          [%]     [%]   
+-+----+----+-----------+-----------+---------+---------
+0    2 2.25 7.6246034e2 7.6248591e2     -1.14      1.14
+1 2.25  2.5 6.9684577e2 6.9684166e2     -1.16      1.16
+2  2.5 2.75 6.0548681e2 6.0546059e2     -1.18      1.18
+3 2.75    3 4.8928139e2 4.8924093e2     -1.22      1.22
+4    3 3.25 3.6454175e2 3.6449702e2     -1.27      1.27
+5 3.25  3.5 2.4754316e2 2.4750254e2     -1.35      1.35
+6  3.5    4 1.1667878e2 1.1665095e2     -1.50      1.50
+7    4  4.5 2.7737493e1 2.7724826e1     -2.77      2.77
 ";
 
 const SCALE_ABS_STR: &str =
@@ -143,19 +143,6 @@ const SCALE_ENV_9_STR: &str = "b   etal    dsig/detal  9pt-svar (env)
 7    4  4.5 2.7517266e1   -5.36    5.22
 ";
 
-const PDF_WITH_SCALE_COV_STR: &str = "b   etal    dsig/detal  PDF central PDF w/ 7pt scale (cov) 
-     []        [pb]                           [%]          
--+----+----+-----------+-----------+-----------+-----------
-0    2 2.25 7.5459110e2 7.5461655e2       -3.48        3.48
-1 2.25  2.5 6.9028342e2 6.9027941e2       -3.50        3.50
-2  2.5 2.75 6.0025198e2 6.0022595e2       -3.55        3.55
-3 2.75    3 4.8552235e2 4.8548211e2       -3.56        3.56
-4    3 3.25 3.6195456e2 3.6191001e2       -3.58        3.58
-5 3.25  3.5 2.4586691e2 2.4582640e2       -3.60        3.60
-6  3.5    4 1.1586851e2 1.1584074e2       -3.63        3.63
-7    4  4.5 2.7517266e1 2.7504644e1       -4.26        4.26
-";
-
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -174,15 +161,15 @@ fn help() {
 }
 
 #[test]
-fn pdf_default() {
+fn conv_fun_default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "uncert",
-            "--pdf",
+            "--conv-fun=0,1",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
+            "NNPDF31_nlo_as_0118_luxqed,NNPDF40_nnlo_as_01180=NNPDF3.1+NNPDF4.0",
         ])
         .assert()
         .success()
@@ -190,12 +177,12 @@ fn pdf_default() {
 }
 
 #[test]
-fn pdf_cl_90() {
+fn conv_fun_cl_90() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "uncert",
-            "--pdf",
+            "--conv-fun",
             "--cl=90",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -207,12 +194,12 @@ fn pdf_cl_90() {
 }
 
 #[test]
-fn pdf_integrated() {
+fn conv_fun_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "uncert",
-            "--pdf",
+            "--conv-fun=0",
             "--integrated",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -224,12 +211,12 @@ fn pdf_integrated() {
 }
 
 #[test]
-fn pdf_orders_a2_as1a2() {
+fn conv_fun_orders_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "uncert",
-            "--pdf",
+            "--conv-fun=0",
             "--orders=a2,as1a2",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -313,19 +300,4 @@ fn scale_env_9() {
         .assert()
         .success()
         .stdout(SCALE_ENV_9_STR);
-}
-
-#[test]
-fn pdf_with_scale_cov() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "uncert",
-            "--pdf-with-scale-cov",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
-        ])
-        .assert()
-        .success()
-        .stdout(PDF_WITH_SCALE_COV_STR);
 }

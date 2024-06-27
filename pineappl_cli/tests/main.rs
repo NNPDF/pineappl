@@ -19,15 +19,16 @@ Commands:
   pull      Calculates the pull between two different PDF sets
   read      Read out information of a grid
   subgrids  Print information about the internal subgrid types
-  uncert    Calculates scale and PDF uncertainties
+  uncert    Calculate scale and convolution function uncertainties
   write     Write a grid modified by various operations
 
 Options:
-      --lhapdf-banner        Allow LHAPDF to print banners
-      --force-positive       Forces negative PDF values to zero
-      --allow-extrapolation  Allow extrapolation of PDFs outside their region of validity
-  -h, --help                 Print help
-  -V, --version              Print version
+      --lhapdf-banner          Allow LHAPDF to print banners
+      --force-positive         Forces negative PDF values to zero
+      --allow-extrapolation    Allow extrapolation of PDFs outside their region of validity
+      --use-alphas-from <IDX>  Choose the PDF/FF set for the strong coupling [default: 0]
+  -h, --help                   Print help
+  -V, --version                Print version
 ";
 
 #[test]

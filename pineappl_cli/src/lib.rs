@@ -38,6 +38,9 @@ pub struct GlobalConfiguration {
     /// Allow extrapolation of PDFs outside their region of validity.
     #[arg(long)]
     pub allow_extrapolation: bool,
+    /// Choose the PDF/FF set for the strong coupling.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    pub use_alphas_from: usize,
 }
 
 #[enum_dispatch]

@@ -2,11 +2,11 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Convolutes a PineAPPL grid with a PDF set
 
-Usage: pineappl convolve [OPTIONS] <INPUT> <PDFSETS>...
+Usage: pineappl convolve [OPTIONS] <INPUT> <CONV_FUNS>...
 
 Arguments:
-  <INPUT>       Path of the input grid
-  <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
+  <INPUT>         Path of the input grid
+  <CONV_FUNS>...  LHAPDF id(s) or name of the PDF set(s)
 
 Options:
   -b, --bins <BINS>       Selects a subset of bins
