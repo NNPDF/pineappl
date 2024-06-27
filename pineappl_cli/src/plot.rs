@@ -13,7 +13,6 @@ use std::fmt::Write;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::slice;
 use std::thread;
 
 /// Creates a matplotlib script plotting the contents of the grid.
@@ -529,19 +528,13 @@ impl Subcommand for Opts {
                 metadata = format_metadata(&vector),
             );
         } else {
-            let (pdfset1, pdfset2) = self
-                .conv_funs
-                .iter()
-                .map(|fun| {
-                    assert_eq!(fun.lhapdf_names.len(), 1);
-                    if let Some(member) = fun.members[0] {
-                        format!("{}/{member}", fun.lhapdf_names[0])
-                    } else {
-                        fun.lhapdf_names[0].clone()
-                    }
-                })
-                .collect_tuple()
-                .unwrap();
+            // TODO: enforce two arguments with clap
+            assert_eq!(self.conv_funs.len(), 2);
+
+            let (set1, mut conv_funs1) =
+                helpers::create_conv_funs_for_set(&self.conv_funs[0], self.conv_fun_uncert_from)?;
+            let (set2, mut conv_funs2) =
+                helpers::create_conv_funs_for_set(&self.conv_funs[1], self.conv_fun_uncert_from)?;
             let (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
@@ -552,17 +545,15 @@ impl Subcommand for Opts {
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let (set1, member1) = helpers::create_pdfset(&pdfset1)?;
-            let (set2, member2) = helpers::create_pdfset(&pdfset2)?;
-            let mut pdfset1 = set1.mk_pdfs()?;
-            let mut pdfset2 = set2.mk_pdfs()?;
+            let member1 = self.conv_funs[0].members[self.conv_fun_uncert_from];
+            let member2 = self.conv_funs[1].members[self.conv_fun_uncert_from];
 
-            let values1: Vec<_> = pdfset1
+            let values1: Vec<_> = conv_funs1
                 .par_iter_mut()
-                .map(|pdf| {
+                .map(|conv_funs| {
                     let values = helpers::convolve(
                         &grid,
-                        slice::from_mut(pdf),
+                        conv_funs,
                         &[],
                         &[bin],
                         &[],
@@ -574,12 +565,12 @@ impl Subcommand for Opts {
                     values[0]
                 })
                 .collect();
-            let values2: Vec<_> = pdfset2
+            let values2: Vec<_> = conv_funs2
                 .par_iter_mut()
-                .map(|pdf| {
+                .map(|conv_funs| {
                     let values = helpers::convolve(
                         &grid,
-                        slice::from_mut(pdf),
+                        conv_funs,
                         &[],
                         &[bin],
                         &[],
@@ -613,10 +604,26 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolve_subgrid(&grid, &mut pdfset1[0], order, bin, channel, cfg)
-                .sum_axis(Axis(0));
-            let res2 = helpers::convolve_subgrid(&grid, &mut pdfset2[0], order, bin, channel, cfg)
-                .sum_axis(Axis(0));
+            // TODO: if no member is given, the zeroth is used, but we should show the averaged
+            // result of all members instead
+            let res1 = helpers::convolve_subgrid(
+                &grid,
+                &mut conv_funs1[member1.unwrap_or(0)],
+                order,
+                bin,
+                channel,
+                cfg,
+            )
+            .sum_axis(Axis(0));
+            let res2 = helpers::convolve_subgrid(
+                &grid,
+                &mut conv_funs2[member2.unwrap_or(0)],
+                order,
+                bin,
+                channel,
+                cfg,
+            )
+            .sum_axis(Axis(0));
 
             let subgrid = &grid.subgrids()[[order, bin, channel]];
             //let q2 = subgrid.q2_grid();

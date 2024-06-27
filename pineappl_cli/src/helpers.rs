@@ -97,23 +97,6 @@ pub fn create_conv_funs_for_set(
     Ok((set, conv_funs))
 }
 
-pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
-    let pdfset = pdfset.split_once('=').map_or(pdfset, |(name, _)| name);
-    let (pdfset, member) = pdfset
-        .rsplit_once('/')
-        .map_or((pdfset, None), |(set, member)| {
-            (set, Some(member.parse::<usize>().unwrap()))
-        });
-
-    Ok((
-        PdfSet::new(&pdfset.parse().map_or_else(
-            |_| pdfset.to_owned(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ))?,
-        member,
-    ))
-}
-
 pub fn read_grid(input: &Path) -> Result<Grid> {
     Grid::read(File::open(input).context(format!("unable to open '{}'", input.display()))?)
         .context(format!("unable to read '{}'", input.display()))
@@ -381,36 +364,94 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
 
 pub fn convolve_subgrid(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     order: usize,
     bin: usize,
     lumi: usize,
     cfg: &GlobalConfiguration,
 ) -> Array3<f64> {
-    // if the field 'Particle' is missing we assume it's a proton PDF
-    let pdf_pdg_id = lhapdf
-        .set()
-        .entry("Particle")
-        .map_or(Ok(2212), |string| string.parse::<i32>())
-        .unwrap();
-
     if cfg.force_positive {
-        lhapdf.set_force_positive(1);
+        for fun in conv_funs.iter_mut() {
+            fun.set_force_positive(1);
+        }
     }
 
-    let x_max = lhapdf.x_max();
-    let x_min = lhapdf.x_min();
-    let mut pdf = |id, x, q2| {
-        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-            0.0
-        } else {
-            lhapdf.xfx_q2(id, x, q2)
-        }
-    };
-    let mut alphas = |q2| lhapdf.alphas_q2(q2);
-    let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
+    match conv_funs {
+        [fun] => {
+            // there's only one convolution function from which we can use the strong coupling
+            assert_eq!(cfg.use_alphas_from, 0);
 
-    grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            let pdg_id = fun
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let x_max = fun.x_max();
+            let x_min = fun.x_min();
+            let mut alphas = |q2| fun.alphas_q2(q2);
+            let mut fun = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                    0.0
+                } else {
+                    fun.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
+
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+        }
+        [fun1, fun2] => {
+            let pdg_id1 = fun1
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let pdg_id2 = fun2
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let x_max1 = fun1.x_max();
+            let x_min1 = fun1.x_min();
+            let x_max2 = fun2.x_max();
+            let x_min2 = fun2.x_min();
+
+            let mut alphas = |q2| match cfg.use_alphas_from {
+                0 => fun1.alphas_q2(q2),
+                1 => fun2.alphas_q2(q2),
+                _ => panic!(
+                    "expected `use_alphas_from` to be `0` or `1`, is {}",
+                    cfg.use_alphas_from
+                ),
+            };
+            let mut fun1 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
+                    0.0
+                } else {
+                    fun1.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut fun2 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
+                    0.0
+                } else {
+                    fun2.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache =
+                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
+
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+        }
+        _ => unimplemented!(),
+    }
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
