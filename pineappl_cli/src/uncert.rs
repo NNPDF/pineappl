@@ -184,7 +184,9 @@ impl Subcommand for Opts {
 
         for &index in &self.group.conv_fun {
             title.add_cell(
-                cell!(c->format!("{}", self.conv_funs.lhapdf_names[index])).with_hspan(3),
+                // TODO: fix alignment for second title row
+                cell!(c->format!("{}\n[{y_unit}]          [%]     [%]", self.conv_funs.lhapdf_names[index]))
+                    .with_hspan(3),
             );
         }
 
