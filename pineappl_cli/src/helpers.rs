@@ -97,14 +97,6 @@ pub fn create_conv_funs_for_set(
     Ok((set, conv_funs))
 }
 
-pub fn create_pdf(pdf: &str) -> Result<Pdf> {
-    let pdf = pdf.split_once('=').map_or(pdf, |(name, _)| name);
-
-    Ok(pdf
-        .parse()
-        .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
-}
-
 pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
     let pdfset = pdfset.split_once('=').map_or(pdfset, |(name, _)| name);
     let (pdfset, member) = pdfset
@@ -120,10 +112,6 @@ pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
         ))?,
         member,
     ))
-}
-
-pub fn pdf_label(pdf: &str) -> &str {
-    pdf.split_once('=').map_or(pdf, |(_, label)| label)
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {
@@ -423,11 +411,6 @@ pub fn convolve_subgrid(
     let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
 
     grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
-}
-
-pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
-    // TODO: figure out how to validate `argument` with `managed-lhapdf`
-    Ok(argument.to_owned())
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
