@@ -93,7 +93,7 @@ jobs:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
 
-  cli-wheels-macos:
+  cli-wheel-macos:
     strategy:
       matrix:
         include:
@@ -185,7 +185,7 @@ jobs:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
 
-  cli-wheels-linux:
+  cli-wheel-linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
