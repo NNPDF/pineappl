@@ -115,7 +115,8 @@ jobs:
             3.10
       - name: Install non-Rust dependencies
         run: |
-          python3 maintainer/install_lhapdf.py
+          python3 maintainer/install_lhapdf.py || true
+          cat LHAPDF-6.5.3/config.log
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
