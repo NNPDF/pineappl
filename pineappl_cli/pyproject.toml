@@ -4,3 +4,4 @@ build-backend = "maturin"
 
 [tool.maturin]
 bindings = "bin"
+features = ["static"]
