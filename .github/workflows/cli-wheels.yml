@@ -34,7 +34,7 @@ jobs:
             python3
             curl
             tar
-            mingw-w64-pkg-config
+            mingw-w64-ucrt-x86_64-pkg-config
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
