@@ -22,10 +22,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          before-script-linux: |
-            yum update
-            yum -y install gcc-c++ make
-            python3 maintainer/install_lhapdf.py
+          container: ghcr.io/nnpdf/pineappl-ci:latest
           # `--find-interpreter` is needed to generate wheels for *all* Python versions
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
           sccache: "true"
