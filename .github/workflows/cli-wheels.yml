@@ -32,6 +32,8 @@ jobs:
             mingw-w64-ucrt-x86_64-make
             autoconf
             python3
+            curl
+            tar
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -48,10 +50,12 @@ jobs:
             3.11
             3.12
             3.10
-      - name: Install non-Rust dependencies
+      - name: Install LHAPDF
         run: |
-          python3 maintainer/install_lhapdf.py || true
-          cat LHAPDF-6.5.3/config.log
+          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
+          cd LHAPDF-6.5.4
+          ./configure || true
+          cat LHAPDF-6.5.4/config.log
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
