@@ -34,7 +34,6 @@ jobs:
           path: dist
 
   wheels-macos:
-    runs-on: macos-latest
     strategy:
       matrix:
         include:
