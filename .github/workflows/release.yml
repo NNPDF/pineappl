@@ -130,7 +130,7 @@ jobs:
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
           sccache: "true"
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
@@ -202,7 +202,7 @@ jobs:
           sccache: "true"
           manylinux: auto
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
