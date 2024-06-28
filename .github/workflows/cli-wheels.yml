@@ -34,7 +34,7 @@ jobs:
             python3
             curl
             tar
-            pkgconf
+            mingw-w64-pkg-config
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -60,11 +60,9 @@ jobs:
           make -j
           make install
           # print the path of `pkgconf`
-          command -v pkgconf
+          command -v pkg-config
       - name: Build wheels
         uses: PyO3/maturin-action@v1
-        env:
-          PKG_CONFIG: "/usr/bin/pkgconf"
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
