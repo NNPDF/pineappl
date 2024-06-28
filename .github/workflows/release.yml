@@ -192,6 +192,9 @@ jobs:
         target: [x86_64]
     steps:
       - uses: actions/checkout@v4
+      - name: Enable APPLgrid, fastNLO and legacy FK-table converters
+        run: |
+          sed -i "s/features = [\"static\"]/all-features = true/" pineappl_cli/pyproject.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
