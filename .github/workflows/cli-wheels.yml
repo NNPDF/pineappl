@@ -34,6 +34,7 @@ jobs:
             python3
             curl
             tar
+            pkgconf
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
