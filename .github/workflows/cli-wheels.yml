@@ -55,7 +55,7 @@ jobs:
           curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
           cd LHAPDF-6.5.4
           ./configure || true
-          cat LHAPDF-6.5.4/config.log
+          cat config.log
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
