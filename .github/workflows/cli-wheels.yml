@@ -63,6 +63,8 @@ jobs:
           command -v pkgconf
       - name: Build wheels
         uses: PyO3/maturin-action@v1
+        env:
+          PKG_CONFIG: "/usr/bin/pkgconf"
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
