@@ -54,7 +54,8 @@ jobs:
         run: |
           curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
           cd LHAPDF-6.5.4
-          ./configure || true
+          # compiling with Python gives errors, but we also don't need Python
+          ./configure --disable-python || true
           cat config.log
       - name: Build wheels
         uses: PyO3/maturin-action@v1
