@@ -35,6 +35,8 @@ jobs:
             curl
             tar
             mingw-w64-ucrt-x86_64-pkg-config
+            rust
+            maturin
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -68,11 +70,8 @@ jobs:
           echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
           echo "${PKG_CONFIG_PATH}"
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
-          sccache: "true"
+        run:
+          maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml --target ${{ matrix.target }}
       - name: Patch wheels
         run: |
           delvewheel repair dist/*
