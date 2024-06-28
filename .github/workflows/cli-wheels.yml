@@ -56,7 +56,7 @@ jobs:
           curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
           cd LHAPDF-6.5.4
           # compiling with Python gives errors, but we also don't need Python
-          ./configure --disable-python
+          ./configure --disable-python --disable-shared
           make -j
           make install
           # print the path of `pkgconf`
