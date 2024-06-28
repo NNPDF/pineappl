@@ -61,10 +61,12 @@ jobs:
           make install
           # print the path of `pkgconf`
           command -v pkg-config
-      - name: Set path to pkg-config
+      - name: Set pkg-config paths
         run: |
           # for some reason `pkg-config` isn't properly found by Rust
           echo "PKG_CONFIG=$(command -v pkg-config)" >> ${GITHUB_ENV}
+          echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
+          echo "${PKG_CONFIG_PATH}"
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
