@@ -28,8 +28,8 @@ jobs:
           update: true
           install: >-
             git
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-make
+            gcc
+            make
             autoconf
             python3
             curl
