@@ -35,19 +35,20 @@ impl PyImportOnlySubgridV2 {
         {
             sparse_array[[imu2, ix1, ix2]] = *value;
         }
-        Self{
+        Self {
             import_only_subgrid: ImportOnlySubgridV2::new(
-            sparse_array,
-            mu2_grid
-                .iter()
-                .map(|(ren, fac)| Mu2 {
-                    ren: *ren,
-                    fac: *fac,
-                })
-                .collect(),
-            x1_grid.to_vec().unwrap(),
-            x2_grid.to_vec().unwrap(),
-        )}
+                sparse_array,
+                mu2_grid
+                    .iter()
+                    .map(|(ren, fac)| Mu2 {
+                        ren: *ren,
+                        fac: *fac,
+                    })
+                    .collect(),
+                x1_grid.to_vec().unwrap(),
+                x2_grid.to_vec().unwrap(),
+            ),
+        }
     }
 
     /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`

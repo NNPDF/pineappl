@@ -152,12 +152,13 @@ pub struct PyMu2 {
     pub mu2: Mu2,
 }
 
-
 #[pymethods]
 impl PyMu2 {
     #[new]
     pub fn new(ren: f64, fac: f64) -> Self {
-        Self { mu2: Mu2 { ren, fac } }
+        Self {
+            mu2: Mu2 { ren, fac },
+        }
     }
 
     #[getter]

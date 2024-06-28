@@ -1,9 +1,11 @@
 use anyhow::Result;
 use itertools::Itertools;
+use ndarray::s;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, Order};
+use pineappl::boc::{Channel, Order};
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::lumi::LumiEntry;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
@@ -24,7 +26,7 @@ fn create_lumi(
     table: &fastNLOCoeffAddBase,
     comb: &fastNLOPDFLinearCombinations,
     dis_pid: i32,
-) -> Vec<LumiEntry> {
+) -> Vec<Channel> {
     let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
     let mut lumis = Vec::new();
 
@@ -45,7 +47,7 @@ fn create_lumi(
             entries.push((a, b, f));
         }
 
-        lumis.push(LumiEntry::new(entries));
+        lumis.push(Channel::new(entries));
     }
 
     // if the PDF coefficient vector was empty, we must reconstruct the lumi function
@@ -81,7 +83,7 @@ fn create_lumi(
             xfx1[a] = 0.0;
         }
 
-        lumis = entries.into_iter().map(LumiEntry::new).collect();
+        lumis = entries.into_iter().map(Channel::new).collect();
     }
 
     lumis
@@ -109,6 +111,22 @@ fn convert_coeff_add_fix(
             .collect(),
         SubgridParams::default(),
     );
+
+    // UNWRAP: shouldn't be larger than `2`
+    let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
+    assert!(npdf <= 2);
+
+    for index in 0..2 {
+        grid.set_convolution(
+            index,
+            if index < npdf {
+                // TODO: how do we determined the PID/type of the convolution for fixed tables?
+                Convolution::UnpolPDF(2212)
+            } else {
+                Convolution::None
+            },
+        );
+    }
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
@@ -185,18 +203,15 @@ fn convert_coeff_add_fix(
                 }
 
                 if !array.is_empty() {
-                    grid.set_subgrid(
-                        0,
-                        obs.try_into().unwrap(),
-                        subproc.try_into().unwrap(),
+                    grid.subgrids_mut()
+                        [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
                         ImportOnlySubgridV2::new(
                             array,
                             mu2_values,
                             x1_values.clone(),
                             x2_values.clone(),
                         )
-                        .into(),
-                    );
+                        .into();
                 }
             }
         }
@@ -247,15 +262,19 @@ fn convert_coeff_add_flex(
     );
 
     let npdf = table_as_add_base.GetNPDF();
-    let pdf_pdg1 = table.GetPDFPDG(0).to_string();
-    let pdf_pdg2 = if npdf == 2 {
-        table.GetPDFPDG(1).to_string()
-    } else {
-        dis_pid.to_string()
-    };
+    assert!(npdf <= 2);
 
-    grid.set_key_value("initial_state_1", &pdf_pdg1);
-    grid.set_key_value("initial_state_2", &pdf_pdg2);
+    for index in 0..2 {
+        grid.set_convolution(
+            // UNWRAP: index is smaller than 2
+            index.try_into().unwrap(),
+            if index < npdf {
+                Convolution::UnpolPDF(table.GetPDFPDG(index))
+            } else {
+                Convolution::None
+            },
+        );
+    }
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 
@@ -341,23 +360,23 @@ fn convert_coeff_add_flex(
                 }
             }
 
-            for (order, array) in arrays
-                .into_iter()
-                .enumerate()
-                .filter(|(_, array)| !array.is_empty())
+            for (subgrid, array) in grid
+                .subgrids_mut()
+                .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
+                .iter_mut()
+                .zip(arrays.into_iter())
             {
-                grid.set_subgrid(
-                    order,
-                    obs,
-                    subproc.try_into().unwrap(),
-                    ImportOnlySubgridV2::new(
-                        array,
-                        mu2_values.clone(),
-                        x1_values.clone(),
-                        x2_values.clone(),
-                    )
-                    .into(),
-                );
+                if array.is_empty() {
+                    continue;
+                }
+
+                *subgrid = ImportOnlySubgridV2::new(
+                    array,
+                    mu2_values.clone(),
+                    x1_values.clone(),
+                    x2_values.clone(),
+                )
+                .into();
             }
         }
     }

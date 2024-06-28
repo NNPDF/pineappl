@@ -1,6 +1,76 @@
 //! TODO
 
+use std::str::FromStr;
+use thiserror::Error;
+
 const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 215, 224, 235];
+
+/// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
+/// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is
+/// interpreted.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PidBasis {
+    /// This basis uses the [particle data group](https://pdg.lbl.gov/) (PDG) PIDs. For a complete
+    /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
+    /// instance the [2023 review](https://pdg.lbl.gov/2023/mcdata/mc_particle_id_contents.html).
+    Pdg,
+    /// This basis specifies the evolution basis, which is the same as [`PidBasis::Pdg`], except
+    /// the following values have a special meaning: `100`, `103`, `108`, `115`, `124`, `135`,
+    /// `200`, `203`, `208`, `215`, `224`, `235`.
+    Evol,
+}
+
+impl FromStr for PidBasis {
+    type Err = UnknownPidBasis;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Pdg" | "PDG" | "pdg_mc_ids" => Ok(Self::Pdg),
+            "Evol" | "EVOL" | "evol" => Ok(Self::Evol),
+            _ => Err(UnknownPidBasis {
+                basis: s.to_owned(),
+            }),
+        }
+    }
+}
+
+impl PidBasis {
+    /// Return the charge-conjugated particle ID of `pid` given in the basis of `self`. The
+    /// returned tuple contains a factor that possibly arises during the charge conjugation.
+    #[must_use]
+    pub const fn charge_conjugate(&self, pid: i32) -> (i32, f64) {
+        match (*self, pid) {
+            // TODO: in the general case we should allow to return a vector of tuples
+            (Self::Evol, 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
+            (Self::Evol, 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
+            (Self::Evol | Self::Pdg, _) => (charge_conjugate_pdg_pid(pid), 1.0),
+        }
+    }
+
+    /// Given the particle IDs in `pids`, guess the [`PidBasis`].
+    #[must_use]
+    pub fn guess(pids: &[i32]) -> Self {
+        // if we find more than 3 pids that are recognized to be from the evolution basis, declare
+        // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
+        if pids
+            .iter()
+            .filter(|&pid| EVOL_BASIS_IDS.iter().any(|evol_pid| pid == evol_pid))
+            .count()
+            > 3
+        {
+            Self::Evol
+        } else {
+            Self::Pdg
+        }
+    }
+}
+
+/// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
+#[derive(Debug, Error)]
+#[error("unknown PID basis: {basis}")]
+pub struct UnknownPidBasis {
+    basis: String,
+}
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
 #[must_use]
@@ -128,46 +198,148 @@ pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
     }
 }
 
+/// Translates PDG Monte Carlo IDs to particle IDs from the evolution basis.
+#[must_use]
+pub fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
+    match pid {
+        -6 => vec![
+            (100, 1.0 / 12.0),
+            (135, -1.0 / 12.0),
+            (200, -1.0 / 12.0),
+            (235, 1.0 / 12.0),
+        ],
+        -5 => vec![
+            (100, 1.0 / 12.0),
+            (124, -1.0 / 10.0),
+            (135, 1.0 / 60.0),
+            (200, -1.0 / 12.0),
+            (224, 1.0 / 10.0),
+            (235, -1.0 / 60.0),
+        ],
+        -4 => vec![
+            (100, 1.0 / 12.0),
+            (115, -1.0 / 8.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, -1.0 / 12.0),
+            (215, 1.0 / 8.0),
+            (224, -1.0 / 40.0),
+            (235, -1.0 / 60.0),
+        ],
+        -3 => vec![
+            (100, 1.0 / 12.0),
+            (108, -1.0 / 6.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, -1.0 / 12.0),
+            (208, 1.0 / 6.0),
+            (215, -1.0 / 24.0),
+            (224, -1.0 / 40.0),
+            (235, -1.0 / 60.0),
+        ],
+        -2 => vec![
+            (100, 1.0 / 12.0),
+            (103, 1.0 / 4.0),
+            (108, 1.0 / 12.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, -1.0 / 12.0),
+            (203, -1.0 / 4.0),
+            (208, -1.0 / 12.0),
+            (215, -1.0 / 24.0),
+            (224, -1.0 / 40.0),
+            (235, -1.0 / 60.0),
+        ],
+        -1 => vec![
+            (100, 1.0 / 12.0),
+            (103, -1.0 / 4.0),
+            (108, 1.0 / 12.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, -1.0 / 12.0),
+            (203, 1.0 / 4.0),
+            (208, -1.0 / 12.0),
+            (215, -1.0 / 24.0),
+            (224, -1.0 / 40.0),
+            (235, -1.0 / 60.0),
+        ],
+        1 => vec![
+            (100, 1.0 / 12.0),
+            (103, -1.0 / 4.0),
+            (108, 1.0 / 12.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, 1.0 / 12.0),
+            (203, -1.0 / 4.0),
+            (208, 1.0 / 12.0),
+            (215, 1.0 / 24.0),
+            (224, 1.0 / 40.0),
+            (235, 1.0 / 60.0),
+        ],
+        2 => vec![
+            (100, 1.0 / 12.0),
+            (103, 1.0 / 4.0),
+            (108, 1.0 / 12.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, 1.0 / 12.0),
+            (203, 1.0 / 4.0),
+            (208, 1.0 / 12.0),
+            (215, 1.0 / 24.0),
+            (224, 1.0 / 40.0),
+            (235, 1.0 / 60.0),
+        ],
+        3 => vec![
+            (100, 1.0 / 12.0),
+            (108, -1.0 / 6.0),
+            (115, 1.0 / 24.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, 1.0 / 12.0),
+            (208, -1.0 / 6.0),
+            (215, 1.0 / 24.0),
+            (224, 1.0 / 40.0),
+            (235, 1.0 / 60.0),
+        ],
+        4 => vec![
+            (100, 1.0 / 12.0),
+            (115, -1.0 / 8.0),
+            (124, 1.0 / 40.0),
+            (135, 1.0 / 60.0),
+            (200, 1.0 / 12.0),
+            (215, -1.0 / 8.0),
+            (224, 1.0 / 40.0),
+            (235, 1.0 / 60.0),
+        ],
+        5 => vec![
+            (100, 1.0 / 12.0),
+            (124, -1.0 / 10.0),
+            (135, 1.0 / 60.0),
+            (200, 1.0 / 12.0),
+            (224, -1.0 / 10.0),
+            (235, 1.0 / 60.0),
+        ],
+        6 => vec![
+            (100, 1.0 / 12.0),
+            (135, -1.0 / 12.0),
+            (200, 1.0 / 12.0),
+            (235, -1.0 / 12.0),
+        ],
+        _ => vec![(pid, 1.0)],
+    }
+}
+
 /// Return the charge-conjugated PDG ID of `pid`.
 #[must_use]
 pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     match pid {
         21 | 22 => pid,
         _ => -pid,
-    }
-}
-
-/// Return the charge-conjugated particle ID of `pid` for the basis `lumi_id_types`. The returned
-/// tuple contains a factor that possible arises during the carge conjugation.
-///
-/// # Panics
-///
-/// TODO
-#[must_use]
-pub fn charge_conjugate(lumi_id_types: &str, pid: i32) -> (i32, f64) {
-    match (lumi_id_types, pid) {
-        ("evol", 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
-        ("evol", 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
-        ("evol" | "pdg_mc_ids", _) => (charge_conjugate_pdg_pid(pid), 1.0),
-        _ => todo!(),
-    }
-}
-
-/// Given the particle IDs in `pids`, determine the right string for `lumi_id_types` stored in
-/// `Grid`.
-#[must_use]
-pub fn determine_lumi_id_types(pids: &[i32]) -> String {
-    // if we find more than 3 pids that are recognized to be from the evolution basis, declare
-    // it to be the evolution basis (that's a heuristic), otherwise PDG MC IDs
-    if pids
-        .iter()
-        .filter(|&pid| EVOL_BASIS_IDS.iter().any(|evol_pid| pid == evol_pid))
-        .count()
-        > 3
-    {
-        "evol".to_owned()
-    } else {
-        "pdg_mc_ids".to_owned()
     }
 }
 
@@ -208,6 +380,9 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boc::Channel;
+    use crate::channel;
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn test() {
@@ -696,17 +871,32 @@ mod tests {
     }
 
     #[test]
-    fn test_determine_lumi_id_types() {
+    fn pid_basis_guess() {
         assert_eq!(
-            determine_lumi_id_types(&[22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]),
-            "pdg_mc_ids"
+            PidBasis::guess(&[22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]),
+            PidBasis::Pdg,
         );
 
         assert_eq!(
-            determine_lumi_id_types(&[
+            PidBasis::guess(&[
                 22, 100, 200, 21, 100, 103, 108, 115, 124, 135, 203, 208, 215, 224, 235
             ]),
-            "evol"
+            PidBasis::Evol,
         );
+    }
+
+    #[test]
+    fn inverse_inverse_evol() {
+        for pid in [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6] {
+            let result = Channel::translate(
+                &Channel::translate(&channel![pid, pid, 1.0], &pdg_mc_pids_to_evol),
+                &evol_to_pdg_mc_ids,
+            );
+
+            assert_eq!(result.entry().len(), 1);
+            assert_eq!(result.entry()[0].0, pid);
+            assert_eq!(result.entry()[0].1, pid);
+            assert_approx_eq!(f64, result.entry()[0].2, 1.0, ulps = 8);
+        }
     }
 }

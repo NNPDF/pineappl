@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{bail, Result};
 use clap::{Parser, ValueHint};
@@ -16,18 +16,17 @@ pub struct Opts {
     /// Path to the second grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input2: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    conv_funs: ConvFuns,
     /// Ignore differences in the orders and sum them.
     #[arg(long)]
     ignore_orders: bool,
     /// Ignore bin limits (but not number of bins).
     #[arg(long)]
     ignore_bin_limits: bool,
-    /// Ignore differences in the luminosity functions.
-    #[arg(long)]
-    ignore_lumis: bool,
+    /// Ignore differences in the channel definition.
+    #[arg(alias = "ignore-lumis", long)]
+    ignore_channels: bool,
     /// Select orders of the first grid.
     #[arg(
         long,
@@ -122,11 +121,12 @@ impl Subcommand for Opts {
             bail!("number of bins differ");
         }
 
-        if !self.ignore_lumis && (grid1.lumi() != grid2.lumi()) {
-            bail!("luminosities differ");
+        // TODO: use approximate comparison
+        if !self.ignore_channels && (grid1.channels() != grid2.channels()) {
+            bail!("channels differ");
         }
 
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let mut table = helpers::create_table();
         let mut title = Row::empty();
@@ -137,7 +137,7 @@ impl Subcommand for Opts {
             title.add_cell(cell);
         }
 
-        let limits1 = helpers::convolute_limits(&grid1, &[], ConvoluteMode::Normal);
+        let limits1 = helpers::convolve_limits(&grid1, &[], ConvoluteMode::Normal);
 
         if self.ignore_orders {
             let mut cell = cell!(c->"diff");
@@ -146,9 +146,9 @@ impl Subcommand for Opts {
 
             table.set_titles(title);
 
-            let results1 = helpers::convolute(
+            let results1 = helpers::convolve(
                 &grid1,
-                &mut pdf,
+                &mut conv_funs,
                 &orders1,
                 &[],
                 &[],
@@ -156,9 +156,9 @@ impl Subcommand for Opts {
                 ConvoluteMode::Normal,
                 cfg,
             );
-            let results2 = helpers::convolute(
+            let results2 = helpers::convolve(
                 &grid2,
-                &mut pdf,
+                &mut conv_funs,
                 &orders2,
                 &[],
                 &[],
@@ -186,7 +186,7 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
             }
         } else {
             let orders = orders1;
@@ -202,9 +202,9 @@ impl Subcommand for Opts {
             let order_results1: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid1,
-                        &mut pdf,
+                        &mut conv_funs,
                         &[order],
                         &[],
                         &[],
@@ -217,9 +217,9 @@ impl Subcommand for Opts {
             let order_results2: Vec<Vec<f64>> = orders
                 .iter()
                 .map(|&order| {
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid2,
-                        &mut pdf,
+                        &mut conv_funs,
                         &[order],
                         &[],
                         &[],
@@ -245,7 +245,7 @@ impl Subcommand for Opts {
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                    if result1 == result2 { 0.0 } else { result1 / result2 - 1.0 })));
+                    if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
                 }
             }
         }

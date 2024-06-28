@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
@@ -21,7 +21,7 @@ mod eko {
     use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
     use pineappl::evolution::OperatorSliceInfo;
-    use pineappl::pids;
+    use pineappl::pids::{self, PidBasis};
     use serde::Deserialize;
     use std::collections::HashMap;
     use std::ffi::{OsStr, OsString};
@@ -155,7 +155,7 @@ mod eko {
             Ok(Self::V0 {
                 fac1: metadata.q2_grid,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&metadata.inputpids),
+                    pid_basis: PidBasis::guess(&metadata.inputpids),
                     fac0: metadata.q2_ref,
                     pids0: metadata.inputpids,
                     x0: metadata.inputgrid,
@@ -222,7 +222,7 @@ mod eko {
             Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    pid_basis: PidBasis::guess(&pids0),
                     fac0: metadata.mu20,
                     pids0,
                     x0: metadata
@@ -290,7 +290,7 @@ mod eko {
             Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
-                    lumi_id_types: pids::determine_lumi_id_types(&pids0),
+                    pid_basis: PidBasis::guess(&pids0),
                     fac0: operator.mu0 * operator.mu0,
                     pids0,
                     x0: metadata
@@ -425,7 +425,7 @@ mod eko {
 fn evolve_grid(
     grid: &Grid,
     eko: &Path,
-    pdf: &Pdf,
+    use_alphas_from: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
     xif: f64,
@@ -446,7 +446,7 @@ fn evolve_grid(
         .collect();
 
     let mut eko_slices = EkoSlices::new(eko)?;
-    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| pdf.alphas_q2(q2));
+    let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
     if use_old_evolve {
         if let EkoSlices::V0 {
@@ -466,7 +466,7 @@ fn evolve_grid(
                 alphas: alphas_table.alphas,
                 xir,
                 xif,
-                lumi_id_types: info.lumi_id_types,
+                pid_basis: info.pid_basis,
             };
 
             #[allow(deprecated)]
@@ -506,9 +506,8 @@ pub struct Opts {
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
+    conv_funs: ConvFuns,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -542,10 +541,10 @@ impl Subcommand for Opts {
         use prettytable::row;
 
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
-        let results = helpers::convolute_scales(
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let results = helpers::convolve_scales(
             &grid,
-            &mut pdf,
+            &mut conv_funs,
             &self.orders,
             &[],
             &[],
@@ -557,15 +556,15 @@ impl Subcommand for Opts {
         let fk_table = evolve_grid(
             &grid,
             &self.eko,
-            &pdf,
+            &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
             self.xif,
             self.use_old_evolve,
         )?;
-        let evolved_results = helpers::convolute_scales(
+        let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
-            &mut pdf,
+            &mut conv_funs,
             &[],
             &[],
             &[],

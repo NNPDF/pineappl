@@ -10,29 +10,32 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<ENABLE>]                Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<ENABLE>]                Charge conjugate the second initial state [possible values: true, false]
-      --dedup-channels[=<ULPS>]       Deduplicate channels assuming numbers differing by ULPS are the same
-      --delete-bins <BIN1-BIN2,...>   Delete bins with the specified indices
-      --delete-key <KEY>              Delete an internal key-value pair
-      --merge-bins <BIN1-BIN2,...>    Merge specific bins together
-      --optimize[=<ENABLE>]           Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
-      --optimize-fk-table <OPTIMI>    Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-      --remap <REMAPPING>             Modify the bin dimensions and widths
-      --remap-norm <NORM>             Modify the bin normalizations with a common factor
-      --remap-norm-ignore <DIM1,...>  Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
-      --rewrite-channel <IDX> <CHAN>  Rewrite the definition of the channel with index IDX
-  -s, --scale <SCALE>                 Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>  Scale each bin with a different factor
-      --scale-by-order <AS,AL,LR,LF>  Scales all grids with order-dependent factors
-      --set-key-value <KEY> <VALUE>   Set an internal key-value pair
-      --set-key-file <KEY> <FILE>     Set an internal key-value pair, with value being read from a file
-      --split-lumi[=<ENABLE>]         Split the grid such that the luminosity function contains only a single combination per channel [possible values: true, false]
-      --upgrade[=<ENABLE>]            Convert the file format to the most recent version [possible values: true, false]
-  -h, --help                          Print help
+      --cc1[=<ENABLE>]                 Charge conjugate the first initial state [possible values: true, false]
+      --cc2[=<ENABLE>]                 Charge conjugate the second initial state [possible values: true, false]
+      --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
+      --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
+      --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
+      --delete-key <KEY>               Delete an internal key-value pair
+      --merge-bins <BIN1-BIN2,...>     Merge specific bins together
+      --optimize[=<ENABLE>]            Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize-fk-table <OPTIMI>     Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --remap <REMAPPING>              Modify the bin dimensions and widths
+      --remap-norm <NORM>              Modify the bin normalizations with a common factor
+      --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
+      --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
+      --rewrite-order <IDX> <ORDER>    Rewrite the definition of the order with index IDX
+      --rotate-pid-basis <BASIS>       Rotate the PID basis for this grid [possible values: PDG, EVOL]
+  -s, --scale <SCALE>                  Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
+      --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
+      --set-key-value <KEY> <VALUE>    Set an internal key-value pair
+      --set-key-file <KEY> <FILE>      Set an internal key-value pair, with value being read from a file
+      --split-channels[=<ENABLE>]      Split the grid such that each channel contains only a single PID combination [possible values: true, false]
+      --upgrade[=<ENABLE>]             Convert the file format to the most recent version [possible values: true, false]
+  -h, --help                           Print help
 ";
 
-const CHANNEL_STR: &str = "l    entry        entry
+const CHANNEL_STR: &str = "c    entry        entry
 -+------------+------------
 0 1 × ( 2, -1) 1 × ( 4, -3)
 1 1 × (21, -3) 1 × (21, -1)
@@ -80,6 +83,12 @@ const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal
 1 2.25  2.5 6.9028342e2
 2  3.5    4 1.1586851e2
 3    4  4.5 2.7517266e1
+";
+
+const DELETE_CHANNELS_STR: &str = "c    entry        entry
+-+------------+------------
+0 1 × ( 2, -1) 1 × ( 4, -3)
+1 1 × (22, -3) 1 × (22, -1)
 ";
 
 const KEY_VALUE_STR: &str = r"arxiv: 1505.07024
@@ -147,7 +156,7 @@ const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
 const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
 ";
 
-const REWRITE_CHANNELS_CONVOLUTE_STR: &str = "b   etal    dsig/detal 
+const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal 
      []        [pb]    
 -+----+----+-----------
 0    2 2.25 7.5534392e2
@@ -160,7 +169,7 @@ const REWRITE_CHANNELS_CONVOLUTE_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.8214633e1
 ";
 
-const REWRITE_CHANNELS_LUMIS_STR: &str = "l              entry                            entry                       entry                       entry                        entry                  entry
+const REWRITE_CHANNELS_STR: &str = "c              entry                            entry                       entry                       entry                        entry                  entry
 -+--------------------------------+-------------------------------+-----------------------+--------------------------------+-----------------------+---------------------
 0 0.0000128881 × ( 2, -5)          0.050940490000000005 × ( 2, -3) 0.9490461561 × ( 2, -1) 0.0017222500000000003 × ( 4, -5) 0.9473907556 × ( 4, -3) 0.05089536 × ( 4, -1)
 1 0.0017351381000000003 × (-5, 21) 0.9983312456 × (-3, 21)         0.9999415161 × (-1, 21)                                                          
@@ -195,7 +204,7 @@ const SCALE_BY_ORDER_STR: &str = "b   etal    dsig/detal
 7    4  4.5 1.6435633e1
 ";
 
-const SPLIT_LUMI_STR: &str = "l    entry
+const SPLIT_CHANNELS_STR: &str = "c    entry
 -+------------
 0 1 × ( 2, -1)
 1 1 × ( 4, -3)
@@ -218,6 +227,216 @@ const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal
 3 3.25  3.5 2.5300890e2
 4  3.5    4 1.1909464e2
 5    4  4.5 2.9004607e1
+";
+
+const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+-+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
+0    2 2.25 6.5070305e2 6.5070305e2 0.000e0  -7.8692484e0  -7.8692484e0 0.000e0 1.1175729e2 1.1175729e2 0.000e0
+1 2.25  2.5 5.9601236e2 5.9601236e2 0.000e0  -6.5623495e0  -6.5623495e0 0.000e0 1.0083341e2 1.0083341e2 0.000e0
+2  2.5 2.75 5.1561247e2 5.1561247e2 0.000e0  -5.2348261e0  -5.2348261e0 0.000e0 8.9874343e1 8.9874343e1 0.000e0
+3 2.75    3 4.1534629e2 4.1534629e2 0.000e0  -3.7590420e0  -3.7590420e0 0.000e0 7.3935106e1 7.3935106e1 0.000e0
+4    3 3.25 3.0812719e2 3.0812719e2 0.000e0  -2.5871885e0  -2.5871885e0 0.000e0 5.6414554e1 5.6414554e1 0.000e0
+5 3.25  3.5 2.0807482e2 2.0807482e2 0.000e0  -1.6762487e0  -1.6762487e0 0.000e0 3.9468336e1 3.9468336e1 0.000e0
+6  3.5    4 9.6856769e1 9.6856769e1 0.000e0 -8.1027456e-1 -8.1027456e-1 0.000e0 1.9822014e1 1.9822014e1 0.000e0
+7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 -2.2022770e-1 -2.2022770e-1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
+";
+
+const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)            
+-+----+----+-----------+-----------+----------+-------------+-------------+----------+-----------+-----------+----------
+0    2 2.25 6.5070305e2 6.5070305e2 -2.220e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
+1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -2.220e-16 1.0083341e2 1.0083341e2 -5.551e-16
+2  2.5 2.75 5.1561247e2 5.1561247e2 -8.882e-16  -5.2348261e0  -5.2348261e0 -6.661e-16 8.9874343e1 8.9874343e1 -1.221e-15
+3 2.75    3 4.1534629e2 4.1534629e2 -4.441e-16  -3.7590420e0  -3.7590420e0 -5.551e-16 7.3935106e1 7.3935106e1 -1.554e-15
+4    3 3.25 3.0812719e2 3.0812719e2 -3.331e-16  -2.5871885e0  -2.5871885e0 -5.551e-16 5.6414554e1 5.6414554e1 -2.220e-16
+5 3.25  3.5 2.0807482e2 2.0807482e2 -6.661e-16  -1.6762487e0  -1.6762487e0 -1.110e-16 3.9468336e1 3.9468336e1 -3.331e-16
+6  3.5    4 9.6856769e1 9.6856769e1 -3.331e-16 -8.1027456e-1 -8.1027456e-1 -1.110e-16 1.9822014e1 1.9822014e1 -1.110e-15
+7    4  4.5 2.2383492e1 2.2383492e1 -4.441e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -3.331e-16
+";
+
+const ROTATE_PID_BASIS_READ_CHANNELS_STR: &str = " c                 entry
+---+-----------------------------------
+0   0.013888888888888888 × (100, 100)
+1   -0.020833333333333332 × (100, 103)
+2   -0.006944444444444444 × (100, 108)
+3   0.006944444444444444 × (100, 115)
+4   0.004166666666666667 × (100, 124)
+5   0.0027777777777777775 × (100, 135)
+6   -0.013888888888888888 × (100, 200)
+7   0.020833333333333332 × (100, 203)
+8   0.006944444444444444 × (100, 208)
+9   -0.006944444444444444 × (100, 215)
+10  -0.004166666666666667 × (100, 224)
+11  -0.0027777777777777775 × (100, 235)
+12  0.020833333333333332 × (103, 100)
+13  -0.0625 × (103, 103)
+14  0.020833333333333332 × (103, 108)
+15  0.010416666666666666 × (103, 115)
+16  0.00625 × (103, 124)
+17  0.004166666666666667 × (103, 135)
+18  -0.020833333333333332 × (103, 200)
+19  0.0625 × (103, 203)
+20  -0.020833333333333332 × (103, 208)
+21  -0.010416666666666666 × (103, 215)
+22  -0.00625 × (103, 224)
+23  -0.004166666666666667 × (103, 235)
+24  0.006944444444444444 × (108, 100)
+25  -0.020833333333333332 × (108, 103)
+26  0.006944444444444444 × (108, 108)
+27  0.003472222222222222 × (108, 115)
+28  0.0020833333333333333 × (108, 124)
+29  0.0013888888888888887 × (108, 135)
+30  -0.006944444444444444 × (108, 200)
+31  0.020833333333333332 × (108, 203)
+32  -0.006944444444444444 × (108, 208)
+33  -0.003472222222222222 × (108, 215)
+34  -0.0020833333333333333 × (108, 224)
+35  -0.0013888888888888887 × (108, 235)
+36  -0.006944444444444444 × (115, 100)
+37  -0.010416666666666666 × (115, 103)
+38  0.024305555555555552 × (115, 108)
+39  -0.003472222222222222 × (115, 115)
+40  -0.0020833333333333337 × (115, 124)
+41  -0.001388888888888889 × (115, 135)
+42  0.006944444444444444 × (115, 200)
+43  0.010416666666666666 × (115, 203)
+44  -0.024305555555555552 × (115, 208)
+45  0.003472222222222222 × (115, 215)
+46  0.0020833333333333337 × (115, 224)
+47  0.001388888888888889 × (115, 235)
+48  -0.00625 × (124, 103)
+49  -0.0020833333333333333 × (124, 108)
+50  0.0020833333333333333 × (124, 115)
+51  0.0012500000000000002 × (124, 124)
+52  0.0008333333333333334 × (124, 135)
+53  -0.004166666666666667 × (124, 200)
+54  0.00625 × (124, 203)
+55  0.0020833333333333333 × (124, 208)
+56  -0.0020833333333333333 × (124, 215)
+57  -0.0012500000000000002 × (124, 224)
+58  -0.0008333333333333334 × (124, 235)
+59  -0.004166666666666667 × (135, 103)
+60  -0.0013888888888888887 × (135, 108)
+61  0.0013888888888888887 × (135, 115)
+62  0.0005555555555555556 × (135, 135)
+63  -0.0027777777777777775 × (135, 200)
+64  0.004166666666666667 × (135, 203)
+65  0.0013888888888888887 × (135, 208)
+66  -0.0013888888888888887 × (135, 215)
+67  -0.0008333333333333334 × (135, 224)
+68  -0.0005555555555555556 × (135, 235)
+69  0.013888888888888888 × (200, 100)
+70  0.004166666666666667 × (200, 124)
+71  0.0027777777777777775 × (200, 135)
+72  -0.013888888888888888 × (200, 200)
+73  0.020833333333333332 × (200, 203)
+74  0.006944444444444444 × (200, 208)
+75  -0.006944444444444444 × (200, 215)
+76  -0.004166666666666667 × (200, 224)
+77  -0.0027777777777777775 × (200, 235)
+78  -0.0625 × (203, 103)
+79  -0.020833333333333332 × (203, 200)
+80  0.0625 × (203, 203)
+81  -0.020833333333333332 × (203, 208)
+82  -0.010416666666666666 × (203, 215)
+83  -0.00625 × (203, 224)
+84  -0.004166666666666667 × (203, 235)
+85  0.006944444444444444 × (208, 108)
+86  0.003472222222222222 × (208, 115)
+87  -0.006944444444444444 × (208, 200)
+88  0.020833333333333332 × (208, 203)
+89  -0.006944444444444444 × (208, 208)
+90  -0.003472222222222222 × (208, 215)
+91  -0.0020833333333333333 × (208, 224)
+92  -0.0013888888888888887 × (208, 235)
+93  0.024305555555555552 × (215, 108)
+94  -0.003472222222222222 × (215, 115)
+95  -0.0020833333333333337 × (215, 124)
+96  -0.001388888888888889 × (215, 135)
+97  0.006944444444444444 × (215, 200)
+98  0.010416666666666666 × (215, 203)
+99  -0.024305555555555552 × (215, 208)
+100 0.003472222222222222 × (215, 215)
+101 0.0020833333333333337 × (215, 224)
+102 0.001388888888888889 × (215, 235)
+103 0.004166666666666667 × (224, 100)
+104 0.0020833333333333333 × (224, 115)
+105 0.0012500000000000002 × (224, 124)
+106 0.0008333333333333334 × (224, 135)
+107 0.00625 × (224, 203)
+108 0.0020833333333333333 × (224, 208)
+109 -0.0020833333333333333 × (224, 215)
+110 -0.0012500000000000002 × (224, 224)
+111 -0.0008333333333333334 × (224, 235)
+112 0.0027777777777777775 × (235, 100)
+113 0.0013888888888888887 × (235, 115)
+114 0.0008333333333333334 × (235, 124)
+115 0.0005555555555555556 × (235, 135)
+116 0.004166666666666667 × (235, 203)
+117 0.0013888888888888887 × (235, 208)
+118 -0.0013888888888888887 × (235, 215)
+119 -0.0005555555555555556 × (235, 235)
+120 0.16666666666666666 × (21, 100)
+121 -0.25 × (21, 103)
+122 -0.08333333333333333 × (21, 108)
+123 0.08333333333333333 × (21, 115)
+124 0.05 × (21, 124)
+125 0.03333333333333333 × (21, 135)
+126 -0.16666666666666666 × (21, 200)
+127 0.25 × (21, 203)
+128 0.08333333333333333 × (21, 208)
+129 -0.08333333333333333 × (21, 215)
+130 -0.05 × (21, 224)
+131 -0.03333333333333333 × (21, 235)
+132 0.16666666666666666 × (22, 100)
+133 -0.25 × (22, 103)
+134 -0.08333333333333333 × (22, 108)
+135 0.08333333333333333 × (22, 115)
+136 0.05 × (22, 124)
+137 0.03333333333333333 × (22, 135)
+138 -0.16666666666666666 × (22, 200)
+139 0.25 × (22, 203)
+140 0.08333333333333333 × (22, 208)
+141 -0.08333333333333333 × (22, 215)
+142 -0.05 × (22, 224)
+143 -0.03333333333333333 × (22, 235)
+144 0.25 × (103, 21)
+145 0.08333333333333333 × (108, 21)
+146 -0.08333333333333334 × (115, 21)
+147 0.16666666666666666 × (200, 21)
+148 -0.08333333333333334 × (215, 21)
+149 0.05 × (224, 21)
+150 0.03333333333333333 × (235, 21)
+151 0.25 × (103, 22)
+152 0.08333333333333333 × (108, 22)
+153 -0.08333333333333334 × (115, 22)
+154 0.16666666666666666 × (200, 22)
+155 -0.08333333333333334 × (215, 22)
+156 0.05 × (224, 22)
+157 0.03333333333333333 × (235, 22)
+";
+
+const REWRITE_ORDER_CONVOLVE_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 1.8216658e2
+1 2.25  2.5 1.6597039e2
+2  2.5 2.75 1.4666687e2
+3 2.75    3 1.2014156e2
+4    3 3.25 9.0894574e1
+5 3.25  3.5 6.2823156e1
+6  3.5    4 3.0663454e1
+7    4  4.5 7.8264717e0
+";
+
+const REWRITE_ORDER_READ_STR: &str = "o      order
+-+----------------
+0 O(as^1 a^1)
+1 O(as^1 a^2)
+2 O(as^1 a^2 lr^1)
+3 O(as^1 a^2 lf^1)
+4 O(a^3)
+5 O(a^3 lr^1)
+6 O(a^3 lf^1)
 ";
 
 #[test]
@@ -249,8 +468,7 @@ fn cc1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -278,8 +496,7 @@ fn cc2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -307,8 +524,7 @@ fn delete_bins_02_57() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -336,14 +552,37 @@ fn delete_bins_25() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
         .stdout(DELETE_BINS_25_STR);
+}
+
+#[test]
+fn delete_channels() {
+    let output = NamedTempFile::new("deleted3.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--delete-channels=1,3-4",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--channels", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(DELETE_CHANNELS_STR);
 }
 
 #[test]
@@ -398,8 +637,7 @@ fn merge_bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -447,8 +685,7 @@ fn remap() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -510,8 +747,7 @@ fn scale_by_bin() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -540,8 +776,7 @@ fn scale_by_order() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -551,14 +786,14 @@ fn scale_by_order() {
 }
 
 #[test]
-fn split_lumi() {
-    let output = NamedTempFile::new("split-lumi.pineappl.lz4").unwrap();
+fn split_channels() {
+    let output = NamedTempFile::new("split-channels.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--split-lumi",
+            "--split-channels",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -569,8 +804,7 @@ fn split_lumi() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -580,15 +814,10 @@ fn split_lumi() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "read",
-            "--lumis",
-            output.path().to_str().unwrap(),
-        ])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
-        .stdout(SPLIT_LUMI_STR);
+        .stdout(SPLIT_CHANNELS_STR);
 }
 
 #[test]
@@ -599,7 +828,7 @@ fn dedup_channels() {
         .unwrap()
         .args([
             "write",
-            "--split-lumi",
+            "--split-channels",
             "--dedup-channels",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -611,7 +840,6 @@ fn dedup_channels() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -623,12 +851,7 @@ fn dedup_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "read",
-            "--lumis",
-            output.path().to_str().unwrap(),
-        ])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout(CHANNEL_STR);
@@ -673,8 +896,7 @@ fn multiple_arguments() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF40_nnlo_as_01180",
         ])
@@ -709,20 +931,197 @@ fn rewrite_channels() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", output.path().to_str().unwrap()])
+        .args(["read", "--channels", output.path().to_str().unwrap()])
         .assert()
         .success()
-        .stdout(REWRITE_CHANNELS_LUMIS_STR);
+        .stdout(REWRITE_CHANNELS_STR);
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
-        .stdout(REWRITE_CHANNELS_CONVOLUTE_STR);
+        .stdout(REWRITE_CHANNELS_CONVOLVE_STR);
+}
+
+#[test]
+fn rotate_pid_basis() {
+    let pdg_to_pdg = NamedTempFile::new("pdg-to-pdg.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=PDG",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_pdg.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_pdg.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let pdg_to_evol = NamedTempFile::new("pdg-to-evol.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=EVOL",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_evol.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            pdg_to_evol.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+            "--ignore-channels",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_DIFF_STR);
+
+    let evol_to_evol = NamedTempFile::new("evol-to-evol.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=EVOL",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_evol.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_evol.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let evol_to_pdg = NamedTempFile::new("evol-to-pdg.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=PDG",
+            // fix factors that are almost '1' to exact '1's
+            "--rewrite-channel",
+            "0",
+            "1 * ( 2, -1) + 1 * ( 4, -3)",
+            pdg_to_evol.path().to_str().unwrap(),
+            evol_to_pdg.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "diff",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            evol_to_pdg.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_NO_DIFF_STR);
+
+    let evol_to_evol_optimize = NamedTempFile::new("evol-to-evol-optimize.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rotate-pid-basis=EVOL",
+            // use the old name instead of `--split-channels` to test the alias
+            "--split-lumi",
+            "--optimize",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            evol_to_evol_optimize.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "read",
+            // use the old name instead of `--channels` to test the alias
+            "--channels",
+            evol_to_evol_optimize.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout(ROTATE_PID_BASIS_READ_CHANNELS_STR);
+}
+
+#[test]
+fn rewrite_order() {
+    let output = NamedTempFile::new("rewrite-order.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--rewrite-order",
+            "0",
+            "as1a1",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(REWRITE_ORDER_READ_STR);
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(REWRITE_ORDER_CONVOLVE_STR);
 }

@@ -3,8 +3,8 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
 use itertools::Itertools;
+use pineappl::boc::Order;
 use pineappl::fk_table::FkTable;
-use pineappl::grid::Order;
 use prettytable::{cell, row, Row};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -24,9 +24,9 @@ struct Group {
     /// Show the bins of a grid.
     #[arg(long, short)]
     bins: bool,
-    /// Show the luminsities a grid.
-    #[arg(long, short)]
-    lumis: bool,
+    /// Show the channel definition of a grid.
+    #[arg(alias = "lumis", long)]
+    channels: bool,
     /// Check if input is an FK table.
     #[arg(long)]
     fktable: bool,
@@ -104,14 +104,14 @@ impl Subcommand for Opts {
 
             println!("yes");
             return Ok(ExitCode::SUCCESS);
-        } else if self.group.lumis {
-            let mut titles = row![c => "l"];
+        } else if self.group.channels {
+            let mut titles = row![c => "c"];
 
             // if there are no channels print at least one column
             for _ in 0..grid
-                .lumi()
+                .channels()
                 .iter()
-                .map(|lumi| lumi.entry().len())
+                .map(|channel| channel.entry().len())
                 .max()
                 .unwrap_or(1)
             {
@@ -119,12 +119,12 @@ impl Subcommand for Opts {
             }
             table.set_titles(titles);
 
-            for (index, entry) in grid.lumi().iter().enumerate() {
+            for (index, channel) in grid.channels().iter().enumerate() {
                 let row = table.add_empty_row();
 
                 row.add_cell(cell!(format!("{index}")));
 
-                for (id1, id2, factor) in entry.entry() {
+                for (id1, id2, factor) in channel.entry() {
                     row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
                 }
             }

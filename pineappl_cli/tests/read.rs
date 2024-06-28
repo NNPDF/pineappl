@@ -2,7 +2,7 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Read out information of a grid
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
@@ -12,7 +12,7 @@ Options:
       --orders-spaces  Show the orders of a grid, replacing zero powers with spaces
       --orders-long    Show the orders of a grid, including zero powers
   -b, --bins           Show the bins of a grid
-  -l, --lumis          Show the luminsities a grid
+      --channels       Show the channel definition of a grid
       --fktable        Check if input is an FK table
       --ew             For each order print a list of the largest EW order
       --get <KEY>      Gets an internal key-value pair
@@ -34,7 +34,7 @@ const BINS_STR: &str = "b   etal    norm
 7    4  4.5  0.5
 ";
 
-const LUMIS_STR: &str = "l    entry        entry
+const CHANNELS_STR: &str = "c    entry        entry
 -+------------+------------
 0 1 × ( 2, -1) 1 × ( 4, -3)
 1 1 × (21, -3) 1 × (21, -1)
@@ -82,7 +82,7 @@ multiple orders detected
 
 const WRONG_ORDERS_STR: &str = "error: the argument '--orders' cannot be used with '--orders-long'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -549,7 +549,7 @@ y_unit: pb
 
 const WRONG_ARGUMENTS_STR: &str = "error: the argument '--ew' cannot be used with '--qcd'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--lumis|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -575,13 +575,17 @@ fn bins() {
 }
 
 #[test]
-fn lumis() {
+fn channels() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--lumis", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--channels",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+        ])
         .assert()
         .success()
-        .stdout(LUMIS_STR);
+        .stdout(CHANNELS_STR);
 }
 
 #[test]

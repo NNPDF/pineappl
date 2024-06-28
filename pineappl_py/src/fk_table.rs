@@ -1,8 +1,8 @@
+use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
-use pineappl::lumi::LumiCache;
 
-use numpy::{IntoPyArray, PyArray1, PyArray4};
+use numpy::{IntoPyArray, PyArray1, PyArray4, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 use std::collections::HashMap;
@@ -10,6 +10,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+use crate::grid::PyGrid;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
@@ -38,6 +40,13 @@ impl PyFkAssumptions {
 
 #[pymethods]
 impl PyFkTable {
+    #[new]
+    pub fn new(grid: PyGrid) -> Self {
+        Self {
+            fk_table: FkTable::try_from(grid.grid).unwrap(),
+        }
+    }
+
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
         Self {
@@ -149,8 +158,8 @@ impl PyFkTable {
     /// -------
     ///     list(tuple(float,float)) :
     ///         luminosity functions as pid tuples
-    pub fn lumi(&self) -> Vec<(i32, i32)> {
-        self.fk_table.lumi()
+    pub fn channels(&self) -> Vec<(i32, i32)> {
+        self.fk_table.channels()
     }
 
     /// Get reference (fitting) scale.
@@ -214,17 +223,24 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins
-    pub fn convolute_with_one<'py>(
+    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, lumi_mask= None))]
+    pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        lumi_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> &'py PyArray1<f64> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.fk_table
-            .convolute(&mut lumi_cache, &[], &[])
+            .convolve(
+                &mut lumi_cache,
+                &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
+                &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+            )
             .into_pyarray(py)
     }
 

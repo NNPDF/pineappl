@@ -2,11 +2,11 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Shows the predictions for all bin for each order separately
 
-Usage: pineappl orders [OPTIONS] <INPUT> <PDFSET>
+Usage: pineappl orders [OPTIONS] <INPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <PDFSET>  LHAPDF id or name of the PDF set
+  <INPUT>      Path to the input grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
   -a, --absolute               Show absolute numbers of each perturbative order
@@ -98,7 +98,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "orders",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -113,7 +112,6 @@ fn absolute() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "orders",
             "--absolute",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -129,7 +127,6 @@ fn absolute_integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "orders",
             "--absolute",
             "--integrated",
@@ -146,7 +143,6 @@ fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "orders",
             "--integrated",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -162,7 +158,6 @@ fn normalize_a2_as1a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "orders",
             "--normalize=a2,as1a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",

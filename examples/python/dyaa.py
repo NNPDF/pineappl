@@ -159,7 +159,7 @@ def main(calls, pdfname, filename):
         pdf = lhapdf.mkPDF(pdfname, 0)
         pdg_id = int(pdf.set().get_entry('Particle'))
         # perform convolution
-        dxsec = grid.convolute_with_one(pdg_id, pdf.xfxQ2, pdf.alphasQ2)
+        dxsec = grid.convolve_with_one(pdg_id, pdf.xfxQ2, pdf.alphasQ2)
         for i in range(len(dxsec)):
             print(f"{bins[i]:.1f} {bins[i + 1]:.1f} {dxsec[i]:.3e}")
 

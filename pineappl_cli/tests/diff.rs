@@ -3,17 +3,17 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Compares the numerical content of two grids with each other
 
-Usage: pineappl diff [OPTIONS] <INPUT1> <INPUT2> <PDFSET>
+Usage: pineappl diff [OPTIONS] <INPUT1> <INPUT2> <CONV_FUNS>
 
 Arguments:
-  <INPUT1>  Path to the first grid
-  <INPUT2>  Path to the second grid
-  <PDFSET>  LHAPDF id or name of the PDF set
+  <INPUT1>     Path to the first grid
+  <INPUT2>     Path to the second grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
       --ignore-orders      Ignore differences in the orders and sum them
       --ignore-bin-limits  Ignore bin limits (but not number of bins)
-      --ignore-lumis       Ignore differences in the luminosity functions
+      --ignore-channels    Ignore differences in the channel definition
       --orders1 <ORDERS1>  Select orders of the first grid
       --orders2 <ORDERS2>  Select orders of the second grid
       --scale1 <SCALE1>    Scale all results of the first grid [default: 1.0]
@@ -48,28 +48,28 @@ const ORDERS1_A2_A2AS1_ORDERS2_A2_A2AS1_STR: &str =
 7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
 ";
 
-const ORDERS1_A2_A2AS1_IGNORE_ORDERS_STR: &str = "b    x1                   diff              
--+----+----+-----------+-----------+--------
-0    2 2.25 7.6246034e2 7.5459110e2 1.043e-2
-1 2.25  2.5 6.9684577e2 6.9028342e2 9.507e-3
-2  2.5 2.75 6.0548681e2 6.0025198e2 8.721e-3
-3 2.75    3 4.8928139e2 4.8552235e2 7.742e-3
-4    3 3.25 3.6454175e2 3.6195456e2 7.148e-3
-5 3.25  3.5 2.4754316e2 2.4586691e2 6.818e-3
-6  3.5    4 1.1667878e2 1.1586851e2 6.993e-3
-7    4  4.5 2.7737493e1 2.7517266e1 8.003e-3
+const ORDERS1_A2_A2AS1_IGNORE_ORDERS_STR: &str = "b    x1                   diff               
+-+----+----+-----------+-----------+---------
+0    2 2.25 7.6246034e2 7.5459110e2 -1.032e-2
+1 2.25  2.5 6.9684577e2 6.9028342e2 -9.417e-3
+2  2.5 2.75 6.0548681e2 6.0025198e2 -8.646e-3
+3 2.75    3 4.8928139e2 4.8552235e2 -7.683e-3
+4    3 3.25 3.6454175e2 3.6195456e2 -7.097e-3
+5 3.25  3.5 2.4754316e2 2.4586691e2 -6.772e-3
+6  3.5    4 1.1667878e2 1.1586851e2 -6.944e-3
+7    4  4.5 2.7737493e1 2.7517266e1 -7.940e-3
 ";
 
-const SCALE2_2_STR: &str = "b    x1                O(as^0 a^2)                         O(as^0 a^3)                         O(as^1 a^2)           
--+----+----+-----------+-----------+---------+-------------+-------------+---------+-----------+-----------+---------
-0    2 2.25 6.5070305e2 1.3014061e3 -5.000e-1  -7.8692484e0  -1.5738497e1 -5.000e-1 1.1175729e2 2.2351458e2 -5.000e-1
-1 2.25  2.5 5.9601236e2 1.1920247e3 -5.000e-1  -6.5623495e0  -1.3124699e1 -5.000e-1 1.0083341e2 2.0166682e2 -5.000e-1
-2  2.5 2.75 5.1561247e2 1.0312249e3 -5.000e-1  -5.2348261e0  -1.0469652e1 -5.000e-1 8.9874343e1 1.7974869e2 -5.000e-1
-3 2.75    3 4.1534629e2 8.3069258e2 -5.000e-1  -3.7590420e0  -7.5180840e0 -5.000e-1 7.3935106e1 1.4787021e2 -5.000e-1
-4    3 3.25 3.0812719e2 6.1625439e2 -5.000e-1  -2.5871885e0  -5.1743770e0 -5.000e-1 5.6414554e1 1.1282911e2 -5.000e-1
-5 3.25  3.5 2.0807482e2 4.1614964e2 -5.000e-1  -1.6762487e0  -3.3524974e0 -5.000e-1 3.9468336e1 7.8936673e1 -5.000e-1
-6  3.5    4 9.6856769e1 1.9371354e2 -5.000e-1 -8.1027456e-1  -1.6205491e0 -5.000e-1 1.9822014e1 3.9644028e1 -5.000e-1
-7    4  4.5 2.2383492e1 4.4766985e1 -5.000e-1 -2.2022770e-1 -4.4045540e-1 -5.000e-1 5.3540011e0 1.0708002e1 -5.000e-1
+const SCALE2_2_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+-+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
+0    2 2.25 6.5070305e2 1.3014061e3 1.000e0  -7.8692484e0  -1.5738497e1 1.000e0 1.1175729e2 2.2351458e2 1.000e0
+1 2.25  2.5 5.9601236e2 1.1920247e3 1.000e0  -6.5623495e0  -1.3124699e1 1.000e0 1.0083341e2 2.0166682e2 1.000e0
+2  2.5 2.75 5.1561247e2 1.0312249e3 1.000e0  -5.2348261e0  -1.0469652e1 1.000e0 8.9874343e1 1.7974869e2 1.000e0
+3 2.75    3 4.1534629e2 8.3069258e2 1.000e0  -3.7590420e0  -7.5180840e0 1.000e0 7.3935106e1 1.4787021e2 1.000e0
+4    3 3.25 3.0812719e2 6.1625439e2 1.000e0  -2.5871885e0  -5.1743770e0 1.000e0 5.6414554e1 1.1282911e2 1.000e0
+5 3.25  3.5 2.0807482e2 4.1614964e2 1.000e0  -1.6762487e0  -3.3524974e0 1.000e0 3.9468336e1 7.8936673e1 1.000e0
+6  3.5    4 9.6856769e1 1.9371354e2 1.000e0 -8.1027456e-1  -1.6205491e0 1.000e0 1.9822014e1 3.9644028e1 1.000e0
+7    4  4.5 2.2383492e1 4.4766985e1 1.000e0 -2.2022770e-1 -4.4045540e-1 1.000e0 5.3540011e0 1.0708002e1 1.000e0
 ";
 
 const ORDERS_DIFFER_STR: &str = "Error: selected orders differ
@@ -81,7 +81,7 @@ const BIN_LIMITS_DIFFER_STR: &str = "Error: bins limits differ
 const BIN_NUMBER_DIFFERS_STR: &str = "Error: number of bins differ
 ";
 
-const LUMIS_DIFFER_STR: &str = "Error: luminosities differ
+const CHANNELS_DIFFER_STR: &str = "Error: channels differ
 ";
 
 #[test]
@@ -99,7 +99,6 @@ fn orders1_a2_orders2_a2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2",
             "--orders2=a2",
@@ -117,7 +116,6 @@ fn orders1_a2_a2as1_orders2_a2_a2as1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
             "--orders2=a2,a2as1",
@@ -135,7 +133,6 @@ fn orders1_a2_a2as1_ignore_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2,a2as1",
             "--ignore-orders",
@@ -153,7 +150,6 @@ fn scale2_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--scale2=2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -170,7 +166,6 @@ fn orders_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--orders1=a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -202,7 +197,6 @@ fn bin_limits_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -233,7 +227,6 @@ fn bin_number_differs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "--ignore-bin-limits",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -247,11 +240,10 @@ fn bin_number_differs() {
 }
 
 #[test]
-fn lumis_differ() {
+fn channels_differ() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "diff",
             "../test-data/LHCB_WP_7TEV_old.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -259,6 +251,6 @@ fn lumis_differ() {
         ])
         .assert()
         .failure()
-        .stderr(LUMIS_DIFFER_STR)
+        .stderr(CHANNELS_DIFFER_STR)
         .stdout("");
 }

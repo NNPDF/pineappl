@@ -5,7 +5,7 @@
 
 mod analyze;
 mod channels;
-mod convolute;
+mod convolve;
 mod diff;
 mod evolve;
 mod export;
@@ -29,15 +29,18 @@ use std::process::ExitCode;
 
 #[derive(Parser)]
 pub struct GlobalConfiguration {
-    /// Prevents LHAPDF from printing banners.
+    /// Allow LHAPDF to print banners.
     #[arg(long)]
-    pub silence_lhapdf: bool,
+    pub lhapdf_banner: bool,
     /// Forces negative PDF values to zero.
     #[arg(long)]
     pub force_positive: bool,
     /// Allow extrapolation of PDFs outside their region of validity.
     #[arg(long)]
     pub allow_extrapolation: bool,
+    /// Choose the PDF/FF set for the strong coupling.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    pub use_alphas_from: usize,
 }
 
 #[enum_dispatch]
@@ -50,7 +53,7 @@ pub trait Subcommand {
 pub enum SubcommandEnum {
     Analyze(analyze::Opts),
     Channels(channels::Opts),
-    Convolute(convolute::Opts),
+    Convolve(convolve::Opts),
     Diff(diff::Opts),
     Evolve(evolve::Opts),
     Export(export::Opts),

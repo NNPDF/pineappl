@@ -7,7 +7,7 @@ use std::process::{ExitCode, Termination};
 fn main() -> ExitCode {
     let opts = Opts::parse();
 
-    if opts.configuration.silence_lhapdf {
+    if !opts.configuration.lhapdf_banner {
         lhapdf::set_verbosity(0);
     }
 

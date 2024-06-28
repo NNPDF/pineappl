@@ -7,11 +7,11 @@ use clap::{
     ValueHint,
 };
 use pineappl::bin::BinRemapper;
+use pineappl::boc::{Channel, Order};
 use pineappl::fk_table::{FkAssumptions, FkTable};
-use pineappl::lumi::LumiEntry;
-use pineappl::pids;
+use pineappl::pids::PidBasis;
 use std::fs;
-use std::ops::{Deref, RangeInclusive};
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -34,6 +34,7 @@ enum OpsArg {
     Cc2(bool),
     DedupChannels(i64),
     DeleteBins(Vec<RangeInclusive<usize>>),
+    DeleteChannels(Vec<RangeInclusive<usize>>),
     DeleteKey(String),
     MergeBins(Vec<RangeInclusive<usize>>),
     Optimize(bool),
@@ -41,13 +42,15 @@ enum OpsArg {
     Remap(String),
     RemapNorm(f64),
     RemapNormIgnore(Vec<usize>),
-    RewriteChannel((usize, LumiEntry)),
+    RewriteChannel((usize, Channel)),
+    RewriteOrder((usize, Order)),
+    RotatePidBasis(PidBasis),
     Scale(f64),
     ScaleByBin(Vec<f64>),
     ScaleByOrder(Vec<f64>),
     SetKeyFile(Vec<String>),
     SetKeyValue(Vec<String>),
-    SplitLumi(bool),
+    SplitChannels(bool),
     Upgrade(bool),
 }
 
@@ -69,7 +72,7 @@ impl FromArgMatches for MoreArgs {
             args.resize(indices.iter().max().unwrap() + 1, None);
 
             match id.as_str() {
-                "cc1" | "cc2" | "optimize" | "split_lumi" | "upgrade" => {
+                "cc1" | "cc2" | "optimize" | "split_channels" | "upgrade" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -83,7 +86,7 @@ impl FromArgMatches for MoreArgs {
                             "cc1" => OpsArg::Cc1(arg[0]),
                             "cc2" => OpsArg::Cc2(arg[0]),
                             "optimize" => OpsArg::Optimize(arg[0]),
-                            "split_lumi" => OpsArg::SplitLumi(arg[0]),
+                            "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
                             _ => unreachable!(),
                         });
@@ -131,7 +134,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "delete_bins" | "merge_bins" => {
+                "delete_bins" | "delete_channels" | "merge_bins" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -140,6 +143,7 @@ impl FromArgMatches for MoreArgs {
                     ) {
                         args[index] = Some(match id.as_str() {
                             "delete_bins" => OpsArg::DeleteBins(arg),
+                            "delete_channels" => OpsArg::DeleteChannels(arg),
                             "merge_bins" => OpsArg::MergeBins(arg),
                             _ => unreachable!(),
                         });
@@ -174,7 +178,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "rewrite_channel" => {
+                "rewrite_channel" | "rewrite_order" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -183,10 +187,31 @@ impl FromArgMatches for MoreArgs {
                     ) {
                         assert_eq!(arg.len(), 2);
 
-                        args[index] = Some(OpsArg::RewriteChannel((
-                            str::parse(&arg[0]).unwrap(),
-                            str::parse(&arg[1]).unwrap(),
-                        )));
+                        args[index] = Some(match id.as_str() {
+                            "rewrite_channel" => OpsArg::RewriteChannel((
+                                str::parse(&arg[0]).unwrap(),
+                                str::parse(&arg[1]).unwrap(),
+                            )),
+                            "rewrite_order" => OpsArg::RewriteOrder((
+                                str::parse(&arg[0]).unwrap(),
+                                str::parse(&arg[1]).unwrap(),
+                            )),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "rotate_pid_basis" => {
+                    for (index, arg) in indices.into_iter().zip(
+                        matches
+                            .remove_occurrences(&id)
+                            .unwrap()
+                            .map(Iterator::collect::<Vec<_>>),
+                    ) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
+                            "rotate_pid_basis" => OpsArg::RotatePidBasis(arg[0]),
+                            _ => unreachable!(),
+                        });
                     }
                 }
                 "scale_by_bin" | "scale_by_order" => {
@@ -281,6 +306,16 @@ impl Args for MoreArgs {
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
+            Arg::new("delete_channels")
+                .action(ArgAction::Append)
+                .help("Delete channels with the specified indices")
+                .long("delete-channels")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("CH1-CH2,...")
+                .value_parser(helpers::parse_integer_range),
+        )
+        .arg(
             Arg::new("delete_key")
                 .action(ArgAction::Append)
                 .help("Delete an internal key-value pair")
@@ -358,6 +393,25 @@ impl Args for MoreArgs {
                 .value_names(["IDX", "CHAN"])
         )
         .arg(
+            Arg::new("rewrite_order")
+                .action(ArgAction::Append)
+                .help("Rewrite the definition of the order with index IDX")
+                .long("rewrite-order")
+                .num_args(2)
+                .value_names(["IDX", "ORDER"])
+        )
+        .arg(
+            Arg::new("rotate_pid_basis")
+                .action(ArgAction::Append)
+                .help("Rotate the PID basis for this grid")
+                .long("rotate-pid-basis")
+                .value_name("BASIS")
+                .value_parser(
+                    PossibleValuesParser::new(["PDG", "EVOL"])
+                    .try_map(|s| s.parse::<PidBasis>()),
+                ),
+        )
+        .arg(
             Arg::new("scale")
                 .action(ArgAction::Append)
                 .help("Scales all grids with the given factor")
@@ -405,11 +459,12 @@ impl Args for MoreArgs {
                 .value_names(["KEY", "FILE"]),
         )
         .arg(
-            Arg::new("split_lumi")
+            Arg::new("split_channels")
                 .action(ArgAction::Append)
                 .default_missing_value("true")
-                .help("Split the grid such that the luminosity function contains only a single combination per channel")
-                .long("split-lumi")
+                .help("Split the grid such that each channel contains only a single PID combination")
+                .long("split-channels")
+                .alias("split-lumi")
                 .num_args(0..=1)
                 .require_equals(true)
                 .value_name("ENABLE")
@@ -443,54 +498,45 @@ impl Subcommand for Opts {
                     let cc1 = matches!(arg, OpsArg::Cc1(true));
                     let cc2 = matches!(arg, OpsArg::Cc2(true));
 
-                    let lumi_id_types = grid.key_values().map_or("pdg_mc_ids", |kv| {
-                        kv.get("lumi_id_types").map_or("pdg_mc_ids", Deref::deref)
-                    });
-                    let lumis = grid
-                        .lumi()
-                        .iter()
-                        .map(|entry| {
-                            LumiEntry::new(
-                                entry
-                                    .entry()
-                                    .iter()
-                                    .map(|&(a, b, f)| {
-                                        let (ap, f1) = if cc1 {
-                                            pids::charge_conjugate(lumi_id_types, a)
-                                        } else {
-                                            (a, 1.0)
-                                        };
-                                        let (bp, f2) = if cc2 {
-                                            pids::charge_conjugate(lumi_id_types, b)
-                                        } else {
-                                            (b, 1.0)
-                                        };
-                                        (ap, bp, f * f1 * f2)
-                                    })
-                                    .collect(),
-                            )
-                        })
-                        .collect();
+                    let pid_basis = grid.pid_basis();
 
-                    let mut initial_state_1 = grid.initial_state_1();
-                    let mut initial_state_2 = grid.initial_state_2();
+                    for channel in grid.channels_mut() {
+                        *channel = Channel::new(
+                            channel
+                                .entry()
+                                .iter()
+                                .map(|&(a, b, f)| {
+                                    let (ap, f1) = if cc1 {
+                                        pid_basis.charge_conjugate(a)
+                                    } else {
+                                        (a, 1.0)
+                                    };
+                                    let (bp, f2) = if cc2 {
+                                        pid_basis.charge_conjugate(b)
+                                    } else {
+                                        (b, 1.0)
+                                    };
+                                    (ap, bp, f * f1 * f2)
+                                })
+                                .collect(),
+                        );
+                    }
 
                     if cc1 {
-                        initial_state_1 = pids::charge_conjugate_pdg_pid(initial_state_1);
+                        grid.set_convolution(0, grid.convolutions()[0].charge_conjugate());
                     }
                     if cc2 {
-                        initial_state_2 = pids::charge_conjugate_pdg_pid(initial_state_2);
+                        grid.set_convolution(1, grid.convolutions()[1].charge_conjugate());
                     }
-
-                    grid.set_key_value("initial_state_1", &initial_state_1.to_string());
-                    grid.set_key_value("initial_state_2", &initial_state_2.to_string());
-                    grid.set_lumis(lumis);
                 }
                 OpsArg::DedupChannels(ulps) => {
                     grid.dedup_channels(*ulps);
                 }
                 OpsArg::DeleteBins(ranges) => {
                     grid.delete_bins(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
+                }
+                OpsArg::DeleteChannels(ranges) => {
+                    grid.delete_channels(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
                 }
                 OpsArg::DeleteKey(key) => {
                     grid.key_values_mut().remove(key);
@@ -539,10 +585,14 @@ impl Subcommand for Opts {
                     )?;
                 }
                 OpsArg::RewriteChannel((index, new_channel)) => {
-                    let mut channels = grid.lumi().to_vec();
                     // TODO: check that `index` is valid
-                    channels[*index] = new_channel.clone();
-                    grid.set_lumis(channels);
+                    grid.channels_mut()[*index] = new_channel.clone();
+                }
+                OpsArg::RewriteOrder((index, order)) => {
+                    grid.orders_mut()[*index] = order.clone();
+                }
+                OpsArg::RotatePidBasis(pid_basis) => {
+                    grid.rotate_pid_basis(*pid_basis);
                 }
                 OpsArg::Scale(factor) => grid.scale(*factor),
                 OpsArg::Optimize(true) => grid.optimize(),
@@ -561,12 +611,12 @@ impl Subcommand for Opts {
                 OpsArg::SetKeyFile(key_file) => {
                     grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
                 }
-                OpsArg::SplitLumi(true) => grid.split_lumi(),
+                OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),
                 OpsArg::Cc1(false)
                 | OpsArg::Cc2(false)
                 | OpsArg::Optimize(false)
-                | OpsArg::SplitLumi(false)
+                | OpsArg::SplitChannels(false)
                 | OpsArg::Upgrade(false) => {}
             }
         }

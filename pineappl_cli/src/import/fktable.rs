@@ -1,8 +1,12 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
-use pineappl::grid::{Grid, Order};
+use ndarray::s;
+use pineappl::boc::Order;
+use pineappl::channel;
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
-use pineappl::lumi_entry;
+use pineappl::pids::PidBasis;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::SubgridParams;
 use std::fs::File;
@@ -82,14 +86,14 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| lumi_entry![basis[index / 14], basis[index % 14], 1.0])
+                        .map(|(index, _)| channel![basis[index / 14], basis[index % 14], 1.0])
                         .collect()
                 } else {
                     flavor_mask
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| lumi_entry![basis[index], dis_pid, 1.0])
+                        .map(|(index, _)| channel![basis[index], dis_pid, 1.0])
                         .collect()
                 };
 
@@ -107,17 +111,15 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 );
 
                 // explicitly set the evolution basis
-                fktable
-                    .key_values_mut()
-                    .insert("lumi_id_types".to_owned(), "evol".to_owned());
+                fktable.set_pid_basis(PidBasis::Evol);
 
-                fktable
-                    .key_values_mut()
-                    .insert("initial_state_1".to_owned(), "2212".to_owned());
-                if !hadronic {
-                    fktable
-                        .key_values_mut()
-                        .insert("initial_state_2".to_owned(), dis_pid.to_string());
+                // legacy FK-tables only support unpolarized proton PDFs
+                fktable.set_convolution(0, Convolution::UnpolPDF(2212));
+
+                if hadronic {
+                    fktable.set_convolution(1, Convolution::UnpolPDF(2212));
+                } else {
+                    fktable.set_convolution(1, Convolution::None);
                 }
 
                 grid = Some(fktable);
@@ -178,19 +180,19 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                     if bin > last_bin {
                         let grid = grid.as_mut().unwrap();
 
-                        for (lumi, array) in arrays.into_iter().enumerate() {
-                            grid.set_subgrid(
-                                0,
-                                last_bin,
-                                lumi,
-                                ImportOnlySubgridV1::new(
-                                    array,
-                                    vec![q0 * q0],
-                                    x_grid.clone(),
-                                    if hadronic { x_grid.clone() } else { vec![1.0] },
-                                )
-                                .into(),
-                            );
+                        for (subgrid, array) in grid
+                            .subgrids_mut()
+                            .slice_mut(s![0, last_bin, ..])
+                            .iter_mut()
+                            .zip(arrays.into_iter())
+                        {
+                            *subgrid = ImportOnlySubgridV1::new(
+                                array,
+                                vec![q0 * q0],
+                                x_grid.clone(),
+                                if hadronic { x_grid.clone() } else { vec![1.0] },
+                            )
+                            .into();
                         }
 
                         arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
@@ -234,19 +236,19 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
     let mut grid = grid.unwrap();
 
-    for (lumi, array) in arrays.into_iter().enumerate() {
-        grid.set_subgrid(
-            0,
-            last_bin,
-            lumi,
-            ImportOnlySubgridV1::new(
-                array,
-                vec![q0 * q0],
-                x_grid.clone(),
-                if hadronic { x_grid.clone() } else { vec![1.0] },
-            )
-            .into(),
-        );
+    for (subgrid, array) in grid
+        .subgrids_mut()
+        .slice_mut(s![0, last_bin, ..])
+        .iter_mut()
+        .zip(arrays.into_iter())
+    {
+        *subgrid = ImportOnlySubgridV1::new(
+            array,
+            vec![q0 * q0],
+            x_grid.clone(),
+            if hadronic { x_grid.clone() } else { vec![1.0] },
+        )
+        .into();
     }
 
     Ok(grid)

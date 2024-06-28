@@ -1,8 +1,9 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use lhapdf::Pdf;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -18,8 +19,7 @@ mod fktable;
 fn convert_applgrid(
     input: &Path,
     alpha: u32,
-    pdfset: &str,
-    member: usize,
+    conv_funs: &mut [Pdf],
     dis_pid: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -29,7 +29,7 @@ fn convert_applgrid(
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
     let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
-    let results = applgrid::convolute_applgrid(grid.pin_mut(), pdfset, member);
+    let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", pgrid, results, 1))
 }
@@ -38,8 +38,7 @@ fn convert_applgrid(
 fn convert_applgrid(
     _: &Path,
     _: u32,
-    _: &str,
-    _: usize,
+    _: &mut [Pdf],
     _: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -52,7 +51,7 @@ fn convert_applgrid(
 fn convert_fastnlo(
     input: &Path,
     alpha: u32,
-    pdfset: &str,
+    conv_funs: &ConvFuns,
     member: usize,
     dis_pid: i32,
     scales: usize,
@@ -62,9 +61,12 @@ fn convert_fastnlo(
     use pineappl_fastnlo::ffi;
     use std::ptr;
 
+    // TODO: convert this into an error?
+    assert_eq!(conv_funs.lhapdf_names.len(), 1);
+
     let mut file = ffi::make_fastnlo_lhapdf_with_name_file_set(
         input.to_str().unwrap(),
-        pdfset,
+        &conv_funs.lhapdf_names[0],
         member.try_into().unwrap(),
     );
 
@@ -118,7 +120,7 @@ fn convert_fastnlo(
 fn convert_fastnlo(
     _: &Path,
     _: u32,
-    _: &str,
+    _: &ConvFuns,
     _: usize,
     _: i32,
     _: usize,
@@ -147,7 +149,8 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, us
 fn convert_grid(
     input: &Path,
     alpha: u32,
-    pdfset: &str,
+    conv_funs: &mut [Pdf],
+    fun_names: &ConvFuns,
     member: usize,
     dis_pid: i32,
     scales: usize,
@@ -163,12 +166,12 @@ fn convert_grid(
                     .map_or(false, |ext| ext == "tab"))
         {
             return convert_fastnlo(
-                input, alpha, pdfset, member, dis_pid, scales, fnlo_mur, fnlo_muf,
+                input, alpha, fun_names, member, dis_pid, scales, fnlo_mur, fnlo_muf,
             );
         } else if extension == "dat" {
             return convert_fktable(input, dis_pid);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, pdfset, member, dis_pid, scales);
+            return convert_applgrid(input, alpha, conv_funs, dis_pid, scales);
         }
     }
 
@@ -197,7 +200,7 @@ fn fnlo_mu_possible_values() -> Vec<&'static str> {
 }
 
 #[cfg(not(feature = "fastnlo"))]
-fn fnlo_mu_possible_values() -> Vec<&'static str> {
+const fn fnlo_mu_possible_values() -> Vec<&'static str> {
     vec![]
 }
 
@@ -210,9 +213,8 @@ pub struct Opts {
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with.
+    conv_funs: ConvFuns,
     /// LO coupling power in alpha.
     #[arg(default_value_t = 0, long)]
     alpha: u32,
@@ -253,11 +255,14 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, mut grid, reference_results, scale_variations) = convert_grid(
             &self.input,
             self.alpha,
-            &self.pdfset,
+            &mut conv_funs,
+            &self.conv_funs,
             0,
             self.dis_pid,
             self.scales,
@@ -274,10 +279,9 @@ impl Subcommand for Opts {
         if reference_results.is_empty() {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
-            let mut pdf = helpers::create_pdf(&self.pdfset)?;
-            let results = helpers::convolute(
+            let results = helpers::convolve(
                 &grid,
-                &mut pdf,
+                &mut conv_funs,
                 &[],
                 &[],
                 &[],

@@ -85,8 +85,8 @@ module pineappl
             type (c_ptr), value :: grid
         end function
 
-        subroutine grid_convolute_with_one(grid, pdg_id, xfx, alphas, state, order_mask, lumi_mask, xi_ren, xi_fac, results) &
-            bind(c, name = 'pineappl_grid_convolute_with_one')
+        subroutine grid_convolve_with_one(grid, pdg_id, xfx, alphas, state, order_mask, lumi_mask, xi_ren, xi_fac, results) &
+            bind(c, name = 'pineappl_grid_convolve_with_one')
             use iso_c_binding
             type (c_ptr), value        :: grid, state
             integer (c_int32_t), value :: pdg_id
@@ -96,8 +96,8 @@ module pineappl
             real (c_double)            :: results(*)
         end subroutine
 
-        subroutine grid_convolute_with_two(grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, state, order_mask, lumi_mask, &
-            xi_ren, xi_fac, results) bind(c, name = 'pineappl_grid_convolute_with_two')
+        subroutine grid_convolve_with_two(grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, state, order_mask, lumi_mask, &
+            xi_ren, xi_fac, results) bind(c, name = 'pineappl_grid_convolve_with_two')
             use iso_c_binding
             type (c_ptr), value        :: grid, state
             integer (c_int32_t), value :: pdg_id1, pdg_id2
@@ -437,7 +437,7 @@ contains
         pineappl_grid_clone = pineappl_grid(grid_clone(grid%ptr))
     end function
 
-    function pineappl_grid_convolute_with_one(grid, pdg_id, xfx, alphas, order_mask, lumi_mask, xi_ren, xi_fac, state) result(res)
+    function pineappl_grid_convolve_with_one(grid, pdg_id, xfx, alphas, order_mask, lumi_mask, xi_ren, xi_fac, state) result(res)
         use iso_c_binding
         
         implicit none
@@ -469,13 +469,13 @@ contains
             state_ = c_null_ptr
         end if
 
-        call grid_convolute_with_one(grid%ptr, pdg_id, c_funloc(xfx), c_funloc(alphas), state_, &
+        call grid_convolve_with_one(grid%ptr, pdg_id, c_funloc(xfx), c_funloc(alphas), state_, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(lumi_mask(i), c_bool), i = 1, size(lumi_mask))], &
             xi_ren, xi_fac, res)
     end function
 
-    function pineappl_grid_convolute_with_two(grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, &
+    function pineappl_grid_convolve_with_two(grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, &
         order_mask, lumi_mask, xi_ren, xi_fac, state) result(res)
         use iso_c_binding
         
@@ -510,7 +510,7 @@ contains
             state_ = c_null_ptr
         end if
 
-        call grid_convolute_with_two(grid%ptr, pdg_id1, c_funloc(xfx1), pdg_id2, c_funloc(xfx2), c_funloc(alphas), state_, &
+        call grid_convolve_with_two(grid%ptr, pdg_id1, c_funloc(xfx1), pdg_id2, c_funloc(xfx2), c_funloc(alphas), state_, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(lumi_mask(i), c_bool), i = 1, size(lumi_mask))], &
             xi_ren, xi_fac, res)

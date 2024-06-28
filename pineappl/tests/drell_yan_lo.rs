@@ -3,9 +3,10 @@ use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use num_complex::Complex;
 use pineappl::bin::BinRemapper;
-use pineappl::grid::{Grid, GridOptFlags, Ntuple, Order};
-use pineappl::lumi::LumiCache;
-use pineappl::lumi_entry;
+use pineappl::boc::Order;
+use pineappl::channel;
+use pineappl::convolutions::LumiCache;
+use pineappl::grid::{Grid, GridOptFlags, Ntuple};
 use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -119,17 +120,17 @@ fn fill_drell_yan_lo_grid(
     dynamic: bool,
     reweight: bool,
 ) -> Result<Grid> {
-    let lumi = vec![
+    let channels = vec![
         // photons
-        lumi_entry![22, 22, 1.0],
+        channel![22, 22, 1.0],
         // up-antiup
-        lumi_entry![2, -2, 1.0; 4, -4, 1.0],
+        channel![2, -2, 1.0; 4, -4, 1.0],
         // antiup-up
-        lumi_entry![-2, 2, 1.0; -4, 4, 1.0],
+        channel![-2, 2, 1.0; -4, 4, 1.0],
         // down-antidown
-        lumi_entry![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
+        channel![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
         // antidown-down
-        lumi_entry![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
+        channel![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
     ];
 
     let orders = vec![
@@ -178,7 +179,7 @@ fn fill_drell_yan_lo_grid(
 
     // create the PineAPPL grid
     let mut grid = Grid::with_subgrid_type(
-        lumi,
+        channels,
         orders,
         bin_limits,
         subgrid_params,
@@ -239,7 +240,17 @@ fn fill_drell_yan_lo_grid(
         let pto = 0;
         let channel = 2;
 
-        grid.fill(pto, yll.abs(), channel, &Ntuple { x2, x1, q2, weight });
+        grid.fill(
+            pto,
+            yll.abs(),
+            channel,
+            &Ntuple {
+                x1: x2,
+                x2: x1,
+                q2,
+                weight,
+            },
+        );
 
         // LO down-antidown-type channel
         let weight = jacobian * int_quark(s, t, u, -1.0 / 3.0, -0.5);
@@ -253,7 +264,17 @@ fn fill_drell_yan_lo_grid(
         let pto = 0;
         let channel = 4;
 
-        grid.fill(pto, yll.abs(), channel, &Ntuple { x2, x1, q2, weight });
+        grid.fill(
+            pto,
+            yll.abs(),
+            channel,
+            &Ntuple {
+                x1: x2,
+                x2: x1,
+                q2,
+                weight,
+            },
+        );
     }
 
     Ok(grid)
@@ -285,8 +306,6 @@ fn perform_grid_tests(
 
     let pdf_set = "NNPDF31_nlo_as_0118_luxqed";
 
-    assert!(lhapdf::available_pdf_sets().iter().any(|x| x == pdf_set));
-
     let pdf = Pdf::with_setname_and_member(pdf_set, 0)?;
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
@@ -309,20 +328,20 @@ fn perform_grid_tests(
     grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
-    // TEST 5: `convolute`
+    // TEST 5: `convolve`
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
-    // TEST 5b: `convolute` with `LumiCache::with_two`
+    // TEST 5b: `convolve` with `LumiCache::with_two`
     let mut xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas2 = |_| 0.0;
     let mut lumi_cache2 = LumiCache::with_two(2212, &mut xfx1, 2212, &mut xfx2, &mut alphas2);
-    let bins2 = grid.convolute(&mut lumi_cache2, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins2 = grid.convolve(&mut lumi_cache2, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference) in bins2.iter().zip(reference.iter()) {
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
@@ -331,12 +350,12 @@ fn perform_grid_tests(
     mem::drop(lumi_cache2);
     mem::drop(bins2);
 
-    // TEST 6: `convolute_subgrid`
+    // TEST 6: `convolve_subgrid`
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            (0..grid.lumi().len())
+            (0..grid.channels().len())
                 .map(|channel| {
-                    grid.convolute_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
+                    grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
                         .sum()
                 })
                 .sum()
@@ -353,15 +372,15 @@ fn perform_grid_tests(
     // TEST 7b: `optimize`
     grid.optimize();
 
-    assert_eq!(grid.subgrid(0, 0, 0).x1_grid().as_ref(), x_grid);
-    assert_eq!(grid.subgrid(0, 0, 0).x2_grid().as_ref(), x_grid);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().as_ref(), x_grid);
+    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().as_ref(), x_grid);
 
-    // TEST 8: `convolute_subgrid` for the optimized subgrids
+    // TEST 8: `convolve_subgrid` for the optimized subgrids
     let bins: Vec<_> = (0..grid.bin_info().bins())
         .map(|bin| {
-            (0..grid.lumi().len())
+            (0..grid.channels().len())
                 .map(|channel| {
-                    grid.convolute_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
+                    grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, 1.0, 1.0)
                         .sum()
                 })
                 .sum()
@@ -372,7 +391,7 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
     }
 
-    let bins = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let bins = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
         assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
@@ -405,7 +424,7 @@ fn perform_grid_tests(
         grid.merge_bins(bin..bin + 2)?;
     }
 
-    let merged2 = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let merged2 = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     for (result, reference_after_ssd) in merged2.iter().zip(
         reference_after_ssd
@@ -420,7 +439,7 @@ fn perform_grid_tests(
     // delete a few bins from the start
     grid.delete_bins(&[0, 1]);
 
-    let deleted = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let deleted = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     assert_eq!(deleted.len(), 10);
 
@@ -436,7 +455,7 @@ fn perform_grid_tests(
     // delete a few bins from the ending
     grid.delete_bins(&[8, 9]);
 
-    let deleted2 = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let deleted2 = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     assert_eq!(deleted2.len(), 8);
 
@@ -459,113 +478,113 @@ fn generate_grid(subgrid_type: &str, dynamic: bool, reweight: bool) -> Result<Gr
 }
 
 const STATIC_REFERENCE: [f64; 24] = [
-    270.032948077419,
-    266.53042891661994,
-    290.18415971698766,
-    257.18920263434893,
-    238.1024311020346,
-    297.4043699884724,
-    260.05082619542054,
-    239.86180454132813,
-    242.8044656290245,
-    231.94005409799632,
-    224.546005767585,
-    186.30387872772653,
-    216.22804109717634,
-    178.11604807980913,
-    171.36239656080207,
-    145.5738494644204,
-    144.15628290390123,
-    96.98346155489186,
-    87.02664966484767,
-    72.24178056556343,
-    63.34788350688179,
-    45.150098574761095,
-    31.786673143908388,
-    10.508579490820983,
+    269.89225458312495,
+    266.2168804878282,
+    290.0467478314624,
+    258.0064918266305,
+    239.54186548997865,
+    300.17541324377703,
+    258.8811221515799,
+    238.4064950360576,
+    242.5494601562957,
+    236.34329830221077,
+    230.63243720020898,
+    190.03118557029666,
+    213.22241277258763,
+    177.75582251643334,
+    168.07022695390958,
+    151.59217101220256,
+    143.81017491485716,
+    97.09707327367487,
+    91.38465432190982,
+    73.94464862425771,
+    63.859689262732104,
+    48.595785504299926,
+    27.94818010640803,
+    9.343737799674852,
 ];
 
 // numbers are slightly different from `STATIC_REFERENCE` because the static scale detection (SSD)
 // removes the Q^2 interpolation error
 const STATIC_REFERENCE_AFTER_SSD: [f64; 24] = [
-    270.033098990359,
-    266.5305770813254,
-    290.1843197471277,
-    257.18934283371163,
-    238.10255893783074,
-    297.4045259189172,
-    260.05095854131497,
-    239.8619225312395,
-    242.8045800917593,
-    231.94015804152133,
-    224.54610060526701,
-    186.30395209734667,
-    216.22811962577862,
-    178.11610617693407,
-    171.36244639833768,
-    145.57388533569656,
-    144.1563115005831,
-    96.98347582894642,
-    87.02665819940937,
-    72.24178332992076,
-    63.34788220165245,
-    45.15009496754392,
-    31.786668442718938,
-    10.508577299430973,
+    269.89240546283145,
+    266.2170285827742,
+    290.04690782935967,
+    258.0066322019259,
+    239.54199362567599,
+    300.17556967146095,
+    258.88125430161745,
+    238.40661279174125,
+    242.54957458220744,
+    236.34340283622035,
+    230.63253265929194,
+    190.03125927151245,
+    213.2224910582812,
+    177.7558806305883,
+    168.07027678254747,
+    151.59220685502618,
+    143.81020355582885,
+    97.09708758263099,
+    91.38466242593998,
+    73.94465114837278,
+    63.859687905917,
+    48.595781165174515,
+    27.94817639459665,
+    9.343735959243446,
 ];
 
 const DYNAMIC_REFERENCE: [f64; 24] = [
-    270.10748821350154,
-    266.5411133114593,
-    290.17831196525697,
-    257.2279175882498,
-    238.19001761554745,
-    297.4774293868129,
-    260.05099925772,
-    239.8847562882569,
-    242.8256504711324,
-    231.93841366438,
-    224.55846883004486,
-    186.25680820137552,
-    216.31250247378915,
-    178.08658436751017,
-    171.38330537962523,
-    145.56521694168075,
-    144.1389036069047,
-    96.95384922315318,
-    87.01668160609148,
-    72.24037917990188,
-    63.351600701502775,
-    45.15589233137642,
-    31.78895816514695,
-    10.507668133626103,
+    269.9662650413552,
+    266.2274509325408,
+    290.039119030095,
+    258.04801305108583,
+    239.63561020879277,
+    300.2475932636636,
+    258.88126161648313,
+    238.42709542929794,
+    242.5724521248901,
+    236.3541498865422,
+    230.64832146047578,
+    189.999243811704,
+    213.2896760201295,
+    177.7280865940876,
+    168.0886178280483,
+    151.59285700593935,
+    143.80051106343882,
+    97.0715765765853,
+    91.38479915098559,
+    73.94713838892906,
+    63.85622547082087,
+    48.61296466751912,
+    27.948404940991445,
+    9.342761664545428,
 ];
 
 const DYNAMIC_REFERENCE_NO_REWEIGHT: [f64; 24] = [
-    269.0260807547221,
-    265.6228062891378,
-    289.20276155574334,
-    256.20635007483935,
-    237.32408404334382,
-    296.4119556601695,
-    259.1570057084532,
-    239.0354655497739,
-    242.00432881806023,
-    231.0153726768181,
-    223.77970088158807,
-    185.74115061906738,
-    215.5756627252798,
-    177.31781780498287,
-    170.85988900722407,
-    145.28303184463408,
-    143.54049829751125,
-    96.55784208406595,
-    86.82029114390203,
-    72.05416364844432,
-    63.125656746209586,
-    45.02250707871406,
-    31.699275851444902,
-    10.491000144711,
+    268.8874311488598,
+    265.3130436782233,
+    289.0614714145284,
+    257.02578172672656,
+    238.76378338813032,
+    299.1756333696102,
+    257.98748703027104,
+    237.58099891213897,
+    241.75215319366012,
+    235.41757682699438,
+    229.8671307486547,
+    189.47964517011536,
+    212.56055728623704,
+    176.9591711445695,
+    167.56523215346917,
+    151.30532185043768,
+    143.20366078799765,
+    96.67453775369947,
+    91.18334210163036,
+    73.75879631942671,
+    63.629606742074984,
+    48.47126745674977,
+    27.86328933386428,
+    9.32654010506528,
 ];
 
 #[test]
@@ -744,7 +763,7 @@ fn grid_optimize() -> Result<()> {
     let mut grid = generate_grid("LagrangeSubgridV2", false, false)?;
 
     assert_eq!(grid.orders().len(), 3);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
         SubgridEnum::LagrangeSubgridV2 { .. }
@@ -781,23 +800,23 @@ fn grid_optimize() -> Result<()> {
     grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
 
     assert_eq!(grid.orders().len(), 3);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     grid.optimize_using(GridOptFlags::STRIP_EMPTY_ORDERS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     // has no effect for this test
     grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 5);
+    assert_eq!(grid.channels().len(), 5);
 
     grid.optimize_using(GridOptFlags::STRIP_EMPTY_CHANNELS);
 
     assert_eq!(grid.orders().len(), 1);
-    assert_eq!(grid.lumi().len(), 3);
+    assert_eq!(grid.channels().len(), 3);
 
     Ok(())
 }

@@ -5,13 +5,13 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Evolve a grid with an evolution kernel operator to an FK table
 
-Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <PDFSET>
+Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <EKO>     Path to the evolution kernel operator
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <EKO>        Path to the evolution kernel operator
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s)
 
 Options:
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
@@ -188,7 +188,6 @@ fn lhcb_wp_7tev() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.tar",
@@ -218,8 +217,7 @@ fn lhcb_wp_7tev() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             optimized.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
         ])
@@ -235,7 +233,6 @@ fn lhcb_wp_7tev_use_old_evolve() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.tar",
@@ -271,7 +268,6 @@ fn lhcb_wp_7tev_v2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
@@ -308,7 +304,6 @@ fn lhcb_wp_7tev_v2_xir_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
@@ -346,7 +341,6 @@ fn lhcb_wp_7tev_v2_xif_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
@@ -384,7 +378,6 @@ fn lhcb_wp_7tev_v2_xif_2_error() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
@@ -422,7 +415,6 @@ fn e906nlo_bin_00() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             input.path().to_str().unwrap(),
             "../test-data/E906nlo_bin_00.tar",
@@ -441,7 +433,6 @@ fn nutev_cc_nu_fe_sigmared() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "../test-data/NUTEV_CC_NU_FE_SIGMARED.pineappl.lz4",
             "../test-data/NUTEV_CC_NU_FE_SIGMARED.tar",
@@ -461,7 +452,6 @@ fn lhcb_dy_8tev() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "../test-data/LHCB_DY_8TEV.pineappl.lz4",
             "../test-data/LHCB_DY_8TEV.tar",
@@ -481,7 +471,6 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "evolve",
             "--orders=as2,as3,as4",
             "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4",

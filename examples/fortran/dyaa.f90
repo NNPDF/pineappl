@@ -113,7 +113,7 @@ program dyaa
     print *, 'Generated DY-LO-AA.pineappl.lz4 containing a a -> l+ l-.'
     print *, ''
     print *, 'Try running (PDF sets must contain non-zero photon PDF):'
-    print *, '  - pineappl convolute DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed'
+    print *, '  - pineappl convolve DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed'
     print *, '  - pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py'
     print *, '  - pineappl --help'
 

@@ -2,11 +2,11 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Convolutes a PineAPPL grid with a PDF set
 
-Usage: pineappl convolute [OPTIONS] <INPUT> <PDFSETS>...
+Usage: pineappl convolve [OPTIONS] <INPUT> <CONV_FUNS>...
 
 Arguments:
-  <INPUT>       Path of the input grid
-  <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
+  <INPUT>         Path of the input grid
+  <CONV_FUNS>...  LHAPDF id(s) or name of the PDF set(s)
 
 Options:
   -b, --bins <BINS>       Selects a subset of bins
@@ -110,18 +110,6 @@ const THREE_PDFS_STR: &str =
 7    4  4.5 2.7517266e1    2.7259743e1          -0.94    2.8446007e1           3.38
 ";
 
-const WRONG_LHAID_STR: &str =
-    "error: invalid value '0' for '<PDFSETS>...': The PDF set for the LHAPDF ID `0` was not found
-
-For more information, try '--help'.
-";
-
-const WRONG_PDFSET_STR: &str =
-    "error: invalid value 'IDONTEXIST' for '<PDFSETS>...': The PDF set `IDONTEXIST` was not found
-
-For more information, try '--help'.
-";
-
 const BINS_13567_STR: &str = "b   etal   dsig/detal 
      []       [pb]    
 -+----+---+-----------
@@ -180,7 +168,7 @@ For more information, try '--help'.
 fn help() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["convolute", "--help"])
+        .args(["convolve", "--help"])
         .assert()
         .success()
         .stdout(HELP_STR);
@@ -191,8 +179,7 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -207,8 +194,7 @@ fn force_positive() {
         .unwrap()
         .args([
             "--force-positive",
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -222,8 +208,7 @@ fn default_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "324900=NNPDF31_nlo_as_0118_luxqed",
@@ -238,8 +223,7 @@ fn multiple_pdfs_with_new_construction() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
@@ -254,8 +238,7 @@ fn multiple_pdfs_with_relabeling() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF31_nlo_as_0118_luxqed/1=other mc=1.4",
@@ -270,8 +253,7 @@ fn two_pdfs_with_order_subset() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--orders=a2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
@@ -287,8 +269,7 @@ fn three_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
@@ -300,42 +281,11 @@ fn three_pdfs() {
 }
 
 #[test]
-fn wrong_lhaid() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "convolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "0",
-        ])
-        .assert()
-        .failure()
-        .stderr(WRONG_LHAID_STR);
-}
-
-#[test]
-fn wrong_pdfset() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "--silence-lhapdf",
-            "convolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "IDONTEXIST",
-        ])
-        .assert()
-        .failure()
-        .stderr(WRONG_PDFSET_STR);
-}
-
-#[test]
 fn bins_13567() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--bins=1,3,5-7",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -350,8 +300,7 @@ fn integrated() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--integrated",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -366,8 +315,7 @@ fn integrated_multiple_pdfs() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--integrated",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -383,8 +331,7 @@ fn orders_a2_a3() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--orders=a2,a3",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
@@ -399,8 +346,7 @@ fn wrong_orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             "--orders=a2a2as2",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",

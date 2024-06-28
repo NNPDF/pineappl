@@ -136,18 +136,18 @@ program test_pineappl
     xfx2 => xfx2_test
     alphas => alphas_test
 
-    result = pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, &
+    result = pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &
         [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
     if (any(result > 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolute_with_one(): ", result
-        error stop "error: pineappl_grid_convolute_with_one"
+        write(*, *) "pineappl_grid_convolve_with_one(): ", result
+        error stop "error: pineappl_grid_convolve_with_one"
     end if
 
-    result = pineappl_grid_convolute_with_two(grid, 2212, xfx1, 2212, xfx2, alphas, &
+    result = pineappl_grid_convolve_with_two(grid, 2212, xfx1, 2212, xfx2, alphas, &
         [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
     if (any(result < 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolute_with_two(): ", result
-        error stop "error: pineappl_grid_convolute_with_two"
+        write(*, *) "pineappl_grid_convolve_with_two(): ", result
+        error stop "error: pineappl_grid_convolve_with_two"
     end if
 
     call pineappl_keyval_delete(key_vals)

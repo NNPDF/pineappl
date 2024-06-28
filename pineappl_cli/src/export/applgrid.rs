@@ -1,8 +1,11 @@
 use anyhow::{anyhow, bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
+use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::grid::{Grid, Order};
+use pineappl::boc::Order;
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
 use std::borrow::Cow;
@@ -66,32 +69,37 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
-    let lumis = grid.lumi().len();
-    let has_pdf1 = grid.has_pdf1();
-    let has_pdf2 = grid.has_pdf2();
+    let lumis = grid.channels().len();
+    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
+    let has_pdf2 = grid.convolutions()[1] != Convolution::None;
 
     // TODO: check that PDG MC IDs are used
 
     let combinations: Vec<_> = iter::once(lumis.try_into().unwrap())
-        .chain(grid.lumi().iter().enumerate().flat_map(|(index, entry)| {
-            [
-                index.try_into().unwrap(),
-                entry.entry().len().try_into().unwrap(),
-            ]
-            .into_iter()
-            .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
-                // TODO: if the factors aren't trivial, we have to find some other way to
-                // propagate them
-                assert_eq!(factor, 1.0);
+        .chain(
+            grid.channels()
+                .iter()
+                .enumerate()
+                .flat_map(|(index, entry)| {
+                    [
+                        index.try_into().unwrap(),
+                        entry.entry().len().try_into().unwrap(),
+                    ]
+                    .into_iter()
+                    .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
+                        // TODO: if the factors aren't trivial, we have to find some other way to
+                        // propagate them
+                        assert_eq!(factor, 1.0);
 
-                match (has_pdf1, has_pdf2) {
-                    (true, true) => [a, b],
-                    (true, false) => [a, 0],
-                    (false, true) => [b, 0],
-                    (false, false) => unreachable!(),
-                }
-            }))
-        }))
+                        match (has_pdf1, has_pdf2) {
+                            (true, true) => [a, b],
+                            (true, false) => [a, 0],
+                            (false, true) => [b, 0],
+                            (false, false) => unreachable!(),
+                        }
+                    }))
+                }),
+        )
         .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
@@ -161,7 +169,7 @@ pub fn convert_into_applgrid(
                 p.x_order().try_into().unwrap(),
                 "f2",
                 "h0",
-                grid.lumi().len().try_into().unwrap(),
+                grid.channels().len().try_into().unwrap(),
                 has_pdf1 != has_pdf2,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
@@ -295,16 +303,11 @@ pub fn convert_into_applgrid(
 }
 
 // TODO: deduplicate this function from import
-pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolute(
-        grid,
-        pdfset,
-        member.try_into().unwrap(),
-        nloops,
-        1.0,
-        1.0,
-        1.0,
-    )
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    pineappl_applgrid::grid_convolve_with_one(grid, &mut conv_funs[0], nloops, 1.0, 1.0, 1.0)
 }

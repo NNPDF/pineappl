@@ -27,7 +27,7 @@ class Order(PyWrapper):
     def create_mask(orders, max_as, max_al, logs):
         r"""
         Return a mask suitable to pass as the `order_mask` parameter of
-        :meth:`Grid.convolute`.
+        :meth:`Grid.convolve`.
 
         Parameters
         ----------
@@ -183,7 +183,7 @@ class Grid(PyWrapper):
         """
         return [Order(*pyorder.as_tuple()) for pyorder in self.raw.orders()]
 
-    def convolute_with_one(
+    def convolve_with_one(
         self,
         pdg_id,
         xfx,
@@ -226,7 +226,7 @@ class Grid(PyWrapper):
                 cross sections for all bins, for each scale-variation tuple (first all bins, then
                 the scale variation)
         """
-        return self.raw.convolute_with_one(
+        return self.raw.convolve_with_one(
             pdg_id,
             xfx,
             alphas,
@@ -236,7 +236,7 @@ class Grid(PyWrapper):
             xi,
         )
 
-    def convolute_with_two(
+    def convolve_with_two(
         self,
         pdg_id1,
         xfx1,
@@ -285,7 +285,7 @@ class Grid(PyWrapper):
                 cross sections for all bins, for each scale-variation tuple (first all bins, then
                 the scale variation)
         """
-        return self.raw.convolute_with_two(
+        return self.raw.convolve_with_two(
             pdg_id1,
             xfx1,
             pdg_id2,
@@ -295,66 +295,6 @@ class Grid(PyWrapper):
             np.array(bin_indices),
             np.array(lumi_mask),
             xi,
-        )
-
-    def convolute_eko(
-        self,
-        operators,
-        mur2_grid,
-        alphas_values,
-        lumi_id_types="pdg_mc_ids",
-        order_mask=(),
-        xi=(1.0, 1.0),
-    ):
-        """Create an FKTable with the EKO.
-
-        Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.convolute_eko()`.
-
-        Parameters
-        ----------
-            operators : dict
-                EKO Output
-            mur2_grid : list[float]
-                renormalization scales
-            alphas_values : list[float]
-                alpha_s values associated to the renormalization scales
-            lumi_id_types : str
-                kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
-                for evolution basis)
-            order_mask : list(bool)
-                Mask for selecting specific orders. The value `True` means the corresponding order
-                is included. An empty list corresponds to all orders being enabled.
-            xi : (float, float)
-                A tuple with the scale variation factors that should be used.
-                The first entry of a tuple corresponds to the variation of
-                the renormalization scale, the second entry to the variation of the factorization
-                scale. If only results for the central scale are need the tuple should be
-                `(1.0, 1.0)`.
-
-        Returns
-        ------
-            PyFkTable :
-                raw grid as an FKTable
-        """
-        operator_grid = np.array(
-            [op["operators"] for op in operators["Q2grid"].values()]
-        )
-        q2grid = list(operators["Q2grid"].keys())
-        return FkTable(
-            self.raw.convolute_eko(
-                operators["q2_ref"],
-                np.array(alphas_values, dtype=np.float64),
-                np.array(operators["targetpids"], dtype=np.int32),
-                np.array(operators["targetgrid"]),
-                np.array(operators["inputpids"], dtype=np.int32),
-                np.array(operators["inputgrid"]),
-                np.array(mur2_grid, dtype=np.float64),
-                np.array(q2grid, dtype=np.float64),
-                np.array(operator_grid),
-                lumi_id_types,
-                np.array(order_mask, dtype=bool),
-                xi,
-            )
         )
 
     def evolve(

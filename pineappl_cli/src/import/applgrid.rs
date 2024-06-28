@@ -1,7 +1,9 @@
 use anyhow::Result;
-use pineappl::grid::{Grid, Order};
+use lhapdf::Pdf;
+use pineappl::boc::{Channel, Order};
+use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::lumi::LumiEntry;
 use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
@@ -20,7 +22,7 @@ fn convert_to_pdg_id(pid: usize) -> i32 {
     }
 }
 
-fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<LumiEntry> {
+fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
@@ -63,7 +65,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
         xfx1[a] = 0.0;
     }
 
-    lumis.into_iter().map(LumiEntry::new).collect()
+    lumis.into_iter().map(Channel::new).collect()
 }
 
 pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {
@@ -121,8 +123,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             SubgridParams::default(),
         );
 
+        // from APPLgrid alone we don't know what type of convolution we have
+        pgrid.set_convolution(0, Convolution::UnpolPDF(2212));
+
         if grid.isDIS() {
-            pgrid.set_key_value("initial_state_2", &dis_pid.to_string());
+            pgrid.set_convolution(1, Convolution::None);
         }
 
         for bin in 0..grid.Nobs_internal() {
@@ -187,18 +192,14 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 }
 
                 if !array.is_empty() {
-                    pgrid.set_subgrid(
-                        0,
-                        bin.try_into().unwrap(),
-                        lumi,
+                    pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
                         ImportOnlySubgridV2::new(
                             array,
                             mu2_values.clone(),
                             x1_values.clone(),
                             x2_values.clone(),
                         )
-                        .into(),
-                    );
+                        .into();
                 }
             }
         }
@@ -245,16 +246,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     Ok(grid0)
 }
 
-pub fn convolute_applgrid(grid: Pin<&mut grid>, pdfset: &str, member: usize) -> Vec<f64> {
+pub fn convolve_applgrid(grid: Pin<&mut grid>, conv_funs: &mut [Pdf]) -> Vec<f64> {
     let nloops = grid.nloops();
 
-    ffi::grid_convolute(
-        grid,
-        pdfset,
-        member.try_into().unwrap(),
-        nloops,
-        1.0,
-        1.0,
-        1.0,
-    )
+    // TODO: add support for convolving an APPLgrid with two functions
+    assert_eq!(conv_funs.len(), 1);
+
+    pineappl_applgrid::grid_convolve_with_one(grid, &mut conv_funs[0], nloops, 1.0, 1.0, 1.0)
 }

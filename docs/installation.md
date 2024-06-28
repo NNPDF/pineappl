@@ -168,16 +168,16 @@ inside it.
 ### Man pages
 
 Most of PineAPPL's help is available as `pineappl --help` and as `pineappl
-convolute --help`, for example. However, the same information can also be
+convolve --help`, for example. However, the same information can also be
 installed as man pages, which can then be used as either
 
     man pineappl
-    man pineappl-convolute
+    man pineappl-convolve
 
 or
 
     pineappl help
-    pineappl help convolute
+    pineappl help convolve
 
 For this to work first install the [CLI](#cli-pineappl-for-your-shell). Next,
 go to your local copy of PineAPPL's repository and create the man page

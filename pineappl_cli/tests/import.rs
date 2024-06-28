@@ -6,12 +6,12 @@ use assert_fs::NamedTempFile;
 #[cfg(feature = "fastnlo")]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
-Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]
@@ -29,12 +29,12 @@ Options:
 #[cfg(not(feature = "fastnlo"))]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
-Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]
@@ -324,7 +324,6 @@ fn import_fix_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/NJetEvents_0-0-2.tab.gz",
             output.path().to_str().unwrap(),
@@ -343,7 +342,6 @@ fn import_flex_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -362,7 +360,6 @@ fn import_flex_grid_scale_1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -383,7 +380,6 @@ fn import_flex_grid_scale_2() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -404,7 +400,6 @@ fn import_flex_grid_quadratic_sum() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -427,7 +422,6 @@ fn import_flex_grid_quadratic_mean() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -450,7 +444,6 @@ fn import_flex_grid_5() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -471,7 +464,6 @@ fn import_flex_grid_6() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -492,7 +484,6 @@ fn import_flex_grid_7() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -513,7 +504,6 @@ fn import_flex_grid_8() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -534,7 +524,6 @@ fn import_flex_grid_9() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -555,7 +544,6 @@ fn import_flex_grid_10() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -576,7 +564,6 @@ fn import_flex_grid_11() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -597,7 +584,6 @@ fn import_flex_grid_12() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -618,7 +604,6 @@ fn import_flex_grid_13() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -639,7 +624,6 @@ fn import_flex_grid_14() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -660,7 +644,6 @@ fn import_flex_grid_15() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz",
             output.path().to_str().unwrap(),
@@ -685,7 +668,6 @@ fn import_dis_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/FK_POSXDQ.dat",
             output.path().to_str().unwrap(),
@@ -698,8 +680,7 @@ fn import_dis_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -855,9 +836,10 @@ fn import_dis_fktable() {
 fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
+    use pineappl::convolutions::Convolution;
+    use pineappl::convolutions::LumiCache;
     use pineappl::fk_table::{FkAssumptions, FkTable};
     use pineappl::grid::Grid;
-    use pineappl::lumi::LumiCache;
     use std::fs::File;
 
     let output = NamedTempFile::new("converted4.pineappl.lz4").unwrap();
@@ -865,7 +847,6 @@ fn import_hadronic_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/FK_ATLASTTBARTOT13TEV.dat",
             output.path().to_str().unwrap(),
@@ -878,8 +859,7 @@ fn import_hadronic_fktable() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
-            "convolute",
+            "convolve",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -896,7 +876,7 @@ fn import_hadronic_fktable() {
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
     let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let results = grid.convolute(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
+    let results = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0)]);
 
     let mut fk_table = FkTable::try_from(grid).unwrap();
     let table = fk_table.table();
@@ -927,11 +907,13 @@ fn import_hadronic_fktable() {
     assert_eq!(fk_table.bin_dimensions(), 1);
     assert_eq!(fk_table.bin_left(0), [0.0]);
     assert_eq!(fk_table.bin_right(0), [1.0]);
-    assert_eq!(&fk_table.key_values().unwrap()["initial_state_1"], "2212");
-    assert_eq!(&fk_table.key_values().unwrap()["initial_state_2"], "2212");
-    let lumi = fk_table.lumi();
     assert_eq!(
-        lumi,
+        fk_table.grid().convolutions(),
+        [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+    );
+    let channels = fk_table.channels();
+    assert_eq!(
+        channels,
         [
             (100, 100),
             (100, 21),
@@ -1017,49 +999,49 @@ fn import_hadronic_fktable() {
         ]
     );
 
-    assert_eq!(results, fk_table.convolute(&mut lumi_cache, &[], &[]));
+    assert_eq!(results, fk_table.convolve(&mut lumi_cache, &[], &[]));
 
     fk_table.optimize(FkAssumptions::Nf6Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolute(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf6Sym);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolute(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf5Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolute(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf5Sym);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolute(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf4Ind);
-    assert_eq!(fk_table.lumi(), lumi);
+    assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolute(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
     );
 
     fk_table.optimize(FkAssumptions::Nf4Sym);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 100),
             (100, 21),
@@ -1101,7 +1083,7 @@ fn import_hadronic_fktable() {
     );
     fk_table.optimize(FkAssumptions::Nf3Ind);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 21),
             (100, 203),
@@ -1135,7 +1117,7 @@ fn import_hadronic_fktable() {
     );
     fk_table.optimize(FkAssumptions::Nf3Sym);
     assert_eq!(
-        fk_table.lumi(),
+        fk_table.channels(),
         [
             (100, 21),
             (100, 203),
@@ -1170,7 +1152,6 @@ fn import_photon_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/LHCBWZMU7TEV_PI_part1.appl",
             output.path().to_str().unwrap(),
@@ -1189,7 +1170,6 @@ fn import_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/ATLASWPT11-Wplus_tot.appl",
             output.path().to_str().unwrap(),
@@ -1208,7 +1188,6 @@ fn import_new_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/atlas-atlas-wpm-arxiv-1109.5141-xsec001.appl",
             output.path().to_str().unwrap(),
@@ -1240,7 +1219,6 @@ fn import_grid_comparison_failure() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "--accuracy=0",
             "../test-data/NJetEvents_0-0-2.tab.gz",
@@ -1261,7 +1239,6 @@ fn import_dis_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl",
             output.path().to_str().unwrap(),
@@ -1280,7 +1257,6 @@ fn import_double_hadronic_fastnlo() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "import",
             "../test-data/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz",
             output.path().to_str().unwrap(),

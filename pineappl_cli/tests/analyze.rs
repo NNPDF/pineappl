@@ -13,11 +13,11 @@ Options:
 
 const CKF_HELP_STR: &str = "Compare K-factors with channel K factors (ckf)
 
-Usage: pineappl analyze ckf [OPTIONS] <INPUT> <PDFSET> <ORDER> [ORDERS_DEN]...
+Usage: pineappl analyze ckf [OPTIONS] <INPUT> <CONV_FUNS> <ORDER> [ORDERS_DEN]...
 
 Arguments:
   <INPUT>          Path to the input grid
-  <PDFSET>         LHAPDF id or name of the PDF set
+  <CONV_FUNS>      LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
   <ORDER>          Order defining the K factors
   [ORDERS_DEN]...  Normalizing orders of the K factors
 
@@ -27,7 +27,7 @@ Options:
   -h, --help              Print help
 ";
 
-const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K  
+const CKF_STR: &str = "b   etal    bin-K c  K   c  K   c  K   c  K   c  K  
      []                                             
 -+----+----+-----+-+----+-+----+-+----+-+----+-+----
 0    2 2.25  1.17 0 1.30 3 -inf 1 -inf 2 0.00 4 0.00
@@ -42,7 +42,7 @@ const CKF_STR: &str = "b   etal    bin-K l  K   l  K   l  K   l  K   l  K
 
 // TODO: understand these factors
 const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
-    "b   etal    bin-K  l   K    l  K   l  K   l  K   l  K  
+    "b   etal    bin-K  c   K    c  K   c  K   c  K   c  K  
      []                                                
 -+----+----+------+-+------+-+----+-+----+-+----+-+----
 0    2 2.25 -13.20 0 -23.29 3 -inf 1 -inf 4 1.00 2 1.00
@@ -86,7 +86,6 @@ fn ckf() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -104,7 +103,6 @@ fn ckf_with_default_denominator() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -121,7 +119,6 @@ fn ckf_with_bad_limit() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "analyze",
             "ckf",
             "--limit=0",

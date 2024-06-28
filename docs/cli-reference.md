@@ -32,7 +32,7 @@ order (`a2`) and the next-to-leading order QCD (`a2as1`).
 ## `PDFSET`: Specifying PDF members or entire PDF sets
 
 The parameter `PDFSET` that appears for all convolutional-type subcommands
-(`channels`, `convolute`, etc.) must be one of the following strings:
+(`channels`, `convolve`, etc.) must be one of the following strings:
 
 - `setname/member`: In this case `setname` must be a valid [LHAPDF] set name
   and `member` must be the member index. The index `0` denotes the central PDF,

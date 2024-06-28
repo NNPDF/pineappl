@@ -1,6 +1,6 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::{Pdf, PdfSet};
 use prettytable::{cell, Row};
@@ -18,16 +18,17 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the first PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset1: String,
-    /// LHAPDF id or name of the second PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset2: String,
+    /// LHAPDF ID(s) or name(s) of the first PDF(s)/FF(s).
+    conv_funs1: ConvFuns,
+    /// LHAPDF ID(s) or name(s) of the second PDF(s)/FF(s).
+    conv_funs2: ConvFuns,
+    /// Index of the convolution functions for which the pull should be calculated.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    pull_from: usize,
     /// Confidence level in per cent.
     #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
-    /// The maximum number of luminosities displayed.
+    /// The maximum number of channels displayed.
     #[arg(default_value_t = 10, long, short)]
     limit: usize,
     /// Select orders manually.
@@ -51,47 +52,53 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
-        let (set2, member2) = helpers::create_pdfset(&self.pdfset2)?;
-        let mut pdfset1 = set1.mk_pdfs();
-        let mut pdfset2 = set2.mk_pdfs();
+        let (set1, mut conv_funs1) =
+            helpers::create_conv_funs_for_set(&self.conv_funs1, self.pull_from)?;
+        let (set2, mut conv_funs2) =
+            helpers::create_conv_funs_for_set(&self.conv_funs2, self.pull_from)?;
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
             .build_global()
             .unwrap();
 
-        let limit = grid.lumi().len().min(self.limit);
-        let bin_limits = helpers::convolute_limits(&grid, &[], ConvoluteMode::Normal);
-        let results1: Vec<_> = pdfset1
+        let limit = grid.channels().len().min(self.limit);
+        let bin_limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
+        let results1: Vec<_> = conv_funs1
             .par_iter_mut()
-            .flat_map(|pdf| {
-                helpers::convolute(
+            .map(|mut funs| {
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    pdf,
+                    &mut funs,
                     &self.orders,
                     &[],
                     &[],
                     1,
                     ConvoluteMode::Normal,
                     cfg,
-                )
+                ))
             })
+            .collect::<Result<_, _>>()?;
+        let results1: Vec<Vec<_>> = (0..results1[0].len())
+            .map(|bin| (0..results1.len()).map(|pdf| results1[pdf][bin]).collect())
             .collect();
-        let results2: Vec<_> = pdfset2
+        let results2: Vec<_> = conv_funs2
             .par_iter_mut()
-            .flat_map(|pdf| {
-                helpers::convolute(
+            .map(|mut funs| {
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    pdf,
+                    &mut funs,
                     &self.orders,
                     &[],
                     &[],
                     1,
                     ConvoluteMode::Normal,
                     cfg,
-                )
+                ))
             })
+            .collect::<Result<_, _>>()?;
+        let results2: Vec<Vec<_>> = (0..results2[0].len())
+            .map(|bin| (0..results2.len()).map(|pdf| results2[pdf][bin]).collect())
             .collect();
 
         let mut title = Row::empty();
@@ -103,7 +110,7 @@ impl Subcommand for Opts {
         }
         title.add_cell(cell!(c->"total\n[\u{3c3}]"));
         for _ in 0..limit {
-            title.add_cell(cell!(c->"l"));
+            title.add_cell(cell!(c->"c"));
             title.add_cell(cell!(c->"pull\n[\u{3c3}]"));
         }
 
@@ -112,24 +119,16 @@ impl Subcommand for Opts {
 
         for (bin, limits) in bin_limits.iter().enumerate() {
             let (total, unc1, unc2) = {
-                let values1: Vec<_> = results1
-                    .iter()
-                    .skip(bin)
-                    .step_by(bin_limits.len())
-                    .copied()
-                    .collect();
-                let values2: Vec<_> = results2
-                    .iter()
-                    .skip(bin)
-                    .step_by(bin_limits.len())
-                    .copied()
-                    .collect();
-                let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
-                let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
+                let values1 = &results1[bin];
+                let values2 = &results2[bin];
+                let uncertainty1 = set1.uncertainty(values1, self.cl, false)?;
+                let uncertainty2 = set2.uncertainty(values2, self.cl, false)?;
 
                 // if requested use the given member instead of the central value
-                let diff = member2.map_or(uncertainty2.central, |member| values2[member])
-                    - member1.map_or(uncertainty1.central, |member| values1[member]);
+                let diff = self.conv_funs2.members[self.pull_from]
+                    .map_or(uncertainty2.central, |member| values2[member])
+                    - self.conv_funs1.members[self.pull_from]
+                        .map_or(uncertainty1.central, |member| values1[member]);
 
                 // use the uncertainties in the direction in which they point to each other
                 let (unc1, unc2) = if diff > 0.0 {
@@ -140,19 +139,19 @@ impl Subcommand for Opts {
                 (diff / unc1.hypot(unc2), unc1, unc2)
             };
 
-            let lumi_results =
-                |member: Option<usize>, pdfset: &mut Vec<Pdf>, set: &PdfSet| -> Vec<f64> {
+            let channel_results =
+                |member: Option<usize>, pdfset: &mut [Vec<Pdf>], set: &PdfSet| -> Vec<f64> {
                     if let Some(member) = member {
-                        (0..grid.lumi().len())
-                            .map(|lumi| {
-                                let mut lumi_mask = vec![false; grid.lumi().len()];
-                                lumi_mask[lumi] = true;
-                                match helpers::convolute(
+                        (0..grid.channels().len())
+                            .map(|channel| {
+                                let mut channel_mask = vec![false; grid.channels().len()];
+                                channel_mask[channel] = true;
+                                match helpers::convolve(
                                     &grid,
                                     &mut pdfset[member],
                                     &self.orders,
                                     &[bin],
-                                    &lumi_mask,
+                                    &channel_mask,
                                     1,
                                     ConvoluteMode::Normal,
                                     cfg,
@@ -167,17 +166,17 @@ impl Subcommand for Opts {
                     } else {
                         let results: Vec<_> = pdfset
                             .iter_mut()
-                            .flat_map(|pdf| {
-                                (0..grid.lumi().len())
-                                    .map(|lumi| {
-                                        let mut lumi_mask = vec![false; grid.lumi().len()];
-                                        lumi_mask[lumi] = true;
-                                        match helpers::convolute(
+                            .flat_map(|mut pdf| {
+                                (0..grid.channels().len())
+                                    .map(|channel| {
+                                        let mut channel_mask = vec![false; grid.channels().len()];
+                                        channel_mask[channel] = true;
+                                        match helpers::convolve(
                                             &grid,
-                                            pdf,
+                                            &mut pdf,
                                             &self.orders,
                                             &[bin],
-                                            &lumi_mask,
+                                            &channel_mask,
                                             1,
                                             ConvoluteMode::Normal,
                                             cfg,
@@ -192,12 +191,12 @@ impl Subcommand for Opts {
                             })
                             .collect();
 
-                        (0..grid.lumi().len())
-                            .map(|lumi| {
+                        (0..grid.channels().len())
+                            .map(|channel| {
                                 let central: Vec<_> = results
                                     .iter()
-                                    .skip(lumi)
-                                    .step_by(grid.lumi().len())
+                                    .skip(channel)
+                                    .step_by(grid.channels().len())
                                     .copied()
                                     .collect();
                                 set.uncertainty(&central, self.cl, false).unwrap().central
@@ -209,12 +208,20 @@ impl Subcommand for Opts {
             let mut pull_tuples = if self.limit == 0 {
                 vec![]
             } else {
-                let lumi_results1 = lumi_results(member1, &mut pdfset1, &set1);
-                let lumi_results2 = lumi_results(member2, &mut pdfset2, &set2);
+                let channel_results1 = channel_results(
+                    self.conv_funs1.members[self.pull_from],
+                    &mut conv_funs1,
+                    &set1,
+                );
+                let channel_results2 = channel_results(
+                    self.conv_funs2.members[self.pull_from],
+                    &mut conv_funs2,
+                    &set2,
+                );
 
-                let pull_tuples: Vec<_> = lumi_results2
+                let pull_tuples: Vec<_> = channel_results2
                     .iter()
-                    .zip(lumi_results1.iter())
+                    .zip(channel_results1.iter())
                     .map(|(res2, res1)| (res2 - res1) / unc1.hypot(unc2))
                     .enumerate()
                     .collect();
@@ -237,8 +244,8 @@ impl Subcommand for Opts {
                 pull_right.abs().total_cmp(&pull_left.abs())
             });
 
-            for (lumi, pull) in pull_tuples.iter().take(self.limit) {
-                row.add_cell(cell!(r->format!("{lumi}")));
+            for (channel, pull) in pull_tuples.iter().take(self.limit) {
+                row.add_cell(cell!(r->format!("{channel}")));
                 row.add_cell(cell!(r->format!("{:.*}", self.digits, pull)));
             }
         }

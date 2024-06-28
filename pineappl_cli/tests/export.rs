@@ -5,12 +5,12 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Converts PineAPPL grids to APPLgrid files
 
-Usage: pineappl export [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl export [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --accuracy <ACCURACY>          Relative threshold between the table and the converted grid when comparison fails [default: 1e-10]
@@ -120,7 +120,6 @@ fn export_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "export",
             "../test-data/LHCB_DY_8TEV.pineappl.lz4",
             output.path().to_str().unwrap(),
@@ -153,7 +152,6 @@ fn export_dis_applgrid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "export",
             output1.path().to_str().unwrap(),
             output2.path().to_str().unwrap(),

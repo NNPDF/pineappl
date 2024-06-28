@@ -4,7 +4,7 @@ Recipes
 Below we list some common use cases with their solutions.
 
 
-How can I convolute a given PineAPPL grid with my PDF?
+How can I convolve a given PineAPPL grid with my PDF?
 ------------------------------------------------------
 
 .. code:: python
@@ -13,7 +13,7 @@ How can I convolute a given PineAPPL grid with my PDF?
     import lhapdf
     g = pineappl.grid.Grid.read("path/to/grid.pineappl.lz4")
     pdf = lhapdf.mkPDF("YourPDF", 0)
-    bins = g.convolute(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2)
+    bins = g.convolve(pdf.xfxQ2, pdf.xfxQ2, pdf.alphasQ2)
 
 If the grid is actually an FkTable just replace
 

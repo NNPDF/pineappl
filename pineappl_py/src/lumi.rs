@@ -1,4 +1,4 @@
-use pineappl::lumi::LumiEntry;
+use pineappl::boc::Channel;
 
 use pyo3::prelude::*;
 
@@ -14,11 +14,11 @@ use pyo3::prelude::*;
 #[pyclass]
 #[repr(transparent)]
 pub struct PyLumiEntry {
-    pub(crate) lumi_entry: LumiEntry,
+    pub(crate) lumi_entry: Channel,
 }
 
 impl PyLumiEntry {
-    pub(crate) fn new(lumi_entry: LumiEntry) -> Self {
+    pub(crate) fn new(lumi_entry: Channel) -> Self {
         Self { lumi_entry }
     }
 }
@@ -27,7 +27,7 @@ impl PyLumiEntry {
 impl PyLumiEntry {
     #[new]
     pub fn new_lumi_entry(entry: Vec<(i32, i32, f64)>) -> Self {
-        Self::new(LumiEntry::new(entry))
+        Self::new(Channel::new(entry))
     }
 
     /// Get list representation.

@@ -3,13 +3,16 @@
 ## Rust
 
 - Before you commit, make sure that your code compiles with `cargo check` and
-  that it has been formatted properly; `cargo fmt` does that for you.
+  that it has been formatted properly; `cargo fmt` does that for you. Also
+  check if your changes introduce any new linter warnings by running `cargo
+  clippy`
 - Make sure to keep `CHANGELOG.md` up-to-date.
 - Make sure not to use Rust features newer than the specified minimum supported
   Rust Version (MSRV), which is documented in the [README](README.md). You can
   use `cargo-msrv` to check the crates. However, the Github CI also checks this.
-- Make sure to follow the [Rust API
-  Guidelines](https://rust-lang.github.io/api-guidelines/checklist.html)
+- Make sure to follow the [Rust API Guidelines]
+
+[Rust API Guidelines]: https://rust-lang.github.io/api-guidelines/checklist.html
 
 ### Increasing the minimum supported Rust version (MSRV)
 
@@ -38,14 +41,32 @@ increasing the MSRV make sure to set it everywhere to the same value:
 - avoid the use of indices whenever possible; use `Iterator` instead.
 - use the `unwrap` methods whenever a panic would signal a bug in the program,
   and use `Result` instead if errors should be propagated down to the user.
+  When using `unwrap`, document the nature of the bug if a panic happens with a
+  comment of the form: `// UNWRAP: ...`.
 - in APIs prefer `unwrap_or_else(|| unreachable!())` over `unwrap` whenever
-  this avoids the clippy warning that a Panic section is missing
+  this avoids the clippy warning that a Panic section is missing. Also document
+  this with `// UNWRAP: ...`
+
+### Writing tests that need test data
+
+- if you write a test that needs test data (grids, EKOs, etc.) store them at
+  <https://data.nnpdf.science/pineappl/test-data/>. Ask one of the maintainers
+  to upload the data for you if you don't have access to this location. Then
+  add a line to `maintainer/generate-coverage.sh` that downloads the data with
+  `wget` and a similar line to `.github/workflows/rust.yml` that downloads the
+  data with `curl`. To make Github refresh the cached test data when running
+  the CI, increase the integer `XX` in the line `key: test-data-vXX` by one.
 
 ## Git
 
 - When you commit, make sure the commit message is written properly. This
   blogpost explains it nicely: <https://chris.beams.io/posts/git-commit/>.
-- Whenever possible, prefer rebase over merge.
+- Whenever you have unpushed local commits that are behind `origin/master`, use
+  `git pull --rebase` to rebase them
+- When editing Github workflow files, use a separate branch, because usually
+  many commits are needed to get something working. When merging this branch
+  into `master` (or any other branch), squash-merge the commits; the exact
+  history in this case is not important
 
 ## Making a new release
 
@@ -54,10 +75,22 @@ In the `maintainers` directory run
     ./make_release 0.5.4
 
 and replace `0.5.4` with a version string, *not* including `v` at the start.
-The version strings must adhere to [Semantic
-Versioning](https://semver.org/spec/v2.0.0.html).
+The version strings must adhere to [Semantic Versioning].
 
 This will take care of almost everything: the C, Python and Rust interfaces and
-their documentation. After some time also a new [Conda
-package](https://github.com/conda-forge/pineappl-feedstock) will be generated,
-for which the pull request will have to be accepted manually though.
+their documentation. After some time also a new [Conda package] will be
+generated, for which the pull request will have to be accepted manually though.
+
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
+[Conda package]: https://github.com/conda-forge/pineappl-feedstock
+
+## Updating the CI's container
+
+To update the software the CI runs with, modify the files in
+`maintainer/pineappl-ci`. See `maintainer/README.md` for a description of what
+these files do. To generate a new container, you need to manually run the
+[Container action] from the branch in which you modified the container files.
+After the container has been generated, all following commits in *every* branch
+will use the new container.
+
+[Container action]: https://github.com/NNPDF/pineappl/actions/workflows/container.yml

@@ -48,7 +48,6 @@ def main(filename, Q2):
         "runcard",
         f"positivity constraint for quark {pid}",
     )
-    grid.set_key_value("lumi_id_types", "pdg_mc_ids")
 
     # dump file
     grid.optimize()

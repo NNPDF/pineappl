@@ -1,11 +1,12 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
-use pineappl::lumi::LumiEntry;
+use pineappl::boc::Channel;
+use pineappl::convolutions::Convolution;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -21,8 +22,11 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// LHAPDF id(s) or name of the PDF set(s).
-    #[arg(required = true, value_parser = helpers::parse_pdfset)]
-    pdfsets: Vec<String>,
+    #[arg(required = true)]
+    conv_funs: Vec<ConvFuns>,
+    /// Choose for which convolution function the uncertainty should be calculated.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    conv_fun_uncert_from: usize,
     /// Set the number of scale variations.
     #[arg(
         default_value_t = 7,
@@ -37,7 +41,7 @@ pub struct Opts {
         long,
         num_args = 1,
         value_delimiter = ',',
-        value_name = "ORDER,BIN,LUMI"
+        value_name = "ORDER,BIN,CHAN"
     )]
     subgrid_pull: Vec<String>,
     /// Plot the asymmetry.
@@ -48,7 +52,7 @@ pub struct Opts {
     threads: usize,
     /// Disable the (time-consuming) calculation of PDF uncertainties.
     #[arg(long)]
-    no_pdf_unc: bool,
+    no_conv_fun_unc: bool,
 }
 
 fn map_format_join(slice: &[f64]) -> String {
@@ -100,8 +104,9 @@ fn map_format_parton(parton: i32) -> &'static str {
     }
 }
 
-fn map_format_lumi(lumi: &LumiEntry, has_pdf1: bool, has_pdf2: bool) -> String {
-    lumi.entry()
+fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> String {
+    channel
+        .entry()
         .iter()
         .map(|&(a, b, _)| {
             format!(
@@ -126,11 +131,11 @@ fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
         .join(",\n")
 }
 
-fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -> String {
+fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
     pdf_uncertainties
         .iter()
-        .zip(pdfsets.iter())
-        .map(|(values, pdfset)| {
+        .zip(conv_funs.iter().map(|fun| &fun.label))
+        .map(|(values, label)| {
             format!(
                 "                (
                     \"{}\",
@@ -138,7 +143,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], pdfsets: &[String]) -
                     np.array([{}]),
                     np.array([{}]),
                 ),",
-                helpers::pdf_label(pdfset).replace('_', r"\_"),
+                label.replace('_', r"\_"),
                 map_format_e_join_repeat_last(&values[0]),
                 map_format_e_join_repeat_last(&values[1]),
                 map_format_e_join_repeat_last(&values[2]),
@@ -189,7 +194,7 @@ impl Subcommand for Opts {
             };
 
             let grid = helpers::read_grid(&self.input)?;
-            let mut pdf = helpers::create_pdf(&self.pdfsets[0])?;
+            let mut conv_funs = helpers::create_conv_funs(&self.conv_funs[0])?;
             let slices = grid.bin_info().slices();
             let mut data_string = String::new();
 
@@ -217,8 +222,16 @@ impl Subcommand for Opts {
             })) {
                 let bins: Vec<_> = (slice.0..slice.1).collect();
 
-                let results =
-                    helpers::convolute(&grid, &mut pdf, &[], &bins, &[], self.scales, mode, cfg);
+                let results = helpers::convolve(
+                    &grid,
+                    &mut conv_funs,
+                    &[],
+                    &bins,
+                    &[],
+                    self.scales,
+                    mode,
+                    cfg,
+                );
 
                 let qcd_results = {
                     let mut orders = grid.orders().to_vec();
@@ -235,9 +248,9 @@ impl Subcommand for Opts {
                         })
                         .collect();
 
-                    helpers::convolute(
+                    helpers::convolve(
                         &grid,
-                        &mut pdf,
+                        &mut conv_funs,
                         &qcd_orders,
                         &bins,
                         &[],
@@ -247,7 +260,7 @@ impl Subcommand for Opts {
                     )
                 };
 
-                let bin_limits: Vec<_> = helpers::convolute_limits(&grid, &bins, mode)
+                let bin_limits: Vec<_> = helpers::convolve_limits(&grid, &bins, mode)
                     .into_iter()
                     .map(|limits| limits.last().copied().unwrap())
                     .collect();
@@ -262,27 +275,37 @@ impl Subcommand for Opts {
                     .map(|limits| 0.5 * (limits[0] + limits[1]))
                     .collect();
 
-                let pdf_uncertainties: Vec<Vec<Vec<_>>> = self
-                    .pdfsets
+                let conv_fun_uncertainties: Vec<Vec<Vec<_>>> = self
+                    .conv_funs
                     .par_iter()
-                    .map(|pdfset| {
-                        if self.no_pdf_unc {
-                            let mut pdf = helpers::create_pdf(pdfset).unwrap();
+                    .map(|conv_funs| {
+                        if self.no_conv_fun_unc {
+                            let mut conv_funs = helpers::create_conv_funs(conv_funs)?;
 
-                            let results =
-                                helpers::convolute(&grid, &mut pdf, &[], &bins, &[], 1, mode, cfg);
+                            let results = helpers::convolve(
+                                &grid,
+                                &mut conv_funs,
+                                &[],
+                                &bins,
+                                &[],
+                                1,
+                                mode,
+                                cfg,
+                            );
 
-                            vec![results; 3]
+                            Ok(vec![results; 3])
                         } else {
-                            let (set, member) = helpers::create_pdfset(pdfset).unwrap();
+                            let (set, funs) = helpers::create_conv_funs_for_set(
+                                conv_funs,
+                                self.conv_fun_uncert_from,
+                            )?;
 
-                            let pdf_results: Vec<_> = set
-                                .mk_pdfs()
+                            let pdf_results: Vec<_> = funs
                                 .into_par_iter()
-                                .flat_map(|mut pdf| {
-                                    helpers::convolute(
+                                .flat_map(|mut funs| {
+                                    helpers::convolve(
                                         &grid,
-                                        &mut pdf,
+                                        &mut funs,
                                         &[],
                                         &bins,
                                         &[],
@@ -310,16 +333,17 @@ impl Subcommand for Opts {
                                 let uncertainty =
                                     set.uncertainty(&values, lhapdf::CL_1_SIGMA, false).unwrap();
                                 central.push(
-                                    member.map_or(uncertainty.central, |member| values[member]),
+                                    conv_funs.members[self.conv_fun_uncert_from]
+                                        .map_or(uncertainty.central, |member| values[member]),
                                 );
                                 min.push(uncertainty.central - uncertainty.errminus);
                                 max.push(uncertainty.central + uncertainty.errplus);
                             }
 
-                            vec![central, min, max]
+                            Ok(vec![central, min, max])
                         }
                     })
-                    .collect();
+                    .collect::<Result<_>>()?;
 
                 let central: Vec<_> = results.iter().step_by(self.scales).copied().collect();
                 let min: Vec<_> = results
@@ -369,22 +393,22 @@ impl Subcommand for Opts {
                 let channels = if matches!(mode, ConvoluteMode::Asymmetry) {
                     vec![]
                 } else {
-                    let mut channels: Vec<_> = (0..grid.lumi().len())
-                        .map(|lumi| {
-                            let mut lumi_mask = vec![false; grid.lumi().len()];
-                            lumi_mask[lumi] = true;
+                    let mut channels: Vec<_> = (0..grid.channels().len())
+                        .map(|channel| {
+                            let mut channel_mask = vec![false; grid.channels().len()];
+                            channel_mask[channel] = true;
                             (
-                                map_format_lumi(
-                                    &grid.lumi()[lumi],
-                                    grid.has_pdf1(),
-                                    grid.has_pdf2(),
+                                map_format_channel(
+                                    &grid.channels()[channel],
+                                    grid.convolutions()[0] != Convolution::None,
+                                    grid.convolutions()[1] != Convolution::None,
                                 ),
-                                helpers::convolute(
+                                helpers::convolve(
                                     &grid,
-                                    &mut pdf,
+                                    &mut conv_funs,
                                     &[],
                                     &bins,
-                                    &lumi_mask,
+                                    &channel_mask,
                                     1,
                                     mode,
                                     cfg,
@@ -423,7 +447,7 @@ impl Subcommand for Opts {
         }},",
                     slice_label = label,
                     mid = map_format_join(&mid),
-                    pdf_results = format_pdf_results(&pdf_uncertainties, &self.pdfsets),
+                    pdf_results = format_pdf_results(&conv_fun_uncertainties, &self.conv_funs),
                     qcd_y = map_format_e_join_repeat_last(&qcd_central),
                     qcd_min = map_format_e_join_repeat_last(&qcd_min),
                     qcd_max = map_format_e_join_repeat_last(&qcd_max),
@@ -487,13 +511,13 @@ impl Subcommand for Opts {
             let ylog = xlog;
             let title = key_values.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
-            let pdfs = self.pdfsets.len();
+            let nconvs = self.conv_funs.len();
 
             print!(
                 include_str!("plot.py"),
                 inte = if bins == 1 { "" } else { "# " },
                 nint = if bins == 1 { "# " } else { "" },
-                pdfs = if pdfs == 1 || bins == 1 { "# " } else { "" },
+                nconvs = if nconvs == 1 || bins == 1 { "# " } else { "" },
                 xlabel = xlabel,
                 ylabel = ylabel,
                 xlog = xlog,
@@ -504,8 +528,14 @@ impl Subcommand for Opts {
                 metadata = format_metadata(&vector),
             );
         } else {
-            let (pdfset1, pdfset2) = self.pdfsets.iter().collect_tuple().unwrap();
-            let (order, bin, lumi) = self
+            // TODO: enforce two arguments with clap
+            assert_eq!(self.conv_funs.len(), 2);
+
+            let (set1, mut conv_funs1) =
+                helpers::create_conv_funs_for_set(&self.conv_funs[0], self.conv_fun_uncert_from)?;
+            let (set2, mut conv_funs2) =
+                helpers::create_conv_funs_for_set(&self.conv_funs[1], self.conv_fun_uncert_from)?;
+            let (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
                 .map(|num| num.parse::<usize>().unwrap())
@@ -515,17 +545,15 @@ impl Subcommand for Opts {
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
-            let (set1, member1) = helpers::create_pdfset(pdfset1)?;
-            let (set2, member2) = helpers::create_pdfset(pdfset2)?;
-            let mut pdfset1 = set1.mk_pdfs();
-            let mut pdfset2 = set2.mk_pdfs();
+            let member1 = self.conv_funs[0].members[self.conv_fun_uncert_from];
+            let member2 = self.conv_funs[1].members[self.conv_fun_uncert_from];
 
-            let values1: Vec<_> = pdfset1
+            let values1: Vec<_> = conv_funs1
                 .par_iter_mut()
-                .map(|pdf| {
-                    let values = helpers::convolute(
+                .map(|conv_funs| {
+                    let values = helpers::convolve(
                         &grid,
-                        pdf,
+                        conv_funs,
                         &[],
                         &[bin],
                         &[],
@@ -537,12 +565,12 @@ impl Subcommand for Opts {
                     values[0]
                 })
                 .collect();
-            let values2: Vec<_> = pdfset2
+            let values2: Vec<_> = conv_funs2
                 .par_iter_mut()
-                .map(|pdf| {
-                    let values = helpers::convolute(
+                .map(|conv_funs| {
+                    let values = helpers::convolve(
                         &grid,
-                        pdf,
+                        conv_funs,
                         &[],
                         &[bin],
                         &[],
@@ -576,12 +604,28 @@ impl Subcommand for Opts {
                 unc1.hypot(unc2)
             };
 
-            let res1 = helpers::convolute_subgrid(&grid, &mut pdfset1[0], order, bin, lumi, cfg)
-                .sum_axis(Axis(0));
-            let res2 = helpers::convolute_subgrid(&grid, &mut pdfset2[0], order, bin, lumi, cfg)
-                .sum_axis(Axis(0));
+            // TODO: if no member is given, the zeroth is used, but we should show the averaged
+            // result of all members instead
+            let res1 = helpers::convolve_subgrid(
+                &grid,
+                &mut conv_funs1[member1.unwrap_or(0)],
+                order,
+                bin,
+                channel,
+                cfg,
+            )
+            .sum_axis(Axis(0));
+            let res2 = helpers::convolve_subgrid(
+                &grid,
+                &mut conv_funs2[member2.unwrap_or(0)],
+                order,
+                bin,
+                channel,
+                cfg,
+            )
+            .sum_axis(Axis(0));
 
-            let subgrid = grid.subgrid(order, bin, lumi);
+            let subgrid = &grid.subgrids()[[order, bin, channel]];
             //let q2 = subgrid.q2_grid();
             let x1 = subgrid.x1_grid();
             let x2 = subgrid.x2_grid();

@@ -50,12 +50,6 @@ pub mod ffi {
 
         #[namespace = "fastNLO"]
         type EScaleFunctionalForm;
-
-        #[namespace = "fastNLO"]
-        type ESMCalculation;
-
-        #[namespace = "fastNLO"]
-        type ESMOrder;
     }
 
     unsafe extern "C++" {
@@ -138,18 +132,6 @@ pub mod ffi {
         fn GetIXsectUnits(&self) -> i32;
         fn GetNScaleDep(&self) -> i32;
         fn GetPDFPDG(&self, _: i32) -> i32;
-    }
-
-    unsafe extern "C++" {
-        include!("fastnlotk/fastNLOCoeffData.h");
-
-        type fastNLOCoeffData;
-    }
-
-    unsafe extern "C++" {
-        include!("fastnlotk/fastNLOCoeffMult.h");
-
-        type fastNLOCoeffMult;
     }
 
     unsafe extern "C++" {

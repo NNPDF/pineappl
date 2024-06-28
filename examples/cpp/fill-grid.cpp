@@ -203,7 +203,7 @@ int main() {
     // determine the subgrid which are being filled
     pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
 
-    // set the PDG ids of hadrons whose PDFs should be used to convolute the grid with
+    // set the PDG ids of hadrons whose PDFs should be used to convolve the grid with
     pineappl_keyval_set_string(keyval, "initial_state_1", "2212");
     pineappl_keyval_set_string(keyval, "initial_state_2", "2212");
 
@@ -249,7 +249,7 @@ int main() {
 
     std::cout << "Generated " << filename << " containing a a -> l+ l-.\n\n"
         "Try running (PDF sets must contain non-zero photon PDF):\n"
-        "  - pineappl convolute " << filename << " NNPDF31_nnlo_as_0118_luxqed\n"
+        "  - pineappl convolve " << filename << " NNPDF31_nnlo_as_0118_luxqed\n"
         "  - pineappl --silence-lhapdf plot " << filename
         << " NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
         "  - pineappl --help\n";

@@ -24,14 +24,16 @@
 - `examples`: contains examples programs to learn how to use PineAPPL's C, C++,
   Fortran and Python APIs
 - `maintainer`: contains [maintainer-specific tools]
-- `pineappl`: the main Rust crate
+- `pineappl`: the main Rust crate, documentation at <https://docs.rs/pineappl>
 - `pineappl_applgrid`: interface to [APPLgrid], which the CLI uses to convert
   APPLgrids to PineAPPL grids (and vice versa)
-- `pineappl_capi`: the crate that builds PineAPPL's CAPI
+- `pineappl_capi`: the crate that builds PineAPPL's CAPI, documentation at
+  <https://docs.rs/pineappl_capi>
 - `pineappl_cli`: the crate that builds PineAPPL's CLI
 - `pineappl_fastnlo`: interface to [fastNLO], which the CLI uses to convert
   fastNLO tables to PineAPPL grids
-- `pineappl_py`: the crate that builds PineAPPL's Python interface
+- `pineappl_py`: the crate that builds PineAPPL's Python interface,
+  documentation at <https://pineappl.readthedocs.io>
 - `xtask`: crate for [cargo-xtask] commands
 - `.envrc`: [direnv] hooks (mainly enable Nix shell)
 - `.gitignore`: PineAPPL's Git ignore rules
@@ -85,3 +87,14 @@
   figure which version you've got
 
 [package manager]: https://doc.rust-lang.org/cargo/index.html
+
+# Connected accounts
+
+- Codecov: <https://app.codecov.io/gh/NNPDF/pineappl>
+- Conda: <https://github.com/conda-forge/pineappl-feedstock>
+- Crates.io: <https://crates.io/crates/pineappl>
+- PyPI: <https://pypi.org/project/pineappl>
+- ReadTheDocs: <https://pineappl.readthedocs.io>
+- Zenodo: <https://zenodo.org/records/10700087>
+
+We also store testing data in <https://data.nnpdf.science/pineappl/test-data>.

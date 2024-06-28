@@ -1,9 +1,11 @@
 //! Supporting classes and functions for [`Grid::evolve`].
 
-use super::grid::{Grid, GridError, Order};
+use super::boc::{Channel, Order};
+use super::channel;
+use super::convolutions::Convolution;
+use super::grid::{Grid, GridError};
 use super::import_only_subgrid::ImportOnlySubgridV2;
-use super::lumi::LumiEntry;
-use super::lumi_entry;
+use super::pids::PidBasis;
 use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
@@ -44,17 +46,17 @@ pub struct EvolveInfo {
 ///
 /// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
 /// possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`lumi_id_types`], which tells [`FkTable::convolute`] how to perform a convolution. The members
+/// [`pid_basis`], which tells [`FkTable::convolve`] how to perform a convolution. The members
 /// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
 /// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
 /// scales, respectively, around their central values.
 ///
-/// [`FkTable::convolute`]: super::fk_table::FkTable::convolute
+/// [`FkTable::convolve`]: super::fk_table::FkTable::convolve
 /// [`FkTable`]: super::fk_table::FkTable
 /// [`alphas`]: Self::alphas
 /// [`fac0`]: Self::fac0
 /// [`fac1`]: Self::fac1
-/// [`lumi_id_types`]: Self::lumi_id_types
+/// [`pid_basis`]: Self::pid_basis
 /// [`pids0`]: Self::pids0
 /// [`pids1`]: Self::pids1
 /// [`ren1`]: Self::ren1
@@ -85,8 +87,8 @@ pub struct OperatorInfo {
     pub xir: f64,
     /// Multiplicative factor for the central factorization scale.
     pub xif: f64,
-    /// Identifier of the particle basis for the `FkTable`.
-    pub lumi_id_types: String,
+    /// Particle ID basis for `FkTable`.
+    pub pid_basis: PidBasis,
 }
 
 /// Information about the evolution kernel operator slice (EKO) passed to
@@ -102,8 +104,8 @@ pub struct OperatorInfo {
 ///
 /// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
 /// possibly different basis given by `pids0`. This basis must also be identified using
-/// [`lumi_id_types`](Self::lumi_id_types), which tells
-/// [`FkTable::convolute`](super::fk_table::FkTable::convolute) how to perform a convolution.
+/// [`pid_basis`](Self::pid_basis), which tells
+/// [`FkTable::convolve`](super::fk_table::FkTable::convolve) how to perform a convolution.
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
     /// Squared factorization scale of the `FkTable`.
@@ -120,8 +122,8 @@ pub struct OperatorSliceInfo {
     /// `x`-grid coordinates of the `Grid`.
     pub x1: Vec<f64>,
 
-    /// Identifier of the particle basis for the `FkTable`.
-    pub lumi_id_types: String,
+    /// Particle ID basis for `FkTable`.
+    pub pid_basis: PidBasis,
 }
 
 /// A mapping of squared renormalization scales in `ren1` to strong couplings in `alphas`. The
@@ -161,14 +163,11 @@ impl AlphasTable {
 
 fn gluon_has_pid_zero(grid: &Grid) -> bool {
     // if there are any PID zero particles ...
-    grid.lumi()
+    grid.channels()
         .iter()
         .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
-        // and if lumi_id_types = pdg_mc_ids or if the key-value pair doesn't exist
-        && grid
-            .key_values()
-            .and_then(|key_values| key_values.get("lumi_id_types"))
-            .map_or(true, |value| value == "pdg_mc_ids")
+        // and if the particle IDs are encoded using PDG MC IDs
+        && grid.pid_basis() == PidBasis::Pdg
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;
@@ -185,7 +184,7 @@ fn pid_slices(
         .cartesian_product(0..operator.dim().0)
         .filter(|&(pid0_idx, pid1_idx)| {
             // 1) at least one element of the operator must be non-zero, and 2) the pid must be
-            // contained in the lumi somewhere
+            // contained in some channel
             operator
                 .slice(s![pid1_idx, .., pid0_idx, ..])
                 .iter()
@@ -222,7 +221,7 @@ fn pid_slices(
     Ok((pid_indices, pids))
 }
 
-fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
+fn channels0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
     let mut pids0: Vec<_> = pids.iter().map(|&(pid0, _)| pid0).collect();
     pids0.sort_unstable();
     pids0.dedup();
@@ -230,7 +229,7 @@ fn lumi0_with_one(pids: &[(i32, i32)]) -> Vec<i32> {
     pids0
 }
 
-fn lumi0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
+fn channels0_with_two(pids_a: &[(i32, i32)], pids_b: &[(i32, i32)]) -> Vec<(i32, i32)> {
     let mut pids0_a: Vec<_> = pids_a.iter().map(|&(pid0, _)| pid0).collect();
     pids0_a.sort_unstable();
     pids0_a.dedup();
@@ -405,28 +404,28 @@ pub(crate) fn evolve_slice_with_one(
     order_mask: &[bool],
     xi: (f64, f64),
     alphas_table: &AlphasTable,
-) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
+) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
-    let has_pdf1 = grid.has_pdf1();
+    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
 
     let (pid_indices, pids) = pid_slices(operator, info, gluon_has_pid_zero, &|pid| {
-        grid.lumi()
+        grid.channels()
             .iter()
-            .flat_map(LumiEntry::entry)
+            .flat_map(Channel::entry)
             .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
     })?;
 
-    let lumi0 = lumi0_with_one(&pids);
-    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
+    let channels0 = channels0_with_one(&pids);
+    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
     let new_axis = if has_pdf1 { 2 } else { 1 };
 
     let mut last_x1 = Vec::new();
     let mut ops = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
-        let mut tables = vec![Array1::zeros(info.x0.len()); lumi0.len()];
+        let mut tables = vec![Array1::zeros(info.x0.len()); channels0.len()];
 
-        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
+        for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
                 info,
                 &subgrids_o,
@@ -452,13 +451,14 @@ pub(crate) fn evolve_slice_with_one(
                 last_x1 = x1;
             }
 
-            for (&pid1, &factor) in lumi1
-                .entry()
-                .iter()
-                .map(|(a, b, f)| if has_pdf1 { (a, f) } else { (b, f) })
+            for (&pid1, &factor) in
+                channel1
+                    .entry()
+                    .iter()
+                    .map(|(a, b, f)| if has_pdf1 { (a, f) } else { (b, f) })
             {
                 for (fk_table, op) in
-                    lumi0
+                    channels0
                         .iter()
                         .zip(tables.iter_mut())
                         .filter_map(|(&pid0, fk_table)| {
@@ -498,20 +498,20 @@ pub(crate) fn evolve_slice_with_one(
         }));
     }
 
-    let pid = if has_pdf1 {
-        grid.initial_state_2()
+    let pid = if grid.convolutions()[0] == Convolution::None {
+        grid.channels()[0].entry()[0].0
     } else {
-        grid.initial_state_1()
+        grid.channels()[0].entry()[0].1
     };
 
     Ok((
         Array1::from_iter(sub_fk_tables)
-            .into_shape((1, grid.bin_info().bins(), lumi0.len()))
+            .into_shape((1, grid.bin_info().bins(), channels0.len()))
             .unwrap(),
-        lumi0
+        channels0
             .iter()
             .map(|&a| {
-                lumi_entry![
+                channel![
                     if has_pdf1 { a } else { pid },
                     if has_pdf1 { pid } else { a },
                     1.0
@@ -528,24 +528,24 @@ pub(crate) fn evolve_slice_with_two(
     order_mask: &[bool],
     xi: (f64, f64),
     alphas_table: &AlphasTable,
-) -> Result<(Array3<SubgridEnum>, Vec<LumiEntry>), GridError> {
+) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
     let (pid_indices_a, pids_a) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
-        grid.lumi()
+        grid.channels()
             .iter()
-            .flat_map(LumiEntry::entry)
+            .flat_map(Channel::entry)
             .any(|&(a, _, _)| a == pid1)
     })?;
     let (pid_indices_b, pids_b) = pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
-        grid.lumi()
+        grid.channels()
             .iter()
-            .flat_map(LumiEntry::entry)
+            .flat_map(Channel::entry)
             .any(|&(_, b, _)| b == pid1)
     })?;
 
-    let lumi0 = lumi0_with_two(&pids_a, &pids_b);
-    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * lumi0.len());
+    let channels0 = channels0_with_two(&pids_a, &pids_b);
+    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
 
     let mut last_x1a = Vec::new();
     let mut last_x1b = Vec::new();
@@ -553,9 +553,9 @@ pub(crate) fn evolve_slice_with_two(
     let mut operators_b = Vec::new();
 
     for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
-        let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); lumi0.len()];
+        let mut tables = vec![Array2::zeros((info.x0.len(), info.x0.len())); channels0.len()];
 
-        for (subgrids_o, lumi1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.lumi()) {
+        for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
                 info,
                 &subgrids_o,
@@ -587,26 +587,21 @@ pub(crate) fn evolve_slice_with_two(
 
             let mut tmp = Array2::zeros((last_x1a.len(), info.x0.len()));
 
-            for &(pida1, pidb1, factor) in lumi1.entry() {
-                for (fk_table, opa, opb) in
-                    lumi0
-                        .iter()
-                        .zip(tables.iter_mut())
-                        .filter_map(|(&(pida0, pidb0), fk_table)| {
-                            pids_a
-                                .iter()
-                                .zip(operators_a.iter())
-                                .find_map(|(&(pa0, pa1), opa)| {
-                                    (pa0 == pida0 && pa1 == pida1).then_some(opa)
-                                })
-                                .zip(pids_b.iter().zip(operators_b.iter()).find_map(
-                                    |(&(pb0, pb1), opb)| {
-                                        (pb0 == pidb0 && pb1 == pidb1).then_some(opb)
-                                    },
-                                ))
-                                .map(|(opa, opb)| (fk_table, opa, opb))
-                        })
-                {
+            for &(pida1, pidb1, factor) in channel1.entry() {
+                for (fk_table, opa, opb) in channels0.iter().zip(tables.iter_mut()).filter_map(
+                    |(&(pida0, pidb0), fk_table)| {
+                        pids_a
+                            .iter()
+                            .zip(operators_a.iter())
+                            .find_map(|(&(pa0, pa1), opa)| {
+                                (pa0 == pida0 && pa1 == pida1).then_some(opa)
+                            })
+                            .zip(pids_b.iter().zip(operators_b.iter()).find_map(
+                                |(&(pb0, pb1), opb)| (pb0 == pidb0 && pb1 == pidb1).then_some(opb),
+                            ))
+                            .map(|(opa, opb)| (fk_table, opa, opb))
+                    },
+                ) {
                     linalg::general_mat_mul(1.0, &array, &opb.t(), 0.0, &mut tmp);
                     linalg::general_mat_mul(factor, opa, &tmp, 1.0, fk_table);
                 }
@@ -631,8 +626,11 @@ pub(crate) fn evolve_slice_with_two(
 
     Ok((
         Array1::from_iter(sub_fk_tables)
-            .into_shape((1, grid.bin_info().bins(), lumi0.len()))
+            .into_shape((1, grid.bin_info().bins(), channels0.len()))
             .unwrap(),
-        lumi0.iter().map(|&(a, b)| lumi_entry![a, b, 1.0]).collect(),
+        channels0
+            .iter()
+            .map(|&(a, b)| channel![a, b, 1.0])
+            .collect(),
     ))
 }

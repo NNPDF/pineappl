@@ -1,19 +1,16 @@
-use pineappl::evolution::{AlphasTable, OperatorInfo};
-use pineappl::grid::{Grid, Ntuple, Order};
-
-#[allow(deprecated)]
-use pineappl::grid::{EkoInfo, GridAxes};
-
-use pineappl::lumi::LumiCache;
+use pineappl::boc::Order;
+use pineappl::convolutions::LumiCache;
+use pineappl::evolution::OperatorInfo;
+use pineappl::grid::{Grid, Ntuple};
 
 use super::bin::PyBinRemapper;
-use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
+use super::evolution::PyEvolveInfo;
 use super::fk_table::PyFkTable;
 use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray5};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -22,9 +19,7 @@ use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyIterator, PyTuple};
-
-use ndarray::CowArray;
+use pyo3::types::PyIterator;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
@@ -68,7 +63,7 @@ impl PyOrder {
             self.order.logxif,
         )
     }
-    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolute`]. The
+    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`]. The
     /// selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
     /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
     /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
@@ -275,7 +270,7 @@ impl PyGrid {
     /// **Usage:** `yadism`
     pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
         PySubgridEnum {
-            subgrid_enum: self.grid.subgrid(order, bin, lumi).clone(),
+            subgrid_enum: self.grid.subgrids()[[order, bin, lumi]].clone(),
         }
     }
 
@@ -283,8 +278,7 @@ impl PyGrid {
     ///
     /// **Usage:** `yadism`
     pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
-        self.grid
-            .set_subgrid(order, bin, lumi, subgrid.subgrid_enum);
+        self.grid.subgrids_mut()[[order, bin, lumi]] = subgrid.subgrid_enum;
     }
 
     /// Set the normalizations.
@@ -297,45 +291,6 @@ impl PyGrid {
     ///         Remapper object
     pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
-    }
-
-    /// Extract the necessary informations for EKO.
-    ///
-    /// **Usage:** `pineko`
-    ///
-    /// Returns
-    /// -------
-    ///     x_grid: numpy.ndarray(float)
-    ///         interpolation grid
-    ///     pids: numpy.ndarray(int)
-    ///         particle ids
-    ///     mur2_grid : numpy.ndarray(float)
-    ///         factorization scale list
-    ///     muf2_grid : numpy.ndarray(float)
-    ///         factorization scale list
-    #[deprecated(since = "0.6.0", note = "use evolve_info instead")]
-    #[allow(deprecated)]
-    pub fn axes<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> (
-        &'py PyArray1<f64>,
-        &'py PyArray1<i32>,
-        &'py PyArray1<f64>,
-        &'py PyArray1<f64>,
-    ) {
-        let GridAxes {
-            x_grid,
-            pids,
-            mur2_grid,
-            muf2_grid,
-        } = self.grid.axes().unwrap();
-        (
-            x_grid.into_pyarray(py),
-            pids.into_pyarray(py),
-            mur2_grid.into_pyarray(py),
-            muf2_grid.into_pyarray(py),
-        )
     }
 
     /// Convolute grid with pdf.
@@ -372,7 +327,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute_with_one<'py>(
+    pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &PyAny,
@@ -387,7 +342,7 @@ impl PyGrid {
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.grid
-            .convolute(
+            .convolve(
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),
@@ -435,7 +390,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    pub fn convolute_with_two<'py>(
+    pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
         xfx1: &PyAny,
@@ -451,9 +406,10 @@ impl PyGrid {
         let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
         let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
-        let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
+        let mut lumi_cache =
+            LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
         self.grid
-            .convolute(
+            .convolve(
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),
@@ -461,83 +417,6 @@ impl PyGrid {
                 &xi,
             )
             .into_pyarray(py)
-    }
-
-    /// Convolute with with an evolution operator.
-    ///
-    /// **Usage:** `pineko`
-    ///
-    /// Parameters
-    /// ----------
-    ///     muf2_0 : float
-    ///         reference scale
-    ///     alphas : numpy.ndarray(float)
-    ///         list with :math:`\alpha_s(Q2)` for the process scales
-    ///     pids : numpy.ndarray(int)
-    ///         sorting of the particles in the tensor
-    ///     x_grid : numpy.ndarray(float)
-    ///         interpolation grid
-    ///     target_pids : numpy.ndarray(int)
-    ///         sorting of the particles in the tensor for final FkTable
-    ///     target_x_grid : numpy.ndarray(float)
-    ///         final FKTable interpolation grid
-    ///     mur2_grid : numpy.ndarray(float)
-    ///         list of renormalization scales
-    ///     muf2_grid : numpy.ndarray(float)
-    ///         list of factorization scales
-    ///     operator : numpy.ndarray(int, rank=5)
-    ///         evolution tensor
-    ///     orders_mask: numpy.ndarray(bool)
-    ///         boolean mask to activate orders
-    ///
-    /// Returns
-    /// -------
-    ///     PyFkTable :
-    ///         produced FK table
-    #[deprecated(since = "0.6.0", note = "use evolve instead")]
-    #[allow(deprecated)]
-    pub fn convolute_eko(
-        &self,
-        muf2_0: f64,
-        alphas: PyReadonlyArray1<f64>,
-        pids: PyReadonlyArray1<i32>,
-        x_grid: PyReadonlyArray1<f64>,
-        target_pids: PyReadonlyArray1<i32>,
-        target_x_grid: PyReadonlyArray1<f64>,
-        mur2_grid: PyReadonlyArray1<f64>,
-        muf2_grid: PyReadonlyArray1<f64>,
-        operator: PyReadonlyArray5<f64>,
-        lumi_id_types: String,
-        order_mask: PyReadonlyArray1<bool>,
-        xi: (f64, f64),
-    ) -> PyFkTable {
-        let eko_info = EkoInfo {
-            muf2_0,
-            alphas: alphas.to_vec().unwrap(),
-            xir: xi.0,
-            xif: xi.1,
-            target_pids: target_pids.to_vec().unwrap(),
-            target_x_grid: target_x_grid.to_vec().unwrap(),
-            grid_axes: GridAxes {
-                x_grid: x_grid.to_vec().unwrap(),
-                pids: pids.to_vec().unwrap(),
-                mur2_grid: mur2_grid.to_vec().unwrap(),
-                muf2_grid: muf2_grid.to_vec().unwrap(),
-            },
-            lumi_id_types,
-        };
-
-        let evolved_grid = self
-            .grid
-            .convolute_eko(
-                operator.as_array().to_owned(),
-                eko_info,
-                &order_mask.to_vec().unwrap(),
-            )
-            .expect("Nothing returned from evolution.");
-        PyFkTable {
-            fk_table: evolved_grid,
-        }
     }
 
     /// Convolute with grid with an evolution operator.
@@ -599,7 +478,7 @@ impl PyGrid {
             alphas: alphas.to_vec().unwrap(),
             xir: xi.0,
             xif: xi.1,
-            lumi_id_types: lumi_id_types,
+            pid_basis: lumi_id_types.parse().unwrap(),
         };
 
         let evolved_grid = self
@@ -644,37 +523,39 @@ impl PyGrid {
     /// TODO
     pub fn evolve_with_slice_iter(
         &self,
-        slices: &PyIterator,
-        order_mask: PyReadonlyArray1<bool>,
-        xi: (f64, f64),
-        ren1: Vec<f64>,
-        alphas: Vec<f64>,
+        _slices: &PyIterator,
+        _order_mask: PyReadonlyArray1<bool>,
+        _xi: (f64, f64),
+        _ren1: Vec<f64>,
+        _alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
-        Ok(self
-            .grid
-            .evolve_with_slice_iter(
-                slices.map(|result| {
-                    // TODO: check whether we can avoid the `.unwrap` calls
-                    let any = result.unwrap();
-                    let tuple = any.downcast::<PyTuple>().unwrap();
-                    let item0 = tuple.get_item(0).unwrap();
-                    let item1 = tuple.get_item(1).unwrap();
-                    let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
-                    let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
-                    // TODO: can we get rid of the `into_owned` call?
-                    let array = CowArray::from(operator.as_array().into_owned());
+        todo!()
+        //Ok(self
+        //    .grid
+        //    .evolve_with_slice_iter(
+        //        slices.map(|result| {
+        //            // TODO: check whether we can avoid the `.unwrap` calls
+        //            let any = result.unwrap();
+        //            let tuple = any.downcast::<PyTuple>().unwrap();
+        //            // TODO: `get_item` changes return type from pyo3-0.14 to 0.15
+        //            let item0 = tuple.get_item(0).unwrap();
+        //            let item1 = tuple.get_item(1).unwrap();
+        //            let slice_info = item0.extract::<PyOperatorSliceInfo>().unwrap();
+        //            let operator = item1.extract::<PyReadonlyArray4<f64>>().unwrap();
+        //            // TODO: can we get rid of the `into_owned` call?
+        //            let array = CowArray::from(operator.as_array().into_owned());
 
-                    // TODO: change `PyErr` into something appropriate
-                    Ok::<_, PyErr>((slice_info.slice_info, array))
-                }),
-                // TODO: what if it's non-contiguous?
-                order_mask.as_slice().unwrap(),
-                xi,
-                &AlphasTable { ren1, alphas },
-            )
-            .map(|fk_table| PyFkTable { fk_table })
-            // TODO: get rid of this `.unwrap` call
-            .unwrap())
+        //            // TODO: change `PyErr` into something appropriate
+        //            Ok::<_, PyErr>((slice_info.slice_info, array))
+        //        }),
+        //        // TODO: what if it's non-contiguous?
+        //        order_mask.as_slice().unwrap(),
+        //        xi,
+        //        &AlphasTable { ren1, alphas },
+        //    )
+        //    .map(|fk_table| PyFkTable { fk_table })
+        //    // TODO: get rid of this `.unwrap` call
+        //    .unwrap())
     }
 
     /// Load grid from file.
@@ -839,9 +720,9 @@ impl PyGrid {
     ///     list(list(tuple(float,float))) :
     ///         luminosity functions as pid tuples (multiple tuples can bee associated to the same
     ///         contribution)
-    pub fn lumi(&self) -> Vec<Vec<(i32, i32, f64)>> {
+    pub fn channels(&self) -> Vec<Vec<(i32, i32, f64)>> {
         self.grid
-            .lumi()
+            .channels()
             .iter()
             .map(|entry| entry.entry().to_vec())
             .collect()

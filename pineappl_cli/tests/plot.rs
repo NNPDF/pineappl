@@ -4,18 +4,19 @@ use std::thread;
 
 const HELP_STR: &str = "Creates a matplotlib script plotting the contents of the grid
 
-Usage: pineappl plot [OPTIONS] <INPUT> <PDFSETS>...
+Usage: pineappl plot [OPTIONS] <INPUT> <CONV_FUNS>...
 
 Arguments:
-  <INPUT>       Path to the input grid
-  <PDFSETS>...  LHAPDF id(s) or name of the PDF set(s)
+  <INPUT>         Path to the input grid
+  <CONV_FUNS>...  LHAPDF id(s) or name of the PDF set(s)
 
 Options:
+      --conv-fun-uncert-from <IDX>     Choose for which convolution function the uncertainty should be calculated [default: 0]
   -s, --scales <SCALES>                Set the number of scale variations [default: 7] [possible values: 1, 3, 7, 9]
-      --subgrid-pull <ORDER,BIN,LUMI>  Show the pull for a specific grid three-dimensionally
+      --subgrid-pull <ORDER,BIN,CHAN>  Show the pull for a specific grid three-dimensionally
       --asymmetry                      Plot the asymmetry
       --threads <THREADS>              Number of threads to utilize [default: {}]
-      --no-pdf-unc                     Disable the (time-consuming) calculation of PDF uncertainties
+      --no-conv-fun-unc                Disable the (time-consuming) calculation of PDF uncertainties
   -h, --help                           Print help
 ";
 
@@ -1421,7 +1422,6 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--threads=1",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
@@ -1438,7 +1438,6 @@ fn subgrid_pull() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
@@ -1456,7 +1455,6 @@ fn drell_yan_afb() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
             "--asymmetry",
             "--threads=1",
@@ -1473,9 +1471,8 @@ fn drell_yan_mass_slices() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
-            "--silence-lhapdf",
             "plot",
-            "--no-pdf-unc",
+            "--no-conv-fun-unc",
             "--threads=1",
             "../test-data/NNPDF_DY_14TEV_BSM_AFB.pineappl.lz4",
             "NNPDF40_nnlo_as_01180",
