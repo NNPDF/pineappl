@@ -36,10 +36,14 @@ jobs:
   wheels-macos:
     runs-on: macos-latest
     strategy:
-      fail-fast: false
       matrix:
-        target: [aarch64, x86_64]
-
+        include:
+          - os: macos-13
+            target: x86_64
+          - os: macos-14
+            # we cannot cross-compile, because we need also all dependencies for the specified target
+            target: aarch64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
