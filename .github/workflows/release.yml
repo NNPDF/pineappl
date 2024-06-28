@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 env:
+  # this is make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
 
 jobs:
@@ -93,7 +94,7 @@ jobs:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
 
-  cli-wheel-macos:
+  cli-wheels-macos:
     strategy:
       matrix:
         include:
@@ -203,7 +204,7 @@ jobs:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
 
-  cli-wheel-linux:
+  cli-wheels-linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
