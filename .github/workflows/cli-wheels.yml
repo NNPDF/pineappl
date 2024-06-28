@@ -59,6 +59,8 @@ jobs:
           ./configure --disable-python
           make -j
           make install
+          # print the path of `pkgconf`
+          command -v pkgconf
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
