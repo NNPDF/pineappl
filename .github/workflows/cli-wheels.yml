@@ -35,8 +35,8 @@ jobs:
             curl
             tar
             mingw-w64-ucrt-x86_64-pkg-config
-            rust
-            maturin
+            mingw-w64-rust
+            mingw-w64-python-maturin
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
