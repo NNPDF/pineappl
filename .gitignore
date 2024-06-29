@@ -1,6 +1,2 @@
 /target
-
-# Devenv files, to handle the development shell defined by the flake
-.devenv/
-
 test-data/*
