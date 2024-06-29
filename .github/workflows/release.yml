@@ -390,12 +390,29 @@ jobs:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
 
-  release-wheels:
+  release-cli-wheels:
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
     needs:
       - cli-wheels-linux
       - cli-wheels-macos
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "cli-wheels-*"
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN_CLI }}
+        with:
+          command: upload
+          args: --skip-existing *
+
+  release-wheels:
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    needs:
       - wheels-linux
       - wheels-macos
       - wheels-sdist
@@ -403,7 +420,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: "*wheels-*"
+          pattern: "wheels-*"
           merge-multiple: true
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1
