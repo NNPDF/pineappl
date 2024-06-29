@@ -1,0 +1,74 @@
+name: Generate CLI wheels for Windows
+
+# this workflow doesn't do (yet) what it promises; we keep this file to not lose the progress
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cli-wheels-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x64]
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            gcc
+            make
+            autoconf
+            python3
+            curl
+            tar
+            mingw-w64-ucrt-x86_64-pkg-config
+            mingw-w64-rust
+            mingw-w64-python-maturin
+      - uses: actions/setup-python@v5
+        with:
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
+          python-version: |
+            pypy3.7
+            pypy3.8
+            pypy3.9
+            pypy3.10
+            3.7
+            3.8
+            3.9
+            3.11
+            3.12
+            3.10
+      - name: Install LHAPDF
+        run: |
+          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
+          cd LHAPDF-6.5.4
+          # compiling with Python gives errors, but we also don't need Python
+          ./configure --disable-python --disable-shared
+          make -j
+          make install
+          # print the path of `pkgconf`
+          command -v pkg-config
+      - name: Set pkg-config paths
+        run: |
+          # for some reason `pkg-config` isn't properly found by Rust
+          echo "PKG_CONFIG=$(command -v pkg-config)" >> ${GITHUB_ENV}
+          echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
+          echo "${PKG_CONFIG_PATH}"
+      - name: Build wheels
+        run:
+          maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml --target ${{ matrix.target }}
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
