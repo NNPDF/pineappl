@@ -1,21 +1,16 @@
-name: Publish CLI wheels
+name: Generate CLI wheels for Windows
+
+# this workflow doesn't do (yet) what it promises; we keep this file to not lose the progress
 
 on:
-  push:
-    # tags:
-    #   - "v[0-9]+*"
   workflow_dispatch:
 
-env:
-  GH_TOKEN: ${{ github.token }}
-
 jobs:
-  wheels-windows:
+  cli-wheels-windows:
     runs-on: windows-latest
     strategy:
       matrix:
         target: [x64]
-    # if: false    defaults:
     defaults:
       run:
         shell: msys2 {0}
