@@ -6,11 +6,12 @@
 #include <cassert>
 #include <cmath>
 #include <iterator>
-#include <LHAPDF/LHAPDF.h>
 #include <string>
 #include <vector>
 
-std::unique_ptr<LHAPDF::PDF> pdf;
+void* user_data = nullptr;
+rust::Fn<void(double const&, double const&, double*, void*)>* xfx = nullptr;
+rust::Fn<double(double const&, void*)>* alphas = nullptr;
 
 template <typename T>
 rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
@@ -19,66 +20,6 @@ rust::Vec<T> std_vector_to_rust_vec(std::vector<T> vector)
     result.reserve(vector.size());
     std::move(vector.begin(), vector.end(), std::back_inserter(result));
     return result;
-}
-
-enum flavour_map_index : std::size_t
-{
-    anti_top,      // -6: anti-top
-    anti_bottom,   // -5: anti-bottom
-    anti_charm,    // -4: anti-charm
-    anti_strange,  // -3: anti-strange
-    anti_up,       // -2: anti-up
-    anti_down,     // -1: anti-down
-    gluon,         // 21: gluon
-    down,          //  1: down
-    up,            //  2: up
-    strange,       //  3: strange
-    charm,         //  4: charm
-    bottom,        //  5: bottom
-    top,           //  6: top
-    photon,        // 22: photon
-};
-
-std::array<bool, 14> flavour_map = {
-    true,  // -6: anti-top
-    true,  // -5: anti-bottom
-    true,  // -4: anti-charm
-    true,  // -3: anti-strange
-    true,  // -2: anti-up
-    true,  // -1: anti-down
-    true,  // 21: gluon
-    true,  //  1: down
-    true,  //  2: up
-    true,  //  3: strange
-    true,  //  4: charm
-    true,  //  5: bottom
-    true,  //  6: top
-    true,  // 22: photon
-};
-
-constexpr int index_to_pdg_id(std::size_t index)
-{
-    return (index == gluon) ? 21 : ((index == photon) ? 22 : (static_cast <int> (index) - 6));
-}
-
-void xfx(double const& x, double const& q, double* xfx)
-{
-    for (std::size_t i = 0; i != flavour_map.size(); ++i)
-    {
-        if (flavour_map.at(i))
-        {
-            xfx[i] = pdf->xfxQ(index_to_pdg_id(i), std::fmin(x, 1.0), q);
-        }
-        else
-        {
-            xfx[i] = 0.0;
-        }
-    }
-}
-
-double as(double const& q)
-{
-    return pdf->alphasQ(q);
 }
 
 std::unique_ptr<appl::grid> make_grid(rust::Str filename)
@@ -187,18 +128,37 @@ rust::Vec<int> grid_combine(appl::grid const& grid)
     return std_vector_to_rust_vec(grid.combine());
 }
 
-rust::Vec<double> grid_convolve(
+rust::Vec<double> grid_convolve_with_one(
     appl::grid& grid,
-    rust::Str pdfset,
-    int member,
+    rust::Fn<void(double const&, double const&, double*, void*)> xfx,
+    rust::Fn<double(double const&, void*)> alphas,
+    void* user_data,
     int nloops,
     double rscale,
     double fscale,
     double escale
 ) {
-    pdf.reset(LHAPDF::mkPDF(std::string(pdfset.begin(), pdfset.end()), member));
+    // TODO: using global variables isn't thread-safe
+    ::user_data = user_data;
+    ::xfx = &xfx;
+    ::alphas = &alphas;
 
-    auto const results = grid.vconvolute(xfx, as, nloops, rscale, fscale, escale);
+    auto const results = grid.vconvolute(
+        [](double const& x, double const& q2, double* results) {
+            (*::xfx)(x, q2, results, ::user_data);
+        },
+        [](double const& q2) {
+            return (*::alphas)(q2, ::user_data);
+        },
+        nloops,
+        rscale,
+        fscale,
+        escale
+    );
+
+    ::user_data = nullptr;
+    ::xfx = nullptr;
+    ::alphas = nullptr;
 
     return std_vector_to_rust_vec(results);
 }

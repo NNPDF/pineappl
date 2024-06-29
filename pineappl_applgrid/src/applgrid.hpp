@@ -58,10 +58,11 @@ std::unique_ptr<lumi_pdf> make_lumi_pdf(rust::Str s, rust::Slice<int const> comb
 
 rust::Vec<int> grid_combine(appl::grid const& grid);
 
-rust::Vec<double> grid_convolve(
+rust::Vec<double> grid_convolve_with_one(
     appl::grid& grid,
-    rust::Str pdfset,
-    int member,
+    rust::Fn<void(double const&, double const&, double*, void*)> xfx,
+    rust::Fn<double(double const&, void*)> alphas,
+    void* user_data,
     int nloops,
     double rscale,
     double fscale,

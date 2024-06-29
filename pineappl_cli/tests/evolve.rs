@@ -5,13 +5,13 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Evolve a grid with an evolution kernel operator to an FK table
 
-Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <PDFSET>
+Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <EKO>     Path to the evolution kernel operator
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <EKO>        Path to the evolution kernel operator
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s)
 
 Options:
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]

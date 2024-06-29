@@ -13,11 +13,11 @@ Options:
 
 const CKF_HELP_STR: &str = "Compare K-factors with channel K factors (ckf)
 
-Usage: pineappl analyze ckf [OPTIONS] <INPUT> <PDFSET> <ORDER> [ORDERS_DEN]...
+Usage: pineappl analyze ckf [OPTIONS] <INPUT> <CONV_FUNS> <ORDER> [ORDERS_DEN]...
 
 Arguments:
   <INPUT>          Path to the input grid
-  <PDFSET>         LHAPDF id or name of the PDF set
+  <CONV_FUNS>      LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
   <ORDER>          Order defining the K factors
   [ORDERS_DEN]...  Normalizing orders of the K factors
 

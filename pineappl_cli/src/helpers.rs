@@ -1,5 +1,5 @@
 use super::GlobalConfiguration;
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::Array3;
 use pineappl::convolutions::LumiCache;
@@ -11,34 +11,90 @@ use std::iter;
 use std::ops::RangeInclusive;
 use std::path::Path;
 use std::process::ExitCode;
+use std::str::FromStr;
 
-pub fn create_pdf(pdf: &str) -> Result<Pdf> {
-    let pdf = pdf.split_once('=').map_or(pdf, |(name, _)| name);
-
-    Ok(pdf
-        .parse()
-        .map_or_else(|_| Pdf::with_setname_and_nmem(pdf), Pdf::with_lhaid)?)
+#[derive(Clone, Debug, PartialEq)]
+pub struct ConvFuns {
+    pub lhapdf_names: Vec<String>,
+    pub members: Vec<Option<usize>>,
+    pub label: String,
 }
 
-pub fn create_pdfset(pdfset: &str) -> Result<(PdfSet, Option<usize>)> {
-    let pdfset = pdfset.split_once('=').map_or(pdfset, |(name, _)| name);
-    let (pdfset, member) = pdfset
-        .rsplit_once('/')
-        .map_or((pdfset, None), |(set, member)| {
-            (set, Some(member.parse::<usize>().unwrap()))
-        });
+impl FromStr for ConvFuns {
+    type Err = Error;
 
-    Ok((
-        PdfSet::new(&pdfset.parse().map_or_else(
-            |_| pdfset.to_owned(),
-            |lhaid| lhapdf::lookup_pdf(lhaid).unwrap().0,
-        ))?,
-        member,
-    ))
+    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+        let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
+        let (lhapdf_names, members) = names
+            .split(',')
+            .map(|fun| {
+                Ok::<_, Error>(if let Some((name, mem)) = fun.split_once('/') {
+                    (name.to_owned(), Some(mem.parse()?))
+                } else {
+                    (fun.to_owned(), None)
+                })
+            })
+            .collect::<Result<Vec<(_, _)>, _>>()?
+            .into_iter()
+            .unzip();
+
+        Ok(Self {
+            lhapdf_names,
+            members,
+            label: label.to_owned(),
+        })
+    }
 }
 
-pub fn pdf_label(pdf: &str) -> &str {
-    pdf.split_once('=').map_or(pdf, |(_, label)| label)
+pub fn create_conv_funs(funs: &ConvFuns) -> Result<Vec<Pdf>> {
+    Ok(funs
+        .lhapdf_names
+        .iter()
+        .zip(&funs.members)
+        .map(|(lhapdf_name, member)| {
+            lhapdf_name.parse().map_or_else(
+                |_| {
+                    let member = member.unwrap_or(0);
+                    // UNWRAP: we don't support sets with more members than `i32`
+                    Pdf::with_setname_and_member(lhapdf_name, member.try_into().unwrap())
+                },
+                Pdf::with_lhaid,
+            )
+        })
+        .collect::<Result<_, _>>()?)
+}
+
+pub fn create_conv_funs_for_set(
+    funs: &ConvFuns,
+    index_of_set: usize,
+) -> Result<(PdfSet, Vec<Vec<Pdf>>)> {
+    let setname = &funs.lhapdf_names[index_of_set];
+    let set = setname.parse().map_or_else(
+        |_| Ok::<_, Error>(PdfSet::new(setname)?),
+        |lhaid| {
+            Ok(PdfSet::new(
+                &lhapdf::lookup_pdf(lhaid)
+                    .map(|(set, _)| set)
+                    .ok_or(anyhow!(
+                        "no convolution function for LHAID = `{lhaid}` found"
+                    ))?,
+            )?)
+        },
+    )?;
+
+    let conv_funs = set
+        .mk_pdfs()?
+        .into_iter()
+        .map(|conv_fun| {
+            // TODO: do not create objects that are getting overwritten in any case
+            let mut conv_funs = create_conv_funs(funs)?;
+            conv_funs[index_of_set] = conv_fun;
+
+            Ok::<_, Error>(conv_funs)
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok((set, conv_funs))
 }
 
 pub fn read_grid(input: &Path) -> Result<Grid> {
@@ -127,7 +183,7 @@ pub enum ConvoluteMode {
 
 pub fn convolve_scales(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     orders: &[(u32, u32)],
     bins: &[usize],
     channels: &[bool],
@@ -146,29 +202,88 @@ pub fn convolve_scales(
         })
         .collect();
 
-    // if the field 'Particle' is missing we assume it's a proton PDF
-    let pdf_pdg_id = lhapdf
-        .set()
-        .entry("Particle")
-        .map_or(Ok(2212), |string| string.parse::<i32>())
-        .unwrap();
-
     if cfg.force_positive {
-        lhapdf.set_force_positive(1);
+        for fun in conv_funs.iter_mut() {
+            fun.set_force_positive(1);
+        }
     }
 
-    let x_max = lhapdf.x_max();
-    let x_min = lhapdf.x_min();
-    let mut pdf = |id, x, q2| {
-        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-            0.0
-        } else {
-            lhapdf.xfx_q2(id, x, q2)
+    let mut results = match conv_funs {
+        [fun] => {
+            // there's only one convolution function from which we can use the strong coupling
+            assert_eq!(cfg.use_alphas_from, 0);
+
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            let pdg_id = fun
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let x_max = fun.x_max();
+            let x_min = fun.x_min();
+            let mut alphas = |q2| fun.alphas_q2(q2);
+            let mut fun = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                    0.0
+                } else {
+                    fun.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
+
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
+        [fun1, fun2] => {
+            let pdg_id1 = fun1
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let pdg_id2 = fun2
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let x_max1 = fun1.x_max();
+            let x_min1 = fun1.x_min();
+            let x_max2 = fun2.x_max();
+            let x_min2 = fun2.x_min();
+
+            let mut alphas = |q2| match cfg.use_alphas_from {
+                0 => fun1.alphas_q2(q2),
+                1 => fun2.alphas_q2(q2),
+                _ => panic!(
+                    "expected `use_alphas_from` to be `0` or `1`, is {}",
+                    cfg.use_alphas_from
+                ),
+            };
+            let mut fun1 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
+                    0.0
+                } else {
+                    fun1.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut fun2 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
+                    0.0
+                } else {
+                    fun2.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache =
+                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
+
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
+        }
+        _ => unimplemented!(),
     };
-    let mut alphas = |q2| lhapdf.alphas_q2(q2);
-    let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
-    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {
@@ -212,7 +327,7 @@ pub fn convolve_scales(
 
 pub fn convolve(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     orders: &[(u32, u32)],
     bins: &[usize],
     lumis: &[bool],
@@ -222,7 +337,7 @@ pub fn convolve(
 ) -> Vec<f64> {
     convolve_scales(
         grid,
-        lhapdf,
+        conv_funs,
         orders,
         bins,
         lumis,
@@ -249,41 +364,94 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
 
 pub fn convolve_subgrid(
     grid: &Grid,
-    lhapdf: &mut Pdf,
+    conv_funs: &mut [Pdf],
     order: usize,
     bin: usize,
     lumi: usize,
     cfg: &GlobalConfiguration,
 ) -> Array3<f64> {
-    // if the field 'Particle' is missing we assume it's a proton PDF
-    let pdf_pdg_id = lhapdf
-        .set()
-        .entry("Particle")
-        .map_or(Ok(2212), |string| string.parse::<i32>())
-        .unwrap();
-
     if cfg.force_positive {
-        lhapdf.set_force_positive(1);
+        for fun in conv_funs.iter_mut() {
+            fun.set_force_positive(1);
+        }
     }
 
-    let x_max = lhapdf.x_max();
-    let x_min = lhapdf.x_min();
-    let mut pdf = |id, x, q2| {
-        if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-            0.0
-        } else {
-            lhapdf.xfx_q2(id, x, q2)
+    match conv_funs {
+        [fun] => {
+            // there's only one convolution function from which we can use the strong coupling
+            assert_eq!(cfg.use_alphas_from, 0);
+
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            let pdg_id = fun
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
+
+            let x_max = fun.x_max();
+            let x_min = fun.x_min();
+            let mut alphas = |q2| fun.alphas_q2(q2);
+            let mut fun = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
+                    0.0
+                } else {
+                    fun.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
+
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
         }
-    };
-    let mut alphas = |q2| lhapdf.alphas_q2(q2);
-    let mut cache = LumiCache::with_one(pdf_pdg_id, &mut pdf, &mut alphas);
+        [fun1, fun2] => {
+            let pdg_id1 = fun1
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
 
-    grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
-}
+            let pdg_id2 = fun2
+                .set()
+                .entry("Particle")
+                .map_or(Ok(2212), |string| string.parse::<i32>())
+                .unwrap();
 
-pub fn parse_pdfset(argument: &str) -> std::result::Result<String, String> {
-    // TODO: figure out how to validate `argument` with `managed-lhapdf`
-    Ok(argument.to_owned())
+            let x_max1 = fun1.x_max();
+            let x_min1 = fun1.x_min();
+            let x_max2 = fun2.x_max();
+            let x_min2 = fun2.x_min();
+
+            let mut alphas = |q2| match cfg.use_alphas_from {
+                0 => fun1.alphas_q2(q2),
+                1 => fun2.alphas_q2(q2),
+                _ => panic!(
+                    "expected `use_alphas_from` to be `0` or `1`, is {}",
+                    cfg.use_alphas_from
+                ),
+            };
+            let mut fun1 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
+                    0.0
+                } else {
+                    fun1.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut fun2 = |id, x, q2| {
+                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
+                    0.0
+                } else {
+                    fun2.xfx_q2(id, x, q2)
+                }
+            };
+
+            let mut cache =
+                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
+
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+        }
+        _ => unimplemented!(),
+    }
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
@@ -336,4 +504,26 @@ pub fn parse_order(order: &str) -> Result<(u32, u32)> {
     }
 
     Ok((alphas, alpha))
+}
+
+#[cfg(test)]
+mod test {
+    use super::ConvFuns;
+
+    #[test]
+    fn conv_fun_from_str() {
+        assert_eq!(
+            "A/2,B/1,C/0,D=X".parse::<ConvFuns>().unwrap(),
+            ConvFuns {
+                lhapdf_names: vec![
+                    "A".to_owned(),
+                    "B".to_owned(),
+                    "C".to_owned(),
+                    "D".to_owned()
+                ],
+                members: vec![Some(2), Some(1), Some(0), None],
+                label: "X".to_owned()
+            }
+        );
+    }
 }

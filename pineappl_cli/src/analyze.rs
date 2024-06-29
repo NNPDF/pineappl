@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::TypedValueParser;
@@ -39,9 +39,8 @@ pub struct CkfOpts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    conv_funs: ConvFuns,
     /// Order defining the K factors.
     #[arg(value_parser = helpers::parse_order)]
     order: (u32, u32),
@@ -65,7 +64,7 @@ pub struct CkfOpts {
 impl Subcommand for CkfOpts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let orders_den = if self.orders_den.is_empty() {
             grid.orders()
@@ -87,7 +86,7 @@ impl Subcommand for CkfOpts {
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    &mut conv_funs,
                     &[self.order],
                     &[],
                     &lumi_mask,
@@ -103,7 +102,7 @@ impl Subcommand for CkfOpts {
                 lumi_mask[lumi] = true;
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    &mut conv_funs,
                     &orders_den,
                     &[],
                     &lumi_mask,

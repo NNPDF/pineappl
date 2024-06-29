@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
+- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
+  choosing with convolution function uncertainty should be plotted
 
 ### Changed
 
@@ -39,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changed member `lumi_id_types` of `OperatorInfo` and `OperatorSliceInfo` to
   `pid_basis`, which is now of type `PidBasis`
 - renamed module `pineappl::lumi` to `pineappl::convolutions`
+- renamed switch `--pdf` to `--conv-fun` in the subcommand `uncert`. This
+  switch now optionally accepts a list of indices, which determines the
+  corresponding convolution function (PDF/FF), for which the uncertainty should
+  calculated
+- renamed `no_pdf_unc` to `no_conv_fun_unc` in subcommand `plot`
 
 ### Removed
 
@@ -54,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed `TryFromGridError::MetadataMissing`
 - removed `Grid::subgrid` and `Grid::set_subgrid` methods; these functions have
   been replaced with `Grid::subgrids` and `Grid::subgrids_mut`
+- removed the switch `--pdf-with-scale-cov` from `pineappl uncert`
 
 ## [0.7.4] - 23/05/2024
 

@@ -4,14 +4,15 @@ use std::thread;
 
 const HELP_STR: &str = "Calculates the pull between two different PDF sets
 
-Usage: pineappl pull [OPTIONS] <INPUT> <PDFSET1> <PDFSET2>
+Usage: pineappl pull [OPTIONS] <INPUT> <CONV_FUNS1> <CONV_FUNS2>
 
 Arguments:
-  <INPUT>    Path to the input grid
-  <PDFSET1>  LHAPDF id or name of the first PDF set
-  <PDFSET2>  LHAPDF id or name of the second PDF set
+  <INPUT>       Path to the input grid
+  <CONV_FUNS1>  LHAPDF ID(s) or name(s) of the first PDF(s)/FF(s)
+  <CONV_FUNS2>  LHAPDF ID(s) or name(s) of the second PDF(s)/FF(s)
 
 Options:
+      --pull-from <IDX>    Index of the convolution functions for which the pull should be calculated [default: 0]
       --cl <CL>            Confidence level in per cent [default: 68.26894921370858]
   -l, --limit <LIMIT>      The maximum number of channels displayed [default: 10]
   -o, --orders <ORDERS>    Select orders manually

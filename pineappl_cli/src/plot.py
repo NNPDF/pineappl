@@ -69,11 +69,11 @@ def main():
         {inte}plot_int,
         {nint}plot_abs,
         {nint}plot_rel_ewonoff,
-        {pdfs}plot_abs_pdfs,
-        {pdfs}plot_ratio_pdf,
-        {pdfs}plot_double_ratio_pdf,
-        {pdfs}plot_rel_pdfunc,
-        {pdfs}plot_rel_pdfpull,
+        {nconvs}plot_abs_pdfs,
+        {nconvs}plot_ratio_pdf,
+        {nconvs}plot_double_ratio_pdf,
+        {nconvs}plot_rel_pdfunc,
+        {nconvs}plot_rel_pdfpull,
     ]
 
     mpl.rcParams.update(stylesheet)

@@ -26,7 +26,7 @@ flate2 = { optional = true, version = "1.0.22" }
 float-cmp = "0.9.0"
 git-version = "0.3.5"
 itertools = "0.10.1"
-lhapdf = { package = "managed-lhapdf", version = "0.3.0" }
+lhapdf = { package = "managed-lhapdf", version = "0.3.2" }
 lz4_flex = { optional = true, version = "0.9.2" }
 ndarray = "0.15.4"
 ndarray-npy = { optional = true, version = "0.8.1" }
@@ -56,4 +56,4 @@ applgrid = ["dep:cxx", "dep:pineappl_applgrid"]
 evolve = ["dep:base64", "dep:either", "dep:tar", "dep:lz4_flex", "dep:ndarray-npy", "dep:serde", "dep:serde_yaml"]
 fastnlo = ["dep:pineappl_fastnlo"]
 fktable = ["dep:flate2",  "dep:tar"]
-static = ["lhapdf/static", "pineappl_applgrid?/static", "pineappl_fastnlo?/static"]
+static = ["lhapdf/static", "pineappl/static", "pineappl_applgrid?/static", "pineappl_fastnlo?/static"]
