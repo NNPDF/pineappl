@@ -393,11 +393,17 @@ jobs:
   release-wheels:
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [wheels-linux, wheels-macos, wheels-sdist, wheels-windows]
+    needs:
+      - cli-wheels-linux
+      - cli-wheels-macos
+      - wheels-linux
+      - wheels-macos
+      - wheels-sdist
+      - wheels-windows
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          pattern: "*wheels-*"
           merge-multiple: true
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1
