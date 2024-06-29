@@ -11,88 +11,88 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
-  ## create a release on github
-  #create-release:
-  #  runs-on: ubuntu-latest
-  #  if: "startsWith(github.ref, 'refs/tags/')"
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - name: Create new release
-  #      run: |
-  #        # remove leading 'v' in tag name
-  #        gh release create -d v${GITHUB_REF_NAME#v}
+  # create a release on github
+  create-release:
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create new release
+        run: |
+          # remove leading 'v' in tag name
+          gh release create -d v${GITHUB_REF_NAME#v}
 
-  #capi-macos:
-  #  runs-on: macos-latest
-  #  strategy:
-  #    matrix:
-  #      target: [x86_64-apple-darwin, aarch64-apple-darwin]
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - name: Compile library
-  #      run: |
-  #        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
-  #        cargo install --locked cargo-c
-  #        cd pineappl_capi
-  #        cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
-  #        cd prefix
-  #        tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
-  #    - name: Upload artifact
-  #      # as long as we need v3 in `capi-linux` we also must use it here
-  #      uses: actions/upload-artifact@v3
-  #      with:
-  #        name: pineappl_capi-${{ matrix.target }}
-  #        path: pineappl_capi-${{ matrix.target }}.tar.gz
+  capi-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile library
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
+          cargo install --locked cargo-c
+          cd pineappl_capi
+          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
+          cd prefix
+          tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        # as long as we need v3 in `capi-linux` we also must use it here
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_capi-${{ matrix.target }}
+          path: pineappl_capi-${{ matrix.target }}.tar.gz
 
-  #cli-macos:
-  #  strategy:
-  #    matrix:
-  #      include:
-  #        - os: macos-13
-  #          target: x86_64-apple-darwin
-  #        - os: macos-14
-  #          # we cannot cross-compile, because we need also all dependencies for the specified target
-  #          target: aarch64-apple-darwin
-  #  runs-on: ${{ matrix.os }}
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - name: Compile binary
-  #      run: |
-  #        brew tap davidchall/hep
-  #        # install LHAPDF
-  #        brew install lhapdf
-  #        # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
-  #        brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
-  #        # install zlib, which is a dependency of APPLgrid but somehow missing
-  #        brew install zlib
-  #        # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
-  #        export PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
-  #        # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
-  #        export HOMEBREW_TEMP="$(pwd)"/tmp
-  #        mkdir -p ${HOMEBREW_TEMP}
-  #        brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
-  #        export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
-  #        # do not link against `gfortran`
-  #        sed 's/-lgfortran//g' $(command -v applgrid-config) > applgrid-config.new
-  #        mv applgrid-config.new $(command -v applgrid-config)
-  #        chmod +x $(command -v applgrid-config)
-  #        # install fastNLO
-  #        brew install --without-fastjet fastnlo
-  #        # install Rust
-  #        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
-  #        # build the CLI
-  #        cargo install --all-features --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
-  #        # build manpages
-  #        mkdir -p prefix/share/man/man1
-  #        cargo xtask install-manpages prefix/share/man/man1
-  #        cd prefix
-  #        tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
-  #    - name: Upload artifact
-  #      # as long as we need v3 in `cli-linux` we also must use it here
-  #      uses: actions/upload-artifact@v3
-  #      with:
-  #        name: pineappl_cli-${{ matrix.target }}
-  #        path: pineappl_cli-${{ matrix.target }}.tar.gz
+  cli-macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: macos-14
+            # we cannot cross-compile, because we need also all dependencies for the specified target
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile binary
+        run: |
+          brew tap davidchall/hep
+          # install LHAPDF
+          brew install lhapdf
+          # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
+          brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
+          # install zlib, which is a dependency of APPLgrid but somehow missing
+          brew install zlib
+          # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
+          export PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')
+          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
+          export HOMEBREW_TEMP="$(pwd)"/tmp
+          mkdir -p ${HOMEBREW_TEMP}
+          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
+          export APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)
+          # do not link against `gfortran`
+          sed 's/-lgfortran//g' $(command -v applgrid-config) > applgrid-config.new
+          mv applgrid-config.new $(command -v applgrid-config)
+          chmod +x $(command -v applgrid-config)
+          # install fastNLO
+          brew install --without-fastjet fastnlo
+          # install Rust
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-host=${{ matrix.target }}
+          # build the CLI
+          cargo install --all-features --locked --path pineappl_cli  --root=prefix --target=${{ matrix.target }}
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
+          cd prefix
+          tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+      - name: Upload artifact
+        # as long as we need v3 in `cli-linux` we also must use it here
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_cli-${{ matrix.target }}
+          path: pineappl_cli-${{ matrix.target }}.tar.gz
 
   cli-wheels-macos:
     strategy:
@@ -154,55 +154,55 @@ jobs:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
 
-  #capi-linux:
-  #  runs-on: ubuntu-latest
-  #  container: ghcr.io/nnpdf/pineappl-ci:latest
-  #  strategy:
-  #    matrix:
-  #      target: [x86_64-unknown-linux-gnu]
-  #  steps:
-  #    # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-  #    - uses: actions/checkout@v3
-  #    - name: Compile library
-  #      run: |
-  #        cd pineappl_capi
-  #        cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
-  #        cd prefix
-  #        tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
-  #        # print the glibc version requirement
-  #        objdump -T lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
-  #    - name: Upload artifact
-  #      # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-  #      uses: actions/upload-artifact@v3
-  #      with:
-  #        name: pineappl_capi-${{ matrix.target }}
-  #        path: pineappl_capi-${{ matrix.target }}.tar.gz
+  capi-linux:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
+    steps:
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
+      - name: Compile library
+        run: |
+          cd pineappl_capi
+          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
+          cd prefix
+          tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
+          # print the glibc version requirement
+          objdump -T lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
+      - name: Upload artifact
+        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_capi-${{ matrix.target }}
+          path: pineappl_capi-${{ matrix.target }}.tar.gz
 
-  #cli-linux:
-  #  runs-on: ubuntu-latest
-  #  container: ghcr.io/nnpdf/pineappl-ci:latest
-  #  strategy:
-  #    matrix:
-  #      target: [x86_64-unknown-linux-gnu]
-  #  steps:
-  #    # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-  #    - uses: actions/checkout@v3
-  #    - name: Compile binary
-  #      run: |
-  #        cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
-  #        # build manpages
-  #        mkdir -p prefix/share/man/man1
-  #        cargo xtask install-manpages prefix/share/man/man1
-  #        cd prefix
-  #        tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
-  #        # print the dynamically linked libraries
-  #        ldd bin/pineappl
-  #    - name: Upload artifact
-  #      # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-  #      uses: actions/upload-artifact@v3
-  #      with:
-  #        name: pineappl_cli-${{ matrix.target }}
-  #        path: pineappl_cli-${{ matrix.target }}.tar.gz
+  cli-linux:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu]
+    steps:
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
+      - name: Compile binary
+        run: |
+          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
+          # build manpages
+          mkdir -p prefix/share/man/man1
+          cargo xtask install-manpages prefix/share/man/man1
+          cd prefix
+          tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+          # print the dynamically linked libraries
+          ldd bin/pineappl
+      - name: Upload artifact
+        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+        uses: actions/upload-artifact@v3
+        with:
+          name: pineappl_cli-${{ matrix.target }}
+          path: pineappl_cli-${{ matrix.target }}.tar.gz
 
   cli-wheels-linux:
     runs-on: ubuntu-latest
@@ -226,61 +226,61 @@ jobs:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
 
-  ## publish a release on github and upload pre-built CAPI
-  #publish-release:
-  #  needs: [capi-macos, cli-macos, capi-linux, cli-linux]
-  #  runs-on: ubuntu-latest
-  #  if: "startsWith(github.ref, 'refs/tags/')"
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    # version must match the one used in `actions/upload-artifact`
-  #    - uses: actions/download-artifact@v3
-  #      with:
-  #        path: artifacts
-  #    - name: Create new release
-  #      run: |
-  #        # remove leading 'v' in tag name
-  #        version=${GITHUB_REF_NAME#v}
-  #        prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
-  #        if [[ ${prerelease}  == "" ]]; then
-  #            # extract the previous version number
-  #            old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
-  #            # extract news for the current version from the changelog file, dismissing
-  #            # empty lines at the start and the end
-  #            news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
-  #                CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
-  #            gh release edit v${version} -n "${news}"
-  #        else
-  #            gh release edit v${version} -n "" --prerelease
-  #        fi
-  #        find artifacts -name 'pineappl*' -type f -exec gh release upload v${version} {} +
-  #        gh release edit v${version} --draft=false
+  # publish a release on github and upload pre-built CAPI
+  publish-release:
+    needs: [capi-macos, cli-macos, capi-linux, cli-linux]
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    steps:
+      - uses: actions/checkout@v4
+      # version must match the one used in `actions/upload-artifact`
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Create new release
+        run: |
+          # remove leading 'v' in tag name
+          version=${GITHUB_REF_NAME#v}
+          prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
+          if [[ ${prerelease}  == "" ]]; then
+              # extract the previous version number
+              old_version=$(sed -n 's/^## \[\(.*\)\] - .*/\1/p' CHANGELOG.md | tail +2 | head -n 1)
+              # extract news for the current version from the changelog file, dismissing
+              # empty lines at the start and the end
+              news=$(sed -n "/\\[${version}\\]/, /\\[${old_version}\\]/{ /\\[${old_version}\\]/! p }" \
+                  CHANGELOG.md | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba')
+              gh release edit v${version} -n "${news}"
+          else
+              gh release edit v${version} -n "" --prerelease
+          fi
+          find artifacts -name 'pineappl*' -type f -exec gh release upload v${version} {} +
+          gh release edit v${version} --draft=false
 
-  #publish-crates:
-  #  runs-on: ubuntu-latest
-  #  if: "startsWith(github.ref, 'refs/tags/')"
-  #  container: ghcr.io/nnpdf/pineappl-ci:latest
-  #  steps:
-  #    # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-  #    - uses: actions/checkout@v3
+  publish-crates:
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    container: ghcr.io/nnpdf/pineappl-ci:latest
+    steps:
+      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
+      - uses: actions/checkout@v3
 
-  #    - name: Publish all crates
-  #      env:
-  #        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-  #      run: |
-  #        # this must be at least Rust 1.66 to support waiting for dependencies to on crates.io:
-  #        # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
-  #        rustup default stable
-  #        cd pineappl
-  #        cargo publish
-  #        cd ../pineappl_applgrid
-  #        cargo publish
-  #        cd ../pineappl_fastnlo
-  #        cargo publish
-  #        cd ../pineappl_capi
-  #        cargo publish
-  #        cd ../pineappl_cli
-  #        cargo publish
+      - name: Publish all crates
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          # this must be at least Rust 1.66 to support waiting for dependencies to on crates.io:
+          # https://github.com/rust-lang/cargo/blob/master/CHANGELOG.md#cargo-166-2022-12-15
+          rustup default stable
+          cd pineappl
+          cargo publish
+          cd ../pineappl_applgrid
+          cargo publish
+          cd ../pineappl_fastnlo
+          cargo publish
+          cd ../pineappl_capi
+          cargo publish
+          cd ../pineappl_cli
+          cargo publish
 
   wheels-linux:
     runs-on: ubuntu-latest
