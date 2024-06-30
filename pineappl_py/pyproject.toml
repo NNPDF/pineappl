@@ -21,9 +21,10 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 
-dependencies = ["numpy>=1.16.0,<2.0.0", "pineappl-cli"]
+dependencies = ["numpy>=1.16.0,<2.0.0"]
 
 [project.optional-dependencies]
+cli = ["pineappl-cli"]
 docs = [
   "sphinx>=6.2.1",
   "sphinx_rtd_theme>=1.2.2",
