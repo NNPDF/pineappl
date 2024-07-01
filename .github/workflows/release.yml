@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 env:
+  # this is make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
 
 jobs:
@@ -93,6 +94,66 @@ jobs:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
 
+  cli-wheels-macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-13
+            target: x86_64
+          - os: macos-14
+            # we cannot cross-compile, because we need also all dependencies for the specified target
+            target: aarch64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # WARNING: be careful with the ordering - the last version is the
+          # default one. Apparently maturin doesn't find all Python versions
+          # when one chooses a PyPy version instead of CPython as default
+          python-version: |
+            pypy3.8
+            pypy3.9
+            pypy3.10
+            3.8
+            3.9
+            3.11
+            3.12
+            3.10
+      - name: Install dependencies
+        run: |
+          brew tap davidchall/hep
+          # install LHAPDF
+          brew install lhapdf
+          # install APPLgrid's dependencies; disable ROOT because its static libraries are missing
+          brew install --only-dependencies --without-hoppet --without-lhapdf --without-root applgrid
+          # install zlib, which is a dependency of APPLgrid but somehow missing
+          brew install zlib
+          # APPLgrid wants to be linked against zlib, and we need to find its static library via pkg-config
+          echo "PKG_CONFIG_PATH=$(find $(brew --cellar) -name '*.pc' -exec dirname {} + | sort -u | tr '\n' ':')" >> ${GITHUB_ENV}
+          # manually compile APPLgrid, because we need the file `appl_igrid.h` and the files it includes, which are possibly generated
+          export HOMEBREW_TEMP="$(pwd)"/tmp
+          mkdir -p ${HOMEBREW_TEMP}
+          brew install --build-from-source --keep-tmp --without-hoppet --without-lhapdf --without-root applgrid
+          echo "APPL_IGRID_DIR=$(find ${HOMEBREW_TEMP} -name appl_igrid.h -exec dirname {} +)" >> ${GITHUB_ENV}
+          # do not link against `gfortran`
+          sed 's/-lgfortran//g' $(command -v applgrid-config) > applgrid-config.new
+          mv applgrid-config.new $(command -v applgrid-config)
+          chmod +x $(command -v applgrid-config)
+          # install fastNLO
+          brew install --without-fastjet fastnlo
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
+
   capi-linux:
     runs-on: ubuntu-latest
     container: ghcr.io/nnpdf/pineappl-ci:latest
@@ -128,18 +189,42 @@ jobs:
       - uses: actions/checkout@v3
       - name: Compile binary
         run: |
-          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }}
+          cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
           # build manpages
           mkdir -p prefix/share/man/man1
           cargo xtask install-manpages prefix/share/man/man1
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
+          # print the dynamically linked libraries
+          ldd bin/pineappl
       - name: Upload artifact
         # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
         uses: actions/upload-artifact@v3
         with:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
+
+  cli-wheels-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          container: ghcr.io/nnpdf/pineappl-ci:latest
+          # `--find-interpreter` is needed to generate wheels for *all* Python versions
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+          sccache: "true"
+          manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}-${{ matrix.target }}
+          path: dist
 
   # publish a release on github and upload pre-built CAPI
   publish-release:
@@ -305,14 +390,37 @@ jobs:
           name: ${{ github.job }}-${{ matrix.target }}
           path: dist
 
-  release-wheels:
+  release-cli-wheels:
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [wheels-linux, wheels-macos, wheels-sdist, wheels-windows]
+    needs:
+      - cli-wheels-linux
+      - cli-wheels-macos
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          pattern: "cli-wheels-*"
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN_CLI }}
+        with:
+          command: upload
+          args: --skip-existing *
+
+  release-wheels:
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
+    needs:
+      - wheels-linux
+      - wheels-macos
+      - wheels-sdist
+      - wheels-windows
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "wheels-*"
           merge-multiple: true
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1

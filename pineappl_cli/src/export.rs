@@ -1,8 +1,9 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use lhapdf::Pdf;
 use pineappl::boc::Order;
 use pineappl::grid::Grid;
 use std::path::{Path, PathBuf};
@@ -15,8 +16,7 @@ mod applgrid;
 fn convert_into_applgrid(
     output: &Path,
     grid: &Grid,
-    pdfset: &str,
-    member: usize,
+    conv_funs: &mut [Pdf],
     _: usize,
     discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -24,7 +24,7 @@ fn convert_into_applgrid(
 
     let (mut applgrid, order_mask) =
         applgrid::convert_into_applgrid(grid, output, discard_non_matching_scales)?;
-    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), pdfset, member);
+    let results = applgrid::convolve_applgrid(applgrid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", results, 1, order_mask))
 }
@@ -33,8 +33,7 @@ fn convert_into_applgrid(
 fn convert_into_applgrid(
     _: &Path,
     _: &Grid,
-    _: &str,
-    _: usize,
+    _: &mut [Pdf],
     _: usize,
     _: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -46,8 +45,7 @@ fn convert_into_applgrid(
 fn convert_into_grid(
     output: &Path,
     grid: &Grid,
-    pdfset: &str,
-    member: usize,
+    conv_funs: &mut [Pdf],
     scales: usize,
     discard_non_matching_scales: bool,
 ) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
@@ -56,8 +54,7 @@ fn convert_into_grid(
             return convert_into_applgrid(
                 output,
                 grid,
-                pdfset,
-                member,
+                conv_funs,
                 scales,
                 discard_non_matching_scales,
             );
@@ -76,9 +73,8 @@ pub struct Opts {
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
-    /// LHAPDF id or name of the PDF set to check the converted grid with.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with.
+    conv_funs: ConvFuns,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
@@ -106,13 +102,13 @@ impl Subcommand for Opts {
         use prettytable::{cell, row};
 
         let grid = helpers::read_grid(&self.input)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
             &grid,
-            &self.pdfset,
-            0,
+            &mut conv_funs,
             self.scales,
             self.discard_non_matching_scales,
         )?;
@@ -155,10 +151,9 @@ impl Subcommand for Opts {
         if results.is_empty() {
             println!("file was converted, but we cannot check the conversion for this type");
         } else {
-            let mut pdf = helpers::create_pdf(&self.pdfset)?;
             let reference_results = helpers::convolve(
                 &grid,
-                &mut pdf,
+                &mut conv_funs,
                 &orders,
                 &[],
                 &[],

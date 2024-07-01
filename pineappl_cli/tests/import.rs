@@ -6,12 +6,12 @@ use assert_fs::NamedTempFile;
 #[cfg(feature = "fastnlo")]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
-Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]
@@ -29,12 +29,12 @@ Options:
 #[cfg(not(feature = "fastnlo"))]
 const HELP_STR: &str = "Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids
 
-Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <PDFSET>
+Usage: pineappl import [OPTIONS] <INPUT> <OUTPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <OUTPUT>  Path to the converted grid
-  <PDFSET>  LHAPDF id or name of the PDF set to check the converted grid with
+  <INPUT>      Path to the input grid
+  <OUTPUT>     Path to the converted grid
+  <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s) to check the converted grid with
 
 Options:
       --alpha <ALPHA>        LO coupling power in alpha [default: 0]

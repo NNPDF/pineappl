@@ -21,4 +21,4 @@ clap_mangen = "0.2.18"
 enum_dispatch = "0.3.7"
 #git2 = "0.17.2"
 #semver = "1.0.17"
-pineappl_cli = { path = "../pineappl_cli", version = "=0.7.4" }
+pineappl_cli = { path = "../pineappl_cli", version = "=0.8.0-alpha.4" }

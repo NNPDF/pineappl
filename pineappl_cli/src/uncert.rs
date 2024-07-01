@@ -1,6 +1,6 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Args, Parser, ValueHint};
 use prettytable::{cell, Row};
@@ -13,19 +13,16 @@ use std::thread;
 #[derive(Args)]
 #[group(multiple = true, required = true)]
 struct Group {
-    /// Calculate the PDF uncertainties.
-    #[arg(long)]
-    pdf: bool,
-    /// Calculate the combined PDF and scale uncertainty using the covariance method.
+    /// Calculate convolution function uncertainties.
     #[arg(
-        default_missing_value = "7",
+        default_missing_value = "0",
         num_args = 0..=1,
         long,
         require_equals = true,
-        value_name = "SCALES",
-        value_parser = PossibleValuesParser::new(["3", "7", "9"]).try_map(|s| s.parse::<u16>())
+        value_delimiter = ',',
+        value_name = "IDX"
     )]
-    pdf_with_scale_cov: Option<u16>,
+    conv_fun: Vec<usize>,
     /// Show absolute numbers of the scale-varied results.
     #[arg(
         default_missing_value = "7",
@@ -58,18 +55,17 @@ struct Group {
     scale_env: Option<u16>,
 }
 
-/// Calculates scale and PDF uncertainties.
+/// Calculate scale and convolution function uncertainties.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    conv_funs: ConvFuns,
     #[command(flatten)]
     group: Group,
-    /// Confidence level in per cent, for PDF uncertainties.
+    /// Confidence level in per cent, for convolution function uncertainties.
     #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
     /// Show integrated numbers (without bin widths) instead of differential ones.
@@ -98,7 +94,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let (set, _) = helpers::create_pdfset(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let limits = helpers::convolve_limits(
             &grid,
@@ -110,47 +106,60 @@ impl Subcommand for Opts {
             },
         );
 
-        let pdf_results = if self.group.pdf || self.group.pdf_with_scale_cov.is_some() {
-            ThreadPoolBuilder::new()
-                .num_threads(self.threads)
-                .build_global()
-                .unwrap();
+        ThreadPoolBuilder::new()
+            .num_threads(self.threads)
+            .build_global()
+            .unwrap();
 
-            set.mk_pdfs()?
-                .into_par_iter()
-                .flat_map(|mut pdf| {
-                    helpers::convolve(
-                        &grid,
-                        &mut pdf,
-                        &self.orders,
-                        &[],
-                        &[],
-                        1,
-                        if self.integrated {
-                            ConvoluteMode::Integrated
-                        } else {
-                            ConvoluteMode::Normal
-                        },
-                        cfg,
-                    )
-                })
-                .collect()
-        } else {
-            vec![]
-        };
+        let conv_fun_results: Vec<Vec<_>> = self
+            .group
+            .conv_fun
+            .iter()
+            .map(|&index| {
+                let (set, funs) = helpers::create_conv_funs_for_set(&self.conv_funs, index)?;
+                let results: Vec<_> = funs
+                    .into_par_iter()
+                    .map(|mut funs| {
+                        Ok::<_, Error>(helpers::convolve(
+                            &grid,
+                            &mut funs,
+                            &self.orders,
+                            &[],
+                            &[],
+                            1,
+                            if self.integrated {
+                                ConvoluteMode::Integrated
+                            } else {
+                                ConvoluteMode::Normal
+                            },
+                            cfg,
+                        ))
+                    })
+                    .collect::<Result<_, _>>()?;
+
+                // transpose results
+                let results: Vec<Vec<_>> = (0..results[0].len())
+                    .map(|bin| (0..results.len()).map(|pdf| results[pdf][bin]).collect())
+                    .collect();
+
+                results
+                    .into_iter()
+                    .map(|values| Ok(set.uncertainty(&values, self.cl, false)?))
+                    .collect::<Result<_, _>>()
+            })
+            .collect::<Result<_, Error>>()?;
         let scales_max = self
             .group
             .scale_env
             .iter()
             .chain(self.group.scale_abs.iter())
             .chain(self.group.scale_cov.iter())
-            .chain(self.group.pdf_with_scale_cov.iter())
             .map(|&x| usize::from(x))
             .max()
             .unwrap_or(1);
         let scale_results = helpers::convolve(
             &grid,
-            &mut helpers::create_pdf(&self.pdfset)?,
+            &mut conv_funs,
             &self.orders,
             &[],
             &[],
@@ -173,14 +182,12 @@ impl Subcommand for Opts {
         }
         title.add_cell(cell!(c->format!("{y_label}\n[{y_unit}]")));
 
-        if self.group.pdf {
-            title.add_cell(cell!(c->"PDF central"));
-            title.add_cell(cell!(c->"PDF\n[%]").with_hspan(2));
-        }
-
-        if let Some(scales) = self.group.pdf_with_scale_cov {
-            title.add_cell(cell!(c->"PDF central"));
-            title.add_cell(cell!(c->format!("PDF w/ {}pt scale (cov)\n[%]", scales)).with_hspan(2));
+        for &index in &self.group.conv_fun {
+            title.add_cell(
+                // TODO: fix alignment for second title row
+                cell!(c->format!("{}\n[{y_unit}]          [%]     [%]", self.conv_funs.lhapdf_names[index]))
+                    .with_hspan(3),
+            );
         }
 
         if let Some(scales) = self.group.scale_abs {
@@ -205,25 +212,6 @@ impl Subcommand for Opts {
             .zip(scale_results.chunks_exact(scales_max))
             .enumerate()
         {
-            let (pdf_cen, pdf_neg, pdf_pos) =
-                if self.group.pdf || self.group.pdf_with_scale_cov.is_some() {
-                    let values: Vec<_> = pdf_results
-                        .iter()
-                        .skip(bin)
-                        .step_by(limits.len())
-                        .copied()
-                        .collect();
-                    let uncertainty = set.uncertainty(&values, self.cl, false)?;
-
-                    (
-                        uncertainty.central,
-                        -100.0 * uncertainty.errminus / uncertainty.central,
-                        100.0 * uncertainty.errplus / uncertainty.central,
-                    )
-                } else {
-                    (0.0, 0.0, 0.0)
-                };
-
             let row = table.add_empty_row();
             row.add_cell(cell!(r->format!("{bin}")));
             for (left, right) in left_right_limits {
@@ -233,30 +221,10 @@ impl Subcommand for Opts {
 
             row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, scale_res[0])));
 
-            if self.group.pdf {
-                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, pdf_cen)));
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, pdf_neg)));
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, pdf_pos)));
-            }
-
-            if let Some(scales) = self.group.pdf_with_scale_cov {
-                let ns = if scales == 3 { 1.0 } else { 2.0 } / f64::from(scales - 1);
-                let unc = (ns
-                    * scale_res
-                        .iter()
-                        .take(scales.into())
-                        .skip(1)
-                        .map(|x| (x - scale_res[0]).powi(2))
-                        .sum::<f64>())
-                .sqrt();
-                let rel_unc = 100.0 * unc / scale_res[0];
-
-                let total_neg = -(pdf_neg * pdf_neg + rel_unc * rel_unc).sqrt();
-                let total_pos = (pdf_pos * pdf_pos + rel_unc * rel_unc).sqrt();
-
-                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, pdf_cen)));
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, total_neg)));
-                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, total_pos)));
+            for uncertainty in conv_fun_results.iter().map(|results| &results[bin]) {
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, uncertainty.central)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, -100.0 * uncertainty.errminus / uncertainty.central)));
+                row.add_cell(cell!(r->format!("{:.*}", self.digits_rel, 100.0 * uncertainty.errplus / uncertainty.central)));
             }
 
             if let Some(scales) = self.group.scale_abs {

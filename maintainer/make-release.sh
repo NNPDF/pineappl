@@ -19,6 +19,9 @@ features=(
     fktable
 )
 
+main=master
+this_branch=$(git rev-parse --abbrev-ref HEAD)
+
 cd ..
 
 if [[ $# != 1 ]]; then
@@ -28,13 +31,17 @@ fi
 
 version=$1
 
+prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
+
 if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$') != ${version} ]]; then
     echo "Version string incorrect."
     exit 1
 fi
 
-if [[ $(git rev-parse --abbrev-ref HEAD) != master ]]; then
-    echo "You're not on master."
+# in branches that are not master we only allow prereleases
+if [[ ${this_branch} != ${main} ]] && [[ ${prerelease} == "" ]]; then
+    echo "Ordinary releases are only allowed in the '${main}' branch."
+    echo "If you really want to make a release from '${this_branch}', consider making a prerelease."
     exit 1
 fi
 
@@ -72,8 +79,6 @@ cargo publish --dry-run
 cd ..
 
 echo ">>> Updating version strings ..."
-
-prerelease=$(echo ${version} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/\4/')
 
 # we don't want to create a changelog entry for prereleases, which are solely
 # for internal testing purposes

@@ -2,11 +2,11 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Shows the contribution for each partonic channel
 
-Usage: pineappl channels [OPTIONS] <INPUT> <PDFSET>
+Usage: pineappl channels [OPTIONS] <INPUT> <CONV_FUNS>
 
 Arguments:
-  <INPUT>   Path to the input grid
-  <PDFSET>  LHAPDF id or name of the PDF set
+  <INPUT>      Path to the input grid
+  <CONV_FUNS>  LHAPDF ID(s) or name(s) of the PDF(s)/FF(s)
 
 Options:
   -a, --absolute             Show absolute numbers of each contribution
@@ -132,6 +132,14 @@ const DONT_SORT_STR: &str = "b   etal    c  size  c size  c size c  size  c size
 7    4  4.5 0 115.88 1 -7.29 2 0.01 3  -8.61 4 0.01
 ";
 
+const MISSING_CONV_FUN_STR: &str = "error: the following required arguments were not provided:
+  <CONV_FUNS>
+
+Usage: pineappl channels <INPUT> <CONV_FUNS>
+
+For more information, try '--help'.
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -154,6 +162,17 @@ fn default() {
         .assert()
         .success()
         .stdout(DEFAULT_STR);
+}
+
+#[test]
+fn missing_conv_fun() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["channels", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .assert()
+        .failure()
+        .stderr(MISSING_CONV_FUN_STR)
+        .stdout("");
 }
 
 #[test]

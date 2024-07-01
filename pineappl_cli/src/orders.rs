@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Parser, ValueHint};
@@ -12,9 +12,8 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset: String,
+    /// LHAPDF ID(s) or name(s) of the PDF(s)/FF(s).
+    conv_funs: ConvFuns,
     /// Show absolute numbers of each perturbative order.
     #[arg(long, short)]
     absolute: bool,
@@ -42,7 +41,7 @@ pub struct Opts {
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
-        let mut pdf = helpers::create_pdf(&self.pdfset)?;
+        let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         let mut orders: Vec<_> = grid
             .orders()
@@ -66,7 +65,7 @@ impl Subcommand for Opts {
             .map(|order| {
                 helpers::convolve(
                     &grid,
-                    &mut pdf,
+                    &mut conv_funs,
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],

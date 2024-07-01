@@ -1,6 +1,6 @@
-use super::helpers::{self, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::{Pdf, PdfSet};
 use prettytable::{cell, Row};
@@ -18,12 +18,13 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// LHAPDF id or name of the first PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset1: String,
-    /// LHAPDF id or name of the second PDF set.
-    #[arg(value_parser = helpers::parse_pdfset)]
-    pdfset2: String,
+    /// LHAPDF ID(s) or name(s) of the first PDF(s)/FF(s).
+    conv_funs1: ConvFuns,
+    /// LHAPDF ID(s) or name(s) of the second PDF(s)/FF(s).
+    conv_funs2: ConvFuns,
+    /// Index of the convolution functions for which the pull should be calculated.
+    #[arg(default_value = "0", long, value_name = "IDX")]
+    pull_from: usize,
     /// Confidence level in per cent.
     #[arg(default_value_t = lhapdf::CL_1_SIGMA, long)]
     cl: f64,
@@ -51,10 +52,10 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid = helpers::read_grid(&self.input)?;
 
-        let (set1, member1) = helpers::create_pdfset(&self.pdfset1)?;
-        let (set2, member2) = helpers::create_pdfset(&self.pdfset2)?;
-        let mut pdfset1 = set1.mk_pdfs()?;
-        let mut pdfset2 = set2.mk_pdfs()?;
+        let (set1, mut conv_funs1) =
+            helpers::create_conv_funs_for_set(&self.conv_funs1, self.pull_from)?;
+        let (set2, mut conv_funs2) =
+            helpers::create_conv_funs_for_set(&self.conv_funs2, self.pull_from)?;
 
         ThreadPoolBuilder::new()
             .num_threads(self.threads)
@@ -63,35 +64,41 @@ impl Subcommand for Opts {
 
         let limit = grid.channels().len().min(self.limit);
         let bin_limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
-        let results1: Vec<_> = pdfset1
+        let results1: Vec<_> = conv_funs1
             .par_iter_mut()
-            .flat_map(|pdf| {
-                helpers::convolve(
+            .map(|mut funs| {
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    pdf,
+                    &mut funs,
                     &self.orders,
                     &[],
                     &[],
                     1,
                     ConvoluteMode::Normal,
                     cfg,
-                )
+                ))
             })
+            .collect::<Result<_, _>>()?;
+        let results1: Vec<Vec<_>> = (0..results1[0].len())
+            .map(|bin| (0..results1.len()).map(|pdf| results1[pdf][bin]).collect())
             .collect();
-        let results2: Vec<_> = pdfset2
+        let results2: Vec<_> = conv_funs2
             .par_iter_mut()
-            .flat_map(|pdf| {
-                helpers::convolve(
+            .map(|mut funs| {
+                Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    pdf,
+                    &mut funs,
                     &self.orders,
                     &[],
                     &[],
                     1,
                     ConvoluteMode::Normal,
                     cfg,
-                )
+                ))
             })
+            .collect::<Result<_, _>>()?;
+        let results2: Vec<Vec<_>> = (0..results2[0].len())
+            .map(|bin| (0..results2.len()).map(|pdf| results2[pdf][bin]).collect())
             .collect();
 
         let mut title = Row::empty();
@@ -112,24 +119,16 @@ impl Subcommand for Opts {
 
         for (bin, limits) in bin_limits.iter().enumerate() {
             let (total, unc1, unc2) = {
-                let values1: Vec<_> = results1
-                    .iter()
-                    .skip(bin)
-                    .step_by(bin_limits.len())
-                    .copied()
-                    .collect();
-                let values2: Vec<_> = results2
-                    .iter()
-                    .skip(bin)
-                    .step_by(bin_limits.len())
-                    .copied()
-                    .collect();
-                let uncertainty1 = set1.uncertainty(&values1, self.cl, false)?;
-                let uncertainty2 = set2.uncertainty(&values2, self.cl, false)?;
+                let values1 = &results1[bin];
+                let values2 = &results2[bin];
+                let uncertainty1 = set1.uncertainty(values1, self.cl, false)?;
+                let uncertainty2 = set2.uncertainty(values2, self.cl, false)?;
 
                 // if requested use the given member instead of the central value
-                let diff = member2.map_or(uncertainty2.central, |member| values2[member])
-                    - member1.map_or(uncertainty1.central, |member| values1[member]);
+                let diff = self.conv_funs2.members[self.pull_from]
+                    .map_or(uncertainty2.central, |member| values2[member])
+                    - self.conv_funs1.members[self.pull_from]
+                        .map_or(uncertainty1.central, |member| values1[member]);
 
                 // use the uncertainties in the direction in which they point to each other
                 let (unc1, unc2) = if diff > 0.0 {
@@ -141,7 +140,7 @@ impl Subcommand for Opts {
             };
 
             let channel_results =
-                |member: Option<usize>, pdfset: &mut Vec<Pdf>, set: &PdfSet| -> Vec<f64> {
+                |member: Option<usize>, pdfset: &mut [Vec<Pdf>], set: &PdfSet| -> Vec<f64> {
                     if let Some(member) = member {
                         (0..grid.channels().len())
                             .map(|channel| {
@@ -167,14 +166,14 @@ impl Subcommand for Opts {
                     } else {
                         let results: Vec<_> = pdfset
                             .iter_mut()
-                            .flat_map(|pdf| {
+                            .flat_map(|mut pdf| {
                                 (0..grid.channels().len())
                                     .map(|channel| {
                                         let mut channel_mask = vec![false; grid.channels().len()];
                                         channel_mask[channel] = true;
                                         match helpers::convolve(
                                             &grid,
-                                            pdf,
+                                            &mut pdf,
                                             &self.orders,
                                             &[bin],
                                             &channel_mask,
@@ -209,8 +208,16 @@ impl Subcommand for Opts {
             let mut pull_tuples = if self.limit == 0 {
                 vec![]
             } else {
-                let channel_results1 = channel_results(member1, &mut pdfset1, &set1);
-                let channel_results2 = channel_results(member2, &mut pdfset2, &set2);
+                let channel_results1 = channel_results(
+                    self.conv_funs1.members[self.pull_from],
+                    &mut conv_funs1,
+                    &set1,
+                );
+                let channel_results2 = channel_results(
+                    self.conv_funs2.members[self.pull_from],
+                    &mut conv_funs2,
+                    &set2,
+                );
 
                 let pull_tuples: Vec<_> = channel_results2
                     .iter()
