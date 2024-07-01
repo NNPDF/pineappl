@@ -469,6 +469,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "equator"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c35da53b5a021d2484a7cc49b2ac7f2d840f8236a286f84202369bd338d761ea"
+dependencies = [
+ "equator-macro",
+]
+
+[[package]]
+name = "equator-macro"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bf679796c0322556351f287a51b49e48f7c4986e727b5dd78c972d30e2e16cc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -999,6 +1019,69 @@ dependencies = [
 ]
 
 [[package]]
+name = "nano-gemm"
+version = "0.1.2"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+dependencies = [
+ "equator",
+ "nano-gemm-c32",
+ "nano-gemm-c64",
+ "nano-gemm-codegen",
+ "nano-gemm-core",
+ "nano-gemm-f32",
+ "nano-gemm-f64",
+ "num-complex",
+]
+
+[[package]]
+name = "nano-gemm-c32"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+dependencies = [
+ "nano-gemm-codegen",
+ "nano-gemm-core",
+ "num-complex",
+]
+
+[[package]]
+name = "nano-gemm-c64"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+dependencies = [
+ "nano-gemm-codegen",
+ "nano-gemm-core",
+ "num-complex",
+]
+
+[[package]]
+name = "nano-gemm-codegen"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+
+[[package]]
+name = "nano-gemm-core"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+
+[[package]]
+name = "nano-gemm-f32"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+dependencies = [
+ "nano-gemm-codegen",
+ "nano-gemm-core",
+]
+
+[[package]]
+name = "nano-gemm-f64"
+version = "0.1.0"
+source = "git+https://github.com/sarah-ek/nano-gemm#86385315356ab81c66aabf70bcbe10ad9aa3ebae"
+dependencies = [
+ "nano-gemm-codegen",
+ "nano-gemm-core",
+]
+
+[[package]]
 name = "ndarray"
 version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1045,9 +1128,9 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.4.4"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ba157ca0885411de85d6ca030ba7e2a83a28636056c7c699b07c8b6f7383214"
+checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
 dependencies = [
  "num-traits",
 ]
@@ -1064,9 +1147,9 @@ dependencies = [
 
 [[package]]
 name = "num-traits"
-version = "0.2.17"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39e3200413f237f41ab11ad6d161bc7239c84dcb631773ccd7de3dfe4b5c267c"
+checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
 ]
@@ -1237,6 +1320,7 @@ dependencies = [
  "itertools",
  "lz4_flex",
  "managed-lhapdf",
+ "nano-gemm",
  "ndarray",
  "ndarray-npy",
  "num-complex",
