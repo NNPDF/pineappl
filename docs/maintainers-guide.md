@@ -35,6 +35,7 @@
 - `pineappl_py`: the crate that builds PineAPPL's Python interface,
   documentation at <https://pineappl.readthedocs.io>
 - `xtask`: crate for [cargo-xtask] commands
+- `.envrc`: [direnv] hooks (mainly enable Nix shell)
 - `.gitignore`: PineAPPL's Git ignore rules
 - `.readthedocs.yml`: configuration for PineAPPL's [Read-the-Docs] Python
   interface documentation
@@ -46,6 +47,9 @@
 - `README.md`: PineAPPL's repository README file. This file also serves as the
   homepage of [PineAPPL's website]
 - `_config.yml`: configuration file for PineAPPL's Github-pages website
+- `flake.lock`: Nix [flake lock file]
+- `flake.nix`: Nix [flake], which tracks cross-language dependencies to define a
+  reproducible build for the PineAPPL packages, and a suitable development shell
 - `install-capi.sh`: POSIX-compliant shell script to download and install
   PineAPPL's pre-built CAPI
 
@@ -59,6 +63,9 @@
 [lock file]: https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html
 [license v3]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [PineAPPL's website]: https://nnpdf.github.io/pineappl/
+[flake]: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#flake-format
+[flake lock file]: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#lock-files
+[direnv]: https://direnv.net/
 
 ## Abbreviations and terminology
 
