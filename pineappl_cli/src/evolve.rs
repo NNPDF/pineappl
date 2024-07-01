@@ -424,7 +424,8 @@ mod eko {
 #[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
-    eko: &Path,
+    eko_a: &Path,
+    eko_b: &Path,
     use_alphas_from: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
@@ -445,43 +446,86 @@ fn evolve_grid(
         })
         .collect();
 
-    let mut eko_slices = EkoSlices::new(eko)?;
+    let mut eko_slices_a = EkoSlices::new(eko_a)?;
+    let mut eko_slices_b = EkoSlices::new(eko_b)?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
+    // TODO: Check that cloning the `alphas_table` does not cause performance
+    // issue when cloned.
     if use_old_evolve {
         if let EkoSlices::V0 {
             fac1,
             info,
             operator,
-        } = eko_slices
+        } = eko_slices_a
         {
-            let op_info = OperatorInfo {
+            // TODO: Check if the `operator` object is actually mutable
+            let original_operator = operator;
+
+            let op_info_a = OperatorInfo {
                 fac0: info.fac0,
                 pids0: info.pids0.clone(),
                 x0: info.x0.clone(),
                 fac1,
                 pids1: info.pids1.clone(),
                 x1: info.x1.clone(),
-                ren1: alphas_table.ren1,
-                alphas: alphas_table.alphas,
+                ren1: alphas_table.ren1.clone(),
+                alphas: alphas_table.alphas.clone(),
                 xir,
                 xif,
                 pid_basis: info.pid_basis,
             };
 
-            #[allow(deprecated)]
-            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
+            if let EkoSlices::V0 {
+                fac1,
+                info,
+                operator,
+            } = eko_slices_b
+            {
+                // TODO: change the info object
+                let op_info_b = OperatorInfo {
+                    fac0: info.fac0,
+                    pids0: info.pids0.clone(),
+                    x0: info.x0.clone(),
+                    fac1,
+                    pids1: info.pids1.clone(),
+                    x1: info.x1.clone(),
+                    ren1: alphas_table.ren1.clone(),
+                    alphas: alphas_table.alphas.clone(),
+                    xir,
+                    xif,
+                    pid_basis: info.pid_basis,
+                };
+
+                #[allow(deprecated)]
+                Ok(grid.evolve(
+                    original_operator.view(),
+                    operator.view(),
+                    &op_info_a,
+                    &op_info_b,
+                    &order_mask,
+                )?)
+            } else {
+                unimplemented!();
+            }
         } else {
             unimplemented!();
         }
     } else {
-        Ok(grid.evolve_with_slice_iter(&mut eko_slices, &order_mask, (xir, xif), &alphas_table)?)
+        Ok(grid.evolve_with_slice_iter(
+            &mut eko_slices_a,
+            &mut eko_slices_b,
+            &order_mask,
+            (xir, xif),
+            &alphas_table,
+        )?)
     }
 }
 
 #[cfg(not(feature = "evolve"))]
 fn evolve_grid(
     _: &Grid,
+    _: &Path,
     _: &Path,
     _: &Pdf,
     _: &[(u32, u32)],
@@ -508,6 +552,9 @@ pub struct Opts {
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
     conv_funs: ConvFuns,
+    /// Additional path to the 2nd evolution kernel operator.
+    #[arg(value_hint = ValueHint::FilePath, long)]
+    ekob: Option<PathBuf>,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -553,15 +600,31 @@ impl Subcommand for Opts {
             cfg,
         );
 
-        let fk_table = evolve_grid(
-            &grid,
-            &self.eko,
-            &conv_funs[cfg.use_alphas_from],
-            &self.orders,
-            self.xir,
-            self.xif,
-            self.use_old_evolve,
-        )?;
+        let fk_table: FkTable;
+        if let Some(ekob) = &self.ekob {
+            fk_table = evolve_grid(
+                &grid,
+                &self.eko,
+                ekob,
+                &conv_funs[cfg.use_alphas_from],
+                &self.orders,
+                self.xir,
+                self.xif,
+                self.use_old_evolve,
+            )?;
+        } else {
+            fk_table = evolve_grid(
+                &grid,
+                &self.eko,
+                &self.eko,
+                &conv_funs[cfg.use_alphas_from],
+                &self.orders,
+                self.xir,
+                self.xif,
+                self.use_old_evolve,
+            )?;
+        }
+
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
             &mut conv_funs,

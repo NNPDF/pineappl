@@ -454,7 +454,8 @@ impl PyGrid {
     ///     produced FK table
     pub fn evolve(
         &self,
-        operator: PyReadonlyArray5<f64>,
+        operator_a: PyReadonlyArray5<f64>,
+        operator_b: PyReadonlyArray5<f64>,
         fac0: f64,
         pids0: PyReadonlyArray1<i32>,
         x0: PyReadonlyArray1<f64>,
@@ -467,7 +468,21 @@ impl PyGrid {
         lumi_id_types: String,
         order_mask: PyReadonlyArray1<bool>,
     ) -> PyFkTable {
-        let op_info = OperatorInfo {
+        let op_info_a = OperatorInfo {
+            fac0: fac0,
+            pids0: pids0.to_vec().unwrap(),
+            x0: x0.to_vec().unwrap(),
+            fac1: fac1.to_vec().unwrap(),
+            pids1: pids1.to_vec().unwrap(),
+            x1: x1.to_vec().unwrap(),
+            ren1: ren1.to_vec().unwrap(),
+            alphas: alphas.to_vec().unwrap(),
+            xir: xi.0,
+            xif: xi.1,
+            pid_basis: lumi_id_types.parse().unwrap(),
+        };
+
+        let op_info_b = OperatorInfo {
             fac0: fac0,
             pids0: pids0.to_vec().unwrap(),
             x0: x0.to_vec().unwrap(),
@@ -484,8 +499,10 @@ impl PyGrid {
         let evolved_grid = self
             .grid
             .evolve(
-                operator.as_array(),
-                &op_info,
+                operator_a.as_array(),
+                operator_b.as_array(),
+                &op_info_a,
+                &op_info_b,
                 order_mask.as_slice().unwrap(),
             )
             .expect("Nothing returned from evolution.");

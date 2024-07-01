@@ -14,6 +14,7 @@ Arguments:
   <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s)
 
 Options:
+      --ekob <EKOB>          Additional path to the 2nd evolution kernel operator
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
@@ -169,6 +170,16 @@ const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. dif
 const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel. diff
 -+-----------+-----------+-------------
 0 2.1596192e2 2.1590144e2 -2.8005486e-4
+";
+
+const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 3.2222870e2 3.2226654e2  1.1745654e-4
+1 1.8038157e3 1.8037829e3 -1.8192479e-5
+2 3.4767572e3 3.4762728e3 -1.3933339e-4
+3 4.3157563e3 4.3154783e3 -6.4409623e-5
+4 3.6443947e3 3.6443481e3 -1.2807044e-5
+5 5.8386697e2 5.8336795e2 -8.5468266e-4
 ";
 
 #[test]
@@ -481,4 +492,23 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
         .assert()
         .success()
         .stdout(CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR);
+}
+
+#[test]
+fn star_wmwp_510gev_wm_al_pol() {
+    let output = NamedTempFile::new("fktable6.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
+            output.path().to_str().unwrap(),
+            "240608-tr-pol-nlo-100,NNPDF40_nlo_pch_as_01180",
+            "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
+        ])
+        .assert()
+        .success()
+        .stdout(STAR_WMWP_510GEV_WM_AL_POL);
 }
