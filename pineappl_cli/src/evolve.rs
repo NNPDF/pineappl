@@ -555,9 +555,6 @@ pub struct Opts {
     /// Additional path to the 2nd evolution kernel operator.
     #[arg(value_hint = ValueHint::FilePath, long)]
     ekob: Option<PathBuf>,
-    /// LHAPDF id or name of the 2nd PDF set to check the converted grid with.
-    #[arg(value_parser = helpers::parse_pdfset, long)]
-    pdfsetb: Option<String>,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -592,6 +589,16 @@ impl Subcommand for Opts {
 
         let grid = helpers::read_grid(&self.input)?;
         let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
+        let results = helpers::convolve_scales(
+            &grid,
+            &mut conv_funs,
+            &self.orders,
+            &[],
+            &[],
+            &[(self.xir, self.xif)],
+            ConvoluteMode::Normal,
+            cfg,
+        );
 
         let fk_table: FkTable;
         if let Some(ekob) = &self.ekob {
@@ -599,7 +606,7 @@ impl Subcommand for Opts {
                 &grid,
                 &self.eko,
                 ekob,
-                &pdf,
+                &conv_funs[cfg.use_alphas_from],
                 &self.orders,
                 self.xir,
                 self.xif,
@@ -610,7 +617,7 @@ impl Subcommand for Opts {
                 &grid,
                 &self.eko,
                 &self.eko,
-                &pdf,
+                &conv_funs[cfg.use_alphas_from],
                 &self.orders,
                 self.xir,
                 self.xif,
@@ -618,56 +625,16 @@ impl Subcommand for Opts {
             )?;
         }
 
-        let results: Vec<f64>;
-        let evolved_results: Vec<f64>;
-        if let Some(tmp_pdfb) = &self.pdfsetb {
-            let mut pdfb = helpers::create_pdf(tmp_pdfb)?;
-            results = helpers::convolve_scales(
-                &grid,
-                &mut conv_funs,
-                &self.orders,
-                &[],
-                &[],
-                &[(self.xir, self.xif)],
-                ConvoluteMode::Normal,
-                cfg,
-                Some(&mut pdfb),
-            );
-            evolved_results = helpers::convolve_scales(
-                fk_table.grid(),
-                &mut pdf,
-                &[],
-                &[],
-                &[],
-                &[(1.0, 1.0)],
-                ConvoluteMode::Normal,
-                cfg,
-                Some(&mut pdfb),
-            );
-        } else {
-            results = helpers::convolve_scales(
-                &grid,
-                &mut conv_funs[cfg.use_alphas_from],
-                &self.orders,
-                &[],
-                &[],
-                &[(self.xir, self.xif)],
-                ConvoluteMode::Normal,
-                cfg,
-                None,
-            );
-            evolved_results = helpers::convolve_scales(
-                fk_table.grid(),
-                &mut conv_funs,
-                &[],
-                &[],
-                &[],
-                &[(1.0, 1.0)],
-                ConvoluteMode::Normal,
-                cfg,
-                None,
-            );
-        }
+        let evolved_results = helpers::convolve_scales(
+            fk_table.grid(),
+            &mut conv_funs,
+            &[],
+            &[],
+            &[],
+            &[(1.0, 1.0)],
+            ConvoluteMode::Normal,
+            cfg,
+        );
 
         // if both grids don't have the same number of bins there's a bug in the program
         assert_eq!(results.len(), evolved_results.len());

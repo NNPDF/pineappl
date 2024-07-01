@@ -15,7 +15,6 @@ Arguments:
 
 Options:
       --ekob <EKOB>          Additional path to the 2nd evolution kernel operator
-      --pdfsetb <PDFSETB>    LHAPDF id or name of the 2nd PDF set to check the converted grid with
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
@@ -506,9 +505,8 @@ fn star_wmwp_510gev_wm_al_pol() {
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
-            "240608-tr-pol-nlo-100",
+            "240608-tr-pol-nlo-100,NNPDF40_nlo_pch_as_01180",
             "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
-            "--pdfsetb=NNPDF40_nlo_pch_as_01180",
         ])
         .assert()
         .success()

@@ -190,7 +190,6 @@ pub fn convolve_scales(
     scales: &[(f64, f64)],
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
-    lhapdfb: Option<&mut Pdf>,
 ) -> Vec<f64> {
     let orders: Vec<_> = grid
         .orders()
@@ -345,7 +344,6 @@ pub fn convolve(
         &SCALES_VECTOR[0..scales],
         mode,
         cfg,
-        None,
     )
 }
 
