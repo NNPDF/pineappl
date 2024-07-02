@@ -3,10 +3,10 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/version.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
-`PineAPPL` and [its interface](https://docs.rs/pineappl/) is written in
-[Rust](https://www.rust-lang.org/), but besides Rust it also offers interfaces
-for the most popular programming languages: C, C++ and Fortran through its C
-API and Python through [PyO3](https://pyo3.rs/).
+`PineAPPL` and its interface is written in [Rust](https://www.rust-lang.org/),
+but besides Rust PineAPPL also offers interfaces for the most popular
+programming languages: C, C++ and Fortran via the C API and Python through
+[PyO3](https://pyo3.rs/).
 
 Furthermore the program `pineappl` can be installed that will allow you to
 perform many operations on grids in your favorite shell: the command-line
@@ -19,22 +19,22 @@ are a few guidelines:
 - if you're planning to use PineAPPL with Python and/or within the NNPDF
   fitting framework, you'll need the [Python interface](#python);
 - if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll likely
-  need the [CAPI](#c-c-and-fortran-the-capi);
+  need the [CAPI](#capi-interface-for-c-c-and-fortran);
 - if you want to quickly produce predictions, plots and small analyses install
   the [CLI](#cli-pineappl-for-your-shell).
 
-## C, C++ and Fortran: the CAPI
+## CAPI: Interface for C, C++ and Fortran
 
 You can install the CAPI in two different ways:
 
-- [using pre-built binaries](#using-pre-built-binaries), which doesn't require
-  installing Rust or any compilation, or
-- alternatively [from source](#from-source), which needs an installation of
-  Rust.
+- [using pre-built libraries](#using-pre-built-libraries), which doesn't
+  require installing any other dependencies, or
+- alternatively you can [build it from source](#building-the-capi-from-source),
+  but this requires Rust and Cargo.
 
-### Using pre-built binaries
+### Using pre-built libraries
 
-The fastest way to install the CAPI is to download the pre-built binaries:
+The fastest way to install the CAPI is to download the pre-built libraries:
 
     curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh
 
@@ -53,9 +53,9 @@ After the installation the script will check whether certain environment
 variables are set correctly and will complain if this is not the case. Read and
 follow the instructions of the script.
 
-### From source
+### Building the CAPI from source
 
-If you want to build the CAPI from source instead, you first need to
+If you want to build the CAPI from its sources instead, you first need to
 
 0. Install Rust, see the [instructions](#rust) below.
 1. Then install `cargo-c`, which is required for the next step:
