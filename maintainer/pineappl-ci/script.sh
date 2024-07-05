@@ -40,8 +40,7 @@ rm -r /usr/local/cargo/registry
 set -x
 
 # install LHAPDF
-curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" > "LHAPDF-${LHAPDF_V}.tar.gz"
-tar xzf "LHAPDF-${LHAPDF_V}.tar.gz"
+curl -L "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" | tar xzf -
 cd LHAPDF-${LHAPDF_V}
 # compile static libraries with PIC to make statically linking PineAPPL's CLI work
 # see also https://users.rust-lang.org/t/why-does-crelocation-model-dynamic-no-pic-help-although-it-shouldnt/109012
