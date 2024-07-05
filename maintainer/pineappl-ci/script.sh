@@ -65,7 +65,7 @@ ldconfig
 cd ..
 
 # install APPLgrid
-curl "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
+curl -L "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
 cd applgrid-${APPLGRID_V}
 # compile static libraries with PIC to make statically linking PineAPPL's CLI work
 ./configure --without-root --with-pic=yes
