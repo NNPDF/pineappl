@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - pycli
+      - update-container-2
 
 env:
   # our GLIBC version is too old to support Node 20:
