@@ -52,6 +52,9 @@ for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180
     curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 done
 
+# install Tanjona's polarized PDF set
+curl "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
+
 # install zlib compiled with `-fPIC`
 curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
 cd zlib-${ZLIB_V}
