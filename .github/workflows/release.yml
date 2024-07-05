@@ -9,6 +9,8 @@ on:
 env:
   # this is make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
+  # avoid node20, which doesn't run in our container: https://github.com/actions/checkout/issues/1809
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   # create a release on github
