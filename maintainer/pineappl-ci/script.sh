@@ -10,10 +10,11 @@ cc -Q -v test.c
 echo "---"
 
 # install rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none -y
 
 for version in ${RUST_V}; do
     # the last command will be the default
+    rustup install ${version} --profile minimal
     rustup default ${version}
     # install LLVM tools needed for code coverage
     # this is now called `llvm-tools`, but for 1.64 it's still called `llvm-tools-preview`
