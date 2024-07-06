@@ -9,9 +9,6 @@ on:
 env:
   # this is make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
-  # our GLIBC version is too old to support Node 20:
-  # https://github.blog/changelog/2024-03-07-github-actions-all-actions-will-run-on-node20-instead-of-node16-by-default/
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   # create a release on github
@@ -164,8 +161,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-gnu]
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Compile library
         run: |
           cd pineappl_capi
@@ -188,8 +184,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-gnu]
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Compile binary
         run: |
           cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
@@ -324,8 +319,7 @@ jobs:
     if: "startsWith(github.ref, 'refs/tags/')"
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Publish all crates
         env:
