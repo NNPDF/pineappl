@@ -1,4 +1,6 @@
-FROM quay.io/pypa/manylinux2014_x86_64
+# with debian:10 Rust has linking problems, see this description:
+# https://github.com/rust-lang/rust/issues/79946#issuecomment-1693289299
+FROM debian:11-slim
 
 ARG APPLGRID_V=1.6.36
 # must be at least 0.9.16, see https://github.com/NNPDF/pineappl/pull/242#issuecomment-1705371291
