@@ -9,9 +9,6 @@ on:
 env:
   # this is make the `gh` binary work
   GH_TOKEN: ${{ github.token }}
-  # our GLIBC version is too old to support Node 20:
-  # https://github.blog/changelog/2024-03-07-github-actions-all-actions-will-run-on-node20-instead-of-node16-by-default/
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   # create a release on github
@@ -41,8 +38,7 @@ jobs:
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
-        # as long as we need v3 in `capi-linux` we also must use it here
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
@@ -91,8 +87,7 @@ jobs:
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
-        # as long as we need v3 in `cli-linux` we also must use it here
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
@@ -164,8 +159,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-gnu]
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Compile library
         run: |
           cd pineappl_capi
@@ -175,8 +169,7 @@ jobs:
           # print the glibc version requirement
           objdump -T lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
       - name: Upload artifact
-        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
@@ -188,8 +181,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-gnu]
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Compile binary
         run: |
           cargo install --all-features --locked --path pineappl_cli --root=prefix --target=${{ matrix.target }} -vv
@@ -201,8 +193,7 @@ jobs:
           # print the dynamically linked libraries
           ldd bin/pineappl
       - name: Upload artifact
-        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
@@ -218,11 +209,71 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          container: ghcr.io/nnpdf/pineappl-ci:latest
           # `--find-interpreter` is needed to generate wheels for *all* Python versions
           args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
           sccache: "true"
           manylinux: auto
+          before-script-linux: |
+            export APPLGRID_V=1.6.36
+            export FASTNLO_V=2.5.0-2826
+            export LHAPDF_V=6.5.4
+            export ZLIB_V=1.3.1
+            export APPL_IGRID_DIR="/usr/local/src/applgrid-${APPLGRID_V}/src"
+            # install LHAPDF
+            curl -L "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" | tar xzf -
+            cd LHAPDF-${LHAPDF_V}
+            # compile static libraries with PIC to make statically linking PineAPPL's CLI work
+            # see also https://users.rust-lang.org/t/why-does-crelocation-model-dynamic-no-pic-help-although-it-shouldnt/109012
+            ./configure --disable-python --disable-shared --with-pic=yes
+            make -j V=1
+            make install
+            ldconfig
+            cd ..
+            # install zlib; we need to link against it statically
+            curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
+            cd zlib-${ZLIB_V}
+            CFLAGS=-fPIC ./configure --static --prefix=/usr/local
+            make -j
+            make install
+            ldconfig
+            cd ..
+            # install APPLgrid
+            curl -L "https://applgrid.hepforge.org/downloads?f=applgrid-${APPLGRID_V}.tgz" | tar xzf -
+            cd applgrid-${APPLGRID_V}
+            patch -p0 <<EOF
+            --- src/combine.cxx	2024-04-23 16:35:27.000000000 +0200
+            +++ src/combine.cxx.new	2024-07-06 12:29:12.813303074 +0200
+            @@ -56,12 +56,6 @@
+             } 
+             
+             
+            -double integral( appl::TH1D* h ) { 
+            -  double d = 0;
+            -  for ( int i=0 ; i<h->GetNbinsX() ; i++ ) d += h->GetBinContent(i+1);
+            -  return d;
+            -}
+            -
+             
+             void print( appl::TH1D* h ) { 
+               for ( int i=1 ; i<=h->GetNbinsX() ; i++ ) std::cout << h->GetBinContent(i) << " ";
+            EOF
+            # compile static libraries with PIC to make statically linking PineAPPL's CLI work
+            ./configure --without-root --disable-shared --with-pic=yes
+            make -j
+            make install
+            ldconfig
+            mkdir -p ${APPL_IGRID_DIR}
+            cp src/*.h ${APPL_IGRID_DIR}
+            cd ..
+            # install fastNLO
+            curl "https://fastnlo.hepforge.org/code/v25/fastnlo_toolkit-${FASTNLO_V}.tar.gz" | tar xzf -
+            cd fastnlo_toolkit-${FASTNLO_V}
+            # compile static libraries with PIC to make statically linking PineAPPL's CLI work
+            ./configure --prefix=/usr/local/ --disable-shared --with-pic=yes
+            make -j V=1
+            make install
+            ldconfig
+            cd ..
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -237,7 +288,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # version must match the one used in `actions/upload-artifact`
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Create new release
@@ -264,8 +315,7 @@ jobs:
     if: "startsWith(github.ref, 'refs/tags/')"
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Publish all crates
         env:
