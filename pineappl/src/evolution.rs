@@ -10,8 +10,7 @@ use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::Itertools;
-use ndarray::linalg;
-use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, Axis};
+use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView2, ArrayView4, Axis};
 use std::iter;
 
 /// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
@@ -168,6 +167,39 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
         .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
         // and if the particle IDs are encoded using PDG MC IDs
         && grid.pid_basis() == PidBasis::Pdg
+}
+
+fn nano_gemm_mat_mul(
+    alpha: f64,
+    a: ArrayView2<f64>,
+    b: ArrayView2<f64>,
+    beta: f64,
+    c: &mut Array2<f64>,
+) {
+    use nano_gemm::planless;
+
+    let ((m, k), (_, n)) = (a.dim(), b.dim());
+
+    unsafe {
+        planless::execute_f64(
+            m,
+            n,
+            k,
+            c.as_mut_ptr(),
+            c.strides()[0],
+            c.strides()[1],
+            a.as_ptr(),
+            a.strides()[0],
+            a.strides()[1],
+            b.as_ptr(),
+            b.strides()[0],
+            b.strides()[1],
+            beta,
+            alpha,
+            false,
+            false,
+        );
+    }
 }
 
 type Pid01IndexTuples = Vec<(usize, usize)>;
@@ -602,8 +634,8 @@ pub(crate) fn evolve_slice_with_two(
                             .map(|(opa, opb)| (fk_table, opa, opb))
                     },
                 ) {
-                    linalg::general_mat_mul(1.0, &array, &opb.t(), 0.0, &mut tmp);
-                    linalg::general_mat_mul(factor, opa, &tmp, 1.0, fk_table);
+                    nano_gemm_mat_mul(1.0, array.view(), opb.t(), 0.0, &mut tmp);
+                    nano_gemm_mat_mul(factor, opa.view(), tmp.view(), 1.0, fk_table);
                 }
             }
         }
