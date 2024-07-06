@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed CI to build CAPI and CLI
 
+### Changed
+
+- PineAPPL's CAPI requires now GLIBC 2.29 since 0.8.0
+
 ## [0.8.0] - 05/07/2024
 
 ### Added
