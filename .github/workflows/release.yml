@@ -38,8 +38,7 @@ jobs:
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
-        # as long as we need v3 in `capi-linux` we also must use it here
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
@@ -88,8 +87,7 @@ jobs:
           cd prefix
           tar czf ../pineappl_cli-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
-        # as long as we need v3 in `cli-linux` we also must use it here
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
@@ -171,8 +169,7 @@ jobs:
           # print the glibc version requirement
           objdump -T lib/libpineappl_capi.so | grep GLIBC | sed 's/.*GLIBC_\([.0-9]*\).*/\1/g' | sort -Vu | tail -1
       - name: Upload artifact
-        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_capi-${{ matrix.target }}
           path: pineappl_capi-${{ matrix.target }}.tar.gz
@@ -196,8 +193,7 @@ jobs:
           # print the dynamically linked libraries
           ldd bin/pineappl
       - name: Upload artifact
-        # upload-artifact@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pineappl_cli-${{ matrix.target }}
           path: pineappl_cli-${{ matrix.target }}.tar.gz
@@ -292,7 +288,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # version must match the one used in `actions/upload-artifact`
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Create new release
