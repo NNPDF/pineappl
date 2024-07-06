@@ -23,8 +23,7 @@ for version in ${RUST_V}; do
     rustup install ${version} --profile minimal
     rustup default ${version}
     # install LLVM tools needed for code coverage
-    # this is now called `llvm-tools`, but for 1.64 it's still called `llvm-tools-preview`
-    rustup component add llvm-tools-preview
+    rustup component add llvm-tools
 done
 
 # install cargo-c needed for the CAPI
