@@ -227,12 +227,12 @@ impl PyFkTable {
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
-        xfx: &PyAny,
+        xfx: &Bound<'py, PyAny>,
         bin_indices: Option<PyReadonlyArray1<usize>>,
         lumi_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
+        let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.fk_table

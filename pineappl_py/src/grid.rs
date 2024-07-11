@@ -386,16 +386,17 @@ impl PyGrid {
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
-        xfx: &PyAny,
-        alphas: &PyAny,
+        xfx: &Bound<'py, PyAny>,
+        alphas: &Bound<'py, PyAny>,
         order_mask: PyReadonlyArray1<bool>,
         bin_indices: PyReadonlyArray1<usize>,
         lumi_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
-        let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
+        let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
+        // `(q2, )` must have the comma to make it a Rust tuple
+        let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
         self.grid
             .convolve(
@@ -449,19 +450,20 @@ impl PyGrid {
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
-        xfx1: &PyAny,
+        xfx1: &Bound<'py, PyAny>,
         pdg_id2: i32,
-        xfx2: &PyAny,
-        alphas: &PyAny,
+        xfx2: &Bound<'py, PyAny>,
+        alphas: &Bound<'py, PyAny>,
         order_mask: PyReadonlyArray1<bool>,
         bin_indices: PyReadonlyArray1<usize>,
         lumi_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
-        let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
-        let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
+        let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
+        let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
+        // `(q2, )` must have the comma to make it a Rust tuple
+        let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
         let mut lumi_cache =
             LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
         self.grid
@@ -577,9 +579,9 @@ impl PyGrid {
     /// Returns
     /// -------
     /// TODO
-    pub fn evolve_with_slice_iter(
+    pub fn evolve_with_slice_iter<'py>(
         &self,
-        slices: &PyIterator,
+        slices: &Bound<'py, PyIterator>,
         order_mask: PyReadonlyArray1<bool>,
         xi: (f64, f64),
         ren1: Vec<f64>,
