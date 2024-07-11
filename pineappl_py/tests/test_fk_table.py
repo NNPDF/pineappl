@@ -34,3 +34,23 @@ class TestFkTable:
             fk.convolve_with_one(2212, lambda pid, x, q2: 1),
             [5e7 / 9999, 0.0],
         )
+
+        info = pineappl.grid.PyOperatorSliceInfo(
+            1.0, [], [], 1.0, [], [], pineappl.grid.PyPidBasis.Pdg
+        )
+
+        # TODO: write a better test
+        try:
+            g.evolve_with_slice_iter(
+                iter(
+                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                ),
+                np.array([], dtype=bool),
+                (1.0, 1.0),
+                [],
+                [],
+            )
+
+            assert False
+        except:
+            assert True

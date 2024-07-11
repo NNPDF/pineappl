@@ -20,6 +20,8 @@ fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<evolution::PyEvolveInfo>()?;
     m.add_class::<grid::PyGrid>()?;
     m.add_class::<grid::PyOrder>()?;
+    m.add_class::<grid::PyOperatorSliceInfo>()?;
+    m.add_class::<grid::PyPidBasis>()?;
     m.add_class::<lumi::PyLumiEntry>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV1>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV2>()?;
