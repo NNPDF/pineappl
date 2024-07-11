@@ -222,11 +222,11 @@ impl PySubgridEnum {
             .collect()
     }
     /// Return the array of x1 of a subgrid
-    pub fn x1_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        PyArray1::from_slice(py, &self.subgrid_enum.x1_grid())
+    pub fn x1_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        PyArray1::from_slice_bound(py, &self.subgrid_enum.x1_grid())
     }
     /// Return the array of x2 of a subgrid
-    pub fn x2_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        PyArray1::from_slice(py, &self.subgrid_enum.x2_grid())
+    pub fn x2_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        PyArray1::from_slice_bound(py, &self.subgrid_enum.x2_grid())
     }
 }
