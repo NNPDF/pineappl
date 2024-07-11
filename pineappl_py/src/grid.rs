@@ -138,14 +138,14 @@ impl PyOrder {
         max_al: u32,
         logs: bool,
         py: Python<'py>,
-    ) -> &'py PyArray1<bool> {
+    ) -> Bound<'py, PyArray1<bool>> {
         Order::create_mask(
             &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
             max_as,
             max_al,
             logs,
         )
-        .into_pyarray(py)
+        .into_pyarray_bound(py)
     }
 }
 
@@ -393,7 +393,7 @@ impl PyGrid {
         lumi_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
-    ) -> &'py PyArray1<f64> {
+    ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
@@ -405,7 +405,7 @@ impl PyGrid {
                 &lumi_mask.to_vec().unwrap(),
                 &xi,
             )
-            .into_pyarray(py)
+            .into_pyarray_bound(py)
     }
 
     /// Convolute grid with two pdfs.
@@ -458,7 +458,7 @@ impl PyGrid {
         lumi_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
-    ) -> &'py PyArray1<f64> {
+    ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
         let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |q2| f64::extract(alphas.call1((q2,)).unwrap()).unwrap();
@@ -472,7 +472,7 @@ impl PyGrid {
                 &lumi_mask.to_vec().unwrap(),
                 &xi,
             )
-            .into_pyarray(py)
+            .into_pyarray_bound(py)
     }
 
     /// Convolute with grid with an evolution operator.
@@ -700,8 +700,8 @@ impl PyGrid {
     /// -------
     ///     np.ndarray
     ///         bin normalizations
-    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.grid.bin_info().normalizations().into_pyarray(py)
+    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.grid.bin_info().normalizations().into_pyarray_bound(py)
     }
 
     /// Extract the left edges of a specific bin dimension.
@@ -717,8 +717,8 @@ impl PyGrid {
     /// -------
     ///     numpy.ndarray(float) :
     ///         left edges of bins
-    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.grid.bin_info().left(dimension).into_pyarray(py)
+    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.grid.bin_info().left(dimension).into_pyarray_bound(py)
     }
 
     /// Extract the right edges of a specific bin dimension.
@@ -734,8 +734,8 @@ impl PyGrid {
     /// -------
     ///     numpy.ndarray(float) :
     ///         right edges of bins
-    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.grid.bin_info().right(dimension).into_pyarray(py)
+    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.grid.bin_info().right(dimension).into_pyarray_bound(py)
     }
 
     /// Return the number of bins.

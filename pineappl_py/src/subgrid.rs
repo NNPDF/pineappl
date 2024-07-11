@@ -205,8 +205,8 @@ impl PySubgridEnum {
     }
 
     /// Return the dense array of the subgrid.
-    pub fn to_array3<'py>(&self, py: Python<'py>) -> &'py PyArray3<f64> {
-        Array3::from(&self.subgrid_enum).into_pyarray(py)
+    pub fn to_array3<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray3<f64>> {
+        Array3::from(&self.subgrid_enum).into_pyarray_bound(py)
     }
 
     pub fn into(&self) -> Self {

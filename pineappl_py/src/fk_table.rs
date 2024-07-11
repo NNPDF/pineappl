@@ -63,8 +63,8 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray :
     ///         4-dimensional tensor with indixes: bin, lumi, x1, x2
-    pub fn table<'a>(&self, py: Python<'a>) -> PyResult<&'a PyArray4<f64>> {
-        Ok(self.fk_table.table().into_pyarray(py))
+    pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray4<f64>>> {
+        Ok(self.fk_table.table().into_pyarray_bound(py))
     }
 
     /// Get number of bins.
@@ -83,8 +83,8 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray
     ///         bin normalizations
-    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.fk_table.bin_normalizations().into_pyarray(py)
+    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.fk_table.bin_normalizations().into_pyarray_bound(py)
     }
 
     /// Extract the number of dimensions for bins.
@@ -110,8 +110,8 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray(float) :
     ///         left edges of bins
-    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.fk_table.bin_left(dimension).into_pyarray(py)
+    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.fk_table.bin_left(dimension).into_pyarray_bound(py)
     }
 
     /// Extract the right edges of a specific bin dimension.
@@ -125,8 +125,8 @@ impl PyFkTable {
     /// -------
     ///     numpy.ndarray(float) :
     ///         right edges of bins
-    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.fk_table.bin_right(dimension).into_pyarray(py)
+    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.fk_table.bin_right(dimension).into_pyarray_bound(py)
     }
 
     /// Get metadata values stored in the grid.
@@ -178,8 +178,8 @@ impl PyFkTable {
     /// -------
     ///     x_grid : numpy.ndarray(float)
     ///         interpolation grid
-    pub fn x_grid<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.fk_table.x_grid().into_pyarray(py)
+    pub fn x_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.fk_table.x_grid().into_pyarray_bound(py)
     }
 
     /// Write grid to file.
@@ -231,7 +231,7 @@ impl PyFkTable {
         bin_indices: Option<PyReadonlyArray1<usize>>,
         lumi_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
-    ) -> &'py PyArray1<f64> {
+    ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| f64::extract(xfx.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
@@ -241,7 +241,7 @@ impl PyFkTable {
                 &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
                 &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
             )
-            .into_pyarray(py)
+            .into_pyarray_bound(py)
     }
 
     /// Optimize FK table storage
