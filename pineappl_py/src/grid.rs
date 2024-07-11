@@ -12,7 +12,9 @@ use super::lumi::PyLumiEntry;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5};
+use numpy::{
+    IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5,
+};
 
 use std::collections::HashMap;
 use std::fs::File;

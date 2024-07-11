@@ -2,7 +2,7 @@ use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
 
-use numpy::{IntoPyArray, PyArray1, PyArray4, PyReadonlyArray1};
+use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 use std::collections::HashMap;
