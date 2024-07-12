@@ -1,6 +1,6 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
@@ -476,7 +476,7 @@ fn evolve_grid(
             #[allow(deprecated)]
             Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
         } else {
-            unimplemented!();
+            bail!("`--use-old-evolve` can only be used with a specific EKO format")
         }
     } else {
         Ok(grid.evolve_with_slice_iter2(
