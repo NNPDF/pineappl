@@ -13,7 +13,7 @@ use std::path::Path;
 use std::process::ExitCode;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
     pub members: Vec<Option<usize>>,
@@ -75,9 +75,9 @@ pub fn create_conv_funs_for_set(
             Ok(PdfSet::new(
                 &lhapdf::lookup_pdf(lhaid)
                     .map(|(set, _)| set)
-                    .ok_or(anyhow!(
-                        "no convolution function for LHAID = `{lhaid}` found"
-                    ))?,
+                    .ok_or_else(|| {
+                        anyhow!("no convolution function for LHAID = `{lhaid}` found")
+                    })?,
             )?)
         },
     )?;
