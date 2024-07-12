@@ -1386,7 +1386,8 @@ impl Grid {
         )
     }
 
-    #[deprecated(since = "0.8.1", note = "use evolve_slice_with_two2 instead")]
+    /// Do not use this method, it is scheduled to be removed before this branch is merged.
+    #[deprecated(since = "0.8.0", note = "use evolve_slice_with_two2 instead")]
     pub fn evolve2(
         &self,
         operator_a: ArrayView5<f64>,
