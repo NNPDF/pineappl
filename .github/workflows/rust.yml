@@ -29,7 +29,7 @@ jobs:
         with:
           path: test-data
           key: test-data-v12
-      - name: Download test data and additional PDFs
+      - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
         run: |
           test -d test-data || mkdir test-data
