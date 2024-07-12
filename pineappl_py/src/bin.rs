@@ -1,6 +1,6 @@
 use pineappl::bin::BinRemapper;
 
-use numpy::PyReadonlyArray1;
+use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::bin::BinRemapper <bin/struct.BinRemapper.html>`
