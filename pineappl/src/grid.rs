@@ -1590,8 +1590,6 @@ impl Grid {
                 )));
             }
 
-            let view_a = operator_a.view();
-
             // Operate on `slices_b`
             let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
@@ -1610,17 +1608,16 @@ impl Grid {
                 )));
             }
 
-            let view_b = operator_b.view();
+            let views = [operator_a.view(), operator_b.view()];
+            let infos = [info_a, info_b];
 
             let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
                 && self.convolutions()[1] != Convolution::None
             {
                 evolution::evolve_slice_with_two2(
                     self,
-                    &view_a,
-                    &view_b,
-                    &info_a,
-                    &info_b,
+                    &views,
+                    &infos,
                     order_mask,
                     xi,
                     alphas_table,
@@ -1628,8 +1625,8 @@ impl Grid {
             } else {
                 evolution::evolve_slice_with_one(
                     self,
-                    &view_a,
-                    &info_a,
+                    &views[0],
+                    &infos[1],
                     order_mask,
                     xi,
                     alphas_table,
@@ -1645,9 +1642,10 @@ impl Grid {
                 more_members: self.more_members.clone(),
             };
 
+            assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
+
             // TODO: use a new constructor to set this information
-            // NOTE: `info_a.pid_basis` and `info_b.pid_basis` are the same
-            rhs.set_pid_basis(info_a.pid_basis);
+            rhs.set_pid_basis(infos[0].pid_basis);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1656,7 +1654,7 @@ impl Grid {
             }
 
             // NOTE: The following should be shared by the 2 EKOs(?)
-            fac1.push(info_a.fac1);
+            fac1.push(infos[0].fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug

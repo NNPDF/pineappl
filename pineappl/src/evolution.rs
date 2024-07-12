@@ -636,46 +636,60 @@ pub(crate) fn evolve_slice_with_two(
 
 pub(crate) fn evolve_slice_with_two2(
     grid: &Grid,
-    input_operator_a: &ArrayView4<f64>,
-    input_operator_b: &ArrayView4<f64>,
-    info_a: &OperatorSliceInfo,
-    info_b: &OperatorSliceInfo,
+    operators: &[ArrayView4<f64>],
+    infos: &[OperatorSliceInfo],
     order_mask: &[bool],
     xi: (f64, f64),
     alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    let (pid_indices_a, pids_a) =
-        pid_slices(input_operator_a, info_a, gluon_has_pid_zero, &|pid1| {
-            grid.channels()
-                .iter()
-                .flat_map(Channel::entry)
-                .any(|&(a, _, _)| a == pid1)
-        })?;
-    let (pid_indices_b, pids_b) =
-        pid_slices(input_operator_b, info_b, gluon_has_pid_zero, &|pid1| {
-            grid.channels()
-                .iter()
-                .flat_map(Channel::entry)
-                .any(|&(_, b, _)| b == pid1)
-        })?;
+    // TODO: assert that infos[0].fac0 == infos[1].fac0
 
-    let channels0 = channels0_with_two(&pids_a, &pids_b);
+    // TODO: generalize by iterating up to `n`
+    let (pid_indices, pids01): (Vec<_>, Vec<_>) = izip!(0..2, operators, infos)
+        .map(|(d, operator, info)| {
+            pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
+                grid.channels()
+                    .iter()
+                    .flat_map(Channel::entry)
+                    .any(|tuple| match d {
+                        // TODO: `Channel::entry` should return a tuple of a `Vec` and an `f64`
+                        0 => tuple.0 == pid1,
+                        1 => tuple.1 == pid1,
+                        _ => unreachable!(),
+                    })
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .unzip();
+
+    let mut channels0: Vec<_> = pids01
+        .iter()
+        .map(|pids| pids.iter().map(|&(pid0, _)| pid0))
+        .multi_cartesian_product()
+        .collect();
+    channels0.sort_unstable();
+    channels0.dedup();
+    let channels0 = channels0;
+
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
 
-    let mut last_x1a = Vec::new();
-    let mut last_x1b = Vec::new();
-    let mut operators_a = Vec::new();
-    let mut operators_b = Vec::new();
+    // TODO: generalize to `n`
+    let mut last_x1 = vec![Vec::new(); 2];
+    let mut eko_slices = vec![Vec::new(); 2];
 
-    for subgrids_ol in grid.subgrids().axis_iter(Axis(1)) {
-        // NOTE: `info_a.x0.len()` and `info_b.x0.len()` are the same
-        let mut tables = vec![Array2::zeros((info_a.x0.len(), info_a.x0.len())); channels0.len()];
+    for subgrids_oc in grid.subgrids().axis_iter(Axis(1)) {
+        assert_eq!(infos[0].x0.len(), infos[1].x0.len());
 
-        for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
-            let (x1_a, x1_b, array) = ndarray_from_subgrid_orders_slice(
-                info_a,
+        let mut tables =
+            vec![Array2::zeros((infos[0].x0.len(), infos[1].x0.len())); channels0.len()];
+
+        for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
+            let (x1, array) = ndarray_from_subgrid_orders_slice(
+                &infos[0],
+                // TODO: generalize this function to also accept `info[1]`
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -683,45 +697,52 @@ pub(crate) fn evolve_slice_with_two2(
                 alphas_table,
             )?;
 
-            if (last_x1a.len() != x1_a.len())
-                || last_x1a
-                    .iter()
-                    .zip(x1_a.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
-            {
-                operators_a = operator_slices(input_operator_a, info_a, &pid_indices_a, &x1_a)?;
-                last_x1a = x1_a;
+            for (last_x1, x1, pid_indices, slices, operator, info) in izip!(
+                &mut last_x1,
+                x1,
+                &pid_indices,
+                &mut eko_slices,
+                operators,
+                infos
+            ) {
+                if (last_x1.len() != x1.len())
+                    || last_x1
+                        .iter()
+                        .zip(x1.iter())
+                        .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+                {
+                    *slices = operator_slices(operator, info, pid_indices, &x1)?;
+                    *last_x1 = x1;
+                }
             }
 
-            if (last_x1b.len() != x1_b.len())
-                || last_x1b
-                    .iter()
-                    .zip(x1_b.iter())
-                    .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+            let mut tmp = Array2::zeros((last_x1[0].len(), infos[1].x0.len()));
+
+            for (pids1, factor) in channel1
+                .entry()
+                .iter()
+                .map(|&(pida1, pidb1, factor)| ([pida1, pidb1], factor))
             {
-                operators_b = operator_slices(input_operator_b, info_b, &pid_indices_b, &x1_b)?;
-                last_x1b = x1_b;
-            }
-
-            let mut tmp = Array2::zeros((last_x1a.len(), info_a.x0.len()));
-
-            for &(pida1, pidb1, factor) in channel1.entry() {
-                for (fk_table, opa, opb) in channels0.iter().zip(tables.iter_mut()).filter_map(
-                    |(&(pida0, pidb0), fk_table)| {
-                        pids_a
-                            .iter()
-                            .zip(operators_a.iter())
-                            .find_map(|(&(pa0, pa1), opa)| {
-                                (pa0 == pida0 && pa1 == pida1).then_some(opa)
-                            })
-                            .zip(pids_b.iter().zip(operators_b.iter()).find_map(
-                                |(&(pb0, pb1), opb)| (pb0 == pidb0 && pb1 == pidb1).then_some(opb),
-                            ))
-                            .map(|(opa, opb)| (fk_table, opa, opb))
-                    },
-                ) {
-                    linalg::general_mat_mul(1.0, &array, &opb.t(), 0.0, &mut tmp);
-                    linalg::general_mat_mul(factor, opa, &tmp, 1.0, fk_table);
+                for (fk_table, ops) in
+                    channels0
+                        .iter()
+                        .zip(tables.iter_mut())
+                        .filter_map(|(pids0, fk_table)| {
+                            izip!(pids0, &pids1, &pids01, &eko_slices)
+                                .map(|(&pid0, &pid1, pids, slices)| {
+                                    pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                        ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                                    })
+                                })
+                                // TODO: avoid using `collect`
+                                .collect::<Option<Vec<_>>>()
+                                .map(|ops| (fk_table, ops))
+                        })
+                {
+                    // tmp = array * ops[1]^T
+                    linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, &mut tmp);
+                    // fk_table += factor * ops[0] * tmp
+                    linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, fk_table);
                 }
             }
         }
@@ -732,11 +753,11 @@ pub(crate) fn evolve_slice_with_two2(
                 vec![Mu2 {
                     // TODO: FK tables don't depend on the renormalization scale
                     //ren: -1.0,
-                    ren: info_a.fac0,
-                    fac: info_a.fac0,
+                    ren: infos[0].fac0,
+                    fac: infos[0].fac0,
                 }],
-                info_a.x0.clone(),
-                info_a.x0.clone(),
+                infos[0].x0.clone(),
+                infos[1].x0.clone(),
             )
             .into()
         }));
@@ -748,7 +769,7 @@ pub(crate) fn evolve_slice_with_two2(
             .unwrap(),
         channels0
             .iter()
-            .map(|&(a, b)| channel![a, b, 1.0])
+            .map(|c| channel![c[0], c[1], 1.0])
             .collect(),
     ))
 }
