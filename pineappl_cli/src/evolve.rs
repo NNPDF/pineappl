@@ -579,11 +579,10 @@ impl Subcommand for Opts {
 
         let fk_table = evolve_grid(
             &grid,
-            &if let Some(ekob) = &self.ekob {
-                vec![self.eko.as_path(), ekob.as_path()]
-            } else {
-                vec![self.eko.as_path()]
-            },
+            &self.ekob.as_ref().map_or_else(
+                || vec![self.eko.as_path()],
+                |ekob| vec![self.eko.as_path(), ekob],
+            ),
             &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
