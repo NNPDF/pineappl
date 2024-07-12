@@ -297,7 +297,6 @@ class Grid(PyWrapper):
             xi,
         )
 
-
     def evolve(
         self,
         operators,
@@ -308,6 +307,7 @@ class Grid(PyWrapper):
         xi=(1.0, 1.0),
     ):
         """Create an FKTable with the EKO.
+
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.evolve()`.
 
         Parameters
