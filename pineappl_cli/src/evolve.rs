@@ -1,6 +1,6 @@
 use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
@@ -431,6 +431,7 @@ fn evolve_grid(
     xif: f64,
     use_old_evolve: bool,
 ) -> Result<FkTable> {
+    use anyhow::bail;
     use eko::EkoSlices;
     use pineappl::evolution::{AlphasTable, OperatorInfo};
 
@@ -499,8 +500,7 @@ fn evolve_grid(
 #[cfg(not(feature = "evolve"))]
 fn evolve_grid(
     _: &Grid,
-    _: &Path,
-    _: &Path,
+    _: &[&Path],
     _: &Pdf,
     _: &[(u32, u32)],
     _: f64,
