@@ -1355,13 +1355,47 @@ impl Grid {
     #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
     pub fn evolve(
         &self,
+        operator: ArrayView5<f64>,
+        info: &OperatorInfo,
+        order_mask: &[bool],
+    ) -> Result<FkTable, GridError> {
+        self.evolve_with_slice_iter(
+            info.fac1
+                .iter()
+                .zip(operator.axis_iter(Axis(0)))
+                .map(|(&fac1, op)| {
+                    Ok::<_, GridError>((
+                        OperatorSliceInfo {
+                            fac0: info.fac0,
+                            pids0: info.pids0.clone(),
+                            x0: info.x0.clone(),
+                            fac1,
+                            pids1: info.pids1.clone(),
+                            x1: info.x1.clone(),
+                            pid_basis: info.pid_basis,
+                        },
+                        CowArray::from(op),
+                    ))
+                }),
+            order_mask,
+            (info.xir, info.xif),
+            &AlphasTable {
+                ren1: info.ren1.clone(),
+                alphas: info.alphas.clone(),
+            },
+        )
+    }
+
+    #[deprecated(since = "0.8.1", note = "use evolve_slice_with_two2 instead")]
+    pub fn evolve2(
+        &self,
         operator_a: ArrayView5<f64>,
         operator_b: ArrayView5<f64>,
         info_a: &OperatorInfo,
         info_b: &OperatorInfo,
         order_mask: &[bool],
     ) -> Result<FkTable, GridError> {
-        self.evolve_with_slice_iter(
+        self.evolve_with_slice_iter2(
             info_a
                 .fac1
                 .iter()
@@ -1424,6 +1458,105 @@ impl Grid {
     /// return an error.
     pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
+        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        order_mask: &[bool],
+        xi: (f64, f64),
+        alphas_table: &AlphasTable,
+    ) -> Result<FkTable, GridError> {
+        use super::evolution::EVOLVE_INFO_TOL_ULPS;
+
+        let mut lhs: Option<Self> = None;
+        let mut fac1 = Vec::new();
+
+        for result in slices {
+            let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+
+            let op_info_dim = (
+                info.pids1.len(),
+                info.x1.len(),
+                info.pids0.len(),
+                info.x0.len(),
+            );
+
+            if operator.dim() != op_info_dim {
+                return Err(GridError::EvolutionFailure(format!(
+                    "operator information {:?} does not match the operator's dimensions: {:?}",
+                    op_info_dim,
+                    operator.dim(),
+                )));
+            }
+
+            let view = operator.view();
+
+            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
+                && self.convolutions()[1] != Convolution::None
+            {
+                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
+            } else {
+                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
+            }?;
+
+            let mut rhs = Self {
+                subgrids,
+                channels,
+                bin_limits: self.bin_limits.clone(),
+                orders: vec![Order::new(0, 0, 0, 0)],
+                subgrid_params: SubgridParams::default(),
+                more_members: self.more_members.clone(),
+            };
+
+            // TODO: use a new constructor to set this information
+            rhs.set_pid_basis(info.pid_basis);
+
+            if let Some(lhs) = &mut lhs {
+                lhs.merge(rhs)?;
+            } else {
+                lhs = Some(rhs);
+            }
+
+            fac1.push(info.fac1);
+        }
+
+        // UNWRAP: if we can't compare two numbers there's a bug
+        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+
+        // make sure we've evolved all slices
+        if let Some(muf2) = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|mu2| xi.1 * xi.1 * mu2)
+            .find(|&grid_mu2| {
+                !fac1
+                    .iter()
+                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+            })
+        {
+            return Err(GridError::EvolutionFailure(format!(
+                "no operator for muf2 = {muf2} found in {fac1:?}"
+            )));
+        }
+
+        // TODO: convert this unwrap into error
+        let grid = lhs.unwrap();
+
+        // UNWRAP: merging evolved slices should be a proper FkTable again
+        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+    }
+
+    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
+    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
+    /// `order_mask` can be used to include or exclude orders from this operation, and must
+    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
+    /// enabled, and in particular if `order_mask` is empty all orders are activated.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
+    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
+    /// return an error.
+    pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
+        &self,
         slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         slices_b: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
         order_mask: &[bool],
@@ -1481,7 +1614,7 @@ impl Grid {
             let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
                 && self.convolutions()[1] != Convolution::None
             {
-                evolution::evolve_slice_with_two(
+                evolution::evolve_slice_with_two2(
                     self,
                     &view_a,
                     &view_b,

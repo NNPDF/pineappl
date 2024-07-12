@@ -459,60 +459,27 @@ fn evolve_grid(
             operator,
         } = eko_slices_a
         {
-            // TODO: Check if the `operator` object is actually mutable
-            let original_operator = operator;
-
-            let op_info_a = OperatorInfo {
+            let op_info = OperatorInfo {
                 fac0: info.fac0,
                 pids0: info.pids0.clone(),
                 x0: info.x0.clone(),
                 fac1,
                 pids1: info.pids1.clone(),
                 x1: info.x1.clone(),
-                ren1: alphas_table.ren1.clone(),
-                alphas: alphas_table.alphas.clone(),
+                ren1: alphas_table.ren1,
+                alphas: alphas_table.alphas,
                 xir,
                 xif,
                 pid_basis: info.pid_basis,
             };
 
-            if let EkoSlices::V0 {
-                fac1,
-                info,
-                operator,
-            } = eko_slices_b
-            {
-                // TODO: change the info object
-                let op_info_b = OperatorInfo {
-                    fac0: info.fac0,
-                    pids0: info.pids0.clone(),
-                    x0: info.x0.clone(),
-                    fac1,
-                    pids1: info.pids1.clone(),
-                    x1: info.x1.clone(),
-                    ren1: alphas_table.ren1.clone(),
-                    alphas: alphas_table.alphas.clone(),
-                    xir,
-                    xif,
-                    pid_basis: info.pid_basis,
-                };
-
-                #[allow(deprecated)]
-                Ok(grid.evolve(
-                    original_operator.view(),
-                    operator.view(),
-                    &op_info_a,
-                    &op_info_b,
-                    &order_mask,
-                )?)
-            } else {
-                unimplemented!();
-            }
+            #[allow(deprecated)]
+            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
         } else {
             unimplemented!();
         }
     } else {
-        Ok(grid.evolve_with_slice_iter(
+        Ok(grid.evolve_with_slice_iter2(
             &mut eko_slices_a,
             &mut eko_slices_b,
             &order_mask,
