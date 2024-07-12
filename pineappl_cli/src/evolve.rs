@@ -453,7 +453,7 @@ fn evolve_grid(
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
     if use_old_evolve {
-        assert_eq!(eko_slices.len(), 0);
+        assert_eq!(eko_slices.len(), 1);
 
         if let EkoSlices::V0 {
             fac1,
