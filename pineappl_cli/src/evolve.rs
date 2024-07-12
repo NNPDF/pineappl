@@ -492,7 +492,10 @@ fn evolve_grid(
                 (xir, xif),
                 &alphas_table,
             )?),
-            _ => unimplemented!("evolution with {} is not implemented", eko_slices.len()),
+            _ => unimplemented!(
+                "evolution with {} EKOs is not implemented",
+                eko_slices.len()
+            ),
         }
     }
 }
