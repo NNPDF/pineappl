@@ -424,8 +424,7 @@ mod eko {
 #[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
-    eko_a: &Path,
-    eko_b: &Path,
+    ekos: &[&Path],
     use_alphas_from: &Pdf,
     orders: &[(u32, u32)],
     xir: f64,
@@ -446,18 +445,20 @@ fn evolve_grid(
         })
         .collect();
 
-    let mut eko_slices_a = EkoSlices::new(eko_a)?;
-    let mut eko_slices_b = EkoSlices::new(eko_b)?;
+    let mut eko_slices: Vec<_> = ekos
+        .iter()
+        .map(|eko| EkoSlices::new(eko))
+        .collect::<Result<_, _>>()?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
-    // TODO: Check that cloning the `alphas_table` does not cause performance
-    // issue when cloned.
     if use_old_evolve {
+        assert_eq!(eko_slices.len(), 0);
+
         if let EkoSlices::V0 {
             fac1,
             info,
             operator,
-        } = eko_slices_a
+        } = eko_slices.remove(0)
         {
             let op_info = OperatorInfo {
                 fac0: info.fac0,
@@ -479,13 +480,19 @@ fn evolve_grid(
             bail!("`--use-old-evolve` can only be used with a specific EKO format")
         }
     } else {
-        Ok(grid.evolve_with_slice_iter2(
-            &mut eko_slices_a,
-            &mut eko_slices_b,
-            &order_mask,
-            (xir, xif),
-            &alphas_table,
-        )?)
+        match eko_slices.as_mut_slice() {
+            [eko] => {
+                Ok(grid.evolve_with_slice_iter(eko, &order_mask, (xir, xif), &alphas_table)?)
+            }
+            [eko_a, eko_b] => Ok(grid.evolve_with_slice_iter2(
+                eko_a,
+                eko_b,
+                &order_mask,
+                (xir, xif),
+                &alphas_table,
+            )?),
+            _ => unimplemented!("evolution with {} is not implemented", eko_slices.len()),
+        }
     }
 }
 
@@ -567,30 +574,19 @@ impl Subcommand for Opts {
             cfg,
         );
 
-        let fk_table: FkTable;
-        if let Some(ekob) = &self.ekob {
-            fk_table = evolve_grid(
-                &grid,
-                &self.eko,
-                ekob,
-                &conv_funs[cfg.use_alphas_from],
-                &self.orders,
-                self.xir,
-                self.xif,
-                self.use_old_evolve,
-            )?;
-        } else {
-            fk_table = evolve_grid(
-                &grid,
-                &self.eko,
-                &self.eko,
-                &conv_funs[cfg.use_alphas_from],
-                &self.orders,
-                self.xir,
-                self.xif,
-                self.use_old_evolve,
-            )?;
-        }
+        let fk_table = evolve_grid(
+            &grid,
+            &if let Some(ekob) = &self.ekob {
+                vec![self.eko.as_path(), ekob.as_path()]
+            } else {
+                vec![self.eko.as_path()]
+            },
+            &conv_funs[cfg.use_alphas_from],
+            &self.orders,
+            self.xir,
+            self.xif,
+            self.use_old_evolve,
+        )?;
 
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
