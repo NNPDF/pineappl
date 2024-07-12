@@ -264,7 +264,7 @@ impl Order {
 /// combination.
 #[derive(Clone, Debug, Deserialize, PartialEq, PartialOrd, Serialize)]
 pub struct Channel {
-    entry: Vec<(i32, i32, f64)>,
+    entry: Vec<(Vec<i32>, f64)>,
 }
 
 impl Channel {
@@ -306,7 +306,7 @@ impl Channel {
     /// let _ = Channel::new(vec![]);
     /// ```
     #[must_use]
-    pub fn new(mut entry: Vec<(i32, i32, f64)>) -> Self {
+    pub fn new(mut entry: Vec<(Vec<i32>, f64)>) -> Self {
         assert!(!entry.is_empty());
 
         // sort `entry` because the ordering doesn't matter and because it makes it easier to
@@ -373,7 +373,7 @@ impl Channel {
     /// assert_eq!(entry.entry(), [(2, 2, 1.0), (4, 4, 1.0)]);
     /// ```
     #[must_use]
-    pub fn entry(&self) -> &[(i32, i32, f64)] {
+    pub fn entry(&self) -> &[(Vec<i32>, f64)] {
         &self.entry
     }
 
