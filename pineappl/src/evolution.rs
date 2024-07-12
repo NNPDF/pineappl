@@ -269,7 +269,7 @@ fn operator_slices(
 type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Array2<f64>);
 
 fn ndarray_from_subgrid_orders_slice(
-    info: &OperatorSliceInfo,
+    fac1: f64,
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
@@ -353,7 +353,7 @@ fn ndarray_from_subgrid_orders_slice(
         for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
             let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
 
-            if !approx_eq!(f64, xif * xif * fac, info.fac1, ulps = EVOLUTION_TOL_ULPS) {
+            if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
             }
 
@@ -413,7 +413,7 @@ pub(crate) fn evolve_slice_with_one(
 
         for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (mut x1, array) = ndarray_from_subgrid_orders_slice(
-                info,
+                info.fac1,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -556,7 +556,7 @@ pub(crate) fn evolve_slice_with_two(
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
-                info,
+                info.fac1,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -644,7 +644,16 @@ pub(crate) fn evolve_slice_with_two2(
 ) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    // TODO: assert that infos[0].fac0 == infos[1].fac0
+    // TODO: implement matching of different scales for different EKOs
+    let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
+    fac1_scales.sort_by(f64::total_cmp);
+    assert!(fac1_scales.windows(2).all(|scales| approx_eq!(
+        f64,
+        scales[0],
+        scales[1],
+        ulps = EVOLUTION_TOL_ULPS
+    )));
+    let fac1 = fac1_scales[0];
 
     // TODO: generalize by iterating up to `n`
     let (pid_indices, pids01): (Vec<_>, Vec<_>) = izip!(0..2, operators, infos)
@@ -688,8 +697,7 @@ pub(crate) fn evolve_slice_with_two2(
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
-                &infos[0],
-                // TODO: generalize this function to also accept `info[1]`
+                fac1,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
