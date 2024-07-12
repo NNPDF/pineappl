@@ -703,6 +703,60 @@ impl PyGrid {
             .unwrap())
     }
 
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// slices : TODO
+    /// order_mask : TODO
+    ///
+    /// Returns
+    /// -------
+    /// TODO
+    pub fn evolve_with_slice_iter2<'py>(
+        &self,
+        slices_a: &Bound<'py, PyIterator>,
+        slices_b: &Bound<'py, PyIterator>,
+        order_mask: PyReadonlyArray1<bool>,
+        xi: (f64, f64),
+        ren1: Vec<f64>,
+        alphas: Vec<f64>,
+    ) -> PyResult<PyFkTable> {
+        Ok(self
+            .grid
+            .evolve_with_slice_iter2(
+                slices_a.into_iter().map(|slice| {
+                    let (info, op) = slice
+                        .unwrap()
+                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
+                        .unwrap();
+                    Ok::<_, std::io::Error>((
+                        info.info,
+                        // TODO: avoid copying
+                        CowArray::from(op.as_array().to_owned()),
+                    ))
+                }),
+                slices_b.into_iter().map(|slice| {
+                    let (info, op) = slice
+                        .unwrap()
+                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
+                        .unwrap();
+                    Ok::<_, std::io::Error>((
+                        info.info,
+                        // TODO: avoid copying
+                        CowArray::from(op.as_array().to_owned()),
+                    ))
+                }),
+                // TODO: make `order_mask` a `Vec<f64>`
+                &order_mask.to_vec().unwrap(),
+                xi,
+                &AlphasTable { ren1, alphas },
+            )
+            .map(|fk_table| PyFkTable { fk_table })
+            // TODO: avoid unwrap and convert `Result` into `PyResult`
+            .unwrap())
+    }
+
     /// Load grid from file.
     ///
     /// **Usage:** `pineko`, FKTable generation
