@@ -411,7 +411,7 @@ class Grid(PyWrapper):
 
         q2grid = list(operators_a["Q2grid"].keys())
         return FkTable(
-            self.raw.evolve(
+            self.raw.evolve2(
                 np.array(operator_grid_a),
                 np.array(operator_grid_b),
                 operators_a["q2_ref"],
