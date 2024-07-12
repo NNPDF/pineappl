@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - pycli
+      - bump-pyo3-version
 
 env:
   # our GLIBC version is too old to support Node 20:
@@ -16,7 +17,7 @@ jobs:
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
       # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install PineAPPL's C API
         run: |
@@ -61,8 +62,7 @@ jobs:
           grep SF lcov.info | sort -u | sed 's/SF://'
 
       - name: Upload to codecov.io
-        # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v4
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: capi

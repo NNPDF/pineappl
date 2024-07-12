@@ -3,10 +3,10 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/pineappl/badges/version.svg)](https://anaconda.org/conda-forge/pineappl)
 [![AUR](https://img.shields.io/aur/version/pineappl)](https://aur.archlinux.org/packages/pineappl)
 
-`PineAPPL` and [its interface](https://docs.rs/pineappl/) is written in
-[Rust](https://www.rust-lang.org/), but besides Rust it also offers interfaces
-for the most popular programming languages: C, C++ and Fortran through its C
-API and Python through [PyO3](https://pyo3.rs/).
+`PineAPPL` and its interface is written in [Rust](https://www.rust-lang.org/),
+but besides Rust PineAPPL also offers interfaces for the most popular
+programming languages: C, C++ and Fortran via the C API and Python through
+[PyO3](https://pyo3.rs/).
 
 Furthermore the program `pineappl` can be installed that will allow you to
 perform many operations on grids in your favorite shell: the command-line
@@ -19,22 +19,22 @@ are a few guidelines:
 - if you're planning to use PineAPPL with Python and/or within the NNPDF
   fitting framework, you'll need the [Python interface](#python);
 - if you want to run a Monte Carlo to *generate* PineAPPL grids, you'll likely
-  need the [CAPI](#c-c-and-fortran-the-capi);
+  need the [CAPI](#capi-interface-for-c-c-and-fortran);
 - if you want to quickly produce predictions, plots and small analyses install
   the [CLI](#cli-pineappl-for-your-shell).
 
-## C, C++ and Fortran: the CAPI
+## CAPI: Interface for C, C++ and Fortran
 
 You can install the CAPI in two different ways:
 
-- [using pre-built binaries](#using-pre-built-binaries), which doesn't require
-  installing Rust or any compilation, or
-- alternatively [from source](#from-source), which needs an installation of
-  Rust.
+- [using pre-built libraries](#using-pre-built-libraries), which doesn't
+  require installing any other dependencies, or
+- alternatively you can [build it from source](#building-the-capi-from-source),
+  but this requires Rust and Cargo.
 
-### Using pre-built binaries
+### Using pre-built libraries
 
-The fastest way to install the CAPI is to download the pre-built binaries:
+The fastest way to install the CAPI is to download the pre-built libraries:
 
     curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-capi.sh | sh
 
@@ -53,9 +53,9 @@ After the installation the script will check whether certain environment
 variables are set correctly and will complain if this is not the case. Read and
 follow the instructions of the script.
 
-### From source
+### Building the CAPI from source
 
-If you want to build the CAPI from source instead, you first need to
+If you want to build the CAPI from its sources instead, you first need to
 
 0. Install Rust, see the [instructions](#rust) below.
 1. Then install `cargo-c`, which is required for the next step:
@@ -101,6 +101,41 @@ pull` and then repeat step 3.
 
 ## CLI: `pineappl` for your shell
 
+You can install the CLI in two different ways:
+
+- [using pre-built binaries](#using-pre-built-binaries), which doesn't require
+  installing any other dependencies, or
+- alternatively you can [build it from source](#building-the-cli-from-source),
+  but this requires Rust and Cargo.
+
+### Using pre-built binaries
+
+The fastest way to install the CLI is to download the pre-built binaries, for
+instance using `pip`:
+
+    pip install pineappl-cli
+
+or using the installation script:
+
+    curl --proto '=https' --tlsv1.2 -sSf https://nnpdf.github.io/pineappl/install-cli.sh | sh
+
+The installation script will prompt you for the installation directory where
+the files shall be installed to. If you want to pass this directory on the
+command line, change the arguments to the shell:
+
+    .. | sh -s -- --prefix /my/custom/installation/path
+
+By default `install-cli.sh` will download the latest stable release. If you'd
+like a specific version, pass the version along with `--version`:
+
+    .. | sh -s -- --version 0.6.0-alpha.18
+
+After the installation the script will check whether certain environment
+variables are set correctly and will complain if this is not the case. Read and
+follow the instructions of the script.
+
+### Building the CLI from source
+
 You need to install [Rust](#rust) first (see below). Then simply run
 
     cargo install --locked pineappl_cli
@@ -115,7 +150,7 @@ To update the CLI simply repeat the `cargo install` step; if a newer version is
 available it will be automatically downloaded, otherwise `cargo` will exit with
 a message saying that the most recent version is already installed.
 
-### Optional: APPLgrid exporter/importer
+#### Optional: APPLgrid exporter/importer
 
 If you'd like to convert APPLgrids to PineAPPL grids, or vice versa, make sure
 to
@@ -129,7 +164,7 @@ to
 
        APPL_IGRID_DIR=/tmp/applgrid-1.6.27/src cargo install --locked --features=applgrid pineappl_cli
 
-### Optional: Evolution/EKO support
+#### Optional: Evolution/EKO support
 
 If you'd like to convert PineAPPL grids into FK tables using [evolution kernel
 operators (EKO)](https://eko.readthedocs.io/), add the switch
@@ -145,14 +180,14 @@ If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
 
     cargo install --locked --features=fastnlo pineappl_cli
 
-### Optional: FK table converter
+#### Optional: FK table converter
 
 If you'd like to convert NNPDF's legacy FK tables to PineAPPL grids, add the switch
 `--features=fktable` during the CLI's installation, for instance:
 
     cargo install --locked --features=fktable pineappl_cli
 
-### Alternative: development version
+#### Alternative: development version
 
 To use the most recent version available run
 
@@ -165,7 +200,7 @@ this repository and run
 
 inside it.
 
-### Man pages
+#### Man pages
 
 Most of PineAPPL's help is available as `pineappl --help` and as `pineappl
 convolve --help`, for example. However, the same information can also be

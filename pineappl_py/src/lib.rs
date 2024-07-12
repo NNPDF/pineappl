@@ -15,11 +15,13 @@ pub mod subgrid;
 ///
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
-fn pineappl(_py: Python, m: &PyModule) -> PyResult<()> {
+fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<bin::PyBinRemapper>()?;
     m.add_class::<evolution::PyEvolveInfo>()?;
     m.add_class::<grid::PyGrid>()?;
     m.add_class::<grid::PyOrder>()?;
+    m.add_class::<grid::PyOperatorSliceInfo>()?;
+    m.add_class::<grid::PyPidBasis>()?;
     m.add_class::<lumi::PyLumiEntry>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV1>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV2>()?;

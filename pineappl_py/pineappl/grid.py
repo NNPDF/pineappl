@@ -1,7 +1,7 @@
 import numpy as np
 
 from .fk_table import FkTable
-from .pineappl import PyGrid, PyOrder
+from .pineappl import PyGrid, PyOrder, PyOperatorSliceInfo, PyPidBasis
 from .utils import PyWrapper
 
 

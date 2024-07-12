@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - pycli
+      - bump-pyo3-version
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,8 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/nnpdf/pineappl-ci:latest
     steps:
-      # checkout@v4 uses a newer version of Node that's incompatible with our container's GLIBC
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run check
         run: |

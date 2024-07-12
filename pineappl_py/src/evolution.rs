@@ -14,26 +14,26 @@ pub struct PyEvolveInfo {
 impl PyEvolveInfo {
     /// Squared factorization scales of the `Grid`.
     #[getter]
-    fn fac1<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.evolve_info.fac1.clone().into_pyarray(py)
+    fn fac1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.evolve_info.fac1.clone().into_pyarray_bound(py)
     }
 
     /// Particle identifiers of the `Grid`.
     #[getter]
-    fn pids1<'py>(&self, py: Python<'py>) -> &'py PyArray1<i32> {
-        self.evolve_info.pids1.clone().into_pyarray(py)
+    fn pids1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<i32>> {
+        self.evolve_info.pids1.clone().into_pyarray_bound(py)
     }
 
     /// `x`-grid coordinates of the `Grid`.
     #[getter]
-    fn x1<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.evolve_info.x1.clone().into_pyarray(py)
+    fn x1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.evolve_info.x1.clone().into_pyarray_bound(py)
     }
 
     /// Renormalization scales of the `Grid`.
     #[getter]
-    fn ren1<'py>(&self, py: Python<'py>) -> &'py PyArray1<f64> {
-        self.evolve_info.ren1.clone().into_pyarray(py)
+    fn ren1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.evolve_info.ren1.clone().into_pyarray_bound(py)
     }
 }
 
