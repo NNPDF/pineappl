@@ -125,7 +125,7 @@ else
     echo "Warning: Your PKG_CONFIG_PATH environment variable isn't properly set."
     echo "Try adding"
     echo
-    echo "  export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig${PKG_CONFIG_PATH:+:\"\${PKG_CONFIG_PATH\}\"}"
+    echo "  export PKG_CONFIG_PATH=${prefix}/lib/pkgconfig:\"\${PKG_CONFIG_PATH\}\""
     echo
     echo "to your shell configuration file"
 fi
