@@ -269,7 +269,7 @@ fn operator_slices(
 type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Array2<f64>);
 
 fn ndarray_from_subgrid_orders_slice(
-    info: &OperatorSliceInfo,
+    fac1: f64,
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
@@ -353,7 +353,7 @@ fn ndarray_from_subgrid_orders_slice(
         for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
             let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
 
-            if !approx_eq!(f64, xif * xif * fac, info.fac1, ulps = EVOLUTION_TOL_ULPS) {
+            if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
             }
 
@@ -413,7 +413,7 @@ pub(crate) fn evolve_slice_with_one(
 
         for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (mut x1, array) = ndarray_from_subgrid_orders_slice(
-                info,
+                info.fac1,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -556,7 +556,7 @@ pub(crate) fn evolve_slice_with_two(
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
-                info,
+                info.fac1,
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -618,6 +618,154 @@ pub(crate) fn evolve_slice_with_two(
                 }],
                 info.x0.clone(),
                 info.x0.clone(),
+            )
+            .into()
+        }));
+    }
+
+    Ok((
+        Array1::from_iter(sub_fk_tables)
+            .into_shape((1, grid.bin_info().bins(), channels0.len()))
+            .unwrap(),
+        channels0
+            .iter()
+            .map(|c| channel![c[0], c[1], 1.0])
+            .collect(),
+    ))
+}
+
+pub(crate) fn evolve_slice_with_two2(
+    grid: &Grid,
+    operators: &[ArrayView4<f64>],
+    infos: &[OperatorSliceInfo],
+    order_mask: &[bool],
+    xi: (f64, f64),
+    alphas_table: &AlphasTable,
+) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
+    let gluon_has_pid_zero = gluon_has_pid_zero(grid);
+
+    // TODO: implement matching of different scales for different EKOs
+    let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
+    fac1_scales.sort_by(f64::total_cmp);
+    assert!(fac1_scales.windows(2).all(|scales| approx_eq!(
+        f64,
+        scales[0],
+        scales[1],
+        ulps = EVOLUTION_TOL_ULPS
+    )));
+    let fac1 = fac1_scales[0];
+
+    // TODO: generalize by iterating up to `n`
+    let (pid_indices, pids01): (Vec<_>, Vec<_>) = izip!(0..2, operators, infos)
+        .map(|(d, operator, info)| {
+            pid_slices(operator, info, gluon_has_pid_zero, &|pid1| {
+                grid.channels()
+                    .iter()
+                    .flat_map(Channel::entry)
+                    .any(|tuple| match d {
+                        // TODO: `Channel::entry` should return a tuple of a `Vec` and an `f64`
+                        0 => tuple.0 == pid1,
+                        1 => tuple.1 == pid1,
+                        _ => unreachable!(),
+                    })
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .unzip();
+
+    let mut channels0: Vec<_> = pids01
+        .iter()
+        .map(|pids| pids.iter().map(|&(pid0, _)| pid0))
+        .multi_cartesian_product()
+        .collect();
+    channels0.sort_unstable();
+    channels0.dedup();
+    let channels0 = channels0;
+
+    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
+
+    // TODO: generalize to `n`
+    let mut last_x1 = vec![Vec::new(); 2];
+    let mut eko_slices = vec![Vec::new(); 2];
+
+    for subgrids_oc in grid.subgrids().axis_iter(Axis(1)) {
+        assert_eq!(infos[0].x0.len(), infos[1].x0.len());
+
+        let mut tables =
+            vec![Array2::zeros((infos[0].x0.len(), infos[1].x0.len())); channels0.len()];
+
+        for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
+            let (x1, array) = ndarray_from_subgrid_orders_slice(
+                fac1,
+                &subgrids_o,
+                grid.orders(),
+                order_mask,
+                xi,
+                alphas_table,
+            )?;
+
+            for (last_x1, x1, pid_indices, slices, operator, info) in izip!(
+                &mut last_x1,
+                x1,
+                &pid_indices,
+                &mut eko_slices,
+                operators,
+                infos
+            ) {
+                if (last_x1.len() != x1.len())
+                    || last_x1
+                        .iter()
+                        .zip(x1.iter())
+                        .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+                {
+                    *slices = operator_slices(operator, info, pid_indices, &x1)?;
+                    *last_x1 = x1;
+                }
+            }
+
+            let mut tmp = Array2::zeros((last_x1[0].len(), infos[1].x0.len()));
+
+            for (pids1, factor) in channel1
+                .entry()
+                .iter()
+                .map(|&(pida1, pidb1, factor)| ([pida1, pidb1], factor))
+            {
+                for (fk_table, ops) in
+                    channels0
+                        .iter()
+                        .zip(tables.iter_mut())
+                        .filter_map(|(pids0, fk_table)| {
+                            izip!(pids0, &pids1, &pids01, &eko_slices)
+                                .map(|(&pid0, &pid1, pids, slices)| {
+                                    pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                        ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                                    })
+                                })
+                                // TODO: avoid using `collect`
+                                .collect::<Option<Vec<_>>>()
+                                .map(|ops| (fk_table, ops))
+                        })
+                {
+                    // tmp = array * ops[1]^T
+                    linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, &mut tmp);
+                    // fk_table += factor * ops[0] * tmp
+                    linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, fk_table);
+                }
+            }
+        }
+
+        sub_fk_tables.extend(tables.into_iter().map(|table| {
+            ImportOnlySubgridV2::new(
+                SparseArray3::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
+                vec![Mu2 {
+                    // TODO: FK tables don't depend on the renormalization scale
+                    //ren: -1.0,
+                    ren: infos[0].fac0,
+                    fac: infos[0].fac0,
+                }],
+                infos[0].x0.clone(),
+                infos[1].x0.clone(),
             )
             .into()
         }));

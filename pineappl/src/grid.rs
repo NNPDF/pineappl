@@ -1489,6 +1489,145 @@ impl Grid {
         Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
     }
 
+    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
+    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
+    /// `order_mask` can be used to include or exclude orders from this operation, and must
+    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
+    /// enabled, and in particular if `order_mask` is empty all orders are activated.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
+    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
+    /// return an error.
+    pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
+        &self,
+        slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        slices_b: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        order_mask: &[bool],
+        xi: (f64, f64),
+        alphas_table: &AlphasTable,
+    ) -> Result<FkTable, GridError> {
+        use super::evolution::EVOLVE_INFO_TOL_ULPS;
+        use itertools::izip;
+
+        let mut lhs: Option<Self> = None;
+        let mut fac1 = Vec::new();
+
+        // TODO: simplify the ugly repetition below by offloading some ops into fn
+        for (result_a, result_b) in izip!(slices_a, slices_b) {
+            // Operate on `slices_a`
+            let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
+
+            let op_info_dim_a = (
+                info_a.pids1.len(),
+                info_a.x1.len(),
+                info_a.pids0.len(),
+                info_a.x0.len(),
+            );
+
+            if operator_a.dim() != op_info_dim_a {
+                return Err(GridError::EvolutionFailure(format!(
+                    "operator information {:?} does not match the operator's dimensions: {:?}",
+                    op_info_dim_a,
+                    operator_a.dim(),
+                )));
+            }
+
+            // Operate on `slices_b`
+            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
+
+            let op_info_dim_b = (
+                info_b.pids1.len(),
+                info_b.x1.len(),
+                info_b.pids0.len(),
+                info_b.x0.len(),
+            );
+
+            if operator_b.dim() != op_info_dim_b {
+                return Err(GridError::EvolutionFailure(format!(
+                    "operator information {:?} does not match the operator's dimensions: {:?}",
+                    op_info_dim_b,
+                    operator_b.dim(),
+                )));
+            }
+
+            let views = [operator_a.view(), operator_b.view()];
+            let infos = [info_a, info_b];
+
+            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
+                && self.convolutions()[1] != Convolution::None
+            {
+                evolution::evolve_slice_with_two2(
+                    self,
+                    &views,
+                    &infos,
+                    order_mask,
+                    xi,
+                    alphas_table,
+                )
+            } else {
+                evolution::evolve_slice_with_one(
+                    self,
+                    &views[0],
+                    &infos[1],
+                    order_mask,
+                    xi,
+                    alphas_table,
+                )
+            }?;
+
+            let mut rhs = Self {
+                subgrids,
+                channels,
+                bin_limits: self.bin_limits.clone(),
+                orders: vec![Order::new(0, 0, 0, 0)],
+                subgrid_params: SubgridParams::default(),
+                more_members: self.more_members.clone(),
+            };
+
+            assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
+
+            // TODO: use a new constructor to set this information
+            rhs.set_pid_basis(infos[0].pid_basis);
+
+            if let Some(lhs) = &mut lhs {
+                lhs.merge(rhs)?;
+            } else {
+                lhs = Some(rhs);
+            }
+
+            // NOTE: The following should be shared by the 2 EKOs(?)
+            fac1.push(infos[0].fac1);
+        }
+
+        // UNWRAP: if we can't compare two numbers there's a bug
+        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+
+        // make sure we've evolved all slices
+        if let Some(muf2) = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|mu2| xi.1 * xi.1 * mu2)
+            .find(|&grid_mu2| {
+                !fac1
+                    .iter()
+                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+            })
+        {
+            return Err(GridError::EvolutionFailure(format!(
+                "no operator for muf2 = {muf2} found in {fac1:?}"
+            )));
+        }
+
+        // TODO: convert this unwrap into error
+        let grid = lhs.unwrap();
+
+        // UNWRAP: merging evolved slices should be a proper FkTable again
+        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+    }
+
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
     /// equal the bin length are ignored.
     pub fn delete_bins(&mut self, bin_indices: &[usize]) {

@@ -54,3 +54,22 @@ class TestFkTable:
             assert False
         except:
             assert True
+
+        # TODO: write a better test
+        try:
+            g.evolve_with_slice_iter2(
+                iter(
+                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                ),
+                iter(
+                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                ),
+                np.array([], dtype=bool),
+                (1.0, 1.0),
+                [],
+                [],
+            )
+
+            assert False
+        except:
+            assert True

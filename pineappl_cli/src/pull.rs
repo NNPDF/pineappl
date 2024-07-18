@@ -66,10 +66,10 @@ impl Subcommand for Opts {
         let bin_limits = helpers::convolve_limits(&grid, &[], ConvoluteMode::Normal);
         let results1: Vec<_> = conv_funs1
             .par_iter_mut()
-            .map(|mut funs| {
+            .map(|funs| {
                 Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    &mut funs,
+                    funs,
                     &self.orders,
                     &[],
                     &[],
@@ -84,10 +84,10 @@ impl Subcommand for Opts {
             .collect();
         let results2: Vec<_> = conv_funs2
             .par_iter_mut()
-            .map(|mut funs| {
+            .map(|funs| {
                 Ok::<_, Error>(helpers::convolve(
                     &grid,
-                    &mut funs,
+                    funs,
                     &self.orders,
                     &[],
                     &[],
@@ -166,14 +166,14 @@ impl Subcommand for Opts {
                     } else {
                         let results: Vec<_> = pdfset
                             .iter_mut()
-                            .flat_map(|mut pdf| {
+                            .flat_map(|fun| {
                                 (0..grid.channels().len())
                                     .map(|channel| {
                                         let mut channel_mask = vec![false; grid.channels().len()];
                                         channel_mask[channel] = true;
                                         match helpers::convolve(
                                             &grid,
-                                            &mut pdf,
+                                            fun,
                                             &self.orders,
                                             &[bin],
                                             &channel_mask,

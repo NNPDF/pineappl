@@ -137,13 +137,13 @@ impl Subcommand for Opts {
                     })
                     .collect::<Result<_, _>>()?;
 
-                // transpose results
-                let results: Vec<Vec<_>> = (0..results[0].len())
-                    .map(|bin| (0..results.len()).map(|pdf| results[pdf][bin]).collect())
-                    .collect();
-
-                results
-                    .into_iter()
+                (0..results[0].len())
+                    // transpose results
+                    .map(|bin| {
+                        (0..results.len())
+                            .map(|pdf| results[pdf][bin])
+                            .collect::<Vec<_>>()
+                    })
                     .map(|values| Ok(set.uncertainty(&values, self.cl, false)?))
                     .collect::<Result<_, _>>()
             })
