@@ -478,7 +478,7 @@ fn evolve_grid(
             #[allow(deprecated)]
             Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
         } else {
-            bail!("`--use-old-evolve` can only be used with a specific EKO format")
+            bail!("`--use-old-evolve` can only be used with the old EKO format (`V0`)")
         }
     } else {
         match eko_slices.as_mut_slice() {
