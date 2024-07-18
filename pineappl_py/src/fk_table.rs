@@ -244,6 +244,50 @@ impl PyFkTable {
             .into_pyarray_bound(py)
     }
 
+    /// Convolute grid with two pdfs.
+    ///
+    /// **Usage:** `pineko`, `nnpdf`
+    ///
+    /// Parameters
+    /// ----------
+    ///     pdg_id1 : integer
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx1` is the PDF for
+    ///     xfx1 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    ///     pdg_id2 : integer
+    ///         PDG Monte Carlo ID of the hadronic particle `xfx2` is the PDF for
+    ///     xfx2 : callable
+    ///         lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    ///
+    /// Returns
+    /// -------
+    ///     numpy.ndarray(float) :
+    ///         cross sections for all bins
+    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, bin_indices = None, lumi_mask= None))]
+    pub fn convolve_with_two<'py>(
+        &self,
+        pdg_id1: i32,
+        xfx1: &PyAny,
+        pdg_id2: i32,
+        xfx2: &PyAny,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        lumi_mask: Option<PyReadonlyArray1<bool>>,
+        py: Python<'py>,
+    ) -> &'py PyArray1<f64> {
+        let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
+        let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
+        let mut alphas = |_| 1.0;
+        let mut lumi_cache =
+            LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
+        self.fk_table
+            .convolve(
+                &mut lumi_cache,
+                &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
+                &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+            )
+            .into_pyarray(py)
+    }
+
     /// Optimize FK table storage
     ///
     /// In order to perform any relevant optimization, assumptions are needed, and they are passed

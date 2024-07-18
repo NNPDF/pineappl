@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new method `Grid::evolve_with_slice_iter2` which is able to perform
+  evolutions with two different EKOs
+
 ### Fixed
 
 - fixed CI to build CAPI and CLI
