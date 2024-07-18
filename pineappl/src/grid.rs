@@ -1386,62 +1386,6 @@ impl Grid {
         )
     }
 
-    /// Do not use this method, it is scheduled to be removed before this branch is merged.
-    #[deprecated(since = "0.8.0", note = "use evolve_slice_with_two2 instead")]
-    pub fn evolve2(
-        &self,
-        operator_a: ArrayView5<f64>,
-        operator_b: ArrayView5<f64>,
-        info_a: &OperatorInfo,
-        info_b: &OperatorInfo,
-        order_mask: &[bool],
-    ) -> Result<FkTable, GridError> {
-        self.evolve_with_slice_iter2(
-            info_a
-                .fac1
-                .iter()
-                .zip(operator_a.axis_iter(Axis(0)))
-                .map(|(&fac1, op)| {
-                    Ok::<_, GridError>((
-                        OperatorSliceInfo {
-                            fac0: info_a.fac0,
-                            pids0: info_a.pids0.clone(),
-                            x0: info_a.x0.clone(),
-                            fac1,
-                            pids1: info_a.pids1.clone(),
-                            x1: info_a.x1.clone(),
-                            pid_basis: info_a.pid_basis,
-                        },
-                        CowArray::from(op),
-                    ))
-                }),
-            info_b
-                .fac1
-                .iter()
-                .zip(operator_b.axis_iter(Axis(0)))
-                .map(|(&fac1, op)| {
-                    Ok::<_, GridError>((
-                        OperatorSliceInfo {
-                            fac0: info_b.fac0,
-                            pids0: info_b.pids0.clone(),
-                            x0: info_b.x0.clone(),
-                            fac1,
-                            pids1: info_b.pids1.clone(),
-                            x1: info_b.x1.clone(),
-                            pid_basis: info_b.pid_basis,
-                        },
-                        CowArray::from(op),
-                    ))
-                }),
-            order_mask,
-            (info_a.xir, info_a.xif),
-            &AlphasTable {
-                ren1: info_a.ren1.clone(),
-                alphas: info_a.alphas.clone(),
-            },
-        )
-    }
-
     // TODO:
     // - try to find a better solution than to require that E must be convertible into
     //   anyhow::Error
