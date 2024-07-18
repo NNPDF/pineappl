@@ -16,7 +16,7 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "=0.8.0" }
+pineappl = { path = "../pineappl", version = "=0.8.1" }
 itertools = "0.10.1"
 
 [features]
