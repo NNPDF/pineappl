@@ -266,7 +266,7 @@ fn operator_slices(
     Ok(operators)
 }
 
-type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Array2<f64>);
+type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Option<Array2<f64>>);
 
 fn ndarray_from_subgrid_orders_slice(
     fac1: f64,
@@ -297,6 +297,7 @@ fn ndarray_from_subgrid_orders_slice(
     x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
 
     let mut array = Array2::<f64>::zeros((x1_a.len(), x1_b.len()));
+    let mut zero = true;
 
     // add subgrids for different orders, but the same bin and lumi, using the right
     // couplings
@@ -376,11 +377,13 @@ fn ndarray_from_subgrid_orders_slice(
                 )));
             };
 
+            zero = false;
+
             array[[xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
         }
     }
 
-    Ok((vec![x1_a, x1_b], array))
+    Ok((vec![x1_a, x1_b], (!zero).then_some(array)))
 }
 
 pub(crate) fn evolve_slice_with_one(
@@ -420,6 +423,11 @@ pub(crate) fn evolve_slice_with_one(
                 xi,
                 alphas_table,
             )?;
+
+            // skip over zero arrays to speed up evolution and avoid problems with NaNs
+            let Some(array) = array else {
+                continue;
+            };
 
             let x1 = if has_pdf1 { x1.remove(0) } else { x1.remove(1) };
 
@@ -564,6 +572,11 @@ pub(crate) fn evolve_slice_with_two(
                 alphas_table,
             )?;
 
+            // skip over zero arrays to speed up evolution and avoid problems with NaNs
+            let Some(array) = array else {
+                continue;
+            };
+
             for (last_x1, x1, pid_indices, operators) in
                 izip!(&mut last_x1, x1, &pid_indices, &mut operators)
             {
@@ -704,6 +717,11 @@ pub(crate) fn evolve_slice_with_two2(
                 xi,
                 alphas_table,
             )?;
+
+            // skip over zero arrays to speed up evolution and avoid problems with NaNs
+            let Some(array) = array else {
+                continue;
+            };
 
             for (last_x1, x1, pid_indices, slices, operator, info) in izip!(
                 &mut last_x1,

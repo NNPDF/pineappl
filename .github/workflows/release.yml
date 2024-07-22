@@ -307,7 +307,7 @@ jobs:
           else
               gh release edit v${version} -n "" --prerelease
           fi
-          find artifacts -name 'pineappl*' -type f -exec gh release upload v${version} {} +
+          find artifacts -name 'pineappl_*' -type f -exec gh release upload v${version} {} +
           gh release edit v${version} --draft=false
 
   publish-crates:
