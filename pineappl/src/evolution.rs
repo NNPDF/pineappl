@@ -166,7 +166,7 @@ fn gluon_has_pid_zero(grid: &Grid) -> bool {
     // if there are any PID zero particles ...
     grid.channels()
         .iter()
-        .any(|entry| entry.entry().iter().any(|&(a, b, _)| (a == 0) || (b == 0)))
+        .any(|entry| entry.entry().iter().any(|&(ref pids, _)| pids.iter().any(|&pid| pid == 0)))
         // and if the particle IDs are encoded using PDG MC IDs
         && grid.pid_basis() == PidBasis::Pdg
 }
