@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- changed the implementation of evolution functions so that they are much
+  faster and that NaNs are correctly propagated
+
 ## [0.8.1] - 18/07/2024
 
 ### Added
