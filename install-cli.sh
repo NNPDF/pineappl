@@ -80,14 +80,13 @@ if [ -z "${version}" ]; then
         sed -n 's/[ ]*"tag_name"[ ]*:[ ]*"v\([^"]*\)"[ ]*,[ ]*$/\1/p')
 fi
 
-base_url=https://github.com/NNPDF/pineappl/releases/download
+url="https://github.com/NNPDF/pineappl/releases/download/v${version}/pineappl_cli-${target}.tar.gz"
 
-echo "prefix:  ${prefix}"
-echo "target:  ${target}"
-echo "version: ${version}"
+echo "prefix:  '${prefix}'"
+echo "target:  '${target}'"
+echo "version: '${version}'"
 
-curl -s -LJ "${base_url}/v${version}/pineappl_cli-${target}.tar.gz" \
-    | tar xzf - -C "${prefix}"
+curl -s -LJ "${url}" | tar xzf - -C "${prefix}"
 
 if command -v pineappl >/dev/null; then
     path="$(command -v pineappl)"

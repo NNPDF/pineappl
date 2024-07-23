@@ -80,14 +80,14 @@ if [ -z "${version}" ]; then
         sed -n 's/[ ]*"tag_name"[ ]*:[ ]*"v\([^"]*\)"[ ]*,[ ]*$/\1/p')
 fi
 
-base_url=https://github.com/NNPDF/pineappl/releases/download
+url="https://github.com/NNPDF/pineappl/releases/download/v${version}/pineappl_capi-${target}.tar.gz"
 
-echo "prefix:  ${prefix}"
-echo "target:  ${target}"
-echo "version: ${version}"
+echo "prefix:  '${prefix}'"
+echo "target:  '${target}'"
+echo "version: '${version}'"
+echo "URL:     '${url}'"
 
-curl -s -LJ "${base_url}/v${version}/pineappl_capi-${target}.tar.gz" \
-    | tar xzf - -C "${prefix}"
+curl -s -LJ "${url}" | tar xzf - -C "${prefix}"
 
 # instead of `sed` and `mv` we could use `sed -i`, but on Mac it doesn't work as expected from GNU sed
 sed "s:prefix=/:prefix=${prefix}:" "${prefix}"/lib/pkgconfig/pineappl_capi.pc > \
