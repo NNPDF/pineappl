@@ -1,16 +1,16 @@
-from .pineappl import PyLumiEntry
+from .pineappl import PyChannel
 from .utils import PyWrapper
 
 
-class LumiEntry(PyWrapper):
+class Channel(PyWrapper):
     """
-    Python wrapper object to :class:`~pineappl.pineappl.PyLumiEntry`.
+    Python wrapper object to :class:`~pineappl.pineappl.PyChannel`.
 
     Parameters
     ----------
-        lumis : list(tuple(int,int,float))
-            sequence describing a luminosity function.
+    entry : list(tuple(int,int,float))
+        sequence describing a luminosity function.
     """
 
-    def __init__(self, lumis):
-        self._raw = PyLumiEntry(lumis)
+    def __init__(self, entry):
+        self._raw = PyChannel(entry)
