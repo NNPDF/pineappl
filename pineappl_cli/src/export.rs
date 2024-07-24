@@ -143,7 +143,8 @@ impl Subcommand for Opts {
                     },
                     keep,
                 )| {
-                    (keep && (logxir == 0) && (logxif == 0)).then_some((alphas, alpha))
+                    (keep && (logxir == 0) && (logxif == 0) && (logxia == 0))
+                        .then_some((alphas, alpha))
                 },
             )
             .collect();

@@ -216,9 +216,9 @@ impl Subcommand for Opts {
                     logxia,
                 } = order;
 
-                let order_string = [alphas, alpha, logxir, logxif]
+                let order_string = [alphas, alpha, logxir, logxif, logxia]
                     .iter()
-                    .zip(["as^", "a^", "lr^", "lf^"].iter())
+                    .zip(["as^", "a^", "lr^", "lf^", "la^"].iter())
                     .filter_map(|(num, string)| {
                         if **num == 0 && self.group.orders {
                             None
