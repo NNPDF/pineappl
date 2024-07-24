@@ -5,8 +5,6 @@ use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
-///
-/// **Usage**: `yadism`
 #[pyclass]
 #[repr(transparent)]
 pub struct PySubgridParams {
@@ -37,6 +35,8 @@ impl Clone for PySubgridParams {
 
 #[pymethods]
 impl PySubgridParams {
+
+    /// Constructor using the defaults.
     #[new]
     pub fn default() -> Self {
         let subgrid_params = SubgridParams::default();
@@ -86,8 +86,6 @@ impl PySubgridParams {
 
     /// Set reweighting.
     ///
-    /// **Usage:** `yadism`
-    ///
     /// Parameters
     /// ----------
     /// reweight : bool
@@ -97,8 +95,6 @@ impl PySubgridParams {
     }
 
     /// Set number of x bins.
-    ///
-    /// **Usage:** `yadism`
     ///
     /// Parameters
     /// ----------
@@ -110,8 +106,6 @@ impl PySubgridParams {
 
     /// Set :math:`x_{max}`.
     ///
-    /// **Usage:** `yadism`
-    ///
     /// Parameters
     /// ----------
     /// x_max : float
@@ -122,8 +116,6 @@ impl PySubgridParams {
 
     /// Set :math:`x_{min}`.
     ///
-    /// **Usage:** `yadism`
-    ///
     /// Parameters
     /// ----------
     /// x_min : float
@@ -133,8 +125,6 @@ impl PySubgridParams {
     }
 
     /// Set interpolation order for :math:`x_{grid}`.
-    ///
-    /// **Usage:** `yadism`
     ///
     /// Parameters
     /// ----------
@@ -154,6 +144,15 @@ pub struct PyMu2 {
 
 #[pymethods]
 impl PyMu2 {
+
+    /// Constructor.
+    /// 
+    /// Parameters
+    /// ----------
+    /// ren : float
+    ///     renormalization scale
+    /// fac : float
+    ///     factorization scale
     #[new]
     pub fn new(ren: f64, fac: f64) -> Self {
         Self {
@@ -209,10 +208,12 @@ impl PySubgridEnum {
         Array3::from(&self.subgrid_enum).into_pyarray_bound(py)
     }
 
+    /// Clone.
     pub fn into(&self) -> Self {
         self.clone()
     }
-    /// Return the array of mu2 objects of a subgrid
+
+    /// Return the array of mu2 objects.
     pub fn mu2_grid(&self) -> Vec<PyMu2> {
         self.subgrid_enum
             .mu2_grid()
@@ -221,11 +222,13 @@ impl PySubgridEnum {
             .map(|mu2| PyMu2 { mu2 })
             .collect()
     }
-    /// Return the array of x1 of a subgrid
+
+    /// Return the array of x1.
     pub fn x1_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         PyArray1::from_slice_bound(py, &self.subgrid_enum.x1_grid())
     }
-    /// Return the array of x2 of a subgrid
+
+    /// Return the array of x2.
     pub fn x2_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         PyArray1::from_slice_bound(py, &self.subgrid_enum.x2_grid())
     }
