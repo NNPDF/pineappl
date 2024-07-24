@@ -1017,7 +1017,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
         pdg_id_pairs
             .chunks(2)
             .zip(factors)
-            .map(|x| (x.0[0], x.0[1], x.1))
+            .map(|x| (vec![x.0[0], x.0[1]], x.1))
             .collect(),
     ));
 }
@@ -1076,12 +1076,12 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
     entry
         .iter()
-        .flat_map(|(id1, id2, _)| vec![id1, id2])
+        .flat_map(|(pids, _)| pids)
         .zip(pdg_ids.iter_mut())
         .for_each(|(from, to)| *to = *from);
     entry
         .iter()
-        .map(|(_, _, factor)| factor)
+        .map(|(_, factor)| factor)
         .zip(factors.iter_mut())
         .for_each(|(from, to)| *to = *from);
 }

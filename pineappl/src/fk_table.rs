@@ -226,11 +226,11 @@ impl FkTable {
 
     /// Return the channel definition for this `FkTable`. All factors are `1.0`.
     #[must_use]
-    pub fn channels(&self) -> Vec<(i32, i32)> {
+    pub fn channels(&self) -> Vec<Vec<i32>> {
         self.grid
             .channels()
             .iter()
-            .map(|entry| (entry.entry()[0].0, entry.entry()[0].1))
+            .map(|entry| entry.entry()[0].0.clone())
             .collect()
     }
 
@@ -390,7 +390,7 @@ impl TryFrom<Grid> for FkTable {
         for channel in grid.channels() {
             let entry = channel.entry();
 
-            if entry.len() != 1 || entry[0].2 != 1.0 {
+            if entry.len() != 1 || entry[0].1 != 1.0 {
                 return Err(TryFromGridError::InvalidChannel);
             }
         }

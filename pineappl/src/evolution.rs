@@ -386,6 +386,7 @@ fn ndarray_from_subgrid_orders_slice(
     Ok((vec![x1_a, x1_b], (!zero).then_some(array)))
 }
 
+// TODO: merge this method into evolve_slice_with_two
 pub(crate) fn evolve_slice_with_one(
     grid: &Grid,
     operator: &ArrayView4<f64>,
@@ -395,18 +396,22 @@ pub(crate) fn evolve_slice_with_one(
     alphas_table: &AlphasTable,
 ) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
-    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
-
+    // UNWRAP: there must be exactly one convolution that's not None
+    let index = grid
+        .convolutions()
+        .iter()
+        .position(|c| *c != Convolution::None)
+        .unwrap();
     let (pid_indices, pids) = pid_slices(operator, info, gluon_has_pid_zero, &|pid| {
         grid.channels()
             .iter()
             .flat_map(Channel::entry)
-            .any(|&(a, b, _)| if has_pdf1 { a } else { b } == pid)
+            .any(|(pids, _)| pids[index] == pid)
     })?;
 
     let channels0 = channels0_with_one(&pids);
     let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
-    let new_axis = if has_pdf1 { 2 } else { 1 };
+    let new_axis = 2 - index;
 
     let mut last_x1 = Vec::new();
     let mut ops = Vec::new();
@@ -429,7 +434,7 @@ pub(crate) fn evolve_slice_with_one(
                 continue;
             };
 
-            let x1 = if has_pdf1 { x1.remove(0) } else { x1.remove(1) };
+            let x1 = x1.remove(index);
 
             if x1.is_empty() {
                 continue;
@@ -445,12 +450,7 @@ pub(crate) fn evolve_slice_with_one(
                 last_x1 = x1;
             }
 
-            for (&pid1, &factor) in
-                channel1
-                    .entry()
-                    .iter()
-                    .map(|(a, b, f)| if has_pdf1 { (a, f) } else { (b, f) })
-            {
+            for (pid1, &factor) in channel1.entry().iter().map(|(pids, f)| (pids[index], f)) {
                 for (fk_table, op) in
                     channels0
                         .iter()
@@ -485,18 +485,22 @@ pub(crate) fn evolve_slice_with_one(
                     ren: info.fac0,
                     fac: info.fac0,
                 }],
-                if has_pdf1 { info.x0.clone() } else { vec![1.0] },
-                if has_pdf1 { vec![1.0] } else { info.x0.clone() },
+                if index == 0 {
+                    info.x0.clone()
+                } else {
+                    vec![1.0]
+                },
+                if index == 0 {
+                    vec![1.0]
+                } else {
+                    info.x0.clone()
+                },
             )
             .into()
         }));
     }
 
-    let pid = if grid.convolutions()[0] == Convolution::None {
-        grid.channels()[0].entry()[0].0
-    } else {
-        grid.channels()[0].entry()[0].1
-    };
+    let pid = grid.channels()[0].entry()[0].0[index];
 
     Ok((
         Array1::from_iter(sub_fk_tables)
@@ -506,8 +510,8 @@ pub(crate) fn evolve_slice_with_one(
             .iter()
             .map(|&a| {
                 channel![
-                    if has_pdf1 { a } else { pid },
-                    if has_pdf1 { pid } else { a },
+                    if index == 0 { a } else { pid },
+                    if index == 0 { pid } else { a },
                     1.0
                 ]
             })
@@ -532,12 +536,7 @@ pub(crate) fn evolve_slice_with_two(
                 grid.channels()
                     .iter()
                     .flat_map(Channel::entry)
-                    .any(|tuple| match d {
-                        // TODO: `Channel::entry` should return a tuple of a `Vec` and an `f64`
-                        0 => tuple.0 == pid1,
-                        1 => tuple.1 == pid1,
-                        _ => unreachable!(),
-                    })
+                    .any(|(pids, _)| pids[d] == pid1)
             })
         })
         .collect::<Result<Vec<_>, _>>()?
@@ -596,7 +595,7 @@ pub(crate) fn evolve_slice_with_two(
             for (pids1, factor) in channel1
                 .entry()
                 .iter()
-                .map(|&(pida1, pidb1, factor)| ([pida1, pidb1], factor))
+                .map(|(pids1, factor)| ([pids1[0], pids1[1]], factor))
             {
                 for (fk_table, ops) in
                     channels0
@@ -615,7 +614,7 @@ pub(crate) fn evolve_slice_with_two(
                         })
                 {
                     linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, &mut tmp);
-                    linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, fk_table);
+                    linalg::general_mat_mul(*factor, ops[0], &tmp, 1.0, fk_table);
                 }
             }
         }
@@ -675,12 +674,7 @@ pub(crate) fn evolve_slice_with_two2(
                 grid.channels()
                     .iter()
                     .flat_map(Channel::entry)
-                    .any(|tuple| match d {
-                        // TODO: `Channel::entry` should return a tuple of a `Vec` and an `f64`
-                        0 => tuple.0 == pid1,
-                        1 => tuple.1 == pid1,
-                        _ => unreachable!(),
-                    })
+                    .any(|(pids, _)| pids[d] == pid1)
             })
         })
         .collect::<Result<Vec<_>, _>>()?
@@ -747,7 +741,7 @@ pub(crate) fn evolve_slice_with_two2(
             for (pids1, factor) in channel1
                 .entry()
                 .iter()
-                .map(|&(pida1, pidb1, factor)| ([pida1, pidb1], factor))
+                .map(|(pids1, factor)| ([pids1[0], pids1[1]], factor))
             {
                 for (fk_table, ops) in
                     channels0
@@ -768,7 +762,7 @@ pub(crate) fn evolve_slice_with_two2(
                     // tmp = array * ops[1]^T
                     linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, &mut tmp);
                     // fk_table += factor * ops[0] * tmp
-                    linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, fk_table);
+                    linalg::general_mat_mul(*factor, ops[0], &tmp, 1.0, fk_table);
                 }
             }
         }

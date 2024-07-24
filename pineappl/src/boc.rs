@@ -339,17 +339,17 @@ impl Channel {
     /// use pineappl::boc::Channel;
     /// use pineappl::channel;
     ///
-    /// let entry = Channel::translate(&channel![103, 11, 1.0], &|evol_id| match evol_id {
+    /// let entry = Channel::translate(&channel![103, 11, 10], &|evol_id| match evol_id {
     ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
     ///     _ => vec![(evol_id, 1.0)],
     /// });
     ///
-    /// assert_eq!(entry, channel![2, 11, 1.0; -2, 11, -1.0; 1, 11, -1.0; -1, 11, 1.0]);
+    /// assert_eq!(entry, channel![2, 11, 10.0; -2, 11, -10.0; 1, 11, -10.0; -1, 11, 10.0]);
     /// ```
     pub fn translate(entry: &Self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
         let mut result = Vec::new();
 
-        for &(pids, factor) in &entry.entry {
+        for (pids, factor) in &entry.entry {
             for tuples in pids
                 .iter()
                 .map(|&pid| translator(pid))
@@ -357,7 +357,7 @@ impl Channel {
             {
                 result.push((
                     tuples.iter().map(|&(pid, _)| pid).collect(),
-                    tuples.iter().map(|(_, f)| f).product::<f64>(),
+                    tuples.iter().map(|(_, f)| factor * f).product::<f64>(),
                 ));
             }
         }
@@ -382,11 +382,20 @@ impl Channel {
         &self.entry
     }
 
-    // /// Creates a new object with the initial states transposed.
-    // #[must_use]
-    // pub fn transpose(&self) -> Self {
-    //     Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
-    // }
+    /// Create a new object with the PIDs at index `i` and `j` transposed.
+    #[must_use]
+    pub fn transpose(&self, i: usize, j: usize) -> Self {
+        Self::new(
+            self.entry
+                .iter()
+                .map(|(pids, c)| {
+                    let mut transposed = pids.clone();
+                    transposed.swap(i, j);
+                    (transposed, *c)
+                })
+                .collect(),
+        )
+    }
 
     /// If `other` is the same channel when only comparing PIDs and neglecting the factors, return
     /// the number `f1 / f2`, where `f1` is the factor from `self` and `f2` is the factor from
@@ -498,7 +507,7 @@ impl FromStr for Channel {
 #[macro_export]
 macro_rules! channel {
     ($a:expr, $b:expr, $factor:expr $(; $c:expr, $d:expr, $fac:expr)*) => {
-        $crate::boc::Channel::new(vec![($a, $b, $factor), $(($c, $d, $fac)),*])
+        $crate::boc::Channel::new(vec![(vec![$a, $b], $factor), $((vec![$c, $d], $fac)),*])
     };
 }
 

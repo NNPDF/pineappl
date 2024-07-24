@@ -494,9 +494,13 @@ impl Subcommand for Opts {
 
         for arg in &self.more_args.args {
             match arg {
+                // TODO: generalize to arbitrary convolutions
                 OpsArg::Cc1(true) | OpsArg::Cc2(true) => {
-                    let cc1 = matches!(arg, OpsArg::Cc1(true));
-                    let cc2 = matches!(arg, OpsArg::Cc2(true));
+                    let index = match arg {
+                        OpsArg::Cc1(true) => 0,
+                        OpsArg::Cc2(true) => 1,
+                        _ => unreachable!(),
+                    };
 
                     let pid_basis = grid.pid_basis();
 
@@ -505,29 +509,17 @@ impl Subcommand for Opts {
                             channel
                                 .entry()
                                 .iter()
-                                .map(|&(a, b, f)| {
-                                    let (ap, f1) = if cc1 {
-                                        pid_basis.charge_conjugate(a)
-                                    } else {
-                                        (a, 1.0)
-                                    };
-                                    let (bp, f2) = if cc2 {
-                                        pid_basis.charge_conjugate(b)
-                                    } else {
-                                        (b, 1.0)
-                                    };
-                                    (ap, bp, f * f1 * f2)
+                                .map(|(pids, f)| {
+                                    let mut cc_pids = pids.clone();
+                                    let (cc_pid, f1) = pid_basis.charge_conjugate(pids[index]);
+                                    cc_pids[index] = cc_pid;
+                                    (cc_pids, f * f1)
                                 })
                                 .collect(),
                         );
                     }
 
-                    if cc1 {
-                        grid.set_convolution(0, grid.convolutions()[0].charge_conjugate());
-                    }
-                    if cc2 {
-                        grid.set_convolution(1, grid.convolutions()[1].charge_conjugate());
-                    }
+                    grid.set_convolution(index, grid.convolutions()[index].charge_conjugate());
                 }
                 OpsArg::DedupChannels(ulps) => {
                     grid.dedup_channels(*ulps);

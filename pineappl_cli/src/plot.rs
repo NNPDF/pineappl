@@ -104,15 +104,16 @@ fn map_format_parton(parton: i32) -> &'static str {
     }
 }
 
+// TODO: generalize this function to n convolutions
 fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> String {
     channel
         .entry()
         .iter()
-        .map(|&(a, b, _)| {
+        .map(|(pids, _)| {
             format!(
                 "{}{}",
-                if has_pdf1 { map_format_parton(a) } else { "" },
-                if has_pdf2 { map_format_parton(b) } else { "" }
+                if has_pdf1 { map_format_parton(pids[0]) } else { "" },
+                if has_pdf2 { map_format_parton(pids[1]) } else { "" }
             )
         })
         .join(" + ")

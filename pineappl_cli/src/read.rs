@@ -124,8 +124,8 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(format!("{index}")));
 
-                for (id1, id2, factor) in channel.entry() {
-                    row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
+                for (pids, factor) in channel.entry() {
+                    row.add_cell(cell!(format!("{factor} \u{d7} ({})", pids.iter().map(ToString::to_string).join(", "))));
                 }
             }
         } else if self.group.ew || self.group.qcd {

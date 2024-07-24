@@ -388,9 +388,10 @@ impl Grid {
                         let mut lumi = 0.0;
 
                         for entry in channel.entry() {
-                            let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                            let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                            debug_assert_eq!(entry.0.len(), 2);
+                            let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
+                            let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                            lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
                         }
 
                         let alphas = lumi_cache.alphas(imu2);
@@ -454,9 +455,10 @@ impl Grid {
             let mut lumi = 0.0;
 
             for entry in channel.entry() {
-                let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                debug_assert_eq!(entry.0.len(), 2);
+                let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
+                let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
             }
 
             let alphas = lumi_cache.alphas(imu2);
@@ -804,11 +806,7 @@ impl Grid {
                                 {
                                     Some(Ok(pid)) => {
                                         let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|&channels| match index {
-                                                1 => channels.0 == pid,
-                                                2 => channels.1 == pid,
-                                                _ => unreachable!(),
-                                            })
+                                            entry.entry().iter().all(|(pids, _)| pids[index] == pid)
                                         });
 
                                         if condition {
@@ -1147,7 +1145,7 @@ impl Grid {
         // only keep channels that have non-zero factors and for which at least one subgrid is
         // non-empty
         for (channel, entry) in self.channels.iter().enumerate() {
-            if !entry.entry().iter().all(|&(_, _, factor)| factor == 0.0)
+            if !entry.entry().iter().all(|&(_, factor)| factor == 0.0)
                 && !self
                     .subgrids
                     .slice(s![.., .., channel])
@@ -1196,6 +1194,8 @@ impl Grid {
 
     fn symmetrize_channels(&mut self) {
         let convolutions = self.convolutions();
+        // TODO: generalize this method to n convolutions
+        assert_eq!(convolutions.len(), 2);
         if convolutions[0] != convolutions[1] {
             return;
         }
@@ -1205,7 +1205,7 @@ impl Grid {
         while let Some(index) = indices.pop() {
             let channel_entry = &self.channels[index];
 
-            if *channel_entry == channel_entry.transpose() {
+            if *channel_entry == channel_entry.transpose(0, 1) {
                 // check if in all cases the limits are compatible with merging
                 self.subgrids
                     .slice_mut(s![.., .., index])
@@ -1218,7 +1218,7 @@ impl Grid {
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
-                .find(|(_, i)| self.channels[**i] == channel_entry.transpose())
+                .find(|(_, i)| self.channels[**i] == channel_entry.transpose(0, 1))
             {
                 indices.remove(j);
 
@@ -1289,6 +1289,9 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
+        // TODO: generalize this method to n convolutions and different EKOs
+        assert_eq!(self.convolutions().len(), 2);
+
         let has_pdf1 = self.convolutions()[0] != Convolution::None;
         let has_pdf2 = self.convolutions()[1] != Convolution::None;
 
@@ -1324,10 +1327,20 @@ impl Grid {
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             if has_pdf1 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(a, _, _)| a));
+                pids1.extend(
+                    self.channels()[channel]
+                        .entry()
+                        .iter()
+                        .map(|(pids, _)| pids[0]),
+                );
             }
             if has_pdf2 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(_, b, _)| b));
+                pids1.extend(
+                    self.channels()[channel]
+                        .entry()
+                        .iter()
+                        .map(|(pids, _)| pids[1]),
+                );
             }
 
             pids1.sort_unstable();
@@ -1753,6 +1766,9 @@ impl Grid {
     }
 
     pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
+        // TODO: generalize this method to n convolutions
+        assert_eq!(self.convolutions().len(), 2);
+
         self.channels = self
             .channels()
             .iter()
@@ -1761,21 +1777,29 @@ impl Grid {
                     entry
                         .entry()
                         .iter()
-                        .map(|(a, b, f)| {
+                        .map(|(pids, f)| {
                             (
-                                // if `a` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *a,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
-                                // if `b` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *b,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
+                                vec![
+                                    // if `a` is to be added to another pid replace it with this pid
+                                    add.iter().fold(pids[0], |id, &(source, target)| {
+                                        if id == source {
+                                            target
+                                        } else {
+                                            id
+                                        }
+                                    }),
+                                    // if `b` is to be added to another pid replace it with this pid
+                                    add.iter().fold(pids[1], |id, &(source, target)| {
+                                        if id == source {
+                                            target
+                                        } else {
+                                            id
+                                        }
+                                    }),
+                                ],
                                 // if any of the pids `a` or `b` are to b deleted set the factor to
                                 // zero
-                                if del.iter().any(|id| id == a || id == b) {
+                                if del.iter().any(|&id| id == pids[0] || id == pids[1]) {
                                     0.0
                                 } else {
                                     *f
@@ -1805,7 +1829,7 @@ impl Grid {
                 entry
                     .entry()
                     .iter()
-                    .copied()
+                    .cloned()
                     .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
