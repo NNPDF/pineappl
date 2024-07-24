@@ -685,6 +685,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             alpha: s[1],
             logxir: s[2],
             logxif: s[3],
+            logxia: s[4],
         })
         .collect();
 

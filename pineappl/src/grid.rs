@@ -1458,7 +1458,7 @@ impl Grid {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
+                orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
                 more_members: self.more_members.clone(),
             };
@@ -1594,7 +1594,7 @@ impl Grid {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
+                orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
                 more_members: self.more_members.clone(),
             };

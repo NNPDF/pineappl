@@ -24,8 +24,10 @@ pub struct Order {
     pub alpha: u32,
     /// Exponent of the logarithm of the scale factor of the renomalization scale.
     pub logxir: u32,
-    /// Exponent of the logarithm of the scale factor of the factorization scale.
+    /// Exponent of the logarithm of the scale factor of the initial state factorization scale.
     pub logxif: u32,
+    /// Exponent of the logarithm of the scale factor of the final state factorization scale (fragmentation scale).
+    pub logxia: u32,
 }
 
 impl FromStr for Order {
@@ -37,6 +39,7 @@ impl FromStr for Order {
             alpha: 0,
             logxir: 0,
             logxif: 0,
+            logxia: 0,
         };
 
         for tuple in s
@@ -61,6 +64,9 @@ impl FromStr for Order {
                 ("lf", Ok(num)) => {
                     result.logxif = num;
                 }
+                ("la", Ok(num)) => {
+                    result.logxia = num;
+                }
                 (label, Err(err)) => {
                     return Err(ParseOrderError(format!(
                         "error while parsing exponent of '{label}': {err}"
@@ -82,10 +88,11 @@ impl Ord for Order {
         // rest lexicographically
         (self.alphas + self.alpha)
             .cmp(&(other.alphas + other.alpha))
-            .then((self.alpha, self.logxir, self.logxif).cmp(&(
+            .then((self.alpha, self.logxir, self.logxif, self.logxia).cmp(&(
                 other.alpha,
                 other.logxir,
                 other.logxif,
+                other.logxia,
             )))
     }
 }
@@ -100,12 +107,13 @@ impl Order {
     /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
     /// verbose.
     #[must_use]
-    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
+    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32, logxia: u32) -> Self {
         Self {
             alphas,
             alpha,
             logxir,
             logxif,
+            logxia,
         }
     }
 
@@ -238,8 +246,9 @@ impl Order {
                      alpha,
                      logxir,
                      logxif,
+                     logxia,
                  }| {
-                    if !logs && (logxir > 0 || logxif > 0) {
+                    if !logs && (logxir > 0 || logxif > 0 || logxia > 0) {
                         return false;
                     }
 

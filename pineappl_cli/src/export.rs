@@ -118,6 +118,7 @@ impl Subcommand for Opts {
             alpha,
             logxir,
             logxif,
+            logxia,
         } in grid
             .orders()
             .iter()
@@ -138,6 +139,7 @@ impl Subcommand for Opts {
                         alpha,
                         logxir,
                         logxif,
+                        logxia,
                     },
                     keep,
                 )| {

@@ -125,7 +125,10 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(format!("{index}")));
 
                 for (pids, factor) in channel.entry() {
-                    row.add_cell(cell!(format!("{factor} \u{d7} ({})", pids.iter().map(ToString::to_string).join(", "))));
+                    row.add_cell(cell!(format!(
+                        "{factor} \u{d7} ({})",
+                        pids.iter().map(ToString::to_string).join(", ")
+                    )));
                 }
             }
         } else if self.group.ew || self.group.qcd {
@@ -210,6 +213,7 @@ impl Subcommand for Opts {
                     alpha,
                     logxir,
                     logxif,
+                    logxia,
                 } = order;
 
                 let order_string = [alphas, alpha, logxir, logxif]

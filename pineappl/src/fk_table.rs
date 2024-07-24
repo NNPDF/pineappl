@@ -364,6 +364,7 @@ impl TryFrom<Grid> for FkTable {
                 alpha: 0,
                 logxir: 0,
                 logxif: 0,
+                logxia: 0,
             }]
         {
             return Err(TryFromGridError::NonTrivialOrder);

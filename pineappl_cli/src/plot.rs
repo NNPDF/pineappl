@@ -112,8 +112,16 @@ fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> Stri
         .map(|(pids, _)| {
             format!(
                 "{}{}",
-                if has_pdf1 { map_format_parton(pids[0]) } else { "" },
-                if has_pdf2 { map_format_parton(pids[1]) } else { "" }
+                if has_pdf1 {
+                    map_format_parton(pids[0])
+                } else {
+                    ""
+                },
+                if has_pdf2 {
+                    map_format_parton(pids[1])
+                } else {
+                    ""
+                }
             )
         })
         .join(" + ")
