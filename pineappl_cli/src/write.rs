@@ -387,6 +387,7 @@ impl Args for MoreArgs {
         .arg(
             Arg::new("rewrite_channel")
                 .action(ArgAction::Append)
+                .allow_hyphen_values(true)
                 .help("Rewrite the definition of the channel with index IDX")
                 .long("rewrite-channel")
                 .num_args(2)
