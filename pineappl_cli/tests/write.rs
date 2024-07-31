@@ -432,11 +432,9 @@ const REWRITE_ORDER_READ_STR: &str = "o      order
 -+----------------
 0 O(as^1 a^1)
 1 O(as^1 a^2)
-2 O(as^1 a^2 lr^1)
-3 O(as^1 a^2 lf^1)
-4 O(a^3)
-5 O(a^3 lr^1)
-6 O(a^3 lf^1)
+2 O(as^1 a^2 lf^1)
+3 O(a^3)
+4 O(a^3 lf^1)
 ";
 
 #[test]
@@ -458,7 +456,7 @@ fn cc1() {
         .args([
             "write",
             "--cc1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -486,7 +484,7 @@ fn cc2() {
         .args([
             "write",
             "--cc2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -514,7 +512,7 @@ fn delete_bins_02_57() {
         .args([
             "write",
             "--delete-bins=0-2,5-7",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -542,7 +540,7 @@ fn delete_bins_25() {
         .args([
             "write",
             "--delete-bins=2-5",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -570,7 +568,7 @@ fn delete_channels() {
         .args([
             "write",
             "--delete-channels=1,3-4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -603,7 +601,7 @@ fn key_value() {
             "--set-key-file",
             "multiline",
             file.path().to_str().unwrap(),
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -627,7 +625,7 @@ fn merge_bins() {
         .args([
             "write",
             "--merge-bins=6-7",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -656,7 +654,7 @@ fn optimize() {
         .args([
             "write",
             "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -675,7 +673,7 @@ fn remap() {
             "--remap=0,1,2;0,2,4;1,2,3,4,5|:3|5:1,2,3,4,5,8,9|2:2",
             "--remap-norm-ignore=1",
             "--remap-norm=5",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -703,7 +701,7 @@ fn remap_norm_no_remapper() {
         .args([
             "write",
             "--remap-norm=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -720,7 +718,7 @@ fn remap_norm_ignore_no_remapper() {
         .args([
             "write",
             "--remap-norm-ignore=0",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -737,7 +735,7 @@ fn scale_by_bin() {
         .args([
             "write",
             "--scale-by-bin=1,2,3,4,5,6,7,8",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -766,7 +764,7 @@ fn scale_by_order() {
             "write",
             "--scale-by-order=2,1,0.5,0.5",
             "--scale=0.5",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -794,7 +792,7 @@ fn split_channels() {
         .args([
             "write",
             "--split-channels",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -830,7 +828,7 @@ fn dedup_channels() {
             "write",
             "--split-channels",
             "--dedup-channels",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -841,7 +839,7 @@ fn dedup_channels() {
         .unwrap()
         .args([
             "diff",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -866,7 +864,7 @@ fn upgrade() {
         .args([
             "write",
             "--upgrade",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -882,7 +880,7 @@ fn multiple_arguments() {
         .unwrap()
         .args([
             "write",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "--merge-bins=0-1,2-3",
             "--scale=2",
             "--merge-bins=0-0",
@@ -922,7 +920,7 @@ fn rewrite_channels() {
             "--rewrite-channel", "0", "0.9490461561 * ( 2, -1) + 0.050940490000000005 * (2, -3) + 0.0000128881 * (2, -5) + 0.05089536 * (4, -1) + 0.9473907556 * (4, -3) + 0.0017222500000000003 * (4, -5)",
             "--rewrite-channel", "1", "0.9999415161 * (-1, 21) + 0.9983312456 * (-3, 21) + 0.0017351381000000003 * (-5, 21)",
             "--rewrite-channel", "3", "0.9999995342 * ( 2, 21) + 1.0000083656 * ( 4, 21)",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -957,7 +955,7 @@ fn rotate_pid_basis() {
         .args([
             "write",
             "--rotate-pid-basis=PDG",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             pdg_to_pdg.path().to_str().unwrap(),
         ])
         .assert()
@@ -968,7 +966,7 @@ fn rotate_pid_basis() {
         .unwrap()
         .args([
             "diff",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             pdg_to_pdg.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -983,7 +981,7 @@ fn rotate_pid_basis() {
         .args([
             "write",
             "--rotate-pid-basis=EVOL",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             pdg_to_evol.path().to_str().unwrap(),
         ])
         .assert()
@@ -994,7 +992,7 @@ fn rotate_pid_basis() {
         .unwrap()
         .args([
             "diff",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             pdg_to_evol.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
             "--ignore-channels",
@@ -1051,7 +1049,7 @@ fn rotate_pid_basis() {
         .unwrap()
         .args([
             "diff",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             evol_to_pdg.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -1069,7 +1067,7 @@ fn rotate_pid_basis() {
             // use the old name instead of `--split-channels` to test the alias
             "--split-lumi",
             "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             evol_to_evol_optimize.path().to_str().unwrap(),
         ])
         .assert()
@@ -1100,7 +1098,7 @@ fn rewrite_order() {
             "--rewrite-order",
             "0",
             "as1a1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()

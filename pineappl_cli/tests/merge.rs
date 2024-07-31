@@ -45,8 +45,8 @@ fn default() {
         .args([
             "merge",
             output.path().to_str().unwrap(),
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()

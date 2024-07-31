@@ -117,9 +117,9 @@ def main():
             plot(axis, **kwargs)
 
         if len(data_slices) == 1:
-            figure.savefig("LHCB_WP_7TEV.pdf")
+            figure.savefig("LHCB_WP_7TEV_opt.pdf")
         else:
-            figure.savefig("LHCB_WP_7TEV-{}.pdf".format(index))
+            figure.savefig("LHCB_WP_7TEV_opt-{}.pdf".format(index))
         plt.close(figure)
 
 
@@ -1424,7 +1424,7 @@ fn default() {
         .args([
             "plot",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180=NNPDF4.0",
         ])
@@ -1441,7 +1441,7 @@ fn subgrid_pull() {
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180",
         ])

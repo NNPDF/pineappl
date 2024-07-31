@@ -102,8 +102,8 @@ fn orders1_a2_orders2_a2() {
             "diff",
             "--orders1=a2",
             "--orders2=a2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -119,8 +119,8 @@ fn orders1_a2_a2as1_orders2_a2_a2as1() {
             "diff",
             "--orders1=a2,a2as1",
             "--orders2=a2,a2as1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -136,8 +136,8 @@ fn orders1_a2_a2as1_ignore_orders() {
             "diff",
             "--orders1=a2,a2as1",
             "--ignore-orders",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -152,8 +152,8 @@ fn scale2_2() {
         .args([
             "diff",
             "--scale2=2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -168,8 +168,8 @@ fn orders_differ() {
         .args([
             "diff",
             "--orders1=a2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -187,7 +187,7 @@ fn bin_limits_differ() {
         .args([
             "write",
             "--remap=0,1,2,3,4,5,6,7,8",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -198,7 +198,7 @@ fn bin_limits_differ() {
         .unwrap()
         .args([
             "diff",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -217,7 +217,7 @@ fn bin_number_differs() {
         .args([
             "write",
             "--delete-bins=0,1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
         .assert()
@@ -229,7 +229,7 @@ fn bin_number_differs() {
         .args([
             "diff",
             "--ignore-bin-limits",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -246,7 +246,7 @@ fn channels_differ() {
         .args([
             "diff",
             "../test-data/LHCB_WP_7TEV_old.pineappl.lz4",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

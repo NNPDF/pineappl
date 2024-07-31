@@ -168,7 +168,7 @@ fn conv_fun_default() {
             "uncert",
             "--conv-fun=0,1",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF40_nnlo_as_01180=NNPDF3.1+NNPDF4.0",
         ])
         .assert()
@@ -185,7 +185,7 @@ fn conv_fun_cl_90() {
             "--conv-fun",
             "--cl=90",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -202,7 +202,7 @@ fn conv_fun_integrated() {
             "--conv-fun=0",
             "--integrated",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -219,7 +219,7 @@ fn conv_fun_orders_a2_as1a2() {
             "--conv-fun=0",
             "--orders=a2,as1a2",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -234,7 +234,7 @@ fn scale_abs() {
         .args([
             "uncert",
             "--scale-abs",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -249,7 +249,7 @@ fn scale_cov() {
         .args([
             "uncert",
             "--scale-cov",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -264,7 +264,7 @@ fn scale_cov_9() {
         .args([
             "uncert",
             "--scale-cov=9",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -279,7 +279,7 @@ fn scale_env() {
         .args([
             "uncert",
             "--scale-env",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -294,7 +294,7 @@ fn scale_env_9() {
         .args([
             "uncert",
             "--scale-env=9",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

@@ -156,7 +156,7 @@ fn default() {
         .unwrap()
         .args([
             "channels",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -168,7 +168,7 @@ fn default() {
 fn missing_conv_fun() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["channels", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["channels", "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4"])
         .assert()
         .failure()
         .stderr(MISSING_CONV_FUN_STR)
@@ -182,7 +182,7 @@ fn absolute() {
         .args([
             "channels",
             "--absolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -198,7 +198,7 @@ fn absolute_integrated() {
             "channels",
             "--absolute",
             "--integrated",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -213,7 +213,7 @@ fn limit_3() {
         .args([
             "channels",
             "--limit=3",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -228,7 +228,7 @@ fn bad_limit() {
         .args([
             "channels",
             "--limit=0",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -243,7 +243,7 @@ fn channels_0123() {
         .args([
             "channels",
             "--channels=0-3",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -258,7 +258,7 @@ fn orders_a2_as1a2() {
         .args([
             "channels",
             "--orders=a2,as1a2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -274,7 +274,7 @@ fn dont_sort_absolute() {
             "channels",
             "--absolute",
             "--dont-sort",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -289,7 +289,7 @@ fn dont_sort() {
         .args([
             "channels",
             "--dont-sort",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

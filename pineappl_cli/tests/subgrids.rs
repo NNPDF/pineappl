@@ -55,30 +55,54 @@ const MUF_STR: &str = "o b c  muf
 1 7 0 80.352
 1 7 1 80.352
 1 7 3 80.352
+2 0 0 80.352
+2 0 1 80.352
+2 0 3 80.352
+2 1 0 80.352
+2 1 1 80.352
+2 1 3 80.352
+2 2 0 80.352
+2 2 1 80.352
+2 2 3 80.352
+2 3 0 80.352
+2 3 1 80.352
+2 3 3 80.352
+2 4 0 80.352
+2 4 1 80.352
+2 4 3 80.352
+2 5 0 80.352
+2 5 1 80.352
+2 5 3 80.352
+2 6 0 80.352
+2 6 1 80.352
+2 6 3 80.352
+2 7 0 80.352
+2 7 1 80.352
+2 7 3 80.352
 3 0 0 80.352
-3 0 1 80.352
-3 0 3 80.352
+3 0 2 80.352
+3 0 4 80.352
 3 1 0 80.352
-3 1 1 80.352
-3 1 3 80.352
+3 1 2 80.352
+3 1 4 80.352
 3 2 0 80.352
-3 2 1 80.352
-3 2 3 80.352
+3 2 2 80.352
+3 2 4 80.352
 3 3 0 80.352
-3 3 1 80.352
-3 3 3 80.352
+3 3 2 80.352
+3 3 4 80.352
 3 4 0 80.352
-3 4 1 80.352
-3 4 3 80.352
+3 4 2 80.352
+3 4 4 80.352
 3 5 0 80.352
-3 5 1 80.352
-3 5 3 80.352
+3 5 2 80.352
+3 5 4 80.352
 3 6 0 80.352
-3 6 1 80.352
-3 6 3 80.352
+3 6 2 80.352
+3 6 4 80.352
 3 7 0 80.352
-3 7 1 80.352
-3 7 3 80.352
+3 7 2 80.352
+3 7 4 80.352
 4 0 0 80.352
 4 0 2 80.352
 4 0 4 80.352
@@ -103,30 +127,6 @@ const MUF_STR: &str = "o b c  muf
 4 7 0 80.352
 4 7 2 80.352
 4 7 4 80.352
-6 0 0 80.352
-6 0 2 80.352
-6 0 4 80.352
-6 1 0 80.352
-6 1 2 80.352
-6 1 4 80.352
-6 2 0 80.352
-6 2 2 80.352
-6 2 4 80.352
-6 3 0 80.352
-6 3 2 80.352
-6 3 4 80.352
-6 4 0 80.352
-6 4 2 80.352
-6 4 4 80.352
-6 5 0 80.352
-6 5 2 80.352
-6 5 4 80.352
-6 6 0 80.352
-6 6 2 80.352
-6 6 4 80.352
-6 7 0 80.352
-6 7 2 80.352
-6 7 4 80.352
 ";
 
 const MUF2_STR: &str = "o b c   muf2
@@ -163,30 +163,54 @@ const MUF2_STR: &str = "o b c   muf2
 1 7 0 6456.444
 1 7 1 6456.444
 1 7 3 6456.444
+2 0 0 6456.444
+2 0 1 6456.444
+2 0 3 6456.444
+2 1 0 6456.444
+2 1 1 6456.444
+2 1 3 6456.444
+2 2 0 6456.444
+2 2 1 6456.444
+2 2 3 6456.444
+2 3 0 6456.444
+2 3 1 6456.444
+2 3 3 6456.444
+2 4 0 6456.444
+2 4 1 6456.444
+2 4 3 6456.444
+2 5 0 6456.444
+2 5 1 6456.444
+2 5 3 6456.444
+2 6 0 6456.444
+2 6 1 6456.444
+2 6 3 6456.444
+2 7 0 6456.444
+2 7 1 6456.444
+2 7 3 6456.444
 3 0 0 6456.444
-3 0 1 6456.444
-3 0 3 6456.444
+3 0 2 6456.444
+3 0 4 6456.444
 3 1 0 6456.444
-3 1 1 6456.444
-3 1 3 6456.444
+3 1 2 6456.444
+3 1 4 6456.444
 3 2 0 6456.444
-3 2 1 6456.444
-3 2 3 6456.444
+3 2 2 6456.444
+3 2 4 6456.444
 3 3 0 6456.444
-3 3 1 6456.444
-3 3 3 6456.444
+3 3 2 6456.444
+3 3 4 6456.444
 3 4 0 6456.444
-3 4 1 6456.444
-3 4 3 6456.444
+3 4 2 6456.444
+3 4 4 6456.444
 3 5 0 6456.444
-3 5 1 6456.444
-3 5 3 6456.444
+3 5 2 6456.444
+3 5 4 6456.444
 3 6 0 6456.444
-3 6 1 6456.444
-3 6 3 6456.444
+3 6 2 6456.444
+3 6 4 6456.444
 3 7 0 6456.444
-3 7 1 6456.444
-3 7 3 6456.444
+3 7 2 6456.444
+3 7 4 6456.444
 4 0 0 6456.444
 4 0 2 6456.444
 4 0 4 6456.444
@@ -211,30 +235,6 @@ const MUF2_STR: &str = "o b c   muf2
 4 7 0 6456.444
 4 7 2 6456.444
 4 7 4 6456.444
-6 0 0 6456.444
-6 0 2 6456.444
-6 0 4 6456.444
-6 1 0 6456.444
-6 1 2 6456.444
-6 1 4 6456.444
-6 2 0 6456.444
-6 2 2 6456.444
-6 2 4 6456.444
-6 3 0 6456.444
-6 3 2 6456.444
-6 3 4 6456.444
-6 4 0 6456.444
-6 4 2 6456.444
-6 4 4 6456.444
-6 5 0 6456.444
-6 5 2 6456.444
-6 5 4 6456.444
-6 6 0 6456.444
-6 6 2 6456.444
-6 6 4 6456.444
-6 7 0 6456.444
-6 7 2 6456.444
-6 7 4 6456.444
 ";
 
 const MUR_STR: &str = "o b c  mur
@@ -271,30 +271,54 @@ const MUR_STR: &str = "o b c  mur
 1 7 0 80.352
 1 7 1 80.352
 1 7 3 80.352
+2 0 0 80.352
+2 0 1 80.352
+2 0 3 80.352
+2 1 0 80.352
+2 1 1 80.352
+2 1 3 80.352
+2 2 0 80.352
+2 2 1 80.352
+2 2 3 80.352
+2 3 0 80.352
+2 3 1 80.352
+2 3 3 80.352
+2 4 0 80.352
+2 4 1 80.352
+2 4 3 80.352
+2 5 0 80.352
+2 5 1 80.352
+2 5 3 80.352
+2 6 0 80.352
+2 6 1 80.352
+2 6 3 80.352
+2 7 0 80.352
+2 7 1 80.352
+2 7 3 80.352
 3 0 0 80.352
-3 0 1 80.352
-3 0 3 80.352
+3 0 2 80.352
+3 0 4 80.352
 3 1 0 80.352
-3 1 1 80.352
-3 1 3 80.352
+3 1 2 80.352
+3 1 4 80.352
 3 2 0 80.352
-3 2 1 80.352
-3 2 3 80.352
+3 2 2 80.352
+3 2 4 80.352
 3 3 0 80.352
-3 3 1 80.352
-3 3 3 80.352
+3 3 2 80.352
+3 3 4 80.352
 3 4 0 80.352
-3 4 1 80.352
-3 4 3 80.352
+3 4 2 80.352
+3 4 4 80.352
 3 5 0 80.352
-3 5 1 80.352
-3 5 3 80.352
+3 5 2 80.352
+3 5 4 80.352
 3 6 0 80.352
-3 6 1 80.352
-3 6 3 80.352
+3 6 2 80.352
+3 6 4 80.352
 3 7 0 80.352
-3 7 1 80.352
-3 7 3 80.352
+3 7 2 80.352
+3 7 4 80.352
 4 0 0 80.352
 4 0 2 80.352
 4 0 4 80.352
@@ -319,30 +343,6 @@ const MUR_STR: &str = "o b c  mur
 4 7 0 80.352
 4 7 2 80.352
 4 7 4 80.352
-6 0 0 80.352
-6 0 2 80.352
-6 0 4 80.352
-6 1 0 80.352
-6 1 2 80.352
-6 1 4 80.352
-6 2 0 80.352
-6 2 2 80.352
-6 2 4 80.352
-6 3 0 80.352
-6 3 2 80.352
-6 3 4 80.352
-6 4 0 80.352
-6 4 2 80.352
-6 4 4 80.352
-6 5 0 80.352
-6 5 2 80.352
-6 5 4 80.352
-6 6 0 80.352
-6 6 2 80.352
-6 6 4 80.352
-6 7 0 80.352
-6 7 2 80.352
-6 7 4 80.352
 ";
 
 const MUR2_STR: &str = "o b c   mur2
@@ -379,30 +379,54 @@ const MUR2_STR: &str = "o b c   mur2
 1 7 0 6456.444
 1 7 1 6456.444
 1 7 3 6456.444
+2 0 0 6456.444
+2 0 1 6456.444
+2 0 3 6456.444
+2 1 0 6456.444
+2 1 1 6456.444
+2 1 3 6456.444
+2 2 0 6456.444
+2 2 1 6456.444
+2 2 3 6456.444
+2 3 0 6456.444
+2 3 1 6456.444
+2 3 3 6456.444
+2 4 0 6456.444
+2 4 1 6456.444
+2 4 3 6456.444
+2 5 0 6456.444
+2 5 1 6456.444
+2 5 3 6456.444
+2 6 0 6456.444
+2 6 1 6456.444
+2 6 3 6456.444
+2 7 0 6456.444
+2 7 1 6456.444
+2 7 3 6456.444
 3 0 0 6456.444
-3 0 1 6456.444
-3 0 3 6456.444
+3 0 2 6456.444
+3 0 4 6456.444
 3 1 0 6456.444
-3 1 1 6456.444
-3 1 3 6456.444
+3 1 2 6456.444
+3 1 4 6456.444
 3 2 0 6456.444
-3 2 1 6456.444
-3 2 3 6456.444
+3 2 2 6456.444
+3 2 4 6456.444
 3 3 0 6456.444
-3 3 1 6456.444
-3 3 3 6456.444
+3 3 2 6456.444
+3 3 4 6456.444
 3 4 0 6456.444
-3 4 1 6456.444
-3 4 3 6456.444
+3 4 2 6456.444
+3 4 4 6456.444
 3 5 0 6456.444
-3 5 1 6456.444
-3 5 3 6456.444
+3 5 2 6456.444
+3 5 4 6456.444
 3 6 0 6456.444
-3 6 1 6456.444
-3 6 3 6456.444
+3 6 2 6456.444
+3 6 4 6456.444
 3 7 0 6456.444
-3 7 1 6456.444
-3 7 3 6456.444
+3 7 2 6456.444
+3 7 4 6456.444
 4 0 0 6456.444
 4 0 2 6456.444
 4 0 4 6456.444
@@ -427,746 +451,642 @@ const MUR2_STR: &str = "o b c   mur2
 4 7 0 6456.444
 4 7 2 6456.444
 4 7 4 6456.444
-6 0 0 6456.444
-6 0 2 6456.444
-6 0 4 6456.444
-6 1 0 6456.444
-6 1 2 6456.444
-6 1 4 6456.444
-6 2 0 6456.444
-6 2 2 6456.444
-6 2 4 6456.444
-6 3 0 6456.444
-6 3 2 6456.444
-6 3 4 6456.444
-6 4 0 6456.444
-6 4 2 6456.444
-6 4 4 6456.444
-6 5 0 6456.444
-6 5 2 6456.444
-6 5 4 6456.444
-6 6 0 6456.444
-6 6 2 6456.444
-6 6 4 6456.444
-6 7 0 6456.444
-6 7 2 6456.444
-6 7 4 6456.444
 ";
 
 const STATS_STR: &str = "o b c total allocated zeros overhead
 -+-+-+-----+---------+-----+--------
-0 0 0  2500      1012     3      102
-0 1 0  2500      1009     8      102
-0 2 0  2500      1018    16      102
-0 3 0  2500      1006    16      102
-0 4 0  2500       983    21      102
-0 5 0  2500       945    45      102
-0 6 0  2500      1025    77      102
-0 7 0  2500       833    37      102
-1 0 0  2500      1013     0      102
-1 0 1  2500      1009     0      102
-1 0 3  2500      1011     0      102
-1 1 0  2500      1016     0      102
-1 1 1  2500      1005     0      102
-1 1 3  2500      1011     0      102
-1 2 0  2500      1031     0      102
-1 2 1  2500      1022     0      102
-1 2 3  2500      1030     0      102
-1 3 0  2500      1031     0      102
-1 3 1  2500      1026     0      102
-1 3 3  2500      1030     0      102
-1 4 0  2500      1038     2      102
-1 4 1  2500      1025     0      102
-1 4 3  2500      1027     0      102
-1 5 0  2500      1039     0      102
-1 5 1  2500      1022     2      102
-1 5 3  2500      1032     0      102
-1 6 0  2500      1033     0      102
-1 6 1  2500      1029     0      102
-1 6 3  2500      1032     0      102
-1 7 0  2500       982     0      102
-1 7 1  2500       980     2      102
-1 7 3  2500       981     0      102
-3 0 0  2500      1013     0      102
-3 0 1  2500       952     0      102
-3 0 3  2500      1011     2      102
-3 1 0  2500      1016     0      102
-3 1 1  2500       953     7      102
-3 1 3  2500      1005     0      102
-3 2 0  2500      1031     0      102
-3 2 1  2500      1018     6      102
-3 2 3  2500      1029     0      102
-3 3 0  2500      1031     0      102
-3 3 1  2500       998     0      102
-3 3 3  2500      1027     0      102
-3 4 0  2500      1038     2      102
-3 4 1  2500      1022    10      102
-3 4 3  2500      1021     0      102
-3 5 0  2500      1039     0      102
-3 5 1  2500      1007    18      102
-3 5 3  2500      1028     0      102
-3 6 0  2500      1033     0      102
-3 6 1  2500      1027    11      102
-3 6 3  2500      1028     0      102
-3 7 0  2500       982     0      102
-3 7 1  2500       976    58      102
-3 7 3  2500       973     0      102
-4 0 0  2500      1013     0      102
-4 0 2  2500       936    20      102
-4 0 4  2500       930    10      102
-4 1 0  2500      1013     0      102
-4 1 2  2500       938    20      102
-4 1 4  2500       949    16      102
-4 2 0  2500      1026     0      102
-4 2 2  2500       933    32      102
-4 2 4  2500       943     0      102
-4 3 0  2500      1031     0      102
-4 3 2  2500       884     6      102
-4 3 4  2500       983    11      102
-4 4 0  2500      1038     3      102
-4 4 2  2500       894    37      102
-4 4 4  2500       940     0      102
-4 5 0  2500      1035     0      102
-4 5 2  2500       869    16      102
-4 5 4  2500       962    14      102
-4 6 0  2500      1033     0      102
-4 6 2  2500       861    21      102
-4 6 4  2500       969    22      102
-4 7 0  2500       980     0      102
-4 7 2  2500       873   114      102
-4 7 4  2500       817    38      102
-6 0 0  2500      1013     3      102
-6 0 2  2500       767    37      102
-6 0 4  2500       868    11      102
-6 1 0  2500      1013     1      102
-6 1 2  2500       710     7      102
-6 1 4  2500       854    17      102
-6 2 0  2500      1018     3      102
-6 2 2  2500       832    22      102
-6 2 4  2500       898    17      102
-6 3 0  2500      1023     0      102
-6 3 2  2500       840    54      102
-6 3 4  2500       913    39      102
-6 4 0  2500      1038     3      102
-6 4 2  2500       825    80      102
-6 4 4  2500       877     9      102
-6 5 0  2500      1035     0      102
-6 5 2  2500       841    72      102
-6 5 4  2500       911    20      102
-6 6 0  2500      1033     0      102
-6 6 2  2500       855   116      102
-6 6 4  2500       867    13      102
-6 7 0  2500       980     0      102
-6 7 2  2500       869   173      102
-6 7 4  2500       745    36      102
+0 0 0  1156      1012     3       70
+0 1 0  1156      1009     8       70
+0 2 0  1225      1018    16       72
+0 3 0  1296      1006    16       74
+0 4 0  1296       983    21       74
+0 5 0  1369       945    45       76
+0 6 0  1444      1025    77       78
+0 7 0  1521       833    37       80
+1 0 0  1156      1013     0       70
+1 0 1  1156      1009     0       70
+1 0 3  1156      1011     0       70
+1 1 0  1156      1016     0       70
+1 1 1  1156      1005     0       70
+1 1 3  1156      1011     0       70
+1 2 0  1225      1031     0       72
+1 2 1  1225      1022     0       72
+1 2 3  1225      1030     0       72
+1 3 0  1296      1031     0       74
+1 3 1  1296      1026     0       74
+1 3 3  1296      1030     0       74
+1 4 0  1296      1038     2       74
+1 4 1  1296      1025     0       74
+1 4 3  1296      1027     0       74
+1 5 0  1369      1039     0       76
+1 5 1  1369      1022     2       76
+1 5 3  1369      1032     0       76
+1 6 0  1444      1033     0       78
+1 6 1  1444      1029     0       78
+1 6 3  1444      1032     0       78
+1 7 0  1521       982     0       80
+1 7 1  1521       980     2       80
+1 7 3  1521       981     0       80
+2 0 0  1156      1013     0       70
+2 0 1  1156       952     0       70
+2 0 3  1156      1011     2       70
+2 1 0  1156      1016     0       70
+2 1 1  1156       953     7       70
+2 1 3  1156      1005     0       70
+2 2 0  1225      1031     0       72
+2 2 1  1225      1018     6       72
+2 2 3  1225      1029     0       72
+2 3 0  1296      1031     0       74
+2 3 1  1296       998     0       74
+2 3 3  1296      1027     0       74
+2 4 0  1296      1038     2       74
+2 4 1  1296      1022    10       74
+2 4 3  1296      1021     0       74
+2 5 0  1369      1039     0       76
+2 5 1  1332      1007    18       74
+2 5 3  1369      1028     0       76
+2 6 0  1444      1033     0       78
+2 6 1  1444      1027    11       78
+2 6 3  1444      1028     0       78
+2 7 0  1521       982     0       80
+2 7 1  1482       976    58       78
+2 7 3  1521       973     0       80
+3 0 0  1156      1013     0       70
+3 0 2  1156       936    20       70
+3 0 4  1156       930    10       70
+3 1 0  1156      1013     0       70
+3 1 2  1156       938    20       70
+3 1 4  1156       949    16       70
+3 2 0  1225      1026     0       72
+3 2 2  1225       933    32       72
+3 2 4  1225       943     0       72
+3 3 0  1296      1031     0       74
+3 3 2  1260       884     6       72
+3 3 4  1260       983    11       72
+3 4 0  1296      1038     3       74
+3 4 2  1296       894    37       74
+3 4 4  1296       940     0       74
+3 5 0  1369      1035     0       76
+3 5 2  1332       869    16       74
+3 5 4  1332       962    14       74
+3 6 0  1444      1033     0       78
+3 6 2  1406       861    21       76
+3 6 4  1406       969    22       76
+3 7 0  1521       980     0       80
+3 7 2  1444       873   114       78
+3 7 4  1444       817    38       78
+4 0 0  1156      1013     3       70
+4 0 2  1156       767    37       70
+4 0 4  1156       868    11       70
+4 1 0  1156      1013     1       70
+4 1 2  1122       718    15       68
+4 1 4  1156       854    17       70
+4 2 0  1225      1018     3       72
+4 2 2  1225       832    22       72
+4 2 4  1225       898    17       72
+4 3 0  1296      1023     0       74
+4 3 2  1260       840    54       72
+4 3 4  1225       913    39       72
+4 4 0  1296      1038     3       74
+4 4 2  1296       825    80       74
+4 4 4  1296       877     9       74
+4 5 0  1369      1035     0       76
+4 5 2  1332       841    72       74
+4 5 4  1332       911    20       74
+4 6 0  1444      1033     0       78
+4 6 2  1406       855   116       76
+4 6 4  1369       867    13       76
+4 7 0  1521       980     0       80
+4 7 2  1444       869   173       78
+4 7 4  1444       745    36       78
 ";
 
 const TYPE_STR: &str = "o b c        type
 -+-+-+-------------------
-0 0 0 ImportOnlySubgridV1
-0 1 0 ImportOnlySubgridV1
-0 2 0 ImportOnlySubgridV1
-0 3 0 ImportOnlySubgridV1
-0 4 0 ImportOnlySubgridV1
-0 5 0 ImportOnlySubgridV1
-0 6 0 ImportOnlySubgridV1
-0 7 0 ImportOnlySubgridV1
-1 0 0 ImportOnlySubgridV1
-1 0 1 ImportOnlySubgridV1
-1 0 3 ImportOnlySubgridV1
-1 1 0 ImportOnlySubgridV1
-1 1 1 ImportOnlySubgridV1
-1 1 3 ImportOnlySubgridV1
-1 2 0 ImportOnlySubgridV1
-1 2 1 ImportOnlySubgridV1
-1 2 3 ImportOnlySubgridV1
-1 3 0 ImportOnlySubgridV1
-1 3 1 ImportOnlySubgridV1
-1 3 3 ImportOnlySubgridV1
-1 4 0 ImportOnlySubgridV1
-1 4 1 ImportOnlySubgridV1
-1 4 3 ImportOnlySubgridV1
-1 5 0 ImportOnlySubgridV1
-1 5 1 ImportOnlySubgridV1
-1 5 3 ImportOnlySubgridV1
-1 6 0 ImportOnlySubgridV1
-1 6 1 ImportOnlySubgridV1
-1 6 3 ImportOnlySubgridV1
-1 7 0 ImportOnlySubgridV1
-1 7 1 ImportOnlySubgridV1
-1 7 3 ImportOnlySubgridV1
-3 0 0 ImportOnlySubgridV1
-3 0 1 ImportOnlySubgridV1
-3 0 3 ImportOnlySubgridV1
-3 1 0 ImportOnlySubgridV1
-3 1 1 ImportOnlySubgridV1
-3 1 3 ImportOnlySubgridV1
-3 2 0 ImportOnlySubgridV1
-3 2 1 ImportOnlySubgridV1
-3 2 3 ImportOnlySubgridV1
-3 3 0 ImportOnlySubgridV1
-3 3 1 ImportOnlySubgridV1
-3 3 3 ImportOnlySubgridV1
-3 4 0 ImportOnlySubgridV1
-3 4 1 ImportOnlySubgridV1
-3 4 3 ImportOnlySubgridV1
-3 5 0 ImportOnlySubgridV1
-3 5 1 ImportOnlySubgridV1
-3 5 3 ImportOnlySubgridV1
-3 6 0 ImportOnlySubgridV1
-3 6 1 ImportOnlySubgridV1
-3 6 3 ImportOnlySubgridV1
-3 7 0 ImportOnlySubgridV1
-3 7 1 ImportOnlySubgridV1
-3 7 3 ImportOnlySubgridV1
-4 0 0 ImportOnlySubgridV1
-4 0 2 ImportOnlySubgridV1
-4 0 4 ImportOnlySubgridV1
-4 1 0 ImportOnlySubgridV1
-4 1 2 ImportOnlySubgridV1
-4 1 4 ImportOnlySubgridV1
-4 2 0 ImportOnlySubgridV1
-4 2 2 ImportOnlySubgridV1
-4 2 4 ImportOnlySubgridV1
-4 3 0 ImportOnlySubgridV1
-4 3 2 ImportOnlySubgridV1
-4 3 4 ImportOnlySubgridV1
-4 4 0 ImportOnlySubgridV1
-4 4 2 ImportOnlySubgridV1
-4 4 4 ImportOnlySubgridV1
-4 5 0 ImportOnlySubgridV1
-4 5 2 ImportOnlySubgridV1
-4 5 4 ImportOnlySubgridV1
-4 6 0 ImportOnlySubgridV1
-4 6 2 ImportOnlySubgridV1
-4 6 4 ImportOnlySubgridV1
-4 7 0 ImportOnlySubgridV1
-4 7 2 ImportOnlySubgridV1
-4 7 4 ImportOnlySubgridV1
-6 0 0 ImportOnlySubgridV1
-6 0 2 ImportOnlySubgridV1
-6 0 4 ImportOnlySubgridV1
-6 1 0 ImportOnlySubgridV1
-6 1 2 ImportOnlySubgridV1
-6 1 4 ImportOnlySubgridV1
-6 2 0 ImportOnlySubgridV1
-6 2 2 ImportOnlySubgridV1
-6 2 4 ImportOnlySubgridV1
-6 3 0 ImportOnlySubgridV1
-6 3 2 ImportOnlySubgridV1
-6 3 4 ImportOnlySubgridV1
-6 4 0 ImportOnlySubgridV1
-6 4 2 ImportOnlySubgridV1
-6 4 4 ImportOnlySubgridV1
-6 5 0 ImportOnlySubgridV1
-6 5 2 ImportOnlySubgridV1
-6 5 4 ImportOnlySubgridV1
-6 6 0 ImportOnlySubgridV1
-6 6 2 ImportOnlySubgridV1
-6 6 4 ImportOnlySubgridV1
-6 7 0 ImportOnlySubgridV1
-6 7 2 ImportOnlySubgridV1
-6 7 4 ImportOnlySubgridV1
+0 0 0 ImportOnlySubgridV2
+0 1 0 ImportOnlySubgridV2
+0 2 0 ImportOnlySubgridV2
+0 3 0 ImportOnlySubgridV2
+0 4 0 ImportOnlySubgridV2
+0 5 0 ImportOnlySubgridV2
+0 6 0 ImportOnlySubgridV2
+0 7 0 ImportOnlySubgridV2
+1 0 0 ImportOnlySubgridV2
+1 0 1 ImportOnlySubgridV2
+1 0 3 ImportOnlySubgridV2
+1 1 0 ImportOnlySubgridV2
+1 1 1 ImportOnlySubgridV2
+1 1 3 ImportOnlySubgridV2
+1 2 0 ImportOnlySubgridV2
+1 2 1 ImportOnlySubgridV2
+1 2 3 ImportOnlySubgridV2
+1 3 0 ImportOnlySubgridV2
+1 3 1 ImportOnlySubgridV2
+1 3 3 ImportOnlySubgridV2
+1 4 0 ImportOnlySubgridV2
+1 4 1 ImportOnlySubgridV2
+1 4 3 ImportOnlySubgridV2
+1 5 0 ImportOnlySubgridV2
+1 5 1 ImportOnlySubgridV2
+1 5 3 ImportOnlySubgridV2
+1 6 0 ImportOnlySubgridV2
+1 6 1 ImportOnlySubgridV2
+1 6 3 ImportOnlySubgridV2
+1 7 0 ImportOnlySubgridV2
+1 7 1 ImportOnlySubgridV2
+1 7 3 ImportOnlySubgridV2
+2 0 0 ImportOnlySubgridV2
+2 0 1 ImportOnlySubgridV2
+2 0 3 ImportOnlySubgridV2
+2 1 0 ImportOnlySubgridV2
+2 1 1 ImportOnlySubgridV2
+2 1 3 ImportOnlySubgridV2
+2 2 0 ImportOnlySubgridV2
+2 2 1 ImportOnlySubgridV2
+2 2 3 ImportOnlySubgridV2
+2 3 0 ImportOnlySubgridV2
+2 3 1 ImportOnlySubgridV2
+2 3 3 ImportOnlySubgridV2
+2 4 0 ImportOnlySubgridV2
+2 4 1 ImportOnlySubgridV2
+2 4 3 ImportOnlySubgridV2
+2 5 0 ImportOnlySubgridV2
+2 5 1 ImportOnlySubgridV2
+2 5 3 ImportOnlySubgridV2
+2 6 0 ImportOnlySubgridV2
+2 6 1 ImportOnlySubgridV2
+2 6 3 ImportOnlySubgridV2
+2 7 0 ImportOnlySubgridV2
+2 7 1 ImportOnlySubgridV2
+2 7 3 ImportOnlySubgridV2
+3 0 0 ImportOnlySubgridV2
+3 0 2 ImportOnlySubgridV2
+3 0 4 ImportOnlySubgridV2
+3 1 0 ImportOnlySubgridV2
+3 1 2 ImportOnlySubgridV2
+3 1 4 ImportOnlySubgridV2
+3 2 0 ImportOnlySubgridV2
+3 2 2 ImportOnlySubgridV2
+3 2 4 ImportOnlySubgridV2
+3 3 0 ImportOnlySubgridV2
+3 3 2 ImportOnlySubgridV2
+3 3 4 ImportOnlySubgridV2
+3 4 0 ImportOnlySubgridV2
+3 4 2 ImportOnlySubgridV2
+3 4 4 ImportOnlySubgridV2
+3 5 0 ImportOnlySubgridV2
+3 5 2 ImportOnlySubgridV2
+3 5 4 ImportOnlySubgridV2
+3 6 0 ImportOnlySubgridV2
+3 6 2 ImportOnlySubgridV2
+3 6 4 ImportOnlySubgridV2
+3 7 0 ImportOnlySubgridV2
+3 7 2 ImportOnlySubgridV2
+3 7 4 ImportOnlySubgridV2
+4 0 0 ImportOnlySubgridV2
+4 0 2 ImportOnlySubgridV2
+4 0 4 ImportOnlySubgridV2
+4 1 0 ImportOnlySubgridV2
+4 1 2 ImportOnlySubgridV2
+4 1 4 ImportOnlySubgridV2
+4 2 0 ImportOnlySubgridV2
+4 2 2 ImportOnlySubgridV2
+4 2 4 ImportOnlySubgridV2
+4 3 0 ImportOnlySubgridV2
+4 3 2 ImportOnlySubgridV2
+4 3 4 ImportOnlySubgridV2
+4 4 0 ImportOnlySubgridV2
+4 4 2 ImportOnlySubgridV2
+4 4 4 ImportOnlySubgridV2
+4 5 0 ImportOnlySubgridV2
+4 5 2 ImportOnlySubgridV2
+4 5 4 ImportOnlySubgridV2
+4 6 0 ImportOnlySubgridV2
+4 6 2 ImportOnlySubgridV2
+4 6 4 ImportOnlySubgridV2
+4 7 0 ImportOnlySubgridV2
+4 7 2 ImportOnlySubgridV2
+4 7 4 ImportOnlySubgridV2
 ";
 
 const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
 -+-+-+-------------------
-0 0 0 ImportOnlySubgridV1
+0 0 0 ImportOnlySubgridV2
 0 0 1 EmptySubgridV1
 0 0 2 EmptySubgridV1
 0 0 3 EmptySubgridV1
 0 0 4 EmptySubgridV1
-0 1 0 ImportOnlySubgridV1
+0 1 0 ImportOnlySubgridV2
 0 1 1 EmptySubgridV1
 0 1 2 EmptySubgridV1
 0 1 3 EmptySubgridV1
 0 1 4 EmptySubgridV1
-0 2 0 ImportOnlySubgridV1
+0 2 0 ImportOnlySubgridV2
 0 2 1 EmptySubgridV1
 0 2 2 EmptySubgridV1
 0 2 3 EmptySubgridV1
 0 2 4 EmptySubgridV1
-0 3 0 ImportOnlySubgridV1
+0 3 0 ImportOnlySubgridV2
 0 3 1 EmptySubgridV1
 0 3 2 EmptySubgridV1
 0 3 3 EmptySubgridV1
 0 3 4 EmptySubgridV1
-0 4 0 ImportOnlySubgridV1
+0 4 0 ImportOnlySubgridV2
 0 4 1 EmptySubgridV1
 0 4 2 EmptySubgridV1
 0 4 3 EmptySubgridV1
 0 4 4 EmptySubgridV1
-0 5 0 ImportOnlySubgridV1
+0 5 0 ImportOnlySubgridV2
 0 5 1 EmptySubgridV1
 0 5 2 EmptySubgridV1
 0 5 3 EmptySubgridV1
 0 5 4 EmptySubgridV1
-0 6 0 ImportOnlySubgridV1
+0 6 0 ImportOnlySubgridV2
 0 6 1 EmptySubgridV1
 0 6 2 EmptySubgridV1
 0 6 3 EmptySubgridV1
 0 6 4 EmptySubgridV1
-0 7 0 ImportOnlySubgridV1
+0 7 0 ImportOnlySubgridV2
 0 7 1 EmptySubgridV1
 0 7 2 EmptySubgridV1
 0 7 3 EmptySubgridV1
 0 7 4 EmptySubgridV1
-1 0 0 ImportOnlySubgridV1
-1 0 1 ImportOnlySubgridV1
+1 0 0 ImportOnlySubgridV2
+1 0 1 ImportOnlySubgridV2
 1 0 2 EmptySubgridV1
-1 0 3 ImportOnlySubgridV1
+1 0 3 ImportOnlySubgridV2
 1 0 4 EmptySubgridV1
-1 1 0 ImportOnlySubgridV1
-1 1 1 ImportOnlySubgridV1
+1 1 0 ImportOnlySubgridV2
+1 1 1 ImportOnlySubgridV2
 1 1 2 EmptySubgridV1
-1 1 3 ImportOnlySubgridV1
+1 1 3 ImportOnlySubgridV2
 1 1 4 EmptySubgridV1
-1 2 0 ImportOnlySubgridV1
-1 2 1 ImportOnlySubgridV1
+1 2 0 ImportOnlySubgridV2
+1 2 1 ImportOnlySubgridV2
 1 2 2 EmptySubgridV1
-1 2 3 ImportOnlySubgridV1
+1 2 3 ImportOnlySubgridV2
 1 2 4 EmptySubgridV1
-1 3 0 ImportOnlySubgridV1
-1 3 1 ImportOnlySubgridV1
+1 3 0 ImportOnlySubgridV2
+1 3 1 ImportOnlySubgridV2
 1 3 2 EmptySubgridV1
-1 3 3 ImportOnlySubgridV1
+1 3 3 ImportOnlySubgridV2
 1 3 4 EmptySubgridV1
-1 4 0 ImportOnlySubgridV1
-1 4 1 ImportOnlySubgridV1
+1 4 0 ImportOnlySubgridV2
+1 4 1 ImportOnlySubgridV2
 1 4 2 EmptySubgridV1
-1 4 3 ImportOnlySubgridV1
+1 4 3 ImportOnlySubgridV2
 1 4 4 EmptySubgridV1
-1 5 0 ImportOnlySubgridV1
-1 5 1 ImportOnlySubgridV1
+1 5 0 ImportOnlySubgridV2
+1 5 1 ImportOnlySubgridV2
 1 5 2 EmptySubgridV1
-1 5 3 ImportOnlySubgridV1
+1 5 3 ImportOnlySubgridV2
 1 5 4 EmptySubgridV1
-1 6 0 ImportOnlySubgridV1
-1 6 1 ImportOnlySubgridV1
+1 6 0 ImportOnlySubgridV2
+1 6 1 ImportOnlySubgridV2
 1 6 2 EmptySubgridV1
-1 6 3 ImportOnlySubgridV1
+1 6 3 ImportOnlySubgridV2
 1 6 4 EmptySubgridV1
-1 7 0 ImportOnlySubgridV1
-1 7 1 ImportOnlySubgridV1
+1 7 0 ImportOnlySubgridV2
+1 7 1 ImportOnlySubgridV2
 1 7 2 EmptySubgridV1
-1 7 3 ImportOnlySubgridV1
+1 7 3 ImportOnlySubgridV2
 1 7 4 EmptySubgridV1
-2 0 0 EmptySubgridV1
-2 0 1 EmptySubgridV1
+2 0 0 ImportOnlySubgridV2
+2 0 1 ImportOnlySubgridV2
 2 0 2 EmptySubgridV1
-2 0 3 EmptySubgridV1
+2 0 3 ImportOnlySubgridV2
 2 0 4 EmptySubgridV1
-2 1 0 EmptySubgridV1
-2 1 1 EmptySubgridV1
+2 1 0 ImportOnlySubgridV2
+2 1 1 ImportOnlySubgridV2
 2 1 2 EmptySubgridV1
-2 1 3 EmptySubgridV1
+2 1 3 ImportOnlySubgridV2
 2 1 4 EmptySubgridV1
-2 2 0 EmptySubgridV1
-2 2 1 EmptySubgridV1
+2 2 0 ImportOnlySubgridV2
+2 2 1 ImportOnlySubgridV2
 2 2 2 EmptySubgridV1
-2 2 3 EmptySubgridV1
+2 2 3 ImportOnlySubgridV2
 2 2 4 EmptySubgridV1
-2 3 0 EmptySubgridV1
-2 3 1 EmptySubgridV1
+2 3 0 ImportOnlySubgridV2
+2 3 1 ImportOnlySubgridV2
 2 3 2 EmptySubgridV1
-2 3 3 EmptySubgridV1
+2 3 3 ImportOnlySubgridV2
 2 3 4 EmptySubgridV1
-2 4 0 EmptySubgridV1
-2 4 1 EmptySubgridV1
+2 4 0 ImportOnlySubgridV2
+2 4 1 ImportOnlySubgridV2
 2 4 2 EmptySubgridV1
-2 4 3 EmptySubgridV1
+2 4 3 ImportOnlySubgridV2
 2 4 4 EmptySubgridV1
-2 5 0 EmptySubgridV1
-2 5 1 EmptySubgridV1
+2 5 0 ImportOnlySubgridV2
+2 5 1 ImportOnlySubgridV2
 2 5 2 EmptySubgridV1
-2 5 3 EmptySubgridV1
+2 5 3 ImportOnlySubgridV2
 2 5 4 EmptySubgridV1
-2 6 0 EmptySubgridV1
-2 6 1 EmptySubgridV1
+2 6 0 ImportOnlySubgridV2
+2 6 1 ImportOnlySubgridV2
 2 6 2 EmptySubgridV1
-2 6 3 EmptySubgridV1
+2 6 3 ImportOnlySubgridV2
 2 6 4 EmptySubgridV1
-2 7 0 EmptySubgridV1
-2 7 1 EmptySubgridV1
+2 7 0 ImportOnlySubgridV2
+2 7 1 ImportOnlySubgridV2
 2 7 2 EmptySubgridV1
-2 7 3 EmptySubgridV1
+2 7 3 ImportOnlySubgridV2
 2 7 4 EmptySubgridV1
-3 0 0 ImportOnlySubgridV1
-3 0 1 ImportOnlySubgridV1
-3 0 2 EmptySubgridV1
-3 0 3 ImportOnlySubgridV1
-3 0 4 EmptySubgridV1
-3 1 0 ImportOnlySubgridV1
-3 1 1 ImportOnlySubgridV1
-3 1 2 EmptySubgridV1
-3 1 3 ImportOnlySubgridV1
-3 1 4 EmptySubgridV1
-3 2 0 ImportOnlySubgridV1
-3 2 1 ImportOnlySubgridV1
-3 2 2 EmptySubgridV1
-3 2 3 ImportOnlySubgridV1
-3 2 4 EmptySubgridV1
-3 3 0 ImportOnlySubgridV1
-3 3 1 ImportOnlySubgridV1
-3 3 2 EmptySubgridV1
-3 3 3 ImportOnlySubgridV1
-3 3 4 EmptySubgridV1
-3 4 0 ImportOnlySubgridV1
-3 4 1 ImportOnlySubgridV1
-3 4 2 EmptySubgridV1
-3 4 3 ImportOnlySubgridV1
-3 4 4 EmptySubgridV1
-3 5 0 ImportOnlySubgridV1
-3 5 1 ImportOnlySubgridV1
-3 5 2 EmptySubgridV1
-3 5 3 ImportOnlySubgridV1
-3 5 4 EmptySubgridV1
-3 6 0 ImportOnlySubgridV1
-3 6 1 ImportOnlySubgridV1
-3 6 2 EmptySubgridV1
-3 6 3 ImportOnlySubgridV1
-3 6 4 EmptySubgridV1
-3 7 0 ImportOnlySubgridV1
-3 7 1 ImportOnlySubgridV1
-3 7 2 EmptySubgridV1
-3 7 3 ImportOnlySubgridV1
-3 7 4 EmptySubgridV1
-4 0 0 ImportOnlySubgridV1
+3 0 0 ImportOnlySubgridV2
+3 0 1 EmptySubgridV1
+3 0 2 ImportOnlySubgridV2
+3 0 3 EmptySubgridV1
+3 0 4 ImportOnlySubgridV2
+3 1 0 ImportOnlySubgridV2
+3 1 1 EmptySubgridV1
+3 1 2 ImportOnlySubgridV2
+3 1 3 EmptySubgridV1
+3 1 4 ImportOnlySubgridV2
+3 2 0 ImportOnlySubgridV2
+3 2 1 EmptySubgridV1
+3 2 2 ImportOnlySubgridV2
+3 2 3 EmptySubgridV1
+3 2 4 ImportOnlySubgridV2
+3 3 0 ImportOnlySubgridV2
+3 3 1 EmptySubgridV1
+3 3 2 ImportOnlySubgridV2
+3 3 3 EmptySubgridV1
+3 3 4 ImportOnlySubgridV2
+3 4 0 ImportOnlySubgridV2
+3 4 1 EmptySubgridV1
+3 4 2 ImportOnlySubgridV2
+3 4 3 EmptySubgridV1
+3 4 4 ImportOnlySubgridV2
+3 5 0 ImportOnlySubgridV2
+3 5 1 EmptySubgridV1
+3 5 2 ImportOnlySubgridV2
+3 5 3 EmptySubgridV1
+3 5 4 ImportOnlySubgridV2
+3 6 0 ImportOnlySubgridV2
+3 6 1 EmptySubgridV1
+3 6 2 ImportOnlySubgridV2
+3 6 3 EmptySubgridV1
+3 6 4 ImportOnlySubgridV2
+3 7 0 ImportOnlySubgridV2
+3 7 1 EmptySubgridV1
+3 7 2 ImportOnlySubgridV2
+3 7 3 EmptySubgridV1
+3 7 4 ImportOnlySubgridV2
+4 0 0 ImportOnlySubgridV2
 4 0 1 EmptySubgridV1
-4 0 2 ImportOnlySubgridV1
+4 0 2 ImportOnlySubgridV2
 4 0 3 EmptySubgridV1
-4 0 4 ImportOnlySubgridV1
-4 1 0 ImportOnlySubgridV1
+4 0 4 ImportOnlySubgridV2
+4 1 0 ImportOnlySubgridV2
 4 1 1 EmptySubgridV1
-4 1 2 ImportOnlySubgridV1
+4 1 2 ImportOnlySubgridV2
 4 1 3 EmptySubgridV1
-4 1 4 ImportOnlySubgridV1
-4 2 0 ImportOnlySubgridV1
+4 1 4 ImportOnlySubgridV2
+4 2 0 ImportOnlySubgridV2
 4 2 1 EmptySubgridV1
-4 2 2 ImportOnlySubgridV1
+4 2 2 ImportOnlySubgridV2
 4 2 3 EmptySubgridV1
-4 2 4 ImportOnlySubgridV1
-4 3 0 ImportOnlySubgridV1
+4 2 4 ImportOnlySubgridV2
+4 3 0 ImportOnlySubgridV2
 4 3 1 EmptySubgridV1
-4 3 2 ImportOnlySubgridV1
+4 3 2 ImportOnlySubgridV2
 4 3 3 EmptySubgridV1
-4 3 4 ImportOnlySubgridV1
-4 4 0 ImportOnlySubgridV1
+4 3 4 ImportOnlySubgridV2
+4 4 0 ImportOnlySubgridV2
 4 4 1 EmptySubgridV1
-4 4 2 ImportOnlySubgridV1
+4 4 2 ImportOnlySubgridV2
 4 4 3 EmptySubgridV1
-4 4 4 ImportOnlySubgridV1
-4 5 0 ImportOnlySubgridV1
+4 4 4 ImportOnlySubgridV2
+4 5 0 ImportOnlySubgridV2
 4 5 1 EmptySubgridV1
-4 5 2 ImportOnlySubgridV1
+4 5 2 ImportOnlySubgridV2
 4 5 3 EmptySubgridV1
-4 5 4 ImportOnlySubgridV1
-4 6 0 ImportOnlySubgridV1
+4 5 4 ImportOnlySubgridV2
+4 6 0 ImportOnlySubgridV2
 4 6 1 EmptySubgridV1
-4 6 2 ImportOnlySubgridV1
+4 6 2 ImportOnlySubgridV2
 4 6 3 EmptySubgridV1
-4 6 4 ImportOnlySubgridV1
-4 7 0 ImportOnlySubgridV1
+4 6 4 ImportOnlySubgridV2
+4 7 0 ImportOnlySubgridV2
 4 7 1 EmptySubgridV1
-4 7 2 ImportOnlySubgridV1
+4 7 2 ImportOnlySubgridV2
 4 7 3 EmptySubgridV1
-4 7 4 ImportOnlySubgridV1
-5 0 0 EmptySubgridV1
-5 0 1 EmptySubgridV1
-5 0 2 EmptySubgridV1
-5 0 3 EmptySubgridV1
-5 0 4 EmptySubgridV1
-5 1 0 EmptySubgridV1
-5 1 1 EmptySubgridV1
-5 1 2 EmptySubgridV1
-5 1 3 EmptySubgridV1
-5 1 4 EmptySubgridV1
-5 2 0 EmptySubgridV1
-5 2 1 EmptySubgridV1
-5 2 2 EmptySubgridV1
-5 2 3 EmptySubgridV1
-5 2 4 EmptySubgridV1
-5 3 0 EmptySubgridV1
-5 3 1 EmptySubgridV1
-5 3 2 EmptySubgridV1
-5 3 3 EmptySubgridV1
-5 3 4 EmptySubgridV1
-5 4 0 EmptySubgridV1
-5 4 1 EmptySubgridV1
-5 4 2 EmptySubgridV1
-5 4 3 EmptySubgridV1
-5 4 4 EmptySubgridV1
-5 5 0 EmptySubgridV1
-5 5 1 EmptySubgridV1
-5 5 2 EmptySubgridV1
-5 5 3 EmptySubgridV1
-5 5 4 EmptySubgridV1
-5 6 0 EmptySubgridV1
-5 6 1 EmptySubgridV1
-5 6 2 EmptySubgridV1
-5 6 3 EmptySubgridV1
-5 6 4 EmptySubgridV1
-5 7 0 EmptySubgridV1
-5 7 1 EmptySubgridV1
-5 7 2 EmptySubgridV1
-5 7 3 EmptySubgridV1
-5 7 4 EmptySubgridV1
-6 0 0 ImportOnlySubgridV1
-6 0 1 EmptySubgridV1
-6 0 2 ImportOnlySubgridV1
-6 0 3 EmptySubgridV1
-6 0 4 ImportOnlySubgridV1
-6 1 0 ImportOnlySubgridV1
-6 1 1 EmptySubgridV1
-6 1 2 ImportOnlySubgridV1
-6 1 3 EmptySubgridV1
-6 1 4 ImportOnlySubgridV1
-6 2 0 ImportOnlySubgridV1
-6 2 1 EmptySubgridV1
-6 2 2 ImportOnlySubgridV1
-6 2 3 EmptySubgridV1
-6 2 4 ImportOnlySubgridV1
-6 3 0 ImportOnlySubgridV1
-6 3 1 EmptySubgridV1
-6 3 2 ImportOnlySubgridV1
-6 3 3 EmptySubgridV1
-6 3 4 ImportOnlySubgridV1
-6 4 0 ImportOnlySubgridV1
-6 4 1 EmptySubgridV1
-6 4 2 ImportOnlySubgridV1
-6 4 3 EmptySubgridV1
-6 4 4 ImportOnlySubgridV1
-6 5 0 ImportOnlySubgridV1
-6 5 1 EmptySubgridV1
-6 5 2 ImportOnlySubgridV1
-6 5 3 EmptySubgridV1
-6 5 4 ImportOnlySubgridV1
-6 6 0 ImportOnlySubgridV1
-6 6 1 EmptySubgridV1
-6 6 2 ImportOnlySubgridV1
-6 6 3 EmptySubgridV1
-6 6 4 ImportOnlySubgridV1
-6 7 0 ImportOnlySubgridV1
-6 7 1 EmptySubgridV1
-6 7 2 ImportOnlySubgridV1
-6 7 3 EmptySubgridV1
-6 7 4 ImportOnlySubgridV1
+4 7 4 ImportOnlySubgridV2
 ";
 
-const X1_STR: &str = "o b c                                                                                                                                                                                                                                                        x1
--+-+-+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
+const X1_STR: &str = "o b c                                                                                                                                                                                                 x1
+-+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+0 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+0 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+0 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+0 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+0 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+0 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+2 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+2 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+2 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+2 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+3 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+3 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+4 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
 ";
 
-const X2_STR: &str = "o b c                                                                                                                                                                                                                                                        x2
--+-+-+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-0 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-1 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-3 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
-6 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5, 1.292e-5, 8.517e-6, 5.614e-6, 3.700e-6, 2.439e-6, 1.608e-6, 1.060e-6, 6.984e-7, 4.604e-7, 3.034e-7, 2.000e-7
+const X2_STR: &str = "o b c                                                                                                                                                                                                 x2
+-+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+0 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+0 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+0 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+0 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+0 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+0 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+1 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+1 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+1 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+1 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+1 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+1 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+2 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 0 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 0 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 1 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+2 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 2 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 2 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+2 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 3 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 3 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 4 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+2 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+2 5 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+2 5 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+2 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 6 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 6 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+2 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+2 7 1 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+2 7 3 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+3 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+3 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+3 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+3 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+3 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+3 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+3 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 0 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 0 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 2 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 1 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
+4 2 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 2 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 2 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 3 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 3 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 3 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4
+4 4 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 4 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 4 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5
+4 5 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 5 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 5 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 6 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 6 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 6 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5
+4 7 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5, 1.960e-5
+4 7 2 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
+4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
 ";
 
 #[test]
@@ -1186,7 +1106,7 @@ fn muf() {
         .args([
             "subgrids",
             "--muf",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1200,7 +1120,7 @@ fn muf2() {
         .args([
             "subgrids",
             "--muf2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1214,7 +1134,7 @@ fn mur() {
         .args([
             "subgrids",
             "--mur",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1228,7 +1148,7 @@ fn mur2() {
         .args([
             "subgrids",
             "--mur2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1242,7 +1162,7 @@ fn stats() {
         .args([
             "subgrids",
             "--stats",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1256,7 +1176,7 @@ fn type_() {
         .args([
             "subgrids",
             "--type",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1271,7 +1191,7 @@ fn type_show_empty() {
             "subgrids",
             "--show-empty",
             "--type",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -1282,7 +1202,11 @@ fn type_show_empty() {
 fn x1() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["subgrids", "--x1", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "subgrids",
+            "--x1",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(X1_STR);
@@ -1292,7 +1216,11 @@ fn x1() {
 fn x2() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["subgrids", "--x2", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "subgrids",
+            "--x2",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(X2_STR);

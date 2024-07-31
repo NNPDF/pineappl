@@ -99,7 +99,7 @@ fn default() {
         .args([
             "pull",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "ABMP16als118_5_nnlo",
             "CT18NNLO",
         ])
@@ -116,7 +116,7 @@ fn cl_90() {
             "pull",
             "--cl=90",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "MSHT20nnlo_as118",
             "CT18NNLO",
         ])
@@ -135,7 +135,7 @@ fn limit() {
             // since we only show one column, the higher orders aren't that relevant
             "--orders=a2",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "CT18NNLO",
             "ABMP16als118_5_nnlo",
         ])
@@ -152,7 +152,7 @@ fn replica0() {
             "pull",
             "--digits=7",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "CT18NNLO",
         ])
