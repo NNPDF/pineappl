@@ -12,6 +12,16 @@ pkgs=(
     pkg-config
 )
 
+pdf_sets=(
+    ABMP16als118_5_nnlo
+    CT18NNLO
+    MSHT20nnlo_as118
+    NNPDF31_nlo_as_0118_luxqed
+    NNPDF40_nlo_as_01180
+    NNPDF40_nlo_pch_as_01180
+    NNPDF40_nnlo_as_01180
+)
+
 apt update
 apt install -y ${pkgs[@]}
 
@@ -42,7 +52,7 @@ ldconfig
 cd ..
 
 # install PDF sets
-for pdf in NNPDF31_nlo_as_0118_luxqed NNPDF40_nnlo_as_01180 NNPDF40_nlo_as_01180 NNPDF40_nlo_pch_as_01180; do
+for pdf in "${pdf_sets[@]}"; do
     curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
 done
 
