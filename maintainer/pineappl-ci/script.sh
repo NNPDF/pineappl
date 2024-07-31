@@ -53,11 +53,13 @@ cd ..
 
 # install PDF sets
 for pdf in "${pdf_sets[@]}"; do
-    curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
+    # see the following link why `--no-same-owner` may be necessary:
+    # https://github.com/habitat-sh/builder/issues/365#issuecomment-382862233
+    curl "https://lhapdfsets.web.cern.ch/current/${pdf}.tar.gz" | tar xzf - --no-same-owner -C /usr/local/share/LHAPDF
 done
 
 # install Tanjona's polarized PDF set
-curl "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - -C /usr/local/share/LHAPDF
+curl "https://data.nnpdf.science/pineappl/pdfs/240608-tr-pol-nlo-100.tar.gz" | tar xzf - --no-same-owner -C /usr/local/share/LHAPDF
 
 # install zlib; we need to link against it statically
 curl "https://www.zlib.net/zlib-${ZLIB_V}.tar.gz" | tar xzf -
