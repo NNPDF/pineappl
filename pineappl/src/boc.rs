@@ -366,7 +366,7 @@ impl Channel {
             {
                 result.push((
                     tuples.iter().map(|&(pid, _)| pid).collect(),
-                    tuples.iter().map(|(_, f)| factor * f).product::<f64>(),
+                    factor * tuples.iter().map(|(_, f)| f).product::<f64>(),
                 ));
             }
         }
