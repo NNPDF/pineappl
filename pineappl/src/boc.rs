@@ -473,10 +473,12 @@ impl FromStr for Channel {
                             .ok_or_else(|| ParseChannelError(format!("missing ')' in '{pids}'")))?
                             .split(',')
                             .map(|pid| {
-                                Ok(pid
-                                    .trim()
-                                    .parse::<i32>()
-                                    .map_err(|err| ParseChannelError(format!("could not parse PID: '{pid}', '{}'", err.to_string())))?)
+                                Ok(pid.trim().parse::<i32>().map_err(|err| {
+                                    ParseChannelError(format!(
+                                        "could not parse PID: '{pid}', '{}'",
+                                        err.to_string()
+                                    ))
+                                })?)
                             })
                             .collect::<Result<_, _>>()?;
 

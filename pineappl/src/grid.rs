@@ -534,9 +534,7 @@ impl Grid {
         match file_version {
             0 => todo!(),
             1 => bincode::deserialize_from(reader).map_err(GridError::ReadFailure),
-            _ => Err(GridError::FileVersionUnsupported {
-                file_version,
-            }),
+            _ => Err(GridError::FileVersionUnsupported { file_version }),
         }
     }
 
