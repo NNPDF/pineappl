@@ -78,6 +78,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             if self.array.is_empty() && !transpose {
                 mem::swap(&mut self.array, &mut other_grid.array);
             } else {
+                let rhs_mu2 = other_grid.mu2_grid().into_owned();
                 let rhs_x1 = if transpose {
                     other_grid.x2_grid()
                 } else {
@@ -89,10 +90,17 @@ impl Subgrid for PackedQ1X2SubgridV1 {
                     other_grid.x2_grid()
                 };
 
-                if (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2) {
+                if (self.mu2_grid != rhs_mu2)
+                    || (self.x1_grid() != rhs_x1)
+                    || (self.x2_grid() != rhs_x2)
+                {
+                    let mut mu2_grid = self.mu2_grid.clone();
                     let mut x1_grid = self.x1_grid.clone();
                     let mut x2_grid = self.x2_grid.clone();
 
+                    mu2_grid.extend_from_slice(&rhs_mu2);
+                    mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                    mu2_grid.dedup();
                     x1_grid.extend_from_slice(&rhs_x1);
                     x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
                     x1_grid.dedup();
@@ -101,9 +109,13 @@ impl Subgrid for PackedQ1X2SubgridV1 {
                     x2_grid.dedup();
 
                     let mut array =
-                        PackedArray::new([self.array.shape()[0], x1_grid.len(), x2_grid.len()]);
+                        PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
 
                     for ([i, j, k], value) in self.array.indexed_iter() {
+                        let target_i = mu2_grid
+                            .iter()
+                            .position(|&ref mu2| *mu2 == self.mu2_grid[i])
+                            .unwrap_or_else(|| unreachable!());
                         let target_j = x1_grid
                             .iter()
                             .position(|&x| x == self.x1_grid[j])
@@ -113,47 +125,34 @@ impl Subgrid for PackedQ1X2SubgridV1 {
                             .position(|&x| x == self.x2_grid[k])
                             .unwrap_or_else(|| unreachable!());
 
-                        array[[i, target_j, target_k]] = value;
+                        array[[target_i, target_j, target_k]] = value;
                     }
 
                     self.array = array;
+                    self.mu2_grid = mu2_grid;
                     self.x1_grid = x1_grid;
                     self.x2_grid = x2_grid;
                 }
 
-                for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
-                    let index = match self
+                for ([i, j, k], value) in other_grid.array.indexed_iter() {
+                    let (j, k) = if transpose { (k, j) } else { (j, k) };
+                    let target_i = self
                         .mu2_grid
-                        .binary_search_by(|val| val.partial_cmp(mu2).unwrap())
-                    {
-                        Ok(index) => index,
-                        Err(index) => {
-                            self.mu2_grid.insert(index, mu2.clone());
-                            //self.array.increase_x_at(index);
-                            todo!();
-                            index
-                        }
-                    };
+                        .iter()
+                        .position(|&ref x| *x == rhs_mu2[i])
+                        .unwrap_or_else(|| unreachable!());
+                    let target_j = self
+                        .x1_grid
+                        .iter()
+                        .position(|&x| x == rhs_x1[j])
+                        .unwrap_or_else(|| unreachable!());
+                    let target_k = self
+                        .x2_grid
+                        .iter()
+                        .position(|&x| x == rhs_x2[k])
+                        .unwrap_or_else(|| unreachable!());
 
-                    for ([_, j, k], value) in other_grid
-                        .array
-                        .indexed_iter()
-                        .filter(|&([i, _, _], _)| i == other_index)
-                    {
-                        let (j, k) = if transpose { (k, j) } else { (j, k) };
-                        let target_j = self
-                            .x1_grid
-                            .iter()
-                            .position(|&x| x == rhs_x1[j])
-                            .unwrap_or_else(|| unreachable!());
-                        let target_k = self
-                            .x2_grid
-                            .iter()
-                            .position(|&x| x == rhs_x2[k])
-                            .unwrap_or_else(|| unreachable!());
-
-                        self.array[[index, target_j, target_k]] += value;
-                    }
+                    self.array[[target_i, target_j, target_k]] += value;
                 }
             }
         } else {
@@ -162,12 +161,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn scale(&mut self, factor: f64) {
-        if factor == 0.0 {
-            self.array.clear();
-        } else {
-            // self.array.iter_mut().for_each(|x| *x *= factor);
-            todo!();
-        }
+        self.array *= factor;
     }
 
     fn symmetrize(&mut self) {
@@ -362,9 +356,9 @@ mod tests {
             grid1.stats(),
             Stats {
                 total: 200,
-                allocated: 14,
-                zeros: 6,
-                overhead: 42,
+                allocated: 8,
+                zeros: 0,
+                overhead: 12,
                 bytes_per_value: 8,
             }
         );
