@@ -466,6 +466,7 @@ impl FromStr for Channel {
                     || Err(ParseChannelError(format!("missing '*' in '{sub}'"))),
                     |(factor, pids)| {
                         let vector: Vec<_> = pids
+                            .trim()
                             .strip_prefix('(')
                             .ok_or_else(|| ParseChannelError(format!("missing '(' in '{pids}'")))?
                             .strip_suffix(')')
@@ -475,7 +476,7 @@ impl FromStr for Channel {
                                 Ok(pid
                                     .trim()
                                     .parse::<i32>()
-                                    .map_err(|err| ParseChannelError(err.to_string()))?)
+                                    .map_err(|err| ParseChannelError(format!("could not parse PID: '{pid}', '{}'", err.to_string())))?)
                             })
                             .collect::<Result<_, _>>()?;
 
@@ -764,7 +765,7 @@ mod tests {
             str::parse::<Channel>(" 1   * (  2 -2) + 2* (4,-4)")
                 .unwrap_err()
                 .to_string(),
-            "missing ',' in ' (  2 -2) '"
+            "could not parse PID: '  2 -2', 'invalid digit found in string'"
         );
 
         assert_eq!(
