@@ -125,7 +125,7 @@ impl Subcommand for Opts {
             .zip(order_mask.iter())
             .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
         {
-            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif}) isn't supported by {grid_type} and will be skipped.");
+            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped.");
         }
 
         let orders: Vec<_> = grid
