@@ -434,7 +434,7 @@ impl Channel {
             .entry
             .iter()
             .zip(&other.entry)
-            .map(|(a, b)| (a == b).then_some(a.1 / b.1))
+            .map(|((pids_a, fa), (pids_b, fb))| (pids_a == pids_b).then_some(fa / fb))
             .collect();
 
         result.and_then(|factors| {
