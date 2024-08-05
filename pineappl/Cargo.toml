@@ -26,6 +26,7 @@ git-version = "0.3.5"
 itertools = "0.10.1"
 lz4_flex = "0.9.2"
 ndarray = { features = ["serde"], version = "0.15.4" }
+pineappl-v0 = { package = "pineappl", version = "0.8.2" }
 rustc-hash = "1.1.0"
 serde = { features = ["derive"], version = "1.0.130" }
 thiserror = "1.0.30"

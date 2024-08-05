@@ -532,10 +532,53 @@ impl Grid {
         };
 
         match file_version {
-            0 => todo!(),
+            0 => Self::read_uncompressed_v0(reader),
             1 => bincode::deserialize_from(reader).map_err(GridError::ReadFailure),
             _ => Err(GridError::FileVersionUnsupported { file_version }),
         }
+    }
+
+    fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Self, GridError> {
+        use super::packed_array::PackedArray;
+        use super::packed_subgrid::PackedQ1X2SubgridV1;
+        use pineappl_v0::grid::Grid as GridV0;
+        use pineappl_v0::subgrid::Subgrid as _;
+
+        // TODO: convert error from v0 to v1
+        let grid = GridV0::read(&mut reader).unwrap();
+        Ok(Self {
+            subgrids: Array3::from_shape_vec(
+                grid.subgrids().dim(),
+                grid.subgrids()
+                    .into_iter()
+                    .map(|subgrid| {
+                        let mu2_grid: Vec<_> = subgrid
+                            .mu2_grid()
+                            .into_iter()
+                            .map(|mu2v0| Mu2 {
+                                ren: mu2v0.ren,
+                                fac: mu2v0.fac,
+                            })
+                            .collect();
+                        let x1_grid = subgrid.x1_grid().into_owned();
+                        let x2_grid = subgrid.x2_grid().into_owned();
+                        let mut array =
+                            PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+                        for ((o, b, c), v) in subgrid.indexed_iter() {
+                            array[[o, b, c]] = v;
+                        }
+                        PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
+                    })
+                    .collect(),
+            )
+            // UNWRAP: the dimensions must be the same as in the v0 grid
+            .unwrap(),
+            channels: todo!(),
+            bin_limits: todo!(),
+            orders: todo!(),
+            subgrid_params: todo!(),
+            more_members: todo!(),
+        })
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
