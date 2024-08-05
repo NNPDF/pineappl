@@ -71,12 +71,10 @@ pub enum GridError {
     IoFailure(io::Error),
     /// Returned when trying to read a `PineAPPL` file with file format version that is not
     /// supported.
-    #[error("the file version is {file_version}, but supported is only {supported_version}")]
-    FileVersionMismatch {
+    #[error("file version {file_version} is not supported")]
+    FileVersionUnsupported {
         /// File format version of the file read.
         file_version: u64,
-        /// Maximum supported file format version for this library.
-        supported_version: u64,
     },
     /// Returned from [`Grid::evolve`] if the evolution failed.
     #[error("failed to evolve grid: {0}")]
@@ -533,14 +531,13 @@ impl Grid {
             0
         };
 
-        if file_version != 0 {
-            return Err(GridError::FileVersionMismatch {
+        match file_version {
+            0 => todo!(),
+            1 => bincode::deserialize_from(reader).map_err(GridError::ReadFailure),
+            _ => Err(GridError::FileVersionUnsupported {
                 file_version,
-                supported_version: 0,
-            });
+            }),
         }
-
-        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
@@ -550,7 +547,7 @@ impl Grid {
     /// If writing fails an error is returned.
     pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
         let mut writer = BufWriter::new(writer);
-        let file_header = b"PineAPPL\0\0\0\0\0\0\0\0";
+        let file_header = b"PineAPPL\x01\0\0\0\0\0\0\0";
 
         // first write PineAPPL file header
         writer.write(file_header).map_err(GridError::IoFailure)?;
