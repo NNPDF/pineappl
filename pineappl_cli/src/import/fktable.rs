@@ -100,12 +100,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 // construct `Grid`
                 let mut fktable = Grid::new(
                     lumis,
-                    vec![Order {
-                        alphas: 0,
-                        alpha: 0,
-                        logxir: 0,
-                        logxif: 0,
-                    }],
+                    vec![Order::new(0, 0, 0, 0, 0)],
                     (0..=ndata).map(Into::into).collect(),
                     SubgridParams::default(),
                 );

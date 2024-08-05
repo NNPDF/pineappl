@@ -22,16 +22,16 @@ fn pid_to_pdg_id(pid: i32) -> i32 {
     }
 }
 
-fn create_lumi(
+fn reconstruct_channels(
     table: &fastNLOCoeffAddBase,
     comb: &fastNLOPDFLinearCombinations,
     dis_pid: i32,
 ) -> Vec<Channel> {
     let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
-    let mut lumis = Vec::new();
+    let mut channels = Vec::new();
 
-    // if there's a (non-empty) PDF coefficient vector reconstruct the luminosity function; the
-    // advantage is that we preserve the order of the lumi entries in the PineAPPL grid
+    // if there's a (non-empty) PDF coefficient vector reconstruct the channels; the advantage is
+    // that we preserve the order of the channels in the PineAPPL grid
     for pdf_entry in 0..ffi::GetPDFCoeffSize(table) {
         let mut entries = Vec::new();
 
@@ -44,14 +44,14 @@ fn create_lumi(
             };
             let f = 1.0;
 
-            entries.push((a, b, f));
+            entries.push((vec![a, b], f));
         }
 
-        lumis.push(Channel::new(entries));
+        channels.push(Channel::new(entries));
     }
 
-    // if the PDF coefficient vector was empty, we must reconstruct the lumi function
-    if lumis.is_empty() {
+    // if the PDF coefficient vector was empty, we must reconstruct the channels in a different way
+    if channels.is_empty() {
         let nsubproc = table.GetNSubproc().try_into().unwrap();
 
         let mut xfx1 = [0.0; 13];
@@ -66,15 +66,15 @@ fn create_lumi(
             for b in 0..13 {
                 xfx2[b] = 1.0;
 
-                let lumi = ffi::CalcPDFLinearCombination(comb, table, &xfx1, &xfx2, false);
+                let channel = ffi::CalcPDFLinearCombination(comb, table, &xfx1, &xfx2, false);
 
-                assert!(lumi.len() == nsubproc);
+                assert!(channel.len() == nsubproc);
 
-                for (i, l) in lumi.iter().copied().enumerate().filter(|(_, l)| *l != 0.0) {
+                for (i, &l) in channel.iter().enumerate().filter(|(_, &l)| l != 0.0) {
                     let ap = pid_to_pdg_id(i32::try_from(a).unwrap() - 6);
                     let bp = pid_to_pdg_id(i32::try_from(b).unwrap() - 6);
 
-                    entries[i].push((ap, bp, l));
+                    entries[i].push((vec![ap, bp], l));
                 }
 
                 xfx2[b] = 0.0;
@@ -83,10 +83,10 @@ fn create_lumi(
             xfx1[a] = 0.0;
         }
 
-        lumis = entries.into_iter().map(Channel::new).collect();
+        channels = entries.into_iter().map(Channel::new).collect();
     }
 
-    lumis
+    channels
 }
 
 fn convert_coeff_add_fix(
@@ -99,12 +99,13 @@ fn convert_coeff_add_fix(
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
 
     let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb, dis_pid),
+        reconstruct_channels(table_as_add_base, comb, dis_pid),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
             alpha,
             logxir: 0,
             logxif: 0,
+            logxia: 0,
         }],
         (0..=bins)
             .map(|limit| u16::try_from(limit).unwrap().into())
@@ -234,12 +235,12 @@ fn convert_coeff_add_flex(
 
     let alphas = table_as_add_base.GetNpow().try_into().unwrap();
     let orders: Vec<_> = [
-        Order::new(alphas, alpha, 0, 0),
-        Order::new(alphas, alpha, 1, 0),
-        Order::new(alphas, alpha, 0, 1),
-        Order::new(alphas, alpha, 2, 0),
-        Order::new(alphas, alpha, 0, 2),
-        Order::new(alphas, alpha, 1, 1),
+        Order::new(alphas, alpha, 0, 0, 0),
+        Order::new(alphas, alpha, 1, 0, 0),
+        Order::new(alphas, alpha, 0, 1, 0),
+        Order::new(alphas, alpha, 2, 0, 0),
+        Order::new(alphas, alpha, 0, 2, 0),
+        Order::new(alphas, alpha, 1, 1, 0),
     ]
     .into_iter()
     .take(match table.GetNScaleDep() {
@@ -253,7 +254,7 @@ fn convert_coeff_add_flex(
     let orders_len = orders.len();
 
     let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb, dis_pid),
+        reconstruct_channels(table_as_add_base, comb, dis_pid),
         orders,
         (0..=bins)
             .map(|limit| u16::try_from(limit).unwrap().into())

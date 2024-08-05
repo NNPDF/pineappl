@@ -22,11 +22,11 @@ fn convert_to_pdg_id(pid: usize) -> i32 {
     }
 }
 
-fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
+fn reconstruct_channels(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
-    let mut lumis = vec![Vec::new(); nproc];
+    let mut channels = vec![Vec::new(); nproc];
     let mut xfx1 = [0.0; 14];
     let mut xfx2 = [0.0; 14];
     let mut results = vec![0.0; nproc];
@@ -41,7 +41,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
 
             for i in 0..nproc {
                 if results[i] != 0.0 {
-                    lumis[i].push((convert_to_pdg_id(a), dis_pid, results[i]));
+                    channels[i].push((vec![convert_to_pdg_id(a), dis_pid], results[i]));
                 }
             }
         } else {
@@ -54,7 +54,8 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
 
                 for i in 0..nproc {
                     if results[i] != 0.0 {
-                        lumis[i].push((convert_to_pdg_id(a), convert_to_pdg_id(b), results[i]));
+                        channels[i]
+                            .push((vec![convert_to_pdg_id(a), convert_to_pdg_id(b)], results[i]));
                     }
                 }
 
@@ -65,7 +66,7 @@ fn reconstruct_luminosity_function(grid: &grid, order: i32, dis_pid: i32) -> Vec
         xfx1[a] = 0.0;
     }
 
-    lumis.into_iter().map(Channel::new).collect()
+    channels.into_iter().map(Channel::new).collect()
 }
 
 pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {
@@ -80,13 +81,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     if grid.calculation() == ffi::grid_CALCULATION::AMCATNLO {
         alphas_factor = 2.0 * TAU;
         orders = if grid.nloops() == 0 {
-            vec![Order::new(leading_order, alpha, 0, 0)]
+            vec![Order::new(leading_order, alpha, 0, 0, 0)]
         } else if grid.nloops() == 1 {
             vec![
-                Order::new(leading_order + 1, alpha, 0, 0), // NLO
-                Order::new(leading_order + 1, alpha, 1, 0), // NLO mur
-                Order::new(leading_order + 1, alpha, 0, 1), // NLO muf
-                Order::new(leading_order, alpha, 0, 0),     // LO
+                Order::new(leading_order + 1, alpha, 0, 0, 0), // NLO
+                Order::new(leading_order + 1, alpha, 1, 0, 0), // NLO mur
+                Order::new(leading_order + 1, alpha, 0, 1, 0), // NLO muf
+                Order::new(leading_order, alpha, 0, 0, 0),     // LO
             ]
         } else {
             unimplemented!("nloops = {} is not supported", grid.nloops());
@@ -94,7 +95,15 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     } else if grid.calculation() == ffi::grid_CALCULATION::STANDARD {
         alphas_factor = 1.0 / TAU;
         orders = (0..=grid.nloops())
-            .map(|power| Order::new(leading_order + u32::try_from(power).unwrap(), alpha, 0, 0))
+            .map(|power| {
+                Order::new(
+                    leading_order + u32::try_from(power).unwrap(),
+                    alpha,
+                    0,
+                    0,
+                    0,
+                )
+            })
             .collect();
     } else {
         unimplemented!("calculation is not supported");
@@ -114,10 +123,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     let mut grids = Vec::with_capacity(orders.len());
 
     for (i, order) in orders.into_iter().enumerate() {
-        let lumis = reconstruct_luminosity_function(&grid, i.try_into().unwrap(), dis_pid);
-        let lumis_len = lumis.len();
+        let channels = reconstruct_channels(&grid, i.try_into().unwrap(), dis_pid);
+        let lumis_len = channels.len();
         let mut pgrid = Grid::new(
-            lumis,
+            channels,
             vec![order],
             bin_limits.clone(),
             SubgridParams::default(),
