@@ -643,6 +643,8 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
     grid.orders().len()
 }
 
+// TODO: add a function that supports fragmentation scale logs
+
 /// Creates a new and empty grid. The creation requires four different sets of parameters:
 /// - The luminosity function `lumi`: A pointer to the luminosity function that specifies how the
 ///   cross section should be reconstructed.
@@ -685,6 +687,8 @@ pub unsafe extern "C" fn pineappl_grid_new(
             alpha: s[1],
             logxir: s[2],
             logxif: s[3],
+            // this function doesn't support fragmentation scale logs
+            logxia: 0,
         })
         .collect();
 
@@ -1017,7 +1021,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
         pdg_id_pairs
             .chunks(2)
             .zip(factors)
-            .map(|x| (x.0[0], x.0[1], x.1))
+            .map(|x| (vec![x.0[0], x.0[1]], x.1))
             .collect(),
     ));
 }
@@ -1076,12 +1080,12 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
     entry
         .iter()
-        .flat_map(|(id1, id2, _)| vec![id1, id2])
+        .flat_map(|(pids, _)| pids)
         .zip(pdg_ids.iter_mut())
         .for_each(|(from, to)| *to = *from);
     entry
         .iter()
-        .map(|(_, _, factor)| factor)
+        .map(|(_, factor)| factor)
         .zip(factors.iter_mut())
         .for_each(|(from, to)| *to = *from);
 }

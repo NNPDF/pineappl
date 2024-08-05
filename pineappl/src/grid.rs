@@ -71,12 +71,10 @@ pub enum GridError {
     IoFailure(io::Error),
     /// Returned when trying to read a `PineAPPL` file with file format version that is not
     /// supported.
-    #[error("the file version is {file_version}, but supported is only {supported_version}")]
-    FileVersionMismatch {
+    #[error("file version {file_version} is not supported")]
+    FileVersionUnsupported {
         /// File format version of the file read.
         file_version: u64,
-        /// Maximum supported file format version for this library.
-        supported_version: u64,
     },
     /// Returned from [`Grid::evolve`] if the evolution failed.
     #[error("failed to evolve grid: {0}")]
@@ -388,9 +386,10 @@ impl Grid {
                         let mut lumi = 0.0;
 
                         for entry in channel.entry() {
-                            let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                            let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                            lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                            debug_assert_eq!(entry.0.len(), 2);
+                            let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
+                            let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                            lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
                         }
 
                         let alphas = lumi_cache.alphas(imu2);
@@ -454,9 +453,10 @@ impl Grid {
             let mut lumi = 0.0;
 
             for entry in channel.entry() {
-                let xfx1 = lumi_cache.xfx1(entry.0, ix1, imu2);
-                let xfx2 = lumi_cache.xfx2(entry.1, ix2, imu2);
-                lumi += xfx1 * xfx2 * entry.2 / (x1 * x2);
+                debug_assert_eq!(entry.0.len(), 2);
+                let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
+                let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
             }
 
             let alphas = lumi_cache.alphas(imu2);
@@ -531,14 +531,54 @@ impl Grid {
             0
         };
 
-        if file_version != 0 {
-            return Err(GridError::FileVersionMismatch {
-                file_version,
-                supported_version: 0,
-            });
+        match file_version {
+            0 => Self::read_uncompressed_v0(reader),
+            1 => bincode::deserialize_from(reader).map_err(GridError::ReadFailure),
+            _ => Err(GridError::FileVersionUnsupported { file_version }),
         }
+    }
 
-        bincode::deserialize_from(reader).map_err(GridError::ReadFailure)
+    fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Self, GridError> {
+        use super::packed_array::PackedArray;
+        use super::packed_subgrid::PackedQ1X2SubgridV1;
+        use pineappl_v0::grid::Grid as GridV0;
+        use pineappl_v0::subgrid::Subgrid as _;
+
+        // TODO: convert error from v0 to v1
+        let grid = GridV0::read(&mut reader).unwrap();
+        Ok(Self {
+            subgrids: Array3::from_shape_vec(
+                grid.subgrids().dim(),
+                grid.subgrids()
+                    .into_iter()
+                    .map(|subgrid| {
+                        let mu2_grid: Vec<_> = subgrid
+                            .mu2_grid()
+                            .into_iter()
+                            .map(|mu2v0| Mu2 {
+                                ren: mu2v0.ren,
+                                fac: mu2v0.fac,
+                            })
+                            .collect();
+                        let x1_grid = subgrid.x1_grid().into_owned();
+                        let x2_grid = subgrid.x2_grid().into_owned();
+                        let mut array =
+                            PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+                        for ((o, b, c), v) in subgrid.indexed_iter() {
+                            array[[o, b, c]] = v;
+                        }
+                        PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
+                    })
+                    .collect(),
+            )
+            // UNWRAP: the dimensions must be the same as in the v0 grid
+            .unwrap(),
+            channels: todo!(),
+            bin_limits: todo!(),
+            orders: todo!(),
+            subgrid_params: todo!(),
+            more_members: todo!(),
+        })
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
@@ -548,7 +588,7 @@ impl Grid {
     /// If writing fails an error is returned.
     pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
         let mut writer = BufWriter::new(writer);
-        let file_header = b"PineAPPL\0\0\0\0\0\0\0\0";
+        let file_header = b"PineAPPL\x01\0\0\0\0\0\0\0";
 
         // first write PineAPPL file header
         writer.write(file_header).map_err(GridError::IoFailure)?;
@@ -804,11 +844,7 @@ impl Grid {
                                 {
                                     Some(Ok(pid)) => {
                                         let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|&channels| match index {
-                                                1 => channels.0 == pid,
-                                                2 => channels.1 == pid,
-                                                _ => unreachable!(),
-                                            })
+                                            entry.entry().iter().all(|(pids, _)| pids[index - 1] == pid)
                                         });
 
                                         if condition {
@@ -1147,7 +1183,7 @@ impl Grid {
         // only keep channels that have non-zero factors and for which at least one subgrid is
         // non-empty
         for (channel, entry) in self.channels.iter().enumerate() {
-            if !entry.entry().iter().all(|&(_, _, factor)| factor == 0.0)
+            if !entry.entry().iter().all(|&(_, factor)| factor == 0.0)
                 && !self
                     .subgrids
                     .slice(s![.., .., channel])
@@ -1196,6 +1232,8 @@ impl Grid {
 
     fn symmetrize_channels(&mut self) {
         let convolutions = self.convolutions();
+        // TODO: generalize this method to n convolutions
+        assert_eq!(convolutions.len(), 2);
         if convolutions[0] != convolutions[1] {
             return;
         }
@@ -1205,7 +1243,7 @@ impl Grid {
         while let Some(index) = indices.pop() {
             let channel_entry = &self.channels[index];
 
-            if *channel_entry == channel_entry.transpose() {
+            if *channel_entry == channel_entry.transpose(0, 1) {
                 // check if in all cases the limits are compatible with merging
                 self.subgrids
                     .slice_mut(s![.., .., index])
@@ -1218,7 +1256,7 @@ impl Grid {
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
-                .find(|(_, i)| self.channels[**i] == channel_entry.transpose())
+                .find(|(_, i)| self.channels[**i] == channel_entry.transpose(0, 1))
             {
                 indices.remove(j);
 
@@ -1289,6 +1327,9 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
+        // TODO: generalize this method to n convolutions and different EKOs
+        assert_eq!(self.convolutions().len(), 2);
+
         let has_pdf1 = self.convolutions()[0] != Convolution::None;
         let has_pdf2 = self.convolutions()[1] != Convolution::None;
 
@@ -1324,10 +1365,20 @@ impl Grid {
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
             if has_pdf1 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(a, _, _)| a));
+                pids1.extend(
+                    self.channels()[channel]
+                        .entry()
+                        .iter()
+                        .map(|(pids, _)| pids[0]),
+                );
             }
             if has_pdf2 {
-                pids1.extend(self.channels()[channel].entry().iter().map(|(_, b, _)| b));
+                pids1.extend(
+                    self.channels()[channel]
+                        .entry()
+                        .iter()
+                        .map(|(pids, _)| pids[1]),
+                );
             }
 
             pids1.sort_unstable();
@@ -1445,7 +1496,7 @@ impl Grid {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
+                orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
                 more_members: self.more_members.clone(),
             };
@@ -1581,7 +1632,7 @@ impl Grid {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0)],
+                orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
                 more_members: self.more_members.clone(),
             };
@@ -1753,6 +1804,9 @@ impl Grid {
     }
 
     pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
+        // TODO: generalize this method to n convolutions
+        assert_eq!(self.convolutions().len(), 2);
+
         self.channels = self
             .channels()
             .iter()
@@ -1761,21 +1815,29 @@ impl Grid {
                     entry
                         .entry()
                         .iter()
-                        .map(|(a, b, f)| {
+                        .map(|(pids, f)| {
                             (
-                                // if `a` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *a,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
-                                // if `b` is to be added to another pid replace it with this pid
-                                add.iter().fold(
-                                    *b,
-                                    |id, &(source, target)| if id == source { target } else { id },
-                                ),
+                                vec![
+                                    // if `a` is to be added to another pid replace it with this pid
+                                    add.iter().fold(pids[0], |id, &(source, target)| {
+                                        if id == source {
+                                            target
+                                        } else {
+                                            id
+                                        }
+                                    }),
+                                    // if `b` is to be added to another pid replace it with this pid
+                                    add.iter().fold(pids[1], |id, &(source, target)| {
+                                        if id == source {
+                                            target
+                                        } else {
+                                            id
+                                        }
+                                    }),
+                                ],
                                 // if any of the pids `a` or `b` are to b deleted set the factor to
                                 // zero
-                                if del.iter().any(|id| id == a || id == b) {
+                                if del.iter().any(|&id| id == pids[0] || id == pids[1]) {
                                     0.0
                                 } else {
                                     *f
@@ -1805,7 +1867,7 @@ impl Grid {
                 entry
                     .entry()
                     .iter()
-                    .copied()
+                    .cloned()
                     .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
@@ -1841,7 +1903,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1856,7 +1918,7 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
                 channel![2, 2, 1.0; 4, 4, 1.0],
             ],
-            vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
+            vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1876,7 +1938,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1891,9 +1953,9 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![
-                Order::new(1, 2, 0, 0),
-                Order::new(1, 2, 0, 1),
-                Order::new(0, 2, 0, 0),
+                Order::new(1, 2, 0, 0, 0),
+                Order::new(1, 2, 0, 1, 0),
+                Order::new(0, 2, 0, 0, 0),
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
@@ -1937,7 +1999,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1948,7 +2010,7 @@ mod tests {
 
         let mut other = Grid::new(
             vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1980,7 +2042,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
             SubgridParams::default(),
         );
@@ -1995,7 +2057,7 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
                 channel![2, 2, 1.0; 4, 4, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -2030,6 +2092,7 @@ mod tests {
                 alpha: 0,
                 logxir: 0,
                 logxif: 0,
+                logxia: 0,
             }],
             vec![0.0, 1.0],
             SubgridParams::default(),

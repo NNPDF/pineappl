@@ -46,6 +46,7 @@ pub mod import_only_subgrid;
 pub mod lagrange_subgrid;
 pub mod ntuple_subgrid;
 pub mod packed_array;
+pub mod packed_subgrid;
 pub mod pids;
 pub mod sparse_array3;
 pub mod subgrid;

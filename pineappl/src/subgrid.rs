@@ -5,6 +5,7 @@ use super::grid::Ntuple;
 use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
 use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
 use super::ntuple_subgrid::NtupleSubgridV1;
+use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
 use ndarray::Array3;
 use serde::{Deserialize, Serialize};
@@ -30,6 +31,8 @@ pub enum SubgridEnum {
     /// Same as [`ImportOnlySubgridV1`], but with support for different renormalization and
     /// factorization scales choices.
     ImportOnlySubgridV2,
+    ///
+    PackedQ1X2SubgridV1,
 }
 
 /// Structure denoting renormalization and factorization scale values.

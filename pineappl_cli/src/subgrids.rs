@@ -109,6 +109,7 @@ impl Subcommand for Opts {
                         SubgridEnum::ImportOnlySubgridV1(_) => "ImportOnlySubgridV1",
                         SubgridEnum::ImportOnlySubgridV2(_) => "ImportOnlySubgridV2",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
+                        SubgridEnum::PackedQ1X2SubgridV1(_) => "PackedQ1X2SubgridV1",
                     }
                 ));
             }

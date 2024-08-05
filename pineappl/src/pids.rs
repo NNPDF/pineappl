@@ -894,9 +894,9 @@ mod tests {
             );
 
             assert_eq!(result.entry().len(), 1);
-            assert_eq!(result.entry()[0].0, pid);
-            assert_eq!(result.entry()[0].1, pid);
-            assert_approx_eq!(f64, result.entry()[0].2, 1.0, ulps = 8);
+            assert_eq!(result.entry()[0].0[0], pid);
+            assert_eq!(result.entry()[0].0[1], pid);
+            assert_approx_eq!(f64, result.entry()[0].1, 1.0, ulps = 8);
         }
     }
 }

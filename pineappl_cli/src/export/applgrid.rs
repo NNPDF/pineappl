@@ -69,38 +69,43 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
+    if grid.convolutions().len() > 2 {
+        bail!("APPLgrid does not support grids with more than two convolutions");
+    }
+
     let lumis = grid.channels().len();
     let has_pdf1 = grid.convolutions()[0] != Convolution::None;
     let has_pdf2 = grid.convolutions()[1] != Convolution::None;
 
     // TODO: check that PDG MC IDs are used
 
-    let combinations: Vec<_> = iter::once(lumis.try_into().unwrap())
-        .chain(
-            grid.channels()
-                .iter()
-                .enumerate()
-                .flat_map(|(index, entry)| {
-                    [
-                        index.try_into().unwrap(),
-                        entry.entry().len().try_into().unwrap(),
-                    ]
-                    .into_iter()
-                    .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
-                        // TODO: if the factors aren't trivial, we have to find some other way to
-                        // propagate them
-                        assert_eq!(factor, 1.0);
+    let combinations: Vec<_> =
+        iter::once(lumis.try_into().unwrap())
+            .chain(
+                grid.channels()
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, entry)| {
+                        [
+                            index.try_into().unwrap(),
+                            entry.entry().len().try_into().unwrap(),
+                        ]
+                        .into_iter()
+                        .chain(entry.entry().iter().flat_map(|&(ref pids, factor)| {
+                            // TODO: if the factors aren't trivial, we have to find some other way to
+                            // propagate them
+                            assert_eq!(factor, 1.0);
 
-                        match (has_pdf1, has_pdf2) {
-                            (true, true) => [a, b],
-                            (true, false) => [a, 0],
-                            (false, true) => [b, 0],
-                            (false, false) => unreachable!(),
-                        }
-                    }))
-                }),
-        )
-        .collect();
+                            match (has_pdf1, has_pdf2) {
+                                (true, true) => [pids[0], pids[1]],
+                                (true, false) => [pids[0], 0],
+                                (false, true) => [pids[1], 0],
+                                (false, false) => unreachable!(),
+                            }
+                        }))
+                    }),
+            )
+            .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
     let id = "PineAPPL-Lumi.config";

@@ -1226,6 +1226,27 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "pineappl"
 version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88cf595833093c1a56fdd940c66bc1cd7f03ce162f552b29febf7be62f3eea74"
+dependencies = [
+ "anyhow",
+ "arrayvec",
+ "bincode",
+ "bitflags 2.4.2",
+ "enum_dispatch",
+ "float-cmp",
+ "git-version",
+ "itertools",
+ "lz4_flex",
+ "ndarray",
+ "rustc-hash",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "pineappl"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -1240,6 +1261,7 @@ dependencies = [
  "ndarray",
  "ndarray-npy",
  "num-complex",
+ "pineappl 0.8.2",
  "rand",
  "rand_pcg",
  "rustc-hash",
@@ -1250,7 +1272,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_applgrid"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "cc",
  "cxx",
@@ -1261,15 +1283,15 @@ dependencies = [
 
 [[package]]
 name = "pineappl_capi"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "itertools",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
 ]
 
 [[package]]
 name = "pineappl_cli"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1287,7 +1309,7 @@ dependencies = [
  "managed-lhapdf",
  "ndarray",
  "ndarray-npy",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
  "pineappl_applgrid",
  "pineappl_fastnlo",
  "predicates",
@@ -1300,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_fastnlo"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -1310,12 +1332,12 @@ dependencies = [
 
 [[package]]
 name = "pineappl_py"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "itertools",
  "ndarray",
  "numpy",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
  "pyo3",
 ]
 
@@ -2480,7 +2502,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "clap",
