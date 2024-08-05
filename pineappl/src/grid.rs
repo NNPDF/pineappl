@@ -1865,7 +1865,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1880,7 +1880,7 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
                 channel![2, 2, 1.0; 4, 4, 1.0],
             ],
-            vec![Order::new(1, 2, 0, 0), Order::new(1, 2, 0, 1)],
+            vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1900,7 +1900,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1915,9 +1915,9 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
             vec![
-                Order::new(1, 2, 0, 0),
-                Order::new(1, 2, 0, 1),
-                Order::new(0, 2, 0, 0),
+                Order::new(1, 2, 0, 0, 0),
+                Order::new(1, 2, 0, 1, 0),
+                Order::new(0, 2, 0, 0, 0),
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
@@ -1961,7 +1961,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -1972,7 +1972,7 @@ mod tests {
 
         let mut other = Grid::new(
             vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -2004,7 +2004,7 @@ mod tests {
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
             SubgridParams::default(),
         );
@@ -2019,7 +2019,7 @@ mod tests {
                 channel![1, 1, 1.0; 3, 3, 1.0],
                 channel![2, 2, 1.0; 4, 4, 1.0],
             ],
-            vec![Order::new(0, 2, 0, 0)],
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
             SubgridParams::default(),
         );
@@ -2054,6 +2054,7 @@ mod tests {
                 alpha: 0,
                 logxir: 0,
                 logxif: 0,
+                logxia: 0,
             }],
             vec![0.0, 1.0],
             SubgridParams::default(),

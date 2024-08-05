@@ -527,10 +527,10 @@ mod tests {
 
     #[test]
     fn order_from_str() {
-        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0)));
-        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0)));
-        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0)));
-        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1)));
+        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0, 0)));
+        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0, 0)));
+        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0, 0)));
+        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1, 0)));
         assert_eq!(
             "ab12".parse::<Order>(),
             Err(ParseOrderError("unknown coupling: 'ab'".to_owned()))
@@ -547,36 +547,36 @@ mod tests {
     #[test]
     fn order_cmp() {
         let mut orders = [
-            Order::new(1, 2, 1, 0),
-            Order::new(1, 2, 0, 1),
-            Order::new(1, 2, 0, 0),
-            Order::new(0, 3, 1, 0),
-            Order::new(0, 3, 0, 1),
-            Order::new(0, 3, 0, 0),
-            Order::new(0, 2, 0, 0),
+            Order::new(1, 2, 1, 0, 0),
+            Order::new(1, 2, 0, 1, 0),
+            Order::new(1, 2, 0, 0, 0),
+            Order::new(0, 3, 1, 0, 0),
+            Order::new(0, 3, 0, 1, 0),
+            Order::new(0, 3, 0, 0, 0),
+            Order::new(0, 2, 0, 0, 0),
         ];
 
         orders.sort();
 
-        assert_eq!(orders[0], Order::new(0, 2, 0, 0));
-        assert_eq!(orders[1], Order::new(1, 2, 0, 0));
-        assert_eq!(orders[2], Order::new(1, 2, 0, 1));
-        assert_eq!(orders[3], Order::new(1, 2, 1, 0));
-        assert_eq!(orders[4], Order::new(0, 3, 0, 0));
-        assert_eq!(orders[5], Order::new(0, 3, 0, 1));
-        assert_eq!(orders[6], Order::new(0, 3, 1, 0));
+        assert_eq!(orders[0], Order::new(0, 2, 0, 0, 0));
+        assert_eq!(orders[1], Order::new(1, 2, 0, 0, 0));
+        assert_eq!(orders[2], Order::new(1, 2, 0, 1, 0));
+        assert_eq!(orders[3], Order::new(1, 2, 1, 0, 0));
+        assert_eq!(orders[4], Order::new(0, 3, 0, 0, 0));
+        assert_eq!(orders[5], Order::new(0, 3, 0, 1, 0));
+        assert_eq!(orders[6], Order::new(0, 3, 1, 0, 0));
     }
 
     #[test]
     fn order_create_mask() {
         // Drell—Yan orders
         let orders = [
-            Order::new(0, 2, 0, 0), //   LO        :          alpha^2
-            Order::new(1, 2, 0, 0), //  NLO QCD    : alphas   alpha^2
-            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
-            Order::new(2, 2, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
-            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+            Order::new(0, 2, 0, 0, 0), //   LO        :          alpha^2
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
+            Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
         assert_eq!(
@@ -646,18 +646,18 @@ mod tests {
 
         // Top-pair production orders
         let orders = [
-            Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
-            Order::new(1, 1, 0, 0), //   LO QCD—EW : alphas   alpha
-            Order::new(0, 2, 0, 0), //   LO  EW    :          alpha^2
-            Order::new(3, 0, 0, 0), //  NLO QCD    : alphas^3
-            Order::new(2, 1, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-            Order::new(1, 2, 0, 0), //  NLO QCD—EW : alphas   alpha^2
-            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
-            Order::new(4, 0, 0, 0), // NNLO QCD    : alphas^4
-            Order::new(3, 1, 0, 0), // NNLO QCD—EW : alphas^3 alpha
-            Order::new(2, 2, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
-            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+            Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
+            Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+            Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
+            Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
+            Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+            Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(4, 0, 0, 0, 0), // NNLO QCD    : alphas^4
+            Order::new(3, 1, 0, 0, 0), // NNLO QCD—EW : alphas^3 alpha
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
         assert_eq!(

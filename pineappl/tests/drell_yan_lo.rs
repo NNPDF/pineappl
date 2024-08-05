@@ -140,6 +140,7 @@ fn fill_drell_yan_lo_grid(
             alpha: 2,
             logxir: 0,
             logxif: 0,
+            logxia: 0,
         },
         // NLO QCD - won't be filled
         Order {
@@ -147,12 +148,14 @@ fn fill_drell_yan_lo_grid(
             alpha: 2,
             logxir: 0,
             logxif: 0,
+            logxia: 0,
         },
         Order {
             alphas: 1,
             alpha: 2,
             logxir: 0,
             logxif: 1,
+            logxia: 0,
         },
     ];
 
