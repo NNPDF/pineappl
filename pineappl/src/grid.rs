@@ -806,7 +806,7 @@ impl Grid {
                                 {
                                     Some(Ok(pid)) => {
                                         let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|(pids, _)| pids[index] == pid)
+                                            entry.entry().iter().all(|(pids, _)| pids[index - 1] == pid)
                                         });
 
                                         if condition {
