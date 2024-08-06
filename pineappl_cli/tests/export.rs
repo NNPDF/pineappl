@@ -23,11 +23,11 @@ Options:
 
 #[cfg(feature = "applgrid")]
 const EXPORT_APPLGRID_STR: &str =
-    "WARNING: the order O(as^1 a^2 lr^1 lf^0) isn't supported by APPLgrid and will be skipped.
-WARNING: the order O(as^1 a^2 lr^0 lf^1) isn't supported by APPLgrid and will be skipped.
-WARNING: the order O(as^0 a^3 lr^0 lf^0) isn't supported by APPLgrid and will be skipped.
-WARNING: the order O(as^0 a^3 lr^1 lf^0) isn't supported by APPLgrid and will be skipped.
-WARNING: the order O(as^0 a^3 lr^0 lf^1) isn't supported by APPLgrid and will be skipped.
+    "WARNING: the order O(as^1 a^2 lr^1 lf^0 la^0) isn't supported by APPLgrid and will be skipped.
+WARNING: the order O(as^1 a^2 lr^0 lf^1 la^0) isn't supported by APPLgrid and will be skipped.
+WARNING: the order O(as^0 a^3 lr^0 lf^0 la^0) isn't supported by APPLgrid and will be skipped.
+WARNING: the order O(as^0 a^3 lr^1 lf^0 la^0) isn't supported by APPLgrid and will be skipped.
+WARNING: the order O(as^0 a^3 lr^0 lf^1 la^0) isn't supported by APPLgrid and will be skipped.
 b    APPLgrid     PineAPPL     rel. diff
 --+------------+------------+--------------
 0   7.9566291e0  7.9566291e0 -2.5535130e-15
@@ -52,7 +52,7 @@ b    APPLgrid     PineAPPL     rel. diff
 
 #[cfg(feature = "applgrid")]
 const EXPORT_DIS_APPLGRID_STR: &str =
-    "WARNING: the order O(as^1 a^0 lr^0 lf^1) isn't supported by APPLgrid and will be skipped.
+    "WARNING: the order O(as^1 a^0 lr^0 lf^1 la^0) isn't supported by APPLgrid and will be skipped.
 b   APPLgrid    PineAPPL     rel. diff
 --+-----------+-----------+--------------
 0  2.8829972e0 2.8829972e0  3.3306691e-15

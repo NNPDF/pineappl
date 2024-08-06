@@ -127,7 +127,7 @@ impl Subcommand for Opts {
                 for (pids, factor) in channel.entry() {
                     row.add_cell(cell!(format!(
                         "{factor} \u{d7} ({})",
-                        pids.iter().map(ToString::to_string).join(", ")
+                        pids.iter().map(|pid| format!("{pid:2}")).join(", ")
                     )));
                 }
             }

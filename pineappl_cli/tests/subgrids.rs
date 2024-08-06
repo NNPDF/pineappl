@@ -455,301 +455,301 @@ const MUR2_STR: &str = "o b c   mur2
 
 const STATS_STR: &str = "o b c total allocated zeros overhead
 -+-+-+-----+---------+-----+--------
-0 0 0  2500      1012     3      102
-0 1 0  2500      1009     8      102
-0 2 0  2500      1018    16      102
-0 3 0  2500      1006    16      102
-0 4 0  2500       983    21      102
-0 5 0  2500       945    45      102
-0 6 0  2500      1025    77      102
-0 7 0  2500       833    37      102
-1 0 0  2500      1013     0      102
-1 0 1  2500      1009     0      102
-1 0 3  2500      1011     0      102
-1 1 0  2500      1016     0      102
-1 1 1  2500      1005     0      102
-1 1 3  2500      1011     0      102
-1 2 0  2500      1031     0      102
-1 2 1  2500      1022     0      102
-1 2 3  2500      1030     0      102
-1 3 0  2500      1031     0      102
-1 3 1  2500      1026     0      102
-1 3 3  2500      1030     0      102
-1 4 0  2500      1038     2      102
-1 4 1  2500      1025     0      102
-1 4 3  2500      1027     0      102
-1 5 0  2500      1039     0      102
-1 5 1  2500      1022     2      102
-1 5 3  2500      1032     0      102
-1 6 0  2500      1033     0      102
-1 6 1  2500      1029     0      102
-1 6 3  2500      1032     0      102
-1 7 0  2500       982     0      102
-1 7 1  2500       980     2      102
-1 7 3  2500       981     0      102
-3 0 0  2500      1013     0      102
-3 0 1  2500       952     0      102
-3 0 3  2500      1011     2      102
-3 1 0  2500      1016     0      102
-3 1 1  2500       953     7      102
-3 1 3  2500      1005     0      102
-3 2 0  2500      1031     0      102
-3 2 1  2500      1018     6      102
-3 2 3  2500      1029     0      102
-3 3 0  2500      1031     0      102
-3 3 1  2500       998     0      102
-3 3 3  2500      1027     0      102
-3 4 0  2500      1038     2      102
-3 4 1  2500      1022    10      102
-3 4 3  2500      1021     0      102
-3 5 0  2500      1039     0      102
-3 5 1  2500      1007    18      102
-3 5 3  2500      1028     0      102
-3 6 0  2500      1033     0      102
-3 6 1  2500      1027    11      102
-3 6 3  2500      1028     0      102
-3 7 0  2500       982     0      102
-3 7 1  2500       976    58      102
-3 7 3  2500       973     0      102
-4 0 0  2500      1013     0      102
-4 0 2  2500       936    20      102
-4 0 4  2500       930    10      102
-4 1 0  2500      1013     0      102
-4 1 2  2500       938    20      102
-4 1 4  2500       949    16      102
-4 2 0  2500      1026     0      102
-4 2 2  2500       933    32      102
-4 2 4  2500       943     0      102
-4 3 0  2500      1031     0      102
-4 3 2  2500       884     6      102
-4 3 4  2500       983    11      102
-4 4 0  2500      1038     3      102
-4 4 2  2500       894    37      102
-4 4 4  2500       940     0      102
-4 5 0  2500      1035     0      102
-4 5 2  2500       869    16      102
-4 5 4  2500       962    14      102
-4 6 0  2500      1033     0      102
-4 6 2  2500       861    21      102
-4 6 4  2500       969    22      102
-4 7 0  2500       980     0      102
-4 7 2  2500       873   114      102
-4 7 4  2500       817    38      102
-6 0 0  2500      1013     3      102
-6 0 2  2500       767    37      102
-6 0 4  2500       868    11      102
-6 1 0  2500      1013     1      102
-6 1 2  2500       710     7      102
-6 1 4  2500       854    17      102
-6 2 0  2500      1018     3      102
-6 2 2  2500       832    22      102
-6 2 4  2500       898    17      102
-6 3 0  2500      1023     0      102
-6 3 2  2500       840    54      102
-6 3 4  2500       913    39      102
-6 4 0  2500      1038     3      102
-6 4 2  2500       825    80      102
-6 4 4  2500       877     9      102
-6 5 0  2500      1035     0      102
-6 5 2  2500       841    72      102
-6 5 4  2500       911    20      102
-6 6 0  2500      1033     0      102
-6 6 2  2500       855   116      102
-6 6 4  2500       867    13      102
-6 7 0  2500       980     0      102
-6 7 2  2500       869   173      102
-6 7 4  2500       745    36      102
+0 0 0  2500      1010     1       70
+0 1 0  2500      1003     2       72
+0 2 0  2500      1007     5       80
+0 3 0  2500       995     5       80
+0 4 0  2500       963     1       84
+0 5 0  2500       902     2       90
+0 6 0  2500       956     8      100
+0 7 0  2500       798     2       92
+1 0 0  2500      1013     0       68
+1 0 1  2500      1009     0       68
+1 0 3  2500      1011     0       68
+1 1 0  2500      1016     0       68
+1 1 1  2500      1005     0       68
+1 1 3  2500      1011     0       68
+1 2 0  2500      1031     0       70
+1 2 1  2500      1022     0       70
+1 2 3  2500      1030     0       70
+1 3 0  2500      1031     0       72
+1 3 1  2500      1026     0       72
+1 3 3  2500      1030     0       72
+1 4 0  2500      1036     0       74
+1 4 1  2500      1025     0       72
+1 4 3  2500      1027     0       72
+1 5 0  2500      1039     0       74
+1 5 1  2500      1020     0       76
+1 5 3  2500      1032     0       74
+1 6 0  2500      1033     0       76
+1 6 1  2500      1029     0       76
+1 6 3  2500      1032     0       76
+1 7 0  2500       982     0       78
+1 7 1  2500       980     2       78
+1 7 3  2500       981     0       78
+3 0 0  2500      1013     0       68
+3 0 1  2500       952     0       68
+3 0 3  2500      1009     0       70
+3 1 0  2500      1016     0       68
+3 1 1  2500       946     0       72
+3 1 3  2500      1005     0       68
+3 2 0  2500      1031     0       70
+3 2 1  2500      1016     4       72
+3 2 3  2500      1029     0       70
+3 3 0  2500      1031     0       72
+3 3 1  2500       998     0       72
+3 3 3  2500      1027     0       72
+3 4 0  2500      1036     0       74
+3 4 1  2500      1017     5       76
+3 4 3  2500      1021     0       72
+3 5 0  2500      1039     0       74
+3 5 1  2500       989     0       84
+3 5 3  2500      1028     0       74
+3 6 0  2500      1033     0       76
+3 6 1  2500      1017     1       80
+3 6 3  2500      1028     0       76
+3 7 0  2500       982     0       78
+3 7 1  2500       918     0      110
+3 7 3  2500       973     0       78
+4 0 0  2500      1013     0       68
+4 0 2  2500       921     5       80
+4 0 4  2500       920     0       78
+4 1 0  2500      1013     0       68
+4 1 2  2500       920     2       76
+4 1 4  2500       933     0       76
+4 2 0  2500      1026     0       70
+4 2 2  2500       901     0       80
+4 2 4  2500       943     0       70
+4 3 0  2500      1031     0       72
+4 3 2  2500       878     0       74
+4 3 4  2500       976     4       76
+4 4 0  2500      1035     0       74
+4 4 2  2500       860     3       82
+4 4 4  2500       940     0       72
+4 5 0  2500      1035     0       74
+4 5 2  2500       857     4       82
+4 5 4  2500       948     0       82
+4 6 0  2500      1033     0       76
+4 6 2  2500       844     4       86
+4 6 4  2500       947     0       82
+4 7 0  2500       980     0       78
+4 7 2  2500       759     0      116
+4 7 4  2500       779     0       88
+6 0 0  2500      1011     1       70
+6 0 2  2500       731     1       84
+6 0 4  2500       859     2       72
+6 1 0  2500      1013     1       68
+6 1 2  2500       710     7       68
+6 1 4  2500       837     0       78
+6 2 0  2500      1016     1       72
+6 2 2  2500       816     6       86
+6 2 4  2500       882     1       76
+6 3 0  2500      1023     0       72
+6 3 2  2500       791     5      104
+6 3 4  2500       876     2       86
+6 4 0  2500      1035     0       74
+6 4 2  2500       745     0      110
+6 4 4  2500       868     0       76
+6 5 0  2500      1035     0       74
+6 5 2  2500       771     2      108
+6 5 4  2500       893     2       78
+6 6 0  2500      1033     0       76
+6 6 2  2500       739     0      112
+6 6 4  2500       855     1       78
+6 7 0  2500       980     0       78
+6 7 2  2500       696     0      116
+6 7 4  2500       709     0       84
 ";
 
 const TYPE_STR: &str = "o b c        type
 -+-+-+-------------------
-0 0 0 ImportOnlySubgridV1
-0 1 0 ImportOnlySubgridV1
-0 2 0 ImportOnlySubgridV1
-0 3 0 ImportOnlySubgridV1
-0 4 0 ImportOnlySubgridV1
-0 5 0 ImportOnlySubgridV1
-0 6 0 ImportOnlySubgridV1
-0 7 0 ImportOnlySubgridV1
-1 0 0 ImportOnlySubgridV1
-1 0 1 ImportOnlySubgridV1
-1 0 3 ImportOnlySubgridV1
-1 1 0 ImportOnlySubgridV1
-1 1 1 ImportOnlySubgridV1
-1 1 3 ImportOnlySubgridV1
-1 2 0 ImportOnlySubgridV1
-1 2 1 ImportOnlySubgridV1
-1 2 3 ImportOnlySubgridV1
-1 3 0 ImportOnlySubgridV1
-1 3 1 ImportOnlySubgridV1
-1 3 3 ImportOnlySubgridV1
-1 4 0 ImportOnlySubgridV1
-1 4 1 ImportOnlySubgridV1
-1 4 3 ImportOnlySubgridV1
-1 5 0 ImportOnlySubgridV1
-1 5 1 ImportOnlySubgridV1
-1 5 3 ImportOnlySubgridV1
-1 6 0 ImportOnlySubgridV1
-1 6 1 ImportOnlySubgridV1
-1 6 3 ImportOnlySubgridV1
-1 7 0 ImportOnlySubgridV1
-1 7 1 ImportOnlySubgridV1
-1 7 3 ImportOnlySubgridV1
-3 0 0 ImportOnlySubgridV1
-3 0 1 ImportOnlySubgridV1
-3 0 3 ImportOnlySubgridV1
-3 1 0 ImportOnlySubgridV1
-3 1 1 ImportOnlySubgridV1
-3 1 3 ImportOnlySubgridV1
-3 2 0 ImportOnlySubgridV1
-3 2 1 ImportOnlySubgridV1
-3 2 3 ImportOnlySubgridV1
-3 3 0 ImportOnlySubgridV1
-3 3 1 ImportOnlySubgridV1
-3 3 3 ImportOnlySubgridV1
-3 4 0 ImportOnlySubgridV1
-3 4 1 ImportOnlySubgridV1
-3 4 3 ImportOnlySubgridV1
-3 5 0 ImportOnlySubgridV1
-3 5 1 ImportOnlySubgridV1
-3 5 3 ImportOnlySubgridV1
-3 6 0 ImportOnlySubgridV1
-3 6 1 ImportOnlySubgridV1
-3 6 3 ImportOnlySubgridV1
-3 7 0 ImportOnlySubgridV1
-3 7 1 ImportOnlySubgridV1
-3 7 3 ImportOnlySubgridV1
-4 0 0 ImportOnlySubgridV1
-4 0 2 ImportOnlySubgridV1
-4 0 4 ImportOnlySubgridV1
-4 1 0 ImportOnlySubgridV1
-4 1 2 ImportOnlySubgridV1
-4 1 4 ImportOnlySubgridV1
-4 2 0 ImportOnlySubgridV1
-4 2 2 ImportOnlySubgridV1
-4 2 4 ImportOnlySubgridV1
-4 3 0 ImportOnlySubgridV1
-4 3 2 ImportOnlySubgridV1
-4 3 4 ImportOnlySubgridV1
-4 4 0 ImportOnlySubgridV1
-4 4 2 ImportOnlySubgridV1
-4 4 4 ImportOnlySubgridV1
-4 5 0 ImportOnlySubgridV1
-4 5 2 ImportOnlySubgridV1
-4 5 4 ImportOnlySubgridV1
-4 6 0 ImportOnlySubgridV1
-4 6 2 ImportOnlySubgridV1
-4 6 4 ImportOnlySubgridV1
-4 7 0 ImportOnlySubgridV1
-4 7 2 ImportOnlySubgridV1
-4 7 4 ImportOnlySubgridV1
-6 0 0 ImportOnlySubgridV1
-6 0 2 ImportOnlySubgridV1
-6 0 4 ImportOnlySubgridV1
-6 1 0 ImportOnlySubgridV1
-6 1 2 ImportOnlySubgridV1
-6 1 4 ImportOnlySubgridV1
-6 2 0 ImportOnlySubgridV1
-6 2 2 ImportOnlySubgridV1
-6 2 4 ImportOnlySubgridV1
-6 3 0 ImportOnlySubgridV1
-6 3 2 ImportOnlySubgridV1
-6 3 4 ImportOnlySubgridV1
-6 4 0 ImportOnlySubgridV1
-6 4 2 ImportOnlySubgridV1
-6 4 4 ImportOnlySubgridV1
-6 5 0 ImportOnlySubgridV1
-6 5 2 ImportOnlySubgridV1
-6 5 4 ImportOnlySubgridV1
-6 6 0 ImportOnlySubgridV1
-6 6 2 ImportOnlySubgridV1
-6 6 4 ImportOnlySubgridV1
-6 7 0 ImportOnlySubgridV1
-6 7 2 ImportOnlySubgridV1
-6 7 4 ImportOnlySubgridV1
+0 0 0 PackedQ1X2SubgridV1
+0 1 0 PackedQ1X2SubgridV1
+0 2 0 PackedQ1X2SubgridV1
+0 3 0 PackedQ1X2SubgridV1
+0 4 0 PackedQ1X2SubgridV1
+0 5 0 PackedQ1X2SubgridV1
+0 6 0 PackedQ1X2SubgridV1
+0 7 0 PackedQ1X2SubgridV1
+1 0 0 PackedQ1X2SubgridV1
+1 0 1 PackedQ1X2SubgridV1
+1 0 3 PackedQ1X2SubgridV1
+1 1 0 PackedQ1X2SubgridV1
+1 1 1 PackedQ1X2SubgridV1
+1 1 3 PackedQ1X2SubgridV1
+1 2 0 PackedQ1X2SubgridV1
+1 2 1 PackedQ1X2SubgridV1
+1 2 3 PackedQ1X2SubgridV1
+1 3 0 PackedQ1X2SubgridV1
+1 3 1 PackedQ1X2SubgridV1
+1 3 3 PackedQ1X2SubgridV1
+1 4 0 PackedQ1X2SubgridV1
+1 4 1 PackedQ1X2SubgridV1
+1 4 3 PackedQ1X2SubgridV1
+1 5 0 PackedQ1X2SubgridV1
+1 5 1 PackedQ1X2SubgridV1
+1 5 3 PackedQ1X2SubgridV1
+1 6 0 PackedQ1X2SubgridV1
+1 6 1 PackedQ1X2SubgridV1
+1 6 3 PackedQ1X2SubgridV1
+1 7 0 PackedQ1X2SubgridV1
+1 7 1 PackedQ1X2SubgridV1
+1 7 3 PackedQ1X2SubgridV1
+3 0 0 PackedQ1X2SubgridV1
+3 0 1 PackedQ1X2SubgridV1
+3 0 3 PackedQ1X2SubgridV1
+3 1 0 PackedQ1X2SubgridV1
+3 1 1 PackedQ1X2SubgridV1
+3 1 3 PackedQ1X2SubgridV1
+3 2 0 PackedQ1X2SubgridV1
+3 2 1 PackedQ1X2SubgridV1
+3 2 3 PackedQ1X2SubgridV1
+3 3 0 PackedQ1X2SubgridV1
+3 3 1 PackedQ1X2SubgridV1
+3 3 3 PackedQ1X2SubgridV1
+3 4 0 PackedQ1X2SubgridV1
+3 4 1 PackedQ1X2SubgridV1
+3 4 3 PackedQ1X2SubgridV1
+3 5 0 PackedQ1X2SubgridV1
+3 5 1 PackedQ1X2SubgridV1
+3 5 3 PackedQ1X2SubgridV1
+3 6 0 PackedQ1X2SubgridV1
+3 6 1 PackedQ1X2SubgridV1
+3 6 3 PackedQ1X2SubgridV1
+3 7 0 PackedQ1X2SubgridV1
+3 7 1 PackedQ1X2SubgridV1
+3 7 3 PackedQ1X2SubgridV1
+4 0 0 PackedQ1X2SubgridV1
+4 0 2 PackedQ1X2SubgridV1
+4 0 4 PackedQ1X2SubgridV1
+4 1 0 PackedQ1X2SubgridV1
+4 1 2 PackedQ1X2SubgridV1
+4 1 4 PackedQ1X2SubgridV1
+4 2 0 PackedQ1X2SubgridV1
+4 2 2 PackedQ1X2SubgridV1
+4 2 4 PackedQ1X2SubgridV1
+4 3 0 PackedQ1X2SubgridV1
+4 3 2 PackedQ1X2SubgridV1
+4 3 4 PackedQ1X2SubgridV1
+4 4 0 PackedQ1X2SubgridV1
+4 4 2 PackedQ1X2SubgridV1
+4 4 4 PackedQ1X2SubgridV1
+4 5 0 PackedQ1X2SubgridV1
+4 5 2 PackedQ1X2SubgridV1
+4 5 4 PackedQ1X2SubgridV1
+4 6 0 PackedQ1X2SubgridV1
+4 6 2 PackedQ1X2SubgridV1
+4 6 4 PackedQ1X2SubgridV1
+4 7 0 PackedQ1X2SubgridV1
+4 7 2 PackedQ1X2SubgridV1
+4 7 4 PackedQ1X2SubgridV1
+6 0 0 PackedQ1X2SubgridV1
+6 0 2 PackedQ1X2SubgridV1
+6 0 4 PackedQ1X2SubgridV1
+6 1 0 PackedQ1X2SubgridV1
+6 1 2 PackedQ1X2SubgridV1
+6 1 4 PackedQ1X2SubgridV1
+6 2 0 PackedQ1X2SubgridV1
+6 2 2 PackedQ1X2SubgridV1
+6 2 4 PackedQ1X2SubgridV1
+6 3 0 PackedQ1X2SubgridV1
+6 3 2 PackedQ1X2SubgridV1
+6 3 4 PackedQ1X2SubgridV1
+6 4 0 PackedQ1X2SubgridV1
+6 4 2 PackedQ1X2SubgridV1
+6 4 4 PackedQ1X2SubgridV1
+6 5 0 PackedQ1X2SubgridV1
+6 5 2 PackedQ1X2SubgridV1
+6 5 4 PackedQ1X2SubgridV1
+6 6 0 PackedQ1X2SubgridV1
+6 6 2 PackedQ1X2SubgridV1
+6 6 4 PackedQ1X2SubgridV1
+6 7 0 PackedQ1X2SubgridV1
+6 7 2 PackedQ1X2SubgridV1
+6 7 4 PackedQ1X2SubgridV1
 ";
 
 const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
 -+-+-+-------------------
-0 0 0 ImportOnlySubgridV1
+0 0 0 PackedQ1X2SubgridV1
 0 0 1 EmptySubgridV1
 0 0 2 EmptySubgridV1
 0 0 3 EmptySubgridV1
 0 0 4 EmptySubgridV1
-0 1 0 ImportOnlySubgridV1
+0 1 0 PackedQ1X2SubgridV1
 0 1 1 EmptySubgridV1
 0 1 2 EmptySubgridV1
 0 1 3 EmptySubgridV1
 0 1 4 EmptySubgridV1
-0 2 0 ImportOnlySubgridV1
+0 2 0 PackedQ1X2SubgridV1
 0 2 1 EmptySubgridV1
 0 2 2 EmptySubgridV1
 0 2 3 EmptySubgridV1
 0 2 4 EmptySubgridV1
-0 3 0 ImportOnlySubgridV1
+0 3 0 PackedQ1X2SubgridV1
 0 3 1 EmptySubgridV1
 0 3 2 EmptySubgridV1
 0 3 3 EmptySubgridV1
 0 3 4 EmptySubgridV1
-0 4 0 ImportOnlySubgridV1
+0 4 0 PackedQ1X2SubgridV1
 0 4 1 EmptySubgridV1
 0 4 2 EmptySubgridV1
 0 4 3 EmptySubgridV1
 0 4 4 EmptySubgridV1
-0 5 0 ImportOnlySubgridV1
+0 5 0 PackedQ1X2SubgridV1
 0 5 1 EmptySubgridV1
 0 5 2 EmptySubgridV1
 0 5 3 EmptySubgridV1
 0 5 4 EmptySubgridV1
-0 6 0 ImportOnlySubgridV1
+0 6 0 PackedQ1X2SubgridV1
 0 6 1 EmptySubgridV1
 0 6 2 EmptySubgridV1
 0 6 3 EmptySubgridV1
 0 6 4 EmptySubgridV1
-0 7 0 ImportOnlySubgridV1
+0 7 0 PackedQ1X2SubgridV1
 0 7 1 EmptySubgridV1
 0 7 2 EmptySubgridV1
 0 7 3 EmptySubgridV1
 0 7 4 EmptySubgridV1
-1 0 0 ImportOnlySubgridV1
-1 0 1 ImportOnlySubgridV1
+1 0 0 PackedQ1X2SubgridV1
+1 0 1 PackedQ1X2SubgridV1
 1 0 2 EmptySubgridV1
-1 0 3 ImportOnlySubgridV1
+1 0 3 PackedQ1X2SubgridV1
 1 0 4 EmptySubgridV1
-1 1 0 ImportOnlySubgridV1
-1 1 1 ImportOnlySubgridV1
+1 1 0 PackedQ1X2SubgridV1
+1 1 1 PackedQ1X2SubgridV1
 1 1 2 EmptySubgridV1
-1 1 3 ImportOnlySubgridV1
+1 1 3 PackedQ1X2SubgridV1
 1 1 4 EmptySubgridV1
-1 2 0 ImportOnlySubgridV1
-1 2 1 ImportOnlySubgridV1
+1 2 0 PackedQ1X2SubgridV1
+1 2 1 PackedQ1X2SubgridV1
 1 2 2 EmptySubgridV1
-1 2 3 ImportOnlySubgridV1
+1 2 3 PackedQ1X2SubgridV1
 1 2 4 EmptySubgridV1
-1 3 0 ImportOnlySubgridV1
-1 3 1 ImportOnlySubgridV1
+1 3 0 PackedQ1X2SubgridV1
+1 3 1 PackedQ1X2SubgridV1
 1 3 2 EmptySubgridV1
-1 3 3 ImportOnlySubgridV1
+1 3 3 PackedQ1X2SubgridV1
 1 3 4 EmptySubgridV1
-1 4 0 ImportOnlySubgridV1
-1 4 1 ImportOnlySubgridV1
+1 4 0 PackedQ1X2SubgridV1
+1 4 1 PackedQ1X2SubgridV1
 1 4 2 EmptySubgridV1
-1 4 3 ImportOnlySubgridV1
+1 4 3 PackedQ1X2SubgridV1
 1 4 4 EmptySubgridV1
-1 5 0 ImportOnlySubgridV1
-1 5 1 ImportOnlySubgridV1
+1 5 0 PackedQ1X2SubgridV1
+1 5 1 PackedQ1X2SubgridV1
 1 5 2 EmptySubgridV1
-1 5 3 ImportOnlySubgridV1
+1 5 3 PackedQ1X2SubgridV1
 1 5 4 EmptySubgridV1
-1 6 0 ImportOnlySubgridV1
-1 6 1 ImportOnlySubgridV1
+1 6 0 PackedQ1X2SubgridV1
+1 6 1 PackedQ1X2SubgridV1
 1 6 2 EmptySubgridV1
-1 6 3 ImportOnlySubgridV1
+1 6 3 PackedQ1X2SubgridV1
 1 6 4 EmptySubgridV1
-1 7 0 ImportOnlySubgridV1
-1 7 1 ImportOnlySubgridV1
+1 7 0 PackedQ1X2SubgridV1
+1 7 1 PackedQ1X2SubgridV1
 1 7 2 EmptySubgridV1
-1 7 3 ImportOnlySubgridV1
+1 7 3 PackedQ1X2SubgridV1
 1 7 4 EmptySubgridV1
 2 0 0 EmptySubgridV1
 2 0 1 EmptySubgridV1
@@ -791,86 +791,86 @@ const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
 2 7 2 EmptySubgridV1
 2 7 3 EmptySubgridV1
 2 7 4 EmptySubgridV1
-3 0 0 ImportOnlySubgridV1
-3 0 1 ImportOnlySubgridV1
+3 0 0 PackedQ1X2SubgridV1
+3 0 1 PackedQ1X2SubgridV1
 3 0 2 EmptySubgridV1
-3 0 3 ImportOnlySubgridV1
+3 0 3 PackedQ1X2SubgridV1
 3 0 4 EmptySubgridV1
-3 1 0 ImportOnlySubgridV1
-3 1 1 ImportOnlySubgridV1
+3 1 0 PackedQ1X2SubgridV1
+3 1 1 PackedQ1X2SubgridV1
 3 1 2 EmptySubgridV1
-3 1 3 ImportOnlySubgridV1
+3 1 3 PackedQ1X2SubgridV1
 3 1 4 EmptySubgridV1
-3 2 0 ImportOnlySubgridV1
-3 2 1 ImportOnlySubgridV1
+3 2 0 PackedQ1X2SubgridV1
+3 2 1 PackedQ1X2SubgridV1
 3 2 2 EmptySubgridV1
-3 2 3 ImportOnlySubgridV1
+3 2 3 PackedQ1X2SubgridV1
 3 2 4 EmptySubgridV1
-3 3 0 ImportOnlySubgridV1
-3 3 1 ImportOnlySubgridV1
+3 3 0 PackedQ1X2SubgridV1
+3 3 1 PackedQ1X2SubgridV1
 3 3 2 EmptySubgridV1
-3 3 3 ImportOnlySubgridV1
+3 3 3 PackedQ1X2SubgridV1
 3 3 4 EmptySubgridV1
-3 4 0 ImportOnlySubgridV1
-3 4 1 ImportOnlySubgridV1
+3 4 0 PackedQ1X2SubgridV1
+3 4 1 PackedQ1X2SubgridV1
 3 4 2 EmptySubgridV1
-3 4 3 ImportOnlySubgridV1
+3 4 3 PackedQ1X2SubgridV1
 3 4 4 EmptySubgridV1
-3 5 0 ImportOnlySubgridV1
-3 5 1 ImportOnlySubgridV1
+3 5 0 PackedQ1X2SubgridV1
+3 5 1 PackedQ1X2SubgridV1
 3 5 2 EmptySubgridV1
-3 5 3 ImportOnlySubgridV1
+3 5 3 PackedQ1X2SubgridV1
 3 5 4 EmptySubgridV1
-3 6 0 ImportOnlySubgridV1
-3 6 1 ImportOnlySubgridV1
+3 6 0 PackedQ1X2SubgridV1
+3 6 1 PackedQ1X2SubgridV1
 3 6 2 EmptySubgridV1
-3 6 3 ImportOnlySubgridV1
+3 6 3 PackedQ1X2SubgridV1
 3 6 4 EmptySubgridV1
-3 7 0 ImportOnlySubgridV1
-3 7 1 ImportOnlySubgridV1
+3 7 0 PackedQ1X2SubgridV1
+3 7 1 PackedQ1X2SubgridV1
 3 7 2 EmptySubgridV1
-3 7 3 ImportOnlySubgridV1
+3 7 3 PackedQ1X2SubgridV1
 3 7 4 EmptySubgridV1
-4 0 0 ImportOnlySubgridV1
+4 0 0 PackedQ1X2SubgridV1
 4 0 1 EmptySubgridV1
-4 0 2 ImportOnlySubgridV1
+4 0 2 PackedQ1X2SubgridV1
 4 0 3 EmptySubgridV1
-4 0 4 ImportOnlySubgridV1
-4 1 0 ImportOnlySubgridV1
+4 0 4 PackedQ1X2SubgridV1
+4 1 0 PackedQ1X2SubgridV1
 4 1 1 EmptySubgridV1
-4 1 2 ImportOnlySubgridV1
+4 1 2 PackedQ1X2SubgridV1
 4 1 3 EmptySubgridV1
-4 1 4 ImportOnlySubgridV1
-4 2 0 ImportOnlySubgridV1
+4 1 4 PackedQ1X2SubgridV1
+4 2 0 PackedQ1X2SubgridV1
 4 2 1 EmptySubgridV1
-4 2 2 ImportOnlySubgridV1
+4 2 2 PackedQ1X2SubgridV1
 4 2 3 EmptySubgridV1
-4 2 4 ImportOnlySubgridV1
-4 3 0 ImportOnlySubgridV1
+4 2 4 PackedQ1X2SubgridV1
+4 3 0 PackedQ1X2SubgridV1
 4 3 1 EmptySubgridV1
-4 3 2 ImportOnlySubgridV1
+4 3 2 PackedQ1X2SubgridV1
 4 3 3 EmptySubgridV1
-4 3 4 ImportOnlySubgridV1
-4 4 0 ImportOnlySubgridV1
+4 3 4 PackedQ1X2SubgridV1
+4 4 0 PackedQ1X2SubgridV1
 4 4 1 EmptySubgridV1
-4 4 2 ImportOnlySubgridV1
+4 4 2 PackedQ1X2SubgridV1
 4 4 3 EmptySubgridV1
-4 4 4 ImportOnlySubgridV1
-4 5 0 ImportOnlySubgridV1
+4 4 4 PackedQ1X2SubgridV1
+4 5 0 PackedQ1X2SubgridV1
 4 5 1 EmptySubgridV1
-4 5 2 ImportOnlySubgridV1
+4 5 2 PackedQ1X2SubgridV1
 4 5 3 EmptySubgridV1
-4 5 4 ImportOnlySubgridV1
-4 6 0 ImportOnlySubgridV1
+4 5 4 PackedQ1X2SubgridV1
+4 6 0 PackedQ1X2SubgridV1
 4 6 1 EmptySubgridV1
-4 6 2 ImportOnlySubgridV1
+4 6 2 PackedQ1X2SubgridV1
 4 6 3 EmptySubgridV1
-4 6 4 ImportOnlySubgridV1
-4 7 0 ImportOnlySubgridV1
+4 6 4 PackedQ1X2SubgridV1
+4 7 0 PackedQ1X2SubgridV1
 4 7 1 EmptySubgridV1
-4 7 2 ImportOnlySubgridV1
+4 7 2 PackedQ1X2SubgridV1
 4 7 3 EmptySubgridV1
-4 7 4 ImportOnlySubgridV1
+4 7 4 PackedQ1X2SubgridV1
 5 0 0 EmptySubgridV1
 5 0 1 EmptySubgridV1
 5 0 2 EmptySubgridV1
@@ -911,46 +911,46 @@ const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
 5 7 2 EmptySubgridV1
 5 7 3 EmptySubgridV1
 5 7 4 EmptySubgridV1
-6 0 0 ImportOnlySubgridV1
+6 0 0 PackedQ1X2SubgridV1
 6 0 1 EmptySubgridV1
-6 0 2 ImportOnlySubgridV1
+6 0 2 PackedQ1X2SubgridV1
 6 0 3 EmptySubgridV1
-6 0 4 ImportOnlySubgridV1
-6 1 0 ImportOnlySubgridV1
+6 0 4 PackedQ1X2SubgridV1
+6 1 0 PackedQ1X2SubgridV1
 6 1 1 EmptySubgridV1
-6 1 2 ImportOnlySubgridV1
+6 1 2 PackedQ1X2SubgridV1
 6 1 3 EmptySubgridV1
-6 1 4 ImportOnlySubgridV1
-6 2 0 ImportOnlySubgridV1
+6 1 4 PackedQ1X2SubgridV1
+6 2 0 PackedQ1X2SubgridV1
 6 2 1 EmptySubgridV1
-6 2 2 ImportOnlySubgridV1
+6 2 2 PackedQ1X2SubgridV1
 6 2 3 EmptySubgridV1
-6 2 4 ImportOnlySubgridV1
-6 3 0 ImportOnlySubgridV1
+6 2 4 PackedQ1X2SubgridV1
+6 3 0 PackedQ1X2SubgridV1
 6 3 1 EmptySubgridV1
-6 3 2 ImportOnlySubgridV1
+6 3 2 PackedQ1X2SubgridV1
 6 3 3 EmptySubgridV1
-6 3 4 ImportOnlySubgridV1
-6 4 0 ImportOnlySubgridV1
+6 3 4 PackedQ1X2SubgridV1
+6 4 0 PackedQ1X2SubgridV1
 6 4 1 EmptySubgridV1
-6 4 2 ImportOnlySubgridV1
+6 4 2 PackedQ1X2SubgridV1
 6 4 3 EmptySubgridV1
-6 4 4 ImportOnlySubgridV1
-6 5 0 ImportOnlySubgridV1
+6 4 4 PackedQ1X2SubgridV1
+6 5 0 PackedQ1X2SubgridV1
 6 5 1 EmptySubgridV1
-6 5 2 ImportOnlySubgridV1
+6 5 2 PackedQ1X2SubgridV1
 6 5 3 EmptySubgridV1
-6 5 4 ImportOnlySubgridV1
-6 6 0 ImportOnlySubgridV1
+6 5 4 PackedQ1X2SubgridV1
+6 6 0 PackedQ1X2SubgridV1
 6 6 1 EmptySubgridV1
-6 6 2 ImportOnlySubgridV1
+6 6 2 PackedQ1X2SubgridV1
 6 6 3 EmptySubgridV1
-6 6 4 ImportOnlySubgridV1
-6 7 0 ImportOnlySubgridV1
+6 6 4 PackedQ1X2SubgridV1
+6 7 0 PackedQ1X2SubgridV1
 6 7 1 EmptySubgridV1
-6 7 2 ImportOnlySubgridV1
+6 7 2 PackedQ1X2SubgridV1
 6 7 3 EmptySubgridV1
-6 7 4 ImportOnlySubgridV1
+6 7 4 PackedQ1X2SubgridV1
 ";
 
 const X1_STR: &str = "o b c                                                                                                                                                                                                                                                        x1
