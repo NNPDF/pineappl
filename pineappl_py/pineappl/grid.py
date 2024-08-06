@@ -110,7 +110,7 @@ class Grid(PyWrapper):
         Parameters
         ----------
         key : (int, int, int)
-            a 3-element integers tuple, consisting in `(order, bin, channel)`
+            a 3-element integers tuple, consisting of `(order, bin, channel)`
 
         Returns
         -------
@@ -148,7 +148,7 @@ class Grid(PyWrapper):
         Parameters
         ----------
         key : (int, int, int)
-            a 3-element integers tuple, consisting in `(order, bin, channel)`
+            a 3-element integers tuple, consisting of `(order, bin, channel)`
         subgrid : ImportOnlySubgridV1
             subgrid content
         """
