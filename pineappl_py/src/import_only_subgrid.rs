@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`
 ///
 /// **Usage**: `pineko`
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV2")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV2 {
@@ -71,7 +71,7 @@ impl PyImportOnlySubgridV2 {
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
 ///
 /// **Usage**: `yadism`
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV1 {

@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
 ///
 /// **Usage**: `yadism`
-#[pyclass]
+#[pyclass(name = "SubgridParams")]
 #[repr(transparent)]
 pub struct PySubgridParams {
     pub(crate) subgrid_params: SubgridParams,
@@ -146,7 +146,7 @@ impl PySubgridParams {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::Mu2 <subgrid/struct.Mu2.html>`
-#[pyclass]
+#[pyclass(name = "Mu2")]
 #[repr(transparent)]
 pub struct PyMu2 {
     pub mu2: Mu2,
@@ -185,7 +185,7 @@ impl PyMu2 {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
-#[pyclass]
+#[pyclass(name = "SubgridEnum")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PySubgridEnum {

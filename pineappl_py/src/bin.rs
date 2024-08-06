@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 /// PyO3 wrapper to :rustdoc:`pineappl::bin::BinRemapper <bin/struct.BinRemapper.html>`
 ///
 /// **Usage**: `yadism`
-#[pyclass]
+#[pyclass(name = "BinRemapper")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyBinRemapper {

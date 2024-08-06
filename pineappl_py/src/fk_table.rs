@@ -16,13 +16,13 @@ use crate::grid::PyGrid;
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`
 ///
 /// *Usage*: `pineko`, `yadism`
-#[pyclass]
+#[pyclass(name = "FkTable")]
 #[repr(transparent)]
 pub struct PyFkTable {
     pub(crate) fk_table: FkTable,
 }
 
-#[pyclass]
+#[pyclass(name = "FkAssumptions")]
 #[repr(transparent)]
 pub struct PyFkAssumptions {
     pub(crate) fk_assumptions: FkAssumptions,

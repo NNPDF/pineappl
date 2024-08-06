@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 /// 1. the PDG id of the first incoming parton
 /// 2. the PDG id of the second parton
 /// 3. a numerical factor that will multiply the result for this specific combination.
-#[pyclass]
+#[pyclass(name = "LumiEntry")]
 #[repr(transparent)]
 pub struct PyLumiEntry {
     pub(crate) lumi_entry: Channel,

@@ -28,7 +28,7 @@ use pyo3::types::PyIterator;
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`
 ///
 /// **Usage**: `yadism`
-#[pyclass]
+#[pyclass(name = "Order")]
 #[repr(transparent)]
 pub struct PyOrder {
     pub(crate) order: Order,
@@ -36,7 +36,7 @@ pub struct PyOrder {
 
 // TODO: should probably be in a different module
 // TODO: rename to `PidBasis`
-#[pyclass]
+#[pyclass(name = "PidBasis")]
 #[derive(Clone)]
 pub enum PyPidBasis {
     Pdg,
@@ -54,7 +54,7 @@ impl From<PyPidBasis> for PidBasis {
 
 // TODO: should probably be in a different module
 // TODO: rename to `OperatorSliceInfo`
-#[pyclass]
+#[pyclass(name = "OperatorSliceInfo")]
 #[derive(Clone)]
 pub struct PyOperatorSliceInfo {
     info: OperatorSliceInfo,
@@ -152,7 +152,7 @@ impl PyOrder {
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`
 ///
 /// **Usage**: `yadism`, `pineko`, FKTable interface
-#[pyclass]
+#[pyclass(name = "Grid")]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyGrid {
