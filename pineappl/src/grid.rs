@@ -563,6 +563,7 @@ impl Grid {
                                 .map(|mu2v0| Mu2 {
                                     ren: mu2v0.ren,
                                     fac: mu2v0.fac,
+                                    frg: -1.0,
                                 })
                                 .collect();
                             let x1_grid = subgrid.x1_grid().into_owned();

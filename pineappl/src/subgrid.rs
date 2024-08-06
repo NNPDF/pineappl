@@ -42,6 +42,8 @@ pub struct Mu2 {
     pub ren: f64,
     /// The (squared) factorization scale value.
     pub fac: f64,
+    /// The (squared) fragmentation scale value.
+    pub frg: f64,
 }
 
 /// Size-related statistics for a subgrid.

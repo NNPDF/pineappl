@@ -352,7 +352,10 @@ fn ndarray_from_subgrid_orders_slice(
             .collect::<Result<_, _>>()?;
 
         for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
-            let Mu2 { ren, fac } = subgrid.mu2_grid()[ifac1];
+            let Mu2 { ren, fac, frg } = subgrid.mu2_grid()[ifac1];
+
+            // TODO: implement evolution for non-zero fragmentation scales
+            assert_eq!(frg, -1.0);
 
             if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
@@ -484,6 +487,8 @@ pub(crate) fn evolve_slice_with_one(
                     //ren: -1.0,
                     ren: info.fac0,
                     fac: info.fac0,
+                    // TODO: implement evolution for non-zero fragmentation scales
+                    frg: -1.0,
                 }],
                 if index == 0 {
                     info.x0.clone()
@@ -627,6 +632,8 @@ pub(crate) fn evolve_slice_with_two(
                     //ren: -1.0,
                     ren: info.fac0,
                     fac: info.fac0,
+                    // TODO: implement evolution for non-zero fragmentation scales
+                    frg: -1.0,
                 }],
                 info.x0.clone(),
                 info.x0.clone(),
@@ -775,6 +782,8 @@ pub(crate) fn evolve_slice_with_two2(
                     //ren: -1.0,
                     ren: infos[0].fac0,
                     fac: infos[0].fac0,
+                    // TODO: implement evolution for non-zero fragmentation scales
+                    frg: -1.0,
                 }],
                 infos[0].x0.clone(),
                 infos[1].x0.clone(),
