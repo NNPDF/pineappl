@@ -6,7 +6,6 @@ use super::grid::{Grid, GridError};
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
 use ndarray::Array4;
-use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 use std::io::Write;
 use std::str::FromStr;
@@ -218,12 +217,6 @@ impl FkTable {
         self.grid.bin_info().right(dimension)
     }
 
-    /// Access meta data
-    #[must_use]
-    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
-        self.grid.key_values()
-    }
-
     /// Return the channel definition for this `FkTable`. All factors are `1.0`.
     #[must_use]
     pub fn channels(&self) -> Vec<Vec<i32>> {
@@ -281,9 +274,11 @@ impl FkTable {
             .convolve(lumi_cache, &[], bin_indices, channel_mask, &[(1.0, 1.0)])
     }
 
-    /// Set a metadata key-value pair
+    /// Set a metadata key-value pair.
     pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.grid.set_key_value(key, value);
+        self.grid
+            .metadata_mut()
+            .insert(key.to_owned(), value.to_owned());
     }
 
     /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
@@ -347,7 +342,8 @@ impl FkTable {
 
         // store the assumption so that we can check it later on
         self.grid
-            .set_key_value("fk_assumptions", &assumptions.to_string());
+            .metadata_mut()
+            .insert("fk_assumptions".to_owned(), assumptions.to_string());
         self.grid.optimize();
     }
 }

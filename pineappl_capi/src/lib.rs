@@ -710,11 +710,17 @@ pub unsafe extern "C" fn pineappl_grid_new(
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval.strings.get("initial_state_1") {
-            grid.set_key_value("initial_state_1", value.to_str().unwrap());
+            grid.metadata_mut().insert(
+                "initial_state_1".to_owned(),
+                value.to_str().unwrap().to_owned(),
+            );
         }
 
         if let Some(value) = keyval.strings.get("initial_state_2") {
-            grid.set_key_value("initial_state_2", value.to_str().unwrap());
+            grid.metadata_mut().insert(
+                "initial_state_2".to_owned(),
+                value.to_str().unwrap().to_owned(),
+            );
         }
     }
 
@@ -895,12 +901,9 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     let key = unsafe { CStr::from_ptr(key) };
     let key = key.to_string_lossy();
 
-    CString::new(
-        grid.key_values()
-            .map_or("", |kv| kv.get(key.as_ref()).map_or("", String::as_str)),
-    )
-    .unwrap()
-    .into_raw()
+    CString::new(grid.metadata().get(key.as_ref()).map_or("", String::as_str))
+        .unwrap()
+        .into_raw()
 }
 
 /// Sets an internal key-value pair for the grid.
@@ -924,9 +927,9 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     let key = unsafe { CStr::from_ptr(key) };
     let value = unsafe { CStr::from_ptr(value) };
 
-    grid.set_key_value(
-        key.to_string_lossy().as_ref(),
-        value.to_string_lossy().as_ref(),
+    grid.metadata_mut().insert(
+        key.to_string_lossy().into_owned(),
+        value.to_string_lossy().into_owned(),
     );
 }
 

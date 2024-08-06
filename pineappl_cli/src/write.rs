@@ -531,7 +531,7 @@ impl Subcommand for Opts {
                     grid.delete_channels(&ranges.iter().flat_map(Clone::clone).collect::<Vec<_>>());
                 }
                 OpsArg::DeleteKey(key) => {
-                    grid.key_values_mut().remove(key);
+                    grid.metadata_mut().remove(key);
                 }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices
@@ -598,10 +598,12 @@ impl Subcommand for Opts {
                     grid.scale_by_order(factors[0], factors[1], factors[2], factors[3], 1.0);
                 }
                 OpsArg::SetKeyValue(key_value) => {
-                    grid.set_key_value(&key_value[0], &key_value[1]);
+                    grid.metadata_mut()
+                        .insert(key_value[0].clone(), key_value[1].clone());
                 }
                 OpsArg::SetKeyFile(key_file) => {
-                    grid.set_key_value(&key_file[0], &fs::read_to_string(&key_file[1])?);
+                    grid.metadata_mut()
+                        .insert(key_file[0].clone(), fs::read_to_string(&key_file[1])?);
                 }
                 OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),

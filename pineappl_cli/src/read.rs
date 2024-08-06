@@ -60,7 +60,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
-        let mut grid = helpers::read_grid(&self.input)?;
+        let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
 
@@ -164,44 +164,17 @@ impl Subcommand for Opts {
 
             println!("{orders}");
         } else if let Some(key) = &self.group.get {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    if let Some(value) = key_values.get(key) {
-                        println!("{value}");
-                    }
-                },
-            );
+            if let Some(value) = grid.metadata().get(key) {
+                println!("{value}");
+            }
         } else if self.group.keys {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, _) in &vector {
-                        println!("{key}");
-                    }
-                },
-            );
+            for (key, _) in grid.metadata() {
+                println!("{key}");
+            }
         } else if self.group.show {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, value) in &vector {
-                        println!("{key}: {value}");
-                    }
-                },
-            );
+            for (key, value) in grid.metadata() {
+                println!("{key}: {value}");
+            }
         } else {
             table.set_titles(row![c => "o", "order"]);
 

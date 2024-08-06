@@ -216,14 +216,16 @@ impl Subcommand for Opts {
                             "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
                             left = grid.bin_info().left(d)[begin],
                             obs = grid
-                                .key_values()
-                                .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
+                                .metadata()
+                                .get(&format!("x{}_label_tex", d + 1))
+                                .cloned()
                                 .unwrap_or_else(|| format!("x{}", d + 1))
                                 .replace('$', ""),
                             right = grid.bin_info().right(d)[end - 1],
                             unit = grid
-                                .key_values()
-                                .and_then(|map| map.get(&format!("x{}_unit", d + 1)).cloned())
+                                .metadata()
+                                .get(&format!("x{}_unit", d + 1))
+                                .cloned()
                                 .unwrap_or_default()
                         )
                     })
@@ -472,10 +474,8 @@ impl Subcommand for Opts {
             data_string.push_str("    ]");
 
             // prepare metadata
-            let key_values = grid.key_values().cloned().unwrap_or_default();
-            let mut vector: Vec<_> = key_values.iter().collect();
-            vector.sort();
-            let vector = vector;
+            let metadata = grid.metadata();
+            let vector: Vec<_> = metadata.iter().collect();
 
             let mut output = self.input.clone();
 
@@ -492,12 +492,12 @@ impl Subcommand for Opts {
             }
 
             let xaxis = format!("x{}", grid.bin_info().dimensions());
-            let xunit = key_values
+            let xunit = metadata
                 .get(&format!("{xaxis}_unit"))
                 .map_or("", String::as_str);
             let xlabel = format!(
                 "{}{}",
-                key_values
+                metadata
                     .get(&format!("{xaxis}_label_tex"))
                     .map_or("", String::as_str),
                 if xunit.is_empty() {
@@ -506,10 +506,10 @@ impl Subcommand for Opts {
                     format!(" [\\si{{{xunit}}}]")
                 }
             );
-            let yunit = key_values.get("y_unit").map_or("", String::as_str);
+            let yunit = metadata.get("y_unit").map_or("", String::as_str);
             let ylabel = format!(
                 "{}{}",
-                key_values.get("y_label_tex").map_or("", String::as_str),
+                metadata.get("y_label_tex").map_or("", String::as_str),
                 if yunit.is_empty() {
                     String::new()
                 } else {
@@ -518,7 +518,7 @@ impl Subcommand for Opts {
             );
             let xlog = if xunit.is_empty() { "False" } else { "True" };
             let ylog = xlog;
-            let title = key_values.get("description").map_or("", String::as_str);
+            let title = metadata.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 

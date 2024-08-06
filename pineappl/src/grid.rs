@@ -16,9 +16,9 @@ use float_cmp::approx_eq;
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::iter;
 use std::mem;
@@ -85,102 +85,52 @@ pub enum GridError {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-struct Mmv1;
-
-#[derive(Clone, Deserialize, Serialize)]
-struct Mmv2 {
-    remapper: Option<BinRemapper>,
-    key_value_db: HashMap<String, String>,
-}
-
-fn ordered_map_serialize<S, K: Ord + Serialize, V: Serialize>(
-    value: &HashMap<K, V>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let ordered: BTreeMap<_, _> = value.iter().collect();
-    ordered.serialize(serializer)
-}
-
-#[derive(Clone, Deserialize, Serialize)]
 struct Mmv3 {
     remapper: Option<BinRemapper>,
-    // order the HashMap before serializing it to make the output stable
-    #[serde(serialize_with = "ordered_map_serialize")]
-    key_value_db: HashMap<String, String>,
     subgrid_template: SubgridEnum,
-}
-
-impl Default for Mmv2 {
-    fn default() -> Self {
-        Self {
-            remapper: None,
-            key_value_db: [
-                (
-                    "pineappl_gitversion".to_owned(),
-                    git_version!(
-                        args = ["--always", "--dirty", "--long", "--tags"],
-                        cargo_prefix = "cargo:",
-                        fallback = "unknown"
-                    )
-                    .to_owned(),
-                ),
-                // by default we assume there are protons in the initial state
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
-        }
-    }
 }
 
 impl Mmv3 {
     fn new(subgrid_template: SubgridEnum) -> Self {
         Self {
             remapper: None,
-            key_value_db: [
-                (
-                    "pineappl_gitversion".to_owned(),
-                    git_version!(
-                        args = ["--always", "--dirty", "--long", "--tags"],
-                        cargo_prefix = "cargo:",
-                        fallback = "unknown"
-                    )
-                    .to_owned(),
-                ),
-                // by default we assume there are unpolarized protons in the initial state
-                // do not change these to the new metadata to not break backwards compatibility
-                ("initial_state_1".to_owned(), "2212".to_owned()),
-                ("initial_state_2".to_owned(), "2212".to_owned()),
-            ]
-            .iter()
-            .cloned()
-            .collect(),
             subgrid_template,
         }
     }
+}
+
+fn default_metadata() -> BTreeMap<String, String> {
+    [
+        (
+            "pineappl_gitversion".to_owned(),
+            git_version!(
+                args = ["--always", "--dirty", "--long", "--tags"],
+                cargo_prefix = "cargo:",
+                fallback = "unknown"
+            )
+            .to_owned(),
+        ),
+        // by default we assume there are unpolarized protons in the initial state
+        // do not change these to the new metadata to not break backwards compatibility
+        ("initial_state_1".to_owned(), "2212".to_owned()),
+        ("initial_state_2".to_owned(), "2212".to_owned()),
+    ]
+    .iter()
+    .cloned()
+    .collect()
 }
 
 // ALLOW: fixing the warning will break the file format
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Deserialize, Serialize)]
 enum MoreMembers {
-    V1(Mmv1),
-    V2(Mmv2),
     V3(Mmv3),
 }
 
 impl MoreMembers {
     fn upgrade(&mut self) {
         match self {
-            Self::V1(_) => {
-                *self = Self::V2(Mmv2::default());
-            }
-            Self::V2(_) | Self::V3(_) => {}
+            Self::V3(_) => {}
         }
     }
 }
@@ -218,6 +168,7 @@ pub struct Grid {
     bin_limits: BinLimits,
     orders: Vec<Order>,
     subgrid_params: SubgridParams,
+    metadata: BTreeMap<String, String>,
     more_members: MoreMembers,
 }
 
@@ -238,6 +189,7 @@ impl Grid {
             orders,
             channels,
             bin_limits: BinLimits::new(bin_limits),
+            metadata: default_metadata(),
             more_members: MoreMembers::V3(Mmv3::new(
                 LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
                     .into(),
@@ -282,6 +234,7 @@ impl Grid {
             channels,
             bin_limits: BinLimits::new(bin_limits),
             subgrid_params,
+            metadata: default_metadata(),
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
         })
     }
@@ -289,13 +242,11 @@ impl Grid {
     /// Return by which convention the particle IDs are encoded.
     #[must_use]
     pub fn pid_basis(&self) -> PidBasis {
-        if let Some(key_values) = self.key_values() {
-            if let Some(lumi_id_types) = key_values.get("lumi_id_types") {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => return PidBasis::Pdg,
-                    "evol" => return PidBasis::Evol,
-                    _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
-                }
+        if let Some(lumi_id_types) = self.metadata().get("lumi_id_types") {
+            match lumi_id_types.as_str() {
+                "pdg_mc_ids" => return PidBasis::Pdg,
+                "evol" => return PidBasis::Evol,
+                _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
             }
         }
 
@@ -306,9 +257,13 @@ impl Grid {
     /// Set the convention by which PIDs of channels are interpreted.
     pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
         match pid_basis {
-            PidBasis::Pdg => self.set_key_value("lumi_id_types", "pdg_mc_ids"),
-            PidBasis::Evol => self.set_key_value("lumi_id_types", "evol"),
-        }
+            PidBasis::Pdg => self
+                .metadata_mut()
+                .insert("lumi_id_types".to_owned(), "pdg_mc_ids".to_owned()),
+            PidBasis::Evol => self
+                .metadata_mut()
+                .insert("lumi_id_types".to_owned(), "evol".to_owned()),
+        };
     }
 
     fn pdg_channels(&self) -> Cow<[Channel]> {
@@ -487,11 +442,8 @@ impl Grid {
         if let Some(bin) = self.bin_limits.index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
-                if let MoreMembers::V3(mmv3) = &self.more_members {
-                    *subgrid = mmv3.subgrid_template.clone_empty();
-                } else {
-                    unreachable!();
-                }
+                let MoreMembers::V3(mmv3) = &self.more_members;
+                *subgrid = mmv3.subgrid_template.clone_empty();
             }
 
             subgrid.fill(ntuple);
@@ -610,6 +562,12 @@ impl Grid {
                 .collect(),
             // TODO: remove this member
             subgrid_params: SubgridParams::default(),
+            metadata: grid
+                .key_values()
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .collect(),
             // TODO: make these proper members
             more_members: MoreMembers::V3(Mmv3 {
                 remapper: grid.remapper().map(|r| {
@@ -617,7 +575,6 @@ impl Grid {
                     // and limits we should be able to do the same without error
                     BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
                 }),
-                key_value_db: grid.key_values().cloned().unwrap_or_default(),
                 // TODO: remove this member
                 subgrid_template: EmptySubgridV1.into(),
             }),
@@ -862,71 +819,69 @@ impl Grid {
     /// or `convolution_particle_2` and `convolution_type_2` are not correctly set.
     #[must_use]
     pub fn convolutions(&self) -> Vec<Convolution> {
-        self.key_values().map_or_else(
-            // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
-            || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
-            |kv| {
-                // the current file format only supports exactly two convolutions
-                (1..=2)
-                    .map(|index| {
-                        // if there are key-value pairs `convolution_particle_1` and
-                        // `convolution_type_1` and the same with a higher index, we convert this
-                        // metadata into `Convolution`
-                        match (
-                            kv.get(&format!("convolution_particle_{index}"))
-                                .map(|s| s.parse::<i32>()),
-                            kv.get(&format!("convolution_type_{index}"))
-                                .map(String::as_str),
-                        ) {
-                            (_, Some("None")) => Convolution::None,
-                            (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
-                            (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
-                            (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
-                            (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
-                            (None, None) => {
-                                // if these key-value pairs are missing use the old metadata
-                                match kv
-                                    .get(&format!("initial_state_{index}"))
-                                    .map(|s| s.parse::<i32>())
-                                {
-                                    Some(Ok(pid)) => {
-                                        let condition = !self.channels().iter().all(|entry| {
-                                            entry.entry().iter().all(|(pids, _)| pids[index - 1] == pid)
-                                        });
+        let kv = self.metadata();
 
-                                        if condition {
-                                            Convolution::UnpolPDF(pid)
-                                        } else {
-                                            Convolution::None
-                                        }
-                                    }
-                                    None => Convolution::UnpolPDF(2212),
-                                    Some(Err(err)) => panic!("metadata 'initial_state_{index}' could not be parsed: {err}"),
+        // the current file format only supports exactly two convolutions
+        (1..=2)
+            .map(|index| {
+                // if there are key-value pairs `convolution_particle_1` and
+                // `convolution_type_1` and the same with a higher index, we convert this
+                // metadata into `Convolution`
+                match (
+                    kv.get(&format!("convolution_particle_{index}"))
+                        .map(|s| s.parse::<i32>()),
+                    kv.get(&format!("convolution_type_{index}"))
+                        .map(String::as_str),
+                ) {
+                    (_, Some("None")) => Convolution::None,
+                    (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
+                    (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
+                    (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
+                    (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
+                    (None, None) => {
+                        // if these key-value pairs are missing use the old metadata
+                        match kv
+                            .get(&format!("initial_state_{index}"))
+                            .map(|s| s.parse::<i32>())
+                        {
+                            Some(Ok(pid)) => {
+                                let condition = !self.channels().iter().all(|entry| {
+                                    entry.entry().iter().all(|(pids, _)| pids[index - 1] == pid)
+                                });
+
+                                if condition {
+                                    Convolution::UnpolPDF(pid)
+                                } else {
+                                    Convolution::None
                                 }
                             }
-                            (None, Some(_)) => {
-                                panic!("metadata 'convolution_type_{index}' is missing")
-                            }
-                            (Some(_), None) => {
-                                panic!("metadata 'convolution_particle_{index}' is missing")
-                            }
-                            (Some(Ok(_)), Some(type_)) => {
-                                panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
-                            }
-                            (Some(Err(err)), Some(_)) => panic!(
-                                "metadata 'convolution_particle_{index}' could not be parsed: {err}"
+                            None => Convolution::UnpolPDF(2212),
+                            Some(Err(err)) => panic!(
+                                "metadata 'initial_state_{index}' could not be parsed: {err}"
                             ),
                         }
-                    })
-                    .collect()
-            },
-        )
+                    }
+                    (None, Some(_)) => {
+                        panic!("metadata 'convolution_type_{index}' is missing")
+                    }
+                    (Some(_), None) => {
+                        panic!("metadata 'convolution_particle_{index}' is missing")
+                    }
+                    (Some(Ok(_)), Some(type_)) => {
+                        panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
+                    }
+                    (Some(Err(err)), Some(_)) => {
+                        panic!("metadata 'convolution_particle_{index}' could not be parsed: {err}")
+                    }
+                }
+            })
+            .collect()
     }
 
     /// Set the convolution type for this grid for the corresponding `index`.
     pub fn set_convolution(&mut self, index: usize, convolution: Convolution) {
         // remove outdated metadata
-        self.key_values_mut()
+        self.metadata_mut()
             .remove(&format!("initial_state_{}", index + 1));
 
         let (type_, particle) = match convolution {
@@ -937,8 +892,10 @@ impl Grid {
             Convolution::None => ("None".to_owned(), String::new()),
         };
 
-        self.set_key_value(&format!("convolution_type_{}", index + 1), &type_);
-        self.set_key_value(&format!("convolution_particle_{}", index + 1), &particle);
+        self.metadata_mut()
+            .insert(format!("convolution_type_{}", index + 1), type_);
+        self.metadata_mut()
+            .insert(format!("convolution_particle_{}", index + 1), particle);
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
@@ -1058,8 +1015,6 @@ impl Grid {
         self.more_members.upgrade();
 
         match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => mmv2.remapper = Some(remapper),
             MoreMembers::V3(mmv3) => mmv3.remapper = Some(remapper),
         }
 
@@ -1070,16 +1025,12 @@ impl Grid {
     #[must_use]
     pub const fn remapper(&self) -> Option<&BinRemapper> {
         match &self.more_members {
-            MoreMembers::V1(_) => None,
-            MoreMembers::V2(mmv2) => mmv2.remapper.as_ref(),
             MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
         }
     }
 
     fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
         match &mut self.more_members {
-            MoreMembers::V1(_) => None,
-            MoreMembers::V2(mmv2) => mmv2.remapper.as_mut(),
             MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
         }
     }
@@ -1332,40 +1283,20 @@ impl Grid {
         self.more_members.upgrade();
     }
 
-    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    /// Return the metadata of this grid.
     #[must_use]
-    pub const fn key_values(&self) -> Option<&HashMap<String, String>> {
-        match &self.more_members {
-            MoreMembers::V3(mmv3) => Some(&mmv3.key_value_db),
-            MoreMembers::V2(mmv2) => Some(&mmv2.key_value_db),
-            MoreMembers::V1(_) => None,
-        }
+    pub const fn metadata(&self) -> &BTreeMap<String, String> {
+        &self.metadata
     }
 
-    /// Returns a map with key-value pairs, if there are any stored in this grid.
+    /// Return the metadata of this grid.
     ///
     /// # Panics
     ///
     /// TODO
     #[must_use]
-    pub fn key_values_mut(&mut self) -> &mut HashMap<String, String> {
-        self.more_members.upgrade();
-
-        match &mut self.more_members {
-            MoreMembers::V1(_) => unreachable!(),
-            MoreMembers::V2(mmv2) => &mut mmv2.key_value_db,
-            MoreMembers::V3(mmv3) => &mut mmv3.key_value_db,
-        }
-    }
-
-    /// Sets a specific key-value pair in this grid.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.key_values_mut()
-            .insert(key.to_owned(), value.to_owned());
+    pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+        &mut self.metadata
     }
 
     /// Returns information for the generation of evolution operators that are being used in
@@ -1545,6 +1476,7 @@ impl Grid {
                 bin_limits: self.bin_limits.clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
+                metadata: self.metadata.clone(),
                 more_members: self.more_members.clone(),
             };
 
@@ -1684,6 +1616,7 @@ impl Grid {
                 bin_limits: self.bin_limits.clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
                 subgrid_params: SubgridParams::default(),
+                metadata: self.metadata.clone(),
                 more_members: self.more_members.clone(),
             };
 
