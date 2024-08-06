@@ -552,22 +552,26 @@ impl Grid {
                 grid.subgrids()
                     .into_iter()
                     .map(|subgrid| {
-                        let mu2_grid: Vec<_> = subgrid
-                            .mu2_grid()
-                            .into_iter()
-                            .map(|mu2v0| Mu2 {
-                                ren: mu2v0.ren,
-                                fac: mu2v0.fac,
-                            })
-                            .collect();
-                        let x1_grid = subgrid.x1_grid().into_owned();
-                        let x2_grid = subgrid.x2_grid().into_owned();
-                        let mut array =
-                            PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
-                        for ((o, b, c), v) in subgrid.indexed_iter() {
-                            array[[o, b, c]] = v;
+                        if subgrid.is_empty() {
+                            EmptySubgridV1.into()
+                        } else {
+                            let mu2_grid: Vec<_> = subgrid
+                                .mu2_grid()
+                                .into_iter()
+                                .map(|mu2v0| Mu2 {
+                                    ren: mu2v0.ren,
+                                    fac: mu2v0.fac,
+                                })
+                                .collect();
+                            let x1_grid = subgrid.x1_grid().into_owned();
+                            let x2_grid = subgrid.x2_grid().into_owned();
+                            let mut array =
+                                PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+                            for ((o, b, c), v) in subgrid.indexed_iter() {
+                                array[[o, b, c]] = v;
+                            }
+                            PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
                         }
-                        PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
                     })
                     .collect(),
             )
