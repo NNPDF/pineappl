@@ -69,7 +69,7 @@ class Grid(PyWrapper):
         Parameters
         ---------
         channels : list(Channel)
-            List of active luminosities
+            List of active channels
         orders: list(Order)
             List of available orders
         bin_limits: sequence(float)
@@ -188,7 +188,7 @@ class Grid(PyWrapper):
         alphas,
         order_mask=np.array([], dtype=bool),
         bin_indices=np.array([], dtype=np.uint64),
-        lumi_mask=np.array([], dtype=bool),
+        channel_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
         r"""Convolve with a single distribution.
@@ -207,8 +207,8 @@ class Grid(PyWrapper):
         bin_indices : sequence(int)
             A list with the indices of the corresponding bins that should be calculated. An
             empty list means that all orders should be calculated.
-        lumi_mask : sequence(bool)
-            Mask for selecting specific luminosity channels. The value `True` means the
+        channel_mask : sequence(bool)
+            Mask for selecting specific channels. The value `True` means the
             corresponding channel is included. An empty list corresponds to all channels being
             enabled.
         xi : list((float, float))
@@ -230,7 +230,7 @@ class Grid(PyWrapper):
             alphas,
             np.array(order_mask),
             np.array(bin_indices),
-            np.array(lumi_mask),
+            np.array(channel_mask),
             xi,
         )
 
@@ -243,7 +243,7 @@ class Grid(PyWrapper):
         alphas,
         order_mask=np.array([], dtype=bool),
         bin_indices=np.array([], dtype=np.uint64),
-        lumi_mask=np.array([], dtype=bool),
+        channel_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
         r"""Convolve with two distributions.
@@ -266,8 +266,8 @@ class Grid(PyWrapper):
         bin_indices : sequence(int)
             A list with the indices of the corresponding bins that should be calculated. An
             empty list means that all orders should be calculated.
-        lumi_mask : sequence(bool)
-            Mask for selecting specific luminosity channels. The value `True` means the
+        channel_mask : sequence(bool)
+            Mask for selecting specific channels. The value `True` means the
             corresponding channel is included. An empty list corresponds to all channels being
             enabled.
         xi : list((float, float))
@@ -291,7 +291,7 @@ class Grid(PyWrapper):
             alphas,
             np.array(order_mask),
             np.array(bin_indices),
-            np.array(lumi_mask),
+            np.array(channel_mask),
             xi,
         )
 
@@ -300,7 +300,7 @@ class Grid(PyWrapper):
         operators,
         mur2_grid,
         alphas_values,
-        lumi_id_types="pdg_mc_ids",
+        pid_basis="pdg_mc_ids",
         order_mask=(),
         xi=(1.0, 1.0),
     ):
@@ -316,8 +316,8 @@ class Grid(PyWrapper):
             renormalization scales
         alphas_values : list[float]
             alpha_s values associated to the renormalization scales
-        lumi_id_types : str
-            kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
+        pid_basis : str
+            kind of channel types (e.g. "pdg_mc_ids" for flavor basis, "evol"
             for evolution basis)
         order_mask : list(bool)
             Mask for selecting specific orders. The value `True` means the corresponding order
@@ -350,7 +350,7 @@ class Grid(PyWrapper):
                 np.array(mur2_grid, dtype=np.float64),
                 np.array(alphas_values, dtype=np.float64),
                 xi,
-                lumi_id_types,
+                pid_basis,
                 np.array(order_mask, dtype=bool),
             )
         )

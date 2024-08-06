@@ -9,7 +9,7 @@ class Channel(PyWrapper):
     Parameters
     ----------
     entry : list(tuple(int,int,float))
-        sequence describing a luminosity function.
+        sequence describing a channel combination.
     """
 
     def __init__(self, entry):

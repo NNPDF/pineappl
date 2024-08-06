@@ -239,8 +239,8 @@ impl PyGrid {
     ///     order index
     /// observable : float
     ///     reference point (to be binned)
-    /// lumi : int
-    ///     luminosity index
+    /// channel : int
+    ///     channel index
     /// weight : float
     ///     cross section weight
     pub fn fill(
@@ -250,13 +250,13 @@ impl PyGrid {
         q2: f64,
         order: usize,
         observable: f64,
-        lumi: usize,
+        channel: usize,
         weight: f64,
     ) {
         self.grid.fill(
             order,
             observable,
-            lumi,
+            channel,
             &Ntuple::<f64> { x1, x2, q2, weight },
         );
     }
@@ -277,8 +277,8 @@ impl PyGrid {
     ///     order index
     /// observable : float
     ///     reference point (to be binned)
-    /// lumi : int
-    ///     luminosity index
+    /// channel : int
+    ///     channel index
     /// weights : np.array(float)
     ///     cross section weight for all events
     pub fn fill_array(
@@ -288,7 +288,7 @@ impl PyGrid {
         q2s: PyReadonlyArray1<f64>,
         order: usize,
         observables: PyReadonlyArray1<f64>,
-        lumi: usize,
+        channel: usize,
         weights: PyReadonlyArray1<f64>,
     ) {
         for (&x1, &x2, &q2, &observable, &weight) in izip!(
@@ -301,13 +301,13 @@ impl PyGrid {
             self.grid.fill(
                 order,
                 observable,
-                lumi,
+                channel,
                 &Ntuple::<f64> { x1, x2, q2, weight },
             );
         }
     }
 
-    /// Add a point to the grid for all lumis.
+    /// Add a point to the grid for all channels.
     ///
     /// Parameters
     /// ----------
@@ -322,7 +322,7 @@ impl PyGrid {
     /// observable : float
     ///     reference point (to be binned)
     /// weights : np.array(float)
-    ///     cross section weights, one for each lumi
+    ///     cross section weights, one for each channels
     pub fn fill_all(
         &mut self,
         x1: f64,
@@ -369,15 +369,15 @@ impl PyGrid {
     }
 
     /// Retrieve a subgrid.
-    pub fn subgrid(&self, order: usize, bin: usize, lumi: usize) -> PySubgridEnum {
+    pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> PySubgridEnum {
         PySubgridEnum {
-            subgrid_enum: self.grid.subgrids()[[order, bin, lumi]].clone(),
+            subgrid_enum: self.grid.subgrids()[[order, bin, channel]].clone(),
         }
     }
 
     /// Set a subgrid.
-    pub fn set_subgrid(&mut self, order: usize, bin: usize, lumi: usize, subgrid: PySubgridEnum) {
-        self.grid.subgrids_mut()[[order, bin, lumi]] = subgrid.subgrid_enum;
+    pub fn set_subgrid(&mut self, order: usize, bin: usize, channel: usize, subgrid: PySubgridEnum) {
+        self.grid.subgrids_mut()[[order, bin, channel]] = subgrid.subgrid_enum;
     }
 
     /// Set the bin normalizations.
@@ -406,8 +406,8 @@ impl PyGrid {
     /// bin_indices : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
     ///     empty list means that all orders should be calculated.
-    /// lumi_mask : numpy.ndarray(bool)
-    ///     Mask for selecting specific luminosity channels. The value `True` means the
+    /// channel_mask : numpy.ndarray(bool)
+    ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
     ///     enabled.
     /// xi : list((float, float))
@@ -429,7 +429,7 @@ impl PyGrid {
         alphas: &Bound<'py, PyAny>,
         order_mask: PyReadonlyArray1<bool>,
         bin_indices: PyReadonlyArray1<usize>,
-        lumi_mask: PyReadonlyArray1<bool>,
+        channel_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -442,7 +442,7 @@ impl PyGrid {
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),
-                &lumi_mask.to_vec().unwrap(),
+                &channel_mask.to_vec().unwrap(),
                 &xi,
             )
             .into_pyarray_bound(py)
@@ -468,8 +468,8 @@ impl PyGrid {
     /// bin_indices : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
     ///     empty list means that all orders should be calculated.
-    /// lumi_mask : numpy.ndarray(bool)
-    ///     Mask for selecting specific luminosity channels. The value `True` means the
+    /// channel_mask : numpy.ndarray(bool)
+    ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
     ///     enabled.
     /// xi : list((float, float))
@@ -493,7 +493,7 @@ impl PyGrid {
         alphas: &Bound<'py, PyAny>,
         order_mask: PyReadonlyArray1<bool>,
         bin_indices: PyReadonlyArray1<usize>,
-        lumi_mask: PyReadonlyArray1<bool>,
+        channel_mask: PyReadonlyArray1<bool>,
         xi: Vec<(f64, f64)>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -508,7 +508,7 @@ impl PyGrid {
                 &mut lumi_cache,
                 &order_mask.to_vec().unwrap(),
                 &bin_indices.to_vec().unwrap(),
-                &lumi_mask.to_vec().unwrap(),
+                &channel_mask.to_vec().unwrap(),
                 &xi,
             )
             .into_pyarray_bound(py)
@@ -538,8 +538,8 @@ impl PyGrid {
     ///     list with :math:`\alpha_s(Q2)` for the process scales
     /// xi : (float, float)
     ///     factorization and renormalization variation
-    /// lumi_id_types : str
-    ///     type of luminosity identifier
+    /// pid_basis : str
+    ///     type of channel identifier
     /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     ///
@@ -560,7 +560,7 @@ impl PyGrid {
         ren1: PyReadonlyArray1<f64>,
         alphas: PyReadonlyArray1<f64>,
         xi: (f64, f64),
-        lumi_id_types: String,
+        pid_basis: String,
         order_mask: PyReadonlyArray1<bool>,
     ) -> PyFkTable {
         let op_info = OperatorInfo {
@@ -574,7 +574,7 @@ impl PyGrid {
             alphas: alphas.to_vec().unwrap(),
             xir: xi.0,
             xif: xi.1,
-            pid_basis: lumi_id_types.parse().unwrap(),
+            pid_basis: pid_basis.parse().unwrap(),
         };
 
         let evolved_grid = self

@@ -66,7 +66,7 @@ impl PyFkTable {
     /// Returns
     /// -------
     /// numpy.ndarray :
-    ///     4-dimensional tensor with indixes: bin, lumi, x1, x2
+    ///     4-dimensional tensor with indixes: bin, channel, x1, x2
     pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray4<f64>>> {
         Ok(self.fk_table.table().into_pyarray_bound(py))
     }
@@ -160,7 +160,7 @@ impl PyFkTable {
     /// Returns
     /// -------
     /// list(tuple(float,float)) :
-    ///     luminosity functions as pid tuples
+    ///     channel functions as pid tuples
     pub fn channels(&self) -> Vec<(i32, i32)> {
         self.fk_table.channels()
     }
@@ -220,13 +220,13 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
-    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, lumi_mask= None))]
+    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &Bound<'py, PyAny>,
         bin_indices: Option<PyReadonlyArray1<usize>>,
-        lumi_mask: Option<PyReadonlyArray1<bool>>,
+        channel_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -236,7 +236,7 @@ impl PyFkTable {
             .convolve(
                 &mut lumi_cache,
                 &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
-                &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+                &channel_mask.map_or(vec![], |l| l.to_vec().unwrap()),
             )
             .into_pyarray_bound(py)
     }
@@ -258,7 +258,7 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
-    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, bin_indices = None, lumi_mask= None))]
+    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
@@ -266,7 +266,7 @@ impl PyFkTable {
         pdg_id2: i32,
         xfx2: &PyAny,
         bin_indices: Option<PyReadonlyArray1<usize>>,
-        lumi_mask: Option<PyReadonlyArray1<bool>>,
+        channel_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
@@ -278,7 +278,7 @@ impl PyFkTable {
             .convolve(
                 &mut lumi_cache,
                 &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
-                &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+                &channel_mask.map_or(vec![], |l| l.to_vec().unwrap()),
             )
             .into_pyarray_bound(py)
     }
