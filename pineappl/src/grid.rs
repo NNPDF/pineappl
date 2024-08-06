@@ -1582,6 +1582,9 @@ impl Grid {
         // TODO: convert this unwrap into error
         let grid = lhs.unwrap();
 
+        // check that the convolutions are unchanged
+        assert_eq!(self.convolutions(), grid.convolutions());
+
         // UNWRAP: merging evolved slices should be a proper FkTable again
         Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
     }

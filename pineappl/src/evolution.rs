@@ -500,7 +500,7 @@ pub(crate) fn evolve_slice_with_one(
         }));
     }
 
-    let pid = grid.channels()[0].entry()[0].0[index];
+    let pid = grid.channels()[0].entry()[0].0[1 - index];
 
     Ok((
         Array1::from_iter(sub_fk_tables)
