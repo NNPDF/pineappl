@@ -519,7 +519,7 @@ impl Subcommand for Opts {
                         );
                     }
 
-                    grid.set_convolution(index, grid.convolutions()[index].charge_conjugate());
+                    grid.convolutions_mut()[index] = grid.convolutions()[index].charge_conjugate();
                 }
                 OpsArg::DedupChannels(ulps) => {
                     grid.dedup_channels(*ulps);

@@ -4,6 +4,7 @@ use super::grid::Grid;
 use super::pids;
 use super::subgrid::{Mu2, Subgrid};
 use rustc_hash::FxHashMap;
+use serde::{Deserialize, Serialize};
 
 enum Pdfs<'a> {
     Two {
@@ -343,7 +344,7 @@ impl<'a> LumiCache<'a> {
 }
 
 /// Data type that indentifies different types of convolutions.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Convolution {
     // TODO: eventually get rid of this value
     /// No convolution.
