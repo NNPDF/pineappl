@@ -546,7 +546,9 @@ impl Grid {
 
         // TODO: convert error from v0 to v1
         let grid = GridV0::read(&mut reader).unwrap();
-        Ok(Self {
+
+        // TODO: convert differently if grid only has one convolution
+        let result = Self {
             subgrids: Array3::from_shape_vec(
                 grid.subgrids().dim(),
                 grid.subgrids()
@@ -577,12 +579,52 @@ impl Grid {
             )
             // UNWRAP: the dimensions must be the same as in the v0 grid
             .unwrap(),
-            channels: todo!(),
-            bin_limits: todo!(),
-            orders: todo!(),
-            subgrid_params: todo!(),
-            more_members: todo!(),
-        })
+            channels: grid
+                .channels()
+                .iter()
+                .map(|c| Channel::new(c.entry().iter().map(|&(a, b, f)| (vec![a, b], f)).collect()))
+                .collect(),
+            // TODO: change this member to something much easier to handle
+            bin_limits: BinLimits::new(if grid.remapper().is_none() {
+                let limits = &grid.bin_info().limits();
+                iter::once(limits[0][0].0)
+                    .chain(limits.iter().map(|v| v[0].1))
+                    .collect()
+            } else {
+                // if there is a BinRemapper this member will likely have no impact
+                (0..=grid.bin_info().bins())
+                    .map(|i| f64::from(u16::try_from(i).unwrap()))
+                    .collect()
+            }),
+            orders: grid
+                .orders()
+                .iter()
+                .map(|o| Order {
+                    alphas: o.alphas,
+                    alpha: o.alpha,
+                    logxir: o.logxir,
+                    logxif: o.logxif,
+                    logxia: 0,
+                })
+                .collect(),
+            // TODO: remove this member
+            subgrid_params: SubgridParams::default(),
+            // TODO: make these proper members
+            more_members: MoreMembers::V3(Mmv3 {
+                remapper: grid.remapper().map(|r| {
+                    // UNWRAP: if the old grid could be constructed with the given normalizations
+                    // and limits we should be able to do the same without error
+                    BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
+                }),
+                key_value_db: grid.key_values().cloned().unwrap_or_default(),
+                // TODO: remove this member
+                subgrid_template: EmptySubgridV1.into(),
+            }),
+        };
+
+        assert_eq!(result.bin_info().bins(), grid.bin_info().bins());
+
+        Ok(result)
     }
 
     /// Serializes `self` into `writer`. Writing is buffered.
