@@ -231,7 +231,11 @@ impl Subgrid for LagrangeSubgridV1 {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
-                Mu2 { ren: q2, fac: q2, frg: -1.0 }
+                Mu2 {
+                    ren: q2,
+                    fac: q2,
+                    frg: -1.0,
+                }
             })
             .collect()
     }
@@ -614,7 +618,11 @@ impl Subgrid for LagrangeSubgridV2 {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
-                Mu2 { ren: q2, fac: q2, frg: -1.0 }
+                Mu2 {
+                    ren: q2,
+                    fac: q2,
+                    frg: -1.0,
+                }
             })
             .collect()
     }
@@ -927,7 +935,11 @@ impl Subgrid for LagrangeSparseSubgridV1 {
         (0..self.ntau)
             .map(|itau| {
                 let q2 = fq2(self.gettau(itau));
-                Mu2 { ren: q2, fac: q2, frg: -1.0 }
+                Mu2 {
+                    ren: q2,
+                    fac: q2,
+                    frg: -1.0,
+                }
             })
             .collect()
     }

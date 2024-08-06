@@ -274,13 +274,21 @@ mod tests {
         ];
         let mut grid1: SubgridEnum = PackedQ1X2SubgridV1::new(
             PackedArray::new([1, 10, 10]),
-            vec![Mu2 { ren: 0.0, fac: 0.0, frg: 0.0 }],
+            vec![Mu2 {
+                ren: 0.0,
+                fac: 0.0,
+                frg: 0.0,
+            }],
             x.clone(),
             x.clone(),
         )
         .into();
 
-        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0, frg: 0.0 }];
+        let mu2 = vec![Mu2 {
+            ren: 0.0,
+            fac: 0.0,
+            frg: 0.0,
+        }];
 
         assert_eq!(grid1.mu2_grid().as_ref(), mu2);
         assert_eq!(grid1.x1_grid().as_ref(), x);
@@ -314,7 +322,11 @@ mod tests {
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
             PackedArray::new([1, 10, 10]),
-            vec![Mu2 { ren: 1.0, fac: 1.0, frg: 1.0 }],
+            vec![Mu2 {
+                ren: 1.0,
+                fac: 1.0,
+                frg: 1.0,
+            }],
             x.clone(),
             x.clone(),
         )

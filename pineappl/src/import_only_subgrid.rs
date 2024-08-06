@@ -61,7 +61,11 @@ impl Subgrid for ImportOnlySubgridV1 {
         self.q2_grid
             .iter()
             .copied()
-            .map(|q2| Mu2 { ren: q2, fac: q2, frg: -1.0 })
+            .map(|q2| Mu2 {
+                ren: q2,
+                fac: q2,
+                frg: -1.0,
+            })
             .collect()
     }
 
@@ -468,7 +472,11 @@ mod tests {
             }
         );
 
-        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0, frg: -1.0 }];
+        let mu2 = vec![Mu2 {
+            ren: 0.0,
+            fac: 0.0,
+            frg: -1.0,
+        }];
 
         assert_eq!(grid1.mu2_grid().as_ref(), mu2);
         assert_eq!(grid1.x1_grid().as_ref(), x);
@@ -559,13 +567,21 @@ mod tests {
         ];
         let mut grid1: SubgridEnum = ImportOnlySubgridV2::new(
             SparseArray3::new(1, 10, 10),
-            vec![Mu2 { ren: 0.0, fac: 0.0, frg: -1.0 }],
+            vec![Mu2 {
+                ren: 0.0,
+                fac: 0.0,
+                frg: -1.0,
+            }],
             x.clone(),
             x.clone(),
         )
         .into();
 
-        let mu2 = vec![Mu2 { ren: 0.0, fac: 0.0, frg: -1.0 }];
+        let mu2 = vec![Mu2 {
+            ren: 0.0,
+            fac: 0.0,
+            frg: -1.0,
+        }];
 
         assert_eq!(grid1.mu2_grid().as_ref(), mu2);
         assert_eq!(grid1.x1_grid().as_ref(), x);
@@ -599,7 +615,11 @@ mod tests {
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = ImportOnlySubgridV2::new(
             SparseArray3::new(1, 10, 10),
-            vec![Mu2 { ren: 1.0, fac: 1.0, frg: -1.0 }],
+            vec![Mu2 {
+                ren: 1.0,
+                fac: 1.0,
+                frg: -1.0,
+            }],
             x.clone(),
             x.clone(),
         )
@@ -668,7 +688,11 @@ mod tests {
     fn fill_panic_v2() {
         let mut grid = ImportOnlySubgridV2::new(
             SparseArray3::new(1, 1, 1),
-            vec![Mu2 { ren: 1.0, fac: 1.0, frg: -1.0 }],
+            vec![Mu2 {
+                ren: 1.0,
+                fac: 1.0,
+                frg: -1.0,
+            }],
             vec![1.0],
             vec![1.0],
         );
