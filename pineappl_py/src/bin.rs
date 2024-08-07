@@ -26,3 +26,9 @@ impl PyBinRemapper {
         Self::new(BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap())
     }
 }
+
+#[pymodule]
+pub fn bin(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyBinRemapper>()?;
+    Ok(())
+}

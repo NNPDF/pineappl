@@ -7,24 +7,24 @@ import pineappl
 class TestOrder:
     def test_init(self):
         args = (2, 1, 0, 1)
-        o = pineappl.Order(*args)
+        o = pineappl.grid.Order(*args)
 
-        assert isinstance(o, pineappl.Order)
+        assert isinstance(o, pineappl.grid.Order)
         assert o.as_tuple() == args
 
 
 class TestGrid:
     def fake_grid(self, bins=None):
-        lumis = [pineappl.LumiEntry([(1, 21, 0.1)])]
-        orders = [pineappl.Order(3, 0, 0, 0)]
+        lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
+        orders = [pineappl.grid.Order(3, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
-        subgrid_params = pineappl.SubgridParams()
-        g = pineappl.Grid(lumis, orders, bin_limits, subgrid_params)
+        subgrid_params = pineappl.subgrid.SubgridParams()
+        g = pineappl.grid.Grid(lumis, orders, bin_limits, subgrid_params)
         return g
 
     def test_init(self):
         g = self.fake_grid()
-        assert isinstance(g, pineappl.Grid)
+        assert isinstance(g, pineappl.grid.Grid)
         # orders
         assert len(g.orders()) == 1
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0)
@@ -35,7 +35,7 @@ class TestGrid:
         # DIS grid
         xs = np.linspace(0.1, 1.0, 5)
         vs = np.random.rand(len(xs))
-        subgrid = pineappl.ImportOnlySubgridV1(
+        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
             np.array([90.0]),
             np.array(xs),
@@ -47,7 +47,7 @@ class TestGrid:
         x1s = np.linspace(0.1, 1, 2)
         x2s = np.linspace(0.5, 1, 2)
         Q2s = np.linspace(10, 20, 2)
-        subgrid = pineappl.ImportOnlySubgridV1(
+        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
@@ -64,14 +64,14 @@ class TestGrid:
         # 1D
         normalizations = np.array([1.0, 1.0])
         limits = [(1, 1), (2, 2)]
-        remapper = pineappl.BinRemapper(normalizations, limits)
+        remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 1
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
         np.testing.assert_allclose(g.bin_right(0), [1, 2])
         # 2D
         limits = [(1, 2), (2, 3), (2, 4), (3, 5)]
-        remapper = pineappl.BinRemapper(normalizations, limits)
+        remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 2
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
@@ -85,7 +85,7 @@ class TestGrid:
         # DIS grid
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
-        subgrid = pineappl.ImportOnlySubgridV1(
+        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             vs[np.newaxis, :, np.newaxis],
             np.array([90.0]),
             xs,
@@ -110,9 +110,9 @@ class TestGrid:
         p = tmp_path / "test.pineappl"
         p.write_text("")
         g.write(str(p))
-        gg = pineappl.Grid.read(p)
-        assert isinstance(gg, pineappl.Grid)
-        _ = pineappl.Grid.read(str(p))
+        gg = pineappl.grid.Grid.read(p)
+        assert isinstance(gg, pineappl.grid.Grid)
+        _ = pineappl.grid.Grid.read(str(p))
 
     def test_fill(self):
         g = self.fake_grid()

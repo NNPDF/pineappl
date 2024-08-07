@@ -5,9 +5,9 @@ import pytest
 
 class TestBinRemapper:
     def test_init(self):
-        br = pineappl.BinRemapper(np.array([1.0]), [(2, 3)])
+        br = pineappl.bin.BinRemapper(np.array([1.0]), [(2, 3)])
 
-        assert isinstance(br, pineappl.BinRemapper)
+        assert isinstance(br, pineappl.bin.BinRemapper)
 
         with pytest.raises(AttributeError):
             br._bla()

@@ -230,3 +230,11 @@ impl PySubgridEnum {
         PyArray1::from_slice_bound(py, &self.subgrid_enum.x2_grid())
     }
 }
+
+#[pymodule]
+pub fn subgrid(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PySubgridEnum>()?;
+    m.add_class::<PySubgridParams>()?;
+    m.add_class::<PyMu2>()?;
+    Ok(())
+}

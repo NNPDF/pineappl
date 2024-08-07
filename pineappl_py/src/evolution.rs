@@ -44,3 +44,9 @@ impl PyEvolveInfo {
 pub struct PyOperatorSliceInfo {
     pub(crate) slice_info: OperatorSliceInfo,
 }
+
+#[pymodule]
+pub fn evolution(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyEvolveInfo>()?;
+    Ok(())
+}

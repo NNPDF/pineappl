@@ -129,3 +129,10 @@ impl PyImportOnlySubgridV1 {
         }
     }
 }
+
+#[pymodule]
+pub fn import_only_subgrid(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyImportOnlySubgridV1>()?;
+    m.add_class::<PyImportOnlySubgridV2>()?;
+    Ok(())
+}

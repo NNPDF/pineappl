@@ -869,3 +869,13 @@ impl PyGrid {
         self.grid.delete_bins(&bin_indices.to_vec().unwrap())
     }
 }
+
+#[pymodule]
+pub fn grid(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyGrid>()?;
+    m.add_class::<PyOperatorSliceInfo>()?;
+    m.add_class::<PyOrder>()?;
+    m.add_class::<PyPidBasis>()?;
+
+    Ok(())
+}

@@ -6,18 +6,18 @@ import numpy as np
 
 class TestSubgridParams:
     def test_init(self):
-        sp = pineappl.SubgridParams()
-        assert isinstance(sp, pineappl.SubgridParams)
+        sp = pineappl.subgrid.SubgridParams()
+        assert isinstance(sp, pineappl.subgrid.SubgridParams)
 
 
 def test_issue_164(pdf):
-    luminosities = [pineappl.LumiEntry([(1, 2, 1.0)])]
-    orders = [pineappl.Order(0, 0, 0, 0)]
-    params = pineappl.SubgridParams()
+    luminosities = [pineappl.lumi.LumiEntry([(1, 2, 1.0)])]
+    orders = [pineappl.grid.Order(0, 0, 0, 0)]
+    params = pineappl.subgrid.SubgridParams()
 
     def convolve_grid():
         bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.Grid(luminosities, orders, bin_limits, params)
+        grid = pineappl.grid.Grid(luminosities, orders, bin_limits, params)
         grid.fill(0.2, 0.2, 10, 0, 0.5, 0, 0.5)
         return grid.convolve_with_one(2212, pdf.xfxQ, pdf.alphasQ)
 
@@ -33,11 +33,11 @@ def test_issue_164(pdf):
 
 class TestSubgrid:
     def fake_grid(self):
-        luminosities = [pineappl.LumiEntry([(1, 2, 1.0)])]
-        orders = [pineappl.Order(0, 0, 0, 0)]
-        params = pineappl.SubgridParams()
+        luminosities = [pineappl.lumi.LumiEntry([(1, 2, 1.0)])]
+        orders = [pineappl.grid.Order(0, 0, 0, 0)]
+        params = pineappl.subgrid.SubgridParams()
         bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.Grid(luminosities, orders, bin_limits, params)
+        grid = pineappl.grid.Grid(luminosities, orders, bin_limits, params)
         return grid
 
     def fake_importonlysubgrid(self):
@@ -46,7 +46,7 @@ class TestSubgrid:
         Q2s = np.linspace(10, 20, 2)
         mu2s = [tuple([q2, q2]) for q2 in Q2s]
         array = np.random.rand(len(Q2s), len(x1s), len(x2s))
-        subgrid = pineappl.ImportOnlySubgridV2(array, mu2s, x1s, x2s)
+        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV2(array, mu2s, x1s, x2s)
         return subgrid, [x1s, x2s, mu2s, array]
 
     def test_subgrid_methods(self):
@@ -67,7 +67,7 @@ class TestSubgrid:
         test_subgrid, infos = self.fake_importonlysubgrid()
         _, _, _, array = (obj for obj in infos)
         grid.set_subgrid(0, 0, 0, test_subgrid.into())
-        extr_subgrid = grid.subgrid(0, 0, 0)
+        extr_subgrid = grid.subgrid(0,0,0)
         test_array = extr_subgrid.to_array3()
         print(test_array)
         print(array)

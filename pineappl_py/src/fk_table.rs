@@ -302,3 +302,10 @@ impl PyFkTable {
         self.fk_table.optimize(assumptions.fk_assumptions)
     }
 }
+
+#[pymodule]
+pub fn fk_table(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyFkTable>()?;
+    m.add_class::<PyFkAssumptions>()?;
+    Ok(())
+}

@@ -42,3 +42,9 @@ impl PyLumiEntry {
         self.lumi_entry.entry().to_vec()
     }
 }
+
+#[pymodule]
+pub fn lumi(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyLumiEntry>()?;
+    Ok(())
+}

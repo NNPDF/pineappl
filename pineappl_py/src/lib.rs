@@ -2,6 +2,7 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use pyo3::prelude::*;
+use pyo3::wrap_pymodule;
 
 pub mod bin;
 pub mod evolution;
@@ -16,20 +17,13 @@ pub mod subgrid;
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
 fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<bin::PyBinRemapper>()?;
-    m.add_class::<evolution::PyEvolveInfo>()?;
-    m.add_class::<grid::PyGrid>()?;
-    m.add_class::<grid::PyOrder>()?;
-    m.add_class::<grid::PyOperatorSliceInfo>()?;
-    m.add_class::<grid::PyPidBasis>()?;
-    m.add_class::<lumi::PyLumiEntry>()?;
-    m.add_class::<import_only_subgrid::PyImportOnlySubgridV1>()?;
-    m.add_class::<import_only_subgrid::PyImportOnlySubgridV2>()?;
-    m.add_class::<fk_table::PyFkTable>()?;
-    m.add_class::<fk_table::PyFkAssumptions>()?;
-    m.add_class::<subgrid::PySubgridEnum>()?;
-    m.add_class::<subgrid::PySubgridParams>()?;
-    m.add_class::<subgrid::PyMu2>()?;
+    m.add_wrapped(wrap_pymodule!(bin::bin))?;
+    m.add_wrapped(wrap_pymodule!(grid::grid))?;
+    m.add_wrapped(wrap_pymodule!(import_only_subgrid::import_only_subgrid))?;
+    m.add_wrapped(wrap_pymodule!(evolution::evolution))?;
+    m.add_wrapped(wrap_pymodule!(lumi::lumi))?;
+    m.add_wrapped(wrap_pymodule!(fk_table::fk_table))?;
+    m.add_wrapped(wrap_pymodule!(subgrid::subgrid))?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;
 
     Ok(())
