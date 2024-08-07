@@ -29,7 +29,6 @@ pub struct PyFkAssumptions {
 
 #[pymethods]
 impl PyFkAssumptions {
-
     /// Constructor.
     #[new]
     pub fn new(assumption: &str) -> Self {
@@ -41,7 +40,6 @@ impl PyFkAssumptions {
 
 #[pymethods]
 impl PyFkTable {
-
     /// Constructor from an existing grid.
     #[new]
     pub fn new(grid: PyGrid) -> Self {

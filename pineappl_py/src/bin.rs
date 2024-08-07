@@ -20,7 +20,7 @@ impl PyBinRemapper {
 #[pymethods]
 impl PyBinRemapper {
     /// Constructor.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// normalizations : list(float)

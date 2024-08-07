@@ -23,9 +23,8 @@ impl PyChannel {
 
 #[pymethods]
 impl PyChannel {
-
     /// Constructor.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// entry: list(tuple(int, int, float))

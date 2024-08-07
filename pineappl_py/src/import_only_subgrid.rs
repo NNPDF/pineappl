@@ -17,9 +17,8 @@ pub struct PyImportOnlySubgridV2 {
 
 #[pymethods]
 impl PyImportOnlySubgridV2 {
-
     /// Constructor.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// array : numpy.ndarray(float)
@@ -97,9 +96,8 @@ impl PyImportOnlySubgridV1 {
 
 #[pymethods]
 impl PyImportOnlySubgridV1 {
-
     /// Constructor.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// array : numpy.ndarray(float)

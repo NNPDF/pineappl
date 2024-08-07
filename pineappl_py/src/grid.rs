@@ -6,9 +6,9 @@ use pineappl::grid::{Grid, Ntuple};
 use pineappl::pids::PidBasis;
 
 use super::bin::PyBinRemapper;
+use super::channel::PyChannel;
 use super::evolution::PyEvolveInfo;
 use super::fk_table::PyFkTable;
-use super::channel::PyChannel;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
@@ -60,9 +60,8 @@ pub struct PyOperatorSliceInfo {
 
 #[pymethods]
 impl PyOperatorSliceInfo {
-
     /// Constructor.
-    /// 
+    ///
     /// Parameteters
     /// ------------
     /// fac0 : float
@@ -111,7 +110,6 @@ impl PyOrder {
 
 #[pymethods]
 impl PyOrder {
-
     /// Constructor.
     ///
     /// Parameters
@@ -151,7 +149,7 @@ impl PyOrder {
     }
 
     /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`].
-    /// 
+    ///
     /// The selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
     /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
     /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
@@ -197,7 +195,6 @@ impl PyGrid {
 
 #[pymethods]
 impl PyGrid {
-
     /// Constructor.
     ///
     /// Parameters
@@ -376,7 +373,13 @@ impl PyGrid {
     }
 
     /// Set a subgrid.
-    pub fn set_subgrid(&mut self, order: usize, bin: usize, channel: usize, subgrid: PySubgridEnum) {
+    pub fn set_subgrid(
+        &mut self,
+        order: usize,
+        bin: usize,
+        channel: usize,
+        subgrid: PySubgridEnum,
+    ) {
         self.grid.subgrids_mut()[[order, bin, channel]] = subgrid.subgrid_enum;
     }
 
@@ -478,7 +481,7 @@ impl PyGrid {
     ///     the renormalization scale, the second entry to the variation of the factorization
     ///     scale. If only results for the central scale are need the list should contain
     ///     `(1.0, 1.0)`.
-    /// 
+    ///
     /// Returns
     /// -------
     ///     numpy.ndarray(float) :

@@ -4,11 +4,11 @@
 use pyo3::prelude::*;
 
 pub mod bin;
+pub mod channel;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
-pub mod channel;
 pub mod subgrid;
 
 /// PyO3 Python module that contains all exposed classes from Rust.

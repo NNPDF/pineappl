@@ -35,7 +35,6 @@ impl Clone for PySubgridParams {
 
 #[pymethods]
 impl PySubgridParams {
-
     /// Constructor using the defaults.
     #[new]
     pub fn default() -> Self {
@@ -144,9 +143,8 @@ pub struct PyMu2 {
 
 #[pymethods]
 impl PyMu2 {
-
     /// Constructor.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// ren : float
