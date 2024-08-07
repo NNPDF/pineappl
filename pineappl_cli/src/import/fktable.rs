@@ -106,7 +106,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 );
 
                 // explicitly set the evolution basis
-                fktable.set_pid_basis(PidBasis::Evol);
+                *fktable.pid_basis_mut() = PidBasis::Evol;
 
                 // legacy FK-tables only support unpolarized proton PDFs
                 fktable.convolutions_mut()[0] = Convolution::UnpolPDF(2212);

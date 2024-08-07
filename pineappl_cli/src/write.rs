@@ -502,7 +502,7 @@ impl Subcommand for Opts {
                         _ => unreachable!(),
                     };
 
-                    let pid_basis = grid.pid_basis();
+                    let pid_basis = *grid.pid_basis();
 
                     for channel in grid.channels_mut() {
                         *channel = Channel::new(

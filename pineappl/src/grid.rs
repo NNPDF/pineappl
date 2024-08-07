@@ -167,6 +167,7 @@ pub struct Grid {
     subgrid_params: SubgridParams,
     metadata: BTreeMap<String, String>,
     convolutions: Vec<Convolution>,
+    pid_basis: PidBasis,
     more_members: MoreMembers,
 }
 
@@ -194,6 +195,8 @@ impl Grid {
             )),
             // TODO: add this as new parameter
             convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
+            // TODO: make this a new parameter
+            pid_basis: PidBasis::Pdg,
             channels,
             subgrid_params,
         }
@@ -236,36 +239,21 @@ impl Grid {
             subgrid_params,
             metadata: default_metadata(),
             convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
+            pid_basis: PidBasis::Pdg,
             channels,
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
         })
     }
 
-    /// Return by which convention the particle IDs are encoded.
+    /// Return the convention by which the channels' PIDs are encoded.
     #[must_use]
-    pub fn pid_basis(&self) -> PidBasis {
-        if let Some(lumi_id_types) = self.metadata().get("lumi_id_types") {
-            match lumi_id_types.as_str() {
-                "pdg_mc_ids" => return PidBasis::Pdg,
-                "evol" => return PidBasis::Evol,
-                _ => unimplemented!("unknown particle ID convention {lumi_id_types}"),
-            }
-        }
-
-        // if there's no basis explicitly set we're assuming to use PDG IDs
-        PidBasis::Pdg
+    pub fn pid_basis(&self) -> &PidBasis {
+        &self.pid_basis
     }
 
     /// Set the convention by which PIDs of channels are interpreted.
-    pub fn set_pid_basis(&mut self, pid_basis: PidBasis) {
-        match pid_basis {
-            PidBasis::Pdg => self
-                .metadata_mut()
-                .insert("lumi_id_types".to_owned(), "pdg_mc_ids".to_owned()),
-            PidBasis::Evol => self
-                .metadata_mut()
-                .insert("lumi_id_types".to_owned(), "evol".to_owned()),
-        };
+    pub fn pid_basis_mut(&mut self) -> &mut PidBasis {
+        &mut self.pid_basis
     }
 
     fn pdg_channels(&self) -> Cow<[Channel]> {
@@ -568,6 +556,16 @@ impl Grid {
                 .into_iter()
                 .collect(),
             convolutions: Self::read_convolutions_from_metadata(&grid),
+            pid_basis: grid
+                .key_values()
+                .and_then(|kv| kv.get("lumi_id_types"))
+                .map_or(PidBasis::Pdg, |lumi_id_types| {
+                    match lumi_id_types.as_str() {
+                        "pdg_mc_ids" => PidBasis::Pdg,
+                        "evol" => PidBasis::Evol,
+                        _ => panic!("unknown PID basis '{lumi_id_types}'"),
+                    }
+                }),
             // TODO: make these proper members
             more_members: MoreMembers::V3(Mmv3 {
                 remapper: grid.remapper().map(|r| {
@@ -1462,7 +1460,7 @@ impl Grid {
                 evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
             }?;
 
-            let mut rhs = Self {
+            let rhs = Self {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
@@ -1470,11 +1468,9 @@ impl Grid {
                 subgrid_params: SubgridParams::default(),
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
+                pid_basis: info.pid_basis,
                 more_members: self.more_members.clone(),
             };
-
-            // TODO: use a new constructor to set this information
-            rhs.set_pid_basis(info.pid_basis);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1600,7 +1596,7 @@ impl Grid {
                 )
             }?;
 
-            let mut rhs = Self {
+            let rhs = Self {
                 subgrids,
                 channels,
                 bin_limits: self.bin_limits.clone(),
@@ -1608,13 +1604,11 @@ impl Grid {
                 subgrid_params: SubgridParams::default(),
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
+                pid_basis: infos[0].pid_basis,
                 more_members: self.more_members.clone(),
             };
 
             assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
-
-            // TODO: use a new constructor to set this information
-            rhs.set_pid_basis(infos[0].pid_basis);
 
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
@@ -1738,7 +1732,7 @@ impl Grid {
                     .map(|channel| Channel::translate(channel, &pids::pdg_mc_pids_to_evol))
                     .collect();
 
-                self.set_pid_basis(PidBasis::Evol);
+                *self.pid_basis_mut() = PidBasis::Evol;
             }
             (PidBasis::Evol, PidBasis::Pdg) => {
                 self.channels = self
@@ -1747,7 +1741,7 @@ impl Grid {
                     .map(|channel| Channel::translate(channel, &pids::evol_to_pdg_mc_ids))
                     .collect();
 
-                self.set_pid_basis(PidBasis::Pdg);
+                *self.pid_basis_mut() = PidBasis::Pdg;
             }
             (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
                 // here's nothing to do

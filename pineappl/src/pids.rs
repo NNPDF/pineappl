@@ -1,5 +1,6 @@
 //! TODO
 
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -8,7 +9,7 @@ const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 
 /// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
 /// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is
 /// interpreted.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum PidBasis {
     /// This basis uses the [particle data group](https://pdg.lbl.gov/) (PDG) PIDs. For a complete
     /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
