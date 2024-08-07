@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new method `Grid::delete_orders` and the corresponding switch
+  `--delete-orders` in the subcommand `write` of the CLI
+
 ## [0.8.2] - 22/07/2024
 
 ### Changed

@@ -15,6 +15,7 @@ Options:
       --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
       --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
       --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
+      --delete-orders <O1-O2,...>      Delete orders with the specified indices
       --delete-key <KEY>               Delete an internal key-value pair
       --merge-bins <BIN1-BIN2,...>     Merge specific bins together
       --optimize[=<ENABLE>]            Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
@@ -435,6 +436,12 @@ const REWRITE_ORDER_READ_STR: &str = "o      order
 2 O(as^1 a^2 lf^1)
 3 O(a^3)
 4 O(a^3 lf^1)
+";
+
+const DELETE_ORDERS_STR: &str = "o      order
+-+----------------
+0 O(as^1 a^2)
+1 O(as^1 a^2 lf^1)
 ";
 
 #[test]
@@ -1122,4 +1129,28 @@ fn rewrite_order() {
         .assert()
         .success()
         .stdout(REWRITE_ORDER_CONVOLVE_STR);
+}
+
+#[test]
+fn delete_orders() {
+    let output = NamedTempFile::new("deleted4.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--delete-orders=3-4,0",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--orders", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(DELETE_ORDERS_STR);
 }

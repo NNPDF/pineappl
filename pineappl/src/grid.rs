@@ -1752,6 +1752,28 @@ impl Grid {
         }
     }
 
+    /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger
+    /// or equal than the number of orders are ignored.
+    pub fn delete_orders(&mut self, order_indices: &[usize]) {
+        let mut order_indices: Vec<_> = order_indices
+            .iter()
+            .copied()
+            // ignore indices corresponding to orders that don't exist
+            .filter(|&index| index < self.orders().len())
+            .collect();
+
+        // sort and remove repeated indices
+        order_indices.sort_unstable();
+        order_indices.dedup();
+        order_indices.reverse();
+        let order_indices = order_indices;
+
+        for index in order_indices {
+            self.orders.remove(index);
+            self.subgrids.remove_index(Axis(0), index);
+        }
+    }
+
     pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
         self.channels = self
             .channels()
