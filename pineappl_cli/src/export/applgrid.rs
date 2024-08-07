@@ -25,7 +25,11 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
             subgrid
                 .mu2_grid()
                 .iter()
-                .map(|&Mu2 { ren, fac }| {
+                .map(|&Mu2 { ren, fac, frg }| {
+                    if frg > 0.0 {
+                        bail!("subgrid has mua2 > 0.0, which APPLgrid does not support");
+                    }
+
                     if !approx_eq!(f64, ren, fac, ulps = 128) {
                         bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
                     }
@@ -185,7 +189,11 @@ pub fn convert_into_applgrid(
                 let appl_q2_idx: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
-                    .map(|&Mu2 { ren, fac }| {
+                    .map(|&Mu2 { ren, fac, frg }| {
+                        if frg > 0.0 {
+                            bail!("subgrid has mua2 > 0.0, which APPLgrid does not support");
+                        }
+
                         if !approx_eq!(f64, ren, fac, ulps = 128) {
                             bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
                         }

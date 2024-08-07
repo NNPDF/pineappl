@@ -118,15 +118,12 @@ fn convert_coeff_add_fix(
     assert!(npdf <= 2);
 
     for index in 0..2 {
-        grid.set_convolution(
-            index,
-            if index < npdf {
-                // TODO: how do we determined the PID/type of the convolution for fixed tables?
-                Convolution::UnpolPDF(2212)
-            } else {
-                Convolution::None
-            },
-        );
+        grid.convolutions_mut()[index] = if index < npdf {
+            // TODO: how do we determined the PID/type of the convolution for fixed tables?
+            Convolution::UnpolPDF(2212)
+        } else {
+            Convolution::None
+        };
     }
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
@@ -156,6 +153,7 @@ fn convert_coeff_add_fix(
                     .map(|q| Mu2 {
                         ren: q * q,
                         fac: q * q,
+                        frg: -1.0,
                     })
                     .collect();
 
@@ -266,15 +264,12 @@ fn convert_coeff_add_flex(
     assert!(npdf <= 2);
 
     for index in 0..2 {
-        grid.set_convolution(
-            // UNWRAP: index is smaller than 2
-            index.try_into().unwrap(),
-            if index < npdf {
-                Convolution::UnpolPDF(table.GetPDFPDG(index))
-            } else {
-                Convolution::None
-            },
-        );
+        // UNWRAP: index is smaller than 2
+        grid.convolutions_mut()[usize::try_from(index).unwrap()] = if index < npdf {
+            Convolution::UnpolPDF(table.GetPDFPDG(index))
+        } else {
+            Convolution::None
+        };
     }
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
@@ -295,6 +290,7 @@ fn convert_coeff_add_flex(
             .map(|(&s1, &s2)| Mu2 {
                 ren: mur_ff.compute_scale(s1, s2),
                 fac: muf_ff.compute_scale(s1, s2),
+                frg: -1.0,
             })
             .collect();
         let nx = ffi::GetNx(table, obs);
@@ -470,14 +466,18 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
     assert_eq!(labels.len(), dimensions);
 
-    for (dimension, label) in labels.iter().enumerate() {
-        result.set_key_value(&format!("x{}_label", dimension + 1), label);
+    for (dimension, label) in labels.into_iter().enumerate() {
+        result
+            .metadata_mut()
+            .insert(format!("x{}_label", dimension + 1), label);
     }
 
-    result.set_key_value("y_label", &ffi::GetXSDescr(file_as_table));
-    result.set_key_value(
-        "fastnlo_scenario",
-        &ffi::GetScDescr(file_as_table).join("\n"),
+    result
+        .metadata_mut()
+        .insert("y_label".to_owned(), ffi::GetXSDescr(file_as_table));
+    result.metadata_mut().insert(
+        "fastnlo_scenario".to_owned(),
+        ffi::GetScDescr(file_as_table).join("\n"),
     );
 
     Ok(result)

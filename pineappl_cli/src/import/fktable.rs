@@ -109,12 +109,12 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 fktable.set_pid_basis(PidBasis::Evol);
 
                 // legacy FK-tables only support unpolarized proton PDFs
-                fktable.set_convolution(0, Convolution::UnpolPDF(2212));
+                fktable.convolutions_mut()[0] = Convolution::UnpolPDF(2212);
 
                 if hadronic {
-                    fktable.set_convolution(1, Convolution::UnpolPDF(2212));
+                    fktable.convolutions_mut()[1] = Convolution::UnpolPDF(2212);
                 } else {
-                    fktable.set_convolution(1, Convolution::None);
+                    fktable.convolutions_mut()[1] = Convolution::None;
                 }
 
                 grid = Some(fktable);

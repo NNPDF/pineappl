@@ -133,10 +133,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
         );
 
         // from APPLgrid alone we don't know what type of convolution we have
-        pgrid.set_convolution(0, Convolution::UnpolPDF(2212));
+        pgrid.convolutions_mut()[0] = Convolution::UnpolPDF(2212);
 
         if grid.isDIS() {
-            pgrid.set_convolution(1, Convolution::None);
+            pgrid.convolutions_mut()[1] = Convolution::None;
         }
 
         for bin in 0..grid.Nobs_internal() {
@@ -147,7 +147,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             let mu2_values: Vec<_> = (0..igrid.Ntau())
                 .map(|i| {
                     let q2 = igrid.getQ2(i);
-                    Mu2 { ren: q2, fac: q2 }
+                    Mu2 {
+                        ren: q2,
+                        fac: q2,
+                        frg: -1.0,
+                    }
                 })
                 .collect();
             let x1_values: Vec<_> = (0..igrid.Ny1())
