@@ -696,7 +696,20 @@ pub unsafe extern "C" fn pineappl_grid_new(
     let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
 
     let lumi = unsafe { &*lumi };
-    let mut grid = Box::new(
+
+    if let Some(keyval) = key_vals {
+        if let Some(_value) = keyval.strings.get("initial_state_1") {
+            // TODO: set the first convolution type
+            todo!();
+        }
+
+        if let Some(_value) = keyval.strings.get("initial_state_2") {
+            // TODO: set the second convolution type
+            todo!();
+        }
+    }
+
+    let grid = Box::new(
         Grid::with_subgrid_type(
             lumi.0.clone(),
             orders,
@@ -707,22 +720,6 @@ pub unsafe extern "C" fn pineappl_grid_new(
         )
         .unwrap(),
     );
-
-    if let Some(keyval) = key_vals {
-        if let Some(value) = keyval.strings.get("initial_state_1") {
-            grid.metadata_mut().insert(
-                "initial_state_1".to_owned(),
-                value.to_str().unwrap().to_owned(),
-            );
-        }
-
-        if let Some(value) = keyval.strings.get("initial_state_2") {
-            grid.metadata_mut().insert(
-                "initial_state_2".to_owned(),
-                value.to_str().unwrap().to_owned(),
-            );
-        }
-    }
 
     grid
 }
@@ -901,6 +898,12 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     let key = unsafe { CStr::from_ptr(key) };
     let key = key.to_string_lossy();
 
+    // backwards compatibility
+    match key.as_ref() {
+        "initial_state_1" | "initial_state_2" => todo!(),
+        _ => {}
+    }
+
     CString::new(grid.metadata().get(key.as_ref()).map_or("", String::as_str))
         .unwrap()
         .into_raw()
@@ -924,13 +927,20 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     value: *const c_char,
 ) {
     let grid = unsafe { &mut *grid };
-    let key = unsafe { CStr::from_ptr(key) };
-    let value = unsafe { CStr::from_ptr(value) };
+    let key = unsafe { CStr::from_ptr(key) }
+        .to_string_lossy()
+        .into_owned();
+    let value = unsafe { CStr::from_ptr(value) }
+        .to_string_lossy()
+        .into_owned();
 
-    grid.metadata_mut().insert(
-        key.to_string_lossy().into_owned(),
-        value.to_string_lossy().into_owned(),
-    );
+    // backwards compatibility
+    match key.as_str() {
+        "initial_state_1" | "initial_state_2" => todo!(),
+        _ => {}
+    }
+
+    grid.metadata_mut().insert(key, value);
 }
 
 /// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
