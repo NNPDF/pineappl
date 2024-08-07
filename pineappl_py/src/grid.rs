@@ -456,10 +456,10 @@ impl PyGrid {
         pdg_id2: i32,
         xfx2: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: PyReadonlyArray1<bool>,
-        bin_indices: PyReadonlyArray1<usize>,
-        lumi_mask: PyReadonlyArray1<bool>,
-        xi: Vec<(f64, f64)>,
+        order_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        lumi_mask: Option<PyReadonlyArray1<bool>>,
+        xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
