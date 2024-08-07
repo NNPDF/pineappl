@@ -383,15 +383,16 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
+    #[pyo3(signature = (pdg_id, xfx, alphas, order_mask = None, bin_indices = None, lumi_mask= None, xi = None))]
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: PyReadonlyArray1<bool>,
-        bin_indices: PyReadonlyArray1<usize>,
-        lumi_mask: PyReadonlyArray1<bool>,
-        xi: Vec<(f64, f64)>,
+        order_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        lumi_mask: Option<PyReadonlyArray1<bool>>,
+        xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -401,10 +402,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.to_vec().unwrap(),
-                &bin_indices.to_vec().unwrap(),
-                &lumi_mask.to_vec().unwrap(),
-                &xi,
+                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
+                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
+                &lumi_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
     }
@@ -447,6 +448,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
+    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, alphas, order_mask = None, bin_indices = None, lumi_mask= None, xi = None))]
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
@@ -469,10 +471,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.to_vec().unwrap(),
-                &bin_indices.to_vec().unwrap(),
-                &lumi_mask.to_vec().unwrap(),
-                &xi,
+                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
+                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
+                &lumi_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
     }
