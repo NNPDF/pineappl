@@ -5,10 +5,10 @@ use pineappl::boc::Order;
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV1;
+use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::pids::PidBasis;
 use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::SubgridParams;
+use pineappl::subgrid::{Mu2, SubgridParams};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;
@@ -181,9 +181,14 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             .iter_mut()
                             .zip(arrays.into_iter())
                         {
-                            *subgrid = ImportOnlySubgridV1::new(
+                            *subgrid = ImportOnlySubgridV2::new(
                                 array,
-                                vec![q0 * q0],
+                                // TODO: remove the renormalization scale
+                                vec![Mu2 {
+                                    ren: q0 * q0,
+                                    fac: q0 * q0,
+                                    frg: -1.0,
+                                }],
                                 x_grid.clone(),
                                 if hadronic { x_grid.clone() } else { vec![1.0] },
                             )
@@ -237,9 +242,14 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
         .iter_mut()
         .zip(arrays.into_iter())
     {
-        *subgrid = ImportOnlySubgridV1::new(
+        *subgrid = ImportOnlySubgridV2::new(
             array,
-            vec![q0 * q0],
+            // TODO: remove the renormalization scale
+            vec![Mu2 {
+                ren: q0 * q0,
+                fac: q0 * q0,
+                frg: -1.0,
+            }],
             x_grid.clone(),
             if hadronic { x_grid.clone() } else { vec![1.0] },
         )
