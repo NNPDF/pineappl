@@ -52,8 +52,8 @@ Options:
 #[cfg(feature = "fastnlo")]
 const IMPORT_FIX_GRID_STR: &str = "b   PineAPPL     fastNLO      rel. diff
 -+------------+------------+--------------
-0 2.9158424e-4 2.9158424e-4 -2.9976022e-15
-1 2.4657895e-4 2.4657895e-4 -2.8865799e-15
+0 2.9158424e-4 2.9158424e-4 -2.7755576e-15
+1 2.4657895e-4 2.4657895e-4 -2.6645353e-15
 ";
 
 #[cfg(feature = "fastnlo")]
@@ -236,9 +236,9 @@ const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff
 ";
 
 #[cfg(feature = "applgrid")]
-const IMPORT_PHOTON_GRID_STR: &str = "b   PineAPPL     APPLgrid    rel. diff
--+------------+------------+-----------
-0 5.5621307e-4 5.5621307e-4 0.0000000e0
+const IMPORT_PHOTON_GRID_STR: &str = "b   PineAPPL     APPLgrid     rel. diff
+-+------------+------------+--------------
+0 5.5621307e-4 5.5621307e-4 -1.5543122e-15
 ";
 
 #[cfg(feature = "applgrid")]
