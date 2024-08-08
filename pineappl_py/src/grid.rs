@@ -383,7 +383,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    #[pyo3(signature = (pdg_id, xfx, alphas, order_mask = None, bin_indices = None, lumi_mask= None, xi = None))]
+    #[pyo3(signature = (pdg_id, xfx, alphas, order_mask = None, bin_indices = None, lumi_mask = None, xi = None))]
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
@@ -448,7 +448,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, alphas, order_mask = None, bin_indices = None, lumi_mask= None, xi = None))]
+    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, alphas, order_mask = None, bin_indices = None, lumi_mask = None, xi = None))]
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
