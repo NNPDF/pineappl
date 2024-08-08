@@ -7,8 +7,7 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_only_subgrid::ImportOnlySubgridV2;
-use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::ntuple_subgrid::NtupleSubgridV1;
+use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::{self, PidBasis};
@@ -205,8 +204,7 @@ impl Grid {
     /// Constructor. This function can be used like `new`, but the additional parameter
     /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
     /// - `LagrangeSubgrid`
-    /// - `LagrangeSparseSubgrid`
-    /// - `NtupleSubgrid`
+    /// - `LagrangeSubgridV2`
     ///
     /// # Errors
     ///
@@ -223,9 +221,6 @@ impl Grid {
             "LagrangeSubgrid" | "LagrangeSubgridV2" => {
                 LagrangeSubgridV2::new(&subgrid_params, &extra).into()
             }
-            "LagrangeSubgridV1" => LagrangeSubgridV1::new(&subgrid_params).into(),
-            "NtupleSubgrid" => NtupleSubgridV1::new().into(),
-            "LagrangeSparseSubgrid" => LagrangeSparseSubgridV1::new(&subgrid_params).into(),
             _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
         };
 
@@ -1065,8 +1060,6 @@ impl Grid {
                 _ if subgrid.is_empty() => {
                     *subgrid = EmptySubgridV1.into();
                 }
-                // can't be optimized without losing information
-                SubgridEnum::NtupleSubgridV1(_) => continue,
                 _ => {
                     // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
                     // replace this with a method

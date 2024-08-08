@@ -610,25 +610,6 @@ fn drell_yan_lagrange_static() -> Result<()> {
 }
 
 #[test]
-fn drell_yan_lagrange_v1_static() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSubgridV1",
-        false,
-        &STATIC_REFERENCE,
-        &STATIC_REFERENCE, // LagrangeSubgridV1 doesn't have static-scale detection
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        true,
-    )
-}
-
-#[test]
 fn drell_yan_lagrange_v2_static() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
@@ -667,44 +648,6 @@ fn drell_yan_lagrange_dynamic() -> Result<()> {
 }
 
 #[test]
-fn drell_yan_lagrange_v1_dynamic() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSubgridV1",
-        true,
-        &DYNAMIC_REFERENCE,
-        &DYNAMIC_REFERENCE,
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        true,
-    )
-}
-
-#[test]
-fn drell_yan_lagrange_v1_dynamic_no_reweight() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSubgridV1",
-        true,
-        &DYNAMIC_REFERENCE_NO_REWEIGHT,
-        &DYNAMIC_REFERENCE_NO_REWEIGHT,
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        false,
-    )
-}
-
-#[test]
 fn drell_yan_lagrange_v2_dynamic() -> Result<()> {
     perform_grid_tests(
         "LagrangeSubgridV2",
@@ -739,25 +682,6 @@ fn drell_yan_lagrange_v2_dynamic_no_reweight() -> Result<()> {
             0.004328500638820811,
         ],
         false,
-    )
-}
-
-#[test]
-fn drell_yan_lagrange_sparse_dynamic() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSparseSubgrid",
-        true,
-        &DYNAMIC_REFERENCE,
-        &DYNAMIC_REFERENCE,
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        true,
     )
 }
 

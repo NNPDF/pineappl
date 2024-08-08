@@ -2,9 +2,8 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
-use super::import_only_subgrid::{ImportOnlySubgridV1, ImportOnlySubgridV2};
-use super::lagrange_subgrid::{LagrangeSparseSubgridV1, LagrangeSubgridV1, LagrangeSubgridV2};
-use super::ntuple_subgrid::NtupleSubgridV1;
+use super::import_only_subgrid::ImportOnlySubgridV2;
+use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
 use ndarray::Array3;
@@ -16,16 +15,8 @@ use std::borrow::Cow;
 #[derive(Clone, Deserialize, Serialize)]
 pub enum SubgridEnum {
     // WARNING: never change the order or content of this enum, only add to the end of it
-    /// Lagrange-interpolation subgrid.
-    LagrangeSubgridV1,
-    /// N-tuple subgrid.
-    NtupleSubgridV1,
-    /// Lagrange-interpolation subgrid.
-    LagrangeSparseSubgridV1,
     /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
     LagrangeSubgridV2,
-    /// Import-only sparse subgrid with possibly different x1 and x2 bins.
-    ImportOnlySubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
     /// Same as [`ImportOnlySubgridV1`], but with support for different renormalization and

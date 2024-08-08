@@ -44,7 +44,6 @@ pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
 pub mod lagrange_subgrid;
-pub mod ntuple_subgrid;
 pub mod packed_array;
 pub mod packed_subgrid;
 pub mod pids;
