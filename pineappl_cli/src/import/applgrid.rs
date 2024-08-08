@@ -4,12 +4,12 @@ use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::packed_array::PackedArray;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
 use std::ptr;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 
 fn convert_to_pdg_id(pid: usize) -> i32 {
     let pid = i32::try_from(pid).unwrap() - 6;
@@ -122,6 +122,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
 
     let mut grids = Vec::with_capacity(orders.len());
 
+    // from APPLgrid alone we don't know what type of convolution we have
+    let mut convolutions = vec![Convolution::UnpolPDF(2212); 2];
+
+    if grid.isDIS() {
+        convolutions[1] = Convolution::None;
+    }
+
     for (i, order) in orders.into_iter().enumerate() {
         let channels = reconstruct_channels(&grid, i.try_into().unwrap(), dis_pid);
         let lumis_len = channels.len();
@@ -129,15 +136,9 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             channels,
             vec![order],
             bin_limits.clone(),
+            convolutions.clone(),
             SubgridParams::default(),
         );
-
-        // from APPLgrid alone we don't know what type of convolution we have
-        pgrid.convolutions_mut()[0] = Convolution::UnpolPDF(2212);
-
-        if grid.isDIS() {
-            pgrid.convolutions_mut()[1] = Convolution::None;
-        }
 
         for bin in 0..grid.Nobs_internal() {
             let igrid = grid.weightgrid(i.try_into().unwrap(), bin);

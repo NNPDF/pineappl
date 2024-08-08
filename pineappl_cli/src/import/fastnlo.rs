@@ -5,8 +5,8 @@ use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::packed_array::PackedArray;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
@@ -98,6 +98,21 @@ fn convert_coeff_add_fix(
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
 
+    // UNWRAP: shouldn't be larger than `2`
+    let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
+    assert!(npdf <= 2);
+
+    let mut convolutions = vec![Convolution::UnpolPDF(2212); npdf];
+
+    for index in 0..2 {
+        convolutions[index] = if index < npdf {
+            // TODO: how do we determined the PID/type of the convolution for fixed tables?
+            Convolution::UnpolPDF(2212)
+        } else {
+            Convolution::None
+        };
+    }
+
     let mut grid = Grid::new(
         reconstruct_channels(table_as_add_base, comb, dis_pid),
         vec![Order {
@@ -110,21 +125,9 @@ fn convert_coeff_add_fix(
         (0..=bins)
             .map(|limit| u16::try_from(limit).unwrap().into())
             .collect(),
+        convolutions,
         SubgridParams::default(),
     );
-
-    // UNWRAP: shouldn't be larger than `2`
-    let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
-    assert!(npdf <= 2);
-
-    for index in 0..2 {
-        grid.convolutions_mut()[index] = if index < npdf {
-            // TODO: how do we determined the PID/type of the convolution for fixed tables?
-            Convolution::UnpolPDF(2212)
-        } else {
-            Convolution::None
-        };
-    }
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
@@ -251,26 +254,28 @@ fn convert_coeff_add_flex(
     .collect();
     let orders_len = orders.len();
 
+    let npdf = table_as_add_base.GetNPDF();
+    assert!(npdf <= 2);
+
+    let convolutions = (0..2)
+        .map(|index| {
+            if index < npdf {
+                Convolution::UnpolPDF(table.GetPDFPDG(index))
+            } else {
+                Convolution::None
+            }
+        })
+        .collect();
+
     let mut grid = Grid::new(
         reconstruct_channels(table_as_add_base, comb, dis_pid),
         orders,
         (0..=bins)
             .map(|limit| u16::try_from(limit).unwrap().into())
             .collect(),
+        convolutions,
         SubgridParams::default(),
     );
-
-    let npdf = table_as_add_base.GetNPDF();
-    assert!(npdf <= 2);
-
-    for index in 0..2 {
-        // UNWRAP: index is smaller than 2
-        grid.convolutions_mut()[usize::try_from(index).unwrap()] = if index < npdf {
-            Convolution::UnpolPDF(table.GetPDFPDG(index))
-        } else {
-            Convolution::None
-        };
-    }
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 

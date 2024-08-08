@@ -5,9 +5,9 @@ use pineappl::boc::Order;
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
+use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::pids::PidBasis;
-use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -102,20 +102,20 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                     lumis,
                     vec![Order::new(0, 0, 0, 0, 0)],
                     (0..=ndata).map(Into::into).collect(),
+                    // legacy FK-tables only support unpolarized proton PDFs
+                    vec![
+                        Convolution::UnpolPDF(2212),
+                        if hadronic {
+                            Convolution::UnpolPDF(2212)
+                        } else {
+                            Convolution::None
+                        },
+                    ],
                     SubgridParams::default(),
                 );
 
                 // explicitly set the evolution basis
                 *fktable.pid_basis_mut() = PidBasis::Evol;
-
-                // legacy FK-tables only support unpolarized proton PDFs
-                fktable.convolutions_mut()[0] = Convolution::UnpolPDF(2212);
-
-                if hadronic {
-                    fktable.convolutions_mut()[1] = Convolution::UnpolPDF(2212);
-                } else {
-                    fktable.convolutions_mut()[1] = Convolution::None;
-                }
 
                 grid = Some(fktable);
 

@@ -176,6 +176,7 @@ impl Grid {
         channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
+        convolutions: Vec<Convolution>,
         subgrid_params: SubgridParams,
     ) -> Self {
         // TODO: check that channels has same number of PIDs everywhere
@@ -191,8 +192,7 @@ impl Grid {
                 LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
                     .into(),
             )),
-            // TODO: add this as new parameter
-            convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
+            convolutions,
             // TODO: make this a new parameter
             pid_basis: PidBasis::Pdg,
             channels,
@@ -1865,6 +1865,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -1880,6 +1881,7 @@ mod tests {
             ],
             vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -1900,6 +1902,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -1918,6 +1921,7 @@ mod tests {
                 Order::new(0, 2, 0, 0, 0),
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -1961,6 +1965,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -1972,6 +1977,7 @@ mod tests {
             vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -2004,6 +2010,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -2019,6 +2026,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 
@@ -2055,6 +2063,7 @@ mod tests {
                 logxia: 0,
             }],
             vec![0.0, 1.0],
+            vec![Convolution::UnpolPDF(2212); 2],
             SubgridParams::default(),
         );
 

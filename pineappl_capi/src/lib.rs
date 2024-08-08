@@ -58,7 +58,7 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
-use pineappl::convolutions::LumiCache;
+use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags, Ntuple};
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
@@ -697,19 +697,19 @@ pub unsafe extern "C" fn pineappl_grid_new(
 
     let lumi = unsafe { &*lumi };
 
+    let mut convolutions = vec![Convolution::UnpolPDF(2212); 2];
+
     if let Some(keyval) = key_vals {
-        if let Some(_value) = keyval.strings.get("initial_state_1") {
-            // TODO: set the first convolution type
-            todo!();
+        if let Some(value) = keyval.strings.get("initial_state_1") {
+            convolutions[0] = Convolution::UnpolPDF(value.to_string_lossy().parse().unwrap());
         }
 
-        if let Some(_value) = keyval.strings.get("initial_state_2") {
-            // TODO: set the second convolution type
-            todo!();
+        if let Some(value) = keyval.strings.get("initial_state_2") {
+            convolutions[1] = Convolution::UnpolPDF(value.to_string_lossy().parse().unwrap());
         }
     }
 
-    let grid = Box::new(
+    let mut grid = Box::new(
         Grid::with_subgrid_type(
             lumi.0.clone(),
             orders,
@@ -720,6 +720,9 @@ pub unsafe extern "C" fn pineappl_grid_new(
         )
         .unwrap(),
     );
+
+    // TODO: set the convolutions using a new constructor
+    grid.convolutions_mut().clone_from_slice(&convolutions);
 
     grid
 }
@@ -899,9 +902,16 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     let key = key.to_string_lossy();
 
     // backwards compatibility
-    match key.as_ref() {
-        "initial_state_1" | "initial_state_2" => todo!(),
-        _ => {}
+    let index = match key.as_ref() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        return CString::new(grid.convolutions()[index].pid().unwrap().to_string())
+            .unwrap()
+            .into_raw();
     }
 
     CString::new(grid.metadata().get(key.as_ref()).map_or("", String::as_str))
@@ -935,9 +945,14 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
         .into_owned();
 
     // backwards compatibility
-    match key.as_str() {
-        "initial_state_1" | "initial_state_2" => todo!(),
-        _ => {}
+    let index = match key.as_str() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        grid.convolutions_mut()[index] = Convolution::UnpolPDF(value.parse().unwrap());
     }
 
     grid.metadata_mut().insert(key, value);
