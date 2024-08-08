@@ -705,7 +705,7 @@ fn grid_optimize() -> Result<()> {
     // `OPTIMIZE_SUBGRID_TYPE` changes the subgrid type ...
     assert!(matches!(
         grid2.subgrids()[[0, 0, 0]],
-        SubgridEnum::ImportOnlySubgridV2 { .. }
+        SubgridEnum::PackedQ1X2SubgridV1 { .. }
     ));
     // and the dimensions of the subgrid
     assert_eq!(grid2.subgrids()[[0, 0, 0]].x1_grid().len(), 6);
@@ -716,7 +716,7 @@ fn grid_optimize() -> Result<()> {
 
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
-        SubgridEnum::ImportOnlySubgridV2 { .. }
+        SubgridEnum::PackedQ1X2SubgridV1 { .. }
     ));
     // if `STATIC_SCALE_DETECTION` is present the `mu2_grid` dimension are better optimized
     assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().len(), 6);

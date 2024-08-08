@@ -103,7 +103,6 @@ impl Subcommand for Opts {
                 row.add_cell(cell!(l->
                     match subgrid {
                         SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
-                        SubgridEnum::ImportOnlySubgridV2(_) => "ImportOnlySubgridV2",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
                         SubgridEnum::PackedQ1X2SubgridV1(_) => "PackedQ1X2SubgridV1",
                     }

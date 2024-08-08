@@ -5,9 +5,9 @@ use pineappl::boc::Order;
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::pids::PidBasis;
-use pineappl::sparse_array3::SparseArray3;
+use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -119,7 +119,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
+                arrays = iter::repeat(PackedArray::new([1, nx1, nx2]))
                     .take(flavor_mask.iter().filter(|&&value| value).count())
                     .collect();
             }
@@ -181,7 +181,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             .iter_mut()
                             .zip(arrays.into_iter())
                         {
-                            *subgrid = ImportOnlySubgridV2::new(
+                            *subgrid = PackedQ1X2SubgridV1::new(
                                 array,
                                 // TODO: remove the renormalization scale
                                 vec![Mu2 {
@@ -195,7 +195,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             .into();
                         }
 
-                        arrays = iter::repeat(SparseArray3::new(1, nx1, nx2))
+                        arrays = iter::repeat(PackedArray::new([1, nx1, nx2]))
                             .take(flavor_mask.iter().filter(|&&value| value).count())
                             .collect();
                         last_bin = bin;
@@ -242,7 +242,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
         .iter_mut()
         .zip(arrays.into_iter())
     {
-        *subgrid = ImportOnlySubgridV2::new(
+        *subgrid = PackedQ1X2SubgridV1::new(
             array,
             // TODO: remove the renormalization scale
             vec![Mu2 {

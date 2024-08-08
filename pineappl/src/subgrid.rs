@@ -2,7 +2,6 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Ntuple;
-use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
@@ -19,9 +18,6 @@ pub enum SubgridEnum {
     LagrangeSubgridV2,
     /// Empty subgrid.
     EmptySubgridV1,
-    /// Same as [`ImportOnlySubgridV1`], but with support for different renormalization and
-    /// factorization scales choices.
-    ImportOnlySubgridV2,
     ///
     PackedQ1X2SubgridV1,
 }

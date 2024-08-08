@@ -6,7 +6,6 @@ use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
-use super::import_only_subgrid::ImportOnlySubgridV2;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
@@ -1070,7 +1069,7 @@ impl Grid {
                         }
                     }
 
-                    let mut new_subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
+                    let mut new_subgrid = PackedQ1X2SubgridV1::from(&*subgrid).into();
                     mem::swap(subgrid, &mut new_subgrid);
                 }
             }

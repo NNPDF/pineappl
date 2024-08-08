@@ -5,8 +5,8 @@ use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::sparse_array3::SparseArray3;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
@@ -158,7 +158,7 @@ fn convert_coeff_add_fix(
                     .collect();
 
                 let mut array =
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                    PackedArray::new([mu2_values.len(), x1_values.len(), x2_values.len()]);
 
                 // TODO: figure out what the general case is supposed to be
                 assert_eq!(j, 0);
@@ -204,7 +204,7 @@ fn convert_coeff_add_fix(
                 if !array.is_empty() {
                     grid.subgrids_mut()
                         [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
-                        ImportOnlySubgridV2::new(
+                        PackedQ1X2SubgridV1::new(
                             array,
                             mu2_values,
                             x1_values.clone(),
@@ -299,7 +299,7 @@ fn convert_coeff_add_flex(
             let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
             let mut arrays =
                 vec![
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                    PackedArray::new([mu2_values.len(), x1_values.len(), x2_values.len()]);
                     orders_len
                 ];
 
@@ -367,7 +367,7 @@ fn convert_coeff_add_flex(
                     continue;
                 }
 
-                *subgrid = ImportOnlySubgridV2::new(
+                *subgrid = PackedQ1X2SubgridV1::new(
                     array,
                     mu2_values.clone(),
                     x1_values.clone(),

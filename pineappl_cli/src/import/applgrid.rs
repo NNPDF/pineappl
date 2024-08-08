@@ -3,13 +3,13 @@ use lhapdf::Pdf;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::sparse_array3::SparseArray3;
+use pineappl::packed_array::PackedArray;
 use pineappl::subgrid::{Mu2, SubgridParams};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
 use std::ptr;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 
 fn convert_to_pdg_id(pid: usize) -> i32 {
     let pid = i32::try_from(pid).unwrap() - 6;
@@ -185,7 +185,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 let matrix = unsafe { &*matrix };
 
                 let mut array =
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                    PackedArray::new([mu2_values.len(), x1_values.len(), x2_values.len()]);
 
                 for itau in 0..mu2_values.len() {
                     for ix1 in 0..x1_values.len() {
@@ -206,7 +206,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
 
                 if !array.is_empty() {
                     pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
-                        ImportOnlySubgridV2::new(
+                        PackedQ1X2SubgridV1::new(
                             array,
                             mu2_values.clone(),
                             x1_values.clone(),

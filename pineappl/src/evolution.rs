@@ -4,9 +4,9 @@ use super::boc::{Channel, Order};
 use super::channel;
 use super::convolutions::Convolution;
 use super::grid::{Grid, GridError};
-use super::import_only_subgrid::ImportOnlySubgridV2;
+use super::packed_array::PackedArray;
+use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
-use super::sparse_array3::SparseArray3;
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::izip;
@@ -473,8 +473,8 @@ pub(crate) fn evolve_slice_with_one(
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
-            ImportOnlySubgridV2::new(
-                SparseArray3::from_ndarray(
+            PackedQ1X2SubgridV1::new(
+                PackedArray::from_ndarray(
                     table
                         .insert_axis(Axis(0))
                         .insert_axis(Axis(new_axis))
@@ -625,8 +625,8 @@ pub(crate) fn evolve_slice_with_two(
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
-            ImportOnlySubgridV2::new(
-                SparseArray3::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
+            PackedQ1X2SubgridV1::new(
+                PackedArray::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
                 vec![Mu2 {
                     // TODO: FK tables don't depend on the renormalization scale
                     //ren: -1.0,
@@ -775,8 +775,8 @@ pub(crate) fn evolve_slice_with_two2(
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
-            ImportOnlySubgridV2::new(
-                SparseArray3::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
+            PackedQ1X2SubgridV1::new(
+                PackedArray::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
                 vec![Mu2 {
                     // TODO: FK tables don't depend on the renormalization scale
                     //ren: -1.0,
