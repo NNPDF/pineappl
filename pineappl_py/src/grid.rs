@@ -33,7 +33,6 @@ pub struct PyOrder {
 }
 
 // TODO: should probably be in a different module
-// TODO: rename to `PidBasis`
 #[pyclass(name = "PidBasis")]
 #[derive(Clone)]
 pub enum PyPidBasis {
@@ -51,7 +50,6 @@ impl From<PyPidBasis> for PidBasis {
 }
 
 // TODO: should probably be in a different module
-// TODO: rename to `OperatorSliceInfo`
 #[pyclass(name = "OperatorSliceInfo")]
 #[derive(Clone)]
 pub struct PyOperatorSliceInfo {
