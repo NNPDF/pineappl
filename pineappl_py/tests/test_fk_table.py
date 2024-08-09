@@ -9,7 +9,7 @@ class TestFkTable:
         orders = [pineappl.grid.Order(0, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
-        g = pineappl.grid.Grid.create(channels, orders, bin_limits, subgrid_params)
+        g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)
         return g
 
     def test_convolve_with_one(self):
@@ -24,8 +24,8 @@ class TestFkTable:
             xs,
             np.array([1.0]),
         )
-        g.set_subgrid(0, 0, 0, subgrid)
-        fk = pineappl.fk_table.FkTable.from_grid(g)
+        g.set_subgrid(0, 0, 0, subgrid.into())
+        fk = pineappl.fk_table.FkTable(g)
         np.testing.assert_allclose(
             fk.convolve_with_one(2212, lambda pid, x, q2: 0.0),
             [0.0] * 2,
@@ -35,8 +35,8 @@ class TestFkTable:
             [5e7 / 9999, 0.0],
         )
 
-        info = pineappl.grid.PyOperatorSliceInfo(
-            1.0, [], [], 1.0, [], [], pineappl.grid.PyPidBasis.Pdg
+        info = pineappl.evolution.OperatorSliceInfo(
+            1.0, [], [], 1.0, [], [], pineappl.evolution.PidBasis.Pdg
         )
 
         # TODO: write a better test

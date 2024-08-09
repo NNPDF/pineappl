@@ -8,7 +8,7 @@ use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`.
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV2")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV2 {
@@ -79,7 +79,7 @@ impl PyImportOnlySubgridV2 {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`.
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV1 {
@@ -148,4 +148,11 @@ impl PyImportOnlySubgridV1 {
             subgrid_enum: self.import_only_subgrid.clone().into(),
         }
     }
+}
+
+#[pymodule]
+pub fn import_only_subgrid(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyImportOnlySubgridV1>()?;
+    m.add_class::<PyImportOnlySubgridV2>()?;
+    Ok(())
 }

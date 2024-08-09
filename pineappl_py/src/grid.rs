@@ -1,13 +1,12 @@
 use ndarray::CowArray;
 use pineappl::boc::Order;
 use pineappl::convolutions::LumiCache;
-use pineappl::evolution::{AlphasTable, OperatorInfo, OperatorSliceInfo};
+use pineappl::evolution::{AlphasTable, OperatorInfo};
 use pineappl::grid::{Grid, Ntuple};
-use pineappl::pids::PidBasis;
 
 use super::bin::PyBinRemapper;
 use super::channel::PyChannel;
-use super::evolution::PyEvolveInfo;
+use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo, PyPidBasis};
 use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
@@ -26,80 +25,10 @@ use pyo3::prelude::*;
 use pyo3::types::PyIterator;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`.
-#[pyclass]
+#[pyclass(name = "Order")]
 #[repr(transparent)]
 pub struct PyOrder {
     pub(crate) order: Order,
-}
-
-// TODO: should probably be in a different module
-// TODO: rename to `PidBasis`
-#[pyclass]
-#[derive(Clone)]
-pub enum PyPidBasis {
-    Pdg,
-    Evol,
-}
-
-impl From<PyPidBasis> for PidBasis {
-    fn from(basis: PyPidBasis) -> Self {
-        match basis {
-            PyPidBasis::Pdg => Self::Pdg,
-            PyPidBasis::Evol => Self::Evol,
-        }
-    }
-}
-
-// TODO: should probably be in a different module
-// TODO: rename to `OperatorSliceInfo`
-#[pyclass]
-#[derive(Clone)]
-pub struct PyOperatorSliceInfo {
-    info: OperatorSliceInfo,
-}
-
-#[pymethods]
-impl PyOperatorSliceInfo {
-    /// Constructor.
-    ///
-    /// Parameteters
-    /// ------------
-    /// fac0 : float
-    ///     initial factorization scale
-    /// pids0 : list(int)
-    ///     flavors available at the initial scale
-    /// x0 : list(float)
-    ///     x-grid at the initial scale
-    /// fac1 : float
-    ///     evolved final scale
-    /// pids1 : list(int)
-    ///     flavors available at the final scale
-    /// x1 : list(float)
-    ///     x-grid at the final scale
-    /// pid_basis : PyPidBasis
-    ///     flavor basis reprentation at the initial scale
-    #[new]
-    pub fn new(
-        fac0: f64,
-        pids0: Vec<i32>,
-        x0: Vec<f64>,
-        fac1: f64,
-        pids1: Vec<i32>,
-        x1: Vec<f64>,
-        pid_basis: PyPidBasis,
-    ) -> Self {
-        Self {
-            info: OperatorSliceInfo {
-                fac0,
-                pids0,
-                x0,
-                fac1,
-                pids1,
-                x1,
-                pid_basis: pid_basis.into(),
-            },
-        }
-    }
 }
 
 impl PyOrder {
@@ -180,7 +109,7 @@ impl PyOrder {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
-#[pyclass]
+#[pyclass(name = "Grid")]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyGrid {
@@ -425,15 +354,16 @@ impl PyGrid {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
+    #[pyo3(signature = (pdg_id, xfx, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_one<'py>(
         &self,
         pdg_id: i32,
         xfx: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: PyReadonlyArray1<bool>,
-        bin_indices: PyReadonlyArray1<usize>,
-        channel_mask: PyReadonlyArray1<bool>,
-        xi: Vec<(f64, f64)>,
+        order_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        channel_mask: Option<PyReadonlyArray1<bool>>,
+        xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -443,10 +373,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.to_vec().unwrap(),
-                &bin_indices.to_vec().unwrap(),
-                &channel_mask.to_vec().unwrap(),
-                &xi,
+                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
+                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
+                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
     }
@@ -487,6 +417,7 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
+    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
@@ -494,10 +425,10 @@ impl PyGrid {
         pdg_id2: i32,
         xfx2: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: PyReadonlyArray1<bool>,
-        bin_indices: PyReadonlyArray1<usize>,
-        channel_mask: PyReadonlyArray1<bool>,
-        xi: Vec<(f64, f64)>,
+        order_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        channel_mask: Option<PyReadonlyArray1<bool>>,
+        xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -509,10 +440,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.to_vec().unwrap(),
-                &bin_indices.to_vec().unwrap(),
-                &channel_mask.to_vec().unwrap(),
-                &xi,
+                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
+                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
+                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
     }
@@ -913,4 +844,11 @@ impl PyGrid {
     pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
         self.grid.delete_bins(&bin_indices.to_vec().unwrap())
     }
+}
+
+#[pymodule]
+pub fn grid(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyGrid>()?;
+    m.add_class::<PyOrder>()?;
+    Ok(())
 }

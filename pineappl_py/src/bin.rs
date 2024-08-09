@@ -4,7 +4,7 @@ use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::bin::BinRemapper <bin/struct.BinRemapper.html>`.
-#[pyclass]
+#[pyclass(name = "BinRemapper")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyBinRemapper {
@@ -31,4 +31,10 @@ impl PyBinRemapper {
     pub fn new_f64(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
         Self::new(BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap())
     }
+}
+
+#[pymodule]
+pub fn bin(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyBinRemapper>()?;
+    Ok(())
 }

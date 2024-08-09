@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 /// 1. the PDG id of the first incoming parton
 /// 2. the PDG id of the second parton
 /// 3. a numerical factor that will multiply the result for this specific combination.
-#[pyclass]
+#[pyclass(name = "Channel")]
 #[repr(transparent)]
 pub struct PyChannel {
     pub(crate) entry: Channel,
@@ -43,4 +43,10 @@ impl PyChannel {
     pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
         self.entry.entry().to_vec()
     }
+}
+
+#[pymodule]
+pub fn channel(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyChannel>()?;
+    Ok(())
 }

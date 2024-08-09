@@ -14,14 +14,14 @@ use std::str::FromStr;
 use crate::grid::PyGrid;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
-#[pyclass]
+#[pyclass(name = "FkTable")]
 #[repr(transparent)]
 pub struct PyFkTable {
     pub(crate) fk_table: FkTable,
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::PyFkAssumptions <fk_table/struct.PyFkAssumptions.html>`.
-#[pyclass]
+#[pyclass(name = "FkAssumptions")]
 #[repr(transparent)]
 pub struct PyFkAssumptions {
     pub(crate) fk_assumptions: FkAssumptions,
@@ -294,4 +294,11 @@ impl PyFkTable {
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
         self.fk_table.optimize(assumptions.fk_assumptions)
     }
+}
+
+#[pymodule]
+pub fn fk_table(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PyFkTable>()?;
+    m.add_class::<PyFkAssumptions>()?;
+    Ok(())
 }
