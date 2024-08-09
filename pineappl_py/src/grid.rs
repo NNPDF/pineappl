@@ -1,13 +1,12 @@
 use ndarray::CowArray;
 use pineappl::boc::Order;
 use pineappl::convolutions::LumiCache;
-use pineappl::evolution::{AlphasTable, OperatorInfo, OperatorSliceInfo};
+use pineappl::evolution::{AlphasTable, OperatorInfo};
 use pineappl::grid::{Grid, Ntuple};
-use pineappl::pids::PidBasis;
 
 use super::bin::PyBinRemapper;
 use super::channel::PyChannel;
-use super::evolution::PyEvolveInfo;
+use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo, PyPidBasis};
 use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
@@ -30,74 +29,6 @@ use pyo3::types::PyIterator;
 #[repr(transparent)]
 pub struct PyOrder {
     pub(crate) order: Order,
-}
-
-// TODO: should probably be in a different module
-#[pyclass(name = "PidBasis")]
-#[derive(Clone)]
-pub enum PyPidBasis {
-    Pdg,
-    Evol,
-}
-
-impl From<PyPidBasis> for PidBasis {
-    fn from(basis: PyPidBasis) -> Self {
-        match basis {
-            PyPidBasis::Pdg => Self::Pdg,
-            PyPidBasis::Evol => Self::Evol,
-        }
-    }
-}
-
-// TODO: should probably be in a different module
-#[pyclass(name = "OperatorSliceInfo")]
-#[derive(Clone)]
-pub struct PyOperatorSliceInfo {
-    info: OperatorSliceInfo,
-}
-
-#[pymethods]
-impl PyOperatorSliceInfo {
-    /// Constructor.
-    ///
-    /// Parameteters
-    /// ------------
-    /// fac0 : float
-    ///     initial factorization scale
-    /// pids0 : list(int)
-    ///     flavors available at the initial scale
-    /// x0 : list(float)
-    ///     x-grid at the initial scale
-    /// fac1 : float
-    ///     evolved final scale
-    /// pids1 : list(int)
-    ///     flavors available at the final scale
-    /// x1 : list(float)
-    ///     x-grid at the final scale
-    /// pid_basis : PyPidBasis
-    ///     flavor basis reprentation at the initial scale
-    #[new]
-    pub fn new(
-        fac0: f64,
-        pids0: Vec<i32>,
-        x0: Vec<f64>,
-        fac1: f64,
-        pids1: Vec<i32>,
-        x1: Vec<f64>,
-        pid_basis: PyPidBasis,
-    ) -> Self {
-        Self {
-            info: OperatorSliceInfo {
-                fac0,
-                pids0,
-                x0,
-                fac1,
-                pids1,
-                x1,
-                pid_basis: pid_basis.into(),
-            },
-        }
-    }
 }
 
 impl PyOrder {
@@ -918,9 +849,6 @@ impl PyGrid {
 #[pymodule]
 pub fn grid(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyGrid>()?;
-    m.add_class::<PyOperatorSliceInfo>()?;
     m.add_class::<PyOrder>()?;
-    m.add_class::<PyPidBasis>()?;
-
     Ok(())
 }

@@ -35,8 +35,8 @@ class TestFkTable:
             [5e7 / 9999, 0.0],
         )
 
-        info = pineappl.grid.OperatorSliceInfo(
-            1.0, [], [], 1.0, [], [], pineappl.grid.PidBasis.Pdg
+        info = pineappl.evolution.OperatorSliceInfo(
+            1.0, [], [], 1.0, [], [], pineappl.evolution.PidBasis.Pdg
         )
 
         # TODO: write a better test
