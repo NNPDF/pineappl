@@ -3,8 +3,7 @@ from .utils import PyWrapper
 
 
 class FkTable(PyWrapper):
-    """Python wrapper object to interface
-    :class:`~pineappl.pineappl.PyFkTable`.
+    """Python wrapper object to interface :class:`~pineappl.pineappl.PyFkTable`.
 
     Parameters
     ----------
@@ -55,13 +54,12 @@ class FkTable(PyWrapper):
 
 
 class FkAssumptions(PyWrapper):
-    """Python wrapper object to interface
-    :class:`~pineappl.pineappl.PyFkAssumptions`.
+    """Python wrapper object to interface :class:`~pineappl.pineappl.PyFkAssumptions`.
 
     Parameters
     ----------
-        assumption : str
-            assumption identifier
+    assumption : str
+        assumption identifier
     """
 
     def __init__(self, assumption):

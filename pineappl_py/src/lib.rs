@@ -4,11 +4,11 @@
 use pyo3::prelude::*;
 
 pub mod bin;
+pub mod channel;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
-pub mod lumi;
 pub mod subgrid;
 
 /// PyO3 Python module that contains all exposed classes from Rust.
@@ -22,7 +22,7 @@ fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<grid::PyOrder>()?;
     m.add_class::<grid::PyOperatorSliceInfo>()?;
     m.add_class::<grid::PyPidBasis>()?;
-    m.add_class::<lumi::PyLumiEntry>()?;
+    m.add_class::<channel::PyChannel>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV1>()?;
     m.add_class::<import_only_subgrid::PyImportOnlySubgridV2>()?;
     m.add_class::<fk_table::PyFkTable>()?;

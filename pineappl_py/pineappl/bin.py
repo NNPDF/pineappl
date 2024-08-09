@@ -10,10 +10,10 @@ class BinRemapper(PyWrapper):
 
     Parameters
     ----------
-        normalizations : sequence(float)
-            list with normalizations
-        limits : list(tuple(float,float))
-            all bin limits as a flat list
+    normalizations : sequence(float)
+        list with normalizations
+    limits : list(tuple(float,float))
+        all bin limits as a flat list
     """
 
     def __init__(self, normalizations, limits):

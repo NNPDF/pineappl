@@ -10,14 +10,14 @@ class Order(PyWrapper):
 
     Parameters
     ----------
-        alphas : int
-            power of :math:`\alpha_s`
-        alpha : int
-            power of :math:`\alpha`
-        logxir : int
-            power of :math:`\log(\xi_r)`
-        logxif : int
-            power of :math:`\log(\xi_f)`
+    alphas : int
+        power of :math:`\alpha_s`
+    alpha : int
+        power of :math:`\alpha`
+    logxir : int
+        power of :math:`\log(\xi_r)`
+    logxif : int
+        power of :math:`\log(\xi_f)`
     """
 
     def __init__(self, alphas, alpha, logxir, logxif):
@@ -25,9 +25,7 @@ class Order(PyWrapper):
 
     @staticmethod
     def create_mask(orders, max_as, max_al, logs):
-        r"""
-        Return a mask suitable to pass as the `order_mask` parameter of
-        :meth:`Grid.convolve`.
+        r"""Return a mask suitable to pass as the `order_mask` parameter.
 
         Parameters
         ----------
@@ -57,90 +55,90 @@ class Grid(PyWrapper):
 
     Parameters
     ----------
-        pygrid : PyGrid
-            raw wrapper object
+    pygrid : PyGrid
+        raw wrapper object
     """
 
     def __init__(self, pygrid):
         self._raw = pygrid
 
     @classmethod
-    def create(cls, lumi, orders, bin_limits, subgrid_params):
+    def create(cls, channels, orders, bin_limits, subgrid_params):
         """Create a grid object from its ingredients.
 
         Parameters
         ---------
-            lumi : list(LumiEntry)
-                List of active luminosities
-            orders: list(Order)
-                List of available orders
-            bin_limits: sequence(float)
-                Bin limits
-            subgrid_params : SubgridParams
-                subgrid parameters
+        channels : list(Channel)
+            List of active channels
+        orders: list(Order)
+            List of available orders
+        bin_limits: sequence(float)
+            Bin limits
+        subgrid_params : SubgridParams
+            subgrid parameters
         """
-        lumi = [lentry.raw for lentry in lumi]
+        channels = [centry.raw for centry in channels]
         orders = [o.raw for o in orders]
-        return cls(PyGrid(lumi, orders, np.array(bin_limits), subgrid_params.raw))
+        return cls(PyGrid(channels, orders, np.array(bin_limits), subgrid_params.raw))
 
-    def subgrid(self, order, bin_, lumi):
+    def subgrid(self, order, bin_, channel):
         """Retrieve the subgrid at the given position.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
 
         Parameters
         ----------
-            order : int
-                index of order
-            bin_ : int
-                index of bin
-            lumi : int
-                index of luminosity
+        order : int
+            index of order
+        bin_ : int
+            index of bin
+        channel : int
+            index of channel
 
         Returns
         -------
             subgrid : Subgrid
                 subgrid content
         """
-        return self.raw.subgrid(order, bin_, lumi)
+        return self.raw.subgrid(order, bin_, channel)
 
     def __getitem__(self, key):
         """Retrieve the subgrid at the given position.
 
-        Syntactic sugar for :meth:`subgrid`
+        Syntactic sugar for :meth:`subgrid`.
 
         Parameters
         ----------
-            key : (int, int, int)
-                a 3-element integers tuple, consisting in `(order, bin, lumi)`
+        key : (int, int, int)
+            a 3-element integers tuple, consisting of `(order, bin, channel)`
 
         Returns
         -------
-            subgrid : Subgrid
-                subgrid content
+        subgrid : Subgrid
+            subgrid content
         """
         if len(key) != 3:
-            raise ValueError("A tuple with `(order, bin, lumi)` is required as key.")
+            raise ValueError("A tuple with `(order, bin, channel)` is required as key.")
 
         return self.subgrid(*key)
 
-    def set_subgrid(self, order, bin_, lumi, subgrid):
+    def set_subgrid(self, order, bin_, channel, subgrid):
         """Set the subgrid at the given position.
 
         Convenience wrapper for :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
 
         Parameters
         ----------
-            order : int
-                index of order
-            bin_ : int
-                index of bin
-            lumi : int
-                index of luminosity
-            subgrid : ImportOnlySubgridV1
-                subgrid content
+        order : int
+            index of order
+        bin_ : int
+            index of bin
+        channel : int
+            index of channel
+        subgrid : ImportOnlySubgridV1
+            subgrid content
         """
-        self.raw.set_subgrid(order, bin_, lumi, subgrid.into())
+        self.raw.set_subgrid(order, bin_, channel, subgrid.into())
 
     def __setitem__(self, key, subgrid):
         """Set the subgrid at the given position.
@@ -149,13 +147,13 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            key : (int, int, int)
-                a 3-element integers tuple, consisting in `(order, bin, lumi)`
-            subgrid : ImportOnlySubgridV1
-                subgrid content
+        key : (int, int, int)
+            a 3-element integers tuple, consisting of `(order, bin, channel)`
+        subgrid : ImportOnlySubgridV1
+            subgrid content
         """
         if len(key) != 3:
-            raise ValueError("A tuple with `(order, bin, lumi)` is required as key.")
+            raise ValueError("A tuple with `(order, bin, channel)` is required as key.")
 
         self.set_subgrid(*key, subgrid)
 
@@ -166,8 +164,8 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            remapper: BinRemapper
-                Remapper object
+        remapper: BinRemapper
+            Remapper object
         """
         self.raw.set_remapper(remapper.raw)
 
@@ -178,8 +176,8 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            list(Order) :
-                list with perturbative orders and scale variations
+        list(Order) :
+            list with perturbative orders and scale variations
         """
         return [Order(*pyorder.as_tuple()) for pyorder in self.raw.orders()]
 
@@ -190,41 +188,41 @@ class Grid(PyWrapper):
         alphas,
         order_mask=np.array([], dtype=bool),
         bin_indices=np.array([], dtype=np.uint64),
-        lumi_mask=np.array([], dtype=bool),
+        channel_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
-        r"""Convolute grid with pdf.
+        r"""Convolve with a single distribution.
 
         Parameters
         ----------
-            pdg_id : int
-                PDG Monte Carlo ID of the hadronic particle `xfx` is the PDF for
-            xfx : callable
-                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-            alphas : callable
-                lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-            order_mask : sequence(bool)
-                Mask for selecting specific orders. The value `True` means the corresponding order
-                is included. An empty list corresponds to all orders being enabled.
-            bin_indices : sequence(int)
-                A list with the indices of the corresponding bins that should be calculated. An
-                empty list means that all orders should be calculated.
-            lumi_mask : sequence(bool)
-                Mask for selecting specific luminosity channels. The value `True` means the
-                corresponding channel is included. An empty list corresponds to all channels being
-                enabled.
-            xi : list((float, float))
-                A list with the scale variation factors that should be used to calculate
-                scale-varied results. The first entry of a tuple corresponds to the variation of
-                the renormalization scale, the second entry to the variation of the factorization
-                scale. If only results for the central scale are need the list should contain
-                `(1.0, 1.0)`.
+        pdg_id : int
+            PDG Monte Carlo ID of the hadronic particle
+        xfx : callable
+            lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+        alphas : callable
+            lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+        order_mask : sequence(bool)
+            Mask for selecting specific orders. The value `True` means the corresponding order
+            is included. An empty list corresponds to all orders being enabled.
+        bin_indices : sequence(int)
+            A list with the indices of the corresponding bins that should be calculated. An
+            empty list means that all orders should be calculated.
+        channel_mask : sequence(bool)
+            Mask for selecting specific channels. The value `True` means the
+            corresponding channel is included. An empty list corresponds to all channels being
+            enabled.
+        xi : list((float, float))
+            A list with the scale variation factors that should be used to calculate
+            scale-varied results. The first entry of a tuple corresponds to the variation of
+            the renormalization scale, the second entry to the variation of the factorization
+            scale. If only results for the central scale are need the list should contain
+            `(1.0, 1.0)`.
 
         Returns
         -------
-            list(float) :
-                cross sections for all bins, for each scale-variation tuple (first all bins, then
-                the scale variation)
+        list(float) :
+            cross sections for all bins, for each scale-variation tuple (first all bins, then
+            the scale variation)
         """
         return self.raw.convolve_with_one(
             pdg_id,
@@ -232,7 +230,7 @@ class Grid(PyWrapper):
             alphas,
             np.array(order_mask),
             np.array(bin_indices),
-            np.array(lumi_mask),
+            np.array(channel_mask),
             xi,
         )
 
@@ -245,45 +243,45 @@ class Grid(PyWrapper):
         alphas,
         order_mask=np.array([], dtype=bool),
         bin_indices=np.array([], dtype=np.uint64),
-        lumi_mask=np.array([], dtype=bool),
+        channel_mask=np.array([], dtype=bool),
         xi=((1.0, 1.0),),
     ):
-        r"""Convolute grid with two pdfs.
+        r"""Convolve with two distributions.
 
         Parameters
         ----------
-            pdg_id1 : int
-                PDG Monte Carlo ID of the hadronic particle `xfx1` is the PDF for
-            xfx1 : callable
-                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-            pdg_id2 : int
-                PDG Monte Carlo ID of the hadronic particle `xfx2` is the PDF for
-            xfx2 : callable
-                lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-            alphas : callable
-                lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-            order_mask : sequence(bool)
-                Mask for selecting specific orders. The value `True` means the corresponding order
-                is included. An empty list corresponds to all orders being enabled.
-            bin_indices : sequence(int)
-                A list with the indices of the corresponding bins that should be calculated. An
-                empty list means that all orders should be calculated.
-            lumi_mask : sequence(bool)
-                Mask for selecting specific luminosity channels. The value `True` means the
-                corresponding channel is included. An empty list corresponds to all channels being
-                enabled.
-            xi : list((float, float))
-                A list with the scale variation factors that should be used to calculate
-                scale-varied results. The first entry of a tuple corresponds to the variation of
-                the renormalization scale, the second entry to the variation of the factorization
-                scale. If only results for the central scale are need the list should contain
-                `(1.0, 1.0)`.
+        pdg_id1 : int
+            PDG Monte Carlo ID of the first hadronic particle
+        xfx1 : callable
+            lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+        pdg_id2 : int
+            PDG Monte Carlo ID of the second hadronic particle
+        xfx2 : callable
+            lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+        alphas : callable
+            lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
+        order_mask : sequence(bool)
+            Mask for selecting specific orders. The value `True` means the corresponding order
+            is included. An empty list corresponds to all orders being enabled.
+        bin_indices : sequence(int)
+            A list with the indices of the corresponding bins that should be calculated. An
+            empty list means that all orders should be calculated.
+        channel_mask : sequence(bool)
+            Mask for selecting specific channels. The value `True` means the
+            corresponding channel is included. An empty list corresponds to all channels being
+            enabled.
+        xi : list((float, float))
+            A list with the scale variation factors that should be used to calculate
+            scale-varied results. The first entry of a tuple corresponds to the variation of
+            the renormalization scale, the second entry to the variation of the factorization
+            scale. If only results for the central scale are needed the list should contain
+            `(1.0, 1.0)`.
 
         Returns
         -------
-            list(float) :
-                cross sections for all bins, for each scale-variation tuple (first all bins, then
-                the scale variation)
+        list(float) :
+            cross sections for all bins, for each scale-variation tuple (first all bins, then
+            the scale variation)
         """
         return self.raw.convolve_with_two(
             pdg_id1,
@@ -293,7 +291,7 @@ class Grid(PyWrapper):
             alphas,
             np.array(order_mask),
             np.array(bin_indices),
-            np.array(lumi_mask),
+            np.array(channel_mask),
             xi,
         )
 
@@ -302,7 +300,7 @@ class Grid(PyWrapper):
         operators,
         mur2_grid,
         alphas_values,
-        lumi_id_types="pdg_mc_ids",
+        pid_basis="pdg_mc_ids",
         order_mask=(),
         xi=(1.0, 1.0),
     ):
@@ -318,8 +316,8 @@ class Grid(PyWrapper):
             renormalization scales
         alphas_values : list[float]
             alpha_s values associated to the renormalization scales
-        lumi_id_types : str
-            kind of lumi types (e.g. "pdg_mc_ids" for flavor basis, "evol"
+        pid_basis : str
+            kind of channel types (e.g. "pdg_mc_ids" for flavor basis, "evol"
             for evolution basis)
         order_mask : list(bool)
             Mask for selecting specific orders. The value `True` means the corresponding order
@@ -352,7 +350,7 @@ class Grid(PyWrapper):
                 np.array(mur2_grid, dtype=np.float64),
                 np.array(alphas_values, dtype=np.float64),
                 xi,
-                lumi_id_types,
+                pid_basis,
                 np.array(order_mask, dtype=bool),
             )
         )
@@ -365,13 +363,13 @@ class Grid(PyWrapper):
 
         Parameters
         ----------
-            path : pathlike
-                file path
+        path : pathlike
+            file path
 
         Returns
         -------
-            Grid
-                grid object
+        Grid :
+            grid object
         """
         return cls(PyGrid.read(path))
 
