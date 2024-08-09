@@ -1,5 +1,7 @@
 //! Module containing structures for the 3 dimensions of a [`Grid`]: bins, [`Order`] and channels
 //! (`boc`).
+//!
+//! [`Grid`]: super::grid::Grid
 
 use float_cmp::approx_eq;
 use itertools::Itertools;
