@@ -320,61 +320,61 @@ mod tests {
 
     #[test]
     fn index() {
-        let mut a = PackedArray::<f64, 2>::new([4, 2]);
+        let mut a = PackedArray::new([4, 2]);
 
-        a[[0, 0]] = 1.0;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a.entries, vec![1.0]);
+        a[[0, 0]] = 1;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a.entries, vec![1]);
         assert_eq!(a.start_indices, vec![0]);
         assert_eq!(a.lengths, vec![1]);
 
-        a[[3, 0]] = 2.0;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a[[3, 0]], 2.0);
-        assert_eq!(a.entries, vec![1.0, 2.0]);
+        a[[3, 0]] = 2;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a[[3, 0]], 2);
+        assert_eq!(a.entries, vec![1, 2]);
         assert_eq!(a.start_indices, vec![0, 6]);
         assert_eq!(a.lengths, vec![1, 1]);
 
-        a[[3, 1]] = 3.0;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a[[3, 0]], 2.0);
-        assert_eq!(a[[3, 1]], 3.0);
-        assert_eq!(a.entries, vec![1.0, 2.0, 3.0]);
+        a[[3, 1]] = 3;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a[[3, 0]], 2);
+        assert_eq!(a[[3, 1]], 3);
+        assert_eq!(a.entries, vec![1, 2, 3]);
         assert_eq!(a.start_indices, vec![0, 6]);
         assert_eq!(a.lengths, vec![1, 2]);
 
-        a[[2, 0]] = 3.5;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a[[3, 0]], 2.0);
-        assert_eq!(a[[3, 1]], 3.0);
-        assert_eq!(a[[2, 0]], 3.5);
-        assert_eq!(a.entries, vec![1.0, 3.5, 0.0, 2.0, 3.0]);
+        a[[2, 0]] = 9;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a[[3, 0]], 2);
+        assert_eq!(a[[3, 1]], 3);
+        assert_eq!(a[[2, 0]], 9);
+        assert_eq!(a.entries, vec![1, 9, 0, 2, 3]);
         assert_eq!(a.start_indices, vec![0, 4]);
         assert_eq!(a.lengths, vec![1, 4]);
 
-        a[[2, 0]] = 4.0;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a[[3, 0]], 2.0);
-        assert_eq!(a[[3, 1]], 3.0);
-        assert_eq!(a[[2, 0]], 4.0);
-        assert_eq!(a.entries, vec![1.0, 4.0, 0.0, 2.0, 3.0]);
+        a[[2, 0]] = 4;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a[[3, 0]], 2);
+        assert_eq!(a[[3, 1]], 3);
+        assert_eq!(a[[2, 0]], 4);
+        assert_eq!(a.entries, vec![1, 4, 0, 2, 3]);
         assert_eq!(a.start_indices, vec![0, 4]);
         assert_eq!(a.lengths, vec![1, 4]);
 
-        a[[1, 0]] = 5.0;
-        assert_eq!(a[[0, 0]], 1.0);
-        assert_eq!(a[[3, 0]], 2.0);
-        assert_eq!(a[[3, 1]], 3.0);
-        assert_eq!(a[[2, 0]], 4.0);
-        assert_eq!(a[[1, 0]], 5.0);
-        assert_eq!(a.entries, vec![1.0, 0.0, 5.0, 0.0, 4.0, 0.0, 2.0, 3.0]);
+        a[[1, 0]] = 5;
+        assert_eq!(a[[0, 0]], 1);
+        assert_eq!(a[[3, 0]], 2);
+        assert_eq!(a[[3, 1]], 3);
+        assert_eq!(a[[2, 0]], 4);
+        assert_eq!(a[[1, 0]], 5);
+        assert_eq!(a.entries, vec![1, 0, 5, 0, 4, 0, 2, 3]);
         assert_eq!(a.start_indices, vec![0]);
         assert_eq!(a.lengths, vec![8]);
     }
 
     #[test]
     fn iter() {
-        let mut a = PackedArray::<i32, 2>::new([6, 5]);
+        let mut a = PackedArray::new([6, 5]);
         a[[2, 2]] = 1;
         a[[2, 4]] = 2;
         a[[4, 1]] = 3;
@@ -401,48 +401,48 @@ mod tests {
         assert!(array.is_empty());
 
         // insert the first element
-        array[[5, 10, 10]] = 1.0;
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[5, 10, 10]] = 1;
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 1);
         assert_eq!(array.explicit_zeros(), 0);
         assert_eq!(array.overhead(), 2);
         assert!(!array.is_empty());
 
         // insert an element after the first one
-        array[[8, 10, 10]] = 2.0;
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[8, 10, 10]] = 2;
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 2);
         assert_eq!(array.explicit_zeros(), 0);
         assert_eq!(array.overhead(), 4);
         assert!(!array.is_empty());
 
         // insert an element before the first one
-        array[[1, 10, 10]] = 3.0;
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 10, 10]] = 3;
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 3);
         assert_eq!(array.explicit_zeros(), 0);
         assert_eq!(array.overhead(), 6);
         assert!(!array.is_empty());
 
-        array[[1, 10, 11]] = 4.0;
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 10, 11]] = 4;
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 4);
         assert_eq!(array.explicit_zeros(), 0);
         assert_eq!(array.overhead(), 6);
         assert!(!array.is_empty());
 
-        array[[1, 10, 9]] = 5.0;
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 10, 9]] = 5;
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 5);
         assert_eq!(array.explicit_zeros(), 0);
         // dbg!(&array.start_indices);
@@ -450,89 +450,89 @@ mod tests {
         assert_eq!(array.overhead(), 6);
         assert!(!array.is_empty());
 
-        array[[1, 10, 0]] = 6.0;
-        assert_eq!(array[[1, 10, 0]], 6.0);
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 10, 0]] = 6;
+        assert_eq!(array[[1, 10, 0]], 6);
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 6);
         assert_eq!(array.explicit_zeros(), 0);
         assert_eq!(array.overhead(), 8);
         assert!(!array.is_empty());
 
-        array[[1, 10, 2]] = 7.0;
-        assert_eq!(array[[1, 10, 2]], 7.0);
-        assert_eq!(array[[1, 10, 0]], 6.0);
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 10, 2]] = 7;
+        assert_eq!(array[[1, 10, 2]], 7);
+        assert_eq!(array[[1, 10, 0]], 6);
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 7);
         assert_eq!(array.overhead(), 8);
         assert!(!array.is_empty());
 
         // check zeros
-        assert_eq!(array[[1, 10, 1]], 0.0);
+        assert_eq!(array[[1, 10, 1]], 0);
         assert_eq!(array.explicit_zeros(), 1);
 
-        array[[1, 15, 2]] = 8.0;
-        assert_eq!(array[[1, 15, 2]], 8.0);
-        assert_eq!(array[[1, 10, 2]], 7.0);
-        assert_eq!(array[[1, 10, 0]], 6.0);
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 15, 2]] = 8;
+        assert_eq!(array[[1, 15, 2]], 8);
+        assert_eq!(array[[1, 10, 2]], 7);
+        assert_eq!(array[[1, 10, 0]], 6);
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 8);
         assert_eq!(array.overhead(), 10);
         assert!(!array.is_empty());
 
         // check zeros
-        assert_eq!(array[[1, 10, 1]], 0.0);
+        assert_eq!(array[[1, 10, 1]], 0);
         assert_eq!(array.explicit_zeros(), 1);
 
-        array[[1, 15, 4]] = 9.0;
-        assert_eq!(array[[1, 15, 4]], 9.0);
-        assert_eq!(array[[1, 15, 2]], 8.0);
-        assert_eq!(array[[1, 10, 2]], 7.0);
-        assert_eq!(array[[1, 10, 0]], 6.0);
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 15, 4]] = 9;
+        assert_eq!(array[[1, 15, 4]], 9);
+        assert_eq!(array[[1, 15, 2]], 8);
+        assert_eq!(array[[1, 10, 2]], 7);
+        assert_eq!(array[[1, 10, 0]], 6);
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 9);
         assert_eq!(array.overhead(), 10);
         assert!(!array.is_empty());
 
         // check zeros
-        assert_eq!(array[[1, 15, 3]], 0.0);
-        assert_eq!(array[[1, 10, 1]], 0.0);
+        assert_eq!(array[[1, 15, 3]], 0);
+        assert_eq!(array[[1, 10, 1]], 0);
         assert_eq!(array.explicit_zeros(), 2);
 
-        array[[1, 15, 0]] = 10.0;
-        assert_eq!(array[[1, 15, 0]], 10.0);
-        assert_eq!(array[[1, 15, 4]], 9.0);
-        assert_eq!(array[[1, 15, 2]], 8.0);
-        assert_eq!(array[[1, 10, 2]], 7.0);
-        assert_eq!(array[[1, 10, 0]], 6.0);
-        assert_eq!(array[[1, 10, 9]], 5.0);
-        assert_eq!(array[[1, 10, 11]], 4.0);
-        assert_eq!(array[[1, 10, 10]], 3.0);
-        assert_eq!(array[[8, 10, 10]], 2.0);
-        assert_eq!(array[[5, 10, 10]], 1.0);
+        array[[1, 15, 0]] = 10;
+        assert_eq!(array[[1, 15, 0]], 10);
+        assert_eq!(array[[1, 15, 4]], 9);
+        assert_eq!(array[[1, 15, 2]], 8);
+        assert_eq!(array[[1, 10, 2]], 7);
+        assert_eq!(array[[1, 10, 0]], 6);
+        assert_eq!(array[[1, 10, 9]], 5);
+        assert_eq!(array[[1, 10, 11]], 4);
+        assert_eq!(array[[1, 10, 10]], 3);
+        assert_eq!(array[[8, 10, 10]], 2);
+        assert_eq!(array[[5, 10, 10]], 1);
         assert_eq!(array.non_zeros(), 10);
         assert_eq!(array.overhead(), 10);
         assert!(!array.is_empty());
 
         // check zeros
-        assert_eq!(array[[1, 15, 1]], 0.0);
-        assert_eq!(array[[1, 15, 3]], 0.0);
-        assert_eq!(array[[1, 10, 1]], 0.0);
+        assert_eq!(array[[1, 15, 1]], 0);
+        assert_eq!(array[[1, 15, 3]], 0);
+        assert_eq!(array[[1, 10, 1]], 0);
         assert_eq!(array.explicit_zeros(), 3);
     }
 
@@ -565,9 +565,9 @@ mod tests {
     fn index_panic_dim0_0() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[1, 0, 0]] = 1.0;
+        array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0.0);
+        assert_eq!(array[[0, 0, 0]], 0);
     }
 
     #[test]
@@ -575,9 +575,9 @@ mod tests {
     fn index_panic_dim0_1() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[1, 0, 0]] = 1.0;
+        array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[2, 0, 0]], 0.0);
+        assert_eq!(array[[2, 0, 0]], 0);
     }
 
     #[test]
@@ -585,9 +585,9 @@ mod tests {
     fn index_panic_dim1() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[1, 0, 0]] = 1.0;
+        array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[1, 50, 0]], 0.0);
+        assert_eq!(array[[1, 50, 0]], 0);
     }
 
     #[test]
@@ -595,9 +595,9 @@ mod tests {
     fn index_panic_dim2_0() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[0, 0, 1]] = 1.0;
+        array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0.0);
+        assert_eq!(array[[0, 0, 0]], 0);
     }
 
     #[test]
@@ -605,9 +605,9 @@ mod tests {
     fn index_panic_dim2_1() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[0, 0, 1]] = 1.0;
+        array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 2]], 0.0);
+        assert_eq!(array[[0, 0, 2]], 0);
     }
 
     #[test]
@@ -618,48 +618,48 @@ mod tests {
         assert_eq!(array.indexed_iter().next(), None);
 
         // insert an element
-        array[[2, 3, 4]] = 1.0;
+        array[[2, 3, 4]] = 1;
 
         let mut iter = array.indexed_iter();
 
         // check iterator with one element
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1.0)));
+        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
 
         // insert another element
-        array[[2, 3, 6]] = 2.0;
+        array[[2, 3, 6]] = 2;
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1.0)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2.0)));
+        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
 
         // insert yet another element
-        array[[4, 5, 7]] = 3.0;
+        array[[4, 5, 7]] = 3;
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1.0)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2.0)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3.0)));
+        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
 
         // insert at the very first position
-        array[[2, 0, 0]] = 4.0;
+        array[[2, 0, 0]] = 4;
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 0, 0], 4.0)));
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1.0)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2.0)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3.0)));
+        assert_eq!(iter.next(), Some(([2, 0, 0], 4)));
+        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
     }
 
@@ -667,9 +667,9 @@ mod tests {
     fn clear() {
         let mut array = PackedArray::new([40, 50, 50]);
 
-        array[[3, 5, 1]] = 1.0;
-        array[[7, 8, 9]] = 2.0;
-        array[[9, 1, 4]] = 3.0;
+        array[[3, 5, 1]] = 1;
+        array[[7, 8, 9]] = 2;
+        array[[9, 1, 4]] = 3;
 
         assert!(!array.is_empty());
         assert_eq!(array.non_zeros(), 3);
@@ -686,22 +686,22 @@ mod tests {
     fn from_ndarray() {
         let mut ndarray = Array3::zeros((2, 50, 50));
 
-        ndarray[[0, 4, 3]] = 1.0;
-        ndarray[[0, 4, 4]] = 2.0;
-        ndarray[[0, 4, 6]] = 3.0;
-        ndarray[[0, 5, 1]] = 4.0;
-        ndarray[[0, 5, 7]] = 5.0;
-        ndarray[[1, 3, 9]] = 6.0;
+        ndarray[[0, 4, 3]] = 1;
+        ndarray[[0, 4, 4]] = 2;
+        ndarray[[0, 4, 6]] = 3;
+        ndarray[[0, 5, 1]] = 4;
+        ndarray[[0, 5, 7]] = 5;
+        ndarray[[1, 3, 9]] = 6;
 
         let array = PackedArray::from_ndarray(ndarray.view(), 3, 40);
 
-        assert_eq!(array[[3, 4, 3]], 1.0);
-        assert_eq!(array[[3, 4, 4]], 2.0);
-        assert_eq!(array[[3, 4, 5]], 0.0);
-        assert_eq!(array[[3, 4, 6]], 3.0);
-        assert_eq!(array[[3, 5, 1]], 4.0);
-        assert_eq!(array[[3, 5, 7]], 5.0);
-        assert_eq!(array[[4, 3, 9]], 6.0);
+        assert_eq!(array[[3, 4, 3]], 1);
+        assert_eq!(array[[3, 4, 4]], 2);
+        assert_eq!(array[[3, 4, 5]], 0);
+        assert_eq!(array[[3, 4, 6]], 3);
+        assert_eq!(array[[3, 5, 1]], 4);
+        assert_eq!(array[[3, 5, 7]], 5);
+        assert_eq!(array[[4, 3, 9]], 6);
 
         assert_eq!(array.explicit_zeros(), 1);
     }
