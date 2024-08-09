@@ -92,7 +92,7 @@ struct Mmv3 {
 }
 
 impl Mmv3 {
-    fn new(subgrid_template: SubgridEnum) -> Self {
+    const fn new(subgrid_template: SubgridEnum) -> Self {
         Self {
             remapper: None,
             subgrid_template,
@@ -110,8 +110,7 @@ fn default_metadata() -> BTreeMap<String, String> {
         )
         .to_owned(),
     )]
-    .iter()
-    .cloned()
+    .into_iter()
     .collect()
 }
 
@@ -241,7 +240,7 @@ impl Grid {
 
     /// Return the convention by which the channels' PIDs are encoded.
     #[must_use]
-    pub fn pid_basis(&self) -> &PidBasis {
+    pub const fn pid_basis(&self) -> &PidBasis {
         &self.pid_basis
     }
 
@@ -477,8 +476,7 @@ impl Grid {
     fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Self, GridError> {
         use pineappl_v0::subgrid::Subgrid as _;
 
-        // TODO: convert error from v0 to v1
-        let grid = GridV0::read(&mut reader).unwrap();
+        let grid = GridV0::read(&mut reader).map_err(|err| GridError::Other(err.into()))?;
 
         // TODO: convert differently if grid only has one convolution
         let result = Self {
@@ -492,7 +490,7 @@ impl Grid {
                         } else {
                             let mu2_grid: Vec<_> = subgrid
                                 .mu2_grid()
-                                .into_iter()
+                                .iter()
                                 .map(|mu2v0| Mu2 {
                                     ren: mu2v0.ren,
                                     fac: mu2v0.fac,

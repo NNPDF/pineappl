@@ -473,12 +473,11 @@ impl FromStr for Channel {
                             .ok_or_else(|| ParseChannelError(format!("missing ')' in '{pids}'")))?
                             .split(',')
                             .map(|pid| {
-                                Ok(pid.trim().parse::<i32>().map_err(|err| {
+                                pid.trim().parse::<i32>().map_err(|err| {
                                     ParseChannelError(format!(
-                                        "could not parse PID: '{pid}', '{}'",
-                                        err.to_string()
+                                        "could not parse PID: '{pid}', '{err}'"
                                     ))
-                                })?)
+                                })
                             })
                             .collect::<Result<_, _>>()?;
 
@@ -493,9 +492,9 @@ impl FromStr for Channel {
             .collect::<Result<_, _>>()?;
 
         if !result.iter().map(|(pids, _)| pids.len()).all_equal() {
-            return Err(ParseChannelError(format!(
-                "PID tuples have different lengths"
-            )));
+            return Err(ParseChannelError(
+                "PID tuples have different lengths".to_owned(),
+            ));
         }
 
         Ok(Self::new(result))

@@ -168,7 +168,7 @@ impl Subcommand for Opts {
                 println!("{value}");
             }
         } else if self.group.keys {
-            for (key, _) in grid.metadata() {
+            for key in grid.metadata().keys() {
                 println!("{key}");
             }
         } else if self.group.show {

@@ -161,15 +161,12 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
         if integrated {
             "integ"
         } else {
-            metadata
-                .get("y_label")
-                .map(String::as_str)
-                .unwrap_or("diff")
+            metadata.get("y_label").map_or("diff", String::as_str)
         },
         if integrated {
             "" // TODO: compute the units for the integrated cross section
         } else {
-            metadata.get("y_unit").map(String::as_str).unwrap_or("")
+            metadata.get("y_unit").map_or("", String::as_str)
         },
     )
 }

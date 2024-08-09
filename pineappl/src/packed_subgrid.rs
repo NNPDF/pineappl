@@ -19,7 +19,7 @@ pub struct PackedQ1X2SubgridV1 {
 impl PackedQ1X2SubgridV1 {
     /// Constructor.
     #[must_use]
-    pub fn new(
+    pub const fn new(
         array: PackedArray<f64, 3>,
         mu2_grid: Vec<Mu2>,
         x1_grid: Vec<f64>,
@@ -114,7 +114,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
                     for ([i, j, k], value) in self.array.indexed_iter() {
                         let target_i = mu2_grid
                             .iter()
-                            .position(|&ref mu2| *mu2 == self.mu2_grid[i])
+                            .position(|mu2| *mu2 == self.mu2_grid[i])
                             .unwrap_or_else(|| unreachable!());
                         let target_j = x1_grid
                             .iter()
@@ -139,7 +139,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
                     let target_i = self
                         .mu2_grid
                         .iter()
-                        .position(|&ref x| *x == rhs_mu2[i])
+                        .position(|x| *x == rhs_mu2[i])
                         .unwrap_or_else(|| unreachable!());
                     let target_j = self
                         .x1_grid
