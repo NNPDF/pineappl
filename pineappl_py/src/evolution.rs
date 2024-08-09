@@ -3,7 +3,7 @@ use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::evolution::EvolveInfo <evolution/struct.EvolveInfo.html>`
+/// PyO3 wrapper to :rustdoc:`pineappl::evolution::EvolveInfo <evolution/struct.EvolveInfo.html>`.
 #[pyclass]
 #[repr(transparent)]
 pub struct PyEvolveInfo {
@@ -37,7 +37,7 @@ impl PyEvolveInfo {
     }
 }
 
-/// TODO
+/// PyO3 wrapper to :rustdoc:`pineappl::evolution::OperatorSliceInfo <evolution/struct.OperatorSliceInfo.html>`.
 #[pyclass]
 #[repr(transparent)]
 #[derive(Clone)]

@@ -2,9 +2,7 @@ use pineappl::boc::Channel;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::lumi::LumiEntry <lumi/struct.LumiEntry.html>`
-///
-/// **Usage**: `yadism`, FKTable interface
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
 ///
 /// Each entry consists of a tuple, which contains, in the following order:
 ///
@@ -13,38 +11,42 @@ use pyo3::prelude::*;
 /// 3. a numerical factor that will multiply the result for this specific combination.
 #[pyclass(name = "LumiEntry")]
 #[repr(transparent)]
-pub struct PyLumiEntry {
-    pub(crate) lumi_entry: Channel,
+pub struct PyChannel {
+    pub(crate) entry: Channel,
 }
 
-impl PyLumiEntry {
-    pub(crate) fn new(lumi_entry: Channel) -> Self {
-        Self { lumi_entry }
+impl PyChannel {
+    pub(crate) fn new(entry: Channel) -> Self {
+        Self { entry }
     }
 }
 
 #[pymethods]
-impl PyLumiEntry {
+impl PyChannel {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// entry: list(tuple(int, int, float))
+    ///     channel configuration
     #[new]
-    pub fn new_lumi_entry(entry: Vec<(i32, i32, f64)>) -> Self {
+    pub fn new_entry(entry: Vec<(i32, i32, f64)>) -> Self {
         Self::new(Channel::new(entry))
     }
 
     /// Get list representation.
     ///
-    /// **Usage:** FKTable interface
-    ///
     /// Returns
     /// -------
-    ///     list(tuple(int,int,float)) :
-    ///         list representation
+    /// list(tuple(int,int,float)) :
+    ///     list representation
     pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
-        self.lumi_entry.entry().to_vec()
+        self.entry.entry().to_vec()
     }
 }
 
 #[pymodule]
-pub fn lumi(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn channel(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyLumiEntry>()?;
     Ok(())
 }

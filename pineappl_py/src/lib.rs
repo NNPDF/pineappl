@@ -5,11 +5,11 @@ use pyo3::prelude::*;
 use pyo3::wrap_pymodule;
 
 pub mod bin;
+pub mod channel;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod import_only_subgrid;
-pub mod lumi;
 pub mod subgrid;
 
 /// PyO3 Python module that contains all exposed classes from Rust.
@@ -21,7 +21,7 @@ fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(grid::grid))?;
     m.add_wrapped(wrap_pymodule!(import_only_subgrid::import_only_subgrid))?;
     m.add_wrapped(wrap_pymodule!(evolution::evolution))?;
-    m.add_wrapped(wrap_pymodule!(lumi::lumi))?;
+    m.add_wrapped(wrap_pymodule!(channel::channel))?;
     m.add_wrapped(wrap_pymodule!(fk_table::fk_table))?;
     m.add_wrapped(wrap_pymodule!(subgrid::subgrid))?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;

@@ -15,11 +15,11 @@ class TestOrder:
 
 class TestGrid:
     def fake_grid(self, bins=None):
-        lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
+        channels = [pineappl.channel.Channel([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
-        g = pineappl.grid.Grid(lumis, orders, bin_limits, subgrid_params)
+        g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)
         return g
 
     def test_init(self):

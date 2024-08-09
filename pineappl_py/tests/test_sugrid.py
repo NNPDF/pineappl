@@ -11,13 +11,13 @@ class TestSubgridParams:
 
 
 def test_issue_164(pdf):
-    luminosities = [pineappl.lumi.LumiEntry([(1, 2, 1.0)])]
+    channels = [pineappl.channel.Channel([(1, 2, 1.0)])]
     orders = [pineappl.grid.Order(0, 0, 0, 0)]
     params = pineappl.subgrid.SubgridParams()
 
     def convolve_grid():
         bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.grid.Grid(luminosities, orders, bin_limits, params)
+        grid = pineappl.grid.Grid(channels, orders, bin_limits, params)
         grid.fill(0.2, 0.2, 10, 0, 0.5, 0, 0.5)
         return grid.convolve_with_one(2212, pdf.xfxQ, pdf.alphasQ)
 
@@ -33,11 +33,11 @@ def test_issue_164(pdf):
 
 class TestSubgrid:
     def fake_grid(self):
-        luminosities = [pineappl.lumi.LumiEntry([(1, 2, 1.0)])]
+        channels = [pineappl.channel.Channel([(1, 2, 1.0)])]
         orders = [pineappl.grid.Order(0, 0, 0, 0)]
         params = pineappl.subgrid.SubgridParams()
         bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.grid.Grid(luminosities, orders, bin_limits, params)
+        grid = pineappl.grid.Grid(channels, orders, bin_limits, params)
         return grid
 
     def fake_importonlysubgrid(self):
