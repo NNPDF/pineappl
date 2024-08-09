@@ -21,6 +21,7 @@ Options:
   -o, --orders <ORDERS>      Select which orders to evolve
       --xir <XIR>            Rescale the renormalization scale with this factor [default: 1]
       --xif <XIF>            Rescale the factorization scale with this factor [default: 1]
+      --xia <XIA>            Rescale the fragmentation scale with this factor [default: 1]
   -h, --help                 Print help
 ";
 

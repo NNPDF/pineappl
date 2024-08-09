@@ -425,7 +425,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         &order_mask,
         &[],
         &channel_mask,
-        &[(xi_ren, xi_fac)],
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 
@@ -487,7 +487,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         &order_mask,
         &[],
         &channel_mask,
-        &[(xi_ren, xi_fac)],
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 

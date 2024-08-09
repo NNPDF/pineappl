@@ -129,16 +129,58 @@ pub fn create_table() -> Table {
     table
 }
 
-pub const SCALES_VECTOR: [(f64, f64); 9] = [
-    (1.0, 1.0),
-    (2.0, 2.0),
-    (0.5, 0.5),
-    (2.0, 1.0),
-    (1.0, 2.0),
-    (0.5, 1.0),
-    (1.0, 0.5),
-    (2.0, 0.5),
-    (0.5, 2.0),
+pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 1.0),
+    (0.5, 0.5, 1.0),
+    (2.0, 1.0, 1.0),
+    (1.0, 2.0, 1.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 0.5, 1.0),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+];
+
+// const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
+//     (1.0, 1.0, 1.0),
+//     (2.0, 1.0, 2.0),
+//     (0.5, 1.0, 0.5),
+//     (2.0, 1.0, 1.0),
+//     (1.0, 1.0, 2.0),
+//     (0.5, 1.0, 1.0),
+//     (1.0, 1.0, 0.5),
+//     (2.0, 1.0, 0.5),
+//     (0.5, 1.0, 2.0),
+// ];
+
+const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 2.0, 2.0),
+    (0.5, 0.5, 0.5),
+    (0.5, 0.5, 1.0),
+    (0.5, 1.0, 0.5),
+    (0.5, 1.0, 1.0),
+    (0.5, 1.0, 2.0),
+    (1.0, 0.5, 0.5),
+    (1.0, 0.5, 1.0),
+    (1.0, 1.0, 0.5),
+    (1.0, 1.0, 2.0),
+    (1.0, 2.0, 1.0),
+    (1.0, 2.0, 2.0),
+    (2.0, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (2.0, 2.0, 1.0),
+    (2.0, 0.5, 0.5),
+    (0.5, 2.0, 0.5),
+    (1.0, 2.0, 0.5),
+    (2.0, 2.0, 0.5),
+    (2.0, 0.5, 1.0),
+    (0.5, 2.0, 1.0),
+    (0.5, 0.5, 2.0),
+    (1.0, 0.5, 2.0),
+    (2.0, 0.5, 2.0),
+    (0.5, 2.0, 2.0),
 ];
 
 pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, &str, &str) {
@@ -184,7 +226,7 @@ pub fn convolve_scales(
     orders: &[(u32, u32)],
     bins: &[usize],
     channels: &[bool],
-    scales: &[(f64, f64)],
+    scales: &[(f64, f64, f64)],
     mode: ConvoluteMode,
     cfg: &GlobalConfiguration,
 ) -> Vec<f64> {
@@ -230,7 +272,7 @@ pub fn convolve_scales(
 
             let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
 
-            grid.convolve(&mut cache, &orders, bins, channels, scales)
+            grid.convolve(&mut cache, &orders, bins, channels, &scales)
         }
         [fun1, fun2] => {
             let pdg_id1 = fun1
@@ -277,7 +319,7 @@ pub fn convolve_scales(
             let mut cache =
                 LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
 
-            grid.convolve(&mut cache, &orders, bins, channels, scales)
+            grid.convolve(&mut cache, &orders, bins, channels, &scales)
         }
         _ => unimplemented!(),
     };
@@ -322,6 +364,19 @@ pub fn convolve_scales(
     }
 }
 
+pub fn scales_vector(_grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
+    match scales {
+        1 => &SCALES_VECTOR_27[0..1],
+        3 => &SCALES_VECTOR_27[0..3],
+        // TODO: fix 7 and 9 for cases where there is a fragmentation scale
+        7 => &SCALES_VECTOR_REN_FAC[0..7],
+        9 => &SCALES_VECTOR_REN_FAC[..],
+        17 => &SCALES_VECTOR_27[0..17],
+        27 => &SCALES_VECTOR_27[..],
+        _ => unreachable!(),
+    }
+}
+
 pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
@@ -338,7 +393,7 @@ pub fn convolve(
         orders,
         bins,
         lumis,
-        &SCALES_VECTOR[0..scales],
+        scales_vector(grid, scales),
         mode,
         cfg,
     )
@@ -398,7 +453,7 @@ pub fn convolve_subgrid(
 
             let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
 
-            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
         }
         [fun1, fun2] => {
             let pdg_id1 = fun1
@@ -445,7 +500,7 @@ pub fn convolve_subgrid(
             let mut cache =
                 LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
 
-            grid.convolve_subgrid(&mut cache, order, bin, lumi, 1.0, 1.0)
+            grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
         }
         _ => unimplemented!(),
     }

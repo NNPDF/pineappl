@@ -556,6 +556,9 @@ pub struct Opts {
     /// Rescale the factorization scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xif: f64,
+    /// Rescale the fragmentation scale with this factor.
+    #[arg(default_value_t = 1.0, long)]
+    xia: f64,
     #[arg(hide = true, long)]
     use_old_evolve: bool,
 }
@@ -572,7 +575,7 @@ impl Subcommand for Opts {
             &self.orders,
             &[],
             &[],
-            &[(self.xir, self.xif)],
+            &[(self.xir, self.xif, self.xia)],
             ConvoluteMode::Normal,
             cfg,
         );
@@ -596,7 +599,7 @@ impl Subcommand for Opts {
             &[],
             &[],
             &[],
-            &[(1.0, 1.0)],
+            &[(1.0, 1.0, 1.0)],
             ConvoluteMode::Normal,
             cfg,
         );

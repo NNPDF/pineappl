@@ -91,10 +91,11 @@ fn convert_fastnlo(
         1
     };
 
-    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR[0..scales]
+    // fastNLO does not support a fragmentation scale
+    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR_REN_FAC[0..scales]
         .iter()
-        .map(|&(mur, muf)| {
-            if !reader.as_mut().SetScaleFactorsMuRMuF(mur, muf) {
+        .map(|&(xir, xif, _)| {
+            if !reader.as_mut().SetScaleFactorsMuRMuF(xir, xif) {
                 return None;
             }
             reader.as_mut().CalcCrossSection();

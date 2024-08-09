@@ -275,9 +275,11 @@ impl Grid {
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],
-        xi: &[(f64, f64)],
+        xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        lumi_cache.setup(self, xi).unwrap();
+        assert!(xi.iter().all(|&(_, _, xia)| approx_eq!(f64, xia, 1.0, ulps = 2)));
+        let xi = xi.iter().map(|&(xir, xif, _)| (xir, xif)).collect::<Vec<_>>();
+        lumi_cache.setup(self, &xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_info().bins()).collect()
@@ -365,9 +367,9 @@ impl Grid {
         ord: usize,
         bin: usize,
         channel: usize,
-        xir: f64,
-        xif: f64,
+        (xir, xif, xia): (f64, f64, f64),
     ) -> Array3<f64> {
+        assert_eq!(xia, 1.0);
         lumi_cache.setup(self, &[(xir, xif)]).unwrap();
 
         let normalizations = self.bin_info().normalizations();
