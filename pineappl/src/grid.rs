@@ -324,7 +324,7 @@ impl Grid {
         }
     }
 
-    /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
+    /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and
     /// selecting only the orders, bins and channels corresponding to `order_mask`, `bin_indices`
     /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the
     /// first factor varies the renormalization scale, the second the factorization scale. Note
