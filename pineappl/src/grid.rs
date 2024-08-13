@@ -873,7 +873,7 @@ impl Grid {
             mem::swap(&mut new_subgrids[[i, j, k]], subgrid);
         }
 
-        mem::swap(&mut self.subgrids, &mut new_subgrids);
+        self.subgrids = new_subgrids;
     }
 
     /// Scale all subgrids by `factor`.
@@ -1053,8 +1053,7 @@ impl Grid {
                         }
                     }
 
-                    let mut new_subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
-                    mem::swap(subgrid, &mut new_subgrid);
+                    *subgrid = ImportOnlySubgridV2::from(&*subgrid).into();
                 }
             }
         }
