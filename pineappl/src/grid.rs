@@ -1140,41 +1140,19 @@ impl Grid {
     }
 
     fn strip_empty_channels(&mut self) {
-        let mut keep_channel_indices = vec![];
-        let mut new_channel_entries = vec![];
+        let mut indices: Vec<_> = (0..self.channels().len()).collect();
 
-        // only keep channels that have non-zero factors and for which at least one subgrid is
-        // non-empty
-        for (channel, entry) in self.channels.iter().enumerate() {
-            if !entry.entry().iter().all(|&(_, _, factor)| factor == 0.0)
-                && !self
-                    .subgrids
-                    .slice(s![.., .., channel])
-                    .iter()
-                    .all(Subgrid::is_empty)
+        while let Some(index) = indices.pop() {
+            if self
+                .subgrids
+                .slice(s![.., .., index])
+                .iter()
+                .all(Subgrid::is_empty)
             {
-                keep_channel_indices.push(channel);
-                new_channel_entries.push(entry.clone());
+                self.channels.remove(index);
+                self.subgrids.remove_index(Axis(2), index);
             }
         }
-
-        // only keep the previously selected subgrids
-        let new_subgrids = Array3::from_shape_fn(
-            (
-                self.orders.len(),
-                self.bin_info().bins(),
-                keep_channel_indices.len(),
-            ),
-            |(order, bin, new_channel)| {
-                mem::replace(
-                    &mut self.subgrids[[order, bin, keep_channel_indices[new_channel]]],
-                    EmptySubgridV1.into(),
-                )
-            },
-        );
-
-        self.channels = new_channel_entries;
-        self.subgrids = new_subgrids;
     }
 
     fn strip_empty_orders(&mut self) {
