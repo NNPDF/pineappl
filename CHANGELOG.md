@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added new method `Grid::delete_orders` and the corresponding switch
   `--delete-orders` in the subcommand `write` of the CLI
 
+### Changed
+
+- renamed `pineappl.lumi.rs` to `pineappl.channel.rs`
+- removed `.create()` and `.from_grid()` methods and directly instantiate objecs from the class
+- `.into()` needs to be explicitly called on subgrids when using `set_subgrid()`
+- replaced `pineappl.grid.PidBasis` with `pineappl.evolution.PidBasis`
+- replaced `pineappl.grid.OperatorSliceInfo` with `pineappl.evolution.OperatorSliceInfo`
+
 ## [0.8.2] - 22/07/2024
 
 ### Changed
