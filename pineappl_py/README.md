@@ -19,7 +19,7 @@ Run
 
 ```shell
 python -m venv env && . env/bin/activate
-pip install .[docs]
+pip install maturin
 ```
 
 to setup a new environment.
@@ -36,6 +36,7 @@ to build the project.
 Run
 
 ```shell
+maturin develop -E docs
 cd docs && make html
 ```
 
