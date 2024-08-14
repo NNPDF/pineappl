@@ -12,3 +12,23 @@ For installation instructions see the [documentation].
 [PyO3]: https://pyo3.rs
 [Rust API]: https://docs.rs/pineappl
 [documentation]: https://pineappl.readthedocs.io/en/latest/installation.html
+
+## Development
+
+Run
+
+```shell
+python -m venv env && . env/bin/activate
+pip install -r requirements.txt
+maturin develop
+```
+
+to build and setup a new environment.
+
+Run
+
+```shell
+cd docs && make html
+```
+
+to generate the documentation.
