@@ -18,7 +18,7 @@ The Python wrapper is also used in :yadism:`\ ` and :pineko:`\ `. We also list s
    installation
    recipes
    implementation
-   API <modules/pineappl/pineappl>
+   API <modules/pineappl>
    indices
 
 .. important::
