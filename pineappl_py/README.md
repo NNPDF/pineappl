@@ -28,7 +28,7 @@ to setup a new environment and check that `pip --version` returns at least `pip
 pip install -U pip
 ```
 
-Next, install the needed dependencies:
+Next, install `maturin`:
 
 ```shell
 pip install maturin
@@ -40,8 +40,8 @@ Run
 maturin develop
 ```
 
-to build the project, which also install it into the environment so that it can
-be used in Python project using the same environment.
+to build the project, which also installs it into the environment so that it
+can be used in Python projects that use the same environment.
 
 ### Documentation
 
