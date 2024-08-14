@@ -19,11 +19,20 @@ Run
 
 ```shell
 python -m venv env && . env/bin/activate
-pip install maturin
 ```
 
-to setup a new environment.
+to setup a new environment and check that `pip --version` returns at least `pip
+22.0 from ...`. If not, upgrade `pip` via
 
+```shell
+pip install -U pip
+```
+
+Next, install the needed dependencies:
+
+```shell
+pip install maturin
+```
 
 Run
 
@@ -31,13 +40,21 @@ Run
 maturin develop
 ```
 
-to build the project.
+to build the project, which also install it into the environment so that it can
+be used in Python project using the same environment.
 
-Run
+### Documentation
+
+Run the following once to install the documentation's dependencies:
 
 ```shell
-maturin develop -E docs
-cd docs && make html
+pip install .[docs]
+```
+
+Then run
+
+```shell
+( cd docs && make clean html )
 ```
 
 to generate the documentation.
