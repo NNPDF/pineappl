@@ -1,3 +1,4 @@
+//! Binnning interface.
 use pineappl::bin::BinRemapper;
 
 use numpy::{PyArrayMethods, PyReadonlyArray1};
@@ -33,8 +34,9 @@ impl PyBinRemapper {
     }
 }
 
-#[pymodule]
-pub fn bin(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "bin")?;
     m.add_class::<PyBinRemapper>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

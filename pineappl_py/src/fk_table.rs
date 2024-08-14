@@ -1,3 +1,4 @@
+//! FK table interface.
 use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
@@ -296,9 +297,10 @@ impl PyFkTable {
     }
 }
 
-#[pymodule]
-pub fn fk_table(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "fk_table")?;
     m.add_class::<PyFkTable>()?;
     m.add_class::<PyFkAssumptions>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

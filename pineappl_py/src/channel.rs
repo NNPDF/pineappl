@@ -1,3 +1,4 @@
+//! Channel interface.
 use pineappl::boc::Channel;
 
 use pyo3::prelude::*;
@@ -45,8 +46,9 @@ impl PyChannel {
     }
 }
 
-#[pymodule]
-pub fn channel(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "channel")?;
     m.add_class::<PyChannel>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

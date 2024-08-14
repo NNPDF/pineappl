@@ -1,8 +1,7 @@
-// this is needed for PyO3 to work
+//! Generate PyO3 interface.
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use pyo3::prelude::*;
-use pyo3::wrap_pymodule;
 
 pub mod bin;
 pub mod channel;
@@ -17,13 +16,13 @@ pub mod subgrid;
 /// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
 fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_wrapped(wrap_pymodule!(bin::bin))?;
-    m.add_wrapped(wrap_pymodule!(grid::grid))?;
-    m.add_wrapped(wrap_pymodule!(import_only_subgrid::import_only_subgrid))?;
-    m.add_wrapped(wrap_pymodule!(evolution::evolution))?;
-    m.add_wrapped(wrap_pymodule!(channel::channel))?;
-    m.add_wrapped(wrap_pymodule!(fk_table::fk_table))?;
-    m.add_wrapped(wrap_pymodule!(subgrid::subgrid))?;
+    bin::register(m)?;
+    grid::register(m)?;
+    import_only_subgrid::register(m)?;
+    evolution::register(m)?;
+    channel::register(m)?;
+    fk_table::register(m)?;
+    subgrid::register(m)?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;
 
     Ok(())

@@ -1,3 +1,4 @@
+//! Grid interface.
 use ndarray::CowArray;
 use pineappl::boc::Order;
 use pineappl::convolutions::LumiCache;
@@ -846,9 +847,10 @@ impl PyGrid {
     }
 }
 
-#[pymodule]
-pub fn grid(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "grid")?;
     m.add_class::<PyGrid>()?;
     m.add_class::<PyOrder>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

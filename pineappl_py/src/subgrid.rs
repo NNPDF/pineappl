@@ -1,3 +1,4 @@
+//! Subgrid interface.
 use ndarray::Array3;
 use numpy::{IntoPyArray, PyArray1, PyArray3};
 use pineappl::subgrid::Mu2;
@@ -232,10 +233,11 @@ impl PySubgridEnum {
     }
 }
 
-#[pymodule]
-pub fn subgrid(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "subgrid")?;
     m.add_class::<PySubgridEnum>()?;
     m.add_class::<PySubgridParams>()?;
     m.add_class::<PyMu2>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

@@ -1,3 +1,4 @@
+//! PyImportOnlySubgrid* interface.
 use super::subgrid::PySubgridEnum;
 
 use numpy::{PyArrayMethods, PyReadonlyArray1, PyReadonlyArray3};
@@ -150,9 +151,10 @@ impl PyImportOnlySubgridV1 {
     }
 }
 
-#[pymodule]
-pub fn import_only_subgrid(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "import_only_subgrid")?;
     m.add_class::<PyImportOnlySubgridV1>()?;
     m.add_class::<PyImportOnlySubgridV2>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }

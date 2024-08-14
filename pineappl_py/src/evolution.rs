@@ -1,3 +1,4 @@
+//! Evolution interface.
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
 use pineappl::pids::PidBasis;
@@ -106,10 +107,11 @@ impl PyEvolveInfo {
     }
 }
 
-#[pymodule]
-pub fn evolution(_py: Python, m: &PyModule) -> PyResult<()> {
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "evolution")?;
     m.add_class::<PyEvolveInfo>()?;
     m.add_class::<PyOperatorSliceInfo>()?;
     m.add_class::<PyPidBasis>()?;
-    Ok(())
+    parent_module.add_submodule(&m)
 }
