@@ -1,7 +1,0 @@
-# Ignore auto generated module references
-# TODO: while apidoc does not work, we need to preserve that folder
-# source/modules
-# ignore temporary build files
-build/
-# Ignore generated sphinx-bibtex file
-source/bibtex.json
