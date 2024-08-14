@@ -25,7 +25,6 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
-    'sphinxcontrib.bibtex',
 ]
 
 autosummary_generate = True
@@ -36,8 +35,6 @@ extlinks = {
     "rustdoc": ("https://docs.rs/pineappl/latest/pineappl/%s", "PineAPPL - %s"),
     "pineko": ("https://github.com/NNPDF/pineko/%s", "pineko - %s"),
 }
-
-bibtex_bibfiles = ["refs.bib"]
 
 templates_path = ['_templates']
 exclude_patterns = []
