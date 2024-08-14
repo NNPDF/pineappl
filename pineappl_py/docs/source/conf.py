@@ -43,9 +43,9 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
-here = pathlib.Path(__file__).absolute().parent
-
 # TODO: find a way to reactivate apidoc, which doesn't seem to work for the moment.
+
+# here = pathlib.Path(__file__).absolute().parent
 # # https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
 # def run_apidoc(_):
 #     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel

@@ -26,8 +26,6 @@ coverage.xml
 # docs/source/modules
 # ignore temporary build files
 docs/build/
-# Ignore generated sphinx-bibtex file
-docs/source/bibtex.json
 
 # Environments
 .env
