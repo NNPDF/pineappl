@@ -237,7 +237,11 @@ impl PySubgridEnum {
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "subgrid")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Subgrid interface.")?;
-    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.subgrid'] = m");
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.subgrid'] = m"
+    );
     m.add_class::<PySubgridEnum>()?;
     m.add_class::<PySubgridParams>()?;
     m.add_class::<PyMu2>()?;

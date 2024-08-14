@@ -301,7 +301,11 @@ impl PyFkTable {
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "fk_table")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "FK table interface.")?;
-    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.fk_table'] = m");
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.fk_table'] = m"
+    );
     m.add_class::<PyFkTable>()?;
     m.add_class::<PyFkAssumptions>()?;
     parent_module.add_submodule(&m)
