@@ -25,7 +25,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyIterator;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::grid::Order <grid/struct.Order.html>`.
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
 #[pyclass(name = "Order")]
 #[repr(transparent)]
 pub struct PyOrder {

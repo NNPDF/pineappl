@@ -5,7 +5,7 @@ use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/enum.SubgridParams.html>`
 #[pyclass(name = "SubgridParams")]
 #[repr(transparent)]
 pub struct PySubgridParams {
