@@ -45,20 +45,21 @@ html_static_path = ['_static']
 
 here = pathlib.Path(__file__).absolute().parent
 
-# https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
-def run_apidoc(_):
-    from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
+# TODO: find a way to reactivate apidoc, which doesn't seem to work for the moment.
+# # https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-312626491
+# def run_apidoc(_):
+#     from sphinx.ext.apidoc import main  # pylint: disable=import-outside-toplevel
 
-    sys.path.append(str(here.parent))
-    # analyse 'pineappl'
-    docs_dest = here / "modules"
-    import pineappl   # pylint: disable=import-outside-toplevel
+#     sys.path.append(str(here.parent))
+#     # analyse 'pineappl'
+#     docs_dest = here / "modules"
+#     import pineappl   # pylint: disable=import-outside-toplevel
 
-    # note that we can NOT point to the local directory (`here.parents[1] / "pineappl"`)
-    # but we need the package built by `maturin` and installed by `pip`
-    package = pathlib.Path(pineappl.__file__).parent / "pineappl"
-    main(["--module-first", "--no-toc", "-o", str(docs_dest), str(package)])
+#     # note that we can NOT point to the local directory (`here.parents[1] / "pineappl"`)
+#     # but we need the package built by `maturin` and installed by `pip`
+#     package = pathlib.Path(pineappl.__file__).parent / "pineappl"
+#     main(["--module-first", "--no-toc", "-o", str(docs_dest), str(package)])
 
 
-def setup(app):
-    app.connect("builder-inited", run_apidoc)
+# def setup(app):
+#     app.connect("builder-inited", run_apidoc)
