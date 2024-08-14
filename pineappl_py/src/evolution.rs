@@ -110,6 +110,8 @@ impl PyEvolveInfo {
 /// Register submodule in parent.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "evolution")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "Evolution interface.")?;
+    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.evolution'] = m");
     m.add_class::<PyEvolveInfo>()?;
     m.add_class::<PyOperatorSliceInfo>()?;
     m.add_class::<PyPidBasis>()?;

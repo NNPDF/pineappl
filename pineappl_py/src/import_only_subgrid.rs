@@ -154,6 +154,8 @@ impl PyImportOnlySubgridV1 {
 /// Register submodule in parent.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "import_only_subgrid")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "ImportOnlySubgrid* interface.")?;
+    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.import_only_subgrid'] = m");
     m.add_class::<PyImportOnlySubgridV1>()?;
     m.add_class::<PyImportOnlySubgridV2>()?;
     parent_module.add_submodule(&m)

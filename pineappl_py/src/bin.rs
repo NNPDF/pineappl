@@ -37,6 +37,8 @@ impl PyBinRemapper {
 /// Register submodule in parent.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "bin")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "Binning interface.")?;
+    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.bin'] = m");
     m.add_class::<PyBinRemapper>()?;
     parent_module.add_submodule(&m)
 }

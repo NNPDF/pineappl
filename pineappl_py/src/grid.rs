@@ -850,6 +850,8 @@ impl PyGrid {
 /// Register submodule in parent.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "grid")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "Grid interface.")?;
+    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.grid'] = m");
     m.add_class::<PyGrid>()?;
     m.add_class::<PyOrder>()?;
     parent_module.add_submodule(&m)
