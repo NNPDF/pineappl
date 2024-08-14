@@ -48,7 +48,7 @@ can be used in Python projects that use the same environment.
 Run the following once to install the documentation's dependencies:
 
 ```shell
-pip install .[docs]
+pip install '.[docs]'
 ```
 
 Then run
