@@ -24,7 +24,7 @@ clean:
 	rm -rf build
 	rm -rf _build
 
-# while apidoc does not work, we need to preserve that folder
+# TODO: while apidoc does not work, we need to preserve that folder
 cleanall: clean
 	# rm -rf $(PINEAPPLOUT)
 
