@@ -31,9 +31,7 @@ autosummary_generate = True
 autosummary_imported_members = True
 
 extlinks = {
-    "yadism": ("https://nnpdf.github.io/yadism/%s", "yadism - %s"),
     "rustdoc": ("https://docs.rs/pineappl/latest/pineappl/%s", "PineAPPL - %s"),
-    "pineko": ("https://github.com/NNPDF/pineko/%s", "pineko - %s"),
 }
 
 templates_path = ['_templates']
