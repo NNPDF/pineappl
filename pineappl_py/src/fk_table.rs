@@ -21,7 +21,7 @@ pub struct PyFkTable {
     pub(crate) fk_table: FkTable,
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::PyFkAssumptions <fk_table/struct.PyFkAssumptions.html>`.
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::PyFkAssumptions <fk_table/enum.PyFkAssumptions.html>`.
 #[pyclass(name = "FkAssumptions")]
 #[repr(transparent)]
 pub struct PyFkAssumptions {

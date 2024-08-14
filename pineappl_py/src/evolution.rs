@@ -5,7 +5,7 @@ use pineappl::pids::PidBasis;
 
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::pids::PidBasis <pids/struct.PidBasis.html>`.
+/// PyO3 wrapper to :rustdoc:`pineappl::pids::PidBasis <pids/enum.PidBasis.html>`.
 #[pyclass(name = "PidBasis")]
 #[derive(Clone)]
 pub enum PyPidBasis {
