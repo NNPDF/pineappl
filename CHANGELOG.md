@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl.evolution.PidBasis`
 - Python API: replaced `pineappl.grid.PyOperatorSliceInfo` with
   `pineappl.evolution.OperatorSliceInfo`
+- Python API: drop all `Py` prefix, e.g. `PyEvolveInfo` was renamed to
+  `EvolveInfo`
 
 ### Removed
 
