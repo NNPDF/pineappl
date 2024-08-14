@@ -1,5 +1,5 @@
-pineappl package
-================
+PineAPPL's Python API
+=====================
 
 .. automodule:: pineappl
    :members:
