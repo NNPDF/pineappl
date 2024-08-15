@@ -5,7 +5,7 @@ import pineappl
 
 class TestFkTable:
     def fake_grid(self, bins=None):
-        channels = [pineappl.channel.Channel([(1, 21, 1.0)])]
+        channels = [pineappl.boc.Channel([(1, 21, 1.0)])]
         orders = [pineappl.grid.Order(0, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
@@ -36,7 +36,7 @@ class TestFkTable:
         )
 
         info = pineappl.evolution.OperatorSliceInfo(
-            1.0, [], [], 1.0, [], [], pineappl.evolution.PidBasis.Pdg
+            1.0, [], [], 1.0, [], [], pineappl.pids.PidBasis.Pdg
         )
 
         # TODO: write a better test

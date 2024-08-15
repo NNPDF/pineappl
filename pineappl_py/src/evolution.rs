@@ -1,28 +1,10 @@
 //! Evolution interface.
+
+use super::pids::PyPidBasis;
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
-use pineappl::pids::PidBasis;
 
 use pyo3::prelude::*;
-
-/// PyO3 wrapper to :rustdoc:`pineappl::pids::PidBasis <pids/enum.PidBasis.html>`.
-#[pyclass(name = "PidBasis")]
-#[derive(Clone)]
-pub enum PyPidBasis {
-    /// PDG Monte Carlo IDs.
-    Pdg,
-    /// NNPDF's evolution basis IDs.
-    Evol,
-}
-
-impl From<PyPidBasis> for PidBasis {
-    fn from(basis: PyPidBasis) -> Self {
-        match basis {
-            PyPidBasis::Pdg => Self::Pdg,
-            PyPidBasis::Evol => Self::Evol,
-        }
-    }
-}
 
 /// PyO3 wrapper to :rustdoc:`pineappl::evolution::OperatorSliceInfo <evolution/struct.OperatorSliceInfo.html>`.
 #[pyclass(name = "OperatorSliceInfo")]
@@ -120,6 +102,5 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     );
     m.add_class::<PyEvolveInfo>()?;
     m.add_class::<PyOperatorSliceInfo>()?;
-    m.add_class::<PyPidBasis>()?;
     parent_module.add_submodule(&m)
 }

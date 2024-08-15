@@ -15,7 +15,7 @@ class TestOrder:
 
 class TestGrid:
     def fake_grid(self, bins=None):
-        channels = [pineappl.channel.Channel([(1, 21, 0.1)])]
+        channels = [pineappl.boc.Channel([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()

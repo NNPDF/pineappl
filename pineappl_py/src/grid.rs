@@ -1,12 +1,11 @@
 //! Grid interface.
 use ndarray::CowArray;
-use pineappl::boc::Order;
 use pineappl::convolutions::LumiCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::{Grid, Ntuple};
 
 use super::bin::PyBinRemapper;
-use super::channel::PyChannel;
+use super::boc::{PyChannel, PyOrder};
 use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
@@ -22,90 +21,6 @@ use std::path::PathBuf;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyIterator;
-
-/// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
-#[pyclass(name = "Order")]
-#[repr(transparent)]
-pub struct PyOrder {
-    pub(crate) order: Order,
-}
-
-impl PyOrder {
-    pub(crate) fn new(order: Order) -> Self {
-        Self { order }
-    }
-}
-
-#[pymethods]
-impl PyOrder {
-    /// Constructor.
-    ///
-    /// Parameters
-    /// ----------
-    /// alphas : int
-    ///     power of :math:`\alpha_s`
-    /// alpha : int
-    ///     power of :math:`\alpha`
-    /// logxir : int
-    ///     power of :math:`\ln(\xi_r)`
-    /// logxif : int
-    ///     power of :math:`\ln(\xi_f)`
-    #[new]
-    pub fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
-        Self::new(Order::new(alphas, alpha, logxir, logxif))
-    }
-
-    /// Tuple representation.
-    ///
-    /// Returns
-    /// -------
-    /// alphas : int
-    ///     power of :math:`\alpha_s`
-    /// alpha : int
-    ///     power of :math:`\alpha`
-    /// logxir : int
-    ///     power of :math:`\ln(\xi_r)`
-    /// logxif : int
-    ///     power of :math:`\ln(\xi_f)`
-    pub fn as_tuple(&self) -> (u32, u32, u32, u32) {
-        (
-            self.order.alphas,
-            self.order.alpha,
-            self.order.logxir,
-            self.order.logxif,
-        )
-    }
-
-    /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`].
-    ///
-    /// The selection of `orders` is controlled using the `max_as` and `max_al` parameters, for
-    /// instance setting `max_as = 1` and `max_al = 0` selects the LO QCD only, `max_as = 2` and
-    /// `max_al = 0` the NLO QCD; setting `max_as = 3` and `max_al = 2` would select all NLOs, and
-    /// the NNLO QCD.
-    ///
-    /// See `pineappl` crate docs for more examples.
-    ///
-    /// Returns
-    /// -------
-    /// numpy.ndarray(bool)
-    ///     boolean array, to be used as orders' mask
-    #[staticmethod]
-    pub fn create_mask<'py>(
-        orders: Vec<PyRef<Self>>,
-        max_as: u32,
-        max_al: u32,
-        logs: bool,
-        py: Python<'py>,
-    ) -> Bound<'py, PyArray1<bool>> {
-        Order::create_mask(
-            &orders.iter().map(|o| o.order.clone()).collect::<Vec<_>>(),
-            max_as,
-            max_al,
-            logs,
-        )
-        .into_pyarray_bound(py)
-    }
-}
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
 #[pyclass(name = "Grid")]
