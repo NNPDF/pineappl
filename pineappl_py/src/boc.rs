@@ -2,7 +2,6 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::boc::{Channel, Order};
-
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.

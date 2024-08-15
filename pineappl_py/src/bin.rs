@@ -1,7 +1,7 @@
 //! Binnning interface.
-use pineappl::bin::BinRemapper;
 
 use numpy::{PyArrayMethods, PyReadonlyArray1};
+use pineappl::bin::BinRemapper;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::bin::BinRemapper <bin/struct.BinRemapper.html>`.

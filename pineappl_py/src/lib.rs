@@ -1,4 +1,5 @@
 //! Generate PyO3 interface.
+
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use pyo3::prelude::*;

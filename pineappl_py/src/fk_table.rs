@@ -1,18 +1,16 @@
 //! FK table interface.
+
+use super::grid::PyGrid;
+use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
 use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
-
-use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
-
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
-
-use crate::grid::PyGrid;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
 #[pyclass(name = "FkTable")]

@@ -1,26 +1,23 @@
 //! Grid interface.
-use ndarray::CowArray;
-use pineappl::convolutions::LumiCache;
-use pineappl::evolution::AlphasTable;
-use pineappl::grid::{Grid, Ntuple};
 
 use super::bin::PyBinRemapper;
 use super::boc::{PyChannel, PyOrder};
 use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
-
 use itertools::izip;
+use ndarray::CowArray;
 use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4};
-
+use pineappl::convolutions::LumiCache;
+use pineappl::evolution::AlphasTable;
+use pineappl::grid::{Grid, Ntuple};
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyIterator;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
-
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
-use pyo3::types::PyIterator;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
 #[pyclass(name = "Grid")]

@@ -1,4 +1,5 @@
 //! Subgrid interface.
+
 use ndarray::Array3;
 use numpy::{IntoPyArray, PyArray1, PyArray3};
 use pineappl::subgrid::Mu2;

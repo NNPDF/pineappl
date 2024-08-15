@@ -1,6 +1,6 @@
 //! PyImportOnlySubgrid* interface.
-use super::subgrid::PySubgridEnum;
 
+use super::subgrid::PySubgridEnum;
 use numpy::{PyArrayMethods, PyReadonlyArray1, PyReadonlyArray3};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;

@@ -3,7 +3,6 @@
 use super::pids::PyPidBasis;
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
-
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::evolution::OperatorSliceInfo <evolution/struct.OperatorSliceInfo.html>`.
