@@ -72,19 +72,19 @@ channel_breakdown_linestyles = []
 
 def main():
     panels = [
-        {inte}plot_int,
-        {nint}plot_abs,
-        {nint}plot_rel_ewonoff,
-        {nconvs}plot_abs_pdfs,
-        {nconvs}plot_ratio_pdf,
-        {nconvs}plot_double_ratio_pdf,
-        {nconvs}plot_rel_pdfunc,
-        {nconvs}plot_rel_pdfpull,
+        {enable_int}plot_int,
+        {enable_abs}plot_abs,
+        {enable_rel_ewonoff}plot_rel_ewonoff,
+        {enable_abs_pdfs}plot_abs_pdfs,
+        {enable_ratio_pdf}plot_ratio_pdf,
+        {enable_double_ratio_pdf}plot_double_ratio_pdf,
+        {enable_rel_pdfunc}plot_rel_pdfunc,
+        {enable_rel_pdfpull}plot_rel_pdfpull,
     ]
 
     mpl.rcParams.update(stylesheet)
-    {nint}plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
-    {inte}plt.rc("figure", figsize=(4.2, 2.6))
+    {enable_abs}plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
+    {enable_int}plt.rc("figure", figsize=(4.2, 2.6))
 
     data_slices = data()
 

@@ -513,11 +513,30 @@ impl Subcommand for Opts {
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 
+            let enable_int = if bins == 1 { "" } else { "# " };
+            let enable_abs = if bins == 1 { "# " } else { "" };
+            // TODO: only enable if there are EW corrections
+            let enable_rel_ewonoff = enable_abs;
+            let enable_abs_pdfs = if nconvs == 1 || bins == 1 { "# " } else { "" };
+            let enable_ratio_pdf = enable_abs_pdfs;
+            let enable_double_ratio_pdf = enable_abs_pdfs;
+            let enable_rel_pdfunc = if nconvs == 1 || bins == 1 || self.no_conv_fun_unc {
+                "# "
+            } else {
+                ""
+            };
+            let enable_rel_pdfpull = enable_rel_pdfunc;
+
             print!(
                 include_str!("plot.py"),
-                inte = if bins == 1 { "" } else { "# " },
-                nint = if bins == 1 { "# " } else { "" },
-                nconvs = if nconvs == 1 || bins == 1 { "# " } else { "" },
+                enable_int = enable_int,
+                enable_abs = enable_abs,
+                enable_rel_ewonoff = enable_rel_ewonoff,
+                enable_abs_pdfs = enable_abs_pdfs,
+                enable_ratio_pdf = enable_ratio_pdf,
+                enable_double_ratio_pdf = enable_double_ratio_pdf,
+                enable_rel_pdfunc = enable_rel_pdfunc,
+                enable_rel_pdfpull = enable_rel_pdfpull,
                 xlabel = xlabel,
                 ylabel = ylabel,
                 xlog = xlog,
