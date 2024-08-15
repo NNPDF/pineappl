@@ -50,7 +50,11 @@ impl PyChannel {
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "channel")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Channel interface.")?;
-    pyo3::py_run!(parent_module.py(), m, "import sys; sys.modules['pineappl.channel'] = m");
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.channel'] = m"
+    );
     m.add_class::<PyChannel>()?;
     parent_module.add_submodule(&m)
 }
