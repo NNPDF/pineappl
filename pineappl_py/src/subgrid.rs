@@ -12,12 +12,6 @@ pub struct PySubgridParams {
     pub(crate) subgrid_params: SubgridParams,
 }
 
-impl PySubgridParams {
-    pub(crate) fn new(subgrid_params: SubgridParams) -> Self {
-        Self { subgrid_params }
-    }
-}
-
 impl Clone for PySubgridParams {
     fn clone(&self) -> Self {
         let mut subgrid_params = SubgridParams::default();
@@ -39,9 +33,9 @@ impl PySubgridParams {
     /// Constructor using the defaults.
     #[new]
     pub fn default() -> Self {
-        let subgrid_params = SubgridParams::default();
-
-        Self::new(subgrid_params)
+        Self {
+            subgrid_params: SubgridParams::default(),
+        }
     }
 
     /// Set number of :math:`Q^2` bins.

@@ -12,12 +12,6 @@ pub struct PyBinRemapper {
     pub(crate) bin_remapper: BinRemapper,
 }
 
-impl PyBinRemapper {
-    pub(crate) fn new(bin_remapper: BinRemapper) -> Self {
-        Self { bin_remapper }
-    }
-}
-
 #[pymethods]
 impl PyBinRemapper {
     /// Constructor.
@@ -29,8 +23,10 @@ impl PyBinRemapper {
     /// limits : list(tuple(float, float))
     ///     bin limits
     #[new]
-    pub fn new_f64(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
-        Self::new(BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap())
+    pub fn new(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
+        Self {
+            bin_remapper: BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap(),
+        }
     }
 }
 

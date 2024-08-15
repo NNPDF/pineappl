@@ -18,12 +18,6 @@ pub struct PyChannel {
     pub(crate) entry: Channel,
 }
 
-impl PyChannel {
-    pub(crate) fn new(entry: Channel) -> Self {
-        Self { entry }
-    }
-}
-
 #[pymethods]
 impl PyChannel {
     /// Constructor.
@@ -33,8 +27,10 @@ impl PyChannel {
     /// entry: list(tuple(int, int, float))
     ///     channel configuration
     #[new]
-    pub fn new_entry(entry: Vec<(i32, i32, f64)>) -> Self {
-        Self::new(Channel::new(entry))
+    pub fn new(entry: Vec<(i32, i32, f64)>) -> Self {
+        Self {
+            entry: Channel::new(entry),
+        }
     }
 
     /// Get list representation.

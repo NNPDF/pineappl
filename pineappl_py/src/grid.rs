@@ -30,12 +30,6 @@ pub struct PyGrid {
     pub(crate) grid: Grid,
 }
 
-impl PyGrid {
-    pub(crate) fn new(grid: Grid) -> Self {
-        Self { grid }
-    }
-}
-
 #[pymethods]
 impl PyGrid {
     /// Constructor.
@@ -57,12 +51,14 @@ impl PyGrid {
         bin_limits: PyReadonlyArray1<f64>,
         subgrid_params: PySubgridParams,
     ) -> Self {
-        Self::new(Grid::new(
-            channels.iter().map(|pyc| pyc.entry.clone()).collect(),
-            orders.iter().map(|pyo| pyo.order.clone()).collect(),
-            bin_limits.to_vec().unwrap(),
-            subgrid_params.subgrid_params,
-        ))
+        Self {
+            grid: Grid::new(
+                channels.iter().map(|pyc| pyc.entry.clone()).collect(),
+                orders.iter().map(|pyo| pyo.order.clone()).collect(),
+                bin_limits.to_vec().unwrap(),
+                subgrid_params.subgrid_params,
+            ),
+        }
     }
 
     /// Add a point to the grid.
@@ -508,7 +504,9 @@ impl PyGrid {
     ///     grid
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
-        Self::new(Grid::read(BufReader::new(File::open(path).unwrap())).unwrap())
+        Self {
+            grid: Grid::read(BufReader::new(File::open(path).unwrap())).unwrap(),
+        }
     }
 
     /// Write to file.
