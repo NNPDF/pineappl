@@ -71,16 +71,16 @@ xlabel = r"$\eta_{\bar{\ell}}$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
@@ -531,16 +531,16 @@ xlabel = r"$\cos \theta^*$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
@@ -920,16 +920,16 @@ xlabel = r"$\cos \theta^*$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
