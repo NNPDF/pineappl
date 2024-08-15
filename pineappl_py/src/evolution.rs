@@ -9,7 +9,9 @@ use pyo3::prelude::*;
 #[pyclass(name = "PidBasis")]
 #[derive(Clone)]
 pub enum PyPidBasis {
+    /// PDG Monte Carlo IDs.
     Pdg,
+    /// NNPDF's evolution basis IDs.
     Evol,
 }
 

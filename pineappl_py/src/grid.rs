@@ -7,7 +7,7 @@ use pineappl::grid::{Grid, Ntuple};
 
 use super::bin::PyBinRemapper;
 use super::channel::PyChannel;
-use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo, PyPidBasis};
+use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
