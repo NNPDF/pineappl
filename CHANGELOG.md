@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python API: dropped top-level Python interface layer
 - Python API: renamed `lumi` to `channel` in PyO3 Python interface. This
   concerns 1) the argument names of `convolute_with_one` and similar functions;
-  2) the module `pineappl.lumi` was moved to `pineappl.channel`; 3) the class
+  2) the module `pineappl.lumi` was moved to `pineappl.boc`; 3) the class
   `LumiEntry` was renamed to `Channel`
 - Python API: `.into()` needs to be explicitly called on subgrids when calling
   `pineappl.grid.set_subgrid()`
