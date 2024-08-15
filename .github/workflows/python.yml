@@ -21,9 +21,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up Rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none -y
-          rustup install stable --profile minimal
-          rustup default stable
           rustup component add llvm-tools
       - name: Test
         env:
@@ -49,5 +46,4 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: pineappl_py/lcov.info
           flags: python
