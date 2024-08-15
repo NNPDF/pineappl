@@ -46,7 +46,9 @@ class TestSubgrid:
         Q2s = np.linspace(10, 20, 2)
         mu2s = [tuple([q2, q2]) for q2 in Q2s]
         array = np.random.rand(len(Q2s), len(x1s), len(x2s))
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV2(array, mu2s, x1s, x2s)
+        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV2(
+            array, mu2s, x1s, x2s
+        )
         return subgrid, [x1s, x2s, mu2s, array]
 
     def test_subgrid_methods(self):
@@ -67,7 +69,7 @@ class TestSubgrid:
         test_subgrid, infos = self.fake_importonlysubgrid()
         _, _, _, array = (obj for obj in infos)
         grid.set_subgrid(0, 0, 0, test_subgrid.into())
-        extr_subgrid = grid.subgrid(0,0,0)
+        extr_subgrid = grid.subgrid(0, 0, 0)
         test_array = extr_subgrid.to_array3()
         print(test_array)
         print(array)
