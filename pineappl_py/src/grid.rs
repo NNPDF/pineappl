@@ -2,7 +2,7 @@
 use ndarray::CowArray;
 use pineappl::boc::Order;
 use pineappl::convolutions::LumiCache;
-use pineappl::evolution::{AlphasTable, OperatorInfo};
+use pineappl::evolution::AlphasTable;
 use pineappl::grid::{Grid, Ntuple};
 
 use super::bin::PyBinRemapper;
@@ -12,9 +12,7 @@ use super::fk_table::PyFkTable;
 use super::subgrid::{PySubgridEnum, PySubgridParams};
 
 use itertools::izip;
-use numpy::{
-    IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4, PyReadonlyArray5,
-};
+use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -449,82 +447,6 @@ impl PyGrid {
             .into_pyarray_bound(py)
     }
 
-    /// Convolve with an evolution operator.
-    ///
-    /// Parameters
-    /// ----------
-    /// operator : numpy.ndarray(int, rank=5)
-    ///     evolution tensor
-    /// fac0 : float
-    ///     reference scale
-    /// pids0 : numpy.ndarray(int)
-    ///     sorting of the particles in the tensor for final FkTable
-    /// x0 : numpy.ndarray(float)
-    ///     final FKTable interpolation grid
-    /// fac1 : numpy.ndarray(float)
-    ///     list of factorization scales
-    /// pids1 : numpy.ndarray(int)
-    ///     sorting of the particles in the grid
-    /// x1 : numpy.ndarray(float)
-    ///     interpolation grid at process level
-    /// ren1 : numpy.ndarray(float)
-    ///     list of renormalization scales
-    /// alphas : numpy.ndarray(float)
-    ///     list with :math:`\alpha_s(Q2)` for the process scales
-    /// xi : (float, float)
-    ///     factorization and renormalization variation
-    /// pid_basis : str
-    ///     type of channel identifier
-    /// order_mask : numpy.ndarray(bool)
-    ///     boolean mask to activate orders
-    ///
-    /// Returns
-    /// -------
-    /// PyFkTable :
-    ///     produced FK table
-    #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
-    pub fn evolve(
-        &self,
-        operator: PyReadonlyArray5<f64>,
-        fac0: f64,
-        pids0: PyReadonlyArray1<i32>,
-        x0: PyReadonlyArray1<f64>,
-        fac1: PyReadonlyArray1<f64>,
-        pids1: PyReadonlyArray1<i32>,
-        x1: PyReadonlyArray1<f64>,
-        ren1: PyReadonlyArray1<f64>,
-        alphas: PyReadonlyArray1<f64>,
-        xi: (f64, f64),
-        pid_basis: String,
-        order_mask: PyReadonlyArray1<bool>,
-    ) -> PyFkTable {
-        let op_info = OperatorInfo {
-            fac0: fac0,
-            pids0: pids0.to_vec().unwrap(),
-            x0: x0.to_vec().unwrap(),
-            fac1: fac1.to_vec().unwrap(),
-            pids1: pids1.to_vec().unwrap(),
-            x1: x1.to_vec().unwrap(),
-            ren1: ren1.to_vec().unwrap(),
-            alphas: alphas.to_vec().unwrap(),
-            xir: xi.0,
-            xif: xi.1,
-            pid_basis: pid_basis.parse().unwrap(),
-        };
-
-        let evolved_grid = self
-            .grid
-            .evolve(
-                operator.as_array(),
-                &op_info,
-                order_mask.as_slice().unwrap(),
-            )
-            .expect("Nothing returned from evolution.");
-        PyFkTable {
-            fk_table: evolved_grid,
-        }
-    }
-
     /// Collect information for convolution with an evolution operator.
     ///
     /// Parameters
@@ -702,20 +624,6 @@ impl PyGrid {
     /// Merge with another grid.
     pub fn merge(&mut self, other: Self) -> PyResult<()> {
         match self.grid.merge(other.grid) {
-            Ok(()) => Ok(()),
-            Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
-        }
-    }
-
-    /// Merge with another grid, loaded from file.
-    ///
-    /// Note
-    /// ----
-    /// For a current limitation with the implementation of the bound object `Grid` is not possible
-    /// to operate with two `Grid`s in memory, since is not possible to pass a `Grid` by argument
-    #[deprecated = "Deprecated in favor of PyGrid::merge"]
-    pub fn merge_from_file(&mut self, path: PathBuf) -> PyResult<()> {
-        match self.grid.merge(Self::read(path).grid) {
             Ok(()) => Ok(()),
             Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
         }
