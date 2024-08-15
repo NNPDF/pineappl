@@ -93,8 +93,7 @@ jobs:
           grep SF lcov.info | sort -u | sed 's/SF://'
 
       - name: Upload to codecov.io
-        # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
         uses: codecov/codecov-action@v4
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: rust
