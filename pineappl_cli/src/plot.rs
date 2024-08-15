@@ -523,6 +523,7 @@ impl Subcommand for Opts {
                 xlog = xlog,
                 ylog = ylog,
                 title = title,
+                scales = self.scales,
                 output = output.to_str().unwrap(),
                 data = data_string,
                 metadata = format_metadata(&vector),

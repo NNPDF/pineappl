@@ -57,7 +57,7 @@ ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
 label_rel_ewonoff_qcd       = r"NLO QCD"
 label_rel_ewonoff_ew        = r"NLO QCD+EW"
-label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_scale_unc = r"{scales}-p.\ scale var."
 label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = {xlog}
