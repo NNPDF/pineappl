@@ -8,6 +8,7 @@ use pyo3::prelude::*;
 /// PyO3 wrapper to :rustdoc:`pineappl::evolution::OperatorSliceInfo <evolution/struct.OperatorSliceInfo.html>`.
 #[pyclass(name = "OperatorSliceInfo")]
 #[derive(Clone)]
+#[repr(transparent)]
 pub struct PyOperatorSliceInfo {
     pub(crate) info: OperatorSliceInfo,
 }
