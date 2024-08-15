@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl.evolution.OperatorSliceInfo`
 - Python API: drop all `Py` prefixes, for instance `PyEvolveInfo` was renamed
   to `EvolveInfo`
+- by default `pineappl plot` no longer shows a channel breakdown in the panel
+  with absolute PDF predictions. However, this feature can be enabled with via
+  a new array added at the start of the script
 
 ### Removed
 

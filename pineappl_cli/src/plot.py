@@ -63,6 +63,12 @@ label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 xlog = {xlog}
 ylog = {ylog}
 
+# linestyle for the channel breakdown shown in the panel `plot_abs_pdfs`. If the array
+# is empty, no channel breakdown will be shown, otherwise the most important channels,
+# as many as linestyles are given. See also
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+channel_breakdown_linestyles = []
+
 
 def main():
     panels = [
@@ -261,11 +267,10 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ["--", ":"]
-    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+    for index, ((label, y), linestyle) in enumerate(zip(channels, channel_breakdown_linestyles)):
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)))
 
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
