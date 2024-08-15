@@ -24,8 +24,9 @@ clean:
 	rm -rf build
 	rm -rf _build
 
+# TODO: while apidoc does not work, we need to preserve that folder
 cleanall: clean
-	rm -rf $(PINEAPPLOUT)
+	# rm -rf $(PINEAPPLOUT)
 
 .PHONY: help Makefile
 

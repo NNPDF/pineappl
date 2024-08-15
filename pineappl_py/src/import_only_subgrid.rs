@@ -1,5 +1,6 @@
-use super::subgrid::PySubgridEnum;
+//! PyImportOnlySubgrid* interface.
 
+use super::subgrid::PySubgridEnum;
 use numpy::{PyArrayMethods, PyReadonlyArray1, PyReadonlyArray3};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
@@ -8,7 +9,7 @@ use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`.
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV2")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV2 {
@@ -79,7 +80,7 @@ impl PyImportOnlySubgridV2 {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`.
-#[pyclass]
+#[pyclass(name = "ImportOnlySubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV1 {
@@ -148,4 +149,21 @@ impl PyImportOnlySubgridV1 {
             subgrid_enum: self.import_only_subgrid.clone().into(),
         }
     }
+}
+
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "import_only_subgrid")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "ImportOnlySubgrid* interface.",
+    )?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.import_only_subgrid'] = m"
+    );
+    m.add_class::<PyImportOnlySubgridV1>()?;
+    m.add_class::<PyImportOnlySubgridV2>()?;
+    parent_module.add_submodule(&m)
 }

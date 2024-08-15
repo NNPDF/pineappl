@@ -1,27 +1,26 @@
+//! FK table interface.
+
+use super::grid::PyGrid;
+use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
 use pineappl::convolutions::LumiCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
-
-use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
-
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use crate::grid::PyGrid;
-
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
-#[pyclass]
+#[pyclass(name = "FkTable")]
 #[repr(transparent)]
 pub struct PyFkTable {
     pub(crate) fk_table: FkTable,
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::PyFkAssumptions <fk_table/struct.PyFkAssumptions.html>`.
-#[pyclass]
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkAssumptions <fk_table/enum.FkAssumptions.html>`.
+#[pyclass(name = "FkAssumptions")]
 #[repr(transparent)]
 pub struct PyFkAssumptions {
     pub(crate) fk_assumptions: FkAssumptions,
@@ -260,15 +259,15 @@ impl PyFkTable {
     pub fn convolve_with_two<'py>(
         &self,
         pdg_id1: i32,
-        xfx1: &PyAny,
+        xfx1: &Bound<'py, PyAny>,
         pdg_id2: i32,
-        xfx2: &PyAny,
+        xfx2: &Bound<'py, PyAny>,
         bin_indices: Option<PyReadonlyArray1<usize>>,
         channel_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
-        let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
+        let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
+        let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache =
             LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
@@ -294,4 +293,18 @@ impl PyFkTable {
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
         self.fk_table.optimize(assumptions.fk_assumptions)
     }
+}
+
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "fk_table")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "FK table interface.")?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.fk_table'] = m"
+    );
+    m.add_class::<PyFkTable>()?;
+    m.add_class::<PyFkAssumptions>()?;
+    parent_module.add_submodule(&m)
 }

@@ -1,36 +1,17 @@
+//! Subgrid interface.
+
 use ndarray::Array3;
 use numpy::{IntoPyArray, PyArray1, PyArray3};
 use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/struct.SubgridParams.html>`
-#[pyclass]
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/enum.SubgridParams.html>`
+#[pyclass(name = "SubgridParams")]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct PySubgridParams {
     pub(crate) subgrid_params: SubgridParams,
-}
-
-impl PySubgridParams {
-    pub(crate) fn new(subgrid_params: SubgridParams) -> Self {
-        Self { subgrid_params }
-    }
-}
-
-impl Clone for PySubgridParams {
-    fn clone(&self) -> Self {
-        let mut subgrid_params = SubgridParams::default();
-        subgrid_params.set_q2_bins(self.subgrid_params.q2_bins());
-        subgrid_params.set_q2_max(self.subgrid_params.q2_max());
-        subgrid_params.set_q2_min(self.subgrid_params.q2_min());
-        subgrid_params.set_q2_order(self.subgrid_params.q2_order());
-        subgrid_params.set_reweight(self.subgrid_params.reweight());
-        subgrid_params.set_x_bins(self.subgrid_params.x_bins());
-        subgrid_params.set_x_max(self.subgrid_params.x_max());
-        subgrid_params.set_x_min(self.subgrid_params.x_min());
-        subgrid_params.set_x_order(self.subgrid_params.x_order());
-        Self { subgrid_params }
-    }
 }
 
 #[pymethods]
@@ -38,9 +19,9 @@ impl PySubgridParams {
     /// Constructor using the defaults.
     #[new]
     pub fn default() -> Self {
-        let subgrid_params = SubgridParams::default();
-
-        Self::new(subgrid_params)
+        Self {
+            subgrid_params: SubgridParams::default(),
+        }
     }
 
     /// Set number of :math:`Q^2` bins.
@@ -135,10 +116,10 @@ impl PySubgridParams {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::Mu2 <subgrid/struct.Mu2.html>`
-#[pyclass]
+#[pyclass(name = "Mu2")]
 #[repr(transparent)]
 pub struct PyMu2 {
-    pub mu2: Mu2,
+    pub(crate) mu2: Mu2,
 }
 
 #[pymethods]
@@ -182,7 +163,7 @@ impl PyMu2 {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
-#[pyclass]
+#[pyclass(name = "SubgridEnum")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PySubgridEnum {
@@ -230,4 +211,19 @@ impl PySubgridEnum {
     pub fn x2_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         PyArray1::from_slice_bound(py, &self.subgrid_enum.x2_grid())
     }
+}
+
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "subgrid")?;
+    m.setattr(pyo3::intern!(m.py(), "__doc__"), "Subgrid interface.")?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.subgrid'] = m"
+    );
+    m.add_class::<PySubgridEnum>()?;
+    m.add_class::<PySubgridParams>()?;
+    m.add_class::<PyMu2>()?;
+    parent_module.add_submodule(&m)
 }
