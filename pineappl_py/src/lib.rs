@@ -13,8 +13,6 @@ pub mod pids;
 pub mod subgrid;
 
 /// PyO3 Python module that contains all exposed classes from Rust.
-///
-/// NOTE: this name has to match the one in Cargo.toml 'lib.name'
 #[pymodule]
 fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     bin::register(m)?;
