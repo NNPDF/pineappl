@@ -270,8 +270,13 @@ impl FkTable {
         bin_indices: &[usize],
         channel_mask: &[bool],
     ) -> Vec<f64> {
-        self.grid
-            .convolve(lumi_cache, &[], bin_indices, channel_mask, &[(1.0, 1.0, 1.0)])
+        self.grid.convolve(
+            lumi_cache,
+            &[],
+            bin_indices,
+            channel_mask,
+            &[(1.0, 1.0, 1.0)],
+        )
     }
 
     /// Set a metadata key-value pair.

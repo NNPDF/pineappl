@@ -1,6 +1,5 @@
 //! TODO
 
-use super::grid::Ntuple;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -21,7 +20,7 @@ impl Subgrid for EmptySubgridV1 {
         0.0
     }
 
-    fn fill(&mut self, _: &Ntuple<f64>) {
+    fn fill(&mut self, _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
 
@@ -105,12 +104,7 @@ mod tests {
     #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
         let mut subgrid = EmptySubgridV1;
-        subgrid.fill(&Ntuple {
-            x1: 0.0,
-            x2: 0.0,
-            q2: 0.0,
-            weight: 0.0,
-        });
+        subgrid.fill(&[0.0; 4], 0.0);
     }
 
     #[test]

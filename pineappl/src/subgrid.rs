@@ -1,7 +1,6 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::empty_subgrid::EmptySubgridV1;
-use super::grid::Ntuple;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
@@ -82,7 +81,7 @@ pub trait Subgrid {
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`. Filling is currently only support where both renormalization and factorization
     /// scale have the same value.
-    fn fill(&mut self, ntuple: &Ntuple<f64>);
+    fn fill(&mut self, ntuple: &[f64], weight: f64);
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;

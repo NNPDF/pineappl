@@ -1,7 +1,6 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::convert::{f64_from_usize, usize_from_f64};
-use super::grid::Ntuple;
 use super::subgrid::{
     ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
@@ -190,18 +189,21 @@ impl Subgrid for LagrangeSubgridV2 {
         })
     }
 
-    fn fill(&mut self, ntuple: &Ntuple<f64>) {
-        if ntuple.weight == 0.0 {
+    fn fill(&mut self, ntuple: &[f64], weight: f64) {
+        if weight == 0.0 {
             return;
         }
 
-        let y1 = fy(ntuple.x1);
-        let y2 = fy(ntuple.x2);
-        let tau = ftau(ntuple.q2);
+        let &[x1, x2, q2] = ntuple else {
+            unreachable!();
+        };
+        let y1 = fy(x1);
+        let y2 = fy(x2);
+        let tau = ftau(q2);
 
         if self.static_q2 == 0.0 {
-            self.static_q2 = ntuple.q2;
-        } else if (self.static_q2 != -1.0) && (self.static_q2 != ntuple.q2) {
+            self.static_q2 = q2;
+        } else if (self.static_q2 != -1.0) && (self.static_q2 != q2) {
             self.static_q2 = -1.0;
         }
 
@@ -240,15 +242,8 @@ impl Subgrid for LagrangeSubgridV2 {
         let u_tau = (tau - self.gettau(k3)) / self.deltatau();
 
         let factor = 1.0
-            / (if self.reweight1 {
-                weightfun(ntuple.x1)
-            } else {
-                1.0
-            } * if self.reweight2 {
-                weightfun(ntuple.x2)
-            } else {
-                1.0
-            });
+            / (if self.reweight1 { weightfun(x1) } else { 1.0 }
+                * if self.reweight2 { weightfun(x2) } else { 1.0 });
 
         let size = self.tauorder + 1;
         let ny1 = self.ny1;
@@ -266,7 +261,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
             for (i1, fi1i1) in fi1.iter().enumerate() {
                 for (i2, fi2i2) in fi2.iter().enumerate() {
-                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * ntuple.weight;
+                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * weight;
 
                     let grid = self
                         .grid
@@ -466,30 +461,10 @@ mod tests {
     use float_cmp::assert_approx_eq;
 
     fn test_q2_slice_methods<G: Subgrid>(mut grid: G) -> G {
-        grid.fill(&Ntuple {
-            x1: 0.1,
-            x2: 0.2,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid.fill(&Ntuple {
-            x1: 0.9,
-            x2: 0.1,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.01,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.5,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
+        grid.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
+        grid.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
+        grid.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
+        grid.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
 
         // the grid must not be empty
         assert!(!grid.is_empty());
@@ -516,30 +491,10 @@ mod tests {
     where
         SubgridEnum: From<G>,
     {
-        grid1.fill(&Ntuple {
-            x1: 0.1,
-            x2: 0.2,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid1.fill(&Ntuple {
-            x1: 0.9,
-            x2: 0.1,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid1.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.01,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid1.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.5,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
+        grid1.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
+        grid1.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
+        grid1.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
+        grid1.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
 
         assert!(!grid1.is_empty());
         assert!(grid2.is_empty());
@@ -559,30 +514,10 @@ mod tests {
 
         assert_approx_eq!(f64, reference, merged, ulps = 8);
 
-        grid3.fill(&Ntuple {
-            x1: 0.1,
-            x2: 0.2,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid3.fill(&Ntuple {
-            x1: 0.9,
-            x2: 0.1,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid3.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.01,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
-        grid3.fill(&Ntuple {
-            x1: 0.009,
-            x2: 0.5,
-            q2: 90.0_f64.powi(2),
-            weight: 1.0,
-        });
+        grid3.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
+        grid3.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
+        grid3.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
+        grid3.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
 
         grid2.merge(&mut grid3.into(), false);
 
@@ -595,47 +530,17 @@ mod tests {
         // this following events should be skipped
 
         // q2 is too large
-        grid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 0.5,
-            q2: 2e+8,
-            weight: 1.0,
-        });
+        grid.fill(&[0.5, 0.5, 2e+8], 1.0);
         // q2 is too small
-        grid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 0.5,
-            q2: 5e+1,
-            weight: 1.0,
-        });
+        grid.fill(&[0.5, 0.5, 5e+1], 1.0);
         // x1 is too large
-        grid.fill(&Ntuple {
-            x1: 1.1,
-            x2: 0.5,
-            q2: 1e+3,
-            weight: 1.0,
-        });
+        grid.fill(&[1.1, 0.5, 1e+3], 1.0);
         // x1 is too small
-        grid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 1e-7,
-            q2: 1e+3,
-            weight: 1.0,
-        });
+        grid.fill(&[0.5, 1e-7, 1e+3], 1.0);
         // x1 is too large
-        grid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 1.1,
-            q2: 1e+3,
-            weight: 1.0,
-        });
+        grid.fill(&[0.5, 1.1, 1e+3], 1.0);
         // x1 is too small
-        grid.fill(&Ntuple {
-            x1: 1e-7,
-            x2: 0.5,
-            q2: 1e+3,
-            weight: 1.0,
-        });
+        grid.fill(&[1e-7, 0.5, 1e+3], 1.0);
 
         let x1 = grid.x1_grid();
         let x2 = grid.x2_grid();
@@ -670,12 +575,7 @@ mod tests {
         let mut subgrid =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
-        subgrid.fill(&Ntuple {
-            x1: 0.5,
-            x2: 0.5,
-            q2: 1000.0,
-            weight: 0.0,
-        });
+        subgrid.fill(&[0.5, 0.5, 1000.0], 0.0);
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);

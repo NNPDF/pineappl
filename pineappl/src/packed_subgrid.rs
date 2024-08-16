@@ -1,6 +1,5 @@
 //! TODO
 
-use super::grid::Ntuple;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
@@ -53,7 +52,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             .sum()
     }
 
-    fn fill(&mut self, _: &Ntuple<f64>) {
+    fn fill(&mut self, _: &[f64], _: f64) {
         panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
     }
 

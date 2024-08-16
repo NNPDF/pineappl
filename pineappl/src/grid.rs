@@ -26,21 +26,6 @@ use std::mem;
 use std::ops::Range;
 use thiserror::Error;
 
-/// This structure represents a position (`x1`, `x2`, `q2`) in a `Subgrid` together with a
-/// corresponding `weight`. The type `W` can either be a `f64` or `()`, which is used when multiple
-/// weights should be signaled.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct Ntuple<W> {
-    /// Momentum fraction of the first parton.
-    pub x1: f64,
-    /// Momentum fraction of the second parton.
-    pub x2: f64,
-    /// Squared scale.
-    pub q2: f64,
-    /// Weight of this entry.
-    pub weight: W,
-}
-
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
 pub enum GridError {
@@ -277,8 +262,13 @@ impl Grid {
         channel_mask: &[bool],
         xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        assert!(xi.iter().all(|&(_, _, xia)| approx_eq!(f64, xia, 1.0, ulps = 2)));
-        let xi = xi.iter().map(|&(xir, xif, _)| (xir, xif)).collect::<Vec<_>>();
+        assert!(xi
+            .iter()
+            .all(|&(_, _, xia)| approx_eq!(f64, xia, 1.0, ulps = 2)));
+        let xi = xi
+            .iter()
+            .map(|&(xir, xif, _)| (xir, xif))
+            .collect::<Vec<_>>();
         lumi_cache.setup(self, &xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
@@ -423,7 +413,14 @@ impl Grid {
     /// # Panics
     ///
     /// TODO
-    pub fn fill(&mut self, order: usize, observable: f64, channel: usize, ntuple: &Ntuple<f64>) {
+    pub fn fill(
+        &mut self,
+        order: usize,
+        observable: f64,
+        channel: usize,
+        ntuple: &[f64],
+        weight: f64,
+    ) {
         if let Some(bin) = self.bin_limits.index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
@@ -431,7 +428,7 @@ impl Grid {
                 *subgrid = mmv3.subgrid_template.clone_empty();
             }
 
-            subgrid.fill(ntuple);
+            subgrid.fill(ntuple, weight);
         }
     }
 
@@ -672,31 +669,6 @@ impl Grid {
         encoder.try_finish().unwrap();
 
         Ok(())
-    }
-
-    /// Fills the grid with events for the parton momentum fractions `x1` and `x2`, the scale `q2`,
-    /// and the `order` and `observable`. The events are stored in `weights` and their ordering
-    /// corresponds to the ordering of [`Grid::channels`].
-    pub fn fill_all(
-        &mut self,
-        order: usize,
-        observable: f64,
-        ntuple: &Ntuple<()>,
-        weights: &[f64],
-    ) {
-        for (channel, weight) in weights.iter().enumerate() {
-            self.fill(
-                order,
-                observable,
-                channel,
-                &Ntuple {
-                    x1: ntuple.x1,
-                    x2: ntuple.x2,
-                    q2: ntuple.q2,
-                    weight: *weight,
-                },
-            );
-        }
     }
 
     /// Return the channels for this `Grid`.
@@ -1925,28 +1897,10 @@ mod tests {
             SubgridParams::default(),
         );
 
-        other.fill_all(
-            0,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[1.0, 2.0],
-        );
-        other.fill_all(
-            1,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[1.0, 2.0],
-        );
+        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
+        other.fill(0, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
+        other.fill(1, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
+        other.fill(1, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
 
         // merge with four non-empty subgrids
         grid.merge(other).unwrap();
@@ -1982,17 +1936,7 @@ mod tests {
         );
 
         // fill the photon-photon entry
-        other.fill(
-            0,
-            0.1,
-            0,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: 3.0,
-            },
-        );
+        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 3.0);
 
         grid.merge(other).unwrap();
 
@@ -2030,17 +1974,8 @@ mod tests {
             SubgridParams::default(),
         );
 
-        other.fill_all(
-            0,
-            0.1,
-            &Ntuple {
-                x1: 0.1,
-                x2: 0.2,
-                q2: 90.0_f64.powi(2),
-                weight: (),
-            },
-            &[2.0, 3.0],
-        );
+        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
+        other.fill(0, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 3.0);
 
         grid.merge(other).unwrap();
 

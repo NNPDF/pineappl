@@ -59,7 +59,7 @@ use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::{Convolution, LumiCache};
-use pineappl::grid::{Grid, GridOptFlags, Ntuple};
+use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -531,7 +531,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+    grid.fill(order, observable, lumi, &[x1, x2, q2], weight);
 }
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -555,17 +555,9 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
     let grid = unsafe { &mut *grid };
     let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
 
-    grid.fill_all(
-        order,
-        observable,
-        &Ntuple {
-            x1,
-            x2,
-            q2,
-            weight: (),
-        },
-        weights,
-    );
+    for (channel, &weight) in weights.iter().enumerate() {
+        grid.fill(order, observable, channel, &[x1, x2, q2], weight);
+    }
 }
 
 /// Fill `grid` with as many points as indicated by `size`.
@@ -599,7 +591,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
     for (&x1, &x2, &q2, &order, &observable, &lumi, &weight) in
         izip!(x1, x2, q2, orders, observables, lumis, weights)
     {
-        grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+        grid.fill(order, observable, lumi, &[x1, x2, q2], weight);
     }
 }
 
