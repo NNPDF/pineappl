@@ -162,33 +162,6 @@ impl LagrangeSubgridV2 {
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.grid.as_ref().map_or(0.0, |grid| {
-            grid.indexed_iter()
-                .map(|((imu2, ix1, ix2), &sigma)| {
-                    if sigma == 0.0 {
-                        0.0
-                    } else {
-                        let mut value = sigma * lumi(ix1, ix2, imu2 + self.itaumin);
-                        if self.reweight1 {
-                            value *= weightfun(x1[ix1]);
-                        }
-                        if self.reweight2 {
-                            value *= weightfun(x2[ix2]);
-                        }
-                        value
-                    }
-                })
-                .sum()
-        })
-    }
-
     fn fill(&mut self, ntuple: &[f64], weight: f64) {
         if weight == 0.0 {
             return;
@@ -458,117 +431,6 @@ impl Subgrid for LagrangeSubgridV2 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_cmp::assert_approx_eq;
-
-    fn test_q2_slice_methods<G: Subgrid>(mut grid: G) -> G {
-        grid.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
-        grid.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
-        grid.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
-        grid.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
-
-        // the grid must not be empty
-        assert!(!grid.is_empty());
-
-        let x1 = grid.x1_grid();
-        let x2 = grid.x2_grid();
-        let mu2 = grid.mu2_grid();
-
-        let reference = grid.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
-
-        let mut test = 0.0;
-
-        // check `reference` against manually calculated result from q2 slices
-        for ((_, ix1, ix2), value) in grid.indexed_iter() {
-            test += value / (x1[ix1] * x2[ix2]);
-        }
-
-        assert_approx_eq!(f64, test, reference, ulps = 8);
-
-        grid
-    }
-
-    fn test_merge_method<G: Subgrid>(mut grid1: G, mut grid2: G, mut grid3: G)
-    where
-        SubgridEnum: From<G>,
-    {
-        grid1.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
-        grid1.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
-        grid1.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
-        grid1.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
-
-        assert!(!grid1.is_empty());
-        assert!(grid2.is_empty());
-
-        let x1 = grid1.x1_grid().into_owned();
-        let x2 = grid1.x2_grid().into_owned();
-        let mu2 = grid1.mu2_grid().into_owned();
-
-        let reference =
-            grid1.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
-
-        // merge filled grid into empty one
-        grid2.merge(&mut grid1.into(), false);
-        assert!(!grid2.is_empty());
-
-        let merged = grid2.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
-
-        assert_approx_eq!(f64, reference, merged, ulps = 8);
-
-        grid3.fill(&[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
-        grid3.fill(&[0.9, 0.1, 90.0_f64.powi(2)], 1.0);
-        grid3.fill(&[0.009, 0.01, 90.0_f64.powi(2)], 1.0);
-        grid3.fill(&[0.009, 0.5, 90.0_f64.powi(2)], 1.0);
-
-        grid2.merge(&mut grid3.into(), false);
-
-        let merged = grid2.convolve(&x1, &x2, &mu2, &mut |ix1, ix2, _| 1.0 / (x1[ix1] * x2[ix2]));
-
-        assert_approx_eq!(f64, 2.0 * reference, merged, ulps = 8);
-    }
-
-    fn test_empty_subgrid<G: Subgrid>(mut grid: G) {
-        // this following events should be skipped
-
-        // q2 is too large
-        grid.fill(&[0.5, 0.5, 2e+8], 1.0);
-        // q2 is too small
-        grid.fill(&[0.5, 0.5, 5e+1], 1.0);
-        // x1 is too large
-        grid.fill(&[1.1, 0.5, 1e+3], 1.0);
-        // x1 is too small
-        grid.fill(&[0.5, 1e-7, 1e+3], 1.0);
-        // x1 is too large
-        grid.fill(&[0.5, 1.1, 1e+3], 1.0);
-        // x1 is too small
-        grid.fill(&[1e-7, 0.5, 1e+3], 1.0);
-
-        let x1 = grid.x1_grid();
-        let x2 = grid.x2_grid();
-        let mu2 = grid.mu2_grid();
-
-        let result = grid.convolve(&x1, &x2, &mu2, &mut |_, _, _| 1.0);
-
-        assert_eq!(result, 0.0);
-    }
-
-    #[test]
-    fn q2_slice_v2() {
-        let subgrid = test_q2_slice_methods(LagrangeSubgridV2::new(
-            &SubgridParams::default(),
-            &ExtraSubgridParams::default(),
-        ));
-
-        assert_eq!(
-            subgrid.stats(),
-            Stats {
-                total: 10000,
-                allocated: 10000,
-                zeros: 256,
-                overhead: 0,
-                bytes_per_value: 8
-            }
-        );
-    }
 
     #[test]
     fn fill_zero_v2() {
@@ -579,22 +441,5 @@ mod tests {
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
-    }
-
-    #[test]
-    fn merge_dense_v2() {
-        test_merge_method(
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default()),
-        );
-    }
-
-    #[test]
-    fn empty_v2() {
-        test_empty_subgrid(LagrangeSubgridV2::new(
-            &SubgridParams::default(),
-            &ExtraSubgridParams::default(),
-        ));
     }
 }

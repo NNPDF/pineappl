@@ -39,19 +39,6 @@ impl PackedQ1X2SubgridV1 {
 }
 
 impl Subgrid for PackedQ1X2SubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        self.array
-            .indexed_iter()
-            .map(|([imu2, ix1, ix2], sigma)| sigma * lumi(ix1, ix2, imu2))
-            .sum()
-    }
-
     fn fill(&mut self, _: &[f64], _: f64) {
         panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
     }
@@ -312,12 +299,6 @@ mod tests {
         assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
         assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
 
-        // symmetric luminosity function
-        let lumi =
-            &mut (|ix1, ix2, _| x[ix1] * x[ix2]) as &mut dyn FnMut(usize, usize, usize) -> f64;
-
-        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 0.228515625);
-
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
             PackedArray::new([1, 10, 10]),
@@ -338,7 +319,6 @@ mod tests {
         } else {
             unreachable!();
         }
-        assert_eq!(grid2.convolve(&x, &x, &mu2, lumi), 0.228515625);
 
         assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
         assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
@@ -346,8 +326,6 @@ mod tests {
         assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
 
         grid1.merge(&mut grid2, false);
-
-        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         let mut grid1 = {
             let mut g = grid1.clone_empty();
@@ -358,10 +336,8 @@ mod tests {
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
         grid1.symmetrize();
-        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 2.0 * 0.228515625);
 
         grid1.scale(2.0);
-        assert_eq!(grid1.convolve(&x, &x, &mu2, lumi), 4.0 * 0.228515625);
 
         assert_eq!(
             grid1.stats(),

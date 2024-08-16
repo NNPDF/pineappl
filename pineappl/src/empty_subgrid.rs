@@ -10,16 +10,6 @@ use std::iter;
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        _: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        0.0
-    }
-
     fn fill(&mut self, _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
@@ -81,7 +71,6 @@ mod tests {
     #[test]
     fn create_empty() {
         let mut subgrid = EmptySubgridV1;
-        assert_eq!(subgrid.convolve(&[], &[], &[], &mut |_, _, _| 0.0), 0.0,);
         assert!(subgrid.is_empty());
         subgrid.merge(&mut EmptySubgridV1.into(), false);
         subgrid.scale(2.0);

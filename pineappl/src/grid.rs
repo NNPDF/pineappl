@@ -309,24 +309,26 @@ impl Grid {
 
                 lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
 
-                let mut value =
-                    subgrid.convolve(&x1_grid, &x2_grid, &mu2_grid, &mut |ix1, ix2, imu2| {
-                        let x1 = x1_grid[ix1];
-                        let x2 = x2_grid[ix2];
-                        let mut lumi = 0.0;
+                let mut value = 0.0;
 
-                        for entry in channel.entry() {
-                            debug_assert_eq!(entry.0.len(), 2);
-                            let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
-                            let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
-                            lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
-                        }
+                for ((imu2, ix1, ix2), v) in subgrid.indexed_iter() {
+                    let x1 = x1_grid[ix1];
+                    let x2 = x2_grid[ix2];
+                    let mut lumi = 0.0;
 
-                        let alphas = lumi_cache.alphas(imu2);
+                    for entry in channel.entry() {
+                        debug_assert_eq!(entry.0.len(), 2);
+                        let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
+                        let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                        lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
+                    }
 
-                        lumi *= alphas.powi(order.alphas.try_into().unwrap());
-                        lumi
-                    });
+                    let alphas = lumi_cache.alphas(imu2);
+
+                    lumi *= alphas.powi(order.alphas.try_into().unwrap());
+
+                    value += lumi * v;
+                }
 
                 if order.logxir > 0 {
                     value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());

@@ -68,16 +68,6 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Convolute the subgrid with a luminosity function, which takes indices as arguments that
-    /// correspond to the entries given in the slices `x1`, `x2` and `mu2`.
-    fn convolve(
-        &self,
-        x1: &[f64],
-        x2: &[f64],
-        mu2: &[Mu2],
-        lumi: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64;
-
     /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
     /// scale `q2`. Filling is currently only support where both renormalization and factorization
     /// scale have the same value.
