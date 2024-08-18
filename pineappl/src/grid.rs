@@ -86,7 +86,7 @@ impl Mmv3 {
 }
 
 fn default_metadata() -> BTreeMap<String, String> {
-    [(
+    iter::once((
         "pineappl_gitversion".to_owned(),
         git_version!(
             args = ["--always", "--dirty", "--long", "--tags"],
@@ -94,8 +94,7 @@ fn default_metadata() -> BTreeMap<String, String> {
             fallback = "unknown"
         )
         .to_owned(),
-    )]
-    .into_iter()
+    ))
     .collect()
 }
 

@@ -272,7 +272,7 @@ pub fn convolve_scales(
 
             let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
 
-            grid.convolve(&mut cache, &orders, bins, channels, &scales)
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
         [fun1, fun2] => {
             let pdg_id1 = fun1
@@ -319,7 +319,7 @@ pub fn convolve_scales(
             let mut cache =
                 LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
 
-            grid.convolve(&mut cache, &orders, bins, channels, &scales)
+            grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
         _ => unimplemented!(),
     };
