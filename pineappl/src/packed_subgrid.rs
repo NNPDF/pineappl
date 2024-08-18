@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use std::mem;
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct PackedQ1X2SubgridV1 {
     array: PackedArray<f64, 3>,
     mu2_grid: Vec<Mu2>,
@@ -60,89 +60,84 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        if let SubgridEnum::PackedQ1X2SubgridV1(other_grid) = other {
-            if self.array.is_empty() && !transpose {
-                mem::swap(&mut self.array, &mut other_grid.array);
-            } else {
-                let rhs_mu2 = other_grid.mu2_grid().into_owned();
-                let rhs_x1 = if transpose {
-                    other_grid.x2_grid()
-                } else {
-                    other_grid.x1_grid()
-                };
-                let rhs_x2 = if transpose {
-                    other_grid.x1_grid()
-                } else {
-                    other_grid.x2_grid()
-                };
-
-                if (self.mu2_grid != rhs_mu2)
-                    || (self.x1_grid() != rhs_x1)
-                    || (self.x2_grid() != rhs_x2)
-                {
-                    let mut mu2_grid = self.mu2_grid.clone();
-                    let mut x1_grid = self.x1_grid.clone();
-                    let mut x2_grid = self.x2_grid.clone();
-
-                    mu2_grid.extend_from_slice(&rhs_mu2);
-                    mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                    mu2_grid.dedup();
-                    x1_grid.extend_from_slice(&rhs_x1);
-                    x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                    x1_grid.dedup();
-                    x2_grid.extend_from_slice(&rhs_x2);
-                    x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                    x2_grid.dedup();
-
-                    let mut array =
-                        PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
-
-                    for ([i, j, k], value) in self.array.indexed_iter() {
-                        let target_i = mu2_grid
-                            .iter()
-                            .position(|mu2| *mu2 == self.mu2_grid[i])
-                            .unwrap_or_else(|| unreachable!());
-                        let target_j = x1_grid
-                            .iter()
-                            .position(|&x| x == self.x1_grid[j])
-                            .unwrap_or_else(|| unreachable!());
-                        let target_k = x2_grid
-                            .iter()
-                            .position(|&x| x == self.x2_grid[k])
-                            .unwrap_or_else(|| unreachable!());
-
-                        array[[target_i, target_j, target_k]] = value;
-                    }
-
-                    self.array = array;
-                    self.mu2_grid = mu2_grid;
-                    self.x1_grid = x1_grid;
-                    self.x2_grid = x2_grid;
-                }
-
-                for ([i, j, k], value) in other_grid.array.indexed_iter() {
-                    let (j, k) = if transpose { (k, j) } else { (j, k) };
-                    let target_i = self
-                        .mu2_grid
-                        .iter()
-                        .position(|x| *x == rhs_mu2[i])
-                        .unwrap_or_else(|| unreachable!());
-                    let target_j = self
-                        .x1_grid
-                        .iter()
-                        .position(|&x| x == rhs_x1[j])
-                        .unwrap_or_else(|| unreachable!());
-                    let target_k = self
-                        .x2_grid
-                        .iter()
-                        .position(|&x| x == rhs_x2[k])
-                        .unwrap_or_else(|| unreachable!());
-
-                    self.array[[target_i, target_j, target_k]] += value;
-                }
+        if self.is_empty() && !transpose {
+            if let SubgridEnum::PackedQ1X2SubgridV1(other) = other {
+                *self = mem::take(other);
+                return;
             }
+        }
+
+        let rhs_mu2 = other.mu2_grid().into_owned();
+        let rhs_x1 = if transpose {
+            other.x2_grid()
         } else {
-            todo!();
+            other.x1_grid()
+        };
+        let rhs_x2 = if transpose {
+            other.x1_grid()
+        } else {
+            other.x2_grid()
+        };
+
+        if (self.mu2_grid != rhs_mu2) || (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2) {
+            let mut mu2_grid = self.mu2_grid.clone();
+            let mut x1_grid = self.x1_grid.clone();
+            let mut x2_grid = self.x2_grid.clone();
+
+            mu2_grid.extend_from_slice(&rhs_mu2);
+            mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            mu2_grid.dedup();
+            x1_grid.extend_from_slice(&rhs_x1);
+            x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x1_grid.dedup();
+            x2_grid.extend_from_slice(&rhs_x2);
+            x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x2_grid.dedup();
+
+            let mut array = PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+
+            for ([i, j, k], value) in self.array.indexed_iter() {
+                let target_i = mu2_grid
+                    .iter()
+                    .position(|mu2| *mu2 == self.mu2_grid[i])
+                    .unwrap_or_else(|| unreachable!());
+                let target_j = x1_grid
+                    .iter()
+                    .position(|&x| x == self.x1_grid[j])
+                    .unwrap_or_else(|| unreachable!());
+                let target_k = x2_grid
+                    .iter()
+                    .position(|&x| x == self.x2_grid[k])
+                    .unwrap_or_else(|| unreachable!());
+
+                array[[target_i, target_j, target_k]] = value;
+            }
+
+            self.array = array;
+            self.mu2_grid = mu2_grid;
+            self.x1_grid = x1_grid;
+            self.x2_grid = x2_grid;
+        }
+
+        for ((i, j, k), value) in other.indexed_iter() {
+            let (j, k) = if transpose { (k, j) } else { (j, k) };
+            let target_i = self
+                .mu2_grid
+                .iter()
+                .position(|x| *x == rhs_mu2[i])
+                .unwrap_or_else(|| unreachable!());
+            let target_j = self
+                .x1_grid
+                .iter()
+                .position(|&x| x == rhs_x1[j])
+                .unwrap_or_else(|| unreachable!());
+            let target_k = self
+                .x2_grid
+                .iter()
+                .position(|&x| x == rhs_x2[k])
+                .unwrap_or_else(|| unreachable!());
+
+            self.array[[target_i, target_j, target_k]] += value;
         }
     }
 
@@ -254,6 +249,18 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic(expected = "PackedQ1X2SubgridV1 doesn't support the fill operation")]
+    fn fill_packed_q1x2_subgrid_v1() {
+        let mut subgrid = PackedQ1X2SubgridV1::new(
+            PackedArray::new([0, 0, 0]),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        );
+        subgrid.fill(&[0.0; 4], 0.0);
+    }
+
+    #[test]
     fn test_v1() {
         let x = vec![
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
@@ -288,8 +295,6 @@ mod tests {
             x.array_mut()[[0, 1, 3]] = 2.0;
             x.array_mut()[[0, 4, 3]] = 4.0;
             x.array_mut()[[0, 7, 1]] = 8.0;
-        } else {
-            unreachable!();
         }
 
         assert!(!grid1.is_empty());
@@ -316,8 +321,6 @@ mod tests {
             x.array_mut()[[0, 3, 1]] = 2.0;
             x.array_mut()[[0, 3, 4]] = 4.0;
             x.array_mut()[[0, 1, 7]] = 8.0;
-        } else {
-            unreachable!();
         }
 
         assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));

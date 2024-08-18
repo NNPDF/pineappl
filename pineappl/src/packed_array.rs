@@ -23,6 +23,17 @@ pub struct PackedArray<T, const D: usize> {
     shape: Vec<usize>,
 }
 
+impl<T, const D: usize> Default for PackedArray<T, D> {
+    fn default() -> Self {
+        Self {
+            entries: Vec::new(),
+            start_indices: Vec::new(),
+            lengths: Vec::new(),
+            shape: vec![0; D],
+        }
+    }
+}
+
 impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
     /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
