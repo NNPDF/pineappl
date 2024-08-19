@@ -335,9 +335,7 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn scale(&mut self, factor: f64) {
-        if factor == 0.0 {
-            self.grid = None;
-        } else if let Some(self_grid) = &mut self.grid {
+        if let Some(self_grid) = &mut self.grid {
             self_grid.iter_mut().for_each(|x| *x *= factor);
         }
     }
