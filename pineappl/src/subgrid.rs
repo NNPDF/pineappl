@@ -292,7 +292,6 @@ impl SubgridParams {
 }
 
 /// Extra grid creation parameters when the limits for `x1` and `x2` are different.
-#[derive(Deserialize, Serialize)]
 pub struct ExtraSubgridParams {
     reweight2: bool,
     x2_bins: usize,
