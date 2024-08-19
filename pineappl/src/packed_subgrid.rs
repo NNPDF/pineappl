@@ -1,5 +1,6 @@
 //! TODO
 
+use super::grid::Grid;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
@@ -39,6 +40,20 @@ impl PackedQ1X2SubgridV1 {
 }
 
 impl Subgrid for PackedQ1X2SubgridV1 {
+    fn nodes(&self, _: &Grid) -> Cow<[Vec<f64>]> {
+        Cow::Owned(vec![
+            self.x1_grid.clone(),
+            self.x2_grid.clone(),
+            self.mu2_grid
+                .iter()
+                .map(|&Mu2 { ren, fac, frg: _ }| {
+                    assert_eq!(ren, fac);
+                    ren
+                })
+                .collect(),
+        ])
+    }
+
     fn fill(&mut self, _: &[f64], _: f64) {
         panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
     }

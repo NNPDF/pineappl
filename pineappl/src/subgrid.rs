@@ -1,6 +1,7 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::empty_subgrid::EmptySubgridV1;
+use super::grid::Grid;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
@@ -32,6 +33,41 @@ pub struct Mu2 {
     pub frg: f64,
 }
 
+/// Enumeration describing the kinematic variables that are interpolated in a [`Subgrid`].
+#[derive(Clone, Copy, Deserialize, Serialize)]
+pub enum Kinematics {
+    /// Denotes a [`Subgrid`] with three kinematic variables: 1) one scale, which is the value of
+    /// both the renormalization and factorization scale, 2) a momentum fraction for the first
+    /// convolution and 3) a momentum fraction for the second convolution.
+    Q2rfX1X2,
+    // /// Denotes a [`Subgrid`] with four kinematic variables: two scales, 1) the renormalization and
+    // /// 2) factorization scale, 3) a momentum fraction for the first convolution and 3) a momentum
+    // /// fraction for the second convolution.
+    // Q2rQ2fX1X2,
+    // /// FK-table.
+    // Q2fX1X2,
+}
+
+// /// Return the renormalization scales for the `subgrid` contained in `grid`.
+// pub fn ren<'a, 'b>(grid: &'a Grid, subgrid: &'b SubgridEnum) -> Cow<'b, [f64]> {
+//     match grid.kinematics() {
+//         Kinematics::Q2rfX1X2 => match subgrid.nodes(grid) {
+//             Cow::Borrowed(vec) => Cow::Borrowed(&vec[0]),
+//             Cow::Owned(mut vec) => Cow::Owned(vec.remove(0)),
+//         },
+//     }
+// }
+//
+// /// Return the factorization scales for the `subgrid` contained in `grid`.
+// pub fn fac<'a, 'b>(grid: &'a Grid, subgrid: &'b SubgridEnum) -> Cow<'b, [f64]> {
+//     match grid.kinematics() {
+//         Kinematics::Q2rfX1X2 => match subgrid.nodes(grid) {
+//             Cow::Borrowed(vec) => Cow::Borrowed(&vec[0]),
+//             Cow::Owned(mut vec) => Cow::Owned(vec.remove(0)),
+//         },
+//     }
+// }
+
 /// Size-related statistics for a subgrid.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Stats {
@@ -55,6 +91,10 @@ pub struct Stats {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
+    /// Return the values of node points for each kinematical variable interpolated in this
+    /// subgrid.
+    fn nodes(&self, grid: &Grid) -> Cow<[Vec<f64>]>;
+
     /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
     /// factorization values of the grid. If the subgrid does not use a grid, this method should
     /// return an empty slice.

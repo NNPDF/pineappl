@@ -10,7 +10,7 @@ use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::{self, PidBasis};
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{ExtraSubgridParams, Kinematics, Mu2, Subgrid, SubgridEnum, SubgridParams};
 use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
@@ -149,6 +149,7 @@ pub struct Grid {
     metadata: BTreeMap<String, String>,
     convolutions: Vec<Convolution>,
     pid_basis: PidBasis,
+    kinematics: Kinematics,
     more_members: MoreMembers,
 }
 
@@ -178,6 +179,8 @@ impl Grid {
             convolutions,
             // TODO: make this a new parameter
             pid_basis: PidBasis::Pdg,
+            // TODO: make this a new parameter
+            kinematics: Kinematics::Q2rfX1X2,
             channels,
             subgrid_params,
         }
@@ -199,6 +202,8 @@ impl Grid {
         extra: ExtraSubgridParams,
         subgrid_type: &str,
     ) -> Result<Self, GridError> {
+        // TODO: remove this constructor
+
         let subgrid_template: SubgridEnum = match subgrid_type {
             "LagrangeSubgrid" | "LagrangeSubgridV2" => {
                 LagrangeSubgridV2::new(&subgrid_params, &extra).into()
@@ -217,9 +222,16 @@ impl Grid {
             metadata: default_metadata(),
             convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
             pid_basis: PidBasis::Pdg,
+            kinematics: Kinematics::Q2rfX1X2,
             channels,
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
         })
+    }
+
+    /// Return the meaning of kinematic variables which each subgrid interpolates.
+    #[must_use]
+    pub const fn kinematics(&self) -> Kinematics {
+        self.kinematics
     }
 
     /// Return the convention by which the channels' PIDs are encoded.
@@ -558,6 +570,8 @@ impl Grid {
                         _ => panic!("unknown PID basis '{lumi_id_types}'"),
                     }
                 }),
+            // TODO: when reading DIS grids, change this value
+            kinematics: Kinematics::Q2rfX1X2,
             // TODO: make these proper members
             more_members: MoreMembers::V3(Mmv3 {
                 remapper: grid.remapper().map(|r| {
@@ -1434,6 +1448,7 @@ impl Grid {
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
                 pid_basis: info.pid_basis,
+                kinematics: self.kinematics,
                 more_members: self.more_members.clone(),
             };
 
@@ -1570,6 +1585,7 @@ impl Grid {
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
                 pid_basis: infos[0].pid_basis,
+                kinematics: self.kinematics,
                 more_members: self.more_members.clone(),
             };
 
