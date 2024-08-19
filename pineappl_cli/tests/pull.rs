@@ -75,6 +75,9 @@ const REPLICA0_STR: &str = "b   etal      total   c   pull    c    pull    c    
 7    4  4.5 0.1659039 0 0.1773824 3 -0.0075349 4 -0.0025330 2 -0.0014339 1  0.0000233
 ";
 
+const LHAID_ERROR_STR: &str = "Error: no convolution function for LHAID = `0` found
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -159,4 +162,20 @@ fn replica0() {
         .assert()
         .success()
         .stdout(REPLICA0_STR);
+}
+
+#[test]
+fn conv_fun_lhaid_error() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "pull",
+            "--threads=1",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "0",
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .failure()
+        .stderr(LHAID_ERROR_STR);
 }

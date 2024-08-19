@@ -420,10 +420,8 @@ mod tests {
         assert_eq!(FkAssumptions::from_str("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
         assert_eq!(FkAssumptions::from_str("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
         assert_eq!(
-            FkAssumptions::from_str("XXXXXX"),
-            Err(UnknownFkAssumption {
-                variant: "XXXXXX".to_owned()
-            })
+            FkAssumptions::from_str("XXXXXX").unwrap_err().to_string(),
+            "unknown variant for FkAssumptions: XXXXXX"
         );
     }
 

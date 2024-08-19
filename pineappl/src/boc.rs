@@ -250,6 +250,7 @@ impl Order {
                             && match max_as.cmp(&max_al) {
                                 Ordering::Greater => lo_as + pto == alphas,
                                 Ordering::Less => lo_al + pto == alpha,
+                                // TODO: when do we hit this condition?
                                 Ordering::Equal => false,
                             })
                 },
@@ -390,16 +391,22 @@ impl Channel {
     /// # Examples
     ///
     /// ```rust
-    /// use pineappl::boc::Channel;
+    /// use pineappl::channel;
     ///
-    /// let entry1 = Channel::new(vec![(2, 2, 2.0), (4, 4, 2.0)]);
-    /// let entry2 = Channel::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
-    /// let entry3 = Channel::new(vec![(3, 4, 1.0), (2, 2, 1.0)]);
-    /// let entry4 = Channel::new(vec![(4, 3, 1.0), (2, 3, 2.0)]);
+    /// let ch1 = channel![2, 2, 2.0; 4, 4, 2.0];
+    /// let ch2 = channel![4, 4, 1.0; 2, 2, 1.0];
+    /// let ch3 = channel![3, 4, 1.0; 2, 2, 1.0];
+    /// let ch4 = channel![4, 3, 1.0; 2, 3, 2.0];
+    /// let ch5 = channel![2, 2, 1.0; 4, 4, 2.0];
     ///
-    /// assert_eq!(entry1.common_factor(&entry2), Some(2.0));
-    /// assert_eq!(entry1.common_factor(&entry3), None);
-    /// assert_eq!(entry1.common_factor(&entry4), None);
+    /// // ch1 is ch2 multiplied by two
+    /// assert_eq!(ch1.common_factor(&ch2), Some(2.0));
+    /// // ch1 isn't similar to ch3
+    /// assert_eq!(ch1.common_factor(&ch3), None);
+    /// // ch1 isn't similar to ch4 either
+    /// assert_eq!(ch1.common_factor(&ch4), None);
+    /// // ch1 is similar to ch5, but they don't share a common factor
+    /// assert_eq!(ch1.common_factor(&ch5), None);
     /// ```
     #[must_use]
     pub fn common_factor(&self, other: &Self) -> Option<f64> {
@@ -507,7 +514,7 @@ macro_rules! channel {
 
 #[cfg(test)]
 mod tests {
-    use super::{Channel, Order, ParseOrderError};
+    use super::*;
     use crate::pids;
 
     #[test]
@@ -517,15 +524,15 @@ mod tests {
         assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0)));
         assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1)));
         assert_eq!(
-            "ab12".parse::<Order>(),
-            Err(ParseOrderError("unknown coupling: 'ab'".to_owned()))
+            "ab12".parse::<Order>().unwrap_err().to_string(),
+            "unknown coupling: 'ab'"
         );
         assert_eq!(
-            "ab123456789000000".parse::<Order>(),
-            Err(ParseOrderError(
-                "error while parsing exponent of 'ab': number too large to fit in target type"
-                    .to_owned()
-            ))
+            "ab123456789000000"
+                .parse::<Order>()
+                .unwrap_err()
+                .to_string(),
+            "error while parsing exponent of 'ab': number too large to fit in target type"
         );
     }
 
