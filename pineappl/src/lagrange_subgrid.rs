@@ -439,7 +439,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fill_zero_v2() {
+    fn fill_zero() {
         let mut subgrid =
             LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
 
@@ -447,5 +447,81 @@ mod tests {
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 0,
+                allocated: 0,
+                zeros: 0,
+                overhead: 0,
+                bytes_per_value: mem::size_of::<f64>()
+            }
+        );
+    }
+
+    #[test]
+    fn fill_outside_range() {
+        let mut subgrid =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+
+        subgrid.fill(&[1e-10, 0.5, 1000.0], 0.0);
+
+        assert!(subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 0);
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 0,
+                allocated: 0,
+                zeros: 0,
+                overhead: 0,
+                bytes_per_value: mem::size_of::<f64>()
+            }
+        );
+    }
+
+    #[test]
+    fn fill() {
+        let mut subgrid =
+            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+
+        subgrid.fill(&[0.5, 0.5, 1000.0], 1.0);
+
+        assert!(!subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 4 * 4 * 4);
+        assert_eq!(
+            subgrid.static_scale(),
+            Some(Mu2 {
+                ren: 1000.0,
+                fac: 1000.0,
+                frg: -1.0
+            })
+        );
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 50 * 50 * 4,
+                allocated: 50 * 50 * 4,
+                zeros: 50 * 50 * 4 - 4 * 4 * 4,
+                overhead: 0,
+                bytes_per_value: mem::size_of::<f64>()
+            }
+        );
+
+        subgrid.fill(&[0.5, 0.5, 1000000.0], 1.0);
+
+        assert!(!subgrid.is_empty());
+        assert_eq!(subgrid.indexed_iter().count(), 2 * 4 * 4 * 4);
+        assert_eq!(subgrid.static_scale(), None);
+        assert_eq!(
+            subgrid.stats(),
+            Stats {
+                total: 50 * 50 * 23,
+                allocated: 50 * 50 * 23,
+                zeros: 50 * 50 * 23 - 4 * 4 * 4 * 2,
+                overhead: 0,
+                bytes_per_value: mem::size_of::<f64>()
+            }
+        );
     }
 }
