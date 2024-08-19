@@ -5,7 +5,7 @@ use super::grid::Grid;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
-use ndarray::Array3;
+// use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -139,22 +139,22 @@ pub trait Subgrid {
     fn static_scale(&self) -> Option<Mu2>;
 }
 
-// this is needed in the Python interface
-impl From<&SubgridEnum> for Array3<f64> {
-    fn from(subgrid: &SubgridEnum) -> Self {
-        let mut result = Self::zeros((
-            subgrid.mu2_grid().len(),
-            subgrid.x1_grid().len(),
-            subgrid.x2_grid().len(),
-        ));
-
-        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
-            result[[imu2, ix1, ix2]] = value;
-        }
-
-        result
-    }
-}
+// // this is needed in the Python interface
+// impl From<&SubgridEnum> for Array3<f64> {
+//     fn from(subgrid: &SubgridEnum) -> Self {
+//         let mut result = Self::zeros((
+//             subgrid.mu2_grid().len(),
+//             subgrid.x1_grid().len(),
+//             subgrid.x2_grid().len(),
+//         ));
+//
+//         for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
+//             result[[imu2, ix1, ix2]] = value;
+//         }
+//
+//         result
+//     }
+// }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
 /// `mu2_grid`, the `x1_grid` and finally the `x2_grid`.
