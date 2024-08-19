@@ -2,12 +2,11 @@
 
 use super::boc::Order;
 use super::convolutions::{Convolution, LumiCache};
-use super::grid::{Grid, GridError};
+use super::grid::Grid;
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
 use ndarray::Array4;
 use std::fmt::{self, Display, Formatter};
-use std::io::Write;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -151,7 +150,7 @@ impl FkTable {
         let x_grid = self.x_grid();
 
         let mut result = Array4::zeros((
-            self.bins(),
+            self.grid.bin_info().bins(),
             self.grid.channels().len(),
             if has_pdf1 { x_grid.len() } else { 1 },
             if has_pdf2 { x_grid.len() } else { 1 },
@@ -187,36 +186,6 @@ impl FkTable {
         result
     }
 
-    /// Returns the number of bins for this `FkTable`.
-    #[must_use]
-    pub fn bins(&self) -> usize {
-        self.grid.bin_info().bins()
-    }
-
-    /// Extract the normalizations for each bin.
-    #[must_use]
-    pub fn bin_normalizations(&self) -> Vec<f64> {
-        self.grid.bin_info().normalizations()
-    }
-
-    /// Extract the number of dimensions for bins.
-    #[must_use]
-    pub fn bin_dimensions(&self) -> usize {
-        self.grid.bin_info().dimensions()
-    }
-
-    /// Extract the left edges of a specific bin dimension.
-    #[must_use]
-    pub fn bin_left(&self, dimension: usize) -> Vec<f64> {
-        self.grid.bin_info().left(dimension)
-    }
-
-    /// Extract the right edges of a specific bin dimension.
-    #[must_use]
-    pub fn bin_right(&self, dimension: usize) -> Vec<f64> {
-        self.grid.bin_info().right(dimension)
-    }
-
     /// Return the channel definition for this `FkTable`. All factors are `1.0`.
     #[must_use]
     pub fn channels(&self) -> Vec<Vec<i32>> {
@@ -244,24 +213,6 @@ impl FkTable {
         self.grid.evolve_info(&[true]).x1
     }
 
-    /// Propagate write to grid
-    ///
-    /// # Errors
-    ///
-    /// TODO
-    pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
-        self.grid.write(writer)
-    }
-
-    /// Propagate `write_lz4` to `Grid`.
-    ///
-    /// # Errors
-    ///
-    /// See [`Grid::write_lz4`].
-    pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
-        self.grid.write_lz4(writer)
-    }
-
     /// Convolve the FK-table. This method has fewer arguments than [`Grid::convolve`], because
     /// FK-tables have all orders merged together and do not support scale variations.
     pub fn convolve(
@@ -277,13 +228,6 @@ impl FkTable {
             channel_mask,
             &[(1.0, 1.0, 1.0)],
         )
-    }
-
-    /// Set a metadata key-value pair.
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.grid
-            .metadata_mut()
-            .insert(key.to_owned(), value.to_owned());
     }
 
     /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
@@ -422,10 +366,8 @@ mod tests {
         assert_eq!(FkAssumptions::from_str("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
         assert_eq!(FkAssumptions::from_str("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
         assert_eq!(
-            FkAssumptions::from_str("XXXXXX"),
-            Err(UnknownFkAssumption {
-                variant: "XXXXXX".to_owned()
-            })
+            FkAssumptions::from_str("XXXXXX").unwrap().to_string(),
+            "unknown variant for FkAssumptions: XXXXXX"
         );
     }
 
