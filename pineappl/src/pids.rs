@@ -900,4 +900,34 @@ mod tests {
             assert_approx_eq!(f64, result.entry()[0].1, 1.0, ulps = 8);
         }
     }
+
+    #[test]
+    fn pid_basis_charge_conjugate() {
+        assert_eq!(PidBasis::Evol.charge_conjugate(100), (100, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(103), (103, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(108), (108, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(115), (115, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(124), (124, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(135), (135, 1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(200), (200, -1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(203), (203, -1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(208), (208, -1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(215), (215, -1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(224), (224, -1.0));
+        assert_eq!(PidBasis::Evol.charge_conjugate(235), (235, -1.0));
+
+        assert_eq!(PidBasis::Pdg.charge_conjugate(21), (21, 1.0));
+        assert_eq!(PidBasis::Pdg.charge_conjugate(22), (22, 1.0));
+    }
+
+    #[test]
+    fn pid_basis_from_str() {
+        assert_eq!(PidBasis::from_str("EVOL").unwrap(), PidBasis::Evol);
+        assert_eq!(PidBasis::from_str("PDG").unwrap(), PidBasis::Pdg);
+
+        assert_eq!(
+            PidBasis::from_str("XXX").unwrap_err().to_string(),
+            "unknown PID basis: XXX".to_owned()
+        );
+    }
 }
