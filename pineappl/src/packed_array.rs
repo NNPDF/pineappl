@@ -614,6 +614,9 @@ mod tests {
     fn indexed_iter() {
         let mut array = PackedArray::new([40, 50, 50]);
 
+        // check shape
+        assert_eq!(array.shape(), [40, 50, 50]);
+
         // check empty iterator
         assert_eq!(array.indexed_iter().next(), None);
 
@@ -694,6 +697,8 @@ mod tests {
         ndarray[[1, 3, 9]] = 6;
 
         let array = PackedArray::from_ndarray(ndarray.view(), 3, 40);
+
+        assert_eq!(array.shape(), [40, 50, 50]);
 
         assert_eq!(array[[3, 4, 3]], 1);
         assert_eq!(array[[3, 4, 4]], 2);
