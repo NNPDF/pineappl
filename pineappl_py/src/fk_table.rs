@@ -75,7 +75,7 @@ impl PyFkTable {
     /// int :
     ///     number of bins
     pub fn bins(&self) -> usize {
-        self.fk_table.bins()
+        self.fk_table.grid().bin_info().bins()
     }
 
     /// Extract the normalizations for each bin.
@@ -85,7 +85,11 @@ impl PyFkTable {
     /// numpy.ndarray
     ///     bin normalizations
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table.bin_normalizations().into_pyarray_bound(py)
+        self.fk_table
+            .grid()
+            .bin_info()
+            .normalizations()
+            .into_pyarray_bound(py)
     }
 
     /// Extract the number of dimensions for bins.
@@ -97,7 +101,7 @@ impl PyFkTable {
     /// int :
     ///     bin dimension
     pub fn bin_dimensions(&self) -> usize {
-        self.fk_table.bin_dimensions()
+        self.fk_table.grid().bin_info().dimensions()
     }
 
     /// Extract the left edges of a specific bin dimension.
@@ -112,7 +116,11 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     left edges of bins
     pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table.bin_left(dimension).into_pyarray_bound(py)
+        self.fk_table
+            .grid()
+            .bin_info()
+            .left(dimension)
+            .into_pyarray_bound(py)
     }
 
     /// Extract the right edges of a specific bin dimension.
@@ -127,7 +135,11 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     right edges of bins
     pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table.bin_right(dimension).into_pyarray_bound(py)
+        self.fk_table
+            .grid()
+            .bin_info()
+            .right(dimension)
+            .into_pyarray_bound(py)
     }
 
     /// Get metadata values.
@@ -137,7 +149,7 @@ impl PyFkTable {
     /// dict :
     ///     key, value map
     pub fn key_values(&self) -> HashMap<String, String> {
-        self.fk_table.key_values().unwrap().clone()
+        self.fk_table.grid().key_values().unwrap().clone()
     }
 
     /// Set a metadata key-value pair.
@@ -189,7 +201,10 @@ impl PyFkTable {
     /// path : str
     ///     file path
     pub fn write(&self, path: PathBuf) {
-        self.fk_table.write(File::create(path).unwrap()).unwrap();
+        self.fk_table
+            .grid()
+            .write(File::create(path).unwrap())
+            .unwrap();
     }
 
     /// Write to file using lz4.
@@ -200,6 +215,7 @@ impl PyFkTable {
     ///     file path
     pub fn write_lz4(&self, path: PathBuf) {
         self.fk_table
+            .grid()
             .write_lz4(File::create(path).unwrap())
             .unwrap();
     }
