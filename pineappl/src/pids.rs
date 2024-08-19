@@ -44,7 +44,6 @@ impl PidBasis {
             // TODO: in the general case we should allow to return a vector of tuples
             (Self::Evol, 100 | 103 | 108 | 115 | 124 | 135) => (pid, 1.0),
             (Self::Evol, 200 | 203 | 208 | 215 | 224 | 235) => (pid, -1.0),
-            (Self::Evol | Self::Pdg, 21 | 22) => (pid, 1.0),
             (Self::Evol | Self::Pdg, _) => (charge_conjugate_pdg_pid(pid), 1.0),
         }
     }

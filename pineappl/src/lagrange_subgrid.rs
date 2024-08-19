@@ -1,7 +1,6 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
 use super::convert::{f64_from_usize, usize_from_f64};
-use super::grid::Grid;
 use super::subgrid::{
     ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
@@ -163,14 +162,6 @@ impl LagrangeSubgridV2 {
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn nodes(&self, _: &Grid) -> Cow<[Vec<f64>]> {
-        Cow::Owned(vec![
-            (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect(),
-            (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect(),
-            (0..self.ntau).map(|itau| fq2(self.gettau(itau))).collect(),
-        ])
-    }
-
     fn fill(&mut self, ntuple: &[f64], weight: f64) {
         if weight == 0.0 {
             return;

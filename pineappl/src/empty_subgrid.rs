@@ -1,6 +1,5 @@
 //! TODO
 
-use super::grid::Grid;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -11,10 +10,6 @@ use std::iter;
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
-    fn nodes(&self, _: &Grid) -> Cow<[Vec<f64>]> {
-        Cow::Borrowed(&[])
-    }
-
     fn fill(&mut self, _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
