@@ -158,7 +158,7 @@ impl LagrangeSubgridV2 {
         self.itaumin = new_itaumin;
         self.itaumax = new_itaumax;
 
-        mem::swap(&mut self.grid, &mut Some(new_grid));
+        self.grid = Some(new_grid);
     }
 }
 
