@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use predicates::str;
 use std::num::NonZeroUsize;
 use std::thread;
 
@@ -1415,6 +1416,9 @@ if __name__ == "__main__":
     main()
 "#;
 
+const THREE_PDF_ERROR_STR: &str = "convolutions with 3 convolution functions is not supported
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -1463,6 +1467,23 @@ fn subgrid_pull() {
         .assert()
         .success()
         .stdout(SUBGRID_PULL_STR);
+}
+
+#[test]
+fn three_pdf_error() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "plot",
+            "--subgrid-pull=0,0,0",
+            "--threads=1",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+            "NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .failure()
+        .stderr(str::contains(THREE_PDF_ERROR_STR));
 }
 
 #[test]
