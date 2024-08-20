@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use predicates::str;
 
 const HELP_STR: &str = "Convolutes a PineAPPL grid with a PDF set
 
@@ -28,6 +29,12 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal
 5 3.25  3.5 2.4586691e2
 6  3.5    4 1.1586851e2
 7    4  4.5 2.7517266e1
+";
+
+const USE_ALPHAS_FROM_ERROR_STR: &str = "expected `use_alphas_from` to be `0` or `1`, is `2`
+";
+
+const THREE_PDF_ERROR_STR: &str = "convolutions with 3 convolution functions is not supported
 ";
 
 const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 
@@ -179,13 +186,43 @@ fn default() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
+            "--use-alphas-from=1",
             "convolve",
             "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed",
+            "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
         .success()
         .stdout(DEFAULT_STR);
+}
+
+#[test]
+fn use_alphas_from_error() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "--use-alphas-from=2",
+            "convolve",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(str::contains(USE_ALPHAS_FROM_ERROR_STR));
+}
+
+#[test]
+fn three_pdf_error() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .failure()
+        .stderr(str::contains(THREE_PDF_ERROR_STR));
 }
 
 #[test]

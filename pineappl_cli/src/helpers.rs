@@ -295,8 +295,9 @@ pub fn convolve_scales(
             let mut alphas = |q2| match cfg.use_alphas_from {
                 0 => fun1.alphas_q2(q2),
                 1 => fun2.alphas_q2(q2),
+                // TODO: convert this into an error
                 _ => panic!(
-                    "expected `use_alphas_from` to be `0` or `1`, is {}",
+                    "expected `use_alphas_from` to be `0` or `1`, is `{}`",
                     cfg.use_alphas_from
                 ),
             };
@@ -321,7 +322,11 @@ pub fn convolve_scales(
 
             grid.convolve(&mut cache, &orders, bins, channels, scales)
         }
-        _ => unimplemented!(),
+        // TODO: convert this into an error
+        _ => panic!(
+            "convolutions with {} convolution functions is not supported",
+            conv_funs.len()
+        ),
     };
 
     match mode {
