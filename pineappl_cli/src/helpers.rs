@@ -247,87 +247,64 @@ pub fn convolve_scales(
         }
     }
 
-    let mut results = match conv_funs {
-        [fun] => {
-            // there's only one convolution function from which we can use the strong coupling
-            assert_eq!(cfg.use_alphas_from, 0);
+    // TODO: promote this to an error
+    assert!(
+        cfg.use_alphas_from < conv_funs.len(),
+        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
+        cfg.use_alphas_from
+    );
 
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            let pdg_id = fun
-                .set()
-                .entry("Particle")
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
-
-            let x_max = fun.x_max();
-            let x_min = fun.x_min();
-            let mut alphas = |q2| fun.alphas_q2(q2);
-            let mut fun = |id, x, q2| {
+    let x_min_max: Vec<_> = conv_funs
+        .iter_mut()
+        .map(|fun| (fun.x_min(), fun.x_max()))
+        .collect();
+    let mut funs: Vec<_> = conv_funs
+        .iter()
+        .zip(x_min_max)
+        .map(|(fun, (x_min, x_max))| {
+            move |id, x, q2| {
                 if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
                     0.0
                 } else {
                     fun.xfx_q2(id, x, q2)
                 }
-            };
-
-            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
-
-            grid.convolve(&mut cache, &orders, bins, channels, scales)
-        }
-        [fun1, fun2] => {
-            let pdg_id1 = fun1
-                .set()
+            }
+        })
+        .collect();
+    let mut alphas_funs: Vec<_> = conv_funs
+        .iter()
+        .map(|fun| move |q2| fun.alphas_q2(q2))
+        .collect();
+    let pdg_ids: Vec<_> = conv_funs
+        .iter()
+        .map(|fun| {
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            fun.set()
                 .entry("Particle")
                 .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
+                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
+                .unwrap()
+        })
+        .collect();
 
-            let pdg_id2 = fun2
-                .set()
-                .entry("Particle")
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
-
-            let x_max1 = fun1.x_max();
-            let x_min1 = fun1.x_min();
-            let x_max2 = fun2.x_max();
-            let x_min2 = fun2.x_min();
-
-            let mut alphas = |q2| match cfg.use_alphas_from {
-                0 => fun1.alphas_q2(q2),
-                1 => fun2.alphas_q2(q2),
-                // TODO: convert this into an error
-                _ => panic!(
-                    "expected `use_alphas_from` to be `0` or `1`, is `{}`",
-                    cfg.use_alphas_from
-                ),
-            };
-            let mut fun1 = |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
-                    0.0
-                } else {
-                    fun1.xfx_q2(id, x, q2)
-                }
-            };
-
-            let mut fun2 = |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
-                    0.0
-                } else {
-                    fun2.xfx_q2(id, x, q2)
-                }
-            };
-
-            let mut cache =
-                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
-
-            grid.convolve(&mut cache, &orders, bins, channels, scales)
-        }
+    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
+    let mut cache = match funs.as_mut_slice() {
+        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
+        [funs0, funs1] => LumiCache::with_two(
+            pdg_ids[0],
+            funs0,
+            pdg_ids[1],
+            funs1,
+            &mut alphas_funs[cfg.use_alphas_from],
+        ),
         // TODO: convert this into an error
         _ => panic!(
             "convolutions with {} convolution functions is not supported",
             conv_funs.len()
         ),
     };
+
+    let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
         ConvoluteMode::Asymmetry => {
@@ -433,82 +410,64 @@ pub fn convolve_subgrid(
         }
     }
 
-    match conv_funs {
-        [fun] => {
-            // there's only one convolution function from which we can use the strong coupling
-            assert_eq!(cfg.use_alphas_from, 0);
+    // TODO: promote this to an error
+    assert!(
+        cfg.use_alphas_from < conv_funs.len(),
+        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
+        cfg.use_alphas_from
+    );
 
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            let pdg_id = fun
-                .set()
-                .entry("Particle")
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
-
-            let x_max = fun.x_max();
-            let x_min = fun.x_min();
-            let mut alphas = |q2| fun.alphas_q2(q2);
-            let mut fun = |id, x, q2| {
+    let x_min_max: Vec<_> = conv_funs
+        .iter_mut()
+        .map(|fun| (fun.x_min(), fun.x_max()))
+        .collect();
+    let mut funs: Vec<_> = conv_funs
+        .iter()
+        .zip(x_min_max)
+        .map(|(fun, (x_min, x_max))| {
+            move |id, x, q2| {
                 if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
                     0.0
                 } else {
                     fun.xfx_q2(id, x, q2)
                 }
-            };
-
-            let mut cache = LumiCache::with_one(pdg_id, &mut fun, &mut alphas);
-
-            grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
-        }
-        [fun1, fun2] => {
-            let pdg_id1 = fun1
-                .set()
+            }
+        })
+        .collect();
+    let mut alphas_funs: Vec<_> = conv_funs
+        .iter()
+        .map(|fun| move |q2| fun.alphas_q2(q2))
+        .collect();
+    let pdg_ids: Vec<_> = conv_funs
+        .iter()
+        .map(|fun| {
+            // if the field 'Particle' is missing we assume it's a proton PDF
+            fun.set()
                 .entry("Particle")
                 .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
+                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
+                .unwrap()
+        })
+        .collect();
 
-            let pdg_id2 = fun2
-                .set()
-                .entry("Particle")
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                .unwrap();
+    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
+    let mut cache = match funs.as_mut_slice() {
+        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
+        [funs0, funs1] => LumiCache::with_two(
+            pdg_ids[0],
+            funs0,
+            pdg_ids[1],
+            funs1,
+            &mut alphas_funs[cfg.use_alphas_from],
+        ),
+        // TODO: convert this into an error
+        _ => panic!(
+            "convolutions with {} convolution functions is not supported",
+            conv_funs.len()
+        ),
+    };
 
-            let x_max1 = fun1.x_max();
-            let x_min1 = fun1.x_min();
-            let x_max2 = fun2.x_max();
-            let x_min2 = fun2.x_min();
-
-            let mut alphas = |q2| match cfg.use_alphas_from {
-                0 => fun1.alphas_q2(q2),
-                1 => fun2.alphas_q2(q2),
-                _ => panic!(
-                    "expected `use_alphas_from` to be `0` or `1`, is {}",
-                    cfg.use_alphas_from
-                ),
-            };
-            let mut fun1 = |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min1 || x > x_max1) {
-                    0.0
-                } else {
-                    fun1.xfx_q2(id, x, q2)
-                }
-            };
-
-            let mut fun2 = |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min2 || x > x_max2) {
-                    0.0
-                } else {
-                    fun2.xfx_q2(id, x, q2)
-                }
-            };
-
-            let mut cache =
-                LumiCache::with_two(pdg_id1, &mut fun1, pdg_id2, &mut fun2, &mut alphas);
-
-            grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
-        }
-        _ => unimplemented!(),
-    }
+    grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
