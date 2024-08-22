@@ -1477,7 +1477,7 @@ fn three_pdf_error() {
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180",
         ])

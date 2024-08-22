@@ -171,7 +171,7 @@ fn conv_fun_lhaid_error() {
         .args([
             "pull",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "0",
             "NNPDF40_nnlo_as_01180",
         ])

@@ -203,7 +203,7 @@ fn use_alphas_from_error() {
         .args([
             "--use-alphas-from=2",
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -217,7 +217,7 @@ fn three_pdf_error() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
