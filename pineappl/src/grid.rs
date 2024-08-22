@@ -232,17 +232,6 @@ impl Grid {
         &mut self.pid_basis
     }
 
-    fn pdg_channels(&self) -> Cow<[Channel]> {
-        match self.pid_basis() {
-            PidBasis::Evol => self
-                .channels
-                .iter()
-                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
-                .collect(),
-            PidBasis::Pdg => Cow::Borrowed(self.channels()),
-        }
-    }
-
     /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
     /// selecting only the orders, bins and channels corresponding to `order_mask`, `bin_indices`
     /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the
@@ -276,7 +265,7 @@ impl Grid {
         };
         let mut bins = vec![0.0; bin_indices.len() * xi.len()];
         let normalizations = self.bin_info().normalizations();
-        let pdg_channels = self.pdg_channels();
+        let pdg_channels = self.channels_pdg();
 
         for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
@@ -363,7 +352,7 @@ impl Grid {
         lumi_cache.setup(self, &[(xir, xif)]).unwrap();
 
         let normalizations = self.bin_info().normalizations();
-        let pdg_channels = self.pdg_channels();
+        let pdg_channels = self.channels_pdg();
 
         let subgrid = &self.subgrids[[ord, bin, channel]];
         let order = &self.orders[ord];
@@ -510,6 +499,17 @@ impl Grid {
     #[must_use]
     pub fn channels(&self) -> &[Channel] {
         &self.channels
+    }
+
+    fn channels_pdg(&self) -> Cow<[Channel]> {
+        match self.pid_basis() {
+            PidBasis::Evol => self
+                .channels
+                .iter()
+                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
+                .collect(),
+            PidBasis::Pdg => Cow::Borrowed(self.channels()),
+        }
     }
 
     /// Merges the bins for the corresponding range together in a single one.
