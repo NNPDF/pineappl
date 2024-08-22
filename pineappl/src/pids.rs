@@ -63,6 +63,42 @@ impl PidBasis {
             Self::Pdg
         }
     }
+
+    /// Convert the PID `pid` in the basis given by `self` into a LaTeX string that represents the
+    /// particle.
+    pub fn to_latex_str(&self, pid: i32) -> &'static str {
+        match (*self, pid) {
+            (PidBasis::Evol | PidBasis::Pdg, -6) => r"\bar{\mathrm{t}}",
+            (PidBasis::Evol | PidBasis::Pdg, -5) => r"\bar{\mathrm{b}}",
+            (PidBasis::Evol | PidBasis::Pdg, -4) => r"\bar{\mathrm{c}}",
+            (PidBasis::Evol | PidBasis::Pdg, -3) => r"\bar{\mathrm{s}}",
+            (PidBasis::Evol | PidBasis::Pdg, -2) => r"\bar{\mathrm{u}}",
+            (PidBasis::Evol | PidBasis::Pdg, -1) => r"\bar{\mathrm{d}}",
+            (PidBasis::Evol | PidBasis::Pdg, 1) => r"\mathrm{d}",
+            (PidBasis::Evol | PidBasis::Pdg, 2) => r"\mathrm{u}",
+            (PidBasis::Evol | PidBasis::Pdg, 3) => r"\mathrm{s}",
+            (PidBasis::Evol | PidBasis::Pdg, 4) => r"\mathrm{c}",
+            (PidBasis::Evol | PidBasis::Pdg, 5) => r"\mathrm{b}",
+            (PidBasis::Evol | PidBasis::Pdg, 6) => r"\mathrm{t}",
+            (PidBasis::Evol | PidBasis::Pdg, 21) => r"\mathrm{g}",
+            (PidBasis::Evol | PidBasis::Pdg, 22) => r"\gamma",
+            (PidBasis::Evol, 100) => r"\Sigma",
+            (PidBasis::Evol, 103) => r"\mathrm{T}_3",
+            (PidBasis::Evol, 108) => r"\mathrm{T}_8",
+            (PidBasis::Evol, 115) => r"\mathrm{T}_{15}",
+            (PidBasis::Evol, 124) => r"\mathrm{T}_{24}",
+            (PidBasis::Evol, 135) => r"\mathrm{T}_{35}",
+            (PidBasis::Evol, 200) => r"\mathrm{V}",
+            (PidBasis::Evol, 203) => r"\mathrm{V}_3",
+            (PidBasis::Evol, 208) => r"\mathrm{V}_8",
+            (PidBasis::Evol, 215) => r"\mathrm{V}_{15}",
+            (PidBasis::Evol, 224) => r"\mathrm{V}_{24}",
+            (PidBasis::Evol, 235) => r"\mathrm{V}_{35}",
+            _ => unimplemented!(
+                "conversion of PID `{pid}` in basis {self:?} to LaTeX string unknown"
+            ),
+        }
+    }
 }
 
 /// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
@@ -928,5 +964,55 @@ mod tests {
             PidBasis::from_str("XXX").unwrap_err().to_string(),
             "unknown PID basis: XXX".to_owned()
         );
+    }
+
+    #[test]
+    fn to_latex_str() {
+        assert_eq!(PidBasis::Evol.to_latex_str(-6), r"\bar{\mathrm{t}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(-5), r"\bar{\mathrm{b}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(-4), r"\bar{\mathrm{c}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(-3), r"\bar{\mathrm{s}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(-2), r"\bar{\mathrm{u}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(-1), r"\bar{\mathrm{d}}");
+        assert_eq!(PidBasis::Evol.to_latex_str(1), r"\mathrm{d}");
+        assert_eq!(PidBasis::Evol.to_latex_str(2), r"\mathrm{u}");
+        assert_eq!(PidBasis::Evol.to_latex_str(3), r"\mathrm{s}");
+        assert_eq!(PidBasis::Evol.to_latex_str(4), r"\mathrm{c}");
+        assert_eq!(PidBasis::Evol.to_latex_str(5), r"\mathrm{b}");
+        assert_eq!(PidBasis::Evol.to_latex_str(6), r"\mathrm{t}");
+        assert_eq!(PidBasis::Evol.to_latex_str(21), r"\mathrm{g}");
+        assert_eq!(PidBasis::Evol.to_latex_str(22), r"\gamma");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-6), r"\bar{\mathrm{t}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-5), r"\bar{\mathrm{b}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-4), r"\bar{\mathrm{c}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-3), r"\bar{\mathrm{s}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-2), r"\bar{\mathrm{u}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(-1), r"\bar{\mathrm{d}}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(1), r"\mathrm{d}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(2), r"\mathrm{u}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(3), r"\mathrm{s}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(4), r"\mathrm{c}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(5), r"\mathrm{b}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(6), r"\mathrm{t}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(21), r"\mathrm{g}");
+        assert_eq!(PidBasis::Pdg.to_latex_str(22), r"\gamma");
+        assert_eq!(PidBasis::Evol.to_latex_str(100), r"\Sigma");
+        assert_eq!(PidBasis::Evol.to_latex_str(103), r"\mathrm{T}_3");
+        assert_eq!(PidBasis::Evol.to_latex_str(108), r"\mathrm{T}_8");
+        assert_eq!(PidBasis::Evol.to_latex_str(115), r"\mathrm{T}_{15}");
+        assert_eq!(PidBasis::Evol.to_latex_str(124), r"\mathrm{T}_{24}");
+        assert_eq!(PidBasis::Evol.to_latex_str(135), r"\mathrm{T}_{35}");
+        assert_eq!(PidBasis::Evol.to_latex_str(200), r"\mathrm{V}");
+        assert_eq!(PidBasis::Evol.to_latex_str(203), r"\mathrm{V}_3");
+        assert_eq!(PidBasis::Evol.to_latex_str(208), r"\mathrm{V}_8");
+        assert_eq!(PidBasis::Evol.to_latex_str(215), r"\mathrm{V}_{15}");
+        assert_eq!(PidBasis::Evol.to_latex_str(224), r"\mathrm{V}_{24}");
+        assert_eq!(PidBasis::Evol.to_latex_str(235), r"\mathrm{V}_{35}");
+    }
+
+    #[test]
+    #[should_panic(expected = "conversion of PID `999` in basis Pdg to LaTeX string unknown")]
+    fn to_latex_str_error() {
+        let _ = PidBasis::Pdg.to_latex_str(999);
     }
 }

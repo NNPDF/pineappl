@@ -7,6 +7,7 @@ use itertools::Itertools;
 use ndarray::Axis;
 use pineappl::boc::Channel;
 use pineappl::convolutions::Convolution;
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -71,48 +72,28 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
         .join(", ")
 }
 
-// TODO: this function should take into account what type the particle IDs are
-fn map_format_parton(parton: i32) -> &'static str {
-    match parton {
-        -6 => r"\bar{\mathrm{t}}",
-        -5 => r"\bar{\mathrm{b}}",
-        -4 => r"\bar{\mathrm{c}}",
-        -3 => r"\bar{\mathrm{s}}",
-        -2 => r"\bar{\mathrm{u}}",
-        -1 => r"\bar{\mathrm{d}}",
-        1 => r"\mathrm{d}",
-        2 => r"\mathrm{u}",
-        3 => r"\mathrm{s}",
-        4 => r"\mathrm{c}",
-        5 => r"\mathrm{b}",
-        6 => r"\mathrm{t}",
-        0 | 21 => r"\mathrm{g}",
-        22 => r"\gamma",
-        100 => r"\Sigma",
-        103 => r"\mathrm{T}_3",
-        108 => r"\mathrm{T}_8",
-        115 => r"\mathrm{T}_{15}",
-        124 => r"\mathrm{T}_{24}",
-        135 => r"\mathrm{T}_{35}",
-        200 => r"\mathrm{V}",
-        203 => r"\mathrm{V}_3",
-        208 => r"\mathrm{V}_8",
-        215 => r"\mathrm{V}_{15}",
-        224 => r"\mathrm{V}_{24}",
-        235 => r"\mathrm{V}_{35}",
-        _ => unimplemented!("PID = {parton} unknown"),
-    }
-}
-
-fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> String {
+fn map_format_channel(
+    channel: &Channel,
+    has_pdf1: bool,
+    has_pdf2: bool,
+    pid_basis: PidBasis,
+) -> String {
     channel
         .entry()
         .iter()
         .map(|&(a, b, _)| {
             format!(
                 "{}{}",
-                if has_pdf1 { map_format_parton(a) } else { "" },
-                if has_pdf2 { map_format_parton(b) } else { "" }
+                if has_pdf1 {
+                    pid_basis.to_latex_str(a)
+                } else {
+                    ""
+                },
+                if has_pdf2 {
+                    pid_basis.to_latex_str(b)
+                } else {
+                    ""
+                }
             )
         })
         .join(" + ")
@@ -402,6 +383,7 @@ impl Subcommand for Opts {
                                     &grid.channels()[channel],
                                     grid.convolutions()[0] != Convolution::None,
                                     grid.convolutions()[1] != Convolution::None,
+                                    grid.pid_basis(),
                                 ),
                                 helpers::convolve(
                                     &grid,
