@@ -362,13 +362,12 @@ impl Subgrid for LagrangeSubgridV1 {
 
     fn stats(&self) -> Stats {
         let (non_zeros, zeros) = self.grid.as_ref().map_or((0, 0), |array| {
-            array.iter().fold((0, 0), |mut result, value| {
+            array.iter().fold((0, 0), |(non_zeros, zeros), value| {
                 if *value == 0.0 {
-                    result.0 += 1;
+                    (non_zeros, zeros + 1)
                 } else {
-                    result.1 += 1;
+                    (non_zeros + 1, zeros)
                 }
-                result
             })
         });
 
@@ -758,13 +757,12 @@ impl Subgrid for LagrangeSubgridV2 {
 
     fn stats(&self) -> Stats {
         let (non_zeros, zeros) = self.grid.as_ref().map_or((0, 0), |array| {
-            array.iter().fold((0, 0), |mut result, value| {
+            array.iter().fold((0, 0), |(non_zeros, zeros), value| {
                 if *value == 0.0 {
-                    result.0 += 1;
+                    (non_zeros, zeros + 1)
                 } else {
-                    result.1 += 1;
+                    (non_zeros + 1, zeros)
                 }
-                result
             })
         });
 
@@ -1252,7 +1250,7 @@ mod tests {
             Stats {
                 total: 10000,
                 allocated: 10000,
-                zeros: 256,
+                zeros: 9744,
                 overhead: 0,
                 bytes_per_value: 8
             }
@@ -1271,7 +1269,7 @@ mod tests {
             Stats {
                 total: 10000,
                 allocated: 10000,
-                zeros: 256,
+                zeros: 9744,
                 overhead: 0,
                 bytes_per_value: 8
             }
