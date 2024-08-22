@@ -34,6 +34,7 @@
 //! [CLI tutorial]: https://nnpdf.github.io/pineappl/docs/cli-tutorial.html
 
 mod convert;
+mod v0;
 
 pub mod bin;
 pub mod boc;
