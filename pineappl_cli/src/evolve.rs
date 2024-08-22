@@ -24,9 +24,9 @@ mod eko {
     use pineappl::pids::{self, PidBasis};
     use serde::Deserialize;
     use std::collections::HashMap;
-    use std::ffi::{OsStr, OsString};
+    use std::ffi::OsString;
     use std::fs::File;
-    use std::io::{self, BufReader, Cursor};
+    use std::io::{BufReader, Cursor, Read};
     use std::iter::Zip;
     use std::path::Path;
     use std::slice::Iter;
@@ -176,13 +176,15 @@ mod eko {
                 let path = entry.path()?;
 
                 if path.starts_with("./operators")
-                    && (path.extension() == Some(OsStr::new("lz4")))
-                    && (path.with_extension("").extension() == Some(OsStr::new("npz")))
+                    && (path.extension().is_some_and(|ext| ext == "lz4"))
+                    && (path
+                        .with_extension("")
+                        .extension()
+                        .is_some_and(|ext| ext == "npz"))
                 {
-                    // TODO: use let-else when available in MSRV
-                    let file_stem = if let Some(file_stem) = path.with_extension("").file_stem() {
-                        file_stem.to_os_string()
-                    } else {
+                    let Some(file_stem) =
+                        path.with_extension("").file_stem().map(ToOwned::to_owned)
+                    else {
                         continue;
                     };
 
@@ -251,18 +253,16 @@ mod eko {
                 let entry = entry?;
                 let path = entry.path()?;
 
-                if path.starts_with("./operators") && (path.extension() == Some(OsStr::new("yaml")))
+                if path.starts_with("./operators")
+                    && (path.extension().is_some_and(|ext| ext == "yaml"))
                 {
-                    // TODO: use let-else when available in MSRV
-                    let file_stem = if let Some(file_stem) = path.file_stem() {
-                        file_stem.to_os_string()
-                    } else {
+                    let Some(file_stem) = path.file_stem().map(ToOwned::to_owned) else {
                         continue;
                     };
 
                     let op_info: OperatorInfoV1 = serde_yaml::from_reader(entry)?;
                     fac1.insert(file_stem, op_info.scale);
-                } else if path.as_os_str() == OsStr::new("./operator.yaml") {
+                } else if path.as_os_str() == "./operator.yaml" {
                     operator = Some(serde_yaml::from_reader(entry)?);
                 }
             }
@@ -386,21 +386,21 @@ mod eko {
 
                             // here we're only interested in the operators themselves
                             if path.starts_with("./operators")
-                                && (path.extension() == Some(OsStr::new("lz4")))
-                                && (path.with_extension("").extension() == Some(OsStr::new("npz")))
+                                && (path.extension().is_some_and(|ext| ext == "lz4"))
+                                && (path
+                                    .with_extension("")
+                                    .extension()
+                                    .is_some_and(|ext| ext == "npz"))
                             {
-                                // TODO: use let-else when available in MSRV
-                                let file_stem =
-                                    if let Some(file_stem) = path.with_extension("").file_stem() {
-                                        file_stem.to_os_string()
-                                    } else {
-                                        continue;
-                                    };
+                                let Some(file_stem) =
+                                    path.with_extension("").file_stem().map(ToOwned::to_owned)
+                                else {
+                                    continue;
+                                };
 
-                                let mut reader =
-                                    BufReader::new(FrameDecoder::new(BufReader::new(entry)));
+                                let mut reader = FrameDecoder::new(BufReader::new(entry));
                                 let mut buffer = Vec::new();
-                                io::copy(&mut reader, &mut buffer)?;
+                                let _ = reader.read_to_end(&mut buffer)?;
                                 let mut npz = NpzReader::new(Cursor::new(buffer))?;
                                 let operator: Array4<f64> = npz.by_name("operator.npy")?;
 
