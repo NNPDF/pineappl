@@ -49,36 +49,42 @@ xlabel = r"{xlabel}"
 ylabel = r"{ylabel}"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {{central_pdf}}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{{\percent}}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{{\percent}}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {{central_pdf}}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{{\percent}}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{{\percent}}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"{scales}-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = {xlog}
 ylog = {ylog}
 
+# linestyle for the channel breakdown shown in the panel `plot_abs_pdfs`. If the array
+# is empty, no channel breakdown will be shown, otherwise the most important channels,
+# as many as linestyles are given. See also
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+channel_breakdown_linestyles = []
+
 
 def main():
     panels = [
-        {inte}plot_int,
-        {nint}plot_abs,
-        {nint}plot_rel_ewonoff,
-        {nconvs}plot_abs_pdfs,
-        {nconvs}plot_ratio_pdf,
-        {nconvs}plot_double_ratio_pdf,
-        {nconvs}plot_rel_pdfunc,
-        {nconvs}plot_rel_pdfpull,
+        {enable_int}plot_int,
+        {enable_abs}plot_abs,
+        {enable_rel_ewonoff}plot_rel_ewonoff,
+        {enable_abs_pdfs}plot_abs_pdfs,
+        {enable_ratio_pdf}plot_ratio_pdf,
+        {enable_double_ratio_pdf}plot_double_ratio_pdf,
+        {enable_rel_pdfunc}plot_rel_pdfunc,
+        {enable_rel_pdfpull}plot_rel_pdfpull,
     ]
 
     mpl.rcParams.update(stylesheet)
-    {nint}plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
-    {inte}plt.rc("figure", figsize=(4.2, 2.6))
+    {enable_abs}plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
+    {enable_int}plt.rc("figure", figsize=(4.2, 2.6))
 
     data_slices = data()
 
@@ -261,11 +267,10 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ["--", ":"]
-    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+    for index, ((label, y), linestyle) in enumerate(zip(channels, channel_breakdown_linestyles)):
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)))
 
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")

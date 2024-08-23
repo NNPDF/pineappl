@@ -12,3 +12,49 @@ For installation instructions see the [documentation].
 [PyO3]: https://pyo3.rs
 [Rust API]: https://docs.rs/pineappl
 [documentation]: https://pineappl.readthedocs.io/en/latest/installation.html
+
+## Development
+
+Run
+
+```shell
+python -m venv env && . env/bin/activate
+```
+
+to setup a new environment and check that `pip --version` returns at least `pip
+22.0 from ...`. If not, upgrade `pip` via
+
+```shell
+pip install -U pip
+```
+
+Next, install `maturin`:
+
+```shell
+pip install maturin
+```
+
+Run
+
+```shell
+maturin develop
+```
+
+to build the project, which also installs it into the environment so that it
+can be used in Python projects that use the same environment.
+
+### Documentation
+
+Run the following once to install the documentation's dependencies:
+
+```shell
+pip install '.[docs]'
+```
+
+Then run
+
+```shell
+( cd docs && make clean html )
+```
+
+to generate the documentation.

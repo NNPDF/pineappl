@@ -47,33 +47,27 @@ const ORDERS_STR: &str = "o      order
 -+----------------
 0 O(a^2)
 1 O(as^1 a^2)
-2 O(as^1 a^2 lr^1)
-3 O(as^1 a^2 lf^1)
-4 O(a^3)
-5 O(a^3 lr^1)
-6 O(a^3 lf^1)
+2 O(as^1 a^2 lf^1)
+3 O(a^3)
+4 O(a^3 lf^1)
 ";
 
 const ORDERS_LONG_STR: &str = "o           order
 -+--------------------------
 0 O(as^0 a^2 lr^0 lf^0 la^0)
 1 O(as^1 a^2 lr^0 lf^0 la^0)
-2 O(as^1 a^2 lr^1 lf^0 la^0)
-3 O(as^1 a^2 lr^0 lf^1 la^0)
-4 O(as^0 a^3 lr^0 lf^0 la^0)
-5 O(as^0 a^3 lr^1 lf^0 la^0)
-6 O(as^0 a^3 lr^0 lf^1 la^0)
+2 O(as^1 a^2 lr^0 lf^1 la^0)
+3 O(as^0 a^3 lr^0 lf^0 la^0)
+4 O(as^0 a^3 lr^0 lf^1 la^0)
 ";
 
 const ORDERS_SPACES_STR: &str = "o           order
 -+--------------------------
 0 O(     a^2               )
 1 O(as^1 a^2               )
-2 O(as^1 a^2 lr^1          )
-3 O(as^1 a^2      lf^1     )
-4 O(     a^3               )
-5 O(     a^3 lr^1          )
-6 O(     a^3      lf^1     )
+2 O(as^1 a^2      lf^1     )
+3 O(     a^3               )
+4 O(     a^3      lf^1     )
 ";
 
 const FKTABLE_STR: &str = "no
@@ -568,7 +562,11 @@ fn help() {
 fn bins() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--bins", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--bins",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(BINS_STR);
@@ -581,7 +579,7 @@ fn channels() {
         .args([
             "read",
             "--channels",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -592,7 +590,11 @@ fn channels() {
 fn orders() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--orders", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--orders",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(ORDERS_STR);
@@ -605,7 +607,7 @@ fn orders_long() {
         .args([
             "read",
             "--orders-long",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -619,7 +621,7 @@ fn orders_spaces() {
         .args([
             "read",
             "--orders-spaces",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -633,7 +635,7 @@ fn fktable() {
         .args([
             "read",
             "--fktable",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .failure()
@@ -648,7 +650,7 @@ fn wrong_orders() {
             "read",
             "--orders",
             "--orders-long",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .failure()
@@ -659,7 +661,7 @@ fn wrong_orders() {
 fn ew() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--ew", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args(["read", "--ew", "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4"])
         .assert()
         .success()
         .stdout("a2,a3\n");
@@ -672,7 +674,7 @@ fn get_arxiv() {
         .args([
             "read",
             "--get=arxiv",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
@@ -683,7 +685,11 @@ fn get_arxiv() {
 fn keys() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--keys", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--keys",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(KEYS_STR);
@@ -693,7 +699,11 @@ fn keys() {
 fn qcd() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--qcd", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--qcd",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout("a2,as1a2\n");
@@ -703,7 +713,11 @@ fn qcd() {
 fn show() {
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--show", "../test-data/LHCB_WP_7TEV.pineappl.lz4"])
+        .args([
+            "read",
+            "--show",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
         .assert()
         .success()
         .stdout(SHOW_STR);
@@ -717,7 +731,7 @@ fn wrong_arguments() {
             "read",
             "--ew",
             "--qcd",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .failure()

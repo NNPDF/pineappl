@@ -88,7 +88,7 @@ fn ckf() {
         .args([
             "analyze",
             "ckf",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
             "a2",
@@ -105,7 +105,7 @@ fn ckf_with_default_denominator() {
         .args([
             "analyze",
             "ckf",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
         ])
@@ -122,7 +122,7 @@ fn ckf_with_bad_limit() {
             "analyze",
             "ckf",
             "--limit=0",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "a2as1",
         ])

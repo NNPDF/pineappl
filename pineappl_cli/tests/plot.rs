@@ -72,19 +72,25 @@ xlabel = r"$\eta_{\bar{\ell}}$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
+
+# linestyle for the channel breakdown shown in the panel `plot_abs_pdfs`. If the array
+# is empty, no channel breakdown will be shown, otherwise the most important channels,
+# as many as linestyles are given. See also
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+channel_breakdown_linestyles = []
 
 
 def main():
@@ -118,9 +124,9 @@ def main():
             plot(axis, **kwargs)
 
         if len(data_slices) == 1:
-            figure.savefig("LHCB_WP_7TEV.pdf")
+            figure.savefig("LHCB_WP_7TEV_opt.pdf")
         else:
-            figure.savefig("LHCB_WP_7TEV-{}.pdf".format(index))
+            figure.savefig("LHCB_WP_7TEV_opt-{}.pdf".format(index))
         plt.close(figure)
 
 
@@ -284,11 +290,10 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ["--", ":"]
-    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+    for index, ((label, y), linestyle) in enumerate(zip(channels, channel_breakdown_linestyles)):
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)))
 
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
@@ -532,19 +537,25 @@ xlabel = r"$\cos \theta^*$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
+
+# linestyle for the channel breakdown shown in the panel `plot_abs_pdfs`. If the array
+# is empty, no channel breakdown will be shown, otherwise the most important channels,
+# as many as linestyles are given. See also
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+channel_breakdown_linestyles = []
 
 
 def main():
@@ -744,11 +755,10 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ["--", ":"]
-    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+    for index, ((label, y), linestyle) in enumerate(zip(channels, channel_breakdown_linestyles)):
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)))
 
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
@@ -921,19 +931,25 @@ xlabel = r"$\cos \theta^*$"
 ylabel = r"$\frac{\mathrm{d}\sigma}{\mathrm{d}\cos \theta^*}$ [\si{pb}]"
 
 # panel plot labels
-ylabel_ratio_pdf   = "Ratio to {central_pdf}"
-ylabel_double_ratio_pdf = "Ratio to NLO"
-ylabel_rel_ewonoff = "NLO EW on/off [\si{\percent}]"
-ylabel_rel_pdfunc  = "PDF uncertainty [\si{\percent}]"
-ylabel_rel_pdfpull = "Pull [$\sigma$]"
+ylabel_ratio_pdf        = r"Ratio to {central_pdf}"
+ylabel_double_ratio_pdf = r"Ratio to NLO"
+ylabel_rel_ewonoff      = r"NLO EW on/off [\si{\percent}]"
+ylabel_rel_pdfunc       = r"PDF uncertainty [\si{\percent}]"
+ylabel_rel_pdfpull      = r"Pull [$\sigma$]"
 
-label_rel_ewonoff_qcd       = "NLO QCD"
-label_rel_ewonoff_ew        = "NLO QCD+EW"
-label_rel_ewonoff_scale_unc = "7-p.\ scale var."
-label_rel_ewonoff_pdf_unc   = "PDF uncertainty"
+label_rel_ewonoff_qcd       = r"NLO QCD"
+label_rel_ewonoff_ew        = r"NLO QCD+EW"
+label_rel_ewonoff_scale_unc = r"7-p.\ scale var."
+label_rel_ewonoff_pdf_unc   = r"PDF uncertainty"
 
 xlog = False
 ylog = False
+
+# linestyle for the channel breakdown shown in the panel `plot_abs_pdfs`. If the array
+# is empty, no channel breakdown will be shown, otherwise the most important channels,
+# as many as linestyles are given. See also
+# https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
+channel_breakdown_linestyles = []
 
 
 def main():
@@ -1133,11 +1149,10 @@ def plot_abs_pdfs(axis, **kwargs):
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(x, ymin, ymax, alpha=0.4, color=colors[index], label=label, linewidth=0.5, step="post")
 
-    linestyles = ["--", ":"]
-    for index, ((label, y), linestyle) in enumerate(zip(channels, linestyles)):
+    for index, ((label, y), linestyle) in enumerate(zip(channels, channel_breakdown_linestyles)):
         axis.step(x, y, color=colors[0], label=label, linestyle=linestyle, linewidth=1.0, where="post")
 
-    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(linestyles)))
+    axis.legend(bbox_to_anchor=(0, -0.24, 1, 0.2), loc="upper left", mode="expand", borderaxespad=0, ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)))
 
     if slice_label != "":
         t = axis.text(0.98, 0.98, slice_label, horizontalalignment="right", verticalalignment="top", transform=axis.transAxes, fontsize="x-small")
@@ -1428,7 +1443,7 @@ fn default() {
         .args([
             "plot",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180=NNPDF4.0",
         ])
@@ -1445,7 +1460,7 @@ fn subgrid_pull() {
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180",
         ])
@@ -1462,7 +1477,7 @@ fn three_pdf_error() {
             "plot",
             "--subgrid-pull=0,0,0",
             "--threads=1",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180,NNPDF40_nnlo_as_01180",
         ])

@@ -21,8 +21,11 @@ coverage.xml
 .coverage
 
 # Sphinx documentation
-docs/_build/
-doc/_build/
+# Ignore auto generated module references
+# TODO: while apidoc does not work, we need to preserve that folder
+# docs/source/modules
+# ignore temporary build files
+docs/build/
 
 # Environments
 .env

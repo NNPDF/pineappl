@@ -201,7 +201,7 @@ fn lhcb_wp_7tev() {
         .unwrap()
         .args([
             "evolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
@@ -246,7 +246,7 @@ fn lhcb_wp_7tev_use_old_evolve() {
         .unwrap()
         .args([
             "evolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
@@ -260,21 +260,6 @@ fn lhcb_wp_7tev_use_old_evolve() {
 
 #[test]
 fn lhcb_wp_7tev_v2() {
-    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
-
-    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            input.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout("");
-
     let output = NamedTempFile::new("fktable2a.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
@@ -283,7 +268,7 @@ fn lhcb_wp_7tev_v2() {
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
-            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
@@ -296,21 +281,6 @@ fn lhcb_wp_7tev_v2() {
 
 #[test]
 fn lhcb_wp_7tev_v2_xir_2() {
-    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
-
-    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            input.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout("");
-
     let output = NamedTempFile::new("fktable2b.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
@@ -319,7 +289,7 @@ fn lhcb_wp_7tev_v2_xir_2() {
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
-            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
@@ -333,21 +303,6 @@ fn lhcb_wp_7tev_v2_xir_2() {
 
 #[test]
 fn lhcb_wp_7tev_v2_xif_2() {
-    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
-
-    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            input.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout("");
-
     let output = NamedTempFile::new("fktable2c.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
@@ -356,7 +311,7 @@ fn lhcb_wp_7tev_v2_xif_2() {
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
-            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2_xif_2.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",
@@ -370,21 +325,6 @@ fn lhcb_wp_7tev_v2_xif_2() {
 
 #[test]
 fn lhcb_wp_7tev_v2_xif_2_error() {
-    let input = NamedTempFile::new("optimized.pineappl.lz4").unwrap();
-
-    // we first need to optimize the grid, to strip empty x-grid values not contained in the EKO
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "write",
-            "--optimize",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
-            input.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout("");
-
     let output = NamedTempFile::new("fktable2c.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
@@ -393,7 +333,7 @@ fn lhcb_wp_7tev_v2_xif_2_error() {
             "evolve",
             "--digits-abs=16",
             "--digits-rel=16",
-            input.path().to_str().unwrap(),
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "../test-data/LHCB_WP_7TEV_v2.tar",
             output.path().to_str().unwrap(),
             "NNPDF40_nlo_as_01180",

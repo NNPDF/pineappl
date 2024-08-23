@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: test-data
-          key: test-data-v12
+          key: test-data-v13
       - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
         run: |
@@ -42,7 +42,7 @@ jobs:
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_old.pineappl.lz4'
-          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.pineappl.lz4'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_opt.pineappl.lz4'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_v2.tar'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_v2_xif_2.tar'
@@ -93,8 +93,7 @@ jobs:
           grep SF lcov.info | sort -u | sed 's/SF://'
 
       - name: Upload to codecov.io
-        # version 3.1.5 upgrades to Node 20 (https://github.com/codecov/codecov-action/issues/1230), which breaks inside our container
         uses: codecov/codecov-action@v4
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: rust

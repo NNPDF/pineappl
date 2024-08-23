@@ -7,6 +7,7 @@ use itertools::Itertools;
 use ndarray::Axis;
 use pineappl::boc::Channel;
 use pineappl::convolutions::Convolution;
+use pineappl::grid::Grid;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -71,58 +72,23 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
         .join(", ")
 }
 
-// TODO: this function should take into account what type the particle IDs are
-fn map_format_parton(parton: i32) -> &'static str {
-    match parton {
-        -6 => r"\bar{\mathrm{t}}",
-        -5 => r"\bar{\mathrm{b}}",
-        -4 => r"\bar{\mathrm{c}}",
-        -3 => r"\bar{\mathrm{s}}",
-        -2 => r"\bar{\mathrm{u}}",
-        -1 => r"\bar{\mathrm{d}}",
-        1 => r"\mathrm{d}",
-        2 => r"\mathrm{u}",
-        3 => r"\mathrm{s}",
-        4 => r"\mathrm{c}",
-        5 => r"\mathrm{b}",
-        6 => r"\mathrm{t}",
-        0 | 21 => r"\mathrm{g}",
-        22 => r"\gamma",
-        100 => r"\Sigma",
-        103 => r"\mathrm{T}_3",
-        108 => r"\mathrm{T}_8",
-        115 => r"\mathrm{T}_{15}",
-        124 => r"\mathrm{T}_{24}",
-        135 => r"\mathrm{T}_{35}",
-        200 => r"\mathrm{V}",
-        203 => r"\mathrm{V}_3",
-        208 => r"\mathrm{V}_8",
-        215 => r"\mathrm{V}_{15}",
-        224 => r"\mathrm{V}_{24}",
-        235 => r"\mathrm{V}_{35}",
-        _ => unimplemented!("PID = {parton} unknown"),
-    }
-}
-
-// TODO: generalize this function to n convolutions
-fn map_format_channel(channel: &Channel, has_pdf1: bool, has_pdf2: bool) -> String {
+fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
     channel
         .entry()
         .iter()
         .map(|(pids, _)| {
-            format!(
-                "{}{}",
-                if has_pdf1 {
-                    map_format_parton(pids[0])
-                } else {
-                    ""
-                },
-                if has_pdf2 {
-                    map_format_parton(pids[1])
-                } else {
-                    ""
-                }
-            )
+            grid.convolutions()
+                .iter()
+                .zip(pids)
+                .map(|(convolution, &pid)| {
+                    if *convolution != Convolution::None {
+                        grid.pid_basis().to_latex_str(pid)
+                    } else {
+                        ""
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("")
         })
         .join(" + ")
 }
@@ -409,11 +375,7 @@ impl Subcommand for Opts {
                             let mut channel_mask = vec![false; grid.channels().len()];
                             channel_mask[channel] = true;
                             (
-                                map_format_channel(
-                                    &grid.channels()[channel],
-                                    grid.convolutions()[0] != Convolution::None,
-                                    grid.convolutions()[1] != Convolution::None,
-                                ),
+                                map_format_channel(&grid.channels()[channel], &grid),
                                 helpers::convolve(
                                     &grid,
                                     &mut conv_funs,
@@ -522,16 +484,36 @@ impl Subcommand for Opts {
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 
+            let enable_int = if bins == 1 { "" } else { "# " };
+            let enable_abs = if bins == 1 { "# " } else { "" };
+            // TODO: only enable if there are EW corrections
+            let enable_rel_ewonoff = enable_abs;
+            let enable_abs_pdfs = if nconvs == 1 || bins == 1 { "# " } else { "" };
+            let enable_ratio_pdf = enable_abs_pdfs;
+            let enable_double_ratio_pdf = enable_abs_pdfs;
+            let enable_rel_pdfunc = if nconvs == 1 || bins == 1 || self.no_conv_fun_unc {
+                "# "
+            } else {
+                ""
+            };
+            let enable_rel_pdfpull = enable_rel_pdfunc;
+
             print!(
                 include_str!("plot.py"),
-                inte = if bins == 1 { "" } else { "# " },
-                nint = if bins == 1 { "# " } else { "" },
-                nconvs = if nconvs == 1 || bins == 1 { "# " } else { "" },
+                enable_int = enable_int,
+                enable_abs = enable_abs,
+                enable_rel_ewonoff = enable_rel_ewonoff,
+                enable_abs_pdfs = enable_abs_pdfs,
+                enable_ratio_pdf = enable_ratio_pdf,
+                enable_double_ratio_pdf = enable_double_ratio_pdf,
+                enable_rel_pdfunc = enable_rel_pdfunc,
+                enable_rel_pdfpull = enable_rel_pdfpull,
                 xlabel = xlabel,
                 ylabel = ylabel,
                 xlog = xlog,
                 ylog = ylog,
                 title = title,
+                scales = self.scales,
                 output = output.to_str().unwrap(),
                 data = data_string,
                 metadata = format_metadata(&vector),

@@ -10,23 +10,21 @@ class TestOrder:
         o = pineappl.grid.Order(*args)
 
         assert isinstance(o, pineappl.grid.Order)
-        assert isinstance(o.raw, pineappl.pineappl.PyOrder)
         assert o.as_tuple() == args
 
 
 class TestGrid:
     def fake_grid(self, bins=None):
-        lumis = [pineappl.lumi.LumiEntry([(1, 21, 0.1)])]
+        channels = [pineappl.boc.Channel([(1, 21, 0.1)])]
         orders = [pineappl.grid.Order(3, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
-        g = pineappl.grid.Grid.create(lumis, orders, bin_limits, subgrid_params)
+        g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)
         return g
 
     def test_init(self):
         g = self.fake_grid()
         assert isinstance(g, pineappl.grid.Grid)
-        assert isinstance(g.raw, pineappl.pineappl.PyGrid)
         # orders
         assert len(g.orders()) == 1
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0)
@@ -43,7 +41,7 @@ class TestGrid:
             np.array(xs),
             np.array([1.0]),
         )
-        g.set_subgrid(0, 0, 0, subgrid)
+        g.set_subgrid(0, 0, 0, subgrid.into())
 
         # let's mix it for fun with an hadronic one
         x1s = np.linspace(0.1, 1, 2)
@@ -52,7 +50,7 @@ class TestGrid:
         subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
             np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
         )
-        g.set_subgrid(0, 1, 0, subgrid)
+        g.set_subgrid(0, 1, 0, subgrid.into())
         g.optimize()
 
     def test_set_key_value(self):
@@ -64,7 +62,7 @@ class TestGrid:
     def test_bins(self):
         g = self.fake_grid()
         # 1D
-        normalizations = [1.0] * 2
+        normalizations = np.array([1.0, 1.0])
         limits = [(1, 1), (2, 2)]
         remapper = pineappl.bin.BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
@@ -93,7 +91,7 @@ class TestGrid:
             xs,
             np.array([1.0]),
         )
-        g.set_subgrid(0, 0, 0, subgrid)
+        g.set_subgrid(0, 0, 0, subgrid.into())
         np.testing.assert_allclose(
             g.convolve_with_one(2212, lambda pid, x, q2: 0.0, lambda q2: 0.0),
             [0.0] * 2,

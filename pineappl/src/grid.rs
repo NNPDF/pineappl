@@ -232,7 +232,7 @@ impl Grid {
         &mut self.pid_basis
     }
 
-    /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and only
+    /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and
     /// selecting only the orders, bins and channels corresponding to `order_mask`, `bin_indices`
     /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the
     /// first factor varies the renormalization scale, the second the factorization scale. Note
@@ -704,7 +704,7 @@ impl Grid {
             mem::swap(&mut new_subgrids[[i, j, k]], subgrid);
         }
 
-        mem::swap(&mut self.subgrids, &mut new_subgrids);
+        self.subgrids = new_subgrids;
     }
 
     /// Scale all subgrids by `factor`.
@@ -876,8 +876,7 @@ impl Grid {
                         }
                     }
 
-                    let mut new_subgrid = PackedQ1X2SubgridV1::from(&*subgrid).into();
-                    mem::swap(subgrid, &mut new_subgrid);
+                    *subgrid = PackedQ1X2SubgridV1::from(&*subgrid).into();
                 }
             }
         }
@@ -964,41 +963,19 @@ impl Grid {
     }
 
     fn strip_empty_channels(&mut self) {
-        let mut keep_channel_indices = vec![];
-        let mut new_channel_entries = vec![];
+        let mut indices: Vec<_> = (0..self.channels().len()).collect();
 
-        // only keep channels that have non-zero factors and for which at least one subgrid is
-        // non-empty
-        for (channel, entry) in self.channels.iter().enumerate() {
-            if !entry.entry().iter().all(|&(_, factor)| factor == 0.0)
-                && !self
-                    .subgrids
-                    .slice(s![.., .., channel])
-                    .iter()
-                    .all(Subgrid::is_empty)
+        while let Some(index) = indices.pop() {
+            if self
+                .subgrids
+                .slice(s![.., .., index])
+                .iter()
+                .all(Subgrid::is_empty)
             {
-                keep_channel_indices.push(channel);
-                new_channel_entries.push(entry.clone());
+                self.channels.remove(index);
+                self.subgrids.remove_index(Axis(2), index);
             }
         }
-
-        // only keep the previously selected subgrids
-        let new_subgrids = Array3::from_shape_fn(
-            (
-                self.orders.len(),
-                self.bin_info().bins(),
-                keep_channel_indices.len(),
-            ),
-            |(order, bin, new_channel)| {
-                mem::replace(
-                    &mut self.subgrids[[order, bin, keep_channel_indices[new_channel]]],
-                    EmptySubgridV1.into(),
-                )
-            },
-        );
-
-        self.channels = new_channel_entries;
-        self.subgrids = new_subgrids;
     }
 
     fn strip_empty_orders(&mut self) {
@@ -1570,6 +1547,28 @@ impl Grid {
         }
     }
 
+    /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger
+    /// or equal than the number of orders are ignored.
+    pub fn delete_orders(&mut self, order_indices: &[usize]) {
+        let mut order_indices: Vec<_> = order_indices
+            .iter()
+            .copied()
+            // ignore indices corresponding to orders that don't exist
+            .filter(|&index| index < self.orders().len())
+            .collect();
+
+        // sort and remove repeated indices
+        order_indices.sort_unstable();
+        order_indices.dedup();
+        order_indices.reverse();
+        let order_indices = order_indices;
+
+        for index in order_indices {
+            self.orders.remove(index);
+            self.subgrids.remove_index(Axis(0), index);
+        }
+    }
+
     pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
         // TODO: generalize this method to n convolutions
         assert_eq!(self.convolutions().len(), 2);
@@ -1855,7 +1854,7 @@ mod tests {
     #[test]
     fn evolve_info() {
         let grid =
-            Grid::read(File::open("../test-data/LHCB_WP_7TEV.pineappl.lz4").unwrap()).unwrap();
+            Grid::read(File::open("../test-data/LHCB_WP_7TEV_opt.pineappl.lz4").unwrap()).unwrap();
         let info = grid.evolve_info(&[]);
 
         assert_eq!(info.fac1.len(), 1);
@@ -1863,58 +1862,46 @@ mod tests {
 
         assert_eq!(info.pids1, [-3, -1, 2, 4, 21, 22]);
 
-        assert_eq!(info.x1.len(), 50);
-        assert_approx_eq!(f64, info.x1[0], 1.9999999999999954e-7, ulps = 64);
-
-        assert_approx_eq!(f64, info.x1[1], 3.034304765867952e-7, ulps = 64);
-        assert_approx_eq!(f64, info.x1[2], 4.6035014748963906e-7, ulps = 64);
-        assert_approx_eq!(f64, info.x1[3], 6.984208530700364e-7, ulps = 64);
-        assert_approx_eq!(f64, info.x1[4], 1.0596094959101024e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[5], 1.607585498470808e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[6], 2.438943292891682e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[7], 3.7002272069854957e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[8], 5.613757716930151e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[9], 8.516806677573355e-6, ulps = 64);
-        assert_approx_eq!(f64, info.x1[10], 1.292101569074731e-5, ulps = 64);
-        assert_approx_eq!(f64, info.x1[11], 1.9602505002391748e-5, ulps = 64);
-        assert_approx_eq!(f64, info.x1[12], 2.97384953722449e-5, ulps = 64);
-        assert_approx_eq!(f64, info.x1[13], 4.511438394964044e-5, ulps = 64);
-        assert_approx_eq!(f64, info.x1[14], 6.843744918967896e-5, ulps = 64);
-        assert_approx_eq!(f64, info.x1[15], 0.00010381172986576898, ulps = 64);
-        assert_approx_eq!(f64, info.x1[16], 0.00015745605600841445, ulps = 64);
-        assert_approx_eq!(f64, info.x1[17], 0.00023878782918561914, ulps = 64);
-        assert_approx_eq!(f64, info.x1[18], 0.00036205449638139736, ulps = 64);
-        assert_approx_eq!(f64, info.x1[19], 0.0005487795323670796, ulps = 64);
-        assert_approx_eq!(f64, info.x1[20], 0.0008314068836488144, ulps = 64);
-        assert_approx_eq!(f64, info.x1[21], 0.0012586797144272762, ulps = 64);
-        assert_approx_eq!(f64, info.x1[22], 0.0019034634022867384, ulps = 64);
-        assert_approx_eq!(f64, info.x1[23], 0.0028738675812817515, ulps = 64);
-        assert_approx_eq!(f64, info.x1[24], 0.004328500638820811, ulps = 64);
-        assert_approx_eq!(f64, info.x1[25], 0.006496206194633799, ulps = 64);
-        assert_approx_eq!(f64, info.x1[26], 0.009699159574043398, ulps = 64);
-        assert_approx_eq!(f64, info.x1[27], 0.014375068581090129, ulps = 64);
-        assert_approx_eq!(f64, info.x1[28], 0.02108918668378717, ulps = 64);
-        assert_approx_eq!(f64, info.x1[29], 0.030521584007828916, ulps = 64);
-        assert_approx_eq!(f64, info.x1[30], 0.04341491741702269, ulps = 64);
-        assert_approx_eq!(f64, info.x1[31], 0.060480028754447364, ulps = 64);
-        assert_approx_eq!(f64, info.x1[32], 0.08228122126204893, ulps = 64);
-        assert_approx_eq!(f64, info.x1[33], 0.10914375746330703, ulps = 64);
-        assert_approx_eq!(f64, info.x1[34], 0.14112080644440345, ulps = 64);
-        assert_approx_eq!(f64, info.x1[35], 0.17802566042569432, ulps = 64);
-        assert_approx_eq!(f64, info.x1[36], 0.2195041265003886, ulps = 64);
-        assert_approx_eq!(f64, info.x1[37], 0.2651137041582823, ulps = 64);
-        assert_approx_eq!(f64, info.x1[38], 0.31438740076927585, ulps = 64);
-        assert_approx_eq!(f64, info.x1[39], 0.3668753186482242, ulps = 64);
-        assert_approx_eq!(f64, info.x1[40], 0.4221667753589648, ulps = 64);
-        assert_approx_eq!(f64, info.x1[41], 0.4798989029610255, ulps = 64);
-        assert_approx_eq!(f64, info.x1[42], 0.5397572337880445, ulps = 64);
-        assert_approx_eq!(f64, info.x1[43], 0.601472197967335, ulps = 64);
-        assert_approx_eq!(f64, info.x1[44], 0.6648139482473823, ulps = 64);
-        assert_approx_eq!(f64, info.x1[45], 0.7295868442414312, ulps = 64);
-        assert_approx_eq!(f64, info.x1[46], 0.7956242522922756, ulps = 64);
-        assert_approx_eq!(f64, info.x1[47], 0.8627839323906108, ulps = 64);
-        assert_approx_eq!(f64, info.x1[48], 0.9309440808717544, ulps = 64);
-        assert_approx_eq!(f64, info.x1[49], 1.0, ulps = 64);
+        assert_eq!(info.x1.len(), 39);
+        assert_approx_eq!(f64, info.x1[0], 1.9602505002391748e-5, ulps = 64);
+        assert_approx_eq!(f64, info.x1[1], 2.97384953722449e-5, ulps = 64);
+        assert_approx_eq!(f64, info.x1[2], 4.511438394964044e-5, ulps = 64);
+        assert_approx_eq!(f64, info.x1[3], 6.843744918967896e-5, ulps = 64);
+        assert_approx_eq!(f64, info.x1[4], 0.00010381172986576898, ulps = 64);
+        assert_approx_eq!(f64, info.x1[5], 0.00015745605600841445, ulps = 64);
+        assert_approx_eq!(f64, info.x1[6], 0.00023878782918561914, ulps = 64);
+        assert_approx_eq!(f64, info.x1[7], 0.00036205449638139736, ulps = 64);
+        assert_approx_eq!(f64, info.x1[8], 0.0005487795323670796, ulps = 64);
+        assert_approx_eq!(f64, info.x1[9], 0.0008314068836488144, ulps = 64);
+        assert_approx_eq!(f64, info.x1[10], 0.0012586797144272762, ulps = 64);
+        assert_approx_eq!(f64, info.x1[11], 0.0019034634022867384, ulps = 64);
+        assert_approx_eq!(f64, info.x1[12], 0.0028738675812817515, ulps = 64);
+        assert_approx_eq!(f64, info.x1[13], 0.004328500638820811, ulps = 64);
+        assert_approx_eq!(f64, info.x1[14], 0.006496206194633799, ulps = 64);
+        assert_approx_eq!(f64, info.x1[15], 0.009699159574043398, ulps = 64);
+        assert_approx_eq!(f64, info.x1[16], 0.014375068581090129, ulps = 64);
+        assert_approx_eq!(f64, info.x1[17], 0.02108918668378717, ulps = 64);
+        assert_approx_eq!(f64, info.x1[18], 0.030521584007828916, ulps = 64);
+        assert_approx_eq!(f64, info.x1[19], 0.04341491741702269, ulps = 64);
+        assert_approx_eq!(f64, info.x1[20], 0.060480028754447364, ulps = 64);
+        assert_approx_eq!(f64, info.x1[21], 0.08228122126204893, ulps = 64);
+        assert_approx_eq!(f64, info.x1[22], 0.10914375746330703, ulps = 64);
+        assert_approx_eq!(f64, info.x1[23], 0.14112080644440345, ulps = 64);
+        assert_approx_eq!(f64, info.x1[24], 0.17802566042569432, ulps = 64);
+        assert_approx_eq!(f64, info.x1[25], 0.2195041265003886, ulps = 64);
+        assert_approx_eq!(f64, info.x1[26], 0.2651137041582823, ulps = 64);
+        assert_approx_eq!(f64, info.x1[27], 0.31438740076927585, ulps = 64);
+        assert_approx_eq!(f64, info.x1[28], 0.3668753186482242, ulps = 64);
+        assert_approx_eq!(f64, info.x1[29], 0.4221667753589648, ulps = 64);
+        assert_approx_eq!(f64, info.x1[30], 0.4798989029610255, ulps = 64);
+        assert_approx_eq!(f64, info.x1[31], 0.5397572337880445, ulps = 64);
+        assert_approx_eq!(f64, info.x1[32], 0.601472197967335, ulps = 64);
+        assert_approx_eq!(f64, info.x1[33], 0.6648139482473823, ulps = 64);
+        assert_approx_eq!(f64, info.x1[34], 0.7295868442414312, ulps = 64);
+        assert_approx_eq!(f64, info.x1[35], 0.7956242522922756, ulps = 64);
+        assert_approx_eq!(f64, info.x1[36], 0.8627839323906108, ulps = 64);
+        assert_approx_eq!(f64, info.x1[37], 0.9309440808717544, ulps = 64);
+        assert_approx_eq!(f64, info.x1[38], 1.0, ulps = 64);
 
         assert_eq!(info.ren1.len(), 1);
         assert_approx_eq!(f64, info.ren1[0], 6456.443904000001, ulps = 64);

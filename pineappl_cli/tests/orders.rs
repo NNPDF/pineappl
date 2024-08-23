@@ -99,7 +99,7 @@ fn default() {
         .unwrap()
         .args([
             "orders",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -114,7 +114,7 @@ fn absolute() {
         .args([
             "orders",
             "--absolute",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -130,7 +130,7 @@ fn absolute_integrated() {
             "orders",
             "--absolute",
             "--integrated",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -145,7 +145,7 @@ fn integrated() {
         .args([
             "orders",
             "--integrated",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -160,7 +160,7 @@ fn normalize_a2_as1a2() {
         .args([
             "orders",
             "--normalize=a2,as1a2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

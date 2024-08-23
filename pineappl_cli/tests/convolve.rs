@@ -188,7 +188,7 @@ fn default() {
         .args([
             "--use-alphas-from=1",
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -203,7 +203,7 @@ fn use_alphas_from_error() {
         .args([
             "--use-alphas-from=2",
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -217,7 +217,7 @@ fn three_pdf_error() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -232,7 +232,7 @@ fn force_positive() {
         .args([
             "--force-positive",
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -246,7 +246,7 @@ fn default_multiple_pdfs() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "324900=NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -261,7 +261,7 @@ fn multiple_pdfs_with_new_construction() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
         ])
@@ -276,7 +276,7 @@ fn multiple_pdfs_with_relabeling() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF31_nlo_as_0118_luxqed/1=other mc=1.4",
         ])
@@ -292,7 +292,7 @@ fn two_pdfs_with_order_subset() {
         .args([
             "convolve",
             "--orders=a2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
         ])
@@ -307,7 +307,7 @@ fn three_pdfs() {
         .unwrap()
         .args([
             "convolve",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed/0",
             "NNPDF31_nlo_as_0118_luxqed/1",
             "NNPDF31_nlo_as_0118_luxqed/2",
@@ -324,7 +324,7 @@ fn bins_13567() {
         .args([
             "convolve",
             "--bins=1,3,5-7",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -339,7 +339,7 @@ fn integrated() {
         .args([
             "convolve",
             "--integrated",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -354,7 +354,7 @@ fn integrated_multiple_pdfs() {
         .args([
             "convolve",
             "--integrated",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
@@ -370,7 +370,7 @@ fn orders_a2_a3() {
         .args([
             "convolve",
             "--orders=a2,a3",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()
@@ -385,7 +385,7 @@ fn wrong_orders() {
         .args([
             "convolve",
             "--orders=a2a2as2",
-            "../test-data/LHCB_WP_7TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])
         .assert()

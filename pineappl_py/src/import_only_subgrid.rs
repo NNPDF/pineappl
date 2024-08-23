@@ -1,5 +1,6 @@
-use super::subgrid::PySubgridEnum;
+//! PyImportOnlySubgrid* interface.
 
+use super::subgrid::PySubgridEnum;
 use numpy::{PyArrayMethods, PyReadonlyArray1, PyReadonlyArray3};
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
@@ -7,10 +8,8 @@ use pineappl::sparse_array3::SparseArray3;
 use pineappl::subgrid::Mu2;
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`
-///
-/// **Usage**: `pineko`
-#[pyclass]
+/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV2 <import_only_subgrid/struct.ImportOnlySubgridV2.html>`.
+#[pyclass(name = "ImportOnlySubgridV2")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV2 {
@@ -19,6 +18,18 @@ pub struct PyImportOnlySubgridV2 {
 
 #[pymethods]
 impl PyImportOnlySubgridV2 {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// array : numpy.ndarray(float)
+    ///     3D array with all weights
+    /// mu2_grid : list(tuple(float, float))
+    ///     scales grid
+    /// x1_grid : list(float)
+    ///     first momentum fraction grid
+    /// x2_grid : list(float)
+    ///     second momentum fraction grid
     #[new]
     pub fn new(
         array: PyReadonlyArray3<f64>,
@@ -55,12 +66,12 @@ impl PyImportOnlySubgridV2 {
         }
     }
 
-    /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`
+    /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
     ///
     /// Returns
     /// -------
-    ///     PySubgridEnum :
-    ///         casted object
+    /// PySubgridEnum :
+    ///     casted object
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.import_only_subgrid.clone().into(),
@@ -68,10 +79,8 @@ impl PyImportOnlySubgridV2 {
     }
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`
-///
-/// **Usage**: `yadism`
-#[pyclass]
+/// PyO3 wrapper to :rustdoc:`pineappl::import_only_subgrid::ImportOnlySubgridV1 <import_only_subgrid/struct.ImportOnlySubgridV1.html>`.
+#[pyclass(name = "ImportOnlySubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyImportOnlySubgridV1 {
@@ -88,6 +97,18 @@ impl PyImportOnlySubgridV1 {
 
 #[pymethods]
 impl PyImportOnlySubgridV1 {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// array : numpy.ndarray(float)
+    ///     3D array with all weights
+    /// mu2_grid : list(tuple(float, float))
+    ///     scales grid
+    /// x1_grid : list(float)
+    ///     first momentum fraction grid
+    /// x2_grid : list(float)
+    ///     second momentum fraction grid
     #[new]
     pub fn new_import_only_subgrid(
         array: PyReadonlyArray3<f64>,
@@ -117,15 +138,32 @@ impl PyImportOnlySubgridV1 {
         ))
     }
 
-    /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`
+    /// Wrapper to match :meth:`pineappl.pineappl.PyGrid.set_subgrid()`.
     ///
     /// Returns
     /// -------
-    ///     PySubgridEnum :
-    ///         casted object
+    /// PySubgridEnum :
+    ///     casted object
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.import_only_subgrid.clone().into(),
         }
     }
+}
+
+/// Register submodule in parent.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "import_only_subgrid")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "ImportOnlySubgrid* interface.",
+    )?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.import_only_subgrid'] = m"
+    );
+    m.add_class::<PyImportOnlySubgridV1>()?;
+    m.add_class::<PyImportOnlySubgridV2>()?;
+    parent_module.add_submodule(&m)
 }

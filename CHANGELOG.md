@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added new method `Grid::delete_orders` and the corresponding switch
+  `--delete-orders` in the subcommand `write` of the CLI
+
+### Changed
+
+- Python API: dropped top-level Python interface layer
+- Python API: renamed `lumi` to `channel` in PyO3 Python interface. This
+  concerns 1) the argument names of `convolute_with_one` and similar functions;
+  2) the module `pineappl.lumi` was moved to `pineappl.boc`; 3) the class
+  `LumiEntry` was renamed to `Channel`
+- Python API: `.into()` needs to be explicitly called on subgrids when calling
+  `pineappl.grid.set_subgrid()`
+- Python API: replaced `pineappl.grid.PyPidBasis` with
+  `pineappl.evolution.PidBasis`
+- Python API: replaced `pineappl.grid.PyOperatorSliceInfo` with
+  `pineappl.evolution.OperatorSliceInfo`
+- Python API: drop all `Py` prefixes, for instance `PyEvolveInfo` was renamed
+  to `EvolveInfo`
+- by default `pineappl plot` no longer shows a channel breakdown in the panel
+  with absolute PDF predictions. However, this feature can be enabled with via
+  a new array added at the start of the script
+
+### Removed
+
+- Python API: removed `pineappl.grid.Grid.create()` and
+  `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
+  of the respective class instead
+
+### Fixed
+
+- fixed the scale-variation label in the plotting script produced by `pineappl
+  plot`. Previously this would always show a 7-pt. variation irrespective of
+  the parameter passed to `--scales`
+
 ## [0.8.2] - 22/07/2024
 
 ### Changed

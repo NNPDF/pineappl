@@ -80,14 +80,14 @@ if [ -z "${version}" ]; then
         sed -n 's/[ ]*"tag_name"[ ]*:[ ]*"v\([^"]*\)"[ ]*,[ ]*$/\1/p')
 fi
 
-base_url=https://github.com/NNPDF/pineappl/releases/download
+url="https://github.com/NNPDF/pineappl/releases/download/v${version}/pineappl_capi-${target}.tar.gz"
 
-echo "prefix:  ${prefix}"
-echo "target:  ${target}"
-echo "version: ${version}"
+echo "prefix:  '${prefix}'"
+echo "target:  '${target}'"
+echo "version: '${version}'"
+echo "URL:     '${url}'"
 
-curl -s -LJ "${base_url}/v${version}/pineappl_capi-${target}.tar.gz" \
-    | tar xzf - -C "${prefix}"
+curl -s -LJ "${url}" | tar xzf - -C "${prefix}"
 
 # instead of `sed` and `mv` we could use `sed -i`, but on Mac it doesn't work as expected from GNU sed
 sed "s:prefix=/:prefix=${prefix}:" "${prefix}"/lib/pkgconfig/pineappl_capi.pc > \
@@ -102,21 +102,20 @@ elif command -v pkgconf >/dev/null; then
     pcbin=$(command -v pkgconf)
 else
     echo
-    echo "Warning: neither \`pkg-config\` nor \`pkgconf\` not found. At least one is needed for the CAPI to be found"
+    echo "Error: neither \`pkg-config\` nor \`pkgconf\` not found. At least one is needed for the CAPI to be found"
     exit 1
 fi
 
 # check whether the library can be found
-if "${pcbin}" --libs pineappl_capi >/dev/null 2>/dev/null; then
-    prefix_lib=$(cd "${prefix}"/lib && pwd)
-    found_lib=$("${pcbin}" --keep-system-libs --libs-only-L pineappl_capi | sed 's/-L[[:space:]]*//')
+if "${pcbin}" --exists pineappl_capi; then
+    found_prefix=$(cd "$("${pcbin}" --variable=prefix pineappl_capi)" && pwd)
 
-    if [ "${prefix_lib}" != "${found_lib}" ]; then
+    if [ "${prefix}" != "${found_prefix}" ]; then
         echo
         echo "Warning: Your PKG_CONFIG_PATH environment variable isn't properly set."
         echo "It appears a different installation of PineAPPL is found:"
         echo
-        echo "  ${found_lib}"
+        echo "  ${found_prefix}"
         echo
         echo "Remove this installation or reorder your PKG_CONFIG_PATH"
     fi

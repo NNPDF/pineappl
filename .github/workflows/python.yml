@@ -20,7 +20,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up Rust
+        run: |
+          rustup component add llvm-tools
       - name: Test
+        env:
+          RUSTFLAGS: '-Cinstrument-coverage'
         run: |
           cd pineappl_py
           python -m venv env
@@ -28,9 +33,18 @@ jobs:
           pip install maturin
           maturin develop --extras test
           pytest
+          find . -name '*.profraw' -exec $(rustc --print target-libdir)/../bin/llvm-profdata merge -sparse -o pineappl.profdata {} +
+          $(rustc --print target-libdir)/../bin/llvm-cov export \
+              --ignore-filename-regex=index.crates.io \
+              --ignore-filename-regex=rustc \
+              --instr-profile=pineappl.profdata \
+              --skip-functions \
+              --object env/lib/python*/site-packages/pineappl/pineappl.*.so \
+              --format lcov > lcov.info
+          # print all files for which coverage has been generated
+          grep SF lcov.info | sort -u | sed 's/SF://'
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: pineappl_py/coverage.xml
           flags: python
