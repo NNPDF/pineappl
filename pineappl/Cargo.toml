@@ -33,7 +33,7 @@ thiserror = "1.0.30"
 
 [dev-dependencies]
 anyhow = "1.0.48"
-lhapdf = { package = "managed-lhapdf", version = "0.3.2" }
+lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
 num-complex = "0.4.4"
 rand = { default-features = false, version = "0.8.4" }
 rand_pcg = { default-features = false, version = "0.3.1" }
