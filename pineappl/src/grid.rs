@@ -856,6 +856,19 @@ impl Grid {
 
         self.set_key_value(&format!("convolution_type_{}", index + 1), &type_);
         self.set_key_value(&format!("convolution_particle_{}", index + 1), &particle);
+
+        // update the remaining metadata
+        for (index, convolution) in self.convolutions().into_iter().enumerate() {
+            if self
+                .key_values()
+                // UNWRAP: we set some key-values before so there must be a storage
+                .unwrap_or_else(|| unreachable!())
+                .get(&format!("initial_state_{}", index + 1))
+                .is_some()
+            {
+                self.set_convolution(index, convolution);
+            }
+        }
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
