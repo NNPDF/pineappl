@@ -1401,6 +1401,9 @@ impl Grid {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
         let mut lhs: Option<Self> = None;
+        // Q2 slices we use
+        let mut used_op_fac1 = Vec::new();
+        // Q2 slices we encounter, but possibly don't use
         let mut op_fac1 = Vec::new();
         // Q2 slices needed by the grid
         let grid_fac1: Vec<_> = self
@@ -1414,6 +1417,14 @@ impl Grid {
             let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
 
             op_fac1.push(info.fac1);
+
+            // skip slices that the grid doesn't use
+            if !grid_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
 
             let op_info_dim = (
                 info.pids1.len(),
@@ -1457,6 +1468,8 @@ impl Grid {
             } else {
                 lhs = Some(rhs);
             }
+
+            used_op_fac1.push(info.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
@@ -1464,7 +1477,7 @@ impl Grid {
 
         // make sure we've evolved all slices
         if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
-            !op_fac1
+            !used_op_fac1
                 .iter()
                 .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
         }) {
@@ -1503,6 +1516,9 @@ impl Grid {
         use itertools::izip;
 
         let mut lhs: Option<Self> = None;
+        // Q2 slices we use
+        let mut used_op_fac1 = Vec::new();
+        // Q2 slices we encounter, but possibly don't use
         let mut op_fac1 = Vec::new();
         // Q2 slices needed by the grid
         let grid_fac1: Vec<_> = self
@@ -1526,6 +1542,14 @@ impl Grid {
             assert_eq!(info_a.pid_basis, info_b.pid_basis);
 
             op_fac1.push(info_a.fac1);
+
+            // skip slices that the grid doesn't use
+            if !grid_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
 
             let op_info_dim_a = (
                 info_a.pids1.len(),
@@ -1599,6 +1623,8 @@ impl Grid {
             } else {
                 lhs = Some(rhs);
             }
+
+            used_op_fac1.push(infos[0].fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
@@ -1606,7 +1632,7 @@ impl Grid {
 
         // make sure we've evolved all slices
         if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
-            !op_fac1
+            !used_op_fac1
                 .iter()
                 .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
         }) {
