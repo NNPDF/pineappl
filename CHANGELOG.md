@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 30/08/2024
+
 ### Fixed
 
 - fixed a problem in the evolution when an EKO with 'similar' Q2 slices was
@@ -651,7 +653,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/NNPDF/pineappl/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/NNPDF/pineappl/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/NNPDF/pineappl/compare/v0.7.4...v0.8.0
