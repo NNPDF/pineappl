@@ -2097,10 +2097,19 @@ impl Grid {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
         let mut lhs: Option<Self> = None;
-        let mut fac1 = Vec::new();
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
 
         for result in slices {
             let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+
+            op_fac1.push(info.fac1);
 
             let op_info_dim = (
                 info.pids1.len(),
@@ -2142,27 +2151,19 @@ impl Grid {
             } else {
                 lhs = Some(rhs);
             }
-
-            fac1.push(info.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
-        if let Some(muf2) = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|mu2| xi.1 * xi.1 * mu2)
-            .find(|&grid_mu2| {
-                !fac1
-                    .iter()
-                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-            })
-        {
+        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+            !op_fac1
+                .iter()
+                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+        }) {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:?}"
+                "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
 
