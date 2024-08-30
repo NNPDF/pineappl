@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed a problem in the evolution when an EKO with 'similar' Q2 slices was
+  used to evolve; this caused the Q2 slices of the grids to be evolved several
+  times, leading to wrong results
+
 ## [0.7.4] - 23/05/2024
 
 ### Added
