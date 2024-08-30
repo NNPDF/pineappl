@@ -1418,6 +1418,15 @@ impl Grid {
 
             op_fac1.push(info.fac1);
 
+            // it's possible that due to small numerical differences we get two slices which are
+            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
+            if used_op_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
+
             // skip slices that the grid doesn't use
             if !grid_fac1
                 .iter()
@@ -1542,6 +1551,15 @@ impl Grid {
             assert_eq!(info_a.pid_basis, info_b.pid_basis);
 
             op_fac1.push(info_a.fac1);
+
+            // it's possible that due to small numerical differences we get two slices which are
+            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
+            if used_op_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
 
             // skip slices that the grid doesn't use
             if !grid_fac1
