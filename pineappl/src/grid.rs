@@ -12,7 +12,7 @@ use super::ntuple_subgrid::NtupleSubgridV1;
 use super::pids::{self, PidBasis};
 use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
 use bitflags::bitflags;
-use float_cmp::approx_eq;
+use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
@@ -1401,10 +1401,19 @@ impl Grid {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
         let mut lhs: Option<Self> = None;
-        let mut fac1 = Vec::new();
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
 
         for result in slices {
             let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+
+            op_fac1.push(info.fac1);
 
             let op_info_dim = (
                 info.pids1.len(),
@@ -1448,27 +1457,19 @@ impl Grid {
             } else {
                 lhs = Some(rhs);
             }
-
-            fac1.push(info.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
-        if let Some(muf2) = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|mu2| xi.1 * xi.1 * mu2)
-            .find(|&grid_mu2| {
-                !fac1
-                    .iter()
-                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-            })
-        {
+        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+            !op_fac1
+                .iter()
+                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+        }) {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:?}"
+                "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
 
@@ -1502,12 +1503,29 @@ impl Grid {
         use itertools::izip;
 
         let mut lhs: Option<Self> = None;
-        let mut fac1 = Vec::new();
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
 
         // TODO: simplify the ugly repetition below by offloading some ops into fn
         for (result_a, result_b) in izip!(slices_a, slices_b) {
             // Operate on `slices_a`
             let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
+            // Operate on `slices_b`
+            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
+
+            // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
+            assert_approx_eq!(f64, info_a.fac1, info_b.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
+
+            // also the PID bases must be the same
+            assert_eq!(info_a.pid_basis, info_b.pid_basis);
+
+            op_fac1.push(info_a.fac1);
 
             let op_info_dim_a = (
                 info_a.pids1.len(),
@@ -1523,9 +1541,6 @@ impl Grid {
                     operator_a.dim(),
                 )));
             }
-
-            // Operate on `slices_b`
-            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
 
             let op_info_dim_b = (
                 info_b.pids1.len(),
@@ -1576,8 +1591,6 @@ impl Grid {
                 more_members: self.more_members.clone(),
             };
 
-            assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
-
             // TODO: use a new constructor to set this information
             rhs.set_pid_basis(infos[0].pid_basis);
 
@@ -1586,28 +1599,19 @@ impl Grid {
             } else {
                 lhs = Some(rhs);
             }
-
-            // NOTE: The following should be shared by the 2 EKOs(?)
-            fac1.push(infos[0].fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
-        if let Some(muf2) = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|mu2| xi.1 * xi.1 * mu2)
-            .find(|&grid_mu2| {
-                !fac1
-                    .iter()
-                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-            })
-        {
+        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+            !op_fac1
+                .iter()
+                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+        }) {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:?}"
+                "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
 
@@ -1828,7 +1832,6 @@ impl Grid {
 mod tests {
     use super::*;
     use crate::channel;
-    use float_cmp::assert_approx_eq;
     use std::fs::File;
 
     #[test]
