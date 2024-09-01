@@ -429,11 +429,9 @@ fn evolve_grid(
     orders: &[(u32, u32)],
     xir: f64,
     xif: f64,
-    use_old_evolve: bool,
 ) -> Result<FkTable> {
-    use anyhow::bail;
     use eko::EkoSlices;
-    use pineappl::evolution::{AlphasTable, OperatorInfo};
+    use pineappl::evolution::AlphasTable;
 
     let order_mask: Vec<_> = grid
         .orders()
@@ -452,51 +450,19 @@ fn evolve_grid(
         .collect::<Result<_, _>>()?;
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
-    if use_old_evolve {
-        assert_eq!(eko_slices.len(), 1);
-
-        if let EkoSlices::V0 {
-            fac1,
-            info,
-            operator,
-        } = eko_slices.remove(0)
-        {
-            let op_info = OperatorInfo {
-                fac0: info.fac0,
-                pids0: info.pids0.clone(),
-                x0: info.x0.clone(),
-                fac1,
-                pids1: info.pids1.clone(),
-                x1: info.x1.clone(),
-                ren1: alphas_table.ren1,
-                alphas: alphas_table.alphas,
-                xir,
-                xif,
-                pid_basis: info.pid_basis,
-            };
-
-            #[allow(deprecated)]
-            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
-        } else {
-            bail!("`--use-old-evolve` can only be used with the old EKO format (`V0`)")
-        }
-    } else {
-        match eko_slices.as_mut_slice() {
-            [eko] => {
-                Ok(grid.evolve_with_slice_iter(eko, &order_mask, (xir, xif), &alphas_table)?)
-            }
-            [eko_a, eko_b] => Ok(grid.evolve_with_slice_iter2(
-                eko_a,
-                eko_b,
-                &order_mask,
-                (xir, xif),
-                &alphas_table,
-            )?),
-            _ => unimplemented!(
-                "evolution with {} EKOs is not implemented",
-                eko_slices.len()
-            ),
-        }
+    match eko_slices.as_mut_slice() {
+        [eko] => Ok(grid.evolve_with_slice_iter(eko, &order_mask, (xir, xif), &alphas_table)?),
+        [eko_a, eko_b] => Ok(grid.evolve_with_slice_iter2(
+            eko_a,
+            eko_b,
+            &order_mask,
+            (xir, xif),
+            &alphas_table,
+        )?),
+        _ => unimplemented!(
+            "evolution with {} EKOs is not implemented",
+            eko_slices.len()
+        ),
     }
 }
 
@@ -559,8 +525,6 @@ pub struct Opts {
     /// Rescale the fragmentation scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xia: f64,
-    #[arg(hide = true, long)]
-    use_old_evolve: bool,
 }
 
 impl Subcommand for Opts {
@@ -590,7 +554,6 @@ impl Subcommand for Opts {
             &self.orders,
             self.xir,
             self.xif,
-            self.use_old_evolve,
         )?;
 
         let evolved_results = helpers::convolve_scales(

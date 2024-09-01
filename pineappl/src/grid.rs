@@ -4,7 +4,7 @@ use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Order};
 use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
-use super::evolution::{self, AlphasTable, EvolveInfo, OperatorInfo, OperatorSliceInfo};
+use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
@@ -15,7 +15,7 @@ use bitflags::bitflags;
 use float_cmp::approx_eq;
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayView3, ArrayView5, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
+use ndarray::{s, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -1135,50 +1135,6 @@ impl Grid {
             x1,
             ren1,
         }
-    }
-
-    /// Converts this `Grid` into an [`FkTable`] using an evolution kernel operator (EKO) given as
-    /// `operator`. The dimensions and properties of this operator must be described using `info`.
-    /// The parameter `order_mask` can be used to include or exclude orders from this operation,
-    /// and must correspond to the ordering given by [`Grid::orders`]. Orders that are not given
-    /// are enabled, and in particular if `order_mask` is empty all orders are activated.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`.
-    #[deprecated(since = "0.7.4", note = "use evolve_with_slice_iter instead")]
-    pub fn evolve(
-        &self,
-        operator: ArrayView5<f64>,
-        info: &OperatorInfo,
-        order_mask: &[bool],
-    ) -> Result<FkTable, GridError> {
-        self.evolve_with_slice_iter(
-            info.fac1
-                .iter()
-                .zip(operator.axis_iter(Axis(0)))
-                .map(|(&fac1, op)| {
-                    Ok::<_, GridError>((
-                        OperatorSliceInfo {
-                            fac0: info.fac0,
-                            pids0: info.pids0.clone(),
-                            x0: info.x0.clone(),
-                            fac1,
-                            pids1: info.pids1.clone(),
-                            x1: info.x1.clone(),
-                            pid_basis: info.pid_basis,
-                        },
-                        CowArray::from(op),
-                    ))
-                }),
-            order_mask,
-            (info.xir, info.xif),
-            &AlphasTable {
-                ren1: info.ren1.clone(),
-                alphas: info.alphas.clone(),
-            },
-        )
     }
 
     // TODO:
