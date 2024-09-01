@@ -36,62 +36,6 @@ pub struct EvolveInfo {
     pub ren1: Vec<f64>,
 }
 
-/// Information about the evolution kernel operator (EKO) passed to [`Grid::evolve`] as `operator`,
-/// which is used to convert a [`Grid`] into an [`FkTable`]. The dimensions of the EKO must
-/// correspond to the values given in [`fac1`], [`pids0`], [`x0`], [`pids1`] and [`x1`], exactly in
-/// this order. Members with a `1` are defined at the squared factorization scales given in
-/// [`fac1`] (often called process scales) and are found in the [`Grid`] that [`Grid::evolve`] is
-/// called with. Members with a `0` are defined at the squared factorization scale [`fac0`] (often
-/// called fitting scale or starting scale) and are found in the [`FkTable`] resulting from
-/// [`Grid::evolve`].
-///
-/// The EKO may convert a `Grid` from a basis given by the particle identifiers [`pids1`] to a
-/// possibly different basis given by [`pids0`]. This basis must also be identified using
-/// [`pid_basis`], which tells [`FkTable::convolve`] how to perform a convolution. The members
-/// [`ren1`] and [`alphas`] must be the strong couplings given at the respective renormalization
-/// scales. Finally, [`xir`] and [`xif`] can be used to vary the renormalization and factorization
-/// scales, respectively, around their central values.
-///
-/// [`FkTable::convolve`]: super::fk_table::FkTable::convolve
-/// [`FkTable`]: super::fk_table::FkTable
-/// [`alphas`]: Self::alphas
-/// [`fac0`]: Self::fac0
-/// [`fac1`]: Self::fac1
-/// [`pid_basis`]: Self::pid_basis
-/// [`pids0`]: Self::pids0
-/// [`pids1`]: Self::pids1
-/// [`ren1`]: Self::ren1
-/// [`x0`]: Self::x0
-/// [`x1`]: Self::x1
-/// [`xif`]: Self::xif
-/// [`xir`]: Self::xir
-pub struct OperatorInfo {
-    /// Squared factorization scale of the `FkTable`.
-    pub fac0: f64,
-    /// Particle identifiers of the `FkTable`.
-    pub pids0: Vec<i32>,
-    /// `x`-grid coordinates of the `FkTable`
-    pub x0: Vec<f64>,
-    /// Squared factorization scales of the `Grid`.
-    pub fac1: Vec<f64>,
-    /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
-    /// given here, the contributions of them are silently ignored.
-    pub pids1: Vec<i32>,
-    /// `x`-grid coordinates of the `Grid`.
-    pub x1: Vec<f64>,
-
-    /// Renormalization scales of the `Grid`.
-    pub ren1: Vec<f64>,
-    /// Strong couplings corresponding to the order given in [`ren1`](Self::ren1).
-    pub alphas: Vec<f64>,
-    /// Multiplicative factor for the central renormalization scale.
-    pub xir: f64,
-    /// Multiplicative factor for the central factorization scale.
-    pub xif: f64,
-    /// Particle ID basis for `FkTable`.
-    pub pid_basis: PidBasis,
-}
-
 /// Information about the evolution kernel operator slice (EKO) passed to
 /// [`Grid::evolve_with_slice_iter`](super::grid::Grid::evolve_with_slice_iter) as `operator`,
 /// which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable). The
