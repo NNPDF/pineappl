@@ -12,7 +12,7 @@ use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
 
-pub(crate) fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError> {
+pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError> {
     use pineappl_v0::subgrid::Subgrid as _;
 
     let grid = GridV0::read(&mut reader).map_err(|err| GridError::Other(err.into()))?;
