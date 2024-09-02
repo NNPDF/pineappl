@@ -96,13 +96,48 @@ class TestGrid:
             g.convolve_with_one(2212, lambda pid, x, q2: 0.0, lambda q2: 0.0),
             [0.0] * 2,
         )
+        v = 5e6 / 9999
         np.testing.assert_allclose(
             g.convolve_with_one(2212, lambda pid, x, q2: 1, lambda q2: 1.0),
-            [5e6 / 9999, 0.0],
+            [v, 0.0],
+        )
+        np.testing.assert_allclose(
+            g.convolve_with_one(
+                2212, lambda pid, x, q2: 1, lambda q2: 1.0, bin_indices=[0]
+            ),
+            [v],
+        )
+        # block first bins with additional args
+        np.testing.assert_allclose(
+            g.convolve_with_one(
+                2212,
+                lambda pid, x, q2: 1,
+                lambda q2: 1.0,
+                bin_indices=[0],
+                order_mask=[False],
+            ),
+            [0.0],
+        )
+        np.testing.assert_allclose(
+            g.convolve_with_one(
+                2212,
+                lambda pid, x, q2: 1,
+                lambda q2: 1.0,
+                bin_indices=[0],
+                channel_mask=[False],
+            ),
+            [0.0],
+        )
+        # second bin is empty
+        np.testing.assert_allclose(
+            g.convolve_with_one(
+                2212, lambda pid, x, q2: 1, lambda q2: 1.0, bin_indices=[1]
+            ),
+            [0.0],
         )
         np.testing.assert_allclose(
             g.convolve_with_one(2212, lambda pid, x, q2: 1, lambda q2: 2.0),
-            [2**3 * 5e6 / 9999, 0.0],
+            [2**3 * v, 0.0],
         )
 
     def test_io(self, tmp_path):

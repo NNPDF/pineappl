@@ -267,9 +267,9 @@ impl PyGrid {
         pdg_id: i32,
         xfx: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: Option<PyReadonlyArray1<bool>>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -280,9 +280,9 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
-                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &order_mask.map_or(vec![], |b| b.to_vec()),
+                &bin_indices.map_or(vec![], |c| c.to_vec()),
+                &channel_mask.map_or(vec![], |d| d.to_vec()),
                 &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
@@ -332,9 +332,9 @@ impl PyGrid {
         pdg_id2: i32,
         xfx2: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: Option<PyReadonlyArray1<bool>>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         xi: Option<Vec<(f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -347,9 +347,9 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
-                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
+                &order_mask.map_or(vec![], |b| b.to_vec()),
+                &bin_indices.map_or(vec![], |c| c.to_vec()),
+                &channel_mask.map_or(vec![], |d| d.to_vec()),
                 &xi.map_or(vec![(1.0, 1.0)], |m| m),
             )
             .into_pyarray_bound(py)
