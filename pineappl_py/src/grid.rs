@@ -365,7 +365,7 @@ impl PyGrid {
     /// Returns
     /// -------
     /// PyEvolveInfo :
-    ///     evolution informations
+    ///     evolution information
     pub fn evolve_info(&self, order_mask: PyReadonlyArray1<bool>) -> PyEvolveInfo {
         PyEvolveInfo {
             evolve_info: self.grid.evolve_info(order_mask.as_slice().unwrap()),
