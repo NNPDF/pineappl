@@ -244,7 +244,7 @@ impl PyGrid {
     ///     is included. An empty list corresponds to all orders being enabled.
     /// bin_indices : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
-    ///     empty list means that all orders should be calculated.
+    ///     empty list means that all bins should be calculated.
     /// channel_mask : numpy.ndarray(bool)
     ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
@@ -307,7 +307,7 @@ impl PyGrid {
     ///     is included. An empty list corresponds to all orders being enabled.
     /// bin_indices : numpy.ndarray(int)
     ///     A list with the indices of the corresponding bins that should be calculated. An
-    ///     empty list means that all orders should be calculated.
+    ///     empty list means that all bins should be calculated.
     /// channel_mask : numpy.ndarray(bool)
     ///     Mask for selecting specific channels. The value `True` means the
     ///     corresponding channel is included. An empty list corresponds to all channels being
