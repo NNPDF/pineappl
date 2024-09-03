@@ -61,7 +61,7 @@ pub enum GridError {
         /// File format version of the file read.
         file_version: u64,
     },
-    /// Returned from [`Grid::evolve`] if the evolution failed.
+    /// Returned from [`Grid::evolve_with_slice_iter`] if the evolution failed.
     #[error("failed to evolve grid: {0}")]
     EvolutionFailure(String),
     /// Errors that do no originate from this crate itself.
@@ -1066,7 +1066,7 @@ impl Grid {
     }
 
     /// Returns information for the generation of evolution operators that are being used in
-    /// [`Grid::evolve`] with the parameter `order_mask`.
+    /// [`Grid::convolve`] with the parameter `order_mask`.
     #[must_use]
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;

@@ -1,4 +1,4 @@
-//! Supporting classes and functions for [`Grid::evolve`].
+//! Supporting classes and functions for [`Grid::evolve_with_slice_iter`].
 
 use super::boc::{Channel, Order};
 use super::channel;
@@ -45,7 +45,7 @@ pub struct EvolveInfo {
 /// `fac1` (often called process scale) and are found in the [`Grid`] that
 /// `Grid::evolve_with_slice_iter` is called with. Members with a `0` are defined at the squared
 /// factorization scale [`fac0`](Self::fac0) (often called fitting scale or starting scale) and are
-/// found in the `FkTable` resulting from [`Grid::evolve`].
+/// found in the `FkTable` resulting from [`Grid::evolve_with_slice_iter`].
 ///
 /// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
 /// possibly different basis given by `pids0`. This basis must also be identified using
