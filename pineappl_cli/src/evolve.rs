@@ -474,7 +474,6 @@ fn evolve_grid(
     _: &[(u32, u32)],
     _: f64,
     _: f64,
-    _: bool,
 ) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `evolve`"
