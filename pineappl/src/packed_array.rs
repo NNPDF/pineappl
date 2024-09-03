@@ -140,7 +140,7 @@ fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) 
 }
 
 /// Converts a flat `index` into a `multi_index`.
-fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
+pub fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
     assert!(index < shape.iter().product());
     let mut indices = [0; D];
     for (i, d) in indices.iter_mut().zip(shape).rev() {

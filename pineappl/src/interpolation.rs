@@ -125,12 +125,12 @@ impl Interp {
                 ReweightMeth::NoReweight => no_reweight,
             },
             map_x_to_y: match map {
-                Map::ApplGridF2 => applgrid::fx2,
-                Map::ApplGridH0 => applgrid::fq20,
-            },
-            _map_y_to_x: match map {
                 Map::ApplGridF2 => applgrid::fy2,
                 Map::ApplGridH0 => applgrid::ftau0,
+            },
+            _map_y_to_x: match map {
+                Map::ApplGridF2 => applgrid::fx2,
+                Map::ApplGridH0 => applgrid::fq20,
             },
             node_weights: match interp_meth {
                 InterpMeth::Lagrange => lagrange_weights,
@@ -139,6 +139,10 @@ impl Interp {
 
         result.min = (result.map_x_to_y)(min);
         result.max = (result.map_x_to_y)(max);
+
+        if result.min > result.max {
+            std::mem::swap(&mut result.min, &mut result.max);
+        }
 
         result
     }
@@ -158,7 +162,7 @@ impl Interp {
 
     /// TODO
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
-        let y = (self.map_x_to_y)(x);
+        let y = dbg!((self.map_x_to_y)(x));
 
         // points falling outside the interpolation range shouldn't happen very often, because when
         // it does it degrades the interpolation quality
@@ -193,8 +197,10 @@ pub fn interpolate<const D: usize>(
     interps: &[Interp],
     ntuple: &[f64],
     weight: f64,
-    _array: &impl IndexMut<usize>,
+    array: &mut impl IndexMut<[usize; D]>,
 ) {
+    use itertools::Itertools;
+
     if weight == 0.0 {
         return;
     }
@@ -206,7 +212,7 @@ pub fn interpolate<const D: usize>(
     let Some(result): Option<ArrayVec<_, D>> = interps
         .iter()
         .zip(ntuple)
-        .map(|(interp, &x)| interp.interpolate(x))
+        .map(|(interp, &x)| dbg!(interp.interpolate(x)))
         .collect()
     else {
         return;
@@ -218,18 +224,25 @@ pub fn interpolate<const D: usize>(
     //    self.static_q2 = -1.0;
     //}
 
-    let _weight = weight
+    let weight = weight
         / interps
             .iter()
             .zip(ntuple)
             .map(|(interp, &x)| interp.reweight(x))
             .product::<f64>();
 
-    let _node_weights: ArrayVec<_, D> = interps
+    let node_weights: ArrayVec<_, D> = interps
         .iter()
         .zip(result)
         .map(|(interp, (_, fraction))| interp.node_weights(fraction))
         .collect();
+
+    for (i, node_weights) in node_weights.iter().multi_cartesian_product().enumerate() {
+        let mut index = crate::packed_array::unravel_index::<D>(i, &[4; D]);
+        println!("{index:?}");
+        println!("{node_weights:?}");
+        array[index] += weight * node_weights.iter().product();
+    }
 
     //for i3 in 0..=self.tauorder {
     //    let fi3i3 = fi(i3, self.tauorder, u_tau);
@@ -246,4 +259,39 @@ pub fn interpolate<const D: usize>(
     //        }
     //    }
     //}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_interpolation() {
+        let interps = vec![
+            Interp::new(
+                10.0,
+                10000.0,
+                50,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+        ];
+        let ntuple = [100.0, 0.5];
+        let weight = 1.0;
+        let mut array = crate::packed_array::PackedArray::<f64, 2>::new([50, 50]);
+        println!("anything!");
+
+        interpolate(&interps, &ntuple, weight, &mut array);
+    }
 }
