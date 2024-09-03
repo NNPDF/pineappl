@@ -30,8 +30,7 @@ pub struct Opts {
 
 #[derive(Clone)]
 enum OpsArg {
-    Cc1(bool),
-    Cc2(bool),
+    Cc(usize),
     DedupChannels(i64),
     DeleteBins(Vec<RangeInclusive<usize>>),
     DeleteChannels(Vec<RangeInclusive<usize>>),
@@ -73,7 +72,7 @@ impl FromArgMatches for MoreArgs {
             args.resize(indices.iter().max().unwrap() + 1, None);
 
             match id.as_str() {
-                "cc1" | "cc2" | "optimize" | "split_channels" | "upgrade" => {
+                "cc" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -84,8 +83,22 @@ impl FromArgMatches for MoreArgs {
                     for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
-                            "cc1" => OpsArg::Cc1(arg[0]),
-                            "cc2" => OpsArg::Cc2(arg[0]),
+                            "cc" => OpsArg::Cc(arg[0]),
+                            _ => unreachable!(),
+                        });
+                    }
+                }
+                "optimize" | "split_channels" | "upgrade" => {
+                    let arguments: Vec<Vec<_>> = matches
+                        .remove_occurrences(&id)
+                        .unwrap()
+                        .map(Iterator::collect)
+                        .collect();
+                    assert_eq!(arguments.len(), indices.len());
+
+                    for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
+                        assert_eq!(arg.len(), 1);
+                        args[index] = Some(match id.as_str() {
                             "optimize" => OpsArg::Optimize(arg[0]),
                             "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
@@ -265,26 +278,13 @@ impl FromArgMatches for MoreArgs {
 impl Args for MoreArgs {
     fn augment_args(cmd: Command) -> Command {
         cmd.arg(
-            Arg::new("cc1")
+            Arg::new("cc")
                 .action(ArgAction::Append)
-                .default_missing_value("true")
-                .help("Charge conjugate the first initial state")
-                .long("cc1")
-                .num_args(0..=1)
-                .require_equals(true)
-                .value_name("ENABLE")
-                .value_parser(clap::value_parser!(bool)),
-        )
-        .arg(
-            Arg::new("cc2")
-                .action(ArgAction::Append)
-                .default_missing_value("true")
-                .help("Charge conjugate the second initial state")
-                .long("cc2")
-                .num_args(0..=1)
-                .require_equals(true)
-                .value_name("ENABLE")
-                .value_parser(clap::value_parser!(bool)),
+                .help("Charge conjugate the convolution with the specified index")
+                .long("cc")
+                .num_args(1)
+                .value_name("IDX")
+                .value_parser(clap::value_parser!(usize)),
         )
         .arg(
             Arg::new("dedup_channels")
@@ -508,31 +508,8 @@ impl Subcommand for Opts {
         for arg in &self.more_args.args {
             match arg {
                 // TODO: generalize to arbitrary convolutions
-                OpsArg::Cc1(true) | OpsArg::Cc2(true) => {
-                    let index = match arg {
-                        OpsArg::Cc1(true) => 0,
-                        OpsArg::Cc2(true) => 1,
-                        _ => unreachable!(),
-                    };
-
-                    let pid_basis = *grid.pid_basis();
-
-                    for channel in grid.channels_mut() {
-                        *channel = Channel::new(
-                            channel
-                                .entry()
-                                .iter()
-                                .map(|(pids, f)| {
-                                    let mut cc_pids = pids.clone();
-                                    let (cc_pid, f1) = pid_basis.charge_conjugate(pids[index]);
-                                    cc_pids[index] = cc_pid;
-                                    (cc_pids, f * f1)
-                                })
-                                .collect(),
-                        );
-                    }
-
-                    grid.convolutions_mut()[index] = grid.convolutions()[index].charge_conjugate();
+                OpsArg::Cc(index) => {
+                    grid.charge_conjugate(*index);
                 }
                 OpsArg::DedupChannels(ulps) => {
                     grid.dedup_channels(*ulps);
@@ -623,11 +600,8 @@ impl Subcommand for Opts {
                 }
                 OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),
-                OpsArg::Cc1(false)
-                | OpsArg::Cc2(false)
-                | OpsArg::Optimize(false)
-                | OpsArg::SplitChannels(false)
-                | OpsArg::Upgrade(false) => {}
+                OpsArg::Optimize(false) | OpsArg::SplitChannels(false) | OpsArg::Upgrade(false) => {
+                }
             }
         }
 

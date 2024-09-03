@@ -689,6 +689,30 @@ impl Grid {
         &mut self.convolutions
     }
 
+    /// Charge conjugate both the convolution function with index `convolution` and the PIDs in the
+    /// channel definition corresponding to it. This leaves the the results returned by
+    /// [`Grid::convolve`] invariant.
+    pub fn charge_conjugate(&mut self, convolution: usize) {
+        let pid_basis = *self.pid_basis();
+
+        for channel in self.channels_mut() {
+            *channel = Channel::new(
+                channel
+                    .entry()
+                    .iter()
+                    .cloned()
+                    .map(|(mut pids, f)| {
+                        let (cc_pid, f1) = pid_basis.charge_conjugate(pids[convolution]);
+                        pids[convolution] = cc_pid;
+                        (pids, f * f1)
+                    })
+                    .collect(),
+            );
+        }
+
+        self.convolutions_mut()[convolution] = self.convolutions()[convolution].charge_conjugate();
+    }
+
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
         let old_dim = self.subgrids.raw_dim().into_pattern();
         let mut new_subgrids = Array3::from_shape_simple_fn(

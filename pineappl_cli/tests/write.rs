@@ -10,8 +10,7 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<ENABLE>]                 Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<ENABLE>]                 Charge conjugate the second initial state [possible values: true, false]
+      --cc <IDX>                       Charge conjugate the convolution with the specified index
       --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
       --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
       --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
@@ -455,14 +454,14 @@ fn help() {
 }
 
 #[test]
-fn cc1() {
+fn cc_0() {
     let output = NamedTempFile::new("cc1.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc1",
+            "--cc=0",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -483,14 +482,15 @@ fn cc1() {
 }
 
 #[test]
-fn cc2() {
+fn cc_1() {
     let output = NamedTempFile::new("cc2.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc2",
+            "--cc",
+            "1",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
