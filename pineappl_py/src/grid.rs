@@ -280,9 +280,9 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.unwrap_or(vec![]),
-                &bin_indices.unwrap_or(vec![]),
-                &channel_mask.unwrap_or(vec![]),
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
                 &xi.unwrap_or(vec![(1.0, 1.0)]),
             )
             .into_pyarray_bound(py)
@@ -347,9 +347,9 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.unwrap_or(vec![]),
-                &bin_indices.unwrap_or(vec![]),
-                &channel_mask.unwrap_or(vec![]),
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
                 &xi.unwrap_or(vec![(1.0, 1.0)]),
             )
             .into_pyarray_bound(py)
