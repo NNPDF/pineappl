@@ -15,8 +15,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install PineAPPL's C API
+        env:
+          # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
+          RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
-          export RUSTFLAGS="-Cinstrument-coverage"
           cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
           ldconfig
 

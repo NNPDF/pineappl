@@ -37,7 +37,8 @@ export CARGO_TARGET_DIR="$(mktemp -d)"
 # relative paths sometimes don't work, so use an absolute path
 dir="${CARGO_TARGET_DIR}"/debug/doctestbins
 
-export RUSTFLAGS="-Cinstrument-coverage"
+# `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
+export RUSTFLAGS="-Cinstrument-coverage -Clink-dead-code"
 export RUSTDOCFLAGS="-Cinstrument-coverage -Z unstable-options --persist-doctests ${dir}"
 
 # -Z doctest-in-workspace is enabled by default starting from 1.72.0
