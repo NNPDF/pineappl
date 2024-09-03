@@ -4,6 +4,8 @@ use super::convert;
 use arrayvec::ArrayVec;
 use std::ops::IndexMut;
 
+const INTERP_ORDER_MAX_PLUS_ONE: usize = 8;
+
 mod applgrid {
     pub fn reweight_x(x: f64) -> f64 {
         (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
@@ -86,7 +88,7 @@ pub struct Interp {
     order: usize,
     reweight_x: fn(f64) -> f64,
     map_x_to_y: fn(f64) -> f64,
-    map_y_to_x: fn(f64) -> f64,
+    _map_y_to_x: fn(f64) -> f64,
     node_weights: fn(usize, usize, f64) -> f64,
 }
 
@@ -95,7 +97,8 @@ impl Interp {
     ///
     /// # Panics
     ///
-    /// Panics if `nodes` is `0`, or if `nodes` is smaller or equal to `order`.
+    /// Panics if `nodes` is `0`, or if `nodes` is smaller or equal to `order` or if `order` is
+    /// larger than some internally specified maximum.
     pub fn new(
         min: f64,
         max: f64,
@@ -105,8 +108,12 @@ impl Interp {
         map: Map,
         interp_meth: InterpMeth,
     ) -> Self {
+        // for interpolation to work `nodes` has to be at least `1`
         assert!(nodes > 0);
+        // for each interpolated point `order + 1` nodes are updated
         assert!(nodes > order);
+        // for `order`
+        assert!(order < INTERP_ORDER_MAX_PLUS_ONE);
 
         let mut result = Self {
             min: 0.0,
@@ -121,7 +128,7 @@ impl Interp {
                 Map::ApplGridF2 => applgrid::fx2,
                 Map::ApplGridH0 => applgrid::fq20,
             },
-            map_y_to_x: match map {
+            _map_y_to_x: match map {
                 Map::ApplGridF2 => applgrid::fy2,
                 Map::ApplGridH0 => applgrid::ftau0,
             },
@@ -174,7 +181,7 @@ impl Interp {
     }
 
     /// TODO
-    pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, 8> {
+    pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, INTERP_ORDER_MAX_PLUS_ONE> {
         (0..=self.order)
             .map(|i| (self.node_weights)(i, self.order, fraction))
             .collect()
@@ -211,14 +218,14 @@ pub fn interpolate<const D: usize>(
     //    self.static_q2 = -1.0;
     //}
 
-    let weight = weight
+    let _weight = weight
         / interps
             .iter()
             .zip(ntuple)
             .map(|(interp, &x)| interp.reweight(x))
             .product::<f64>();
 
-    let node_weights: ArrayVec<_, D> = interps
+    let _node_weights: ArrayVec<_, D> = interps
         .iter()
         .zip(result)
         .map(|(interp, (_, fraction))| interp.node_weights(fraction))
