@@ -2,6 +2,7 @@
 
 use super::convert;
 use arrayvec::ArrayVec;
+use std::mem;
 use std::ops::IndexMut;
 
 const INTERP_ORDER_MAX_PLUS_ONE: usize = 8;
@@ -140,8 +141,9 @@ impl Interp {
         result.min = (result.map_x_to_y)(min);
         result.max = (result.map_x_to_y)(max);
 
+        // for some maps the minimum in x is mapped to the maximum in y
         if result.min > result.max {
-            std::mem::swap(&mut result.min, &mut result.max);
+            mem::swap(&mut result.min, &mut result.max);
         }
 
         result
@@ -162,7 +164,7 @@ impl Interp {
 
     /// TODO
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
-        let y = dbg!((self.map_x_to_y)(x));
+        let y = (self.map_x_to_y)(x);
 
         // points falling outside the interpolation range shouldn't happen very often, because when
         // it does it degrades the interpolation quality
@@ -190,6 +192,11 @@ impl Interp {
             .map(|i| (self.node_weights)(i, self.order, fraction))
             .collect()
     }
+
+    /// TODO
+    pub fn order(&self) -> usize {
+        self.order
+    }
 }
 
 /// TODO
@@ -197,8 +204,9 @@ pub fn interpolate<const D: usize>(
     interps: &[Interp],
     ntuple: &[f64],
     weight: f64,
-    array: &mut impl IndexMut<[usize; D]>,
+    array: &mut impl IndexMut<[usize; D], Output = f64>,
 ) {
+    use super::packed_array;
     use itertools::Itertools;
 
     if weight == 0.0 {
@@ -212,17 +220,13 @@ pub fn interpolate<const D: usize>(
     let Some(result): Option<ArrayVec<_, D>> = interps
         .iter()
         .zip(ntuple)
-        .map(|(interp, &x)| dbg!(interp.interpolate(x)))
+        .map(|(interp, &x)| interp.interpolate(x))
         .collect()
     else {
         return;
     };
 
-    //if self.static_q2 == 0.0 {
-    //    self.static_q2 = q2;
-    //} else if (self.static_q2 != -1.0) && (self.static_q2 != q2) {
-    //    self.static_q2 = -1.0;
-    //}
+    // TODO: add static value detection
 
     let weight = weight
         / interps
@@ -233,32 +237,23 @@ pub fn interpolate<const D: usize>(
 
     let node_weights: ArrayVec<_, D> = interps
         .iter()
-        .zip(result)
-        .map(|(interp, (_, fraction))| interp.node_weights(fraction))
+        .zip(&result)
+        .map(|(interp, &(_, fraction))| interp.node_weights(fraction))
         .collect();
 
-    for (i, node_weights) in node_weights.iter().multi_cartesian_product().enumerate() {
-        let mut index = crate::packed_array::unravel_index::<D>(i, &[4; D]);
-        println!("{index:?}");
-        println!("{node_weights:?}");
-        array[index] += weight * node_weights.iter().product();
+    let shape: ArrayVec<_, D> = interps.iter().map(|interp| interp.order() + 1).collect();
+
+    for (i, node_weights) in node_weights
+        .into_iter()
+        .multi_cartesian_product()
+        .enumerate()
+    {
+        let mut index = packed_array::unravel_index::<D>(i, &shape);
+        for (entry, (start_index, _)) in index.iter_mut().zip(&result) {
+            *entry += start_index;
+        }
+        array[index] += weight * node_weights.iter().product::<f64>();
     }
-
-    //for i3 in 0..=self.tauorder {
-    //    let fi3i3 = fi(i3, self.tauorder, u_tau);
-
-    //    for (i1, fi1i1) in fi1.iter().enumerate() {
-    //        for (i2, fi2i2) in fi2.iter().enumerate() {
-    //            let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * weight;
-
-    //            let grid = self
-    //                .grid
-    //                .get_or_insert_with(|| Array3::zeros((size, ny1, ny2)));
-
-    //            grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
-    //        }
-    //    }
-    //}
 }
 
 #[cfg(test)]
@@ -290,8 +285,12 @@ mod tests {
         let ntuple = [100.0, 0.5];
         let weight = 1.0;
         let mut array = crate::packed_array::PackedArray::<f64, 2>::new([50, 50]);
-        println!("anything!");
+
+        //println!("{array:?}");
+        //println!("anything!");
 
         interpolate(&interps, &ntuple, weight, &mut array);
+
+        //println!("{array:?}");
     }
 }

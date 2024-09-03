@@ -9,7 +9,7 @@ use std::ops::{Index, IndexMut, MulAssign};
 /// `D`-dimensional array similar to [`ndarray::ArrayBase`], except that `T::default()` is not
 /// stored to save space. Instead, adjacent non-default elements are grouped together and the index
 /// of their first element (`start_index`) and the length of the group (`lengths`) is stored.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PackedArray<T, const D: usize> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the
     /// elements in `lengths`.
