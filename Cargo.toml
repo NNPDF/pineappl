@@ -21,7 +21,7 @@ edition = "2021"
 keywords = ["high-energy-physics", "physics"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/NNPDF/pineappl"
-rust-version = "1.70.0"
+rust-version = "1.80.1"
 version = "1.0.0-alpha1"
 
 [workspace.lints.clippy]
