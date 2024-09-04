@@ -89,7 +89,7 @@ pub struct Interp {
     order: usize,
     reweight_x: fn(f64) -> f64,
     map_x_to_y: fn(f64) -> f64,
-    _map_y_to_x: fn(f64) -> f64,
+    map_y_to_x: fn(f64) -> f64,
     node_weights: fn(usize, usize, f64) -> f64,
 }
 
@@ -129,7 +129,7 @@ impl Interp {
                 Map::ApplGridF2 => applgrid::fy2,
                 Map::ApplGridH0 => applgrid::ftau0,
             },
-            _map_y_to_x: match map {
+            map_y_to_x: match map {
                 Map::ApplGridF2 => applgrid::fx2,
                 Map::ApplGridH0 => applgrid::fq20,
             },
@@ -197,6 +197,13 @@ impl Interp {
     pub fn order(&self) -> usize {
         self.order
     }
+
+    /// TODO
+    pub fn nodes(&self) -> Vec<f64> {
+        (0..self.nodes)
+            .map(|node| (self.map_y_to_x)(self.gety(node)))
+            .collect()
+    }
 }
 
 /// TODO
@@ -262,7 +269,7 @@ mod tests {
     use float_cmp::assert_approx_eq;
 
     #[test]
-    fn test_interpolation() {
+    fn interpolate_two_points() {
         let interps = vec![
             Interp::new(
                 1e2,
@@ -292,6 +299,117 @@ mod tests {
                 InterpMeth::Lagrange,
             ),
         ];
+
+        let nodes: Vec<_> = interps.iter().map(Interp::nodes).collect();
+
+        let q2_reference = [
+            9.9999999999999986e1,
+            1.2242682307575689e2,
+            1.5071735829758390e2,
+            1.8660624792652183e2,
+            2.3239844323901826e2,
+            2.9117504454783159e2,
+            3.6707996194452909e2,
+            4.6572167648697109e2,
+            5.9473999989302229e2,
+            7.6461095796663312e2,
+            9.8979770734783131e2,
+            1.2904078604330668e3,
+            1.6945973073289490e3,
+            2.2420826491130997e3,
+            2.9893125907295248e3,
+            4.0171412997902630e3,
+            5.4423054291935287e3,
+            7.4347313816879214e3,
+            1.0243854670019169e4,
+            1.4238990475802799e4,
+            1.9971806922234402e4,
+            2.8273883344269376e4,
+            4.0410482328443621e4,
+            5.8325253189217328e4,
+            8.5033475340946548e4,
+            1.2526040013230646e5,
+            1.8648821332147921e5,
+            2.8069149021747953e5,
+            4.2724538080621109e5,
+            6.5785374312992941e5,
+            1.0249965523865514e6,
+            1.6165812577807596e6,
+            2.5816634211063879e6,
+            4.1761634755570055e6,
+            6.8451673415389210e6,
+            1.1373037585359517e7,
+            1.9160909972020049e7,
+            3.2746801715531096e7,
+            5.6794352823474184e7,
+            9.9999999999999493e7,
+        ];
+
+        for (&node, ref_node) in nodes[0].iter().zip(q2_reference) {
+            assert_approx_eq!(f64, node, ref_node, ulps = 4);
+        }
+
+        let x_reference = [
+            1.0000000000000000e0,
+            9.3094408087175440e-1,
+            8.6278393239061080e-1,
+            7.9562425229227562e-1,
+            7.2958684424143116e-1,
+            6.6481394824738227e-1,
+            6.0147219796733498e-1,
+            5.3975723378804452e-1,
+            4.7989890296102550e-1,
+            4.2216677535896480e-1,
+            3.6687531864822420e-1,
+            3.1438740076927585e-1,
+            2.6511370415828228e-1,
+            2.1950412650038861e-1,
+            1.7802566042569432e-1,
+            1.4112080644440345e-1,
+            1.0914375746330703e-1,
+            8.2281221262048926e-2,
+            6.0480028754447364e-2,
+            4.3414917417022691e-2,
+            3.0521584007828916e-2,
+            2.1089186683787169e-2,
+            1.4375068581090129e-2,
+            9.6991595740433985e-3,
+            6.4962061946337987e-3,
+            4.3285006388208112e-3,
+            2.8738675812817515e-3,
+            1.9034634022867384e-3,
+            1.2586797144272762e-3,
+            8.3140688364881441e-4,
+            5.4877953236707956e-4,
+            3.6205449638139736e-4,
+            2.3878782918561914e-4,
+            1.5745605600841445e-4,
+            1.0381172986576898e-4,
+            6.8437449189678965e-5,
+            4.5114383949640441e-5,
+            2.9738495372244901e-5,
+            1.9602505002391748e-5,
+            1.2921015690747310e-5,
+            8.5168066775733548e-6,
+            5.6137577169301513e-6,
+            3.7002272069854957e-6,
+            2.4389432928916821e-6,
+            1.6075854984708080e-6,
+            1.0596094959101024e-6,
+            6.9842085307003639e-7,
+            4.6035014748963906e-7,
+            3.0343047658679519e-7,
+            1.9999999999999954e-7,
+        ];
+
+        for (&node, ref_node) in nodes[1].iter().zip(x_reference) {
+            assert_approx_eq!(f64, node, ref_node, ulps = 4);
+        }
+
+        for (&node, ref_node) in nodes[2].iter().zip(x_reference) {
+            assert_approx_eq!(f64, node, ref_node, ulps = 4);
+        }
+
         let mut array = crate::packed_array::PackedArray::<f64, 3>::new([40, 50, 50]);
         let ntuples = [[100000.0, 0.25, 0.5], [1000.0, 0.5, 0.5]];
         let weight = 1.0;
@@ -435,5 +553,53 @@ mod tests {
             assert_eq!(index, ref_index);
             assert_approx_eq!(f64, value, ref_value, ulps = 4);
         }
+    }
+
+    #[test]
+    fn interpolate_zero_and_outside() {
+        let interps = vec![
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+        ];
+        let mut array = crate::packed_array::PackedArray::<f64, 3>::new([40, 50, 50]);
+
+        let ntuple = [1000.0, 0.5, 0.5];
+        let weight = 0.0;
+        interpolate(&interps, &ntuple, weight, &mut array);
+
+        assert_eq!(array.non_zeros(), 0);
+        assert_eq!(array.explicit_zeros(), 0);
+
+        let ntuple = [10.0, 0.5, 0.5];
+        let weight = 1.0;
+        interpolate(&interps, &ntuple, weight, &mut array);
+
+        assert_eq!(array.non_zeros(), 0);
+        assert_eq!(array.explicit_zeros(), 0);
     }
 }
