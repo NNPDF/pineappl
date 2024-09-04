@@ -352,17 +352,17 @@ impl Channel {
     /// use pineappl::boc::Channel;
     /// use pineappl::channel;
     ///
-    /// let entry = Channel::translate(&channel![103, 11, 10.0], &|evol_id| match evol_id {
+    /// let entry = channel![103, 11, 10.0].translate(&|evol_id| match evol_id {
     ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
     ///     _ => vec![(evol_id, 1.0)],
     /// });
     ///
     /// assert_eq!(entry, channel![2, 11, 10.0; -2, 11, -10.0; 1, 11, -10.0; -1, 11, 10.0]);
     /// ```
-    pub fn translate(entry: &Self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
+    pub fn translate(&self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
         let mut result = Vec::new();
 
-        for (pids, factor) in &entry.entry {
+        for (pids, factor) in &self.entry {
             for tuples in pids
                 .iter()
                 .map(|&pid| translator(pid))
@@ -742,7 +742,7 @@ mod tests {
 
     #[test]
     fn channel_translate() {
-        let channel = Channel::translate(&channel![103, 203, 2.0], &pids::evol_to_pdg_mc_ids);
+        let channel = channel![103, 203, 2.0].translate(&pids::evol_to_pdg_mc_ids);
 
         assert_eq!(
             channel,

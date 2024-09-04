@@ -506,7 +506,7 @@ impl Grid {
             PidBasis::Evol => self
                 .channels
                 .iter()
-                .map(|entry| Channel::translate(entry, &pids::evol_to_pdg_mc_ids))
+                .map(|entry| entry.translate(&pids::evol_to_pdg_mc_ids))
                 .collect(),
             PidBasis::Pdg => Cow::Borrowed(self.channels()),
         }
@@ -1485,7 +1485,7 @@ impl Grid {
                 self.channels = self
                     .channels()
                     .iter()
-                    .map(|channel| Channel::translate(channel, &pids::pdg_mc_pids_to_evol))
+                    .map(|channel| channel.translate(&pids::pdg_mc_pids_to_evol))
                     .collect();
 
                 *self.pid_basis_mut() = PidBasis::Evol;
@@ -1494,7 +1494,7 @@ impl Grid {
                 self.channels = self
                     .channels()
                     .iter()
-                    .map(|channel| Channel::translate(channel, &pids::evol_to_pdg_mc_ids))
+                    .map(|channel| channel.translate(&pids::evol_to_pdg_mc_ids))
                     .collect();
 
                 *self.pid_basis_mut() = PidBasis::Pdg;
