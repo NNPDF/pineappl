@@ -19,7 +19,7 @@ jobs:
           # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
           RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
-          cargo cinstall --verbose --prefix=/usr/local/ --manifest-path pineappl_capi/Cargo.toml
+          cargo cinstall --verbose --prefix=/usr/local/ --libdir=lib --manifest-path pineappl_capi/Cargo.toml
           ldconfig
 
       - name: Test C++ example
