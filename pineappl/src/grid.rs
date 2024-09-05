@@ -117,7 +117,7 @@ bitflags! {
     #[derive(Clone, Copy)]
     #[repr(transparent)]
     pub struct GridOptFlags: u32 {
-        /// Change the [`Subgrid`] type to optimize storage effeciency.
+        /// Change the [`Subgrid`] type to optimize storage efficiency.
         const OPTIMIZE_SUBGRID_TYPE = 0b1;
         /// Recognize whether a subgrid was filled with events with a static scale and if this is
         /// the case, optimize it by undoing the interpolation in the scale. This flag requires

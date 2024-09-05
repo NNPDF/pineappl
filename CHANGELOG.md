@@ -78,8 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
-- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
-  choosing with convolution function uncertainty should be plotted
+- added new switch `--conv-fun-uncert-from` to subcommand `plot` to allow
+  choosing which convolution function uncertainty should be plotted
 
 ### Changed
 

@@ -473,6 +473,7 @@ impl FromStr for Channel {
             .split('+')
             .map(|sub| {
                 sub.split_once('*').map_or_else(
+                    // TODO: allow a missing numerical factor which then is assumed to be `1`
                     || Err(ParseChannelError(format!("missing '*' in '{sub}'"))),
                     |(factor, pids)| {
                         let vector: Vec<_> = pids

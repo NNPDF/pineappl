@@ -1,11 +1,11 @@
-//! TODO
+//! Interpolation module.
 
 use super::convert;
 use arrayvec::ArrayVec;
 use std::mem;
 use std::ops::IndexMut;
 
-const INTERP_ORDER_MAX_PLUS_ONE: usize = 8;
+const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
 
 mod applgrid {
     pub fn reweight_x(x: f64) -> f64 {
@@ -18,7 +18,7 @@ mod applgrid {
         for _ in 0..100 {
             let x = (-yp).exp();
             let delta = y - yp - 5.0 * (1.0 - x);
-            if (delta).abs() < 1e-12 {
+            if delta.abs() < 1e-12 {
                 return x;
             }
             let deriv = -1.0 - 5.0 * x;
@@ -109,12 +109,14 @@ impl Interp {
         map: Map,
         interp_meth: InterpMeth,
     ) -> Self {
+        // minimum must be larger or equal to the maximum
+        assert!(min <= max);
         // for interpolation to work `nodes` has to be at least `1`
         assert!(nodes > 0);
         // for each interpolated point `order + 1` nodes are updated
         assert!(nodes > order);
-        // for `order`
-        assert!(order < INTERP_ORDER_MAX_PLUS_ONE);
+        // using arrays with fixed size limit the possible max value of `order`
+        assert!(order < MAX_INTERP_ORDER_PLUS_ONE);
 
         let mut result = Self {
             min: 0.0,
@@ -143,6 +145,8 @@ impl Interp {
 
         // for some maps the minimum in x is mapped to the maximum in y
         if result.min > result.max {
+            // TODO: alternatively we have to modify our range check in `Self::interpolate`, which
+            // has the advantage that we don't swap min and max in `x` space
             mem::swap(&mut result.min, &mut result.max);
         }
 
@@ -187,7 +191,7 @@ impl Interp {
     }
 
     /// TODO
-    pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, INTERP_ORDER_MAX_PLUS_ONE> {
+    pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, MAX_INTERP_ORDER_PLUS_ONE> {
         (0..=self.order)
             .map(|i| (self.node_weights)(i, self.order, fraction))
             .collect()
@@ -252,6 +256,7 @@ pub fn interpolate<const D: usize>(
 
     for (i, node_weights) in node_weights
         .into_iter()
+        // TODO: replace this with something else to avoid allocating memory
         .multi_cartesian_product()
         .enumerate()
     {
