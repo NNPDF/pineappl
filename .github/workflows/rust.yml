@@ -66,7 +66,8 @@ jobs:
 
       - name: Run tests
         env:
-          RUSTFLAGS: '-Cinstrument-coverage'
+          # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
+          RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
           # we need stderr, but we can't run test twice because it'll regenerate/modify the binaries which interferes with `llvm-cov`
           cargo test --features=applgrid,evolve,fastnlo,fktable --no-fail-fast 2> >(tee stderr 1>&2)

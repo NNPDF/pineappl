@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Test
+        env:
+          # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
+          RUSTFLAGS: '-Cinstrument-coverage -Clink-dead-code'
         run: |
           cd pineappl_py
           python -m venv env
