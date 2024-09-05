@@ -34,7 +34,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target=${{ matrix.target }}
           cargo install --locked cargo-c
           cd pineappl_capi
-          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
+          cargo cinstall --destdir=prefix --libdir=lib --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
       - name: Upload artifact
@@ -163,7 +163,7 @@ jobs:
       - name: Compile library
         run: |
           cd pineappl_capi
-          cargo cinstall --destdir=prefix --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
+          cargo cinstall --destdir=prefix --libdir=lib --library-type=cdylib --locked --prefix=/ --target=${{ matrix.target }} --verbose
           cd prefix
           tar czf ../../pineappl_capi-${{ matrix.target }}.tar.gz .
           # print the glibc version requirement
