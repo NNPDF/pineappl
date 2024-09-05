@@ -602,4 +602,33 @@ mod tests {
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
     }
+
+    #[test]
+    fn interpolate_with_one_node() {
+        // TODO: does it make sense for an interpolation to have `min = max`? There will be
+        // numerical problems if the `x` value doesn't exactly hit the limits
+        let interps = vec![Interp::new(
+            90.0_f64.powi(2),
+            90.0_f64.powi(2),
+            1,
+            0,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        )];
+        let mut array = crate::packed_array::PackedArray::<f64, 1>::new([1]);
+
+        let ntuple = [90.0_f64.powi(2)];
+        let weight = 1.0;
+        interpolate(&interps, &ntuple, weight, &mut array);
+
+        assert_eq!(array[[0]], 1.0);
+
+        let nodes = interps[0].nodes();
+
+        assert_eq!(nodes.len(), 1);
+
+        // TODO: the return value is not the one expected (90^2), because `deltay` is zero
+        assert!(nodes[0].is_nan());
+    }
 }
