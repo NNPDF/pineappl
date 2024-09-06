@@ -1442,13 +1442,13 @@ impl Grid {
                 info.x0.len(),
             );
 
-            if operator.dim() != op_info_dim {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim,
-                    operator.dim(),
-                )));
-            }
+            assert_eq!(
+                operator.dim(),
+                op_info_dim,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim,
+                operator.dim(),
+            );
 
             let view = operator.view();
 
@@ -1576,13 +1576,13 @@ impl Grid {
                 info_a.x0.len(),
             );
 
-            if operator_a.dim() != op_info_dim_a {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim_a,
-                    operator_a.dim(),
-                )));
-            }
+            assert_eq!(
+                operator_a.dim(),
+                op_info_dim_a,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim_a,
+                operator_a.dim(),
+            );
 
             let op_info_dim_b = (
                 info_b.pids1.len(),
@@ -1591,38 +1591,31 @@ impl Grid {
                 info_b.x0.len(),
             );
 
-            if operator_b.dim() != op_info_dim_b {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim_b,
-                    operator_b.dim(),
-                )));
-            }
+            assert_eq!(
+                operator_b.dim(),
+                op_info_dim_b,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim_b,
+                operator_b.dim(),
+            );
 
             let views = [operator_a.view(), operator_b.view()];
             let infos = [info_a, info_b];
 
-            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
-                && self.convolutions()[1] != Convolution::None
-            {
-                evolution::evolve_slice_with_two2(
-                    self,
-                    &views,
-                    &infos,
-                    order_mask,
-                    xi,
-                    alphas_table,
-                )
-            } else {
-                evolution::evolve_slice_with_one(
-                    self,
-                    &views[0],
-                    &infos[1],
-                    order_mask,
-                    xi,
-                    alphas_table,
-                )
-            }?;
+            assert!(
+                (self.convolutions()[0] != Convolution::None)
+                    && (self.convolutions()[1] != Convolution::None),
+                "only one convolution found, use `Grid::evolve_with_slice_iter` instead"
+            );
+
+            let (subgrids, channels) = evolution::evolve_slice_with_two2(
+                self,
+                &views,
+                &infos,
+                order_mask,
+                xi,
+                alphas_table,
+            )?;
 
             let mut rhs = Self {
                 subgrids,
