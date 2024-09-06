@@ -2,6 +2,7 @@
 
 use super::convert;
 use arrayvec::ArrayVec;
+use serde::{Deserialize, Serialize};
 use std::mem;
 use std::ops::IndexMut;
 
@@ -41,10 +42,6 @@ mod applgrid {
     }
 }
 
-fn no_reweight(_: f64) -> f64 {
-    1.0
-}
-
 fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
     let mut factorials = 1;
     let mut product = 1.0;
@@ -60,6 +57,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 }
 
 /// TODO
+#[derive(Clone, Deserialize, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -68,6 +66,7 @@ pub enum ReweightMeth {
 }
 
 /// TODO
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Map {
     /// TODO
     ApplGridF2,
@@ -76,21 +75,22 @@ pub enum Map {
 }
 
 /// TODO
+#[derive(Clone, Deserialize, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,
 }
 
 /// TODO
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Interp {
     min: f64,
     max: f64,
     nodes: usize,
     order: usize,
-    reweight_x: fn(f64) -> f64,
-    map_x_to_y: fn(f64) -> f64,
-    map_y_to_x: fn(f64) -> f64,
-    node_weights: fn(usize, usize, f64) -> f64,
+    reweight: ReweightMeth,
+    map: Map,
+    interp_meth: InterpMeth,
 }
 
 impl Interp {
@@ -123,25 +123,13 @@ impl Interp {
             max: 0.0,
             nodes,
             order,
-            reweight_x: match reweight {
-                ReweightMeth::ApplGridX => applgrid::reweight_x,
-                ReweightMeth::NoReweight => no_reweight,
-            },
-            map_x_to_y: match map {
-                Map::ApplGridF2 => applgrid::fy2,
-                Map::ApplGridH0 => applgrid::ftau0,
-            },
-            map_y_to_x: match map {
-                Map::ApplGridF2 => applgrid::fx2,
-                Map::ApplGridH0 => applgrid::fq20,
-            },
-            node_weights: match interp_meth {
-                InterpMeth::Lagrange => lagrange_weights,
-            },
+            reweight,
+            map,
+            interp_meth,
         };
 
-        result.min = (result.map_x_to_y)(min);
-        result.max = (result.map_x_to_y)(max);
+        result.min = result.map_x_to_y(min);
+        result.max = result.map_x_to_y(max);
 
         // for some maps the minimum in x is mapped to the maximum in y
         if result.min > result.max {
@@ -163,12 +151,15 @@ impl Interp {
 
     /// TODO
     pub fn reweight(&self, x: f64) -> f64 {
-        (self.reweight_x)(x)
+        match self.reweight {
+            ReweightMeth::ApplGridX => applgrid::reweight_x(x),
+            ReweightMeth::NoReweight => return 1.0,
+        }
     }
 
     /// TODO
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
-        let y = (self.map_x_to_y)(x);
+        let y = self.map_x_to_y(x);
 
         // points falling outside the interpolation range shouldn't happen very often, because when
         // it does it degrades the interpolation quality
@@ -193,7 +184,9 @@ impl Interp {
     /// TODO
     pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, MAX_INTERP_ORDER_PLUS_ONE> {
         (0..=self.order)
-            .map(|i| (self.node_weights)(i, self.order, fraction))
+            .map(|i| match self.interp_meth {
+                InterpMeth::Lagrange => lagrange_weights(i, self.order, fraction),
+            })
             .collect()
     }
 
@@ -205,8 +198,22 @@ impl Interp {
     /// TODO
     pub fn nodes(&self) -> Vec<f64> {
         (0..self.nodes)
-            .map(|node| (self.map_y_to_x)(self.gety(node)))
+            .map(|node| self.map_y_to_x(self.gety(node)))
             .collect()
+    }
+
+    fn map_y_to_x(&self, y: f64) -> f64 {
+        match self.map {
+            Map::ApplGridF2 => applgrid::fx2(y),
+            Map::ApplGridH0 => applgrid::fq20(y),
+        }
+    }
+
+    fn map_x_to_y(&self, x: f64) -> f64 {
+        match self.map {
+            Map::ApplGridF2 => applgrid::fy2(x),
+            Map::ApplGridH0 => applgrid::ftau0(x),
+        }
     }
 }
 

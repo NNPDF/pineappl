@@ -1,83 +1,19 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
-use super::convert::{f64_from_usize, usize_from_f64};
+use super::interpolation::{self, Interp, InterpMeth, Map, ReweightMeth};
+use super::packed_array::PackedArray;
 use super::subgrid::{
     ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
-use arrayvec::ArrayVec;
-use ndarray::Array3;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::iter;
 use std::mem;
-
-fn weightfun(x: f64) -> f64 {
-    (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
-}
-
-fn fx(y: f64) -> f64 {
-    let mut yp = y;
-
-    for _ in 0..100 {
-        let x = (-yp).exp();
-        let delta = y - yp - 5.0 * (1.0 - x);
-        if (delta).abs() < 1e-12 {
-            return x;
-        }
-        let deriv = -1.0 - 5.0 * x;
-        yp -= delta / deriv;
-    }
-
-    unreachable!();
-}
-
-fn fy(x: f64) -> f64 {
-    (1.0 - x).mul_add(5.0, -x.ln())
-}
-
-fn ftau(q2: f64) -> f64 {
-    (q2 / 0.0625).ln().ln()
-}
-
-fn fq2(tau: f64) -> f64 {
-    0.0625 * tau.exp().exp()
-}
-
-fn fi(i: usize, n: usize, u: f64) -> f64 {
-    let mut factorials = 1;
-    let mut product = 1.0;
-    for z in 0..i {
-        product *= u - f64_from_usize(z);
-        factorials *= i - z;
-    }
-    for z in i + 1..=n {
-        product *= f64_from_usize(z) - u;
-        factorials *= z - i;
-    }
-    product / f64_from_usize(factorials)
-}
 
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
-    grid: Option<Array3<f64>>,
-    ntau: usize,
-    ny1: usize,
-    ny2: usize,
-    y1order: usize,
-    y2order: usize,
-    tauorder: usize,
-    itaumin: usize,
-    itaumax: usize,
-    reweight1: bool,
-    reweight2: bool,
-    y1min: f64,
-    y1max: f64,
-    y2min: f64,
-    y2max: f64,
-    taumin: f64,
-    taumax: f64,
-    pub(crate) static_q2: f64,
+    grid: PackedArray<f64, 3>,
+    interps: [Interp; 3],
 }
 
 impl LagrangeSubgridV2 {
@@ -85,343 +21,218 @@ impl LagrangeSubgridV2 {
     #[must_use]
     pub fn new(subgrid_params: &SubgridParams, extra_params: &ExtraSubgridParams) -> Self {
         Self {
-            grid: None,
-            ntau: subgrid_params.q2_bins(),
-            ny1: subgrid_params.x_bins(),
-            ny2: extra_params.x2_bins(),
-            y1order: subgrid_params.x_order(),
-            y2order: extra_params.x2_order(),
-            tauorder: subgrid_params.q2_order(),
-            itaumin: 0,
-            itaumax: 0,
-            reweight1: subgrid_params.reweight(),
-            reweight2: extra_params.reweight2(),
-            y1min: fy(subgrid_params.x_max()),
-            y1max: fy(subgrid_params.x_min()),
-            y2min: fy(extra_params.x2_max()),
-            y2max: fy(extra_params.x2_min()),
-            taumin: ftau(subgrid_params.q2_min()),
-            taumax: ftau(subgrid_params.q2_max()),
-            static_q2: 0.0,
+            grid: PackedArray::new([
+                subgrid_params.q2_bins(),
+                subgrid_params.x_bins(),
+                extra_params.x2_bins(),
+            ]),
+            interps: [
+                Interp::new(
+                    subgrid_params.q2_min(),
+                    subgrid_params.q2_max(),
+                    subgrid_params.q2_bins(),
+                    subgrid_params.q2_order(),
+                    ReweightMeth::NoReweight,
+                    Map::ApplGridH0,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    subgrid_params.x_min(),
+                    subgrid_params.x_max(),
+                    subgrid_params.x_bins(),
+                    subgrid_params.x_order(),
+                    if subgrid_params.reweight() {
+                        ReweightMeth::ApplGridX
+                    } else {
+                        ReweightMeth::NoReweight
+                    },
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    extra_params.x2_min(),
+                    extra_params.x2_max(),
+                    extra_params.x2_bins(),
+                    extra_params.x2_order(),
+                    if extra_params.reweight2() {
+                        ReweightMeth::ApplGridX
+                    } else {
+                        ReweightMeth::NoReweight
+                    },
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+            ],
         }
-    }
-
-    fn deltay1(&self) -> f64 {
-        (self.y1max - self.y1min) / f64_from_usize(self.ny1 - 1)
-    }
-
-    fn deltay2(&self) -> f64 {
-        (self.y1max - self.y2min) / f64_from_usize(self.ny2 - 1)
-    }
-
-    fn deltatau(&self) -> f64 {
-        (self.taumax - self.taumin) / f64_from_usize(self.ntau - 1)
-    }
-
-    fn gety1(&self, iy: usize) -> f64 {
-        if self.y1min == self.y1max {
-            debug_assert_eq!(iy, 0);
-            self.y1min
-        } else {
-            f64_from_usize(iy).mul_add(self.deltay1(), self.y1min)
-        }
-    }
-
-    fn gety2(&self, iy: usize) -> f64 {
-        if self.y2min == self.y2max {
-            debug_assert_eq!(iy, 0);
-            self.y2min
-        } else {
-            f64_from_usize(iy).mul_add(self.deltay2(), self.y2min)
-        }
-    }
-
-    fn gettau(&self, iy: usize) -> f64 {
-        if self.taumin == self.taumax {
-            debug_assert_eq!(iy, 0);
-            self.taumin
-        } else {
-            f64_from_usize(iy).mul_add(self.deltatau(), self.taumin)
-        }
-    }
-
-    fn increase_tau(&mut self, new_itaumin: usize, new_itaumax: usize) {
-        let min_diff = self.itaumin - new_itaumin;
-
-        let mut new_grid = Array3::zeros((new_itaumax - new_itaumin, self.ny1, self.ny2));
-
-        for ((i, j, k), value) in self.grid.as_ref().unwrap().indexed_iter() {
-            new_grid[[i + min_diff, j, k]] = *value;
-        }
-
-        self.itaumin = new_itaumin;
-        self.itaumax = new_itaumax;
-
-        self.grid = Some(new_grid);
     }
 }
 
 impl Subgrid for LagrangeSubgridV2 {
     fn fill(&mut self, ntuple: &[f64], weight: f64) {
-        if weight == 0.0 {
-            return;
-        }
-
-        let &[x1, x2, q2] = ntuple else {
-            unreachable!();
-        };
-        let y1 = fy(x1);
-        let y2 = fy(x2);
-        let tau = ftau(q2);
-
-        if self.static_q2 == 0.0 {
-            self.static_q2 = q2;
-        } else if (self.static_q2 != -1.0) && (self.static_q2 != q2) {
-            self.static_q2 = -1.0;
-        }
-
-        if (y2 < self.y2min)
-            || (y2 > self.y2max)
-            || (y1 < self.y1min)
-            || (y1 > self.y1max)
-            || (tau < self.taumin)
-            || (tau > self.taumax)
-        {
-            return;
-        }
-
-        let k1 =
-            usize_from_f64((y1 - self.y1min) / self.deltay1() - f64_from_usize(self.y1order / 2))
-                .min(self.ny1 - 1 - self.y1order);
-        let k2 =
-            usize_from_f64((y2 - self.y2min) / self.deltay2() - f64_from_usize(self.y2order / 2))
-                .min(self.ny2 - 1 - self.y2order);
-
-        let u_y1 = (y1 - self.gety1(k1)) / self.deltay1();
-        let u_y2 = (y2 - self.gety2(k2)) / self.deltay2();
-
-        let fi1: ArrayVec<_, 8> = (0..=self.y1order)
-            .map(|i| fi(i, self.y1order, u_y1))
-            .collect();
-        let fi2: ArrayVec<_, 8> = (0..=self.y2order)
-            .map(|i| fi(i, self.y2order, u_y2))
-            .collect();
-
-        let k3 = usize_from_f64(
-            (tau - self.taumin) / self.deltatau() - f64_from_usize(self.tauorder / 2),
-        )
-        .min(self.ntau - 1 - self.tauorder);
-
-        let u_tau = (tau - self.gettau(k3)) / self.deltatau();
-
-        let factor = 1.0
-            / (if self.reweight1 { weightfun(x1) } else { 1.0 }
-                * if self.reweight2 { weightfun(x2) } else { 1.0 });
-
-        let size = self.tauorder + 1;
-        let ny1 = self.ny1;
-        let ny2 = self.ny2;
-
-        if self.grid.is_none() {
-            self.itaumin = k3;
-            self.itaumax = k3 + size;
-        } else if k3 < self.itaumin || k3 + size > self.itaumax {
-            self.increase_tau(self.itaumin.min(k3), self.itaumax.max(k3 + size));
-        }
-
-        for i3 in 0..=self.tauorder {
-            let fi3i3 = fi(i3, self.tauorder, u_tau);
-
-            for (i1, fi1i1) in fi1.iter().enumerate() {
-                for (i2, fi2i2) in fi2.iter().enumerate() {
-                    let fillweight = factor * fi1i1 * fi2i2 * fi3i3 * weight;
-
-                    let grid = self
-                        .grid
-                        .get_or_insert_with(|| Array3::zeros((size, ny1, ny2)));
-
-                    grid[[k3 + i3 - self.itaumin, k1 + i1, k2 + i2]] += fillweight;
-                }
-            }
-        }
+        // TODO: change the order of ntuple higher up in the code
+        let mut ntuple = ntuple.to_vec();
+        ntuple.rotate_right(1);
+        interpolation::interpolate(&self.interps, &ntuple, weight, &mut self.grid);
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
-        (0..self.ntau)
-            .map(|itau| {
-                let q2 = fq2(self.gettau(itau));
-                Mu2 {
-                    ren: q2,
-                    fac: q2,
-                    frg: -1.0,
-                }
+        self.interps[0]
+            .nodes()
+            .iter()
+            .map(|&q2| Mu2 {
+                ren: q2,
+                fac: q2,
+                frg: -1.0,
             })
             .collect()
     }
 
     fn x1_grid(&self) -> Cow<[f64]> {
-        (0..self.ny1).map(|iy| fx(self.gety1(iy))).collect()
+        self.interps[1].nodes().into()
     }
 
     fn x2_grid(&self) -> Cow<[f64]> {
-        (0..self.ny2).map(|iy| fx(self.gety2(iy))).collect()
+        self.interps[2].nodes().into()
     }
 
     fn is_empty(&self) -> bool {
-        self.grid.is_none()
+        self.grid.is_empty()
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        let x1_equal = self.x1_grid() == other.x1_grid();
-        let x2_equal = self.x2_grid() == other.x2_grid();
+        // if self.is_empty() && !transpose {
+        //     if let SubgridEnum::LagrangeSubgridV2(other) = other {
+        //         *self = *other;
+        //         return;
+        //     }
+        // }
 
-        if let SubgridEnum::LagrangeSubgridV2(other_grid) = other {
-            if let Some(other_grid_grid) = &mut other_grid.grid {
-                if self.grid.is_some() {
-                    // TODO: the general case isn't implemented
-                    assert!(x1_equal);
-                    assert!(x2_equal);
-
-                    let new_itaumin = self.itaumin.min(other_grid.itaumin);
-                    let new_itaumax = self.itaumax.max(other_grid.itaumax);
-                    let offset = other_grid.itaumin.saturating_sub(self.itaumin);
-
-                    // TODO: we need much more checks here if there subgrids are compatible at all
-
-                    if (self.itaumin != new_itaumin) || (self.itaumax != new_itaumax) {
-                        self.increase_tau(new_itaumin, new_itaumax);
-                    }
-
-                    if (other_grid.static_q2 == -1.0) || (self.static_q2 != other_grid.static_q2) {
-                        self.static_q2 = -1.0;
-                    }
-
-                    let self_grid = self.grid.as_mut().unwrap();
-
-                    if transpose {
-                        for ((i, k, j), value) in other_grid_grid.indexed_iter() {
-                            self_grid[[i + offset, j, k]] += value;
-                        }
-                    } else {
-                        for ((i, j, k), value) in other_grid_grid.indexed_iter() {
-                            self_grid[[i + offset, j, k]] += value;
-                        }
-                    }
-                } else {
-                    self.grid = other_grid.grid.take();
-                    self.itaumin = other_grid.itaumin;
-                    self.itaumax = other_grid.itaumax;
-                    self.static_q2 = other_grid.static_q2;
-
-                    if transpose {
-                        if let Some(grid) = &mut self.grid {
-                            grid.swap_axes(1, 2);
-                        }
-                    }
-                }
-            }
+        let rhs_mu2 = other.mu2_grid().into_owned();
+        let rhs_x1 = if transpose {
+            other.x2_grid()
         } else {
-            todo!();
+            other.x1_grid()
+        };
+        let rhs_x2 = if transpose {
+            other.x1_grid()
+        } else {
+            other.x2_grid()
+        };
+
+        if (self.mu2_grid() != rhs_mu2) || (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2)
+        {
+            let mut mu2_grid = self.mu2_grid().into_owned();
+            let mut x1_grid = self.x1_grid().into_owned();
+            let mut x2_grid = self.x2_grid().into_owned();
+
+            mu2_grid.extend_from_slice(&rhs_mu2);
+            mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            mu2_grid.dedup();
+            x1_grid.extend_from_slice(&rhs_x1);
+            x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x1_grid.dedup();
+            x2_grid.extend_from_slice(&rhs_x2);
+            x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x2_grid.dedup();
+
+            let mut array = PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+
+            for ([i, j, k], value) in self.grid.indexed_iter() {
+                let target_i = mu2_grid
+                    .iter()
+                    .position(|mu2| *mu2 == self.mu2_grid()[i])
+                    .unwrap_or_else(|| unreachable!());
+                let target_j = x1_grid
+                    .iter()
+                    .position(|&x| x == self.x1_grid()[j])
+                    .unwrap_or_else(|| unreachable!());
+                let target_k = x2_grid
+                    .iter()
+                    .position(|&x| x == self.x2_grid()[k])
+                    .unwrap_or_else(|| unreachable!());
+
+                array[[target_i, target_j, target_k]] = value;
+            }
+
+            self.grid = array;
+            // TODO: make sure that the interpolation of both grids are the same
+        }
+
+        for ((i, j, k), value) in other.indexed_iter() {
+            let (j, k) = if transpose { (k, j) } else { (j, k) };
+            let target_i = self
+                .mu2_grid()
+                .iter()
+                .position(|x| *x == rhs_mu2[i])
+                .unwrap_or_else(|| unreachable!());
+            let target_j = self
+                .x1_grid()
+                .iter()
+                .position(|&x| x == rhs_x1[j])
+                .unwrap_or_else(|| unreachable!());
+            let target_k = self
+                .x2_grid()
+                .iter()
+                .position(|&x| x == rhs_x2[k])
+                .unwrap_or_else(|| unreachable!());
+
+            self.grid[[target_i, target_j, target_k]] += value;
         }
     }
 
     fn scale(&mut self, factor: f64) {
-        if let Some(self_grid) = &mut self.grid {
-            self_grid.iter_mut().for_each(|x| *x *= factor);
-        }
+        self.grid *= factor;
     }
 
     fn symmetrize(&mut self) {
-        if let Some(grid) = self.grid.as_mut() {
-            let (i_size, j_size, k_size) = grid.dim();
+        let mut new_array = PackedArray::new([
+            self.mu2_grid().len(),
+            self.x1_grid().len(),
+            self.x2_grid().len(),
+        ]);
 
-            for i in 0..i_size {
-                for j in 0..j_size {
-                    for k in j + 1..k_size {
-                        grid[[i, j, k]] += grid[[i, k, j]];
-                        grid[[i, k, j]] = 0.0;
-                    }
-                }
-            }
+        for ([i, j, k], sigma) in self.grid.indexed_iter().filter(|([_, j, k], _)| k >= j) {
+            new_array[[i, j, k]] = sigma;
         }
+        // do not change the diagonal entries (k==j)
+        for ([i, j, k], sigma) in self.grid.indexed_iter().filter(|([_, j, k], _)| k < j) {
+            new_array[[i, k, j]] += sigma;
+        }
+
+        self.grid = new_array;
     }
 
     fn clone_empty(&self) -> SubgridEnum {
-        Self {
-            grid: None,
-            ntau: self.ntau,
-            ny1: self.ny1,
-            ny2: self.ny2,
-            y1order: self.y1order,
-            y2order: self.y2order,
-            tauorder: self.tauorder,
-            itaumin: 0,
-            itaumax: 0,
-            reweight1: self.reweight1,
-            reweight2: self.reweight2,
-            y1min: self.y1min,
-            y1max: self.y1max,
-            y2min: self.y2min,
-            y2max: self.y2max,
-            taumin: self.taumin,
-            taumax: self.taumax,
-            static_q2: 0.0,
-        }
-        .into()
+        self.clone().into()
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        self.grid.as_ref().map_or_else(
-            || Box::new(iter::empty()) as Box<dyn Iterator<Item = ((usize, usize, usize), f64)>>,
-            |grid| {
-                Box::new(grid.indexed_iter().filter(|(_, &value)| value != 0.0).map(
-                    |(tuple, &value)| {
-                        (
-                            (self.itaumin + tuple.0, tuple.1, tuple.2),
-                            value
-                                * if self.reweight1 {
-                                    weightfun(fx(self.gety1(tuple.1)))
-                                } else {
-                                    1.0
-                                }
-                                * if self.reweight2 {
-                                    weightfun(fx(self.gety2(tuple.2)))
-                                } else {
-                                    1.0
-                                },
-                        )
-                    },
-                ))
-            },
-        )
+        let nodes: Vec<_> = self.interps.iter().map(|interp| interp.nodes()).collect();
+        Box::new(self.grid.indexed_iter().map(move |(index, v)| {
+            (
+                (index[0], index[1], index[2]),
+                v * self
+                    .interps
+                    .iter()
+                    .enumerate()
+                    .map(|(i, interp)| interp.reweight(nodes[i][index[i]]))
+                    .product::<f64>(),
+            )
+        }))
     }
 
     fn stats(&self) -> Stats {
-        let (non_zeros, zeros) = self.grid.as_ref().map_or((0, 0), |array| {
-            array.iter().fold((0, 0), |(non_zeros, zeros), value| {
-                if *value == 0.0 {
-                    (non_zeros, zeros + 1)
-                } else {
-                    (non_zeros + 1, zeros)
-                }
-            })
-        });
-
         Stats {
-            total: non_zeros + zeros,
-            allocated: non_zeros + zeros,
-            zeros,
-            overhead: 0,
+            total: self.mu2_grid().len() * self.x1_grid().len() * self.x2_grid().len(),
+            allocated: self.grid.non_zeros() + self.grid.explicit_zeros(),
+            zeros: self.grid.explicit_zeros(),
+            overhead: self.grid.overhead(),
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
 
     fn static_scale(&self) -> Option<Mu2> {
-        (self.static_q2 > 0.0).then_some(Mu2 {
-            ren: self.static_q2,
-            fac: self.static_q2,
-            frg: -1.0,
-        })
+        None
     }
 }
 
@@ -441,7 +252,7 @@ mod tests {
         assert_eq!(
             subgrid.stats(),
             Stats {
-                total: 0,
+                total: 100000,
                 allocated: 0,
                 zeros: 0,
                 overhead: 0,
@@ -462,7 +273,7 @@ mod tests {
         assert_eq!(
             subgrid.stats(),
             Stats {
-                total: 0,
+                total: 100000,
                 allocated: 0,
                 zeros: 0,
                 overhead: 0,
