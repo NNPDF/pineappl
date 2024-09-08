@@ -100,83 +100,17 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        // if self.is_empty() && !transpose {
-        //     if let SubgridEnum::LagrangeSubgridV2(other) = other {
-        //         *self = *other;
-        //         return;
-        //     }
-        // }
-
-        let rhs_mu2 = other.mu2_grid().into_owned();
-        let rhs_x1 = if transpose {
-            other.x2_grid()
-        } else {
-            other.x1_grid()
-        };
-        let rhs_x2 = if transpose {
-            other.x1_grid()
-        } else {
-            other.x2_grid()
-        };
-
-        if (self.mu2_grid() != rhs_mu2) || (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2)
-        {
-            let mut mu2_grid = self.mu2_grid().into_owned();
-            let mut x1_grid = self.x1_grid().into_owned();
-            let mut x2_grid = self.x2_grid().into_owned();
-
-            mu2_grid.extend_from_slice(&rhs_mu2);
-            mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            mu2_grid.dedup();
-            x1_grid.extend_from_slice(&rhs_x1);
-            x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            x1_grid.dedup();
-            x2_grid.extend_from_slice(&rhs_x2);
-            x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            x2_grid.dedup();
-
-            let mut array = PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
-
-            for ([i, j, k], value) in self.grid.indexed_iter() {
-                let target_i = mu2_grid
-                    .iter()
-                    .position(|mu2| *mu2 == self.mu2_grid()[i])
-                    .unwrap_or_else(|| unreachable!());
-                let target_j = x1_grid
-                    .iter()
-                    .position(|&x| x == self.x1_grid()[j])
-                    .unwrap_or_else(|| unreachable!());
-                let target_k = x2_grid
-                    .iter()
-                    .position(|&x| x == self.x2_grid()[k])
-                    .unwrap_or_else(|| unreachable!());
-
-                array[[target_i, target_j, target_k]] = value;
+        // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
+        if let SubgridEnum::LagrangeSubgridV2(other) = other {
+            // TODO: make sure `other` has the same interpolation as `self`
+            for (mut index, value) in other.grid.indexed_iter() {
+                if transpose {
+                    index.swap(1, 2);
+                }
+                self.grid[index] += value;
             }
-
-            self.grid = array;
-            // TODO: make sure that the interpolation of both grids are the same
-        }
-
-        for ((i, j, k), value) in other.indexed_iter() {
-            let (j, k) = if transpose { (k, j) } else { (j, k) };
-            let target_i = self
-                .mu2_grid()
-                .iter()
-                .position(|x| *x == rhs_mu2[i])
-                .unwrap_or_else(|| unreachable!());
-            let target_j = self
-                .x1_grid()
-                .iter()
-                .position(|&x| x == rhs_x1[j])
-                .unwrap_or_else(|| unreachable!());
-            let target_k = self
-                .x2_grid()
-                .iter()
-                .position(|&x| x == rhs_x2[k])
-                .unwrap_or_else(|| unreachable!());
-
-            self.grid[[target_i, target_j, target_k]] += value;
+        } else {
+            unimplemented!();
         }
     }
 

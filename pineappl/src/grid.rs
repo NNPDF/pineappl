@@ -891,15 +891,15 @@ impl Grid {
                     *subgrid = EmptySubgridV1.into();
                 }
                 _ => {
-                    todo!();
-                    // // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
-                    // // replace this with a method
-                    // if !static_scale_detection {
-                    //     if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
-                    //         // disable static-scale detection
-                    //         subgrid.static_q2 = -1.0;
-                    //     }
-                    // }
+                    // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
+                    // replace this with a method
+                    if !static_scale_detection {
+                        if let SubgridEnum::LagrangeSubgridV2(_subgrid) = subgrid {
+                            // disable static-scale detection
+                            //subgrid.static_q2 = -1.0;
+                            todo!();
+                        }
+                    }
 
                     *subgrid = PackedQ1X2SubgridV1::from(&*subgrid).into();
                 }
