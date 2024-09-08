@@ -5,6 +5,7 @@ use super::packed_array::PackedArray;
 use super::subgrid::{
     ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
 };
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
@@ -14,6 +15,7 @@ use std::mem;
 pub struct LagrangeSubgridV2 {
     grid: PackedArray<f64, 3>,
     interps: [Interp; 3],
+    pub(crate) static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
@@ -63,6 +65,7 @@ impl LagrangeSubgridV2 {
                     InterpMeth::Lagrange,
                 ),
             ],
+            static_q2: 0.0,
         }
     }
 }
@@ -72,7 +75,14 @@ impl Subgrid for LagrangeSubgridV2 {
         // TODO: change the order of ntuple higher up in the code
         let mut ntuple = ntuple.to_vec();
         ntuple.rotate_right(1);
-        interpolation::interpolate(&self.interps, &ntuple, weight, &mut self.grid);
+        if interpolation::interpolate(&self.interps, &ntuple, weight, &mut self.grid) {
+            let q2 = ntuple[0];
+            if self.static_q2 == 0.0 {
+                self.static_q2 = q2;
+            } else if (self.static_q2 != -1.0) && !approx_eq!(f64, self.static_q2, q2, ulps = 4) {
+                self.static_q2 = -1.0;
+            }
+        }
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
@@ -166,7 +176,11 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn static_scale(&self) -> Option<Mu2> {
-        None
+        (self.static_q2 > 0.0).then_some(Mu2 {
+            ren: self.static_q2,
+            fac: self.static_q2,
+            frg: -1.0,
+        })
     }
 }
 
@@ -236,10 +250,10 @@ mod tests {
         assert_eq!(
             subgrid.stats(),
             Stats {
-                total: 50 * 50 * 4,
-                allocated: 50 * 50 * 4,
-                zeros: 50 * 50 * 4 - 4 * 4 * 4,
-                overhead: 0,
+                total: 100000,
+                allocated: 64,
+                zeros: 0,
+                overhead: 32,
                 bytes_per_value: mem::size_of::<f64>()
             }
         );
@@ -252,10 +266,10 @@ mod tests {
         assert_eq!(
             subgrid.stats(),
             Stats {
-                total: 50 * 50 * 23,
-                allocated: 50 * 50 * 23,
-                zeros: 50 * 50 * 23 - 4 * 4 * 4 * 2,
-                overhead: 0,
+                total: 100000,
+                allocated: 128,
+                zeros: 0,
+                overhead: 64,
                 bytes_per_value: mem::size_of::<f64>()
             }
         );

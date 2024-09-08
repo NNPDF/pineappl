@@ -223,12 +223,12 @@ pub fn interpolate<const D: usize>(
     ntuple: &[f64],
     weight: f64,
     array: &mut impl IndexMut<[usize; D], Output = f64>,
-) {
+) -> bool {
     use super::packed_array;
     use itertools::Itertools;
 
     if weight == 0.0 {
-        return;
+        return false;
     }
 
     // we must have as many variables as we want to interpolate
@@ -241,7 +241,7 @@ pub fn interpolate<const D: usize>(
         .map(|(interp, &x)| interp.interpolate(x))
         .collect()
     else {
-        return;
+        return false;
     };
 
     // TODO: add static value detection
@@ -273,6 +273,8 @@ pub fn interpolate<const D: usize>(
         }
         array[index] += weight * node_weights.iter().product::<f64>();
     }
+
+    true
 }
 
 #[cfg(test)]
