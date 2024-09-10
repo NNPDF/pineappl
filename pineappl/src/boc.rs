@@ -3,12 +3,62 @@
 //!
 //! [`Grid`]: super::grid::Grid
 
+use bitflags::bitflags;
 use float_cmp::approx_eq;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::str::FromStr;
 use thiserror::Error;
+
+bitflags! {
+    /// TODO
+    #[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
+    #[repr(transparent)]
+    pub struct Scale: u32 {
+        /// TODO
+        const REN = 0b001;
+        /// TODO
+        const FAC = 0b010;
+        /// TODO
+        const FRG = 0b100;
+    }
+}
+
+/// TODO
+#[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
+pub enum Kinematics {
+    /// TODO
+    Mu2(Scale),
+    /// TODO
+    X(usize),
+}
+
+impl Kinematics {
+    /// TODO
+    pub const MU2_R: Self = Self::Mu2(Scale::REN);
+
+    /// TODO
+    pub const MU2_F: Self = Self::Mu2(Scale::FAC);
+
+    /// TODO
+    pub const MU2_A: Self = Self::Mu2(Scale::FRG);
+
+    /// TODO
+    pub const MU2_RFA: Self = Self::Mu2(Scale::REN.union(Scale::FAC).union(Scale::FRG));
+
+    /// TODO
+    pub const MU2_RF: Self = Self::Mu2(Scale::REN.union(Scale::FAC));
+
+    /// TODO
+    pub const X1: Self = Self::X(0);
+
+    /// TODO
+    pub const X2: Self = Self::X(1);
+
+    /// TODO
+    pub const X3: Self = Self::X(2);
+}
 
 /// Error type keeping information if [`Order::from_str`] went wrong.
 #[derive(Debug, Error, Eq, PartialEq)]
