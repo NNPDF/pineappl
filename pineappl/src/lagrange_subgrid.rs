@@ -87,7 +87,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
         self.interps[0]
-            .nodes()
+            .node_values()
             .iter()
             .map(|&q2| Mu2 {
                 ren: q2,
@@ -98,11 +98,11 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn x1_grid(&self) -> Cow<[f64]> {
-        self.interps[1].nodes().into()
+        self.interps[1].node_values().into()
     }
 
     fn x2_grid(&self) -> Cow<[f64]> {
-        self.interps[2].nodes().into()
+        self.interps[2].node_values().into()
     }
 
     fn is_empty(&self) -> bool {
@@ -151,7 +151,11 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        let nodes: Vec<_> = self.interps.iter().map(|interp| interp.nodes()).collect();
+        let nodes: Vec<_> = self
+            .interps
+            .iter()
+            .map(|interp| interp.node_values())
+            .collect();
         Box::new(self.grid.indexed_iter().map(move |(index, v)| {
             (
                 (index[0], index[1], index[2]),

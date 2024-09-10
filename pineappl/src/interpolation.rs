@@ -196,7 +196,7 @@ impl Interp {
     }
 
     /// TODO
-    pub fn nodes(&self) -> Vec<f64> {
+    pub fn node_values(&self) -> Vec<f64> {
         (0..self.nodes)
             .map(|node| self.map_y_to_x(self.gety(node)))
             .collect()
@@ -314,7 +314,7 @@ mod tests {
             ),
         ];
 
-        let nodes: Vec<_> = interps.iter().map(Interp::nodes).collect();
+        let node_values: Vec<_> = interps.iter().map(Interp::node_values).collect();
 
         let q2_reference = [
             9.9999999999999986e1,
@@ -359,7 +359,7 @@ mod tests {
             9.9999999999999493e7,
         ];
 
-        for (&node, ref_node) in nodes[0].iter().zip(q2_reference) {
+        for (&node, ref_node) in node_values[0].iter().zip(q2_reference) {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
@@ -416,11 +416,11 @@ mod tests {
             1.9999999999999954e-7,
         ];
 
-        for (&node, ref_node) in nodes[1].iter().zip(x_reference) {
+        for (&node, ref_node) in node_values[1].iter().zip(x_reference) {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
-        for (&node, ref_node) in nodes[2].iter().zip(x_reference) {
+        for (&node, ref_node) in node_values[2].iter().zip(x_reference) {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
@@ -638,11 +638,11 @@ mod tests {
 
         assert_eq!(array[[0]], 1.0);
 
-        let nodes = interps[0].nodes();
+        let node_values = interps[0].node_values();
 
-        assert_eq!(nodes.len(), 1);
+        assert_eq!(node_values.len(), 1);
 
         // TODO: the return value is not the one expected (90^2), because `deltay` is zero
-        assert!(nodes[0].is_nan());
+        assert!(node_values[0].is_nan());
     }
 }
