@@ -1,5 +1,5 @@
 use super::bin::{BinLimits, BinRemapper};
-use super::boc::{Channel, Order};
+use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::Convolution;
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv3, MoreMembers};
@@ -107,6 +107,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             // TODO: remove this member
             subgrid_template: EmptySubgridV1.into(),
         }),
+        kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
     };
 
     assert_eq!(result.bin_info().bins(), grid.bin_info().bins());

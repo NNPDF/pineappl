@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::boc::{Channel, Order};
+use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
@@ -149,6 +149,7 @@ pub struct Grid {
     pub(crate) convolutions: Vec<Convolution>,
     pub(crate) pid_basis: PidBasis,
     pub(crate) more_members: MoreMembers,
+    pub(crate) kinematics: Vec<Kinematics>,
 }
 
 impl Grid {
@@ -189,8 +190,12 @@ impl Grid {
             pid_basis: PidBasis::Pdg,
             channels,
             subgrid_params,
+            // TODO: make this a new parameter
+            kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         }
     }
+
+    // TODO: get rid of this constructor
 
     /// Constructor. This function can be used like `new`, but the additional parameter
     /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
@@ -228,6 +233,7 @@ impl Grid {
             pid_basis: PidBasis::Pdg,
             channels,
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
+            kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         })
     }
 
@@ -1236,6 +1242,7 @@ impl Grid {
                 convolutions: self.convolutions.clone(),
                 pid_basis: info.pid_basis,
                 more_members: self.more_members.clone(),
+                kinematics: self.kinematics.clone(),
             };
 
             if let Some(lhs) = &mut lhs {
@@ -1372,6 +1379,7 @@ impl Grid {
                 convolutions: self.convolutions.clone(),
                 pid_basis: infos[0].pid_basis,
                 more_members: self.more_members.clone(),
+                kinematics: self.kinematics.clone(),
             };
 
             assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
