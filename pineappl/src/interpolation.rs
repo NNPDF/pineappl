@@ -57,7 +57,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -66,7 +66,7 @@ pub enum ReweightMeth {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum Map {
     /// TODO
     ApplGridF2,
@@ -215,6 +215,26 @@ impl Interp {
             Map::ApplGridH0 => applgrid::ftau0(x),
         }
     }
+
+    /// TODO
+    pub fn nodes(&self) -> usize {
+        self.nodes
+    }
+
+    /// TODO
+    pub fn min(&self) -> f64 {
+        self.min
+    }
+
+    /// TODO
+    pub fn max(&self) -> f64 {
+        self.max
+    }
+
+    /// TODO
+    pub fn map(&self) -> Map {
+        self.map
+    }
 }
 
 /// TODO
@@ -359,6 +379,8 @@ mod tests {
             9.9999999999999493e7,
         ];
 
+        assert_eq!(node_values[0].len(), interps[0].nodes());
+
         for (&node, ref_node) in node_values[0].iter().zip(q2_reference) {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
@@ -415,6 +437,9 @@ mod tests {
             3.0343047658679519e-7,
             1.9999999999999954e-7,
         ];
+
+        assert_eq!(node_values[1].len(), interps[1].nodes());
+        assert_eq!(node_values[2].len(), interps[2].nodes());
 
         for (&node, ref_node) in node_values[1].iter().zip(x_reference) {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);

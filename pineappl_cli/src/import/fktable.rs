@@ -1,14 +1,15 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::Order;
+use pineappl::boc::{Kinematics, Order};
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::{Mu2, SubgridParams};
+use pineappl::subgrid::Mu2;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;
@@ -111,7 +112,38 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             Convolution::None
                         },
                     ],
-                    SubgridParams::default(),
+                    // TODO: what are sensible parameters for FK-tables?
+                    vec![
+                        Interp::new(
+                            1e2,
+                            1e8,
+                            40,
+                            3,
+                            ReweightMeth::NoReweight,
+                            Map::ApplGridH0,
+                            InterpMeth::Lagrange,
+                        ),
+                        Interp::new(
+                            2e-7,
+                            1.0,
+                            50,
+                            3,
+                            ReweightMeth::ApplGridX,
+                            Map::ApplGridF2,
+                            InterpMeth::Lagrange,
+                        ),
+                        Interp::new(
+                            2e-7,
+                            1.0,
+                            50,
+                            3,
+                            ReweightMeth::ApplGridX,
+                            Map::ApplGridF2,
+                            InterpMeth::Lagrange,
+                        ),
+                    ],
+                    // TODO: change kinematics for DIS
+                    vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
                 );
 
                 // explicitly set the evolution basis

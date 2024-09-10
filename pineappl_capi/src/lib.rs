@@ -60,7 +60,7 @@ use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Order};
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
-use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -71,10 +71,21 @@ use std::slice;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgridParams) {
+fn grid_params(key_vals: Option<&KeyVal>) -> (String, Vec<Interp>) {
     let mut subgrid_type = "LagrangeSubgrid".to_owned();
-    let mut subgrid_params = SubgridParams::default();
-    let mut extra = ExtraSubgridParams::default();
+    let mut q2_min = 1e2;
+    let mut q2_max = 1e8;
+    let mut q2_nodes = 40;
+    let mut q2_order = 3;
+    let mut x1_min = 2e-7;
+    let mut x1_max = 1.0;
+    let mut x1_nodes = 50;
+    let mut x1_order = 3;
+    let mut x2_min = 2e-7;
+    let mut x2_max = 1.0;
+    let mut x2_nodes = 50;
+    let mut x2_order = 3;
+    let mut reweight = ReweightMeth::ApplGridX;
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval
@@ -82,7 +93,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_bins")
             .or_else(|| keyval.ints.get("nq2"))
         {
-            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+            q2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval
@@ -90,7 +101,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_max")
             .or_else(|| keyval.doubles.get("q2max"))
         {
-            subgrid_params.set_q2_max(*value);
+            q2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -98,7 +109,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_min")
             .or_else(|| keyval.doubles.get("q2min"))
         {
-            subgrid_params.set_q2_min(*value);
+            q2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -106,17 +117,19 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_order")
             .or_else(|| keyval.ints.get("q2order"))
         {
-            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
+            q2_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.bools.get("reweight") {
-            subgrid_params.set_reweight(*value);
+            if !value {
+                reweight = ReweightMeth::NoReweight;
+            }
         }
 
         if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_bins(value);
-            extra.set_x2_bins(value);
+            x1_nodes = value;
+            x2_nodes = value;
         }
 
         if let Some(value) = keyval
@@ -124,8 +137,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_max")
             .or_else(|| keyval.doubles.get("xmax"))
         {
-            subgrid_params.set_x_max(*value);
-            extra.set_x2_max(*value);
+            x1_max = *value;
+            x2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -133,8 +146,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_min")
             .or_else(|| keyval.doubles.get("xmin"))
         {
-            subgrid_params.set_x_min(*value);
-            extra.set_x2_min(*value);
+            x1_min = *value;
+            x2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -143,40 +156,40 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .or_else(|| keyval.ints.get("xorder"))
         {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_order(value);
-            extra.set_x2_order(value);
+            x1_order = value;
+            x2_order = value;
         }
 
         if let Some(value) = keyval.ints.get("x1_bins") {
-            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
+            x1_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x1_max") {
-            subgrid_params.set_x_max(*value);
+            x1_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x1_min") {
-            subgrid_params.set_x_min(*value);
+            x1_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x1_order") {
-            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
+            x1_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.ints.get("x2_bins") {
-            extra.set_x2_bins(usize::try_from(*value).unwrap());
+            x2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x2_max") {
-            extra.set_x2_max(*value);
+            x2_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x2_min") {
-            extra.set_x2_min(*value);
+            x2_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x2_order") {
-            extra.set_x2_order(usize::try_from(*value).unwrap());
+            x2_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.strings.get("subgrid_type") {
@@ -184,7 +197,38 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
         }
     }
 
-    (subgrid_type, subgrid_params, extra)
+    (
+        subgrid_type,
+        vec![
+            Interp::new(
+                q2_min,
+                q2_max,
+                q2_nodes,
+                q2_order,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                x1_min,
+                x1_max,
+                x1_nodes,
+                x1_order,
+                reweight,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                x2_min,
+                x2_max,
+                x2_nodes,
+                x2_order,
+                reweight,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+        ],
+    )
 }
 
 /// Type for defining a luminosity function.
@@ -693,7 +737,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         .collect();
 
     let key_vals = unsafe { key_vals.as_ref() };
-    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
+    let (subgrid_type, interps) = grid_params(key_vals);
 
     let lumi = unsafe { &*lumi };
 
@@ -714,8 +758,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
             lumi.0.clone(),
             orders,
             unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-            subgrid_params,
-            extra,
+            interps,
             &subgrid_type,
         )
         .unwrap(),

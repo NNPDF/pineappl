@@ -1,10 +1,8 @@
 //! Module containing the Lagrange-interpolation subgrid.
 
-use super::interpolation::{self, Interp, InterpMeth, Map, ReweightMeth};
+use super::interpolation::{self, Interp};
 use super::packed_array::PackedArray;
-use super::subgrid::{
-    ExtraSubgridParams, Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter, SubgridParams,
-};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -14,57 +12,18 @@ use std::mem;
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
     grid: PackedArray<f64, 3>,
-    interps: [Interp; 3],
+    interps: Vec<Interp>,
     pub(crate) static_q2: f64,
 }
 
 impl LagrangeSubgridV2 {
     /// Constructor.
     #[must_use]
-    pub fn new(subgrid_params: &SubgridParams, extra_params: &ExtraSubgridParams) -> Self {
+    pub fn new(interps: &[Interp]) -> Self {
+        debug_assert_eq!(interps.len(), 3);
         Self {
-            grid: PackedArray::new([
-                subgrid_params.q2_bins(),
-                subgrid_params.x_bins(),
-                extra_params.x2_bins(),
-            ]),
-            interps: [
-                Interp::new(
-                    subgrid_params.q2_min(),
-                    subgrid_params.q2_max(),
-                    subgrid_params.q2_bins(),
-                    subgrid_params.q2_order(),
-                    ReweightMeth::NoReweight,
-                    Map::ApplGridH0,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    subgrid_params.x_min(),
-                    subgrid_params.x_max(),
-                    subgrid_params.x_bins(),
-                    subgrid_params.x_order(),
-                    if subgrid_params.reweight() {
-                        ReweightMeth::ApplGridX
-                    } else {
-                        ReweightMeth::NoReweight
-                    },
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    extra_params.x2_min(),
-                    extra_params.x2_max(),
-                    extra_params.x2_bins(),
-                    extra_params.x2_order(),
-                    if extra_params.reweight2() {
-                        ReweightMeth::ApplGridX
-                    } else {
-                        ReweightMeth::NoReweight
-                    },
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-            ],
+            grid: PackedArray::new([interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
+            interps: interps.to_vec(),
             static_q2: 0.0,
         }
     }
@@ -191,11 +150,11 @@ impl Subgrid for LagrangeSubgridV2 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::v0;
 
     #[test]
     fn fill_zero() {
-        let mut subgrid =
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
         subgrid.fill(&[0.5, 0.5, 1000.0], 0.0);
 
@@ -215,8 +174,7 @@ mod tests {
 
     #[test]
     fn fill_outside_range() {
-        let mut subgrid =
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
         subgrid.fill(&[1e-10, 0.5, 1000.0], 0.0);
 
@@ -236,8 +194,7 @@ mod tests {
 
     #[test]
     fn fill() {
-        let mut subgrid =
-            LagrangeSubgridV2::new(&SubgridParams::default(), &ExtraSubgridParams::default());
+        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
         subgrid.fill(&[0.5, 0.5, 1000.0], 1.0);
 

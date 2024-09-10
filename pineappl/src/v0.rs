@@ -3,14 +3,47 @@ use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::Convolution;
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv3, MoreMembers};
+use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
-use super::subgrid::{Mu2, SubgridParams};
+use super::subgrid::Mu2;
 use ndarray::Array3;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
+
+pub fn default_interps() -> Vec<Interp> {
+    vec![
+        Interp::new(
+            1e2,
+            1e8,
+            40,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ]
+}
 
 pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError> {
     use pineappl_v0::subgrid::Subgrid as _;
@@ -78,8 +111,6 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 logxia: 0,
             })
             .collect(),
-        // TODO: remove this member
-        subgrid_params: SubgridParams::default(),
         metadata: grid
             .key_values()
             .cloned()
@@ -108,6 +139,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             subgrid_template: EmptySubgridV1.into(),
         }),
         kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+        interps: default_interps(),
     };
 
     assert_eq!(result.bin_info().bins(), grid.bin_info().bins());

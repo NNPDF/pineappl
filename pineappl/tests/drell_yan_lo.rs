@@ -7,7 +7,8 @@ use pineappl::boc::Order;
 use pineappl::channel;
 use pineappl::convolutions::LumiCache;
 use pineappl::grid::{Grid, GridOptFlags};
-use pineappl::subgrid::{ExtraSubgridParams, Subgrid, SubgridEnum, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::subgrid::{Subgrid, SubgridEnum};
 use rand::Rng;
 use rand_pcg::Pcg64;
 use std::f64::consts::PI;
@@ -162,33 +163,44 @@ fn fill_drell_yan_lo_grid(
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     let bin_limits: Vec<_> = (0..=24).map(|x: u32| f64::from(x) / 10.0).collect();
 
-    let mut subgrid_params = SubgridParams::default();
-    let mut extra = ExtraSubgridParams::default();
+    let reweight = if reweight {
+        ReweightMeth::ApplGridX
+    } else {
+        ReweightMeth::NoReweight
+    };
 
-    subgrid_params.set_q2_bins(30);
-    subgrid_params.set_q2_max(1e6);
-    subgrid_params.set_q2_min(1e2);
-    subgrid_params.set_q2_order(3);
-    subgrid_params.set_reweight(reweight);
-    subgrid_params.set_x_bins(50);
-    subgrid_params.set_x_max(1.0);
-    subgrid_params.set_x_min(2e-7);
-    subgrid_params.set_x_order(3);
-    extra.set_x2_bins(50);
-    extra.set_x2_max(1.0);
-    extra.set_x2_min(2e-7);
-    extra.set_x2_order(3);
-    extra.set_reweight2(reweight);
+    let interps = vec![
+        Interp::new(
+            1e2,
+            1e6,
+            30,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ];
 
     // create the PineAPPL grid
-    let mut grid = Grid::with_subgrid_type(
-        channels,
-        orders,
-        bin_limits,
-        subgrid_params,
-        extra,
-        subgrid_type,
-    )?;
+    let mut grid = Grid::with_subgrid_type(channels, orders, bin_limits, interps, subgrid_type)?;
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;

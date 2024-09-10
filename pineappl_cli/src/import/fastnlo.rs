@@ -2,12 +2,13 @@ use anyhow::Result;
 use itertools::Itertools;
 use ndarray::s;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
-use pineappl::subgrid::{Mu2, SubgridParams};
+use pineappl::subgrid::Mu2;
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
@@ -126,7 +127,38 @@ fn convert_coeff_add_fix(
             .map(|limit| u16::try_from(limit).unwrap().into())
             .collect(),
         convolutions,
-        SubgridParams::default(),
+        // TODO: read out interpolation parameters from fastNLO
+        vec![
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+        ],
+        // TODO: change kinematics for DIS
+        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
     );
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
@@ -274,7 +306,38 @@ fn convert_coeff_add_flex(
             .map(|limit| u16::try_from(limit).unwrap().into())
             .collect(),
         convolutions,
-        SubgridParams::default(),
+        // TODO: read out interpolation parameters from fastNLO
+        vec![
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+            Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ),
+        ],
+        // TODO: change kinematics for DIS
+        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
     );
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);

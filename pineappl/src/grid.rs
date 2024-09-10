@@ -6,10 +6,11 @@ use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
+use super::interpolation::Interp;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::{self, PidBasis};
-use super::subgrid::{ExtraSubgridParams, Mu2, Subgrid, SubgridEnum, SubgridParams};
+use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
 use float_cmp::approx_eq;
@@ -144,12 +145,12 @@ pub struct Grid {
     pub(crate) channels: Vec<Channel>,
     pub(crate) bin_limits: BinLimits,
     pub(crate) orders: Vec<Order>,
-    pub(crate) subgrid_params: SubgridParams,
     pub(crate) metadata: BTreeMap<String, String>,
     pub(crate) convolutions: Vec<Convolution>,
     pub(crate) pid_basis: PidBasis,
     pub(crate) more_members: MoreMembers,
     pub(crate) kinematics: Vec<Kinematics>,
+    pub(crate) interps: Vec<Interp>,
 }
 
 impl Grid {
@@ -160,7 +161,8 @@ impl Grid {
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
         convolutions: Vec<Convolution>,
-        subgrid_params: SubgridParams,
+        interps: Vec<Interp>,
+        kinematics: Vec<Kinematics>,
     ) -> Self {
         for (channel_idx, channel) in channels.iter().enumerate() {
             let offending_entry = channel
@@ -173,6 +175,12 @@ impl Grid {
             }
         }
 
+        assert_eq!(
+            interps.len(),
+            kinematics.len(),
+            "interps and kinematics have different lengths"
+        );
+
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, channels.len()),
@@ -181,17 +189,13 @@ impl Grid {
             orders,
             bin_limits: BinLimits::new(bin_limits),
             metadata: default_metadata(),
-            more_members: MoreMembers::V3(Mmv3::new(
-                LagrangeSubgridV2::new(&subgrid_params, &ExtraSubgridParams::from(&subgrid_params))
-                    .into(),
-            )),
+            more_members: MoreMembers::V3(Mmv3::new(LagrangeSubgridV2::new(&interps).into())),
             convolutions,
             // TODO: make this a new parameter
             pid_basis: PidBasis::Pdg,
             channels,
-            subgrid_params,
-            // TODO: make this a new parameter
-            kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            interps,
+            kinematics,
         }
     }
 
@@ -209,14 +213,11 @@ impl Grid {
         channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
-        subgrid_params: SubgridParams,
-        extra: ExtraSubgridParams,
+        interps: Vec<Interp>,
         subgrid_type: &str,
     ) -> Result<Self, GridError> {
         let subgrid_template: SubgridEnum = match subgrid_type {
-            "LagrangeSubgrid" | "LagrangeSubgridV2" => {
-                LagrangeSubgridV2::new(&subgrid_params, &extra).into()
-            }
+            "LagrangeSubgrid" | "LagrangeSubgridV2" => LagrangeSubgridV2::new(&interps).into(),
             _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
         };
 
@@ -227,12 +228,12 @@ impl Grid {
             ),
             orders,
             bin_limits: BinLimits::new(bin_limits),
-            subgrid_params,
             metadata: default_metadata(),
             convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
             pid_basis: PidBasis::Pdg,
             channels,
             more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
+            interps,
             kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         })
     }
@@ -1237,7 +1238,7 @@ impl Grid {
                 channels,
                 bin_limits: self.bin_limits.clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
-                subgrid_params: SubgridParams::default(),
+                interps: self.interps.clone(),
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
                 pid_basis: info.pid_basis,
@@ -1374,7 +1375,7 @@ impl Grid {
                 channels,
                 bin_limits: self.bin_limits.clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
-                subgrid_params: SubgridParams::default(),
+                interps: self.interps.clone(),
                 metadata: self.metadata.clone(),
                 convolutions: self.convolutions.clone(),
                 pid_basis: infos[0].pid_basis,
@@ -1655,21 +1656,16 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
     }
 
     #[test]
     fn grid_with_subgrid_type() {
         let subgrid_type = String::from("Idontexist");
-        let result = Grid::with_subgrid_type(
-            vec![],
-            vec![],
-            vec![],
-            SubgridParams::default(),
-            ExtraSubgridParams::default(),
-            &subgrid_type,
-        );
+        let result =
+            Grid::with_subgrid_type(vec![], vec![], vec![], v0::default_interps(), &subgrid_type);
 
         matches!(result, Err(GridError::UnknownSubgridType(x)) if x == subgrid_type);
     }
@@ -1684,7 +1680,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1700,7 +1697,8 @@ mod tests {
             vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         // merging with empty subgrids should not change the grid
@@ -1721,7 +1719,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1740,7 +1739,8 @@ mod tests {
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
@@ -1766,7 +1766,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1778,7 +1779,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         // fill the photon-photon entry
@@ -1801,7 +1803,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         assert_eq!(grid.bin_info().bins(), 2);
@@ -1817,7 +1820,8 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
@@ -1845,7 +1849,8 @@ mod tests {
             }],
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            SubgridParams::default(),
+            v0::default_interps(),
+            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
         // by default we assume unpolarized proton PDFs are used

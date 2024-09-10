@@ -6,7 +6,8 @@ use ndarray::{s, Axis};
 use pineappl::boc::Order;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
-use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::subgrid::{Mu2, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
 use std::borrow::Cow;
 use std::f64::consts::TAU;
@@ -14,9 +15,7 @@ use std::iter;
 use std::path::Path;
 use std::pin::Pin;
 
-fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<SubgridParams> {
-    let mut result = SubgridParams::default();
-
+fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<Vec<Interp>> {
     let mu2_grid: Vec<_> = grid
         .subgrids()
         .slice(s![order, bin, ..])
@@ -41,16 +40,57 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<S
         .collect::<Result<_>>()?;
     let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
     mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
-    let mu2_grid = mu2_grid.as_slice();
-
-    if let &[fac] = mu2_grid {
-        result.set_q2_bins(1);
-        result.set_q2_max(fac);
-        result.set_q2_min(fac);
-        result.set_q2_order(0);
-    }
 
     // TODO: implement the general case
+    let mut result = vec![
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ];
+
+    if let &[fac] = mu2_grid.as_slice() {
+        result.insert(
+            0,
+            Interp::new(
+                fac,
+                fac,
+                1,
+                0,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+        );
+    } else {
+        result.insert(
+            0,
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+        );
+    }
+
     Ok(result)
 }
 
@@ -165,19 +205,29 @@ pub fn convert_into_applgrid(
             .axis_iter(Axis(0))
             .enumerate()
         {
-            let p = reconstruct_subgrid_params(grid, order, bin)?;
+            let interps = reconstruct_subgrid_params(grid, order, bin)?;
+            // TODO: support DIS case
+            assert_eq!(interps.len(), 3);
+
+            // TODO: make sure interps[1] is the same as interps[2]
 
             let mut igrid = ffi::make_igrid(
-                p.q2_bins().try_into().unwrap(),
-                p.q2_min(),
-                p.q2_max(),
-                p.q2_order().try_into().unwrap(),
-                p.x_bins().try_into().unwrap(),
-                p.x_min(),
-                p.x_max(),
-                p.x_order().try_into().unwrap(),
-                "f2",
-                "h0",
+                interps[0].nodes().try_into().unwrap(),
+                interps[0].min(),
+                interps[0].max(),
+                interps[0].order().try_into().unwrap(),
+                interps[1].nodes().try_into().unwrap(),
+                interps[1].min(),
+                interps[1].max(),
+                interps[1].order().try_into().unwrap(),
+                match interps[1].map() {
+                    Map::ApplGridF2 => "f2",
+                    map => panic!("export does not support {map:?}"),
+                },
+                match interps[0].map() {
+                    Map::ApplGridH0 => "h0",
+                    map => panic!("export does not support {map:?}"),
+                },
                 grid.channels().len().try_into().unwrap(),
                 has_pdf1 != has_pdf2,
             );
