@@ -223,12 +223,12 @@ impl Interp {
 
     /// TODO
     pub fn min(&self) -> f64 {
-        self.min
+        self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
     }
 
     /// TODO
     pub fn max(&self) -> f64 {
-        self.max
+        self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
     }
 
     /// TODO
