@@ -161,7 +161,17 @@ impl Grid {
         convolutions: Vec<Convolution>,
         subgrid_params: SubgridParams,
     ) -> Self {
-        // TODO: check that channels has same number of PIDs everywhere
+        for (channel_idx, channel) in channels.iter().enumerate() {
+            let offending_entry = channel
+                .entry()
+                .iter()
+                .find_map(|(pids, _)| (pids.len() != convolutions.len()).then_some(pids.len()));
+
+            if let Some(pids_len) = offending_entry {
+                panic!("channel #{channel_idx} has wrong number of PIDs: expected {}, found {pids_len}", convolutions.len());
+            }
+        }
+
         Self {
             subgrids: Array3::from_shape_simple_fn(
                 (orders.len(), bin_limits.len() - 1, channels.len()),
@@ -1626,6 +1636,20 @@ mod tests {
     use crate::channel;
     use float_cmp::assert_approx_eq;
     use std::fs::File;
+
+    #[test]
+    #[should_panic(expected = "channel #0 has wrong number of PIDs: expected 2, found 3")]
+    fn grid_new_panic() {
+        let channel = vec![(vec![1, -1, 1], 1.0), (vec![2, -2, 2], 1.0)];
+
+        let _ = Grid::new(
+            vec![Channel::new(channel)],
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![0.0, 1.0],
+            vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+            SubgridParams::default(),
+        );
+    }
 
     #[test]
     fn grid_with_subgrid_type() {

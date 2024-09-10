@@ -318,9 +318,20 @@ impl Channel {
     ///
     /// let _ = Channel::new(vec![]);
     /// ```
+    ///
+    /// Creating a channel with entries that have a different number of PIDs panics:
+    /// ```rust,should_panic
+    /// use pineappl::boc::Channel;
+    ///
+    /// let _ = Channel::new(vec![(vec![1, 1, 1], 1.0), (vec![1, 1], 1.0)]);
+    /// ```
     #[must_use]
     pub fn new(mut entry: Vec<(Vec<i32>, f64)>) -> Self {
-        assert!(!entry.is_empty());
+        assert!(!entry.is_empty(), "can not create empty channel");
+        assert!(
+            entry.iter().map(|(pids, _)| pids.len()).all_equal(),
+            "can not create channel with a different number of PIDs"
+        );
 
         // sort `entry` because the ordering doesn't matter and because it makes it easier to
         // compare `Channel` objects with each other
