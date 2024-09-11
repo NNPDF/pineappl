@@ -57,7 +57,7 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -71,8 +71,7 @@ use std::slice;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_params(key_vals: Option<&KeyVal>) -> (String, Vec<Interp>) {
-    let mut subgrid_type = "LagrangeSubgrid".to_owned();
+fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
     let mut q2_min = 1e2;
     let mut q2_max = 1e8;
     let mut q2_nodes = 40;
@@ -191,44 +190,37 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, Vec<Interp>) {
         if let Some(value) = keyval.ints.get("x2_order") {
             x2_order = usize::try_from(*value).unwrap();
         }
-
-        if let Some(value) = keyval.strings.get("subgrid_type") {
-            value.to_str().unwrap().clone_into(&mut subgrid_type);
-        }
     }
 
-    (
-        subgrid_type,
-        vec![
-            Interp::new(
-                q2_min,
-                q2_max,
-                q2_nodes,
-                q2_order,
-                ReweightMeth::NoReweight,
-                Map::ApplGridH0,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                x1_min,
-                x1_max,
-                x1_nodes,
-                x1_order,
-                reweight,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                x2_min,
-                x2_max,
-                x2_nodes,
-                x2_order,
-                reweight,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-        ],
-    )
+    vec![
+        Interp::new(
+            q2_min,
+            q2_max,
+            q2_nodes,
+            q2_order,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x1_min,
+            x1_max,
+            x1_nodes,
+            x1_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x2_min,
+            x2_max,
+            x2_nodes,
+            x2_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ]
 }
 
 /// Type for defining a luminosity function.
@@ -737,7 +729,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         .collect();
 
     let key_vals = unsafe { key_vals.as_ref() };
-    let (subgrid_type, interps) = grid_params(key_vals);
+    let interps = grid_interpolation_params(key_vals);
 
     let lumi = unsafe { &*lumi };
 
@@ -753,21 +745,14 @@ pub unsafe extern "C" fn pineappl_grid_new(
         }
     }
 
-    let mut grid = Box::new(
-        Grid::with_subgrid_type(
-            lumi.0.clone(),
-            orders,
-            unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-            interps,
-            &subgrid_type,
-        )
-        .unwrap(),
-    );
-
-    // TODO: set the convolutions using a new constructor
-    grid.convolutions_mut().clone_from_slice(&convolutions);
-
-    grid
+    Box::new(Grid::new(
+        lumi.0.clone(),
+        orders,
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+        convolutions,
+        interps,
+        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+    ))
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.

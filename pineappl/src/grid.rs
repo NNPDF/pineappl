@@ -184,46 +184,6 @@ impl Grid {
         }
     }
 
-    // TODO: get rid of this constructor
-
-    /// Constructor. This function can be used like `new`, but the additional parameter
-    /// `subgrid_type` selects the underlying `Subgrid` type. Supported values are:
-    /// - `LagrangeSubgrid`
-    /// - `LagrangeSubgridV2`
-    ///
-    /// # Errors
-    ///
-    /// If `subgrid_type` is none of the values listed above, an error is returned.
-    pub fn with_subgrid_type(
-        channels: Vec<Channel>,
-        orders: Vec<Order>,
-        bin_limits: Vec<f64>,
-        interps: Vec<Interp>,
-        subgrid_type: &str,
-    ) -> Result<Self, GridError> {
-        match subgrid_type {
-            "LagrangeSubgrid" | "LagrangeSubgridV2" => {}
-            _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
-        };
-
-        Ok(Self {
-            subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, channels.len()),
-                || EmptySubgridV1.into(),
-            ),
-            orders,
-            bin_limits: BinLimits::new(bin_limits),
-            metadata: default_metadata(),
-            convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
-            pid_basis: PidBasis::Pdg,
-            channels,
-            more_members: MoreMembers::V4(Mmv4),
-            interps,
-            kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
-            remapper: None,
-        })
-    }
-
     /// Return the convention by which the channels' PIDs are encoded.
     #[must_use]
     pub const fn pid_basis(&self) -> &PidBasis {
@@ -1688,15 +1648,6 @@ mod tests {
             v0::default_interps(),
             vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
-    }
-
-    #[test]
-    fn grid_with_subgrid_type() {
-        let subgrid_type = String::from("Idontexist");
-        let result =
-            Grid::with_subgrid_type(vec![], vec![], vec![], v0::default_interps(), &subgrid_type);
-
-        matches!(result, Err(GridError::UnknownSubgridType(x)) if x == subgrid_type);
     }
 
     #[test]

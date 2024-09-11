@@ -3,9 +3,9 @@ use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use num_complex::Complex;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::Order;
+use pineappl::boc::{Kinematics, Order};
 use pineappl::channel;
-use pineappl::convolutions::LumiCache;
+use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::subgrid::{Subgrid, SubgridEnum};
@@ -117,7 +117,6 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 fn fill_drell_yan_lo_grid(
     rng: &mut impl Rng,
     calls: u32,
-    subgrid_type: &str,
     dynamic: bool,
     reweight: bool,
 ) -> Result<Grid> {
@@ -163,13 +162,18 @@ fn fill_drell_yan_lo_grid(
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
     let bin_limits: Vec<_> = (0..=24).map(|x: u32| f64::from(x) / 10.0).collect();
 
+    // the grid represents data with two unpolarized proton PDFs
+    let convolutions = vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)];
+
     let reweight = if reweight {
         ReweightMeth::ApplGridX
     } else {
         ReweightMeth::NoReweight
     };
 
+    // define how `Grid::fill` interpolates
     let interps = vec![
+        // 1st dimension interpolation parameters
         Interp::new(
             1e2,
             1e6,
@@ -179,6 +183,7 @@ fn fill_drell_yan_lo_grid(
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         ),
+        // 2nd dimension interpolation parameters
         Interp::new(
             2e-7,
             1.0,
@@ -188,6 +193,7 @@ fn fill_drell_yan_lo_grid(
             Map::ApplGridF2,
             InterpMeth::Lagrange,
         ),
+        // 3rd dimension interpolation parameters
         Interp::new(
             2e-7,
             1.0,
@@ -199,8 +205,24 @@ fn fill_drell_yan_lo_grid(
         ),
     ];
 
+    let kinematics = vec![
+        // 1st dimension is factorization and at the same time also the renormalization scale
+        Kinematics::MU2_RF,
+        // 2nd dimension is the parton momentum fraction of the first convolution
+        Kinematics::X1,
+        // 3rd dimension is the parton momentum fraction of the second convolution
+        Kinematics::X2,
+    ];
+
     // create the PineAPPL grid
-    let mut grid = Grid::with_subgrid_type(channels, orders, bin_limits, interps, subgrid_type)?;
+    let mut grid = Grid::new(
+        channels,
+        orders,
+        bin_limits,
+        convolutions,
+        interps,
+        kinematics,
+    );
 
     // in GeV^2 pbarn
     let hbarc2 = 3.893793721e8;
@@ -276,7 +298,6 @@ fn fill_drell_yan_lo_grid(
 }
 
 fn perform_grid_tests(
-    subgrid_type: &str,
     dynamic: bool,
     reference: &[f64],
     reference_after_ssd: &[f64],
@@ -284,15 +305,11 @@ fn perform_grid_tests(
     reweight: bool,
 ) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let mut grid = fill_drell_yan_lo_grid(&mut rng, INT_STATS, subgrid_type, dynamic, reweight)?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, INT_STATS, dynamic, reweight)?;
 
     // TEST 1: `merge` and `scale`
     grid.merge(fill_drell_yan_lo_grid(
-        &mut rng,
-        INT_STATS,
-        subgrid_type,
-        dynamic,
-        reweight,
+        &mut rng, INT_STATS, dynamic, reweight,
     )?)?;
     grid.scale(0.5);
 
@@ -467,9 +484,9 @@ fn perform_grid_tests(
     Ok(())
 }
 
-fn generate_grid(subgrid_type: &str, dynamic: bool, reweight: bool) -> Result<Grid> {
+fn generate_grid(dynamic: bool, reweight: bool) -> Result<Grid> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    fill_drell_yan_lo_grid(&mut rng, 500_000, subgrid_type, dynamic, reweight)
+    fill_drell_yan_lo_grid(&mut rng, 500_000, dynamic, reweight)
 }
 
 // number is small enough for the tests to be quick and meaningful
@@ -586,9 +603,8 @@ const DYNAMIC_REFERENCE_NO_REWEIGHT: [f64; 24] = [
 ];
 
 #[test]
-fn drell_yan_lagrange_static() -> Result<()> {
+fn drell_yan_static() -> Result<()> {
     perform_grid_tests(
-        "LagrangeSubgrid",
         false,
         &STATIC_REFERENCE,
         &STATIC_REFERENCE_AFTER_SSD,
@@ -605,28 +621,8 @@ fn drell_yan_lagrange_static() -> Result<()> {
 }
 
 #[test]
-fn drell_yan_lagrange_v2_static() -> Result<()> {
+fn drell_yan_dynamic() -> Result<()> {
     perform_grid_tests(
-        "LagrangeSubgridV2",
-        false,
-        &STATIC_REFERENCE,
-        &STATIC_REFERENCE_AFTER_SSD,
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        true,
-    )
-}
-
-#[test]
-fn drell_yan_lagrange_dynamic() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSubgrid",
         true,
         &DYNAMIC_REFERENCE,
         &DYNAMIC_REFERENCE,
@@ -643,28 +639,8 @@ fn drell_yan_lagrange_dynamic() -> Result<()> {
 }
 
 #[test]
-fn drell_yan_lagrange_v2_dynamic() -> Result<()> {
+fn drell_yan_dynamic_no_reweight() -> Result<()> {
     perform_grid_tests(
-        "LagrangeSubgridV2",
-        true,
-        &DYNAMIC_REFERENCE,
-        &DYNAMIC_REFERENCE,
-        &[
-            0.030521584007828916,
-            0.02108918668378717,
-            0.014375068581090129,
-            0.009699159574043398,
-            0.006496206194633799,
-            0.004328500638820811,
-        ],
-        true,
-    )
-}
-
-#[test]
-fn drell_yan_lagrange_v2_dynamic_no_reweight() -> Result<()> {
-    perform_grid_tests(
-        "LagrangeSubgridV2",
         true,
         &DYNAMIC_REFERENCE_NO_REWEIGHT,
         &DYNAMIC_REFERENCE_NO_REWEIGHT,
@@ -682,7 +658,7 @@ fn drell_yan_lagrange_v2_dynamic_no_reweight() -> Result<()> {
 
 #[test]
 fn grid_optimize() -> Result<()> {
-    let mut grid = generate_grid("LagrangeSubgridV2", false, false)?;
+    let mut grid = generate_grid(false, false)?;
 
     assert_eq!(grid.orders().len(), 3);
     assert_eq!(grid.channels().len(), 5);
