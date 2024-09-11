@@ -263,35 +263,35 @@ fn fill_drell_yan_lo_grid(
         let pto = 0;
         let channel = 0;
 
-        grid.fill(pto, yll.abs(), channel, &[x1, x2, q2], weight);
+        grid.fill(pto, yll.abs(), channel, &[q2, x1, x2], weight);
 
         // LO up-antiup-type channel
         let weight = jacobian * int_quark(s, t, u, 2.0 / 3.0, 0.5);
         let pto = 0;
         let channel = 1;
 
-        grid.fill(pto, yll.abs(), channel, &[x1, x2, q2], weight);
+        grid.fill(pto, yll.abs(), channel, &[q2, x1, x2], weight);
 
         // LO antiup-up-type channel - swap (x1 <-> x2) and (t <-> u)
         let weight = jacobian * int_quark(s, u, t, 2.0 / 3.0, 0.5);
         let pto = 0;
         let channel = 2;
 
-        grid.fill(pto, yll.abs(), channel, &[x2, x1, q2], weight);
+        grid.fill(pto, yll.abs(), channel, &[q2, x2, x1], weight);
 
         // LO down-antidown-type channel
         let weight = jacobian * int_quark(s, t, u, -1.0 / 3.0, -0.5);
         let pto = 0;
         let channel = 3;
 
-        grid.fill(pto, yll.abs(), channel, &[x1, x2, q2], weight);
+        grid.fill(pto, yll.abs(), channel, &[q2, x1, x2], weight);
 
         // LO antidown-down-type channel - swap (x1 <-> x2) and (t <-> u)
         let weight = jacobian * int_quark(s, u, t, -1.0 / 3.0, -0.5);
         let pto = 0;
         let channel = 4;
 
-        grid.fill(pto, yll.abs(), channel, &[x2, x1, q2], weight);
+        grid.fill(pto, yll.abs(), channel, &[q2, x2, x1], weight);
     }
 
     Ok(grid)

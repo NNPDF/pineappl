@@ -90,7 +90,7 @@ impl PyGrid {
             order,
             observable,
             channel,
-            &Ntuple::<f64> { x1, x2, q2, weight },
+            &Ntuple::<f64> { q2, x1, x2, weight },
         );
     }
 
@@ -135,7 +135,7 @@ impl PyGrid {
                 order,
                 observable,
                 channel,
-                &Ntuple::<f64> { x1, x2, q2, weight },
+                &Ntuple::<f64> { q2, x1, x2, weight },
             );
         }
     }

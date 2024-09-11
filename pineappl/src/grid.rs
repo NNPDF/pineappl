@@ -360,7 +360,9 @@ impl Grid {
         array
     }
 
-    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`.
+    /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The
+    /// parameter `ntuple` must contain the variables specified by the `kinematics` parameter in
+    /// the constructor [`Grid::new`] in the same order.
     ///
     /// # Panics
     ///
@@ -1723,10 +1725,10 @@ mod tests {
             vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
-        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
-        other.fill(0, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
-        other.fill(1, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 1.0);
-        other.fill(1, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 1.0);
+        other.fill(0, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
+        other.fill(1, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 1.0);
+        other.fill(1, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
 
         // merge with four non-empty subgrids
         grid.merge(other).unwrap();
@@ -1764,7 +1766,7 @@ mod tests {
         );
 
         // fill the photon-photon entry
-        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 3.0);
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 3.0);
 
         grid.merge(other).unwrap();
 
@@ -1804,8 +1806,8 @@ mod tests {
             vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         );
 
-        other.fill(0, 0.1, 0, &[0.1, 0.2, 90.0_f64.powi(2)], 2.0);
-        other.fill(0, 0.1, 1, &[0.1, 0.2, 90.0_f64.powi(2)], 3.0);
+        other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
+        other.fill(0, 0.1, 1, &[90.0_f64.powi(2), 0.1, 0.2], 3.0);
 
         grid.merge(other).unwrap();
 

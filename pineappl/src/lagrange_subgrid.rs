@@ -31,9 +31,6 @@ impl LagrangeSubgridV2 {
 
 impl Subgrid for LagrangeSubgridV2 {
     fn fill(&mut self, ntuple: &[f64], weight: f64) {
-        // TODO: change the order of ntuple higher up in the code
-        let mut ntuple = ntuple.to_vec();
-        ntuple.rotate_right(1);
         if interpolation::interpolate(&self.interps, &ntuple, weight, &mut self.grid) {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
@@ -153,7 +150,7 @@ mod tests {
     fn fill_zero() {
         let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
-        subgrid.fill(&[0.5, 0.5, 1000.0], 0.0);
+        subgrid.fill(&[1000.0, 0.5, 0.5], 0.0);
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
@@ -173,7 +170,7 @@ mod tests {
     fn fill_outside_range() {
         let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
-        subgrid.fill(&[1e-10, 0.5, 1000.0], 0.0);
+        subgrid.fill(&[1000.0, 1e-10, 0.5], 0.0);
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
@@ -193,7 +190,7 @@ mod tests {
     fn fill() {
         let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
 
-        subgrid.fill(&[0.5, 0.5, 1000.0], 1.0);
+        subgrid.fill(&[1000.0, 0.5, 0.5], 1.0);
 
         assert!(!subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 4 * 4 * 4);
@@ -216,7 +213,7 @@ mod tests {
             }
         );
 
-        subgrid.fill(&[0.5, 0.5, 1000000.0], 1.0);
+        subgrid.fill(&[1000000.0, 0.5, 0.5], 1.0);
 
         assert!(!subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 2 * 4 * 4 * 4);

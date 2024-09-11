@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with absolute PDF predictions. However, this feature can be enabled with via
   a new array added at the start of the script
 - raised MSRV to 1.80.1
+- changed the order of elements in `Grid::fill` of the parameter `ntuple` to
+  reflect the ordering of `kinematics` given to `Grid::new`
 
 ### Removed
 

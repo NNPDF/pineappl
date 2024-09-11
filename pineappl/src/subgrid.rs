@@ -68,9 +68,8 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Fills the subgrid with `weight` for the parton momentum fractions `x1` and `x2`, and the
-    /// scale `q2`. Filling is currently only support where both renormalization and factorization
-    /// scale have the same value.
+    /// Fills the subgrid with `weight` and the kinematic information in `ntuple` according to the
+    /// same ordering given by `kinematics` in [`Grid::new`] that was used to create the grid.
     fn fill(&mut self, ntuple: &[f64], weight: f64);
 
     /// Returns true if `fill` was never called for this grid.

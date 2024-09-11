@@ -257,7 +257,7 @@ mod tests {
             Vec::new(),
             Vec::new(),
         );
-        subgrid.fill(&[0.0; 4], 0.0);
+        subgrid.fill(&[0.0; 3], 0.0);
     }
 
     #[test]
