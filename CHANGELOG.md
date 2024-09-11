@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python API: removed `pineappl.grid.Grid.create()` and
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
+- removed the constructor `Grid::with_subgrid_type`
 
 ### Fixed
 
