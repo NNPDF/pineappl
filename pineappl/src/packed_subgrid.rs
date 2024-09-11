@@ -32,11 +32,6 @@ impl PackedQ1X2SubgridV1 {
             x2_grid,
         }
     }
-
-    /// Return the array containing the numerical values of the grid.
-    pub fn array_mut(&mut self) -> &mut PackedArray<f64, 3> {
-        &mut self.array
-    }
 }
 
 impl Subgrid for PackedQ1X2SubgridV1 {
@@ -293,10 +288,10 @@ mod tests {
 
         // only use exactly representable numbers here so that we can avoid using approx_eq
         if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid1 {
-            x.array_mut()[[0, 1, 2]] = 1.0;
-            x.array_mut()[[0, 1, 3]] = 2.0;
-            x.array_mut()[[0, 4, 3]] = 4.0;
-            x.array_mut()[[0, 7, 1]] = 8.0;
+            x.array[[0, 1, 2]] = 1.0;
+            x.array[[0, 1, 3]] = 2.0;
+            x.array[[0, 4, 3]] = 4.0;
+            x.array[[0, 7, 1]] = 8.0;
         }
 
         assert!(!grid1.is_empty());
@@ -319,10 +314,10 @@ mod tests {
         )
         .into();
         if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid2 {
-            x.array_mut()[[0, 2, 1]] = 1.0;
-            x.array_mut()[[0, 3, 1]] = 2.0;
-            x.array_mut()[[0, 3, 4]] = 4.0;
-            x.array_mut()[[0, 1, 7]] = 8.0;
+            x.array[[0, 2, 1]] = 1.0;
+            x.array[[0, 3, 1]] = 2.0;
+            x.array[[0, 3, 4]] = 4.0;
+            x.array[[0, 1, 7]] = 8.0;
         }
 
         assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
