@@ -13,7 +13,7 @@ use thiserror::Error;
 
 bitflags! {
     /// TODO
-    #[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
+    #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
     #[repr(transparent)]
     pub struct Scale: u32 {
         /// TODO
@@ -26,7 +26,7 @@ bitflags! {
 }
 
 /// TODO
-#[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
     /// TODO
     Mu2(Scale),
@@ -420,6 +420,7 @@ impl Channel {
     ///
     /// assert_eq!(entry, channel![2, 11, 10.0; -2, 11, -10.0; 1, 11, -10.0; -1, 11, 10.0]);
     /// ```
+    #[must_use]
     pub fn translate(&self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
         let mut result = Vec::new();
 

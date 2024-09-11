@@ -155,6 +155,11 @@ pub struct Grid {
 
 impl Grid {
     /// Constructor.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the number of PIDs in `channels` is not equal to `convolutions.len()`, or if
+    /// `interps` and `kinematics` have different lengths.
     #[must_use]
     pub fn new(
         channels: Vec<Channel>,
@@ -383,7 +388,7 @@ impl Grid {
 
         let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
 
-        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
+        for (index @ (imu2, ix1, ix2), value) in subgrid.indexed_iter() {
             let x1 = x1_grid[ix1];
             let x2 = x2_grid[ix2];
             let mut lumi = 0.0;
@@ -399,7 +404,7 @@ impl Grid {
 
             lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
-            array[[imu2, ix1, ix2]] = lumi * value;
+            array[<[usize; 3]>::from(index)] = lumi * value;
         }
 
         if order.logxir > 0 {
@@ -741,8 +746,8 @@ impl Grid {
             || EmptySubgridV1.into(),
         );
 
-        for ((i, j, k), subgrid) in self.subgrids.indexed_iter_mut() {
-            mem::swap(&mut new_subgrids[[i, j, k]], subgrid);
+        for (index, subgrid) in self.subgrids.indexed_iter_mut() {
+            mem::swap(&mut new_subgrids[<[usize; 3]>::from(index)], subgrid);
         }
 
         self.subgrids = new_subgrids;
@@ -1193,6 +1198,11 @@ impl Grid {
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
     /// return an error.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the operator returned by `slices` has different dimensions than promised by the
+    /// corresponding [`OperatorSliceInfo`].
     pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
         slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
@@ -1316,6 +1326,11 @@ impl Grid {
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
     /// return an error.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the operators returned by `slices_a` and `slices_b` have different dimensions
+    /// than promised by the corresponding [`OperatorSliceInfo`].
     pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
         &self,
         slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,

@@ -100,6 +100,7 @@ impl Interp {
     ///
     /// Panics if `nodes` is `0`, or if `nodes` is smaller or equal to `order` or if `order` is
     /// larger than some internally specified maximum.
+    #[must_use]
     pub fn new(
         min: f64,
         max: f64,
@@ -150,14 +151,16 @@ impl Interp {
     }
 
     /// TODO
+    #[must_use]
     pub fn reweight(&self, x: f64) -> f64 {
         match self.reweight {
             ReweightMeth::ApplGridX => applgrid::reweight_x(x),
-            ReweightMeth::NoReweight => return 1.0,
+            ReweightMeth::NoReweight => 1.0,
         }
     }
 
     /// TODO
+    #[must_use]
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
         let y = self.map_x_to_y(x);
 
@@ -182,6 +185,7 @@ impl Interp {
     }
 
     /// TODO
+    #[must_use]
     pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, MAX_INTERP_ORDER_PLUS_ONE> {
         (0..=self.order)
             .map(|i| match self.interp_meth {
@@ -191,11 +195,13 @@ impl Interp {
     }
 
     /// TODO
-    pub fn order(&self) -> usize {
+    #[must_use]
+    pub const fn order(&self) -> usize {
         self.order
     }
 
     /// TODO
+    #[must_use]
     pub fn node_values(&self) -> Vec<f64> {
         (0..self.nodes)
             .map(|node| self.map_y_to_x(self.gety(node)))
@@ -217,22 +223,26 @@ impl Interp {
     }
 
     /// TODO
-    pub fn nodes(&self) -> usize {
+    #[must_use]
+    pub const fn nodes(&self) -> usize {
         self.nodes
     }
 
     /// TODO
+    #[must_use]
     pub fn min(&self) -> f64 {
         self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
     }
 
     /// TODO
+    #[must_use]
     pub fn max(&self) -> f64 {
         self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
     }
 
     /// TODO
-    pub fn map(&self) -> Map {
+    #[must_use]
+    pub const fn map(&self) -> Map {
         self.map
     }
 }

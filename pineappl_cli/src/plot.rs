@@ -81,10 +81,10 @@ fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
                 .iter()
                 .zip(pids)
                 .map(|(convolution, &pid)| {
-                    if *convolution != Convolution::None {
-                        grid.pid_basis().to_latex_str(pid)
-                    } else {
+                    if *convolution == Convolution::None {
                         ""
+                    } else {
+                        grid.pid_basis().to_latex_str(pid)
                     }
                 })
                 .collect::<Vec<_>>()
@@ -526,7 +526,7 @@ impl Subcommand for Opts {
                 helpers::create_conv_funs_for_set(&self.conv_funs[0], self.conv_fun_uncert_from)?;
             let (set2, mut conv_funs2) =
                 helpers::create_conv_funs_for_set(&self.conv_funs[1], self.conv_fun_uncert_from)?;
-            let (order, bin, channel) = self
+            let index @ (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
                 .map(|num| num.parse::<usize>().unwrap())
@@ -616,7 +616,7 @@ impl Subcommand for Opts {
             )
             .sum_axis(Axis(0));
 
-            let subgrid = &grid.subgrids()[[order, bin, channel]];
+            let subgrid = &grid.subgrids()[<[usize; 3]>::from(index)];
             //let q2 = subgrid.q2_grid();
             let x1 = subgrid.x1_grid();
             let x2 = subgrid.x2_grid();

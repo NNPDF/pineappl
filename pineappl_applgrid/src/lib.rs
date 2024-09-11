@@ -13,6 +13,7 @@
 use lhapdf::Pdf;
 use std::mem;
 use std::pin::Pin;
+use std::ptr;
 use std::slice;
 use std::sync::{Mutex, OnceLock};
 
@@ -185,7 +186,7 @@ pub fn grid_convolve_with_one(
             grid,
             xfx,
             alphas,
-            (pdf as *mut Pdf).cast::<ffi::c_void>(),
+            ptr::from_mut(pdf).cast::<ffi::c_void>(),
             nloops,
             rscale,
             fscale,

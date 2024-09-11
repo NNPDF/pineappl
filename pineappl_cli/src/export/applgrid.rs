@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
@@ -222,11 +222,11 @@ pub fn convert_into_applgrid(
                 interps[1].order().try_into().unwrap(),
                 match interps[1].map() {
                     Map::ApplGridF2 => "f2",
-                    map => panic!("export does not support {map:?}"),
+                    map @ Map::ApplGridH0 => panic!("export does not support {map:?}"),
                 },
                 match interps[0].map() {
                     Map::ApplGridH0 => "h0",
-                    map => panic!("export does not support {map:?}"),
+                    map @ Map::ApplGridF2 => panic!("export does not support {map:?}"),
                 },
                 grid.channels().len().try_into().unwrap(),
                 has_pdf1 != has_pdf2,
@@ -255,10 +255,9 @@ pub fn convert_into_applgrid(
                                     if discard_non_matching_scales {
                                         Ok(-1)
                                     } else {
-                                        Err(anyhow!(
-                                            "factorization scale muf2 = {} not found in APPLgrid",
-                                            fac
-                                        ))
+                                        bail!(
+                                            "factorization scale muf2 = {fac} not found in APPLgrid",
+                                        )
                                     }
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -282,12 +281,7 @@ pub fn convert_into_applgrid(
                             .iter()
                             .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
                             .map_or_else(
-                                || {
-                                    Err(anyhow!(
-                                        "momentum fraction x1 = {} not found in APPLgrid",
-                                        x1
-                                    ))
-                                },
+                                || bail!("momentum fraction x1 = {x1} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
@@ -299,12 +293,7 @@ pub fn convert_into_applgrid(
                             .iter()
                             .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
                             .map_or_else(
-                                || {
-                                    Err(anyhow!(
-                                        "momentum fraction x2 = {} not found in APPLgrid",
-                                        x2
-                                    ))
-                                },
+                                || bail!("momentum fraction x2 = {x2} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })

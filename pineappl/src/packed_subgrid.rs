@@ -174,7 +174,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
         Box::new(
             self.array
                 .indexed_iter()
-                .map(|([o, b, c], v)| ((o, b, c), v)),
+                .map(|(index, v)| (index.into(), v)),
         )
     }
 
@@ -313,7 +313,7 @@ mod tests {
                 frg: 1.0,
             }],
             x.clone(),
-            x.clone(),
+            x,
         )
         .into();
         if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid2 {

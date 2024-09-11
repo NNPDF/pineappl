@@ -110,11 +110,8 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        let nodes: Vec<_> = self
-            .interps
-            .iter()
-            .map(|interp| interp.node_values())
-            .collect();
+        let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
+
         Box::new(self.grid.indexed_iter().map(move |(index, v)| {
             (
                 (index[0], index[1], index[2]),
