@@ -13,7 +13,7 @@ use super::pids::{self, PidBasis};
 use super::subgrid::{Mu2, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
-use float_cmp::approx_eq;
+use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
@@ -1203,10 +1203,39 @@ impl Grid {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
         let mut lhs: Option<Self> = None;
-        let mut fac1 = Vec::new();
+        // Q2 slices we use
+        let mut used_op_fac1 = Vec::new();
+        // Q2 slices we encounter, but possibly don't use
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
 
         for result in slices {
             let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
+
+            op_fac1.push(info.fac1);
+
+            // it's possible that due to small numerical differences we get two slices which are
+            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
+            if used_op_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
+
+            // skip slices that the grid doesn't use
+            if !grid_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
 
             let op_info_dim = (
                 info.pids1.len(),
@@ -1215,13 +1244,13 @@ impl Grid {
                 info.x0.len(),
             );
 
-            if operator.dim() != op_info_dim {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim,
-                    operator.dim(),
-                )));
-            }
+            assert_eq!(
+                operator.dim(),
+                op_info_dim,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim,
+                operator.dim(),
+            );
 
             let view = operator.view();
 
@@ -1252,26 +1281,20 @@ impl Grid {
                 lhs = Some(rhs);
             }
 
-            fac1.push(info.fac1);
+            used_op_fac1.push(info.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
-        if let Some(muf2) = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|mu2| xi.1 * xi.1 * mu2)
-            .find(|&grid_mu2| {
-                !fac1
-                    .iter()
-                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-            })
-        {
+        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+            !used_op_fac1
+                .iter()
+                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+        }) {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:?}"
+                "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
 
@@ -1305,12 +1328,49 @@ impl Grid {
         use itertools::izip;
 
         let mut lhs: Option<Self> = None;
-        let mut fac1 = Vec::new();
+        // Q2 slices we use
+        let mut used_op_fac1 = Vec::new();
+        // Q2 slices we encounter, but possibly don't use
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
 
         // TODO: simplify the ugly repetition below by offloading some ops into fn
         for (result_a, result_b) in izip!(slices_a, slices_b) {
             // Operate on `slices_a`
             let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
+            // Operate on `slices_b`
+            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
+
+            // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
+            assert_approx_eq!(f64, info_a.fac1, info_b.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
+
+            // also the PID bases must be the same
+            assert_eq!(info_a.pid_basis, info_b.pid_basis);
+
+            op_fac1.push(info_a.fac1);
+
+            // it's possible that due to small numerical differences we get two slices which are
+            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
+            if used_op_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
+
+            // skip slices that the grid doesn't use
+            if !grid_fac1
+                .iter()
+                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+            {
+                continue;
+            }
 
             let op_info_dim_a = (
                 info_a.pids1.len(),
@@ -1319,16 +1379,13 @@ impl Grid {
                 info_a.x0.len(),
             );
 
-            if operator_a.dim() != op_info_dim_a {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim_a,
-                    operator_a.dim(),
-                )));
-            }
-
-            // Operate on `slices_b`
-            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
+            assert_eq!(
+                operator_a.dim(),
+                op_info_dim_a,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim_a,
+                operator_a.dim(),
+            );
 
             let op_info_dim_b = (
                 info_b.pids1.len(),
@@ -1337,38 +1394,31 @@ impl Grid {
                 info_b.x0.len(),
             );
 
-            if operator_b.dim() != op_info_dim_b {
-                return Err(GridError::EvolutionFailure(format!(
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    op_info_dim_b,
-                    operator_b.dim(),
-                )));
-            }
+            assert_eq!(
+                operator_b.dim(),
+                op_info_dim_b,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                op_info_dim_b,
+                operator_b.dim(),
+            );
 
             let views = [operator_a.view(), operator_b.view()];
             let infos = [info_a, info_b];
 
-            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
-                && self.convolutions()[1] != Convolution::None
-            {
-                evolution::evolve_slice_with_two2(
-                    self,
-                    &views,
-                    &infos,
-                    order_mask,
-                    xi,
-                    alphas_table,
-                )
-            } else {
-                evolution::evolve_slice_with_one(
-                    self,
-                    &views[0],
-                    &infos[1],
-                    order_mask,
-                    xi,
-                    alphas_table,
-                )
-            }?;
+            assert!(
+                (self.convolutions()[0] != Convolution::None)
+                    && (self.convolutions()[1] != Convolution::None),
+                "only one convolution found, use `Grid::evolve_with_slice_iter` instead"
+            );
+
+            let (subgrids, channels) = evolution::evolve_slice_with_two2(
+                self,
+                &views,
+                &infos,
+                order_mask,
+                xi,
+                alphas_table,
+            )?;
 
             let rhs = Self {
                 subgrids,
@@ -1391,27 +1441,20 @@ impl Grid {
                 lhs = Some(rhs);
             }
 
-            // NOTE: The following should be shared by the 2 EKOs(?)
-            fac1.push(infos[0].fac1);
+            used_op_fac1.push(infos[0].fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug
-        fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
 
         // make sure we've evolved all slices
-        if let Some(muf2) = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|mu2| xi.1 * xi.1 * mu2)
-            .find(|&grid_mu2| {
-                !fac1
-                    .iter()
-                    .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-            })
-        {
+        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+            !used_op_fac1
+                .iter()
+                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+        }) {
             return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {fac1:?}"
+                "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
 
@@ -1643,7 +1686,6 @@ impl Grid {
 mod tests {
     use super::*;
     use crate::channel;
-    use float_cmp::assert_approx_eq;
     use std::fs::File;
 
     #[test]

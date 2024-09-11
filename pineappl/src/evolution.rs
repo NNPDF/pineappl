@@ -16,7 +16,7 @@ use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView4, Axis};
 use std::iter;
 
 /// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
-pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 64;
+pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 256;
 
 /// Number of ULPS used to search for grid values in this module. This value must be a large-enough
 /// multiple of [`EVOLVE_INFO_TOL_ULPS`], because otherwise similar values are not found in

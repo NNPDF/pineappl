@@ -951,9 +951,9 @@ dependencies = [
 
 [[package]]
 name = "pineappl"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88cf595833093c1a56fdd940c66bc1cd7f03ce162f552b29febf7be62f3eea74"
+checksum = "5041fcf611eb0c41f1f6562b498fabdd1319c8d4572fd137ac244ca4e73d999c"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -987,7 +987,7 @@ dependencies = [
  "ndarray",
  "ndarray-npy",
  "num-complex",
- "pineappl 0.8.2",
+ "pineappl 0.8.3",
  "rand",
  "rand_pcg",
  "rustc-hash",

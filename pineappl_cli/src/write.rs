@@ -59,11 +59,8 @@ struct MoreArgs {
 }
 
 impl FromArgMatches for MoreArgs {
-    fn from_arg_matches(_: &ArgMatches) -> Result<Self, Error> {
-        unreachable!()
-    }
-
-    fn from_arg_matches_mut(matches: &mut ArgMatches) -> Result<Self, Error> {
+    fn from_arg_matches(matches: &ArgMatches) -> Result<Self, Error> {
+        let mut matches = matches.clone();
         let mut args = Vec::new();
         let ids: Vec<_> = matches.ids().map(|id| id.as_str().to_owned()).collect();
 
@@ -267,10 +264,6 @@ impl FromArgMatches for MoreArgs {
     }
 
     fn update_from_arg_matches(&mut self, _: &ArgMatches) -> Result<(), Error> {
-        unreachable!()
-    }
-
-    fn update_from_arg_matches_mut(&mut self, _: &mut ArgMatches) -> Result<(), Error> {
         unreachable!()
     }
 }
