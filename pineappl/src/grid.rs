@@ -71,19 +71,7 @@ pub enum GridError {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-pub(crate) struct Mmv3 {
-    pub(crate) remapper: Option<BinRemapper>,
-    pub(crate) subgrid_template: SubgridEnum,
-}
-
-impl Mmv3 {
-    const fn new(subgrid_template: SubgridEnum) -> Self {
-        Self {
-            remapper: None,
-            subgrid_template,
-        }
-    }
-}
+pub(crate) struct Mmv4;
 
 fn default_metadata() -> BTreeMap<String, String> {
     iter::once((
@@ -98,11 +86,9 @@ fn default_metadata() -> BTreeMap<String, String> {
     .collect()
 }
 
-// ALLOW: fixing the warning will break the file format
-#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Deserialize, Serialize)]
 pub(crate) enum MoreMembers {
-    V3(Mmv3),
+    V4(Mmv4),
 }
 
 bitflags! {
@@ -143,6 +129,7 @@ pub struct Grid {
     pub(crate) more_members: MoreMembers,
     pub(crate) kinematics: Vec<Kinematics>,
     pub(crate) interps: Vec<Interp>,
+    pub(crate) remapper: Option<BinRemapper>,
 }
 
 impl Grid {
@@ -186,13 +173,14 @@ impl Grid {
             orders,
             bin_limits: BinLimits::new(bin_limits),
             metadata: default_metadata(),
-            more_members: MoreMembers::V3(Mmv3::new(LagrangeSubgridV2::new(&interps).into())),
+            more_members: MoreMembers::V4(Mmv4),
             convolutions,
             // TODO: make this a new parameter
             pid_basis: PidBasis::Pdg,
             channels,
             interps,
             kinematics,
+            remapper: None,
         }
     }
 
@@ -213,8 +201,8 @@ impl Grid {
         interps: Vec<Interp>,
         subgrid_type: &str,
     ) -> Result<Self, GridError> {
-        let subgrid_template: SubgridEnum = match subgrid_type {
-            "LagrangeSubgrid" | "LagrangeSubgridV2" => LagrangeSubgridV2::new(&interps).into(),
+        match subgrid_type {
+            "LagrangeSubgrid" | "LagrangeSubgridV2" => {}
             _ => return Err(GridError::UnknownSubgridType(subgrid_type.to_owned())),
         };
 
@@ -229,9 +217,10 @@ impl Grid {
             convolutions: vec![Convolution::UnpolPDF(2212); channels[0].entry()[0].0.len()],
             pid_basis: PidBasis::Pdg,
             channels,
-            more_members: MoreMembers::V3(Mmv3::new(subgrid_template)),
+            more_members: MoreMembers::V4(Mmv4),
             interps,
             kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            remapper: None,
         })
     }
 
@@ -427,8 +416,7 @@ impl Grid {
         if let Some(bin) = self.bin_limits.index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
-                let MoreMembers::V3(mmv3) = &self.more_members;
-                *subgrid = mmv3.subgrid_template.clone_empty();
+                *subgrid = LagrangeSubgridV2::new(&self.interps).into();
             }
 
             subgrid.fill(ntuple, weight);
@@ -841,9 +829,7 @@ impl Grid {
             });
         }
 
-        match &mut self.more_members {
-            MoreMembers::V3(mmv3) => mmv3.remapper = Some(remapper),
-        }
+        self.remapper = Some(remapper);
 
         Ok(())
     }
@@ -851,15 +837,11 @@ impl Grid {
     /// Return the currently set remapper, if there is any.
     #[must_use]
     pub const fn remapper(&self) -> Option<&BinRemapper> {
-        match &self.more_members {
-            MoreMembers::V3(mmv3) => mmv3.remapper.as_ref(),
-        }
+        self.remapper.as_ref()
     }
 
     fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
-        match &mut self.more_members {
-            MoreMembers::V3(mmv3) => mmv3.remapper.as_mut(),
-        }
+        self.remapper.as_mut()
     }
 
     /// Returns all information about the bins in this grid.
@@ -1271,6 +1253,7 @@ impl Grid {
                 pid_basis: info.pid_basis,
                 more_members: self.more_members.clone(),
                 kinematics: self.kinematics.clone(),
+                remapper: self.remapper.clone(),
             };
 
             if let Some(lhs) = &mut lhs {
@@ -1434,6 +1417,7 @@ impl Grid {
                 pid_basis: infos[0].pid_basis,
                 more_members: self.more_members.clone(),
                 kinematics: self.kinematics.clone(),
+                remapper: self.remapper.clone(),
             };
 
             assert_eq!(infos[0].pid_basis, infos[1].pid_basis);

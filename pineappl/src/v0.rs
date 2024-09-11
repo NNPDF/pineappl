@@ -2,7 +2,7 @@ use super::bin::{BinLimits, BinRemapper};
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::Convolution;
 use super::empty_subgrid::EmptySubgridV1;
-use super::grid::{Grid, GridError, Mmv3, MoreMembers};
+use super::grid::{Grid, GridError, Mmv4, MoreMembers};
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
@@ -128,15 +128,11 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                     _ => panic!("unknown PID basis '{lumi_id_types}'"),
                 }
             }),
-        // TODO: make these proper members
-        more_members: MoreMembers::V3(Mmv3 {
-            remapper: grid.remapper().map(|r| {
-                // UNWRAP: if the old grid could be constructed with the given normalizations
-                // and limits we should be able to do the same without error
-                BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
-            }),
-            // TODO: remove this member
-            subgrid_template: EmptySubgridV1.into(),
+        more_members: MoreMembers::V4(Mmv4),
+        remapper: grid.remapper().map(|r| {
+            // UNWRAP: if the old grid could be constructed with the given normalizations
+            // and limits we should be able to do the same without error
+            BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
         }),
         kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
         interps: default_interps(),
