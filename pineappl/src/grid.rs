@@ -105,14 +105,6 @@ pub(crate) enum MoreMembers {
     V3(Mmv3),
 }
 
-impl MoreMembers {
-    fn upgrade(&mut self) {
-        match self {
-            Self::V3(_) => {}
-        }
-    }
-}
-
 bitflags! {
     /// Bitflags for optimizing a [`Grid`]. See [`Grid::optimize_using`].
     #[derive(Clone, Copy)]
@@ -849,8 +841,6 @@ impl Grid {
             });
         }
 
-        self.more_members.upgrade();
-
         match &mut self.more_members {
             MoreMembers::V3(mmv3) => mmv3.remapper = Some(remapper),
         }
@@ -1091,9 +1081,7 @@ impl Grid {
     }
 
     /// Upgrades the internal data structures to their latest versions.
-    pub fn upgrade(&mut self) {
-        self.more_members.upgrade();
-    }
+    pub fn upgrade(&mut self) {}
 
     /// Return the metadata of this grid.
     #[must_use]
