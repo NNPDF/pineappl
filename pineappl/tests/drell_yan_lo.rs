@@ -8,6 +8,7 @@ use pineappl::channel;
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -216,6 +217,8 @@ fn fill_drell_yan_lo_grid(
 
     // create the PineAPPL grid
     let mut grid = Grid::new(
+        // the integers in the channel definition are PDG Monte Carlo IDs
+        PidBasis::Pdg,
         channels,
         orders,
         bin_limits,

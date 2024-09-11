@@ -8,6 +8,7 @@ use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::Mu2;
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
@@ -115,6 +116,7 @@ fn convert_coeff_add_fix(
         .collect();
 
     let mut grid = Grid::new(
+        PidBasis::Pdg,
         reconstruct_channels(table_as_add_base, comb, dis_pid),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
@@ -300,6 +302,7 @@ fn convert_coeff_add_flex(
         .collect();
 
     let mut grid = Grid::new(
+        PidBasis::Pdg,
         reconstruct_channels(table_as_add_base, comb, dis_pid),
         orders,
         (0..=bins)

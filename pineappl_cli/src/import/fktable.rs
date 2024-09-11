@@ -78,7 +78,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                 nx2 = if hadronic { nx1 } else { 1 };
 
-                // FK tables are always in the flavor basis
+                // TODO: are FK tables always in the evolution basis?
                 let basis = [
                     22, 100, 21, 200, 203, 208, 215, 224, 235, 103, 108, 115, 124, 135,
                 ];
@@ -99,7 +99,8 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                 };
 
                 // construct `Grid`
-                let mut fktable = Grid::new(
+                let fktable = Grid::new(
+                    PidBasis::Evol,
                     lumis,
                     vec![Order::new(0, 0, 0, 0, 0)],
                     (0..=ndata).map(Into::into).collect(),
@@ -145,9 +146,6 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                     // TODO: change kinematics for DIS
                     vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
                 );
-
-                // explicitly set the evolution basis
-                *fktable.pid_basis_mut() = PidBasis::Evol;
 
                 grid = Some(fktable);
 

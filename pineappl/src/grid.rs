@@ -141,6 +141,7 @@ impl Grid {
     /// `interps` and `kinematics` have different lengths.
     #[must_use]
     pub fn new(
+        pid_basis: PidBasis,
         channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
@@ -175,8 +176,7 @@ impl Grid {
             metadata: default_metadata(),
             more_members: MoreMembers::V4(Mmv4),
             convolutions,
-            // TODO: make this a new parameter
-            pid_basis: PidBasis::Pdg,
+            pid_basis,
             channels,
             interps,
             kinematics,
@@ -1643,6 +1643,7 @@ mod tests {
         let channel = vec![(vec![1, -1, 1], 1.0), (vec![2, -2, 2], 1.0)];
 
         let _ = Grid::new(
+            PidBasis::Pdg,
             vec![Channel::new(channel)],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 1.0],
@@ -1655,6 +1656,7 @@ mod tests {
     #[test]
     fn grid_merge_empty_subgrids() {
         let mut grid = Grid::new(
+            PidBasis::Pdg,
             vec![
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1671,6 +1673,7 @@ mod tests {
         assert_eq!(grid.orders().len(), 1);
 
         let other = Grid::new(
+            PidBasis::Pdg,
             vec![
                 // differently ordered than `grid`
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1694,6 +1697,7 @@ mod tests {
     #[test]
     fn grid_merge_orders() {
         let mut grid = Grid::new(
+            PidBasis::Pdg,
             vec![
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1710,6 +1714,7 @@ mod tests {
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
+            PidBasis::Pdg,
             vec![
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1741,6 +1746,7 @@ mod tests {
     #[test]
     fn grid_merge_channels_entries() {
         let mut grid = Grid::new(
+            PidBasis::Pdg,
             vec![
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1757,6 +1763,7 @@ mod tests {
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
+            PidBasis::Pdg,
             vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1778,6 +1785,7 @@ mod tests {
     #[test]
     fn grid_merge_bins() {
         let mut grid = Grid::new(
+            PidBasis::Pdg,
             vec![
                 channel![2, 2, 1.0; 4, 4, 1.0],
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1794,6 +1802,7 @@ mod tests {
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
+            PidBasis::Pdg,
             vec![
                 // channels are differently sorted
                 channel![1, 1, 1.0; 3, 3, 1.0],
@@ -1821,6 +1830,7 @@ mod tests {
     #[test]
     fn grid_convolutions() {
         let mut grid = Grid::new(
+            PidBasis::Pdg,
             vec![channel![21, 21, 1.0]],
             vec![Order {
                 alphas: 0,

@@ -61,6 +61,7 @@ use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -746,6 +747,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
     }
 
     Box::new(Grid::new(
+        PidBasis::Pdg,
         lumi.0.clone(),
         orders,
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),

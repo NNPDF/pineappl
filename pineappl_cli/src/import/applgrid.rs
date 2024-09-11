@@ -6,6 +6,7 @@ use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::Mu2;
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
@@ -134,6 +135,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
         let channels = reconstruct_channels(&grid, i.try_into().unwrap(), dis_pid);
         let lumis_len = channels.len();
         let mut pgrid = Grid::new(
+            PidBasis::Pdg,
             channels,
             vec![order],
             bin_limits.clone(),
