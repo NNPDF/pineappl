@@ -30,8 +30,13 @@ impl LagrangeSubgridV2 {
 }
 
 impl Subgrid for LagrangeSubgridV2 {
-    fn fill(&mut self, ntuple: &[f64], weight: f64) {
-        if interpolation::interpolate(&self.interps, &ntuple, weight, &mut self.grid) {
+    fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64) {
+        debug_assert_eq!(interps.len(), ntuple.len());
+
+        // TODO: lift the restriction to exactly three kinematics variables
+        debug_assert_eq!(interps.len(), 3);
+
+        if interpolation::interpolate(interps, &ntuple, weight, &mut self.grid) {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;
@@ -148,9 +153,10 @@ mod tests {
 
     #[test]
     fn fill_zero() {
-        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
+        let interps = v0::default_interps();
+        let mut subgrid = LagrangeSubgridV2::new(&interps);
 
-        subgrid.fill(&[1000.0, 0.5, 0.5], 0.0);
+        subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 0.0);
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
@@ -168,9 +174,10 @@ mod tests {
 
     #[test]
     fn fill_outside_range() {
-        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
+        let interps = v0::default_interps();
+        let mut subgrid = LagrangeSubgridV2::new(&interps);
 
-        subgrid.fill(&[1000.0, 1e-10, 0.5], 0.0);
+        subgrid.fill(&interps, &[1000.0, 1e-10, 0.5], 0.0);
 
         assert!(subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 0);
@@ -188,9 +195,10 @@ mod tests {
 
     #[test]
     fn fill() {
-        let mut subgrid = LagrangeSubgridV2::new(&v0::default_interps());
+        let interps = v0::default_interps();
+        let mut subgrid = LagrangeSubgridV2::new(&interps);
 
-        subgrid.fill(&[1000.0, 0.5, 0.5], 1.0);
+        subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 1.0);
 
         assert!(!subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 4 * 4 * 4);
@@ -213,7 +221,7 @@ mod tests {
             }
         );
 
-        subgrid.fill(&[1000000.0, 0.5, 0.5], 1.0);
+        subgrid.fill(&interps, &[1000000.0, 0.5, 0.5], 1.0);
 
         assert!(!subgrid.is_empty());
         assert_eq!(subgrid.indexed_iter().count(), 2 * 4 * 4 * 4);

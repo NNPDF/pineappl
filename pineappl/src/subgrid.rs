@@ -5,6 +5,7 @@ use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
 // use ndarray::Array3;
+use super::interpolation::Interp;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -68,9 +69,10 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
-    /// Fills the subgrid with `weight` and the kinematic information in `ntuple` according to the
-    /// same ordering given by `kinematics` in [`Grid::new`] that was used to create the grid.
-    fn fill(&mut self, ntuple: &[f64], weight: f64);
+    /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
+    /// kinematic information in `ntuple`. The parameter `ntuple` assumes the same ordering given
+    /// by `kinematics` in [`Grid::new`] that was used to create the grid.
+    fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64);
 
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;

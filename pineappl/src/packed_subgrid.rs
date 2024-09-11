@@ -1,5 +1,6 @@
 //! TODO
 
+use super::interpolation::Interp;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
@@ -39,7 +40,7 @@ impl PackedQ1X2SubgridV1 {
 }
 
 impl Subgrid for PackedQ1X2SubgridV1 {
-    fn fill(&mut self, _: &[f64], _: f64) {
+    fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
         panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
     }
 
@@ -247,6 +248,7 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::v0;
 
     #[test]
     #[should_panic(expected = "PackedQ1X2SubgridV1 doesn't support the fill operation")]
@@ -257,7 +259,7 @@ mod tests {
             Vec::new(),
             Vec::new(),
         );
-        subgrid.fill(&[0.0; 3], 0.0);
+        subgrid.fill(&v0::default_interps(), &[0.0; 3], 0.0);
     }
 
     #[test]

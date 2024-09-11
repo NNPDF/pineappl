@@ -1,5 +1,6 @@
 //! TODO
 
+use super::interpolation::Interp;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -10,7 +11,7 @@ use std::iter;
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
-    fn fill(&mut self, _: &[f64], _: f64) {
+    fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
 
@@ -67,6 +68,7 @@ impl Subgrid for EmptySubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::v0;
 
     #[test]
     fn create_empty() {
@@ -93,7 +95,7 @@ mod tests {
     #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
         let mut subgrid = EmptySubgridV1;
-        subgrid.fill(&[0.0; 4], 0.0);
+        subgrid.fill(&v0::default_interps(), &[0.0; 3], 0.0);
     }
 
     #[test]

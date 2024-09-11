@@ -381,7 +381,7 @@ impl Grid {
                 *subgrid = LagrangeSubgridV2::new(&self.interps).into();
             }
 
-            subgrid.fill(ntuple, weight);
+            subgrid.fill(&self.interps, ntuple, weight);
         }
     }
 
