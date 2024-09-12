@@ -44,3 +44,8 @@ unsafe-op-in-unsafe-fn = "deny"
 codegen-units = 1
 lto = true
 strip = "debuginfo"
+
+[profile.test-opt]
+inherits = "test"
+opt-level = 1
+debug = false
