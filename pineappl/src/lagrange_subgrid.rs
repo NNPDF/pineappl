@@ -90,18 +90,19 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn symmetrize(&mut self) {
-        let mut new_array = PackedArray::new([
-            self.mu2_grid().len(),
-            self.x1_grid().len(),
-            self.x2_grid().len(),
-        ]);
+        let mut new_array = PackedArray::new(
+            <[usize; 3]>::try_from(self.array.shape())
+                // UNWRAP: this must succeed since the array is 3-dimensional
+                .unwrap(),
+        );
 
-        for ([i, j, k], sigma) in self.array.indexed_iter().filter(|([_, j, k], _)| k >= j) {
-            new_array[[i, j, k]] = sigma;
-        }
-        // do not change the diagonal entries (k==j)
-        for ([i, j, k], sigma) in self.array.indexed_iter().filter(|([_, j, k], _)| k < j) {
-            new_array[[i, k, j]] += sigma;
+        for (mut index, sigma) in self.array.indexed_iter() {
+            // TODO: why not the other way around?
+            if index[2] < index[1] {
+                index.swap(1, 2);
+            }
+
+            new_array[index] += sigma;
         }
 
         self.array = new_array;
@@ -125,7 +126,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
     fn stats(&self) -> Stats {
         Stats {
-            total: self.mu2_grid().len() * self.x1_grid().len() * self.x2_grid().len(),
+            total: self.array.shape().iter().product(),
             allocated: self.array.non_zeros() + self.array.explicit_zeros(),
             zeros: self.array.explicit_zeros(),
             overhead: self.array.overhead(),
