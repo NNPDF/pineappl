@@ -156,16 +156,6 @@ impl Subgrid for PackedQ1X2SubgridV1 {
         mem::swap(&mut self.array, &mut new_array);
     }
 
-    fn clone_empty(&self) -> SubgridEnum {
-        Self {
-            array: PackedArray::new([self.mu2_grid.len(), self.x1_grid.len(), self.x2_grid.len()]),
-            mu2_grid: self.mu2_grid.clone(),
-            x1_grid: self.x1_grid.clone(),
-            x2_grid: self.x2_grid.clone(),
-        }
-        .into()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(
             self.array
@@ -326,12 +316,6 @@ mod tests {
         assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
 
         grid1.merge(&mut grid2, false);
-
-        let mut grid1 = {
-            let mut g = grid1.clone_empty();
-            g.merge(&mut grid1, false);
-            g
-        };
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged

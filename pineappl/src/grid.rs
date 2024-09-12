@@ -931,11 +931,11 @@ impl Grid {
                         rhs.scale(1.0 / factor);
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
-                            *lhs = rhs.clone_empty();
+                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
+                        } else {
+                            lhs.merge(rhs, false);
+                            *rhs = EmptySubgridV1.into();
                         }
-                        lhs.merge(rhs, false);
-
-                        *rhs = EmptySubgridV1.into();
                     }
                 }
             }
@@ -1013,11 +1013,13 @@ impl Grid {
                     if !rhs.is_empty() {
                         if lhs.is_empty() {
                             // we can't merge into an EmptySubgridV1
-                            *lhs = rhs.clone_empty();
+                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
+                            // transpose `lhs`
+                            todo!();
+                        } else {
+                            lhs.merge(rhs, true);
+                            *rhs = EmptySubgridV1.into();
                         }
-
-                        lhs.merge(rhs, true);
-                        *rhs = EmptySubgridV1.into();
                     }
                 }
             }

@@ -42,10 +42,6 @@ impl Subgrid for EmptySubgridV1 {
 
     fn symmetrize(&mut self) {}
 
-    fn clone_empty(&self) -> SubgridEnum {
-        Self.into()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(iter::empty())
     }
@@ -77,7 +73,6 @@ mod tests {
         subgrid.merge(&mut EmptySubgridV1.into(), false);
         subgrid.scale(2.0);
         subgrid.symmetrize();
-        assert!(subgrid.clone_empty().is_empty());
         assert_eq!(
             subgrid.stats(),
             Stats {

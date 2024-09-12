@@ -87,9 +87,6 @@ pub trait Subgrid {
     /// grid by getting rid of almost half of the entries.
     fn symmetrize(&mut self);
 
-    /// Returns an empty copy of the current subgrid.
-    fn clone_empty(&self) -> SubgridEnum;
-
     /// Return an iterator over all non-zero elements of the subgrid.
     fn indexed_iter(&self) -> SubgridIndexedIter;
 

@@ -107,10 +107,6 @@ impl Subgrid for LagrangeSubgridV2 {
         self.grid = new_array;
     }
 
-    fn clone_empty(&self) -> SubgridEnum {
-        self.clone().into()
-    }
-
     fn indexed_iter(&self) -> SubgridIndexedIter {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
