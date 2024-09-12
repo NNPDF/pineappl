@@ -11,7 +11,7 @@ use std::mem;
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
-    grid: PackedArray<f64, 3>,
+    array: PackedArray<f64, 3>,
     interps: Vec<Interp>,
     pub(crate) static_q2: f64,
 }
@@ -22,7 +22,7 @@ impl LagrangeSubgridV2 {
     pub fn new(interps: &[Interp]) -> Self {
         debug_assert_eq!(interps.len(), 3);
         Self {
-            grid: PackedArray::new([interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
+            array: PackedArray::new([interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
             interps: interps.to_vec(),
             static_q2: 0.0,
         }
@@ -36,7 +36,7 @@ impl Subgrid for LagrangeSubgridV2 {
         // TODO: lift the restriction to exactly three kinematics variables
         debug_assert_eq!(interps.len(), 3);
 
-        if interpolation::interpolate(interps, &ntuple, weight, &mut self.grid) {
+        if interpolation::interpolate(interps, &ntuple, weight, &mut self.array) {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;
@@ -67,18 +67,18 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn is_empty(&self) -> bool {
-        self.grid.is_empty()
+        self.array.is_empty()
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::LagrangeSubgridV2(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
-            for (mut index, value) in other.grid.indexed_iter() {
+            for (mut index, value) in other.array.indexed_iter() {
                 if transpose {
                     index.swap(1, 2);
                 }
-                self.grid[index] += value;
+                self.array[index] += value;
             }
         } else {
             unimplemented!();
@@ -86,7 +86,7 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn scale(&mut self, factor: f64) {
-        self.grid *= factor;
+        self.array *= factor;
     }
 
     fn symmetrize(&mut self) {
@@ -96,21 +96,21 @@ impl Subgrid for LagrangeSubgridV2 {
             self.x2_grid().len(),
         ]);
 
-        for ([i, j, k], sigma) in self.grid.indexed_iter().filter(|([_, j, k], _)| k >= j) {
+        for ([i, j, k], sigma) in self.array.indexed_iter().filter(|([_, j, k], _)| k >= j) {
             new_array[[i, j, k]] = sigma;
         }
         // do not change the diagonal entries (k==j)
-        for ([i, j, k], sigma) in self.grid.indexed_iter().filter(|([_, j, k], _)| k < j) {
+        for ([i, j, k], sigma) in self.array.indexed_iter().filter(|([_, j, k], _)| k < j) {
             new_array[[i, k, j]] += sigma;
         }
 
-        self.grid = new_array;
+        self.array = new_array;
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
-        Box::new(self.grid.indexed_iter().map(move |(index, v)| {
+        Box::new(self.array.indexed_iter().map(move |(index, v)| {
             (
                 (index[0], index[1], index[2]),
                 v * self
@@ -126,9 +126,9 @@ impl Subgrid for LagrangeSubgridV2 {
     fn stats(&self) -> Stats {
         Stats {
             total: self.mu2_grid().len() * self.x1_grid().len() * self.x2_grid().len(),
-            allocated: self.grid.non_zeros() + self.grid.explicit_zeros(),
-            zeros: self.grid.explicit_zeros(),
-            overhead: self.grid.overhead(),
+            allocated: self.array.non_zeros() + self.array.explicit_zeros(),
+            zeros: self.array.explicit_zeros(),
+            overhead: self.array.overhead(),
             bytes_per_value: mem::size_of::<f64>(),
         }
     }
