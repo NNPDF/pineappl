@@ -55,7 +55,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+    fn merge(&mut self, other: &SubgridEnum, transpose: bool) {
         let rhs_mu2 = other.mu2_grid().into_owned();
         let rhs_x1 = if transpose {
             other.x2_grid()

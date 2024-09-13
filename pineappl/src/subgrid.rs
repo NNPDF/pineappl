@@ -78,7 +78,7 @@ pub trait Subgrid {
     fn is_empty(&self) -> bool;
 
     /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool);
+    fn merge(&mut self, other: &SubgridEnum, transpose: bool);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);

@@ -70,7 +70,7 @@ impl Subgrid for LagrangeSubgridV2 {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
+    fn merge(&mut self, other: &SubgridEnum, transpose: bool) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::LagrangeSubgridV2(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
