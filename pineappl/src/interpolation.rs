@@ -459,12 +459,12 @@ mod tests {
             assert_approx_eq!(f64, node, ref_node, ulps = 4);
         }
 
-        let mut array = crate::packed_array::PackedArray::<f64, 3>::new([40, 50, 50]);
+        let mut array = crate::packed_array::PackedArray::<f64>::new(&[40, 50, 50]);
         let ntuples = [[100000.0, 0.25, 0.5], [1000.0, 0.5, 0.5]];
         let weight = 1.0;
 
         for ntuple in &ntuples {
-            interpolate(&interps, ntuple, weight, &mut array);
+            interpolate::<3>(&interps, ntuple, weight, &mut array);
         }
 
         let reference = [
@@ -635,18 +635,18 @@ mod tests {
                 InterpMeth::Lagrange,
             ),
         ];
-        let mut array = crate::packed_array::PackedArray::<f64, 3>::new([40, 50, 50]);
+        let mut array = crate::packed_array::PackedArray::<f64>::new(&[40, 50, 50]);
 
         let ntuple = [1000.0, 0.5, 0.5];
         let weight = 0.0;
-        interpolate(&interps, &ntuple, weight, &mut array);
+        interpolate::<3>(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
 
         let ntuple = [10.0, 0.5, 0.5];
         let weight = 1.0;
-        interpolate(&interps, &ntuple, weight, &mut array);
+        interpolate::<3>(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
@@ -665,11 +665,11 @@ mod tests {
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         )];
-        let mut array = crate::packed_array::PackedArray::<f64, 1>::new([1]);
+        let mut array = crate::packed_array::PackedArray::<f64>::new(&[1]);
 
         let ntuple = [90.0_f64.powi(2)];
         let weight = 1.0;
-        interpolate(&interps, &ntuple, weight, &mut array);
+        interpolate::<1>(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array[[0]], 1.0);
 

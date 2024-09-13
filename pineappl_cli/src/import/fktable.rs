@@ -149,7 +149,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(PackedArray::new([1, nx1, nx2]))
+                arrays = iter::repeat(PackedArray::new(&[1, nx1, nx2]))
                     .take(flavor_mask.iter().filter(|&&value| value).count())
                     .collect();
             }
@@ -225,7 +225,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                             .into();
                         }
 
-                        arrays = iter::repeat(PackedArray::new([1, nx1, nx2]))
+                        arrays = iter::repeat(PackedArray::new(&[1, nx1, nx2]))
                             .take(flavor_mask.iter().filter(|&&value| value).count())
                             .collect();
                         last_bin = bin;

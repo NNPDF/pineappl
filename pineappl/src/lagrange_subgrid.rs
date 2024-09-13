@@ -11,7 +11,7 @@ use std::mem;
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct LagrangeSubgridV2 {
-    array: PackedArray<f64, 3>,
+    array: PackedArray<f64>,
     interps: Vec<Interp>,
     pub(crate) static_q2: f64,
 }
@@ -22,7 +22,7 @@ impl LagrangeSubgridV2 {
     pub fn new(interps: &[Interp]) -> Self {
         debug_assert_eq!(interps.len(), 3);
         Self {
-            array: PackedArray::new([interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
+            array: PackedArray::new(&[interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
             interps: interps.to_vec(),
             static_q2: 0.0,
         }
@@ -36,7 +36,7 @@ impl Subgrid for LagrangeSubgridV2 {
         // TODO: lift the restriction to exactly three kinematics variables
         debug_assert_eq!(interps.len(), 3);
 
-        if interpolation::interpolate(interps, &ntuple, weight, &mut self.array) {
+        if interpolation::interpolate::<3>(interps, &ntuple, weight, &mut self.array) {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;
@@ -74,7 +74,7 @@ impl Subgrid for LagrangeSubgridV2 {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::LagrangeSubgridV2(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
-            for (mut index, value) in other.array.indexed_iter() {
+            for (mut index, value) in other.array.indexed_iter::<3>() {
                 if transpose {
                     index.swap(1, 2);
                 }
@@ -90,13 +90,9 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn symmetrize(&mut self) {
-        let mut new_array = PackedArray::new(
-            <[usize; 3]>::try_from(self.array.shape())
-                // UNWRAP: this must succeed since the array is 3-dimensional
-                .unwrap(),
-        );
+        let mut new_array = PackedArray::new(self.array.shape());
 
-        for (mut index, sigma) in self.array.indexed_iter() {
+        for (mut index, sigma) in self.array.indexed_iter::<3>() {
             // TODO: why not the other way around?
             if index[2] < index[1] {
                 index.swap(1, 2);
@@ -111,7 +107,7 @@ impl Subgrid for LagrangeSubgridV2 {
     fn indexed_iter(&self) -> SubgridIndexedIter {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
-        Box::new(self.array.indexed_iter().map(move |(index, v)| {
+        Box::new(self.array.indexed_iter::<3>().map(move |(index, v)| {
             (
                 (index[0], index[1], index[2]),
                 v * self

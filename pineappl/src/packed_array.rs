@@ -10,7 +10,7 @@ use std::ops::{Index, IndexMut, MulAssign};
 /// stored to save space. Instead, adjacent non-default elements are grouped together and the index
 /// of their first element (`start_index`) and the length of the group (`lengths`) is stored.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct PackedArray<T, const D: usize> {
+pub struct PackedArray<T> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the
     /// elements in `lengths`.
     entries: Vec<T>,
@@ -23,10 +23,10 @@ pub struct PackedArray<T, const D: usize> {
     shape: Vec<usize>,
 }
 
-impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
+impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
-    pub fn new(shape: [usize; D]) -> Self {
+    pub fn new(shape: &[usize]) -> Self {
         Self {
             entries: vec![],
             start_indices: vec![],
@@ -80,7 +80,9 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
     /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of
     /// an iterator element is `([usize; D], T)` where the first element of the tuple is the index
     /// and the second element is the value.
-    pub fn indexed_iter(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
+    pub fn indexed_iter<const D: usize>(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
+        assert_eq!(self.shape.len(), D);
+
         self.start_indices
             .iter()
             .zip(&self.lengths)
@@ -93,19 +95,19 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
     }
 }
 
-impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> {
+impl<T: Copy + MulAssign<T>> MulAssign<T> for PackedArray<T> {
     fn mul_assign(&mut self, rhs: T) {
         self.entries.iter_mut().for_each(|x| *x *= rhs);
     }
 }
 
-impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
-    /// Converts `array` into a `PackedArray<T, 3>`.
+impl<T: Copy + Default + PartialEq> PackedArray<T> {
+    /// Converts `array` into a `PackedArray<T>`.
     #[must_use]
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
 
-        let mut result = Self::new([xsize, shape[1], shape[2]]);
+        let mut result = Self::new(&[xsize, shape[1], shape[2]]);
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
@@ -144,7 +146,7 @@ pub fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usiz
     indices
 }
 
-impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for PackedArray<T, D> {
+impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for PackedArray<T> {
     type Output = T;
 
     fn index(&self, index: [usize; D]) -> &Self::Output {
@@ -180,7 +182,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
 }
 
 impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
-    for PackedArray<T, D>
+    for PackedArray<T>
 {
     fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
         assert_eq!(index.len(), self.shape.len());
@@ -325,7 +327,7 @@ mod tests {
 
     #[test]
     fn index() {
-        let mut a = PackedArray::new([4, 2]);
+        let mut a = PackedArray::new(&[4, 2]);
 
         a[[0, 0]] = 1;
         assert_eq!(a[[0, 0]], 1);
@@ -379,7 +381,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut a = PackedArray::new([6, 5]);
+        let mut a = PackedArray::new(&[6, 5]);
         a[[2, 2]] = 1;
         a[[2, 4]] = 2;
         a[[4, 1]] = 3;
@@ -399,7 +401,7 @@ mod tests {
 
     #[test]
     fn index_access() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         // after creation the array must be empty
         assert_eq!(array.overhead(), 0);
@@ -544,7 +546,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [40, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[40, 0, 50]] = 1.0;
     }
@@ -552,7 +554,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[0, 50, 0]] = 1.0;
     }
@@ -560,7 +562,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim2() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[0, 0, 50]] = 1.0;
     }
@@ -568,7 +570,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -578,7 +580,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [2, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -588,7 +590,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [1, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_panic_dim1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -598,7 +600,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim2_0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
@@ -608,7 +610,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 2] is implicitly set to the default value")]
     fn index_panic_dim2_1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
@@ -617,13 +619,13 @@ mod tests {
 
     #[test]
     fn indexed_iter() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         // check shape
         assert_eq!(array.shape(), [40, 50, 50]);
 
         // check empty iterator
-        assert_eq!(array.indexed_iter().next(), None);
+        assert_eq!(array.indexed_iter::<3>().next(), None);
 
         // insert an element
         array[[2, 3, 4]] = 1;
@@ -673,7 +675,7 @@ mod tests {
 
     #[test]
     fn clear() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(&[40, 50, 50]);
 
         array[[3, 5, 1]] = 1;
         array[[7, 8, 9]] = 2;

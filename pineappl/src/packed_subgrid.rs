@@ -10,7 +10,7 @@ use std::mem;
 /// TODO
 #[derive(Clone, Deserialize, Serialize)]
 pub struct PackedQ1X2SubgridV1 {
-    array: PackedArray<f64, 3>,
+    array: PackedArray<f64>,
     mu2_grid: Vec<Mu2>,
     x1_grid: Vec<f64>,
     x2_grid: Vec<f64>,
@@ -20,7 +20,7 @@ impl PackedQ1X2SubgridV1 {
     /// Constructor.
     #[must_use]
     pub const fn new(
-        array: PackedArray<f64, 3>,
+        array: PackedArray<f64>,
         mu2_grid: Vec<Mu2>,
         x1_grid: Vec<f64>,
         x2_grid: Vec<f64>,
@@ -83,7 +83,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
             x2_grid.dedup();
 
-            let mut array = PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+            let mut array = PackedArray::new(&[mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
 
             for ([i, j, k], value) in self.array.indexed_iter() {
                 let target_i = mu2_grid
@@ -135,13 +135,9 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn symmetrize(&mut self) {
-        let mut new_array = PackedArray::new(
-            <[usize; 3]>::try_from(self.array.shape())
-                // UNWRAP: this must succeed since the array is 3-dimensional
-                .unwrap(),
-        );
+        let mut new_array = PackedArray::new(self.array.shape());
 
-        for (mut index, sigma) in self.array.indexed_iter() {
+        for (mut index, sigma) in self.array.indexed_iter::<3>() {
             // TODO: why not the other way around?
             if index[2] < index[1] {
                 index.swap(1, 2);
@@ -205,7 +201,7 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
         let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
         let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();
 
-        let mut array = PackedArray::new([mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+        let mut array = PackedArray::new(&[mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
 
         for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
             // if there's a static scale we want every value to be added to same grid point
@@ -236,7 +232,7 @@ mod tests {
     #[should_panic(expected = "PackedQ1X2SubgridV1 doesn't support the fill operation")]
     fn fill_packed_q1x2_subgrid_v1() {
         let mut subgrid = PackedQ1X2SubgridV1::new(
-            PackedArray::new([0, 0, 0]),
+            PackedArray::new(&[0, 0, 0]),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -250,7 +246,7 @@ mod tests {
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
         ];
         let mut grid1: SubgridEnum = PackedQ1X2SubgridV1::new(
-            PackedArray::new([1, 10, 10]),
+            PackedArray::new(&[1, 10, 10]),
             vec![Mu2 {
                 ren: 0.0,
                 fac: 0.0,
@@ -290,7 +286,7 @@ mod tests {
 
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
-            PackedArray::new([1, 10, 10]),
+            PackedArray::new(&[1, 10, 10]),
             vec![Mu2 {
                 ren: 1.0,
                 fac: 1.0,
