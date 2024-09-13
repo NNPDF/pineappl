@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::mem;
 
 /// TODO
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct PackedQ1X2SubgridV1 {
     array: PackedArray<f64, 3>,
     mu2_grid: Vec<Mu2>,
@@ -56,13 +56,6 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
-        if self.is_empty() && !transpose {
-            if let SubgridEnum::PackedQ1X2SubgridV1(other) = other {
-                *self = mem::take(other);
-                return;
-            }
-        }
-
         let rhs_mu2 = other.mu2_grid().into_owned();
         let rhs_x1 = if transpose {
             other.x2_grid()
