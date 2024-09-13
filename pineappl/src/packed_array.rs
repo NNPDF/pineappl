@@ -77,6 +77,17 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
+    /// TODO
+    pub fn indexed_iter2(&self) -> impl Iterator<Item = (usize, T)> + '_ {
+        self.start_indices
+            .iter()
+            .zip(&self.lengths)
+            .flat_map(|(&start_index, &length)| start_index..(start_index + length))
+            .zip(&self.entries)
+            .filter(|&(_, entry)| *entry != Default::default())
+            .map(|(indices, entry)| (indices, *entry))
+    }
+
     /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of
     /// an iterator element is `([usize; D], T)` where the first element of the tuple is the index
     /// and the second element is the value.
@@ -121,7 +132,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 }
 
 /// Converts a `multi_index` into a flat index.
-fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) -> usize {
+fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
     assert_eq!(multi_index.len(), shape.len());
 
     multi_index
@@ -150,6 +161,14 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
     type Output = T;
 
     fn index(&self, index: [usize; D]) -> &Self::Output {
+        &self[index.as_slice()]
+    }
+}
+
+impl<T: Copy + Default + PartialEq> Index<&[usize]> for PackedArray<T> {
+    type Output = T;
+
+    fn index(&self, index: &[usize]) -> &Self::Output {
         assert_eq!(index.len(), self.shape.len());
         assert!(
             index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
@@ -181,10 +200,44 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
     }
 }
 
-impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
-    for PackedArray<T>
-{
-    fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
+impl<T: Copy + Default + PartialEq> Index<usize> for PackedArray<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        // assert_eq!(index.len(), self.shape.len());
+        // assert!(
+        //     index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
+        //     "index {:?} is out of bounds for array of shape {:?}",
+        //     index,
+        //     self.shape
+        // );
+
+        let raveled_index = index;
+        // let raveled_index = ravel_multi_index(&index, &self.shape);
+        let point = self.start_indices.partition_point(|&i| i <= raveled_index);
+
+        assert!(
+            point > 0,
+            "entry at index {index:?} is implicitly set to the default value"
+        );
+
+        let start_index = self.start_indices[point - 1];
+        let length = self.lengths[point - 1];
+
+        let point_entries =
+            self.lengths.iter().take(point - 1).sum::<usize>() + raveled_index - start_index;
+
+        assert!(
+            raveled_index < (start_index + length),
+            "entry at index {index:?} is implicitly set to the default value"
+        );
+
+        &self.entries[point_entries]
+    }
+}
+
+impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T> {
+    fn index_mut(&mut self, index: &[usize]) -> &mut Self::Output {
         assert_eq!(index.len(), self.shape.len());
 
         // Panic if the index value for any dimension is greater or equal than the length of this
@@ -296,6 +349,14 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
         self.entries.insert(point_entries, Default::default());
 
         &mut self.entries[point_entries]
+    }
+}
+
+impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
+    for PackedArray<T>
+{
+    fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
+        &mut self[index.as_slice()]
     }
 }
 

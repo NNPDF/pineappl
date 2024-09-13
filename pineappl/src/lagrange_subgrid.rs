@@ -20,9 +20,8 @@ impl LagrangeSubgridV2 {
     /// Constructor.
     #[must_use]
     pub fn new(interps: &[Interp]) -> Self {
-        debug_assert_eq!(interps.len(), 3);
         Self {
-            array: PackedArray::new(&[interps[0].nodes(), interps[1].nodes(), interps[2].nodes()]),
+            array: PackedArray::new(&interps.iter().map(Interp::nodes).collect::<Vec<_>>()),
             interps: interps.to_vec(),
             static_q2: 0.0,
         }

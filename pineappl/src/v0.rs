@@ -74,7 +74,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                         let mut array =
                             PackedArray::new(&[mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
                         for (index, v) in subgrid.indexed_iter() {
-                            array[index.into()] = v;
+                            array[<[usize; 3]>::from(index)] = v;
                         }
                         PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
                     }
