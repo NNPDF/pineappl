@@ -159,7 +159,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
 }
 
 /// Converts a `multi_index` into a flat index.
-pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
+fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
     assert_eq!(multi_index.len(), shape.len());
 
     multi_index
@@ -174,7 +174,7 @@ pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
 ///
 /// Panics when `index` is out of range.
 #[must_use]
-pub fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
+fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
     assert!(index < shape.iter().product());
     let mut indices = [0; D];
     for (i, d) in indices.iter_mut().zip(shape).rev() {
