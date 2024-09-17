@@ -295,7 +295,10 @@ fn ndarray_from_subgrid_orders_slice(
             })
             .collect::<Result<_, _>>()?;
 
-        for ((ifac1, ix1, ix2), value) in subgrid.indexed_iter() {
+        for (indices, value) in subgrid.indexed_iter() {
+            let &[ifac1, ix1, ix2] = indices.as_slice() else {
+                unimplemented!()
+            };
             let Mu2 { ren, fac, frg } = subgrid.mu2_grid()[ifac1];
 
             // TODO: implement evolution for non-zero fragmentation scales

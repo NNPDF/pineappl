@@ -301,7 +301,10 @@ pub fn convert_into_applgrid(
 
                 let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
 
-                for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
+                for (indices, value) in subgrid.indexed_iter() {
+                    let &[iq2, ix1, ix2] = indices.as_slice() else {
+                        unimplemented!()
+                    };
                     let appl_q2_idx = appl_q2_idx[iq2];
 
                     if appl_q2_idx == -1 {

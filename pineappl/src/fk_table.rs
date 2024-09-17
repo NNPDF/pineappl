@@ -178,8 +178,10 @@ impl FkTable {
                 vec![0]
             };
 
-            for ((_, ix1, ix2), value) in subgrid.indexed_iter() {
-                result[[bin, channel, indices1[ix1], indices2[ix2]]] = value;
+            for (index, value) in subgrid.indexed_iter() {
+                assert_eq!(index.len(), 3);
+                assert_eq!(index[0], 0);
+                result[[bin, channel, indices1[index[1]], indices2[index[2]]]] = value;
             }
         }
 

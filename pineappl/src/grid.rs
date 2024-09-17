@@ -16,7 +16,7 @@ use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
+use ndarray::{s, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -261,19 +261,20 @@ impl Grid {
 
                 let mut value = 0.0;
 
-                for ((imu2, ix1, ix2), v) in subgrid.indexed_iter() {
-                    let x1 = x1_grid[ix1];
-                    let x2 = x2_grid[ix2];
+                for (idx, v) in subgrid.indexed_iter() {
+                    assert_eq!(idx.len(), 3);
+                    let x1 = x1_grid[idx[1]];
+                    let x2 = x2_grid[idx[2]];
                     let mut lumi = 0.0;
 
                     for entry in channel.entry() {
                         debug_assert_eq!(entry.0.len(), 2);
-                        let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
-                        let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                        let xfx1 = lumi_cache.xfx1(entry.0[0], idx[1], idx[0]);
+                        let xfx2 = lumi_cache.xfx2(entry.0[1], idx[2], idx[0]);
                         lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
                     }
 
-                    let alphas = lumi_cache.alphas(imu2);
+                    let alphas = lumi_cache.alphas(idx[0]);
 
                     lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
@@ -310,7 +311,7 @@ impl Grid {
         bin: usize,
         channel: usize,
         (xir, xif, xia): (f64, f64, f64),
-    ) -> Array3<f64> {
+    ) -> ArrayD<f64> {
         assert_eq!(xia, 1.0);
         lumi_cache.setup(self, &[(xir, xif)]).unwrap();
 
@@ -327,25 +328,27 @@ impl Grid {
 
         lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
 
-        let mut array = Array3::zeros((mu2_grid.len(), x1_grid.len(), x2_grid.len()));
+        let dim = vec![mu2_grid.len(), x1_grid.len(), x2_grid.len()];
+        let mut array = ArrayD::zeros(dim);
 
-        for (index @ (imu2, ix1, ix2), value) in subgrid.indexed_iter() {
-            let x1 = x1_grid[ix1];
-            let x2 = x2_grid[ix2];
+        for (idx, value) in subgrid.indexed_iter() {
+            assert_eq!(idx.len(), 3);
+            let x1 = x1_grid[idx[1]];
+            let x2 = x2_grid[idx[2]];
             let mut lumi = 0.0;
 
             for entry in channel.entry() {
                 debug_assert_eq!(entry.0.len(), 2);
-                let xfx1 = lumi_cache.xfx1(entry.0[0], ix1, imu2);
-                let xfx2 = lumi_cache.xfx2(entry.0[1], ix2, imu2);
+                let xfx1 = lumi_cache.xfx1(entry.0[0], idx[1], idx[0]);
+                let xfx2 = lumi_cache.xfx2(entry.0[1], idx[2], idx[0]);
                 lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
             }
 
-            let alphas = lumi_cache.alphas(imu2);
+            let alphas = lumi_cache.alphas(idx[0]);
 
             lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
-            array[<[usize; 3]>::from(index)] = lumi * value;
+            array[idx.as_slice()] = lumi * value;
         }
 
         if order.logxir > 0 {

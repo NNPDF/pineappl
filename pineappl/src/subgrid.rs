@@ -116,4 +116,4 @@ pub trait Subgrid {
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
 /// `mu2_grid`, the `x1_grid` and finally the `x2_grid`.
-pub type SubgridIndexedIter<'a> = Box<dyn Iterator<Item = ((usize, usize, usize), f64)> + 'a>;
+pub type SubgridIndexedIter<'a> = Box<dyn Iterator<Item = (Vec<usize>, f64)> + 'a>;

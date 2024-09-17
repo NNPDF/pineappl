@@ -32,10 +32,8 @@ impl Subgrid for LagrangeSubgridV2 {
     fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64) {
         debug_assert_eq!(interps.len(), ntuple.len());
 
-        // TODO: lift the restriction to exactly three kinematics variables
-        debug_assert_eq!(interps.len(), 3);
-
         if interpolation::interpolate(interps, &ntuple, weight, &mut self.array) {
+            // TODO: make this more general
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;
@@ -103,19 +101,33 @@ impl Subgrid for LagrangeSubgridV2 {
         self.array = new_array;
     }
 
+    // fn indexed_iter(&self) -> SubgridIndexedIter {
+    //     let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
+
+    //     Box::new(self.array.indexed_iter::<3>().map(move |(index, v)| {
+    //         (
+    //             (index[0], index[1], index[2]),
+    //             v * self
+    //                 .interps
+    //                 .iter()
+    //                 .enumerate()
+    //                 .map(|(i, interp)| interp.reweight(nodes[i][index[i]]))
+    //                 .product::<f64>(),
+    //         )
+    //     }))
+    // }
+
     fn indexed_iter(&self) -> SubgridIndexedIter {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
-        Box::new(self.array.indexed_iter::<3>().map(move |(index, v)| {
-            (
-                (index[0], index[1], index[2]),
-                v * self
-                    .interps
-                    .iter()
-                    .enumerate()
-                    .map(|(i, interp)| interp.reweight(nodes[i][index[i]]))
-                    .product::<f64>(),
-            )
+        Box::new(self.array.indexed_iter3().map(move |(indices, weight)| {
+            let reweight = self
+                .interps
+                .iter()
+                .enumerate()
+                .map(|(i, interp)| interp.reweight(nodes[i][indices[i]]))
+                .product::<f64>();
+            (indices, weight * reweight)
         }))
     }
 

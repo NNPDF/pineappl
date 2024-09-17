@@ -106,6 +106,19 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     }
 
     /// TODO
+    pub fn indexed_iter3(&self) -> impl Iterator<Item = (Vec<usize>, T)> + '_ {
+        self.start_indices
+            .iter()
+            .zip(&self.lengths)
+            .flat_map(|(&start_index, &length)| {
+                (start_index..(start_index + length)).map(|i| unravel_index2(i, &self.shape))
+            })
+            .zip(&self.entries)
+            .filter(|&(_, entry)| *entry != Default::default())
+            .map(|(indices, entry)| (indices, *entry))
+    }
+
+    /// TODO
     // TODO: rewrite this method into `sub_block_iter_mut() -> impl Iterator<Item = &mut f64>`
     pub fn sub_block_idx(
         &self,
@@ -177,6 +190,17 @@ fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
 fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
     assert!(index < shape.iter().product());
     let mut indices = [0; D];
+    for (i, d) in indices.iter_mut().zip(shape).rev() {
+        *i = index % d;
+        index /= d;
+    }
+    indices
+}
+
+/// TODO
+pub fn unravel_index2(mut index: usize, shape: &[usize]) -> Vec<usize> {
+    assert!(index < shape.iter().product());
+    let mut indices = vec![0; shape.len()];
     for (i, d) in indices.iter_mut().zip(shape).rev() {
         *i = index % d;
         index /= d;

@@ -1,7 +1,7 @@
 use super::GlobalConfiguration;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
-use ndarray::Array3;
+use ndarray::{Array3, Ix3};
 use pineappl::convolutions::LumiCache;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
@@ -467,7 +467,11 @@ pub fn convolve_subgrid(
         ),
     };
 
-    grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0))
+    let subgrid = grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0));
+    subgrid
+        .into_dimensionality::<Ix3>()
+        .map_err(|_| anyhow!("Only 3-dimensional subgrids are supported",))
+        .unwrap()
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {

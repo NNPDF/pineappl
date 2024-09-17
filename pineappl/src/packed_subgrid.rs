@@ -108,8 +108,14 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             self.x2_grid = x2_grid;
         }
 
-        for ((i, j, k), value) in other.indexed_iter() {
-            let (j, k) = if transpose { (k, j) } else { (j, k) };
+        for (indices, value) in other.indexed_iter() {
+            assert_eq!(indices.len(), 3);
+            let (j, k) = if transpose {
+                (indices[2], indices[1])
+            } else {
+                (indices[1], indices[2])
+            };
+            let i = indices[0];
             let target_i = self
                 .mu2_grid
                 .iter()
@@ -150,11 +156,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        Box::new(
-            self.array
-                .indexed_iter()
-                .map(|(index, v)| (index.into(), v)),
-        )
+        Box::new(self.array.indexed_iter3())
     }
 
     fn stats(&self) -> Stats {
@@ -185,11 +187,11 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
                 subgrid.x1_grid().len()..0,
                 subgrid.x2_grid().len()..0,
             ),
-            |prev, ((imu2, ix1, ix2), _)| {
+            |prev, (indices, _)| {
                 (
-                    prev.0.start.min(imu2)..prev.0.end.max(imu2 + 1),
-                    prev.1.start.min(ix1)..prev.1.end.max(ix1 + 1),
-                    prev.2.start.min(ix2)..prev.2.end.max(ix2 + 1),
+                    prev.0.start.min(indices[0])..prev.0.end.max(indices[0] + 1),
+                    prev.1.start.min(indices[1])..prev.1.end.max(indices[1] + 1),
+                    prev.2.start.min(indices[2])..prev.2.end.max(indices[2] + 1),
                 )
             },
         );
@@ -203,15 +205,19 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
 
         let mut array = PackedArray::new(&[mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
 
-        for ((imu2, ix1, ix2), value) in subgrid.indexed_iter() {
+        for (indices, value) in subgrid.indexed_iter() {
             // if there's a static scale we want every value to be added to same grid point
             let index = if static_scale {
                 0
             } else {
-                imu2 - mu2_range.start
+                indices[0] - mu2_range.start
             };
 
-            array[[index, ix1 - x1_range.start, ix2 - x2_range.start]] += value;
+            array[[
+                index,
+                indices[1] - x1_range.start,
+                indices[2] - x2_range.start,
+            ]] += value;
         }
 
         Self {
@@ -279,10 +285,10 @@ mod tests {
 
         assert!(!grid1.is_empty());
 
-        assert_eq!(grid1.indexed_iter().next(), Some(((0, 1, 2), 1.0)));
-        assert_eq!(grid1.indexed_iter().nth(1), Some(((0, 1, 3), 2.0)));
-        assert_eq!(grid1.indexed_iter().nth(2), Some(((0, 4, 3), 4.0)));
-        assert_eq!(grid1.indexed_iter().nth(3), Some(((0, 7, 1), 8.0)));
+        assert_eq!(grid1.indexed_iter().next(), Some((vec![0, 1, 2], 1.0)));
+        assert_eq!(grid1.indexed_iter().nth(1), Some((vec![0, 1, 3], 2.0)));
+        assert_eq!(grid1.indexed_iter().nth(2), Some((vec![0, 4, 3], 4.0)));
+        assert_eq!(grid1.indexed_iter().nth(3), Some((vec![0, 7, 1], 8.0)));
 
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
@@ -303,10 +309,10 @@ mod tests {
             x.array[[0, 1, 7]] = 8.0;
         }
 
-        assert_eq!(grid2.indexed_iter().next(), Some(((0, 1, 7), 8.0)));
-        assert_eq!(grid2.indexed_iter().nth(1), Some(((0, 2, 1), 1.0)));
-        assert_eq!(grid2.indexed_iter().nth(2), Some(((0, 3, 1), 2.0)));
-        assert_eq!(grid2.indexed_iter().nth(3), Some(((0, 3, 4), 4.0)));
+        assert_eq!(grid2.indexed_iter().next(), Some((vec![0, 1, 7], 8.0)));
+        assert_eq!(grid2.indexed_iter().nth(1), Some((vec![0, 2, 1], 1.0)));
+        assert_eq!(grid2.indexed_iter().nth(2), Some((vec![0, 3, 1], 2.0)));
+        assert_eq!(grid2.indexed_iter().nth(3), Some((vec![0, 3, 4], 4.0)));
 
         grid1.merge(&mut grid2, false);
 
