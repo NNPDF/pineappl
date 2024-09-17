@@ -40,7 +40,7 @@ impl Subgrid for EmptySubgridV1 {
 
     fn scale(&mut self, _: f64) {}
 
-    fn symmetrize(&mut self) {}
+    fn symmetrize(&mut self, _: usize, _: usize) {}
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(iter::empty())
@@ -72,7 +72,7 @@ mod tests {
         assert!(subgrid.is_empty());
         subgrid.merge(&mut EmptySubgridV1.into(), false);
         subgrid.scale(2.0);
-        subgrid.symmetrize();
+        subgrid.symmetrize(1, 2);
         assert_eq!(
             subgrid.stats(),
             Stats {

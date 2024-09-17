@@ -140,16 +140,16 @@ impl Subgrid for PackedQ1X2SubgridV1 {
         self.array *= factor;
     }
 
-    fn symmetrize(&mut self) {
+    fn symmetrize(&mut self, a: usize, b: usize) {
         let mut new_array = PackedArray::new(self.array.shape());
 
-        for (mut index, sigma) in self.array.indexed_iter::<3>() {
+        for (mut index, sigma) in self.array.indexed_iter3() {
             // TODO: why not the other way around?
-            if index[2] < index[1] {
-                index.swap(1, 2);
+            if index[b] < index[a] {
+                index.swap(a, b);
             }
 
-            new_array[index] += sigma;
+            new_array[index.as_slice()] += sigma;
         }
 
         self.array = new_array;
@@ -318,7 +318,7 @@ mod tests {
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
-        grid1.symmetrize();
+        grid1.symmetrize(1, 2);
 
         grid1.scale(2.0);
 

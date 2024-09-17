@@ -997,7 +997,7 @@ impl Grid {
                     .iter_mut()
                     .for_each(|subgrid| {
                         if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
-                            subgrid.symmetrize();
+                            subgrid.symmetrize(1, 2);
                         }
                     });
             } else if let Some((j, &other_index)) = indices

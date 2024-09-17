@@ -83,9 +83,9 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
-    /// Assumes that the initial states for this grid are the same and uses this to optimize the
-    /// grid by getting rid of almost half of the entries.
-    fn symmetrize(&mut self);
+    /// Assume that the convolution functions for indices `a` and `b` for this grid are the same
+    /// and use this to optimize the size of the grid.
+    fn symmetrize(&mut self, a: usize, b: usize);
 
     /// Return an iterator over all non-zero elements of the subgrid.
     fn indexed_iter(&self) -> SubgridIndexedIter;
