@@ -515,7 +515,7 @@ impl Grid {
                 if new_subgrid.is_empty() {
                     mem::swap(new_subgrid, subgrid);
                 } else {
-                    new_subgrid.merge(subgrid, false);
+                    new_subgrid.merge(subgrid, None);
                 }
             } else {
                 let new_bin = if bin > bins.start {
@@ -633,7 +633,7 @@ impl Grid {
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, false);
+                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, None);
             }
         }
 
@@ -936,7 +936,7 @@ impl Grid {
                             // we can't merge into an EmptySubgridV1
                             *lhs = mem::replace(rhs, EmptySubgridV1.into());
                         } else {
-                            lhs.merge(rhs, false);
+                            lhs.merge(rhs, None);
                             *rhs = EmptySubgridV1.into();
                         }
                     }
@@ -1020,7 +1020,7 @@ impl Grid {
                             // transpose `lhs`
                             todo!();
                         } else {
-                            lhs.merge(rhs, true);
+                            lhs.merge(rhs, Some((1, 2)));
                             *rhs = EmptySubgridV1.into();
                         }
                     }

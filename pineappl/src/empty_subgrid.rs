@@ -1,7 +1,7 @@
 //! TODO
 
 use super::interpolation::Interp;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::iter;
@@ -27,11 +27,15 @@ impl Subgrid for EmptySubgridV1 {
         Cow::Borrowed(&[])
     }
 
+    fn node_values(&self) -> Vec<NodeValues> {
+        Vec::new()
+    }
+
     fn is_empty(&self) -> bool {
         true
     }
 
-    fn merge(&mut self, subgrid: &SubgridEnum, _: bool) {
+    fn merge(&mut self, subgrid: &SubgridEnum, _: Option<(usize, usize)>) {
         assert!(
             subgrid.is_empty(),
             "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"

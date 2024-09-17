@@ -1,13 +1,71 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
+use float_cmp::approx_eq;
 use super::empty_subgrid::EmptySubgridV1;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
 // use ndarray::Array3;
+use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+
+/// TODO
+#[derive(Clone)]
+pub enum NodeValues {
+    /// TODO
+    UseFromGrid,
+    /// TODO
+    UseThese(Vec<f64>),
+}
+
+impl NodeValues {
+    pub fn extend(&mut self, other: &Self) {
+        match (self, other) {
+            (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => (),
+            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => a.extend_from_slice(b),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            NodeValues::UseFromGrid => unimplemented!(),
+            NodeValues::UseThese(a) => a.len(),
+        }
+    }
+
+    pub fn find(&self, value: f64) -> Option<usize> {
+        match self {
+            NodeValues::UseFromGrid => unimplemented!(),
+            NodeValues::UseThese(a) => a
+                .iter()
+                .position(|&x| approx_eq!(f64, x, value, ulps = EVOLVE_INFO_TOL_ULPS)),
+        }
+    }
+
+    pub fn get(&self, index: usize) -> f64 {
+        match self {
+            NodeValues::UseFromGrid => unimplemented!(),
+            NodeValues::UseThese(a) => a[index],
+        }
+    }
+}
+
+impl PartialEq for NodeValues {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
+            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => a
+                .iter()
+                .zip(b)
+                .all(|(&a, &b)| approx_eq!(f64, a, b, ulps = EVOLVE_INFO_TOL_ULPS)),
+            // TODO: the remaining cases could still be the same, but we don't know the values from `UseFromGrid`.
+            _ => false,
+        }
+    }
+}
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -69,6 +127,9 @@ pub trait Subgrid {
     /// return an empty slice.
     fn x2_grid(&self) -> Cow<[f64]>;
 
+    /// TODO
+    fn node_values(&self) -> Vec<NodeValues>;
+
     /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
     /// kinematic information in `ntuple`. The parameter `ntuple` assumes the same ordering given
     /// by `kinematics` in [`Grid::new`] that was used to create the grid.
@@ -77,8 +138,9 @@ pub trait Subgrid {
     /// Returns true if `fill` was never called for this grid.
     fn is_empty(&self) -> bool;
 
-    /// Merges `other` into this subgrid.
-    fn merge(&mut self, other: &SubgridEnum, transpose: bool);
+    /// Merge `other` into this subgrid, possibly transposing the two dimensions given by
+    /// `transpose`.
+    fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);

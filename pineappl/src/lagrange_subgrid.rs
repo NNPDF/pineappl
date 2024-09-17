@@ -2,7 +2,7 @@
 
 use super::interpolation::{self, Interp};
 use super::packed_array::PackedArray;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -63,19 +63,23 @@ impl Subgrid for LagrangeSubgridV2 {
         self.interps[2].node_values().into()
     }
 
+    fn node_values(&self) -> Vec<NodeValues> {
+        vec![NodeValues::UseFromGrid; self.interps.len()]
+    }
+
     fn is_empty(&self) -> bool {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &SubgridEnum, transpose: bool) {
+    fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::LagrangeSubgridV2(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
-            for (mut index, value) in other.array.indexed_iter::<3>() {
-                if transpose {
-                    index.swap(1, 2);
+            for (mut index, value) in other.array.indexed_iter3() {
+                if let Some((a, b)) = transpose {
+                    index.swap(a, b);
                 }
-                self.array[index] += value;
+                self.array[index.as_slice()] += value;
             }
         } else {
             unimplemented!();
