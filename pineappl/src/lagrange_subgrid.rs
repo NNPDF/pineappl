@@ -35,7 +35,7 @@ impl Subgrid for LagrangeSubgridV2 {
         // TODO: lift the restriction to exactly three kinematics variables
         debug_assert_eq!(interps.len(), 3);
 
-        if interpolation::interpolate::<3>(interps, &ntuple, weight, &mut self.array) {
+        if interpolation::interpolate(interps, &ntuple, weight, &mut self.array) {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;

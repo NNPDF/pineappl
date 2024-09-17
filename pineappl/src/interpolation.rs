@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::mem;
 
 const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
+const MAX_DIMENSIONS: usize = 8;
 
 mod applgrid {
     pub fn reweight_x(x: f64) -> f64 {
@@ -248,7 +249,7 @@ impl Interp {
 }
 
 /// TODO
-pub fn interpolate<const D: usize>(
+pub fn interpolate(
     interps: &[Interp],
     ntuple: &[f64],
     weight: f64,
@@ -262,9 +263,12 @@ pub fn interpolate<const D: usize>(
 
     // we must have as many variables as we want to interpolate
     debug_assert_eq!(interps.len(), ntuple.len());
-    debug_assert_eq!(interps.len(), D);
+    debug_assert!(interps.len() <= MAX_DIMENSIONS);
 
-    let Some((indices, fractions)): Option<(ArrayVec<_, D>, ArrayVec<_, D>)> = interps
+    let Some((indices, fractions)): Option<(
+        ArrayVec<_, MAX_DIMENSIONS>,
+        ArrayVec<_, MAX_DIMENSIONS>,
+    )> = interps
         .iter()
         .zip(ntuple)
         .map(|(interp, &x)| interp.interpolate(x))
@@ -282,13 +286,14 @@ pub fn interpolate<const D: usize>(
             .map(|(interp, &x)| interp.reweight(x))
             .product::<f64>();
 
-    let node_weights: ArrayVec<_, D> = interps
+    let node_weights: ArrayVec<_, MAX_DIMENSIONS> = interps
         .iter()
         .zip(fractions)
         .map(|(interp, fraction)| interp.node_weights(fraction))
         .collect();
 
-    let shape: ArrayVec<_, D> = interps.iter().map(|interp| interp.order() + 1).collect();
+    let shape: ArrayVec<_, MAX_DIMENSIONS> =
+        interps.iter().map(|interp| interp.order() + 1).collect();
 
     for (i, node_weight) in node_weights
         .into_iter()
@@ -461,7 +466,7 @@ mod tests {
         let weight = 1.0;
 
         for ntuple in &ntuples {
-            interpolate::<3>(&interps, ntuple, weight, &mut array);
+            interpolate(&interps, ntuple, weight, &mut array);
         }
 
         let reference = [
@@ -636,14 +641,14 @@ mod tests {
 
         let ntuple = [1000.0, 0.5, 0.5];
         let weight = 0.0;
-        interpolate::<3>(&interps, &ntuple, weight, &mut array);
+        interpolate(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
 
         let ntuple = [10.0, 0.5, 0.5];
         let weight = 1.0;
-        interpolate::<3>(&interps, &ntuple, weight, &mut array);
+        interpolate(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
@@ -666,7 +671,7 @@ mod tests {
 
         let ntuple = [90.0_f64.powi(2)];
         let weight = 1.0;
-        interpolate::<1>(&interps, &ntuple, weight, &mut array);
+        interpolate(&interps, &ntuple, weight, &mut array);
 
         assert_eq!(array[[0]], 1.0);
 
