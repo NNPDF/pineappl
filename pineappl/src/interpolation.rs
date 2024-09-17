@@ -1,10 +1,10 @@
 //! Interpolation module.
 
 use super::convert;
+use super::packed_array::PackedArray;
 use arrayvec::ArrayVec;
 use serde::{Deserialize, Serialize};
 use std::mem;
-use std::ops::IndexMut;
 
 const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
 
@@ -252,9 +252,8 @@ pub fn interpolate<const D: usize>(
     interps: &[Interp],
     ntuple: &[f64],
     weight: f64,
-    array: &mut impl IndexMut<[usize; D], Output = f64>,
+    array: &mut PackedArray<f64>,
 ) -> bool {
-    use super::packed_array;
     use itertools::Itertools;
 
     if weight == 0.0 {
@@ -291,17 +290,15 @@ pub fn interpolate<const D: usize>(
 
     let shape: ArrayVec<_, D> = interps.iter().map(|interp| interp.order() + 1).collect();
 
-    for (i, node_weights) in node_weights
+    for (i, node_weight) in node_weights
         .into_iter()
         // TODO: replace this with something else to avoid allocating memory
         .multi_cartesian_product()
+        .map(|weights| weights.iter().product::<f64>())
         .enumerate()
     {
-        let mut index = packed_array::unravel_index::<D>(i, &shape);
-        for (entry, start_index) in index.iter_mut().zip(&indices) {
-            *entry += start_index;
-        }
-        array[index] += weight * node_weights.iter().product::<f64>();
+        let idx = array.sub_block_idx(&indices, i, &shape);
+        array[idx] += weight * node_weight;
     }
 
     true
