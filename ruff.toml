@@ -3,3 +3,5 @@ extend-exclude = [
   "pineappl_cli/src/plot.py",
   "pineappl_cli/src/subgrid-pull-plot.py",
 ]
+
+line-length = 80

@@ -173,7 +173,9 @@ def main(calls, pdfname, filename):
 if __name__ == "__main__":
     # expose the arguments as script
     ap = argparse.ArgumentParser()
-    ap.add_argument("--calls", default=100000, type=int, help="Number of events")
+    ap.add_argument(
+        "--calls", default=100000, type=int, help="Number of events"
+    )
     ap.add_argument(
         "--pdf",
         default="NNPDF31_nlo_as_0118_luxqed",

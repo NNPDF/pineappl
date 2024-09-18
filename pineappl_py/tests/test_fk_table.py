@@ -7,7 +7,9 @@ class TestFkTable:
     def fake_grid(self, bins=None):
         channels = [pineappl.boc.Channel([(1, 21, 1.0)])]
         orders = [pineappl.grid.Order(0, 0, 0, 0)]
-        bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
+        bin_limits = np.array(
+            [1e-7, 1e-3, 1] if bins is None else bins, dtype=float
+        )
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)
         return g
@@ -43,7 +45,10 @@ class TestFkTable:
         try:
             g.evolve_with_slice_iter(
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 np.array([], dtype=bool),
                 (1.0, 1.0),
@@ -59,10 +64,16 @@ class TestFkTable:
         try:
             g.evolve_with_slice_iter2(
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 np.array([], dtype=bool),
                 (1.0, 1.0),
