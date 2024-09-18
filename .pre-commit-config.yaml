@@ -31,6 +31,7 @@ repos:
       entry: bash -c 'cargo check --features=evolve,fktable'
       language: system
       require_serial: true
+      types: [rust]
   - repo: https://github.com/pre-commit/pre-commit
     rev: v3.8.0
     hooks:
