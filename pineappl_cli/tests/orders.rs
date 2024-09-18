@@ -18,7 +18,7 @@ Options:
 ";
 
 const DEFAULT_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
-     []        [pb]         [%]         [%]         [%]
+     []        [pb]         [%]         [%]         [%]    
 -+----+----+-----------+-----------+-----------+-----------
 0    2 2.25 7.5459110e2      100.00       17.17       -1.21
 1 2.25  2.5 6.9028342e2      100.00       16.92       -1.10
@@ -30,8 +30,8 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^
 7    4  4.5 2.7517266e1      100.00       23.92       -0.98
 ";
 
-const ABSOLUTE_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2)  O(as^0 a^3)
-     []        [pb]        [pb]        [pb]         [pb]
+const ABSOLUTE_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2)  O(as^0 a^3) 
+     []        [pb]        [pb]        [pb]         [pb]     
 -+----+----+-----------+-----------+-----------+-------------
 0    2 2.25 7.5459110e2 6.5070305e2 1.1175729e2  -7.8692484e0
 1 2.25  2.5 6.9028342e2 5.9601236e2 1.0083341e2  -6.5623495e0
@@ -44,8 +44,8 @@ const ABSOLUTE_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2)  O(a
 ";
 
 const ABSOLUTE_INTEGRATED_STR: &str =
-    "b   etal       integ    O(as^0 a^2) O(as^1 a^2)  O(as^0 a^3)
-     []         []          []          []           []
+    "b   etal       integ    O(as^0 a^2) O(as^1 a^2)  O(as^0 a^3) 
+     []         []          []          []           []      
 -+----+----+-----------+-----------+-----------+-------------
 0    2 2.25 1.8864777e2 1.6267576e2 2.7939322e1  -1.9673121e0
 1 2.25  2.5 1.7257086e2 1.4900309e2 2.5208352e1  -1.6405874e0
@@ -58,7 +58,7 @@ const ABSOLUTE_INTEGRATED_STR: &str =
 ";
 
 const INTEGRATED_STR: &str = "b   etal       integ    O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
-     []         []          [%]         [%]         [%]
+     []         []          [%]         [%]         [%]    
 -+----+----+-----------+-----------+-----------+-----------
 0    2 2.25 1.8864777e2      100.00       17.17       -1.21
 1 2.25  2.5 1.7257086e2      100.00       16.92       -1.10
@@ -71,7 +71,7 @@ const INTEGRATED_STR: &str = "b   etal       integ    O(as^0 a^2) O(as^1 a^2) O(
 ";
 
 const NORMALIZE_A2_AS1A2_STR: &str = "b   etal    dsig/detal  O(as^0 a^2) O(as^1 a^2) O(as^0 a^3)
-     []        [pb]         [%]         [%]         [%]
+     []        [pb]         [%]         [%]         [%]    
 -+----+----+-----------+-----------+-----------+-----------
 0    2 2.25 7.5459110e2       85.34       14.66       -1.03
 1 2.25  2.5 6.9028342e2       85.53       14.47       -0.94

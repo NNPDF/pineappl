@@ -113,7 +113,7 @@ mg5amc_revno: 983
 nnpdf_id: LHCBWZMU7TEV
 pineappl_gitversion: v0.4.1-114-gdce19e0
 results: ----------------------------------------------------------------------
-   PineAPPL         MC        sigma      central         min      max
+   PineAPPL         MC        sigma      central         min      max 
                               1/100   sigma   1/1000   1/1000   1/1000
 ----------------------------------------------------------------------
  3.772955e+02  3.772821e+02   0.165   0.022   0.0357   0.0392   0.0313
@@ -181,22 +181,22 @@ runcard: <LesHouchesEvents version="3.0">
 #      update to_full                                                  *
 #***********************************************************************
 #
-#*******************
+#*******************                                                 
 # Running parameters
-#*******************
+#*******************                                                 
 #
 #***********************************************************************
 # Tag name for the run (one word)                                      *
 #***********************************************************************
-  tag_1	= run_tag ! name of the run
+  tag_1	= run_tag ! name of the run 
 #***********************************************************************
 # Number of LHE events (and their normalization) and the required      *
 # (relative) accuracy on the Xsec.                                     *
 # These values are ignored for fixed order runs                        *
 #***********************************************************************
-  10000	= nevents ! Number of unweighted events requested
+  10000	= nevents ! Number of unweighted events requested 
   -1.0	= req_acc ! Required accuracy (-1=auto determined from nevents)
-  -1	= nevt_job ! Max number of events per job in event generation.
+  -1	= nevt_job ! Max number of events per job in event generation. 
                  !  (-1= no split).
 #***********************************************************************
 # Normalize the weights of LHE events such that they sum or average to *
@@ -206,7 +206,7 @@ runcard: <LesHouchesEvents version="3.0">
 #***********************************************************************
 # Number of points per itegration channel (ignored for aMC@NLO runs)   *
 #***********************************************************************
-  0.0001	= req_acc_fo ! Required accuracy (-1=ignored, and use the
+  0.0001	= req_acc_fo ! Required accuracy (-1=ignored, and use the 
  	                   ! number of points and iter. below)
 # These numbers are ignored except if req_acc_FO is equal to -1
   5000	= npoints_fo_grid ! number of points to setup grids
@@ -228,40 +228,40 @@ runcard: <LesHouchesEvents version="3.0">
 # PDF choice: this automatically fixes also alpha_s(MZ) and its evol.  *
 #***********************************************************************
   lhapdf	= pdlabel ! PDF set
-  324900	= lhaid ! If pdlabel=lhapdf, this is the lhapdf number. Only
-              ! numbers for central PDF sets are allowed. Can be a list;
+  324900	= lhaid ! If pdlabel=lhapdf, this is the lhapdf number. Only 
+              ! numbers for central PDF sets are allowed. Can be a list; 
               ! PDF sets beyond the first are included via reweighting.
 #***********************************************************************
 # Include the NLO Monte Carlo subtr. terms for the following parton    *
 # shower (HERWIG6 | HERWIGPP | PYTHIA6Q | PYTHIA6PT | PYTHIA8)         *
 # WARNING: PYTHIA6PT works only for processes without FSR!!!!          *
 #***********************************************************************
-  HERWIG6	= parton_shower
+  HERWIG6	= parton_shower 
   1.0	= shower_scale_factor ! multiply default shower starting
                                   ! scale by this factor
 #***********************************************************************
 # Renormalization and factorization scales                             *
 # (Default functional form for the non-fixed scales is the sum of      *
-# the transverse masses divided by two of all final state particles    *
+# the transverse masses divided by two of all final state particles    * 
 # and partons. This can be changed in SubProcesses/set_scales.f or via *
 # dynamical_scale_choice option)                                       *
 #***********************************************************************
   True	= fixed_ren_scale ! if .true. use fixed ren scale
   True	= fixed_fac_scale ! if .true. use fixed fac scale
-  80.352	= mur_ref_fixed ! fixed ren reference scale
+  80.352	= mur_ref_fixed ! fixed ren reference scale 
   80.352	= muf_ref_fixed ! fixed fact reference scale
   -1	= dynamical_scale_choice ! Choose one (or more) of the predefined
            ! dynamical choices. Can be a list; scale choices beyond the
            ! first are included via reweighting
   1.0	= mur_over_ref ! ratio of current muR over reference muR
   1.0	= muf_over_ref ! ratio of current muF over reference muF
-#***********************************************************************
+#*********************************************************************** 
 # Reweight variables for scale dependence and PDF uncertainty          *
 #***********************************************************************
   1.0, 2.0, 0.5	= rw_rscale ! muR factors to be included by reweighting
   1.0, 2.0, 0.5	= rw_fscale ! muF factors to be included by reweighting
-  True	= reweight_scale ! Reweight to get scale variation using the
-            ! rw_rscale and rw_fscale factors. Should be a list of
+  True	= reweight_scale ! Reweight to get scale variation using the 
+            ! rw_rscale and rw_fscale factors. Should be a list of 
             ! booleans of equal length to dynamical_scale_choice to
             ! specify for which choice to include scale dependence.
   False	= reweight_pdf ! Reweight to get PDF uncertainty. Should be a
@@ -282,14 +282,14 @@ runcard: <LesHouchesEvents version="3.0">
 #      MG5_aMC available, but available in Pythia8.                    *
 #  -1: NNLL+NLO jet-veto computation. See arxiv:1412.8408 [hep-ph].    *
 #***********************************************************************
-  0	= ickkw
+  0	= ickkw 
 #***********************************************************************
 #
 #***********************************************************************
 # BW cutoff (M+/-bwcutoff*Gamma). Determines which resonances are      *
 # written in the LHE event file                                        *
 #***********************************************************************
-  15.0	= bwcutoff
+  15.0	= bwcutoff 
 #***********************************************************************
 # Cuts on the jets. Jet clustering is performed by FastJet.            *
 #  - If gamma_is_j, photons are also clustered                            *
@@ -345,9 +345,9 @@ runcard: <LesHouchesEvents version="3.0">
 # Use PineAPPL to generate PDF-independent fast-interpolation grid     *
 # (https://zenodo.org/record/3992765#.X2EWy5MzbVo)                     *
 #***********************************************************************
-  True	= pineappl ! PineAPPL switch
+  True	= pineappl ! PineAPPL switch 
 #***********************************************************************
-#*********************************************************************
+#********************************************************************* 
 #  Additional hidden parameters
 #*********************************************************************
   5	= maxjetflavor # hidden_parameter
@@ -360,7 +360,7 @@ runcard: <LesHouchesEvents version="3.0">
 ###################################
 ## INFORMATION FOR MASS
 ###################################
-BLOCK MASS #
+BLOCK MASS # 
       6 1.725000e+02 # mt
       23 9.115350e+01 # mz
       24 8.035200e+01 # mw
@@ -386,7 +386,7 @@ BLOCK MASS #
 ###################################
 ## INFORMATION FOR SMINPUTS
 ###################################
-BLOCK SMINPUTS #
+BLOCK SMINPUTS # 
       2 1.166379e-05 # gf
       3 1.180000e-01 # as (note that parameter not used if you use a pdf set)
 ###################################
@@ -480,14 +480,14 @@ runshower = False
 <foanalyse>
 <![CDATA[
 #######################################################################
-#
+#                             
 # This file contains the settings for analyses to be linked to fixed
 # order runs. Analysis files are meant to be put (or linked) inside
 # <PROCDIR>/FixedOrderAnalysis/ (<PROCDIR> is the name of the exported
 # process directory). See the
 # <PROCDIR>/FixedOrderAnalysis/analysis_*_template.f file for details
 # on how to write your own analysis.
-#
+#                                                                               
 #######################################################################
 #
 # Analysis format.
@@ -501,7 +501,7 @@ FO_ANALYSIS_FORMAT = HwU
 #
 #
 # Needed extra-libraries (FastJet is already linked):
-FO_EXTRALIBS =
+FO_EXTRALIBS = 
 #
 # (Absolute) path to the extra libraries. Directory names should be
 # separated by white spaces.
@@ -509,7 +509,7 @@ FO_EXTRAPATHS =
 #
 # (Absolute) path to the dirs containing header files needed by the
 # libraries (e.g. C++ header files):
-FO_INCLUDEPATHS =
+FO_INCLUDEPATHS =                      
 #
 # User's analysis (to be put in the <PROCDIR>/FixedOrderAnalysis/
 # directory). Please use .o as extension and white spaces to separate
@@ -535,7 +535,7 @@ FO_ANALYSE = LHCB_WP_7TEV.o
 runcard_gitversion: 82de4ad
 x1_label: etal
 x1_label_tex: $\eta_{\bar{\ell}}$
-x1_unit:
+x1_unit: 
 y_label: dsig/detal
 y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb

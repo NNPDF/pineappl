@@ -27,8 +27,8 @@ Options:
   -h, --help              Print help
 ";
 
-const CKF_STR: &str = "b   etal    bin-K c  K   c  K   c  K   c  K   c  K
-     []
+const CKF_STR: &str = "b   etal    bin-K c  K   c  K   c  K   c  K   c  K  
+     []                                             
 -+----+----+-----+-+----+-+----+-+----+-+----+-+----
 0    2 2.25  1.17 0 1.30 3 -inf 1 -inf 2 0.00 4 0.00
 1 2.25  2.5  1.17 0 1.31 3 -inf 1 -inf 2 0.00 4 0.00
@@ -42,8 +42,8 @@ const CKF_STR: &str = "b   etal    bin-K c  K   c  K   c  K   c  K   c  K
 
 // TODO: understand these factors
 const CKF_WITH_DEFAULT_DENOMINATOR_STR: &str =
-    "b   etal    bin-K  c   K    c  K   c  K   c  K   c  K
-     []
+    "b   etal    bin-K  c   K    c  K   c  K   c  K   c  K  
+     []                                                
 -+----+----+------+-+------+-+----+-+----+-+----+-+----
 0    2 2.25 -13.20 0 -23.29 3 -inf 1 -inf 4 1.00 2 1.00
 1 2.25  2.5 -14.37 0 -26.28 3 -inf 1 -inf 4 1.00 2 1.00

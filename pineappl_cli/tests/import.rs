@@ -203,8 +203,8 @@ const IMPORT_FLEX_GRID_15_STR: &str = "b   PineAPPL     fastNLO      rel. diff  
 ";
 
 #[cfg(feature = "fktable")]
-const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff
-    []        []
+const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff     
+    []        []      
 --+--+--+-------------
  0  0  1   1.8900584e0
  1  1  2   1.4830883e0
@@ -229,8 +229,8 @@ const IMPORT_DIS_FKTABLE_STR: &str = "b   x1       diff
 ";
 
 #[cfg(feature = "fktable")]
-const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff
-  []      []
+const IMPORT_HADRONIC_FKTABLE_STR: &str = "b x1     diff    
+  []      []     
 -+-+-+-----------
 0 0 1 7.7624461e2
 ";

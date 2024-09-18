@@ -21,7 +21,7 @@ Options:
 ";
 
 const DEFAULT_STR: &str = "b   etal    c  size  c  size  c size  c size c size
-     []        [%]      [%]      [%]    [%]    [%]
+     []        [%]      [%]      [%]    [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----+-+----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31 4 0.02 2 0.01
 1 2.25  2.5 0 112.20 3  -8.85 1 -3.38 4 0.02 2 0.01
@@ -34,8 +34,8 @@ const DEFAULT_STR: &str = "b   etal    c  size  c  size  c size  c size c size
 ";
 
 const ABSOLUTE_STR: &str =
-    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal
-     []          [pb]           [pb]           [pb]           [pb]           [pb]
+    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal 
+     []          [pb]           [pb]           [pb]           [pb]           [pb]    
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 8.4002759e2 3 -6.0727462e1 1 -2.4969360e1 4 1.7176328e-1 2 8.8565923e-2
 1 2.25  2.5 0 7.7448295e2 3 -6.1109036e1 1 -2.3319483e1 4 1.4518685e-1 2 8.3802762e-2
@@ -48,8 +48,8 @@ const ABSOLUTE_STR: &str =
 ";
 
 const ABSOLUTE_INTEGRATED_STR: &str =
-    "b   etal    c    integ    c    integ     c    integ     c    integ     c    integ
-     []           []             []             []             []             []
+    "b   etal    c    integ    c    integ     c    integ     c    integ     c    integ    
+     []           []             []             []             []             []     
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 2.1000690e2 3 -1.5181865e1 1 -6.2423401e0 4 4.2940819e-2 2 2.2141481e-2
 1 2.25  2.5 0 1.9362074e2 3 -1.5277259e1 1 -5.8298709e0 4 3.6296712e-2 2 2.0950691e-2
@@ -61,8 +61,8 @@ const ABSOLUTE_INTEGRATED_STR: &str =
 7    4  4.5 0 1.5943129e1 3 -1.1843361e0 1 -1.0028343e0 4 1.7077102e-3 2 9.6673424e-4
 ";
 
-const LIMIT_3_STR: &str = "b   etal    c  size  c  size  c size
-     []        [%]      [%]      [%]
+const LIMIT_3_STR: &str = "b   etal    c  size  c  size  c size 
+     []        [%]      [%]      [%] 
 -+----+----+-+------+-+------+-+-----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31
 1 2.25  2.5 0 112.20 3  -8.85 1 -3.38
@@ -80,7 +80,7 @@ For more information, try '--help'.
 ";
 
 const LUMIS_0123_STR: &str = "b   etal    c  size  c  size  c size  c size
-     []        [%]      [%]      [%]    [%]
+     []        [%]      [%]      [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----
 0    2 2.25 0 111.32 3  -8.05 1 -3.31 2 0.01
 1 2.25  2.5 0 112.20 3  -8.85 1 -3.38 2 0.01
@@ -93,7 +93,7 @@ const LUMIS_0123_STR: &str = "b   etal    c  size  c  size  c size  c size
 ";
 
 const ORDERS_A2_AS1A2_STR: &str = "b   etal    c  size  c  size  c size  c size c size
-     []        [%]      [%]      [%]    [%]    [%]
+     []        [%]      [%]      [%]    [%]    [%] 
 -+----+----+-+------+-+------+-+-----+-+----+-+----
 0    2 2.25 0 111.24 3  -7.96 1 -3.27 2 0.00 4 0.00
 1 2.25  2.5 0 112.12 3  -8.77 1 -3.35 2 0.00 4 0.00
@@ -106,8 +106,8 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    c  size  c  size  c size  c size 
 ";
 
 const DONT_SORT_ABSOLUTE_STR: &str =
-    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal
-     []          [pb]           [pb]           [pb]           [pb]           [pb]
+    "b   etal    c dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal  c  dsig/detal 
+     []          [pb]           [pb]           [pb]           [pb]           [pb]    
 -+----+----+-+-----------+-+------------+-+------------+-+------------+-+------------
 0    2 2.25 0 8.4002759e2 1 -2.4969360e1 2 8.8565923e-2 3 -6.0727462e1 4 1.7176328e-1
 1 2.25  2.5 0 7.7448295e2 1 -2.3319483e1 2 8.3802762e-2 3 -6.1109036e1 4 1.4518685e-1
@@ -120,7 +120,7 @@ const DONT_SORT_ABSOLUTE_STR: &str =
 ";
 
 const DONT_SORT_STR: &str = "b   etal    c  size  c size  c size c  size  c size
-     []        [%]      [%]    [%]     [%]     [%]
+     []        [%]      [%]    [%]     [%]     [%] 
 -+----+----+-+------+-+-----+-+----+-+------+-+----
 0    2 2.25 0 111.32 1 -3.31 2 0.01 3  -8.05 4 0.02
 1 2.25  2.5 0 112.20 1 -3.38 2 0.01 3  -8.85 4 0.02

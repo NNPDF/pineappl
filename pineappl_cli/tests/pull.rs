@@ -22,8 +22,8 @@ Options:
 ";
 
 // last two columns are zero because the PDFs don't have a photon
-const DEFAULT_STR: &str = "b   etal    total c pull  c pull  c  pull  c pull  c pull
-     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]     [\u{3c3}]
+const DEFAULT_STR: &str = "b   etal    total c pull  c pull  c  pull  c pull  c pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]     [\u{3c3}] 
 -+----+----+-----+-+-----+-+-----+-+------+-+-----+-+-----
 0    2 2.25 0.636 0 0.525 3 0.062 1  0.049 2 0.000 4 0.000
 1 2.25  2.5 0.695 0 0.571 3 0.069 1  0.054 2 0.000 4 0.000
@@ -36,8 +36,8 @@ const DEFAULT_STR: &str = "b   etal    total c pull  c pull  c  pull  c pull  c 
 ";
 
 // last two columns are zero because the PDFs don't have a photon
-const CL_90_STR: &str = "b   etal    total c pull  c  pull  c  pull  c pull  c pull
-     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]     [\u{3c3}]
+const CL_90_STR: &str = "b   etal    total c pull  c  pull  c  pull  c pull  c pull 
+     []      [\u{3c3}]     [\u{3c3}]     [\u{3c3}]      [\u{3c3}]      [\u{3c3}]     [\u{3c3}] 
 -+----+----+-----+-+-----+-+------+-+------+-+-----+-+-----
 0    2 2.25 0.203 0 0.191 1  0.036 3 -0.024 2 0.000 4 0.000
 1 2.25  2.5 0.222 0 0.211 1  0.038 3 -0.027 2 0.000 4 0.000
@@ -49,8 +49,8 @@ const CL_90_STR: &str = "b   etal    total c pull  c  pull  c  pull  c pull  c p
 7    4  4.5 0.603 0 0.698 1 -0.063 3 -0.032 2 0.000 4 0.000
 ";
 
-const LIMIT_STR: &str = "b   etal    total  c  pull
-     []      [\u{3c3}]      [\u{3c3}]
+const LIMIT_STR: &str = "b   etal    total  c  pull 
+     []      [\u{3c3}]      [\u{3c3}]  
 -+----+----+------+-+------
 0    2 2.25 -0.504 0 -0.504
 1 2.25  2.5 -0.535 0 -0.535
@@ -62,8 +62,8 @@ const LIMIT_STR: &str = "b   etal    total  c  pull
 7    4  4.5 -0.270 0 -0.270
 ";
 
-const REPLICA0_STR: &str = "b   etal      total   c   pull    c    pull    c    pull    c    pull    c    pull
-     []        [\u{3c3}]         [\u{3c3}]         [\u{3c3}]          [\u{3c3}]          [\u{3c3}]          [\u{3c3}]
+const REPLICA0_STR: &str = "b   etal      total   c   pull    c    pull    c    pull    c    pull    c    pull   
+     []        [\u{3c3}]         [\u{3c3}]         [\u{3c3}]          [\u{3c3}]          [\u{3c3}]          [\u{3c3}]    
 -+----+----+---------+-+---------+-+----------+-+----------+-+----------+-+----------
 0    2 2.25 0.8254315 0 0.8205578 1  0.0381204 3 -0.0228547 4 -0.0068566 2 -0.0035354
 1 2.25  2.5 0.9013633 0 0.8981709 1  0.0412455 3 -0.0280520 4 -0.0063410 2 -0.0036601
