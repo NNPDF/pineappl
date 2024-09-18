@@ -17,6 +17,6 @@ We also list some common :doc:`recipes` here.
    :caption: Contents:
 
    installation
-   recipes
+   recipes <recipes.ipynb>
    API <modules/pineappl>
    indices
