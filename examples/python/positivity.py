@@ -55,4 +55,4 @@ def main(filename, Q2):
 
 
 if __name__ == "__main__":
-    main("charm-positivity.pineappl", 1.5 ** 2)
+    main("charm-positivity.pineappl", 1.5**2)

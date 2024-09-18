@@ -52,7 +52,7 @@ class TestFkTable:
             )
 
             assert False
-        except:
+        except:  # noqa: E722
             assert True
 
         # TODO: write a better test
@@ -71,5 +71,5 @@ class TestFkTable:
             )
 
             assert False
-        except:
+        except:  # noqa: E722
             assert True

@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+ci:
+  autofix_prs: false
+  skip: [fmt]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # A fast Python linter and code formatter. See
+    # https://docs.astral.sh/ruff/ for more details.
+    rev: v0.6.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+    - id: fmt
+      name: cargo fmt
+      description: Format Rust files with cargo fmt.
+      entry: cargo fmt --
+      language: system
+      files: ^crates/.*\.rs$
+      args: []
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v3.8.0
+    hooks:
+      - id: validate_manifest

@@ -13,8 +13,8 @@ Options:
   -h, --help  Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const DEFAULT_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 1.5769498e3
 1 2.25  2.5 1.4412311e3

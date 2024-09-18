@@ -25,8 +25,8 @@ Options:
 ";
 
 const DEFAULT_STR: &str =
-    "b   etal    dsig/detal             324900                 NNPDF40_nnlo_as_01180    
-     []        [pb]       [pb]          [%]     [%]     [pb]          [%]     [%]  
+    "b   etal    dsig/detal             324900                 NNPDF40_nnlo_as_01180
+     []        [pb]       [pb]          [%]     [%]     [pb]          [%]     [%]
 -+----+----+-----------+-----------+--------+--------+-----------+--------+--------
 0    2 2.25 7.7302788e2 7.7302788e2    -0.67     0.67 7.7302788e2    -0.62     0.62
 1 2.25  2.5 7.0634852e2 7.0634851e2    -0.72     0.72 7.0634851e2    -0.62     0.62
@@ -38,8 +38,8 @@ const DEFAULT_STR: &str =
 7    4  4.5 2.9665790e1 2.9665790e1    -2.56     2.56 2.9665789e1    -3.51     3.51
 ";
 
-const CL_90_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed   
-     []        [pb]        [pb]          [%]     [%]   
+const CL_90_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed
+     []        [pb]        [pb]          [%]     [%]
 -+----+----+-----------+-----------+---------+---------
 0    2 2.25 7.5459110e2 7.5461655e2     -1.87      1.87
 1 2.25  2.5 6.9028342e2 6.9027941e2     -1.90      1.90
@@ -51,8 +51,8 @@ const CL_90_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed
 7    4  4.5 2.7517266e1 2.7504644e1     -4.55      4.55
 ";
 
-const INTEGRATED_STR: &str = "b   etal       integ      NNPDF31_nlo_as_0118_luxqed   
-     []         []          []          [%]     [%]    
+const INTEGRATED_STR: &str = "b   etal       integ      NNPDF31_nlo_as_0118_luxqed
+     []         []          []          [%]     [%]
 -+----+----+-----------+-----------+---------+---------
 0    2 2.25 1.8864777e2 1.8865414e2     -1.14      1.14
 1 2.25  2.5 1.7257086e2 1.7256985e2     -1.16      1.16
@@ -64,8 +64,8 @@ const INTEGRATED_STR: &str = "b   etal       integ      NNPDF31_nlo_as_0118_luxq
 7    4  4.5 1.3758633e1 1.3752322e1     -2.77      2.77
 ";
 
-const ORDERS_A2_AS1A2_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed   
-     []        [pb]        [pb]          [%]     [%]   
+const ORDERS_A2_AS1A2_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118_luxqed
+     []        [pb]        [pb]          [%]     [%]
 -+----+----+-----------+-----------+---------+---------
 0    2 2.25 7.6246034e2 7.6248591e2     -1.14      1.14
 1 2.25  2.5 6.9684577e2 6.9684166e2     -1.16      1.16
@@ -79,7 +79,7 @@ const ORDERS_A2_AS1A2_STR: &str = "b   etal    dsig/detal    NNPDF31_nlo_as_0118
 
 const SCALE_ABS_STR: &str =
 "b   etal    dsig/detal   (r=1,f=1)   (r=2,f=2)  (r=0.5,f=0.5)  (r=2,f=1)   (r=1,f=2)  (r=0.5,f=1) (r=1,f=0.5)
-     []        [pb]        [pb]        [pb]         [pb]         [pb]        [pb]        [pb]        [pb]    
+     []        [pb]        [pb]        [pb]         [pb]         [pb]        [pb]        [pb]        [pb]
 -+----+----+-----------+-----------+-----------+-------------+-----------+-----------+-----------+-----------
 0    2 2.25 7.5459110e2 7.5459110e2 7.6745431e2   7.4296019e2 7.4384068e2 7.7529764e2 7.6796494e2 7.2595107e2
 1 2.25  2.5 6.9028342e2 6.9028342e2 7.0221920e2   6.7923774e2 6.8058382e2 7.0957480e2 7.0235002e2 6.6417441e2
@@ -92,7 +92,7 @@ const SCALE_ABS_STR: &str =
 ";
 
 const SCALE_COV_STR: &str = "b   etal    dsig/detal  7pt scale (cov)
-     []        [pb]           [%]      
+     []        [pb]           [%]
 -+----+----+-----------+-------+-------
 0    2 2.25 7.5459110e2   -3.29    3.29
 1 2.25  2.5 6.9028342e2   -3.30    3.30
@@ -105,7 +105,7 @@ const SCALE_COV_STR: &str = "b   etal    dsig/detal  7pt scale (cov)
 ";
 
 const SCALE_COV_9_STR: &str = "b   etal    dsig/detal  9pt scale (cov)
-     []        [pb]           [%]      
+     []        [pb]           [%]
 -+----+----+-----------+-------+-------
 0    2 2.25 7.5459110e2   -4.48    4.48
 1 2.25  2.5 6.9028342e2   -4.48    4.48
@@ -117,8 +117,8 @@ const SCALE_COV_9_STR: &str = "b   etal    dsig/detal  9pt scale (cov)
 7    4  4.5 2.7517266e1   -4.67    4.67
 ";
 
-const SCALE_ENV_STR: &str = "b   etal    dsig/detal  7pt-svar (env) 
-     []        [pb]           [%]      
+const SCALE_ENV_STR: &str = "b   etal    dsig/detal  7pt-svar (env)
+     []        [pb]           [%]
 -+----+----+-----------+-------+-------
 0    2 2.25 7.5459110e2   -3.80    2.74
 1 2.25  2.5 6.9028342e2   -3.78    2.79
@@ -130,8 +130,8 @@ const SCALE_ENV_STR: &str = "b   etal    dsig/detal  7pt-svar (env)
 7    4  4.5 2.7517266e1   -3.47    2.87
 ";
 
-const SCALE_ENV_9_STR: &str = "b   etal    dsig/detal  9pt-svar (env) 
-     []        [pb]           [%]      
+const SCALE_ENV_9_STR: &str = "b   etal    dsig/detal  9pt-svar (env)
+     []        [pb]           [%]
 -+----+----+-----------+-------+-------
 0    2 2.25 7.5459110e2   -5.61    4.04
 1 2.25  2.5 6.9028342e2   -5.54    4.12

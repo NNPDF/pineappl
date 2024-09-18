@@ -1,0 +1,5 @@
+# Do not check specific files or directories
+extend-exclude = [
+  "pineappl_cli/src/plot.py",
+  "pineappl_cli/src/subgrid-pull-plot.py",
+]

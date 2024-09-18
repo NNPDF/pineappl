@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pineappl
 
+
 def int_photo(s, t, u):
     """
     Photon-photon matrix element.
@@ -157,7 +158,7 @@ def main(calls, pdfname, filename):
         import lhapdf  # pylint: disable=import-outside-toplevel
 
         pdf = lhapdf.mkPDF(pdfname, 0)
-        pdg_id = int(pdf.set().get_entry('Particle'))
+        pdg_id = int(pdf.set().get_entry("Particle"))
         # perform convolution
         dxsec = grid.convolve_with_one(pdg_id, pdf.xfxQ2, pdf.alphasQ2)
         for i in range(len(dxsec)):

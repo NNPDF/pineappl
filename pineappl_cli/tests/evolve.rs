@@ -105,8 +105,8 @@ const LHCB_WP_7TEV_V2_XIF_2_STR: &str =
 const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str = "Error: failed to evolve grid: no operator for muf2 = 25825.775616000003 found in [6456.443904000001]
 ";
 
-const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.8731123e2
 1 2.25  2.5 7.1853181e2

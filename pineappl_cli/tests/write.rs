@@ -45,7 +45,7 @@ const CHANNEL_STR: &str = "c    entry        entry
 4 1 × ( 2, 22) 1 × ( 4, 22)
 ";
 
-const DEDUP_CHANNEL_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+const DEDUP_CHANNEL_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)
 -+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
 0    2 2.25 6.5070305e2 6.5070305e2 0.000e0  -7.8692484e0  -7.8692484e0 0.000e0 1.1175729e2 1.1175729e2 0.000e0
 1 2.25  2.5 5.9601236e2 5.9601236e2 0.000e0  -6.5623495e0  -6.5623495e0 0.000e0 1.0083341e2 1.0083341e2 0.000e0
@@ -57,8 +57,8 @@ const DEDUP_CHANNEL_DIFF_STR: &str = "b    x1               O(as^0 a^2)         
 7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 -2.2022770e-1 -2.2022770e-1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
 ";
 
-const DEFAULT_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const DEFAULT_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5459110e2
 1 2.25  2.5 6.9028342e2
@@ -70,15 +70,15 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.7517266e1
 ";
 
-const DELETE_BINS_02_57_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const DELETE_BINS_02_57_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0 2.75    3 4.8552235e2
 1    3 3.25 3.6195456e2
 ";
 
-const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const DELETE_BINS_25_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5459110e2
 1 2.25  2.5 6.9028342e2
@@ -108,7 +108,7 @@ four
 nnpdf_id: LHCBWZMU7TEV
 pineappl_gitversion: v0.4.1-114-gdce19e0
 results: ----------------------------------------------------------------------
-   PineAPPL         MC        sigma      central         min      max 
+   PineAPPL         MC        sigma      central         min      max
                               1/100   sigma   1/1000   1/1000   1/1000
 ----------------------------------------------------------------------
  3.772955e+02  3.772821e+02   0.165   0.022   0.0357   0.0392   0.0313
@@ -123,14 +123,14 @@ results: ----------------------------------------------------------------------
 runcard_gitversion: 82de4ad
 x1_label: etal
 x1_label_tex: $\eta_{\bar{\ell}}$
-x1_unit: 
+x1_unit:
 y_label: dsig/detal
 y_label_tex: $\frac{\mathrm{d}\sigma}{\mathrm{d}\eta_{\bar{\ell}}}$
 y_unit: pb
 ";
 
-const MERGE_BINS_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const MERGE_BINS_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5459110e2
 1 2.25  2.5 6.9028342e2
@@ -141,8 +141,8 @@ const MERGE_BINS_STR: &str = "b   etal    dsig/detal
 6  3.5  4.5 7.1692887e1
 ";
 
-const REMAP_STR: &str = "b etal  x2  x3  dsig/detal 
-   []   []  []     [pb]    
+const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
+   []   []  []     [pb]
 -+--+--+-+-+-+-+-----------
 0  0  1 0 2 1 2 3.7729555e1
 1  0  1 0 2 2 3 3.4514171e1
@@ -157,8 +157,8 @@ const REMAP_STR: &str = "b etal  x2  x3  dsig/detal
 const REMAP_NO_REMAPPER_STR: &str = "Error: grid does not have a remapper
 ";
 
-const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5534392e2
 1 2.25  2.5 6.9342538e2
@@ -173,14 +173,14 @@ const REWRITE_CHANNELS_CONVOLVE_STR: &str = "b   etal    dsig/detal
 const REWRITE_CHANNELS_STR: &str = "c              entry                            entry                       entry                       entry                        entry                  entry
 -+--------------------------------+-------------------------------+-----------------------+--------------------------------+-----------------------+---------------------
 0 0.0000128881 × ( 2, -5)          0.050940490000000005 × ( 2, -3) 0.9490461561 × ( 2, -1) 0.0017222500000000003 × ( 4, -5) 0.9473907556 × ( 4, -3) 0.05089536 × ( 4, -1)
-1 0.0017351381000000003 × (-5, 21) 0.9983312456 × (-3, 21)         0.9999415161 × (-1, 21)                                                          
-2 1 × (22, -3)                     1 × (22, -1)                                                                                                     
-3 0.9999995342 × ( 2, 21)          1.0000083656 × ( 4, 21)                                                                                          
-4 1 × ( 2, 22)                     1 × ( 4, 22)                                                                                                     
+1 0.0017351381000000003 × (-5, 21) 0.9983312456 × (-3, 21)         0.9999415161 × (-1, 21)
+2 1 × (22, -3)                     1 × (22, -1)
+3 0.9999995342 × ( 2, 21)          1.0000083656 × ( 4, 21)
+4 1 × ( 2, 22)                     1 × ( 4, 22)
 ";
 
-const SCALE_BY_BIN_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const SCALE_BY_BIN_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5459110e2
 1 2.25  2.5 1.3805668e3
@@ -192,8 +192,8 @@ const SCALE_BY_BIN_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.2013813e2
 ";
 
-const SCALE_BY_ORDER_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const SCALE_BY_ORDER_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 4.3317419e2
 1 2.25  2.5 3.9555841e2
@@ -219,8 +219,8 @@ const SPLIT_CHANNELS_STR: &str = "c    entry
 9 1 × ( 4, 22)
 ";
 
-const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2  2.5 7.5454524e2
 1  2.5    3 5.6456123e2
@@ -230,7 +230,7 @@ const MULTIPLE_ARGUMENTS_STR: &str = "b   etal    dsig/detal
 5    4  4.5 2.9004607e1
 ";
 
-const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)          
+const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)                       O(as^0 a^3)                       O(as^1 a^2)
 -+----+----+-----------+-----------+-------+-------------+-------------+-------+-----------+-----------+-------
 0    2 2.25 6.5070305e2 6.5070305e2 0.000e0  -7.8692484e0  -7.8692484e0 0.000e0 1.1175729e2 1.1175729e2 0.000e0
 1 2.25  2.5 5.9601236e2 5.9601236e2 0.000e0  -6.5623495e0  -6.5623495e0 0.000e0 1.0083341e2 1.0083341e2 0.000e0
@@ -242,7 +242,7 @@ const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)   
 7    4  4.5 2.2383492e1 2.2383492e1 0.000e0 -2.2022770e-1 -2.2022770e-1 0.000e0 5.3540011e0 5.3540011e0 0.000e0
 ";
 
-const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)            
+const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)
 -+----+----+-----------+-----------+----------+-------------+-------------+----------+-----------+-----------+----------
 0    2 2.25 6.5070305e2 6.5070305e2 -2.220e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
 1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -2.220e-16 1.0083341e2 1.0083341e2 -5.551e-16
@@ -416,8 +416,8 @@ const ROTATE_PID_BASIS_READ_CHANNELS_STR: &str = " c                 entry
 157 0.03333333333333333 × (235, 22)
 ";
 
-const REWRITE_ORDER_CONVOLVE_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const REWRITE_ORDER_CONVOLVE_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 1.8216658e2
 1 2.25  2.5 1.6597039e2

@@ -1,7 +1,7 @@
 program test_pineappl
     use pineappl
     use iso_c_binding
-    
+
     implicit none
 
     integer, parameter :: dp = kind(0.0d0)
@@ -164,7 +164,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -177,7 +177,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -190,7 +190,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test

@@ -18,8 +18,8 @@ Options:
   -h, --help              Print help
 ";
 
-const DEFAULT_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const DEFAULT_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5459110e2
 1 2.25  2.5 6.9028342e2
@@ -37,8 +37,8 @@ const USE_ALPHAS_FROM_ERROR_STR: &str = "expected `use_alphas_from` to be `0` or
 const THREE_PDF_ERROR_STR: &str = "convolutions with 3 convolution functions is not supported
 ";
 
-const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 7.5461571e2
 1 2.25  2.5 6.9032107e2
@@ -50,8 +50,8 @@ const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.8422453e1
 ";
 
-const DEFAULT_MULTIPLE_PDFS_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed 
-     []        [pb]              [pb] [%]          
+const DEFAULT_MULTIPLE_PDFS_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed
+     []        [pb]              [pb] [%]
 -+----+----+-----------+-------------+-------------
 0    2 2.25 7.5459110e2   7.5459110e2          0.00
 1 2.25  2.5 6.9028342e2   6.9028342e2          0.00
@@ -64,8 +64,8 @@ const DEFAULT_MULTIPLE_PDFS_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_
 ";
 
 const MULTIPLE_PDFS_WITH_NEW_CONSTRUCTION_STR: &str =
-    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1 
-     []        [pb]               [pb] [%]           
+    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1
+     []        [pb]               [pb] [%]
 -+----+----+-----------+--------------+--------------
 0    2 2.25 7.5459110e2    7.5169067e2          -0.38
 1 2.25  2.5 6.9028342e2    6.8612437e2          -0.60
@@ -77,8 +77,8 @@ const MULTIPLE_PDFS_WITH_NEW_CONSTRUCTION_STR: &str =
 7    4  4.5 2.7517266e1    2.7259743e1          -0.94
 ";
 
-const MULTIPLE_PDFS_WITH_RELABELING_STR: &str = "b   etal    dsig/detal     other mc=1.4   
-     []        [pb]          [pb] [%]     
+const MULTIPLE_PDFS_WITH_RELABELING_STR: &str = "b   etal    dsig/detal     other mc=1.4
+     []        [pb]          [pb] [%]
 -+----+----+-----------+-----------+------
 0    2 2.25 7.5459110e2 7.5169067e2  -0.38
 1 2.25  2.5 6.9028342e2 6.8612437e2  -0.60
@@ -90,8 +90,8 @@ const MULTIPLE_PDFS_WITH_RELABELING_STR: &str = "b   etal    dsig/detal     othe
 7    4  4.5 2.7517266e1 2.7259743e1  -0.94
 ";
 
-const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1 
-     []        [pb]               [pb] [%]           
+const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str = "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1
+     []        [pb]               [pb] [%]
 -+----+----+-----------+--------------+--------------
 0    2 2.25 6.5070305e2    6.4903968e2          -0.26
 1 2.25  2.5 5.9601236e2    5.9329838e2          -0.46
@@ -104,8 +104,8 @@ const TWO_PDFS_WITH_ORDER_SUBSET_STR: &str = "b   etal    dsig/detal  NNPDF31_nl
 ";
 
 const THREE_PDFS_STR: &str =
-    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2 
-     []        [pb]               [pb] [%]                      [pb] [%]           
+    "b   etal    dsig/detal  NNPDF31_nlo_as_0118_luxqed/1  NNPDF31_nlo_as_0118_luxqed/2
+     []        [pb]               [pb] [%]                      [pb] [%]
 -+----+----+-----------+--------------+--------------+--------------+--------------
 0    2 2.25 7.5459110e2    7.5169067e2          -0.38    7.5748758e2           0.38
 1 2.25  2.5 6.9028342e2    6.8612437e2          -0.60    6.9177921e2           0.22
@@ -117,8 +117,8 @@ const THREE_PDFS_STR: &str =
 7    4  4.5 2.7517266e1    2.7259743e1          -0.94    2.8446007e1           3.38
 ";
 
-const BINS_13567_STR: &str = "b   etal   dsig/detal 
-     []       [pb]    
+const BINS_13567_STR: &str = "b   etal   dsig/detal
+     []       [pb]
 -+----+---+-----------
 1 2.25 2.5 6.9028342e2
 3 2.75   3 4.8552235e2
@@ -127,8 +127,8 @@ const BINS_13567_STR: &str = "b   etal   dsig/detal
 7    4 4.5 2.7517266e1
 ";
 
-const INTEGRATED_STR: &str = "b   etal       integ   
-     []         []     
+const INTEGRATED_STR: &str = "b   etal       integ
+     []         []
 -+----+----+-----------
 0    2 2.25 1.8864777e2
 1 2.25  2.5 1.7257086e2
@@ -140,8 +140,8 @@ const INTEGRATED_STR: &str = "b   etal       integ
 7    4  4.5 1.3758633e1
 ";
 
-const INTEGRATED_MULTIPLE_PDFS_STR: &str = "b   etal       integ    NNPDF31_nlo_as_0118_luxqed 
-     []         []                [] [%]           
+const INTEGRATED_MULTIPLE_PDFS_STR: &str = "b   etal       integ    NNPDF31_nlo_as_0118_luxqed
+     []         []                [] [%]
 -+----+----+-----------+-------------+-------------
 0    2 2.25 1.8864777e2   1.8864777e2          0.00
 1 2.25  2.5 1.7257086e2   1.7257086e2          0.00
@@ -153,8 +153,8 @@ const INTEGRATED_MULTIPLE_PDFS_STR: &str = "b   etal       integ    NNPDF31_nlo_
 7    4  4.5 1.3758633e1   1.3758633e1          0.00
 ";
 
-const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal 
-     []        [pb]    
+const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal
+     []        [pb]
 -+----+----+-----------
 0    2 2.25 6.4283381e2
 1 2.25  2.5 5.8945001e2
