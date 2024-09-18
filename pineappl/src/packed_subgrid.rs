@@ -4,6 +4,7 @@ use super::interpolation::Interp;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::assert_approx_eq;
+use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem;
@@ -74,17 +75,6 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
-        // let rhs_mu2 = other.mu2_grid().into_owned();
-        // let rhs_x1 = if transpose {
-        //     other.x2_grid()
-        // } else {
-        //     other.x1_grid()
-        // };
-        // let rhs_x2 = if transpose {
-        //     other.x1_grid()
-        // } else {
-        //     other.x2_grid()
-        // };
         let lhs_node_values = self.node_values();
         let mut rhs_node_values = other.node_values();
         let mut new_node_values = lhs_node_values.clone();
@@ -92,75 +82,69 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             rhs_node_values.swap(a, b);
         }
 
-        if lhs_node_values != rhs_node_values {
-            for (lhs, rhs) in new_node_values.iter_mut().zip(rhs_node_values) {
-                lhs.extend(&rhs);
+        // TODO: remove this block
+        assert!(matches!(transpose, None | Some((1, 2))));
+        let rhs_mu2 = other.mu2_grid().into_owned();
+        let rhs_x1 = if transpose.is_some() {
+            other.x2_grid()
+        } else {
+            other.x1_grid()
+        };
+        let rhs_x2 = if transpose.is_some() {
+            other.x1_grid()
+        } else {
+            other.x2_grid()
+        };
+
+        if (self.mu2_grid != rhs_mu2) || (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2) {
+            // end block
+            for (lhs, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
+                lhs.extend(rhs);
             }
 
-            let mut array = PackedArray::new(
-                &new_node_values
-                    .iter()
-                    .map(NodeValues::len)
-                    .collect::<Vec<_>>(),
-            );
+            let mut array = PackedArray::new(new_node_values.iter().map(NodeValues::len).collect());
 
             for (indices, value) in self.array.indexed_iter3() {
-                // let target_i = mu2_grid
-                //     .iter()
-                //     .position(|mu2| *mu2 == self.mu2_grid[i])
-                //     .unwrap_or_else(|| unreachable!());
-                // let target_j = x1_grid
-                //     .iter()
-                //     .position(|&x| x == self.x1_grid[j])
-                //     .unwrap_or_else(|| unreachable!());
-                // let target_k = x2_grid
-                //     .iter()
-                //     .position(|&x| x == self.x2_grid[k])
-                //     .unwrap_or_else(|| unreachable!());
-                let target: Vec<_> = indices
-                    .iter()
-                    .zip(&new_node_values)
-                    .zip(&lhs_node_values)
-                    .map(|((&i, new_values), old_values)| new_values.find(old_values.get(i)).unwrap())
+                let target: Vec<_> = izip!(indices, &new_node_values, &lhs_node_values)
+                    .map(|(index, new, lhs)| new.find(lhs.get(index)).unwrap())
                     .collect();
 
                 array[target.as_slice()] = value;
             }
 
             self.array = array;
-            todo!();
+
+            // TODO: remove this block
+            let mut mu2_grid = self.mu2_grid.clone();
+            let mut x1_grid = self.x1_grid.clone();
+            let mut x2_grid = self.x2_grid.clone();
+
+            mu2_grid.extend_from_slice(&rhs_mu2);
+            mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            mu2_grid.dedup();
+            x1_grid.extend_from_slice(&rhs_x1);
+            x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x1_grid.dedup();
+            x2_grid.extend_from_slice(&rhs_x2);
+            x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            x2_grid.dedup();
+            // end block
+
+            self.mu2_grid = mu2_grid;
+            self.x1_grid = x1_grid;
+            self.x2_grid = x2_grid;
         }
 
         for (mut indices, value) in other.indexed_iter() {
             if let Some((a, b)) = transpose {
                 indices.swap(a, b);
             }
-            // let i = indices[0];
-            // let target_i = self
-            //     .mu2_grid
-            //     .iter()
-            //     .position(|x| *x == rhs_mu2[i])
-            //     .unwrap_or_else(|| unreachable!());
-            // let target_j = self
-            //     .x1_grid
-            //     .iter()
-            //     .position(|&x| x == rhs_x1[j])
-            //     .unwrap_or_else(|| unreachable!());
-            // let target_k = self
-            //     .x2_grid
-            //     .iter()
-            //     .position(|&x| x == rhs_x2[k])
-            //     .unwrap_or_else(|| unreachable!());
 
-            // self.array[[target_i, target_j, target_k]] += value;
-            let target: Vec<_> = indices
-                    .iter()
-                    .zip(&new_node_values)
-                    .zip(&rhs_node_values)
-                    .map(|((&i, new_values), old_values)| new_values.find(old_values.get(i)).unwrap())
-                    .collect();
+            let target: Vec<_> = izip!(indices, &new_node_values, &rhs_node_values)
+                .map(|(index, new, rhs)| new.find(rhs.get(index)).unwrap())
+                .collect();
 
-                self.array[target.as_slice()] += value;
+            self.array[target.as_slice()] += value;
         }
     }
 
@@ -284,7 +268,7 @@ mod tests {
             vec![Mu2 {
                 ren: 0.0,
                 fac: 0.0,
-                frg: 0.0,
+                frg: -1.0,
             }],
             x.clone(),
             x.clone(),
@@ -294,7 +278,7 @@ mod tests {
         let mu2 = vec![Mu2 {
             ren: 0.0,
             fac: 0.0,
-            frg: 0.0,
+            frg: -1.0,
         }];
 
         assert_eq!(grid1.mu2_grid().as_ref(), mu2);
@@ -324,7 +308,7 @@ mod tests {
             vec![Mu2 {
                 ren: 1.0,
                 fac: 1.0,
-                frg: 1.0,
+                frg: -1.0,
             }],
             x.clone(),
             x,
