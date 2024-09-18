@@ -4,6 +4,8 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
+      - id: trailing-whitespace
+        exclude: ^pineappl_cli/tests/
       - id: end-of-file-fixer
       - id: check-merge-conflict
   - repo: https://github.com/astral-sh/ruff-pre-commit
