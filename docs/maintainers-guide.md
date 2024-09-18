@@ -48,6 +48,7 @@
 - `_config.yml`: configuration file for PineAPPL's Github-pages website
 - `install-capi.sh`: POSIX-compliant shell script to download and install
   PineAPPL's pre-built CAPI
+- `.pre-commit-config.yaml`: pre-commit hooks configuration
 
 [cargo-xtask]: https://github.com/matklad/cargo-xtask
 [release page]: https://github.com/NNPDF/pineappl/releases
