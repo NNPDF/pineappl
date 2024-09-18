@@ -1,13 +1,9 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-ci:
-  autofix_prs: false
-  skip: [fmt]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
-      - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-merge-conflict
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -25,8 +21,14 @@ repos:
       description: Format Rust files with cargo fmt.
       entry: cargo fmt --
       language: system
-      files: ^crates/.*\.rs$
+      files: ^pineappl\S*\/.*\.rs$
       args: []
+    - id: check
+      name: cargo check
+      description: Run cargo check.
+      entry: bash -c 'cargo check --features=evolve,fktable'
+      language: system
+      require_serial: true
   - repo: https://github.com/pre-commit/pre-commit
     rev: v3.8.0
     hooks:
