@@ -21,7 +21,7 @@ impl LagrangeSubgridV2 {
     #[must_use]
     pub fn new(interps: &[Interp]) -> Self {
         Self {
-            array: PackedArray::new(&interps.iter().map(Interp::nodes).collect::<Vec<_>>()),
+            array: PackedArray::new(interps.iter().map(Interp::nodes).collect()),
             interps: interps.to_vec(),
             static_q2: 0.0,
         }
@@ -91,7 +91,7 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn symmetrize(&mut self, a: usize, b: usize) {
-        let mut new_array = PackedArray::new(self.array.shape());
+        let mut new_array = PackedArray::new(self.array.shape().to_vec());
 
         for (mut index, sigma) in self.array.indexed_iter3() {
             // TODO: why not the other way around?

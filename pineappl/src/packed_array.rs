@@ -26,12 +26,12 @@ pub struct PackedArray<T> {
 impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
-    pub fn new(shape: &[usize]) -> Self {
+    pub fn new(shape: Vec<usize>) -> Self {
         Self {
             entries: vec![],
             start_indices: vec![],
             lengths: vec![],
-            shape: shape.to_vec(),
+            shape,
         }
     }
 
@@ -158,7 +158,7 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
 
-        let mut result = Self::new(&[xsize, shape[1], shape[2]]);
+        let mut result = Self::new(vec![xsize, shape[1], shape[2]]);
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
@@ -556,7 +556,7 @@ mod tests {
 
     #[test]
     fn index() {
-        let mut a = PackedArray::new(&[4, 2]);
+        let mut a = PackedArray::new(vec![4, 2]);
 
         a[[0, 0]] = 1;
         assert_eq!(a[[0, 0]], 1);
@@ -610,7 +610,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut a = PackedArray::new(&[6, 5]);
+        let mut a = PackedArray::new(vec![6, 5]);
         a[[2, 2]] = 1;
         a[[2, 4]] = 2;
         a[[4, 1]] = 3;
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn index_access() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         // after creation the array must be empty
         assert_eq!(array.overhead(), 0);
@@ -775,7 +775,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [40, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim0() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[40, 0, 50]] = 1.0;
     }
@@ -783,7 +783,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim1() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 50, 0]] = 1.0;
     }
@@ -791,7 +791,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim2() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 50]] = 1.0;
     }
@@ -799,7 +799,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_0() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -809,7 +809,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [2, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_1() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -819,7 +819,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [1, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_panic_dim1() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
@@ -829,7 +829,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim2_0() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
@@ -839,7 +839,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 2] is implicitly set to the default value")]
     fn index_panic_dim2_1() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
@@ -848,7 +848,7 @@ mod tests {
 
     #[test]
     fn indexed_iter() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         // check shape
         assert_eq!(array.shape(), [40, 50, 50]);
@@ -904,7 +904,7 @@ mod tests {
 
     #[test]
     fn clear() {
-        let mut array = PackedArray::new(&[40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[3, 5, 1]] = 1;
         array[[7, 8, 9]] = 2;

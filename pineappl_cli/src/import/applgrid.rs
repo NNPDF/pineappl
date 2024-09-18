@@ -220,7 +220,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 let matrix = unsafe { &*matrix };
 
                 let mut array =
-                    PackedArray::new(&[mu2_values.len(), x1_values.len(), x2_values.len()]);
+                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
 
                 for itau in 0..mu2_values.len() {
                     for ix1 in 0..x1_values.len() {

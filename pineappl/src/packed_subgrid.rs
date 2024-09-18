@@ -169,7 +169,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn symmetrize(&mut self, a: usize, b: usize) {
-        let mut new_array = PackedArray::new(self.array.shape());
+        let mut new_array = PackedArray::new(self.array.shape().to_vec());
 
         for (mut index, sigma) in self.array.indexed_iter3() {
             // TODO: why not the other way around?
@@ -231,7 +231,7 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
         let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
         let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();
 
-        let mut array = PackedArray::new(&[mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+        let mut array = PackedArray::new(vec![mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
 
         for (indices, value) in subgrid.indexed_iter() {
             // if there's a static scale we want every value to be added to same grid point
@@ -266,7 +266,7 @@ mod tests {
     #[should_panic(expected = "PackedQ1X2SubgridV1 doesn't support the fill operation")]
     fn fill_packed_q1x2_subgrid_v1() {
         let mut subgrid = PackedQ1X2SubgridV1::new(
-            PackedArray::new(&[0, 0, 0]),
+            PackedArray::new(vec![0, 0, 0]),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -280,7 +280,7 @@ mod tests {
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
         ];
         let mut grid1: SubgridEnum = PackedQ1X2SubgridV1::new(
-            PackedArray::new(&[1, 10, 10]),
+            PackedArray::new(vec![1, 10, 10]),
             vec![Mu2 {
                 ren: 0.0,
                 fac: 0.0,
@@ -320,7 +320,7 @@ mod tests {
 
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
-            PackedArray::new(&[1, 10, 10]),
+            PackedArray::new(vec![1, 10, 10]),
             vec![Mu2 {
                 ren: 1.0,
                 fac: 1.0,

@@ -195,7 +195,7 @@ fn convert_coeff_add_fix(
                     .collect();
 
                 let mut array =
-                    PackedArray::new(&[mu2_values.len(), x1_values.len(), x2_values.len()]);
+                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
 
                 // TODO: figure out what the general case is supposed to be
                 assert_eq!(j, 0);
@@ -370,7 +370,7 @@ fn convert_coeff_add_flex(
             let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
             let mut arrays =
                 vec![
-                    PackedArray::new(&[mu2_values.len(), x1_values.len(), x2_values.len()]);
+                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
                     orders_len
                 ];
 
