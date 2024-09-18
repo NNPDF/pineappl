@@ -74,7 +74,7 @@ mod tests {
     fn create_empty() {
         let mut subgrid = EmptySubgridV1;
         assert!(subgrid.is_empty());
-        subgrid.merge(&mut EmptySubgridV1.into(), false);
+        subgrid.merge(&mut EmptySubgridV1.into(), None);
         subgrid.scale(2.0);
         subgrid.symmetrize(1, 2);
         assert_eq!(

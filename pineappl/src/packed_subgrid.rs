@@ -342,7 +342,7 @@ mod tests {
         assert_eq!(grid2.indexed_iter().nth(2), Some((vec![0, 3, 1], 2.0)));
         assert_eq!(grid2.indexed_iter().nth(3), Some((vec![0, 3, 4], 4.0)));
 
-        grid1.merge(&mut grid2, false);
+        grid1.merge(&mut grid2, None);
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged
