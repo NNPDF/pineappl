@@ -509,8 +509,21 @@ impl Subcommand for Opts {
             };
             let enable_rel_pdfpull = enable_rel_pdfunc;
 
-            print!(
-                include_str!("plot.py"),
+            let config = format!("title = {title}
+xlabel = {xlabel}
+ylabel = {ylabel}
+xlog = {xlog}
+ylog = {ylog}
+scales = {scales}
+enable_int = {enable_int}
+enable_abs = {enable_abs}
+enable_rel_ewonoff = {enable_rel_ewonoff}
+enable_abs_pdfs = {enable_abs_pdfs}
+enable_ratio_pdf = {enable_ratio_pdf}
+enable_double_ratio_pdf = {enable_double_ratio_pdf}
+enable_rel_pdfunc = {enable_rel_pdfunc}
+enable_rel_pdfpull = {enable_rel_pdfpull}
+output = {output}",
                 enable_int = enable_int,
                 enable_abs = enable_abs,
                 enable_rel_ewonoff = enable_rel_ewonoff,
@@ -526,9 +539,16 @@ impl Subcommand for Opts {
                 title = title,
                 scales = self.scales,
                 output = output.to_str().unwrap(),
-                data = data_string,
+            );
+
+            let data = format!("data = {data_string}
+metadata = {metadata}",
+                data_string = data_string,
                 metadata = format_metadata(&vector),
             );
+            // TODO: read plot.py and replace "# CLI_INSERT_CONFIG\n" with `config`
+            // and "# CLI_INSERT_DATA\n" with `data`
+            // include_str!("plot.py")
         } else {
             // TODO: enforce two arguments with clap
             assert_eq!(self.conv_funs.len(), 2);
