@@ -31,10 +31,18 @@ repos:
     - id: check
       name: cargo check
       description: Run cargo check.
-      entry: bash -c 'cargo check --features=evolve,fktable'
+      entry: bash -c 'cargo check --all-targets --features=evolve,fktable'
       language: system
       require_serial: true
       types: [rust]
+    - id: clippy
+      name: cargo clippy
+      description: Check Rust files with cargo clippy.
+      # Show only errors and ignore warnings
+      entry: cargo clippy --all-targets --features=evolve,fktable -- -Awarnings
+      pass_filenames: false
+      types: [file, rust]
+      language: system
   - repo: https://github.com/pre-commit/pre-commit
     rev: v3.8.0
     hooks:
