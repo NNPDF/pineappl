@@ -18,6 +18,7 @@ repos:
         exclude: ^pineappl_cli/src/plot.py
       - id: ruff-format
         args: [--line-length=80]
+        exclude: ^pineappl_cli/src/plot.py
   - repo: local
     hooks:
     - id: fmt
