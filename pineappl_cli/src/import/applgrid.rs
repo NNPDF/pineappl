@@ -1,6 +1,6 @@
 use anyhow::Result;
 use lhapdf::Pdf;
-use pineappl::boc::{Channel, Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -171,7 +171,12 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
                 ),
             ],
             // TODO: change kinematics for DIS
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         for bin in 0..grid.Nobs_internal() {

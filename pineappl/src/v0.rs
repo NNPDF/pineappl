@@ -1,5 +1,5 @@
 use super::bin::{BinLimits, BinRemapper};
-use super::boc::{Channel, Kinematics, Order};
+use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::Convolution;
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv4, MoreMembers};
@@ -134,8 +134,15 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             // and limits we should be able to do the same without error
             BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
         }),
-        kinematics: vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+        // TODO: read in flexible-scale grids properly
+        kinematics: vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
         interps: default_interps(),
+        scales: Scales {
+            // TODO: read in flexible-scale grids properly
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
     };
 
     assert_eq!(result.bin_info().bins(), grid.bin_info().bins());

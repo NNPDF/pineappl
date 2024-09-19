@@ -57,7 +57,7 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -753,7 +753,12 @@ pub unsafe extern "C" fn pineappl_grid_new(
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
         convolutions,
         interps,
-        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
     ))
 }
 

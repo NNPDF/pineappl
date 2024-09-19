@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::{Kinematics, Order};
+use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
@@ -144,7 +144,13 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         ),
                     ],
                     // TODO: change kinematics for DIS
-                    vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+                    vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+                    // TODO: is this correct?
+                    Scales {
+                        ren: ScaleFuncForm::NoScale,
+                        fac: ScaleFuncForm::Scale(0),
+                        frg: ScaleFuncForm::NoScale,
+                    },
                 );
 
                 grid = Some(fktable);

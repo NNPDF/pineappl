@@ -3,7 +3,7 @@ use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use num_complex::Complex;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Kinematics, Order};
+use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::{Convolution, LumiCache};
 use pineappl::grid::{Grid, GridOptFlags};
@@ -208,12 +208,18 @@ fn fill_drell_yan_lo_grid(
 
     let kinematics = vec![
         // 1st dimension is factorization and at the same time also the renormalization scale
-        Kinematics::MU2_RF,
+        Kinematics::Scale(0),
         // 2nd dimension is the parton momentum fraction of the first convolution
         Kinematics::X1,
         // 3rd dimension is the parton momentum fraction of the second convolution
         Kinematics::X2,
     ];
+
+    let scales = Scales {
+        ren: ScaleFuncForm::Scale(0),
+        fac: ScaleFuncForm::Scale(1),
+        frg: ScaleFuncForm::NoScale,
+    };
 
     // create the PineAPPL grid
     let mut grid = Grid::new(
@@ -225,6 +231,7 @@ fn fill_drell_yan_lo_grid(
         convolutions,
         interps,
         kinematics,
+        scales,
     );
 
     // in GeV^2 pbarn

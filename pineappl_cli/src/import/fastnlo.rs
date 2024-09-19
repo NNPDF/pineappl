@@ -2,7 +2,7 @@ use anyhow::Result;
 use itertools::Itertools;
 use ndarray::s;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -160,7 +160,12 @@ fn convert_coeff_add_fix(
             ),
         ],
         // TODO: change kinematics for DIS
-        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
     );
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
@@ -340,7 +345,17 @@ fn convert_coeff_add_flex(
             ),
         ],
         // TODO: change kinematics for DIS
-        vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+        vec![
+            Kinematics::Scale(0),
+            Kinematics::Scale(1),
+            Kinematics::X1,
+            Kinematics::X2,
+        ],
+        Scales {
+            ren: todo!(),
+            fac: todo!(),
+            frg: ScaleFuncForm::NoScale,
+        },
     );
 
     let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);

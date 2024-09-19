@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::boc::{Channel, Kinematics, Order};
+use super::boc::{Channel, Kinematics, Order, Scales};
 use super::convolutions::{Convolution, LumiCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
@@ -130,6 +130,7 @@ pub struct Grid {
     pub(crate) kinematics: Vec<Kinematics>,
     pub(crate) interps: Vec<Interp>,
     pub(crate) remapper: Option<BinRemapper>,
+    pub(crate) scales: Scales,
 }
 
 impl Grid {
@@ -148,6 +149,7 @@ impl Grid {
         convolutions: Vec<Convolution>,
         interps: Vec<Interp>,
         kinematics: Vec<Kinematics>,
+        scales: Scales,
     ) -> Self {
         for (channel_idx, channel) in channels.iter().enumerate() {
             let offending_entry = channel
@@ -181,6 +183,7 @@ impl Grid {
             interps,
             kinematics,
             remapper: None,
+            scales,
         }
     }
 
@@ -1221,6 +1224,8 @@ impl Grid {
                 more_members: self.more_members.clone(),
                 kinematics: self.kinematics.clone(),
                 remapper: self.remapper.clone(),
+                // TODO: is this correct?
+                scales: self.scales.clone(),
             };
 
             if let Some(lhs) = &mut lhs {
@@ -1385,6 +1390,8 @@ impl Grid {
                 more_members: self.more_members.clone(),
                 kinematics: self.kinematics.clone(),
                 remapper: self.remapper.clone(),
+                // TODO: is this correct?
+                scales: self.scales.clone(),
             };
 
             assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
@@ -1639,6 +1646,7 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::boc::ScaleFuncForm;
     use crate::channel;
     use std::fs::File;
 
@@ -1654,7 +1662,12 @@ mod tests {
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
     }
 
@@ -1670,7 +1683,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1688,7 +1706,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         // merging with empty subgrids should not change the grid
@@ -1711,7 +1734,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1732,7 +1760,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 1.0);
@@ -1760,7 +1793,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         assert_eq!(grid.bin_info().bins(), 4);
@@ -1774,7 +1812,12 @@ mod tests {
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         // fill the photon-photon entry
@@ -1799,7 +1842,12 @@ mod tests {
             vec![0.0, 0.25, 0.5],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         assert_eq!(grid.bin_info().bins(), 2);
@@ -1817,7 +1865,12 @@ mod tests {
             vec![0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         other.fill(0, 0.1, 0, &[90.0_f64.powi(2), 0.1, 0.2], 2.0);
@@ -1847,7 +1900,12 @@ mod tests {
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
             v0::default_interps(),
-            vec![Kinematics::MU2_RF, Kinematics::X1, Kinematics::X2],
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
         );
 
         // by default we assume unpolarized proton PDFs are used
