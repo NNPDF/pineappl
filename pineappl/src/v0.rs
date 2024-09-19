@@ -7,7 +7,7 @@ use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
-use super::subgrid::Mu2;
+use super::subgrid::{Mu2, NodeValues};
 use ndarray::Array3;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
@@ -76,7 +76,17 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                         for (index, v) in subgrid.indexed_iter() {
                             array[<[usize; 3]>::from(index)] = v;
                         }
-                        PackedQ1X2SubgridV1::new(array, mu2_grid, x1_grid, x2_grid).into()
+                        PackedQ1X2SubgridV1::new(
+                            array,
+                            vec![
+                                NodeValues::UseThese(
+                                    mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                ),
+                                NodeValues::UseThese(x1_grid),
+                                NodeValues::UseThese(x2_grid),
+                            ],
+                        )
+                        .into()
                     }
                 })
                 .collect(),

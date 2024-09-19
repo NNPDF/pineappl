@@ -7,7 +7,7 @@ use super::grid::{Grid, GridError};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
-use super::subgrid::{Mu2, Subgrid, SubgridEnum};
+use super::subgrid::{Mu2, NodeValues, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::izip;
 use itertools::Itertools;
@@ -429,24 +429,19 @@ pub(crate) fn evolve_slice_with_one(
                     0,
                     1,
                 ),
-                vec![Mu2 {
-                    // TODO: FK tables don't depend on the renormalization scale
-                    //ren: -1.0,
-                    ren: info.fac0,
-                    fac: info.fac0,
-                    // TODO: implement evolution for non-zero fragmentation scales
-                    frg: -1.0,
-                }],
-                if index == 0 {
-                    info.x0.clone()
-                } else {
-                    vec![1.0]
-                },
-                if index == 0 {
-                    vec![1.0]
-                } else {
-                    info.x0.clone()
-                },
+                vec![
+                    NodeValues::UseThese(vec![info.fac0]),
+                    NodeValues::UseThese(if index == 0 {
+                        info.x0.clone()
+                    } else {
+                        vec![1.0]
+                    }),
+                    NodeValues::UseThese(if index == 0 {
+                        vec![1.0]
+                    } else {
+                        info.x0.clone()
+                    }),
+                ],
             )
             .into()
         }));
@@ -574,16 +569,11 @@ pub(crate) fn evolve_slice_with_two(
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             PackedQ1X2SubgridV1::new(
                 PackedArray::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
-                vec![Mu2 {
-                    // TODO: FK tables don't depend on the renormalization scale
-                    //ren: -1.0,
-                    ren: info.fac0,
-                    fac: info.fac0,
-                    // TODO: implement evolution for non-zero fragmentation scales
-                    frg: -1.0,
-                }],
-                info.x0.clone(),
-                info.x0.clone(),
+                vec![
+                    NodeValues::UseThese(vec![info.fac0]),
+                    NodeValues::UseThese(info.x0.clone()),
+                    NodeValues::UseThese(info.x0.clone()),
+                ],
             )
             .into()
         }));
@@ -724,16 +714,11 @@ pub(crate) fn evolve_slice_with_two2(
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             PackedQ1X2SubgridV1::new(
                 PackedArray::from_ndarray(table.insert_axis(Axis(0)).view(), 0, 1),
-                vec![Mu2 {
-                    // TODO: FK tables don't depend on the renormalization scale
-                    //ren: -1.0,
-                    ren: infos[0].fac0,
-                    fac: infos[0].fac0,
-                    // TODO: implement evolution for non-zero fragmentation scales
-                    frg: -1.0,
-                }],
-                infos[0].x0.clone(),
-                infos[1].x0.clone(),
+                vec![
+                    NodeValues::UseThese(vec![infos[0].fac0]),
+                    NodeValues::UseThese(infos[0].x0.clone()),
+                    NodeValues::UseThese(infos[1].x0.clone()),
+                ],
             )
             .into()
         }));

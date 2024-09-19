@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 /// TODO
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum NodeValues {
     /// TODO
     UseFromGrid,
@@ -60,17 +60,28 @@ impl NodeValues {
             NodeValues::UseThese(a) => a[index],
         }
     }
+
+    /// TODO
+    pub fn values(&self) -> Vec<f64> {
+        match self {
+            NodeValues::UseFromGrid => unimplemented!(),
+            NodeValues::UseThese(a) => a.clone(),
+        }
+    }
 }
 
 impl PartialEq for NodeValues {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
-            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => a.iter().zip(b).all(
-                // TODO: use some tolerance
-                |(&a, &b)| a == b,
-                //approx_eq!(f64, a, b, ulps = EVOLVE_INFO_TOL_ULPS)
-            ),
+            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => {
+                (a.len() == b.len())
+                    && a.iter().zip(b).all(
+                        // TODO: use some tolerance
+                        |(&a, &b)| a == b,
+                        //approx_eq!(f64, a, b, ulps = EVOLVE_INFO_TOL_ULPS)
+                    )
+            }
             // TODO: the remaining cases could still be the same, but we don't know the values from `UseFromGrid`.
             _ => false,
         }

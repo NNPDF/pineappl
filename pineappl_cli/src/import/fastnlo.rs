@@ -9,7 +9,7 @@ use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::Mu2;
+use pineappl::subgrid::{Mu2, NodeValues};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
@@ -248,9 +248,13 @@ fn convert_coeff_add_fix(
                         [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
                         PackedQ1X2SubgridV1::new(
                             array,
-                            mu2_values,
-                            x1_values.clone(),
-                            x2_values.clone(),
+                            vec![
+                                NodeValues::UseThese(
+                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                ),
+                                NodeValues::UseThese(x1_values.clone()),
+                                NodeValues::UseThese(x2_values.clone()),
+                            ],
                         )
                         .into();
                 }
@@ -453,13 +457,7 @@ fn convert_coeff_add_flex(
                     continue;
                 }
 
-                *subgrid = PackedQ1X2SubgridV1::new(
-                    array,
-                    mu2_values.clone(),
-                    x1_values.clone(),
-                    x2_values.clone(),
-                )
-                .into();
+                *subgrid = PackedQ1X2SubgridV1::new(array, todo!()).into();
             }
         }
     }

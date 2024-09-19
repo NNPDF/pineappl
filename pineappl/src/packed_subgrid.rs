@@ -3,7 +3,6 @@
 use super::interpolation::Interp;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use float_cmp::assert_approx_eq;
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -13,26 +12,14 @@ use std::mem;
 #[derive(Clone, Deserialize, Serialize)]
 pub struct PackedQ1X2SubgridV1 {
     array: PackedArray<f64>,
-    mu2_grid: Vec<Mu2>,
-    x1_grid: Vec<f64>,
-    x2_grid: Vec<f64>,
+    node_values: Vec<NodeValues>,
 }
 
 impl PackedQ1X2SubgridV1 {
     /// Constructor.
     #[must_use]
-    pub const fn new(
-        array: PackedArray<f64>,
-        mu2_grid: Vec<Mu2>,
-        x1_grid: Vec<f64>,
-        x2_grid: Vec<f64>,
-    ) -> Self {
-        Self {
-            array,
-            mu2_grid,
-            x1_grid,
-            x2_grid,
-        }
+    pub const fn new(array: PackedArray<f64>, node_values: Vec<NodeValues>) -> Self {
+        Self { array, node_values }
     }
 }
 
@@ -42,32 +29,30 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
-        Cow::Borrowed(&self.mu2_grid)
+        // Cow::Borrowed(&self.mu2_grid)
+        Cow::Owned(
+            self.node_values[0]
+                .values()
+                .into_iter()
+                .map(|ren| Mu2 {
+                    ren,
+                    fac: ren,
+                    frg: -1.0,
+                })
+                .collect(),
+        )
     }
 
     fn x1_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&self.x1_grid)
+        Cow::Owned(self.node_values[1].values())
     }
 
     fn x2_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&self.x2_grid)
+        Cow::Owned(self.node_values[2].values())
     }
 
     fn node_values(&self) -> Vec<NodeValues> {
-        vec![
-            NodeValues::UseThese(
-                self.mu2_grid
-                    .iter()
-                    .map(|&Mu2 { ren, fac, frg }| {
-                        assert_approx_eq!(f64, ren, fac, ulps = 4);
-                        assert_approx_eq!(f64, frg, -1.0, ulps = 4);
-                        fac
-                    })
-                    .collect(),
-            ),
-            NodeValues::UseThese(self.x1_grid.clone()),
-            NodeValues::UseThese(self.x2_grid.clone()),
-        ]
+        self.node_values.clone()
     }
 
     fn is_empty(&self) -> bool {
@@ -82,22 +67,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             rhs_node_values.swap(a, b);
         }
 
-        // TODO: remove this block
-        assert!(matches!(transpose, None | Some((1, 2))));
-        let rhs_mu2 = other.mu2_grid().into_owned();
-        let rhs_x1 = if transpose.is_some() {
-            other.x2_grid()
-        } else {
-            other.x1_grid()
-        };
-        let rhs_x2 = if transpose.is_some() {
-            other.x1_grid()
-        } else {
-            other.x2_grid()
-        };
-
-        if (self.mu2_grid != rhs_mu2) || (self.x1_grid() != rhs_x1) || (self.x2_grid() != rhs_x2) {
-            // end block
+        if self.node_values() != rhs_node_values {
             for (lhs, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
                 lhs.extend(rhs);
             }
@@ -113,26 +83,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             }
 
             self.array = array;
-
-            // TODO: remove this block
-            let mut mu2_grid = self.mu2_grid.clone();
-            let mut x1_grid = self.x1_grid.clone();
-            let mut x2_grid = self.x2_grid.clone();
-
-            mu2_grid.extend_from_slice(&rhs_mu2);
-            mu2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            mu2_grid.dedup();
-            x1_grid.extend_from_slice(&rhs_x1);
-            x1_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            x1_grid.dedup();
-            x2_grid.extend_from_slice(&rhs_x2);
-            x2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            x2_grid.dedup();
-            // end block
-
-            self.mu2_grid = mu2_grid;
-            self.x1_grid = x1_grid;
-            self.x2_grid = x2_grid;
+            self.node_values = new_node_values.clone();
         }
 
         for (mut indices, value) in other.indexed_iter() {
@@ -182,8 +133,12 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn static_scale(&self) -> Option<Mu2> {
-        if let [static_scale] = self.mu2_grid.as_slice() {
-            Some(static_scale.clone())
+        if let &[static_scale] = self.node_values()[0].values().as_slice() {
+            Some(Mu2 {
+                ren: static_scale,
+                fac: static_scale,
+                frg: -1.0,
+            })
         } else {
             None
         }
@@ -232,12 +187,14 @@ impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
             ]] += value;
         }
 
-        Self {
+        Self::new(
             array,
-            mu2_grid,
-            x1_grid,
-            x2_grid,
-        }
+            vec![
+                NodeValues::UseThese(mu2_grid.iter().map(|mu2| mu2.ren).collect()),
+                NodeValues::UseThese(x1_grid),
+                NodeValues::UseThese(x2_grid),
+            ],
+        )
     }
 }
 
@@ -251,9 +208,7 @@ mod tests {
     fn fill_packed_q1x2_subgrid_v1() {
         let mut subgrid = PackedQ1X2SubgridV1::new(
             PackedArray::new(vec![0, 0, 0]),
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
+            vec![NodeValues::UseThese(Vec::new()); 3],
         );
         subgrid.fill(&v0::default_interps(), &[0.0; 3], 0.0);
     }
@@ -265,13 +220,11 @@ mod tests {
         ];
         let mut grid1: SubgridEnum = PackedQ1X2SubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
-            vec![Mu2 {
-                ren: 0.0,
-                fac: 0.0,
-                frg: -1.0,
-            }],
-            x.clone(),
-            x.clone(),
+            vec![
+                NodeValues::UseThese(vec![0.0]),
+                NodeValues::UseThese(x.clone()),
+                NodeValues::UseThese(x.clone()),
+            ],
         )
         .into();
 
@@ -305,13 +258,11 @@ mod tests {
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
-            vec![Mu2 {
-                ren: 1.0,
-                fac: 1.0,
-                frg: -1.0,
-            }],
-            x.clone(),
-            x,
+            vec![
+                NodeValues::UseThese(vec![1.0]),
+                NodeValues::UseThese(x.clone()),
+                NodeValues::UseThese(x.clone()),
+            ],
         )
         .into();
         if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid2 {

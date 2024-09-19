@@ -9,7 +9,7 @@ use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::Mu2;
+use pineappl::subgrid::NodeValues;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;
@@ -219,14 +219,15 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         {
                             *subgrid = PackedQ1X2SubgridV1::new(
                                 array,
-                                // TODO: remove the renormalization scale
-                                vec![Mu2 {
-                                    ren: q0 * q0,
-                                    fac: q0 * q0,
-                                    frg: -1.0,
-                                }],
-                                x_grid.clone(),
-                                if hadronic { x_grid.clone() } else { vec![1.0] },
+                                vec![
+                                    NodeValues::UseThese(vec![q0 * q0]),
+                                    NodeValues::UseThese(x_grid.clone()),
+                                    NodeValues::UseThese(if hadronic {
+                                        x_grid.clone()
+                                    } else {
+                                        vec![1.0]
+                                    }),
+                                ],
                             )
                             .into();
                         }
@@ -280,14 +281,11 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
     {
         *subgrid = PackedQ1X2SubgridV1::new(
             array,
-            // TODO: remove the renormalization scale
-            vec![Mu2 {
-                ren: q0 * q0,
-                fac: q0 * q0,
-                frg: -1.0,
-            }],
-            x_grid.clone(),
-            if hadronic { x_grid.clone() } else { vec![1.0] },
+            vec![
+                NodeValues::UseThese(vec![q0 * q0]),
+                NodeValues::UseThese(x_grid.clone()),
+                NodeValues::UseThese(if hadronic { x_grid.clone() } else { vec![1.0] }),
+            ],
         )
         .into();
     }
