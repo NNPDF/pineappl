@@ -78,6 +78,7 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
         .join(", ")
 }
 
+/// Convert a channel to a good Python string representation.
 fn map_format_channel(
     channel: &Channel,
     has_pdf1: bool,
@@ -105,12 +106,13 @@ fn map_format_channel(
         .join(" + ")
 }
 
+/// Convert channel contributions to Python tuples.
 fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
     channels
         .iter()
         .map(|(label, bins)| {
             format!(
-                "                (r\"${}$\", np.array([{}]))",
+                "            (r\"${}$\", np.array([{}]))",
                 label,
                 map_format_e_join_repeat_last(bins)
             )
@@ -125,7 +127,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns
         .zip(conv_funs.iter().map(|fun| &fun.label))
         .map(|(values, label)| {
             format!(
-                "                (
+                "            (
                     \"{}\",
                     np.array([{}]),
                     np.array([{}]),
@@ -150,7 +152,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
                 None
             } else {
                 Some(format!(
-                    "        \"{}\": r\"{}\",",
+                    "    \"{}\": r\"{}\",",
                     key,
                     if *key == "description" {
                         value.replace('\u{2013}', "--").replace('\u{2014}', "---")
@@ -427,23 +429,23 @@ impl Subcommand for Opts {
 
                 writeln!(
                     &mut data_string,
-                    "        {{
-            \"slice_label\"    : r\"{slice_label}\",
-            \"x\"        : np.array([{x}]),
-            \"mid\"      : np.array([{mid}]),
-            \"pdf_results\" : [
+                    "    {{
+        \"slice_label\"    : r\"{slice_label}\",
+        \"x\"        : np.array([{x}]),
+        \"mid\"      : np.array([{mid}]),
+        \"pdf_results\" : [
 {pdf_results}
-            ],
-            \"qcd_y\"    : np.array([{qcd_y}]),
-            \"qcd_min\"  : np.array([{qcd_min}]),
-            \"qcd_max\"  : np.array([{qcd_max}]),
-            \"y\"        : np.array([{y}]),
-            \"ymin\"     : np.array([{ymin}]),
-            \"ymax\"     : np.array([{ymax}]),
-            \"channels\" : [
+        ],
+        \"qcd_y\"    : np.array([{qcd_y}]),
+        \"qcd_min\"  : np.array([{qcd_min}]),
+        \"qcd_max\"  : np.array([{qcd_max}]),
+        \"y\"        : np.array([{y}]),
+        \"ymin\"     : np.array([{ymin}]),
+        \"ymax\"     : np.array([{ymax}]),
+        \"channels\" : [
 {channels}
-            ],
-        }},",
+        ],
+    }},",
                     slice_label = label,
                     mid = map_format_join(&mid),
                     pdf_results = format_pdf_results(&conv_fun_uncertainties, &self.conv_funs),
@@ -459,7 +461,7 @@ impl Subcommand for Opts {
                 .unwrap_or_else(|_| unreachable!());
             }
 
-            data_string.push_str("    ]");
+            data_string.push_str("]");
 
             // prepare metadata
             let key_values = grid.key_values().cloned().unwrap_or_default();
@@ -558,7 +560,7 @@ output = r\"{output}\"",
             let data = format!(
                 "data = {data_string}
 metadata = {{
-    {metadata}
+{metadata}
 }}",
                 data_string = data_string,
                 metadata = format_metadata(&vector),
