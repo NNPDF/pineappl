@@ -1,6 +1,6 @@
 use anyhow::Result;
-use itertools::Itertools;
-use ndarray::s;
+// use itertools::Itertools;
+// use ndarray::s;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::Convolution;
@@ -266,203 +266,205 @@ fn convert_coeff_add_fix(
 }
 
 fn convert_coeff_add_flex(
-    table: &fastNLOCoeffAddFlex,
-    comb: &fastNLOPDFLinearCombinations,
-    mur_ff: EScaleFunctionalForm,
-    muf_ff: EScaleFunctionalForm,
-    bins: usize,
-    alpha: u32,
-    ipub_units: i32,
-    dis_pid: i32,
+    _table: &fastNLOCoeffAddFlex,
+    _comb: &fastNLOPDFLinearCombinations,
+    _mur_ff: EScaleFunctionalForm,
+    _muf_ff: EScaleFunctionalForm,
+    _bins: usize,
+    _alpha: u32,
+    _ipub_units: i32,
+    _dis_pid: i32,
 ) -> Grid {
-    let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
+    todo!()
 
-    let alphas = table_as_add_base.GetNpow().try_into().unwrap();
-    let orders: Vec<_> = [
-        Order::new(alphas, alpha, 0, 0, 0),
-        Order::new(alphas, alpha, 1, 0, 0),
-        Order::new(alphas, alpha, 0, 1, 0),
-        Order::new(alphas, alpha, 2, 0, 0),
-        Order::new(alphas, alpha, 0, 2, 0),
-        Order::new(alphas, alpha, 1, 1, 0),
-    ]
-    .into_iter()
-    .take(match table.GetNScaleDep() {
-        0..=4 => 1,
-        5 => 3,
-        6 => 4,
-        7 => 6,
-        _ => unimplemented!(),
-    })
-    .collect();
-    let orders_len = orders.len();
+    // let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
 
-    let npdf = table_as_add_base.GetNPDF();
-    assert!(npdf <= 2);
+    // let alphas = table_as_add_base.GetNpow().try_into().unwrap();
+    // let orders: Vec<_> = [
+    //     Order::new(alphas, alpha, 0, 0, 0),
+    //     Order::new(alphas, alpha, 1, 0, 0),
+    //     Order::new(alphas, alpha, 0, 1, 0),
+    //     Order::new(alphas, alpha, 2, 0, 0),
+    //     Order::new(alphas, alpha, 0, 2, 0),
+    //     Order::new(alphas, alpha, 1, 1, 0),
+    // ]
+    // .into_iter()
+    // .take(match table.GetNScaleDep() {
+    //     0..=4 => 1,
+    //     5 => 3,
+    //     6 => 4,
+    //     7 => 6,
+    //     _ => unimplemented!(),
+    // })
+    // .collect();
+    // let orders_len = orders.len();
 
-    let convolutions = (0..2)
-        .map(|index| {
-            if index < npdf {
-                Convolution::UnpolPDF(table.GetPDFPDG(index))
-            } else {
-                Convolution::None
-            }
-        })
-        .collect();
+    // let npdf = table_as_add_base.GetNPDF();
+    // assert!(npdf <= 2);
 
-    let mut grid = Grid::new(
-        PidBasis::Pdg,
-        reconstruct_channels(table_as_add_base, comb, dis_pid),
-        orders,
-        (0..=bins)
-            .map(|limit| u16::try_from(limit).unwrap().into())
-            .collect(),
-        convolutions,
-        // TODO: read out interpolation parameters from fastNLO
-        vec![
-            Interp::new(
-                1e2,
-                1e8,
-                40,
-                3,
-                ReweightMeth::NoReweight,
-                Map::ApplGridH0,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                2e-7,
-                1.0,
-                50,
-                3,
-                ReweightMeth::ApplGridX,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                2e-7,
-                1.0,
-                50,
-                3,
-                ReweightMeth::ApplGridX,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-        ],
-        // TODO: change kinematics for DIS
-        vec![
-            Kinematics::Scale(0),
-            Kinematics::Scale(1),
-            Kinematics::X1,
-            Kinematics::X2,
-        ],
-        Scales {
-            ren: todo!(),
-            fac: todo!(),
-            frg: ScaleFuncForm::NoScale,
-        },
-    );
+    // let convolutions = (0..2)
+    //     .map(|index| {
+    //         if index < npdf {
+    //             Convolution::UnpolPDF(table.GetPDFPDG(index))
+    //         } else {
+    //             Convolution::None
+    //         }
+    //     })
+    //     .collect();
 
-    let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
+    // let mut grid = Grid::new(
+    //     PidBasis::Pdg,
+    //     reconstruct_channels(table_as_add_base, comb, dis_pid),
+    //     orders,
+    //     (0..=bins)
+    //         .map(|limit| u16::try_from(limit).unwrap().into())
+    //         .collect(),
+    //     convolutions,
+    //     // TODO: read out interpolation parameters from fastNLO
+    //     vec![
+    //         Interp::new(
+    //             1e2,
+    //             1e8,
+    //             40,
+    //             3,
+    //             ReweightMeth::NoReweight,
+    //             Map::ApplGridH0,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //         Interp::new(
+    //             2e-7,
+    //             1.0,
+    //             50,
+    //             3,
+    //             ReweightMeth::ApplGridX,
+    //             Map::ApplGridF2,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //         Interp::new(
+    //             2e-7,
+    //             1.0,
+    //             50,
+    //             3,
+    //             ReweightMeth::ApplGridX,
+    //             Map::ApplGridF2,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //     ],
+    //     // TODO: change kinematics for DIS
+    //     vec![
+    //         Kinematics::Scale(0),
+    //         Kinematics::Scale(1),
+    //         Kinematics::X1,
+    //         Kinematics::X2,
+    //     ],
+    //     Scales {
+    //         ren: todo!(),
+    //         fac: todo!(),
+    //         frg: ScaleFuncForm::NoScale,
+    //     },
+    // );
 
-    for obs in 0..bins {
-        let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
-        let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
-        let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
-        let x2_values = if npdf > 1 {
-            ffi::GetXNodes2(table_as_add_base, obs.try_into().unwrap())
-        } else {
-            vec![1.0]
-        };
+    // let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 
-        let mu2_values: Vec<_> = scale_nodes1
-            .iter()
-            .cartesian_product(scale_nodes2.iter())
-            .map(|(&s1, &s2)| Mu2 {
-                ren: mur_ff.compute_scale(s1, s2),
-                fac: muf_ff.compute_scale(s1, s2),
-                frg: -1.0,
-            })
-            .collect();
-        let nx = ffi::GetNx(table, obs);
+    // for obs in 0..bins {
+    //     let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
+    //     let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
+    //     let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
+    //     let x2_values = if npdf > 1 {
+    //         ffi::GetXNodes2(table_as_add_base, obs.try_into().unwrap())
+    //     } else {
+    //         vec![1.0]
+    //     };
 
-        for subproc in 0..table_as_add_base.GetNSubproc() {
-            let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
-            let mut arrays =
-                vec![
-                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
-                    orders_len
-                ];
+    //     let mu2_values: Vec<_> = scale_nodes1
+    //         .iter()
+    //         .cartesian_product(scale_nodes2.iter())
+    //         .map(|(&s1, &s2)| Mu2 {
+    //             ren: mur_ff.compute_scale(s1, s2),
+    //             fac: muf_ff.compute_scale(s1, s2),
+    //             frg: -1.0,
+    //         })
+    //         .collect();
+    //     let nx = ffi::GetNx(table, obs);
 
-            for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
-                .cartesian_product(0..scale_nodes2.len())
-                .enumerate()
-            {
-                let logmur2 = mu2_values[mu2_slice].ren.ln();
-                let logmuf2 = mu2_values[mu2_slice].fac.ln();
-                let logs00 = [
-                    logmur2,
-                    logmuf2,
-                    logmur2 * logmur2,
-                    logmuf2 * logmuf2,
-                    logmur2 * logmuf2,
-                ];
-                let logs10 = [2.0 * logmur2, 0.0, logmuf2];
-                let logs01 = [0.0, 2.0 * logmuf2, logmur2];
+    //     for subproc in 0..table_as_add_base.GetNSubproc() {
+    //         let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
+    //         let mut arrays =
+    //             vec![
+    //                 PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
+    //                 orders_len
+    //             ];
 
-                for ix in 0..nx {
-                    // TODO: is this always correct? Isn't there a member function for it?
-                    let ix1 = ix % x1_values.len();
-                    let ix2 = ix / x1_values.len();
-                    let mut values = [0.0; 6];
+    //         for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
+    //             .cartesian_product(0..scale_nodes2.len())
+    //             .enumerate()
+    //         {
+    //             let logmur2 = mu2_values[mu2_slice].ren.ln();
+    //             let logmuf2 = mu2_values[mu2_slice].fac.ln();
+    //             let logs00 = [
+    //                 logmur2,
+    //                 logmuf2,
+    //                 logmur2 * logmur2,
+    //                 logmuf2 * logmuf2,
+    //                 logmur2 * logmuf2,
+    //             ];
+    //             let logs10 = [2.0 * logmur2, 0.0, logmuf2];
+    //             let logs01 = [0.0, 2.0 * logmuf2, logmur2];
 
-                    for (index, value) in values.iter_mut().enumerate().take(orders_len) {
-                        *value = ffi::GetSigmaTilde(table, index, obs, ix, is1, is2, subproc);
-                    }
+    //             for ix in 0..nx {
+    //                 // TODO: is this always correct? Isn't there a member function for it?
+    //                 let ix1 = ix % x1_values.len();
+    //                 let ix2 = ix / x1_values.len();
+    //                 let mut values = [0.0; 6];
 
-                    values[0] += values[1..]
-                        .iter()
-                        .zip(logs00.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
-                    values[1] += values[3..]
-                        .iter()
-                        .zip(logs10.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
-                    values[2] += values[3..]
-                        .iter()
-                        .zip(logs01.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
+    //                 for (index, value) in values.iter_mut().enumerate().take(orders_len) {
+    //                     *value = ffi::GetSigmaTilde(table, index, obs, ix, is1, is2, subproc);
+    //                 }
 
-                    for (value, array) in values
-                        .iter()
-                        .copied()
-                        .zip(arrays.iter_mut())
-                        .filter(|(value, _)| *value != 0.0)
-                    {
-                        array[[mu2_slice, ix1, ix2]] =
-                            value * factor * x1_values[ix1] * x2_values[ix2];
-                    }
-                }
-            }
+    //                 values[0] += values[1..]
+    //                     .iter()
+    //                     .zip(logs00.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
+    //                 values[1] += values[3..]
+    //                     .iter()
+    //                     .zip(logs10.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
+    //                 values[2] += values[3..]
+    //                     .iter()
+    //                     .zip(logs01.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
 
-            for (subgrid, array) in grid
-                .subgrids_mut()
-                .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
-                .iter_mut()
-                .zip(arrays.into_iter())
-            {
-                if array.is_empty() {
-                    continue;
-                }
+    //                 for (value, array) in values
+    //                     .iter()
+    //                     .copied()
+    //                     .zip(arrays.iter_mut())
+    //                     .filter(|(value, _)| *value != 0.0)
+    //                 {
+    //                     array[[mu2_slice, ix1, ix2]] =
+    //                         value * factor * x1_values[ix1] * x2_values[ix2];
+    //                 }
+    //             }
+    //         }
 
-                *subgrid = PackedQ1X2SubgridV1::new(array, todo!()).into();
-            }
-        }
-    }
+    //         for (subgrid, array) in grid
+    //             .subgrids_mut()
+    //             .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
+    //             .iter_mut()
+    //             .zip(arrays.into_iter())
+    //         {
+    //             if array.is_empty() {
+    //                 continue;
+    //             }
 
-    grid
+    //             *subgrid = PackedQ1X2SubgridV1::new(array, todo!()).into();
+    //         }
+    //     }
+    // }
+
+    // grid
 }
 
 pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> Result<Grid> {
