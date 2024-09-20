@@ -16,6 +16,10 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::thread;
 
+const MARKER_CONFIG_BEGIN: &str = "# CLI_INSERT_CONFIG_BEGIN\n";
+const MARKER_CONFIG_END: &str = "# CLI_INSERT_CONFIG_END";
+const MARKER_DATA_INSERT: &str = "# CLI_INSERT_DATA";
+
 /// Creates a matplotlib script plotting the contents of the grid.
 #[derive(Parser)]
 pub struct Opts {
@@ -56,10 +60,12 @@ pub struct Opts {
     no_conv_fun_unc: bool,
 }
 
+/// Convert `slice` to (unformatted) Python list.
 fn map_format_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{x}")).join(", ")
 }
 
+/// Convert `slice` to Python list using `.7e`.
 fn map_format_e_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{x:.7e}")).join(", ")
 }
@@ -112,6 +118,7 @@ fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
         .join(",\n")
 }
 
+/// Convert PDF results to a Python tuple.
 fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
     pdf_uncertainties
         .iter()
@@ -124,7 +131,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns
                     np.array([{}]),
                     np.array([{}]),
                 ),",
-                label.replace('_', r"\_"),
+                label,
                 map_format_e_join_repeat_last(&values[0]),
                 map_format_e_join_repeat_last(&values[1]),
                 map_format_e_join_repeat_last(&values[2]),
@@ -133,6 +140,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns
         .join("\n")
 }
 
+/// Convert metadata into a Python dict.
 fn format_metadata(metadata: &[(&String, &String)]) -> String {
     metadata
         .iter()
@@ -158,6 +166,15 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
             }
         })
         .join("\n")
+}
+
+/// Convert `b` into a Python bool literal.
+fn map_bool(b: bool) -> String {
+    if b {
+        "True".to_owned()
+    } else {
+        "False".to_owned()
+    }
 }
 
 impl Subcommand for Opts {
@@ -489,29 +506,26 @@ impl Subcommand for Opts {
                     format!(" [\\si{{{yunit}}}]")
                 }
             );
-            let xlog = if xunit.is_empty() { "False" } else { "True" };
+            let xlog = !xunit.is_empty();
             let ylog = xlog;
             let title = key_values.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 
-            let enable_int = if bins == 1 { "" } else { "# " };
-            let enable_abs = if bins == 1 { "# " } else { "" };
+            let enable_int = bins == 1;
+            let enable_abs = !enable_int;
             // TODO: only enable if there are EW corrections
             let enable_rel_ewonoff = enable_abs;
-            let enable_abs_pdfs = if nconvs == 1 || bins == 1 { "# " } else { "" };
+            let enable_abs_pdfs = !(nconvs == 1 || bins == 1);
             let enable_ratio_pdf = enable_abs_pdfs;
             let enable_double_ratio_pdf = enable_abs_pdfs;
-            let enable_rel_pdfunc = if nconvs == 1 || bins == 1 || self.no_conv_fun_unc {
-                "# "
-            } else {
-                ""
-            };
+            let enable_rel_pdfunc = !(nconvs == 1 || bins == 1 || self.no_conv_fun_unc);
             let enable_rel_pdfpull = enable_rel_pdfunc;
 
-            let config = format!("title = {title}
-xlabel = {xlabel}
-ylabel = {ylabel}
+            let config = format!(
+                "title = r\"{title}\"
+xlabel = r\"{xlabel}\"
+ylabel = r\"{ylabel}\"
 xlog = {xlog}
 ylog = {ylog}
 scales = {scales}
@@ -523,32 +537,53 @@ enable_ratio_pdf = {enable_ratio_pdf}
 enable_double_ratio_pdf = {enable_double_ratio_pdf}
 enable_rel_pdfunc = {enable_rel_pdfunc}
 enable_rel_pdfpull = {enable_rel_pdfpull}
-output = {output}",
-                enable_int = enable_int,
-                enable_abs = enable_abs,
-                enable_rel_ewonoff = enable_rel_ewonoff,
-                enable_abs_pdfs = enable_abs_pdfs,
-                enable_ratio_pdf = enable_ratio_pdf,
-                enable_double_ratio_pdf = enable_double_ratio_pdf,
-                enable_rel_pdfunc = enable_rel_pdfunc,
-                enable_rel_pdfpull = enable_rel_pdfpull,
+output = r\"{output}\"",
+                enable_int = map_bool(enable_int),
+                enable_abs = map_bool(enable_abs),
+                enable_rel_ewonoff = map_bool(enable_rel_ewonoff),
+                enable_abs_pdfs = map_bool(enable_abs_pdfs),
+                enable_ratio_pdf = map_bool(enable_ratio_pdf),
+                enable_double_ratio_pdf = map_bool(enable_double_ratio_pdf),
+                enable_rel_pdfunc = map_bool(enable_rel_pdfunc),
+                enable_rel_pdfpull = map_bool(enable_rel_pdfpull),
                 xlabel = xlabel,
                 ylabel = ylabel,
-                xlog = xlog,
-                ylog = ylog,
+                xlog = map_bool(xlog),
+                ylog = map_bool(ylog),
                 title = title,
                 scales = self.scales,
                 output = output.to_str().unwrap(),
             );
 
-            let data = format!("data = {data_string}
-metadata = {metadata}",
+            let data = format!(
+                "data = {data_string}
+metadata = {{
+    {metadata}
+}}",
                 data_string = data_string,
                 metadata = format_metadata(&vector),
             );
-            // TODO: read plot.py and replace "# CLI_INSERT_CONFIG\n" with `config`
-            // and "# CLI_INSERT_DATA\n" with `data`
-            // include_str!("plot.py")
+            let template = include_str!("plot.py");
+            // UNWRAP: if there are no markers the template is wrong
+            let config_marker_begin = template.find(MARKER_CONFIG_BEGIN).unwrap();
+            let config_marker_end = template.find(MARKER_CONFIG_END).unwrap();
+            let data_marker = template.find(MARKER_DATA_INSERT).unwrap();
+            // echo template and dynamic content
+            print!("{}", template.get(0..config_marker_begin).unwrap());
+            print!("{}", config);
+            print!(
+                "{}",
+                template
+                    .get((config_marker_end + MARKER_CONFIG_END.len())..data_marker)
+                    .unwrap()
+            );
+            print!("{}", data);
+            print!(
+                "{}",
+                template
+                    .get((data_marker + MARKER_DATA_INSERT.len())..)
+                    .unwrap()
+            );
         } else {
             // TODO: enforce two arguments with clap
             assert_eq!(self.conv_funs.len(), 2);

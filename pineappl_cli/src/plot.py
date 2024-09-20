@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
-# defaults for global variables coming from the CLI
+# global variables coming from the CLI
+# CLI_INSERT_CONFIG_BEGIN
+# add some placeholders meanwhile
 title = ""
 xlabel = ""
 ylabel = ""
@@ -23,10 +25,7 @@ enable_rel_pdfpull = False
 output = ""
 data = {}
 metadata = {}
-
-# CLI config variables
-# CLI_INSERT_CONFIG
-# end CLI config variables
+# CLI_INSERT_CONFIG_END
 
 # color cycler for different PDF results
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -74,7 +73,7 @@ ylabel_rel_pdfpull = r"Pull [$\sigma$]"
 
 label_rel_ewonoff_qcd = r"NLO QCD"
 label_rel_ewonoff_ew = r"NLO QCD+EW"
-label_rel_ewonoff_scale_unc = f"{scales}-p.\ scale var."
+label_rel_ewonoff_scale_unc = f"{scales}-p. scale var."
 label_rel_ewonoff_pdf_unc = r"PDF uncertainty"
 
 
