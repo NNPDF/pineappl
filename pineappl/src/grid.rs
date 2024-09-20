@@ -15,6 +15,7 @@ use super::v0;
 use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
+use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize};
@@ -273,17 +274,25 @@ impl Grid {
 
                 let channel = &pdg_channels[chan];
                 let mu2_grid = subgrid.mu2_grid();
-                let x1_grid = subgrid.x1_grid();
-                let x2_grid = subgrid.x2_grid();
+                let x_grid: Vec<_> = subgrid
+                    .node_values()
+                    .iter()
+                    .zip(self.kinematics())
+                    .filter_map(|(node_values, kin)| {
+                        matches!(kin, Kinematics::X(_)).then(|| node_values.values())
+                    })
+                    .collect();
+                // TODO: generalize this to N dimensions
+                assert_eq!(x_grid.len(), 2);
 
-                lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
+                lumi_cache.set_grids(&mu2_grid, &x_grid[0], &x_grid[1], xir, xif);
 
                 let mut value = 0.0;
 
                 for (idx, v) in subgrid.indexed_iter() {
                     assert_eq!(idx.len(), 3);
-                    let x1 = x1_grid[idx[1]];
-                    let x2 = x2_grid[idx[2]];
+                    let x1 = x_grid[0][idx[1]];
+                    let x2 = x_grid[1][idx[2]];
                     let mut lumi = 0.0;
 
                     for entry in channel.entry() {
@@ -341,19 +350,36 @@ impl Grid {
         let order = &self.orders[ord];
 
         let channel = &pdg_channels[channel];
-        let mu2_grid = subgrid.mu2_grid();
-        let x1_grid = subgrid.x1_grid();
-        let x2_grid = subgrid.x2_grid();
+        let node_values: Vec<_> = subgrid
+            .node_values()
+            .iter()
+            .map(|node_values| node_values.values())
+            .collect();
+        // TODO: generalize this to N dimensions
+        assert_eq!(node_values.len(), 3);
 
-        lumi_cache.set_grids(&mu2_grid, &x1_grid, &x2_grid, xir, xif);
+        lumi_cache.set_grids(
+            &node_values[0]
+                .iter()
+                .map(|&scale| Mu2 {
+                    ren: scale,
+                    fac: scale,
+                    frg: -1.0,
+                })
+                .collect::<Vec<_>>(),
+            &node_values[1],
+            &node_values[2],
+            xir,
+            xif,
+        );
 
-        let dim = vec![mu2_grid.len(), x1_grid.len(), x2_grid.len()];
+        let dim: Vec<_> = node_values.iter().map(Vec::len).collect();
         let mut array = ArrayD::zeros(dim);
 
         for (idx, value) in subgrid.indexed_iter() {
             assert_eq!(idx.len(), 3);
-            let x1 = x1_grid[idx[1]];
-            let x2 = x2_grid[idx[2]];
+            let x1 = node_values[1][idx[1]];
+            let x2 = node_values[2][idx[2]];
             let mut lumi = 0.0;
 
             for entry in channel.entry() {
@@ -997,32 +1023,56 @@ impl Grid {
     }
 
     fn symmetrize_channels(&mut self) {
-        let convolutions = self.convolutions();
-        // TODO: generalize this method to n convolutions
-        assert_eq!(convolutions.len(), 2);
-        if convolutions[0] != convolutions[1] {
-            return;
-        }
+        let pairs: Vec<_> = self
+            .convolutions()
+            .iter()
+            .enumerate()
+            .tuple_combinations()
+            .filter_map(|((idx_a, conv_a), (idx_b, conv_b))| {
+                (conv_a == conv_b).then(|| (idx_a, idx_b))
+            })
+            .collect();
+
+        let (idx_a, idx_b) = match pairs.as_slice() {
+            &[] => return,
+            &[pair] => pair,
+            _ => panic!("more than two equal convolutions found"),
+        };
+        let a_subgrid = self
+            .kinematics()
+            .iter()
+            .position(|&kin| kin == Kinematics::X(idx_a))
+            // UNWRAP: should be guaranteed by the constructor
+            .unwrap();
+        let b_subgrid = self
+            .kinematics()
+            .iter()
+            .position(|&kin| kin == Kinematics::X(idx_b))
+            // UNWRAP: should be guaranteed by the constructor
+            .unwrap();
 
         let mut indices: Vec<usize> = (0..self.channels.len()).rev().collect();
 
         while let Some(index) = indices.pop() {
             let channel_entry = &self.channels[index];
 
-            if *channel_entry == channel_entry.transpose(0, 1) {
+            if *channel_entry == channel_entry.transpose(idx_a, idx_b) {
                 // check if in all cases the limits are compatible with merging
                 self.subgrids
                     .slice_mut(s![.., .., index])
                     .iter_mut()
                     .for_each(|subgrid| {
-                        if !subgrid.is_empty() && (subgrid.x1_grid() == subgrid.x2_grid()) {
-                            subgrid.symmetrize(1, 2);
+                        if !subgrid.is_empty()
+                            && (subgrid.node_values()[a_subgrid]
+                                == subgrid.node_values()[b_subgrid])
+                        {
+                            subgrid.symmetrize(a_subgrid, b_subgrid);
                         }
                     });
             } else if let Some((j, &other_index)) = indices
                 .iter()
                 .enumerate()
-                .find(|(_, i)| self.channels[**i] == channel_entry.transpose(0, 1))
+                .find(|(_, i)| self.channels[**i] == channel_entry.transpose(idx_a, idx_b))
             {
                 indices.remove(j);
 
@@ -1039,7 +1089,7 @@ impl Grid {
                             // transpose `lhs`
                             todo!();
                         } else {
-                            lhs.merge(rhs, Some((1, 2)));
+                            lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
                             *rhs = EmptySubgridV1.into();
                         }
                     }
@@ -1073,12 +1123,6 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
 
-        // TODO: generalize this method to n convolutions and different EKOs
-        assert_eq!(self.convolutions().len(), 2);
-
-        let has_pdf1 = self.convolutions()[0] != Convolution::None;
-        let has_pdf2 = self.convolutions()[1] != Convolution::None;
-
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
         let mut x1 = Vec::new();
@@ -1089,7 +1133,7 @@ impl Grid {
             .indexed_iter()
             .filter_map(|(tuple, subgrid)| {
                 (!subgrid.is_empty() && (order_mask.is_empty() || order_mask[tuple.0]))
-                    .then_some((tuple.2, subgrid))
+                    .then_some((&self.channels()[tuple.2], subgrid))
             })
         {
             ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
@@ -1100,31 +1144,26 @@ impl Grid {
             fac1.sort_by(f64::total_cmp);
             fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
-            if has_pdf1 {
-                x1.extend(subgrid.x1_grid().iter().copied());
-            }
-            if has_pdf2 {
-                x1.extend(subgrid.x2_grid().iter());
-            }
+            x1.extend(
+                subgrid
+                    .node_values()
+                    .iter()
+                    .zip(self.kinematics())
+                    .filter(|(_, kin)| matches!(kin, Kinematics::X(_)))
+                    .zip(self.convolutions())
+                    .filter_map(|((node_values, _), convolution)| {
+                        (*convolution != Convolution::None).then_some(node_values.values())
+                    })
+                    .flatten(),
+            );
 
             x1.sort_by(f64::total_cmp);
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
-            if has_pdf1 {
-                pids1.extend(
-                    self.channels()[channel]
-                        .entry()
-                        .iter()
-                        .map(|(pids, _)| pids[0]),
-                );
-            }
-            if has_pdf2 {
-                pids1.extend(
-                    self.channels()[channel]
-                        .entry()
-                        .iter()
-                        .map(|(pids, _)| pids[1]),
-                );
+            for (index, convolution) in self.convolutions().iter().enumerate() {
+                if *convolution != Convolution::None {
+                    pids1.extend(channel.entry().iter().map(|(pids, _)| pids[index]));
+                }
             }
 
             pids1.sort_unstable();
