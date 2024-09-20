@@ -89,11 +89,13 @@ impl AlphasTable {
             .subgrids()
             .iter()
             .flat_map(|subgrid| {
-                subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|Mu2 { ren, .. }| xir * xir * ren)
-                    .collect::<Vec<_>>()
+                grid.scales()
+                    .ren
+                    .calc(&subgrid.node_values(), grid.kinematics())
+                    // UNWRAP: grids with no renormalization scales should not call this function
+                    .unwrap()
+                    .into_iter()
+                    .map(|ren| xir * xir * ren)
             })
             .collect();
         // UNWRAP: if we can't sort numbers the grid is fishy

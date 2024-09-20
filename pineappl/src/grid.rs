@@ -204,6 +204,16 @@ impl Grid {
         &mut self.pid_basis
     }
 
+    /// TODO
+    pub fn kinematics(&self) -> &[Kinematics] {
+        &self.kinematics
+    }
+
+    /// TODO
+    pub fn scales(&self) -> &Scales {
+        &self.scales
+    }
+
     /// Perform a convolution using the PDFs and strong coupling in `lumi_cache`, and
     /// selecting only the orders, bins and channels corresponding to `order_mask`, `bin_indices`
     /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the

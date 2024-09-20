@@ -44,14 +44,17 @@ impl ScaleFuncForm {
     pub fn calc(&self, node_values: &[NodeValues], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
         match self {
             ScaleFuncForm::NoScale => None,
-            &ScaleFuncForm::Scale(index) => Some(
+            &ScaleFuncForm::Scale(index) => Some(if node_values.is_empty() {
+                // TODO: empty subgrid should have as many node values as dimensions
+                Vec::new()
+            } else {
                 node_values[kinematics
                     .iter()
                     .position(|&kin| kin == Kinematics::Scale(index))
                     // UNWRAP: this should be guaranteed by `Grid::new`
                     .unwrap()]
-                .values(),
-            ),
+                .values()
+            }),
             ScaleFuncForm::QuadraticSum(_, _) => todo!(),
         }
     }
