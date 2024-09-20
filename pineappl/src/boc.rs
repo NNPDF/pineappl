@@ -3,6 +3,7 @@
 //!
 //! [`Grid`]: super::grid::Grid
 
+use super::subgrid::NodeValues;
 use float_cmp::approx_eq;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,24 @@ pub enum ScaleFuncForm {
     QuadraticSum(usize, usize),
 }
 
+impl ScaleFuncForm {
+    /// TODO
+    pub fn calc(&self, node_values: &[NodeValues], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
+        match self {
+            ScaleFuncForm::NoScale => None,
+            &ScaleFuncForm::Scale(index) => Some(
+                node_values[kinematics
+                    .iter()
+                    .position(|&kin| kin == Kinematics::Scale(index))
+                    // UNWRAP: this should be guaranteed by `Grid::new`
+                    .unwrap()]
+                .values(),
+            ),
+            ScaleFuncForm::QuadraticSum(_, _) => todo!(),
+        }
+    }
+}
+
 /// TODO
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Scales {
@@ -47,6 +66,27 @@ pub struct Scales {
     pub fac: ScaleFuncForm,
     /// TODO
     pub frg: ScaleFuncForm,
+}
+
+impl Scales {
+    /// TODO
+    pub fn compatible_with(&self, kinematics: &[Kinematics]) -> bool {
+        for scale in [&self.ren, &self.fac, &self.frg].map(Clone::clone) {
+            match scale {
+                ScaleFuncForm::NoScale => {}
+                ScaleFuncForm::Scale(index)
+                    if kinematics
+                        .iter()
+                        .any(|&kin| kin == Kinematics::Scale(index)) => {}
+                ScaleFuncForm::QuadraticSum(idx1, idx2)
+                    if kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx1))
+                        && kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx2)) => {}
+                _ => return false,
+            }
+        }
+
+        true
+    }
 }
 
 /// Error type keeping information if [`Order::from_str`] went wrong.

@@ -217,7 +217,7 @@ fn fill_drell_yan_lo_grid(
 
     let scales = Scales {
         ren: ScaleFuncForm::Scale(0),
-        fac: ScaleFuncForm::Scale(1),
+        fac: ScaleFuncForm::Scale(0),
         frg: ScaleFuncForm::NoScale,
     };
 

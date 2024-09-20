@@ -138,8 +138,9 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// Panics when the number of PIDs in `channels` is not equal to `convolutions.len()`, or if
-    /// `interps` and `kinematics` have different lengths.
+    /// Panics when the number of PIDs in `channels` is not equal to `convolutions.len()`, or
+    /// `interps` and `kinematics` have different lengths or if `kinematics` are not compatible
+    /// with `scales`.
     #[must_use]
     pub fn new(
         pid_basis: PidBasis,
@@ -166,6 +167,11 @@ impl Grid {
             interps.len(),
             kinematics.len(),
             "interps and kinematics have different lengths"
+        );
+
+        assert!(
+            scales.compatible_with(&kinematics),
+            "scales and kinematics are not compatible"
         );
 
         Self {
