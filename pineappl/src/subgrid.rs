@@ -12,10 +12,10 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum NodeValues {
     /// TODO
-    UseFromGrid,
+    // UseFromGrid,
     /// TODO
     UseThese(Vec<f64>),
 }
@@ -24,21 +24,20 @@ impl NodeValues {
     /// TODO
     pub fn extend(&mut self, other: &Self) {
         match (self, other) {
-            (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => (),
+            // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => (),
             (NodeValues::UseThese(a), NodeValues::UseThese(b)) => {
                 a.extend_from_slice(b);
                 a.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
                 // TODO: use some tolerance
                 a.dedup();
-            }
-            _ => unimplemented!(),
+            } // _ => unimplemented!(),
         }
     }
 
     /// TODO
     pub fn len(&self) -> usize {
         match self {
-            NodeValues::UseFromGrid => unimplemented!(),
+            // NodeValues::UseFromGrid => unimplemented!(),
             NodeValues::UseThese(a) => a.len(),
         }
     }
@@ -46,7 +45,7 @@ impl NodeValues {
     /// TODO
     pub fn find(&self, value: f64) -> Option<usize> {
         match self {
-            NodeValues::UseFromGrid => unimplemented!(),
+            // NodeValues::UseFromGrid => unimplemented!(),
             NodeValues::UseThese(a) => a.iter().position(|&x|
                 // approx_eq!(f64, x, value, ulps = EVOLVE_INFO_TOL_ULPS)
                 x == value),
@@ -56,7 +55,7 @@ impl NodeValues {
     /// TODO
     pub fn get(&self, index: usize) -> f64 {
         match self {
-            NodeValues::UseFromGrid => unimplemented!(),
+            // NodeValues::UseFromGrid => unimplemented!(),
             NodeValues::UseThese(a) => a[index],
         }
     }
@@ -64,7 +63,7 @@ impl NodeValues {
     /// TODO
     pub fn values(&self) -> Vec<f64> {
         match self {
-            NodeValues::UseFromGrid => unimplemented!(),
+            // NodeValues::UseFromGrid => unimplemented!(),
             NodeValues::UseThese(a) => a.clone(),
         }
     }
@@ -73,7 +72,7 @@ impl NodeValues {
 impl PartialEq for NodeValues {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
+            // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
             (NodeValues::UseThese(a), NodeValues::UseThese(b)) => {
                 (a.len() == b.len())
                     && a.iter().zip(b).all(
@@ -81,9 +80,8 @@ impl PartialEq for NodeValues {
                         |(&a, &b)| a == b,
                         //approx_eq!(f64, a, b, ulps = EVOLVE_INFO_TOL_ULPS)
                     )
-            }
-            // TODO: the remaining cases could still be the same, but we don't know the values from `UseFromGrid`.
-            _ => false,
+            } // TODO: the remaining cases could still be the same, but we don't know the values from `UseFromGrid`.
+              // _ => false,
         }
     }
 }

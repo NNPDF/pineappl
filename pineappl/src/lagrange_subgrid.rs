@@ -64,7 +64,10 @@ impl Subgrid for LagrangeSubgridV2 {
     }
 
     fn node_values(&self) -> Vec<NodeValues> {
-        vec![NodeValues::UseFromGrid; self.interps.len()]
+        self.interps
+            .iter()
+            .map(|interp| NodeValues::UseThese(interp.node_values().to_vec()))
+            .collect()
     }
 
     fn is_empty(&self) -> bool {

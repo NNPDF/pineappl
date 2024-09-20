@@ -148,53 +148,58 @@ impl Subgrid for PackedQ1X2SubgridV1 {
 impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
     fn from(subgrid: &SubgridEnum) -> Self {
         // find smallest ranges
-        let (mu2_range, x1_range, x2_range) = subgrid.indexed_iter().fold(
-            (
-                subgrid.mu2_grid().len()..0,
-                subgrid.x1_grid().len()..0,
-                subgrid.x2_grid().len()..0,
-            ),
-            |prev, (indices, _)| {
-                (
-                    prev.0.start.min(indices[0])..prev.0.end.max(indices[0] + 1),
-                    prev.1.start.min(indices[1])..prev.1.end.max(indices[1] + 1),
-                    prev.2.start.min(indices[2])..prev.2.end.max(indices[2] + 1),
-                )
+        let ranges: Vec<_> = subgrid.indexed_iter().fold(
+            subgrid
+                .node_values()
+                .iter()
+                .map(|values| values.values().len()..0)
+                .collect(),
+            |mut prev, (indices, _)| {
+                for (i, index) in indices.iter().enumerate() {
+                    prev[i].start = prev[i].start.min(*index);
+                    prev[i].end = prev[i].end.max(*index + 1);
+                }
+                prev
             },
         );
 
-        let (mu2_grid, static_scale) = subgrid.static_scale().map_or_else(
-            || (subgrid.mu2_grid()[mu2_range.clone()].to_vec(), false),
-            |scale| (vec![scale], true),
+        let mut new_node_values: Vec<_> = subgrid
+            .node_values()
+            .iter()
+            .zip(&ranges)
+            .map(|(values, range)| NodeValues::UseThese(values.values()[range.clone()].to_vec()))
+            .collect();
+        let static_scale = if let Some(Mu2 { ren, fac, frg }) = subgrid.static_scale() {
+            assert_eq!(ren, fac);
+            assert_eq!(frg, -1.0);
+            new_node_values[0] = NodeValues::UseThese(vec![fac]);
+            true
+        } else {
+            false
+        };
+
+        let mut array = PackedArray::new(
+            new_node_values
+                .iter()
+                .map(|values| values.values().len())
+                .collect(),
         );
-        let x1_grid = subgrid.x1_grid()[x1_range.clone()].to_vec();
-        let x2_grid = subgrid.x2_grid()[x2_range.clone()].to_vec();
 
-        let mut array = PackedArray::new(vec![mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
+        for (mut indices, value) in subgrid.indexed_iter() {
+            for (idx, (index, range)) in indices.iter_mut().zip(&ranges).enumerate() {
+                // TODO: generalize static scale detection
+                *index = if static_scale && idx == 0 {
+                    // if there's a static scale we want every value to be added to same grid point
+                    0
+                } else {
+                    *index - range.start
+                };
+            }
 
-        for (indices, value) in subgrid.indexed_iter() {
-            // if there's a static scale we want every value to be added to same grid point
-            let index = if static_scale {
-                0
-            } else {
-                indices[0] - mu2_range.start
-            };
-
-            array[[
-                index,
-                indices[1] - x1_range.start,
-                indices[2] - x2_range.start,
-            ]] += value;
+            array[indices.as_slice()] += value;
         }
 
-        Self::new(
-            array,
-            vec![
-                NodeValues::UseThese(mu2_grid.iter().map(|mu2| mu2.ren).collect()),
-                NodeValues::UseThese(x1_grid),
-                NodeValues::UseThese(x2_grid),
-            ],
-        )
+        Self::new(array, new_node_values)
     }
 }
 
@@ -228,15 +233,24 @@ mod tests {
         )
         .into();
 
-        let mu2 = vec![Mu2 {
-            ren: 0.0,
-            fac: 0.0,
-            frg: -1.0,
-        }];
+        // let mu2 = vec![Mu2 {
+        //     ren: 0.0,
+        //     fac: 0.0,
+        //     frg: -1.0,
+        // }];
 
-        assert_eq!(grid1.mu2_grid().as_ref(), mu2);
-        assert_eq!(grid1.x1_grid().as_ref(), x);
-        assert_eq!(grid1.x2_grid(), grid1.x1_grid());
+        // assert_eq!(grid1.mu2_grid().as_ref(), mu2);
+        // assert_eq!(grid1.x1_grid().as_ref(), x);
+        // assert_eq!(grid1.x2_grid(), grid1.x1_grid());
+
+        assert_eq!(
+            grid1.node_values(),
+            vec![
+                NodeValues::UseThese(vec![0.0]),
+                NodeValues::UseThese(x.clone()),
+                NodeValues::UseThese(x.clone())
+            ]
+        );
 
         assert!(grid1.is_empty());
 
