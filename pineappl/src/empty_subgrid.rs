@@ -98,17 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn q2_grid() {
-        assert!(EmptySubgridV1.mu2_grid().is_empty());
-    }
-
-    #[test]
-    fn x1_grid() {
-        assert!(EmptySubgridV1.x1_grid().is_empty());
-    }
-
-    #[test]
-    fn x2_grid() {
-        assert!(EmptySubgridV1.x2_grid().is_empty());
+    fn node_values() {
+        assert!(EmptySubgridV1.node_values().is_empty());
     }
 }

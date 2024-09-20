@@ -675,6 +675,7 @@ fn import_flex_grid_15() {
 #[test]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
+    use ndarray::Array4;
     use pineappl::fk_table::FkTable;
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -823,7 +824,7 @@ fn import_dis_fktable() {
         ]
     );
 
-    let table = fk_table.table();
+    let table: Array4<f64> = fk_table.table().into_dimensionality().unwrap();
 
     assert_eq!(table.dim(), (20, 9, 100, 1));
     assert_eq!(
@@ -852,6 +853,7 @@ fn import_dis_fktable() {
 fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
+    use ndarray::Array4;
     use pineappl::convolutions::Convolution;
     use pineappl::convolutions::LumiCache;
     use pineappl::fk_table::{FkAssumptions, FkTable};
@@ -895,7 +897,7 @@ fn import_hadronic_fktable() {
     let results = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     let mut fk_table = FkTable::try_from(grid).unwrap();
-    let table = fk_table.table();
+    let table: Array4<f64> = fk_table.table().into_dimensionality().unwrap();
 
     assert_eq!(table.dim(), (1, 45, 30, 30));
     assert_eq!(

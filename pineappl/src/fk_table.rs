@@ -1,11 +1,11 @@
 //! Provides the [`FkTable`] type.
 
-use super::boc::Order;
+use super::boc::{Kinematics, Order};
 use super::convolutions::{Convolution, LumiCache};
 use super::grid::Grid;
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
-use ndarray::Array4;
+use ndarray::ArrayD;
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 use thiserror::Error;
@@ -144,44 +144,59 @@ impl FkTable {
     ///
     /// TODO
     #[must_use]
-    pub fn table(&self) -> Array4<f64> {
-        let has_pdf1 = self.grid.convolutions()[0] != Convolution::None;
-        let has_pdf2 = self.grid.convolutions()[1] != Convolution::None;
+    pub fn table(&self) -> ArrayD<f64> {
         let x_grid = self.x_grid();
 
-        let mut result = Array4::zeros((
-            self.grid.bin_info().bins(),
-            self.grid.channels().len(),
-            if has_pdf1 { x_grid.len() } else { 1 },
-            if has_pdf2 { x_grid.len() } else { 1 },
-        ));
+        let mut dim = vec![self.grid.bin_info().bins(), self.grid.channels().len()];
+        dim.extend(self.grid.convolutions().iter().map(|convolution| {
+            if *convolution == Convolution::None {
+                1
+            } else {
+                x_grid.len()
+            }
+        }));
+        let mut result = ArrayD::zeros(dim);
 
         for ((_, bin, channel), subgrid) in self.grid().subgrids().indexed_iter() {
-            let indices1 = if has_pdf1 {
-                subgrid
-                    .x1_grid()
-                    .iter()
-                    .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
-                    .collect::<Option<_>>()
-                    .unwrap()
-            } else {
-                vec![0]
-            };
-            let indices2 = if has_pdf2 {
-                subgrid
-                    .x2_grid()
-                    .iter()
-                    .map(|&s| x_grid.iter().position(|&x| approx_eq!(f64, s, x, ulps = 2)))
-                    .collect::<Option<_>>()
-                    .unwrap()
-            } else {
-                vec![0]
-            };
+            let indices: Vec<_> = self
+                .grid
+                .convolutions()
+                .iter()
+                .enumerate()
+                .map(|(index, convolution)| {
+                    subgrid
+                        .node_values()
+                        .iter()
+                        .zip(self.grid.kinematics())
+                        .find_map(|(node_values, kin)| {
+                            matches!(kin, Kinematics::X(i) if *i == index).then(|| {
+                                if *convolution == Convolution::None {
+                                    vec![0]
+                                } else {
+                                    node_values
+                                        .values()
+                                        .iter()
+                                        .map(|&s| {
+                                            x_grid
+                                                .iter()
+                                                .position(|&x| approx_eq!(f64, s, x, ulps = 2))
+                                                // UNWRAP: must be guaranteed by the grid constructor
+                                                .unwrap()
+                                        })
+                                        .collect()
+                                }
+                            })
+                        })
+                        // UNWRAP: must be guaranteed by the grid constructor
+                        .unwrap()
+                })
+                .collect();
 
             for (index, value) in subgrid.indexed_iter() {
                 assert_eq!(index.len(), 3);
                 assert_eq!(index[0], 0);
-                result[[bin, channel, indices1[index[1]], indices2[index[2]]]] = value;
+                // result[[bin, channel, indices1[index[1]], indices2[index[2]]]] = value;
+                result[[bin, channel, indices[0][index[1]], indices[1][index[2]]]] = value;
             }
         }
 
