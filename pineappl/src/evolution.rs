@@ -1,6 +1,6 @@
 //! Supporting classes and functions for [`Grid::evolve_with_slice_iter`].
 
-use super::boc::{Channel, Order};
+use super::boc::{Channel, Kinematics, Order};
 use super::channel;
 use super::convolutions::Convolution;
 use super::grid::{Grid, GridError};
@@ -216,37 +216,44 @@ type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Option<Array2<f64>>);
 
 fn ndarray_from_subgrid_orders_slice(
     fac1: f64,
+    kinematics: &[Kinematics],
     subgrids: &ArrayView1<SubgridEnum>,
     orders: &[Order],
     order_mask: &[bool],
     (xir, xif): (f64, f64),
     alphas_table: &AlphasTable,
 ) -> Result<X1aX1bOp2Tuple, GridError> {
-    // TODO: skip empty subgrids
-
-    let mut x1_a: Vec<_> = subgrids
+    // create a Vec of all x values for each dimension
+    let mut x1n: Vec<_> = kinematics
         .iter()
         .enumerate()
-        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
-        .flat_map(|(_, subgrid)| subgrid.x1_grid().into_owned())
-        .collect();
-    let mut x1_b: Vec<_> = subgrids
-        .iter()
-        .enumerate()
-        .filter(|(index, _)| order_mask.get(*index).copied().unwrap_or(true))
-        .flat_map(|(_, subgrid)| subgrid.x2_grid().into_owned())
+        .filter_map(|(idx, kin)| matches!(kin, Kinematics::X(_)).then_some(idx))
+        .map(|kin_idx| {
+            subgrids
+                .iter()
+                .enumerate()
+                .filter(|&(ord_idx, subgrid)| {
+                    order_mask.get(ord_idx).copied().unwrap_or(true)
+                        // TODO: empty subgrids don't have node values
+                        && !subgrid.is_empty()
+                })
+                .flat_map(|(_, subgrid)| subgrid.node_values()[kin_idx].values())
+                .collect::<Vec<_>>()
+        })
         .collect();
 
-    x1_a.sort_by(f64::total_cmp);
-    x1_a.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
-    x1_b.sort_by(f64::total_cmp);
-    x1_b.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLUTION_TOL_ULPS));
+    for x1 in &mut x1n {
+        x1.sort_by(f64::total_cmp);
+        x1.dedup_by(|&mut a, &mut b| approx_eq!(f64, a, b, ulps = EVOLUTION_TOL_ULPS));
+    }
 
-    let mut array = Array2::<f64>::zeros((x1_a.len(), x1_b.len()));
+    // TODO: lift this restriction
+    assert_eq!(x1n.len(), 2);
+
+    let mut array = Array2::<f64>::zeros((x1n[0].len(), x1n[1].len()));
     let mut zero = true;
 
-    // add subgrids for different orders, but the same bin and lumi, using the right
-    // couplings
+    // for the same bin and channel, sum subgrids of different orders, using the right couplings
     for (subgrid, order) in subgrids
         .iter()
         .zip(orders.iter())
@@ -273,29 +280,24 @@ fn ndarray_from_subgrid_orders_slice(
             logs *= (xif * xif).ln();
         }
 
-        // TODO: use `try_collect` once stabilized
-        let xa_indices: Vec<_> = subgrid
-            .x1_grid()
+        let x1_indices: Vec<Vec<_>> = kinematics
             .iter()
-            .map(|&xa| {
-                x1_a.iter()
-                    .position(|&x1a| approx_eq!(f64, x1a, xa, ulps = EVOLUTION_TOL_ULPS))
-                    .ok_or_else(|| {
-                        GridError::EvolutionFailure(format!("no operator for x1 = {xa} found"))
+            .enumerate()
+            .filter_map(|(idx, kin)| matches!(kin, Kinematics::X(_)).then_some(idx))
+            .zip(&x1n)
+            .map(|(kin_idx, x1)| {
+                subgrid.node_values()[kin_idx]
+                    .values()
+                    .into_iter()
+                    .map(|xs| {
+                        x1.iter()
+                            .position(|&x| approx_eq!(f64, x, xs, ulps = EVOLUTION_TOL_ULPS))
+                            // UNWRAP: `x1n` contains all x-values, so we must find each `x`
+                            .unwrap()
                     })
+                    .collect()
             })
-            .collect::<Result<_, _>>()?;
-        let xb_indices: Vec<_> = subgrid
-            .x2_grid()
-            .iter()
-            .map(|&xb| {
-                x1_b.iter()
-                    .position(|&x1b| approx_eq!(f64, x1b, xb, ulps = EVOLUTION_TOL_ULPS))
-                    .ok_or_else(|| {
-                        GridError::EvolutionFailure(format!("no operator for x1 = {xb} found"))
-                    })
-            })
-            .collect::<Result<_, _>>()?;
+            .collect();
 
         for (indices, value) in subgrid.indexed_iter() {
             let &[ifac1, ix1, ix2] = indices.as_slice() else {
@@ -331,11 +333,11 @@ fn ndarray_from_subgrid_orders_slice(
 
             zero = false;
 
-            array[[xa_indices[ix1], xb_indices[ix2]]] += als * logs * value;
+            array[[x1_indices[0][ix1], x1_indices[1][ix2]]] += als * logs * value;
         }
     }
 
-    Ok((vec![x1_a, x1_b], (!zero).then_some(array)))
+    Ok((x1n, (!zero).then_some(array)))
 }
 
 // TODO: merge this method into evolve_slice_with_two
@@ -374,6 +376,7 @@ pub(crate) fn evolve_slice_with_one(
         for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (mut x1, array) = ndarray_from_subgrid_orders_slice(
                 info.fac1,
+                grid.kinematics(),
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -513,6 +516,7 @@ pub(crate) fn evolve_slice_with_two(
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
                 info.fac1,
+                grid.kinematics(),
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
@@ -651,6 +655,7 @@ pub(crate) fn evolve_slice_with_two2(
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
                 fac1,
+                grid.kinematics(),
                 &subgrids_o,
                 grid.orders(),
                 order_mask,
