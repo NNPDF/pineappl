@@ -188,14 +188,13 @@ def set_ylim(axis, save, load, filename):
     axis.set_ylim((ymin - space, ymax + space))
 
 
-def plot_int(axis, **kwargs):
+def plot_int(axis, /, pdf_results, **_kwargs):
     xmin = np.array([])
     xmax = np.array([])
     x = np.array([])
     y = np.array([])
 
-    for index, i in enumerate(kwargs["pdf_results"]):
-        label, ycentral, ymin, ymax = i
+    for index, (label, ycentral, ymin, ymax) in enumerate(pdf_results):
         x = np.append(x, ycentral[:-1])
         xmin = np.append(xmin, ymin[:-1])
         xmax = np.append(xmax, ymax[:-1])
@@ -221,16 +220,13 @@ def plot_int(axis, **kwargs):
     axis.margins(x=0.1, y=0.1)
 
 
-def plot_abs(axis, **kwargs):
-    x = kwargs["x"]
-    slice_label = kwargs["slice_label"]
-
+def plot_abs(axis, /, x, y, ymin, ymax, slice_label="", **_kwargs):
     axis.set_yscale("log" if ylog else "linear")
-    axis.step(x, kwargs["y"], colors[0], linewidth=1.0, where="post", label=slice_label)
+    axis.step(x, y, colors[0], linewidth=1.0, where="post", label=slice_label)
     axis.fill_between(
         x,
-        kwargs["ymin"],
-        kwargs["ymax"],
+        ymin,
+        ymax,
         alpha=0.4,
         color=colors[0],
         linewidth=0.5,
@@ -242,18 +238,14 @@ def plot_abs(axis, **kwargs):
         axis.legend()
 
 
-def plot_ratio_pdf(axis, **kwargs):
-    x = kwargs["x"]
-    slice_label = kwargs["slice_label"]
-    pdf_uncertainties = kwargs["pdf_results"]
+def plot_ratio_pdf(axis, /, x, pdf_results, slice_label="", **_kwargs):
+    axis.set_ylabel(ylabel_ratio_pdf.format(central_pdf=pdf_results[0][0]))
 
-    axis.set_ylabel(ylabel_ratio_pdf.format(central_pdf=pdf_uncertainties[0][0]))
-
-    for index, i in enumerate(pdf_uncertainties):
+    for index, i in enumerate(pdf_results):
         label, y, ymin, ymax = i
-        y = y / pdf_uncertainties[0][1]
-        ymin = ymin / pdf_uncertainties[0][1]
-        ymax = ymax / pdf_uncertainties[0][1]
+        y = y / pdf_results[0][1]
+        ymin = ymin / pdf_results[0][1]
+        ymax = ymax / pdf_results[0][1]
 
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(
@@ -272,7 +264,7 @@ def plot_ratio_pdf(axis, **kwargs):
         loc="upper left",
         mode="expand",
         borderaxespad=0,
-        ncol=min(4, len(pdf_uncertainties)),
+        ncol=min(4, len(pdf_results)),
     )
 
     if slice_label != "":
@@ -295,23 +287,19 @@ def plot_ratio_pdf(axis, **kwargs):
         )
 
 
-def plot_double_ratio_pdf(axis, **kwargs):
-    x = kwargs["x"]
-    slice_label = kwargs["slice_label"]
-    pdf_uncertainties = kwargs["pdf_results"]
-
+def plot_double_ratio_pdf(axis, /, x, pdf_results, slice_label="", **_kwargs):
     axis.set_ylabel(ylabel_double_ratio_pdf)
 
-    for index, i in enumerate(pdf_uncertainties):
+    for index, i in enumerate(pdf_results):
         label, y, ymin, ymax = i
         if index == 0 or index == 2:
-            y = y / pdf_uncertainties[0][1]
-            ymin = ymin / pdf_uncertainties[0][1]
-            ymax = ymax / pdf_uncertainties[0][1]
+            y = y / pdf_results[0][1]
+            ymin = ymin / pdf_results[0][1]
+            ymax = ymax / pdf_results[0][1]
         else:
-            y = y / pdf_uncertainties[1][1]
-            ymin = ymin / pdf_uncertainties[1][1]
-            ymax = ymax / pdf_uncertainties[1][1]
+            y = y / pdf_results[1][1]
+            ymin = ymin / pdf_results[1][1]
+            ymax = ymax / pdf_results[1][1]
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(
             x,
@@ -329,7 +317,7 @@ def plot_double_ratio_pdf(axis, **kwargs):
         loc="upper left",
         mode="expand",
         borderaxespad=0,
-        ncol=min(4, len(pdf_uncertainties)),
+        ncol=min(4, len(pdf_results)),
     )
 
     if slice_label != "":
@@ -352,16 +340,11 @@ def plot_double_ratio_pdf(axis, **kwargs):
         )
 
 
-def plot_abs_pdfs(axis, **kwargs):
-    x = kwargs["x"]
-    slice_label = kwargs["slice_label"]
-    pdf_uncertainties = kwargs["pdf_results"]
-    channels = kwargs["channels"]
-
+def plot_abs_pdfs(axis, /, x, pdf_results, channels, slice_label="", **_kwargs):
     axis.set_yscale("log" if ylog else "linear")
     axis.set_ylabel(ylabel)
 
-    for index, i in enumerate(pdf_uncertainties):
+    for index, i in enumerate(pdf_results):
         label, y, ymin, ymax = i
         axis.step(x, y, color=colors[index], linewidth=1.0, where="post")
         axis.fill_between(
@@ -393,7 +376,7 @@ def plot_abs_pdfs(axis, **kwargs):
         loc="upper left",
         mode="expand",
         borderaxespad=0,
-        ncol=min(4, len(pdf_uncertainties) + len(channel_breakdown_linestyles)),
+        ncol=min(4, len(pdf_results) + len(channel_breakdown_linestyles)),
     )
 
     if slice_label != "":
@@ -416,20 +399,15 @@ def plot_abs_pdfs(axis, **kwargs):
         )
 
 
-def plot_rel_ewonoff(axis, **kwargs):
-    x = kwargs["x"]
-    y = percent_diff(kwargs["y"], kwargs["qcd_y"])
-    qcd_y = percent_diff(kwargs["qcd_y"], kwargs["qcd_y"])
+def plot_rel_ewonoff(axis, /, x, mid, y, ymin, ymax, qcd_y, pdf_results, **_kwargs):
+    y = percent_diff(y, qcd_y)
+    qcd_y = percent_diff(qcd_y, qcd_y)
     # qcd_ymin = percent_diff(kwargs["qcd_min"], kwargs["qcd_y"])
     # qcd_ymax = percent_diff(kwargs["qcd_max"], kwargs["qcd_y"])
-    ymin = percent_diff(kwargs["ymin"], kwargs["qcd_y"])
-    ymax = percent_diff(kwargs["ymax"], kwargs["qcd_y"])
-    pdf_min = abs(
-        percent_diff(kwargs["pdf_results"][0][2], kwargs["pdf_results"][0][1])
-    )[:-1]
-    pdf_max = abs(
-        percent_diff(kwargs["pdf_results"][0][3], kwargs["pdf_results"][0][1])
-    )[:-1]
+    ymin = percent_diff(ymin, qcd_y)
+    ymax = percent_diff(ymax, qcd_y)
+    pdf_min = abs(percent_diff(pdf_results[0][2], pdf_results[0][1]))[:-1]
+    pdf_max = abs(percent_diff(pdf_results[0][3], pdf_results[0][1]))[:-1]
 
     axis.step(
         x, qcd_y, colors0_qcd, label=label_rel_ewonoff_qcd, linewidth=1.0, where="post"
@@ -447,7 +425,7 @@ def plot_rel_ewonoff(axis, **kwargs):
         step="post",
     )
     axis.errorbar(
-        kwargs["mid"],
+        mid,
         y[:-1],
         yerr=(pdf_min, pdf_max),
         color=colors[0],
@@ -467,11 +445,8 @@ def plot_rel_ewonoff(axis, **kwargs):
     )
 
 
-def plot_rel_pdfunc(axis, **kwargs):
-    x = kwargs["x"]
-    pdf_uncertainties = kwargs["pdf_results"]
-
-    for index, i in enumerate(pdf_uncertainties):
+def plot_rel_pdfunc(axis, /, x, pdf_results, **_kwargs):
+    for index, i in enumerate(pdf_results):
         label, y, ymin, ymax = i
         ymin = percent_diff(ymin, y)
         ymax = percent_diff(ymax, y)
@@ -483,15 +458,12 @@ def plot_rel_pdfunc(axis, **kwargs):
     set_ylim(axis, False, False, "rel_pdfunc")
 
 
-def plot_rel_pdfpull(axis, **kwargs):
-    central_y = kwargs["pdf_results"][0][1]
-    central_ymin = kwargs["pdf_results"][0][2]
-    central_ymax = kwargs["pdf_results"][0][3]
-    pdf_uncertainties = kwargs["pdf_results"]
-    x = kwargs["x"]
-    y = kwargs["y"]
+def plot_rel_pdfpull(axis, /, x, y, pdf_results, **_kwargs):
+    central_y = pdf_results[0][1]
+    central_ymin = pdf_results[0][2]
+    central_ymax = pdf_results[0][3]
 
-    for index, i in enumerate(pdf_uncertainties):
+    for index, i in enumerate(pdf_results):
         label, y, ymin, ymax = i
         diff = y - central_y
         yerr = np.where(diff > 0.0, y - ymin, ymax - y)
@@ -513,7 +485,7 @@ def plot_rel_pdfpull(axis, **kwargs):
         loc="lower left",
         mode="expand",
         borderaxespad=0,
-        ncol=min(4, len(pdf_uncertainties)),
+        ncol=min(4, len(pdf_results)),
     )  # rel_pdfpull
     axis.set_ylabel(ylabel_rel_pdfpull)
 
