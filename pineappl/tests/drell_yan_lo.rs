@@ -394,8 +394,10 @@ fn perform_grid_tests(
     // TEST 7b: `optimize`
     grid.optimize();
 
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().as_ref(), x_grid);
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().as_ref(), x_grid);
+    let node_values = grid.subgrids()[[0, 0, 0]].node_values();
+
+    assert_eq!(node_values[1].values(), x_grid);
+    assert_eq!(node_values[2].values(), x_grid);
 
     // TEST 8: `convolve_subgrid` for the optimized subgrids
     let bins: Vec<_> = (0..grid.bin_info().bins())
@@ -676,9 +678,11 @@ fn grid_optimize() -> Result<()> {
         grid.subgrids()[[0, 0, 0]],
         SubgridEnum::LagrangeSubgridV2 { .. }
     ));
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().len(), 50);
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().len(), 50);
-    assert_eq!(grid.subgrids()[[0, 0, 0]].mu2_grid().len(), 30);
+
+    let node_values = grid.subgrids()[[0, 0, 0]].node_values();
+    assert_eq!(node_values[0].len(), 30);
+    assert_eq!(node_values[1].len(), 50);
+    assert_eq!(node_values[2].len(), 50);
 
     let mut grid2 = grid.clone();
     grid2.optimize_using(GridOptFlags::OPTIMIZE_SUBGRID_TYPE);
@@ -689,9 +693,10 @@ fn grid_optimize() -> Result<()> {
         SubgridEnum::PackedQ1X2SubgridV1 { .. }
     ));
     // and the dimensions of the subgrid
-    assert_eq!(grid2.subgrids()[[0, 0, 0]].x1_grid().len(), 6);
-    assert_eq!(grid2.subgrids()[[0, 0, 0]].x2_grid().len(), 6);
-    assert_eq!(grid2.subgrids()[[0, 0, 0]].mu2_grid().len(), 4);
+    let node_values = grid2.subgrids()[[0, 0, 0]].node_values();
+    assert_eq!(node_values[0].len(), 4);
+    assert_eq!(node_values[1].len(), 6);
+    assert_eq!(node_values[2].len(), 6);
 
     grid.optimize_using(GridOptFlags::OPTIMIZE_SUBGRID_TYPE | GridOptFlags::STATIC_SCALE_DETECTION);
 
@@ -699,10 +704,11 @@ fn grid_optimize() -> Result<()> {
         grid.subgrids()[[0, 0, 0]],
         SubgridEnum::PackedQ1X2SubgridV1 { .. }
     ));
-    // if `STATIC_SCALE_DETECTION` is present the `mu2_grid` dimension are better optimized
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x1_grid().len(), 6);
-    assert_eq!(grid.subgrids()[[0, 0, 0]].x2_grid().len(), 6);
-    assert_eq!(grid.subgrids()[[0, 0, 0]].mu2_grid().len(), 1);
+    // if `STATIC_SCALE_DETECTION` is present the scale dimension is better optimized
+    let node_values = grid.subgrids()[[0, 0, 0]].node_values();
+    assert_eq!(node_values[0].len(), 1);
+    assert_eq!(node_values[1].len(), 6);
+    assert_eq!(node_values[2].len(), 6);
 
     // has no effect for this test
     grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
