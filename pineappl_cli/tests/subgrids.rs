@@ -2,7 +2,7 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Print information about the internal subgrid types
 
-Usage: pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x1|--x2|--stats> <INPUT>
+Usage: pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x=<IDX>|--stats> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
@@ -14,8 +14,7 @@ Options:
       --mur2             Show the squared renormalization grid values
       --muf              Show the factorization grid values
       --muf2             Show the squared factorization grid values
-      --x1               Show the x1 grid values
-      --x2               Show the x2 grid values
+      --x=<IDX>          Show the x-node values for the given indices
       --stats            Show grid statistics (figures are the number of entries)
       --digits <DIGITS>  Set the number of digits shown for numerical values [default: 3]
   -h, --help             Print help
@@ -873,7 +872,7 @@ const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
 4 7 4 PackedQ1X2SubgridV1
 ";
 
-const X1_STR: &str = "o b c                                                                                                                                                                                                 x1
+const X0_STR: &str = "o b c                                                                                                                                                                                                 x0
 -+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
 0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
@@ -981,7 +980,7 @@ const X1_STR: &str = "o b c                                                     
 4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
 ";
 
-const X2_STR: &str = "o b c                                                                                                                                                                                                 x2
+const X1_STR: &str = "o b c                                                                                                                                                                                                 x1
 -+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
 0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
@@ -1199,29 +1198,29 @@ fn type_show_empty() {
 }
 
 #[test]
+fn x0() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "subgrids",
+            "--x=0",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
+        .assert()
+        .success()
+        .stdout(X0_STR);
+}
+
+#[test]
 fn x1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "subgrids",
-            "--x1",
+            "--x=1",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
         .stdout(X1_STR);
-}
-
-#[test]
-fn x2() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "subgrids",
-            "--x2",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-        ])
-        .assert()
-        .success()
-        .stdout(X2_STR);
 }

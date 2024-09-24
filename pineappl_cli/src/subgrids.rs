@@ -2,6 +2,7 @@ use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
+use pineappl::boc::Kinematics;
 use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
@@ -26,12 +27,9 @@ struct Group {
     /// Show the squared factorization grid values.
     #[arg(long)]
     muf2: bool,
-    /// Show the x1 grid values.
-    #[arg(long)]
-    x1: bool,
-    /// Show the x2 grid values.
-    #[arg(long)]
-    x2: bool,
+    /// Show the x-node values for the given indices.
+    #[arg(long, require_equals = true, value_delimiter = ',', value_name = "IDX")]
+    x: Vec<usize>,
     /// Show grid statistics (figures are the number of entries).
     #[arg(long)]
     stats: bool,
@@ -74,11 +72,8 @@ impl Subcommand for Opts {
         if self.group.muf2 {
             titles.add_cell(cell!(c->"muf2"));
         }
-        if self.group.x1 {
-            titles.add_cell(cell!(c->"x1"));
-        }
-        if self.group.x2 {
-            titles.add_cell(cell!(c->"x2"));
+        for index in &self.group.x {
+            titles.add_cell(cell!(c->format!("x{index}")));
         }
         if self.group.stats {
             titles.add_cell(cell!(c->"total"));
@@ -144,18 +139,17 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.group.x1 {
-                let values: Vec<_> = subgrid
-                    .x1_grid()
+            for &index in &self.group.x {
+                let values: Vec<_> = grid
+                    .kinematics()
                     .iter()
-                    .map(|x| format!("{:.*e}", self.digits, x))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.x2 {
-                let values: Vec<_> = subgrid
-                    .x2_grid()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::X(idx) if idx == index).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .values()
                     .iter()
                     .map(|x| format!("{:.*e}", self.digits, x))
                     .collect();

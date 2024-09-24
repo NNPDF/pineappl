@@ -5,7 +5,7 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
-use pineappl::boc::Channel;
+use pineappl::boc::{Channel, Kinematics};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::subgrid::Subgrid;
@@ -536,6 +536,9 @@ impl Subcommand for Opts {
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
 
+            // TODO: convert this into an error
+            assert_eq!(grid.convolutions().len(), 2);
+
             let member1 = self.conv_funs[0].members[self.conv_fun_uncert_from];
             let member2 = self.conv_funs[1].members[self.conv_fun_uncert_from];
 
@@ -618,8 +621,27 @@ impl Subcommand for Opts {
 
             let subgrid = &grid.subgrids()[<[usize; 3]>::from(index)];
             //let q2 = subgrid.q2_grid();
-            let x1 = subgrid.x1_grid();
-            let x2 = subgrid.x2_grid();
+            let x1 = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::X(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values();
+
+            let x2 = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::X(idx) if idx == 1).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values();
 
             let mut x1_vals = vec![];
             let mut x2_vals = vec![];

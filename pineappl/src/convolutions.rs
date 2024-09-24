@@ -1,8 +1,9 @@
 //! Module for everything related to luminosity functions.
 
+use super::boc::Kinematics;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{Mu2, Subgrid};
+use super::subgrid::{Mu2, NodeValues, Subgrid};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -165,8 +166,13 @@ impl<'a> LumiCache<'a> {
                 if subgrid.is_empty() {
                     None
                 } else {
-                    let mut vec = subgrid.x1_grid().into_owned();
-                    vec.extend_from_slice(&subgrid.x2_grid());
+                    let vec: Vec<_> = grid
+                        .kinematics()
+                        .iter()
+                        .zip(subgrid.node_values())
+                        .filter(|(kin, _)| matches!(kin, Kinematics::X(_)))
+                        .flat_map(|(_, node_values)| node_values.values())
+                        .collect();
                     Some(vec)
                 }
             })
@@ -297,12 +303,16 @@ impl<'a> LumiCache<'a> {
     /// Set the grids.
     pub fn set_grids(
         &mut self,
+        grid: &Grid,
+        node_values: &[NodeValues],
         mu2_grid: &[Mu2],
-        x1_grid: &[f64],
-        x2_grid: &[f64],
         xir: f64,
         xif: f64,
+        xia: f64,
     ) {
+        // TODO: generalize this for fragmentation functions
+        assert_eq!(xia, 1.0);
+
         self.imur2 = mu2_grid
             .iter()
             .map(|Mu2 { ren, .. }| {
@@ -321,7 +331,16 @@ impl<'a> LumiCache<'a> {
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
-        self.ix1 = x1_grid
+        self.ix1 = grid
+            .kinematics()
+            .iter()
+            .zip(node_values)
+            .find_map(|(kin, node_values)| {
+                matches!(kin, &Kinematics::X(index) if index == 0).then_some(node_values)
+            })
+            // UNWRAP: guaranteed by the grid constructor
+            .unwrap()
+            .values()
             .iter()
             .map(|x1| {
                 self.x_grid
@@ -331,7 +350,16 @@ impl<'a> LumiCache<'a> {
             })
             .collect();
 
-        self.ix2 = x2_grid
+        self.ix2 = grid
+            .kinematics()
+            .iter()
+            .zip(node_values)
+            .find_map(|(kin, node_values)| {
+                matches!(kin, &Kinematics::X(index) if index == 1).then_some(node_values)
+            })
+            // UNWRAP: guaranteed by the grid constructor
+            .unwrap()
+            .values()
             .iter()
             .map(|x2| {
                 self.x_grid

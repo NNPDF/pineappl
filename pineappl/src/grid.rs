@@ -274,8 +274,9 @@ impl Grid {
 
                 let channel = &pdg_channels[chan];
                 let mu2_grid = subgrid.mu2_grid();
-                let x_grid: Vec<_> = subgrid
-                    .node_values()
+                let node_values = subgrid.node_values();
+
+                let x_grid: Vec<_> = node_values
                     .iter()
                     .zip(self.kinematics())
                     .filter_map(|(node_values, kin)| {
@@ -285,7 +286,8 @@ impl Grid {
                 // TODO: generalize this to N dimensions
                 assert_eq!(x_grid.len(), 2);
 
-                lumi_cache.set_grids(&mu2_grid, &x_grid[0], &x_grid[1], xir, xif);
+                // TODO: generalize this for fragmentation functions
+                lumi_cache.set_grids(self, &node_values, &mu2_grid, xir, xif, 1.0);
 
                 let mut value = 0.0;
 
@@ -359,6 +361,8 @@ impl Grid {
         assert_eq!(node_values.len(), 3);
 
         lumi_cache.set_grids(
+            self,
+            &subgrid.node_values(),
             &node_values[0]
                 .iter()
                 .map(|&scale| Mu2 {
@@ -367,10 +371,9 @@ impl Grid {
                     frg: -1.0,
                 })
                 .collect::<Vec<_>>(),
-            &node_values[1],
-            &node_values[2],
             xir,
             xif,
+            xia,
         );
 
         let dim: Vec<_> = node_values.iter().map(Vec::len).collect();

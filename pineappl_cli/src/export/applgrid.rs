@@ -3,13 +3,12 @@ use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::boc::Order;
+use pineappl::boc::{Order, Kinematics};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::subgrid::{Mu2, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
-use std::borrow::Cow;
 use std::f64::consts::TAU;
 use std::iter;
 use std::path::Path;
@@ -120,6 +119,12 @@ pub fn convert_into_applgrid(
     let lumis = grid.channels().len();
     let has_pdf1 = grid.convolutions()[0] != Convolution::None;
     let has_pdf2 = grid.convolutions()[1] != Convolution::None;
+    // let (has_pdf1, has_pdf2) = match (grid.convolutions()[0].clone(), grid.convolutions()[1].clone()) {
+    //     (Convolution::None, Convolution::None) => unreachable!(),
+    //     (Convolution::None, _) => (false, true),
+    //     (_, Convolution::None) => (true, false),
+    //     _ => (true, true),
+    // };
 
     // TODO: check that PDG MC IDs are used
 
@@ -140,12 +145,14 @@ pub fn convert_into_applgrid(
                             // propagate them
                             assert_eq!(factor, 1.0);
 
-                            match (has_pdf1, has_pdf2) {
-                                (true, true) => [pids[0], pids[1]],
-                                (true, false) => [pids[0], 0],
-                                (false, true) => [pids[1], 0],
-                                (false, false) => unreachable!(),
-                            }
+                            pids.iter()
+                                .zip(grid.convolutions())
+                                .filter_map(|(&pid, convolution)| {
+                                    (*convolution != Convolution::None).then_some(pid)
+                                })
+                                .chain(iter::repeat(0))
+                                .take(2)
+                                .collect::<Vec<_>>()
                         }))
                     }),
             )
@@ -229,7 +236,11 @@ pub fn convert_into_applgrid(
                     map @ Map::ApplGridF2 => panic!("export does not support {map:?}"),
                 },
                 grid.channels().len().try_into().unwrap(),
-                has_pdf1 != has_pdf2,
+                grid.convolutions()
+                    .iter()
+                    .filter(|&conv| *conv != Convolution::None)
+                    .count()
+                    == 1,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
@@ -266,13 +277,66 @@ pub fn convert_into_applgrid(
                     .collect::<Result<_>>()?;
 
                 // in the DIS case APPLgrid always uses the first x dimension
+
                 let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
-                    (subgrid.x1_grid(), subgrid.x2_grid())
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                    )
                 } else if has_pdf1 {
-                    (subgrid.x1_grid(), Cow::Owned(vec![]))
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                        Vec::new(),
+                    )
                 } else {
-                    (subgrid.x2_grid(), Cow::Owned(vec![]))
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                        Vec::new(),
+                    )
                 };
+                // let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
+                //     (subgrid.x1_grid(), subgrid.x2_grid())
+                // } else if has_pdf1 {
+                //     (subgrid.x1_grid(), Cow::Owned(vec![]))
+                // } else {
+                //     (subgrid.x2_grid(), Cow::Owned(vec![]))
+                // };
 
                 let appl_x1_idx: Vec<_> = x1_grid
                     .iter()
