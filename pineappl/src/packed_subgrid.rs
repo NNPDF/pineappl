@@ -29,7 +29,6 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn mu2_grid(&self) -> Cow<[Mu2]> {
-        // Cow::Borrowed(&self.mu2_grid)
         Cow::Owned(
             self.node_values[0]
                 .values()
@@ -232,16 +231,6 @@ mod tests {
             ],
         )
         .into();
-
-        // let mu2 = vec![Mu2 {
-        //     ren: 0.0,
-        //     fac: 0.0,
-        //     frg: -1.0,
-        // }];
-
-        // assert_eq!(grid1.mu2_grid().as_ref(), mu2);
-        // assert_eq!(grid1.x1_grid().as_ref(), x);
-        // assert_eq!(grid1.x2_grid(), grid1.x1_grid());
 
         assert_eq!(
             grid1.node_values(),
