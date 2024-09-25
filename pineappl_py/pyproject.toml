@@ -28,6 +28,8 @@ cli = ["pineappl-cli"]
 docs = [
   "sphinx>=6.2.1",
   "sphinx_rtd_theme>=1.2.2",
+  "nbsphinx>=0.8.8",
+  "ipykernel>=6.13.0",
 ]
 test = ["pytest", "pytest-cov"]
 
