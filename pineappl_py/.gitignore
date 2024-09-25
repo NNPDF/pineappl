@@ -1,4 +1,5 @@
-
+.ipynb_checkpoints
+docs/source/*.pineappl.lz4
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
