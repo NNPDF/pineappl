@@ -14,14 +14,16 @@ ylabel = ""
 xlog = False
 ylog = False
 scales = 1
-enable_int = False
-enable_abs = False
-enable_rel_ewonoff = False
-enable_abs_pdfs = False
-enable_ratio_pdf = False
-enable_double_ratio_pdf = False
-enable_rel_pdfunc = False
-enable_rel_pdfpull = False
+plot_panels = {
+    "plot_int": False,
+    "plot_abs": False,
+    "plot_rel_ewonoff": False,
+    "plot_abs_pdfs": False,
+    "plot_ratio_pdf": False,
+    "plot_double_ratio_pdf": False,
+    "plot_rel_pdfunc": False,
+    "plot_rel_pdfpull": False,
+}
 output = ""
 data = {}
 metadata = {}
@@ -85,29 +87,13 @@ channel_breakdown_linestyles = []
 
 
 def main():
-    panels = []
-    if enable_int:
-        panels.append(plot_int)
-    if enable_abs:
-        panels.append(plot_abs)
-    if enable_rel_ewonoff:
-        panels.append(plot_rel_ewonoff)
-    if enable_abs_pdfs:
-        panels.append(plot_abs_pdfs)
-    if enable_ratio_pdf:
-        panels.append(plot_ratio_pdf)
-    if enable_double_ratio_pdf:
-        panels.append(plot_double_ratio_pdf)
-    if enable_rel_pdfunc:
-        panels.append(plot_rel_pdfunc)
-    if enable_rel_pdfpull:
-        panels.append(plot_rel_pdfpull)
+    panels = [globals()[panel] for panel, enabled in plot_panels.items() if enabled]
 
     mpl.rcParams.update(stylesheet)
-    if enable_abs:
-        plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
-    if enable_int:
+    if len(panels) == 1:
         plt.rc("figure", figsize=(4.2, 2.6))
+    else:
+        plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
 
     for index, kwargs in enumerate(data):
         figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)

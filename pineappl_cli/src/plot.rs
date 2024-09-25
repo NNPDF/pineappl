@@ -531,14 +531,16 @@ ylabel = r\"{ylabel}\"
 xlog = {xlog}
 ylog = {ylog}
 scales = {scales}
-enable_int = {enable_int}
-enable_abs = {enable_abs}
-enable_rel_ewonoff = {enable_rel_ewonoff}
-enable_abs_pdfs = {enable_abs_pdfs}
-enable_ratio_pdf = {enable_ratio_pdf}
-enable_double_ratio_pdf = {enable_double_ratio_pdf}
-enable_rel_pdfunc = {enable_rel_pdfunc}
-enable_rel_pdfpull = {enable_rel_pdfpull}
+plot_panels = {{
+    \"plot_int\": {enable_int},
+    \"plot_abs\": {enable_abs},
+    \"plot_rel_ewonoff\": {enable_rel_ewonoff},
+    \"plot_abs_pdfs\": {enable_abs_pdfs},
+    \"plot_ratio_pdf\": {enable_ratio_pdf},
+    \"plot_double_ratio_pdf\": {enable_double_ratio_pdf},
+    \"plot_rel_pdfunc\": {enable_rel_pdfunc},
+    \"plot_rel_pdfpull\": {enable_rel_pdfpull},
+}}
 output = r\"{output}\"",
                 enable_int = map_bool(enable_int),
                 enable_abs = map_bool(enable_abs),
