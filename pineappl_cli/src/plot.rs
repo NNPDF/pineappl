@@ -128,12 +128,12 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns
         .map(|(values, label)| {
             format!(
                 "            (
-                    \"{}\",
+                    r\"{}\",
                     np.array([{}]),
                     np.array([{}]),
                     np.array([{}]),
                 ),",
-                label,
+                label.replace('_', r"\_"),
                 map_format_e_join_repeat_last(&values[0]),
                 map_format_e_join_repeat_last(&values[1]),
                 map_format_e_join_repeat_last(&values[2]),
