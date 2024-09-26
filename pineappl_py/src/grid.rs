@@ -413,7 +413,6 @@ impl PyGrid {
                         CowArray::from(op.as_array().to_owned()),
                     ))
                 }),
-                // TODO: make `order_mask` a `Vec<f64>`
                 &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
@@ -478,7 +477,6 @@ impl PyGrid {
                         CowArray::from(op.as_array().to_owned()),
                     ))
                 }),
-                // TODO: make `order_mask` a `Vec<f64>`
                 &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
