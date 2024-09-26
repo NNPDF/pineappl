@@ -12,6 +12,9 @@ use std::process::ExitCode;
 #[cfg(feature = "applgrid")]
 mod applgrid;
 
+#[cfg(feature = "fastnlo")]
+mod fastnlo;
+
 #[cfg(feature = "applgrid")]
 fn convert_into_applgrid(
     output: &Path,
@@ -42,6 +45,36 @@ fn convert_into_applgrid(
     ))
 }
 
+#[cfg(feature = "fastnlo")]
+fn convert_into_fastnlo(
+    output: &Path,
+    grid: &Grid,
+    conv_funs: &mut [Pdf],
+    _: usize,
+    discard_non_matching_scales: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    // TODO: check also scale-varied results
+
+    let (mut fastnlo, order_mask) =
+        fastnlo::convert_into_fastnlo(grid, output, discard_non_matching_scales)?;
+    let results = fastnlo::convolve_fastnlo(fastnlo.pin_mut(), conv_funs);
+
+    Ok(("fastNLO", results, 1, order_mask))
+}
+
+#[cfg(not(feature = "fastnlo"))]
+fn convert_into_fastnlo(
+    _: &Path,
+    _: &Grid,
+    _: &mut [Pdf],
+    _: usize,
+    _: bool,
+) -> Result<(&'static str, Vec<f64>, usize, Vec<bool>)> {
+    Err(anyhow!(
+        "you need to install `pineappl` with feature `fastnlo`"
+    ))
+}
+
 fn convert_into_grid(
     output: &Path,
     grid: &Grid,
@@ -58,13 +91,27 @@ fn convert_into_grid(
                 scales,
                 discard_non_matching_scales,
             );
+        } else if extension == "tab"
+            || (extension == "gz"
+                && output
+                    .with_extension("")
+                    .extension()
+                    .map_or(false, |ext| ext == "tab"))
+        {
+            return convert_into_fastnlo(
+                output,
+                grid,
+                conv_funs,
+                scales,
+                discard_non_matching_scales,
+            );
         }
     }
 
     Err(anyhow!("could not detect file format"))
 }
 
-/// Converts PineAPPL grids to APPLgrid files.
+/// Converts PineAPPL grids to APPLgrid or fastNLO files.
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
