@@ -15,14 +15,14 @@ xlog = False
 ylog = False
 scales = 1
 plot_panels = {
-    "plot_int": False,
-    "plot_abs": False,
-    "plot_rel_ewonoff": False,
-    "plot_abs_pdfs": False,
-    "plot_ratio_pdf": False,
-    "plot_double_ratio_pdf": False,
-    "plot_rel_pdfunc": False,
-    "plot_rel_pdfpull": False,
+    "int": False,
+    "abs": False,
+    "rel_ewonoff": False,
+    "abs_pdfs": False,
+    "ratio_pdf": False,
+    "double_ratio_pdf": False,
+    "rel_pdfunc": False,
+    "rel_pdfpull": False,
 }
 output = ""
 data = {}
@@ -86,15 +86,21 @@ label_rel_ewonoff_pdf_unc = r"PDF uncertainty"
 channel_breakdown_linestyles = []
 
 
-def main():
-    panels = [globals()[panel] for panel, enabled in plot_panels.items() if enabled]
+def main(active_panels):
+    """Build a plot figure with various panels."""
+    # Find the active panels
+    panels = [
+        PANEL_FNC_MAP[panel] for panel, enabled in active_panels.items() if enabled
+    ]
 
+    # prepare the figure
     mpl.rcParams.update(stylesheet)
     if len(panels) == 1:
         plt.rc("figure", figsize=(4.2, 2.6))
     else:
         plt.rc("figure", figsize=(6.4, 2.4 * len(panels)))
 
+    # Plot all data
     for index, kwargs in enumerate(data):
         figure, axes = plt.subplots(len(panels), 1, sharex=True, squeeze=False)
 
@@ -478,10 +484,22 @@ def plot_rel_pdfpull(axis, /, x, y, pdf_results, **_kwargs):
     set_ylim(axis, False, False, "rel_pdfpull")
 
 
+PANEL_FNC_MAP = {
+    "int": plot_int,
+    "abs": plot_abs,
+    "rel_ewonoff": plot_rel_ewonoff,
+    "abs_pdfs": plot_abs_pdfs,
+    "ratio_pdf": plot_ratio_pdf,
+    "double_ratio_pdf": plot_double_ratio_pdf,
+    "rel_pdfunc": plot_rel_pdfunc,
+    "rel_pdfpull": plot_rel_pdfpull,
+}
+
+
 # CLI data variables
 # CLI_INSERT_DATA
 # end CLI data variables
 
 
 if __name__ == "__main__":
-    main()
+    main(plot_panels)
