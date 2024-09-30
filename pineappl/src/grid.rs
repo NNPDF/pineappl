@@ -213,6 +213,7 @@ bitflags! {
 
 /// Main data structure of `PineAPPL`. This structure contains a `Subgrid` for each `LumiEntry`,
 /// bin, and coupling order it was created with.
+#[allow(clippy::unsafe_derive_deserialize)]
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
@@ -257,6 +258,7 @@ impl Grid {
     /// # Errors
     ///
     /// If `subgrid_type` is none of the values listed above, an error is returned.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn with_subgrid_type(
         channels: Vec<Channel>,
         orders: Vec<Order>,
@@ -356,7 +358,9 @@ impl Grid {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
-                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                if ((order.logxir > 0) && (xir - 1.0).abs() < f64::EPSILON)
+                    || ((order.logxif > 0) && (xif - 1.0).abs() < f64::EPSILON)
+                {
                     continue;
                 }
 
@@ -841,6 +845,7 @@ impl Grid {
     }
 
     /// Set the convolution type for this grid for the corresponding `index`.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn set_convolution(&mut self, index: usize, convolution: Convolution) {
         // remove outdated metadata
         self.key_values_mut()
@@ -1391,6 +1396,11 @@ impl Grid {
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
     /// return an error.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the dimension of the operators do not match the operator
+    /// information.
     pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
         &self,
         slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
@@ -1513,6 +1523,11 @@ impl Grid {
     /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
     /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
     /// return an error.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the dimension of the operators do not match the operator
+    /// information.
     pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
         &self,
         slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
@@ -1661,6 +1676,7 @@ impl Grid {
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
     /// equal the bin length are ignored.
+    #[allow(clippy::range_plus_one)]
     pub fn delete_bins(&mut self, bin_indices: &[usize]) {
         let mut bin_indices: Vec<_> = bin_indices
             .iter()

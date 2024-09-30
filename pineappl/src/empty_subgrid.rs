@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn create_empty() {
         let mut subgrid = EmptySubgridV1;
-        assert_eq!(subgrid.convolve(&[], &[], &[], &mut |_, _, _| 0.0), 0.0,);
+        assert!((subgrid.convolve(&[], &[], &[], &mut |_, _, _| 0.0) - 0.0).abs() < f64::EPSILON);
         assert!(subgrid.is_empty());
         subgrid.merge(&mut EmptySubgridV1.into(), false);
         subgrid.scale(2.0);

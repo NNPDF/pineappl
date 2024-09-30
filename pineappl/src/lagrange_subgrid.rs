@@ -14,7 +14,7 @@ use std::iter;
 use std::mem;
 
 fn weightfun(x: f64) -> f64 {
-    (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
+    (x.sqrt() / 0.99f64.mul_add(-x, 1.0)).powi(3)
 }
 
 fn fx(y: f64) -> f64 {
@@ -22,11 +22,11 @@ fn fx(y: f64) -> f64 {
 
     for _ in 0..100 {
         let x = (-yp).exp();
-        let delta = y - yp - 5.0 * (1.0 - x);
+        let delta = 5.0f64.mul_add(-(1.0 - x), y - yp);
         if (delta).abs() < 1e-12 {
             return x;
         }
-        let deriv = -1.0 - 5.0 * x;
+        let deriv = 5.0f64.mul_add(-x, -1.0);
         yp -= delta / deriv;
     }
 
@@ -451,7 +451,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety1(&self, iy: usize) -> f64 {
-        if self.y1min == self.y1max {
+        if (self.y1min - self.y1max).abs() < f64::EPSILON {
             debug_assert_eq!(iy, 0);
             self.y1min
         } else {
@@ -460,7 +460,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gety2(&self, iy: usize) -> f64 {
-        if self.y2min == self.y2max {
+        if (self.y2min - self.y2max).abs() < f64::EPSILON {
             debug_assert_eq!(iy, 0);
             self.y2min
         } else {
@@ -469,7 +469,7 @@ impl LagrangeSubgridV2 {
     }
 
     fn gettau(&self, iy: usize) -> f64 {
-        if self.taumin == self.taumax {
+        if (self.taumin - self.taumax).abs() < f64::EPSILON {
             debug_assert_eq!(iy, 0);
             self.taumin
         } else {
@@ -532,7 +532,9 @@ impl Subgrid for LagrangeSubgridV2 {
 
         if self.static_q2 == 0.0 {
             self.static_q2 = ntuple.q2;
-        } else if (self.static_q2 != -1.0) && (self.static_q2 != ntuple.q2) {
+        } else if ((self.static_q2 + 1.0).abs() > f64::EPSILON)
+            && ((self.static_q2 - ntuple.q2).abs() > f64::EPSILON)
+        {
             self.static_q2 = -1.0;
         }
 
@@ -651,7 +653,9 @@ impl Subgrid for LagrangeSubgridV2 {
                         self.increase_tau(new_itaumin, new_itaumax);
                     }
 
-                    if (other_grid.static_q2 == -1.0) || (self.static_q2 != other_grid.static_q2) {
+                    if ((other_grid.static_q2 + 1.0).abs() > f64::EPSILON)
+                        || ((self.static_q2 - other_grid.static_q2).abs() > f64::EPSILON)
+                    {
                         self.static_q2 = -1.0;
                     }
 

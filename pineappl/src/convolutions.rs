@@ -307,7 +307,7 @@ impl<'a> LumiCache<'a> {
             .map(|Mu2 { ren, .. }| {
                 self.mur2_grid
                     .iter()
-                    .position(|&mur2| mur2 == xir * xir * ren)
+                    .position(|&mur2| (mur2 - xir * xir * ren).abs() < f64::EPSILON)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
@@ -316,7 +316,7 @@ impl<'a> LumiCache<'a> {
             .map(|Mu2 { fac, .. }| {
                 self.muf2_grid
                     .iter()
-                    .position(|&muf2| muf2 == xif * xif * fac)
+                    .position(|&muf2| (muf2 - xif * xif * fac).abs() < f64::EPSILON)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
@@ -325,7 +325,7 @@ impl<'a> LumiCache<'a> {
             .map(|x1| {
                 self.x_grid
                     .iter()
-                    .position(|x| x1 == x)
+                    .position(|x| (x1 - x).abs() < f64::EPSILON)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
@@ -335,7 +335,7 @@ impl<'a> LumiCache<'a> {
             .map(|x2| {
                 self.x_grid
                     .iter()
-                    .position(|x| x2 == x)
+                    .position(|x| (x2 - x).abs() < f64::EPSILON)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();

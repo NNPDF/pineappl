@@ -88,7 +88,7 @@ impl Subgrid for ImportOnlySubgridV1 {
 
                 for (other_index, mu2) in other_grid.mu2_grid().iter().enumerate() {
                     // the following should always be the case
-                    assert_eq!(mu2.ren, mu2.fac);
+                    assert!((mu2.ren - mu2.fac).abs() < f64::EPSILON);
                     let q2 = &mu2.ren;
 
                     let index = match self
@@ -276,11 +276,11 @@ impl Subgrid for ImportOnlySubgridV2 {
                     for ((i, j, k), value) in self.array.indexed_iter() {
                         let target_j = x1_grid
                             .iter()
-                            .position(|&x| x == self.x1_grid[j])
+                            .position(|&x| (x - self.x1_grid[j]).abs() < f64::EPSILON)
                             .unwrap_or_else(|| unreachable!());
                         let target_k = x2_grid
                             .iter()
-                            .position(|&x| x == self.x2_grid[k])
+                            .position(|&x| (x - self.x2_grid[k]).abs() < f64::EPSILON)
                             .unwrap_or_else(|| unreachable!());
 
                         array[[i, target_j, target_k]] = value;
@@ -313,12 +313,12 @@ impl Subgrid for ImportOnlySubgridV2 {
                         let target_j = self
                             .x1_grid
                             .iter()
-                            .position(|&x| x == rhs_x1[j])
+                            .position(|&x| (x - rhs_x1[j]).abs() < f64::EPSILON)
                             .unwrap_or_else(|| unreachable!());
                         let target_k = self
                             .x2_grid
                             .iter()
-                            .position(|&x| x == rhs_x2[k])
+                            .position(|&x| (x - rhs_x2[k]).abs() < f64::EPSILON)
                             .unwrap_or_else(|| unreachable!());
 
                         self.array[[index, target_j, target_k]] += value;
