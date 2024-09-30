@@ -1,7 +1,7 @@
 //! PyImportOnlySubgrid* interface.
 
 use super::subgrid::PySubgridEnum;
-use numpy::{PyArrayMethods, PyReadonlyArray1, PyReadonlyArray3};
+use numpy::PyReadonlyArray3;
 use pineappl::import_only_subgrid::ImportOnlySubgridV1;
 use pineappl::import_only_subgrid::ImportOnlySubgridV2;
 use pineappl::sparse_array3::SparseArray3;
@@ -34,14 +34,10 @@ impl PyImportOnlySubgridV2 {
     pub fn new(
         array: PyReadonlyArray3<f64>,
         mu2_grid: Vec<(f64, f64)>,
-        x1_grid: PyReadonlyArray1<f64>,
-        x2_grid: PyReadonlyArray1<f64>,
+        x1_grid: Vec<f64>,
+        x2_grid: Vec<f64>,
     ) -> Self {
-        let mut sparse_array = SparseArray3::new(
-            mu2_grid.len(),
-            x1_grid.as_slice().unwrap().len(),
-            x2_grid.as_slice().unwrap().len(),
-        );
+        let mut sparse_array = SparseArray3::new(mu2_grid.len(), x1_grid.len(), x2_grid.len());
 
         for ((imu2, ix1, ix2), value) in array
             .as_array()
@@ -60,8 +56,8 @@ impl PyImportOnlySubgridV2 {
                         fac: *fac,
                     })
                     .collect(),
-                x1_grid.to_vec().unwrap(),
-                x2_grid.to_vec().unwrap(),
+                x1_grid,
+                x2_grid,
             ),
         }
     }
@@ -112,15 +108,11 @@ impl PyImportOnlySubgridV1 {
     #[new]
     pub fn new_import_only_subgrid(
         array: PyReadonlyArray3<f64>,
-        q2_grid: PyReadonlyArray1<f64>,
-        x1_grid: PyReadonlyArray1<f64>,
-        x2_grid: PyReadonlyArray1<f64>,
+        q2_grid: Vec<f64>,
+        x1_grid: Vec<f64>,
+        x2_grid: Vec<f64>,
     ) -> Self {
-        let mut sparse_array = SparseArray3::new(
-            q2_grid.as_slice().unwrap().len(),
-            x1_grid.as_slice().unwrap().len(),
-            x2_grid.as_slice().unwrap().len(),
-        );
+        let mut sparse_array = SparseArray3::new(q2_grid.len(), x1_grid.len(), x2_grid.len());
 
         for ((iq2, ix1, ix2), value) in array
             .as_array()
@@ -132,9 +124,9 @@ impl PyImportOnlySubgridV1 {
 
         Self::new(ImportOnlySubgridV1::new(
             sparse_array,
-            q2_grid.to_vec().unwrap(),
-            x1_grid.to_vec().unwrap(),
-            x2_grid.to_vec().unwrap(),
+            q2_grid,
+            x1_grid,
+            x2_grid,
         ))
     }
 

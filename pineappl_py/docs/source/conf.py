@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx_rtd_theme",
+    "nbsphinx",
 ]
 
 

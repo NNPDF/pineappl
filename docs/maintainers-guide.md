@@ -13,7 +13,9 @@
     is pushed to the repository. It then uploads pre-compiled libraries of the
     CAPI for Linux, MacOS and Windows to Github, publishes the crates to
     <https://crates.io/> and the Python wheels to <https://pypi.org/>. Finally,
-    it creates a new release on PineAPPL's Github [release page]
+    it creates a new release on PineAPPL's Github [release page]. You can
+    manually run this workflow from any branch to check whether it works, if
+    there's no tag no actual release will be made.
   - `rust.yml`: checks whether the Rust code succesfully compiles and generates
     code coverage
 - `.github/codecov.yml`: configuration file for PineAPPL's [codecov page]

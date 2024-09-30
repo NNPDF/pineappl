@@ -1,6 +1,5 @@
 //! Binnning interface.
 
-use numpy::{PyArrayMethods, PyReadonlyArray1};
 use pineappl::bin::BinRemapper;
 use pyo3::prelude::*;
 
@@ -23,9 +22,9 @@ impl PyBinRemapper {
     /// limits : list(tuple(float, float))
     ///     bin limits
     #[new]
-    pub fn new(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
+    pub fn new(normalizations: Vec<f64>, limits: Vec<(f64, f64)>) -> Self {
         Self {
-            bin_remapper: BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap(),
+            bin_remapper: BinRemapper::new(normalizations, limits).unwrap(),
         }
     }
 }
