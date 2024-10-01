@@ -246,7 +246,11 @@ pub fn convert_into_applgrid(
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
             let appl_x2: Vec<_> = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect();
 
-            for (lumi, subgrid) in subgrids.iter().enumerate() {
+            for (lumi, subgrid) in subgrids
+                .iter()
+                .enumerate()
+                .filter(|(_, subgrid)| !subgrid.is_empty())
+            {
                 let appl_q2_idx: Vec<_> = subgrid
                     .mu2_grid()
                     .iter()
