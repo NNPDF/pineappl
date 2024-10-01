@@ -292,10 +292,6 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_one`].
-///
-/// # Safety
-///
-/// This function should not be used anymore. Use `pineappl_grid_convolve_with_one` instead.
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_one` instead"
@@ -330,10 +326,6 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_two`].
-///
-/// # Safety
-///
-/// This function should not be used anymore. Use `pineappl_grid_convolve_with_two` instead.
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_two` instead"

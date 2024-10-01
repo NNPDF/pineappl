@@ -160,7 +160,6 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
         .join("\n")
 }
 
-#[allow(clippy::float_cmp)]
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         ThreadPoolBuilder::new()

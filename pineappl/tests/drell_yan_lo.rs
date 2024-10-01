@@ -25,7 +25,6 @@ fn int_photo(s: f64, t: f64, u: f64) -> f64 {
 }
 
 // Eq. (2.12) - quark-antiquark contribution to DY lepton pair production
-#[allow(clippy::suboptimal_flops)]
 fn int_quark(s: f64, t: f64, u: f64, qq: f64, i3_wq: f64) -> f64 {
     let alphagf: f64 = 1.0 / 132.30818655547878;
     let mw = 80.35198454966643;
@@ -78,7 +77,6 @@ struct Psp2to2 {
     jacobian: f64,
 }
 
-#[allow(clippy::suboptimal_flops)]
 fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     let smin = mmin * mmin;
     let smax = mmax * mmax;

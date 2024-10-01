@@ -75,7 +75,6 @@ impl Subgrid for EmptySubgridV1 {
     }
 }
 
-#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
     use super::*;

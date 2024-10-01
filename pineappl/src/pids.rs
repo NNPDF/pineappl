@@ -383,7 +383,6 @@ pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
 /// Given `tuples` represting a linear combination of PDG MC IDs, return a PID for the `evol`
 /// basis. The order of each tuple in `tuples` is not relevant. This function inverts
 /// [`evol_to_pdg_mc_ids`]. If the inversion is not possible, `None` is returned.
-#[allow(clippy::float_cmp)]
 #[must_use]
 pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
     let mut tuples = tuples.to_vec();

@@ -560,7 +560,6 @@ pub struct Opts {
     use_old_evolve: bool,
 }
 
-#[allow(clippy::float_cmp)]
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::row;

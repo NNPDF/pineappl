@@ -296,7 +296,6 @@ impl FkTable {
     }
 }
 
-#[allow(clippy::float_cmp)]
 impl TryFrom<Grid> for FkTable {
     type Error = TryFromGridError;
 

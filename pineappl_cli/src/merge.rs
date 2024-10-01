@@ -6,10 +6,9 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// Merges one or more PineAPPL grids together.
-#[allow(clippy::doc_markdown)]
 #[derive(Parser)]
 pub struct Opts {
-    /// Path of the merged `PineAPPL` file.
+    /// Path of the merged PineAPPL file.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// Path(s) of the files that should be merged.

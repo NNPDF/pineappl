@@ -294,7 +294,6 @@ impl<'a> LumiCache<'a> {
     }
 
     /// Set the grids.
-    #[allow(clippy::float_cmp)]
     pub fn set_grids(
         &mut self,
         mu2_grid: &[Mu2],

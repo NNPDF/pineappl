@@ -16,7 +16,6 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// Write a grid modified by various operations.
-#[allow(clippy::doc_markdown)]
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -495,7 +494,6 @@ impl Args for MoreArgs {
     }
 }
 
-#[allow(clippy::range_plus_one)]
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
         let mut grid = helpers::read_grid(&self.input)?;

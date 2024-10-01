@@ -65,7 +65,6 @@ fn convert_into_grid(
 }
 
 /// Converts PineAPPL grids to APPLgrid files.
-#[allow(clippy::doc_markdown)]
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -98,7 +97,6 @@ pub struct Opts {
     digits_rel: usize,
 }
 
-#[allow(clippy::float_cmp)]
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};

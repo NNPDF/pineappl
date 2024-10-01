@@ -656,7 +656,6 @@ fn import_flex_grid_15() {
         .stdout(predicates::str::ends_with(IMPORT_FLEX_GRID_15_STR));
 }
 
-#[allow(clippy::float_cmp)]
 #[test]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
@@ -832,7 +831,6 @@ fn import_dis_fktable() {
     );
 }
 
-#[allow(clippy::float_cmp)]
 #[test]
 #[cfg(feature = "fktable")]
 fn import_hadronic_fktable() {
