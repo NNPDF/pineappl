@@ -33,7 +33,7 @@ module pineappl
             use iso_c_binding
 
             implicit none
-            
+
             real(c_double), value, intent(in) :: q2
             type (c_ptr), value, intent(in)   :: state
             real(c_double)                    :: pineappl_alphas
@@ -353,7 +353,7 @@ contains
     ! https://stackoverflow.com/a/20121335 and https://community.intel.com/t5/Intel-Fortran-Compiler/Converting-c-string-to-Fortran-string/m-p/959515
     function c_f_string(c_str) result(f_str)
         use :: iso_c_binding
-        
+
         type(c_ptr), intent(in) :: c_str
         character(kind=c_char), dimension(:), pointer :: arr_f_ptr => null()
         character(len=:, kind=c_char), allocatable :: f_str
@@ -361,7 +361,7 @@ contains
 
         length = strlen(c_str)
         call c_f_pointer(c_str, arr_f_ptr, [length])
-        
+
         if (.not.associated(arr_f_ptr)) then
             f_str = "NULL"
             return
@@ -378,7 +378,7 @@ contains
         implicit none
 
         type (pineappl_grid), intent(in) :: grid
-        
+
         pineappl_grid_bin_count = grid_bin_count(grid%ptr)
     end function
 
@@ -386,7 +386,7 @@ contains
         implicit none
 
         type (pineappl_grid), intent(in) :: grid
-        
+
         pineappl_grid_bin_dimensions = grid_bin_dimensions(grid%ptr)
     end function
 
@@ -439,9 +439,9 @@ contains
 
     function pineappl_grid_convolve_with_one(grid, pdg_id, xfx, alphas, order_mask, lumi_mask, xi_ren, xi_fac, state) result(res)
         use iso_c_binding
-        
+
         implicit none
-        
+
         type (pineappl_grid), intent(in)   :: grid
         integer, intent(in)                :: pdg_id
         ! no pointer attribute here, see https://community.intel.com/t5/Intel-Fortran-Compiler/Segfault-when-passing-procedure-pointer-to-function-but-not-when/m-p/939797
@@ -478,9 +478,9 @@ contains
     function pineappl_grid_convolve_with_two(grid, pdg_id1, xfx1, pdg_id2, xfx2, alphas, &
         order_mask, lumi_mask, xi_ren, xi_fac, state) result(res)
         use iso_c_binding
-        
+
         implicit none
-        
+
         type (pineappl_grid), intent(in)   :: grid
         integer, intent(in)                :: pdg_id1, pdg_id2
         procedure (pineappl_xfx)           :: xfx1, xfx2
@@ -570,7 +570,7 @@ contains
         type (pineappl_grid), intent(in) :: grid
         character (*), intent(in)        :: key
         character (:), allocatable       :: res
-        
+
         res = c_f_string(grid_key_value(grid%ptr, key // c_null_char))
     end function
 

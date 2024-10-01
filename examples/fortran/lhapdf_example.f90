@@ -26,7 +26,7 @@ program lhapdf_example
 
     call lhapdf_initpdfset_byname(0, "nCTEQ15_1_1")
     call lhapdf_initpdfset_byname(1, "nCTEQ15FullNuc_208_82")
-    
+
     ! calling pineappl_grid_convolve without any flags
     xfx => xfx_test1
     alphas => alphas_test1
@@ -48,7 +48,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -61,7 +61,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -78,7 +78,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test1
@@ -90,7 +90,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test2
