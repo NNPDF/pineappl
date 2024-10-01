@@ -3,7 +3,7 @@ use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::boc::{Order, Kinematics};
+use pineappl::boc::{Kinematics, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -246,7 +246,7 @@ pub fn convert_into_applgrid(
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
             let appl_x2: Vec<_> = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect();
 
-            for (lumi, subgrid) in subgrids
+            for (channel, subgrid) in subgrids
                 .iter()
                 .enumerate()
                 .filter(|(_, subgrid)| !subgrid.is_empty())
@@ -367,7 +367,7 @@ pub fn convert_into_applgrid(
                     })
                     .collect::<Result<_>>()?;
 
-                let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
+                let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), channel);
 
                 for (indices, value) in subgrid.indexed_iter() {
                     let &[iq2, ix1, ix2] = indices.as_slice() else {
