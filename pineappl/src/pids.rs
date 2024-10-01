@@ -406,7 +406,7 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
         .collect();
 
     if let &[(pid, factor)] = non_zero.as_slice() {
-        if (factor - 1.0).abs() < f64::EPSILON {
+        if factor == 1.0 {
             return Some(pid);
         }
     }

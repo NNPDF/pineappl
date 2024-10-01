@@ -349,7 +349,6 @@ impl<T: Clone + Default + PartialEq> SparseArray3<T> {
     }
 
     /// Return an iterator over the elements, including zero elements.
-    #[allow(clippy::iter_without_into_iter)]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.entries.iter_mut()
     }

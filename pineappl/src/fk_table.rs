@@ -326,7 +326,7 @@ impl TryFrom<Grid> for FkTable {
 
             if muf2 < 0.0 {
                 muf2 = mu2_grid[0].fac;
-            } else if (muf2 - mu2_grid[0].fac).abs() > f64::EPSILON {
+            } else if muf2 != mu2_grid[0].fac {
                 return Err(TryFromGridError::MultipleScales);
             }
         }
@@ -334,7 +334,7 @@ impl TryFrom<Grid> for FkTable {
         for channel in grid.channels() {
             let entry = channel.entry();
 
-            if entry.len() != 1 || (entry[0].2 - 1.0).abs() > f64::EPSILON {
+            if entry.len() != 1 || entry[0].2 != 1.0 {
                 return Err(TryFromGridError::InvalidChannel);
             }
         }

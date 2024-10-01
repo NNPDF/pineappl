@@ -806,16 +806,16 @@ mod test {
             ]))
             .unwrap();
 
-        assert!((limits.left() - 0.0).abs() < f64::EPSILON);
-        assert!((limits.right() - 2.0).abs() < f64::EPSILON);
+        assert_eq!(limits.left(), 0.0);
+        assert_eq!(limits.right(), 2.0);
         assert_eq!(limits.bins(), 6);
 
         let non_consecutive_bins = BinLimits::new(vec![3.0, 4.0]);
 
         assert!(limits.merge(&non_consecutive_bins).is_err());
 
-        assert!((limits.left() - 0.0).abs() < f64::EPSILON);
-        assert!((limits.right() - 2.0).abs() < f64::EPSILON);
+        assert_eq!(limits.left(), 0.0);
+        assert_eq!(limits.right(), 2.0);
         assert_eq!(limits.bins(), 6);
 
         // left merge
@@ -828,8 +828,8 @@ mod test {
             ]))
             .is_err());
 
-        assert!((limits.left() - 0.0).abs() < f64::EPSILON);
-        assert!((limits.right() - 2.0).abs() < f64::EPSILON);
+        assert_eq!(limits.left(), 0.0);
+        assert_eq!(limits.right(), 2.0);
         assert_eq!(limits.bins(), 6);
     }
 
