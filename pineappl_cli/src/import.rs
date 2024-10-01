@@ -205,6 +205,7 @@ const fn fnlo_mu_possible_values() -> Vec<&'static str> {
 }
 
 /// Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids.
+#[allow(clippy::doc_markdown)]
 #[derive(Parser)]
 pub struct Opts {
     /// Path to the input grid.
@@ -251,6 +252,7 @@ pub struct Opts {
     dis_pid: i32,
 }
 
+#[allow(clippy::float_cmp)]
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};

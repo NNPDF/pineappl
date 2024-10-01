@@ -7,7 +7,8 @@ use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-/// Convolutes a PineAPPL grid with a PDF set.
+/// Convolves a PineAPPL grid with a PDF set.
+#[allow(clippy::doc_markdown)]
 #[derive(Parser)]
 #[command(alias = "convolute")]
 pub struct Opts {

@@ -6,7 +6,7 @@ const HELP_STR: &str = "Merges one or more PineAPPL grids together
 Usage: pineappl merge <OUTPUT> <INPUT>...
 
 Arguments:
-  <OUTPUT>    Path of the merged PineAPPL file
+  <OUTPUT>    Path of the merged `PineAPPL` file
   <INPUT>...  Path(s) of the files that should be merged
 
 Options:

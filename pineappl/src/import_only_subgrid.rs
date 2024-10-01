@@ -77,6 +77,7 @@ impl Subgrid for ImportOnlySubgridV1 {
         self.array.is_empty()
     }
 
+    #[allow(clippy::float_cmp)]
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::ImportOnlySubgridV1(other_grid) = other {
             if self.array.is_empty() && !transpose {
@@ -243,6 +244,7 @@ impl Subgrid for ImportOnlySubgridV2 {
         self.array.is_empty()
     }
 
+    #[allow(clippy::float_cmp)]
     fn merge(&mut self, other: &mut SubgridEnum, transpose: bool) {
         if let SubgridEnum::ImportOnlySubgridV2(other_grid) = other {
             if self.array.is_empty() && !transpose {
@@ -433,6 +435,7 @@ impl From<&SubgridEnum> for ImportOnlySubgridV2 {
     }
 }
 
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
     use super::*;

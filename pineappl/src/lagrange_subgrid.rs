@@ -13,10 +13,12 @@ use std::borrow::Cow;
 use std::iter;
 use std::mem;
 
+#[allow(clippy::suboptimal_flops)]
 fn weightfun(x: f64) -> f64 {
     (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
 }
 
+#[allow(clippy::suboptimal_flops)]
 fn fx(y: f64) -> f64 {
     let mut yp = y;
 
@@ -412,6 +414,7 @@ pub struct LagrangeSubgridV2 {
     pub(crate) static_q2: f64,
 }
 
+#[allow(clippy::float_cmp)]
 impl LagrangeSubgridV2 {
     /// Constructor.
     #[must_use]
@@ -493,6 +496,7 @@ impl LagrangeSubgridV2 {
     }
 }
 
+#[allow(clippy::float_cmp)]
 impl Subgrid for LagrangeSubgridV2 {
     fn convolve(
         &self,
@@ -1055,6 +1059,7 @@ impl From<&LagrangeSubgridV1> for LagrangeSparseSubgridV1 {
     }
 }
 
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod tests {
     use super::*;

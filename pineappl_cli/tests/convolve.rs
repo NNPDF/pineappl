@@ -1,7 +1,7 @@
 use assert_cmd::Command;
 use predicates::str;
 
-const HELP_STR: &str = "Convolutes a PineAPPL grid with a PDF set
+const HELP_STR: &str = "Convolves a PineAPPL grid with a PDF set
 
 Usage: pineappl convolve [OPTIONS] <INPUT> <CONV_FUNS>...
 

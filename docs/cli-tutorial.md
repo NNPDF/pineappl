@@ -82,7 +82,7 @@ used already, run
 Depending on the version of PineAPPL this will show output similar to the
 following:
 
-    Convolutes a PineAPPL grid with a PDF set
+    Convolves a PineAPPL grid with a PDF set
 
     Usage: pineappl convolve [OPTIONS] <INPUT> <PDFSETS>...
 

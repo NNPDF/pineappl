@@ -57,6 +57,7 @@ pub struct Opts {
     digits_rel: usize,
 }
 
+#[allow(clippy::float_cmp)]
 impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         let grid1 = helpers::read_grid(&self.input1)?;

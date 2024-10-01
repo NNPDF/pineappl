@@ -7,7 +7,7 @@ Usage: pineappl [OPTIONS] <COMMAND>
 Commands:
   analyze   Perform various analyses with grids
   channels  Shows the contribution for each partonic channel
-  convolve  Convolutes a PineAPPL grid with a PDF set
+  convolve  Convolves a PineAPPL grid with a PDF set
   diff      Compares the numerical content of two grids with each other
   evolve    Evolve a grid with an evolution kernel operator to an FK table
   export    Converts PineAPPL grids to APPLgrid files

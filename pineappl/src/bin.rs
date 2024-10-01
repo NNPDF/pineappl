@@ -108,6 +108,7 @@ pub enum ParseBinRemapperError {
     },
 }
 
+#[allow(clippy::assigning_clones)]
 impl FromStr for BinRemapper {
     type Err = ParseBinRemapperError;
 
@@ -787,6 +788,7 @@ impl BinLimits {
     }
 }
 
+#[allow(clippy::float_cmp)]
 #[cfg(test)]
 mod test {
     use super::*;
