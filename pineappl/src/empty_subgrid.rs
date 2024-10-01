@@ -19,14 +19,6 @@ impl Subgrid for EmptySubgridV1 {
         Cow::Borrowed(&[])
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&[])
-    }
-
-    fn x2_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&[])
-    }
-
     fn node_values(&self) -> Vec<NodeValues> {
         Vec::new()
     }

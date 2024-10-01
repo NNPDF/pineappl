@@ -42,14 +42,6 @@ impl Subgrid for PackedQ1X2SubgridV1 {
         )
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
-        Cow::Owned(self.node_values[1].values())
-    }
-
-    fn x2_grid(&self) -> Cow<[f64]> {
-        Cow::Owned(self.node_values[2].values())
-    }
-
     fn node_values(&self) -> Vec<NodeValues> {
         self.node_values.clone()
     }

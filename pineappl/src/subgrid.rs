@@ -138,14 +138,6 @@ pub trait Subgrid {
     /// return an empty slice.
     fn mu2_grid(&self) -> Cow<[Mu2]>;
 
-    /// Return a slice of values of `x1`. If the subgrid does not use a grid, this method should
-    /// return an empty slice.
-    fn x1_grid(&self) -> Cow<[f64]>;
-
-    /// Return a slice of values of `x2`. If the subgrid does not use a grid, this method should
-    /// return an empty slice.
-    fn x2_grid(&self) -> Cow<[f64]>;
-
     /// TODO
     fn node_values(&self) -> Vec<NodeValues>;
 

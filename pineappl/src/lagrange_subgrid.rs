@@ -55,14 +55,6 @@ impl Subgrid for LagrangeSubgridV2 {
             .collect()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
-        self.interps[1].node_values().into()
-    }
-
-    fn x2_grid(&self) -> Cow<[f64]> {
-        self.interps[2].node_values().into()
-    }
-
     fn node_values(&self) -> Vec<NodeValues> {
         self.interps
             .iter()
