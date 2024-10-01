@@ -337,15 +337,24 @@ impl TryFrom<Grid> for FkTable {
                 continue;
             }
 
-            let mu2_grid = subgrid.mu2_grid();
-
-            if mu2_grid.len() > 1 {
+            let [fac] = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    // TODO: generalize this for arbitrary scales
+                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values()[..]
+            else {
                 return Err(TryFromGridError::MultipleScales);
-            }
+            };
 
             if muf2 < 0.0 {
-                muf2 = mu2_grid[0].fac;
-            } else if muf2 != mu2_grid[0].fac {
+                muf2 = fac;
+            } else if !approx_eq!(f64, muf2, fac, ulps = 4) {
                 return Err(TryFromGridError::MultipleScales);
             }
         }

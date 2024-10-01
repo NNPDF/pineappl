@@ -3,7 +3,6 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
 use pineappl::boc::Kinematics;
-use pineappl::subgrid::Mu2;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
@@ -15,18 +14,9 @@ struct Group {
     /// Show the subgrid type.
     #[arg(long = "type")]
     type_: bool,
-    /// Show the renormalization grid values.
-    #[arg(long)]
-    mur: bool,
-    /// Show the squared renormalization grid values.
-    #[arg(long)]
-    mur2: bool,
-    /// Show the factorization grid values.
-    #[arg(long)]
-    muf: bool,
-    /// Show the squared factorization grid values.
-    #[arg(long)]
-    muf2: bool,
+    /// Show the scale node values for the given indices.
+    #[arg(long, require_equals = true, value_delimiter = ',', value_name = "IDX")]
+    scale: Vec<usize>,
     /// Show the x-node values for the given indices.
     #[arg(long, require_equals = true, value_delimiter = ',', value_name = "IDX")]
     x: Vec<usize>,
@@ -60,17 +50,8 @@ impl Subcommand for Opts {
         if self.group.type_ {
             titles.add_cell(cell!(c->"type"));
         }
-        if self.group.mur {
-            titles.add_cell(cell!(c->"mur"));
-        }
-        if self.group.mur2 {
-            titles.add_cell(cell!(c->"mur2"));
-        }
-        if self.group.muf {
-            titles.add_cell(cell!(c->"muf"));
-        }
-        if self.group.muf2 {
-            titles.add_cell(cell!(c->"muf2"));
+        for index in &self.group.scale {
+            titles.add_cell(cell!(c->format!("scale{index}")));
         }
         for index in &self.group.x {
             titles.add_cell(cell!(c->format!("x{index}")));
@@ -103,38 +84,19 @@ impl Subcommand for Opts {
                     }
                 ));
             }
-            if self.group.mur {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
+            for &index in &self.group.scale {
+                let values: Vec<_> = grid
+                    .kinematics()
                     .iter()
-                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren.sqrt()))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.mur2 {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::Scale(idx) if idx == index).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .values()
                     .iter()
-                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.muf {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac.sqrt()))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.muf2 {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac))
+                    .map(|x| format!("{:.*}", self.digits, x))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));

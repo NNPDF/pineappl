@@ -7,7 +7,7 @@ use super::grid::{Grid, GridError};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
-use super::subgrid::{Mu2, NodeValues, Subgrid, SubgridEnum};
+use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::izip;
 use itertools::Itertools;
@@ -215,6 +215,7 @@ fn operator_slices(
 type X1aX1bOp2Tuple = (Vec<Vec<f64>>, Option<Array2<f64>>);
 
 fn ndarray_from_subgrid_orders_slice(
+    grid: &Grid,
     fac1: f64,
     kinematics: &[Kinematics],
     subgrids: &ArrayView1<SubgridEnum>,
@@ -303,10 +304,20 @@ fn ndarray_from_subgrid_orders_slice(
             let &[ifac1, ix1, ix2] = indices.as_slice() else {
                 unimplemented!()
             };
-            let Mu2 { ren, fac, frg } = subgrid.mu2_grid()[ifac1];
+            let fac = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values()[ifac1];
+            // TODO: generalize this for multiple scales
+            let ren = fac;
 
             // TODO: implement evolution for non-zero fragmentation scales
-            assert_eq!(frg, -1.0);
 
             if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
@@ -375,6 +386,7 @@ pub(crate) fn evolve_slice_with_one(
 
         for (subgrids_o, channel1) in subgrids_ol.axis_iter(Axis(1)).zip(grid.channels()) {
             let (mut x1, array) = ndarray_from_subgrid_orders_slice(
+                grid,
                 info.fac1,
                 grid.kinematics(),
                 &subgrids_o,
@@ -515,6 +527,7 @@ pub(crate) fn evolve_slice_with_two(
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
+                grid,
                 info.fac1,
                 grid.kinematics(),
                 &subgrids_o,
@@ -654,6 +667,7 @@ pub(crate) fn evolve_slice_with_two2(
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
+                grid,
                 fac1,
                 grid.kinematics(),
                 &subgrids_o,

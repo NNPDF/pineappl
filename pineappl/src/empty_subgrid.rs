@@ -3,7 +3,6 @@
 use super::interpolation::Interp;
 use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::iter;
 
 /// A subgrid type that is always empty.
@@ -13,10 +12,6 @@ pub struct EmptySubgridV1;
 impl Subgrid for EmptySubgridV1 {
     fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
-    }
-
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
-        Cow::Borrowed(&[])
     }
 
     fn node_values(&self) -> Vec<NodeValues> {

@@ -7,7 +7,7 @@ use pineappl::boc::{Kinematics, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
-use pineappl::subgrid::{Mu2, Subgrid};
+use pineappl::subgrid::{Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;
@@ -15,26 +15,33 @@ use std::path::Path;
 use std::pin::Pin;
 
 fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<Vec<Interp>> {
+    if grid
+        .kinematics()
+        .iter()
+        .filter(|kin| matches!(kin, Kinematics::Scale(_)))
+        .count()
+        > 1
+    {
+        bail!("APPLgrid does not support grids with more than one scale");
+    }
+
     let mu2_grid: Vec<_> = grid
         .subgrids()
         .slice(s![order, bin, ..])
         .iter()
-        .map(|subgrid| {
-            subgrid
-                .mu2_grid()
-                .iter()
-                .map(|&Mu2 { ren, fac, frg }| {
-                    if frg > 0.0 {
-                        bail!("subgrid has mua2 > 0.0, which APPLgrid does not support");
-                    }
-
-                    if !approx_eq!(f64, ren, fac, ulps = 128) {
-                        bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-                    }
-
-                    Ok(fac)
-                })
-                .collect::<Result<Vec<_>>>()
+        .filter_map(|subgrid| {
+            (!subgrid.is_empty()).then(|| {
+                Ok(grid
+                    .kinematics()
+                    .iter()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .values())
+            })
         })
         .collect::<Result<_>>()?;
     let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
@@ -251,17 +258,18 @@ pub fn convert_into_applgrid(
                 .enumerate()
                 .filter(|(_, subgrid)| !subgrid.is_empty())
             {
-                let appl_q2_idx: Vec<_> = subgrid
-                    .mu2_grid()
+                let appl_q2_idx: Vec<_> = grid
+                    .kinematics()
                     .iter()
-                    .map(|&Mu2 { ren, fac, frg }| {
-                        if frg > 0.0 {
-                            bail!("subgrid has mua2 > 0.0, which APPLgrid does not support");
-                        }
-
-                        if !approx_eq!(f64, ren, fac, ulps = 128) {
-                            bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-                        }
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .values()
+                    .into_iter()
+                    .map(|fac| {
                         appl_q2
                             .iter()
                             .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
@@ -379,7 +387,16 @@ pub fn convert_into_applgrid(
                         if value != 0.0 {
                             println!(
                                 "WARNING: discarding non-matching scale muf2 = {}",
-                                subgrid.mu2_grid()[iq2].fac
+                                grid
+                                    .kinematics()
+                                    .iter()
+                                    .zip(subgrid.node_values())
+                                    .find_map(|(kin, node_values)| {
+                                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                                    })
+                                    // TODO: convert this into an error
+                                    .unwrap()
+                                    .values()[iq2]
                             );
                         }
 

@@ -5,7 +5,6 @@ use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use itertools::izip;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::mem;
 
 /// TODO
@@ -26,20 +25,6 @@ impl PackedQ1X2SubgridV1 {
 impl Subgrid for PackedQ1X2SubgridV1 {
     fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
         panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
-    }
-
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
-        Cow::Owned(
-            self.node_values[0]
-                .values()
-                .into_iter()
-                .map(|ren| Mu2 {
-                    ren,
-                    fac: ren,
-                    frg: -1.0,
-                })
-                .collect(),
-        )
     }
 
     fn node_values(&self) -> Vec<NodeValues> {

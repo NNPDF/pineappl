@@ -9,7 +9,6 @@ use enum_dispatch::enum_dispatch;
 // use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 /// TODO
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -133,11 +132,6 @@ pub struct Stats {
 /// Trait each subgrid must implement.
 #[enum_dispatch]
 pub trait Subgrid {
-    /// Return a slice of [`Mu2`] values corresponding to the (squared) renormalization and
-    /// factorization values of the grid. If the subgrid does not use a grid, this method should
-    /// return an empty slice.
-    fn mu2_grid(&self) -> Cow<[Mu2]>;
-
     /// TODO
     fn node_values(&self) -> Vec<NodeValues>;
 

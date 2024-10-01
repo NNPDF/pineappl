@@ -5,7 +5,6 @@ use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::mem;
 
 /// Subgrid which uses Lagrange-interpolation.
@@ -41,18 +40,6 @@ impl Subgrid for LagrangeSubgridV2 {
                 self.static_q2 = -1.0;
             }
         }
-    }
-
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
-        self.interps[0]
-            .node_values()
-            .iter()
-            .map(|&q2| Mu2 {
-                ren: q2,
-                fac: q2,
-                frg: -1.0,
-            })
-            .collect()
     }
 
     fn node_values(&self) -> Vec<NodeValues> {

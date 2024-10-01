@@ -10,7 +10,7 @@ use super::interpolation::Interp;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::{self, PidBasis};
-use super::subgrid::{Mu2, Subgrid, SubgridEnum};
+use super::subgrid::{Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};
@@ -273,7 +273,17 @@ impl Grid {
                 }
 
                 let channel = &pdg_channels[chan];
-                let mu2_grid = subgrid.mu2_grid();
+                let mu2_grid = self
+                    .kinematics()
+                    .iter()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        // TODO: generalize this for arbitrary scales
+                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .values();
                 let node_values = subgrid.node_values();
 
                 let x_grid: Vec<_> = node_values
@@ -363,14 +373,7 @@ impl Grid {
         lumi_cache.set_grids(
             self,
             &subgrid.node_values(),
-            &node_values[0]
-                .iter()
-                .map(|&scale| Mu2 {
-                    ren: scale,
-                    fac: scale,
-                    frg: -1.0,
-                })
-                .collect::<Vec<_>>(),
+            &node_values[0].iter().copied().collect::<Vec<_>>(),
             xir,
             xif,
             xia,
@@ -1139,11 +1142,31 @@ impl Grid {
                     .then_some((&self.channels()[tuple.2], subgrid))
             })
         {
-            ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
+            // ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
+            ren1.extend(self
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values().into_iter());
             ren1.sort_by(f64::total_cmp);
             ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
-            fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
+            // fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
+            fac1.extend(self
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values().into_iter());
             fac1.sort_by(f64::total_cmp);
             fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 

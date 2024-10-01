@@ -3,7 +3,7 @@
 use super::boc::Kinematics;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{Mu2, NodeValues, Subgrid};
+use super::subgrid::{NodeValues, Subgrid};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -188,11 +188,23 @@ impl<'a> LumiCache<'a> {
                 if subgrid.is_empty() {
                     None
                 } else {
-                    Some(subgrid.mu2_grid().into_owned())
+                    Some(
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                // TODO: generalize this for arbitrary scales
+                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                    )
                 }
             })
             .flatten()
-            .flat_map(|Mu2 { ren, .. }| {
+            .flat_map(|ren| {
                 xi.iter()
                     .map(|(xir, _)| xir * xir * ren)
                     .collect::<Vec<_>>()
@@ -208,11 +220,23 @@ impl<'a> LumiCache<'a> {
                 if subgrid.is_empty() {
                     None
                 } else {
-                    Some(subgrid.mu2_grid().into_owned())
+                    Some(
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                // TODO: generalize this for arbitrary scales
+                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                    )
                 }
             })
             .flatten()
-            .flat_map(|Mu2 { fac, .. }| {
+            .flat_map(|fac| {
                 xi.iter()
                     .map(|(_, xif)| xif * xif * fac)
                     .collect::<Vec<_>>()
@@ -305,7 +329,7 @@ impl<'a> LumiCache<'a> {
         &mut self,
         grid: &Grid,
         node_values: &[NodeValues],
-        mu2_grid: &[Mu2],
+        mu2_grid: &[f64],
         xir: f64,
         xif: f64,
         xia: f64,
@@ -315,7 +339,7 @@ impl<'a> LumiCache<'a> {
 
         self.imur2 = mu2_grid
             .iter()
-            .map(|Mu2 { ren, .. }| {
+            .map(|ren| {
                 self.mur2_grid
                     .iter()
                     .position(|&mur2| mur2 == xir * xir * ren)
@@ -324,7 +348,7 @@ impl<'a> LumiCache<'a> {
             .collect();
         self.imuf2 = mu2_grid
             .iter()
-            .map(|Mu2 { fac, .. }| {
+            .map(|fac| {
                 self.muf2_grid
                     .iter()
                     .position(|&muf2| muf2 == xif * xif * fac)
