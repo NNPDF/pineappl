@@ -308,6 +308,13 @@ impl<'a> ConvolutionCache<'a> {
         }
     }
 
+    /// TODO
+    pub fn fx_prod(&mut self, pdg_ids: &[i32], indices: &[usize]) -> f64 {
+        self.xfx1(pdg_ids[0], indices[1], indices[0])
+            * self.xfx2(pdg_ids[1], indices[2], indices[0])
+            / (self.x_grid[self.ix1[indices[1]]] * self.x_grid[self.ix2[indices[2]]])
+    }
+
     /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],
     /// in the grid `mu2_grid` at the index `imu2`.
     #[must_use]

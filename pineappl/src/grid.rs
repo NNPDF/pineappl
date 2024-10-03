@@ -286,34 +286,21 @@ impl Grid {
                     .values();
                 let node_values = subgrid.node_values();
 
-                let x_grid: Vec<_> = node_values
-                    .iter()
-                    .zip(self.kinematics())
-                    .filter_map(|(node_values, kin)| {
-                        matches!(kin, Kinematics::X(_)).then(|| node_values.values())
-                    })
-                    .collect();
-                // TODO: generalize this to N dimensions
-                assert_eq!(x_grid.len(), 2);
-
                 // TODO: generalize this for fragmentation functions
                 convolution_cache.set_grids(self, &node_values, &mu2_grid, xir, xif, 1.0);
 
                 let mut value = 0.0;
 
                 for (idx, v) in subgrid.indexed_iter() {
-                    assert_eq!(idx.len(), 3);
-                    let x1 = x_grid[0][idx[1]];
-                    let x2 = x_grid[1][idx[2]];
                     let mut lumi = 0.0;
 
                     for entry in channel.entry() {
-                        debug_assert_eq!(entry.0.len(), 2);
-                        let xfx1 = convolution_cache.xfx1(entry.0[0], idx[1], idx[0]);
-                        let xfx2 = convolution_cache.xfx2(entry.0[1], idx[2], idx[0]);
-                        lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
+                        // TODO: we assume `idx` to be ordered as scale, x1, x2
+                        let fx_prod = convolution_cache.fx_prod(&entry.0, &idx);
+                        lumi += fx_prod * entry.1;
                     }
 
+                    // TODO: we assume `idx` to be ordered as scale, x1, x2
                     let alphas = convolution_cache.alphas(idx[0]);
 
                     lumi *= alphas.powi(order.alphas.try_into().unwrap());
