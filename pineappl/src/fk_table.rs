@@ -1,7 +1,7 @@
 //! Provides the [`FkTable`] type.
 
 use super::boc::{Kinematics, Order};
-use super::convolutions::{Convolution, LumiCache};
+use super::convolutions::{Convolution, ConvolutionCache};
 use super::grid::Grid;
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
@@ -234,12 +234,12 @@ impl FkTable {
     /// FK-tables have all orders merged together and do not support scale variations.
     pub fn convolve(
         &self,
-        lumi_cache: &mut LumiCache,
+        convolution_cache: &mut ConvolutionCache,
         bin_indices: &[usize],
         channel_mask: &[bool],
     ) -> Vec<f64> {
         self.grid.convolve(
-            lumi_cache,
+            convolution_cache,
             &[],
             bin_indices,
             channel_mask,

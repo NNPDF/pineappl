@@ -38,7 +38,7 @@ impl<'a> Pdfs<'a> {
 
 /// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
 /// instead of the PDFs themselves.
-pub struct LumiCache<'a> {
+pub struct ConvolutionCache<'a> {
     pdfs: Pdfs<'a>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
     alphas_cache: Vec<f64>,
@@ -55,7 +55,7 @@ pub struct LumiCache<'a> {
     cc2: i32,
 }
 
-impl<'a> LumiCache<'a> {
+impl<'a> ConvolutionCache<'a> {
     /// Construct a luminosity cache with two PDFs, `xfx1` and `xfx2`. The types of hadrons the
     /// PDFs correspond to must be given as `pdg1` and `pdg2`. The function to evaluate the
     /// strong coupling must be given as `alphas`. The grid that the cache will be used with must

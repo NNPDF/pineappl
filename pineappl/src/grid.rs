@@ -2,7 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Kinematics, Order, Scales};
-use super::convolutions::{Convolution, LumiCache};
+use super::convolutions::{Convolution, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
@@ -226,7 +226,7 @@ impl Grid {
     /// TODO
     pub fn convolve(
         &self,
-        lumi_cache: &mut LumiCache,
+        convolution_cache: &mut ConvolutionCache,
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],
@@ -239,7 +239,7 @@ impl Grid {
             .iter()
             .map(|&(xir, xif, _)| (xir, xif))
             .collect::<Vec<_>>();
-        lumi_cache.setup(self, &xi).unwrap();
+        convolution_cache.setup(self, &xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_info().bins()).collect()
@@ -297,7 +297,7 @@ impl Grid {
                 assert_eq!(x_grid.len(), 2);
 
                 // TODO: generalize this for fragmentation functions
-                lumi_cache.set_grids(self, &node_values, &mu2_grid, xir, xif, 1.0);
+                convolution_cache.set_grids(self, &node_values, &mu2_grid, xir, xif, 1.0);
 
                 let mut value = 0.0;
 
@@ -309,12 +309,12 @@ impl Grid {
 
                     for entry in channel.entry() {
                         debug_assert_eq!(entry.0.len(), 2);
-                        let xfx1 = lumi_cache.xfx1(entry.0[0], idx[1], idx[0]);
-                        let xfx2 = lumi_cache.xfx2(entry.0[1], idx[2], idx[0]);
+                        let xfx1 = convolution_cache.xfx1(entry.0[0], idx[1], idx[0]);
+                        let xfx2 = convolution_cache.xfx2(entry.0[1], idx[2], idx[0]);
                         lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
                     }
 
-                    let alphas = lumi_cache.alphas(idx[0]);
+                    let alphas = convolution_cache.alphas(idx[0]);
 
                     lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
@@ -346,14 +346,14 @@ impl Grid {
     /// TODO
     pub fn convolve_subgrid(
         &self,
-        lumi_cache: &mut LumiCache,
+        convolution_cache: &mut ConvolutionCache,
         ord: usize,
         bin: usize,
         channel: usize,
         (xir, xif, xia): (f64, f64, f64),
     ) -> ArrayD<f64> {
         assert_eq!(xia, 1.0);
-        lumi_cache.setup(self, &[(xir, xif)]).unwrap();
+        convolution_cache.setup(self, &[(xir, xif)]).unwrap();
 
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();
@@ -370,7 +370,7 @@ impl Grid {
         // TODO: generalize this to N dimensions
         assert_eq!(node_values.len(), 3);
 
-        lumi_cache.set_grids(
+        convolution_cache.set_grids(
             self,
             &subgrid.node_values(),
             &node_values[0].iter().copied().collect::<Vec<_>>(),
@@ -390,12 +390,12 @@ impl Grid {
 
             for entry in channel.entry() {
                 debug_assert_eq!(entry.0.len(), 2);
-                let xfx1 = lumi_cache.xfx1(entry.0[0], idx[1], idx[0]);
-                let xfx2 = lumi_cache.xfx2(entry.0[1], idx[2], idx[0]);
+                let xfx1 = convolution_cache.xfx1(entry.0[0], idx[1], idx[0]);
+                let xfx2 = convolution_cache.xfx2(entry.0[1], idx[2], idx[0]);
                 lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
             }
 
-            let alphas = lumi_cache.alphas(idx[0]);
+            let alphas = convolution_cache.alphas(idx[0]);
 
             lumi *= alphas.powi(order.alphas.try_into().unwrap());
 

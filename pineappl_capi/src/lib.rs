@@ -58,7 +58,7 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use pineappl::convolutions::{Convolution, LumiCache};
+use pineappl::convolutions::{Convolution, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
@@ -455,10 +455,10 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
+    let mut convolution_cache = ConvolutionCache::with_one(pdg_id, &mut pdf, &mut als);
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
+        &mut convolution_cache,
         &order_mask,
         &[],
         &channel_mask,
@@ -517,10 +517,11 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
+    let mut convolution_cache =
+        ConvolutionCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
+        &mut convolution_cache,
         &order_mask,
         &[],
         &channel_mask,

@@ -855,7 +855,7 @@ fn import_hadronic_fktable() {
     use lhapdf::Pdf;
     use ndarray::Array4;
     use pineappl::convolutions::Convolution;
-    use pineappl::convolutions::LumiCache;
+    use pineappl::convolutions::ConvolutionCache;
     use pineappl::fk_table::{FkAssumptions, FkTable};
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -893,8 +893,8 @@ fn import_hadronic_fktable() {
     let pdf = Pdf::with_setname_and_member("NNPDF31_nlo_as_0118_luxqed", 0).unwrap();
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
-    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let results = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let mut convolution_cache = ConvolutionCache::with_one(2212, &mut xfx, &mut alphas);
+    let results = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     let mut fk_table = FkTable::try_from(grid).unwrap();
     let table: Array4<f64> = fk_table.table().into_dimensionality().unwrap();
@@ -1017,14 +1017,14 @@ fn import_hadronic_fktable() {
         ]
     );
 
-    assert_eq!(results, fk_table.convolve(&mut lumi_cache, &[], &[]));
+    assert_eq!(results, fk_table.convolve(&mut convolution_cache, &[], &[]));
 
     fk_table.optimize(FkAssumptions::Nf6Ind);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf6Sym);
@@ -1032,7 +1032,7 @@ fn import_hadronic_fktable() {
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0],
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0],
         ulps = 4
     );
     fk_table.optimize(FkAssumptions::Nf5Ind);
@@ -1040,21 +1040,21 @@ fn import_hadronic_fktable() {
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf5Sym);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
     fk_table.optimize(FkAssumptions::Nf4Ind);
     assert_eq!(fk_table.channels(), channels);
     assert_approx_eq!(
         f64,
         results[0],
-        fk_table.convolve(&mut lumi_cache, &[], &[])[0]
+        fk_table.convolve(&mut convolution_cache, &[], &[])[0]
     );
 
     fk_table.optimize(FkAssumptions::Nf4Sym);

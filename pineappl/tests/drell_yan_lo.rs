@@ -5,7 +5,7 @@ use num_complex::Complex;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
-use pineappl::convolutions::{Convolution, LumiCache};
+use pineappl::convolutions::{Convolution, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
@@ -351,25 +351,26 @@ fn perform_grid_tests(
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     // TEST 5: `convolve`
-    let mut lumi_cache = LumiCache::with_one(2212, &mut xfx, &mut alphas);
-    let bins = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let mut convolution_cache = ConvolutionCache::with_one(2212, &mut xfx, &mut alphas);
+    let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
-    // TEST 5b: `convolve` with `LumiCache::with_two`
+    // TEST 5b: `convolve` with `ConvolutionCache::with_two`
     let mut xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas2 = |_| 0.0;
-    let mut lumi_cache2 = LumiCache::with_two(2212, &mut xfx1, 2212, &mut xfx2, &mut alphas2);
-    let bins2 = grid.convolve(&mut lumi_cache2, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let mut convolution_cache2 =
+        ConvolutionCache::with_two(2212, &mut xfx1, 2212, &mut xfx2, &mut alphas2);
+    let bins2 = grid.convolve(&mut convolution_cache2, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins2.iter().zip(reference.iter()) {
         assert_approx_eq!(f64, *result, *reference, ulps = 16);
     }
 
-    mem::drop(lumi_cache2);
+    mem::drop(convolution_cache2);
     mem::drop(bins2);
 
     // TEST 6: `convolve_subgrid`
@@ -377,7 +378,7 @@ fn perform_grid_tests(
         .map(|bin| {
             (0..grid.channels().len())
                 .map(|channel| {
-                    grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, (1.0, 1.0, 1.0))
+                    grid.convolve_subgrid(&mut convolution_cache, 0, bin, channel, (1.0, 1.0, 1.0))
                         .sum()
                 })
                 .sum()
@@ -404,7 +405,7 @@ fn perform_grid_tests(
         .map(|bin| {
             (0..grid.channels().len())
                 .map(|channel| {
-                    grid.convolve_subgrid(&mut lumi_cache, 0, bin, channel, (1.0, 1.0, 1.0))
+                    grid.convolve_subgrid(&mut convolution_cache, 0, bin, channel, (1.0, 1.0, 1.0))
                         .sum()
                 })
                 .sum()
@@ -415,7 +416,7 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
     }
 
-    let bins = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
         assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
@@ -448,7 +449,7 @@ fn perform_grid_tests(
         grid.merge_bins(bin..bin + 2)?;
     }
 
-    let merged2 = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let merged2 = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference_after_ssd) in merged2.iter().zip(
         reference_after_ssd
@@ -463,7 +464,7 @@ fn perform_grid_tests(
     // delete a few bins from the start
     grid.delete_bins(&[0, 1]);
 
-    let deleted = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let deleted = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     assert_eq!(deleted.len(), 10);
 
@@ -479,7 +480,7 @@ fn perform_grid_tests(
     // delete a few bins from the ending
     grid.delete_bins(&[8, 9]);
 
-    let deleted2 = grid.convolve(&mut lumi_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
+    let deleted2 = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     assert_eq!(deleted2.len(), 8);
 

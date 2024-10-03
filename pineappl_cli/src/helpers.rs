@@ -2,7 +2,7 @@ use super::GlobalConfiguration;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::{Array3, Ix3};
-use pineappl::convolutions::LumiCache;
+use pineappl::convolutions::ConvolutionCache;
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
@@ -289,8 +289,10 @@ pub fn convolve_scales(
 
     // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
     let mut cache = match funs.as_mut_slice() {
-        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
-        [funs0, funs1] => LumiCache::with_two(
+        [funs0] => {
+            ConvolutionCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from])
+        }
+        [funs0, funs1] => ConvolutionCache::with_two(
             pdg_ids[0],
             funs0,
             pdg_ids[1],
@@ -452,8 +454,10 @@ pub fn convolve_subgrid(
 
     // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
     let mut cache = match funs.as_mut_slice() {
-        [funs0] => LumiCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from]),
-        [funs0, funs1] => LumiCache::with_two(
+        [funs0] => {
+            ConvolutionCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from])
+        }
+        [funs0, funs1] => ConvolutionCache::with_two(
             pdg_ids[0],
             funs0,
             pdg_ids[1],
