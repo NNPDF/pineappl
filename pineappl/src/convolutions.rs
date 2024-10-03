@@ -7,31 +7,15 @@ use super::subgrid::{NodeValues, Subgrid};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-enum Pdfs<'a> {
-    Two {
-        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        xfx1_cache: FxHashMap<(i32, usize, usize), f64>,
-        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        xfx2_cache: FxHashMap<(i32, usize, usize), f64>,
-    },
-    One {
-        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        xfx_cache: FxHashMap<(i32, usize, usize), f64>,
-    },
+struct Pdfs<'a> {
+    xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
+    xfx_cache: Vec<FxHashMap<(i32, usize, usize), f64>>,
 }
 
 impl<'a> Pdfs<'a> {
     pub fn clear(&mut self) {
-        match self {
-            Self::One { xfx_cache, .. } => xfx_cache.clear(),
-            Self::Two {
-                xfx1_cache,
-                xfx2_cache,
-                ..
-            } => {
-                xfx1_cache.clear();
-                xfx2_cache.clear();
-            }
+        for xfx_cache in &mut self.xfx_cache {
+            xfx_cache.clear();
         }
     }
 }
@@ -47,12 +31,9 @@ pub struct ConvolutionCache<'a> {
     x_grid: Vec<f64>,
     imur2: Vec<usize>,
     imuf2: Vec<usize>,
-    ix1: Vec<usize>,
-    ix2: Vec<usize>,
-    pdg1: i32,
-    pdg2: i32,
-    cc1: i32,
-    cc2: i32,
+    ix: Vec<Vec<usize>>,
+    pdg: Vec<i32>,
+    cc: Vec<i32>,
 }
 
 impl<'a> ConvolutionCache<'a> {
@@ -70,11 +51,9 @@ impl<'a> ConvolutionCache<'a> {
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            pdfs: Pdfs::Two {
-                xfx1,
-                xfx1_cache: FxHashMap::default(),
-                xfx2,
-                xfx2_cache: FxHashMap::default(),
+            pdfs: Pdfs {
+                xfx: vec![xfx1, xfx2],
+                xfx_cache: vec![FxHashMap::default(); 2],
             },
             alphas,
             alphas_cache: vec![],
@@ -83,12 +62,9 @@ impl<'a> ConvolutionCache<'a> {
             x_grid: vec![],
             imur2: Vec::new(),
             imuf2: Vec::new(),
-            ix1: Vec::new(),
-            ix2: Vec::new(),
-            pdg1,
-            pdg2,
-            cc1: 0,
-            cc2: 0,
+            ix: Vec::new(),
+            pdg: vec![pdg1, pdg2],
+            cc: vec![0, 0],
         }
     }
 
@@ -104,9 +80,9 @@ impl<'a> ConvolutionCache<'a> {
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            pdfs: Pdfs::One {
-                xfx,
-                xfx_cache: FxHashMap::default(),
+            pdfs: Pdfs {
+                xfx: vec![xfx],
+                xfx_cache: vec![FxHashMap::default()],
             },
             alphas,
             alphas_cache: vec![],
@@ -115,12 +91,9 @@ impl<'a> ConvolutionCache<'a> {
             x_grid: vec![],
             imur2: Vec::new(),
             imuf2: Vec::new(),
-            ix1: Vec::new(),
-            ix2: Vec::new(),
-            pdg1: pdg,
-            pdg2: pdg,
-            cc1: 0,
-            cc2: 0,
+            ix: Vec::new(),
+            pdg: vec![pdg, pdg],
+            cc: vec![0, 0],
         }
     }
 
@@ -131,30 +104,24 @@ impl<'a> ConvolutionCache<'a> {
         assert_eq!(convolutions.len(), 2);
 
         // do we have to charge-conjugate the initial states?
-        let cc1 = if let Some(pid) = convolutions[0].pid() {
-            if self.pdg1 == pid {
-                1
-            } else if self.pdg1 == pids::charge_conjugate_pdg_pid(pid) {
-                -1
-            } else {
-                // TODO: return a proper error
-                return Err(());
-            }
-        } else {
-            0
-        };
-        let cc2 = if let Some(pid) = convolutions[1].pid() {
-            if self.pdg2 == pid {
-                1
-            } else if self.pdg2 == pids::charge_conjugate_pdg_pid(pid) {
-                -1
-            } else {
-                // TODO: return a proper error
-                return Err(());
-            }
-        } else {
-            0
-        };
+        self.cc = convolutions
+            .iter()
+            .zip(&self.pdg)
+            .map(|(convolution, &pdg)| {
+                if let Some(pid) = convolution.pid() {
+                    if pdg == pid {
+                        1
+                    } else if pdg == pids::charge_conjugate_pdg_pid(pid) {
+                        -1
+                    } else {
+                        // TODO: return a proper error
+                        panic!("wrong convolution function");
+                    }
+                } else {
+                    0
+                }
+            })
+            .collect();
 
         // TODO: try to avoid calling clear
         self.clear();
@@ -250,32 +217,26 @@ impl<'a> ConvolutionCache<'a> {
         self.mur2_grid = mur2_grid;
         self.muf2_grid = muf2_grid;
         self.x_grid = x_grid;
-        self.cc1 = cc1;
-        self.cc2 = cc2;
 
         Ok(())
     }
 
     /// Return the PDF (multiplied with `x`) for the first initial state.
     pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
-        let ix1 = self.ix1[ix1];
+        let ix1 = self.ix[0][ix1];
         let x = self.x_grid[ix1];
-        if self.cc1 == 0 {
+        if self.cc[0] == 0 {
             x
         } else {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = if self.cc1 == 1 {
+            let pid = if self.cc[0] == 1 {
                 pdg_id
             } else {
                 pids::charge_conjugate_pdg_pid(pdg_id)
             };
-            let (xfx, xfx_cache) = match &mut self.pdfs {
-                Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
-                Pdfs::Two {
-                    xfx1, xfx1_cache, ..
-                } => (xfx1, xfx1_cache),
-            };
+            let xfx = &mut self.pdfs.xfx[0];
+            let xfx_cache = &mut self.pdfs.xfx_cache[0];
             *xfx_cache
                 .entry((pid, ix1, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
@@ -284,24 +245,25 @@ impl<'a> ConvolutionCache<'a> {
 
     /// Return the PDF (multiplied with `x`) for the second initial state.
     pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
-        let ix2 = self.ix2[ix2];
+        let ix2 = self.ix[1][ix2];
         let x = self.x_grid[ix2];
-        if self.cc2 == 0 {
+        if self.cc[1] == 0 {
             x
         } else {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = if self.cc2 == 1 {
+            let pid = if self.cc[1] == 1 {
                 pdg_id
             } else {
                 pids::charge_conjugate_pdg_pid(pdg_id)
             };
-            let (xfx, xfx_cache) = match &mut self.pdfs {
-                Pdfs::One { xfx, xfx_cache, .. } => (xfx, xfx_cache),
-                Pdfs::Two {
-                    xfx2, xfx2_cache, ..
-                } => (xfx2, xfx2_cache),
-            };
+            let len = self.pdfs.xfx.len();
+            let xfx = &mut self
+                .pdfs
+                .xfx[if len == 1 { 0 } else { 1 }];
+            let xfx_cache = &mut self
+                .pdfs
+                .xfx_cache[if len == 1 { 0 } else { 1 }];
             *xfx_cache
                 .entry((pid, ix2, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
@@ -312,7 +274,7 @@ impl<'a> ConvolutionCache<'a> {
     pub fn fx_prod(&mut self, pdg_ids: &[i32], indices: &[usize]) -> f64 {
         self.xfx1(pdg_ids[0], indices[1], indices[0])
             * self.xfx2(pdg_ids[1], indices[2], indices[0])
-            / (self.x_grid[self.ix1[indices[1]]] * self.x_grid[self.ix2[indices[2]]])
+            / (self.x_grid[self.ix[0][indices[1]]] * self.x_grid[self.ix[1][indices[2]]])
     }
 
     /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],
@@ -362,41 +324,27 @@ impl<'a> ConvolutionCache<'a> {
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();
-        self.ix1 = grid
-            .kinematics()
-            .iter()
-            .zip(node_values)
-            .find_map(|(kin, node_values)| {
-                matches!(kin, &Kinematics::X(index) if index == 0).then_some(node_values)
-            })
-            // UNWRAP: guaranteed by the grid constructor
-            .unwrap()
-            .values()
-            .iter()
-            .map(|x1| {
-                self.x_grid
-                    .iter()
-                    .position(|x| x1 == x)
-                    .unwrap_or_else(|| unreachable!())
-            })
-            .collect();
 
-        self.ix2 = grid
-            .kinematics()
-            .iter()
-            .zip(node_values)
-            .find_map(|(kin, node_values)| {
-                matches!(kin, &Kinematics::X(index) if index == 1).then_some(node_values)
-            })
-            // UNWRAP: guaranteed by the grid constructor
-            .unwrap()
-            .values()
-            .iter()
-            .map(|x2| {
-                self.x_grid
+        // TODO: generalize this for arbitrary orderings of x
+        self.ix = (0..grid.convolutions().len())
+            .map(|idx| {
+                grid.kinematics()
                     .iter()
-                    .position(|x| x2 == x)
-                    .unwrap_or_else(|| unreachable!())
+                    .zip(node_values)
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::X(index) if index == idx).then_some(node_values)
+                    })
+                    // UNWRAP: guaranteed by the grid constructor
+                    .unwrap()
+                    .values()
+                    .iter()
+                    .map(|xd| {
+                        self.x_grid
+                            .iter()
+                            .position(|x| xd == x)
+                            .unwrap_or_else(|| unreachable!())
+                    })
+                    .collect()
             })
             .collect();
     }
