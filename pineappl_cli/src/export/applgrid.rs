@@ -7,7 +7,7 @@ use pineappl::boc::{Kinematics, Order};
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
-use pineappl::subgrid::{Subgrid};
+use pineappl::subgrid::Subgrid;
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;
@@ -387,12 +387,12 @@ pub fn convert_into_applgrid(
                         if value != 0.0 {
                             println!(
                                 "WARNING: discarding non-matching scale muf2 = {}",
-                                grid
-                                    .kinematics()
+                                grid.kinematics()
                                     .iter()
                                     .zip(subgrid.node_values())
                                     .find_map(|(kin, node_values)| {
-                                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                                        matches!(kin, &Kinematics::Scale(idx) if idx == 0)
+                                            .then_some(node_values)
                                     })
                                     // TODO: convert this into an error
                                     .unwrap()

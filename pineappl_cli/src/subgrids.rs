@@ -90,7 +90,8 @@ impl Subcommand for Opts {
                     .iter()
                     .zip(subgrid.node_values())
                     .find_map(|(kin, node_values)| {
-                        matches!(kin, &Kinematics::Scale(idx) if idx == index).then_some(node_values)
+                        matches!(kin, &Kinematics::Scale(idx) if idx == index)
+                            .then_some(node_values)
                     })
                     // TODO: convert this into an error
                     .unwrap()
