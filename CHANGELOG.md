@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed a bug that lead to inconsistent convolution metadata
+  (https://github.com/NNPDF/pineappl/issues/316)
+
 ## [0.8.3] - 30/08/2024
 
 ### Fixed
