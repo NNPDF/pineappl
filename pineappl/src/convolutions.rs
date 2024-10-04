@@ -211,55 +211,36 @@ impl<'a> ConvolutionCache<'a> {
         Ok(())
     }
 
-    /// Return the PDF (multiplied with `x`) for the first initial state.
-    pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
-        let ix1 = self.ix[0][ix1];
-        let x = self.x_grid[ix1];
-        if let Some((idx, cc)) = self.perm[0] {
-            let imuf2 = self.imuf2[imu2];
-            let muf2 = self.muf2_grid[imuf2];
-            let pid = if cc {
-                pids::charge_conjugate_pdg_pid(pdg_id)
-            } else {
-                pdg_id
-            };
-            let xfx = &mut self.xfx[idx];
-            let xfx_cache = &mut self.xfx_cache[idx];
-            *xfx_cache
-                .entry((pid, ix1, imuf2))
-                .or_insert_with(|| xfx(pid, x, muf2))
-        } else {
-            x
-        }
-    }
-
-    /// Return the PDF (multiplied with `x`) for the second initial state.
-    pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
-        let ix2 = self.ix[1][ix2];
-        let x = self.x_grid[ix2];
-        if let Some((idx, cc)) = self.perm[1] {
-            let imuf2 = self.imuf2[imu2];
-            let muf2 = self.muf2_grid[imuf2];
-            let pid = if cc {
-                pids::charge_conjugate_pdg_pid(pdg_id)
-            } else {
-                pdg_id
-            };
-            let xfx = &mut self.xfx[idx];
-            let xfx_cache = &mut self.xfx_cache[idx];
-            *xfx_cache
-                .entry((pid, ix2, imuf2))
-                .or_insert_with(|| xfx(pid, x, muf2))
-        } else {
-            x
-        }
-    }
-
     /// TODO
     pub fn fx_prod(&mut self, pdg_ids: &[i32], indices: &[usize]) -> f64 {
-        self.xfx1(pdg_ids[0], indices[1], indices[0])
-            * self.xfx2(pdg_ids[1], indices[2], indices[0])
-            / (self.x_grid[self.ix[0][indices[1]]] * self.x_grid[self.ix[1][indices[2]]])
+        // TODO: here we assume that
+        // - indices[0] is the (squared) factorization scale,
+        // - indices[1] is x1 and
+        // - indices[2] is x2.
+        // Lift this restriction!
+        self.perm
+            .iter()
+            .zip(pdg_ids)
+            .enumerate()
+            .filter_map(|(index, (perm, &pdg_id))| {
+                perm.map(|(idx, cc)| {
+                    let ix = self.ix[index][indices[index + 1]];
+                    let imuf2 = self.imuf2[indices[0]];
+                    let muf2 = self.muf2_grid[imuf2];
+                    let pid = if cc {
+                        pids::charge_conjugate_pdg_pid(pdg_id)
+                    } else {
+                        pdg_id
+                    };
+                    let xfx = &mut self.xfx[idx];
+                    let xfx_cache = &mut self.xfx_cache[idx];
+                    *xfx_cache.entry((pid, ix, imuf2)).or_insert_with(|| {
+                        let x = self.x_grid[ix];
+                        xfx(pid, x, muf2) / x
+                    })
+                })
+            })
+            .product()
     }
 
     /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],

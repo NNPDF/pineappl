@@ -371,15 +371,13 @@ impl Grid {
 
         for (idx, value) in subgrid.indexed_iter() {
             assert_eq!(idx.len(), 3);
-            let x1 = node_values[1][idx[1]];
-            let x2 = node_values[2][idx[2]];
             let mut lumi = 0.0;
 
             for entry in channel.entry() {
                 debug_assert_eq!(entry.0.len(), 2);
-                let xfx1 = convolution_cache.xfx1(entry.0[0], idx[1], idx[0]);
-                let xfx2 = convolution_cache.xfx2(entry.0[1], idx[2], idx[0]);
-                lumi += xfx1 * xfx2 * entry.1 / (x1 * x2);
+                // TODO: we assume `idx` to be ordered as scale, x1, x2
+                let fx_prod = convolution_cache.fx_prod(&entry.0, &idx);
+                lumi += fx_prod * entry.1;
             }
 
             let alphas = convolution_cache.alphas(idx[0]);
