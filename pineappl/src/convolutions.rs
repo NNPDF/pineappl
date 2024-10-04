@@ -20,14 +20,14 @@ pub struct ConvolutionCache<'a> {
     imur2: Vec<usize>,
     imuf2: Vec<usize>,
     ix: Vec<Vec<usize>>,
-    pdg: Vec<i32>,
+    pdg: Vec<Convolution>,
     perm: Vec<Option<(usize, bool)>>,
 }
 
 impl<'a> ConvolutionCache<'a> {
     /// TODO
     pub fn new(
-        pdg: Vec<i32>,
+        pdg: Vec<Convolution>,
         xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
@@ -58,16 +58,16 @@ impl<'a> ConvolutionCache<'a> {
             .iter()
             .enumerate()
             .map(|(max_idx, conv)| {
-                conv.pid().map(|pid| {
+                conv.pid().map(|_| {
                     self.pdg
                         .iter()
                         .take(max_idx + 1)
                         .enumerate()
                         .rev()
-                        .find_map(|(idx, &pdg)| {
-                            if pid == pdg {
+                        .find_map(|(idx, pdg)| {
+                            if conv == pdg {
                                 Some((idx, false))
-                            } else if pid == pids::charge_conjugate_pdg_pid(pdg) {
+                            } else if *conv == pdg.charge_conjugate() {
                                 Some((idx, true))
                             } else {
                                 None

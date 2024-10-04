@@ -2,7 +2,7 @@ use super::GlobalConfiguration;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::{Array3, Ix3};
-use pineappl::convolutions::ConvolutionCache;
+use pineappl::convolutions::{Convolution, ConvolutionCache};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
@@ -279,19 +279,39 @@ pub fn convolve_scales(
         .iter()
         .map(|fun| move |q2| fun.alphas_q2(q2))
         .collect();
-    let pdg_ids: Vec<_> = conv_funs
+    let convolutions: Vec<_> = conv_funs
         .iter()
-        .map(|fun| {
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            fun.set()
+        .zip(grid.convolutions())
+        .map(|(fun, convolution)| {
+            let pid = fun
+                .set()
                 .entry("Particle")
+                // if the field 'Particle' is missing we assume it's a proton PDF
                 .map_or(Ok(2212), |string| string.parse::<i32>())
                 // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap()
+                .unwrap();
+
+            match fun.set().entry("SetType").unwrap_or_default().as_str() {
+                "fragfn" => Convolution::UnpolFF(pid),
+                "" => {
+                    // if we can not figure out the type of the convolution from the PDF set, we
+                    // assume it from the grid convolution at the same index
+                    match convolution {
+                        // if the grid convolution is None, we assume it's a proton PDF
+                        Convolution::None | Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
+                        Convolution::PolPDF(_) => Convolution::PolPDF(pid),
+                        Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
+                        Convolution::PolFF(_) => Convolution::PolFF(pid),
+                    }
+                }
+                // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
+                // PDFs and all FFs
+                _ => unimplemented!(),
+            }
         })
         .collect();
 
-    let mut cache = ConvolutionCache::new(pdg_ids, xfx, &mut alphas_funs[cfg.use_alphas_from]);
+    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
     let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
@@ -430,19 +450,39 @@ pub fn convolve_subgrid(
         .iter()
         .map(|fun| move |q2| fun.alphas_q2(q2))
         .collect();
-    let pdg_ids: Vec<_> = conv_funs
+    let convolutions: Vec<_> = conv_funs
         .iter()
-        .map(|fun| {
-            // if the field 'Particle' is missing we assume it's a proton PDF
-            fun.set()
+        .zip(grid.convolutions())
+        .map(|(fun, convolution)| {
+            let pid = fun
+                .set()
                 .entry("Particle")
+                // if the field 'Particle' is missing we assume it's a proton PDF
                 .map_or(Ok(2212), |string| string.parse::<i32>())
                 // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap()
+                .unwrap();
+
+            match fun.set().entry("SetType").unwrap_or_default().as_str() {
+                "fragfn" => Convolution::UnpolFF(pid),
+                "" => {
+                    // if we can not figure out the type of the convolution from the PDF set, we
+                    // assume it from the grid convolution at the same index
+                    match convolution {
+                        // if the grid convolution is None, we assume it's a proton PDF
+                        Convolution::None | Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
+                        Convolution::PolPDF(_) => Convolution::PolPDF(pid),
+                        Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
+                        Convolution::PolFF(_) => Convolution::PolFF(pid),
+                    }
+                }
+                // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
+                // PDFs and all FFs
+                _ => unimplemented!(),
+            }
         })
         .collect();
 
-    let mut cache = ConvolutionCache::new(pdg_ids, xfx, &mut alphas_funs[cfg.use_alphas_from]);
+    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
     let subgrid = grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0));
 
     subgrid

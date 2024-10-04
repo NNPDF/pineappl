@@ -351,7 +351,11 @@ fn perform_grid_tests(
     grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
 
     // TEST 5: `convolve`
-    let mut convolution_cache = ConvolutionCache::new(vec![2212], vec![&mut xfx], &mut alphas);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![Convolution::UnpolPDF(2212)],
+        vec![&mut xfx],
+        &mut alphas,
+    );
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins.iter().zip(reference.iter()) {
@@ -362,8 +366,11 @@ fn perform_grid_tests(
     let mut xfx1 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas2 = |_| 0.0;
-    let mut convolution_cache2 =
-        ConvolutionCache::new(vec![2212, 2212], vec![&mut xfx1, &mut xfx2], &mut alphas2);
+    let mut convolution_cache2 = ConvolutionCache::new(
+        vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+        vec![&mut xfx1, &mut xfx2],
+        &mut alphas2,
+    );
     let bins2 = grid.convolve(&mut convolution_cache2, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference) in bins2.iter().zip(reference.iter()) {

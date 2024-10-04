@@ -455,7 +455,11 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut convolution_cache = ConvolutionCache::new(vec![pdg_id], vec![&mut xfx], &mut als);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![Convolution::UnpolPDF(pdg_id)],
+        vec![&mut xfx],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
@@ -517,8 +521,14 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut convolution_cache =
-        ConvolutionCache::new(vec![pdg_id1, pdg_id2], vec![&mut xfx1, &mut xfx2], &mut als);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![
+            Convolution::UnpolPDF(pdg_id1),
+            Convolution::UnpolPDF(pdg_id2),
+        ],
+        vec![&mut xfx1, &mut xfx2],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
