@@ -7,23 +7,11 @@ use super::subgrid::{NodeValues, Subgrid};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-struct Pdfs<'a> {
-    xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
-    xfx_cache: Vec<FxHashMap<(i32, usize, usize), f64>>,
-}
-
-impl<'a> Pdfs<'a> {
-    pub fn clear(&mut self) {
-        for xfx_cache in &mut self.xfx_cache {
-            xfx_cache.clear();
-        }
-    }
-}
-
 /// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
 /// instead of the PDFs themselves.
 pub struct ConvolutionCache<'a> {
-    pdfs: Pdfs<'a>,
+    xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
+    xfx_cache: Vec<FxHashMap<(i32, usize, usize), f64>>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
     alphas_cache: Vec<f64>,
     mur2_grid: Vec<f64>,
@@ -51,10 +39,8 @@ impl<'a> ConvolutionCache<'a> {
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            pdfs: Pdfs {
-                xfx: vec![xfx1, xfx2],
-                xfx_cache: vec![FxHashMap::default(); 2],
-            },
+            xfx: vec![xfx1, xfx2],
+            xfx_cache: vec![FxHashMap::default(); 2],
             alphas,
             alphas_cache: vec![],
             mur2_grid: vec![],
@@ -80,10 +66,8 @@ impl<'a> ConvolutionCache<'a> {
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            pdfs: Pdfs {
-                xfx: vec![xfx],
-                xfx_cache: vec![FxHashMap::default()],
-            },
+            xfx: vec![xfx],
+            xfx_cache: vec![FxHashMap::default()],
             alphas,
             alphas_cache: vec![],
             mur2_grid: vec![],
@@ -235,8 +219,8 @@ impl<'a> ConvolutionCache<'a> {
             } else {
                 pids::charge_conjugate_pdg_pid(pdg_id)
             };
-            let xfx = &mut self.pdfs.xfx[0];
-            let xfx_cache = &mut self.pdfs.xfx_cache[0];
+            let xfx = &mut self.xfx[0];
+            let xfx_cache = &mut self.xfx_cache[0];
             *xfx_cache
                 .entry((pid, ix1, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
@@ -257,13 +241,9 @@ impl<'a> ConvolutionCache<'a> {
             } else {
                 pids::charge_conjugate_pdg_pid(pdg_id)
             };
-            let len = self.pdfs.xfx.len();
-            let xfx = &mut self
-                .pdfs
-                .xfx[if len == 1 { 0 } else { 1 }];
-            let xfx_cache = &mut self
-                .pdfs
-                .xfx_cache[if len == 1 { 0 } else { 1 }];
+            let len = self.xfx.len();
+            let xfx = &mut self.xfx[if len == 1 { 0 } else { 1 }];
+            let xfx_cache = &mut self.xfx_cache[if len == 1 { 0 } else { 1 }];
             *xfx_cache
                 .entry((pid, ix2, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
@@ -287,7 +267,9 @@ impl<'a> ConvolutionCache<'a> {
     /// Clears the cache.
     pub fn clear(&mut self) {
         self.alphas_cache.clear();
-        self.pdfs.clear();
+        for xfx_cache in &mut self.xfx_cache {
+            xfx_cache.clear();
+        }
         self.mur2_grid.clear();
         self.muf2_grid.clear();
         self.x_grid.clear();
