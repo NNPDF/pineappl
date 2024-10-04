@@ -21,7 +21,7 @@ pub struct ConvolutionCache<'a> {
     imuf2: Vec<usize>,
     ix: Vec<Vec<usize>>,
     pdg: Vec<i32>,
-    cc: Vec<i32>,
+    perm: Vec<Option<(usize, bool)>>,
 }
 
 impl<'a> ConvolutionCache<'a> {
@@ -50,7 +50,7 @@ impl<'a> ConvolutionCache<'a> {
             imuf2: Vec::new(),
             ix: Vec::new(),
             pdg: vec![pdg1, pdg2],
-            cc: vec![0, 0],
+            perm: Vec::new(),
         }
     }
 
@@ -76,8 +76,8 @@ impl<'a> ConvolutionCache<'a> {
             imur2: Vec::new(),
             imuf2: Vec::new(),
             ix: Vec::new(),
-            pdg: vec![pdg, pdg],
-            cc: vec![0, 0],
+            pdg: vec![pdg],
+            perm: Vec::new(),
         }
     }
 
@@ -87,23 +87,29 @@ impl<'a> ConvolutionCache<'a> {
         // TODO: the following code only works with exactly two convolutions
         assert_eq!(convolutions.len(), 2);
 
-        // do we have to charge-conjugate the initial states?
-        self.cc = convolutions
+        self.perm = grid
+            .convolutions()
             .iter()
-            .zip(&self.pdg)
-            .map(|(convolution, &pdg)| {
-                if let Some(pid) = convolution.pid() {
-                    if pdg == pid {
-                        1
-                    } else if pdg == pids::charge_conjugate_pdg_pid(pid) {
-                        -1
-                    } else {
-                        // TODO: return a proper error
-                        panic!("wrong convolution function");
-                    }
-                } else {
-                    0
-                }
+            .enumerate()
+            .map(|(max_idx, conv)| {
+                conv.pid().map(|pid| {
+                    self.pdg
+                        .iter()
+                        .take(max_idx + 1)
+                        .enumerate()
+                        .rev()
+                        .find_map(|(idx, &pdg)| {
+                            if pid == pdg {
+                                Some((idx, false))
+                            } else if pid == pids::charge_conjugate_pdg_pid(pdg) {
+                                Some((idx, true))
+                            } else {
+                                None
+                            }
+                        })
+                        // TODO: convert `unwrap` to `Err`
+                        .unwrap()
+                })
             })
             .collect();
 
@@ -209,21 +215,21 @@ impl<'a> ConvolutionCache<'a> {
     pub fn xfx1(&mut self, pdg_id: i32, ix1: usize, imu2: usize) -> f64 {
         let ix1 = self.ix[0][ix1];
         let x = self.x_grid[ix1];
-        if self.cc[0] == 0 {
-            x
-        } else {
+        if let Some((idx, cc)) = self.perm[0] {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = if self.cc[0] == 1 {
-                pdg_id
-            } else {
+            let pid = if cc {
                 pids::charge_conjugate_pdg_pid(pdg_id)
+            } else {
+                pdg_id
             };
-            let xfx = &mut self.xfx[0];
-            let xfx_cache = &mut self.xfx_cache[0];
+            let xfx = &mut self.xfx[idx];
+            let xfx_cache = &mut self.xfx_cache[idx];
             *xfx_cache
                 .entry((pid, ix1, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
+        } else {
+            x
         }
     }
 
@@ -231,22 +237,21 @@ impl<'a> ConvolutionCache<'a> {
     pub fn xfx2(&mut self, pdg_id: i32, ix2: usize, imu2: usize) -> f64 {
         let ix2 = self.ix[1][ix2];
         let x = self.x_grid[ix2];
-        if self.cc[1] == 0 {
-            x
-        } else {
+        if let Some((idx, cc)) = self.perm[1] {
             let imuf2 = self.imuf2[imu2];
             let muf2 = self.muf2_grid[imuf2];
-            let pid = if self.cc[1] == 1 {
-                pdg_id
-            } else {
+            let pid = if cc {
                 pids::charge_conjugate_pdg_pid(pdg_id)
+            } else {
+                pdg_id
             };
-            let len = self.xfx.len();
-            let xfx = &mut self.xfx[if len == 1 { 0 } else { 1 }];
-            let xfx_cache = &mut self.xfx_cache[if len == 1 { 0 } else { 1 }];
+            let xfx = &mut self.xfx[idx];
+            let xfx_cache = &mut self.xfx_cache[idx];
             *xfx_cache
                 .entry((pid, ix2, imuf2))
                 .or_insert_with(|| xfx(pid, x, muf2))
+        } else {
+            x
         }
     }
 
