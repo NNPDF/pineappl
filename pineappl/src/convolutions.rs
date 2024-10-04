@@ -25,58 +25,24 @@ pub struct ConvolutionCache<'a> {
 }
 
 impl<'a> ConvolutionCache<'a> {
-    /// Construct a luminosity cache with two PDFs, `xfx1` and `xfx2`. The types of hadrons the
-    /// PDFs correspond to must be given as `pdg1` and `pdg2`. The function to evaluate the
-    /// strong coupling must be given as `alphas`. The grid that the cache will be used with must
-    /// be given as `grid`; this parameter determines which of the initial states are hadronic, and
-    /// if an initial states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some
-    /// of the PDFs must be charge-conjugated, this is automatically done in this function.
-    pub fn with_two(
-        pdg1: i32,
-        xfx1: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        pdg2: i32,
-        xfx2: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+    /// TODO
+    pub fn new(
+        pdg: Vec<i32>,
+        xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            xfx: vec![xfx1, xfx2],
-            xfx_cache: vec![FxHashMap::default(); 2],
+            xfx_cache: vec![FxHashMap::default(); xfx.len()],
+            xfx,
             alphas,
-            alphas_cache: vec![],
-            mur2_grid: vec![],
-            muf2_grid: vec![],
-            x_grid: vec![],
+            alphas_cache: Vec::new(),
+            mur2_grid: Vec::new(),
+            muf2_grid: Vec::new(),
+            x_grid: Vec::new(),
             imur2: Vec::new(),
             imuf2: Vec::new(),
             ix: Vec::new(),
-            pdg: vec![pdg1, pdg2],
-            perm: Vec::new(),
-        }
-    }
-
-    /// Construct a luminosity cache with a single PDF `xfx`. The type of hadron the PDF
-    /// corresponds to must be given as `pdg`. The function to evaluate the strong coupling must be
-    /// given as `alphas`. The grid that the cache should be used with must be given as `grid`;
-    /// this parameter determines which of the initial states are hadronic, and if an initial
-    /// states is not hadronic the corresponding 'PDF' is set to `xfx = x`. If some of the PDFs
-    /// must be charge-conjugated, this is automatically done in this function.
-    pub fn with_one(
-        pdg: i32,
-        xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
-        alphas: &'a mut dyn FnMut(f64) -> f64,
-    ) -> Self {
-        Self {
-            xfx: vec![xfx],
-            xfx_cache: vec![FxHashMap::default()],
-            alphas,
-            alphas_cache: vec![],
-            mur2_grid: vec![],
-            muf2_grid: vec![],
-            x_grid: vec![],
-            imur2: Vec::new(),
-            imuf2: Vec::new(),
-            ix: Vec::new(),
-            pdg: vec![pdg],
+            pdg,
             perm: Vec::new(),
         }
     }

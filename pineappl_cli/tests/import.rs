@@ -893,7 +893,7 @@ fn import_hadronic_fktable() {
     let pdf = Pdf::with_setname_and_member("NNPDF31_nlo_as_0118_luxqed", 0).unwrap();
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
-    let mut convolution_cache = ConvolutionCache::with_one(2212, &mut xfx, &mut alphas);
+    let mut convolution_cache = ConvolutionCache::new(vec![2212], vec![&mut xfx], &mut alphas);
     let results = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     let mut fk_table = FkTable::try_from(grid).unwrap();

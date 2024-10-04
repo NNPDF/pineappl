@@ -442,7 +442,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf = |id, x, q2| xfx(id, x, q2, state);
+    let mut xfx = |id, x, q2| xfx(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         vec![]
@@ -455,7 +455,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut convolution_cache = ConvolutionCache::with_one(pdg_id, &mut pdf, &mut als);
+    let mut convolution_cache = ConvolutionCache::new(vec![pdg_id], vec![&mut xfx], &mut als);
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
@@ -503,8 +503,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf1 = |id, x, q2| xfx1(id, x, q2, state);
-    let mut pdf2 = |id, x, q2| xfx2(id, x, q2, state);
+    let mut xfx1 = |id, x, q2| xfx1(id, x, q2, state);
+    let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         vec![]
@@ -518,7 +518,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut convolution_cache =
-        ConvolutionCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
+        ConvolutionCache::new(vec![pdg_id1, pdg_id2], vec![&mut xfx1, &mut xfx2], &mut als);
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,

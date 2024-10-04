@@ -271,6 +271,10 @@ pub fn convolve_scales(
             }
         })
         .collect();
+    let xfx: Vec<_> = funs
+        .iter_mut()
+        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
+        .collect();
     let mut alphas_funs: Vec<_> = conv_funs
         .iter()
         .map(|fun| move |q2| fun.alphas_q2(q2))
@@ -287,25 +291,7 @@ pub fn convolve_scales(
         })
         .collect();
 
-    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
-    let mut cache = match funs.as_mut_slice() {
-        [funs0] => {
-            ConvolutionCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from])
-        }
-        [funs0, funs1] => ConvolutionCache::with_two(
-            pdg_ids[0],
-            funs0,
-            pdg_ids[1],
-            funs1,
-            &mut alphas_funs[cfg.use_alphas_from],
-        ),
-        // TODO: convert this into an error
-        _ => panic!(
-            "convolutions with {} convolution functions is not supported",
-            conv_funs.len()
-        ),
-    };
-
+    let mut cache = ConvolutionCache::new(pdg_ids, xfx, &mut alphas_funs[cfg.use_alphas_from]);
     let mut results = grid.convolve(&mut cache, &orders, bins, channels, scales);
 
     match mode {
@@ -436,6 +422,10 @@ pub fn convolve_subgrid(
             }
         })
         .collect();
+    let xfx: Vec<_> = funs
+        .iter_mut()
+        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
+        .collect();
     let mut alphas_funs: Vec<_> = conv_funs
         .iter()
         .map(|fun| move |q2| fun.alphas_q2(q2))
@@ -452,26 +442,9 @@ pub fn convolve_subgrid(
         })
         .collect();
 
-    // TODO: write a new constructor of `LumiCache` that accepts a vector of all the arguments
-    let mut cache = match funs.as_mut_slice() {
-        [funs0] => {
-            ConvolutionCache::with_one(pdg_ids[0], funs0, &mut alphas_funs[cfg.use_alphas_from])
-        }
-        [funs0, funs1] => ConvolutionCache::with_two(
-            pdg_ids[0],
-            funs0,
-            pdg_ids[1],
-            funs1,
-            &mut alphas_funs[cfg.use_alphas_from],
-        ),
-        // TODO: convert this into an error
-        _ => panic!(
-            "convolutions with {} convolution functions is not supported",
-            conv_funs.len()
-        ),
-    };
-
+    let mut cache = ConvolutionCache::new(pdg_ids, xfx, &mut alphas_funs[cfg.use_alphas_from]);
     let subgrid = grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0));
+
     subgrid
         .into_dimensionality::<Ix3>()
         .map_err(|_| anyhow!("Only 3-dimensional subgrids are supported",))
