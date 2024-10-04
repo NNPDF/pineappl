@@ -37,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
 
+## [0.8.4] - 04/10/2024
+
+### Fixed
+
+- fixed a bug that lead to inconsistent convolution metadata
+  (https://github.com/NNPDF/pineappl/issues/316)
+
+## [0.8.3] - 30/08/2024
+
 ### Fixed
 
 - fixed the scale-variation label in the plotting script produced by `pineappl
@@ -685,9 +694,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - first release
 
 [Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
+[0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/NNPDF/pineappl/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/NNPDF/pineappl/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/NNPDF/pineappl/compare/v0.7.4...v0.8.0
+[0.7.5]: https://github.com/NNPDF/pineappl/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/NNPDF/pineappl/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/NNPDF/pineappl/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/NNPDF/pineappl/compare/v0.7.1...v0.7.2
