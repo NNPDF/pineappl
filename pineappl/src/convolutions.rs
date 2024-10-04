@@ -16,9 +16,11 @@ pub struct ConvolutionCache<'a> {
     alphas_cache: Vec<f64>,
     mur2_grid: Vec<f64>,
     muf2_grid: Vec<f64>,
+    mua2_grid: Vec<f64>,
     x_grid: Vec<f64>,
     imur2: Vec<usize>,
     imuf2: Vec<usize>,
+    imua2: Vec<usize>,
     ix: Vec<Vec<usize>>,
     pdg: Vec<Convolution>,
     perm: Vec<Option<(usize, bool)>>,
@@ -38,16 +40,18 @@ impl<'a> ConvolutionCache<'a> {
             alphas_cache: Vec::new(),
             mur2_grid: Vec::new(),
             muf2_grid: Vec::new(),
+            mua2_grid: Vec::new(),
             x_grid: Vec::new(),
             imur2: Vec::new(),
             imuf2: Vec::new(),
+            imua2: Vec::new(),
             ix: Vec::new(),
             pdg,
             perm: Vec::new(),
         }
     }
 
-    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64)]) -> Result<(), ()> {
+    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64, f64)]) -> Result<(), ()> {
         let convolutions = grid.convolutions();
 
         // TODO: the following code only works with exactly two convolutions
@@ -129,7 +133,7 @@ impl<'a> ConvolutionCache<'a> {
             .flatten()
             .flat_map(|ren| {
                 xi.iter()
-                    .map(|(xir, _)| xir * xir * ren)
+                    .map(|(xir, _, _)| xir * xir * ren)
                     .collect::<Vec<_>>()
             })
             .collect();
@@ -161,17 +165,50 @@ impl<'a> ConvolutionCache<'a> {
             .flatten()
             .flat_map(|fac| {
                 xi.iter()
-                    .map(|(_, xif)| xif * xif * fac)
+                    .map(|(_, xif, _)| xif * xif * fac)
                     .collect::<Vec<_>>()
             })
             .collect();
         muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         muf2_grid.dedup();
 
+        let mut mua2_grid: Vec<_> = grid
+            .subgrids()
+            .iter()
+            .filter_map(|subgrid| {
+                if subgrid.is_empty() {
+                    None
+                } else {
+                    Some(
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                // TODO: generalize this for arbitrary scales
+                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap()
+                            .values(),
+                    )
+                }
+            })
+            .flatten()
+            .flat_map(|frg| {
+                xi.iter()
+                    .map(|(_, _, xia)| xia * xia * frg)
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        mua2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        mua2_grid.dedup();
+
         self.alphas_cache = mur2_grid.iter().map(|&mur2| (self.alphas)(mur2)).collect();
 
         self.mur2_grid = mur2_grid;
         self.muf2_grid = muf2_grid;
+        self.mua2_grid = mua2_grid;
         self.x_grid = x_grid;
 
         Ok(())
@@ -191,8 +228,7 @@ impl<'a> ConvolutionCache<'a> {
             .filter_map(|(index, (perm, &pdg_id))| {
                 perm.map(|(idx, cc)| {
                     let ix = self.ix[index][indices[index + 1]];
-                    let imuf2 = self.imuf2[indices[0]];
-                    let muf2 = self.muf2_grid[imuf2];
+
                     let pid = if cc {
                         pids::charge_conjugate_pdg_pid(pdg_id)
                     } else {
@@ -200,9 +236,20 @@ impl<'a> ConvolutionCache<'a> {
                     };
                     let xfx = &mut self.xfx[idx];
                     let xfx_cache = &mut self.xfx_cache[idx];
-                    *xfx_cache.entry((pid, ix, imuf2)).or_insert_with(|| {
+                    let (imu2, mu2) = match self.pdg[idx] {
+                        Convolution::UnpolPDF(_) | Convolution::PolPDF(_) => {
+                            let imuf2 = self.imuf2[indices[0]];
+                            (imuf2, self.muf2_grid[imuf2])
+                        }
+                        Convolution::UnpolFF(_) | Convolution::PolFF(_) => {
+                            let imua2 = self.imua2[indices[0]];
+                            (imua2, self.mua2_grid[imua2])
+                        }
+                        Convolution::None => unreachable!(),
+                    };
+                    *xfx_cache.entry((pid, ix, imu2)).or_insert_with(|| {
                         let x = self.x_grid[ix];
-                        xfx(pid, x, muf2) / x
+                        xfx(pid, x, mu2) / x
                     })
                 })
             })
@@ -224,6 +271,7 @@ impl<'a> ConvolutionCache<'a> {
         }
         self.mur2_grid.clear();
         self.muf2_grid.clear();
+        self.mua2_grid.clear();
         self.x_grid.clear();
     }
 
@@ -237,9 +285,6 @@ impl<'a> ConvolutionCache<'a> {
         xif: f64,
         xia: f64,
     ) {
-        // TODO: generalize this for fragmentation functions
-        assert_eq!(xia, 1.0);
-
         self.imur2 = mu2_grid
             .iter()
             .map(|ren| {
@@ -255,6 +300,15 @@ impl<'a> ConvolutionCache<'a> {
                 self.muf2_grid
                     .iter()
                     .position(|&muf2| muf2 == xif * xif * fac)
+                    .unwrap_or_else(|| unreachable!())
+            })
+            .collect();
+        self.imua2 = mu2_grid
+            .iter()
+            .map(|frg| {
+                self.mua2_grid
+                    .iter()
+                    .position(|&mua2| mua2 == xia * xia * frg)
                     .unwrap_or_else(|| unreachable!())
             })
             .collect();

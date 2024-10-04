@@ -232,13 +232,6 @@ impl Grid {
         channel_mask: &[bool],
         xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        assert!(xi
-            .iter()
-            .all(|&(_, _, xia)| approx_eq!(f64, xia, 1.0, ulps = 2)));
-        let xi = xi
-            .iter()
-            .map(|&(xir, xif, _)| (xir, xif))
-            .collect::<Vec<_>>();
         convolution_cache.setup(self, &xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
@@ -250,11 +243,14 @@ impl Grid {
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();
 
-        for (xi_index, &(xir, xif)) in xi.iter().enumerate() {
+        for (xi_index, &(xir, xif, xia)) in xi.iter().enumerate() {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
-                if ((order.logxir > 0) && (xir == 1.0)) || ((order.logxif > 0) && (xif == 1.0)) {
+                if ((order.logxir > 0) && (xir == 1.0))
+                    || ((order.logxif > 0) && (xif == 1.0))
+                    || ((order.logxia > 0) && (xia == 1.0))
+                {
                     continue;
                 }
 
@@ -316,6 +312,10 @@ impl Grid {
                     value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
                 }
 
+                if order.logxia > 0 {
+                    value *= (xia * xia).ln().powi(order.logxia.try_into().unwrap());
+                }
+
                 bins[xi_index + xi.len() * bin_index] += value / normalizations[bin];
             }
         }
@@ -339,8 +339,7 @@ impl Grid {
         channel: usize,
         (xir, xif, xia): (f64, f64, f64),
     ) -> ArrayD<f64> {
-        assert_eq!(xia, 1.0);
-        convolution_cache.setup(self, &[(xir, xif)]).unwrap();
+        convolution_cache.setup(self, &[(xir, xif, xia)]).unwrap();
 
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();
@@ -393,6 +392,10 @@ impl Grid {
 
         if order.logxif > 0 {
             array *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+        }
+
+        if order.logxia > 0 {
+            array *= (xia * xia).ln().powi(order.logxia.try_into().unwrap());
         }
 
         array /= normalizations[bin];
