@@ -78,40 +78,12 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     }
 
     /// TODO
-    pub fn indexed_iter2(&self) -> impl Iterator<Item = (usize, T)> + '_ {
-        self.start_indices
-            .iter()
-            .zip(&self.lengths)
-            .flat_map(|(&start_index, &length)| start_index..(start_index + length))
-            .zip(&self.entries)
-            .filter(|&(_, entry)| *entry != Default::default())
-            .map(|(indices, entry)| (indices, *entry))
-    }
-
-    /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of
-    /// an iterator element is `([usize; D], T)` where the first element of the tuple is the index
-    /// and the second element is the value.
-    pub fn indexed_iter<const D: usize>(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
-        assert_eq!(self.shape.len(), D);
-
+    pub fn indexed_iter(&self) -> impl Iterator<Item = (Vec<usize>, T)> + '_ {
         self.start_indices
             .iter()
             .zip(&self.lengths)
             .flat_map(|(&start_index, &length)| {
                 (start_index..(start_index + length)).map(|i| unravel_index(i, &self.shape))
-            })
-            .zip(&self.entries)
-            .filter(|&(_, entry)| *entry != Default::default())
-            .map(|(indices, entry)| (indices, *entry))
-    }
-
-    /// TODO
-    pub fn indexed_iter3(&self) -> impl Iterator<Item = (Vec<usize>, T)> + '_ {
-        self.start_indices
-            .iter()
-            .zip(&self.lengths)
-            .flat_map(|(&start_index, &length)| {
-                (start_index..(start_index + length)).map(|i| unravel_index2(i, &self.shape))
             })
             .zip(&self.entries)
             .filter(|&(_, entry)| *entry != Default::default())
@@ -181,24 +153,8 @@ fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
         .fold(0, |acc, (i, d)| acc * d + i)
 }
 
-/// Converts a flat `index` into a `multi_index`.
-///
-/// # Panics
-///
-/// Panics when `index` is out of range.
-#[must_use]
-fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
-    assert!(index < shape.iter().product());
-    let mut indices = [0; D];
-    for (i, d) in indices.iter_mut().zip(shape).rev() {
-        *i = index % d;
-        index /= d;
-    }
-    indices
-}
-
 /// TODO
-pub fn unravel_index2(mut index: usize, shape: &[usize]) -> Vec<usize> {
+pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
     assert!(index < shape.iter().product());
     let mut indices = vec![0; shape.len()];
     for (i, d) in indices.iter_mut().zip(shape).rev() {
@@ -255,13 +211,11 @@ impl<T: Copy + Default + PartialEq> Index<usize> for PackedArray<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
-        // assert_eq!(index.len(), self.shape.len());
-        // assert!(
-        //     index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
-        //     "index {:?} is out of bounds for array of shape {:?}",
-        //     index,
-        //     self.shape
-        // );
+        assert!(
+            index < self.shape.iter().product(),
+            "index {index} is out of bounds for array of shape {:?}",
+            self.shape
+        );
 
         let raveled_index = index;
         // let raveled_index = ravel_multi_index(&index, &self.shape);
@@ -535,16 +489,6 @@ mod tests {
     use std::mem;
 
     #[test]
-    fn unravel_index() {
-        assert_eq!(super::unravel_index(0, &[3, 2]), [0, 0]);
-        assert_eq!(super::unravel_index(1, &[3, 2]), [0, 1]);
-        assert_eq!(super::unravel_index(2, &[3, 2]), [1, 0]);
-        assert_eq!(super::unravel_index(3, &[3, 2]), [1, 1]);
-        assert_eq!(super::unravel_index(4, &[3, 2]), [2, 0]);
-        assert_eq!(super::unravel_index(5, &[3, 2]), [2, 1]);
-    }
-
-    #[test]
     fn ravel_multi_index() {
         assert_eq!(super::ravel_multi_index(&[0, 0], &[3, 2]), 0);
         assert_eq!(super::ravel_multi_index(&[0, 1], &[3, 2]), 1);
@@ -609,6 +553,61 @@ mod tests {
     }
 
     #[test]
+    fn flat_index() {
+        let shape = vec![4, 2];
+        let mut a = PackedArray::new(shape.clone());
+
+        a[[0, 0]] = 1;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a.entries, vec![1]);
+        assert_eq!(a.start_indices, vec![0]);
+        assert_eq!(a.lengths, vec![1]);
+
+        a[[3, 0]] = 2;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a.entries, vec![1, 2]);
+        assert_eq!(a.start_indices, vec![0, 6]);
+        assert_eq!(a.lengths, vec![1, 1]);
+
+        a[[3, 1]] = 3;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a.entries, vec![1, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 6]);
+        assert_eq!(a.lengths, vec![1, 2]);
+
+        a[[2, 0]] = 9;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 9);
+        assert_eq!(a.entries, vec![1, 9, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 4]);
+        assert_eq!(a.lengths, vec![1, 4]);
+
+        a[[2, 0]] = 4;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 4);
+        assert_eq!(a.entries, vec![1, 4, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 4]);
+        assert_eq!(a.lengths, vec![1, 4]);
+
+        a[[1, 0]] = 5;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 4);
+        assert_eq!(a[super::ravel_multi_index(&[1, 0], &shape)], 5);
+        assert_eq!(a.entries, vec![1, 0, 5, 0, 4, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0]);
+        assert_eq!(a.lengths, vec![8]);
+    }
+
+    #[test]
     fn iter() {
         let mut a = PackedArray::new(vec![6, 5]);
         a[[2, 2]] = 1;
@@ -619,11 +618,11 @@ mod tests {
         assert_eq!(
             a.indexed_iter().collect::<Vec<_>>(),
             &[
-                ([2, 2], 1),
-                ([2, 4], 2),
-                ([4, 1], 3),
-                ([4, 4], 4),
-                ([5, 0], 5),
+                (vec![2, 2], 1),
+                (vec![2, 4], 2),
+                (vec![4, 1], 3),
+                (vec![4, 4], 4),
+                (vec![5, 0], 5),
             ]
         );
     }
@@ -847,6 +846,28 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "entry at index 0 is implicitly set to the default value")]
+    fn flat_index_panic_0() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[1, 0, 0]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[0, 0, 0], &shape)];
+    }
+
+    #[test]
+    #[should_panic(expected = "index 102550 is out of bounds for array of shape [40, 50, 50]")]
+    fn flat_index_panic_dim1() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[1, 0, 0]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[40, 50, 50], &shape)];
+    }
+
+    #[test]
     fn indexed_iter() {
         let mut array = PackedArray::new(vec![40, 50, 50]);
 
@@ -854,7 +875,7 @@ mod tests {
         assert_eq!(array.shape(), [40, 50, 50]);
 
         // check empty iterator
-        assert_eq!(array.indexed_iter::<3>().next(), None);
+        assert_eq!(array.indexed_iter().next(), None);
 
         // insert an element
         array[[2, 3, 4]] = 1;
@@ -862,7 +883,7 @@ mod tests {
         let mut iter = array.indexed_iter();
 
         // check iterator with one element
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -872,8 +893,8 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -883,9 +904,9 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -895,10 +916,10 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 0, 0], 4)));
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
+        assert_eq!(iter.next(), Some((vec![2, 0, 0], 4)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
     }
 

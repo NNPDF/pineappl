@@ -57,7 +57,7 @@ impl Subgrid for LagrangeSubgridV2 {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::LagrangeSubgridV2(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
-            for (mut index, value) in other.array.indexed_iter3() {
+            for (mut index, value) in other.array.indexed_iter() {
                 if let Some((a, b)) = transpose {
                     index.swap(a, b);
                 }
@@ -75,7 +75,7 @@ impl Subgrid for LagrangeSubgridV2 {
     fn symmetrize(&mut self, a: usize, b: usize) {
         let mut new_array = PackedArray::new(self.array.shape().to_vec());
 
-        for (mut index, sigma) in self.array.indexed_iter3() {
+        for (mut index, sigma) in self.array.indexed_iter() {
             // TODO: why not the other way around?
             if index[b] < index[a] {
                 index.swap(a, b);
@@ -90,7 +90,7 @@ impl Subgrid for LagrangeSubgridV2 {
     fn indexed_iter(&self) -> SubgridIndexedIter {
         let nodes: Vec<_> = self.interps.iter().map(Interp::node_values).collect();
 
-        Box::new(self.array.indexed_iter3().map(move |(indices, weight)| {
+        Box::new(self.array.indexed_iter().map(move |(indices, weight)| {
             let reweight = self
                 .interps
                 .iter()

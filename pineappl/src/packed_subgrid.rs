@@ -50,7 +50,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
 
             let mut array = PackedArray::new(new_node_values.iter().map(NodeValues::len).collect());
 
-            for (indices, value) in self.array.indexed_iter3() {
+            for (indices, value) in self.array.indexed_iter() {
                 let target: Vec<_> = izip!(indices, &new_node_values, &lhs_node_values)
                     .map(|(index, new, lhs)| new.find(lhs.get(index)).unwrap())
                     .collect();
@@ -82,7 +82,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     fn symmetrize(&mut self, a: usize, b: usize) {
         let mut new_array = PackedArray::new(self.array.shape().to_vec());
 
-        for (mut index, sigma) in self.array.indexed_iter3() {
+        for (mut index, sigma) in self.array.indexed_iter() {
             // TODO: why not the other way around?
             if index[b] < index[a] {
                 index.swap(a, b);
@@ -95,7 +95,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
-        Box::new(self.array.indexed_iter3())
+        Box::new(self.array.indexed_iter())
     }
 
     fn stats(&self) -> Stats {
