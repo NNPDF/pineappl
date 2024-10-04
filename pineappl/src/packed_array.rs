@@ -802,7 +802,7 @@ mod tests {
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0);
+        let _ = array[[0, 0, 0]];
     }
 
     #[test]
@@ -812,7 +812,7 @@ mod tests {
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[2, 0, 0]], 0);
+        let _ = array[[2, 0, 0]];
     }
 
     #[test]
@@ -822,7 +822,7 @@ mod tests {
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[1, 50, 0]], 0);
+        let _ = array[[1, 50, 0]];
     }
 
     #[test]
@@ -832,7 +832,7 @@ mod tests {
 
         array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0);
+        let _ = array[[0, 0, 0]];
     }
 
     #[test]
@@ -842,7 +842,7 @@ mod tests {
 
         array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 2]], 0);
+        let _ = array[[0, 0, 2]];
     }
 
     #[test]
@@ -857,8 +857,19 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "entry at index 2 is implicitly set to the default value")]
+    fn flat_index_panic_2() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[0, 0, 1]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[0, 0, 2], &shape)];
+    }
+
+    #[test]
     #[should_panic(expected = "index 102550 is out of bounds for array of shape [40, 50, 50]")]
-    fn flat_index_panic_dim1() {
+    fn flat_index_panic_102550() {
         let shape = vec![40, 50, 50];
         let mut array = PackedArray::new(shape.clone());
 
