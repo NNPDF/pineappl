@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed a bug in `pineappl_applgrid` that lead to linking problems with ROOT
+  and `gfortran`
+
 ## [0.8.4] - 04/10/2024
 
 ### Fixed
