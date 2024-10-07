@@ -1442,12 +1442,12 @@ impl Grid {
                 "only one convolution found, use `Grid::evolve_with_slice_iter` instead"
             );
 
-            let (subgrids, channels) = evolution::evolve_slice_with_two2(
+            let (subgrids, channels) = evolution::evolve_slice_with_many(
                 self,
                 &views,
                 &infos,
                 order_mask,
-                xi,
+                (xi.0, xi.1, 1.0),
                 alphas_table,
             )?;
 

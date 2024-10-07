@@ -1,6 +1,6 @@
 //! Provides the [`PackedArray`] struct.
 
-use ndarray::ArrayView3;
+use ndarray::{ArrayView3, ArrayViewD};
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::mem;
@@ -137,6 +137,22 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
             .filter(|(_, &entry)| entry != Default::default())
         {
             result[[i + xstart, j, k]] = entry;
+        }
+
+        result
+    }
+}
+
+impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
+    fn from(array: ArrayViewD<T>) -> Self {
+        let mut result = Self::new(array.shape().to_vec());
+
+        for (i, &entry) in array
+            .iter()
+            .enumerate()
+            .filter(|(_, &entry)| entry != Default::default())
+        {
+            result[i] = entry;
         }
 
         result
