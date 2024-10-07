@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.5] - 07/10/2024
+
 ### Fixed
 
 - fixed a bug in `pineappl_applgrid` that lead to linking problems with ROOT
@@ -665,7 +667,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.4...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.5...HEAD
+[0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/NNPDF/pineappl/compare/v0.8.1...v0.8.2
