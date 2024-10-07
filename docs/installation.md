@@ -150,6 +150,13 @@ To update the CLI simply repeat the `cargo install` step; if a newer version is
 available it will be automatically downloaded, otherwise `cargo` will exit with
 a message saying that the most recent version is already installed.
 
+If `LHAPDF` is not found, you need to update your `PKG_CONFIG_PATH` variable,
+which must point to the directory where LHAPDF's `.pc` file is installed:
+
+    export PKG_CONFIG_PATH=${lhapdf_prefix}/lib/pkgconfig:$PKG_CONFIG_PATH
+
+(replace `${lhapdf_prefix}` with your LHAPDF installation root).
+
 #### Optional: APPLgrid exporter/importer
 
 If you'd like to convert APPLgrids to PineAPPL grids, or vice versa, make sure
