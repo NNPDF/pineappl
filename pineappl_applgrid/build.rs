@@ -115,6 +115,14 @@ fn main() {
         ""
     };
 
+    // `--ldflags` contains linker paths not contained in `--libdir`
+    for lib_path in libs
+        .split_whitespace()
+        .filter_map(|token| token.strip_prefix("-L"))
+    {
+        println!("cargo:rustc-link-search={lib_path}");
+    }
+
     for lib in libs
         .split_whitespace()
         .filter_map(|token| token.strip_prefix("-l"))
