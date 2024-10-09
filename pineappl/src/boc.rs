@@ -12,7 +12,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// TODO
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
     /// TODO
     Scale(usize),

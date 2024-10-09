@@ -363,6 +363,19 @@ fn ndarray_from_subgrid_orders_slice_many(
     (xir, xif, xia): (f64, f64, f64),
     alphas_table: &AlphasTable,
 ) -> Result<X1aX1bOpDTuple, GridError> {
+    // TODO: remove these assumptions from the following code
+    assert_eq!(grid.kinematics()[0], Kinematics::Scale(0));
+    assert_eq!(
+        grid.kinematics()[1..]
+            .iter()
+            .map(|kin| match kin {
+                &Kinematics::X(idx) => idx,
+                _ => unreachable!(),
+            })
+            .collect::<Vec<_>>(),
+        (0..(grid.kinematics().len() - 1)).collect::<Vec<_>>()
+    );
+
     // create a Vec of all x values for each dimension
     let mut x1n: Vec<_> = kinematics
         .iter()
@@ -390,6 +403,7 @@ fn ndarray_from_subgrid_orders_slice_many(
     let dim: Vec<_> = x1n.iter().map(Vec::len).collect();
     let mut array = ArrayD::<f64>::zeros(dim);
     let mut zero = true;
+    let mut x1_idx = vec![0; grid.convolutions().len()];
 
     // for the same bin and channel, sum subgrids of different orders, using the right couplings
     for (subgrid, order) in subgrids
@@ -446,9 +460,6 @@ fn ndarray_from_subgrid_orders_slice_many(
             .collect();
 
         for (indices, value) in subgrid.indexed_iter() {
-            let &[ifac1, ix1, ix2] = indices.as_slice() else {
-                unimplemented!()
-            };
             let fac = grid
                 .kinematics()
                 .iter()
@@ -458,7 +469,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                 })
                 // TODO: convert this into an error
                 .unwrap()
-                .values()[ifac1];
+                .values()[indices[0]];
             // TODO: generalize this for multiple scales
             let ren = fac;
 
@@ -489,7 +500,13 @@ fn ndarray_from_subgrid_orders_slice_many(
 
             zero = false;
 
-            array[[x1_indices[0][ix1], x1_indices[1][ix2]]] += als * logs * value;
+            // TODO: here we assume that all X are consecutive starting from the second element and
+            // are in ascending order
+            for (i, &index) in indices.iter().skip(1).enumerate() {
+                x1_idx[i] = x1_indices[i][index];
+            }
+
+            array[x1_idx.as_slice()] += als * logs * value;
         }
     }
 
