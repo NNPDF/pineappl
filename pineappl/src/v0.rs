@@ -162,64 +162,70 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
 
 fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Convolution> {
     grid.key_values().map_or_else(
-            // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
-            || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
-            |kv| {
-                // file format v0 only supports exactly two convolutions
-                (1..=2)
-            .map(|index| {
-                // if there are key-value pairs `convolution_particle_1` and
-                // `convolution_type_1` and the same with a higher index, we convert this
-                // metadata into `Convolution`
-                match (
-                    kv.get(&format!("convolution_particle_{index}"))
-                        .map(|s| s.parse::<i32>()),
-                    kv.get(&format!("convolution_type_{index}"))
-                        .map(String::as_str),
-                ) {
-                    (_, Some("None")) => Convolution::None,
-                    (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
-                    (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
-                    (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
-                    (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
-                    (None, None) => {
-                        // if these key-value pairs are missing use the old metadata
-                        match kv
-                            .get(&format!("initial_state_{index}"))
-                            .map(|s| s.parse::<i32>())
-                        {
-                            Some(Ok(pid)) => {
-                                let condition = !grid.channels().iter().all(|entry| {
-                                    entry.entry().iter().all(|&(a, b, _)| match index {1 => a, 2 => b, _ => unreachable!()} == pid)
-                                });
+        // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
+        || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+        |kv| {
+            // file format v0 only supports exactly two convolutions
+            (1..=2)
+                .map(|index| {
+                    // if there are key-value pairs `convolution_particle_1` and
+                    // `convolution_type_1` and the same with a higher index, we convert this
+                    // metadata into `Convolution`
+                    match (
+                        kv.get(&format!("convolution_particle_{index}"))
+                            .map(|s| s.parse::<i32>()),
+                        kv.get(&format!("convolution_type_{index}"))
+                            .map(String::as_str),
+                    ) {
+                        (_, Some("None")) => Convolution::None,
+                        (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
+                        (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
+                        (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
+                        (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
+                        (None, None) => {
+                            // if these key-value pairs are missing use the old metadata
+                            match kv
+                                .get(&format!("initial_state_{index}"))
+                                .map(|s| s.parse::<i32>())
+                            {
+                                Some(Ok(pid)) => {
+                                    let condition = !grid.channels().iter().all(|entry| {
+                                        entry.entry().iter().all(|&(a, b, _)|
+                                            match index {
+                                                1 => a,
+                                                2 => b,
+                                                _ => unreachable!()
+                                            } == pid
+                                        )
+                                    });
 
-                                if condition {
-                                    Convolution::UnpolPDF(pid)
-                                } else {
-                                    Convolution::None
+                                    if condition {
+                                        Convolution::UnpolPDF(pid)
+                                    } else {
+                                        Convolution::None
+                                    }
                                 }
+                                None => Convolution::UnpolPDF(2212),
+                                Some(Err(err)) => panic!(
+                                    "metadata 'initial_state_{index}' could not be parsed: {err}"
+                                ),
                             }
-                            None => Convolution::UnpolPDF(2212),
-                            Some(Err(err)) => panic!(
-                                "metadata 'initial_state_{index}' could not be parsed: {err}"
-                            ),
+                        }
+                        (None, Some(_)) => {
+                            panic!("metadata 'convolution_type_{index}' is missing")
+                        }
+                        (Some(_), None) => {
+                            panic!("metadata 'convolution_particle_{index}' is missing")
+                        }
+                        (Some(Ok(_)), Some(type_)) => {
+                            panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
+                        }
+                        (Some(Err(err)), Some(_)) => {
+                            panic!("metadata 'convolution_particle_{index}' could not be parsed: {err}")
                         }
                     }
-                    (None, Some(_)) => {
-                        panic!("metadata 'convolution_type_{index}' is missing")
-                    }
-                    (Some(_), None) => {
-                        panic!("metadata 'convolution_particle_{index}' is missing")
-                    }
-                    (Some(Ok(_)), Some(type_)) => {
-                        panic!("metadata 'convolution_type_{index} = {type_}' is unknown")
-                    }
-                    (Some(Err(err)), Some(_)) => {
-                        panic!("metadata 'convolution_particle_{index}' could not be parsed: {err}")
-                    }
-                }
-            })
-            .collect()
-            },
-        )
+                })
+                .collect()
+        },
+    )
 }
