@@ -81,7 +81,7 @@ mod tests {
     #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
         let mut subgrid = EmptySubgridV1;
-        subgrid.fill(&v0::default_interps(), &[0.0; 3], 0.0);
+        subgrid.fill(&v0::default_interps(2), &[0.0; 3], 0.0);
     }
 
     #[test]

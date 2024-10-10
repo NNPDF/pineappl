@@ -124,14 +124,8 @@ pub fn convert_into_applgrid(
     }
 
     let lumis = grid.channels().len();
-    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
-    let has_pdf2 = grid.convolutions()[1] != Convolution::None;
-    // let (has_pdf1, has_pdf2) = match (grid.convolutions()[0].clone(), grid.convolutions()[1].clone()) {
-    //     (Convolution::None, Convolution::None) => unreachable!(),
-    //     (Convolution::None, _) => (false, true),
-    //     (_, Convolution::None) => (true, false),
-    //     _ => (true, true),
-    // };
+    let has_pdf1 = grid.convolutions().get(0).is_some();
+    let has_pdf2 = grid.convolutions().get(1).is_some();
 
     // TODO: check that PDG MC IDs are used
 
@@ -378,9 +372,9 @@ pub fn convert_into_applgrid(
                 let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), channel);
 
                 for (indices, value) in subgrid.indexed_iter() {
-                    let &[iq2, ix1, ix2] = indices.as_slice() else {
-                        unimplemented!()
-                    };
+                    // TODO: here we assume that all X are consecutive starting from the second
+                    // element and are in ascending order
+                    let iq2 = indices[0];
                     let appl_q2_idx = appl_q2_idx[iq2];
 
                     if appl_q2_idx == -1 {
@@ -406,9 +400,9 @@ pub fn convert_into_applgrid(
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
                         appl_q2_idx,
-                        appl_x1_idx[ix1],
+                        appl_x1_idx[indices[1]],
                         if has_pdf1 && has_pdf2 {
-                            appl_x2_idx[ix2]
+                            appl_x2_idx[indices[2]]
                         } else {
                             0
                         },

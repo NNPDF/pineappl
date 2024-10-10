@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn fill_zero() {
-        let interps = v0::default_interps();
+        let interps = v0::default_interps(2);
         let mut subgrid = LagrangeSubgridV2::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 0.0);
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn fill_outside_range() {
-        let interps = v0::default_interps();
+        let interps = v0::default_interps(2);
         let mut subgrid = LagrangeSubgridV2::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 1e-10, 0.5], 0.0);
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn fill() {
-        let interps = v0::default_interps();
+        let interps = v0::default_interps(2);
         let mut subgrid = LagrangeSubgridV2::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 1.0);

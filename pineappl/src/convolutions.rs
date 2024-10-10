@@ -52,11 +52,6 @@ impl<'a> ConvolutionCache<'a> {
     }
 
     pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64, f64)]) -> Result<(), ()> {
-        let convolutions = grid.convolutions();
-
-        // TODO: the following code only works with exactly two convolutions
-        assert_eq!(convolutions.len(), 2);
-
         self.perm = grid
             .convolutions()
             .iter()

@@ -13,18 +13,19 @@ use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
 
-pub fn default_interps() -> Vec<Interp> {
-    vec![
-        Interp::new(
-            1e2,
-            1e8,
-            40,
-            3,
-            ReweightMeth::NoReweight,
-            Map::ApplGridH0,
-            InterpMeth::Lagrange,
-        ),
-        Interp::new(
+pub fn default_interps(convolutions: usize) -> Vec<Interp> {
+    let mut interps = vec![Interp::new(
+        1e2,
+        1e8,
+        40,
+        3,
+        ReweightMeth::NoReweight,
+        Map::ApplGridH0,
+        InterpMeth::Lagrange,
+    )];
+
+    for _ in 0..convolutions {
+        interps.push(Interp::new(
             2e-7,
             1.0,
             50,
@@ -32,25 +33,26 @@ pub fn default_interps() -> Vec<Interp> {
             ReweightMeth::ApplGridX,
             Map::ApplGridF2,
             InterpMeth::Lagrange,
-        ),
-        Interp::new(
-            2e-7,
-            1.0,
-            50,
-            3,
-            ReweightMeth::ApplGridX,
-            Map::ApplGridF2,
-            InterpMeth::Lagrange,
-        ),
-    ]
+        ));
+    }
+
+    interps
 }
 
 pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError> {
     use pineappl_v0::subgrid::Subgrid as _;
 
     let grid = GridV0::read(&mut reader).map_err(|err| GridError::Other(err.into()))?;
+    let convolutions = read_convolutions_from_metadata(&grid);
 
-    // TODO: convert differently if grid only has one convolution
+    // TODO: read in flexible-scale grids properly
+    let mut kinematics = vec![Kinematics::Scale(0), Kinematics::X(0)];
+    if convolutions[0].is_some() && convolutions[1].is_some() {
+        kinematics.push(Kinematics::X(1));
+    }
+
+    assert_eq!(convolutions.len(), 2);
+
     let result = Grid {
         subgrids: Array3::from_shape_vec(
             grid.subgrids().dim(),
@@ -69,24 +71,40 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                                 frg: -1.0,
                             })
                             .collect();
-                        let x1_grid = subgrid.x1_grid().into_owned();
-                        let x2_grid = subgrid.x2_grid().into_owned();
-                        let mut array =
-                            PackedArray::new(vec![mu2_grid.len(), x1_grid.len(), x2_grid.len()]);
-                        for (index, v) in subgrid.indexed_iter() {
-                            array[<[usize; 3]>::from(index)] = v;
+
+                        let mut dim = vec![mu2_grid.len()];
+                        if convolutions[0].is_some() {
+                            dim.push(subgrid.x1_grid().len());
                         }
-                        PackedQ1X2SubgridV1::new(
-                            array,
-                            vec![
-                                NodeValues::UseThese(
-                                    mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                ),
-                                NodeValues::UseThese(x1_grid),
-                                NodeValues::UseThese(x2_grid),
-                            ],
-                        )
-                        .into()
+                        if convolutions[1].is_some() {
+                            dim.push(subgrid.x2_grid().len());
+                        }
+                        let mut array = PackedArray::new(dim);
+
+                        if convolutions[0].is_none() {
+                            for (index, v) in subgrid.indexed_iter() {
+                                array[[index.0, index.2]] = v;
+                            }
+                        } else if convolutions[1].is_none() {
+                            for (index, v) in subgrid.indexed_iter() {
+                                array[[index.0, index.1]] = v;
+                            }
+                        } else {
+                            for (index, v) in subgrid.indexed_iter() {
+                                array[<[usize; 3]>::from(index)] = v;
+                            }
+                        }
+
+                        let mut node_values = vec![NodeValues::UseThese(
+                            mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                        )];
+                        if convolutions[0].is_some() {
+                            node_values.push(NodeValues::UseThese(subgrid.x1_grid().into_owned()));
+                        }
+                        if convolutions[1].is_some() {
+                            node_values.push(NodeValues::UseThese(subgrid.x2_grid().into_owned()));
+                        }
+                        PackedQ1X2SubgridV1::new(array, node_values).into()
                     }
                 })
                 .collect(),
@@ -96,7 +114,23 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
         channels: grid
             .channels()
             .iter()
-            .map(|c| Channel::new(c.entry().iter().map(|&(a, b, f)| (vec![a, b], f)).collect()))
+            .map(|c| {
+                Channel::new(
+                    c.entry()
+                        .iter()
+                        .map(|&(a, b, f)| {
+                            let mut pids = Vec::new();
+                            if convolutions[0].is_some() {
+                                pids.push(a);
+                            }
+                            if convolutions[1].is_some() {
+                                pids.push(b);
+                            };
+                            (pids, f)
+                        })
+                        .collect(),
+                )
+            })
             .collect(),
         // TODO: change this member to something much easier to handle
         bin_limits: BinLimits::new(if grid.remapper().is_none() {
@@ -127,7 +161,12 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             .unwrap_or_default()
             .into_iter()
             .collect(),
-        convolutions: read_convolutions_from_metadata(&grid),
+        interps: default_interps(convolutions.len()),
+        convolutions: convolutions
+            .into_iter()
+            //.map(|conv| conv.unwrap_or(Convolution::None))
+            .filter_map(|conv| conv)
+            .collect(),
         pid_basis: grid
             .key_values()
             .and_then(|kv| kv.get("lumi_id_types"))
@@ -144,9 +183,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             // and limits we should be able to do the same without error
             BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
         }),
-        // TODO: read in flexible-scale grids properly
-        kinematics: vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
-        interps: default_interps(),
+        kinematics,
         scales: Scales {
             // TODO: read in flexible-scale grids properly
             ren: ScaleFuncForm::Scale(0),
@@ -160,10 +197,10 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
     Ok(result)
 }
 
-fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Convolution> {
+fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Convolution>> {
     grid.key_values().map_or_else(
         // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
-        || vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+        || vec![Some(Convolution::UnpolPDF(2212)); 2],
         |kv| {
             // file format v0 only supports exactly two convolutions
             (1..=2)
@@ -177,11 +214,11 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Convolution> {
                         kv.get(&format!("convolution_type_{index}"))
                             .map(String::as_str),
                     ) {
-                        (_, Some("None")) => Convolution::None,
-                        (Some(Ok(pid)), Some("UnpolPDF")) => Convolution::UnpolPDF(pid),
-                        (Some(Ok(pid)), Some("PolPDF")) => Convolution::PolPDF(pid),
-                        (Some(Ok(pid)), Some("UnpolFF")) => Convolution::UnpolFF(pid),
-                        (Some(Ok(pid)), Some("PolFF")) => Convolution::PolFF(pid),
+                        (_, Some("None")) => None,
+                        (Some(Ok(pid)), Some("UnpolPDF")) => Some(Convolution::UnpolPDF(pid)),
+                        (Some(Ok(pid)), Some("PolPDF")) => Some(Convolution::PolPDF(pid)),
+                        (Some(Ok(pid)), Some("UnpolFF")) => Some(Convolution::UnpolFF(pid)),
+                        (Some(Ok(pid)), Some("PolFF")) => Some(Convolution::PolFF(pid)),
                         (None, None) => {
                             // if these key-value pairs are missing use the old metadata
                             match kv
@@ -199,13 +236,9 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Convolution> {
                                         )
                                     });
 
-                                    if condition {
-                                        Convolution::UnpolPDF(pid)
-                                    } else {
-                                        Convolution::None
-                                    }
+                                    condition.then_some(Convolution::UnpolPDF(pid))
                                 }
-                                None => Convolution::UnpolPDF(2212),
+                                None => Some(Convolution::UnpolPDF(2212)),
                                 Some(Err(err)) => panic!(
                                     "metadata 'initial_state_{index}' could not be parsed: {err}"
                                 ),

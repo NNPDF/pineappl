@@ -12,7 +12,7 @@ use float_cmp::approx_eq;
 use itertools::izip;
 use itertools::Itertools;
 use ndarray::linalg;
-use ndarray::{s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, Axis, Ix2};
+use ndarray::{s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, Axis, Ix1, Ix2};
 use std::iter;
 
 /// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
@@ -980,8 +980,6 @@ pub(crate) fn evolve_slice_with_many(
     let dim: Vec<_> = infos.iter().map(|info| info.x0.len()).collect();
 
     for subgrids_oc in grid.subgrids().axis_iter(Axis(1)) {
-        assert_eq!(infos[0].x0.len(), infos[1].x0.len());
-
         let mut tables = vec![ArrayD::zeros(dim.clone()); channels0.len()];
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
@@ -1020,19 +1018,13 @@ pub(crate) fn evolve_slice_with_many(
                 }
             }
 
-            let mut tmp = Array2::zeros((last_x1[0].len(), infos[1].x0.len()));
-
-            for (pids1, factor) in channel1
-                .entry()
-                .iter()
-                .map(|(pids1, factor)| ([pids1[0], pids1[1]], factor))
-            {
+            for (pids1, factor) in channel1.entry() {
                 for (fk_table, ops) in
                     channels0
                         .iter()
                         .zip(tables.iter_mut())
                         .filter_map(|(pids0, fk_table)| {
-                            izip!(pids0, &pids1, &pids01, &eko_slices)
+                            izip!(pids0, pids1, &pids01, &eko_slices)
                                 .map(|(&pid0, &pid1, pids, slices)| {
                                     pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
                                         ((p0 == pid0) && (p1 == pid1)).then_some(op)
@@ -1043,20 +1035,22 @@ pub(crate) fn evolve_slice_with_many(
                                 .map(|ops| (fk_table, ops))
                         })
                 {
-                    general_tensor_mul(*factor, &array, &ops, &mut tmp, fk_table);
+                    general_tensor_mul(*factor, &array, &ops, fk_table);
                 }
             }
+        }
+
+        // TODO: generalize this for arbitrary scales and x values
+        let mut node_values = vec![NodeValues::UseThese(vec![infos[0].fac0])];
+
+        for info in infos {
+            node_values.push(NodeValues::UseThese(info.x0.clone()));
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             PackedQ1X2SubgridV1::new(
                 PackedArray::from(table.insert_axis(Axis(0)).view()),
-                // TODO: generalize this for arbitrary scales and x values
-                vec![
-                    NodeValues::UseThese(vec![infos[0].fac0]),
-                    NodeValues::UseThese(infos[0].x0.clone()),
-                    NodeValues::UseThese(infos[1].x0.clone()),
-                ],
+                node_values.clone(),
             )
             .into()
         }));
@@ -1067,8 +1061,8 @@ pub(crate) fn evolve_slice_with_many(
             .into_shape((1, grid.bin_info().bins(), channels0.len()))
             .unwrap(),
         channels0
-            .iter()
-            .map(|c| channel![c[0], c[1], 1.0])
+            .into_iter()
+            .map(|c| Channel::new(vec![(c, 1.0)]))
             .collect(),
     ))
 }
@@ -1077,16 +1071,25 @@ fn general_tensor_mul(
     factor: f64,
     array: &ArrayD<f64>,
     ops: &[&Array2<f64>],
-    tmp: &mut Array2<f64>,
     fk_table: &mut ArrayD<f64>,
 ) {
-    // TODO: generalize this to n dimensions
-    assert_eq!(array.shape().len(), 2);
-    let array = array.view().into_dimensionality::<Ix2>().unwrap();
-    let mut fk_table = fk_table.view_mut().into_dimensionality::<Ix2>().unwrap();
+    match array.shape().len() {
+        1 => {
+            let array = array.view().into_dimensionality::<Ix1>().unwrap();
+            let mut fk_table = fk_table.view_mut().into_dimensionality::<Ix1>().unwrap();
+            fk_table.scaled_add(factor, &ops[0].dot(&array));
+        }
+        2 => {
+            let array = array.view().into_dimensionality::<Ix2>().unwrap();
+            let mut fk_table = fk_table.view_mut().into_dimensionality::<Ix2>().unwrap();
 
-    // tmp = array * ops[1]^T
-    linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, tmp);
-    // fk_table += factor * ops[0] * tmp
-    linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, &mut fk_table);
+            let mut tmp = Array2::zeros((array.shape()[0], ops[1].shape()[0]));
+            // tmp = array * ops[1]^T
+            linalg::general_mat_mul(1.0, &array, &ops[1].t(), 0.0, &mut tmp);
+            // fk_table += factor * ops[0] * tmp
+            linalg::general_mat_mul(factor, ops[0], &tmp, 1.0, &mut fk_table);
+        }
+        // TODO: generalize this to n dimensions
+        _ => unimplemented!(),
+    }
 }

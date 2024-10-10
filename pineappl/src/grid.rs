@@ -1275,15 +1275,16 @@ impl Grid {
                 operator.dim(),
             );
 
-            let view = operator.view();
-
-            let (subgrids, channels) = if self.convolutions()[0] != Convolution::None
-                && self.convolutions()[1] != Convolution::None
-            {
-                evolution::evolve_slice_with_two(self, &view, &info, order_mask, xi, alphas_table)
-            } else {
-                evolution::evolve_slice_with_one(self, &view, &info, order_mask, xi, alphas_table)
-            }?;
+            let views = vec![operator.view(); self.convolutions().len()];
+            let infos = vec![info.clone(); self.convolutions().len()];
+            let (subgrids, channels) = evolution::evolve_slice_with_many(
+                self,
+                &views,
+                &infos,
+                order_mask,
+                (xi.0, xi.1, 1.0),
+                alphas_table,
+            )?;
 
             let rhs = Self {
                 subgrids,
@@ -1734,7 +1735,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1755,7 +1756,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1778,7 +1779,7 @@ mod tests {
             vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1806,7 +1807,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1832,7 +1833,7 @@ mod tests {
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1865,7 +1866,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1884,7 +1885,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1914,7 +1915,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1937,7 +1938,7 @@ mod tests {
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1972,7 +1973,7 @@ mod tests {
             }],
             vec![0.0, 1.0],
             vec![Convolution::UnpolPDF(2212); 2],
-            v0::default_interps(),
+            v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
                 ren: ScaleFuncForm::Scale(0),

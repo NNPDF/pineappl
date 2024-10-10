@@ -191,7 +191,7 @@ mod tests {
             PackedArray::new(vec![0, 0, 0]),
             vec![NodeValues::UseThese(Vec::new()); 3],
         );
-        subgrid.fill(&v0::default_interps(), &[0.0; 3], 0.0);
+        subgrid.fill(&v0::default_interps(2), &[0.0; 3], 0.0);
     }
 
     #[test]
