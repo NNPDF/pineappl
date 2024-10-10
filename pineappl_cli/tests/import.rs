@@ -822,13 +822,12 @@ fn import_dis_fktable() {
             0.9126417795942889,
             0.9416284084927907,
             0.9707498946430192,
-            1.0
         ]
     );
 
     let table: Array3<f64> = fk_table.table().into_dimensionality().unwrap();
 
-    assert_eq!(table.dim(), (20, 9, 101));
+    assert_eq!(table.dim(), (20, 9, 100));
     assert_eq!(
         table
             .indexed_iter()

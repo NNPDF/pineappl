@@ -98,6 +98,12 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         .collect()
                 };
 
+                let convolutions = if hadronic {
+                    vec![Convolution::UnpolPDF(2212); 2]
+                } else {
+                    vec![Convolution::UnpolPDF(2212)]
+                };
+
                 // construct `Grid`
                 let fktable = Grid::new(
                     PidBasis::Evol,
@@ -105,43 +111,65 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                     vec![Order::new(0, 0, 0, 0, 0)],
                     (0..=ndata).map(Into::into).collect(),
                     // legacy FK-tables only support unpolarized proton PDFs
-                    if hadronic {
-                        vec![Convolution::UnpolPDF(2212); 2]
-                    } else {
-                        vec![Convolution::UnpolPDF(2212)]
-                    },
+                    convolutions.clone(),
                     // TODO: what are sensible parameters for FK-tables?
-                    vec![
-                        Interp::new(
-                            1e2,
-                            1e8,
-                            40,
-                            3,
-                            ReweightMeth::NoReweight,
-                            Map::ApplGridH0,
-                            InterpMeth::Lagrange,
-                        ),
-                        Interp::new(
-                            2e-7,
-                            1.0,
-                            50,
-                            3,
-                            ReweightMeth::ApplGridX,
-                            Map::ApplGridF2,
-                            InterpMeth::Lagrange,
-                        ),
-                        Interp::new(
-                            2e-7,
-                            1.0,
-                            50,
-                            3,
-                            ReweightMeth::ApplGridX,
-                            Map::ApplGridF2,
-                            InterpMeth::Lagrange,
-                        ),
-                    ],
-                    // TODO: change kinematics for DIS
-                    vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+                    if hadronic {
+                        vec![
+                            Interp::new(
+                                1e2,
+                                1e8,
+                                40,
+                                3,
+                                ReweightMeth::NoReweight,
+                                Map::ApplGridH0,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                        ]
+                    } else {
+                        vec![
+                            Interp::new(
+                                1e2,
+                                1e8,
+                                40,
+                                3,
+                                ReweightMeth::NoReweight,
+                                Map::ApplGridH0,
+                                InterpMeth::Lagrange,
+                            ),
+                            Interp::new(
+                                2e-7,
+                                1.0,
+                                50,
+                                3,
+                                ReweightMeth::ApplGridX,
+                                Map::ApplGridF2,
+                                InterpMeth::Lagrange,
+                            ),
+                        ]
+                    },
+                    if hadronic {
+                        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
+                    } else {
+                        vec![Kinematics::Scale(0), Kinematics::X1]
+                    },
                     // TODO: is this correct?
                     Scales {
                         ren: ScaleFuncForm::NoScale,
@@ -152,9 +180,13 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
 
                 grid = Some(fktable);
 
-                arrays = iter::repeat(PackedArray::new(vec![1, nx1, nx2]))
-                    .take(flavor_mask.iter().filter(|&&value| value).count())
-                    .collect();
+                arrays = iter::repeat(PackedArray::new(if hadronic {
+                    vec![1, nx1, nx2]
+                } else {
+                    vec![1, nx1]
+                }))
+                .take(flavor_mask.iter().filter(|&&value| value).count())
+                .collect();
             }
             _ => match section {
                 FkTableSection::GridInfo => {
@@ -216,22 +248,29 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         {
                             *subgrid = PackedQ1X2SubgridV1::new(
                                 array,
-                                vec![
-                                    NodeValues::UseThese(vec![q0 * q0]),
-                                    NodeValues::UseThese(x_grid.clone()),
-                                    NodeValues::UseThese(if hadronic {
-                                        x_grid.clone()
-                                    } else {
-                                        vec![1.0]
-                                    }),
-                                ],
+                                if hadronic {
+                                    vec![
+                                        NodeValues::UseThese(vec![q0 * q0]),
+                                        NodeValues::UseThese(x_grid.clone()),
+                                        NodeValues::UseThese(x_grid.clone()),
+                                    ]
+                                } else {
+                                    vec![
+                                        NodeValues::UseThese(vec![q0 * q0]),
+                                        NodeValues::UseThese(x_grid.clone()),
+                                    ]
+                                },
                             )
                             .into();
                         }
 
-                        arrays = iter::repeat(PackedArray::new(vec![1, nx1, nx2]))
-                            .take(flavor_mask.iter().filter(|&&value| value).count())
-                            .collect();
+                        arrays = iter::repeat(PackedArray::new(if hadronic {
+                            vec![1, nx1, nx2]
+                        } else {
+                            vec![1, nx1]
+                        }))
+                        .take(flavor_mask.iter().filter(|&&value| value).count())
+                        .collect();
                         last_bin = bin;
                     }
 
@@ -257,8 +296,11 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         .zip(grid_values.iter())
                         .filter(|(_, value)| **value != 0.0)
                     {
-                        array[[0, x1, x2]] =
-                            x_grid[x1] * if hadronic { x_grid[x2] } else { 1.0 } * value;
+                        if hadronic {
+                            array[[0, x1, x2]] = x_grid[x1] * x_grid[x2] * value;
+                        } else {
+                            array[[0, x1]] = x_grid[x1] * value;
+                        }
                     }
                 }
                 _ => {}
