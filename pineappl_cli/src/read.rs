@@ -60,7 +60,7 @@ pub struct Opts {
 
 impl Subcommand for Opts {
     fn run(&self, _: &GlobalConfiguration) -> Result<ExitCode> {
-        let mut grid = helpers::read_grid(&self.input)?;
+        let grid = helpers::read_grid(&self.input)?;
 
         let mut table = helpers::create_table();
 
@@ -124,8 +124,11 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(format!("{index}")));
 
-                for (id1, id2, factor) in channel.entry() {
-                    row.add_cell(cell!(format!("{factor} \u{d7} ({id1:2}, {id2:2})")));
+                for (pids, factor) in channel.entry() {
+                    row.add_cell(cell!(format!(
+                        "{factor} \u{d7} ({})",
+                        pids.iter().map(|pid| format!("{pid:2}")).join(", ")
+                    )));
                 }
             }
         } else if self.group.ew || self.group.qcd {
@@ -161,44 +164,17 @@ impl Subcommand for Opts {
 
             println!("{orders}");
         } else if let Some(key) = &self.group.get {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    if let Some(value) = key_values.get(key) {
-                        println!("{value}");
-                    }
-                },
-            );
+            if let Some(value) = grid.metadata().get(key) {
+                println!("{value}");
+            }
         } else if self.group.keys {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, _) in &vector {
-                        println!("{key}");
-                    }
-                },
-            );
+            for key in grid.metadata().keys() {
+                println!("{key}");
+            }
         } else if self.group.show {
-            grid.upgrade();
-
-            grid.key_values().map_or_else(
-                || unreachable!(),
-                |key_values| {
-                    let mut vector = key_values.iter().collect::<Vec<_>>();
-                    vector.sort();
-
-                    for (key, value) in &vector {
-                        println!("{key}: {value}");
-                    }
-                },
-            );
+            for (key, value) in grid.metadata() {
+                println!("{key}: {value}");
+            }
         } else {
             table.set_titles(row![c => "o", "order"]);
 
@@ -210,11 +186,12 @@ impl Subcommand for Opts {
                     alpha,
                     logxir,
                     logxif,
+                    logxia,
                 } = order;
 
-                let order_string = [alphas, alpha, logxir, logxif]
+                let order_string = [alphas, alpha, logxir, logxif, logxia]
                     .iter()
-                    .zip(["as^", "a^", "lr^", "lf^"].iter())
+                    .zip(["as^", "a^", "lr^", "lf^", "la^"].iter())
                     .filter_map(|(num, string)| {
                         if **num == 0 && self.group.orders {
                             None
