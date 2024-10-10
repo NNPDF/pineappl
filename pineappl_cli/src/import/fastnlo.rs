@@ -27,10 +27,9 @@ fn pid_to_pdg_id(pid: i32) -> i32 {
 fn reconstruct_channels(
     table: &fastNLOCoeffAddBase,
     comb: &fastNLOPDFLinearCombinations,
-    dis_pid: i32,
 ) -> Vec<Channel> {
-    let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
     let mut channels = Vec::new();
+    let npdf = table.GetNPDF();
 
     // if there's a (non-empty) PDF coefficient vector reconstruct the channels; the advantage is
     // that we preserve the order of the channels in the PineAPPL grid
@@ -38,15 +37,13 @@ fn reconstruct_channels(
         let mut entries = Vec::new();
 
         for entry in ffi::GetPDFCoeff(table, pdf_entry) {
-            let a = pid_to_pdg_id(entry.first);
-            let b = if dis_pid == 0 {
-                pid_to_pdg_id(entry.second)
-            } else {
-                dis_pid
-            };
-            let f = 1.0;
+            let mut pids = vec![pid_to_pdg_id(entry.first)];
 
-            entries.push((vec![a, b], f));
+            if npdf == 2 {
+                pids.push(pid_to_pdg_id(entry.second));
+            }
+
+            entries.push((pids, 1.0));
         }
 
         channels.push(Channel::new(entries));
@@ -54,6 +51,8 @@ fn reconstruct_channels(
 
     // if the PDF coefficient vector was empty, we must reconstruct the channels in a different way
     if channels.is_empty() {
+        assert_eq!(npdf, 2);
+
         let nsubproc = table.GetNSubproc().try_into().unwrap();
 
         let mut xfx1 = [0.0; 13];
@@ -96,7 +95,6 @@ fn convert_coeff_add_fix(
     comb: &fastNLOPDFLinearCombinations,
     bins: usize,
     alpha: u32,
-    dis_pid: i32,
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
 
@@ -109,7 +107,7 @@ fn convert_coeff_add_fix(
 
     let mut grid = Grid::new(
         PidBasis::Pdg,
-        reconstruct_channels(table_as_add_base, comb, dis_pid),
+        reconstruct_channels(table_as_add_base, comb),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
             alpha,
@@ -122,37 +120,64 @@ fn convert_coeff_add_fix(
             .collect(),
         convolutions,
         // TODO: read out interpolation parameters from fastNLO
-        vec![
-            Interp::new(
-                1e2,
-                1e8,
-                40,
-                3,
-                ReweightMeth::NoReweight,
-                Map::ApplGridH0,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                2e-7,
-                1.0,
-                50,
-                3,
-                ReweightMeth::ApplGridX,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-            Interp::new(
-                2e-7,
-                1.0,
-                50,
-                3,
-                ReweightMeth::ApplGridX,
-                Map::ApplGridF2,
-                InterpMeth::Lagrange,
-            ),
-        ],
+        if npdf == 2 {
+            vec![
+                Interp::new(
+                    1e2,
+                    1e8,
+                    40,
+                    3,
+                    ReweightMeth::NoReweight,
+                    Map::ApplGridH0,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+            ]
+        } else {
+            vec![
+                Interp::new(
+                    1e2,
+                    1e8,
+                    40,
+                    3,
+                    ReweightMeth::NoReweight,
+                    Map::ApplGridH0,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+            ]
+        },
         // TODO: change kinematics for DIS
-        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+        if npdf == 2 {
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
+        } else {
+            vec![Kinematics::Scale(0), Kinematics::X1]
+        },
         Scales {
             ren: ScaleFuncForm::Scale(0),
             fac: ScaleFuncForm::Scale(0),
@@ -265,7 +290,6 @@ fn convert_coeff_add_flex(
     _bins: usize,
     _alpha: u32,
     _ipub_units: i32,
-    _dis_pid: i32,
 ) -> Grid {
     todo!()
 
@@ -459,7 +483,7 @@ fn convert_coeff_add_flex(
     // grid
 }
 
-pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> Result<Grid> {
+pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 
@@ -500,7 +524,6 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
                     bins,
                     alpha,
                     file_as_table.GetIpublunits(),
-                    dis_pid,
                 ));
             }
         } else {
@@ -509,7 +532,6 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
                 linear_combinations,
                 bins,
                 alpha,
-                dis_pid,
             ));
         }
     }

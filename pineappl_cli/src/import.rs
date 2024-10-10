@@ -51,7 +51,6 @@ fn convert_fastnlo(
     alpha: u32,
     conv_funs: &ConvFuns,
     member: usize,
-    dis_pid: i32,
     scales: usize,
     fnlo_mur: Option<&str>,
     fnlo_muf: Option<&str>,
@@ -79,7 +78,7 @@ fn convert_fastnlo(
         }
     }
 
-    let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
+    let grid = fastnlo::convert_fastnlo_table(&file, alpha)?;
     let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
 
     // TODO: scale-variation log conversion is only enabled for flex grids
@@ -121,7 +120,6 @@ fn convert_fastnlo(
     _: u32,
     _: &ConvFuns,
     _: usize,
-    _: i32,
     _: usize,
     _: Option<&str>,
     _: Option<&str>,
@@ -151,7 +149,6 @@ fn convert_grid(
     conv_funs: &mut [Pdf],
     fun_names: &ConvFuns,
     member: usize,
-    dis_pid: i32,
     scales: usize,
     fnlo_mur: Option<&str>,
     fnlo_muf: Option<&str>,
@@ -164,9 +161,7 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(
-                input, alpha, fun_names, member, dis_pid, scales, fnlo_mur, fnlo_muf,
-            );
+            return convert_fastnlo(input, alpha, fun_names, member, scales, fnlo_mur, fnlo_muf);
         } else if extension == "dat" {
             return convert_fktable(input);
         } else if extension == "appl" || extension == "root" {
@@ -245,9 +240,6 @@ pub struct Opts {
     /// Do not optimize converted grid.
     #[arg(long)]
     no_optimize: bool,
-    /// Particle ID for the non-hadronic initial states if it cannot be determined from the grid.
-    #[arg(long, default_value_t = 11)]
-    dis_pid: i32,
 }
 
 impl Subcommand for Opts {
@@ -263,7 +255,6 @@ impl Subcommand for Opts {
             &mut conv_funs,
             &self.conv_funs,
             0,
-            self.dis_pid,
             self.scales,
             self.fnlo_mur.as_deref(),
             self.fnlo_muf.as_deref(),
