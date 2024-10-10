@@ -1167,21 +1167,15 @@ impl Grid {
                     .node_values()
                     .iter()
                     .zip(self.kinematics())
-                    .filter(|(_, kin)| matches!(kin, Kinematics::X(_)))
-                    .zip(self.convolutions())
-                    .filter_map(|((node_values, _), convolution)| {
-                        (*convolution != Convolution::None).then_some(node_values.values())
-                    })
+                    .filter_map(|(nv, kin)| matches!(kin, Kinematics::X(_)).then(|| nv.values()))
                     .flatten(),
             );
 
             x1.sort_by(f64::total_cmp);
             x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
-            for (index, convolution) in self.convolutions().iter().enumerate() {
-                if *convolution != Convolution::None {
-                    pids1.extend(channel.entry().iter().map(|(pids, _)| pids[index]));
-                }
+            for (index, _) in self.convolutions().iter().enumerate() {
+                pids1.extend(channel.entry().iter().map(|(pids, _)| pids[index]));
             }
 
             pids1.sort_unstable();
@@ -1359,6 +1353,9 @@ impl Grid {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
         use itertools::izip;
 
+        // TODO: generalize this function for an arbitrary number of convolutions
+        assert_eq!(self.convolutions().len(), 2);
+
         let mut lhs: Option<Self> = None;
         // Q2 slices we use
         let mut used_op_fac1 = Vec::new();
@@ -1436,12 +1433,6 @@ impl Grid {
 
             let views = [operator_a.view(), operator_b.view()];
             let infos = [info_a, info_b];
-
-            assert!(
-                (self.convolutions()[0] != Convolution::None)
-                    && (self.convolutions()[1] != Convolution::None),
-                "only one convolution found, use `Grid::evolve_with_slice_iter` instead"
-            );
 
             let (subgrids, channels) = evolution::evolve_slice_with_many(
                 self,

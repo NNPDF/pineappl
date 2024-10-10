@@ -20,7 +20,6 @@ fn convert_applgrid(
     input: &Path,
     alpha: u32,
     conv_funs: &mut [Pdf],
-    dis_pid: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -28,7 +27,7 @@ fn convert_applgrid(
     // TODO: check AMCATNLO scale variations
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
-    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
+    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
     let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", pgrid, results, 1))
@@ -39,7 +38,6 @@ fn convert_applgrid(
     _: &Path,
     _: u32,
     _: &mut [Pdf],
-    _: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
@@ -134,14 +132,14 @@ fn convert_fastnlo(
 }
 
 #[cfg(feature = "fktable")]
-fn convert_fktable(input: &Path, dis_pid: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
-    let fktable = fktable::convert_fktable(input, dis_pid)?;
+fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
+    let fktable = fktable::convert_fktable(input)?;
 
     Ok(("fktable", fktable, vec![], 1))
 }
 
 #[cfg(not(feature = "fktable"))]
-fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
+fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -170,9 +168,9 @@ fn convert_grid(
                 input, alpha, fun_names, member, dis_pid, scales, fnlo_mur, fnlo_muf,
             );
         } else if extension == "dat" {
-            return convert_fktable(input, dis_pid);
+            return convert_fktable(input);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, conv_funs, dis_pid, scales);
+            return convert_applgrid(input, alpha, conv_funs, scales);
         }
     }
 

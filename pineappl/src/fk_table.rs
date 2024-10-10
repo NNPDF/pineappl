@@ -1,12 +1,13 @@
 //! Provides the [`FkTable`] type.
 
 use super::boc::{Kinematics, Order};
-use super::convolutions::{Convolution, ConvolutionCache};
+use super::convolutions::ConvolutionCache;
 use super::grid::Grid;
 use super::subgrid::Subgrid;
 use float_cmp::approx_eq;
 use ndarray::ArrayD;
 use std::fmt::{self, Display, Formatter};
+use std::iter;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -148,43 +149,34 @@ impl FkTable {
         let x_grid = self.x_grid();
 
         let mut dim = vec![self.grid.bin_info().bins(), self.grid.channels().len()];
-        dim.extend(self.grid.convolutions().iter().map(|convolution| {
-            if *convolution == Convolution::None {
-                1
-            } else {
-                x_grid.len()
-            }
-        }));
+        dim.extend(iter::repeat(x_grid.len()).take(self.grid.convolutions().len()));
+        let mut idx = vec![0; dim.len()];
         let mut result = ArrayD::zeros(dim);
 
         for ((_, bin, channel), subgrid) in self.grid().subgrids().indexed_iter() {
-            let indices: Vec<_> = self
+            let indices: Vec<Vec<_>> = self
                 .grid
                 .convolutions()
                 .iter()
                 .enumerate()
-                .map(|(index, convolution)| {
+                .map(|(index, _)| {
                     subgrid
                         .node_values()
                         .iter()
                         .zip(self.grid.kinematics())
                         .find_map(|(node_values, kin)| {
                             matches!(kin, Kinematics::X(i) if *i == index).then(|| {
-                                if *convolution == Convolution::None {
-                                    vec![0]
-                                } else {
-                                    node_values
-                                        .values()
-                                        .iter()
-                                        .map(|&s| {
-                                            x_grid
-                                                .iter()
-                                                .position(|&x| approx_eq!(f64, s, x, ulps = 2))
-                                                // UNWRAP: must be guaranteed by the grid constructor
-                                                .unwrap()
-                                        })
-                                        .collect()
-                                }
+                                node_values
+                                    .values()
+                                    .iter()
+                                    .map(|&s| {
+                                        x_grid
+                                            .iter()
+                                            .position(|&x| approx_eq!(f64, s, x, ulps = 2))
+                                            // UNWRAP: must be guaranteed by the grid constructor
+                                            .unwrap()
+                                    })
+                                    .collect()
                             })
                         })
                         // UNWRAP: must be guaranteed by the grid constructor
@@ -193,10 +185,13 @@ impl FkTable {
                 .collect();
 
             for (index, value) in subgrid.indexed_iter() {
-                assert_eq!(index.len(), 3);
                 assert_eq!(index[0], 0);
-                // result[[bin, channel, indices1[index[1]], indices2[index[2]]]] = value;
-                result[[bin, channel, indices[0][index[1]], indices[1][index[2]]]] = value;
+                idx[0] = bin;
+                idx[1] = channel;
+                for i in 2..result.shape().len() {
+                    idx[i] = indices[i - 2][index[i - 1]];
+                }
+                result[idx.as_slice()] = value;
             }
         }
 

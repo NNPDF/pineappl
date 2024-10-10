@@ -240,7 +240,6 @@ impl<'a> ConvolutionCache<'a> {
                             let imua2 = self.imua2[indices[0]];
                             (imua2, self.mua2_grid[imua2])
                         }
-                        Convolution::None => unreachable!(),
                     };
                     *xfx_cache.entry((pid, ix, imu2)).or_insert_with(|| {
                         let x = self.x_grid[ix];
@@ -336,9 +335,6 @@ impl<'a> ConvolutionCache<'a> {
 /// Data type that indentifies different types of convolutions.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Convolution {
-    // TODO: eventually get rid of this value
-    /// No convolution.
-    None,
     /// Unpolarized parton distribution function. The integer denotes the type of hadron with a PDG
     /// MC ID.
     UnpolPDF(i32),
@@ -357,7 +353,6 @@ impl Convolution {
     #[must_use]
     pub const fn charge_conjugate(&self) -> Self {
         match *self {
-            Self::None => Self::None,
             Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
             Self::PolPDF(pid) => Self::PolPDF(pids::charge_conjugate_pdg_pid(pid)),
             Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
@@ -369,7 +364,6 @@ impl Convolution {
     #[must_use]
     pub const fn pid(&self) -> Option<i32> {
         match *self {
-            Self::None => None,
             Self::UnpolPDF(pid) | Self::PolPDF(pid) | Self::UnpolFF(pid) | Self::PolFF(pid) => {
                 Some(pid)
             }
@@ -383,7 +377,6 @@ mod tests {
 
     #[test]
     fn convolution_charge_conjugate() {
-        assert_eq!(Convolution::None.charge_conjugate(), Convolution::None);
         assert_eq!(
             Convolution::UnpolPDF(2212).charge_conjugate(),
             Convolution::UnpolPDF(-2212)
@@ -404,7 +397,6 @@ mod tests {
 
     #[test]
     fn convolution_pid() {
-        assert_eq!(Convolution::None.pid(), None);
         assert_eq!(Convolution::UnpolPDF(2212).pid(), Some(2212));
         assert_eq!(Convolution::PolPDF(2212).pid(), Some(2212));
         assert_eq!(Convolution::UnpolFF(2212).pid(), Some(2212));

@@ -297,8 +297,7 @@ pub fn convolve_scales(
                     // if we can not figure out the type of the convolution from the PDF set, we
                     // assume it from the grid convolution at the same index
                     match convolution {
-                        // if the grid convolution is None, we assume it's a proton PDF
-                        Convolution::None | Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
+                        Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
                         Convolution::PolPDF(_) => Convolution::PolPDF(pid),
                         Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
                         Convolution::PolFF(_) => Convolution::PolFF(pid),
@@ -468,8 +467,7 @@ pub fn convolve_subgrid(
                     // if we can not figure out the type of the convolution from the PDF set, we
                     // assume it from the grid convolution at the same index
                     match convolution {
-                        // if the grid convolution is None, we assume it's a proton PDF
-                        Convolution::None | Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
+                        Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
                         Convolution::PolPDF(_) => Convolution::PolPDF(pid),
                         Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
                         Convolution::PolFF(_) => Convolution::PolFF(pid),

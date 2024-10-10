@@ -4,7 +4,6 @@ use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
-use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::subgrid::Subgrid;
@@ -147,10 +146,7 @@ pub fn convert_into_applgrid(
                             assert_eq!(factor, 1.0);
 
                             pids.iter()
-                                .zip(grid.convolutions())
-                                .filter_map(|(&pid, convolution)| {
-                                    (*convolution != Convolution::None).then_some(pid)
-                                })
+                                .copied()
                                 .chain(iter::repeat(0))
                                 .take(2)
                                 .collect::<Vec<_>>()
@@ -237,11 +233,7 @@ pub fn convert_into_applgrid(
                     map @ Map::ApplGridF2 => panic!("export does not support {map:?}"),
                 },
                 grid.channels().len().try_into().unwrap(),
-                grid.convolutions()
-                    .iter()
-                    .filter(|&conv| *conv != Convolution::None)
-                    .count()
-                    == 1,
+                grid.convolutions().len() == 1,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();

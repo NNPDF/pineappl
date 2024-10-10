@@ -104,16 +104,8 @@ fn convert_coeff_add_fix(
     let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
     assert!(npdf <= 2);
 
-    let convolutions = (0..2)
-        .map(|index| {
-            if index < npdf {
-                // TODO: how do we determined the PID/type of the convolution for fixed tables?
-                Convolution::UnpolPDF(2212)
-            } else {
-                Convolution::None
-            }
-        })
-        .collect();
+    // TODO: extract the proper convolution PIDs
+    let convolutions = vec![Convolution::UnpolPDF(2212); npdf];
 
     let mut grid = Grid::new(
         PidBasis::Pdg,

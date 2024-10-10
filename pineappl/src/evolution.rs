@@ -1,7 +1,6 @@
 //! Supporting classes and functions for [`Grid::evolve_with_slice_iter`].
 
 use super::boc::{Channel, Kinematics, Order};
-use super::convolutions::Convolution;
 use super::grid::{Grid, GridError};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
@@ -388,13 +387,6 @@ pub(crate) fn evolve_slice_with_many(
 
     assert_eq!(operators.len(), infos.len());
     assert_eq!(operators.len(), grid.convolutions().len());
-    assert_eq!(
-        grid.convolutions()
-            .iter()
-            .filter(|&conv| *conv == Convolution::None)
-            .count(),
-        0
-    );
 
     let (pid_indices, pids01): (Vec<_>, Vec<_>) = izip!(0..infos.len(), operators, infos)
         .map(|(d, operator, info)| {

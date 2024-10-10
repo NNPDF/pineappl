@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
@@ -28,7 +28,7 @@ enum FkTableSection {
     FastKernel,
 }
 
-fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
+fn read_fktable(reader: impl BufRead) -> Result<Grid> {
     let mut section = FkTableSection::Sof;
     let mut flavor_mask = Vec::<bool>::new();
     let mut x_grid = Vec::new();
@@ -94,7 +94,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| channel![basis[index], dis_pid, 1.0])
+                        .map(|(index, _)| Channel::new(vec![(vec![basis[index]], 1.0)]))
                         .collect()
                 };
 
@@ -105,14 +105,11 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
                     vec![Order::new(0, 0, 0, 0, 0)],
                     (0..=ndata).map(Into::into).collect(),
                     // legacy FK-tables only support unpolarized proton PDFs
-                    vec![
-                        Convolution::UnpolPDF(2212),
-                        if hadronic {
-                            Convolution::UnpolPDF(2212)
-                        } else {
-                            Convolution::None
-                        },
-                    ],
+                    if hadronic {
+                        vec![Convolution::UnpolPDF(2212); 2]
+                    } else {
+                        vec![Convolution::UnpolPDF(2212)]
+                    },
                     // TODO: what are sensible parameters for FK-tables?
                     vec![
                         Interp::new(
@@ -281,11 +278,18 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
     {
         *subgrid = PackedQ1X2SubgridV1::new(
             array,
-            vec![
-                NodeValues::UseThese(vec![q0 * q0]),
-                NodeValues::UseThese(x_grid.clone()),
-                NodeValues::UseThese(if hadronic { x_grid.clone() } else { vec![1.0] }),
-            ],
+            if hadronic {
+                vec![
+                    NodeValues::UseThese(vec![q0 * q0]),
+                    NodeValues::UseThese(x_grid.clone()),
+                    NodeValues::UseThese(x_grid.clone()),
+                ]
+            } else {
+                vec![
+                    NodeValues::UseThese(vec![q0 * q0]),
+                    NodeValues::UseThese(x_grid.clone()),
+                ]
+            },
         )
         .into();
     }
@@ -293,7 +297,7 @@ fn read_fktable(reader: impl BufRead, dis_pid: i32) -> Result<Grid> {
     Ok(grid)
 }
 
-pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
+pub fn convert_fktable(input: &Path) -> Result<Grid> {
     let reader = GzDecoder::new(File::open(input)?);
 
     let mut archive = Archive::new(reader);
@@ -304,7 +308,7 @@ pub fn convert_fktable(input: &Path, dis_pid: i32) -> Result<Grid> {
 
         if let Some(extension) = path.extension() {
             if extension == "dat" {
-                return read_fktable(BufReader::new(file), dis_pid);
+                return read_fktable(BufReader::new(file));
             }
         }
     }

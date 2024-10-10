@@ -675,7 +675,7 @@ fn import_flex_grid_15() {
 #[test]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
-    use ndarray::Array4;
+    use ndarray::Array3;
     use pineappl::fk_table::FkTable;
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -717,6 +717,7 @@ fn import_dis_fktable() {
 
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 
+    assert_eq!(fk_table.grid().kinematics().len(), 2);
     assert_eq!(fk_table.muf2(), 1.65 * 1.65);
     assert_eq!(
         fk_table.x_grid(),
@@ -820,13 +821,14 @@ fn import_dis_fktable() {
             0.8837966741980419,
             0.9126417795942889,
             0.9416284084927907,
-            0.9707498946430192
+            0.9707498946430192,
+            1.0
         ]
     );
 
-    let table: Array4<f64> = fk_table.table().into_dimensionality().unwrap();
+    let table: Array3<f64> = fk_table.table().into_dimensionality().unwrap();
 
-    assert_eq!(table.dim(), (20, 9, 100, 1));
+    assert_eq!(table.dim(), (20, 9, 101));
     assert_eq!(
         table
             .indexed_iter()
@@ -834,16 +836,16 @@ fn import_dis_fktable() {
             .take(10)
             .collect::<Vec<_>>(),
         [
-            ((0, 0, 0, 0), &4.506605409085538e-8),
-            ((0, 0, 1, 0), &1.8561090273141668e-8),
-            ((0, 0, 2, 0), &-3.3821015317570252e-9),
-            ((0, 0, 3, 0), &1.980084314325426e-9),
-            ((0, 0, 4, 0), &2.187815687938248e-9),
-            ((0, 0, 5, 0), &1.3280152778522626e-9),
-            ((0, 0, 6, 0), &1.3848470515483116e-9),
-            ((0, 0, 7, 0), &1.5145898293299224e-9),
-            ((0, 0, 8, 0), &1.6942313031679552e-9),
-            ((0, 0, 9, 0), &1.9734220063025288e-9),
+            ((0, 0, 0), &4.506605409085538e-8),
+            ((0, 0, 1), &1.8561090273141668e-8),
+            ((0, 0, 2), &-3.3821015317570252e-9),
+            ((0, 0, 3), &1.980084314325426e-9),
+            ((0, 0, 4), &2.187815687938248e-9),
+            ((0, 0, 5), &1.3280152778522626e-9),
+            ((0, 0, 6), &1.3848470515483116e-9),
+            ((0, 0, 7), &1.5145898293299224e-9),
+            ((0, 0, 8), &1.6942313031679552e-9),
+            ((0, 0, 9), &1.9734220063025288e-9),
         ]
     );
 }

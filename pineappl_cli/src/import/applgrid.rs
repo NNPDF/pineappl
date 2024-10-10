@@ -11,7 +11,7 @@ use pineappl::subgrid::{Mu2, NodeValues};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
-use std::ptr;
+use std::{iter, ptr};
 
 fn convert_to_pdg_id(pid: usize) -> i32 {
     let pid = i32::try_from(pid).unwrap() - 6;
@@ -24,7 +24,7 @@ fn convert_to_pdg_id(pid: usize) -> i32 {
     }
 }
 
-fn reconstruct_channels(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
+fn reconstruct_channels(grid: &grid, order: i32) -> Vec<Channel> {
     let pdf = unsafe { &*grid.genpdf(order, false) };
     let nproc: usize = pdf.Nproc().try_into().unwrap();
 
@@ -43,7 +43,7 @@ fn reconstruct_channels(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
 
             for i in 0..nproc {
                 if results[i] != 0.0 {
-                    channels[i].push((vec![convert_to_pdg_id(a), dis_pid], results[i]));
+                    channels[i].push((vec![convert_to_pdg_id(a)], results[i]));
                 }
             }
         } else {
@@ -71,7 +71,7 @@ fn reconstruct_channels(grid: &grid, order: i32, dis_pid: i32) -> Vec<Channel> {
     channels.into_iter().map(Channel::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Result<Grid> {
+pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
@@ -125,14 +125,31 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
     let mut grids = Vec::with_capacity(orders.len());
 
     // from APPLgrid alone we don't know what type of convolution we have
-    let mut convolutions = vec![Convolution::UnpolPDF(2212); 2];
-
-    if grid.isDIS() {
-        convolutions[1] = Convolution::None;
+    let convolutions = vec![Convolution::UnpolPDF(2212); if grid.isDIS() { 1 } else { 2 }];
+    // TODO: read out interpolation parameters from APPLgrid
+    let mut interps = vec![Interp::new(
+        1e2,
+        1e8,
+        40,
+        3,
+        ReweightMeth::NoReweight,
+        Map::ApplGridH0,
+        InterpMeth::Lagrange,
+    )];
+    for _ in 0..convolutions.len() {
+        interps.push(Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ));
     }
 
     for (i, order) in orders.into_iter().enumerate() {
-        let channels = reconstruct_channels(&grid, i.try_into().unwrap(), dis_pid);
+        let channels = reconstruct_channels(&grid, i.try_into().unwrap());
         let lumis_len = channels.len();
         let mut pgrid = Grid::new(
             PidBasis::Pdg,
@@ -140,38 +157,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32, dis_pid: i32) -> Resul
             vec![order],
             bin_limits.clone(),
             convolutions.clone(),
-            // TODO: read out interpolation parameters from APPLgrid
-            vec![
-                Interp::new(
-                    1e2,
-                    1e8,
-                    40,
-                    3,
-                    ReweightMeth::NoReweight,
-                    Map::ApplGridH0,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    2e-7,
-                    1.0,
-                    50,
-                    3,
-                    ReweightMeth::ApplGridX,
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    2e-7,
-                    1.0,
-                    50,
-                    3,
-                    ReweightMeth::ApplGridX,
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-            ],
-            // TODO: change kinematics for DIS
-            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            interps.clone(),
+            iter::once(Kinematics::Scale(0))
+                .chain((0..convolutions.len()).map(|idx| Kinematics::X(idx)))
+                .collect(),
             Scales {
                 ren: ScaleFuncForm::Scale(0),
                 fac: ScaleFuncForm::Scale(0),

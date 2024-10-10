@@ -6,7 +6,6 @@ use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use ndarray::Axis;
 use pineappl::boc::{Channel, Kinematics};
-use pineappl::convolutions::Convolution;
 use pineappl::grid::Grid;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -77,16 +76,8 @@ fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
         .entry()
         .iter()
         .map(|(pids, _)| {
-            grid.convolutions()
-                .iter()
-                .zip(pids)
-                .map(|(convolution, &pid)| {
-                    if *convolution == Convolution::None {
-                        ""
-                    } else {
-                        grid.pid_basis().to_latex_str(pid)
-                    }
-                })
+            pids.iter()
+                .map(|&pid| grid.pid_basis().to_latex_str(pid))
                 .collect::<Vec<_>>()
                 .join("")
         })
