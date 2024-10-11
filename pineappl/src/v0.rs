@@ -1,6 +1,6 @@
 use super::bin::{BinLimits, BinRemapper};
 use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use super::convolutions::Convolution;
+use super::convolutions::{Conv, ConvType};
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv4, MoreMembers};
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -197,10 +197,10 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
     Ok(result)
 }
 
-fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Convolution>> {
+fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Conv>> {
     grid.key_values().map_or_else(
         // if there isn't any metadata, we assume two unpolarized proton-PDFs are used
-        || vec![Some(Convolution::UnpolPDF(2212)); 2],
+        || vec![Some(Conv::new(ConvType::UnpolPDF, 2212)); 2],
         |kv| {
             // file format v0 only supports exactly two convolutions
             (1..=2)
@@ -215,10 +215,10 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Convolution>> {
                             .map(String::as_str),
                     ) {
                         (_, Some("None")) => None,
-                        (Some(Ok(pid)), Some("UnpolPDF")) => Some(Convolution::UnpolPDF(pid)),
-                        (Some(Ok(pid)), Some("PolPDF")) => Some(Convolution::PolPDF(pid)),
-                        (Some(Ok(pid)), Some("UnpolFF")) => Some(Convolution::UnpolFF(pid)),
-                        (Some(Ok(pid)), Some("PolFF")) => Some(Convolution::PolFF(pid)),
+                        (Some(Ok(pid)), Some("UnpolPDF")) => Some(Conv::new(ConvType::UnpolPDF, pid)),
+                        (Some(Ok(pid)), Some("PolPDF")) => Some(Conv::new(ConvType::PolPDF, pid)),
+                        (Some(Ok(pid)), Some("UnpolFF")) => Some(Conv::new(ConvType::UnpolFF, pid)),
+                        (Some(Ok(pid)), Some("PolFF")) => Some(Conv::new(ConvType::PolFF, pid)),
                         (None, None) => {
                             // if these key-value pairs are missing use the old metadata
                             match kv
@@ -236,9 +236,9 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Convolution>> {
                                         )
                                     });
 
-                                    condition.then_some(Convolution::UnpolPDF(pid))
+                                    condition.then_some(Conv::new(ConvType::UnpolPDF, pid))
                                 }
-                                None => Some(Convolution::UnpolPDF(2212)),
+                                None => Some(Conv::new(ConvType::UnpolPDF, 2212)),
                                 Some(Err(err)) => panic!(
                                     "metadata 'initial_state_{index}' could not be parsed: {err}"
                                 ),

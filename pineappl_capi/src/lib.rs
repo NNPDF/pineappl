@@ -58,7 +58,7 @@
 use itertools::izip;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use pineappl::convolutions::{Convolution, ConvolutionCache};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
@@ -456,7 +456,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut convolution_cache = ConvolutionCache::new(
-        vec![Convolution::UnpolPDF(pdg_id)],
+        vec![Conv::new(ConvType::UnpolPDF, pdg_id)],
         vec![&mut xfx],
         &mut als,
     );
@@ -523,8 +523,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut convolution_cache = ConvolutionCache::new(
         vec![
-            Convolution::UnpolPDF(pdg_id1),
-            Convolution::UnpolPDF(pdg_id2),
+            Conv::new(ConvType::UnpolPDF, pdg_id1),
+            Conv::new(ConvType::UnpolPDF, pdg_id2),
         ],
         vec![&mut xfx1, &mut xfx2],
         &mut als,
@@ -745,15 +745,17 @@ pub unsafe extern "C" fn pineappl_grid_new(
 
     let lumi = unsafe { &*lumi };
 
-    let mut convolutions = vec![Convolution::UnpolPDF(2212); 2];
+    let mut convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); 2];
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval.strings.get("initial_state_1") {
-            convolutions[0] = Convolution::UnpolPDF(value.to_string_lossy().parse().unwrap());
+            convolutions[0] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
 
         if let Some(value) = keyval.strings.get("initial_state_2") {
-            convolutions[1] = Convolution::UnpolPDF(value.to_string_lossy().parse().unwrap());
+            convolutions[1] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
     }
 
@@ -955,7 +957,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     };
 
     if let Some(index) = index {
-        return CString::new(grid.convolutions()[index].pid().unwrap().to_string())
+        return CString::new(grid.convolutions()[index].pid().to_string())
             .unwrap()
             .into_raw();
     }
@@ -998,7 +1000,7 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     };
 
     if let Some(index) = index {
-        grid.convolutions_mut()[index] = Convolution::UnpolPDF(value.parse().unwrap());
+        grid.convolutions_mut()[index] = Conv::new(ConvType::UnpolPDF, value.parse().unwrap());
     }
 
     grid.metadata_mut().insert(key, value);

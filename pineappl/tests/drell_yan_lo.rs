@@ -5,7 +5,7 @@ use num_complex::Complex;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
-use pineappl::convolutions::{Convolution, ConvolutionCache};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
@@ -164,7 +164,10 @@ fn fill_drell_yan_lo_grid(
     let bin_limits: Vec<_> = (0..=24).map(|x: u32| f64::from(x) / 10.0).collect();
 
     // the grid represents data with two unpolarized proton PDFs
-    let convolutions = vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)];
+    let convolutions = vec![
+        Conv::new(ConvType::UnpolPDF, 2212),
+        Conv::new(ConvType::UnpolPDF, 2212),
+    ];
 
     let reweight = if reweight {
         ReweightMeth::ApplGridX
@@ -352,7 +355,7 @@ fn perform_grid_tests(
 
     // TEST 5: `convolve`
     let mut convolution_cache = ConvolutionCache::new(
-        vec![Convolution::UnpolPDF(2212)],
+        vec![Conv::new(ConvType::UnpolPDF, 2212)],
         vec![&mut xfx],
         &mut alphas,
     );
@@ -367,7 +370,10 @@ fn perform_grid_tests(
     let mut xfx2 = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas2 = |_| 0.0;
     let mut convolution_cache2 = ConvolutionCache::new(
-        vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+        vec![
+            Conv::new(ConvType::UnpolPDF, 2212),
+            Conv::new(ConvType::UnpolPDF, 2212),
+        ],
         vec![&mut xfx1, &mut xfx2],
         &mut alphas2,
     );

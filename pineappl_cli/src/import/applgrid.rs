@@ -1,7 +1,7 @@
 use anyhow::Result;
 use lhapdf::Pdf;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use pineappl::convolutions::Convolution;
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
@@ -125,7 +125,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
     let mut grids = Vec::with_capacity(orders.len());
 
     // from APPLgrid alone we don't know what type of convolution we have
-    let convolutions = vec![Convolution::UnpolPDF(2212); if grid.isDIS() { 1 } else { 2 }];
+    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); if grid.isDIS() { 1 } else { 2 }];
     // TODO: read out interpolation parameters from APPLgrid
     let mut interps = vec![Interp::new(
         1e2,

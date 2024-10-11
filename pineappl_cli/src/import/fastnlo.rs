@@ -3,7 +3,7 @@ use anyhow::Result;
 // use ndarray::s;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use pineappl::convolutions::Convolution;
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
@@ -103,7 +103,7 @@ fn convert_coeff_add_fix(
     assert!(npdf <= 2);
 
     // TODO: extract the proper convolution PIDs
-    let convolutions = vec![Convolution::UnpolPDF(2212); npdf];
+    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); npdf];
 
     let mut grid = Grid::new(
         PidBasis::Pdg,

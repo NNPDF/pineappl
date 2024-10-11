@@ -2,7 +2,7 @@ use super::GlobalConfiguration;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::{Array3, Ix3};
-use pineappl::convolutions::{Convolution, ConvolutionCache};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
 use prettytable::Table;
@@ -292,16 +292,11 @@ pub fn convolve_scales(
                 .unwrap();
 
             match fun.set().entry("SetType").unwrap_or_default().as_str() {
-                "fragfn" => Convolution::UnpolFF(pid),
+                "fragfn" => Conv::new(ConvType::UnpolFF, pid),
                 "" => {
                     // if we can not figure out the type of the convolution from the PDF set, we
                     // assume it from the grid convolution at the same index
-                    match convolution {
-                        Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
-                        Convolution::PolPDF(_) => Convolution::PolPDF(pid),
-                        Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
-                        Convolution::PolFF(_) => Convolution::PolFF(pid),
-                    }
+                    convolution.with_pid(pid)
                 }
                 // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
                 // PDFs and all FFs
@@ -462,16 +457,11 @@ pub fn convolve_subgrid(
                 .unwrap();
 
             match fun.set().entry("SetType").unwrap_or_default().as_str() {
-                "fragfn" => Convolution::UnpolFF(pid),
+                "fragfn" => Conv::new(ConvType::UnpolFF, pid),
                 "" => {
                     // if we can not figure out the type of the convolution from the PDF set, we
                     // assume it from the grid convolution at the same index
-                    match convolution {
-                        Convolution::UnpolPDF(_) => Convolution::UnpolPDF(pid),
-                        Convolution::PolPDF(_) => Convolution::PolPDF(pid),
-                        Convolution::UnpolFF(_) => Convolution::UnpolFF(pid),
-                        Convolution::PolFF(_) => Convolution::PolFF(pid),
-                    }
+                    convolution.with_pid(pid)
                 }
                 // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
                 // PDFs and all FFs

@@ -853,8 +853,8 @@ fn import_hadronic_fktable() {
     use float_cmp::assert_approx_eq;
     use lhapdf::Pdf;
     use ndarray::Array4;
-    use pineappl::convolutions::Convolution;
     use pineappl::convolutions::ConvolutionCache;
+    use pineappl::convolutions::{Conv, ConvType};
     use pineappl::fk_table::{FkAssumptions, FkTable};
     use pineappl::grid::Grid;
     use std::fs::File;
@@ -893,7 +893,7 @@ fn import_hadronic_fktable() {
     let mut xfx = |id, x, q2| pdf.xfx_q2(id, x, q2);
     let mut alphas = |_| 0.0;
     let mut convolution_cache = ConvolutionCache::new(
-        vec![Convolution::UnpolPDF(2212)],
+        vec![Conv::new(ConvType::UnpolPDF, 2212)],
         vec![&mut xfx],
         &mut alphas,
     );
@@ -930,7 +930,10 @@ fn import_hadronic_fktable() {
     assert_eq!(fk_table.grid().bin_info().right(0), [1.0]);
     assert_eq!(
         fk_table.grid().convolutions(),
-        [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+        [
+            Conv::new(ConvType::UnpolPDF, 2212),
+            Conv::new(ConvType::UnpolPDF, 2212)
+        ]
     );
     let channels = fk_table.channels();
     assert_eq!(

@@ -3,7 +3,7 @@ use flate2::read::GzDecoder;
 use ndarray::s;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
-use pineappl::convolutions::Convolution;
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
@@ -99,9 +99,9 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                 };
 
                 let convolutions = if hadronic {
-                    vec![Convolution::UnpolPDF(2212); 2]
+                    vec![Conv::new(ConvType::UnpolPDF, 2212); 2]
                 } else {
-                    vec![Convolution::UnpolPDF(2212)]
+                    vec![Conv::new(ConvType::UnpolPDF, 2212)]
                 };
 
                 // construct `Grid`

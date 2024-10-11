@@ -22,14 +22,14 @@ pub struct ConvolutionCache<'a> {
     imuf2: Vec<usize>,
     imua2: Vec<usize>,
     ix: Vec<Vec<usize>>,
-    pdg: Vec<Convolution>,
+    pdg: Vec<Conv>,
     perm: Vec<Option<(usize, bool)>>,
 }
 
 impl<'a> ConvolutionCache<'a> {
     /// TODO
     pub fn new(
-        pdg: Vec<Convolution>,
+        pdg: Vec<Conv>,
         xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
@@ -57,7 +57,7 @@ impl<'a> ConvolutionCache<'a> {
             .iter()
             .enumerate()
             .map(|(max_idx, conv)| {
-                conv.pid().map(|_| {
+                Some(
                     self.pdg
                         .iter()
                         .take(max_idx + 1)
@@ -66,15 +66,15 @@ impl<'a> ConvolutionCache<'a> {
                         .find_map(|(idx, pdg)| {
                             if conv == pdg {
                                 Some((idx, false))
-                            } else if *conv == pdg.charge_conjugate() {
+                            } else if *conv == pdg.cc() {
                                 Some((idx, true))
                             } else {
                                 None
                             }
                         })
                         // TODO: convert `unwrap` to `Err`
-                        .unwrap()
-                })
+                        .unwrap(),
+                )
             })
             .collect();
 
@@ -231,12 +231,12 @@ impl<'a> ConvolutionCache<'a> {
                     };
                     let xfx = &mut self.xfx[idx];
                     let xfx_cache = &mut self.xfx_cache[idx];
-                    let (imu2, mu2) = match self.pdg[idx] {
-                        Convolution::UnpolPDF(_) | Convolution::PolPDF(_) => {
+                    let (imu2, mu2) = match self.pdg[idx].conv_type() {
+                        ConvType::UnpolPDF | ConvType::PolPDF => {
                             let imuf2 = self.imuf2[indices[0]];
                             (imuf2, self.muf2_grid[imuf2])
                         }
-                        Convolution::UnpolFF(_) | Convolution::PolFF(_) => {
+                        ConvType::UnpolFF | ConvType::PolFF => {
                             let imua2 = self.imua2[indices[0]];
                             (imua2, self.mua2_grid[imua2])
                         }
@@ -332,42 +332,70 @@ impl<'a> ConvolutionCache<'a> {
     }
 }
 
-/// Data type that indentifies different types of convolutions.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Convolution {
-    /// Unpolarized parton distribution function. The integer denotes the type of hadron with a PDG
-    /// MC ID.
-    UnpolPDF(i32),
-    /// Polarized parton distribution function. The integer denotes the type of hadron with a PDG
-    /// MC ID.
-    PolPDF(i32),
-    /// Unpolarized fragmentation function. The integer denotes the type of hadron with a PDG MC
-    /// ID.
-    UnpolFF(i32),
-    /// Polarized fragmentation function. The integer denotes the type of hadron with a PDG MC ID.
-    PolFF(i32),
+/// TODO
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ConvType {
+    /// Unpolarized parton distribution function.
+    UnpolPDF,
+    /// Polarized parton distribution function.
+    PolPDF,
+    /// Unpolarized fragmentation function.
+    UnpolFF,
+    /// Polarized fragmentation function.
+    PolFF,
 }
 
-impl Convolution {
-    /// Return the convolution if the PID is charged conjugated.
-    #[must_use]
-    pub const fn charge_conjugate(&self) -> Self {
-        match *self {
-            Self::UnpolPDF(pid) => Self::UnpolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::PolPDF(pid) => Self::PolPDF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::UnpolFF(pid) => Self::UnpolFF(pids::charge_conjugate_pdg_pid(pid)),
-            Self::PolFF(pid) => Self::PolFF(pids::charge_conjugate_pdg_pid(pid)),
+impl ConvType {
+    /// TODO
+    pub fn new(polarized: bool, time_like: bool) -> Self {
+        match (polarized, time_like) {
+            (false, false) => Self::UnpolPDF,
+            (false, true) => Self::UnpolFF,
+            (true, false) => Self::PolPDF,
+            (true, true) => Self::PolFF,
+        }
+    }
+}
+
+/// Data type that indentifies different types of convolutions.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Conv {
+    conv_type: ConvType,
+    pid: i32,
+}
+
+impl Conv {
+    /// Constructor.
+    pub fn new(conv_type: ConvType, pid: i32) -> Self {
+        Self { conv_type, pid }
+    }
+
+    /// TODO
+    pub fn with_pid(&self, pid: i32) -> Self {
+        Self {
+            conv_type: self.conv_type,
+            pid,
         }
     }
 
-    /// Return the PID of the convolution if it has any.
+    /// Return the convolution if the PID is charged conjugated.
     #[must_use]
-    pub const fn pid(&self) -> Option<i32> {
-        match *self {
-            Self::UnpolPDF(pid) | Self::PolPDF(pid) | Self::UnpolFF(pid) | Self::PolFF(pid) => {
-                Some(pid)
-            }
+    pub const fn cc(&self) -> Self {
+        Self {
+            conv_type: self.conv_type,
+            pid: pids::charge_conjugate_pdg_pid(self.pid),
         }
+    }
+
+    /// Return the PID of the convolution.
+    #[must_use]
+    pub const fn pid(&self) -> i32 {
+        self.pid
+    }
+
+    /// Return the convolution type of this convolution.
+    pub fn conv_type(&self) -> ConvType {
+        self.conv_type
     }
 }
 
@@ -376,30 +404,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn convolution_charge_conjugate() {
+    fn conv_cc() {
         assert_eq!(
-            Convolution::UnpolPDF(2212).charge_conjugate(),
-            Convolution::UnpolPDF(-2212)
+            Conv::new(ConvType::UnpolPDF, 2212).cc(),
+            Conv::new(ConvType::UnpolPDF, -2212)
         );
         assert_eq!(
-            Convolution::PolPDF(2212).charge_conjugate(),
-            Convolution::PolPDF(-2212)
+            Conv::new(ConvType::PolPDF, 2212).cc(),
+            Conv::new(ConvType::PolPDF, -2212)
         );
         assert_eq!(
-            Convolution::UnpolFF(2212).charge_conjugate(),
-            Convolution::UnpolFF(-2212)
+            Conv::new(ConvType::UnpolFF, 2212).cc(),
+            Conv::new(ConvType::UnpolFF, -2212)
         );
         assert_eq!(
-            Convolution::PolFF(2212).charge_conjugate(),
-            Convolution::PolFF(-2212)
+            Conv::new(ConvType::PolFF, 2212).cc(),
+            Conv::new(ConvType::PolFF, -2212)
         );
     }
 
     #[test]
-    fn convolution_pid() {
-        assert_eq!(Convolution::UnpolPDF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::PolPDF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::UnpolFF(2212).pid(), Some(2212));
-        assert_eq!(Convolution::PolFF(2212).pid(), Some(2212));
+    fn conv_pid() {
+        assert_eq!(Conv::new(ConvType::UnpolPDF, 2212).pid(), 2212);
+        assert_eq!(Conv::new(ConvType::PolPDF, 2212).pid(), 2212);
+        assert_eq!(Conv::new(ConvType::UnpolFF, 2212).pid(), 2212);
+        assert_eq!(Conv::new(ConvType::PolFF, 2212).pid(), 2212);
     }
 }

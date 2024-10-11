@@ -2,7 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Kinematics, Order, Scales};
-use super::convolutions::{Convolution, ConvolutionCache};
+use super::convolutions::{Conv, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
@@ -125,7 +125,7 @@ pub struct Grid {
     pub(crate) bin_limits: BinLimits,
     pub(crate) orders: Vec<Order>,
     pub(crate) metadata: BTreeMap<String, String>,
-    pub(crate) convolutions: Vec<Convolution>,
+    pub(crate) convolutions: Vec<Conv>,
     pub(crate) pid_basis: PidBasis,
     pub(crate) more_members: MoreMembers,
     pub(crate) kinematics: Vec<Kinematics>,
@@ -148,7 +148,7 @@ impl Grid {
         channels: Vec<Channel>,
         orders: Vec<Order>,
         bin_limits: Vec<f64>,
-        convolutions: Vec<Convolution>,
+        convolutions: Vec<Conv>,
         interps: Vec<Interp>,
         kinematics: Vec<Kinematics>,
         scales: Scales,
@@ -686,12 +686,12 @@ impl Grid {
     /// Panics if the metadata key--value pairs `convolution_particle_1` and `convolution_type_1`,
     /// or `convolution_particle_2` and `convolution_type_2` are not correctly set.
     #[must_use]
-    pub fn convolutions(&self) -> &[Convolution] {
+    pub fn convolutions(&self) -> &[Conv] {
         &self.convolutions
     }
 
     /// Return the convolution types.
-    pub fn convolutions_mut(&mut self) -> &mut [Convolution] {
+    pub fn convolutions_mut(&mut self) -> &mut [Conv] {
         &mut self.convolutions
     }
 
@@ -716,7 +716,7 @@ impl Grid {
             );
         }
 
-        self.convolutions_mut()[convolution] = self.convolutions()[convolution].charge_conjugate();
+        self.convolutions_mut()[convolution] = self.convolutions()[convolution].cc();
     }
 
     fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
@@ -1713,6 +1713,7 @@ mod tests {
     use super::*;
     use crate::boc::ScaleFuncForm;
     use crate::channel;
+    use crate::convolutions::ConvType;
     use std::fs::File;
 
     #[test]
@@ -1725,7 +1726,10 @@ mod tests {
             vec![Channel::new(channel)],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 1.0],
-            vec![Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)],
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1746,7 +1750,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1769,7 +1773,7 @@ mod tests {
             ],
             vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1797,7 +1801,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1823,7 +1827,7 @@ mod tests {
                 Order::new(0, 2, 0, 0, 0),
             ],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1856,7 +1860,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1875,7 +1879,7 @@ mod tests {
             vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1905,7 +1909,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1928,7 +1932,7 @@ mod tests {
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1963,7 +1967,7 @@ mod tests {
                 logxia: 0,
             }],
             vec![0.0, 1.0],
-            vec![Convolution::UnpolPDF(2212); 2],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
             Scales {
@@ -1976,15 +1980,21 @@ mod tests {
         // by default we assume unpolarized proton PDFs are used
         assert_eq!(
             grid.convolutions(),
-            [Convolution::UnpolPDF(2212), Convolution::UnpolPDF(2212)]
+            [
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212)
+            ]
         );
 
-        grid.convolutions_mut()[0] = Convolution::UnpolPDF(-2212);
-        grid.convolutions_mut()[1] = Convolution::UnpolPDF(-2212);
+        grid.convolutions_mut()[0] = Conv::new(ConvType::UnpolPDF, -2212);
+        grid.convolutions_mut()[1] = Conv::new(ConvType::UnpolPDF, -2212);
 
         assert_eq!(
             grid.convolutions(),
-            [Convolution::UnpolPDF(-2212), Convolution::UnpolPDF(-2212)]
+            [
+                Conv::new(ConvType::UnpolPDF, -2212),
+                Conv::new(ConvType::UnpolPDF, -2212)
+            ]
         );
     }
 
