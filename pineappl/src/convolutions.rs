@@ -23,7 +23,7 @@ pub struct ConvolutionCache<'a> {
     imua2: Vec<usize>,
     ix: Vec<Vec<usize>>,
     pdg: Vec<Conv>,
-    perm: Vec<Option<(usize, bool)>>,
+    perm: Vec<(usize, bool)>,
 }
 
 impl<'a> ConvolutionCache<'a> {
@@ -57,24 +57,22 @@ impl<'a> ConvolutionCache<'a> {
             .iter()
             .enumerate()
             .map(|(max_idx, conv)| {
-                Some(
-                    self.pdg
-                        .iter()
-                        .take(max_idx + 1)
-                        .enumerate()
-                        .rev()
-                        .find_map(|(idx, pdg)| {
-                            if conv == pdg {
-                                Some((idx, false))
-                            } else if *conv == pdg.cc() {
-                                Some((idx, true))
-                            } else {
-                                None
-                            }
-                        })
-                        // TODO: convert `unwrap` to `Err`
-                        .unwrap(),
-                )
+                self.pdg
+                    .iter()
+                    .take(max_idx + 1)
+                    .enumerate()
+                    .rev()
+                    .find_map(|(idx, pdg)| {
+                        if conv == pdg {
+                            Some((idx, false))
+                        } else if *conv == pdg.cc() {
+                            Some((idx, true))
+                        } else {
+                            None
+                        }
+                    })
+                    // TODO: convert `unwrap` to `Err`
+                    .unwrap()
             })
             .collect();
 
@@ -220,31 +218,29 @@ impl<'a> ConvolutionCache<'a> {
             .iter()
             .zip(pdg_ids)
             .enumerate()
-            .filter_map(|(index, (perm, &pdg_id))| {
-                perm.map(|(idx, cc)| {
-                    let ix = self.ix[index][indices[index + 1]];
+            .map(|(index, (&(idx, cc), &pdg_id))| {
+                let ix = self.ix[index][indices[index + 1]];
 
-                    let pid = if cc {
-                        pids::charge_conjugate_pdg_pid(pdg_id)
-                    } else {
-                        pdg_id
-                    };
-                    let xfx = &mut self.xfx[idx];
-                    let xfx_cache = &mut self.xfx_cache[idx];
-                    let (imu2, mu2) = match self.pdg[idx].conv_type() {
-                        ConvType::UnpolPDF | ConvType::PolPDF => {
-                            let imuf2 = self.imuf2[indices[0]];
-                            (imuf2, self.muf2_grid[imuf2])
-                        }
-                        ConvType::UnpolFF | ConvType::PolFF => {
-                            let imua2 = self.imua2[indices[0]];
-                            (imua2, self.mua2_grid[imua2])
-                        }
-                    };
-                    *xfx_cache.entry((pid, ix, imu2)).or_insert_with(|| {
-                        let x = self.x_grid[ix];
-                        xfx(pid, x, mu2) / x
-                    })
+                let pid = if cc {
+                    pids::charge_conjugate_pdg_pid(pdg_id)
+                } else {
+                    pdg_id
+                };
+                let xfx = &mut self.xfx[idx];
+                let xfx_cache = &mut self.xfx_cache[idx];
+                let (imu2, mu2) = match self.pdg[idx].conv_type() {
+                    ConvType::UnpolPDF | ConvType::PolPDF => {
+                        let imuf2 = self.imuf2[indices[0]];
+                        (imuf2, self.muf2_grid[imuf2])
+                    }
+                    ConvType::UnpolFF | ConvType::PolFF => {
+                        let imua2 = self.imua2[indices[0]];
+                        (imua2, self.mua2_grid[imua2])
+                    }
+                };
+                *xfx_cache.entry((pid, ix, imu2)).or_insert_with(|| {
+                    let x = self.x_grid[ix];
+                    xfx(pid, x, mu2) / x
                 })
             })
             .product()
