@@ -2,7 +2,7 @@
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
 use super::boc::{Channel, Kinematics, Order, Scales};
-use super::convolutions::{Conv, ConvolutionCache};
+use super::convolutions::{Conv, ConvType, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
@@ -1194,7 +1194,8 @@ impl Grid {
     // - try to find a better solution than to require that E must be convertible into
     //   anyhow::Error
 
-    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
+    /// Convert this `Grid` into an [`FkTable`] using `slices.len()` evolution operators, which 
+    /// for each entry must iterate over a [`Result`]
     /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
     /// `order_mask` can be used to include or exclude orders from this operation, and must
     /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
@@ -1208,153 +1209,20 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// Panics when the operator returned by `slices` has different dimensions than promised by the
-    /// corresponding [`OperatorSliceInfo`].
-    pub fn evolve_with_slice_iter<'a, E: Into<anyhow::Error>>(
-        &self,
-        slices: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
-        order_mask: &[bool],
-        xi: (f64, f64),
-        alphas_table: &AlphasTable,
-    ) -> Result<FkTable, GridError> {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-
-        let mut lhs: Option<Self> = None;
-        // Q2 slices we use
-        let mut used_op_fac1 = Vec::new();
-        // Q2 slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
-        // Q2 slices needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
-
-        for result in slices {
-            let (info, operator) = result.map_err(|err| GridError::Other(err.into()))?;
-
-            op_fac1.push(info.fac1);
-
-            // it's possible that due to small numerical differences we get two slices which are
-            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
-            if used_op_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
-            }
-
-            // skip slices that the grid doesn't use
-            if !grid_fac1
-                .iter()
-                .any(|&fac| approx_eq!(f64, fac, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
-            {
-                continue;
-            }
-
-            let op_info_dim = (
-                info.pids1.len(),
-                info.x1.len(),
-                info.pids0.len(),
-                info.x0.len(),
-            );
-
-            assert_eq!(
-                operator.dim(),
-                op_info_dim,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim,
-                operator.dim(),
-            );
-
-            let views = vec![operator.view(); self.convolutions().len()];
-            let infos = vec![info.clone(); self.convolutions().len()];
-            let (subgrids, channels) = evolution::evolve_slice_with_many(
-                self,
-                &views,
-                &infos,
-                order_mask,
-                (xi.0, xi.1, 1.0),
-                alphas_table,
-            )?;
-
-            let rhs = Self {
-                subgrids,
-                channels,
-                bin_limits: self.bin_limits.clone(),
-                orders: vec![Order::new(0, 0, 0, 0, 0)],
-                interps: self.interps.clone(),
-                metadata: self.metadata.clone(),
-                convolutions: self.convolutions.clone(),
-                pid_basis: info.pid_basis,
-                more_members: self.more_members.clone(),
-                kinematics: self.kinematics.clone(),
-                remapper: self.remapper.clone(),
-                // TODO: is this correct?
-                scales: self.scales.clone(),
-            };
-
-            if let Some(lhs) = &mut lhs {
-                lhs.merge(rhs)?;
-            } else {
-                lhs = Some(rhs);
-            }
-
-            used_op_fac1.push(info.fac1);
-        }
-
-        // UNWRAP: if we can't compare two numbers there's a bug
-        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-
-        // make sure we've evolved all slices
-        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
-            !used_op_fac1
-                .iter()
-                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
-        }) {
-            return Err(GridError::EvolutionFailure(format!(
-                "no operator for muf2 = {muf2} found in {op_fac1:?}"
-            )));
-        }
-
-        // TODO: convert this unwrap into error
-        let grid = lhs.unwrap();
-
-        // UNWRAP: merging evolved slices should be a proper FkTable again
-        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
-    }
-
-    /// Converts this `Grid` into an [`FkTable`] using `slices` that must iterate over a [`Result`]
-    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
-    /// `order_mask` can be used to include or exclude orders from this operation, and must
-    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
-    /// enabled, and in particular if `order_mask` is empty all orders are activated.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
-    /// return an error.
-    ///
-    /// # Panics
-    ///
-    /// Panics when the operators returned by `slices_a` and `slices_b` have different dimensions
+    /// Panics when the operators returned by either slice have different dimensions
     /// than promised by the corresponding [`OperatorSliceInfo`].
-    pub fn evolve_with_slice_iter2<'a, E: Into<anyhow::Error>>(
+    pub fn evolve<
+        'a,
+        E: Into<anyhow::Error>,
+        S: IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+    >(
         &self,
-        slices_a: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
-        slices_b: impl IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        slices: Vec<S>,
         order_mask: &[bool],
-        xi: (f64, f64),
+        xi: (f64, f64, f64),
         alphas_table: &AlphasTable,
     ) -> Result<FkTable, GridError> {
         use super::evolution::EVOLVE_INFO_TOL_ULPS;
-        use itertools::izip;
-
-        // TODO: generalize this function for an arbitrary number of convolutions
-        assert_eq!(self.convolutions().len(), 2);
 
         let mut lhs: Option<Self> = None;
         // Q2 slices we use
@@ -1366,29 +1234,118 @@ impl Grid {
             .evolve_info(order_mask)
             .fac1
             .into_iter()
+            // TODO: also take care of the fragmentation scale
             .map(|fac| xi.1 * xi.1 * fac)
             .collect();
 
-        // TODO: simplify the ugly repetition below by offloading some ops into fn
-        for (result_a, result_b) in izip!(slices_a, slices_b) {
-            // Operate on `slices_a`
-            let (info_a, operator_a) = result_a.map_err(|err| GridError::Other(err.into()))?;
-            // Operate on `slices_b`
-            let (info_b, operator_b) = result_b.map_err(|err| GridError::Other(err.into()))?;
+        let mut perm = Vec::new();
+        let mut eko_conv_types: Vec<ConvType>;
+
+        struct Iter<T> {
+            iters: Vec<T>,
+        }
+
+        impl<T: Iterator> Iterator for Iter<T> {
+            type Item = Vec<T::Item>;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let v: Vec<_> = self.iters.iter_mut().filter_map(Iterator::next).collect();
+
+                if v.len() == self.iters.len() {
+                    Some(v)
+                } else {
+                    None
+                }
+            }
+        }
+
+        fn zip_n<O, T>(iters: O) -> impl Iterator<Item = Vec<T::Item>>
+        where
+            O: IntoIterator<Item = T>,
+            T: IntoIterator,
+        {
+            Iter {
+                iters: iters.into_iter().map(IntoIterator::into_iter).collect(),
+            }
+        }
+
+        for result in zip_n(slices) {
+            let (infos, operators): (Vec<OperatorSliceInfo>, Vec<CowArray<'_, f64, Ix4>>) = result
+                .into_iter()
+                .map(|res| res.map_err(|err| GridError::Other(err.into())))
+                .collect::<Result<_, _>>()?;
 
             // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
-            assert_approx_eq!(f64, info_a.fac1, info_b.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
 
-            // also the PID bases must be the same
-            assert_eq!(info_a.pid_basis, info_b.pid_basis);
+            let (info_0, infos_rest) = infos
+                .split_first()
+                // UNWRAP: TODO
+                .unwrap();
+            let dim_op_info_0 = (
+                info_0.pids1.len(),
+                info_0.x1.len(),
+                info_0.pids0.len(),
+                info_0.x0.len(),
+            );
+            assert_eq!(
+                operators[0].dim(),
+                dim_op_info_0,
+                "operator information {:?} does not match the operator's dimensions: {:?}",
+                dim_op_info_0,
+                operators[0].dim(),
+            );
+            for (index, info) in infos_rest.iter().enumerate() {
+                assert_approx_eq!(f64, info_0.fac1, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
+                assert_eq!(info_0.pid_basis, info.pid_basis);
 
-            op_fac1.push(info_a.fac1);
+                let dim_op_info = (
+                    info.pids1.len(),
+                    info.x1.len(),
+                    info.pids0.len(),
+                    info.x0.len(),
+                );
+
+                assert_eq!(
+                    operators[index + 1].dim(),
+                    dim_op_info,
+                    "operator information {:?} does not match the operator's dimensions: {:?}",
+                    dim_op_info,
+                    operators[index + 1].dim(),
+                );
+            }
+
+            if perm.is_empty() {
+                eko_conv_types = infos.iter().map(|info| info.conv_type).collect();
+                perm = self
+                    .convolutions()
+                    .iter()
+                    .enumerate()
+                    .map(|(max_idx, conv)| {
+                        eko_conv_types
+                            .iter()
+                            .take(max_idx + 1)
+                            .enumerate()
+                            .rev()
+                            .find_map(|(idx, &eko_conv_type)| {
+                                if conv.conv_type() == eko_conv_type {
+                                    Some(idx)
+                                } else {
+                                    None
+                                }
+                            })
+                            // TODO: convert `unwrap` to `Err`
+                            .unwrap()
+                    })
+                    .collect();
+            }
+
+            op_fac1.push(info_0.fac1);
 
             // it's possible that due to small numerical differences we get two slices which are
             // almost the same. We have to skip those in order not to evolve the 'same' slice twice
             if used_op_fac1
                 .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+                .any(|&fac| approx_eq!(f64, fac, info_0.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
             {
                 continue;
             }
@@ -1396,50 +1353,20 @@ impl Grid {
             // skip slices that the grid doesn't use
             if !grid_fac1
                 .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_a.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+                .any(|&fac| approx_eq!(f64, fac, info_0.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
             {
                 continue;
             }
 
-            let op_info_dim_a = (
-                info_a.pids1.len(),
-                info_a.x1.len(),
-                info_a.pids0.len(),
-                info_a.x0.len(),
-            );
-
-            assert_eq!(
-                operator_a.dim(),
-                op_info_dim_a,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim_a,
-                operator_a.dim(),
-            );
-
-            let op_info_dim_b = (
-                info_b.pids1.len(),
-                info_b.x1.len(),
-                info_b.pids0.len(),
-                info_b.x0.len(),
-            );
-
-            assert_eq!(
-                operator_b.dim(),
-                op_info_dim_b,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                op_info_dim_b,
-                operator_b.dim(),
-            );
-
-            let views = [operator_a.view(), operator_b.view()];
-            let infos = [info_a, info_b];
+            let operators: Vec<_> = perm.iter().map(|&idx| operators[idx].view()).collect();
+            let infos: Vec<_> = perm.iter().map(|&idx| infos[idx].clone()).collect();
 
             let (subgrids, channels) = evolution::evolve_slice_with_many(
                 self,
-                &views,
+                &operators,
                 &infos,
                 order_mask,
-                (xi.0, xi.1, 1.0),
+                xi,
                 alphas_table,
             )?;
 
@@ -1459,15 +1386,13 @@ impl Grid {
                 scales: self.scales.clone(),
             };
 
-            assert_eq!(infos[0].pid_basis, infos[1].pid_basis);
-
             if let Some(lhs) = &mut lhs {
                 lhs.merge(rhs)?;
             } else {
                 lhs = Some(rhs);
             }
 
-            used_op_fac1.push(infos[0].fac1);
+            used_op_fac1.push(info_0.fac1);
         }
 
         // UNWRAP: if we can't compare two numbers there's a bug

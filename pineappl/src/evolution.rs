@@ -1,6 +1,7 @@
 //! Supporting classes and functions for [`Grid::evolve_with_slice_iter`].
 
 use super::boc::{Channel, Kinematics, Order};
+use super::convolutions::ConvType;
 use super::grid::{Grid, GridError};
 use super::packed_array::PackedArray;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
@@ -51,13 +52,13 @@ pub struct EvolveInfo {
 /// [`FkTable::convolve`](super::fk_table::FkTable::convolve) how to perform a convolution.
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
-    /// Squared factorization scale of the `FkTable`.
+    /// Squared factorization/fragmentation scale of the `FkTable`.
     pub fac0: f64,
     /// Particle identifiers of the `FkTable`.
     pub pids0: Vec<i32>,
     /// `x`-grid coordinates of the `FkTable`
     pub x0: Vec<f64>,
-    /// Squared factorization scale of the slice of `Grid` that should be evolved.
+    /// Squared factorization/fragmentation scale of the slice of `Grid` that should be evolved.
     pub fac1: f64,
     /// Particle identifiers of the `Grid`. If the `Grid` contains more particle identifiers than
     /// given here, the contributions of them are silently ignored.
@@ -67,6 +68,8 @@ pub struct OperatorSliceInfo {
 
     /// Particle ID basis for `FkTable`.
     pub pid_basis: PidBasis,
+    /// TODO
+    pub conv_type: ConvType,
 }
 
 /// A mapping of squared renormalization scales in `ren1` to strong couplings in `alphas`. The

@@ -20,6 +20,7 @@ mod eko {
     use ndarray::iter::AxisIter;
     use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
+    use pineappl::convolutions::ConvType;
     use pineappl::evolution::OperatorSliceInfo;
     use pineappl::pids::{self, PidBasis};
     use serde::Deserialize;
@@ -75,17 +76,14 @@ mod eko {
 
     #[derive(Deserialize)]
     struct OperatorConfigsV1 {
-        #[serde(rename = "polarized")]
-        _polarized: bool,
-        #[serde(rename = "time_like")]
-        _time_like: bool,
+        polarized: bool,
+        time_like: bool,
     }
 
     #[derive(Deserialize)]
     struct OperatorV1 {
         mu0: f64,
-        #[serde(rename = "configs")]
-        _configs: OperatorConfigsV1,
+        configs: OperatorConfigsV1,
     }
 
     #[derive(Deserialize)]
@@ -172,6 +170,7 @@ mod eko {
                     fac1: 0.0,
                     pids1: metadata.targetpids,
                     x1: metadata.targetgrid,
+                    conv_type: ConvType::UnpolPDF,
                 },
                 operator,
             })
@@ -250,6 +249,7 @@ mod eko {
                         .rotations
                         .targetgrid
                         .unwrap_or(metadata.rotations.xgrid),
+                    conv_type: ConvType::UnpolPDF,
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -316,6 +316,10 @@ mod eko {
                         .bases
                         .targetgrid
                         .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                    conv_type: ConvType::new(
+                        operator.configs.polarized,
+                        operator.configs.time_like,
+                    ),
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -439,6 +443,7 @@ fn evolve_grid(
     orders: &[(u32, u32)],
     xir: f64,
     xif: f64,
+    xia: f64,
 ) -> Result<FkTable> {
     use eko::EkoSlices;
     use pineappl::evolution::AlphasTable;
@@ -458,22 +463,10 @@ fn evolve_grid(
         .iter()
         .map(|eko| EkoSlices::new(eko))
         .collect::<Result<_, _>>()?;
+    let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
-    match eko_slices.as_mut_slice() {
-        [eko] => Ok(grid.evolve_with_slice_iter(eko, &order_mask, (xir, xif), &alphas_table)?),
-        [eko_a, eko_b] => Ok(grid.evolve_with_slice_iter2(
-            eko_a,
-            eko_b,
-            &order_mask,
-            (xir, xif),
-            &alphas_table,
-        )?),
-        _ => unimplemented!(
-            "evolution with {} EKOs is not implemented",
-            eko_slices.len()
-        ),
-    }
+    Ok(grid.evolve(eko_slices, &order_mask, (xir, xif, xia), &alphas_table)?)
 }
 
 #[cfg(not(feature = "evolve"))]
@@ -482,6 +475,7 @@ fn evolve_grid(
     _: &[&Path],
     _: &Pdf,
     _: &[(u32, u32)],
+    _: f64,
     _: f64,
     _: f64,
 ) -> Result<FkTable> {
@@ -563,6 +557,7 @@ impl Subcommand for Opts {
             &self.orders,
             self.xir,
             self.xif,
+            self.xia,
         )?;
 
         let evolved_results = helpers::convolve_scales(
