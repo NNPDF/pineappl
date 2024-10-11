@@ -74,8 +74,18 @@ mod eko {
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
 
     #[derive(Deserialize)]
+    struct OperatorConfigsV1 {
+        #[serde(rename = "polarized")]
+        _polarized: bool,
+        #[serde(rename = "time_like")]
+        _time_like: bool,
+    }
+
+    #[derive(Deserialize)]
     struct OperatorV1 {
         mu0: f64,
+        #[serde(rename = "configs")]
+        _configs: OperatorConfigsV1,
     }
 
     #[derive(Deserialize)]
