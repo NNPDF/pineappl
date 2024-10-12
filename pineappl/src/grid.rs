@@ -1194,12 +1194,12 @@ impl Grid {
     // - try to find a better solution than to require that E must be convertible into
     //   anyhow::Error
 
-    /// Convert this `Grid` into an [`FkTable`] using `slices.len()` evolution operators, which 
-    /// for each entry must iterate over a [`Result`]
-    /// of tuples of an [`OperatorSliceInfo`] and the corresponding sliced operator. The parameter
-    /// `order_mask` can be used to include or exclude orders from this operation, and must
-    /// correspond to the ordering given by [`Grid::orders`]. Orders that are not given are
-    /// enabled, and in particular if `order_mask` is empty all orders are activated.
+    /// Convert this `Grid` into an [`FkTable`] using `slices.len()` evolution operators, which for
+    /// each entry must iterate over a [`Result`] of tuples of an [`OperatorSliceInfo`] and the
+    /// corresponding sliced operator. The parameter `order_mask` can be used to include or exclude
+    /// orders from this operation, and must correspond to the ordering given by [`Grid::orders`].
+    /// Orders that are not given are enabled, and in particular if `order_mask` is empty all
+    /// orders are activated.
     ///
     /// # Errors
     ///
@@ -1209,8 +1209,8 @@ impl Grid {
     ///
     /// # Panics
     ///
-    /// Panics when the operators returned by either slice have different dimensions
-    /// than promised by the corresponding [`OperatorSliceInfo`].
+    /// Panics when the operators returned by either slice have different dimensions than promised
+    /// by the corresponding [`OperatorSliceInfo`].
     pub fn evolve<
         'a,
         E: Into<anyhow::Error>,
@@ -1239,7 +1239,6 @@ impl Grid {
             .collect();
 
         let mut perm = Vec::new();
-        let mut eko_conv_types: Vec<ConvType>;
 
         struct Iter<T> {
             iters: Vec<T>,
@@ -1275,18 +1274,18 @@ impl Grid {
                 .map(|res| res.map_err(|err| GridError::Other(err.into())))
                 .collect::<Result<_, _>>()?;
 
-            // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
-
             let (info_0, infos_rest) = infos
                 .split_first()
                 // UNWRAP: TODO
                 .unwrap();
+
             let dim_op_info_0 = (
                 info_0.pids1.len(),
                 info_0.x1.len(),
                 info_0.pids0.len(),
                 info_0.x0.len(),
             );
+
             assert_eq!(
                 operators[0].dim(),
                 dim_op_info_0,
@@ -1294,7 +1293,9 @@ impl Grid {
                 dim_op_info_0,
                 operators[0].dim(),
             );
+
             for (index, info) in infos_rest.iter().enumerate() {
+                // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
                 assert_approx_eq!(f64, info_0.fac1, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
                 assert_eq!(info_0.pid_basis, info.pid_basis);
 
@@ -1315,7 +1316,9 @@ impl Grid {
             }
 
             if perm.is_empty() {
-                eko_conv_types = infos.iter().map(|info| info.conv_type).collect();
+                let eko_conv_types: Vec<ConvType> =
+                    infos.iter().map(|info| info.conv_type).collect();
+
                 perm = self
                     .convolutions()
                     .iter()
