@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 #![cfg(feature = "evolve")]
 
 use assert_cmd::Command;

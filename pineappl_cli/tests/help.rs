@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 const HELP_STR: &str = "Display a manpage for selected subcommands

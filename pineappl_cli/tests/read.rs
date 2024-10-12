@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 const HELP_STR: &str = "Read out information of a grid

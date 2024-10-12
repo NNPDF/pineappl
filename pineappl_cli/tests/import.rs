@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]

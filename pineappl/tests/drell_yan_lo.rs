@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use anyhow::Result;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;

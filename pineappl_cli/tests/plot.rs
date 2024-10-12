@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use predicates::str;
 use std::num::NonZeroUsize;
