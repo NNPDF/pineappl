@@ -159,7 +159,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
             convolutions.clone(),
             interps.clone(),
             iter::once(Kinematics::Scale(0))
-                .chain((0..convolutions.len()).map(|idx| Kinematics::X(idx)))
+                .chain((0..convolutions.len()).map(Kinematics::X))
                 .collect(),
             Scales {
                 ren: ScaleFuncForm::Scale(0),

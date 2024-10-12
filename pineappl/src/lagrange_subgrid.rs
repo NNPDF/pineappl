@@ -31,7 +31,7 @@ impl Subgrid for LagrangeSubgridV2 {
     fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64) {
         debug_assert_eq!(interps.len(), ntuple.len());
 
-        if interpolation::interpolate(interps, &ntuple, weight, &mut self.array) {
+        if interpolation::interpolate(interps, ntuple, weight, &mut self.array) {
             // TODO: make this more general
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
@@ -45,7 +45,7 @@ impl Subgrid for LagrangeSubgridV2 {
     fn node_values(&self) -> Vec<NodeValues> {
         self.interps
             .iter()
-            .map(|interp| NodeValues::UseThese(interp.node_values().to_vec()))
+            .map(|interp| NodeValues::UseThese(interp.node_values()))
             .collect()
     }
 

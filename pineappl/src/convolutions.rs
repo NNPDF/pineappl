@@ -313,7 +313,7 @@ impl<'a> ConvolutionCache<'a> {
                         matches!(kin, &Kinematics::X(index) if index == idx).then_some(node_values)
                     })
                     // UNWRAP: guaranteed by the grid constructor
-                    .unwrap()
+                    .unwrap_or_else(|| unreachable!())
                     .values()
                     .iter()
                     .map(|xd| {
@@ -343,7 +343,8 @@ pub enum ConvType {
 
 impl ConvType {
     /// TODO
-    pub fn new(polarized: bool, time_like: bool) -> Self {
+    #[must_use]
+    pub const fn new(polarized: bool, time_like: bool) -> Self {
         match (polarized, time_like) {
             (false, false) => Self::UnpolPDF,
             (false, true) => Self::UnpolFF,
@@ -362,12 +363,14 @@ pub struct Conv {
 
 impl Conv {
     /// Constructor.
-    pub fn new(conv_type: ConvType, pid: i32) -> Self {
+    #[must_use]
+    pub const fn new(conv_type: ConvType, pid: i32) -> Self {
         Self { conv_type, pid }
     }
 
     /// TODO
-    pub fn with_pid(&self, pid: i32) -> Self {
+    #[must_use]
+    pub const fn with_pid(&self, pid: i32) -> Self {
         Self {
             conv_type: self.conv_type,
             pid,
@@ -390,7 +393,8 @@ impl Conv {
     }
 
     /// Return the convolution type of this convolution.
-    pub fn conv_type(&self) -> ConvType {
+    #[must_use]
+    pub const fn conv_type(&self) -> ConvType {
         self.conv_type
     }
 }

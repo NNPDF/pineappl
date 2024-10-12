@@ -59,7 +59,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
             }
 
             self.array = array;
-            self.node_values = new_node_values.clone();
+            self.node_values.clone_from(&new_node_values);
         }
 
         for (mut indices, value) in other.indexed_iter() {
@@ -241,7 +241,7 @@ mod tests {
             vec![
                 NodeValues::UseThese(vec![1.0]),
                 NodeValues::UseThese(x.clone()),
-                NodeValues::UseThese(x.clone()),
+                NodeValues::UseThese(x),
             ],
         )
         .into();
@@ -257,7 +257,7 @@ mod tests {
         assert_eq!(grid2.indexed_iter().nth(2), Some((vec![0, 3, 1], 2.0)));
         assert_eq!(grid2.indexed_iter().nth(3), Some((vec![0, 3, 4], 4.0)));
 
-        grid1.merge(&mut grid2, None);
+        grid1.merge(&grid2, None);
 
         // the luminosity function is symmetric, so after symmetrization the result must be
         // unchanged

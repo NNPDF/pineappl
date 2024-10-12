@@ -10,7 +10,7 @@ use super::interpolation::Interp;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::{self, PidBasis};
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};
@@ -206,12 +206,14 @@ impl Grid {
     }
 
     /// TODO
+    #[must_use]
     pub fn kinematics(&self) -> &[Kinematics] {
         &self.kinematics
     }
 
     /// TODO
-    pub fn scales(&self) -> &Scales {
+    #[must_use]
+    pub const fn scales(&self) -> &Scales {
         &self.scales
     }
 
@@ -232,7 +234,7 @@ impl Grid {
         channel_mask: &[bool],
         xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        convolution_cache.setup(self, &xi).unwrap();
+        convolution_cache.setup(self, xi).unwrap();
 
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_info().bins()).collect()
@@ -351,19 +353,12 @@ impl Grid {
         let node_values: Vec<_> = subgrid
             .node_values()
             .iter()
-            .map(|node_values| node_values.values())
+            .map(NodeValues::values)
             .collect();
         // TODO: generalize this to N dimensions
         assert_eq!(node_values.len(), 3);
 
-        convolution_cache.set_grids(
-            self,
-            &subgrid.node_values(),
-            &node_values[0].iter().copied().collect::<Vec<_>>(),
-            xir,
-            xif,
-            xia,
-        );
+        convolution_cache.set_grids(self, &subgrid.node_values(), &node_values[0], xir, xif, xia);
 
         let dim: Vec<_> = node_values.iter().map(Vec::len).collect();
         let mut array = ArrayD::zeros(dim);
@@ -672,7 +667,7 @@ impl Grid {
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
             } else {
-                self.subgrids[[self_i, self_j, self_k]].merge(&mut *subgrid, None);
+                self.subgrids[[self_i, self_j, self_k]].merge(subgrid, None);
             }
         }
 
@@ -1022,14 +1017,13 @@ impl Grid {
             .iter()
             .enumerate()
             .tuple_combinations()
-            .filter_map(|((idx_a, conv_a), (idx_b, conv_b))| {
-                (conv_a == conv_b).then(|| (idx_a, idx_b))
-            })
+            .filter(|((_, conv_a), (_, conv_b))| conv_a == conv_b)
+            .map(|((idx_a, _), (idx_b, _))| (idx_a, idx_b))
             .collect();
 
-        let (idx_a, idx_b) = match pairs.as_slice() {
-            &[] => return,
-            &[pair] => pair,
+        let (idx_a, idx_b) = match *pairs.as_slice() {
+            [] => return,
+            [pair] => pair,
             _ => panic!("more than two equal convolutions found"),
         };
         let a_subgrid = self
@@ -1222,24 +1216,6 @@ impl Grid {
         xi: (f64, f64, f64),
         alphas_table: &AlphasTable,
     ) -> Result<FkTable, GridError> {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-
-        let mut lhs: Option<Self> = None;
-        // Q2 slices we use
-        let mut used_op_fac1 = Vec::new();
-        // Q2 slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
-        // Q2 slices needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            // TODO: also take care of the fragmentation scale
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
-
-        let mut perm = Vec::new();
-
         struct Iter<T> {
             iters: Vec<T>,
         }
@@ -1267,6 +1243,24 @@ impl Grid {
                 iters: iters.into_iter().map(IntoIterator::into_iter).collect(),
             }
         }
+
+        use super::evolution::EVOLVE_INFO_TOL_ULPS;
+
+        let mut lhs: Option<Self> = None;
+        // Q2 slices we use
+        let mut used_op_fac1 = Vec::new();
+        // Q2 slices we encounter, but possibly don't use
+        let mut op_fac1 = Vec::new();
+        // Q2 slices needed by the grid
+        let grid_fac1: Vec<_> = self
+            .evolve_info(order_mask)
+            .fac1
+            .into_iter()
+            // TODO: also take care of the fragmentation scale
+            .map(|fac| xi.1 * xi.1 * fac)
+            .collect();
+
+        let mut perm = Vec::new();
 
         for result in zip_n(slices) {
             let (infos, operators): (Vec<OperatorSliceInfo>, Vec<CowArray<'_, f64, Ix4>>) = result

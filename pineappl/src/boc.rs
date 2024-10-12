@@ -41,10 +41,11 @@ pub enum ScaleFuncForm {
 
 impl ScaleFuncForm {
     /// TODO
+    #[must_use]
     pub fn calc(&self, node_values: &[NodeValues], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
         match self {
-            ScaleFuncForm::NoScale => None,
-            &ScaleFuncForm::Scale(index) => Some(if node_values.is_empty() {
+            Self::NoScale => None,
+            &Self::Scale(index) => Some(if node_values.is_empty() {
                 // TODO: empty subgrid should have as many node values as dimensions
                 Vec::new()
             } else {
@@ -55,7 +56,7 @@ impl ScaleFuncForm {
                     .unwrap()]
                 .values()
             }),
-            ScaleFuncForm::QuadraticSum(_, _) => todo!(),
+            Self::QuadraticSum(_, _) => todo!(),
         }
     }
 }

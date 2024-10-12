@@ -24,26 +24,23 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
         bail!("APPLgrid does not support grids with more than one scale");
     }
 
-    let mu2_grid: Vec<_> = grid
+    let mut mu2_grid: Vec<_> = grid
         .subgrids()
         .slice(s![order, bin, ..])
         .iter()
-        .filter_map(|subgrid| {
-            (!subgrid.is_empty()).then(|| {
-                Ok(grid
-                    .kinematics()
-                    .iter()
-                    .zip(subgrid.node_values())
-                    .find_map(|(kin, node_values)| {
-                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                    })
-                    // TODO: convert this into an error
-                    .unwrap()
-                    .values())
-            })
+        .filter(|subgrid| !subgrid.is_empty())
+        .flat_map(|subgrid| {
+            grid.kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap()
+                .values()
         })
-        .collect::<Result<_>>()?;
-    let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
+        .collect();
     mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
 
     // TODO: implement the general case
@@ -123,7 +120,7 @@ pub fn convert_into_applgrid(
     }
 
     let lumis = grid.channels().len();
-    let has_pdf1 = grid.convolutions().get(0).is_some();
+    let has_pdf1 = grid.convolutions().first().is_some();
     let has_pdf2 = grid.convolutions().get(1).is_some();
 
     // TODO: check that PDG MC IDs are used

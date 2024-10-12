@@ -26,7 +26,7 @@ pub struct PackedArray<T> {
 impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
-    pub fn new(shape: Vec<usize>) -> Self {
+    pub const fn new(shape: Vec<usize>) -> Self {
         Self {
             entries: vec![],
             start_indices: vec![],
@@ -91,7 +91,12 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     }
 
     /// TODO
+    ///
+    /// # Panics
+    ///
+    /// TODO
     // TODO: rewrite this method into `sub_block_iter_mut() -> impl Iterator<Item = &mut f64>`
+    #[must_use]
     pub fn sub_block_idx(
         &self,
         start_index: &[usize],
@@ -170,6 +175,11 @@ fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
 }
 
 /// TODO
+///
+/// # Panics
+///
+/// TODO
+#[must_use]
 pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
     assert!(index < shape.iter().product());
     let mut indices = vec![0; shape.len()];
@@ -200,7 +210,7 @@ impl<T: Copy + Default + PartialEq> Index<&[usize]> for PackedArray<T> {
             self.shape
         );
 
-        let raveled_index = ravel_multi_index(&index, &self.shape);
+        let raveled_index = ravel_multi_index(index, &self.shape);
         let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
         assert!(
@@ -399,7 +409,7 @@ impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T
         //       `threshold_distance`:
         //       -> we insert the element as a new group
 
-        let raveled_index = ravel_multi_index(&index, &self.shape);
+        let raveled_index = ravel_multi_index(index, &self.shape);
 
         // To determine which groups the new element is close to, `point` is the index of the
         // start_index of the first group after the new element. `point` is 0 if no elements before

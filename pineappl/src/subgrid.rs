@@ -24,7 +24,7 @@ impl NodeValues {
     pub fn extend(&mut self, other: &Self) {
         match (self, other) {
             // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => (),
-            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => {
+            (Self::UseThese(a), Self::UseThese(b)) => {
                 a.extend_from_slice(b);
                 a.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
                 // TODO: use some tolerance
@@ -34,36 +34,40 @@ impl NodeValues {
     }
 
     /// TODO
+    #[must_use]
     pub fn len(&self) -> usize {
         match self {
             // NodeValues::UseFromGrid => unimplemented!(),
-            NodeValues::UseThese(a) => a.len(),
+            Self::UseThese(a) => a.len(),
         }
     }
 
     /// TODO
+    #[must_use]
     pub fn find(&self, value: f64) -> Option<usize> {
         match self {
             // NodeValues::UseFromGrid => unimplemented!(),
-            NodeValues::UseThese(a) => a.iter().position(|&x|
+            Self::UseThese(a) => a.iter().position(|&x|
                 // approx_eq!(f64, x, value, ulps = EVOLVE_INFO_TOL_ULPS)
                 x == value),
         }
     }
 
     /// TODO
+    #[must_use]
     pub fn get(&self, index: usize) -> f64 {
         match self {
             // NodeValues::UseFromGrid => unimplemented!(),
-            NodeValues::UseThese(a) => a[index],
+            Self::UseThese(a) => a[index],
         }
     }
 
     /// TODO
+    #[must_use]
     pub fn values(&self) -> Vec<f64> {
         match self {
             // NodeValues::UseFromGrid => unimplemented!(),
-            NodeValues::UseThese(a) => a.clone(),
+            Self::UseThese(a) => a.clone(),
         }
     }
 }
@@ -72,7 +76,7 @@ impl PartialEq for NodeValues {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
-            (NodeValues::UseThese(a), NodeValues::UseThese(b)) => {
+            (Self::UseThese(a), Self::UseThese(b)) => {
                 (a.len() == b.len())
                     && a.iter().zip(b).all(
                         // TODO: use some tolerance

@@ -117,12 +117,7 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
     }
 }
 
-fn fill_drell_yan_lo_grid(
-    rng: &mut impl Rng,
-    calls: u32,
-    dynamic: bool,
-    reweight: bool,
-) -> Result<Grid> {
+fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: u32, dynamic: bool, reweight: bool) -> Grid {
     let channels = vec![
         // photons
         channel![22, 22, 1.0],
@@ -309,7 +304,7 @@ fn fill_drell_yan_lo_grid(
         grid.fill(pto, yll.abs(), channel, &[q2, x2, x1], weight);
     }
 
-    Ok(grid)
+    grid
 }
 
 fn perform_grid_tests(
@@ -320,12 +315,12 @@ fn perform_grid_tests(
     reweight: bool,
 ) -> Result<()> {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
-    let mut grid = fill_drell_yan_lo_grid(&mut rng, INT_STATS, dynamic, reweight)?;
+    let mut grid = fill_drell_yan_lo_grid(&mut rng, INT_STATS, dynamic, reweight);
 
     // TEST 1: `merge` and `scale`
     grid.merge(fill_drell_yan_lo_grid(
         &mut rng, INT_STATS, dynamic, reweight,
-    )?)?;
+    ))?;
     grid.scale(0.5);
 
     // suppress LHAPDF banners
@@ -512,7 +507,7 @@ fn perform_grid_tests(
     Ok(())
 }
 
-fn generate_grid(dynamic: bool, reweight: bool) -> Result<Grid> {
+fn generate_grid(dynamic: bool, reweight: bool) -> Grid {
     let mut rng = Pcg64::new(0xcafef00dd15ea5e5, 0xa02bdbf7bb3c0a7ac28fa16a64abf96);
     fill_drell_yan_lo_grid(&mut rng, 500_000, dynamic, reweight)
 }
@@ -685,8 +680,8 @@ fn drell_yan_dynamic_no_reweight() -> Result<()> {
 }
 
 #[test]
-fn grid_optimize() -> Result<()> {
-    let mut grid = generate_grid(false, false)?;
+fn grid_optimize() {
+    let mut grid = generate_grid(false, false);
 
     assert_eq!(grid.orders().len(), 3);
     assert_eq!(grid.channels().len(), 5);
@@ -747,6 +742,4 @@ fn grid_optimize() -> Result<()> {
 
     assert_eq!(grid.orders().len(), 1);
     assert_eq!(grid.channels().len(), 3);
-
-    Ok(())
 }
