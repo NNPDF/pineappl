@@ -171,7 +171,7 @@ const NUTEV_CC_NU_FE_SIGMARED_STR: &str = "b     Grid       FkTable     rel. dif
 
 const CMS_TTB_8TEV_2D_TTM_TRAP_TOT_STR: &str = "b    Grid       FkTable     rel. diff
 -+-----------+-----------+-------------
-0 2.1596192e2 2.1590144e2 -2.8005486e-4
+0 2.0680644e2 2.0666857e2 -6.6663644e-4
 ";
 
 const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
@@ -406,6 +406,7 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
         .args([
             "evolve",
             "--orders=as2,as3,as4",
+            "--xir=2",
             "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT-opt.pineappl.lz4",
             "../test-data/CMS_TTB_8TEV_2D_TTM_TRAP_TOT.tar",
             output.path().to_str().unwrap(),

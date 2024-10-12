@@ -211,12 +211,12 @@ impl FkTable {
     /// Returns the single `muf2` scale of this `FkTable`.
     #[must_use]
     pub fn muf2(&self) -> f64 {
-        if let &[muf2] = &self.grid.evolve_info(&[true]).fac1[..] {
-            muf2
-        } else {
-            // every `FkTable` has only a single factorization scale
-            unreachable!()
-        }
+        let [muf2] = self.grid.evolve_info(&[true]).fac1[..]
+            .try_into()
+            // UNWRAP: every `FkTable` has only a single factorization scale
+            .unwrap_or_else(|_| unreachable!());
+
+        muf2
     }
 
     /// Returns the x grid that all subgrids for all hadronic initial states share.

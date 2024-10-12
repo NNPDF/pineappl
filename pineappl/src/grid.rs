@@ -166,7 +166,9 @@ impl Grid {
         assert_eq!(
             interps.len(),
             kinematics.len(),
-            "interps and kinematics have different lengths"
+            "interps and kinematics have different lengths: {} vs. {}",
+            interps.len(),
+            kinematics.len(),
         );
 
         assert!(
@@ -1618,7 +1620,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "channel #0 has wrong number of PIDs: expected 2, found 3")]
-    fn grid_new_panic() {
+    fn grid_new_panic0() {
         let channel = vec![(vec![1, -1, 1], 1.0), (vec![2, -2, 2], 1.0)];
 
         let _ = Grid::new(
@@ -1638,6 +1640,64 @@ mod tests {
                 frg: ScaleFuncForm::NoScale,
             },
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "interps and kinematics have different lengths: 2 vs. 3")]
+    fn grid_new_panic1() {
+        let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
+
+        let _ = Grid::new(
+            PidBasis::Pdg,
+            vec![Channel::new(channel)],
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![0.0, 1.0],
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(1),
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "scales and kinematics are not compatible")]
+    fn grid_new_panic2() {
+        let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
+
+        let _ = Grid::new(
+            PidBasis::Pdg,
+            vec![Channel::new(channel)],
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![0.0, 1.0],
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(2),
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(1),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+    }
+
+    #[test]
+    fn grid_read_file_version_unsupported() {
+        assert!(matches!(
+            Grid::read(
+                &[b'P', b'i', b'n', b'e', b'A', b'P', b'P', b'L', 99, 0, 0, 0, 0, 0, 0, 0][..]
+            ),
+            Err(GridError::FileVersionUnsupported { file_version: 99 })
+        ));
     }
 
     #[test]
@@ -1896,6 +1956,35 @@ mod tests {
                 Conv::new(ConvType::UnpolPDF, -2212)
             ]
         );
+    }
+
+    #[test]
+    fn grid_set_remapper_bin_number_mismatch() {
+        let mut grid = Grid::new(
+            PidBasis::Pdg,
+            vec![
+                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1, 1, 1.0; 3, 3, 1.0],
+            ],
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(2),
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        assert!(matches!(
+            grid.set_remapper(BinRemapper::new(vec![1.0], vec![(0.0, 1.0)]).unwrap()),
+            Err(GridError::BinNumberMismatch {
+                grid_bins: 4,
+                remapper_bins: 1
+            })
+        ));
     }
 
     #[test]
