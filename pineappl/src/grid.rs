@@ -9,7 +9,7 @@ use super::fk_table::FkTable;
 use super::interpolation::Interp;
 use super::lagrange_subgrid::LagrangeSubgridV2;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
-use super::pids::{self, PidBasis};
+use super::pids::PidBasis;
 use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
@@ -19,7 +19,6 @@ use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::iter;
@@ -502,15 +501,12 @@ impl Grid {
         &self.channels
     }
 
-    fn channels_pdg(&self) -> Cow<[Channel]> {
-        match self.pid_basis() {
-            PidBasis::Evol => self
-                .channels
-                .iter()
-                .map(|entry| entry.translate(&pids::evol_to_pdg_mc_ids))
-                .collect(),
-            PidBasis::Pdg => Cow::Borrowed(self.channels()),
-        }
+    fn channels_pdg(&self) -> Vec<Channel> {
+        self.channels()
+            .iter()
+            .cloned()
+            .map(|channel| self.pid_basis().translate(PidBasis::Pdg, channel))
+            .collect()
     }
 
     /// Merges the bins for the corresponding range together in a single one.
@@ -1490,29 +1486,11 @@ impl Grid {
 
     /// Change the particle ID convention.
     pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
-        match (self.pid_basis(), pid_basis) {
-            (PidBasis::Pdg, PidBasis::Evol) => {
-                self.channels = self
-                    .channels()
-                    .iter()
-                    .map(|channel| channel.translate(&pids::pdg_mc_pids_to_evol))
-                    .collect();
-
-                *self.pid_basis_mut() = PidBasis::Evol;
-            }
-            (PidBasis::Evol, PidBasis::Pdg) => {
-                self.channels = self
-                    .channels()
-                    .iter()
-                    .map(|channel| channel.translate(&pids::evol_to_pdg_mc_ids))
-                    .collect();
-
-                *self.pid_basis_mut() = PidBasis::Pdg;
-            }
-            (PidBasis::Evol, PidBasis::Evol) | (PidBasis::Pdg, PidBasis::Pdg) => {
-                // here's nothing to do
-            }
+        let self_pid_basis = *self.pid_basis();
+        for channel in &mut self.channels {
+            *channel = self_pid_basis.translate(pid_basis, channel.clone());
         }
+        self.pid_basis = pid_basis;
     }
 
     /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices

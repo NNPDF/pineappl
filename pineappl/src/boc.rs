@@ -632,7 +632,6 @@ macro_rules! channel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pids;
 
     #[test]
     fn order_from_str() {
@@ -833,19 +832,6 @@ mod tests {
         assert_eq!(
             Order::create_mask(&orders, 3, 3, false),
             [true, true, true, true, true, true, true, true, true, true, true, true]
-        );
-    }
-
-    #[test]
-    fn channel_translate() {
-        let channel = channel![103, 203, 2.0].translate(&pids::evol_to_pdg_mc_ids);
-
-        assert_eq!(
-            channel,
-            channel![ 2,  2,  2.0;  2, -2, -2.0;  2,  1, -2.0;  2, -1,  2.0;
-                     -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
-                      1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
-                     -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
         );
     }
 

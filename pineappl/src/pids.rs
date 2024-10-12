@@ -1,5 +1,6 @@
 //! TODO
 
+use super::boc::Channel;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
@@ -101,6 +102,16 @@ impl PidBasis {
             ),
         }
     }
+
+    /// TODO
+    #[must_use]
+    pub fn translate(&self, to: Self, channel: Channel) -> Channel {
+        match (self, to) {
+            (&Self::Pdg, Self::Pdg) | (&Self::Evol, Self::Evol) => channel,
+            (&Self::Pdg, Self::Evol) => channel.translate(&pdg_mc_pids_to_evol),
+            (&Self::Evol, Self::Pdg) => channel.translate(&evol_to_pdg_mc_ids),
+        }
+    }
 }
 
 /// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
@@ -112,7 +123,7 @@ pub struct UnknownPidBasis {
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
 #[must_use]
-pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
+fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
     match id {
         100 => vec![
             (2, 1.0),
@@ -238,7 +249,7 @@ pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
 
 /// Translates PDG Monte Carlo IDs to particle IDs from the evolution basis.
 #[must_use]
-pub fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
+fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
     match pid {
         -6 => vec![
             (100, 1.0 / 12.0),
@@ -1014,5 +1025,18 @@ mod tests {
     #[should_panic(expected = "conversion of PID `999` in basis Pdg to LaTeX string unknown")]
     fn to_latex_str_error() {
         let _ = PidBasis::Pdg.to_latex_str(999);
+    }
+
+    #[test]
+    fn translate() {
+        let channel = PidBasis::Evol.translate(PidBasis::Pdg, channel![103, 203, 2.0]);
+
+        assert_eq!(
+            channel,
+            channel![ 2,  2,  2.0;  2, -2, -2.0;  2,  1, -2.0;  2, -1,  2.0;
+                     -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
+                      1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
+                     -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
+        );
     }
 }
