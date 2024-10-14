@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use assert_fs::{fixture::FileWriteStr, NamedTempFile};
 
@@ -10,8 +12,7 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc1[=<ENABLE>]                 Charge conjugate the first initial state [possible values: true, false]
-      --cc2[=<ENABLE>]                 Charge conjugate the second initial state [possible values: true, false]
+      --cc <IDX>                       Charge conjugate the convolution with the specified index
       --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
       --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
       --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
@@ -244,14 +245,14 @@ const ROTATE_PID_BASIS_NO_DIFF_STR: &str = "b    x1               O(as^0 a^2)   
 
 const ROTATE_PID_BASIS_DIFF_STR: &str = "b    x1                O(as^0 a^2)                          O(as^0 a^3)                          O(as^1 a^2)            
 -+----+----+-----------+-----------+----------+-------------+-------------+----------+-----------+-----------+----------
-0    2 2.25 6.5070305e2 6.5070305e2 -2.220e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
-1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -2.220e-16 1.0083341e2 1.0083341e2 -5.551e-16
-2  2.5 2.75 5.1561247e2 5.1561247e2 -8.882e-16  -5.2348261e0  -5.2348261e0 -6.661e-16 8.9874343e1 8.9874343e1 -1.221e-15
-3 2.75    3 4.1534629e2 4.1534629e2 -4.441e-16  -3.7590420e0  -3.7590420e0 -5.551e-16 7.3935106e1 7.3935106e1 -1.554e-15
-4    3 3.25 3.0812719e2 3.0812719e2 -3.331e-16  -2.5871885e0  -2.5871885e0 -5.551e-16 5.6414554e1 5.6414554e1 -2.220e-16
-5 3.25  3.5 2.0807482e2 2.0807482e2 -6.661e-16  -1.6762487e0  -1.6762487e0 -1.110e-16 3.9468336e1 3.9468336e1 -3.331e-16
-6  3.5    4 9.6856769e1 9.6856769e1 -3.331e-16 -8.1027456e-1 -8.1027456e-1 -1.110e-16 1.9822014e1 1.9822014e1 -1.110e-15
-7    4  4.5 2.2383492e1 2.2383492e1 -4.441e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -3.331e-16
+0    2 2.25 6.5070305e2 6.5070305e2 -5.551e-16  -7.8692484e0  -7.8692484e0 -4.441e-16 1.1175729e2 1.1175729e2 -1.221e-15
+1 2.25  2.5 5.9601236e2 5.9601236e2 -7.772e-16  -6.5623495e0  -6.5623495e0 -4.441e-16 1.0083341e2 1.0083341e2    0.000e0
+2  2.5 2.75 5.1561247e2 5.1561247e2 -8.882e-16  -5.2348261e0  -5.2348261e0 -8.882e-16 8.9874343e1 8.9874343e1 -1.221e-15
+3 2.75    3 4.1534629e2 4.1534629e2 -4.441e-16  -3.7590420e0  -3.7590420e0 -6.661e-16 7.3935106e1 7.3935106e1 -1.554e-15
+4    3 3.25 3.0812719e2 3.0812719e2 -5.551e-16  -2.5871885e0  -2.5871885e0 -5.551e-16 5.6414554e1 5.6414554e1    0.000e0
+5 3.25  3.5 2.0807482e2 2.0807482e2 -5.551e-16  -1.6762487e0  -1.6762487e0 -2.220e-16 3.9468336e1 3.9468336e1 -6.661e-16
+6  3.5    4 9.6856769e1 9.6856769e1 -4.441e-16 -8.1027456e-1 -8.1027456e-1 -4.441e-16 1.9822014e1 1.9822014e1 -1.110e-15
+7    4  4.5 2.2383492e1 2.2383492e1 -6.661e-16 -2.2022770e-1 -2.2022770e-1 -5.551e-16 5.3540011e0 5.3540011e0 -6.661e-16
 ";
 
 const ROTATE_PID_BASIS_READ_CHANNELS_STR: &str = " c                 entry
@@ -455,14 +456,14 @@ fn help() {
 }
 
 #[test]
-fn cc1() {
+fn cc_0() {
     let output = NamedTempFile::new("cc1.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc1",
+            "--cc=0",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])
@@ -483,14 +484,15 @@ fn cc1() {
 }
 
 #[test]
-fn cc2() {
+fn cc_1() {
     let output = NamedTempFile::new("cc2.pineappl.lz4").unwrap();
 
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "write",
-            "--cc2",
+            "--cc",
+            "1",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])

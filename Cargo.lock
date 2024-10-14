@@ -139,6 +139,9 @@ name = "bitflags"
 version = "2.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "block-buffer"
@@ -948,7 +951,28 @@ dependencies = [
 
 [[package]]
 name = "pineappl"
-version = "0.8.2"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5041fcf611eb0c41f1f6562b498fabdd1319c8d4572fd137ac244ca4e73d999c"
+dependencies = [
+ "anyhow",
+ "arrayvec",
+ "bincode",
+ "bitflags 2.4.2",
+ "enum_dispatch",
+ "float-cmp",
+ "git-version",
+ "itertools",
+ "lz4_flex",
+ "ndarray",
+ "rustc-hash",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "pineappl"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -963,6 +987,7 @@ dependencies = [
  "ndarray",
  "ndarray-npy",
  "num-complex",
+ "pineappl 0.8.3",
  "rand",
  "rand_pcg",
  "rustc-hash",
@@ -973,7 +998,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_applgrid"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "cc",
  "cxx",
@@ -984,15 +1009,15 @@ dependencies = [
 
 [[package]]
 name = "pineappl_capi"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "itertools",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
 ]
 
 [[package]]
 name = "pineappl_cli"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1010,7 +1035,7 @@ dependencies = [
  "managed-lhapdf",
  "ndarray",
  "ndarray-npy",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
  "pineappl_applgrid",
  "pineappl_fastnlo",
  "predicates",
@@ -1023,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "pineappl_fastnlo"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -1033,12 +1058,12 @@ dependencies = [
 
 [[package]]
 name = "pineappl_py"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "itertools",
  "ndarray",
  "numpy",
- "pineappl",
+ "pineappl 1.0.0-alpha1",
  "pyo3",
 ]
 
@@ -1939,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.8.2"
+version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "clap",

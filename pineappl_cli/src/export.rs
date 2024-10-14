@@ -118,13 +118,14 @@ impl Subcommand for Opts {
             alpha,
             logxir,
             logxif,
+            logxia,
         } in grid
             .orders()
             .iter()
             .zip(order_mask.iter())
             .filter_map(|(order, keep)| (!keep).then_some(order.clone()))
         {
-            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif}) isn't supported by {grid_type} and will be skipped.");
+            println!("WARNING: the order O(as^{alphas} a^{alpha} lr^{logxir} lf^{logxif} la^{logxia}) isn't supported by {grid_type} and will be skipped.");
         }
 
         let orders: Vec<_> = grid
@@ -138,10 +139,12 @@ impl Subcommand for Opts {
                         alpha,
                         logxir,
                         logxif,
+                        logxia,
                     },
                     keep,
                 )| {
-                    (keep && (logxir == 0) && (logxif == 0)).then_some((alphas, alpha))
+                    (keep && (logxir == 0) && (logxif == 0) && (logxia == 0))
+                        .then_some((alphas, alpha))
                 },
             )
             .collect();

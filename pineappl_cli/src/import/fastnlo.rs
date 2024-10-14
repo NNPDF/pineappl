@@ -1,13 +1,15 @@
 use anyhow::Result;
-use itertools::Itertools;
-use ndarray::s;
+// use itertools::Itertools;
+// use ndarray::s;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
-use pineappl::convolutions::Convolution;
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
-use pineappl::import_only_subgrid::ImportOnlySubgridV2;
-use pineappl::sparse_array3::SparseArray3;
-use pineappl::subgrid::{Mu2, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::packed_array::PackedArray;
+use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::pids::PidBasis;
+use pineappl::subgrid::{Mu2, NodeValues};
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
@@ -22,36 +24,35 @@ fn pid_to_pdg_id(pid: i32) -> i32 {
     }
 }
 
-fn create_lumi(
+fn reconstruct_channels(
     table: &fastNLOCoeffAddBase,
     comb: &fastNLOPDFLinearCombinations,
-    dis_pid: i32,
 ) -> Vec<Channel> {
-    let dis_pid = if table.GetNPDF() == 2 { 0 } else { dis_pid };
-    let mut lumis = Vec::new();
+    let mut channels = Vec::new();
+    let npdf = table.GetNPDF();
 
-    // if there's a (non-empty) PDF coefficient vector reconstruct the luminosity function; the
-    // advantage is that we preserve the order of the lumi entries in the PineAPPL grid
+    // if there's a (non-empty) PDF coefficient vector reconstruct the channels; the advantage is
+    // that we preserve the order of the channels in the PineAPPL grid
     for pdf_entry in 0..ffi::GetPDFCoeffSize(table) {
         let mut entries = Vec::new();
 
         for entry in ffi::GetPDFCoeff(table, pdf_entry) {
-            let a = pid_to_pdg_id(entry.first);
-            let b = if dis_pid == 0 {
-                pid_to_pdg_id(entry.second)
-            } else {
-                dis_pid
-            };
-            let f = 1.0;
+            let mut pids = vec![pid_to_pdg_id(entry.first)];
 
-            entries.push((a, b, f));
+            if npdf == 2 {
+                pids.push(pid_to_pdg_id(entry.second));
+            }
+
+            entries.push((pids, 1.0));
         }
 
-        lumis.push(Channel::new(entries));
+        channels.push(Channel::new(entries));
     }
 
-    // if the PDF coefficient vector was empty, we must reconstruct the lumi function
-    if lumis.is_empty() {
+    // if the PDF coefficient vector was empty, we must reconstruct the channels in a different way
+    if channels.is_empty() {
+        assert_eq!(npdf, 2);
+
         let nsubproc = table.GetNSubproc().try_into().unwrap();
 
         let mut xfx1 = [0.0; 13];
@@ -66,15 +67,15 @@ fn create_lumi(
             for b in 0..13 {
                 xfx2[b] = 1.0;
 
-                let lumi = ffi::CalcPDFLinearCombination(comb, table, &xfx1, &xfx2, false);
+                let channel = ffi::CalcPDFLinearCombination(comb, table, &xfx1, &xfx2, false);
 
-                assert!(lumi.len() == nsubproc);
+                assert!(channel.len() == nsubproc);
 
-                for (i, l) in lumi.iter().copied().enumerate().filter(|(_, l)| *l != 0.0) {
+                for (i, &l) in channel.iter().enumerate().filter(|(_, &l)| l != 0.0) {
                     let ap = pid_to_pdg_id(i32::try_from(a).unwrap() - 6);
                     let bp = pid_to_pdg_id(i32::try_from(b).unwrap() - 6);
 
-                    entries[i].push((ap, bp, l));
+                    entries[i].push((vec![ap, bp], l));
                 }
 
                 xfx2[b] = 0.0;
@@ -83,10 +84,10 @@ fn create_lumi(
             xfx1[a] = 0.0;
         }
 
-        lumis = entries.into_iter().map(Channel::new).collect();
+        channels = entries.into_iter().map(Channel::new).collect();
     }
 
-    lumis
+    channels
 }
 
 fn convert_coeff_add_fix(
@@ -94,39 +95,95 @@ fn convert_coeff_add_fix(
     comb: &fastNLOPDFLinearCombinations,
     bins: usize,
     alpha: u32,
-    dis_pid: i32,
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
-
-    let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb, dis_pid),
-        vec![Order {
-            alphas: table_as_add_base.GetNpow().try_into().unwrap(),
-            alpha,
-            logxir: 0,
-            logxif: 0,
-        }],
-        (0..=bins)
-            .map(|limit| u16::try_from(limit).unwrap().into())
-            .collect(),
-        SubgridParams::default(),
-    );
 
     // UNWRAP: shouldn't be larger than `2`
     let npdf = usize::try_from(table_as_add_base.GetNPDF()).unwrap();
     assert!(npdf <= 2);
 
-    for index in 0..2 {
-        grid.set_convolution(
-            index,
-            if index < npdf {
-                // TODO: how do we determined the PID/type of the convolution for fixed tables?
-                Convolution::UnpolPDF(2212)
-            } else {
-                Convolution::None
-            },
-        );
-    }
+    // TODO: extract the proper convolution PIDs
+    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); npdf];
+
+    let mut grid = Grid::new(
+        PidBasis::Pdg,
+        reconstruct_channels(table_as_add_base, comb),
+        vec![Order {
+            alphas: table_as_add_base.GetNpow().try_into().unwrap(),
+            alpha,
+            logxir: 0,
+            logxif: 0,
+            logxia: 0,
+        }],
+        (0..=bins)
+            .map(|limit| u16::try_from(limit).unwrap().into())
+            .collect(),
+        convolutions,
+        // TODO: read out interpolation parameters from fastNLO
+        if npdf == 2 {
+            vec![
+                Interp::new(
+                    1e2,
+                    1e8,
+                    40,
+                    3,
+                    ReweightMeth::NoReweight,
+                    Map::ApplGridH0,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+            ]
+        } else {
+            vec![
+                Interp::new(
+                    1e2,
+                    1e8,
+                    40,
+                    3,
+                    ReweightMeth::NoReweight,
+                    Map::ApplGridH0,
+                    InterpMeth::Lagrange,
+                ),
+                Interp::new(
+                    2e-7,
+                    1.0,
+                    50,
+                    3,
+                    ReweightMeth::ApplGridX,
+                    Map::ApplGridF2,
+                    InterpMeth::Lagrange,
+                ),
+            ]
+        },
+        // TODO: change kinematics for DIS
+        if npdf == 2 {
+            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
+        } else {
+            vec![Kinematics::Scale(0), Kinematics::X1]
+        },
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
+    );
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
@@ -155,11 +212,12 @@ fn convert_coeff_add_fix(
                     .map(|q| Mu2 {
                         ren: q * q,
                         fac: q * q,
+                        frg: -1.0,
                     })
                     .collect();
 
                 let mut array =
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
+                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
 
                 // TODO: figure out what the general case is supposed to be
                 assert_eq!(j, 0);
@@ -205,11 +263,15 @@ fn convert_coeff_add_fix(
                 if !array.is_empty() {
                     grid.subgrids_mut()
                         [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
-                        ImportOnlySubgridV2::new(
+                        PackedQ1X2SubgridV1::new(
                             array,
-                            mu2_values,
-                            x1_values.clone(),
-                            x2_values.clone(),
+                            vec![
+                                NodeValues::UseThese(
+                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                ),
+                                NodeValues::UseThese(x1_values.clone()),
+                                NodeValues::UseThese(x2_values.clone()),
+                            ],
                         )
                         .into();
                 }
@@ -221,170 +283,207 @@ fn convert_coeff_add_fix(
 }
 
 fn convert_coeff_add_flex(
-    table: &fastNLOCoeffAddFlex,
-    comb: &fastNLOPDFLinearCombinations,
-    mur_ff: EScaleFunctionalForm,
-    muf_ff: EScaleFunctionalForm,
-    bins: usize,
-    alpha: u32,
-    ipub_units: i32,
-    dis_pid: i32,
+    _table: &fastNLOCoeffAddFlex,
+    _comb: &fastNLOPDFLinearCombinations,
+    _mur_ff: EScaleFunctionalForm,
+    _muf_ff: EScaleFunctionalForm,
+    _bins: usize,
+    _alpha: u32,
+    _ipub_units: i32,
 ) -> Grid {
-    let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
+    todo!()
 
-    let alphas = table_as_add_base.GetNpow().try_into().unwrap();
-    let orders: Vec<_> = [
-        Order::new(alphas, alpha, 0, 0),
-        Order::new(alphas, alpha, 1, 0),
-        Order::new(alphas, alpha, 0, 1),
-        Order::new(alphas, alpha, 2, 0),
-        Order::new(alphas, alpha, 0, 2),
-        Order::new(alphas, alpha, 1, 1),
-    ]
-    .into_iter()
-    .take(match table.GetNScaleDep() {
-        0..=4 => 1,
-        5 => 3,
-        6 => 4,
-        7 => 6,
-        _ => unimplemented!(),
-    })
-    .collect();
-    let orders_len = orders.len();
+    // let table_as_add_base = ffi::downcast_coeff_add_flex_to_base(table);
 
-    let mut grid = Grid::new(
-        create_lumi(table_as_add_base, comb, dis_pid),
-        orders,
-        (0..=bins)
-            .map(|limit| u16::try_from(limit).unwrap().into())
-            .collect(),
-        SubgridParams::default(),
-    );
+    // let alphas = table_as_add_base.GetNpow().try_into().unwrap();
+    // let orders: Vec<_> = [
+    //     Order::new(alphas, alpha, 0, 0, 0),
+    //     Order::new(alphas, alpha, 1, 0, 0),
+    //     Order::new(alphas, alpha, 0, 1, 0),
+    //     Order::new(alphas, alpha, 2, 0, 0),
+    //     Order::new(alphas, alpha, 0, 2, 0),
+    //     Order::new(alphas, alpha, 1, 1, 0),
+    // ]
+    // .into_iter()
+    // .take(match table.GetNScaleDep() {
+    //     0..=4 => 1,
+    //     5 => 3,
+    //     6 => 4,
+    //     7 => 6,
+    //     _ => unimplemented!(),
+    // })
+    // .collect();
+    // let orders_len = orders.len();
 
-    let npdf = table_as_add_base.GetNPDF();
-    assert!(npdf <= 2);
+    // let npdf = table_as_add_base.GetNPDF();
+    // assert!(npdf <= 2);
 
-    for index in 0..2 {
-        grid.set_convolution(
-            // UNWRAP: index is smaller than 2
-            index.try_into().unwrap(),
-            if index < npdf {
-                Convolution::UnpolPDF(table.GetPDFPDG(index))
-            } else {
-                Convolution::None
-            },
-        );
-    }
+    // let convolutions = (0..2)
+    //     .map(|index| {
+    //         if index < npdf {
+    //             Convolution::UnpolPDF(table.GetPDFPDG(index))
+    //         } else {
+    //             Convolution::None
+    //         }
+    //     })
+    //     .collect();
 
-    let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
+    // let mut grid = Grid::new(
+    //     PidBasis::Pdg,
+    //     reconstruct_channels(table_as_add_base, comb, dis_pid),
+    //     orders,
+    //     (0..=bins)
+    //         .map(|limit| u16::try_from(limit).unwrap().into())
+    //         .collect(),
+    //     convolutions,
+    //     // TODO: read out interpolation parameters from fastNLO
+    //     vec![
+    //         Interp::new(
+    //             1e2,
+    //             1e8,
+    //             40,
+    //             3,
+    //             ReweightMeth::NoReweight,
+    //             Map::ApplGridH0,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //         Interp::new(
+    //             2e-7,
+    //             1.0,
+    //             50,
+    //             3,
+    //             ReweightMeth::ApplGridX,
+    //             Map::ApplGridF2,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //         Interp::new(
+    //             2e-7,
+    //             1.0,
+    //             50,
+    //             3,
+    //             ReweightMeth::ApplGridX,
+    //             Map::ApplGridF2,
+    //             InterpMeth::Lagrange,
+    //         ),
+    //     ],
+    //     // TODO: change kinematics for DIS
+    //     vec![
+    //         Kinematics::Scale(0),
+    //         Kinematics::Scale(1),
+    //         Kinematics::X1,
+    //         Kinematics::X2,
+    //     ],
+    //     Scales {
+    //         ren: todo!(),
+    //         fac: todo!(),
+    //         frg: ScaleFuncForm::NoScale,
+    //     },
+    // );
 
-    for obs in 0..bins {
-        let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
-        let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
-        let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
-        let x2_values = if npdf > 1 {
-            ffi::GetXNodes2(table_as_add_base, obs.try_into().unwrap())
-        } else {
-            vec![1.0]
-        };
+    // let rescale = 0.1_f64.powi(table.GetIXsectUnits() - ipub_units);
 
-        let mu2_values: Vec<_> = scale_nodes1
-            .iter()
-            .cartesian_product(scale_nodes2.iter())
-            .map(|(&s1, &s2)| Mu2 {
-                ren: mur_ff.compute_scale(s1, s2),
-                fac: muf_ff.compute_scale(s1, s2),
-            })
-            .collect();
-        let nx = ffi::GetNx(table, obs);
+    // for obs in 0..bins {
+    //     let scale_nodes1 = ffi::GetScaleNodes1(table, obs.try_into().unwrap());
+    //     let scale_nodes2 = ffi::GetScaleNodes2(table, obs.try_into().unwrap());
+    //     let x1_values = ffi::GetXNodes1(table_as_add_base, obs.try_into().unwrap());
+    //     let x2_values = if npdf > 1 {
+    //         ffi::GetXNodes2(table_as_add_base, obs.try_into().unwrap())
+    //     } else {
+    //         vec![1.0]
+    //     };
 
-        for subproc in 0..table_as_add_base.GetNSubproc() {
-            let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
-            let mut arrays =
-                vec![
-                    SparseArray3::new(mu2_values.len(), x1_values.len(), x2_values.len());
-                    orders_len
-                ];
+    //     let mu2_values: Vec<_> = scale_nodes1
+    //         .iter()
+    //         .cartesian_product(scale_nodes2.iter())
+    //         .map(|(&s1, &s2)| Mu2 {
+    //             ren: mur_ff.compute_scale(s1, s2),
+    //             fac: muf_ff.compute_scale(s1, s2),
+    //             frg: -1.0,
+    //         })
+    //         .collect();
+    //     let nx = ffi::GetNx(table, obs);
 
-            for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
-                .cartesian_product(0..scale_nodes2.len())
-                .enumerate()
-            {
-                let logmur2 = mu2_values[mu2_slice].ren.ln();
-                let logmuf2 = mu2_values[mu2_slice].fac.ln();
-                let logs00 = [
-                    logmur2,
-                    logmuf2,
-                    logmur2 * logmur2,
-                    logmuf2 * logmuf2,
-                    logmur2 * logmuf2,
-                ];
-                let logs10 = [2.0 * logmur2, 0.0, logmuf2];
-                let logs01 = [0.0, 2.0 * logmuf2, logmur2];
+    //     for subproc in 0..table_as_add_base.GetNSubproc() {
+    //         let factor = rescale / table_as_add_base.GetNevt(obs.try_into().unwrap(), subproc);
+    //         let mut arrays =
+    //             vec![
+    //                 PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
+    //                 orders_len
+    //             ];
 
-                for ix in 0..nx {
-                    // TODO: is this always correct? Isn't there a member function for it?
-                    let ix1 = ix % x1_values.len();
-                    let ix2 = ix / x1_values.len();
-                    let mut values = [0.0; 6];
+    //         for (mu2_slice, (is1, is2)) in (0..scale_nodes1.len())
+    //             .cartesian_product(0..scale_nodes2.len())
+    //             .enumerate()
+    //         {
+    //             let logmur2 = mu2_values[mu2_slice].ren.ln();
+    //             let logmuf2 = mu2_values[mu2_slice].fac.ln();
+    //             let logs00 = [
+    //                 logmur2,
+    //                 logmuf2,
+    //                 logmur2 * logmur2,
+    //                 logmuf2 * logmuf2,
+    //                 logmur2 * logmuf2,
+    //             ];
+    //             let logs10 = [2.0 * logmur2, 0.0, logmuf2];
+    //             let logs01 = [0.0, 2.0 * logmuf2, logmur2];
 
-                    for (index, value) in values.iter_mut().enumerate().take(orders_len) {
-                        *value = ffi::GetSigmaTilde(table, index, obs, ix, is1, is2, subproc);
-                    }
+    //             for ix in 0..nx {
+    //                 // TODO: is this always correct? Isn't there a member function for it?
+    //                 let ix1 = ix % x1_values.len();
+    //                 let ix2 = ix / x1_values.len();
+    //                 let mut values = [0.0; 6];
 
-                    values[0] += values[1..]
-                        .iter()
-                        .zip(logs00.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
-                    values[1] += values[3..]
-                        .iter()
-                        .zip(logs10.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
-                    values[2] += values[3..]
-                        .iter()
-                        .zip(logs01.iter())
-                        .map(|(value, log)| value * log)
-                        .sum::<f64>();
+    //                 for (index, value) in values.iter_mut().enumerate().take(orders_len) {
+    //                     *value = ffi::GetSigmaTilde(table, index, obs, ix, is1, is2, subproc);
+    //                 }
 
-                    for (value, array) in values
-                        .iter()
-                        .copied()
-                        .zip(arrays.iter_mut())
-                        .filter(|(value, _)| *value != 0.0)
-                    {
-                        array[[mu2_slice, ix1, ix2]] =
-                            value * factor * x1_values[ix1] * x2_values[ix2];
-                    }
-                }
-            }
+    //                 values[0] += values[1..]
+    //                     .iter()
+    //                     .zip(logs00.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
+    //                 values[1] += values[3..]
+    //                     .iter()
+    //                     .zip(logs10.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
+    //                 values[2] += values[3..]
+    //                     .iter()
+    //                     .zip(logs01.iter())
+    //                     .map(|(value, log)| value * log)
+    //                     .sum::<f64>();
 
-            for (subgrid, array) in grid
-                .subgrids_mut()
-                .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
-                .iter_mut()
-                .zip(arrays.into_iter())
-            {
-                if array.is_empty() {
-                    continue;
-                }
+    //                 for (value, array) in values
+    //                     .iter()
+    //                     .copied()
+    //                     .zip(arrays.iter_mut())
+    //                     .filter(|(value, _)| *value != 0.0)
+    //                 {
+    //                     array[[mu2_slice, ix1, ix2]] =
+    //                         value * factor * x1_values[ix1] * x2_values[ix2];
+    //                 }
+    //             }
+    //         }
 
-                *subgrid = ImportOnlySubgridV2::new(
-                    array,
-                    mu2_values.clone(),
-                    x1_values.clone(),
-                    x2_values.clone(),
-                )
-                .into();
-            }
-        }
-    }
+    //         for (subgrid, array) in grid
+    //             .subgrids_mut()
+    //             .slice_mut(s![.., obs, usize::try_from(subproc).unwrap()])
+    //             .iter_mut()
+    //             .zip(arrays.into_iter())
+    //         {
+    //             if array.is_empty() {
+    //                 continue;
+    //             }
 
-    grid
+    //             *subgrid = PackedQ1X2SubgridV1::new(array, todo!()).into();
+    //         }
+    //     }
+    // }
+
+    // grid
 }
 
-pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> Result<Grid> {
+pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 
@@ -425,7 +524,6 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
                     bins,
                     alpha,
                     file_as_table.GetIpublunits(),
-                    dis_pid,
                 ));
             }
         } else {
@@ -434,7 +532,6 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
                 linear_combinations,
                 bins,
                 alpha,
-                dis_pid,
             ));
         }
     }
@@ -469,14 +566,18 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32, dis_pid: i32) -> 
 
     assert_eq!(labels.len(), dimensions);
 
-    for (dimension, label) in labels.iter().enumerate() {
-        result.set_key_value(&format!("x{}_label", dimension + 1), label);
+    for (dimension, label) in labels.into_iter().enumerate() {
+        result
+            .metadata_mut()
+            .insert(format!("x{}_label", dimension + 1), label);
     }
 
-    result.set_key_value("y_label", &ffi::GetXSDescr(file_as_table));
-    result.set_key_value(
-        "fastnlo_scenario",
-        &ffi::GetScDescr(file_as_table).join("\n"),
+    result
+        .metadata_mut()
+        .insert("y_label".to_owned(), ffi::GetXSDescr(file_as_table));
+    result.metadata_mut().insert(
+        "fastnlo_scenario".to_owned(),
+        ffi::GetScDescr(file_as_table).join("\n"),
     );
 
     Ok(result)
