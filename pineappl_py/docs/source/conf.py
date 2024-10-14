@@ -7,26 +7,24 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import pineappl
-import sys
-import pathlib
 
-project = 'pineappl'
-copyright = '2020–2024, the PineAPPL team'
-author = 'the PineAPPL team'
+project = "pineappl"
+copyright = "2020–2024, the PineAPPL team"
+author = "the PineAPPL team"
 release = pineappl.version
 version = release
 
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.todo',
-    'sphinx_rtd_theme',
-    'nbsphinx',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx_rtd_theme",
+    "nbsphinx",
 ]
 
 
@@ -34,14 +32,14 @@ extlinks = {
     "rustdoc": ("https://docs.rs/pineappl/latest/pineappl/%s", "PineAPPL - %s"),
 }
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
 
 
 # TODO: find a way to reactivate apidoc, which doesn't seem to work for the moment.

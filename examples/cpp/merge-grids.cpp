@@ -41,4 +41,3 @@ int main(int argc, char* argv[]) {
     pineappl_grid_delete(clone);
     pineappl_grid_delete(grid1);
 }
-
