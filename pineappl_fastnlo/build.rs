@@ -65,7 +65,7 @@ fn main() {
         .file("src/fastnlo.cpp")
         .include(fnlo_include_path.trim())
         .includes(lhapdf_include_paths)
-        .std("c++17") // apparently not supported by MSVC, but fastNLO probably can't be compiled on Windows
+        .std("c++17")
         .compile("fnlo-bridge");
 
     println!("cargo:rerun-if-changed=src/lib.rs");

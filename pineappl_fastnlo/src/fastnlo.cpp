@@ -1,6 +1,7 @@
 #include "pineappl_fastnlo/src/fastnlo.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
 #include <string>
 
@@ -63,6 +64,156 @@ std::unique_ptr<fastNLOLHAPDF> make_fastnlo_lhapdf_with_name_file_set(
     std::string arg1(LHAPDFfile.begin(), LHAPDFfile.end());
 
     return std::unique_ptr<fastNLOLHAPDF>(new fastNLOLHAPDF(arg0, arg1, PDFSet));
+}
+
+std::unique_ptr<fastNLOCreate> make_fastnlo_create(
+    int alphas_lo,
+    rust::Slice<rust::Vec<double> const> left_bin_limits,
+    rust::Slice<rust::Vec<double> const> right_bin_limits,
+    rust::Slice<double const> normalizations,
+    int lo_channels,
+    int nlo_channels,
+    int nnlo_channels,
+    rust::Slice<int const> convolutions,
+    rust::Slice<rust::Vec<pair_int_int> const> channels
+) {
+    assert(left_bin_limits.size() == right_bin_limits.size());
+    auto const bins = left_bin_limits.size();
+    assert(bins == normalizations.size());
+    assert(bins > 0);
+    auto const dimensions = left_bin_limits.at(0).size();
+    assert(dimensions > 0);
+    assert(convolutions.size() <= 2);
+    assert(convolutions.size() >= 1);
+
+    std::vector<std::vector<double>> bin_limits(dimensions);
+
+    // TODO: check if this is the right ordering
+    for (std::size_t i = 0; i != dimensions; ++i) {
+        assert(left_bin_limits.at(i).size() == dimensions);
+        assert(right_bin_limits.at(i).size() == dimensions);
+
+        //bin_limits.at(i).resize(2 * limits);
+
+        //for (std::size_t j = 0; j != limits; ++j) {
+        //    bin_limits.at(i).at(2 * j + 0) = left_bin_limits.at(j).at(i);
+        //    bin_limits.at(i).at(2 * j + 1) = right_bin_limits.at(j).at(i);
+        //}
+        bin_limits.at(i).resize(bins + 1);
+        bin_limits.at(i).at(0) = left_bin_limits.at(0).front();
+
+        for (std::size_t j = 0; j != bins; ++j) {
+            bin_limits.at(i).at(j + 1) = right_bin_limits.at(j).at(i);
+        }
+    }
+
+    fastNLO::GeneratorConstants gconst;
+    // TODO: add PineAPPL's version number
+    gconst.Name = "PineAPPL-fastNLO interface";
+
+    fastNLO::ProcessConstants pconst;
+    pconst.LeadingOrder = alphas_lo;
+    pconst.NPDF = convolutions.size();
+    pconst.NSubProcessesLO = lo_channels;
+    pconst.NSubProcessesNLO = nlo_channels;
+    pconst.NSubProcessesNNLO = nnlo_channels;
+
+    if (convolutions.size() == 1) {
+        pconst.IPDFdef1 = 2;
+    } else {
+        pconst.IPDFdef1 = 3;
+    }
+
+    // TODO: is this the correct value to set the linear combinations ourselves?
+    pconst.IPDFdef2 = 0;
+    pconst.IPDFdef3LO = 2;
+    pconst.IPDFdef3NLO = 0;
+    pconst.IPDFdef3NNLO = 0;
+
+    if (convolutions.size() == 1) {
+        // TODO: not yet implemented
+        assert(false);
+    } else {
+        pconst.NPDFDim = 2;
+    }
+
+    std::vector<std::vector<std::pair<int, int>>> linear_combinations(channels.size());
+    for (std::size_t i = 0; i != channels.size(); ++i) {
+        std::vector<std::pair<int, int>> entries(channels.at(i).size());
+        for (std::size_t j = 0; j != channels.at(i).size(); ++j) {
+            auto const first = channels.at(i).at(j).first;
+            auto const second = channels.at(i).at(j).second;
+            entries.at(j) = std::make_pair(first, second);
+        }
+        linear_combinations.at(i) = entries;
+    }
+    pconst.PDFCoeffLO = linear_combinations;
+
+    fastNLO::ScenarioConstants sconst;
+    sconst.DifferentialDimension = dimensions;
+    sconst.DimensionIsDifferential = std::vector<int>(dimensions, 0);
+    sconst.CalculateBinSize = false;
+    sconst.BinSize = std::vector<double>(normalizations.begin(), normalizations.end());
+
+    switch (sconst.DifferentialDimension) {
+        case 1:
+            sconst.SingleDifferentialBinning = bin_limits.at(0);
+            break;
+
+        case 2:
+            sconst.DoubleDifferentialBinning = bin_limits;
+            break;
+
+        case 3:
+            sconst.TripleDifferentialBinning = bin_limits;
+            break;
+
+        default:
+            // ASSERT: there are no or too many dimensions, which fastNLO doesn't support
+            assert(false);
+    }
+    sconst.FlexibleScaleTable = true;
+
+    if (convolutions.size() == 1) {
+        sconst.PDF1 = convolutions.at(0);
+        // TODO: do we leave PDF2 unchanged (set to 'proton') for DIS?
+    } else {
+        sconst.PDF1 = convolutions.at(0);
+        sconst.PDF2 = convolutions.at(1);
+    }
+
+    sconst.ReadBinningFromSteering = true;
+    sconst.IgnoreWarmupBinningCheck = true;
+    sconst.X_NNodeCounting = "NodesPerBin";
+    sconst.Mu1_NNodeCounting = "NodesPerBin";
+    sconst.Mu2_NNodeCounting = "NodesPerBin";
+
+    fastNLO::WarmupConstants wconst(sconst);
+    wconst.Binning = bin_limits;
+
+    // these values are probably irrelevant but must nevertheless given
+    wconst.Values.resize(bins, std::vector<double>{
+        // bin index
+        0,
+        // x-min
+        2e-7,
+        // x-max
+        1.0,
+        // scale1-min
+        10.0,
+        // scale1-max
+        100.0,
+        // scale2-min
+        10.0,
+        // scale2-max
+        100.0
+    });
+    for (std::size_t i = 0; i != wconst.Values.size(); ++i) {
+        wconst.Values.at(i).at(0) = static_cast <double> (i);
+    }
+    // wconst.headerValues = ;
+
+    return std::unique_ptr<fastNLOCreate>(new fastNLOCreate(gconst, pconst, sconst, wconst));
 }
 
 rust::Vec<double> GetCrossSection(fastNLOReader& reader, bool lNorm)
