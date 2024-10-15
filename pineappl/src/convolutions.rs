@@ -4,6 +4,7 @@ use super::boc::Kinematics;
 use super::grid::Grid;
 use super::pids;
 use super::subgrid::{NodeValues, Subgrid};
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -82,123 +83,48 @@ impl<'a> ConvolutionCache<'a> {
         let mut x_grid: Vec<_> = grid
             .subgrids()
             .iter()
-            .filter_map(|subgrid| {
-                if subgrid.is_empty() {
-                    None
-                } else {
-                    let vec: Vec<_> = grid
-                        .kinematics()
-                        .iter()
-                        .zip(subgrid.node_values())
-                        .filter(|(kin, _)| matches!(kin, Kinematics::X(_)))
-                        .flat_map(|(_, node_values)| node_values.values())
-                        .collect();
-                    Some(vec)
-                }
+            .filter(|subgrid| !subgrid.is_empty())
+            .flat_map(|subgrid| {
+                grid.kinematics()
+                    .iter()
+                    .zip(subgrid.node_values())
+                    .filter(|(kin, _)| matches!(kin, Kinematics::X(_)))
+                    .flat_map(|(_, node_values)| node_values.values())
             })
-            .flatten()
             .collect();
         x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         x_grid.dedup();
 
-        let mut mur2_grid: Vec<_> = grid
+        let (mut mur2_grid, mut muf2_grid, mut mua2_grid): (Vec<_>, Vec<_>, Vec<_>) = grid
             .subgrids()
             .iter()
-            .filter_map(|subgrid| {
-                if subgrid.is_empty() {
-                    None
-                } else {
-                    Some(
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                // TODO: generalize this for arbitrary scales
-                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
-                    )
-                }
+            .filter(|subgrid| !subgrid.is_empty())
+            .flat_map(|subgrid| {
+                grid.kinematics()
+                    .iter()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        // TODO: generalize this for arbitrary scales
+                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
+                    })
+                    // UNWRAP: the `Grid` constructor should guarantee all scales are available
+                    .unwrap_or_else(|| unreachable!())
+                    .values()
             })
-            .flatten()
-            .flat_map(|ren| {
+            .flat_map(|val| {
                 xi.iter()
-                    .map(|(xir, _, _)| xir * xir * ren)
-                    .collect::<Vec<_>>()
+                    .map(move |(xir, xif, xia)| (xir * xir * val, xif * xif * val, xia * xia * val))
             })
-            .collect();
+            .multiunzip();
+
         mur2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         mur2_grid.dedup();
-
-        let mut muf2_grid: Vec<_> = grid
-            .subgrids()
-            .iter()
-            .filter_map(|subgrid| {
-                if subgrid.is_empty() {
-                    None
-                } else {
-                    Some(
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                // TODO: generalize this for arbitrary scales
-                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
-                    )
-                }
-            })
-            .flatten()
-            .flat_map(|fac| {
-                xi.iter()
-                    .map(|(_, xif, _)| xif * xif * fac)
-                    .collect::<Vec<_>>()
-            })
-            .collect();
         muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         muf2_grid.dedup();
-
-        let mut mua2_grid: Vec<_> = grid
-            .subgrids()
-            .iter()
-            .filter_map(|subgrid| {
-                if subgrid.is_empty() {
-                    None
-                } else {
-                    Some(
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                // TODO: generalize this for arbitrary scales
-                                matches!(kin, &Kinematics::Scale(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
-                    )
-                }
-            })
-            .flatten()
-            .flat_map(|frg| {
-                xi.iter()
-                    .map(|(_, _, xia)| xia * xia * frg)
-                    .collect::<Vec<_>>()
-            })
-            .collect();
         mua2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
         mua2_grid.dedup();
 
         self.alphas_cache = mur2_grid.iter().map(|&mur2| (self.alphas)(mur2)).collect();
-
         self.mur2_grid = mur2_grid;
         self.muf2_grid = muf2_grid;
         self.mua2_grid = mua2_grid;
