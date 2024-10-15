@@ -295,14 +295,9 @@ impl Grid {
 
                     for entry in channel.entry() {
                         // TODO: we assume `idx` to be ordered as scale, x1, x2
-                        let fx_prod = convolution_cache.fx_prod(&entry.0, &idx);
+                        let fx_prod = convolution_cache.as_fx_prod(&entry.0, order.alphas, &idx);
                         lumi += fx_prod * entry.1;
                     }
-
-                    // TODO: we assume `idx` to be ordered as scale, x1, x2
-                    let alphas = convolution_cache.alphas(idx[0]);
-
-                    lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
                     value += lumi * v;
                 }
@@ -371,13 +366,9 @@ impl Grid {
             for entry in channel.entry() {
                 debug_assert_eq!(entry.0.len(), 2);
                 // TODO: we assume `idx` to be ordered as scale, x1, x2
-                let fx_prod = convolution_cache.fx_prod(&entry.0, &idx);
+                let fx_prod = convolution_cache.as_fx_prod(&entry.0, order.alphas, &idx);
                 lumi += fx_prod * entry.1;
             }
-
-            let alphas = convolution_cache.alphas(idx[0]);
-
-            lumi *= alphas.powi(order.alphas.try_into().unwrap());
 
             array[idx.as_slice()] = lumi * value;
         }

@@ -134,7 +134,7 @@ impl<'a> ConvolutionCache<'a> {
     }
 
     /// TODO
-    pub fn fx_prod(&mut self, pdg_ids: &[i32], indices: &[usize]) -> f64 {
+    pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u32, indices: &[usize]) -> f64 {
         // TODO: here we assume that
         // - indices[0] is the (squared) factorization scale,
         // - indices[1] is x1 and
@@ -169,14 +169,8 @@ impl<'a> ConvolutionCache<'a> {
                     xfx(pid, x, mu2) / x
                 })
             })
-            .product()
-    }
-
-    /// Return the strong coupling for the renormalization scale set with [`LumiCache::set_grids`],
-    /// in the grid `mu2_grid` at the index `imu2`.
-    #[must_use]
-    pub fn alphas(&self, imu2: usize) -> f64 {
-        self.alphas_cache[self.imur2[imu2]]
+            .product::<f64>()
+            * self.alphas_cache[self.imur2[indices[0]]].powi(as_order.try_into().unwrap())
     }
 
     /// Clears the cache.
