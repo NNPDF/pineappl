@@ -1,7 +1,7 @@
 //! Interface for bins, orders and channels.
 
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
@@ -42,6 +42,35 @@ impl PyChannel {
     #[must_use]
     pub fn into_array(&self) -> Vec<(Vec<i32>, f64)> {
         self.entry.entry().to_vec()
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl`.
+#[pyclass(name = "Kinematics")]
+#[repr(transparent)]
+pub struct PyKinematics {
+    pub(crate) kinematics: Kinematics,
+}
+
+impl PyKinematics {
+    pub(crate) const fn new(kinematics: Kinematics) -> Self {
+        Self { kinematics }
+    }
+}
+
+#[pymethods]
+impl PyKinematics {
+    /// Constructor.
+    #[new]
+    #[must_use]
+    pub const fn new_kin(kinematic: usize) -> Self {
+        let kins = match kinematic {
+            0 => Kinematics::Scale(0),
+            1 => Kinematics::X(0),
+            2 => Kinematics::X(1),
+            _ => todo!(),
+        };
+        Self::new(kins)
     }
 }
 
@@ -152,5 +181,6 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     );
     m.add_class::<PyChannel>()?;
     m.add_class::<PyOrder>()?;
+    m.add_class::<PyKinematics>()?;
     parent_module.add_submodule(&m)
 }

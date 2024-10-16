@@ -16,7 +16,7 @@ pub mod subgrid;
 
 /// PyO3 Python module that contains all exposed classes from Rust.
 #[pymodule]
-fn vector_length_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     bin::register(m)?;
     boc::register(m)?;
     evolution::register(m)?;
