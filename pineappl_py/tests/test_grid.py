@@ -2,32 +2,78 @@ import numpy as np
 import pytest
 
 import pineappl
+from pineappl.pids import PidBasis
+from pineappl.boc import Channel, Kinematics
+from pineappl.grid import Order, Grid
+from pineappl.convolutions import Conv, ConvType
+from pineappl.interpolation import Interp
 
 
 class TestOrder:
     def test_init(self):
-        args = (2, 1, 0, 1)
+        args = (2, 1, 0, 1, 0)
         o = pineappl.grid.Order(*args)
 
-        assert isinstance(o, pineappl.grid.Order)
+        assert isinstance(o, Order)
         assert o.as_tuple() == args
 
 
 class TestGrid:
     def fake_grid(self, bins=None):
-        channels = [pineappl.boc.Channel([(1, 21, 0.1)])]
-        orders = [pineappl.grid.Order(3, 0, 0, 0)]
+        channels = [Channel([([1, 21], 0.1)])]
+        orders = [Order(3, 0, 0, 0, 0)]
+        # Construct the type of convolutions and the convolution object
+        convtype = ConvType(polarized=False, time_like=False)
+        conv = Conv(conv_type=convtype, pid=2212)
+        # We assume symmetrical proton-proton in the initial state
+        convolutions = [conv, conv]
+        # Define the kinematics. Kinematics are defined as a list of items.
+        # 1st item: factorization and renormalization scale
+        # 2nd item: parton momentum fraction of the 1st convolution
+        # 3rd tiem: parton momentum fraction of the 2nd convolution
+        kinematics = [
+            Kinematics(0),  # Scale
+            Kinematics(1),  # x1 momentum fraction
+            Kinematics(2),  # x2 momentum fraction
+        ]
+        # Define the interpolation specs for each item of the Kinematics
+        interpolations = [
+            Interp(
+                min=1e2,
+                max=1e8,
+                nodes=40,
+                order=3,
+            ),  # Interpolation on the Scale
+            Interp(
+                min=2e-7,
+                max=1.0,
+                nodes=50,
+                order=3,
+            ),  # Interpolation on x1 momentum fraction
+            Interp(
+                min=2e-7,
+                max=1.0,
+                nodes=50,
+                order=3,
+            ),  # Interpolation on x2 momentum fraction
+        ]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
-        subgrid_params = pineappl.subgrid.SubgridParams()
-        g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)
+        g = pineappl.grid.Grid(
+            pid_basis=PidBasis.Evol,
+            channels=channels,
+            orders=orders,
+            bin_limits=bin_limits,
+            convolutions=convolutions,
+            interpolations=interpolations,
+            kinematics=kinematics,
+        )
         return g
 
     def test_init(self):
         g = self.fake_grid()
-        assert isinstance(g, pineappl.grid.Grid)
-        # orders
+        assert isinstance(g, Grid)
         assert len(g.orders()) == 1
-        assert g.orders()[0].as_tuple() == (3, 0, 0, 0)
+        assert g.orders()[0].as_tuple() == (3, 0, 0, 0, 0)
 
     def test_set_subgrid(self):
         g = self.fake_grid()
@@ -116,28 +162,26 @@ class TestGrid:
 
     def test_fill(self):
         g = self.fake_grid()
-        g.fill(0.5, 0.5, 10.0, 0, 0.01, 0, 10.0)
-        res = g.convolve_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
-        pytest.approx(res) == 0.0
-
-    def test_fill_array(self):
-        g = self.fake_grid()
-        g.fill_array(
-            np.array([0.5, 1.0]),
-            np.array([0.5, 1.0]),
-            np.array([0.5, 1.0]),
-            0,
-            np.array([1e-3, 1e-2]),
-            0,
-            np.array([10.0, 100.0]),
+        # Fill the Grid with some values
+        n_tuple = [0.5, 0.5, 10.0]
+        g.fill(
+            order=0,
+            observable=0.01,
+            channel=0,
+            ntuple=n_tuple,
+            weight=10,
         )
-        res = g.convolve_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
-        pytest.approx(res) == 0.0
-
-    def test_fill_all(self):
-        g = self.fake_grid()
-        g.fill_all(1.0, 1.0, 1.0, 0, 1e-2, np.array([10.0]))
-        res = g.convolve_with_one(2212, lambda pid, x, q2: x, lambda q2: 1.0)
+        # Construct the type of convolutions and the convolution object
+        convtype = ConvType(polarized=False, time_like=False)
+        conv = Conv(conv_type=convtype, pid=2212)
+        # Peform convolutions using Toy LHPDF & AlphasQ2 functions
+        res = g.convolve_with_two(
+            pdg_conv1=conv,
+            xfx1=lambda pid, x, q2: x,
+            pdg_conv2=conv,
+            xfx2=lambda pid, x, q2: x,
+            alphas=lambda q2: 1.0,
+        )
         pytest.approx(res) == 0.0
 
     def test_merge(self):

@@ -121,13 +121,16 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
     #[must_use]
-    pub const fn as_tuple(&self) -> (u32, u32, u32, u32) {
+    pub const fn as_tuple(&self) -> (u32, u32, u32, u32, u32) {
         (
             self.order.alphas,
             self.order.alpha,
             self.order.logxir,
             self.order.logxif,
+            self.order.logxia,
         )
     }
 
@@ -177,7 +180,7 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3::py_run!(
         parent_module.py(),
         m,
-        "import sys; sys.modules['pineappl.channel'] = m"
+        "import sys; sys.modules['pineappl.boc'] = m"
     );
     m.add_class::<PyChannel>()?;
     m.add_class::<PyOrder>()?;

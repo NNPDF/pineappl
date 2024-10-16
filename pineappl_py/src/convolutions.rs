@@ -63,7 +63,7 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3::py_run!(
         parent_module.py(),
         m,
-        "import sys; sys.modules['vector_length_module.convolutions'] = m"
+        "import sys; sys.modules['pineappl.convolutions'] = m"
     );
     m.add_class::<PyConvType>()?;
     m.add_class::<PyConv>()?;

@@ -44,7 +44,7 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3::py_run!(
         parent_module.py(),
         m,
-        "import sys; sys.modules['vector_length_module.interpolation'] = m"
+        "import sys; sys.modules['pineappl.interpolation'] = m"
     );
     m.add_class::<PyInterp>()?;
     parent_module.add_submodule(&m)
