@@ -16,6 +16,10 @@ pub struct PyBinRemapper {
 impl PyBinRemapper {
     /// Constructor.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// normalizations : list(float)
@@ -23,6 +27,8 @@ impl PyBinRemapper {
     /// limits : list(tuple(float, float))
     ///     bin limits
     #[new]
+    #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
         Self {
             bin_remapper: BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap(),
@@ -31,6 +37,9 @@ impl PyBinRemapper {
 }
 
 /// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "bin")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Binning interface.")?;

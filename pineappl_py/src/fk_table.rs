@@ -1,12 +1,12 @@
 //! FK table interface.
 
+use super::convolutions::PyConv;
 use super::grid::PyGrid;
-use numpy::{IntoPyArray, PyArray1, PyArray4, PyArrayMethods, PyReadonlyArray1};
-use pineappl::convolutions::LumiCache;
+use numpy::{IntoPyArray, PyArray1, PyArrayDyn, PyArrayMethods, PyReadonlyArray1};
+use pineappl::convolutions::ConvolutionCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
 use pyo3::prelude::*;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -29,9 +29,12 @@ pub struct PyFkAssumptions {
 #[pymethods]
 impl PyFkAssumptions {
     /// Constructor.
+    /// # Panics
+    /// TODO
     #[new]
+    #[must_use]
     pub fn new(assumption: &str) -> Self {
-        PyFkAssumptions {
+        Self {
             fk_assumptions: FkAssumptions::from_str(assumption).unwrap(),
         }
     }
@@ -40,7 +43,10 @@ impl PyFkAssumptions {
 #[pymethods]
 impl PyFkTable {
     /// Constructor from an existing grid.
+    /// # Panics
+    /// TODO
     #[new]
+    #[must_use]
     pub fn new(grid: PyGrid) -> Self {
         Self {
             fk_table: FkTable::try_from(grid.grid).unwrap(),
@@ -48,6 +54,9 @@ impl PyFkTable {
     }
 
     /// Read from given path.
+    /// # Panics
+    /// TODO
+    #[must_use]
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
         Self {
@@ -60,11 +69,14 @@ impl PyFkTable {
 
     /// Get cross section tensor.
     ///
+    /// # Errors
+    /// TODO
+    ///
     /// Returns
     /// -------
     /// numpy.ndarray :
     ///     4-dimensional tensor with indixes: bin, channel, x1, x2
-    pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray4<f64>>> {
+    pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArrayDyn<f64>>> {
         Ok(self.fk_table.table().into_pyarray_bound(py))
     }
 
@@ -74,6 +86,7 @@ impl PyFkTable {
     /// -------
     /// int :
     ///     number of bins
+    #[must_use]
     pub fn bins(&self) -> usize {
         self.fk_table.grid().bin_info().bins()
     }
@@ -84,6 +97,7 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray
     ///     bin normalizations
+    #[must_use]
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table
             .grid()
@@ -100,6 +114,7 @@ impl PyFkTable {
     /// -------
     /// int :
     ///     bin dimension
+    #[must_use]
     pub fn bin_dimensions(&self) -> usize {
         self.fk_table.grid().bin_info().dimensions()
     }
@@ -115,6 +130,7 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     left edges of bins
+    #[must_use]
     pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table
             .grid()
@@ -134,6 +150,7 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     right edges of bins
+    #[must_use]
     pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table
             .grid()
@@ -142,35 +159,14 @@ impl PyFkTable {
             .into_pyarray_bound(py)
     }
 
-    /// Get metadata values.
-    ///
-    /// Returns
-    /// -------
-    /// dict :
-    ///     key, value map
-    pub fn key_values(&self) -> HashMap<String, String> {
-        self.fk_table.grid().key_values().unwrap().clone()
-    }
-
-    /// Set a metadata key-value pair.
-    ///
-    /// Parameters
-    /// ----------
-    /// key : str
-    ///     key
-    /// value : str
-    ///     value
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.fk_table.set_key_value(key, value);
-    }
-
     /// Get channels.
     ///
     /// Returns
     /// -------
     /// list(tuple(float,float)) :
     ///     channel functions as pid tuples
-    pub fn channels(&self) -> Vec<(i32, i32)> {
+    #[must_use]
+    pub fn channels(&self) -> Vec<Vec<i32>> {
         self.fk_table.channels()
     }
 
@@ -180,6 +176,7 @@ impl PyFkTable {
     /// -------
     /// float :
     ///     reference scale
+    #[must_use]
     pub fn muf2(&self) -> f64 {
         self.fk_table.muf2()
     }
@@ -190,11 +187,15 @@ impl PyFkTable {
     /// -------
     /// x_grid : numpy.ndarray(float)
     ///     interpolation grid
+    #[must_use]
     pub fn x_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table.x_grid().into_pyarray_bound(py)
     }
 
     /// Write to file.
+    ///
+    /// # Panics
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -209,6 +210,9 @@ impl PyFkTable {
 
     /// Write to file using lz4.
     ///
+    /// # Panics
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// path : str
@@ -222,6 +226,9 @@ impl PyFkTable {
 
     /// Convolve with a single distribution.
     ///
+    /// # Panics
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// pdg_id : integer
@@ -233,10 +240,12 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
-    #[pyo3(signature = (pdg_id, xfx, bin_indices = None, channel_mask= None))]
+    #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
+    #[pyo3(signature = (pdg_conv, xfx, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_one<'py>(
         &self,
-        pdg_id: i32,
+        pdg_conv: PyRef<PyConv>,
         xfx: &Bound<'py, PyAny>,
         bin_indices: Option<PyReadonlyArray1<usize>>,
         channel_mask: Option<PyReadonlyArray1<bool>>,
@@ -244,7 +253,8 @@ impl PyFkTable {
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut alphas = |_| 1.0;
-        let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        let mut lumi_cache =
+            ConvolutionCache::new(vec![pdg_conv.conv.clone()], vec![&mut xfx], &mut alphas);
         self.fk_table
             .convolve(
                 &mut lumi_cache,
@@ -255,6 +265,9 @@ impl PyFkTable {
     }
 
     /// Convoluve grid with two different distribution.
+    ///
+    /// # Panics
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -271,12 +284,14 @@ impl PyFkTable {
     /// -------
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
-    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, bin_indices = None, channel_mask= None))]
+    #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
+    #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_two<'py>(
         &self,
-        pdg_id1: i32,
+        pdg_conv1: PyRef<PyConv>,
         xfx1: &Bound<'py, PyAny>,
-        pdg_id2: i32,
+        pdg_conv2: PyRef<PyConv>,
         xfx2: &Bound<'py, PyAny>,
         bin_indices: Option<PyReadonlyArray1<usize>>,
         channel_mask: Option<PyReadonlyArray1<bool>>,
@@ -285,8 +300,11 @@ impl PyFkTable {
         let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut alphas = |_| 1.0;
-        let mut lumi_cache =
-            LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
+        let mut lumi_cache = ConvolutionCache::new(
+            vec![pdg_conv1.conv.clone(), pdg_conv2.conv.clone()],
+            vec![&mut xfx1, &mut xfx2],
+            &mut alphas,
+        );
         self.fk_table
             .convolve(
                 &mut lumi_cache,
@@ -306,12 +324,16 @@ impl PyFkTable {
     /// assumptions : PyFkAssumptions
     ///     assumptions about the FkTable properties, declared by the user, deciding which
     ///     optimizations are possible
+    #[allow(clippy::needless_pass_by_value)]
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
-        self.fk_table.optimize(assumptions.fk_assumptions)
+        self.fk_table.optimize(assumptions.fk_assumptions);
     }
 }
 
 /// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "fk_table")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "FK table interface.")?;

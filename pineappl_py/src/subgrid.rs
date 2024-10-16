@@ -1,119 +1,8 @@
 //! Subgrid interface.
 
-use ndarray::Array3;
-use numpy::{IntoPyArray, PyArray1, PyArray3};
 use pineappl::subgrid::Mu2;
-use pineappl::subgrid::{Subgrid, SubgridEnum, SubgridParams};
+use pineappl::subgrid::{Subgrid, SubgridEnum};
 use pyo3::prelude::*;
-
-/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridParams <subgrid/enum.SubgridParams.html>`
-#[pyclass(name = "SubgridParams")]
-#[derive(Clone)]
-#[repr(transparent)]
-pub struct PySubgridParams {
-    pub(crate) subgrid_params: SubgridParams,
-}
-
-#[pymethods]
-impl PySubgridParams {
-    /// Constructor using the defaults.
-    #[new]
-    pub fn default() -> Self {
-        Self {
-            subgrid_params: SubgridParams::default(),
-        }
-    }
-
-    /// Set number of :math:`Q^2` bins.
-    ///
-    /// Parameters
-    /// ----------
-    /// q2_bins : int
-    ///     number of bins
-    pub fn set_q2_bins(&mut self, q2_bins: usize) {
-        self.subgrid_params.set_q2_bins(q2_bins);
-    }
-
-    /// Set the upper limit for :math:`Q^2`.
-    ///
-    /// Parameters
-    /// ----------
-    /// q2_max: float
-    ///     new `q2_max`
-    pub fn set_q2_max(&mut self, q2_max: f64) {
-        self.subgrid_params.set_q2_max(q2_max);
-    }
-
-    /// Set the lower limit for :math:`Q^2`.
-    ///
-    /// Parameters
-    /// ----------
-    /// q2_min: float
-    ///     new `q2_min`
-    pub fn set_q2_min(&mut self, q2_min: f64) {
-        self.subgrid_params.set_q2_min(q2_min);
-    }
-
-    /// Set interpolation order for :math:`Q^2_{grid}`.
-    ///
-    /// Parameters
-    /// ----------
-    /// q2_order : float
-    ///     new `q2_order`
-    pub fn set_q2_order(&mut self, q2_order: usize) {
-        self.subgrid_params.set_q2_order(q2_order);
-    }
-
-    /// Set reweighting.
-    ///
-    /// Parameters
-    /// ----------
-    /// reweight : bool
-    ///     apply reweighting?
-    pub fn set_reweight(&mut self, reweight: bool) {
-        self.subgrid_params.set_reweight(reweight);
-    }
-
-    /// Set number of x bins.
-    ///
-    /// Parameters
-    /// ----------
-    /// x_bins : int
-    ///     number of bins
-    pub fn set_x_bins(&mut self, x_bins: usize) {
-        self.subgrid_params.set_x_bins(x_bins);
-    }
-
-    /// Set :math:`x_{max}`.
-    ///
-    /// Parameters
-    /// ----------
-    /// x_max : float
-    ///     new `x_max`
-    pub fn set_x_max(&mut self, x_max: f64) {
-        self.subgrid_params.set_x_max(x_max);
-    }
-
-    /// Set :math:`x_{min}`.
-    ///
-    /// Parameters
-    /// ----------
-    /// x_min : float
-    ///     new `x_min`
-    pub fn set_x_min(&mut self, x_min: f64) {
-        self.subgrid_params.set_x_min(x_min);
-    }
-
-    /// Set interpolation order for :math:`x_{grid}`.
-    ///
-    /// Parameters
-    /// ----------
-    /// x_order : float
-    ///     new `x_order`
-    pub fn set_x_order(&mut self, x_order: usize) {
-        self.subgrid_params.set_x_order(x_order);
-    }
-}
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::Mu2 <subgrid/struct.Mu2.html>`
 #[pyclass(name = "Mu2")]
@@ -132,33 +21,34 @@ impl PyMu2 {
     ///     renormalization scale
     /// fac : float
     ///     factorization scale
+    /// frg : float
+    ///     fragmentation scale
     #[new]
-    pub fn new(ren: f64, fac: f64) -> Self {
+    #[must_use]
+    pub const fn new(ren: f64, fac: f64, frg: f64) -> Self {
         Self {
-            mu2: Mu2 { ren, fac },
+            mu2: Mu2 { ren, fac, frg },
         }
     }
 
     #[getter]
-    fn ren(&self) -> PyResult<f64> {
-        Ok(self.mu2.ren)
+    const fn ren(&self) -> f64 {
+        self.mu2.ren
     }
 
     #[setter]
-    fn set_ren(&mut self, value: f64) -> PyResult<()> {
+    fn set_ren(&mut self, value: f64) {
         self.mu2.ren = value;
-        Ok(())
     }
 
     #[getter]
-    fn fac(&self) -> PyResult<f64> {
-        Ok(self.mu2.fac)
+    const fn fac(&self) -> f64 {
+        self.mu2.fac
     }
 
     #[setter]
-    fn set_fac(&mut self, value: f64) -> PyResult<()> {
+    fn set_fac(&mut self, value: f64) {
         self.mu2.fac = value;
-        Ok(())
     }
 }
 
@@ -182,38 +72,18 @@ impl PySubgridEnum {
         self.subgrid_enum.scale(factor);
     }
 
-    /// Return the dense array of the subgrid.
-    pub fn to_array3<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray3<f64>> {
-        Array3::from(&self.subgrid_enum).into_pyarray_bound(py)
-    }
-
     /// Clone.
+    #[must_use]
     pub fn into(&self) -> Self {
         self.clone()
-    }
-
-    /// Return the array of mu2 objects.
-    pub fn mu2_grid(&self) -> Vec<PyMu2> {
-        self.subgrid_enum
-            .mu2_grid()
-            .iter()
-            .cloned()
-            .map(|mu2| PyMu2 { mu2 })
-            .collect()
-    }
-
-    /// Return the array of x1.
-    pub fn x1_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        PyArray1::from_slice_bound(py, &self.subgrid_enum.x1_grid())
-    }
-
-    /// Return the array of x2.
-    pub fn x2_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        PyArray1::from_slice_bound(py, &self.subgrid_enum.x2_grid())
     }
 }
 
 /// Register submodule in parent.
+///
+/// # Errors
+///
+/// Raises Errors if (sub-)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "subgrid")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Subgrid interface.")?;
@@ -223,7 +93,6 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
         "import sys; sys.modules['pineappl.subgrid'] = m"
     );
     m.add_class::<PySubgridEnum>()?;
-    m.add_class::<PySubgridParams>()?;
     m.add_class::<PyMu2>()?;
     parent_module.add_submodule(&m)
 }

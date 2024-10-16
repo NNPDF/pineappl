@@ -23,10 +23,11 @@ impl PyChannel {
     ///
     /// Parameters
     /// ----------
-    /// entry: list(tuple(int, int, float))
+    /// entry: list(tuple(list(int),float))
     ///     channel configuration
     #[new]
-    pub fn new(entry: Vec<(i32, i32, f64)>) -> Self {
+    #[must_use]
+    pub fn new(entry: Vec<(Vec<i32>, f64)>) -> Self {
         Self {
             entry: Channel::new(entry),
         }
@@ -36,27 +37,12 @@ impl PyChannel {
     ///
     /// Returns
     /// -------
-    /// list(tuple(int,int,float)) :
+    /// list(tuple(list(int),float)) :
     ///     list representation
-    pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
+    #[must_use]
+    pub fn into_array(&self) -> Vec<(Vec<i32>, f64)> {
         self.entry.entry().to_vec()
     }
-}
-
-/// Register submodule in parent.
-pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "boc")?;
-    m.setattr(
-        pyo3::intern!(m.py(), "__doc__"),
-        "Interface for bins, orders and channels.",
-    )?;
-    pyo3::py_run!(
-        parent_module.py(),
-        m,
-        "import sys; sys.modules['pineappl.channel'] = m"
-    );
-    m.add_class::<PyChannel>()?;
-    parent_module.add_submodule(&m)
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
@@ -67,7 +53,7 @@ pub struct PyOrder {
 }
 
 impl PyOrder {
-    pub(crate) fn new(order: Order) -> Self {
+    pub(crate) const fn new(order: Order) -> Self {
         Self { order }
     }
 }
@@ -86,9 +72,12 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
     #[new]
-    pub fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
-        Self::new(Order::new(alphas, alpha, logxir, logxif))
+    #[must_use]
+    pub const fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32, logxia: u32) -> Self {
+        Self::new(Order::new(alphas, alpha, logxir, logxif, logxia))
     }
 
     /// Tuple representation.
@@ -103,7 +92,8 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
-    pub fn as_tuple(&self) -> (u32, u32, u32, u32) {
+    #[must_use]
+    pub const fn as_tuple(&self) -> (u32, u32, u32, u32) {
         (
             self.order.alphas,
             self.order.alpha,
@@ -126,6 +116,8 @@ impl PyOrder {
     /// numpy.ndarray(bool)
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
+    #[must_use]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
         max_as: u32,
@@ -141,4 +133,24 @@ impl PyOrder {
         )
         .into_pyarray_bound(py)
     }
+}
+
+/// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "boc")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "Interface for bins, orders and channels.",
+    )?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.channel'] = m"
+    );
+    m.add_class::<PyChannel>()?;
+    m.add_class::<PyOrder>()?;
+    parent_module.add_submodule(&m)
 }
