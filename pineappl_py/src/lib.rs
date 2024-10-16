@@ -11,6 +11,7 @@ pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod interpolation;
+pub mod packed_subgrid;
 pub mod pids;
 pub mod subgrid;
 

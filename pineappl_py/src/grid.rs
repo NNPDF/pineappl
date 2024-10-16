@@ -7,6 +7,7 @@ use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
 use super::interpolation::PyInterp;
 use super::pids::PyPidBasis;
+use super::subgrid::PySubgridEnum;
 use ndarray::CowArray;
 use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4};
 use pineappl::boc::{ScaleFuncForm, Scales};
@@ -105,6 +106,25 @@ impl PyGrid {
         weight: f64,
     ) {
         self.grid.fill(order, observable, channel, &ntuple, weight);
+    }
+
+    /// Retrieve a subgrid.
+    #[must_use]
+    pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> PySubgridEnum {
+        PySubgridEnum {
+            subgrid_enum: self.grid.subgrids()[[order, bin, channel]].clone(),
+        }
+    }
+
+    /// Set a subgrid.
+    pub fn set_subgrid(
+        &mut self,
+        order: usize,
+        bin: usize,
+        channel: usize,
+        subgrid: PySubgridEnum,
+    ) {
+        self.grid.subgrids_mut()[[order, bin, channel]] = subgrid.subgrid_enum;
     }
 
     /// Set the bin normalizations.
