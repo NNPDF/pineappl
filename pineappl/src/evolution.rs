@@ -3,8 +3,8 @@
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvType;
 use super::grid::{Grid, GridError};
-use super::packed_array::PackedArray;
 use super::import_subgrid::ImportSubgridV1;
+use super::packed_array::PackedArray;
 use super::pids::PidBasis;
 use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;

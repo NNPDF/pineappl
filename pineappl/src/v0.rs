@@ -3,9 +3,9 @@ use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType};
 use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv4, MoreMembers};
+use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
-use super::import_subgrid::ImportSubgridV1;
 use super::pids::PidBasis;
 use super::subgrid::{Mu2, NodeValues};
 use ndarray::Array3;
@@ -162,10 +162,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             .into_iter()
             .collect(),
         interps: default_interps(convolutions.len()),
-        convolutions: convolutions
-            .into_iter()
-            .flatten()
-            .collect(),
+        convolutions: convolutions.into_iter().flatten().collect(),
         pid_basis: grid
             .key_values()
             .and_then(|kv| kv.get("lumi_id_types"))

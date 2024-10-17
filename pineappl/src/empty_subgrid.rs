@@ -55,8 +55,8 @@ impl Subgrid for EmptySubgridV1 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::packed_array::PackedArray;
     use crate::import_subgrid::ImportSubgridV1;
+    use crate::packed_array::PackedArray;
     use crate::v0;
 
     #[test]

@@ -581,7 +581,9 @@ impl Subcommand for Opts {
                 }
                 OpsArg::ScaleByBin(factors) => grid.scale_by_bin(factors),
                 OpsArg::ScaleByOrder(factors) => {
-                    grid.scale_by_order(factors[0], factors[1], factors[2], factors[3], factors[4], 1.0);
+                    grid.scale_by_order(
+                        factors[0], factors[1], factors[2], factors[3], factors[4], 1.0,
+                    );
                 }
                 OpsArg::SetKeyValue(key_value) => {
                     grid.metadata_mut()

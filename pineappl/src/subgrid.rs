@@ -1,8 +1,8 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::empty_subgrid::EmptySubgridV1;
-use super::interp_subgrid::InterpSubgridV1;
 use super::import_subgrid::ImportSubgridV1;
+use super::interp_subgrid::InterpSubgridV1;
 use enum_dispatch::enum_dispatch;
 // use float_cmp::approx_eq;
 // use ndarray::Array3;

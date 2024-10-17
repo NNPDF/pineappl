@@ -2,6 +2,7 @@ use super::GlobalConfiguration;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use lhapdf::{Pdf, PdfSet};
 use ndarray::{Array3, Ix3};
+use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
 use prettytable::format::{FormatBuilder, LinePosition, LineSeparator};
@@ -141,17 +142,17 @@ pub const SCALES_VECTOR_REN_FAC: [(f64, f64, f64); 9] = [
     (0.5, 2.0, 1.0),
 ];
 
-// const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
-//     (1.0, 1.0, 1.0),
-//     (2.0, 1.0, 2.0),
-//     (0.5, 1.0, 0.5),
-//     (2.0, 1.0, 1.0),
-//     (1.0, 1.0, 2.0),
-//     (0.5, 1.0, 1.0),
-//     (1.0, 1.0, 0.5),
-//     (2.0, 1.0, 0.5),
-//     (0.5, 1.0, 2.0),
-// ];
+const SCALES_VECTOR_REN_FRG: [(f64, f64, f64); 9] = [
+    (1.0, 1.0, 1.0),
+    (2.0, 1.0, 2.0),
+    (0.5, 1.0, 0.5),
+    (2.0, 1.0, 1.0),
+    (1.0, 1.0, 2.0),
+    (0.5, 1.0, 1.0),
+    (1.0, 1.0, 0.5),
+    (2.0, 1.0, 0.5),
+    (0.5, 1.0, 2.0),
+];
 
 const SCALES_VECTOR_27: [(f64, f64, f64); 27] = [
     (1.0, 1.0, 1.0),
@@ -348,15 +349,18 @@ pub fn convolve_scales(
     }
 }
 
-pub fn scales_vector(_grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
-    match scales {
-        1 => &SCALES_VECTOR_27[0..1],
-        3 => &SCALES_VECTOR_27[0..3],
-        // TODO: fix 7 and 9 for cases where there is a fragmentation scale
-        7 => &SCALES_VECTOR_REN_FAC[0..7],
-        9 => &SCALES_VECTOR_REN_FAC[..],
-        17 => &SCALES_VECTOR_27[0..17],
-        27 => &SCALES_VECTOR_27[..],
+pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
+    let Scales { fac, frg, .. } = grid.scales();
+
+    match (fac, frg, scales) {
+        (_, _, 1) => &SCALES_VECTOR_27[0..1],
+        (_, _, 3) => &SCALES_VECTOR_27[0..3],
+        (_, ScaleFuncForm::NoScale, 7) => &SCALES_VECTOR_REN_FAC[0..7],
+        (_, ScaleFuncForm::NoScale, 9) => &SCALES_VECTOR_REN_FAC[..],
+        (ScaleFuncForm::NoScale, _, 7) => &SCALES_VECTOR_REN_FRG[0..7],
+        (ScaleFuncForm::NoScale, _, 9) => &SCALES_VECTOR_REN_FRG[..],
+        (_, _, 17) => &SCALES_VECTOR_27[0..17],
+        (_, _, 27) => &SCALES_VECTOR_27[..],
         _ => unreachable!(),
     }
 }
