@@ -7,7 +7,7 @@ use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl`.
-#[pyclass(name = "PyPackedSubgrid")]
+#[pyclass(name = "PackedSubgrid")]
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct PyPackedSubgrid {

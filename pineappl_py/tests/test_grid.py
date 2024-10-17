@@ -1,18 +1,25 @@
 import numpy as np
 import pytest
 
-import pineappl
 from pineappl.pids import PidBasis
 from pineappl.boc import Channel, Kinematics
+from pineappl.bin import BinRemapper
 from pineappl.grid import Order, Grid
 from pineappl.convolutions import Conv, ConvType
 from pineappl.interpolation import Interp
+from pineappl.packed_subgrid import PackedSubgrid
+
+
+# Construct the type of convolutions and the convolution object
+# We assume unpolarized proton PDF
+TYPECONV = ConvType(polarized=False, time_like=False)
+CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
 
 
 class TestOrder:
     def test_init(self):
         args = (2, 1, 0, 1, 0)
-        o = pineappl.grid.Order(*args)
+        o = Order(*args)
 
         assert isinstance(o, Order)
         assert o.as_tuple() == args
@@ -22,11 +29,8 @@ class TestGrid:
     def fake_grid(self, bins=None):
         channels = [Channel([([1, 21], 0.1)])]
         orders = [Order(3, 0, 0, 0, 0)]
-        # Construct the type of convolutions and the convolution object
-        convtype = ConvType(polarized=False, time_like=False)
-        conv = Conv(conv_type=convtype, pid=2212)
         # We assume symmetrical proton-proton in the initial state
-        convolutions = [conv, conv]
+        convolutions = [CONVOBJECT, CONVOBJECT]
         # Define the kinematics. Kinematics are defined as a list of items.
         # 1st item: factorization and renormalization scale
         # 2nd item: parton momentum fraction of the 1st convolution
@@ -58,7 +62,7 @@ class TestGrid:
             ),  # Interpolation on x2 momentum fraction
         ]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
-        g = pineappl.grid.Grid(
+        g = Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
             orders=orders,
@@ -81,10 +85,10 @@ class TestGrid:
         # DIS grid
         xs = np.linspace(0.1, 1.0, 5)
         vs = np.random.rand(len(xs))
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
+        subgrid = PackedSubgrid(
             vs[np.newaxis, :, np.newaxis],
             np.array([90.0]),
-            np.array(xs),
+            xs,
             np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
@@ -93,7 +97,7 @@ class TestGrid:
         x1s = np.linspace(0.1, 1, 2)
         x2s = np.linspace(0.5, 1, 2)
         Q2s = np.linspace(10, 20, 2)
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
+        subgrid = PackedSubgrid(
             np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
@@ -110,14 +114,14 @@ class TestGrid:
         # 1D
         normalizations = np.array([1.0, 1.0])
         limits = [(1, 1), (2, 2)]
-        remapper = pineappl.bin.BinRemapper(normalizations, limits)
+        remapper = BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 1
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
         np.testing.assert_allclose(g.bin_right(0), [1, 2])
         # 2D
         limits = [(1, 2), (2, 3), (2, 4), (3, 5)]
-        remapper = pineappl.bin.BinRemapper(normalizations, limits)
+        remapper = BinRemapper(normalizations, limits)
         g.set_remapper(remapper)
         assert g.bin_dimensions() == 2
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
@@ -128,26 +132,46 @@ class TestGrid:
     def test_convolve_with_one(self):
         g = self.fake_grid()
 
-        # DIS grid
+        # Fill the subgrid-part of the GRID object
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV1(
-            vs[np.newaxis, :, np.newaxis],
-            np.array([90.0]),
-            xs,
-            np.array([1.0]),
+        subgrid = PackedSubgrid(
+            array=vs[np.newaxis, :, np.newaxis],
+            scales=np.array([90.0]),
+            x1_grid=xs,
+            x2_grid=np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
+
+        # Check the convolutions of the GRID
         np.testing.assert_allclose(
-            g.convolve_with_one(2212, lambda pid, x, q2: 0.0, lambda q2: 0.0),
+            g.convolve_with_two(
+                pdg_conv1=CONVOBJECT,
+                xfx1=lambda pid, x, q2: 0.0,
+                pdg_conv2=CONVOBJECT,
+                xfx2=lambda pid, x, q2: 0.0,
+                alphas=lambda q2: 0.0,
+            ),
             [0.0] * 2,
         )
         np.testing.assert_allclose(
-            g.convolve_with_one(2212, lambda pid, x, q2: 1, lambda q2: 1.0),
+            g.convolve_with_two(
+                pdg_conv1=CONVOBJECT,
+                xfx1=lambda pid, x, q2: 1.0,
+                pdg_conv2=CONVOBJECT,
+                xfx2=lambda pid, x, q2: 1.0,
+                alphas=lambda q2: 1.0,
+            ),
             [5e6 / 9999, 0.0],
         )
         np.testing.assert_allclose(
-            g.convolve_with_one(2212, lambda pid, x, q2: 1, lambda q2: 2.0),
+            g.convolve_with_two(
+                pdg_conv1=CONVOBJECT,
+                xfx1=lambda pid, x, q2: 1.0,
+                pdg_conv2=CONVOBJECT,
+                xfx2=lambda pid, x, q2: 1.0,
+                alphas=lambda q2: 2.0,
+            ),
             [2**3 * 5e6 / 9999, 0.0],
         )
 
@@ -156,9 +180,9 @@ class TestGrid:
         p = tmp_path / "test.pineappl"
         p.write_text("")
         g.write(str(p))
-        gg = pineappl.grid.Grid.read(p)
-        assert isinstance(gg, pineappl.grid.Grid)
-        _ = pineappl.grid.Grid.read(str(p))
+        gg = Grid.read(p)
+        assert isinstance(gg, Grid)
+        _ = Grid.read(str(p))
 
     def test_fill(self):
         g = self.fake_grid()
@@ -171,14 +195,11 @@ class TestGrid:
             ntuple=n_tuple,
             weight=10,
         )
-        # Construct the type of convolutions and the convolution object
-        convtype = ConvType(polarized=False, time_like=False)
-        conv = Conv(conv_type=convtype, pid=2212)
         # Peform convolutions using Toy LHPDF & AlphasQ2 functions
         res = g.convolve_with_two(
-            pdg_conv1=conv,
+            pdg_conv1=CONVOBJECT,
             xfx1=lambda pid, x, q2: x,
-            pdg_conv2=conv,
+            pdg_conv2=CONVOBJECT,
             xfx2=lambda pid, x, q2: x,
             alphas=lambda q2: 1.0,
         )

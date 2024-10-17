@@ -20,12 +20,13 @@ pub mod subgrid;
 fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     bin::register(m)?;
     boc::register(m)?;
-    evolution::register(m)?;
     convolutions::register(m)?;
+    evolution::register(m)?;
+    fk_table::register(m)?;
     grid::register(m)?;
     interpolation::register(m)?;
+    packed_subgrid::register(m)?;
     pids::register(m)?;
-    fk_table::register(m)?;
     subgrid::register(m)?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;
 
