@@ -164,7 +164,6 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
         interps: default_interps(convolutions.len()),
         convolutions: convolutions
             .into_iter()
-            //.map(|conv| conv.unwrap_or(Convolution::None))
             .flatten()
             .collect(),
         pid_basis: grid

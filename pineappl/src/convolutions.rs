@@ -1,4 +1,4 @@
-//! Module for everything related to luminosity functions.
+//! Module for everything related to convolution functions.
 
 use super::boc::Kinematics;
 use super::grid::Grid;
@@ -236,7 +236,7 @@ impl<'a> ConvolutionCache<'a> {
                     .position(|&muf2| muf2 == xif * xif * fac)
             })
             .collect::<Option<_>>()
-            // if we didn't find a single renormalization scale, we assume we don't need any
+            // if we didn't find a single factorization scale, we assume we don't need any
             // factorization scale
             .unwrap_or_default();
         self.imua2 = mu2_grid
@@ -247,11 +247,10 @@ impl<'a> ConvolutionCache<'a> {
                     .position(|&mua2| mua2 == xia * xia * frg)
             })
             .collect::<Option<_>>()
-            // if we didn't find a single renormalization scale, we assume we don't need any
+            // if we didn't find a single fragmentation scale, we assume we don't need any
             // fragmentation scale
             .unwrap_or_default();
 
-        // TODO: generalize this for arbitrary orderings of x
         self.ix = (0..grid.convolutions().len())
             .map(|idx| {
                 grid.kinematics()
