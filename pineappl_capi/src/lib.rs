@@ -925,7 +925,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.scale_by_order(alphas, alpha, logxir, logxif, global);
+    grid.scale_by_order(alphas, alpha, logxir, logxif, 1.0, global);
 }
 
 /// Return the value for `key` stored in `grid`. If `key` isn't found, `NULL` will be returned.

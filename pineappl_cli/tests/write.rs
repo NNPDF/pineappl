@@ -12,29 +12,29 @@ Arguments:
   <OUTPUT>  Path of the modified PineAPPL file
 
 Options:
-      --cc <IDX>                       Charge conjugate the convolution with the specified index
-      --dedup-channels[=<ULPS>]        Deduplicate channels assuming numbers differing by ULPS are the same
-      --delete-bins <BIN1-BIN2,...>    Delete bins with the specified indices
-      --delete-channels <CH1-CH2,...>  Delete channels with the specified indices
-      --delete-orders <O1-O2,...>      Delete orders with the specified indices
-      --delete-key <KEY>               Delete an internal key-value pair
-      --merge-bins <BIN1-BIN2,...>     Merge specific bins together
-      --optimize[=<ENABLE>]            Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
-      --optimize-fk-table <OPTIMI>     Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
-      --remap <REMAPPING>              Modify the bin dimensions and widths
-      --remap-norm <NORM>              Modify the bin normalizations with a common factor
-      --remap-norm-ignore <DIM1,...>   Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
-      --rewrite-channel <IDX> <CHAN>   Rewrite the definition of the channel with index IDX
-      --rewrite-order <IDX> <ORDER>    Rewrite the definition of the order with index IDX
-      --rotate-pid-basis <BASIS>       Rotate the PID basis for this grid [possible values: PDG, EVOL]
-  -s, --scale <SCALE>                  Scales all grids with the given factor
-      --scale-by-bin <BIN1,BIN2,...>   Scale each bin with a different factor
-      --scale-by-order <AS,AL,LR,LF>   Scales all grids with order-dependent factors
-      --set-key-value <KEY> <VALUE>    Set an internal key-value pair
-      --set-key-file <KEY> <FILE>      Set an internal key-value pair, with value being read from a file
-      --split-channels[=<ENABLE>]      Split the grid such that each channel contains only a single PID combination [possible values: true, false]
-      --upgrade[=<ENABLE>]             Convert the file format to the most recent version [possible values: true, false]
-  -h, --help                           Print help
+      --cc <IDX>                        Charge conjugate the convolution with the specified index
+      --dedup-channels[=<ULPS>]         Deduplicate channels assuming numbers differing by ULPS are the same
+      --delete-bins <BIN1-BIN2,...>     Delete bins with the specified indices
+      --delete-channels <CH1-CH2,...>   Delete channels with the specified indices
+      --delete-orders <O1-O2,...>       Delete orders with the specified indices
+      --delete-key <KEY>                Delete an internal key-value pair
+      --merge-bins <BIN1-BIN2,...>      Merge specific bins together
+      --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
+      --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --remap <REMAPPING>               Modify the bin dimensions and widths
+      --remap-norm <NORM>               Modify the bin normalizations with a common factor
+      --remap-norm-ignore <DIM1,...>    Modify the bin normalizations by multiplying with the bin lengths for the given dimensions
+      --rewrite-channel <IDX> <CHAN>    Rewrite the definition of the channel with index IDX
+      --rewrite-order <IDX> <ORDER>     Rewrite the definition of the order with index IDX
+      --rotate-pid-basis <BASIS>        Rotate the PID basis for this grid [possible values: PDG, EVOL]
+  -s, --scale <SCALE>                   Scales all grids with the given factor
+      --scale-by-bin <BIN1,BIN2,...>    Scale each bin with a different factor
+      --scale-by-order <FAC1,FAC2,...>  Scale subgrids with order-dependent factors
+      --set-key-value <KEY> <VALUE>     Set an internal key-value pair
+      --set-key-file <KEY> <FILE>       Set an internal key-value pair, with value being read from a file
+      --split-channels[=<ENABLE>]       Split the grid such that each channel contains only a single PID combination [possible values: true, false]
+      --upgrade[=<ENABLE>]              Convert the file format to the most recent version [possible values: true, false]
+  -h, --help                            Print help
 ";
 
 const CHANNEL_STR: &str = "c    entry        entry
@@ -771,7 +771,7 @@ fn scale_by_order() {
         .unwrap()
         .args([
             "write",
-            "--scale-by-order=2,1,0.5,0.5",
+            "--scale-by-order=2,1,0.5,0.5,1.0",
             "--scale=0.5",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),

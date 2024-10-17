@@ -741,6 +741,7 @@ impl Grid {
         alpha: f64,
         logxir: f64,
         logxif: f64,
+        logxia: f64,
         global: f64,
     ) {
         for ((i, _, _), subgrid) in self.subgrids.indexed_iter_mut() {
@@ -749,7 +750,8 @@ impl Grid {
                 * alphas.powi(order.alphas.try_into().unwrap())
                 * alpha.powi(order.alpha.try_into().unwrap())
                 * logxir.powi(order.logxir.try_into().unwrap())
-                * logxif.powi(order.logxif.try_into().unwrap());
+                * logxif.powi(order.logxif.try_into().unwrap())
+                * logxia.powi(order.logxia.try_into().unwrap());
 
             subgrid.scale(factor);
         }

@@ -347,8 +347,8 @@ fn perform_grid_tests(
     let mut grid = Grid::read(&mut file)?;
 
     // TEST 4: `scale_by_order`
-    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0);
-    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 4.0);
+    grid.scale_by_order(10.0, 0.5, 10.0, 10.0, 1.0, 1.0);
+    grid.scale_by_order(10.0, 1.0, 10.0, 10.0, 1.0, 4.0);
 
     // TEST 5: `convolve`
     let mut convolution_cache = ConvolutionCache::new(

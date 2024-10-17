@@ -439,11 +439,11 @@ impl Args for MoreArgs {
         .arg(
             Arg::new("scale_by_order")
                 .action(ArgAction::Append)
-                .help("Scales all grids with order-dependent factors")
+                .help("Scale subgrids with order-dependent factors")
                 .long("scale-by-order")
                 .num_args(1)
                 .value_delimiter(',')
-                .value_name("AS,AL,LR,LF")
+                .value_name("FAC1,FAC2,...")
                 .value_parser(value_parser!(f64)),
         )
         .arg(
@@ -581,7 +581,7 @@ impl Subcommand for Opts {
                 }
                 OpsArg::ScaleByBin(factors) => grid.scale_by_bin(factors),
                 OpsArg::ScaleByOrder(factors) => {
-                    grid.scale_by_order(factors[0], factors[1], factors[2], factors[3], 1.0);
+                    grid.scale_by_order(factors[0], factors[1], factors[2], factors[3], factors[4], 1.0);
                 }
                 OpsArg::SetKeyValue(key_value) => {
                     grid.metadata_mut()

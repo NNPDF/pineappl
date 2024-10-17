@@ -287,7 +287,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
         }
     }
 
-    grid0.scale_by_order(alphas_factor, 1.0, 1.0, 1.0, global);
+    grid0.scale_by_order(alphas_factor, 1.0, 1.0, 1.0, 1.0, global);
 
     Ok(grid0)
 }
