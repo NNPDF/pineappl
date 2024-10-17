@@ -38,7 +38,6 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
                 })
                 // TODO: convert this into an error
                 .unwrap()
-                .values()
         })
         .collect();
     mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
@@ -250,7 +249,6 @@ pub fn convert_into_applgrid(
                     })
                     // TODO: convert this into an error
                     .unwrap()
-                    .values()
                     .into_iter()
                     .map(|fac| {
                         appl_q2
@@ -283,8 +281,7 @@ pub fn convert_into_applgrid(
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
+                            .unwrap(),
                         grid.kinematics()
                             .iter()
                             .zip(subgrid.node_values())
@@ -293,8 +290,7 @@ pub fn convert_into_applgrid(
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
+                            .unwrap(),
                     )
                 } else if has_pdf1 {
                     (
@@ -306,8 +302,7 @@ pub fn convert_into_applgrid(
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
+                            .unwrap(),
                         Vec::new(),
                     )
                 } else {
@@ -320,8 +315,7 @@ pub fn convert_into_applgrid(
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
-                            .unwrap()
-                            .values(),
+                            .unwrap(),
                         Vec::new(),
                     )
                 };
@@ -378,8 +372,7 @@ pub fn convert_into_applgrid(
                                             .then_some(node_values)
                                     })
                                     // TODO: convert this into an error
-                                    .unwrap()
-                                    .values()[iq2]
+                                    .unwrap()[iq2]
                             );
                         }
 

@@ -1,8 +1,10 @@
 //! TODO
 
+use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use super::packed_array::PackedArray;
-use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use float_cmp::approx_eq;
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -11,13 +13,13 @@ use std::mem;
 #[derive(Clone, Deserialize, Serialize)]
 pub struct ImportSubgridV1 {
     array: PackedArray<f64>,
-    node_values: Vec<NodeValues>,
+    node_values: Vec<Vec<f64>>,
 }
 
 impl ImportSubgridV1 {
     /// Constructor.
     #[must_use]
-    pub const fn new(array: PackedArray<f64>, node_values: Vec<NodeValues>) -> Self {
+    pub const fn new(array: PackedArray<f64>, node_values: Vec<Vec<f64>>) -> Self {
         Self { array, node_values }
     }
 }
@@ -27,7 +29,7 @@ impl Subgrid for ImportSubgridV1 {
         panic!("ImportSubgridV1 doesn't support the fill operation");
     }
 
-    fn node_values(&self) -> Vec<NodeValues> {
+    fn node_values(&self) -> Vec<Vec<f64>> {
         self.node_values.clone()
     }
 
@@ -43,16 +45,27 @@ impl Subgrid for ImportSubgridV1 {
             rhs_node_values.swap(a, b);
         }
 
+        // TODO: allow for some tolerance
         if self.node_values() != rhs_node_values {
-            for (lhs, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
-                lhs.extend(rhs);
+            for (new, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
+                new.extend(rhs);
+                new.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
+                new.dedup();
             }
 
-            let mut array = PackedArray::new(new_node_values.iter().map(NodeValues::len).collect());
+            let mut array = PackedArray::new(new_node_values.iter().map(Vec::len).collect());
 
             for (indices, value) in self.array.indexed_iter() {
                 let target: Vec<_> = izip!(indices, &new_node_values, &lhs_node_values)
-                    .map(|(index, new, lhs)| new.find(lhs.get(index)).unwrap())
+                    .map(|(index, new, lhs)| {
+                        new.iter()
+                            .position(|&value| {
+                                approx_eq!(f64, value, lhs[index], ulps = EVOLVE_INFO_TOL_ULPS)
+                            })
+                            // UNWRAP: must succeed, `new_node_values` is the union of
+                            // `lhs_node_values` and `rhs_node_values`
+                            .unwrap()
+                    })
                     .collect();
 
                 array[target.as_slice()] = value;
@@ -68,7 +81,13 @@ impl Subgrid for ImportSubgridV1 {
             }
 
             let target: Vec<_> = izip!(indices, &new_node_values, &rhs_node_values)
-                .map(|(index, new, rhs)| new.find(rhs.get(index)).unwrap())
+                .map(|(index, new, rhs)| {
+                    new.iter()
+                        .position(|&value| value == rhs[index])
+                        // UNWRAP: must succeed, `new_node_values` is the union of
+                        // `lhs_node_values` and `rhs_node_values`
+                        .unwrap()
+                })
                 .collect();
 
             self.array[target.as_slice()] += value;
@@ -109,7 +128,7 @@ impl Subgrid for ImportSubgridV1 {
     }
 
     fn static_scale(&self) -> Option<Mu2> {
-        if let &[static_scale] = self.node_values()[0].values().as_slice() {
+        if let &[static_scale] = self.node_values()[0].as_slice() {
             Some(Mu2 {
                 ren: static_scale,
                 fac: static_scale,
@@ -128,7 +147,7 @@ impl From<&SubgridEnum> for ImportSubgridV1 {
             subgrid
                 .node_values()
                 .iter()
-                .map(|values| values.values().len()..0)
+                .map(|values| values.len()..0)
                 .collect(),
             |mut prev, (indices, _)| {
                 for (i, index) in indices.iter().enumerate() {
@@ -143,23 +162,18 @@ impl From<&SubgridEnum> for ImportSubgridV1 {
             .node_values()
             .iter()
             .zip(&ranges)
-            .map(|(values, range)| NodeValues::UseThese(values.values()[range.clone()].to_vec()))
+            .map(|(values, range)| values[range.clone()].to_vec())
             .collect();
         let static_scale = if let Some(Mu2 { ren, fac, frg }) = subgrid.static_scale() {
             assert_eq!(ren, fac);
             assert_eq!(frg, -1.0);
-            new_node_values[0] = NodeValues::UseThese(vec![fac]);
+            new_node_values[0] = vec![fac];
             true
         } else {
             false
         };
 
-        let mut array = PackedArray::new(
-            new_node_values
-                .iter()
-                .map(|values| values.values().len())
-                .collect(),
-        );
+        let mut array = PackedArray::new(new_node_values.iter().map(Vec::len).collect());
 
         for (mut indices, value) in subgrid.indexed_iter() {
             for (idx, (index, range)) in indices.iter_mut().zip(&ranges).enumerate() {
@@ -187,10 +201,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "ImportSubgridV1 doesn't support the fill operation")]
     fn fill_packed_q1x2_subgrid_v1() {
-        let mut subgrid = ImportSubgridV1::new(
-            PackedArray::new(vec![0, 0, 0]),
-            vec![NodeValues::UseThese(Vec::new()); 3],
-        );
+        let mut subgrid =
+            ImportSubgridV1::new(PackedArray::new(vec![0, 0, 0]), vec![Vec::new(); 3]);
         subgrid.fill(&v0::default_interps(2), &[0.0; 3], 0.0);
     }
 
@@ -201,22 +213,11 @@ mod tests {
         ];
         let mut grid1: SubgridEnum = ImportSubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
-            vec![
-                NodeValues::UseThese(vec![0.0]),
-                NodeValues::UseThese(x.clone()),
-                NodeValues::UseThese(x.clone()),
-            ],
+            vec![vec![0.0], x.clone(), x.clone()],
         )
         .into();
 
-        assert_eq!(
-            grid1.node_values(),
-            vec![
-                NodeValues::UseThese(vec![0.0]),
-                NodeValues::UseThese(x.clone()),
-                NodeValues::UseThese(x.clone())
-            ]
-        );
+        assert_eq!(grid1.node_values(), vec![vec![0.0], x.clone(), x.clone()]);
 
         assert!(grid1.is_empty());
 
@@ -238,11 +239,7 @@ mod tests {
         // create grid with transposed entries, but different q2
         let mut grid2: SubgridEnum = ImportSubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
-            vec![
-                NodeValues::UseThese(vec![1.0]),
-                NodeValues::UseThese(x.clone()),
-                NodeValues::UseThese(x),
-            ],
+            vec![vec![1.0], x.clone(), x],
         )
         .into();
         if let SubgridEnum::ImportSubgridV1(ref mut x) = grid2 {

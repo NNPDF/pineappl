@@ -7,7 +7,7 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::{Mu2, NodeValues};
+use super::subgrid::Mu2;
 use ndarray::Array3;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
@@ -95,14 +95,13 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                             }
                         }
 
-                        let mut node_values = vec![NodeValues::UseThese(
-                            mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                        )];
+                        let mut node_values =
+                            vec![mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect()];
                         if convolutions[0].is_some() {
-                            node_values.push(NodeValues::UseThese(subgrid.x1_grid().into_owned()));
+                            node_values.push(subgrid.x1_grid().into_owned());
                         }
                         if convolutions[1].is_some() {
-                            node_values.push(NodeValues::UseThese(subgrid.x2_grid().into_owned()));
+                            node_values.push(subgrid.x2_grid().into_owned());
                         }
                         ImportSubgridV1::new(array, node_values).into()
                     }

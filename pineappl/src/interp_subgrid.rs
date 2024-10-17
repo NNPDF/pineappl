@@ -2,7 +2,7 @@
 
 use super::interpolation::{self, Interp};
 use super::packed_array::PackedArray;
-use super::subgrid::{Mu2, NodeValues, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -42,11 +42,8 @@ impl Subgrid for InterpSubgridV1 {
         }
     }
 
-    fn node_values(&self) -> Vec<NodeValues> {
-        self.interps
-            .iter()
-            .map(|interp| NodeValues::UseThese(interp.node_values()))
-            .collect()
+    fn node_values(&self) -> Vec<Vec<f64>> {
+        self.interps.iter().map(Interp::node_values).collect()
     }
 
     fn is_empty(&self) -> bool {

@@ -6,7 +6,7 @@ use super::grid::{Grid, GridError};
 use super::import_subgrid::ImportSubgridV1;
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
+use super::subgrid::{Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::izip;
 use itertools::Itertools;
@@ -244,7 +244,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                         // TODO: empty subgrids don't have node values
                         && !subgrid.is_empty()
                 })
-                .flat_map(|(_, subgrid)| subgrid.node_values()[kin_idx].values())
+                .flat_map(|(_, subgrid)| subgrid.node_values()[kin_idx].clone())
                 .collect::<Vec<_>>()
         })
         .collect();
@@ -301,9 +301,8 @@ fn ndarray_from_subgrid_orders_slice_many(
             .zip(&x1n)
             .map(|(kin_idx, x1)| {
                 subgrid.node_values()[kin_idx]
-                    .values()
-                    .into_iter()
-                    .map(|xs| {
+                    .iter()
+                    .map(|&xs| {
                         x1.iter()
                             .position(|&x| approx_eq!(f64, x, xs, ulps = EVOLUTION_TOL_ULPS))
                             // UNWRAP: `x1n` contains all x-values, so we must find each `x`
@@ -322,8 +321,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                     matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
                 })
                 // TODO: convert this into an error
-                .unwrap()
-                .values()[indices[0]];
+                .unwrap()[indices[0]];
             // TODO: generalize this for multiple scales
             let ren = fac;
 
@@ -482,10 +480,10 @@ pub(crate) fn evolve_slice_with_many(
         }
 
         // TODO: generalize this for arbitrary scales and x values
-        let mut node_values = vec![NodeValues::UseThese(vec![infos[0].fac0])];
+        let mut node_values = vec![vec![infos[0].fac0]];
 
         for info in infos {
-            node_values.push(NodeValues::UseThese(info.x0.clone()));
+            node_values.push(info.x0.clone());
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {

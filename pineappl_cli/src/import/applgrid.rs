@@ -7,7 +7,7 @@ use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::{Mu2, NodeValues};
+use pineappl::subgrid::Mu2;
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
@@ -245,11 +245,9 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
                         ImportSubgridV1::new(
                             array,
                             vec![
-                                NodeValues::UseThese(
-                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                ),
-                                NodeValues::UseThese(x1_values.clone()),
-                                NodeValues::UseThese(x2_values.clone()),
+                                mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                x1_values.clone(),
+                                x2_values.clone(),
                             ],
                         )
                         .into();

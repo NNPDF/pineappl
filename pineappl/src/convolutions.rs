@@ -3,7 +3,7 @@
 use super::boc::Kinematics;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{NodeValues, Subgrid};
+use super::subgrid::Subgrid;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -88,7 +88,7 @@ impl<'a> ConvolutionCache<'a> {
                     .iter()
                     .zip(subgrid.node_values())
                     .filter(|(kin, _)| matches!(kin, Kinematics::X(_)))
-                    .flat_map(|(_, node_values)| node_values.values())
+                    .flat_map(|(_, node_values)| node_values)
             })
             .collect();
         x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
@@ -211,7 +211,7 @@ impl<'a> ConvolutionCache<'a> {
     pub fn set_grids(
         &mut self,
         grid: &Grid,
-        node_values: &[NodeValues],
+        node_values: &[Vec<f64>],
         mu2_grid: &[f64],
         xir: f64,
         xif: f64,
@@ -261,8 +261,7 @@ impl<'a> ConvolutionCache<'a> {
                     })
                     // UNWRAP: guaranteed by the grid constructor
                     .unwrap_or_else(|| unreachable!())
-                    .values()
-                    .iter()
+                    .into_iter()
                     .map(|xd| {
                         self.x_grid
                             .iter()

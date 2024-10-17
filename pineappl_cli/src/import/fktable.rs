@@ -9,7 +9,6 @@ use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::NodeValues;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;
@@ -249,16 +248,9 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                             *subgrid = ImportSubgridV1::new(
                                 array,
                                 if hadronic {
-                                    vec![
-                                        NodeValues::UseThese(vec![q0 * q0]),
-                                        NodeValues::UseThese(x_grid.clone()),
-                                        NodeValues::UseThese(x_grid.clone()),
-                                    ]
+                                    vec![vec![q0 * q0], x_grid.clone(), x_grid.clone()]
                                 } else {
-                                    vec![
-                                        NodeValues::UseThese(vec![q0 * q0]),
-                                        NodeValues::UseThese(x_grid.clone()),
-                                    ]
+                                    vec![vec![q0 * q0], x_grid.clone()]
                                 },
                             )
                             .into();
@@ -321,16 +313,9 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
         *subgrid = ImportSubgridV1::new(
             array,
             if hadronic {
-                vec![
-                    NodeValues::UseThese(vec![q0 * q0]),
-                    NodeValues::UseThese(x_grid.clone()),
-                    NodeValues::UseThese(x_grid.clone()),
-                ]
+                vec![vec![q0 * q0], x_grid.clone(), x_grid.clone()]
             } else {
-                vec![
-                    NodeValues::UseThese(vec![q0 * q0]),
-                    NodeValues::UseThese(x_grid.clone()),
-                ]
+                vec![vec![q0 * q0], x_grid.clone()]
             },
         )
         .into();

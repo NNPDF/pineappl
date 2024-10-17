@@ -4,7 +4,6 @@ use super::subgrid::PySubgridEnum;
 use numpy::PyReadonlyArray3;
 use pineappl::packed_array::PackedArray;
 use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
-use pineappl::subgrid::NodeValues;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl`.
@@ -37,13 +36,9 @@ impl PyPackedSubgrid {
         x1_grid: Vec<f64>,
         x2_grid: Vec<f64>,
     ) -> Self {
-        let node_values: Vec<NodeValues> = vec![
-            NodeValues::UseThese(scales),
-            NodeValues::UseThese(x1_grid),
-            NodeValues::UseThese(x2_grid),
-        ];
+        let node_values: Vec<Vec<f64>> = vec![scales, x1_grid, x2_grid];
         let mut sparse_array: PackedArray<f64> =
-            PackedArray::new(node_values.iter().map(NodeValues::len).collect());
+            PackedArray::new(node_values.iter().map(Vec::len).collect());
 
         for ((iscale, ix1, ix2), value) in array
             .as_array()

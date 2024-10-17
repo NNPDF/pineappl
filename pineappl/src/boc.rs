@@ -3,7 +3,6 @@
 //!
 //! [`Grid`]: super::grid::Grid
 
-use super::subgrid::NodeValues;
 use float_cmp::approx_eq;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -42,7 +41,7 @@ pub enum ScaleFuncForm {
 impl ScaleFuncForm {
     /// TODO
     #[must_use]
-    pub fn calc(&self, node_values: &[NodeValues], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
+    pub fn calc(&self, node_values: &[Vec<f64>], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
         match self {
             Self::NoScale => None,
             &Self::Scale(index) => Some(if node_values.is_empty() {
@@ -54,7 +53,7 @@ impl ScaleFuncForm {
                     .position(|&kin| kin == Kinematics::Scale(index))
                     // UNWRAP: this should be guaranteed by `Grid::new`
                     .unwrap()]
-                .values()
+                .clone()
             }),
             Self::QuadraticSum(_, _) => todo!(),
         }

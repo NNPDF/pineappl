@@ -620,8 +620,7 @@ impl Subcommand for Opts {
                     matches!(kin, &Kinematics::X(idx) if idx == 0).then_some(node_values)
                 })
                 // TODO: convert this into an error
-                .unwrap()
-                .values();
+                .unwrap();
 
             let x2 = grid
                 .kinematics()
@@ -631,8 +630,7 @@ impl Subcommand for Opts {
                     matches!(kin, &Kinematics::X(idx) if idx == 1).then_some(node_values)
                 })
                 // TODO: convert this into an error
-                .unwrap()
-                .values();
+                .unwrap();
 
             let mut x1_vals = vec![];
             let mut x2_vals = vec![];

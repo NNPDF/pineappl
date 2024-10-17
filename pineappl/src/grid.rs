@@ -10,7 +10,7 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interp_subgrid::InterpSubgridV1;
 use super::interpolation::Interp;
 use super::pids::PidBasis;
-use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
+use super::subgrid::{Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};
@@ -281,8 +281,7 @@ impl Grid {
                         matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
                     })
                     // TODO: convert this into an error
-                    .unwrap()
-                    .values();
+                    .unwrap();
                 let node_values = subgrid.node_values();
 
                 // TODO: generalize this for fragmentation functions
@@ -346,11 +345,7 @@ impl Grid {
         let order = &self.orders[ord];
 
         let channel = &pdg_channels[channel];
-        let node_values: Vec<_> = subgrid
-            .node_values()
-            .iter()
-            .map(NodeValues::values)
-            .collect();
+        let node_values: Vec<_> = subgrid.node_values();
         // TODO: generalize this to N dimensions
         assert_eq!(node_values.len(), 3);
 
@@ -1125,7 +1120,6 @@ impl Grid {
                     })
                     // TODO: convert this into an error
                     .unwrap()
-                    .values()
                     .into_iter(),
             );
             ren1.sort_by(f64::total_cmp);
@@ -1141,7 +1135,6 @@ impl Grid {
                     })
                     // TODO: convert this into an error
                     .unwrap()
-                    .values()
                     .into_iter(),
             );
             fac1.sort_by(f64::total_cmp);
@@ -1152,7 +1145,7 @@ impl Grid {
                     .node_values()
                     .iter()
                     .zip(self.kinematics())
-                    .filter_map(|(nv, kin)| matches!(kin, Kinematics::X(_)).then(|| nv.values()))
+                    .filter_map(|(nv, kin)| matches!(kin, Kinematics::X(_)).then(|| nv))
                     .flatten(),
             );
 

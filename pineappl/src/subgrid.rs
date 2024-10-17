@@ -10,84 +10,6 @@ use enum_dispatch::enum_dispatch;
 use super::interpolation::Interp;
 use serde::{Deserialize, Serialize};
 
-/// TODO
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum NodeValues {
-    /// TODO
-    // UseFromGrid,
-    /// TODO
-    UseThese(Vec<f64>),
-}
-
-impl NodeValues {
-    /// TODO
-    pub fn extend(&mut self, other: &Self) {
-        match (self, other) {
-            // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => (),
-            (Self::UseThese(a), Self::UseThese(b)) => {
-                a.extend_from_slice(b);
-                a.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
-                // TODO: use some tolerance
-                a.dedup();
-            } // _ => unimplemented!(),
-        }
-    }
-
-    /// TODO
-    #[must_use]
-    pub fn len(&self) -> usize {
-        match self {
-            // NodeValues::UseFromGrid => unimplemented!(),
-            Self::UseThese(a) => a.len(),
-        }
-    }
-
-    /// TODO
-    #[must_use]
-    pub fn find(&self, value: f64) -> Option<usize> {
-        match self {
-            // NodeValues::UseFromGrid => unimplemented!(),
-            Self::UseThese(a) => a.iter().position(|&x|
-                // approx_eq!(f64, x, value, ulps = EVOLVE_INFO_TOL_ULPS)
-                x == value),
-        }
-    }
-
-    /// TODO
-    #[must_use]
-    pub fn get(&self, index: usize) -> f64 {
-        match self {
-            // NodeValues::UseFromGrid => unimplemented!(),
-            Self::UseThese(a) => a[index],
-        }
-    }
-
-    /// TODO
-    #[must_use]
-    pub fn values(&self) -> Vec<f64> {
-        match self {
-            // NodeValues::UseFromGrid => unimplemented!(),
-            Self::UseThese(a) => a.clone(),
-        }
-    }
-}
-
-impl PartialEq for NodeValues {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            // (NodeValues::UseFromGrid, NodeValues::UseFromGrid) => true,
-            (Self::UseThese(a), Self::UseThese(b)) => {
-                (a.len() == b.len())
-                    && a.iter().zip(b).all(
-                        // TODO: use some tolerance
-                        |(&a, &b)| a == b,
-                        //approx_eq!(f64, a, b, ulps = EVOLVE_INFO_TOL_ULPS)
-                    )
-            } // TODO: the remaining cases could still be the same, but we don't know the values from `UseFromGrid`.
-              // _ => false,
-        }
-    }
-}
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
@@ -137,7 +59,7 @@ pub struct Stats {
 #[enum_dispatch]
 pub trait Subgrid {
     /// TODO
-    fn node_values(&self) -> Vec<NodeValues>;
+    fn node_values(&self) -> Vec<Vec<f64>>;
 
     /// Fill the subgrid with `weight` that is being interpolated with `interps` using the
     /// kinematic information in `ntuple`. The parameter `ntuple` assumes the same ordering given

@@ -167,7 +167,6 @@ impl FkTable {
                         .find_map(|(node_values, kin)| {
                             matches!(kin, Kinematics::X(i) if *i == index).then(|| {
                                 node_values
-                                    .values()
                                     .iter()
                                     .map(|&s| {
                                         x_grid
@@ -341,8 +340,7 @@ impl TryFrom<Grid> for FkTable {
                     matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
                 })
                 // TODO: convert this into an error
-                .unwrap()
-                .values()[..]
+                .unwrap()[..]
             else {
                 return Err(TryFromGridError::MultipleScales);
             };

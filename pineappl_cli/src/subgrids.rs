@@ -95,8 +95,7 @@ impl Subcommand for Opts {
                     })
                     // TODO: convert this into an error
                     .unwrap()
-                    .values()
-                    .iter()
+                    .into_iter()
                     .map(|x| format!("{:.*}", self.digits, x))
                     .collect();
 
@@ -112,8 +111,7 @@ impl Subcommand for Opts {
                     })
                     // TODO: convert this into an error
                     .unwrap()
-                    .values()
-                    .iter()
+                    .into_iter()
                     .map(|x| format!("{:.*e}", self.digits, x))
                     .collect();
 
