@@ -80,7 +80,7 @@ impl Subcommand for Opts {
                     match subgrid {
                         SubgridEnum::InterpSubgridV1(_) => "InterpSubgridV1",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
-                        SubgridEnum::PackedQ1X2SubgridV1(_) => "PackedQ1X2SubgridV1",
+                        SubgridEnum::ImportSubgridV1(_) => "ImportSubgridV1",
                     }
                 ));
             }

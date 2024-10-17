@@ -4,7 +4,7 @@ use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvType;
 use super::grid::{Grid, GridError};
 use super::packed_array::PackedArray;
-use super::packed_subgrid::PackedQ1X2SubgridV1;
+use super::import_subgrid::ImportSubgridV1;
 use super::pids::PidBasis;
 use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
@@ -489,7 +489,7 @@ pub(crate) fn evolve_slice_with_many(
         }
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
-            PackedQ1X2SubgridV1::new(
+            ImportSubgridV1::new(
                 PackedArray::from(table.insert_axis(Axis(0)).view()),
                 node_values.clone(),
             )

@@ -701,7 +701,7 @@ fn grid_optimize() {
     // `OPTIMIZE_SUBGRID_TYPE` changes the subgrid type ...
     assert!(matches!(
         grid2.subgrids()[[0, 0, 0]],
-        SubgridEnum::PackedQ1X2SubgridV1 { .. }
+        SubgridEnum::ImportSubgridV1 { .. }
     ));
     // and the dimensions of the subgrid
     let node_values = grid2.subgrids()[[0, 0, 0]].node_values();
@@ -713,7 +713,7 @@ fn grid_optimize() {
 
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
-        SubgridEnum::PackedQ1X2SubgridV1 { .. }
+        SubgridEnum::ImportSubgridV1 { .. }
     ));
     // if `STATIC_SCALE_DETECTION` is present the scale dimension is better optimized
     let node_values = grid.subgrids()[[0, 0, 0]].node_values();

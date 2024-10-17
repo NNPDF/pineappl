@@ -56,7 +56,7 @@ impl Subgrid for EmptySubgridV1 {
 mod tests {
     use super::*;
     use crate::packed_array::PackedArray;
-    use crate::packed_subgrid::PackedQ1X2SubgridV1;
+    use crate::import_subgrid::ImportSubgridV1;
     use crate::v0;
 
     #[test]
@@ -96,7 +96,7 @@ mod tests {
         let mut array = PackedArray::new(vec![1, 1]);
         array[0] = 1.0;
         let node_values = vec![NodeValues::UseThese(vec![1.0]); 2];
-        let subgrid_rhs = PackedQ1X2SubgridV1::new(array, node_values).into();
+        let subgrid_rhs = ImportSubgridV1::new(array, node_values).into();
 
         subgrid_lhs.merge(&subgrid_rhs, None);
     }

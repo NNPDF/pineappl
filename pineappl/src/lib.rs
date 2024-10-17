@@ -46,6 +46,6 @@ pub mod grid;
 pub mod interpolation;
 pub mod interp_subgrid;
 pub mod packed_array;
-pub mod packed_subgrid;
+pub mod import_subgrid;
 pub mod pids;
 pub mod subgrid;

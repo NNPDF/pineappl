@@ -7,7 +7,7 @@ use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::NodeValues;
 use std::fs::File;
@@ -246,7 +246,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                             .iter_mut()
                             .zip(arrays.into_iter())
                         {
-                            *subgrid = PackedQ1X2SubgridV1::new(
+                            *subgrid = ImportSubgridV1::new(
                                 array,
                                 if hadronic {
                                     vec![
@@ -318,7 +318,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
         .iter_mut()
         .zip(arrays.into_iter())
     {
-        *subgrid = PackedQ1X2SubgridV1::new(
+        *subgrid = ImportSubgridV1::new(
             array,
             if hadronic {
                 vec![

@@ -5,7 +5,7 @@ use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::{Mu2, NodeValues};
 use pineappl_applgrid::ffi::{self, grid};
@@ -235,7 +235,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
 
                 if !array.is_empty() {
                     pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
-                        PackedQ1X2SubgridV1::new(
+                        ImportSubgridV1::new(
                             array,
                             vec![
                                 NodeValues::UseThese(

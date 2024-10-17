@@ -5,7 +5,7 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::grid::{Grid, GridError, Mmv4, MoreMembers};
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
-use super::packed_subgrid::PackedQ1X2SubgridV1;
+use super::import_subgrid::ImportSubgridV1;
 use super::pids::PidBasis;
 use super::subgrid::{Mu2, NodeValues};
 use ndarray::Array3;
@@ -104,7 +104,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                         if convolutions[1].is_some() {
                             node_values.push(NodeValues::UseThese(subgrid.x2_grid().into_owned()));
                         }
-                        PackedQ1X2SubgridV1::new(array, node_values).into()
+                        ImportSubgridV1::new(array, node_values).into()
                     }
                 })
                 .collect(),

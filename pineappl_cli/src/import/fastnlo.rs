@@ -7,7 +7,7 @@ use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
+use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::{Mu2, NodeValues};
 use pineappl_fastnlo::ffi::{
@@ -263,7 +263,7 @@ fn convert_coeff_add_fix(
                 if !array.is_empty() {
                     grid.subgrids_mut()
                         [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
-                        PackedQ1X2SubgridV1::new(
+                        ImportSubgridV1::new(
                             array,
                             vec![
                                 NodeValues::UseThese(
@@ -475,7 +475,7 @@ fn convert_coeff_add_flex(
     //                 continue;
     //             }
 
-    //             *subgrid = PackedQ1X2SubgridV1::new(array, todo!()).into();
+    //             *subgrid = ImportSubgridV1::new(array, todo!()).into();
     //         }
     //     }
     // }

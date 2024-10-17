@@ -8,7 +8,7 @@ use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::interpolation::Interp;
 use super::interp_subgrid::InterpSubgridV1;
-use super::packed_subgrid::PackedQ1X2SubgridV1;
+use super::import_subgrid::ImportSubgridV1;
 use super::pids::PidBasis;
 use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
 use super::v0;
@@ -884,7 +884,7 @@ impl Grid {
                         }
                     }
 
-                    *subgrid = PackedQ1X2SubgridV1::from(&*subgrid).into();
+                    *subgrid = ImportSubgridV1::from(&*subgrid).into();
                 }
             }
         }

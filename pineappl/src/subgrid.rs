@@ -2,7 +2,7 @@
 
 use super::empty_subgrid::EmptySubgridV1;
 use super::interp_subgrid::InterpSubgridV1;
-use super::packed_subgrid::PackedQ1X2SubgridV1;
+use super::import_subgrid::ImportSubgridV1;
 use enum_dispatch::enum_dispatch;
 // use float_cmp::approx_eq;
 // use ndarray::Array3;
@@ -99,7 +99,7 @@ pub enum SubgridEnum {
     /// Empty subgrid.
     EmptySubgridV1,
     /// TODO
-    PackedQ1X2SubgridV1,
+    ImportSubgridV1,
 }
 
 /// Structure denoting renormalization and factorization scale values.

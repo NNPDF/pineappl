@@ -9,12 +9,12 @@ use std::mem;
 
 /// TODO
 #[derive(Clone, Deserialize, Serialize)]
-pub struct PackedQ1X2SubgridV1 {
+pub struct ImportSubgridV1 {
     array: PackedArray<f64>,
     node_values: Vec<NodeValues>,
 }
 
-impl PackedQ1X2SubgridV1 {
+impl ImportSubgridV1 {
     /// Constructor.
     #[must_use]
     pub const fn new(array: PackedArray<f64>, node_values: Vec<NodeValues>) -> Self {
@@ -22,9 +22,9 @@ impl PackedQ1X2SubgridV1 {
     }
 }
 
-impl Subgrid for PackedQ1X2SubgridV1 {
+impl Subgrid for ImportSubgridV1 {
     fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
-        panic!("PackedQ1X2SubgridV1 doesn't support the fill operation");
+        panic!("ImportSubgridV1 doesn't support the fill operation");
     }
 
     fn node_values(&self) -> Vec<NodeValues> {
@@ -121,7 +121,7 @@ impl Subgrid for PackedQ1X2SubgridV1 {
     }
 }
 
-impl From<&SubgridEnum> for PackedQ1X2SubgridV1 {
+impl From<&SubgridEnum> for ImportSubgridV1 {
     fn from(subgrid: &SubgridEnum) -> Self {
         // find smallest ranges
         let ranges: Vec<_> = subgrid.indexed_iter().fold(
@@ -185,9 +185,9 @@ mod tests {
     use crate::v0;
 
     #[test]
-    #[should_panic(expected = "PackedQ1X2SubgridV1 doesn't support the fill operation")]
+    #[should_panic(expected = "ImportSubgridV1 doesn't support the fill operation")]
     fn fill_packed_q1x2_subgrid_v1() {
-        let mut subgrid = PackedQ1X2SubgridV1::new(
+        let mut subgrid = ImportSubgridV1::new(
             PackedArray::new(vec![0, 0, 0]),
             vec![NodeValues::UseThese(Vec::new()); 3],
         );
@@ -199,7 +199,7 @@ mod tests {
         let x = vec![
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
         ];
-        let mut grid1: SubgridEnum = PackedQ1X2SubgridV1::new(
+        let mut grid1: SubgridEnum = ImportSubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
             vec![
                 NodeValues::UseThese(vec![0.0]),
@@ -221,7 +221,7 @@ mod tests {
         assert!(grid1.is_empty());
 
         // only use exactly representable numbers here so that we can avoid using approx_eq
-        if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid1 {
+        if let SubgridEnum::ImportSubgridV1(ref mut x) = grid1 {
             x.array[[0, 1, 2]] = 1.0;
             x.array[[0, 1, 3]] = 2.0;
             x.array[[0, 4, 3]] = 4.0;
@@ -236,7 +236,7 @@ mod tests {
         assert_eq!(grid1.indexed_iter().nth(3), Some((vec![0, 7, 1], 8.0)));
 
         // create grid with transposed entries, but different q2
-        let mut grid2: SubgridEnum = PackedQ1X2SubgridV1::new(
+        let mut grid2: SubgridEnum = ImportSubgridV1::new(
             PackedArray::new(vec![1, 10, 10]),
             vec![
                 NodeValues::UseThese(vec![1.0]),
@@ -245,7 +245,7 @@ mod tests {
             ],
         )
         .into();
-        if let SubgridEnum::PackedQ1X2SubgridV1(ref mut x) = grid2 {
+        if let SubgridEnum::ImportSubgridV1(ref mut x) = grid2 {
             x.array[[0, 2, 1]] = 1.0;
             x.array[[0, 3, 1]] = 2.0;
             x.array[[0, 3, 4]] = 4.0;
