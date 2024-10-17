@@ -105,7 +105,7 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_a)`
     #[new]
     #[must_use]
-    pub const fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32, logxia: u32) -> Self {
+    pub const fn new_order(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
         Self::new(Order::new(alphas, alpha, logxir, logxif, logxia))
     }
 
@@ -124,7 +124,7 @@ impl PyOrder {
     /// logxia : int
     ///     power of :math:`\ln(\xi_a)`
     #[must_use]
-    pub const fn as_tuple(&self) -> (u32, u32, u32, u32, u32) {
+    pub const fn as_tuple(&self) -> (u8, u8, u8, u8, u8) {
         (
             self.order.alphas,
             self.order.alpha,
@@ -152,8 +152,8 @@ impl PyOrder {
     #[allow(clippy::needless_pass_by_value)]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
-        max_as: u32,
-        max_al: u32,
+        max_as: u8,
+        max_al: u8,
         logs: bool,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<bool>> {

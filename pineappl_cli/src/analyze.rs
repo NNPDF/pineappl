@@ -43,10 +43,10 @@ pub struct CkfOpts {
     conv_funs: ConvFuns,
     /// Order defining the K factors.
     #[arg(value_parser = helpers::parse_order)]
-    order: (u32, u32),
+    order: (u8, u8),
     /// Normalizing orders of the K factors.
     #[arg(value_delimiter = ',', value_parser = helpers::parse_order)]
-    orders_den: Vec<(u32, u32)>,
+    orders_den: Vec<(u8, u8)>,
     /// The maximum number of channels displayed.
     #[arg(
         default_value_t = 10,

@@ -94,7 +94,7 @@ fn convert_coeff_add_fix(
     table: &fastNLOCoeffAddFix,
     comb: &fastNLOPDFLinearCombinations,
     bins: usize,
-    alpha: u32,
+    alpha: u8,
 ) -> Grid {
     let table_as_add_base = ffi::downcast_coeff_add_fix_to_base(table);
 
@@ -288,7 +288,7 @@ fn convert_coeff_add_flex(
     _mur_ff: EScaleFunctionalForm,
     _muf_ff: EScaleFunctionalForm,
     _bins: usize,
-    _alpha: u32,
+    _alpha: u8,
     _ipub_units: i32,
 ) -> Grid {
     todo!()
@@ -483,7 +483,7 @@ fn convert_coeff_add_flex(
     // grid
 }
 
-pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u32) -> Result<Grid> {
+pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u8) -> Result<Grid> {
     let file_as_reader = ffi::downcast_lhapdf_to_reader(file);
     let file_as_table = ffi::downcast_lhapdf_to_table(file);
 

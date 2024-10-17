@@ -670,10 +670,10 @@ pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_par
     let order_params = unsafe { slice::from_raw_parts_mut(order_params, 4 * orders.len()) };
 
     for (i, order) in orders.iter().enumerate() {
-        order_params[4 * i] = order.alphas;
-        order_params[4 * i + 1] = order.alpha;
-        order_params[4 * i + 2] = order.logxir;
-        order_params[4 * i + 3] = order.logxif;
+        order_params[4 * i] = order.alphas.into();
+        order_params[4 * i + 1] = order.alpha.into();
+        order_params[4 * i + 2] = order.logxir.into();
+        order_params[4 * i + 3] = order.logxif.into();
     }
 }
 
@@ -731,10 +731,11 @@ pub unsafe extern "C" fn pineappl_grid_new(
     let orders: Vec<_> = order_params
         .chunks(4)
         .map(|s| Order {
-            alphas: s[0],
-            alpha: s[1],
-            logxir: s[2],
-            logxif: s[3],
+            // UNWRAP: there shouldn't be orders with exponents larger than 255
+            alphas: s[0].try_into().unwrap(),
+            alpha: s[1].try_into().unwrap(),
+            logxir: s[2].try_into().unwrap(),
+            logxif: s[3].try_into().unwrap(),
             // this function doesn't support fragmentation scale logs
             logxia: 0,
         })

@@ -71,12 +71,16 @@ fn reconstruct_channels(grid: &grid, order: i32) -> Vec<Channel> {
     channels.into_iter().map(Channel::new).collect()
 }
 
-pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
+pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     let bin_limits: Vec<_> = (0..=grid.Nobs_internal())
         .map(|i| grid.obslow_internal(i))
         .collect();
 
-    let leading_order: u32 = grid.leadingOrder().try_into().unwrap();
+    let leading_order: u8 = grid
+        .leadingOrder()
+        .try_into()
+        // UNWRAP: exponents of orders shouldn't be larger than 255
+        .unwrap();
     let orders;
     let alphas_factor;
 
@@ -99,7 +103,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u32) -> Result<Grid> {
         orders = (0..=grid.nloops())
             .map(|power| {
                 Order::new(
-                    leading_order + u32::try_from(power).unwrap(),
+                    leading_order
+                        + u8::try_from(power)
+                            // UNWRAP: exponents of orders shouldn't be larger than 255
+                            .unwrap(),
                     alpha,
                     0,
                     0,

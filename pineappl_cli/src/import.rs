@@ -18,7 +18,7 @@ mod fktable;
 #[cfg(feature = "applgrid")]
 fn convert_applgrid(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &mut [Pdf],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -36,7 +36,7 @@ fn convert_applgrid(
 #[cfg(not(feature = "applgrid"))]
 fn convert_applgrid(
     _: &Path,
-    _: u32,
+    _: u8,
     _: &mut [Pdf],
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
@@ -48,7 +48,7 @@ fn convert_applgrid(
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &ConvFuns,
     member: usize,
     scales: usize,
@@ -117,7 +117,7 @@ fn convert_fastnlo(
 #[cfg(not(feature = "fastnlo"))]
 fn convert_fastnlo(
     _: &Path,
-    _: u32,
+    _: u8,
     _: &ConvFuns,
     _: usize,
     _: usize,
@@ -145,7 +145,7 @@ fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
 
 fn convert_grid(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &mut [Pdf],
     fun_names: &ConvFuns,
     member: usize,
@@ -211,7 +211,7 @@ pub struct Opts {
     conv_funs: ConvFuns,
     /// LO coupling power in alpha.
     #[arg(default_value_t = 0, long)]
-    alpha: u32,
+    alpha: u8,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,

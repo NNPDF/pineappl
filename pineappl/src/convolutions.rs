@@ -149,7 +149,7 @@ impl<'a> ConvolutionCache<'a> {
     }
 
     /// TODO
-    pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u32, indices: &[usize]) -> f64 {
+    pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
         // - indices[0] is the (squared) factorization scale,
         // - indices[1] is x1 and
@@ -187,7 +187,7 @@ impl<'a> ConvolutionCache<'a> {
             })
             .product();
         let alphas_powers = if as_order != 0 {
-            self.alphas_cache[self.imur2[indices[0]]].powi(as_order.try_into().unwrap())
+            self.alphas_cache[self.imur2[indices[0]]].powi(as_order.into())
         } else {
             1.0
         };

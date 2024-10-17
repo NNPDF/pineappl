@@ -148,10 +148,11 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             .orders()
             .iter()
             .map(|o| Order {
-                alphas: o.alphas,
-                alpha: o.alpha,
-                logxir: o.logxir,
-                logxif: o.logxif,
+                // UNWRAP: there shouldn't be orders with exponents larger than 255
+                alphas: o.alphas.try_into().unwrap(),
+                alpha: o.alpha.try_into().unwrap(),
+                logxir: o.logxir.try_into().unwrap(),
+                logxif: o.logxif.try_into().unwrap(),
                 logxia: 0,
             })
             .collect(),

@@ -440,7 +440,7 @@ fn evolve_grid(
     grid: &Grid,
     ekos: &[&Path],
     use_alphas_from: &Pdf,
-    orders: &[(u32, u32)],
+    orders: &[(u8, u8)],
     xir: f64,
     xif: f64,
     xia: f64,
@@ -518,7 +518,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Rescale the renormalization scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xir: f64,

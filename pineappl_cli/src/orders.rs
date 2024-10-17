@@ -29,7 +29,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    normalize: Vec<(u32, u32)>,
+    normalize: Vec<(u8, u8)>,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,

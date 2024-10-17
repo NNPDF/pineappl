@@ -224,7 +224,7 @@ pub enum ConvoluteMode {
 pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Pdf],
-    orders: &[(u32, u32)],
+    orders: &[(u8, u8)],
     bins: &[usize],
     channels: &[bool],
     scales: &[(f64, f64, f64)],
@@ -368,7 +368,7 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
-    orders: &[(u32, u32)],
+    orders: &[(u8, u8)],
     bins: &[usize],
     lumis: &[bool],
     scales: usize,
@@ -502,7 +502,7 @@ pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
     }
 }
 
-pub fn parse_order(order: &str) -> Result<(u32, u32)> {
+pub fn parse_order(order: &str) -> Result<(u8, u8)> {
     let mut alphas = 0;
     let mut alpha = 0;
 
@@ -520,14 +520,14 @@ pub fn parse_order(order: &str) -> Result<(u32, u32)> {
                 .chars()
                 .take_while(|c| c.is_numeric())
                 .count();
-            alphas = str::parse::<u32>(&order[index + 2..index + 2 + len])
+            alphas = str::parse::<u8>(&order[index + 2..index + 2 + len])
                 .context(format!("unable to parse order '{order}'"))?;
         } else {
             let len = order[index + 1..]
                 .chars()
                 .take_while(|c| c.is_numeric())
                 .count();
-            alpha = str::parse::<u32>(&order[index + 1..index + 1 + len])
+            alpha = str::parse::<u8>(&order[index + 1..index + 1 + len])
                 .context(format!("unable to parse order '{order}'"))?;
         }
     }

@@ -104,16 +104,18 @@ pub struct ParseOrderError(String);
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
-    pub alphas: u32,
+    pub alphas: u8,
     /// Exponent of the electromagnetic coupling.
-    pub alpha: u32,
+    pub alpha: u8,
     /// Exponent of the logarithm of the scale factor of the renomalization scale.
-    pub logxir: u32,
+    pub logxir: u8,
     /// Exponent of the logarithm of the scale factor of the initial state factorization scale.
-    pub logxif: u32,
+    pub logxif: u8,
     /// Exponent of the logarithm of the scale factor of the final state factorization scale
     /// (fragmentation scale).
-    pub logxia: u32,
+    pub logxia: u8,
+    // /// Reserved for future usage.
+    // pub other: [u8; 3],
 }
 
 impl FromStr for Order {
@@ -193,7 +195,7 @@ impl Order {
     /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
     /// verbose.
     #[must_use]
-    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32, logxia: u32) -> Self {
+    pub const fn new(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
         Self {
             alphas,
             alpha,
@@ -295,7 +297,7 @@ impl Order {
     /// assert_eq!(Order::create_mask(&orders, 1, 1, false), [true, true, true, false, false, false, false]);
     /// ```
     #[must_use]
-    pub fn create_mask(orders: &[Self], max_as: u32, max_al: u32, logs: bool) -> Vec<bool> {
+    pub fn create_mask(orders: &[Self], max_as: u8, max_al: u8, logs: bool) -> Vec<bool> {
         // smallest sum of alphas and alpha
         let lo = orders
             .iter()
