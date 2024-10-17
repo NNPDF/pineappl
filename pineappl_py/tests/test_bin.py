@@ -1,13 +1,14 @@
 import numpy as np
-import pineappl
 import pytest
+
+from pineappl.bin import BinRemapper
 
 
 class TestBinRemapper:
     def test_init(self):
-        br = pineappl.bin.BinRemapper(np.array([1.0]), [(2, 3)])
+        br = BinRemapper(np.array([1.0]), [(2, 3)])
 
-        assert isinstance(br, pineappl.bin.BinRemapper)
+        assert isinstance(br, BinRemapper)
 
         with pytest.raises(AttributeError):
             br._bla()

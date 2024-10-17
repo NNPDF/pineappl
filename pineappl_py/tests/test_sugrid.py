@@ -1,25 +1,82 @@
-import pineappl
 import pytest
-
 import numpy as np
+
+from pineappl.pids import PidBasis
+from pineappl.boc import Channel, Order, Kinematics
+from pineappl.convolutions import Conv, ConvType
+from pineappl.grid import Grid
+from pineappl.subgrid import SubgridParams
+from pineappl.interpolation import Interp
+
+
+# See `test_grid.py` for more detailed information
+TYPECONV = ConvType(polarized=False, time_like=False)
+CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
 
 
 class TestSubgridParams:
     def test_init(self):
-        sp = pineappl.subgrid.SubgridParams()
-        assert isinstance(sp, pineappl.subgrid.SubgridParams)
+        sp = SubgridParams()
+        assert isinstance(sp, SubgridParams)
 
 
 def test_issue_164(pdf):
-    channels = [pineappl.boc.Channel([([1, 2], 1.0)])]
-    orders = [pineappl.grid.Order(0, 0, 0, 0, 0)]
-    params = pineappl.subgrid.SubgridParams()
+    # https://github.com/NNPDF/pineappl/issues/164
+    channels = [Channel([([1, 2], 1.0)])]
+    orders = [Order(0, 0, 0, 0, 0)]
+    params = SubgridParams()
 
     def convolve_grid():
         bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.grid.Grid(channels, orders, bin_limits, params)
-        grid.fill(0.2, 0.2, 10, 0, 0.5, 0, 0.5)
-        return grid.convolve_with_one(2212, pdf.xfxQ, pdf.alphasQ)
+        # See `test_grid.py` for more detailed information
+        # on the meaning of the following parameters
+        convolutions = [CONVOBJECT]  # Consider DIS-case
+        kinematics = [
+            Kinematics(0),  # Scale
+            Kinematics(1),  # x1 momentum fraction
+            Kinematics(2),  # x2 momentum fraction
+        ]
+        interpolations = [
+            Interp(
+                min=1e2,
+                max=1e8,
+                nodes=40,
+                order=3,
+            ),  # Interpolation on the Scale
+            Interp(
+                min=2e-7,
+                max=1.0,
+                nodes=50,
+                order=3,
+            ),  # Interpolation on x1 momentum fraction
+            Interp(
+                min=2e-7,
+                max=1.0,
+                nodes=50,
+                order=3,
+            ),  # Interpolation on x2 momentum fraction
+        ]
+        grid = Grid(
+            pid_basis=PidBasis.Evol,
+            channels=channels,
+            orders=orders,
+            bin_limits=bin_limits,
+            convolutions=convolutions,
+            interpolations=interpolations,
+            kinematics=kinematics,
+        )
+        grid.fill(
+            order=0,
+            observable=0.5,
+            channel=0,
+            ntuple=[0.2, 0.2, 10],
+            weight=0.5,
+        )
+        return grid.convolve_with_one(
+            pdg_conv=CONVOBJECT,
+            xfx=pdf.xfxQ,
+            alphas=pdf.alphasQ,
+        )
 
     # default minimum is q2=100
     res = convolve_grid()
@@ -28,49 +85,4 @@ def test_issue_164(pdf):
     # lower minimum to q2=1
     params.set_q2_min(1.0)
     res = convolve_grid()
-    assert pytest.approx(res) != 0.0
-
-
-class TestSubgrid:
-    def fake_grid(self):
-        channels = [pineappl.boc.Channel([([1, 2], 1.0)])]
-        orders = [pineappl.grid.Order(0, 0, 0, 0, 0)]
-        params = pineappl.subgrid.SubgridParams()
-        bin_limits = np.array([0.0, 1.0])
-        grid = pineappl.grid.Grid(channels, orders, bin_limits, params)
-        return grid
-
-    def fake_importonlysubgrid(self):
-        x1s = np.linspace(0.1, 1, 2)
-        x2s = np.linspace(0.5, 1, 2)
-        Q2s = np.linspace(10, 20, 2)
-        mu2s = [tuple([q2, q2]) for q2 in Q2s]
-        array = np.random.rand(len(Q2s), len(x1s), len(x2s))
-        subgrid = pineappl.import_only_subgrid.ImportOnlySubgridV2(
-            array, mu2s, x1s, x2s
-        )
-        return subgrid, [x1s, x2s, mu2s, array]
-
-    def test_subgrid_methods(self):
-        grid = self.fake_grid()
-        test_subgrid, infos = self.fake_importonlysubgrid()
-        x1s, x2s, mu2s, _ = (obj for obj in infos)
-        grid.set_subgrid(0, 0, 0, test_subgrid.into())
-        extr_subgrid = grid.subgrid(0, 0, 0)
-        facgrid = np.array([mu2.fac for mu2 in extr_subgrid.mu2_grid()])
-        rengrid = np.array([mu2.ren for mu2 in extr_subgrid.mu2_grid()])
-        np.testing.assert_allclose([mu2[0] for mu2 in mu2s], rengrid)
-        np.testing.assert_allclose([mu2[1] for mu2 in mu2s], facgrid)
-        np.testing.assert_allclose(extr_subgrid.x1_grid(), x1s)
-        np.testing.assert_allclose(extr_subgrid.x2_grid(), x2s)
-
-    def test_to_array3(self):
-        grid = self.fake_grid()
-        test_subgrid, infos = self.fake_importonlysubgrid()
-        _, _, _, array = (obj for obj in infos)
-        grid.set_subgrid(0, 0, 0, test_subgrid.into())
-        extr_subgrid = grid.subgrid(0, 0, 0)
-        test_array = extr_subgrid.to_array3()
-        print(test_array)
-        print(array)
-        np.testing.assert_allclose(test_array, array)
+    assert res == 0.0

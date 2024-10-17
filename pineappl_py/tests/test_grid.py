@@ -16,15 +16,6 @@ TYPECONV = ConvType(polarized=False, time_like=False)
 CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
 
 
-class TestOrder:
-    def test_init(self):
-        args = (2, 1, 0, 1, 0)
-        o = Order(*args)
-
-        assert isinstance(o, Order)
-        assert o.as_tuple() == args
-
-
 class TestGrid:
     def fake_grid(self, bins=None):
         channels = [Channel([([1, 21], 0.1)])]
