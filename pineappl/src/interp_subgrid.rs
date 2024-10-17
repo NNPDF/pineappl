@@ -9,13 +9,13 @@ use std::mem;
 
 /// Subgrid which uses Lagrange-interpolation.
 #[derive(Clone, Deserialize, Serialize)]
-pub struct LagrangeSubgridV2 {
+pub struct InterpSubgridV1 {
     array: PackedArray<f64>,
     interps: Vec<Interp>,
     pub(crate) static_q2: f64,
 }
 
-impl LagrangeSubgridV2 {
+impl InterpSubgridV1 {
     /// Constructor.
     #[must_use]
     pub fn new(interps: &[Interp]) -> Self {
@@ -27,7 +27,7 @@ impl LagrangeSubgridV2 {
     }
 }
 
-impl Subgrid for LagrangeSubgridV2 {
+impl Subgrid for InterpSubgridV1 {
     fn fill(&mut self, interps: &[Interp], ntuple: &[f64], weight: f64) {
         debug_assert_eq!(interps.len(), ntuple.len());
 
@@ -55,7 +55,7 @@ impl Subgrid for LagrangeSubgridV2 {
 
     fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
-        if let SubgridEnum::LagrangeSubgridV2(other) = other {
+        if let SubgridEnum::InterpSubgridV1(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`
             for (mut index, value) in other.array.indexed_iter() {
                 if let Some((a, b)) = transpose {
@@ -128,7 +128,7 @@ mod tests {
     #[test]
     fn fill_zero() {
         let interps = v0::default_interps(2);
-        let mut subgrid = LagrangeSubgridV2::new(&interps);
+        let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 0.0);
 
@@ -149,7 +149,7 @@ mod tests {
     #[test]
     fn fill_outside_range() {
         let interps = v0::default_interps(2);
-        let mut subgrid = LagrangeSubgridV2::new(&interps);
+        let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 1e-10, 0.5], 0.0);
 
@@ -170,7 +170,7 @@ mod tests {
     #[test]
     fn fill() {
         let interps = v0::default_interps(2);
-        let mut subgrid = LagrangeSubgridV2::new(&interps);
+        let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 1.0);
 

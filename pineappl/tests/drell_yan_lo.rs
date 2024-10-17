@@ -687,7 +687,7 @@ fn grid_optimize() {
     assert_eq!(grid.channels().len(), 5);
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
-        SubgridEnum::LagrangeSubgridV2 { .. }
+        SubgridEnum::InterpSubgridV1 { .. }
     ));
 
     let node_values = grid.subgrids()[[0, 0, 0]].node_values();

@@ -44,7 +44,7 @@ pub mod evolution;
 pub mod fk_table;
 pub mod grid;
 pub mod interpolation;
-pub mod lagrange_subgrid;
+pub mod interp_subgrid;
 pub mod packed_array;
 pub mod packed_subgrid;
 pub mod pids;

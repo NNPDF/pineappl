@@ -78,7 +78,7 @@ impl Subcommand for Opts {
             if self.group.type_ {
                 row.add_cell(cell!(l->
                     match subgrid {
-                        SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
+                        SubgridEnum::InterpSubgridV1(_) => "InterpSubgridV1",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
                         SubgridEnum::PackedQ1X2SubgridV1(_) => "PackedQ1X2SubgridV1",
                     }

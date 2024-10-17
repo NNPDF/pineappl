@@ -7,7 +7,7 @@ use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::interpolation::Interp;
-use super::lagrange_subgrid::LagrangeSubgridV2;
+use super::interp_subgrid::InterpSubgridV1;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use super::pids::PidBasis;
 use super::subgrid::{NodeValues, Subgrid, SubgridEnum};
@@ -407,7 +407,7 @@ impl Grid {
         if let Some(bin) = self.bin_limits.index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
-                *subgrid = LagrangeSubgridV2::new(&self.interps).into();
+                *subgrid = InterpSubgridV1::new(&self.interps).into();
             }
 
             subgrid.fill(&self.interps, ntuple, weight);
@@ -875,10 +875,10 @@ impl Grid {
                     *subgrid = EmptySubgridV1.into();
                 }
                 _ => {
-                    // TODO: this requires a `pub(crate)` in `LagrangeSubgridV2`; we should
+                    // TODO: this requires a `pub(crate)` in `InterpSubgridV1`; we should
                     // replace this with a method
                     if !static_scale_detection {
-                        if let SubgridEnum::LagrangeSubgridV2(subgrid) = subgrid {
+                        if let SubgridEnum::InterpSubgridV1(subgrid) = subgrid {
                             // disable static-scale detection
                             subgrid.static_q2 = -1.0;
                         }

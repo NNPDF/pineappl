@@ -1,7 +1,7 @@
 //! Module containing the trait `Subgrid` and supporting structs.
 
 use super::empty_subgrid::EmptySubgridV1;
-use super::lagrange_subgrid::LagrangeSubgridV2;
+use super::interp_subgrid::InterpSubgridV1;
 use super::packed_subgrid::PackedQ1X2SubgridV1;
 use enum_dispatch::enum_dispatch;
 // use float_cmp::approx_eq;
@@ -94,8 +94,8 @@ impl PartialEq for NodeValues {
 #[derive(Clone, Deserialize, Serialize)]
 pub enum SubgridEnum {
     // WARNING: never change the order or content of this enum, only add to the end of it
-    /// Lagrange-interpolation subgrid with possibly different x1 and x2 bins.
-    LagrangeSubgridV2,
+    /// Subgrid type that supports filling.
+    InterpSubgridV1,
     /// Empty subgrid.
     EmptySubgridV1,
     /// TODO
