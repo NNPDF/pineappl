@@ -5,8 +5,8 @@ import pineappl
 
 class TestFkTable:
     def fake_grid(self, bins=None):
-        channels = [pineappl.boc.Channel([(1, 21, 1.0)])]
-        orders = [pineappl.grid.Order(0, 0, 0, 0)]
+        channels = [pineappl.boc.Channel([([1, 21], 1.0)])]
+        orders = [pineappl.grid.Order(0, 0, 0, 0, 0)]
         bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
         subgrid_params = pineappl.subgrid.SubgridParams()
         g = pineappl.grid.Grid(channels, orders, bin_limits, subgrid_params)

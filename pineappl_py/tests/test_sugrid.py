@@ -11,8 +11,8 @@ class TestSubgridParams:
 
 
 def test_issue_164(pdf):
-    channels = [pineappl.boc.Channel([(1, 2, 1.0)])]
-    orders = [pineappl.grid.Order(0, 0, 0, 0)]
+    channels = [pineappl.boc.Channel([([1, 2], 1.0)])]
+    orders = [pineappl.grid.Order(0, 0, 0, 0, 0)]
     params = pineappl.subgrid.SubgridParams()
 
     def convolve_grid():
@@ -33,8 +33,8 @@ def test_issue_164(pdf):
 
 class TestSubgrid:
     def fake_grid(self):
-        channels = [pineappl.boc.Channel([(1, 2, 1.0)])]
-        orders = [pineappl.grid.Order(0, 0, 0, 0)]
+        channels = [pineappl.boc.Channel([([1, 2], 1.0)])]
+        orders = [pineappl.grid.Order(0, 0, 0, 0, 0)]
         params = pineappl.subgrid.SubgridParams()
         bin_limits = np.array([0.0, 1.0])
         grid = pineappl.grid.Grid(channels, orders, bin_limits, params)
