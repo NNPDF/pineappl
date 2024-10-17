@@ -1,9 +1,10 @@
-"""Test module for the interface of the `fk_table`.
+"""Test module for the interface of the `evolution`.
 
-It checks the cases in which we have one, two, and
-three (general) convolutions.
+It checks the cases in which we have evolve with one,
+two, and three (general) EKOs.
 """
 
+import itertools
 import numpy as np
 
 from pineappl.pids import PidBasis
@@ -11,8 +12,7 @@ from pineappl.boc import Channel, Kinematics
 from pineappl.grid import Order, Grid
 from pineappl.convolutions import Conv, ConvType
 from pineappl.interpolation import Interp
-from pineappl.packed_subgrid import PackedSubgrid
-from pineappl.fk_table import FkTable
+from pineappl.evolution import OperatorSliceInfo
 
 
 class TestFkTable:
@@ -31,7 +31,7 @@ class TestFkTable:
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
             Interp(
-                min=1e2,
+                min=1.0,
                 max=1e8,
                 nodes=40,
                 order=3,
@@ -62,51 +62,50 @@ class TestFkTable:
             kinematics=kinematics,
         )
 
-    def test_convolve_with_one(self):
+    def test_with_one_eko(self):
         # Define convolution types and the initial state hadrons
         # We consider an initial state Polarized Proton
         h = ConvType(polarized=True, time_like=False)
         h_conv = Conv(conv_type=h, pid=2212)
+
         # The length of the convolutions has to match the nb of hadrons
         convolutions = [h_conv]
+
         # We define the PIDs of the partons out of the Proton
         down_channel = [([1], 1.0)]  # DIS-case
         up_channel = [([2], 1.0)]  # DIS-case
         channels = [Channel(down_channel), Channel(up_channel)]
+
         # Now we define the perturbative orders
         orders = [Order(0, 0, 0, 0, 0)]
-        g = self.fake_grid(channels, orders, convolutions)
 
-        # DIS grid
-        xs = np.linspace(0.5, 1.0, 5)
-        vs = xs.copy()
-        subgrid = PackedSubgrid(
-            vs[np.newaxis, :, np.newaxis],
-            np.array([90.0]),
-            xs,
-            np.array([1.0]),
-        )
-        g.set_subgrid(0, 0, 0, subgrid.into())
-        fk = FkTable(g)  # Convert Grid -> FkTable
-        np.testing.assert_allclose(
-            fk.convolve_with_one(
-                pdg_conv=h_conv,
-                xfx=lambda pid, x, q2: 0.0,
-            ),
-            [0.0] * 2,
-        )
-        np.testing.assert_allclose(
-            fk.convolve_with_one(
-                pdg_conv=h_conv,
-                xfx=lambda pid, x, q2: 1.0,
-            ),
-            [5e7 / 9999, 0.0],
+        # Construct the Grid and fill with some values
+        grid = self.fake_grid(channels, orders, convolutions)
+
+        x1g = np.linspace(0.5, 1.0, 5)
+        x2g = x1g.copy()
+        q2g = np.array([10, 90, 100])
+
+        for x1, x2, q2 in itertools.product(x1g, x2g, q2g):
+            grid.fill(
+                order=0,
+                observable=0.01,
+                channel=0,
+                ntuple=[x1, x2, q2],
+                weight=10,
+            )
+
+        # Check the Evolution of the Grid
+        info = OperatorSliceInfo(
+            fac0=1.0,
+            pids0=[],
+            x0=[],
+            fac1=1.0,
+            pids1=[],
+            x1=[],
+            pid_basis=PidBasis.Pdg,
+            conv_type=h,
         )
 
-    def test_convolve_with_two(self):
-        # TODO
-        pass
-
-    def test_convolve_with_many(self):
-        # TODO
-        pass
+        # TODO: check a Toy evolution
+        assert isinstance(info, OperatorSliceInfo)

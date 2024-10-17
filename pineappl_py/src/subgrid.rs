@@ -77,6 +77,17 @@ impl PySubgridEnum {
     pub fn into(&self) -> Self {
         self.clone()
     }
+
+    /// Return the array of mu2 objects.
+    #[must_use]
+    pub fn static_scale(&self) -> Vec<PyMu2> {
+        self.subgrid_enum
+            .static_scale()
+            .iter()
+            .cloned()
+            .map(|mu2| PyMu2 { mu2 })
+            .collect()
+    }
 }
 
 /// Register submodule in parent.

@@ -15,11 +15,14 @@ from pineappl.packed_subgrid import PackedSubgrid
 TYPECONV = ConvType(polarized=False, time_like=False)
 CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
 
+# Construct the Channel and Order objetcs
+UP_ANTIUP_CHANNEL = [([2, -2], 0.1)]
+CHANNELS = [Channel(UP_ANTIUP_CHANNEL)]
+ORDERS = [Order(3, 0, 0, 0, 0)]
+
 
 class TestGrid:
-    def fake_grid(self, bins=None):
-        channels = [Channel([([1, 21], 0.1)])]
-        orders = [Order(3, 0, 0, 0, 0)]
+    def fake_grid(self, channels=CHANNELS, orders=ORDERS, bins=None):
         # We assume symmetrical proton-proton in the initial state
         convolutions = [CONVOBJECT, CONVOBJECT]
         # Define the kinematics. Kinematics are defined as a list of items.
@@ -52,7 +55,9 @@ class TestGrid:
                 order=3,
             ),  # Interpolation on x2 momentum fraction
         ]
-        bin_limits = np.array([1e-7, 1e-3, 1] if bins is None else bins, dtype=float)
+        bin_limits = np.array(
+            [1e-7, 1e-3, 1] if bins is None else bins, dtype=float
+        )
         g = Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
@@ -69,6 +74,11 @@ class TestGrid:
         assert isinstance(g, Grid)
         assert len(g.orders()) == 1
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0, 0)
+
+    def test_channels(self):
+        g = self.fake_grid()
+        assert len(g.channels()) == 1
+        assert g.channels()[0] == UP_ANTIUP_CHANNEL
 
     def test_set_subgrid(self):
         g = self.fake_grid()
@@ -94,12 +104,6 @@ class TestGrid:
         g.set_subgrid(0, 1, 0, subgrid.into())
         g.optimize()
 
-    def test_set_key_value(self):
-        g = self.fake_grid()
-        g.set_key_value("bla", "blub")
-        g.set_key_value('"', "'")
-        g.set_key_value("äöü", "ß\\")
-
     def test_bins(self):
         g = self.fake_grid()
         # 1D
@@ -120,7 +124,7 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
-    def test_convolve_with_one(self):
+    def test_convolve_with_two(self):
         g = self.fake_grid()
 
         # Fill the subgrid-part of the GRID object
@@ -197,24 +201,24 @@ class TestGrid:
         pytest.approx(res) == 0.0
 
     def test_merge(self):
-        g = self.fake_grid([1, 2, 3])
-        g1 = self.fake_grid([3, 4, 5])
+        g = self.fake_grid(bins=[1, 2, 3])
+        g1 = self.fake_grid(bins=[3, 4, 5])
         assert g.bins() == 2
         assert g1.bins() == 2
 
         g.merge(g1)
         assert g.bins() == 4
 
-        g2 = self.fake_grid([1, 2, 3])
-        g3 = self.fake_grid([1, 2, 3])
+        g2 = self.fake_grid(bins=[1, 2, 3])
+        g3 = self.fake_grid(bins=[1, 2, 3])
         assert g2.bins() == 2
         assert g3.bins() == 2
 
         g2.merge(g3)
         assert g2.bins() == 2
 
-        g4 = self.fake_grid([2, 3, 4])
-        g5 = self.fake_grid([4, 5, 6])
+        g4 = self.fake_grid(bins=[2, 3, 4])
+        g5 = self.fake_grid(bins=[4, 5, 6])
         assert g4.bins() == 2
         assert g5.bins() == 2
 

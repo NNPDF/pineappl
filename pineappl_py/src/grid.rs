@@ -51,12 +51,11 @@ impl PyGrid {
     ///     subgrid parameters
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new_grid(
         pid_basis: PyPidBasis,
         channels: Vec<PyRef<PyChannel>>,
         orders: Vec<PyRef<PyOrder>>,
-        bin_limits: PyReadonlyArray1<f64>,
+        bin_limits: Vec<f64>,
         convolutions: Vec<PyRef<PyConv>>,
         interpolations: Vec<PyRef<PyInterp>>,
         kinematics: Vec<PyRef<PyKinematics>>,
@@ -64,15 +63,18 @@ impl PyGrid {
         Self {
             grid: Grid::new(
                 pid_basis.into(),
-                channels.iter().map(|pyc| pyc.entry.clone()).collect(),
-                orders.iter().map(|pyo| pyo.order.clone()).collect(),
-                bin_limits.to_vec().unwrap(),
-                convolutions.iter().map(|pyx| pyx.conv.clone()).collect(),
+                channels.into_iter().map(|pyc| pyc.entry.clone()).collect(),
+                orders.into_iter().map(|pyo| pyo.order.clone()).collect(),
+                bin_limits,
+                convolutions
+                    .into_iter()
+                    .map(|pyx| pyx.conv.clone())
+                    .collect(),
                 interpolations
-                    .iter()
+                    .into_iter()
                     .map(|pyi| pyi.interp.clone())
                     .collect(),
-                kinematics.iter().map(|pyk| pyk.kinematics).collect(),
+                kinematics.into_iter().map(|pyk| pyk.kinematics).collect(),
                 Scales {
                     ren: ScaleFuncForm::Scale(0),
                     fac: ScaleFuncForm::Scale(0),
@@ -324,7 +326,8 @@ impl PyGrid {
         }
     }
 
-    /// Evolve grid using sliced operators.
+    /// Evolve grid with as many EKOs as Convolutions.
+    /// TODO: Expose `slices` to be a vector!!!
     ///
     /// # Panics
     /// TODO
@@ -352,6 +355,65 @@ impl PyGrid {
     #[allow(clippy::needless_lifetimes)]
     #[allow(clippy::needless_pass_by_value)]
     pub fn evolve<'py>(
+        &self,
+        slices: &Bound<'py, PyIterator>,
+        order_mask: PyReadonlyArray1<bool>,
+        xi: (f64, f64, f64),
+        ren1: Vec<f64>,
+        alphas: Vec<f64>,
+    ) -> PyResult<PyFkTable> {
+        Ok(self
+            .grid
+            .evolve(
+                vec![slices.into_iter().map(|slice| {
+                    let (info, op) = slice
+                        .unwrap()
+                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
+                        .unwrap();
+                    Ok::<_, std::io::Error>((
+                        info.info,
+                        // TODO: avoid copying
+                        CowArray::from(op.as_array().to_owned()),
+                    ))
+                })],
+                // TODO: make `order_mask` a `Vec<f64>`
+                &order_mask.to_vec().unwrap(),
+                xi,
+                &AlphasTable { ren1, alphas },
+            )
+            .map(|fk_table| PyFkTable { fk_table })
+            // TODO: avoid unwrap and convert `Result` into `PyResult`
+            .unwrap())
+    }
+
+    /// Evolve grid with one single EKO.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// # Errors
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// slices : Iterable
+    ///     list of (PyOperatorSliceInfo, 5D array) describing each convolution
+    /// order_mask : numpy.ndarray(bool)
+    ///     boolean mask to activate orders
+    /// xi : (float, float)
+    ///     factorization and renormalization variation
+    /// ren1 : numpy.ndarray(float)
+    ///     list of renormalization scales
+    /// alphas : numpy.ndarray(float)
+    ///     list with :math:`\alpha_s(Q2)` for the process scales
+    ///
+    /// Returns
+    /// -------
+    /// PyFkTable :
+    ///     produced FK table
+    #[allow(clippy::needless_lifetimes)]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn evolve_with_slice_iter<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
         order_mask: PyReadonlyArray1<bool>,
