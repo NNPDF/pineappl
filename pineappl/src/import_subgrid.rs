@@ -45,12 +45,13 @@ impl Subgrid for ImportSubgridV1 {
             rhs_node_values.swap(a, b);
         }
 
-        // TODO: allow for some tolerance
-        if self.node_values() != rhs_node_values {
+        if new_node_values != rhs_node_values {
             for (new, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
                 new.extend(rhs);
-                new.sort_by(|lhs, rhs| lhs.partial_cmp(rhs).unwrap());
-                new.dedup();
+                new.sort_by(f64::total_cmp);
+                new.dedup_by(|&mut lhs, &mut rhs| {
+                    approx_eq!(f64, lhs, rhs, ulps = EVOLVE_INFO_TOL_ULPS)
+                });
             }
 
             let mut array = PackedArray::new(new_node_values.iter().map(Vec::len).collect());
@@ -83,7 +84,9 @@ impl Subgrid for ImportSubgridV1 {
             let target: Vec<_> = izip!(indices, &new_node_values, &rhs_node_values)
                 .map(|(index, new, rhs)| {
                     new.iter()
-                        .position(|&value| value == rhs[index])
+                        .position(|&value| {
+                            approx_eq!(f64, value, rhs[index], ulps = EVOLVE_INFO_TOL_ULPS)
+                        })
                         // UNWRAP: must succeed, `new_node_values` is the union of
                         // `lhs_node_values` and `rhs_node_values`
                         .unwrap()
