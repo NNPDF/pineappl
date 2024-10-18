@@ -297,20 +297,29 @@ impl PyGrid {
             .into_pyarray_bound(py)
     }
 
+    /// Convolve a grid with as many convolutions.
+    ///
+    /// # Panics
     /// TODO
     // #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     #[must_use]
     pub fn convolve<'py>(
         &self,
-        _pdg_convs: Vec<PyRef<PyConv>>,
-        _xfxs: &Bound<'py, PyIterator>,
-        _alphas: &Bound<'py, PyAny>,
-        _order_mask: Option<PyReadonlyArray1<bool>>,
-        _bin_indices: Option<PyReadonlyArray1<usize>>,
-        _channel_mask: Option<PyReadonlyArray1<bool>>,
-        _xi: Option<Vec<(f64, f64, f64)>>,
-        _py: Python<'py>,
+        pdg_convs: Vec<PyRef<PyConv>>,
+        xfxs: Vec<PyObject>,
+        alphas: PyObject,
+        order_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<PyReadonlyArray1<usize>>,
+        channel_mask: Option<PyReadonlyArray1<bool>>,
+        xi: Option<Vec<(f64, f64, f64)>>,
+        py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
+        // Closure for alphas function
+        let mut alphas = |q2: f64| {
+            let result: f64 = alphas.call1(py, (q2,)).unwrap().extract(py).unwrap();
+            result
+        };
+
         todo!()
     }
 
