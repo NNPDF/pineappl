@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 18/10/2024
+
 ### Fixed
 
 - fixed [Issue #318](https://github.com/NNPDF/pineappl/issues/318) that caused
@@ -672,7 +674,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.5...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.6...HEAD
+[0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
