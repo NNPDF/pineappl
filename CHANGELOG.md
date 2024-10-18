@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed [Issue #318](https://github.com/NNPDF/pineappl/issues/318) that caused
+  fastNLO tables with `NPDFDim = 2` to be incorrectly imported
+
 ## [0.8.5] - 07/10/2024
 
 ### Fixed
