@@ -22,8 +22,8 @@ ORDERS = [Order(3, 0, 0, 0, 0)]
 class TestGrid:
     def fake_grid(
         self,
-        channels: list[Channel] = CHANNELS,
-        orders: list[Order] = ORDERS,
+        channels: list(Channel) = CHANNELS,
+        orders: list(Order) = ORDERS,
         bins: list | None = None,
     ) -> Grid:
         # We assume symmetrical proton-proton in the initial state

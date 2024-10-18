@@ -17,9 +17,9 @@ from pineappl.pids import PidBasis
 class TestFkTable:
     def fake_grid(
         self,
-        channels: list[Channel],
-        orders: list[Order],
-        convolutions: list[Conv],
+        channels: list(Channel),
+        orders: list(Order),
+        convolutions: list(Conv),
         bins=None,
     ) -> Grid:
         kinematics = [
