@@ -7,7 +7,7 @@ from pineappl.convolutions import Conv, ConvType
 from pineappl.grid import Grid
 from pineappl.interpolation import Interp
 from pineappl.subgrid import SubgridEnum
-from pineappl.packed_subgrid import PackedSubgrid
+from pineappl.import_subgrid import ImportSubgridV1
 
 
 # Define some default for the minimum value of `Q2`
@@ -103,7 +103,7 @@ class TestSubgrid:
         Q2s = np.linspace(10, 20, 2)
         scale = [q2 for q2 in Q2s]
         array = np.random.rand(len(Q2s), len(x1s), len(x2s))
-        subgrid = PackedSubgrid(
+        subgrid = ImportSubgridV1(
             array=array,
             scales=scale,
             x1_grid=x1s,

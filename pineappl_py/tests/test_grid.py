@@ -7,7 +7,7 @@ from pineappl.bin import BinRemapper
 from pineappl.grid import Order, Grid
 from pineappl.convolutions import Conv, ConvType
 from pineappl.interpolation import Interp
-from pineappl.packed_subgrid import PackedSubgrid
+from pineappl.import_subgrid import ImportSubgridV1
 
 
 # Construct the type of convolutions and the convolution object
@@ -86,7 +86,7 @@ class TestGrid:
         # DIS grid
         xs = np.linspace(0.1, 1.0, 5)
         vs = np.random.rand(len(xs))
-        subgrid = PackedSubgrid(
+        subgrid = ImportSubgridV1(
             vs[np.newaxis, :, np.newaxis],
             np.array([90.0]),
             xs,
@@ -98,7 +98,7 @@ class TestGrid:
         x1s = np.linspace(0.1, 1, 2)
         x2s = np.linspace(0.5, 1, 2)
         Q2s = np.linspace(10, 20, 2)
-        subgrid = PackedSubgrid(
+        subgrid = ImportSubgridV1(
             np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
@@ -130,7 +130,7 @@ class TestGrid:
         # Fill the subgrid-part of the GRID object
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
-        subgrid = PackedSubgrid(
+        subgrid = ImportSubgridV1(
             array=vs[np.newaxis, :, np.newaxis],
             scales=np.array([90.0]),
             x1_grid=xs,

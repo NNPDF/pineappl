@@ -2,20 +2,20 @@
 
 use super::subgrid::PySubgridEnum;
 use numpy::PyReadonlyArray3;
+use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::packed_array::PackedArray;
-use pineappl::packed_subgrid::PackedQ1X2SubgridV1;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl`.
-#[pyclass(name = "PackedSubgrid")]
+#[pyclass(name = "ImportSubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
-pub struct PyPackedSubgrid {
-    pub(crate) packed_subgrid: PackedQ1X2SubgridV1,
+pub struct PyImportSubgridV1 {
+    pub(crate) import_subgrid: ImportSubgridV1,
 }
 
 #[pymethods]
-impl PyPackedSubgrid {
+impl PyImportSubgridV1 {
     /// Constructor.
     /// Constructor.
     ///
@@ -49,7 +49,7 @@ impl PyPackedSubgrid {
         }
 
         Self {
-            packed_subgrid: PackedQ1X2SubgridV1::new(sparse_array, node_values),
+            import_subgrid: ImportSubgridV1::new(sparse_array, node_values),
         }
     }
 
@@ -57,7 +57,7 @@ impl PyPackedSubgrid {
     #[must_use]
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
-            subgrid_enum: self.packed_subgrid.clone().into(),
+            subgrid_enum: self.import_subgrid.clone().into(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl PyPackedSubgrid {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "packed_subgrid")?;
+    let m = PyModule::new_bound(parent_module.py(), "import_subgrid")?;
     m.setattr(
         pyo3::intern!(m.py(), "__doc__"),
         "Interface for packed subgrid specs.",
@@ -75,8 +75,8 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     pyo3::py_run!(
         parent_module.py(),
         m,
-        "import sys; sys.modules['pineappl.packed_subgrid'] = m"
+        "import sys; sys.modules['pineappl.import_subgrid'] = m"
     );
-    m.add_class::<PyPackedSubgrid>()?;
+    m.add_class::<PyImportSubgridV1>()?;
     parent_module.add_submodule(&m)
 }

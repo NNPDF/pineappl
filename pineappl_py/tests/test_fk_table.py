@@ -11,8 +11,8 @@ from pineappl.boc import Channel, Kinematics
 from pineappl.grid import Order, Grid
 from pineappl.convolutions import Conv, ConvType
 from pineappl.interpolation import Interp
-from pineappl.packed_subgrid import PackedSubgrid
 from pineappl.fk_table import FkTable
+from pineappl.import_subgrid import ImportSubgridV1
 
 
 class TestFkTable:
@@ -80,7 +80,7 @@ class TestFkTable:
         # DIS grid
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
-        subgrid = PackedSubgrid(
+        subgrid = ImportSubgridV1(
             vs[np.newaxis, :, np.newaxis],
             np.array([90.0]),
             xs,
