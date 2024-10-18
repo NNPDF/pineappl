@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: test-data
-          key: test-data-v13
+          key: test-data-v14
       - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
         run: |
@@ -38,6 +38,7 @@ jobs:
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
+          curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHC8-Mtt-HT4-173_3-bin1.tab.gz'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
           curl -s -C - -O 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
