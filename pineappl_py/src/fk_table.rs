@@ -2,7 +2,7 @@
 
 use super::convolutions::PyConv;
 use super::grid::PyGrid;
-use numpy::{IntoPyArray, PyArray1, PyArrayDyn, PyArrayMethods, PyReadonlyArray1};
+use numpy::{IntoPyArray, PyArray1, PyArrayDyn};
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
@@ -252,8 +252,8 @@ impl PyFkTable {
         &self,
         pdg_conv: PyRef<PyConv>,
         xfx: &Bound<'py, PyAny>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -263,8 +263,8 @@ impl PyFkTable {
         self.fk_table
             .convolve(
                 &mut lumi_cache,
-                &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
             )
             .into_pyarray_bound(py)
     }
@@ -297,8 +297,8 @@ impl PyFkTable {
         xfx1: &Bound<'py, PyAny>,
         pdg_conv2: PyRef<PyConv>,
         xfx2: &Bound<'py, PyAny>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
@@ -312,8 +312,8 @@ impl PyFkTable {
         self.fk_table
             .convolve(
                 &mut lumi_cache,
-                &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |l| l.to_vec().unwrap()),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
             )
             .into_pyarray_bound(py)
     }

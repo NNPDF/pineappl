@@ -3,6 +3,8 @@
 set -euo pipefail
 
 grids=(
+    ## Ploughshare
+
     # Group: applfast
     "https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-appl-arxiv-1312.3524/applfast-atlas-dijets-appl-arxiv-1312.3524.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-appl-arxiv-1711.02692/applfast-atlas-dijets-appl-arxiv-1711.02692.tgz"
@@ -82,6 +84,15 @@ grids=(
     "https://ploughshare.web.cern.ch/ploughshare/db/xfitter/xfitter-na10-dimuon-286-inspire-212896/xfitter-na10-dimuon-286-inspire-212896.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/xfitter/xfitter-wa70-pi+prompt-photon-inspire-250394/xfitter-wa70-pi+prompt-photon-inspire-250394.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/xfitter/xfitter-wa70-pi-prompt-photon-inspire-250394/xfitter-wa70-pi-prompt-photon-inspire-250394.tgz"
+
+    ## Mitov's ttbar tables
+
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/LHC8-ttbar-2dim-CMS.tar.gz"
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/2d-ttbar-LHC-13TeV-3_masses.tar.gz"
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/LHC13-ttbar-CMS_bin-fastNLO.tar.gz"
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/LHC13-ttbar-CMS_bin-fastNLO-172_5.tar.gz"
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/fastNLO-ttbar-NNLO-LHC8-173_3-bin1.tar.gz"
+    "http://www.precision.hep.phy.cam.ac.uk/wp-content/results/fastNLOtables/fastNLO-ttbar-NNLO-LHC13-173_3-bin1.tar.gz"
 )
 
 tmp=$(mktemp -d)
@@ -92,16 +103,18 @@ trap "cd && rm -rf ${tmp}" EXIT SIGKILL
 for grid in ${grids[@]}; do
     archive=${grid##*/}
     wget --no-verbose --no-clobber "${grid}" -O /tmp/"${archive}" || true
-    tar xzf /tmp/"${archive}"
+    mkdir subdir
+    tar xzf /tmp/"${archive}" -C subdir
 
-    for grid in $(find . \( -name '*.appl' -o -name '*.tab.gz' -o -name '*.root' \)); do
+    for grid in $(find subdir \( -name '*.appl' -o -name '*.tab' -o -name '*.tab.gz' -o -name '*.root' \)); do
         if [[ $(basename $grid) =~ ^\..* ]]; then
             continue
         fi
 
         converted_grid="${grid}".pineappl.lz4
-        pineappl --silence-lhapdf import --accuracy 1e-12 "${grid}" "${converted_grid}" NNPDF31_nnlo_as_0118_luxqed
+        pineappl import --accuracy 1e-12 "${grid}" "${converted_grid}" NNPDF31_nnlo_as_0118_luxqed
         du -h "${grid}" "${converted_grid}"
     done
-    rm -r ${archive%.tgz}
+
+    rm -r subdir
 done

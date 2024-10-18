@@ -306,6 +306,16 @@ const IMPORT_DOUBLE_HADRONIC_FASTNLO_STR: &str =
 20 2.0326950e-2 2.0326950e-2  6.6613381e-15 1.3211654e-14
 ";
 
+#[cfg(feature = "fastnlo")]
+const IMPORT_NPDFDIM_2_TABLE_STR: &str = "0  1.0824021e0  1.0824021e0  1.4654944e-14
+1  1.0680553e0  1.0680553e0 -1.4432899e-15
+2 6.4959982e-1 6.4959982e-1  4.4408921e-15
+3 3.3033872e-1 3.3033872e-1  2.0872193e-14
+4 1.3360159e-1 1.3360159e-1 -2.3092639e-14
+5 3.2728146e-2 3.2728146e-2 -5.7731597e-15
+6 3.8508907e-3 3.8508907e-3  2.2870594e-14
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -1294,4 +1304,22 @@ fn import_double_hadronic_fastnlo() {
         .stdout(predicates::str::ends_with(
             IMPORT_DOUBLE_HADRONIC_FASTNLO_STR,
         ));
+}
+
+#[test]
+#[cfg(feature = "fastnlo")]
+fn import_npdfdim_2_table() {
+    let output = NamedTempFile::new("converted10.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "import",
+            "../test-data/LHC8-Mtt-HT4-173_3-bin1.tab.gz",
+            output.path().to_str().unwrap(),
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(predicates::str::ends_with(IMPORT_NPDFDIM_2_TABLE_STR));
 }

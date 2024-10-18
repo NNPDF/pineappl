@@ -9,7 +9,7 @@ use super::interpolation::PyInterp;
 use super::pids::PyPidBasis;
 use super::subgrid::PySubgridEnum;
 use ndarray::CowArray;
-use numpy::{IntoPyArray, PyArray1, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray4};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
@@ -200,9 +200,9 @@ impl PyGrid {
         pdg_conv: PyRef<PyConv>,
         xfx: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: Option<PyReadonlyArray1<bool>>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -214,10 +214,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
-                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
-                &xi.map_or_else(|| vec![(1.0, 1.0, 1.0)], |m| m),
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
             )
             .into_pyarray_bound(py)
     }
@@ -271,9 +271,9 @@ impl PyGrid {
         pdg_conv2: PyRef<PyConv>,
         xfx2: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
-        order_mask: Option<PyReadonlyArray1<bool>>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -289,10 +289,10 @@ impl PyGrid {
         self.grid
             .convolve(
                 &mut lumi_cache,
-                &order_mask.map_or(vec![], |b| b.to_vec().unwrap()),
-                &bin_indices.map_or(vec![], |c| c.to_vec().unwrap()),
-                &channel_mask.map_or(vec![], |d| d.to_vec().unwrap()),
-                &xi.map_or_else(|| vec![(1.0, 1.0, 1.0)], |m| m),
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
             )
             .into_pyarray_bound(py)
     }
@@ -308,9 +308,9 @@ impl PyGrid {
         pdg_convs: Vec<PyRef<PyConv>>,
         xfxs: Vec<PyObject>,
         alphas: PyObject,
-        order_mask: Option<PyReadonlyArray1<bool>>,
-        bin_indices: Option<PyReadonlyArray1<usize>>,
-        channel_mask: Option<PyReadonlyArray1<bool>>,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
         xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
@@ -339,9 +339,9 @@ impl PyGrid {
     /// PyEvolveInfo :
     ///     evolution informations
     #[must_use]
-    pub fn evolve_info(&self, order_mask: PyReadonlyArray1<bool>) -> PyEvolveInfo {
+    pub fn evolve_info(&self, order_mask: Vec<bool>) -> PyEvolveInfo {
         PyEvolveInfo {
-            evolve_info: self.grid.evolve_info(order_mask.as_slice().unwrap()),
+            evolve_info: self.grid.evolve_info(order_mask.as_slice()),
         }
     }
 
@@ -376,7 +376,7 @@ impl PyGrid {
     pub fn evolve<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
-        order_mask: PyReadonlyArray1<bool>,
+        order_mask: Vec<bool>,
         xi: (f64, f64, f64),
         ren1: Vec<f64>,
         alphas: Vec<f64>,
@@ -395,8 +395,7 @@ impl PyGrid {
                         CowArray::from(op.as_array().to_owned()),
                     ))
                 })],
-                // TODO: make `order_mask` a `Vec<f64>`
-                &order_mask.to_vec().unwrap(),
+                &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
             )
@@ -434,7 +433,7 @@ impl PyGrid {
     pub fn evolve_with_slice_iter<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
-        order_mask: PyReadonlyArray1<bool>,
+        order_mask: Vec<bool>,
         xi: (f64, f64, f64),
         ren1: Vec<f64>,
         alphas: Vec<f64>,
@@ -453,8 +452,7 @@ impl PyGrid {
                         CowArray::from(op.as_array().to_owned()),
                     ))
                 })],
-                // TODO: make `order_mask` a `Vec<f64>`
-                &order_mask.to_vec().unwrap(),
+                &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
             )
@@ -669,8 +667,8 @@ impl PyGrid {
     /// ----------
     /// factors : numpy.ndarray[float]
     ///     bin-dependent factors by which to scale
-    pub fn scale_by_bin(&mut self, factors: PyReadonlyArray1<f64>) {
-        self.grid.scale_by_bin(&factors.to_vec().unwrap());
+    pub fn scale_by_bin(&mut self, factors: Vec<f64>) {
+        self.grid.scale_by_bin(&factors);
     }
 
     /// Delete bins.
@@ -685,8 +683,8 @@ impl PyGrid {
     /// ----------
     /// bin_indices : numpy.ndarray[int]
     ///     list of indices of bins to removed
-    pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
-        self.grid.delete_bins(&bin_indices.to_vec().unwrap());
+    pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
+        self.grid.delete_bins(&bin_indices)
     }
 }
 

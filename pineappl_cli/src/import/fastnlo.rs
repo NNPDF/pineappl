@@ -15,6 +15,7 @@ use pineappl_fastnlo::ffi::{
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
 };
 use std::f64::consts::TAU;
+use std::mem;
 
 fn pid_to_pdg_id(pid: i32) -> i32 {
     match pid {
@@ -187,6 +188,8 @@ fn convert_coeff_add_fix(
 
     let total_scalenodes: usize = table.GetTotalScalenodes().try_into().unwrap();
 
+    let npdfdim = table.GetNPDFDim();
+
     for obs in 0..table_as_add_base.GetNObsBin() {
         let x1_values = ffi::GetXNodes1(table_as_add_base, obs);
 
@@ -236,13 +239,21 @@ fn convert_coeff_add_fix(
                             table.GetSigmaTilde(obs, j, mu2_slice.try_into().unwrap(), ix, subproc);
 
                         if value != 0.0 {
+                            if npdfdim == 2 {
+                                mem::swap(&mut ix1, &mut ix2);
+                            }
+
                             array[[mu2_slice, ix2, ix1]] =
                                 value / factor * x1_values[ix1] * x2_values[ix2];
+
+                            if npdfdim == 2 {
+                                mem::swap(&mut ix1, &mut ix2);
+                            }
                         }
 
                         ix1 += 1;
 
-                        match table.GetNPDFDim() {
+                        match npdfdim {
                             2 => {
                                 if ix1 == x1_values.len() {
                                     ix1 = 0;

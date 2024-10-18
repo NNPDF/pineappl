@@ -72,12 +72,6 @@ for feature in ${features[@]}; do
     cargo test --release --features=${feature}
 done
 
-echo ">>> Testing if 'pineappl' can be published ..."
-
-cd pineappl
-cargo publish --dry-run
-cd ..
-
 echo ">>> Updating version strings ..."
 
 # we don't want to create a changelog entry for prereleases, which are solely
@@ -106,6 +100,12 @@ echo ">>> Updating Cargo.lock ..."
 
 echo ${crates[@]} | xargs printf ' -p %s' | xargs cargo update
 git add Cargo.lock
+
+echo ">>> Testing if 'pineappl' can be published ..."
+
+cd pineappl
+cargo publish --dry-run
+cd ..
 
 echo ">>> Commiting and pushing changes ..."
 
