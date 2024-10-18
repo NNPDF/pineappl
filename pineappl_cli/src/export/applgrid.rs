@@ -182,14 +182,8 @@ pub fn convert_into_applgrid(
         .unwrap()
         - lo_alphas;
 
-    let mut applgrid = ffi::make_empty_grid(
-        &limits,
-        id,
-        lo_alphas.try_into().unwrap(),
-        loops.try_into().unwrap(),
-        "f2",
-        "h0",
-    );
+    let mut applgrid =
+        ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
 
     for (appl_order, order) in order_mask
         .iter()
@@ -197,7 +191,7 @@ pub fn convert_into_applgrid(
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
     {
-        let factor = TAU.powi(grid.orders()[order].alphas.try_into().unwrap());
+        let factor = TAU.powi(grid.orders()[order].alphas.into());
 
         for (bin, subgrids) in grid
             .subgrids()

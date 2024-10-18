@@ -302,15 +302,15 @@ impl Grid {
                 }
 
                 if order.logxir > 0 {
-                    value *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+                    value *= (xir * xir).ln().powi(order.logxir.into());
                 }
 
                 if order.logxif > 0 {
-                    value *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+                    value *= (xif * xif).ln().powi(order.logxif.into());
                 }
 
                 if order.logxia > 0 {
-                    value *= (xia * xia).ln().powi(order.logxia.try_into().unwrap());
+                    value *= (xia * xia).ln().powi(order.logxia.into());
                 }
 
                 bins[xi_index + xi.len() * bin_index] += value / normalizations[bin];
@@ -369,15 +369,15 @@ impl Grid {
         }
 
         if order.logxir > 0 {
-            array *= (xir * xir).ln().powi(order.logxir.try_into().unwrap());
+            array *= (xir * xir).ln().powi(order.logxir.into());
         }
 
         if order.logxif > 0 {
-            array *= (xif * xif).ln().powi(order.logxif.try_into().unwrap());
+            array *= (xif * xif).ln().powi(order.logxif.into());
         }
 
         if order.logxia > 0 {
-            array *= (xia * xia).ln().powi(order.logxia.try_into().unwrap());
+            array *= (xia * xia).ln().powi(order.logxia.into());
         }
 
         array /= normalizations[bin];
@@ -742,11 +742,11 @@ impl Grid {
         for ((i, _, _), subgrid) in self.subgrids.indexed_iter_mut() {
             let order = &self.orders[i];
             let factor = global
-                * alphas.powi(order.alphas.try_into().unwrap())
-                * alpha.powi(order.alpha.try_into().unwrap())
-                * logxir.powi(order.logxir.try_into().unwrap())
-                * logxif.powi(order.logxif.try_into().unwrap())
-                * logxia.powi(order.logxia.try_into().unwrap());
+                * alphas.powi(order.alphas.into())
+                * alpha.powi(order.alpha.into())
+                * logxir.powi(order.logxir.into())
+                * logxif.powi(order.logxif.into())
+                * logxia.powi(order.logxia.into());
 
             subgrid.scale(factor);
         }

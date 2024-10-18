@@ -343,7 +343,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                     approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
                 })
             {
-                alphas.powi(order.alphas.try_into().unwrap())
+                alphas.powi(order.alphas.into())
             } else {
                 return Err(GridError::EvolutionFailure(format!(
                     "no alphas for mur2 = {mur2} found"
