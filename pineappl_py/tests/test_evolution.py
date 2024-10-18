@@ -5,14 +5,14 @@ two, and three (general) EKOs.
 """
 
 import itertools
-import numpy as np
 
-from pineappl.pids import PidBasis
+import numpy as np
 from pineappl.boc import Channel, Kinematics
-from pineappl.grid import Order, Grid
 from pineappl.convolutions import Conv, ConvType
-from pineappl.interpolation import Interp
 from pineappl.evolution import OperatorSliceInfo
+from pineappl.grid import Grid, Order
+from pineappl.interpolation import Interp
+from pineappl.pids import PidBasis
 
 
 class TestFkTable:

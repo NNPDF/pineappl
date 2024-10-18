@@ -1,14 +1,12 @@
 import numpy as np
 import pytest
-
-from pineappl.pids import PidBasis
-from pineappl.boc import Channel, Kinematics
 from pineappl.bin import BinRemapper
-from pineappl.grid import Order, Grid
+from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
-from pineappl.interpolation import Interp
+from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
-
+from pineappl.interpolation import Interp
+from pineappl.pids import PidBasis
 
 # Construct the type of convolutions and the convolution object
 # We assume unpolarized proton PDF

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from pineappl.bin import BinRemapper
 
 

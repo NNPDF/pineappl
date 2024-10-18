@@ -1,14 +1,12 @@
-import pytest
 import numpy as np
-
-from pineappl.pids import PidBasis
-from pineappl.boc import Channel, Order, Kinematics
+import pytest
+from pineappl.boc import Channel, Kinematics, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.grid import Grid
-from pineappl.interpolation import Interp
-from pineappl.subgrid import SubgridEnum
 from pineappl.import_subgrid import ImportSubgridV1
-
+from pineappl.interpolation import Interp
+from pineappl.pids import PidBasis
+from pineappl.subgrid import SubgridEnum
 
 # Define some default for the minimum value of `Q2`
 Q2_MIN = 1e2
