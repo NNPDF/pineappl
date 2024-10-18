@@ -11,6 +11,7 @@ wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/E906nlo_bin_00.tar'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_ATLASTTBARTOT13TEV.dat'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/FK_POSXDQ.dat'
+wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHC8-Mtt-HT4-173_3-bin1.tab.gz'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCBWZMU7TEV_PI_part1.appl'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
 wget --no-verbose --no-clobber -P test-data 'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
