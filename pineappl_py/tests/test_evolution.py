@@ -13,15 +13,16 @@ from pineappl.evolution import OperatorSliceInfo
 from pineappl.grid import Grid, Order
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
+from typing import List
 
 
 class TestEvolution:
     def fake_grid(
         self,
-        channels: list[Channel],
-        orders: list[Order],
-        convolutions: list[Conv],
-        bins: list[float] = [1e-7, 1e-3, 1],
+        channels: List[Channel],
+        orders: List[Order],
+        convolutions: List[Conv],
+        bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
             Kinematics(0),  # Scale

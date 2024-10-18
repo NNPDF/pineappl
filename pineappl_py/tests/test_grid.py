@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from pineappl.bin import BinRemapper
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
@@ -7,6 +8,7 @@ from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
+from typing import List
 
 # Construct the type of convolutions and the convolution object
 # We assume unpolarized proton PDF
@@ -22,9 +24,9 @@ ORDERS = [Order(3, 0, 0, 0, 0)]
 class TestGrid:
     def fake_grid(
         self,
-        channels: list[Channel] = CHANNELS,
-        orders: list[Order] = ORDERS,
-        bins: list[float] = [1e-7, 1e-3, 1],
+        channels: List[Channel] = CHANNELS,
+        orders: List[Order] = ORDERS,
+        bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         # We assume symmetrical proton-proton in the initial state
         convolutions = [CONVOBJECT, CONVOBJECT]
