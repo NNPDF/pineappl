@@ -15,13 +15,13 @@ from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
 
 
-class TestFkTable:
+class TestEvolution:
     def fake_grid(
         self,
         channels: list[Channel],
         orders: list[Order],
         convolutions: list[Conv],
-        bins=None,
+        bins: list[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
             Kinematics(0),  # Scale
@@ -49,9 +49,7 @@ class TestFkTable:
                 order=3,
             ),  # Interpolation on x2 momentum fraction
         ]
-        bin_limits = np.array(
-            [1e-7, 1e-3, 1] if bins is None else bins, dtype=float
-        )
+        bin_limits = np.array(bins)
         return Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,

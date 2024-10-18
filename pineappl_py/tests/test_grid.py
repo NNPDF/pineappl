@@ -24,7 +24,7 @@ class TestGrid:
         self,
         channels: list[Channel] = CHANNELS,
         orders: list[Order] = ORDERS,
-        bins: list | None = None,
+        bins: list[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         # We assume symmetrical proton-proton in the initial state
         convolutions = [CONVOBJECT, CONVOBJECT]
@@ -58,9 +58,7 @@ class TestGrid:
                 order=3,
             ),  # Interpolation on x2 momentum fraction
         ]
-        bin_limits = np.array(
-            [1e-7, 1e-3, 1] if bins is None else bins, dtype=float
-        )
+        bin_limits = np.array(bins)
         return Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
