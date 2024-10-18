@@ -1,20 +1,22 @@
 //! Grid interface.
 
 use super::bin::PyBinRemapper;
-use super::boc::{PyChannel, PyOrder};
+use super::boc::{PyChannel, PyKinematics, PyOrder};
+use super::convolutions::PyConv;
 use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
-use super::subgrid::{PySubgridEnum, PySubgridParams};
-use itertools::izip;
+use super::interpolation::PyInterp;
+use super::pids::PyPidBasis;
+use super::subgrid::PySubgridEnum;
 use ndarray::CowArray;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
-use pineappl::convolutions::LumiCache;
+use pineappl::boc::{ScaleFuncForm, Scales};
+use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
-use pineappl::grid::{Grid, Ntuple};
+use pineappl::grid::Grid;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyIterator;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -29,31 +31,59 @@ pub struct PyGrid {
 
 #[pymethods]
 impl PyGrid {
-    /// Constructor.
+    /// Constructor to instantiate a new Grid.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     ///
     /// Parameters
     /// ----------
+    /// pid_basis : PidBasis
+    ///     choice of basis which can be `Evol` or `Pdg`
     /// channels : list(PyChannel)
     ///     channels
     /// orders : list(PyOrder)
     ///     orders
     /// bin_limits : list(float)
     ///     bin configurations
-    /// subgrid_params : PySubgridParams
-    ///     subgrid parameters
+    /// convolutions : list(PyConv)
+    ///     contains the types of convolution
+    /// interpolations : list(PyInterp)
+    ///     types of interpolations required by each kinematic
+    /// kinematics : list(PyKinematics)
+    ///     list of kinematics
     #[new]
+    #[must_use]
     pub fn new_grid(
+        pid_basis: PyPidBasis,
         channels: Vec<PyRef<PyChannel>>,
         orders: Vec<PyRef<PyOrder>>,
         bin_limits: Vec<f64>,
-        subgrid_params: PySubgridParams,
+        convolutions: Vec<PyRef<PyConv>>,
+        interpolations: Vec<PyRef<PyInterp>>,
+        kinematics: Vec<PyRef<PyKinematics>>,
     ) -> Self {
         Self {
             grid: Grid::new(
-                channels.iter().map(|pyc| pyc.entry.clone()).collect(),
-                orders.iter().map(|pyo| pyo.order.clone()).collect(),
+                pid_basis.into(),
+                channels.into_iter().map(|pyc| pyc.entry.clone()).collect(),
+                orders.into_iter().map(|pyo| pyo.order.clone()).collect(),
                 bin_limits,
-                subgrid_params.subgrid_params,
+                convolutions
+                    .into_iter()
+                    .map(|pyx| pyx.conv.clone())
+                    .collect(),
+                interpolations
+                    .into_iter()
+                    .map(|pyi| pyi.interp.clone())
+                    .collect(),
+                kinematics.into_iter().map(|pyk| pyk.kinematics).collect(),
+                Scales {
+                    ren: ScaleFuncForm::Scale(0),
+                    fac: ScaleFuncForm::Scale(0),
+                    frg: ScaleFuncForm::NoScale,
+                },
             ),
         }
     }
@@ -62,146 +92,29 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// x1 : float
-    ///     first momentum fraction
-    /// x2 : float
-    ///     second momentum fraction
-    /// q2 : float
-    ///     process scale
     /// order : int
     ///     order index
     /// observable : float
     ///     reference point (to be binned)
     /// channel : int
     ///     channel index
+    /// ntuple: list(float)
+    ///     list containing information on kinematics
     /// weight : float
     ///     cross section weight
     pub fn fill(
         &mut self,
-        x1: f64,
-        x2: f64,
-        q2: f64,
         order: usize,
         observable: f64,
         channel: usize,
+        ntuple: Vec<f64>,
         weight: f64,
     ) {
-        self.grid.fill(
-            order,
-            observable,
-            channel,
-            &Ntuple::<f64> { x1, x2, q2, weight },
-        );
-    }
-
-    /// Add an array to the grid.
-    ///
-    /// Useful to avoid multiple python calls, leading to performance improvement.
-    ///
-    /// Parameters
-    /// ----------
-    /// x1s : np.array(float)
-    ///     first momentum fraction of all events
-    /// x2s : np.array(float)
-    ///     second momentum fraction of all events
-    /// x1s : np.array(float)
-    ///     process scale of all events
-    /// order : int
-    ///     order index
-    /// observable : float
-    ///     reference point (to be binned)
-    /// channel : int
-    ///     channel index
-    /// weights : np.array(float)
-    ///     cross section weight for all events
-    pub fn fill_array(
-        &mut self,
-        x1s: Vec<f64>,
-        x2s: Vec<f64>,
-        q2s: Vec<f64>,
-        order: usize,
-        observables: Vec<f64>,
-        channel: usize,
-        weights: Vec<f64>,
-    ) {
-        for (&x1, &x2, &q2, &observable, &weight) in izip!(
-            x1s.iter(),
-            x2s.iter(),
-            q2s.iter(),
-            observables.iter(),
-            weights.iter(),
-        ) {
-            self.grid.fill(
-                order,
-                observable,
-                channel,
-                &Ntuple::<f64> { x1, x2, q2, weight },
-            );
-        }
-    }
-
-    /// Add a point to the grid for all channels.
-    ///
-    /// Parameters
-    /// ----------
-    /// x1 : float
-    ///     first momentum fraction
-    /// x2 : float
-    ///     second momentum fraction
-    /// q2 : float
-    ///     process scale
-    /// order : int
-    ///     order index
-    /// observable : float
-    ///     reference point (to be binned)
-    /// weights : np.array(float)
-    ///     cross section weights, one for each channels
-    pub fn fill_all(
-        &mut self,
-        x1: f64,
-        x2: f64,
-        q2: f64,
-        order: usize,
-        observable: f64,
-        weights: Vec<f64>,
-    ) {
-        self.grid.fill_all(
-            order,
-            observable,
-            &Ntuple::<()> {
-                x1,
-                x2,
-                q2,
-                weight: (),
-            },
-            &weights,
-        );
-    }
-
-    /// Get metadata values stored in the grid.
-    ///
-    ///
-    /// Returns
-    /// -------
-    /// dict :
-    ///     key, value map
-    pub fn key_values(&self) -> HashMap<String, String> {
-        self.grid.key_values().unwrap().clone()
-    }
-
-    /// Set a metadata key-value pair in the grid.
-    ///
-    /// Parameters
-    /// ----------
-    /// key : str
-    ///     key
-    /// value : str
-    ///     value
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.grid.set_key_value(key, value);
+        self.grid.fill(order, observable, channel, &ntuple, weight);
     }
 
     /// Retrieve a subgrid.
+    #[must_use]
     pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.grid.subgrids()[[order, bin, channel]].clone(),
@@ -209,6 +122,17 @@ impl PyGrid {
     }
 
     /// Set a subgrid.
+    ///
+    /// Parameters
+    /// ----------
+    /// order : int
+    ///     order index
+    /// bin : int
+    ///     bin index
+    /// channel : int
+    ///     channel index
+    /// subgrid : PySubgridEnum
+    ///     subgrid object
     pub fn set_subgrid(
         &mut self,
         order: usize,
@@ -221,6 +145,10 @@ impl PyGrid {
 
     /// Set the bin normalizations.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// remapper: BinRemapper
@@ -231,10 +159,14 @@ impl PyGrid {
 
     /// Convolve with a single distribution.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
-    /// pdg_id : int
-    ///     PDG Monte Carlo ID of the hadronic particle
+    /// pdg_conv : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     /// alphas : callable
@@ -261,43 +193,49 @@ impl PyGrid {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
-    #[pyo3(signature = (pdg_id, xfx, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
+    #[must_use]
+    #[pyo3(signature = (pdg_conv, xfx, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_one<'py>(
         &self,
-        pdg_id: i32,
+        pdg_conv: PyRef<PyConv>,
         xfx: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
         order_mask: Option<Vec<bool>>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
-        xi: Option<Vec<(f64, f64)>>,
+        xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
         // `(q2, )` must have the comma to make it a Rust tuple
         let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
-        let mut lumi_cache = LumiCache::with_one(pdg_id, &mut xfx, &mut alphas);
+        let mut lumi_cache =
+            ConvolutionCache::new(vec![pdg_conv.conv.clone()], vec![&mut xfx], &mut alphas);
         self.grid
             .convolve(
                 &mut lumi_cache,
                 &order_mask.unwrap_or_default(),
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or(vec![(1.0, 1.0)]),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
             )
             .into_pyarray_bound(py)
     }
 
     /// Convolve with two distributions.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
-    /// pdg_id1 : int
-    ///     PDG Monte Carlo ID of the first hadronic particle
+    /// pdg_conv1 : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx1 : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    /// pdg_id2 : int
-    ///     PDG Monte Carlo ID of the second hadronic particle
+    /// pdg_conv2 : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx2 : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     /// alphas : callable
@@ -324,38 +262,97 @@ impl PyGrid {
     ///     numpy.ndarray(float) :
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
-    #[pyo3(signature = (pdg_id1, xfx1, pdg_id2, xfx2, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
+    #[must_use]
+    #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_two<'py>(
         &self,
-        pdg_id1: i32,
+        pdg_conv1: PyRef<PyConv>,
         xfx1: &Bound<'py, PyAny>,
-        pdg_id2: i32,
+        pdg_conv2: PyRef<PyConv>,
         xfx2: &Bound<'py, PyAny>,
         alphas: &Bound<'py, PyAny>,
         order_mask: Option<Vec<bool>>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
-        xi: Option<Vec<(f64, f64)>>,
+        xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
         // `(q2, )` must have the comma to make it a Rust tuple
         let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
-        let mut lumi_cache =
-            LumiCache::with_two(pdg_id1, &mut xfx1, pdg_id2, &mut xfx2, &mut alphas);
+        let mut lumi_cache = ConvolutionCache::new(
+            vec![pdg_conv1.conv.clone(), pdg_conv2.conv.clone()],
+            vec![&mut xfx1, &mut xfx2],
+            &mut alphas,
+        );
         self.grid
             .convolve(
                 &mut lumi_cache,
                 &order_mask.unwrap_or_default(),
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or(vec![(1.0, 1.0)]),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
+            )
+            .into_pyarray_bound(py)
+    }
+
+    /// Convolve a grid with as many convolutions.
+    ///
+    /// # Panics
+    /// TODO
+    // #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
+    #[must_use]
+    pub fn convolve<'py>(
+        &self,
+        pdg_convs: Vec<PyRef<PyConv>>,
+        xfxs: Vec<PyObject>,
+        alphas: PyObject,
+        order_mask: Option<Vec<bool>>,
+        bin_indices: Option<Vec<usize>>,
+        channel_mask: Option<Vec<bool>>,
+        xi: Option<Vec<(f64, f64, f64)>>,
+        py: Python<'py>,
+    ) -> Bound<'py, PyArray1<f64>> {
+        let mut alphas = |q2: f64| {
+            let result: f64 = alphas.call1(py, (q2,)).unwrap().extract(py).unwrap();
+            result
+        };
+
+        let mut xfx_funcs: Vec<_> = xfxs
+            .iter()
+            .map(|xfx| {
+                move |id: i32, x: f64, q2: f64| {
+                    xfx.call1(py, (id, x, q2)).unwrap().extract(py).unwrap()
+                }
+            })
+            .collect();
+
+        let mut lumi_cache = ConvolutionCache::new(
+            pdg_convs.into_iter().map(|pdg| pdg.conv.clone()).collect(),
+            xfx_funcs
+                .iter_mut()
+                .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+                .collect(),
+            &mut alphas,
+        );
+
+        self.grid
+            .convolve(
+                &mut lumi_cache,
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
             )
             .into_pyarray_bound(py)
     }
 
     /// Collect information for convolution with an evolution operator.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -365,14 +362,23 @@ impl PyGrid {
     /// Returns
     /// -------
     /// PyEvolveInfo :
-    ///     evolution information
+    ///     evolution informations
+    #[must_use]
     pub fn evolve_info(&self, order_mask: Vec<bool>) -> PyEvolveInfo {
         PyEvolveInfo {
             evolve_info: self.grid.evolve_info(order_mask.as_slice()),
         }
     }
 
-    /// Convolve with uniform evolution operator slices.
+    /// Evolve grid with as many EKOs as Convolutions.
+    ///
+    /// TODO: Expose `slices` to be a vector!!!
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// # Errors
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -391,18 +397,19 @@ impl PyGrid {
     /// -------
     /// PyFkTable :
     ///     produced FK table
-    pub fn evolve_with_slice_iter<'py>(
+    #[allow(clippy::needless_lifetimes)]
+    pub fn evolve<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
         order_mask: Vec<bool>,
-        xi: (f64, f64),
+        xi: (f64, f64, f64),
         ren1: Vec<f64>,
         alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
         Ok(self
             .grid
-            .evolve_with_slice_iter(
-                slices.into_iter().map(|slice| {
+            .evolve(
+                vec![slices.into_iter().map(|slice| {
                     let (info, op) = slice
                         .unwrap()
                         .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
@@ -412,7 +419,7 @@ impl PyGrid {
                         // TODO: avoid copying
                         CowArray::from(op.as_array().to_owned()),
                     ))
-                }),
+                })],
                 &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
@@ -422,14 +429,18 @@ impl PyGrid {
             .unwrap())
     }
 
-    /// Convolve with two different evolution operator slices.
+    /// Evolve grid with one single EKO.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// # Errors
+    /// TODO
     ///
     /// Parameters
     /// ----------
-    /// slices_a : Iterable
-    ///     list of (PyOperatorSliceInfo, 5D array) describing the first convolution
-    /// slices_b : Iterable
-    ///     list of (PyOperatorSliceInfo, 5D array) describing the second convolution
+    /// slices : Iterable
+    ///     list of (PyOperatorSliceInfo, 5D array) describing each convolution
     /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     /// xi : (float, float)
@@ -443,19 +454,19 @@ impl PyGrid {
     /// -------
     /// PyFkTable :
     ///     produced FK table
-    pub fn evolve_with_slice_iter2<'py>(
+    #[allow(clippy::needless_lifetimes)]
+    pub fn evolve_with_slice_iter<'py>(
         &self,
-        slices_a: &Bound<'py, PyIterator>,
-        slices_b: &Bound<'py, PyIterator>,
+        slices: &Bound<'py, PyIterator>,
         order_mask: Vec<bool>,
-        xi: (f64, f64),
+        xi: (f64, f64, f64),
         ren1: Vec<f64>,
         alphas: Vec<f64>,
     ) -> PyResult<PyFkTable> {
         Ok(self
             .grid
-            .evolve_with_slice_iter2(
-                slices_a.into_iter().map(|slice| {
+            .evolve(
+                vec![slices.into_iter().map(|slice| {
                     let (info, op) = slice
                         .unwrap()
                         .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
@@ -465,18 +476,7 @@ impl PyGrid {
                         // TODO: avoid copying
                         CowArray::from(op.as_array().to_owned()),
                     ))
-                }),
-                slices_b.into_iter().map(|slice| {
-                    let (info, op) = slice
-                        .unwrap()
-                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
-                        .unwrap();
-                    Ok::<_, std::io::Error>((
-                        info.info,
-                        // TODO: avoid copying
-                        CowArray::from(op.as_array().to_owned()),
-                    ))
-                }),
+                })],
                 &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },
@@ -488,6 +488,10 @@ impl PyGrid {
 
     /// Load from file.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// path : str
@@ -497,6 +501,7 @@ impl PyGrid {
     /// -------
     /// PyGrid :
     ///     grid
+    #[must_use]
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
         Self {
@@ -505,6 +510,10 @@ impl PyGrid {
     }
 
     /// Write to file.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -515,6 +524,10 @@ impl PyGrid {
     }
 
     /// Write to compressed file.
+    ///
+    /// # Panics
+    ///
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -530,10 +543,18 @@ impl PyGrid {
     }
 
     /// Merge with another grid.
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn merge(&mut self, other: Self) -> PyResult<()> {
         match self.grid.merge(other.grid) {
             Ok(()) => Ok(()),
-            Err(x) => Err(PyValueError::new_err(format!("{:?}", x))),
+            Err(x) => Err(PyValueError::new_err(format!("{x:?}"))),
         }
     }
 
@@ -545,6 +566,7 @@ impl PyGrid {
     /// -------
     /// int :
     ///     bin dimension
+    #[must_use]
     pub fn bin_dimensions(&self) -> usize {
         self.grid.bin_info().dimensions()
     }
@@ -555,6 +577,7 @@ impl PyGrid {
     /// -------
     /// np.ndarray
     ///     bin normalizations
+    #[must_use]
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.grid.bin_info().normalizations().into_pyarray_bound(py)
     }
@@ -570,6 +593,7 @@ impl PyGrid {
     /// -------
     /// numpy.ndarray(float) :
     ///     left edges of bins
+    #[must_use]
     pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.grid.bin_info().left(dimension).into_pyarray_bound(py)
     }
@@ -585,6 +609,7 @@ impl PyGrid {
     /// -------
     /// numpy.ndarray(float) :
     ///     right edges of bins
+    #[must_use]
     pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.grid.bin_info().right(dimension).into_pyarray_bound(py)
     }
@@ -595,6 +620,7 @@ impl PyGrid {
     /// -------
     /// int :
     ///     Number of bins
+    #[must_use]
     pub fn bins(&self) -> usize {
         self.grid.bin_info().bins()
     }
@@ -605,6 +631,7 @@ impl PyGrid {
     /// -------
     /// list(PyOrder) :
     ///     list with perturbative orders and scale variations
+    #[must_use]
     pub fn orders(&self) -> Vec<PyOrder> {
         self.grid
             .orders()
@@ -615,6 +642,20 @@ impl PyGrid {
             .collect()
     }
 
+    /// Get the type(s) of convolution(s) for the current Grid.
+    ///
+    /// Returns
+    /// list(PyConv):
+    ///     list of convolution type with the corresponding PIDs
+    #[must_use]
+    pub fn convolutions(&self) -> Vec<PyConv> {
+        self.grid
+            .convolutions()
+            .iter()
+            .map(|conv| PyConv { conv: conv.clone() })
+            .collect()
+    }
+
     /// Extract channels.
     ///
     /// Returns
@@ -622,7 +663,8 @@ impl PyGrid {
     /// list(list(tuple(float,float,int))) :
     ///     channels as tuples (pid, pid, factor) (multiple tuples can be associated to the same
     ///     contribution)
-    pub fn channels(&self) -> Vec<Vec<(i32, i32, f64)>> {
+    #[must_use]
+    pub fn channels(&self) -> Vec<Vec<(Vec<i32>, f64)>> {
         self.grid
             .channels()
             .iter()
@@ -642,6 +684,10 @@ impl PyGrid {
 
     /// Scale subgrids bin by bin.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Parameters
     /// ----------
     /// factors : numpy.ndarray[float]
@@ -652,6 +698,10 @@ impl PyGrid {
 
     /// Delete bins.
     ///
+    /// # Panics
+    ///
+    /// TODO
+    ///
     /// Repeated bins and those exceeding the length are ignored.
     ///
     /// Parameters
@@ -659,11 +709,14 @@ impl PyGrid {
     /// bin_indices : numpy.ndarray[int]
     ///     list of indices of bins to removed
     pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
-        self.grid.delete_bins(&bin_indices)
+        self.grid.delete_bins(&bin_indices);
     }
 }
 
 /// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "grid")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Grid interface.")?;

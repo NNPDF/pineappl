@@ -1,16 +1,15 @@
 //! Interface for bins, orders and channels.
 
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
 ///
 /// Each entry consists of a tuple, which contains, in the following order:
 ///
-/// 1. the PDG id of the first incoming parton
-/// 2. the PDG id of the second parton
-/// 3. a numerical factor that will multiply the result for this specific combination.
+/// 1. a list containing the PDG value of the 1st, 2nd, and etc. of the incoming parton
+/// 2. a numerical factor that will multiply the result for this specific combination.
 #[pyclass(name = "Channel")]
 #[repr(transparent)]
 pub struct PyChannel {
@@ -23,10 +22,11 @@ impl PyChannel {
     ///
     /// Parameters
     /// ----------
-    /// entry: list(tuple(int, int, float))
+    /// entry: list(tuple(list(int),float))
     ///     channel configuration
     #[new]
-    pub fn new(entry: Vec<(i32, i32, f64)>) -> Self {
+    #[must_use]
+    pub fn new(entry: Vec<(Vec<i32>, f64)>) -> Self {
         Self {
             entry: Channel::new(entry),
         }
@@ -36,27 +36,48 @@ impl PyChannel {
     ///
     /// Returns
     /// -------
-    /// list(tuple(int,int,float)) :
+    /// list(tuple(list(int),float)) :
     ///     list representation
-    pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
+    #[must_use]
+    pub fn into_array(&self) -> Vec<(Vec<i32>, f64)> {
         self.entry.entry().to_vec()
     }
 }
 
-/// Register submodule in parent.
-pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "boc")?;
-    m.setattr(
-        pyo3::intern!(m.py(), "__doc__"),
-        "Interface for bins, orders and channels.",
-    )?;
-    pyo3::py_run!(
-        parent_module.py(),
-        m,
-        "import sys; sys.modules['pineappl.channel'] = m"
-    );
-    m.add_class::<PyChannel>()?;
-    parent_module.add_submodule(&m)
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
+#[pyclass(name = "Kinematics")]
+#[repr(transparent)]
+pub struct PyKinematics {
+    pub(crate) kinematics: Kinematics,
+}
+
+impl PyKinematics {
+    pub(crate) const fn new(kinematics: Kinematics) -> Self {
+        Self { kinematics }
+    }
+}
+
+#[pymethods]
+impl PyKinematics {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// kinematic: int
+    ///     an integer representing the kinematic. 0 represents the scale,
+    ///     1 represents the momentum fraction of the first parton, and 2
+    ///     represents the momentum fraction of the second parton.
+    #[new]
+    #[must_use]
+    pub const fn new_kin(kinematic: usize) -> Self {
+        let kins = match kinematic {
+            0 => Kinematics::Scale(0),
+            1 => Kinematics::X(0),
+            2 => Kinematics::X(1),
+            _ => todo!(),
+        };
+        Self::new(kins)
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
@@ -67,7 +88,7 @@ pub struct PyOrder {
 }
 
 impl PyOrder {
-    pub(crate) fn new(order: Order) -> Self {
+    pub(crate) const fn new(order: Order) -> Self {
         Self { order }
     }
 }
@@ -86,9 +107,12 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
     #[new]
-    pub fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
-        Self::new(Order::new(alphas, alpha, logxir, logxif))
+    #[must_use]
+    pub const fn new_order(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
+        Self::new(Order::new(alphas, alpha, logxir, logxif, logxia))
     }
 
     /// Tuple representation.
@@ -103,12 +127,16 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
-    pub fn as_tuple(&self) -> (u32, u32, u32, u32) {
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
+    #[must_use]
+    pub const fn as_tuple(&self) -> (u8, u8, u8, u8, u8) {
         (
             self.order.alphas,
             self.order.alpha,
             self.order.logxir,
             self.order.logxif,
+            self.order.logxia,
         )
     }
 
@@ -126,10 +154,11 @@ impl PyOrder {
     /// numpy.ndarray(bool)
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
+    #[must_use]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
-        max_as: u32,
-        max_al: u32,
+        max_as: u8,
+        max_al: u8,
         logs: bool,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<bool>> {
@@ -141,4 +170,25 @@ impl PyOrder {
         )
         .into_pyarray_bound(py)
     }
+}
+
+/// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "boc")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "Interface for bins, orders and channels.",
+    )?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.boc'] = m"
+    );
+    m.add_class::<PyChannel>()?;
+    m.add_class::<PyOrder>()?;
+    m.add_class::<PyKinematics>()?;
+    parent_module.add_submodule(&m)
 }

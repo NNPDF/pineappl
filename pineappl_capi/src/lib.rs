@@ -57,10 +57,11 @@
 
 use itertools::izip;
 use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
-use pineappl::convolutions::LumiCache;
-use pineappl::grid::{Grid, GridOptFlags, Ntuple};
-use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
+use pineappl::grid::{Grid, GridOptFlags};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -71,10 +72,20 @@ use std::slice;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgridParams) {
-    let mut subgrid_type = "LagrangeSubgrid".to_owned();
-    let mut subgrid_params = SubgridParams::default();
-    let mut extra = ExtraSubgridParams::default();
+fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
+    let mut q2_min = 1e2;
+    let mut q2_max = 1e8;
+    let mut q2_nodes = 40;
+    let mut q2_order = 3;
+    let mut x1_min = 2e-7;
+    let mut x1_max = 1.0;
+    let mut x1_nodes = 50;
+    let mut x1_order = 3;
+    let mut x2_min = 2e-7;
+    let mut x2_max = 1.0;
+    let mut x2_nodes = 50;
+    let mut x2_order = 3;
+    let mut reweight = ReweightMeth::ApplGridX;
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval
@@ -82,7 +93,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_bins")
             .or_else(|| keyval.ints.get("nq2"))
         {
-            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+            q2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval
@@ -90,7 +101,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_max")
             .or_else(|| keyval.doubles.get("q2max"))
         {
-            subgrid_params.set_q2_max(*value);
+            q2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -98,7 +109,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_min")
             .or_else(|| keyval.doubles.get("q2min"))
         {
-            subgrid_params.set_q2_min(*value);
+            q2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -106,17 +117,19 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_order")
             .or_else(|| keyval.ints.get("q2order"))
         {
-            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
+            q2_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.bools.get("reweight") {
-            subgrid_params.set_reweight(*value);
+            if !value {
+                reweight = ReweightMeth::NoReweight;
+            }
         }
 
         if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_bins(value);
-            extra.set_x2_bins(value);
+            x1_nodes = value;
+            x2_nodes = value;
         }
 
         if let Some(value) = keyval
@@ -124,8 +137,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_max")
             .or_else(|| keyval.doubles.get("xmax"))
         {
-            subgrid_params.set_x_max(*value);
-            extra.set_x2_max(*value);
+            x1_max = *value;
+            x2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -133,8 +146,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_min")
             .or_else(|| keyval.doubles.get("xmin"))
         {
-            subgrid_params.set_x_min(*value);
-            extra.set_x2_min(*value);
+            x1_min = *value;
+            x2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -143,48 +156,72 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .or_else(|| keyval.ints.get("xorder"))
         {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_order(value);
-            extra.set_x2_order(value);
+            x1_order = value;
+            x2_order = value;
         }
 
         if let Some(value) = keyval.ints.get("x1_bins") {
-            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
+            x1_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x1_max") {
-            subgrid_params.set_x_max(*value);
+            x1_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x1_min") {
-            subgrid_params.set_x_min(*value);
+            x1_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x1_order") {
-            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
+            x1_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.ints.get("x2_bins") {
-            extra.set_x2_bins(usize::try_from(*value).unwrap());
+            x2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x2_max") {
-            extra.set_x2_max(*value);
+            x2_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x2_min") {
-            extra.set_x2_min(*value);
+            x2_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x2_order") {
-            extra.set_x2_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.strings.get("subgrid_type") {
-            value.to_str().unwrap().clone_into(&mut subgrid_type);
+            x2_order = usize::try_from(*value).unwrap();
         }
     }
 
-    (subgrid_type, subgrid_params, extra)
+    vec![
+        Interp::new(
+            q2_min,
+            q2_max,
+            q2_nodes,
+            q2_order,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x1_min,
+            x1_max,
+            x1_nodes,
+            x1_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x2_min,
+            x2_max,
+            x2_nodes,
+            x2_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ]
 }
 
 /// Type for defining a luminosity function.
@@ -292,6 +329,10 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_one`].
+///
+/// # Safety
+///
+/// See [`pineappl_grid_convolve_with_one`].
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_one` instead"
@@ -326,6 +367,10 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_two`].
+///
+/// # Safety
+///
+/// See [`pineappl_grid_convolve_with_two`].
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_two` instead"
@@ -397,7 +442,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf = |id, x, q2| xfx(id, x, q2, state);
+    let mut xfx = |id, x, q2| xfx(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         vec![]
@@ -410,14 +455,18 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![Conv::new(ConvType::UnpolPDF, pdg_id)],
+        vec![&mut xfx],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
+        &mut convolution_cache,
         &order_mask,
         &[],
         &channel_mask,
-        &[(xi_ren, xi_fac)],
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 
@@ -458,8 +507,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf1 = |id, x, q2| xfx1(id, x, q2, state);
-    let mut pdf2 = |id, x, q2| xfx2(id, x, q2, state);
+    let mut xfx1 = |id, x, q2| xfx1(id, x, q2, state);
+    let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         vec![]
@@ -472,14 +521,21 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![
+            Conv::new(ConvType::UnpolPDF, pdg_id1),
+            Conv::new(ConvType::UnpolPDF, pdg_id2),
+        ],
+        vec![&mut xfx1, &mut xfx2],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
+        &mut convolution_cache,
         &order_mask,
         &[],
         &channel_mask,
-        &[(xi_ren, xi_fac)],
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 
@@ -523,7 +579,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+    grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
 }
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -547,17 +603,9 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
     let grid = unsafe { &mut *grid };
     let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
 
-    grid.fill_all(
-        order,
-        observable,
-        &Ntuple {
-            x1,
-            x2,
-            q2,
-            weight: (),
-        },
-        weights,
-    );
+    for (channel, &weight) in weights.iter().enumerate() {
+        grid.fill(order, observable, channel, &[q2, x1, x2], weight);
+    }
 }
 
 /// Fill `grid` with as many points as indicated by `size`.
@@ -591,7 +639,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
     for (&x1, &x2, &q2, &order, &observable, &lumi, &weight) in
         izip!(x1, x2, q2, orders, observables, lumis, weights)
     {
-        grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+        grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
     }
 }
 
@@ -622,10 +670,10 @@ pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_par
     let order_params = unsafe { slice::from_raw_parts_mut(order_params, 4 * orders.len()) };
 
     for (i, order) in orders.iter().enumerate() {
-        order_params[4 * i] = order.alphas;
-        order_params[4 * i + 1] = order.alpha;
-        order_params[4 * i + 2] = order.logxir;
-        order_params[4 * i + 3] = order.logxif;
+        order_params[4 * i] = order.alphas.into();
+        order_params[4 * i + 1] = order.alpha.into();
+        order_params[4 * i + 2] = order.logxir.into();
+        order_params[4 * i + 3] = order.logxif.into();
     }
 }
 
@@ -642,6 +690,8 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 
     grid.orders().len()
 }
+
+// TODO: add a function that supports fragmentation scale logs
 
 /// Creates a new and empty grid. The creation requires four different sets of parameters:
 /// - The luminosity function `lumi`: A pointer to the luminosity function that specifies how the
@@ -681,40 +731,49 @@ pub unsafe extern "C" fn pineappl_grid_new(
     let orders: Vec<_> = order_params
         .chunks(4)
         .map(|s| Order {
-            alphas: s[0],
-            alpha: s[1],
-            logxir: s[2],
-            logxif: s[3],
+            // UNWRAP: there shouldn't be orders with exponents larger than 255
+            alphas: s[0].try_into().unwrap(),
+            alpha: s[1].try_into().unwrap(),
+            logxir: s[2].try_into().unwrap(),
+            logxif: s[3].try_into().unwrap(),
+            // this function doesn't support fragmentation scale logs
+            logxia: 0,
         })
         .collect();
 
     let key_vals = unsafe { key_vals.as_ref() };
-    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
+    let interps = grid_interpolation_params(key_vals);
 
     let lumi = unsafe { &*lumi };
-    let mut grid = Box::new(
-        Grid::with_subgrid_type(
-            lumi.0.clone(),
-            orders,
-            unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-            subgrid_params,
-            extra,
-            &subgrid_type,
-        )
-        .unwrap(),
-    );
+
+    let mut convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); 2];
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval.strings.get("initial_state_1") {
-            grid.set_key_value("initial_state_1", value.to_str().unwrap());
+            convolutions[0] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
 
         if let Some(value) = keyval.strings.get("initial_state_2") {
-            grid.set_key_value("initial_state_2", value.to_str().unwrap());
+            convolutions[1] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
     }
 
-    grid
+    Box::new(Grid::new(
+        PidBasis::Pdg,
+        lumi.0.clone(),
+        orders,
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+        convolutions,
+        interps,
+        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
+    ))
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
@@ -867,7 +926,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.scale_by_order(alphas, alpha, logxir, logxif, global);
+    grid.scale_by_order(alphas, alpha, logxir, logxif, 1.0, global);
 }
 
 /// Return the value for `key` stored in `grid`. If `key` isn't found, `NULL` will be returned.
@@ -891,12 +950,22 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     let key = unsafe { CStr::from_ptr(key) };
     let key = key.to_string_lossy();
 
-    CString::new(
-        grid.key_values()
-            .map_or("", |kv| kv.get(key.as_ref()).map_or("", String::as_str)),
-    )
-    .unwrap()
-    .into_raw()
+    // backwards compatibility
+    let index = match key.as_ref() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        return CString::new(grid.convolutions()[index].pid().to_string())
+            .unwrap()
+            .into_raw();
+    }
+
+    CString::new(grid.metadata().get(key.as_ref()).map_or("", String::as_str))
+        .unwrap()
+        .into_raw()
 }
 
 /// Sets an internal key-value pair for the grid.
@@ -917,13 +986,25 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     value: *const c_char,
 ) {
     let grid = unsafe { &mut *grid };
-    let key = unsafe { CStr::from_ptr(key) };
-    let value = unsafe { CStr::from_ptr(value) };
+    let key = unsafe { CStr::from_ptr(key) }
+        .to_string_lossy()
+        .into_owned();
+    let value = unsafe { CStr::from_ptr(value) }
+        .to_string_lossy()
+        .into_owned();
 
-    grid.set_key_value(
-        key.to_string_lossy().as_ref(),
-        value.to_string_lossy().as_ref(),
-    );
+    // backwards compatibility
+    let index = match key.as_str() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        grid.convolutions_mut()[index] = Conv::new(ConvType::UnpolPDF, value.parse().unwrap());
+    }
+
+    grid.metadata_mut().insert(key, value);
 }
 
 /// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
@@ -1017,7 +1098,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
         pdg_id_pairs
             .chunks(2)
             .zip(factors)
-            .map(|x| (x.0[0], x.0[1], x.1))
+            .map(|x| (vec![x.0[0], x.0[1]], x.1))
             .collect(),
     ));
 }
@@ -1076,12 +1157,12 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
     entry
         .iter()
-        .flat_map(|(id1, id2, _)| vec![id1, id2])
+        .flat_map(|(pids, _)| pids)
         .zip(pdg_ids.iter_mut())
         .for_each(|(from, to)| *to = *from);
     entry
         .iter()
-        .map(|(_, _, factor)| factor)
+        .map(|(_, factor)| factor)
         .zip(factors.iter_mut())
         .for_each(|(from, to)| *to = *from);
 }

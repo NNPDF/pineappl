@@ -1,5 +1,6 @@
 //! Evolution interface.
 
+use super::convolutions::PyConvType;
 use super::pids::PyPidBasis;
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
@@ -33,7 +34,10 @@ impl PyOperatorSliceInfo {
     ///     x-grid at the final scale
     /// pid_basis : PyPidBasis
     ///     flavor basis reprentation at the initial scale
+    /// conv_type : PyConvType
+    ///     the type of convolution required
     #[new]
+    #[must_use]
     pub fn new(
         fac0: f64,
         pids0: Vec<i32>,
@@ -42,6 +46,7 @@ impl PyOperatorSliceInfo {
         pids1: Vec<i32>,
         x1: Vec<f64>,
         pid_basis: PyPidBasis,
+        conv_type: PyRef<PyConvType>,
     ) -> Self {
         Self {
             info: OperatorSliceInfo {
@@ -52,6 +57,7 @@ impl PyOperatorSliceInfo {
                 pids1,
                 x1,
                 pid_basis: pid_basis.into(),
+                conv_type: conv_type.convtype,
             },
         }
     }
@@ -92,6 +98,9 @@ impl PyEvolveInfo {
 }
 
 /// Register submodule in parent.
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "evolution")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Evolution interface.")?;
