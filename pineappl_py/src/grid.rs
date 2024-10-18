@@ -314,13 +314,38 @@ impl PyGrid {
         xi: Option<Vec<(f64, f64, f64)>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        // Closure for alphas function
         let mut alphas = |q2: f64| {
             let result: f64 = alphas.call1(py, (q2,)).unwrap().extract(py).unwrap();
             result
         };
 
-        todo!()
+        let mut xfx_funcs: Vec<_> = xfxs
+            .iter()
+            .map(|xfx| {
+                move |id: i32, x: f64, q2: f64| {
+                    xfx.call1(py, (id, x, q2)).unwrap().extract(py).unwrap()
+                }
+            })
+            .collect();
+
+        let mut lumi_cache = ConvolutionCache::new(
+            pdg_convs.into_iter().map(|pdg| pdg.conv.clone()).collect(),
+            xfx_funcs
+                .iter_mut()
+                .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+                .collect(),
+            &mut alphas,
+        );
+
+        self.grid
+            .convolve(
+                &mut lumi_cache,
+                &order_mask.unwrap_or_default(),
+                &bin_indices.unwrap_or_default(),
+                &channel_mask.unwrap_or_default(),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
+            )
+            .into_pyarray_bound(py)
     }
 
     /// Collect information for convolution with an evolution operator.
@@ -684,7 +709,7 @@ impl PyGrid {
     /// bin_indices : numpy.ndarray[int]
     ///     list of indices of bins to removed
     pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
-        self.grid.delete_bins(&bin_indices)
+        self.grid.delete_bins(&bin_indices);
     }
 }
 

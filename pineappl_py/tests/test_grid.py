@@ -173,6 +173,14 @@ class TestGrid:
             [2**3 * v, 0.0],
         )
         np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=[CONVOBJECT, CONVOBJECT],
+                xfxs=[lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+                alphas=lambda q2: 2.0,
+            ),
+            [2**3 * v, 0.0],
+        )  # Test using the generalized convolution
+        np.testing.assert_allclose(
             g.convolve_with_two(
                 pdg_conv1=CONVOBJECT,
                 xfx1=lambda pid, x, q2: 1.0,
