@@ -8,9 +8,8 @@ use pyo3::prelude::*;
 ///
 /// Each entry consists of a tuple, which contains, in the following order:
 ///
-/// 1. the PDG id of the first incoming parton
-/// 2. the PDG id of the second parton
-/// 3. a numerical factor that will multiply the result for this specific combination.
+/// 1. a list containing the PDG value of the 1st, 2nd, and etc. of the incoming parton
+/// 2. a numerical factor that will multiply the result for this specific combination.
 #[pyclass(name = "Channel")]
 #[repr(transparent)]
 pub struct PyChannel {
@@ -45,7 +44,7 @@ impl PyChannel {
     }
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl`.
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
 #[pyclass(name = "Kinematics")]
 #[repr(transparent)]
 pub struct PyKinematics {
@@ -61,6 +60,13 @@ impl PyKinematics {
 #[pymethods]
 impl PyKinematics {
     /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// kinematic: int
+    ///     an integer representing the kinematic. 0 represents the scale,
+    ///     1 represents the momentum fraction of the first parton, and 2
+    ///     represents the momentum fraction of the second parton.
     #[new]
     #[must_use]
     pub const fn new_kin(kinematic: usize) -> Self {
@@ -149,7 +155,6 @@ impl PyOrder {
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
         max_as: u8,

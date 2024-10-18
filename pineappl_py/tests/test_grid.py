@@ -22,7 +22,12 @@ ORDERS = [Order(3, 0, 0, 0, 0)]
 
 
 class TestGrid:
-    def fake_grid(self, channels=CHANNELS, orders=ORDERS, bins=None):
+    def fake_grid(
+        self,
+        channels: list[Channel] = CHANNELS,
+        orders: list[Order] = ORDERS,
+        bins: list | None = None,
+    ) -> Grid:
         # We assume symmetrical proton-proton in the initial state
         convolutions = [CONVOBJECT, CONVOBJECT]
         # Define the kinematics. Kinematics are defined as a list of items.
@@ -58,7 +63,7 @@ class TestGrid:
         bin_limits = np.array(
             [1e-7, 1e-3, 1] if bins is None else bins, dtype=float
         )
-        g = Grid(
+        return Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
             orders=orders,
@@ -67,7 +72,6 @@ class TestGrid:
             interpolations=interpolations,
             kinematics=kinematics,
         )
-        return g
 
     def test_init(self):
         g = self.fake_grid()

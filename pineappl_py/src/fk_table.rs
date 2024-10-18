@@ -12,13 +12,6 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
-#[pyclass(name = "FkTable")]
-#[repr(transparent)]
-pub struct PyFkTable {
-    pub(crate) fk_table: FkTable,
-}
-
 /// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkAssumptions <fk_table/enum.FkAssumptions.html>`.
 #[pyclass(name = "FkAssumptions")]
 #[repr(transparent)]
@@ -40,6 +33,13 @@ impl PyFkAssumptions {
     }
 }
 
+/// PyO3 wrapper to :rustdoc:`pineappl::fk_table::FkTable <fk_table/struct.FkTable.html>`.
+#[pyclass(name = "FkTable")]
+#[repr(transparent)]
+pub struct PyFkTable {
+    pub(crate) fk_table: FkTable,
+}
+
 #[pymethods]
 impl PyFkTable {
     /// Constructor from an existing grid.
@@ -53,7 +53,13 @@ impl PyFkTable {
         }
     }
 
-    /// Read from given path.
+    /// Read an FK Table from given path.
+    ///
+    /// Parameteters
+    /// ------------
+    /// path : str
+    ///     path to the FK table
+    ///
     /// # Panics
     /// TODO
     #[must_use]
@@ -241,7 +247,6 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_conv, xfx, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_one<'py>(
         &self,
@@ -285,7 +290,6 @@ impl PyFkTable {
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, bin_indices = None, channel_mask= None))]
     pub fn convolve_with_two<'py>(
         &self,
@@ -324,7 +328,6 @@ impl PyFkTable {
     /// assumptions : PyFkAssumptions
     ///     assumptions about the FkTable properties, declared by the user, deciding which
     ///     optimizations are possible
-    #[allow(clippy::needless_pass_by_value)]
     pub fn optimize(&mut self, assumptions: PyRef<PyFkAssumptions>) {
         self.fk_table.optimize(assumptions.fk_assumptions);
     }

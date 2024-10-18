@@ -16,7 +16,7 @@ class TestKinematics:
 
 
 class TestOrder:
-    def create_order(self, args=(2, 1, 0, 1, 0)):
+    def create_order(self, args: tuple = (2, 1, 0, 1, 0)) -> Order:
         return Order(*args)
 
     def test_init(self):

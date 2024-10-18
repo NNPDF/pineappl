@@ -34,9 +34,10 @@ impl PyOperatorSliceInfo {
     ///     x-grid at the final scale
     /// pid_basis : PyPidBasis
     ///     flavor basis reprentation at the initial scale
+    /// conv_type : PyConvType
+    ///     the type of convolution required
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new(
         fac0: f64,
         pids0: Vec<i32>,

@@ -3,7 +3,7 @@
 use pineappl::convolutions::{Conv, ConvType};
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl::`.
+/// PyO3 wrapper to :rustdoc:`pineappl::convolutions::ConvType <convolutions/enum.ConvType.html>`.
 #[pyclass(name = "ConvType")]
 #[repr(transparent)]
 pub struct PyConvType {
@@ -26,7 +26,7 @@ impl PyConvType {
     }
 }
 
-/// PyO3 wrapper to :rustdoc:`pineappl::`.
+/// PyO3 wrapper to :rustdoc:`pineappl::convolutions::Conv <convolutions/struct.Conv.html>`.
 #[pyclass(name = "Conv")]
 #[repr(transparent)]
 pub struct PyConv {
@@ -44,7 +44,6 @@ impl PyConv {
     /// Constructor.
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new_conv(conv_type: PyRef<PyConvType>, pid: i32) -> Self {
         Self::new(Conv::new(conv_type.convtype, pid))
     }

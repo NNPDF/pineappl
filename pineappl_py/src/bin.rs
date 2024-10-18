@@ -28,7 +28,6 @@ impl PyBinRemapper {
     ///     bin limits
     #[new]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new(normalizations: PyReadonlyArray1<f64>, limits: Vec<(f64, f64)>) -> Self {
         Self {
             bin_remapper: BinRemapper::new(normalizations.to_vec().unwrap(), limits).unwrap(),

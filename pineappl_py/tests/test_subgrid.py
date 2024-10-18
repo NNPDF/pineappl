@@ -67,7 +67,7 @@ def test_issue_164(pdf):
     channels = [Channel([([2], 1.0)])]  # DIS-case
     orders = [Order(0, 0, 0, 0, 0)]
 
-    def convolve_grid(q2_min=Q2_MIN):
+    def convolve_grid(q2_min: float = Q2_MIN) -> Grid:
         grid = fake_dis_grid(orders, channels, q2_min)
         # Fill the Grid with some values
         grid.fill(
@@ -92,12 +92,12 @@ def test_issue_164(pdf):
 
 
 class TestSubgrid:
-    def fake_grid(sefl):
+    def fake_grid(self):
         channels = [Channel([([2], 1.0)]), Channel([([3], 0.5)])]
         orders = [Order(0, 0, 0, 0, 0)]
         return fake_dis_grid(orders, channels)
 
-    def fake_importonlysubgrid(self):
+    def fake_importonlysubgrid(self) -> tuple:
         x1s = np.linspace(0.1, 1, 2)
         x2s = np.linspace(0.5, 1, 2)
         Q2s = np.linspace(10, 20, 2)

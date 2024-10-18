@@ -31,9 +31,7 @@ pub struct PyGrid {
 
 #[pymethods]
 impl PyGrid {
-    /// Constructor.
-    ///
-    /// TODO Exposes all the arguments
+    /// Constructor to instantiate a new Grid.
     ///
     /// # Panics
     ///
@@ -41,14 +39,20 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
+    /// pid_basis : PidBasis
+    ///     choice of basis which can be `Evol` or `Pdg`
     /// channels : list(PyChannel)
     ///     channels
     /// orders : list(PyOrder)
     ///     orders
     /// bin_limits : list(float)
     ///     bin configurations
-    /// subgrid_params : PySubgridParams
-    ///     subgrid parameters
+    /// convolutions : list(PyConv)
+    ///     contains the types of convolution
+    /// interpolations : list(PyInterp)
+    ///     types of interpolations required by each kinematic
+    /// kinematics : list(PyKinematics)
+    ///     list of kinematics
     #[new]
     #[must_use]
     pub fn new_grid(
@@ -98,7 +102,6 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weight : float
     ///     cross section weight
-    #[allow(clippy::needless_pass_by_value)]
     pub fn fill(
         &mut self,
         order: usize,
@@ -119,6 +122,17 @@ impl PyGrid {
     }
 
     /// Set a subgrid.
+    ///
+    /// Parameters
+    /// ----------
+    /// order : int
+    ///     order index
+    /// bin : int
+    ///     bin index
+    /// channel : int
+    ///     channel index
+    /// subgrid : PySubgridEnum
+    ///     subgrid object
     pub fn set_subgrid(
         &mut self,
         order: usize,
@@ -151,8 +165,8 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// pdg_id : int
-    ///     PDG Monte Carlo ID of the hadronic particle
+    /// pdg_conv : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     /// alphas : callable
@@ -180,7 +194,6 @@ impl PyGrid {
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_conv, xfx, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_one<'py>(
         &self,
@@ -217,12 +230,12 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// pdg_id1 : int
-    ///     PDG Monte Carlo ID of the first hadronic particle
+    /// pdg_conv1 : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx1 : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    /// pdg_id2 : int
-    ///     PDG Monte Carlo ID of the second hadronic particle
+    /// pdg_conv2 : PyConv
+    ///     contains the types of convolutions and PID
     /// xfx2 : callable
     ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
     /// alphas : callable
@@ -250,7 +263,6 @@ impl PyGrid {
     ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///         the scale variation)
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve_with_two<'py>(
         &self,
@@ -288,7 +300,6 @@ impl PyGrid {
     /// TODO
     // #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn convolve<'py>(
         &self,
         _pdg_convs: Vec<PyRef<PyConv>>,
@@ -319,7 +330,6 @@ impl PyGrid {
     /// PyEvolveInfo :
     ///     evolution informations
     #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn evolve_info(&self, order_mask: PyReadonlyArray1<bool>) -> PyEvolveInfo {
         PyEvolveInfo {
             evolve_info: self.grid.evolve_info(order_mask.as_slice().unwrap()),
@@ -327,6 +337,7 @@ impl PyGrid {
     }
 
     /// Evolve grid with as many EKOs as Convolutions.
+    ///
     /// TODO: Expose `slices` to be a vector!!!
     ///
     /// # Panics
@@ -353,7 +364,6 @@ impl PyGrid {
     /// PyFkTable :
     ///     produced FK table
     #[allow(clippy::needless_lifetimes)]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn evolve<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
@@ -412,7 +422,6 @@ impl PyGrid {
     /// PyFkTable :
     ///     produced FK table
     #[allow(clippy::needless_lifetimes)]
-    #[allow(clippy::needless_pass_by_value)]
     pub fn evolve_with_slice_iter<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
@@ -651,7 +660,6 @@ impl PyGrid {
     /// ----------
     /// factors : numpy.ndarray[float]
     ///     bin-dependent factors by which to scale
-    #[allow(clippy::needless_pass_by_value)]
     pub fn scale_by_bin(&mut self, factors: PyReadonlyArray1<f64>) {
         self.grid.scale_by_bin(&factors.to_vec().unwrap());
     }
@@ -668,7 +676,6 @@ impl PyGrid {
     /// ----------
     /// bin_indices : numpy.ndarray[int]
     ///     list of indices of bins to removed
-    #[allow(clippy::needless_pass_by_value)]
     pub fn delete_bins(&mut self, bin_indices: PyReadonlyArray1<usize>) {
         self.grid.delete_bins(&bin_indices.to_vec().unwrap());
     }

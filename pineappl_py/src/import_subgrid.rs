@@ -6,7 +6,7 @@ use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::packed_array::PackedArray;
 use pyo3::prelude::*;
 
-/// PyO3 wrapper to :rustdoc:`pineappl`.
+/// PyO3 wrapper to :rustdoc:`pineappl::import_subgrid::ImportSubgridV1 <import_subgrid/struct.ImportSubgridV1.html>`.
 #[pyclass(name = "ImportSubgridV1")]
 #[derive(Clone)]
 #[repr(transparent)]
@@ -16,7 +16,6 @@ pub struct PyImportSubgridV1 {
 
 #[pymethods]
 impl PyImportSubgridV1 {
-    /// Constructor.
     /// Constructor.
     ///
     /// Parameters

@@ -3,7 +3,7 @@
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pyo3::{prelude::*, pyclass};
 
-/// PyO3 wrapper to :rustdoc:`pineappl::`.
+/// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Interp <interpolation/struct.Interp.html>`.
 #[pyclass(name = "Interp")]
 #[repr(transparent)]
 pub struct PyInterp {
@@ -19,6 +19,19 @@ impl PyInterp {
 #[pymethods]
 impl PyInterp {
     /// Constructor.
+    ///
+    /// TODO: Exposes ReweightMeth,reweight Map, and InterpMeth
+    ///
+    /// Parameteters
+    /// ------------
+    /// min : float
+    ///     minimum value of the node
+    /// max : float
+    ///     maximum value of the node
+    /// nodes : int
+    ///     number of nodes
+    /// order : int
+    ///     order of the interpolation
     #[new]
     #[must_use]
     pub fn new_interp(min: f64, max: f64, nodes: usize, order: usize) -> Self {
