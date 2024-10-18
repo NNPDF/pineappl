@@ -235,7 +235,7 @@ impl Grid {
         channel_mask: &[bool],
         xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        convolution_cache.setup(self, xi).unwrap();
+        convolution_cache.setup(self, xi);
 
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_info().bins()).collect()
@@ -336,7 +336,7 @@ impl Grid {
         channel: usize,
         (xir, xif, xia): (f64, f64, f64),
     ) -> ArrayD<f64> {
-        convolution_cache.setup(self, &[(xir, xif, xia)]).unwrap();
+        convolution_cache.setup(self, &[(xir, xif, xia)]);
 
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();

@@ -51,7 +51,7 @@ impl<'a> ConvolutionCache<'a> {
         }
     }
 
-    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64, f64)]) -> Result<(), ()> {
+    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64, f64)]) {
         self.perm = grid
             .convolutions()
             .iter()
@@ -91,7 +91,7 @@ impl<'a> ConvolutionCache<'a> {
                     .flat_map(|(_, node_values)| node_values)
             })
             .collect();
-        x_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        x_grid.sort_by(f64::total_cmp);
         x_grid.dedup();
 
         let mut mur2_grid: Vec<_> = grid
@@ -106,7 +106,7 @@ impl<'a> ConvolutionCache<'a> {
             })
             .flat_map(|ren| xi.iter().map(move |(xir, _, _)| xir * xir * ren))
             .collect();
-        mur2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        mur2_grid.sort_by(f64::total_cmp);
         mur2_grid.dedup();
 
         let mut muf2_grid: Vec<_> = grid
@@ -121,7 +121,7 @@ impl<'a> ConvolutionCache<'a> {
             })
             .flat_map(|fac| xi.iter().map(move |(_, xif, _)| xif * xif * fac))
             .collect();
-        muf2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        muf2_grid.sort_by(f64::total_cmp);
         muf2_grid.dedup();
 
         let mut mua2_grid: Vec<_> = grid
@@ -136,7 +136,7 @@ impl<'a> ConvolutionCache<'a> {
             })
             .flat_map(|frg| xi.iter().map(move |(_, _, xia)| xia * xia * frg))
             .collect();
-        mua2_grid.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        mua2_grid.sort_by(f64::total_cmp);
         mua2_grid.dedup();
 
         self.alphas_cache = mur2_grid.iter().map(|&mur2| (self.alphas)(mur2)).collect();
@@ -144,8 +144,6 @@ impl<'a> ConvolutionCache<'a> {
         self.muf2_grid = muf2_grid;
         self.mua2_grid = mua2_grid;
         self.x_grid = x_grid;
-
-        Ok(())
     }
 
     /// TODO
