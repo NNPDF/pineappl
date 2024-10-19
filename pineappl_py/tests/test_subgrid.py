@@ -75,9 +75,9 @@ def test_issue_164(pdf):
             ntuple=[0.2, 0.2, 10],
             weight=0.5,
         )
-        return grid.convolve_with_one(
-            pdg_conv=CONVOBJECT,
-            xfx=pdf.xfxQ,
+        return grid.convolve(
+            pdg_convs=[CONVOBJECT],
+            xfxs=[pdf.xfxQ],
             alphas=pdf.alphasQ,
         )
 

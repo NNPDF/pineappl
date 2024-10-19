@@ -11,7 +11,7 @@ from pineappl.pids import PidBasis
 from typing import List
 
 # Construct the type of convolutions and the convolution object
-# We assume unpolarized proton PDF
+# We assume unpolarized protons in the initial state
 TYPECONV = ConvType(polarized=False, time_like=False)
 CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
 
@@ -20,6 +20,76 @@ UP_ANTIUP_CHANNEL = [([2, -2], 0.1)]
 CHANNELS = [Channel(UP_ANTIUP_CHANNEL)]
 ORDERS = [Order(3, 0, 0, 0, 0)]
 
+# Testing specs for Convolution checks. Each element of the list is
+# a tuple with two elements where the first element is a dictionary
+# whose keys are the arguments of the `convolve` function and the
+# second element is the expected results.
+REF_VALUE = 5e6 / 9999
+TESTING_SPECS = [
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 0.0, lambda pid, x, q2: 0.0],
+            "alphas": lambda q2: 0.0,
+        },
+        [0.0] * 2,
+    ),  # fixed alphas(Q2) == 0.0
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 1.0,
+        },
+        [REF_VALUE, 0.0],
+    ),  # fixed alphas(Q2) == 1.0
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 2.0,
+        },
+        [2**3 * REF_VALUE, 0.0],
+    ),  # fixed alphas(Q2) == 2.0
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 1.0,
+            "bin_indices": [0],
+        },
+        [REF_VALUE],
+    ),  # block first Bin without argument
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 1.0,
+            "bin_indices": [0],
+            "order_mask": [False],
+        },
+        [0.0],
+    ),  # block first Bin with order_mask
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 1.0,
+            "bin_indices": [0],
+            "channel_mask": [False],
+        },
+        [0.0],
+    ),  # block first Bin with channel_mask
+    (
+        {
+            "pdg_convs": [CONVOBJECT, CONVOBJECT],
+            "xfxs": [lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
+            "alphas": lambda q2: 1.0,
+            "bin_indices": [1],
+        },
+        [0.0],
+    ),  # second Bin is empty
+]
+
 
 class TestGrid:
     def fake_grid(
@@ -27,9 +97,8 @@ class TestGrid:
         channels: List[Channel] = CHANNELS,
         orders: List[Order] = ORDERS,
         bins: List[float] = [1e-7, 1e-3, 1],
+        convolutions: List[Conv] = [CONVOBJECT, CONVOBJECT],
     ) -> Grid:
-        # We assume symmetrical proton-proton in the initial state
-        convolutions = [CONVOBJECT, CONVOBJECT]
         # Define the kinematics. Kinematics are defined as a list of items.
         # 1st item: factorization and renormalization scale
         # 2nd item: parton momentum fraction of the 1st convolution
@@ -126,7 +195,8 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
-    def test_convolve_with_two(self):
+    @pytest.mark.parametrize("params,expected", TESTING_SPECS)
+    def test_toy_convolution(self, params, expected):
         g = self.fake_grid()
 
         # Fill the subgrid-part of the GRID object
@@ -141,93 +211,15 @@ class TestGrid:
         g.set_subgrid(0, 0, 0, subgrid.into())
 
         # Check the convolutions of the GRID
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 0.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 0.0,
-                alphas=lambda q2: 0.0,
-            ),
-            [0.0] * 2,
-        )
-        v = 5e6 / 9999
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 1.0,
-            ),
-            [v, 0.0],
-        )
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 2.0,
-            ),
-            [2**3 * v, 0.0],
-        )
-        np.testing.assert_allclose(
-            g.convolve(
-                pdg_convs=[CONVOBJECT, CONVOBJECT],
-                xfxs=[lambda pid, x, q2: 1.0, lambda pid, x, q2: 1.0],
-                alphas=lambda q2: 2.0,
-            ),
-            [2**3 * v, 0.0],
-        )  # Test using the generalized convolution
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 1.0,
-                bin_indices=[0],
-            ),
-            [v],
-        )
-        # block first bins with additional args
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 1.0,
-                bin_indices=[0],
-                order_mask=[False],
-            ),
-            [0.0],
-        )
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 1.0,
-                bin_indices=[0],
-                channel_mask=[False],
-            ),
-            [0.0],
-        )
-        # second bin is empty
-        np.testing.assert_allclose(
-            g.convolve_with_two(
-                pdg_conv1=CONVOBJECT,
-                xfx1=lambda pid, x, q2: 1.0,
-                pdg_conv2=CONVOBJECT,
-                xfx2=lambda pid, x, q2: 1.0,
-                alphas=lambda q2: 1.0,
-                bin_indices=[1],
-            ),
-            [0.0],
-        )
+        np.testing.assert_allclose(g.convolve(**params), expected)
+
+    def test_unpolarized_convolution(self):
+        # TODO
+        pass
+
+    def test_polarized_convolution(self):
+        # TODO
+        pass
 
     def test_io(self, tmp_path):
         g = self.fake_grid()
@@ -250,11 +242,9 @@ class TestGrid:
             weight=10,
         )
         # Peform convolutions using Toy LHPDF & AlphasQ2 functions
-        res = g.convolve_with_two(
-            pdg_conv1=CONVOBJECT,
-            xfx1=lambda pid, x, q2: x,
-            pdg_conv2=CONVOBJECT,
-            xfx2=lambda pid, x, q2: x,
+        res = g.convolve(
+            pdg_convs=[CONVOBJECT, CONVOBJECT],
+            xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
             alphas=lambda q2: 1.0,
         )
         pytest.approx(res) == 0.0
