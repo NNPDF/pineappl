@@ -157,18 +157,17 @@ impl PyGrid {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
     }
 
-    /// Convolve with a single distribution.
+    /// Convolve the grid with as many distributions.
     ///
     /// # Panics
-    ///
     /// TODO
     ///
     /// Parameters
     /// ----------
-    /// pdg_conv : PyConv
-    ///     contains the types of convolutions and PID
-    /// xfx : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    /// pdg_convs : list(PyConv)
+    ///     list containing the types of convolutions and PID
+    /// xfxs : list(callable)
+    ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
     /// alphas : callable
     ///     lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
     /// order_mask : numpy.ndarray(bool)
@@ -194,115 +193,7 @@ impl PyGrid {
     ///     cross sections for all bins, for each scale-variation tuple (first all bins, then
     ///     the scale variation)
     #[must_use]
-    #[pyo3(signature = (pdg_conv, xfx, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
-    pub fn convolve_with_one<'py>(
-        &self,
-        pdg_conv: PyRef<PyConv>,
-        xfx: &Bound<'py, PyAny>,
-        alphas: &Bound<'py, PyAny>,
-        order_mask: Option<Vec<bool>>,
-        bin_indices: Option<Vec<usize>>,
-        channel_mask: Option<Vec<bool>>,
-        xi: Option<Vec<(f64, f64, f64)>>,
-        py: Python<'py>,
-    ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
-        // `(q2, )` must have the comma to make it a Rust tuple
-        let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
-        let mut lumi_cache =
-            ConvolutionCache::new(vec![pdg_conv.conv.clone()], vec![&mut xfx], &mut alphas);
-        self.grid
-            .convolve(
-                &mut lumi_cache,
-                &order_mask.unwrap_or_default(),
-                &bin_indices.unwrap_or_default(),
-                &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
-            )
-            .into_pyarray_bound(py)
-    }
-
-    /// Convolve with two distributions.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    ///
-    /// Parameters
-    /// ----------
-    /// pdg_conv1 : PyConv
-    ///     contains the types of convolutions and PID
-    /// xfx1 : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    /// pdg_conv2 : PyConv
-    ///     contains the types of convolutions and PID
-    /// xfx2 : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    /// alphas : callable
-    ///     lhapdf like callable with arguments `Q2` returning :math:`\alpha_s`
-    /// order_mask : numpy.ndarray(bool)
-    ///     Mask for selecting specific orders. The value `True` means the corresponding order
-    ///     is included. An empty list corresponds to all orders being enabled.
-    /// bin_indices : numpy.ndarray(int)
-    ///     A list with the indices of the corresponding bins that should be calculated. An
-    ///     empty list means that all bins should be calculated.
-    /// channel_mask : numpy.ndarray(bool)
-    ///     Mask for selecting specific channels. The value `True` means the
-    ///     corresponding channel is included. An empty list corresponds to all channels being
-    ///     enabled.
-    /// xi : list((float, float))
-    ///     A list with the scale variation factors that should be used to calculate
-    ///     scale-varied results. The first entry of a tuple corresponds to the variation of
-    ///     the renormalization scale, the second entry to the variation of the factorization
-    ///     scale. If only results for the central scale are need the list should contain
-    ///     `(1.0, 1.0)`.
-    ///
-    /// Returns
-    /// -------
-    ///     numpy.ndarray(float) :
-    ///         cross sections for all bins, for each scale-variation tuple (first all bins, then
-    ///         the scale variation)
-    #[must_use]
-    #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
-    pub fn convolve_with_two<'py>(
-        &self,
-        pdg_conv1: PyRef<PyConv>,
-        xfx1: &Bound<'py, PyAny>,
-        pdg_conv2: PyRef<PyConv>,
-        xfx2: &Bound<'py, PyAny>,
-        alphas: &Bound<'py, PyAny>,
-        order_mask: Option<Vec<bool>>,
-        bin_indices: Option<Vec<usize>>,
-        channel_mask: Option<Vec<bool>>,
-        xi: Option<Vec<(f64, f64, f64)>>,
-        py: Python<'py>,
-    ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
-        let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
-        // `(q2, )` must have the comma to make it a Rust tuple
-        let mut alphas = |q2| alphas.call1((q2,)).unwrap().extract().unwrap();
-        let mut lumi_cache = ConvolutionCache::new(
-            vec![pdg_conv1.conv.clone(), pdg_conv2.conv.clone()],
-            vec![&mut xfx1, &mut xfx2],
-            &mut alphas,
-        );
-        self.grid
-            .convolve(
-                &mut lumi_cache,
-                &order_mask.unwrap_or_default(),
-                &bin_indices.unwrap_or_default(),
-                &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
-            )
-            .into_pyarray_bound(py)
-    }
-
-    /// Convolve a grid with as many convolutions.
-    ///
-    /// # Panics
-    /// TODO
-    // #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
-    #[must_use]
+    #[pyo3(signature = (pdg_convs, xfxs, alphas, order_mask = None, bin_indices = None, channel_mask = None, xi = None))]
     pub fn convolve<'py>(
         &self,
         pdg_convs: Vec<PyRef<PyConv>>,
@@ -370,7 +261,7 @@ impl PyGrid {
         }
     }
 
-    /// Evolve grid with as many EKOs as Convolutions.
+    /// Evolve the grid with as many EKOs as Convolutions.
     ///
     /// TODO: Expose `slices` to be a vector!!!
     ///
@@ -397,7 +288,6 @@ impl PyGrid {
     /// -------
     /// PyFkTable :
     ///     produced FK table
-    #[allow(clippy::needless_lifetimes)]
     pub fn evolve<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,
@@ -454,7 +344,6 @@ impl PyGrid {
     /// -------
     /// PyFkTable :
     ///     produced FK table
-    #[allow(clippy::needless_lifetimes)]
     pub fn evolve_with_slice_iter<'py>(
         &self,
         slices: &Bound<'py, PyIterator>,

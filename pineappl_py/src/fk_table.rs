@@ -230,85 +230,58 @@ impl PyFkTable {
             .unwrap();
     }
 
-    /// Convolve with a single distribution.
+    /// Convolve the FK table with as many distributions.
     ///
     /// # Panics
     /// TODO
     ///
     /// Parameters
     /// ----------
-    /// pdg_id : integer
-    ///     PDG Monte Carlo ID of the hadronic particle
-    /// xfx : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
+    /// pdg_convs : list(PyConv)
+    ///     list containing the types of convolutions and PID
+    /// xfxs : list(callable)
+    ///     list of lhapdf-like callable with arguments `pid, x, Q2` returning x*pdf
+    /// bin_indices : numpy.ndarray(int)
+    ///     A list with the indices of the corresponding bins that should be calculated. An
+    ///     empty list means that all bins should be calculated.
+    /// channel_mask : numpy.ndarray(bool)
+    ///     Mask for selecting specific channels. The value `True` means the
+    ///     corresponding channel is included. An empty list corresponds to all channels being
+    ///     enabled.
     ///
     /// Returns
     /// -------
     /// numpy.ndarray(float) :
     ///     cross sections for all bins
     #[must_use]
-    #[pyo3(signature = (pdg_conv, xfx, bin_indices = None, channel_mask= None))]
-    pub fn convolve_with_one<'py>(
+    #[pyo3(signature = (pdg_convs, xfxs, bin_indices = None, channel_mask= None))]
+    pub fn convolve<'py>(
         &self,
-        pdg_conv: PyRef<PyConv>,
-        xfx: &Bound<'py, PyAny>,
+        pdg_convs: Vec<PyRef<PyConv>>,
+        xfxs: Vec<PyObject>,
         bin_indices: Option<Vec<usize>>,
         channel_mask: Option<Vec<bool>>,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx = |id, x, q2| xfx.call1((id, x, q2)).unwrap().extract().unwrap();
-        let mut alphas = |_| 1.0;
-        let mut lumi_cache =
-            ConvolutionCache::new(vec![pdg_conv.conv.clone()], vec![&mut xfx], &mut alphas);
-        self.fk_table
-            .convolve(
-                &mut lumi_cache,
-                &bin_indices.unwrap_or_default(),
-                &channel_mask.unwrap_or_default(),
-            )
-            .into_pyarray_bound(py)
-    }
+        let mut xfx_funcs: Vec<_> = xfxs
+            .iter()
+            .map(|xfx| {
+                move |id: i32, x: f64, q2: f64| {
+                    xfx.call1(py, (id, x, q2)).unwrap().extract(py).unwrap()
+                }
+            })
+            .collect();
 
-    /// Convoluve grid with two different distribution.
-    ///
-    /// # Panics
-    /// TODO
-    ///
-    /// Parameters
-    /// ----------
-    /// pdg_id1 : integer
-    ///     PDG Monte Carlo ID of the first hadronic particle
-    /// xfx1 : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    /// pdg_id2 : integer
-    ///     PDG Monte Carlo ID of the second hadronic particle
-    /// xfx2 : callable
-    ///     lhapdf like callable with arguments `pid, x, Q2` returning x*pdf for :math:`x`-grid
-    ///
-    /// Returns
-    /// -------
-    /// numpy.ndarray(float) :
-    ///     cross sections for all bins
-    #[must_use]
-    #[pyo3(signature = (pdg_conv1, xfx1, pdg_conv2, xfx2, bin_indices = None, channel_mask= None))]
-    pub fn convolve_with_two<'py>(
-        &self,
-        pdg_conv1: PyRef<PyConv>,
-        xfx1: &Bound<'py, PyAny>,
-        pdg_conv2: PyRef<PyConv>,
-        xfx2: &Bound<'py, PyAny>,
-        bin_indices: Option<Vec<usize>>,
-        channel_mask: Option<Vec<bool>>,
-        py: Python<'py>,
-    ) -> Bound<'py, PyArray1<f64>> {
-        let mut xfx1 = |id, x, q2| xfx1.call1((id, x, q2)).unwrap().extract().unwrap();
-        let mut xfx2 = |id, x, q2| xfx2.call1((id, x, q2)).unwrap().extract().unwrap();
         let mut alphas = |_| 1.0;
         let mut lumi_cache = ConvolutionCache::new(
-            vec![pdg_conv1.conv.clone(), pdg_conv2.conv.clone()],
-            vec![&mut xfx1, &mut xfx2],
+            pdg_convs.into_iter().map(|pdg| pdg.conv.clone()).collect(),
+            xfx_funcs
+                .iter_mut()
+                .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+                .collect(),
             &mut alphas,
         );
+
         self.fk_table
             .convolve(
                 &mut lumi_cache,

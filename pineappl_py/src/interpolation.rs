@@ -1,7 +1,7 @@
 //! Interpolation interface.
 
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
-use pyo3::{prelude::*, pyclass};
+use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Interp <interpolation/struct.Interp.html>`.
 #[pyclass(name = "Interp")]
@@ -32,16 +32,40 @@ impl PyInterp {
     ///     number of nodes
     /// order : int
     ///     order of the interpolation
+    /// reweght_meth : Optional[str]
+    ///     re-weighting method to be used
+    /// map : Optional[str]
+    ///     the type of mapping to be used
     #[new]
     #[must_use]
-    pub fn new_interp(min: f64, max: f64, nodes: usize, order: usize) -> Self {
+    #[pyo3(signature = (min, max, nodes, order, reweight_meth = None, map = None))]
+    pub fn new_interp(
+        min: f64,
+        max: f64,
+        nodes: usize,
+        order: usize,
+        reweight_meth: Option<&str>,
+        map: Option<&str>,
+    ) -> Self {
+        let reweight = match reweight_meth.unwrap_or("applgrid") {
+            "applgrid" => ReweightMeth::ApplGridX,
+            "noreweight" => ReweightMeth::NoReweight,
+            _ => todo!(),
+        };
+
+        let mapping = match map.unwrap_or("applgrid_f2") {
+            "applgrid_f2" => Map::ApplGridF2,
+            "applgrid_h0" => Map::ApplGridH0,
+            _ => todo!(),
+        };
+
         Self::new(Interp::new(
             min,
             max,
             nodes,
             order,
-            ReweightMeth::ApplGridX,
-            Map::ApplGridF2,
+            reweight,
+            mapping,
             InterpMeth::Lagrange,
         ))
     }
