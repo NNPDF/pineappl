@@ -50,6 +50,16 @@ impl PyMu2 {
     fn set_fac(&mut self, value: f64) {
         self.mu2.fac = value;
     }
+
+    #[getter]
+    const fn frg(&self) -> f64 {
+        self.mu2.frg
+    }
+
+    #[setter]
+    fn set_frg(&mut self, value: f64) {
+        self.mu2.frg = value;
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`

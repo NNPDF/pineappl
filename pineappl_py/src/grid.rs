@@ -319,62 +319,6 @@ impl PyGrid {
             .unwrap())
     }
 
-    /// Evolve grid with one single EKO.
-    ///
-    /// # Panics
-    /// TODO
-    ///
-    /// # Errors
-    /// TODO
-    ///
-    /// Parameters
-    /// ----------
-    /// slices : Iterable
-    ///     list of (PyOperatorSliceInfo, 5D array) describing each convolution
-    /// order_mask : numpy.ndarray(bool)
-    ///     boolean mask to activate orders
-    /// xi : (float, float)
-    ///     factorization and renormalization variation
-    /// ren1 : numpy.ndarray(float)
-    ///     list of renormalization scales
-    /// alphas : numpy.ndarray(float)
-    ///     list with :math:`\alpha_s(Q2)` for the process scales
-    ///
-    /// Returns
-    /// -------
-    /// PyFkTable :
-    ///     produced FK table
-    pub fn evolve_with_slice_iter<'py>(
-        &self,
-        slices: &Bound<'py, PyIterator>,
-        order_mask: Vec<bool>,
-        xi: (f64, f64, f64),
-        ren1: Vec<f64>,
-        alphas: Vec<f64>,
-    ) -> PyResult<PyFkTable> {
-        Ok(self
-            .grid
-            .evolve(
-                vec![slices.into_iter().map(|slice| {
-                    let (info, op) = slice
-                        .unwrap()
-                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
-                        .unwrap();
-                    Ok::<_, std::io::Error>((
-                        info.info,
-                        // TODO: avoid copying
-                        CowArray::from(op.as_array().to_owned()),
-                    ))
-                })],
-                &order_mask,
-                xi,
-                &AlphasTable { ren1, alphas },
-            )
-            .map(|fk_table| PyFkTable { fk_table })
-            // TODO: avoid unwrap and convert `Result` into `PyResult`
-            .unwrap())
-    }
-
     /// Load from file.
     ///
     /// # Panics

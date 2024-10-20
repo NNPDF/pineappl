@@ -72,6 +72,20 @@ pub struct PyEvolveInfo {
 
 #[pymethods]
 impl PyEvolveInfo {
+    /// Constructor.
+    #[new]
+    #[must_use]
+    pub const fn new(fac1: Vec<f64>, pids1: Vec<i32>, x1: Vec<f64>, ren1: Vec<f64>) -> Self {
+        Self {
+            evolve_info: EvolveInfo {
+                fac1,
+                pids1,
+                x1,
+                ren1,
+            },
+        }
+    }
+
     /// Squared factorization scales of the `Grid`.
     #[getter]
     fn fac1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {

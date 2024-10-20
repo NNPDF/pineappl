@@ -5,44 +5,15 @@ three (general) convolutions.
 """
 
 import numpy as np
-import pytest
-import subprocess
+import tempfile
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
-from pineappl.fk_table import FkTable
+from pineappl.fk_table import FkTable, FkAssumptions
 from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
 from typing import List
-
-
-@pytest.fixture
-def download_fktable(tmp_path_factory):
-    def _download_fk(fkname: str) -> None:
-        download_dir = tmp_path_factory.mktemp("data")
-        file_path = download_dir / f"{fkname}"
-        args = [
-            "wget",
-            "--no-verbose",
-            "--no-clobber",
-            "-P",
-            f"{download_dir}",
-            f"https://data.nnpdf.science/pineappl/test-data/{fkname}",
-        ]
-
-        try:
-            _ = subprocess.run(
-                args,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            return file_path
-        except OSError as error:
-            msg = f"Failed to execute the command {args}."
-            raise EnvironmentError(msg) from error
-
-    return _download_fk
 
 
 class TestFkTable:
@@ -121,7 +92,11 @@ class TestFkTable:
             np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
-        fk = FkTable(g)  # Convert Grid -> FkTable
+
+        # Convert the Grid -> FkTable
+        fk = FkTable(g)
+
+        # Test a simple convolution of the FK table
         np.testing.assert_allclose(
             fk.convolve(
                 pdg_convs=[h_conv],
@@ -137,38 +112,72 @@ class TestFkTable:
             [5e7 / 9999, 0.0],
         )
 
+        # Test writing/dumping the FK table into disk
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fk.write(f"{tmpdir}/toy_fktable.pineappl")
+            fk.write_lz4(f"{tmpdir}/toy_fktable.pineappl.lz4")
+
+    def test_fktable(
+        self,
+        download_objects,
+        fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
+    ):
+        fk_table = download_objects(f"{fkname}")
+        fk = FkTable.read(fk_table)
+
+        assert fk.table().shape == (1, 51, 34, 34)
+        np.testing.assert_allclose(fk.muf2(), 2.7224999999999997)
+
+        # Check the various aspects of the Bins
+        assert fk.bins() == 1
+        np.testing.assert_allclose(fk.bin_normalizations(), [1.0])
+        np.testing.assert_allclose(fk.bin_right(dimension=0), [1.0])
+        np.testing.assert_allclose(fk.bin_left(dimension=0), [0.0])
+
+        # Check the various aspects of the Channels
+        channels = fk.channels()
+        assert len(channels) == 51
+        assert [21, 200] in channels
+
+        # Check the contents of the x-grid
+        x_grid = fk.x_grid()
+        assert x_grid.size == 34
+        np.testing.assert_allclose(x_grid[0], 1.57456056e-04)
+
+        # Test FK optimization
+        assumption = FkAssumptions("Nf6Sym")
+        fk.optimize(assumption)
+
     def test_unpolarized_convolution(
         self,
-        download_fktable,
-        fkname: str = "CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
+        pdf,
+        download_objects,
+        fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
     ):
         """Check the convolution of an actual FK table that involves two
         symmetrical unpolarized protons:
         """
         expected_results = [3.72524538e04]
-        fk_table = download_fktable(f"{fkname}")
+        fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 
         # Convolution object of the 1st hadron - Polarized
         h = ConvType(polarized=False, time_like=False)
         h_conv = Conv(conv_type=h, pid=2212)
 
-        # Define the Toy Unpolarized PDF set
-        def _unpolarized_pdf(pid, x, q2):
-            return 1.0
-
         np.testing.assert_allclose(
             fk.convolve(
                 pdg_convs=[h_conv, h_conv],
-                xfxs=[_unpolarized_pdf, _unpolarized_pdf],
+                xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
             ),
             expected_results,
         )
 
     def test_polarized_convolution(
         self,
-        download_fktable,
-        fkname: str = "GRID_STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
+        pdf,
+        download_objects,
+        fkname: str = "FKTABLE_STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
     ):
         """Check the convolution of an actual FK table that involves two
         different initial states:
@@ -183,7 +192,7 @@ class TestFkTable:
             -5.67594297e5,
             +6.59245015e4,
         ]
-        fk_table = download_fktable(f"{fkname}")
+        fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 
         # Convolution object of the 1st hadron - Polarized
@@ -194,18 +203,10 @@ class TestFkTable:
         h2 = ConvType(polarized=False, time_like=False)
         h2_conv = Conv(conv_type=h2, pid=2212)
 
-        # Define the Toy Polarized PDF set
-        def _polarized_pdf(pid, x, q2):
-            return 2.0
-
-        # Define the Toy Unpolarized PDF set
-        def _unpolarized_pdf(pid, x, q2):
-            return 1.0
-
         np.testing.assert_allclose(
             fk.convolve(
                 pdg_convs=[h1_conv, h2_conv],
-                xfxs=[_polarized_pdf, _unpolarized_pdf],
+                xfxs=[pdf.polarized_pdf, pdf.unpolarized_pdf],
             ),
             expected_results,
         )

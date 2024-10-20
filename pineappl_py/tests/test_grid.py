@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import tempfile
 
 from pineappl.bin import BinRemapper
 from pineappl.boc import Channel, Kinematics
@@ -151,6 +152,14 @@ class TestGrid:
         assert len(g.channels()) == 1
         assert g.channels()[0] == UP_ANTIUP_CHANNEL
 
+    def test_write(self):
+        g = self.fake_grid()
+
+        # Test writing/dumping the FK table into disk
+        with tempfile.TemporaryDirectory() as tmpdir:
+            g.write(f"{tmpdir}/toy_grid.pineappl")
+            g.write_lz4(f"{tmpdir}/toy_grid.pineappl.lz4")
+
     def test_set_subgrid(self):
         g = self.fake_grid()
 
@@ -195,6 +204,24 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
+    def test_grid(
+        self,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Get the types of convolutions for this grid
+        for conv in g.convolutions():
+            assert isinstance(conv, Conv)
+
+        # Check that the scalings work, ie run without error
+        # TODO: implement method to check the actual values
+        g.scale(factor=10.0)
+        g.scale_by_bin(factors=[10.0, 20.0])
+        g.delete_bins(bin_indices=[0, 1, 2])
+
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, params, expected):
         g = self.fake_grid()
@@ -213,13 +240,74 @@ class TestGrid:
         # Check the convolutions of the GRID
         np.testing.assert_allclose(g.convolve(**params), expected)
 
-    def test_unpolarized_convolution(self):
-        # TODO
-        pass
+    def test_unpolarized_convolution(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
+    ):
+        """Tes convolution with an actual Grid. In the following example,
+        it is a DIS grid that involves a single unique hadron/proton.
+        """
+        expected_results = [
+            +3.71019208e4,
+            +3.71019208e4,
+            +2.13727492e4,
+            -1.83941398e3,
+            +3.22728612e3,
+            +5.45646897e4,
+        ]
 
-    def test_polarized_convolution(self):
-        # TODO
-        pass
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Convolution object of the Unpolarized proton
+        h = ConvType(polarized=False, time_like=False)
+        h_conv = Conv(conv_type=h, pid=2212)
+
+        np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=[h_conv],  # Requires ONE single convolutions
+                xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
+
+    def test_polarized_convolution(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+    ):
+        expected_results = [
+            +5.50006832e6,
+            +1.68117895e6,
+            +3.08224445e5,
+            -2.65602464e5,
+            -1.04664085e6,
+            -5.19002089e6,
+        ]
+
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Convolution object of the 1st hadron - Polarized
+        h1 = ConvType(polarized=True, time_like=False)
+        h1_conv = Conv(conv_type=h1, pid=2212)
+
+        # Convolution object of the 2nd hadron - Unpolarized
+        h2 = ConvType(polarized=False, time_like=False)
+        h2_conv = Conv(conv_type=h2, pid=2212)
+
+        np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=[h1_conv, h2_conv],
+                xfxs=[pdf.polarized_pdf, pdf.unpolarized_pdf],
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
 
     def test_io(self, tmp_path):
         g = self.fake_grid()
@@ -276,3 +364,18 @@ class TestGrid:
 
         with pytest.raises(ValueError, match="NonConsecutiveBins"):
             g2.merge(g5)
+
+    def test_evolveinfo(
+        self,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+        g_evinfo = g.evolve_info(order_mask=[True, False, False, False])
+
+        np.testing.assert_allclose(g_evinfo.fac1, [6463.838404])
+        np.testing.assert_allclose(g_evinfo.ren1, [6463.838404])
+        np.testing.assert_allclose(g_evinfo.pids1, [-5, -3, -1, 2, 4])
+        assert g_evinfo.x1.size == 23
+        np.testing.assert_allclose(g_evinfo.x1[0], 0.01437507)

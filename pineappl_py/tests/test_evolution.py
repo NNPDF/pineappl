@@ -9,7 +9,7 @@ import itertools
 import numpy as np
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
-from pineappl.evolution import OperatorSliceInfo
+from pineappl.evolution import OperatorSliceInfo, EvolveInfo
 from pineappl.grid import Grid, Order
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
@@ -60,6 +60,18 @@ class TestEvolution:
             interpolations=interpolations,
             kinematics=kinematics,
         )
+
+    def test_evolveinfo(self):
+        evinfo = EvolveInfo(
+            fac1=[0.5, 1.0, 2.0],
+            pids1=[-2, 0, 2],
+            x1=[1e-3, 0.5, 1],
+            ren1=[0.5, 1.0, 2.0],
+        )
+        np.testing.assert_array_equal(evinfo.fac1, [0.5, 1.0, 2.0])
+        np.testing.assert_array_equal(evinfo.pids1, [-2, 0, 2])
+        np.testing.assert_array_equal(evinfo.x1, [1e-3, 0.5, 1.0])
+        np.testing.assert_array_equal(evinfo.fac1, [0.5, 1.0, 2.0])
 
     def test_with_one_eko(self):
         # Define convolution types and the initial state hadrons
