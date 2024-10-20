@@ -1,5 +1,7 @@
 //! Module containing structures for the 3 dimensions of a [`Grid`]: bins, [`Order`] and channels
 //! (`boc`).
+//!
+//! [`Grid`]: super::grid::Grid
 
 use float_cmp::approx_eq;
 use itertools::Itertools;
@@ -7,6 +9,88 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::str::FromStr;
 use thiserror::Error;
+
+/// TODO
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum Kinematics {
+    /// TODO
+    Scale(usize),
+    /// TODO
+    X(usize),
+}
+
+impl Kinematics {
+    /// TODO
+    pub const X1: Self = Self::X(0);
+
+    /// TODO
+    pub const X2: Self = Self::X(1);
+}
+
+/// TODO
+#[derive(Clone, Deserialize, Serialize)]
+pub enum ScaleFuncForm {
+    /// TODO
+    NoScale,
+    /// TODO
+    Scale(usize),
+    /// TODO
+    QuadraticSum(usize, usize),
+}
+
+impl ScaleFuncForm {
+    /// TODO
+    #[must_use]
+    pub fn calc(&self, node_values: &[Vec<f64>], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
+        match self {
+            Self::NoScale => None,
+            &Self::Scale(index) => Some(if node_values.is_empty() {
+                // TODO: empty subgrid should have as many node values as dimensions
+                Vec::new()
+            } else {
+                node_values[kinematics
+                    .iter()
+                    .position(|&kin| kin == Kinematics::Scale(index))
+                    // UNWRAP: this should be guaranteed by `Grid::new`
+                    .unwrap()]
+                .clone()
+            }),
+            Self::QuadraticSum(_, _) => todo!(),
+        }
+    }
+}
+
+/// TODO
+#[derive(Clone, Deserialize, Serialize)]
+pub struct Scales {
+    /// TODO
+    pub ren: ScaleFuncForm,
+    /// TODO
+    pub fac: ScaleFuncForm,
+    /// TODO
+    pub frg: ScaleFuncForm,
+}
+
+impl Scales {
+    /// TODO
+    pub fn compatible_with(&self, kinematics: &[Kinematics]) -> bool {
+        for scale in [&self.ren, &self.fac, &self.frg].map(Clone::clone) {
+            match scale {
+                ScaleFuncForm::NoScale => {}
+                ScaleFuncForm::Scale(index)
+                    if kinematics
+                        .iter()
+                        .any(|&kin| kin == Kinematics::Scale(index)) => {}
+                ScaleFuncForm::QuadraticSum(idx1, idx2)
+                    if kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx1))
+                        && kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx2)) => {}
+                _ => return false,
+            }
+        }
+
+        true
+    }
+}
 
 /// Error type keeping information if [`Order::from_str`] went wrong.
 #[derive(Debug, Error, Eq, PartialEq)]
@@ -19,13 +103,18 @@ pub struct ParseOrderError(String);
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Order {
     /// Exponent of the strong coupling.
-    pub alphas: u32,
+    pub alphas: u8,
     /// Exponent of the electromagnetic coupling.
-    pub alpha: u32,
+    pub alpha: u8,
     /// Exponent of the logarithm of the scale factor of the renomalization scale.
-    pub logxir: u32,
-    /// Exponent of the logarithm of the scale factor of the factorization scale.
-    pub logxif: u32,
+    pub logxir: u8,
+    /// Exponent of the logarithm of the scale factor of the initial state factorization scale.
+    pub logxif: u8,
+    /// Exponent of the logarithm of the scale factor of the final state factorization scale
+    /// (fragmentation scale).
+    pub logxia: u8,
+    // /// Reserved for future usage.
+    // pub other: [u8; 3],
 }
 
 impl FromStr for Order {
@@ -37,6 +126,7 @@ impl FromStr for Order {
             alpha: 0,
             logxir: 0,
             logxif: 0,
+            logxia: 0,
         };
 
         for tuple in s
@@ -61,6 +151,9 @@ impl FromStr for Order {
                 ("lf", Ok(num)) => {
                     result.logxif = num;
                 }
+                ("la", Ok(num)) => {
+                    result.logxia = num;
+                }
                 (label, Err(err)) => {
                     return Err(ParseOrderError(format!(
                         "error while parsing exponent of '{label}': {err}"
@@ -82,10 +175,11 @@ impl Ord for Order {
         // rest lexicographically
         (self.alphas + self.alpha)
             .cmp(&(other.alphas + other.alpha))
-            .then((self.alpha, self.logxir, self.logxif).cmp(&(
+            .then((self.alpha, self.logxir, self.logxif, self.logxia).cmp(&(
                 other.alpha,
                 other.logxir,
                 other.logxif,
+                other.logxia,
             )))
     }
 }
@@ -100,23 +194,24 @@ impl Order {
     /// Constructor. This function mainly exists to have a way of constructing `Order` that is less
     /// verbose.
     #[must_use]
-    pub const fn new(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
+    pub const fn new(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
         Self {
             alphas,
             alpha,
             logxir,
             logxif,
+            logxia,
         }
     }
 
     /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`],
-    /// [`Grid::evolve`] or [`Grid::evolve_info`]. The selection of `orders` is controlled using
-    /// the `max_as` and `max_al` parameters, for instance setting `max_as = 1` and `max_al = 0`
-    /// selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD; setting `max_as = 3`
-    /// and `max_al = 2` would select all NLOs, and the NNLO QCD.
+    /// [`Grid::evolve_with_slice_iter`] or [`Grid::evolve_info`]. The selection of `orders` is
+    /// controlled using the `max_as` and `max_al` parameters, for instance setting `max_as = 1`
+    /// and `max_al = 0` selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD;
+    /// setting `max_as = 3` and `max_al = 2` would select all NLOs, and the NNLO QCD.
     ///
     /// [`Grid::convolve`]: super::grid::Grid::convolve
-    /// [`Grid::evolve`]: super::grid::Grid::evolve
+    /// [`Grid::evolve_with_slice_iter`]: super::grid::Grid::evolve_with_slice_iter
     /// [`Grid::evolve_info`]: super::grid::Grid::evolve_info
     ///
     /// # Example
@@ -136,12 +231,12 @@ impl Order {
     /// use pineappl::boc::Order;
     ///
     /// let orders = [
-    ///     Order::new(0, 2, 0, 0), //   LO        :          alpha^2
-    ///     Order::new(1, 2, 0, 0), //  NLO QCD    : alphas   alpha^2
-    ///     Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
-    ///     Order::new(2, 2, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-    ///     Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
-    ///     Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+    ///     Order::new(0, 2, 0, 0, 0), //   LO        :          alpha^2
+    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
+    ///     Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
+    ///     Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
+    ///     Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+    ///     Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
     /// ];
     ///
     /// // LO EW
@@ -167,11 +262,11 @@ impl Order {
     /// use pineappl::boc::Order;
     ///
     /// let orders = [
-    ///     Order::new(0, 2, 0, 0), //  LO         :        alpha^2
-    ///     Order::new(1, 2, 0, 0), //  NLO QCD    : alphas alpha^2
-    ///     Order::new(1, 2, 1, 0), //  NLO QCD    : alphas alpha^2 logxif
-    ///     Order::new(0, 3, 0, 0), //  NLO  EW    :        alpha^3
-    ///     Order::new(0, 3, 1, 0), //  NLO  EW    :        alpha^3 logxif
+    ///     Order::new(0, 2, 0, 0, 0), //  LO         :        alpha^2
+    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas alpha^2
+    ///     Order::new(1, 2, 1, 0, 0), //  NLO QCD    : alphas alpha^2 logxif
+    ///     Order::new(0, 3, 0, 0, 0), //  NLO  EW    :        alpha^3
+    ///     Order::new(0, 3, 1, 0, 0), //  NLO  EW    :        alpha^3 logxif
     /// ];
     ///
     /// assert_eq!(Order::create_mask(&orders, 0, 2, true), [true, false, false, true, true]);
@@ -184,13 +279,13 @@ impl Order {
     /// use pineappl::boc::Order;
     ///
     /// let orders = [
-    ///     Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
-    ///     Order::new(1, 1, 0, 0), //   LO QCD—EW : alphas   alpha
-    ///     Order::new(0, 2, 0, 0), //   LO  EW    :          alpha^2
-    ///     Order::new(3, 0, 0, 0), //  NLO QCD    : alphas^3
-    ///     Order::new(2, 1, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-    ///     Order::new(1, 2, 0, 0), //  NLO QCD—EW : alphas   alpha^2
-    ///     Order::new(0, 3, 0, 0), //  NLO EW     :          alpha^3
+    ///     Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
+    ///     Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+    ///     Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
+    ///     Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
+    ///     Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
+    ///     Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+    ///     Order::new(0, 3, 0, 0, 0), //  NLO EW     :          alpha^3
     /// ];
     ///
     /// // LO EW
@@ -201,7 +296,7 @@ impl Order {
     /// assert_eq!(Order::create_mask(&orders, 1, 1, false), [true, true, true, false, false, false, false]);
     /// ```
     #[must_use]
-    pub fn create_mask(orders: &[Self], max_as: u32, max_al: u32, logs: bool) -> Vec<bool> {
+    pub fn create_mask(orders: &[Self], max_as: u8, max_al: u8, logs: bool) -> Vec<bool> {
         // smallest sum of alphas and alpha
         let lo = orders
             .iter()
@@ -238,8 +333,9 @@ impl Order {
                      alpha,
                      logxir,
                      logxif,
+                     logxia,
                  }| {
-                    if !logs && (logxir > 0 || logxif > 0) {
+                    if !logs && (logxir > 0 || logxif > 0 || logxia > 0) {
                         return false;
                     }
 
@@ -265,7 +361,7 @@ impl Order {
 /// combination.
 #[derive(Clone, Debug, Deserialize, PartialEq, PartialOrd, Serialize)]
 pub struct Channel {
-    entry: Vec<(i32, i32, f64)>,
+    entry: Vec<(Vec<i32>, f64)>,
 }
 
 impl Channel {
@@ -279,8 +375,8 @@ impl Channel {
     /// ```rust
     /// use pineappl::boc::Channel;
     ///
-    /// let entry1 = Channel::new(vec![(2, 2, 1.0), (4, 4, 1.0)]);
-    /// let entry2 = Channel::new(vec![(4, 4, 1.0), (2, 2, 1.0)]);
+    /// let entry1 = Channel::new(vec![(vec![2, 2], 1.0), (vec![4, 4], 1.0)]);
+    /// let entry2 = Channel::new(vec![(vec![4, 4], 1.0), (vec![2, 2], 1.0)]);
     ///
     /// // checks that the ordering doesn't matter
     /// assert_eq!(entry1, entry2);
@@ -291,8 +387,8 @@ impl Channel {
     /// ```rust
     /// use pineappl::boc::Channel;
     ///
-    /// let entry1 = Channel::new(vec![(1, 1, 1.0), (1, 1, 3.0), (3, 3, 1.0), (1, 1, 6.0)]);
-    /// let entry2 = Channel::new(vec![(1, 1, 10.0), (3, 3, 1.0)]);
+    /// let entry1 = Channel::new(vec![(vec![1, 1], 1.0), (vec![1, 1], 3.0), (vec![3, 3], 1.0), (vec![1, 1], 6.0)]);
+    /// let entry2 = Channel::new(vec![(vec![1, 1], 10.0), (vec![3, 3], 1.0)]);
     ///
     /// assert_eq!(entry1, entry2);
     /// ```
@@ -306,28 +402,39 @@ impl Channel {
     ///
     /// let _ = Channel::new(vec![]);
     /// ```
+    ///
+    /// Creating a channel with entries that have a different number of PIDs panics:
+    /// ```rust,should_panic
+    /// use pineappl::boc::Channel;
+    ///
+    /// let _ = Channel::new(vec![(vec![1, 1, 1], 1.0), (vec![1, 1], 1.0)]);
+    /// ```
     #[must_use]
-    pub fn new(mut entry: Vec<(i32, i32, f64)>) -> Self {
-        assert!(!entry.is_empty());
+    pub fn new(mut entry: Vec<(Vec<i32>, f64)>) -> Self {
+        assert!(!entry.is_empty(), "can not create empty channel");
+        assert!(
+            entry.iter().map(|(pids, _)| pids.len()).all_equal(),
+            "can not create channel with a different number of PIDs"
+        );
 
         // sort `entry` because the ordering doesn't matter and because it makes it easier to
         // compare `Channel` objects with each other
-        entry.sort_by(|x, y| (x.0, x.1).cmp(&(y.0, y.1)));
+        entry.sort_by(|x, y| x.0.cmp(&y.0));
 
         Self {
             entry: entry
                 .into_iter()
                 .coalesce(|lhs, rhs| {
                     // sum the factors of repeated elements
-                    if (lhs.0, lhs.1) == (rhs.0, rhs.1) {
-                        Ok((lhs.0, lhs.1, lhs.2 + rhs.2))
+                    if lhs.0 == rhs.0 {
+                        Ok((lhs.0, lhs.1 + rhs.1))
                     } else {
                         Err((lhs, rhs))
                     }
                 })
                 // filter zeros
                 // TODO: find a better than to hardcode the epsilon limit
-                .filter(|&(_, _, f)| !approx_eq!(f64, f.abs(), 0.0, epsilon = 1e-14))
+                .filter(|&(_, f)| !approx_eq!(f64, f.abs(), 0.0, epsilon = 1e-14))
                 .collect(),
         }
     }
@@ -340,25 +447,31 @@ impl Channel {
     /// use pineappl::boc::Channel;
     /// use pineappl::channel;
     ///
-    /// let entry = Channel::translate(&channel![103, 11, 1.0], &|evol_id| match evol_id {
+    /// let entry = channel![103, 11, 10.0].translate(&|evol_id| match evol_id {
     ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
     ///     _ => vec![(evol_id, 1.0)],
     /// });
     ///
-    /// assert_eq!(entry, channel![2, 11, 1.0; -2, 11, -1.0; 1, 11, -1.0; -1, 11, 1.0]);
+    /// assert_eq!(entry, channel![2, 11, 10.0; -2, 11, -10.0; 1, 11, -10.0; -1, 11, 10.0]);
     /// ```
-    pub fn translate(entry: &Self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
-        let mut tuples = Vec::new();
+    #[must_use]
+    pub fn translate(&self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
+        let mut result = Vec::new();
 
-        for &(a, b, factor) in &entry.entry {
-            for (aid, af) in translator(a) {
-                for (bid, bf) in translator(b) {
-                    tuples.push((aid, bid, factor * af * bf));
-                }
+        for (pids, factor) in &self.entry {
+            for tuples in pids
+                .iter()
+                .map(|&pid| translator(pid))
+                .multi_cartesian_product()
+            {
+                result.push((
+                    tuples.iter().map(|&(pid, _)| pid).collect(),
+                    factor * tuples.iter().map(|(_, f)| f).product::<f64>(),
+                ));
             }
         }
 
-        Self::new(tuples)
+        Self::new(result)
     }
 
     /// Returns a tuple representation of this entry.
@@ -371,17 +484,26 @@ impl Channel {
     ///
     /// let entry = channel![4, 4, 1.0; 2, 2, 1.0];
     ///
-    /// assert_eq!(entry.entry(), [(2, 2, 1.0), (4, 4, 1.0)]);
+    /// assert_eq!(entry.entry(), [(vec![2, 2], 1.0), (vec![4, 4], 1.0)]);
     /// ```
     #[must_use]
-    pub fn entry(&self) -> &[(i32, i32, f64)] {
+    pub fn entry(&self) -> &[(Vec<i32>, f64)] {
         &self.entry
     }
 
-    /// Creates a new object with the initial states transposed.
+    /// Create a new object with the PIDs at index `i` and `j` transposed.
     #[must_use]
-    pub fn transpose(&self) -> Self {
-        Self::new(self.entry.iter().map(|(a, b, c)| (*b, *a, *c)).collect())
+    pub fn transpose(&self, i: usize, j: usize) -> Self {
+        Self::new(
+            self.entry
+                .iter()
+                .map(|(pids, c)| {
+                    let mut transposed = pids.clone();
+                    transposed.swap(i, j);
+                    (transposed, *c)
+                })
+                .collect(),
+        )
     }
 
     /// If `other` is the same channel when only comparing PIDs and neglecting the factors, return
@@ -418,7 +540,7 @@ impl Channel {
             .entry
             .iter()
             .zip(&other.entry)
-            .map(|(a, b)| ((a.0 == b.0) && (a.1 == b.1)).then_some(a.2 / b.2))
+            .map(|((pids_a, fa), (pids_b, fb))| (pids_a == pids_b).then_some(fa / fb))
             .collect();
 
         result.and_then(|factors| {
@@ -443,51 +565,46 @@ impl FromStr for Channel {
     type Err = ParseChannelError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::new(
-            s.split('+')
-                .map(|sub| {
-                    sub.split_once('*').map_or_else(
-                        || Err(ParseChannelError(format!("missing '*' in '{sub}'"))),
-                        |(factor, pids)| {
-                            let tuple = pids.split_once(',').map_or_else(
-                                || Err(ParseChannelError(format!("missing ',' in '{pids}'"))),
-                                |(a, b)| {
-                                    Ok((
-                                        a.trim()
-                                            .strip_prefix('(')
-                                            .ok_or_else(|| {
-                                                ParseChannelError(format!(
-                                                    "missing '(' in '{pids}'"
-                                                ))
-                                            })?
-                                            .trim()
-                                            .parse::<i32>()
-                                            .map_err(|err| ParseChannelError(err.to_string()))?,
-                                        b.trim()
-                                            .strip_suffix(')')
-                                            .ok_or_else(|| {
-                                                ParseChannelError(format!(
-                                                    "missing ')' in '{pids}'"
-                                                ))
-                                            })?
-                                            .trim()
-                                            .parse::<i32>()
-                                            .map_err(|err| ParseChannelError(err.to_string()))?,
+        let result: Vec<_> = s
+            .split('+')
+            .map(|sub| {
+                sub.split_once('*').map_or_else(
+                    // TODO: allow a missing numerical factor which then is assumed to be `1`
+                    || Err(ParseChannelError(format!("missing '*' in '{sub}'"))),
+                    |(factor, pids)| {
+                        let vector: Vec<_> = pids
+                            .trim()
+                            .strip_prefix('(')
+                            .ok_or_else(|| ParseChannelError(format!("missing '(' in '{pids}'")))?
+                            .strip_suffix(')')
+                            .ok_or_else(|| ParseChannelError(format!("missing ')' in '{pids}'")))?
+                            .split(',')
+                            .map(|pid| {
+                                pid.trim().parse::<i32>().map_err(|err| {
+                                    ParseChannelError(format!(
+                                        "could not parse PID: '{pid}', '{err}'"
                                     ))
-                                },
-                            )?;
+                                })
+                            })
+                            .collect::<Result<_, _>>()?;
 
-                            Ok((
-                                tuple.0,
-                                tuple.1,
-                                str::parse::<f64>(factor.trim())
-                                    .map_err(|err| ParseChannelError(err.to_string()))?,
-                            ))
-                        },
-                    )
-                })
-                .collect::<Result<_, _>>()?,
-        ))
+                        Ok((
+                            vector,
+                            str::parse::<f64>(factor.trim())
+                                .map_err(|err| ParseChannelError(err.to_string()))?,
+                        ))
+                    },
+                )
+            })
+            .collect::<Result<_, _>>()?;
+
+        if !result.iter().map(|(pids, _)| pids.len()).all_equal() {
+            return Err(ParseChannelError(
+                "PID tuples have different lengths".to_owned(),
+            ));
+        }
+
+        Ok(Self::new(result))
     }
 }
 
@@ -507,22 +624,23 @@ impl FromStr for Channel {
 /// ```
 #[macro_export]
 macro_rules! channel {
+    // TODO: generalize this to accept an arbitrary number of PIDs
     ($a:expr, $b:expr, $factor:expr $(; $c:expr, $d:expr, $fac:expr)*) => {
-        $crate::boc::Channel::new(vec![($a, $b, $factor), $(($c, $d, $fac)),*])
+        $crate::boc::Channel::new(vec![(vec![$a, $b], $factor), $((vec![$c, $d], $fac)),*])
     };
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pids;
 
     #[test]
     fn order_from_str() {
-        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0)));
-        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0)));
-        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0)));
-        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1)));
+        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0, 0)));
+        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0, 0)));
+        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0, 0)));
+        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1, 0)));
+        assert_eq!("as1la1".parse(), Ok(Order::new(1, 0, 0, 0, 1)));
         assert_eq!(
             "ab12".parse::<Order>().unwrap_err().to_string(),
             "unknown coupling: 'ab'"
@@ -539,36 +657,36 @@ mod tests {
     #[test]
     fn order_cmp() {
         let mut orders = [
-            Order::new(1, 2, 1, 0),
-            Order::new(1, 2, 0, 1),
-            Order::new(1, 2, 0, 0),
-            Order::new(0, 3, 1, 0),
-            Order::new(0, 3, 0, 1),
-            Order::new(0, 3, 0, 0),
-            Order::new(0, 2, 0, 0),
+            Order::new(1, 2, 1, 0, 0),
+            Order::new(1, 2, 0, 1, 0),
+            Order::new(1, 2, 0, 0, 0),
+            Order::new(0, 3, 1, 0, 0),
+            Order::new(0, 3, 0, 1, 0),
+            Order::new(0, 3, 0, 0, 0),
+            Order::new(0, 2, 0, 0, 0),
         ];
 
         orders.sort();
 
-        assert_eq!(orders[0], Order::new(0, 2, 0, 0));
-        assert_eq!(orders[1], Order::new(1, 2, 0, 0));
-        assert_eq!(orders[2], Order::new(1, 2, 0, 1));
-        assert_eq!(orders[3], Order::new(1, 2, 1, 0));
-        assert_eq!(orders[4], Order::new(0, 3, 0, 0));
-        assert_eq!(orders[5], Order::new(0, 3, 0, 1));
-        assert_eq!(orders[6], Order::new(0, 3, 1, 0));
+        assert_eq!(orders[0], Order::new(0, 2, 0, 0, 0));
+        assert_eq!(orders[1], Order::new(1, 2, 0, 0, 0));
+        assert_eq!(orders[2], Order::new(1, 2, 0, 1, 0));
+        assert_eq!(orders[3], Order::new(1, 2, 1, 0, 0));
+        assert_eq!(orders[4], Order::new(0, 3, 0, 0, 0));
+        assert_eq!(orders[5], Order::new(0, 3, 0, 1, 0));
+        assert_eq!(orders[6], Order::new(0, 3, 1, 0, 0));
     }
 
     #[test]
     fn order_create_mask() {
         // Drell—Yan orders
         let orders = [
-            Order::new(0, 2, 0, 0), //   LO        :          alpha^2
-            Order::new(1, 2, 0, 0), //  NLO QCD    : alphas   alpha^2
-            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
-            Order::new(2, 2, 0, 0), // NNLO QCD    : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
-            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+            Order::new(0, 2, 0, 0, 0), //   LO        :          alpha^2
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD    : alphas   alpha^2
+            Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD    : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
         assert_eq!(
@@ -638,18 +756,18 @@ mod tests {
 
         // Top-pair production orders
         let orders = [
-            Order::new(2, 0, 0, 0), //   LO QCD    : alphas^2
-            Order::new(1, 1, 0, 0), //   LO QCD—EW : alphas   alpha
-            Order::new(0, 2, 0, 0), //   LO  EW    :          alpha^2
-            Order::new(3, 0, 0, 0), //  NLO QCD    : alphas^3
-            Order::new(2, 1, 0, 0), //  NLO QCD—EW : alphas^2 alpha
-            Order::new(1, 2, 0, 0), //  NLO QCD—EW : alphas   alpha^2
-            Order::new(0, 3, 0, 0), //  NLO  EW    :          alpha^3
-            Order::new(4, 0, 0, 0), // NNLO QCD    : alphas^4
-            Order::new(3, 1, 0, 0), // NNLO QCD—EW : alphas^3 alpha
-            Order::new(2, 2, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
-            Order::new(1, 3, 0, 0), // NNLO QCD—EW : alphas   alpha^3
-            Order::new(0, 4, 0, 0), // NNLO EW     :          alpha^4
+            Order::new(2, 0, 0, 0, 0), //   LO QCD    : alphas^2
+            Order::new(1, 1, 0, 0, 0), //   LO QCD—EW : alphas   alpha
+            Order::new(0, 2, 0, 0, 0), //   LO  EW    :          alpha^2
+            Order::new(3, 0, 0, 0, 0), //  NLO QCD    : alphas^3
+            Order::new(2, 1, 0, 0, 0), //  NLO QCD—EW : alphas^2 alpha
+            Order::new(1, 2, 0, 0, 0), //  NLO QCD—EW : alphas   alpha^2
+            Order::new(0, 3, 0, 0, 0), //  NLO  EW    :          alpha^3
+            Order::new(4, 0, 0, 0, 0), // NNLO QCD    : alphas^4
+            Order::new(3, 1, 0, 0, 0), // NNLO QCD—EW : alphas^3 alpha
+            Order::new(2, 2, 0, 0, 0), // NNLO QCD—EW : alphas^2 alpha^2
+            Order::new(1, 3, 0, 0, 0), // NNLO QCD—EW : alphas   alpha^3
+            Order::new(0, 4, 0, 0, 0), // NNLO EW     :          alpha^4
         ];
 
         assert_eq!(
@@ -719,19 +837,6 @@ mod tests {
     }
 
     #[test]
-    fn channel_translate() {
-        let channel = Channel::translate(&channel![103, 203, 2.0], &pids::evol_to_pdg_mc_ids);
-
-        assert_eq!(
-            channel,
-            channel![ 2,  2,  2.0;  2, -2, -2.0;  2,  1, -2.0;  2, -1,  2.0;
-                     -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
-                      1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
-                     -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
-        );
-    }
-
-    #[test]
     fn channel_from_str() {
         assert_eq!(
             str::parse::<Channel>(" 1   * (  2 , -2) + 2* (4,-4)").unwrap(),
@@ -756,7 +861,7 @@ mod tests {
             str::parse::<Channel>(" 1   * (  2 -2) + 2* (4,-4)")
                 .unwrap_err()
                 .to_string(),
-            "missing ',' in ' (  2 -2) '"
+            "could not parse PID: '  2 -2', 'invalid digit found in string'"
         );
 
         assert_eq!(
@@ -771,6 +876,13 @@ mod tests {
                 .unwrap_err()
                 .to_string(),
             "missing ')' in ' (  2, -2 '"
+        );
+
+        assert_eq!(
+            str::parse::<Channel>("1 * (2, 2, 2) + 2 * (4, 4)")
+                .unwrap_err()
+                .to_string(),
+            "PID tuples have different lengths"
         );
     }
 }

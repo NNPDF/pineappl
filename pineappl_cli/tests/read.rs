@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 const HELP_STR: &str = "Read out information of a grid
@@ -52,22 +54,22 @@ const ORDERS_STR: &str = "o      order
 4 O(a^3 lf^1)
 ";
 
-const ORDERS_LONG_STR: &str = "o         order
--+---------------------
-0 O(as^0 a^2 lr^0 lf^0)
-1 O(as^1 a^2 lr^0 lf^0)
-2 O(as^1 a^2 lr^0 lf^1)
-3 O(as^0 a^3 lr^0 lf^0)
-4 O(as^0 a^3 lr^0 lf^1)
+const ORDERS_LONG_STR: &str = "o           order
+-+--------------------------
+0 O(as^0 a^2 lr^0 lf^0 la^0)
+1 O(as^1 a^2 lr^0 lf^0 la^0)
+2 O(as^1 a^2 lr^0 lf^1 la^0)
+3 O(as^0 a^3 lr^0 lf^0 la^0)
+4 O(as^0 a^3 lr^0 lf^1 la^0)
 ";
 
-const ORDERS_SPACES_STR: &str = "o         order
--+---------------------
-0 O(     a^2          )
-1 O(as^1 a^2          )
-2 O(as^1 a^2      lf^1)
-3 O(     a^3          )
-4 O(     a^3      lf^1)
+const ORDERS_SPACES_STR: &str = "o           order
+-+--------------------------
+0 O(     a^2               )
+1 O(as^1 a^2               )
+2 O(as^1 a^2      lf^1     )
+3 O(     a^3               )
+4 O(     a^3      lf^1     )
 ";
 
 const FKTABLE_STR: &str = "no

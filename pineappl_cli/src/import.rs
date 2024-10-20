@@ -18,9 +18,8 @@ mod fktable;
 #[cfg(feature = "applgrid")]
 fn convert_applgrid(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &mut [Pdf],
-    dis_pid: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     use pineappl_applgrid::ffi;
@@ -28,7 +27,7 @@ fn convert_applgrid(
     // TODO: check AMCATNLO scale variations
 
     let mut grid = ffi::make_grid(input.to_str().unwrap())?;
-    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha, dis_pid)?;
+    let pgrid = applgrid::convert_applgrid(grid.pin_mut(), alpha)?;
     let results = applgrid::convolve_applgrid(grid.pin_mut(), conv_funs);
 
     Ok(("APPLgrid", pgrid, results, 1))
@@ -37,9 +36,8 @@ fn convert_applgrid(
 #[cfg(not(feature = "applgrid"))]
 fn convert_applgrid(
     _: &Path,
-    _: u32,
+    _: u8,
     _: &mut [Pdf],
-    _: i32,
     _: usize,
 ) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
@@ -50,10 +48,9 @@ fn convert_applgrid(
 #[cfg(feature = "fastnlo")]
 fn convert_fastnlo(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &ConvFuns,
     member: usize,
-    dis_pid: i32,
     scales: usize,
     fnlo_mur: Option<&str>,
     fnlo_muf: Option<&str>,
@@ -81,7 +78,7 @@ fn convert_fastnlo(
         }
     }
 
-    let grid = fastnlo::convert_fastnlo_table(&file, alpha, dis_pid)?;
+    let grid = fastnlo::convert_fastnlo_table(&file, alpha)?;
     let mut reader = ffi::downcast_lhapdf_to_reader_mut(file.as_mut().unwrap());
 
     // TODO: scale-variation log conversion is only enabled for flex grids
@@ -91,10 +88,11 @@ fn convert_fastnlo(
         1
     };
 
-    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR[0..scales]
+    // fastNLO does not support a fragmentation scale
+    let unpermuted_results: Vec<_> = helpers::SCALES_VECTOR_REN_FAC[0..scales]
         .iter()
-        .map(|&(mur, muf)| {
-            if !reader.as_mut().SetScaleFactorsMuRMuF(mur, muf) {
+        .map(|&(xir, xif, _)| {
+            if !reader.as_mut().SetScaleFactorsMuRMuF(xir, xif) {
                 return None;
             }
             reader.as_mut().CalcCrossSection();
@@ -119,10 +117,9 @@ fn convert_fastnlo(
 #[cfg(not(feature = "fastnlo"))]
 fn convert_fastnlo(
     _: &Path,
-    _: u32,
+    _: u8,
     _: &ConvFuns,
     _: usize,
-    _: i32,
     _: usize,
     _: Option<&str>,
     _: Option<&str>,
@@ -133,14 +130,14 @@ fn convert_fastnlo(
 }
 
 #[cfg(feature = "fktable")]
-fn convert_fktable(input: &Path, dis_pid: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
-    let fktable = fktable::convert_fktable(input, dis_pid)?;
+fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
+    let fktable = fktable::convert_fktable(input)?;
 
     Ok(("fktable", fktable, vec![], 1))
 }
 
 #[cfg(not(feature = "fktable"))]
-fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
+fn convert_fktable(_: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `fktable`"
     ))
@@ -148,11 +145,10 @@ fn convert_fktable(_: &Path, _: i32) -> Result<(&'static str, Grid, Vec<f64>, us
 
 fn convert_grid(
     input: &Path,
-    alpha: u32,
+    alpha: u8,
     conv_funs: &mut [Pdf],
     fun_names: &ConvFuns,
     member: usize,
-    dis_pid: i32,
     scales: usize,
     fnlo_mur: Option<&str>,
     fnlo_muf: Option<&str>,
@@ -165,13 +161,11 @@ fn convert_grid(
                     .extension()
                     .map_or(false, |ext| ext == "tab"))
         {
-            return convert_fastnlo(
-                input, alpha, fun_names, member, dis_pid, scales, fnlo_mur, fnlo_muf,
-            );
+            return convert_fastnlo(input, alpha, fun_names, member, scales, fnlo_mur, fnlo_muf);
         } else if extension == "dat" {
-            return convert_fktable(input, dis_pid);
+            return convert_fktable(input);
         } else if extension == "appl" || extension == "root" {
-            return convert_applgrid(input, alpha, conv_funs, dis_pid, scales);
+            return convert_applgrid(input, alpha, conv_funs, scales);
         }
     }
 
@@ -217,7 +211,7 @@ pub struct Opts {
     conv_funs: ConvFuns,
     /// LO coupling power in alpha.
     #[arg(default_value_t = 0, long)]
-    alpha: u32,
+    alpha: u8,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-10", long)]
     accuracy: f64,
@@ -246,9 +240,6 @@ pub struct Opts {
     /// Do not optimize converted grid.
     #[arg(long)]
     no_optimize: bool,
-    /// Particle ID for the non-hadronic initial states if it cannot be determined from the grid.
-    #[arg(long, default_value_t = 11)]
-    dis_pid: i32,
 }
 
 impl Subcommand for Opts {
@@ -264,7 +255,6 @@ impl Subcommand for Opts {
             &mut conv_funs,
             &self.conv_funs,
             0,
-            self.dis_pid,
             self.scales,
             self.fnlo_mur.as_deref(),
             self.fnlo_muf.as_deref(),
