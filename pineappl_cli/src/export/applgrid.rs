@@ -119,7 +119,7 @@ pub fn convert_into_applgrid(
     }
 
     let lumis = grid.channels().len();
-    let has_pdf1 = grid.convolutions().first().is_some();
+    let has_pdf1 = !grid.convolutions().is_empty();
     let has_pdf2 = grid.convolutions().get(1).is_some();
 
     // TODO: check that PDG MC IDs are used

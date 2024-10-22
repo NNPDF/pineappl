@@ -250,9 +250,9 @@ impl Grid {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
-                if ((order.logxir > 0) && approx_eq!(f64, xir, 1.0, ulps = 4))
-                    || ((order.logxif > 0) && approx_eq!(f64, xif, 1.0, ulps = 4))
-                    || ((order.logxia > 0) && approx_eq!(f64, xia, 1.0, ulps = 4))
+                if ((order.logxir != 0) && approx_eq!(f64, xir, 1.0, ulps = 4))
+                    || ((order.logxif != 0) && approx_eq!(f64, xif, 1.0, ulps = 4))
+                    || ((order.logxia != 0) && approx_eq!(f64, xia, 1.0, ulps = 4))
                 {
                     continue;
                 }
@@ -288,15 +288,15 @@ impl Grid {
                     value += lumi * v;
                 }
 
-                if order.logxir > 0 {
+                if order.logxir != 0 {
                     value *= (xir * xir).ln().powi(order.logxir.into());
                 }
 
-                if order.logxif > 0 {
+                if order.logxif != 0 {
                     value *= (xif * xif).ln().powi(order.logxif.into());
                 }
 
-                if order.logxia > 0 {
+                if order.logxia != 0 {
                     value *= (xia * xia).ln().powi(order.logxia.into());
                 }
 
@@ -356,15 +356,15 @@ impl Grid {
             array[idx.as_slice()] = lumi * value;
         }
 
-        if order.logxir > 0 {
+        if order.logxir != 0 {
             array *= (xir * xir).ln().powi(order.logxir.into());
         }
 
-        if order.logxif > 0 {
+        if order.logxif != 0 {
             array *= (xif * xif).ln().powi(order.logxif.into());
         }
 
-        if order.logxia > 0 {
+        if order.logxia != 0 {
             array *= (xia * xia).ln().powi(order.logxia.into());
         }
 
@@ -1466,7 +1466,7 @@ impl Grid {
         for channel in &mut self.channels {
             *channel = self_pid_basis.translate(pid_basis, channel.clone());
         }
-        self.pid_basis = pid_basis;
+        *self.pid_basis_mut() = pid_basis;
     }
 
     /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
@@ -1885,8 +1885,6 @@ mod tests {
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
-
-    // TODO: convolve_subgrid, merge_bins, subgrid, set_subgrid
 
     #[test]
     fn grid_convolutions() {
