@@ -4,16 +4,17 @@ It checks the cases in which we have one, two, and
 three (general) convolutions.
 """
 
-import numpy as np
 import tempfile
+from typing import List
+
+import numpy as np
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
-from pineappl.fk_table import FkTable, FkAssumptions
+from pineappl.fk_table import FkAssumptions, FkTable
 from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
-from typing import List
 
 
 class TestFkTable:
@@ -86,9 +87,9 @@ class TestFkTable:
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
         subgrid = ImportSubgridV1(
-            vs[np.newaxis, :],  # DIS shape: (len(q2), len(x_grid))
-            np.array([90.0]),
-            xs,
+            array=vs[np.newaxis, :],  # DIS shape: (len(q2), len(x_grid))
+            scales=np.array([90.0]),
+            x_grids=[xs],  # Vector containing one single `x-grid`
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 

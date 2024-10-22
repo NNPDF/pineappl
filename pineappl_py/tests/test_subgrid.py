@@ -6,7 +6,7 @@ from pineappl.grid import Grid
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
-from pineappl.subgrid import SubgridEnum, Mu2
+from pineappl.subgrid import Mu2, SubgridEnum
 
 # Define some default for the minimum value of `Q2`
 Q2_MIN = 1e2
@@ -95,19 +95,18 @@ class TestSubgrid:
         orders = [Order(0, 0, 0, 0, 0)]
         return fake_dis_grid(orders, channels)
 
-    def fake_importonlysubgrid(self) -> tuple:
-        x1s = np.linspace(0.1, 1, 2)
-        x2s = np.linspace(0.5, 1, 2)
+    def fake_importonlysubgrid(self, nb_dim: int = 2) -> tuple:
+        x_grids = [np.linspace(0.1, 1, 2) for _ in range(nb_dim)]
+        xgrid_size = [x.size for x in x_grids]
         Q2s = np.linspace(10, 20, 2)
         scale = [q2 for q2 in Q2s]
-        array = np.random.rand(len(Q2s), len(x1s), len(x2s))
+        array = np.random.rand(len(Q2s), *xgrid_size)
         subgrid = ImportSubgridV1(
             array=array,
             scales=scale,
-            x1_grid=x1s,
-            x2_grid=x2s,
+            x_grids=x_grids,
         )
-        return subgrid, [x1s, x2s, scale, array]
+        return subgrid, [*x_grids, scale, array]
 
     def test_mu2(self):
         mu2_obj = Mu2(ren=1.0, fac=2.0, frg=0.0)
@@ -132,6 +131,14 @@ class TestSubgrid:
         extr_subgrid = grid.subgrid(0, 0, 0)
         assert isinstance(extr_subgrid, SubgridEnum)
 
+    @pytest.mark.parametrize("nb_dim", [1, 2, 3, 4])
+    def test_subgrid_arrays(self, nb_dim):
+        """This simply checks that the commands run without raising any
+        errors and that the objects have been succesfully instantiated.
+        """
+        subgrid, info = self.fake_importonlysubgrid(nb_dim=nb_dim)
+        assert isinstance(subgrid, ImportSubgridV1)
+
     @pytest.mark.skip(reason="No implementation of Array3 for subgrid.")
     def test_to_array3(self):
         # TODO: extract and check the dense array of the subgrid
@@ -142,6 +149,4 @@ class TestSubgrid:
         grid.set_subgrid(0, 0, 0, test_subgrid.into())
         extr_subgrid = grid.subgrid(0, 0, 0)
         test_array = extr_subgrid.to_array3()
-        print(test_array)
-        print(array)
         np.testing.assert_allclose(test_array, array)

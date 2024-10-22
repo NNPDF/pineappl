@@ -5,15 +5,15 @@ two, and three (general) EKOs.
 """
 
 import itertools
+from typing import List
 
 import numpy as np
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
-from pineappl.evolution import OperatorSliceInfo, EvolveInfo
+from pineappl.evolution import EvolveInfo, OperatorSliceInfo
 from pineappl.grid import Grid, Order
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
-from typing import List
 
 
 class TestEvolution:

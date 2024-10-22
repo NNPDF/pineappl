@@ -1,7 +1,8 @@
+import tempfile
+from typing import List
+
 import numpy as np
 import pytest
-import tempfile
-
 from pineappl.bin import BinRemapper
 from pineappl.boc import Channel, Kinematics
 from pineappl.convolutions import Conv, ConvType
@@ -9,7 +10,6 @@ from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
-from typing import List
 
 # Construct the type of convolutions and the convolution object
 # We assume unpolarized protons in the initial state
@@ -167,10 +167,9 @@ class TestGrid:
         xs = np.linspace(0.1, 1.0, 5)
         vs = np.random.rand(len(xs))
         subgrid = ImportSubgridV1(
-            vs[np.newaxis, :, np.newaxis],
-            np.array([90.0]),
-            xs,
-            np.array([1.0]),
+            array=vs[np.newaxis, :, np.newaxis],
+            scales=np.array([90.0]),
+            x_grids=[xs, np.array([1.0])],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 
@@ -179,7 +178,9 @@ class TestGrid:
         x2s = np.linspace(0.5, 1, 2)
         Q2s = np.linspace(10, 20, 2)
         subgrid = ImportSubgridV1(
-            np.random.rand(len(Q2s), len(x1s), len(x2s)), Q2s, x1s, x2s
+            array=np.random.rand(len(Q2s), len(x1s), len(x2s)),
+            scales=Q2s,
+            x_grids=[x1s, x2s],
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
         g.optimize()
@@ -232,8 +233,7 @@ class TestGrid:
         subgrid = ImportSubgridV1(
             array=vs[np.newaxis, :, np.newaxis],
             scales=np.array([90.0]),
-            x1_grid=xs,
-            x2_grid=np.array([1.0]),
+            x_grids=[xs, np.array([1.0])],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 
