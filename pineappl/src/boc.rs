@@ -59,7 +59,7 @@ impl ScaleFuncForm {
                             .iter()
                             .position(|&kin| kin == Kinematics::Scale(index))
                             // UNWRAP: this should be guaranteed by `Grid::new`
-                            .unwrap()],
+                            .unwrap_or_else(|| unreachable!())],
                     )
                 }
             }

@@ -223,7 +223,7 @@ fn ndarray_from_subgrid_orders_slice_many(
             .iter()
             .map(|kin| match kin {
                 &Kinematics::X(idx) => idx,
-                _ => unreachable!(),
+                Kinematics::Scale(_) => unreachable!(),
             })
             .collect::<Vec<_>>(),
         (0..(grid.kinematics().len() - 1)).collect::<Vec<_>>()

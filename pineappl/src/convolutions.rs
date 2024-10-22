@@ -170,7 +170,7 @@ pub struct GridConvCache<'a, 'b> {
     ix: Vec<Vec<usize>>,
 }
 
-impl<'a, 'b> GridConvCache<'a, 'b> {
+impl GridConvCache<'_, '_> {
     /// TODO
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
@@ -230,11 +230,12 @@ impl<'a, 'b> GridConvCache<'a, 'b> {
 
         for (result, values, scale, xi) in izip!(&mut self.imu2, &self.cache.mu2, scales, xi) {
             result.clear();
-            result.extend(scale.calc(&node_values, kinematics).into_iter().map(|s| {
+            result.extend(scale.calc(&node_values, kinematics).iter().map(|s| {
                 values
                     .iter()
                     .position(|&value| value == xi * xi * s)
-                    .unwrap()
+                    // UNWRAP: if this fails, `new_grid_conv_cache` hasn't been called properly
+                    .unwrap_or_else(|| unreachable!())
             }));
         }
 
@@ -248,7 +249,7 @@ impl<'a, 'b> GridConvCache<'a, 'b> {
                     })
                     // UNWRAP: guaranteed by the grid constructor
                     .unwrap_or_else(|| unreachable!())
-                    .into_iter()
+                    .iter()
                     .map(|xd| {
                         self.cache
                             .x_grid
