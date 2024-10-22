@@ -3,81 +3,98 @@
 use super::boc::Kinematics;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::Subgrid;
+use super::subgrid::{Subgrid, SubgridEnum};
+use itertools::izip;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+
+const REN_IDX: usize = 0;
+const FAC_IDX: usize = 1;
+const FRG_IDX: usize = 2;
+const SCALES_CNT: usize = 3;
+
+struct ConvCache1d<'a> {
+    xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
+    cache: FxHashMap<(i32, usize, usize), f64>,
+    conv: Conv,
+    scale: usize,
+}
 
 /// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
 /// instead of the PDFs themselves.
 pub struct ConvolutionCache<'a> {
-    xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
-    xfx_cache: Vec<FxHashMap<(i32, usize, usize), f64>>,
+    caches: Vec<ConvCache1d<'a>>,
     alphas: &'a mut dyn FnMut(f64) -> f64,
     alphas_cache: Vec<f64>,
-    mur2_grid: Vec<f64>,
-    muf2_grid: Vec<f64>,
-    mua2_grid: Vec<f64>,
+    mu2: [Vec<f64>; SCALES_CNT],
     x_grid: Vec<f64>,
-    imur2: Vec<usize>,
-    imuf2: Vec<usize>,
-    imua2: Vec<usize>,
-    ix: Vec<Vec<usize>>,
-    pdg: Vec<Conv>,
-    perm: Vec<(usize, bool)>,
 }
 
 impl<'a> ConvolutionCache<'a> {
     /// TODO
     pub fn new(
-        pdg: Vec<Conv>,
+        convolutions: Vec<Conv>,
         xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
         alphas: &'a mut dyn FnMut(f64) -> f64,
     ) -> Self {
         Self {
-            xfx_cache: vec![FxHashMap::default(); xfx.len()],
-            xfx,
+            caches: xfx
+                .into_iter()
+                .zip(convolutions)
+                .map(|(xfx, conv)| ConvCache1d {
+                    xfx,
+                    cache: FxHashMap::default(),
+                    scale: match conv.conv_type() {
+                        ConvType::UnpolPDF | ConvType::PolPDF => FAC_IDX,
+                        ConvType::UnpolFF | ConvType::PolFF => FRG_IDX,
+                    },
+                    conv,
+                })
+                .collect(),
             alphas,
             alphas_cache: Vec::new(),
-            mur2_grid: Vec::new(),
-            muf2_grid: Vec::new(),
-            mua2_grid: Vec::new(),
+            mu2: [const { Vec::new() }; SCALES_CNT],
             x_grid: Vec::new(),
-            imur2: Vec::new(),
-            imuf2: Vec::new(),
-            imua2: Vec::new(),
-            ix: Vec::new(),
-            pdg,
-            perm: Vec::new(),
         }
     }
 
-    pub(crate) fn setup(&mut self, grid: &Grid, xi: &[(f64, f64, f64)]) {
-        self.perm = grid
-            .convolutions()
-            .iter()
-            .enumerate()
-            .map(|(max_idx, conv)| {
-                self.pdg
+    pub(crate) fn new_grid_conv_cache<'b>(
+        &'b mut self,
+        grid: &Grid,
+        xi: &[(f64, f64, f64)],
+    ) -> GridConvCache<'a, 'b> {
+        // TODO: try to avoid calling clear
+        self.clear();
+
+        let scales: [_; SCALES_CNT] = grid.scales().into();
+        let xi: Vec<_> = (0..SCALES_CNT)
+            .map(|idx| {
+                let mut vars: Vec<_> = xi
                     .iter()
-                    .take(max_idx + 1)
-                    .enumerate()
-                    .rev()
-                    .find_map(|(idx, pdg)| {
-                        if conv == pdg {
-                            Some((idx, false))
-                        } else if *conv == pdg.cc() {
-                            Some((idx, true))
-                        } else {
-                            None
-                        }
-                    })
-                    // TODO: convert `unwrap` to `Err`
-                    .unwrap()
+                    .map(|&x| <[_; SCALES_CNT]>::from(x)[idx])
+                    .collect();
+                vars.sort_by(f64::total_cmp);
+                vars.dedup();
+                vars
             })
             .collect();
 
-        // TODO: try to avoid calling clear
-        self.clear();
+        for (result, scale, xi) in izip!(&mut self.mu2, scales, xi) {
+            result.clear();
+            result.extend(
+                grid.subgrids()
+                    .iter()
+                    .filter(|subgrid| !subgrid.is_empty())
+                    .flat_map(|subgrid| {
+                        scale
+                            .calc(&subgrid.node_values(), grid.kinematics())
+                            .into_owned()
+                    })
+                    .flat_map(|scale| xi.iter().map(move |&xi| xi * xi * scale)),
+            );
+            result.sort_by(f64::total_cmp);
+            result.dedup();
+        }
 
         let mut x_grid: Vec<_> = grid
             .subgrids()
@@ -94,58 +111,66 @@ impl<'a> ConvolutionCache<'a> {
         x_grid.sort_by(f64::total_cmp);
         x_grid.dedup();
 
-        let mut mur2_grid: Vec<_> = grid
-            .subgrids()
+        self.alphas_cache = self.mu2[REN_IDX]
             .iter()
-            .filter(|subgrid| !subgrid.is_empty())
-            .flat_map(|subgrid| {
-                grid.scales()
-                    .ren
-                    .calc(&subgrid.node_values(), grid.kinematics())
-                    .unwrap_or_default()
-            })
-            .flat_map(|ren| xi.iter().map(move |(xir, _, _)| xir * xir * ren))
+            .map(|&mur2| (self.alphas)(mur2))
             .collect();
-        mur2_grid.sort_by(f64::total_cmp);
-        mur2_grid.dedup();
-
-        let mut muf2_grid: Vec<_> = grid
-            .subgrids()
-            .iter()
-            .filter(|subgrid| !subgrid.is_empty())
-            .flat_map(|subgrid| {
-                grid.scales()
-                    .fac
-                    .calc(&subgrid.node_values(), grid.kinematics())
-                    .unwrap_or_default()
-            })
-            .flat_map(|fac| xi.iter().map(move |(_, xif, _)| xif * xif * fac))
-            .collect();
-        muf2_grid.sort_by(f64::total_cmp);
-        muf2_grid.dedup();
-
-        let mut mua2_grid: Vec<_> = grid
-            .subgrids()
-            .iter()
-            .filter(|subgrid| !subgrid.is_empty())
-            .flat_map(|subgrid| {
-                grid.scales()
-                    .frg
-                    .calc(&subgrid.node_values(), grid.kinematics())
-                    .unwrap_or_default()
-            })
-            .flat_map(|frg| xi.iter().map(move |(_, _, xia)| xia * xia * frg))
-            .collect();
-        mua2_grid.sort_by(f64::total_cmp);
-        mua2_grid.dedup();
-
-        self.alphas_cache = mur2_grid.iter().map(|&mur2| (self.alphas)(mur2)).collect();
-        self.mur2_grid = mur2_grid;
-        self.muf2_grid = muf2_grid;
-        self.mua2_grid = mua2_grid;
         self.x_grid = x_grid;
+
+        let perm = grid
+            .convolutions()
+            .iter()
+            .enumerate()
+            .map(|(max_idx, grid_conv)| {
+                self.caches
+                    .iter()
+                    .take(max_idx + 1)
+                    .enumerate()
+                    .rev()
+                    .find_map(|(idx, ConvCache1d { conv, .. })| {
+                        if grid_conv == conv {
+                            Some((idx, false))
+                        } else if *grid_conv == conv.cc() {
+                            Some((idx, true))
+                        } else {
+                            None
+                        }
+                    })
+                    // TODO: convert `unwrap` to `Err`
+                    .unwrap()
+            })
+            .collect();
+
+        GridConvCache {
+            cache: self,
+            perm,
+            imu2: [const { Vec::new() }; SCALES_CNT],
+            ix: Vec::new(),
+        }
     }
 
+    /// Clears the cache.
+    pub fn clear(&mut self) {
+        self.alphas_cache.clear();
+        for xfx_cache in &mut self.caches {
+            xfx_cache.cache.clear();
+        }
+        for scales in &mut self.mu2 {
+            scales.clear();
+        }
+        self.x_grid.clear();
+    }
+}
+
+/// TODO
+pub struct GridConvCache<'a, 'b> {
+    cache: &'b mut ConvolutionCache<'a>,
+    perm: Vec<(usize, bool)>,
+    imu2: [Vec<usize>; SCALES_CNT],
+    ix: Vec<Vec<usize>>,
+}
+
+impl<'a, 'b> GridConvCache<'a, 'b> {
     /// TODO
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
@@ -153,39 +178,42 @@ impl<'a> ConvolutionCache<'a> {
         // - indices[1] is x1 and
         // - indices[2] is x2.
         // Lift this restriction!
-        let fx_prod: f64 = self
-            .perm
-            .iter()
-            .zip(pdg_ids)
-            .enumerate()
-            .map(|(index, (&(idx, cc), &pdg_id))| {
-                let ix = self.ix[index][indices[index + 1]];
 
-                let pid = if cc {
+        let skip_to_x = indices.len() - pdg_ids.len();
+        let ix = self
+            .ix
+            .iter()
+            .zip(indices.iter().skip(skip_to_x))
+            .map(|(ix, &index)| ix[index]);
+        let idx_pid = self.perm.iter().zip(pdg_ids).map(|(&(idx, cc), &pdg_id)| {
+            (
+                idx,
+                if cc {
                     pids::charge_conjugate_pdg_pid(pdg_id)
                 } else {
                     pdg_id
-                };
-                let xfx = &mut self.xfx[idx];
-                let xfx_cache = &mut self.xfx_cache[idx];
-                let (imu2, mu2) = match self.pdg[idx].conv_type() {
-                    ConvType::UnpolPDF | ConvType::PolPDF => {
-                        let imuf2 = self.imuf2[indices[0]];
-                        (imuf2, self.muf2_grid[imuf2])
-                    }
-                    ConvType::UnpolFF | ConvType::PolFF => {
-                        let imua2 = self.imua2[indices[0]];
-                        (imua2, self.mua2_grid[imua2])
-                    }
-                };
-                *xfx_cache.entry((pid, ix, imu2)).or_insert_with(|| {
-                    let x = self.x_grid[ix];
+                },
+            )
+        });
+
+        let fx_prod: f64 = ix
+            .zip(idx_pid)
+            .map(|(ix, (idx, pid))| {
+                let ConvCache1d {
+                    xfx, cache, scale, ..
+                } = &mut self.cache.caches[idx];
+
+                let imu2 = self.imu2[*scale][indices[0]];
+                let mu2 = self.cache.mu2[*scale][imu2];
+
+                *cache.entry((pid, ix, imu2)).or_insert_with(|| {
+                    let x = self.cache.x_grid[ix];
                     xfx(pid, x, mu2) / x
                 })
             })
             .product();
         let alphas_powers = if as_order != 0 {
-            self.alphas_cache[self.imur2[indices[0]]].powi(as_order.into())
+            self.cache.alphas_cache[self.imu2[REN_IDX][indices[0]]].powi(as_order.into())
         } else {
             1.0
         };
@@ -193,67 +221,28 @@ impl<'a> ConvolutionCache<'a> {
         fx_prod * alphas_powers
     }
 
-    /// Clears the cache.
-    pub fn clear(&mut self) {
-        self.alphas_cache.clear();
-        for xfx_cache in &mut self.xfx_cache {
-            xfx_cache.clear();
-        }
-        self.mur2_grid.clear();
-        self.muf2_grid.clear();
-        self.mua2_grid.clear();
-        self.x_grid.clear();
-    }
-
     /// Set the grids.
-    pub fn set_grids(
-        &mut self,
-        grid: &Grid,
-        node_values: &[Vec<f64>],
-        mu2_grid: &[f64],
-        xir: f64,
-        xif: f64,
-        xia: f64,
-    ) {
-        self.imur2 = mu2_grid
-            .iter()
-            .map(|ren| {
-                self.mur2_grid
+    pub fn set_grids(&mut self, grid: &Grid, subgrid: &SubgridEnum, xi: (f64, f64, f64)) {
+        let node_values = subgrid.node_values();
+        let kinematics = grid.kinematics();
+        let scales: [_; SCALES_CNT] = grid.scales().into();
+        let xi: [_; SCALES_CNT] = xi.into();
+
+        for (result, values, scale, xi) in izip!(&mut self.imu2, &self.cache.mu2, scales, xi) {
+            result.clear();
+            result.extend(scale.calc(&node_values, kinematics).into_iter().map(|s| {
+                values
                     .iter()
-                    .position(|&mur2| mur2 == xir * xir * ren)
-            })
-            .collect::<Option<_>>()
-            // if we didn't find a single renormalization scale, we assume we don't need any
-            // renormalization scale
-            .unwrap_or_default();
-        self.imuf2 = mu2_grid
-            .iter()
-            .map(|fac| {
-                self.muf2_grid
-                    .iter()
-                    .position(|&muf2| muf2 == xif * xif * fac)
-            })
-            .collect::<Option<_>>()
-            // if we didn't find a single factorization scale, we assume we don't need any
-            // factorization scale
-            .unwrap_or_default();
-        self.imua2 = mu2_grid
-            .iter()
-            .map(|frg| {
-                self.mua2_grid
-                    .iter()
-                    .position(|&mua2| mua2 == xia * xia * frg)
-            })
-            .collect::<Option<_>>()
-            // if we didn't find a single fragmentation scale, we assume we don't need any
-            // fragmentation scale
-            .unwrap_or_default();
+                    .position(|&value| value == xi * xi * s)
+                    .unwrap()
+            }));
+        }
 
         self.ix = (0..grid.convolutions().len())
             .map(|idx| {
-                grid.kinematics()
+                kinematics
                     .iter()
-                    .zip(node_values)
+                    .zip(&node_values)
                     .find_map(|(kin, node_values)| {
                         matches!(kin, &Kinematics::X(index) if index == idx).then_some(node_values)
                     })
@@ -261,7 +250,8 @@ impl<'a> ConvolutionCache<'a> {
                     .unwrap_or_else(|| unreachable!())
                     .into_iter()
                     .map(|xd| {
-                        self.x_grid
+                        self.cache
+                            .x_grid
                             .iter()
                             .position(|x| xd == x)
                             .unwrap_or_else(|| unreachable!())

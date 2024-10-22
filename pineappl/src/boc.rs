@@ -6,6 +6,7 @@
 use float_cmp::approx_eq;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::str::FromStr;
 use thiserror::Error;
@@ -41,20 +42,27 @@ pub enum ScaleFuncForm {
 impl ScaleFuncForm {
     /// TODO
     #[must_use]
-    pub fn calc(&self, node_values: &[Vec<f64>], kinematics: &[Kinematics]) -> Option<Vec<f64>> {
-        match self {
-            Self::NoScale => None,
-            &Self::Scale(index) => Some(if node_values.is_empty() {
-                // TODO: empty subgrid should have as many node values as dimensions
-                Vec::new()
-            } else {
-                node_values[kinematics
-                    .iter()
-                    .position(|&kin| kin == Kinematics::Scale(index))
-                    // UNWRAP: this should be guaranteed by `Grid::new`
-                    .unwrap()]
-                .clone()
-            }),
+    pub fn calc<'a>(
+        &self,
+        node_values: &'a [Vec<f64>],
+        kinematics: &[Kinematics],
+    ) -> Cow<'a, [f64]> {
+        match self.clone() {
+            Self::NoScale => Cow::Borrowed(&[]),
+            Self::Scale(index) => {
+                if node_values.is_empty() {
+                    // TODO: empty subgrid should have as many node values as dimensions
+                    Cow::Borrowed(&[])
+                } else {
+                    Cow::Borrowed(
+                        &node_values[kinematics
+                            .iter()
+                            .position(|&kin| kin == Kinematics::Scale(index))
+                            // UNWRAP: this should be guaranteed by `Grid::new`
+                            .unwrap()],
+                    )
+                }
+            }
             Self::QuadraticSum(_, _) => todo!(),
         }
     }
@@ -69,6 +77,12 @@ pub struct Scales {
     pub fac: ScaleFuncForm,
     /// TODO
     pub frg: ScaleFuncForm,
+}
+
+impl<'a> From<&'a Scales> for [&'a ScaleFuncForm; 3] {
+    fn from(scales: &'a Scales) -> [&'a ScaleFuncForm; 3] {
+        [&scales.ren, &scales.fac, &scales.frg]
+    }
 }
 
 impl Scales {

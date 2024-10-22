@@ -229,13 +229,13 @@ impl Grid {
     /// TODO
     pub fn convolve(
         &self,
-        convolution_cache: &mut ConvolutionCache,
+        cache: &mut ConvolutionCache,
         order_mask: &[bool],
         bin_indices: &[usize],
         channel_mask: &[bool],
         xi: &[(f64, f64, f64)],
     ) -> Vec<f64> {
-        convolution_cache.setup(self, xi);
+        let mut cache = cache.new_grid_conv_cache(self, xi);
 
         let bin_indices = if bin_indices.is_empty() {
             (0..self.bin_info().bins()).collect()
@@ -246,7 +246,7 @@ impl Grid {
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();
 
-        for (xi_index, &(xir, xif, xia)) in xi.iter().enumerate() {
+        for (xi_index, &xis @ (xir, xif, xia)) in xi.iter().enumerate() {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
@@ -272,29 +272,16 @@ impl Grid {
                 }
 
                 let channel = &pdg_channels[chan];
-                let mu2_grid = self
-                    .kinematics()
-                    .iter()
-                    .zip(subgrid.node_values())
-                    .find_map(|(kin, node_values)| {
-                        // TODO: generalize this for arbitrary scales
-                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                    })
-                    // TODO: convert this into an error
-                    .unwrap();
-                let node_values = subgrid.node_values();
-
-                // TODO: generalize this for fragmentation functions
-                convolution_cache.set_grids(self, &node_values, &mu2_grid, xir, xif, 1.0);
-
                 let mut value = 0.0;
+
+                cache.set_grids(self, subgrid, xis);
 
                 for (idx, v) in subgrid.indexed_iter() {
                     let mut lumi = 0.0;
 
                     for entry in channel.entry() {
                         // TODO: we assume `idx` to be ordered as scale, x1, x2
-                        let fx_prod = convolution_cache.as_fx_prod(&entry.0, order.alphas, &idx);
+                        let fx_prod = cache.as_fx_prod(&entry.0, order.alphas, &idx);
                         lumi += fx_prod * entry.1;
                     }
 
@@ -330,13 +317,13 @@ impl Grid {
     /// TODO
     pub fn convolve_subgrid(
         &self,
-        convolution_cache: &mut ConvolutionCache,
+        cache: &mut ConvolutionCache,
         ord: usize,
         bin: usize,
         channel: usize,
-        (xir, xif, xia): (f64, f64, f64),
+        xi @ (xir, xif, xia): (f64, f64, f64),
     ) -> ArrayD<f64> {
-        convolution_cache.setup(self, &[(xir, xif, xia)]);
+        let mut cache = cache.new_grid_conv_cache(self, &[(xir, xif, xia)]);
 
         let normalizations = self.bin_info().normalizations();
         let pdg_channels = self.channels_pdg();
@@ -345,13 +332,14 @@ impl Grid {
         let order = &self.orders[ord];
 
         let channel = &pdg_channels[channel];
+
+        cache.set_grids(self, subgrid, xi);
+
         let node_values: Vec<_> = subgrid.node_values();
         // TODO: generalize this to N dimensions
         assert_eq!(node_values.len(), 3);
-
-        convolution_cache.set_grids(self, &subgrid.node_values(), &node_values[0], xir, xif, xia);
-
         let dim: Vec<_> = node_values.iter().map(Vec::len).collect();
+
         let mut array = ArrayD::zeros(dim);
 
         for (idx, value) in subgrid.indexed_iter() {
@@ -361,7 +349,7 @@ impl Grid {
             for entry in channel.entry() {
                 debug_assert_eq!(entry.0.len(), 2);
                 // TODO: we assume `idx` to be ordered as scale, x1, x2
-                let fx_prod = convolution_cache.as_fx_prod(&entry.0, order.alphas, &idx);
+                let fx_prod = cache.as_fx_prod(&entry.0, order.alphas, &idx);
                 lumi += fx_prod * entry.1;
             }
 

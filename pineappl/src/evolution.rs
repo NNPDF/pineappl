@@ -93,8 +93,7 @@ impl AlphasTable {
                 grid.scales()
                     .ren
                     .calc(&subgrid.node_values(), grid.kinematics())
-                    // UNWRAP: grids with no renormalization scales should not call this function
-                    .unwrap()
+                    .into_owned()
                     .into_iter()
                     .map(|ren| xir * xir * ren)
             })
