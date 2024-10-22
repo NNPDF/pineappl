@@ -86,10 +86,9 @@ class TestFkTable:
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
         subgrid = ImportSubgridV1(
-            vs[np.newaxis, :, np.newaxis],
+            vs[np.newaxis, :],  # DIS shape: (len(q2), len(x_grid))
             np.array([90.0]),
             xs,
-            np.array([1.0]),
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 
