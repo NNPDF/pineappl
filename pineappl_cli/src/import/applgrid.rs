@@ -130,9 +130,10 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     assert_eq!(grid.getDynamicScale(), 0.0);
 
     let mut grids = Vec::with_capacity(orders.len());
+    let dis = grid.isDIS();
 
     // from APPLgrid alone we don't know what type of convolution we have
-    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); if grid.isDIS() { 1 } else { 2 }];
+    let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); if dis { 1 } else { 2 }];
     // TODO: read out interpolation parameters from APPLgrid
     let mut interps = vec![Interp::new(
         1e2,
@@ -220,8 +221,11 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
 
                 let matrix = unsafe { &*matrix };
 
-                let mut array =
-                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
+                let mut array = PackedArray::new(if dis {
+                    vec![mu2_values.len(), x1_values.len()]
+                } else {
+                    vec![mu2_values.len(), x1_values.len(), x2_values.len()]
+                });
 
                 for itau in 0..mu2_values.len() {
                     for ix1 in 0..x1_values.len() {
@@ -234,7 +238,12 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
                             );
 
                             if value != 0.0 {
-                                array[[itau, ix1, ix2]] = value * x1_weights[ix1] * x2_weights[ix2];
+                                if dis {
+                                    array[[itau, ix1]] = value * x1_weights[ix1];
+                                } else {
+                                    array[[itau, ix1, ix2]] =
+                                        value * x1_weights[ix1] * x2_weights[ix2];
+                                }
                             }
                         }
                     }
@@ -244,11 +253,18 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
                     pgrid.subgrids_mut()[[0, bin.try_into().unwrap(), lumi]] =
                         ImportSubgridV1::new(
                             array,
-                            vec![
-                                mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                x1_values.clone(),
-                                x2_values.clone(),
-                            ],
+                            if dis {
+                                vec![
+                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                    x1_values.clone(),
+                                ]
+                            } else {
+                                vec![
+                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
+                                    x1_values.clone(),
+                                    x2_values.clone(),
+                                ]
+                            },
                         )
                         .into();
                 }
