@@ -21,7 +21,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 
-dependencies = ["numpy>=1.16.0,<2.0.0"]
+dependencies = ["numpy>=1.16.0"]
 
 [project.optional-dependencies]
 cli = ["pineappl-cli"]
