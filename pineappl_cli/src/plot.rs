@@ -3,6 +3,7 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use float_cmp::assert_approx_eq;
 use itertools::Itertools;
 use ndarray::Axis;
 use pineappl::boc::{Channel, Kinematics};
@@ -638,7 +639,7 @@ impl Subcommand for Opts {
 
             for (((ix1, ix2), &one), &two) in res1.indexed_iter().zip(res2.iter()) {
                 if one == 0.0 {
-                    assert_eq!(two, 0.0);
+                    assert_approx_eq!(f64, two, 0.0, ulps = 4);
                     continue;
                 }
 

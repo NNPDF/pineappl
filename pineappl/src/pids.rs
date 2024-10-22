@@ -1,6 +1,7 @@
 //! TODO
 
 use super::boc::Channel;
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
@@ -418,7 +419,7 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
         .collect();
 
     if let &[(pid, factor)] = non_zero.as_slice() {
-        if factor == 1.0 {
+        if approx_eq!(f64, factor, 1.0, ulps = 4) {
             return Some(pid);
         }
     }

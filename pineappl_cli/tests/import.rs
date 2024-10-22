@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use assert_cmd::Command;
+use float_cmp::assert_approx_eq;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
@@ -730,7 +731,7 @@ fn import_dis_fktable() {
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 
     assert_eq!(fk_table.grid().kinematics().len(), 2);
-    assert_eq!(fk_table.muf2(), 1.65 * 1.65);
+    assert_approx_eq!(f64, fk_table.muf2(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [
@@ -1000,7 +1001,7 @@ fn import_hadronic_fktable() {
             [115, 115]
         ]
     );
-    assert_eq!(fk_table.muf2(), 1.65 * 1.65);
+    assert_approx_eq!(f64, fk_table.muf2(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [

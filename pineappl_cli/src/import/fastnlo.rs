@@ -1,6 +1,7 @@
 use anyhow::Result;
 // use itertools::Itertools;
 // use ndarray::s;
+use float_cmp::approx_eq;
 use pineappl::bin::BinRemapper;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};
@@ -205,7 +206,7 @@ fn convert_coeff_add_fix(
 
             for j in 0..table.GetTotalScalevars() {
                 // TODO: for the time being we only extract the central scale result
-                if table.GetScaleFactor(j) != 1.0 {
+                if !approx_eq!(f64, table.GetScaleFactor(j), 1.0, ulps = 4) {
                     continue;
                 }
 

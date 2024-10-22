@@ -584,7 +584,9 @@ impl Subcommand for Opts {
             .zip(evolved_results.into_iter())
             .enumerate()
         {
-            // catches the case where both results are zero
+            // ALLOW: here we really need an exact comparison
+            // TODO: change allow to `expect` if MSRV >= 1.81.0
+            #[allow(clippy::float_cmp)]
             let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
 
             if rel_diff.abs() > self.accuracy {

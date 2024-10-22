@@ -1,4 +1,5 @@
 use anyhow::Result;
+use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};
@@ -127,7 +128,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
     }
 
     // this setting isn't supported
-    assert_eq!(grid.getDynamicScale(), 0.0);
+    assert_approx_eq!(f64, grid.getDynamicScale(), 0.0, ulps = 4);
 
     let mut grids = Vec::with_capacity(orders.len());
     let dis = grid.isDIS();

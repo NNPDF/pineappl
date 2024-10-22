@@ -355,7 +355,7 @@ impl TryFrom<Grid> for FkTable {
         for channel in grid.channels() {
             let entry = channel.entry();
 
-            if entry.len() != 1 || entry[0].1 != 1.0 {
+            if entry.len() != 1 || !approx_eq!(f64, entry[0].1, 1.0, ulps = 4) {
                 return Err(TryFromGridError::InvalidChannel);
             }
         }

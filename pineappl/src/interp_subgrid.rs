@@ -36,7 +36,9 @@ impl Subgrid for InterpSubgridV1 {
             let q2 = ntuple[0];
             if self.static_q2 == 0.0 {
                 self.static_q2 = q2;
-            } else if (self.static_q2 != -1.0) && !approx_eq!(f64, self.static_q2, q2, ulps = 4) {
+            } else if !approx_eq!(f64, self.static_q2, -1.0, ulps = 4)
+                && !approx_eq!(f64, self.static_q2, q2, ulps = 4)
+            {
                 self.static_q2 = -1.0;
             }
         }

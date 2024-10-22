@@ -250,9 +250,9 @@ impl Grid {
             for ((ord, bin, chan), subgrid) in self.subgrids.indexed_iter() {
                 let order = &self.orders[ord];
 
-                if ((order.logxir > 0) && (xir == 1.0))
-                    || ((order.logxif > 0) && (xif == 1.0))
-                    || ((order.logxia > 0) && (xia == 1.0))
+                if ((order.logxir > 0) && approx_eq!(f64, xir, 1.0, ulps = 4))
+                    || ((order.logxif > 0) && approx_eq!(f64, xif, 1.0, ulps = 4))
+                    || ((order.logxia > 0) && approx_eq!(f64, xia, 1.0, ulps = 4))
                 {
                     continue;
                 }

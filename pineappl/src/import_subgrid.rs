@@ -4,7 +4,7 @@ use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use super::packed_array::PackedArray;
 use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use float_cmp::approx_eq;
+use float_cmp::{approx_eq, assert_approx_eq};
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -168,8 +168,8 @@ impl From<&SubgridEnum> for ImportSubgridV1 {
             .map(|(values, range)| values[range.clone()].to_vec())
             .collect();
         let static_scale = if let Some(Mu2 { ren, fac, frg }) = subgrid.static_scale() {
-            assert_eq!(ren, fac);
-            assert_eq!(frg, -1.0);
+            assert_approx_eq!(f64, ren, fac, ulps = 4);
+            assert_approx_eq!(f64, frg, -1.0, ulps = 4);
             new_node_values[0] = vec![fac];
             true
         } else {

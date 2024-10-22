@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use float_cmp::approx_eq;
+use float_cmp::{approx_eq, assert_approx_eq};
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
@@ -137,9 +137,9 @@ pub fn convert_into_applgrid(
                         ]
                         .into_iter()
                         .chain(entry.entry().iter().flat_map(|&(ref pids, factor)| {
-                            // TODO: if the factors aren't trivial, we have to find some other way to
-                            // propagate them
-                            assert_eq!(factor, 1.0);
+                            // TODO: if the factors aren't trivial, we have to find some other way
+                            // to propagate them
+                            assert_approx_eq!(f64, factor, 1.0, ulps = 4);
 
                             pids.iter()
                                 .copied()

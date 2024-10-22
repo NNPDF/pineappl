@@ -673,7 +673,7 @@ mod tests {
         let weight = 1.0;
         interpolate(&interps, &ntuple, weight, &mut array);
 
-        assert_eq!(array[[0]], 1.0);
+        assert_approx_eq!(f64, array[[0]], 1.0, ulps = 2);
 
         let node_values = interps[0].node_values();
 

@@ -185,8 +185,17 @@ impl Subcommand for Opts {
                 // catches the case where both results are zero
                 let rel_diffs: Vec<_> = one
                     .iter()
-                    .zip(two.iter())
-                    .map(|(a, b)| if a == b { 0.0 } else { b / a - 1.0 })
+                    .zip(two)
+                    .map(|(&a, &b)| {
+                        // ALLOW: here we really need an exact comparison
+                        // TODO: change allow to `expect` if MSRV >= 1.81.0
+                        #[allow(clippy::float_cmp)]
+                        if a == b {
+                            0.0
+                        } else {
+                            b / a - 1.0
+                        }
+                    })
                     .collect();
 
                 let max_rel_diff = rel_diffs
