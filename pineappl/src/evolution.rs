@@ -293,13 +293,15 @@ fn ndarray_from_subgrid_orders_slice_many(
             logs *= (xia * xia).ln();
         }
 
+        let node_values = subgrid.node_values();
+
         let x1_indices: Vec<Vec<_>> = kinematics
             .iter()
             .enumerate()
             .filter_map(|(idx, kin)| matches!(kin, Kinematics::X(_)).then_some(idx))
             .zip(&x1n)
             .map(|(kin_idx, x1)| {
-                subgrid.node_values()[kin_idx]
+                node_values[kin_idx]
                     .iter()
                     .map(|&xs| {
                         x1.iter()
@@ -311,20 +313,13 @@ fn ndarray_from_subgrid_orders_slice_many(
             })
             .collect();
 
-        for (indices, value) in subgrid.indexed_iter() {
-            let fac = grid
-                .kinematics()
-                .iter()
-                .zip(subgrid.node_values())
-                .find_map(|(kin, node_values)| {
-                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                })
-                // TODO: convert this into an error
-                .unwrap()[indices[0]];
-            // TODO: generalize this for multiple scales
-            let ren = fac;
+        let rens = grid.scales().ren.calc(&node_values, grid.kinematics());
+        let facs = grid.scales().fac.calc(&node_values, grid.kinematics());
 
+        for (indices, value) in subgrid.indexed_iter() {
             // TODO: implement evolution for non-zero fragmentation scales
+            let ren = rens[grid.scales().ren.idx(&indices)];
+            let fac = facs[grid.scales().fac.idx(&indices)];
 
             if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;

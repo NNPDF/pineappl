@@ -332,15 +332,9 @@ impl TryFrom<Grid> for FkTable {
             }
 
             let [fac] = grid
-                .kinematics()
-                .iter()
-                .zip(subgrid.node_values())
-                .find_map(|(kin, node_values)| {
-                    // TODO: generalize this for arbitrary scales
-                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                })
-                // TODO: convert this into an error
-                .unwrap()[..]
+                .scales()
+                .fac
+                .calc(&subgrid.node_values(), grid.kinematics())[..]
             else {
                 return Err(TryFromGridError::MultipleScales);
             };

@@ -1098,32 +1098,20 @@ impl Grid {
                     .then_some((&self.channels()[tuple.2], subgrid))
             })
         {
-            // ren1.extend(subgrid.mu2_grid().iter().map(|Mu2 { ren, .. }| *ren));
             ren1.extend(
-                self.kinematics()
-                    .iter()
-                    .zip(subgrid.node_values())
-                    .find_map(|(kin, node_values)| {
-                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                    })
-                    // TODO: convert this into an error
-                    .unwrap()
-                    .into_iter(),
+                self.scales()
+                    .ren
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
             );
             ren1.sort_by(f64::total_cmp);
             ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
 
-            // fac1.extend(subgrid.mu2_grid().iter().map(|Mu2 { fac, .. }| *fac));
             fac1.extend(
-                self.kinematics()
-                    .iter()
-                    .zip(subgrid.node_values())
-                    .find_map(|(kin, node_values)| {
-                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                    })
-                    // TODO: convert this into an error
-                    .unwrap()
-                    .into_iter(),
+                self.scales()
+                    .fac
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
             );
             fac1.sort_by(f64::total_cmp);
             fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));

@@ -30,14 +30,10 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
         .iter()
         .filter(|subgrid| !subgrid.is_empty())
         .flat_map(|subgrid| {
-            grid.kinematics()
-                .iter()
-                .zip(subgrid.node_values())
-                .find_map(|(kin, node_values)| {
-                    matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                })
-                // TODO: convert this into an error
-                .unwrap()
+            grid.scales()
+                .fac
+                .calc(&subgrid.node_values(), grid.kinematics())
+                .into_owned()
         })
         .collect();
     mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
@@ -234,17 +230,9 @@ pub fn convert_into_applgrid(
                 .enumerate()
                 .filter(|(_, subgrid)| !subgrid.is_empty())
             {
-                let appl_q2_idx: Vec<_> = grid
-                    .kinematics()
+                let appl_q2_idx: Vec<_> = grid.scales().fac.calc(&subgrid.node_values(), grid.kinematics())
                     .iter()
-                    .zip(subgrid.node_values())
-                    .find_map(|(kin, node_values)| {
-                        matches!(kin, &Kinematics::Scale(idx) if idx == 0).then_some(node_values)
-                    })
-                    // TODO: convert this into an error
-                    .unwrap()
-                    .into_iter()
-                    .map(|fac| {
+                    .map(|&fac| {
                         appl_q2
                             .iter()
                             .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
@@ -313,13 +301,6 @@ pub fn convert_into_applgrid(
                         Vec::new(),
                     )
                 };
-                // let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
-                //     (subgrid.x1_grid(), subgrid.x2_grid())
-                // } else if has_pdf1 {
-                //     (subgrid.x1_grid(), Cow::Owned(vec![]))
-                // } else {
-                //     (subgrid.x2_grid(), Cow::Owned(vec![]))
-                // };
 
                 let appl_x1_idx: Vec<_> = x1_grid
                     .iter()
@@ -358,15 +339,9 @@ pub fn convert_into_applgrid(
                         if value != 0.0 {
                             println!(
                                 "WARNING: discarding non-matching scale muf2 = {}",
-                                grid.kinematics()
-                                    .iter()
-                                    .zip(subgrid.node_values())
-                                    .find_map(|(kin, node_values)| {
-                                        matches!(kin, &Kinematics::Scale(idx) if idx == 0)
-                                            .then_some(node_values)
-                                    })
-                                    // TODO: convert this into an error
-                                    .unwrap()[iq2]
+                                grid.scales()
+                                    .fac
+                                    .calc(&subgrid.node_values(), grid.kinematics())[iq2]
                             );
                         }
 
