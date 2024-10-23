@@ -1370,6 +1370,19 @@ pub struct InterpTuples {
     interpolation_method: *const c_char,
 }
 
+/// Type for defining the kinematic object.
+/// `KinematicTuples` is a tuple that has the following entries:
+/// - `scales`: each scale is represented by an integer and the
+///   mapping is as follows: `n` => `Kinematics::Scale(n)`
+/// - `momentum_fraction`: each momentum fraction is represented
+///   by an integer and the mapping is as follows:
+///   `0` => `Kinematics::X(0), ..., ``n` => `Kinematics::X(n)`
+#[repr(C)]
+pub struct KinematicTuples {
+    scales: *const usize,
+    momentum_fraction: *const usize,
+}
+
 #[must_use]
 fn construct_interpolation(interp: &InterpTuples) -> Interp {
     // Interpolation specs for the reweighting
@@ -1378,8 +1391,8 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
             .to_str()
             .expect("Failed to convert `reweighting_method` into a proper string.")
     } {
-        "applgrid" => ReweightMeth::ApplGridX,
-        "noreweight" => ReweightMeth::NoReweight,
+        "ApplGridX" => ReweightMeth::ApplGridX,
+        "NoReweight" => ReweightMeth::NoReweight,
         _ => todo!(),
     };
 
@@ -1389,8 +1402,8 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
             .to_str()
             .expect("Failed to convert `mapping` into a proper string.")
     } {
-        "applgrid_f2" => Map::ApplGridF2,
-        "applgrid_h0" => Map::ApplGridH0,
+        "ApplGridF2" => Map::ApplGridF2,
+        "ApplGridH0" => Map::ApplGridH0,
         _ => todo!(),
     };
 
@@ -1400,7 +1413,7 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
             .to_str()
             .expect("Failed to convert `interpolation_method` into a proper string.")
     } {
-        "lagrange" => InterpMeth::Lagrange,
+        "Lagrange" => InterpMeth::Lagrange,
         _ => todo!(),
     };
 
@@ -1423,7 +1436,7 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
 /// `pdg_id_combinations` must be an array with length `n_combinations * combinations`, and
 /// `factors` with length of `combinations`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_lumi_add2(
+pub unsafe extern "C" fn pineappl_channel_add(
     lumi: *mut Lumi,
     combinations: usize,
     nb_combinations: usize,
@@ -1481,13 +1494,13 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     pid_basis: *const c_char, // takes: `const char* pid_basis = "Evol";`
     channels: *const Lumi,
     orders: usize,
-    order_params: *const u32,
+    order_params: *const u8,
     bins: usize,
     bin_limits: *const f64,
     nb_convolutions: usize,
     convolution_types: *const *const c_char, // takes: `const char* convtype[] = { "UnpolPDF" };`
     pdg_ids: *const c_int,                   // takes: `const char* pdg_dis[] = { 2212 }`
-    kinematics: *const usize,                // takes: `uintptr_t kinematics[] = { 0, 1, 2, ... }`
+    kinematics: *const KinematicTuples, // takes: `KinematicTuples(scales: {0..m}, momentum_fraction: {0,,n})`
     interpolations: *const InterpTuples, // takes: `struct InterpTuples interpdata[] = { {...} }`
 ) -> Box<Grid> {
     // PID Basis
@@ -1505,15 +1518,15 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let channels = unsafe { &*channels };
 
     // Perturbative orders
-    let order_params = unsafe { slice::from_raw_parts(order_params, 4 * orders) };
+    let order_params = unsafe { slice::from_raw_parts(order_params, 5 * orders) };
     let orders: Vec<_> = order_params
-        .chunks(4)
+        .chunks(5)
         .map(|s| Order {
-            alphas: s[0].try_into().unwrap(),
-            alpha: s[1].try_into().unwrap(),
-            logxir: s[2].try_into().unwrap(),
-            logxif: s[3].try_into().unwrap(),
-            logxia: s[4].try_into().unwrap(),
+            alphas: s[0],
+            alpha: s[1],
+            logxir: s[2],
+            logxif: s[3],
+            logxia: s[4],
         })
         .collect();
 
@@ -1543,24 +1556,24 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     }
 
     // Grid interpolations
-    let mut interp_vecs = Vec::new();
     let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
-    for interp_ref in interp_slices {
-        interp_vecs.push(construct_interpolation(interp_ref));
-    }
+    let interp_vecs: Vec<Interp> = interp_slices.iter().map(construct_interpolation).collect();
 
-    // Kinematics
-    let kinematics = unsafe { slice::from_raw_parts(kinematics, nb_convolutions + 1) };
-    let kinematics_vec = kinematics
+    // Kinematics. A tuple: Tuple(scales: {0..n}, momentum_fraction: {0..n} )
+    let kinematics = unsafe { &*kinematics };
+    let kin_scales = // `Scales`
+        unsafe { slice::from_raw_parts(kinematics.scales, interp_vecs.len() - nb_convolutions) };
+    let mut kinematics_vec: Vec<Kinematics> = kin_scales
         .iter()
-        .map(|&kin| {
-            if kin == 0 {
-                Kinematics::Scale(0)
-            } else {
-                Kinematics::X(kin - 1)
-            }
-        })
+        .map(|&scale| Kinematics::Scale(scale))
         .collect();
+    let kin_momenta = // `momentum_fraction`
+        unsafe { slice::from_raw_parts(kinematics.momentum_fraction, nb_convolutions) };
+    let momenta_vec: Vec<Kinematics> = kin_momenta
+        .iter()
+        .map(|&momentum| Kinematics::X(momentum))
+        .collect();
+    kinematics_vec.extend(momenta_vec);
 
     Box::new(Grid::new(
         pid_basis,
@@ -1590,13 +1603,12 @@ pub unsafe extern "C" fn pineappl_grid_fill2(
     grid: *mut Grid,
     order: usize,
     observable: f64,
-    lumi: usize,
+    channel: usize,
     ntuple: *const f64,
     weight: f64,
-    size_tuple: usize,
 ) {
     let grid = unsafe { &mut *grid };
-    let ntuple = unsafe { slice::from_raw_parts(ntuple, size_tuple) };
+    let ntuple = unsafe { slice::from_raw_parts(ntuple, grid.kinematics().len()) };
 
-    grid.fill(order, observable, lumi, ntuple, weight);
+    grid.fill(order, observable, channel, ntuple, weight);
 }
