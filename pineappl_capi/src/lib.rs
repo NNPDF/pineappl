@@ -66,7 +66,7 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 use std::path::Path;
 use std::slice;
 
@@ -690,8 +690,6 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 
     grid.orders().len()
 }
-
-// TODO: add a function that supports fragmentation scale logs
 
 /// Creates a new and empty grid. The creation requires four different sets of parameters:
 /// - The luminosity function `lumi`: A pointer to the luminosity function that specifies how the
@@ -1356,4 +1354,254 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
     if !string.is_null() {
         mem::drop(unsafe { CString::from_raw(string) });
     }
+}
+
+// Here starts the generalized C-API interface.
+
+/// Type for defining the interpolation object
+#[repr(C)]
+pub struct InterpTuples {
+    node_min: f64,
+    node_max: f64,
+    nb_nodes: usize,
+    interp_degree: usize,
+    reweighting_method: *const c_char,
+    mapping: *const c_char,
+    interpolation_method: *const c_char,
+}
+
+#[must_use]
+fn construct_interpolation(interp: &InterpTuples) -> Interp {
+    // Interpolation specs for the reweighting
+    let reweight_mth = match unsafe {
+        CStr::from_ptr(interp.reweighting_method)
+            .to_str()
+            .expect("Failed to convert `reweighting_method` into a proper string.")
+    } {
+        "applgrid" => ReweightMeth::ApplGridX,
+        "noreweight" => ReweightMeth::NoReweight,
+        _ => todo!(),
+    };
+
+    // Interpolation specs for the mapping
+    let mapping = match unsafe {
+        CStr::from_ptr(interp.mapping)
+            .to_str()
+            .expect("Failed to convert `mapping` into a proper string.")
+    } {
+        "applgrid_f2" => Map::ApplGridF2,
+        "applgrid_h0" => Map::ApplGridH0,
+        _ => todo!(),
+    };
+
+    // Interpolation specs for the Interpolation Method
+    let interp_meth = match unsafe {
+        CStr::from_ptr(interp.interpolation_method)
+            .to_str()
+            .expect("Failed to convert `interpolation_method` into a proper string.")
+    } {
+        "lagrange" => InterpMeth::Lagrange,
+        _ => todo!(),
+    };
+
+    Interp::new(
+        interp.node_min,
+        interp.node_max,
+        interp.nb_nodes,
+        interp.interp_degree,
+        reweight_mth,
+        mapping,
+        interp_meth,
+    )
+}
+
+/// Adds a generalized linear combination of initial states to the Luminosity.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
+/// `pdg_id_combinations` must be an array with length `n_combinations * combinations`, and
+/// `factors` with length of `combinations`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_lumi_add2(
+    lumi: *mut Lumi,
+    combinations: usize,
+    nb_combinations: usize,
+    pdg_id_combinations: *const i32,
+    factors: *const f64,
+) {
+    let lumi = unsafe { &mut *lumi };
+    let pdg_id_pairs =
+        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_combinations * combinations) };
+    let factors = if factors.is_null() {
+        vec![1.0; combinations]
+    } else {
+        unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
+    };
+
+    lumi.0.push(Channel::new(
+        pdg_id_pairs
+            .chunks(nb_combinations)
+            .zip(factors)
+            .map(|x| ((0..nb_combinations).map(|i| x.0[i]).collect(), x.1))
+            .collect(),
+    ));
+}
+
+/// Creates a new and empty grid that can accept any number of convolutions. The creation requires
+/// the following different sets of parameters:
+/// - The PID basis `pid_basis`: The basis onto which the partons are mapped, can be `Evol` or `Pdg`.
+/// - The channel function `channels`: A pointer to the luminosity function that specifies how the
+///   cross section should be reconstructed.
+/// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
+///   different perturbative orders, specified by `orders`. The array `order_params` stores the
+///   exponent of each perturbative order and must contain 4 integers denoting the exponent of the
+///   string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+///   scale, and finally of the logarithm of the factorization scale.
+/// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
+///   from a one-dimensional distribution. To this end `bins` specifies how many observables are
+///   stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
+///   each bin.
+/// - The types of convolutions `convolution_types` and their numbers `nb_convolutions`: specify how
+///   how many different convolutions are involved and their types - which are a cross product of the
+///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
+/// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
+/// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
+///   Grid. These can be the energy and the various momentum fractions.
+/// - The specifications of the interpolation methods `interpolations`: provide the specifications on
+///   how each of the kinematics should be interpolated.
+///
+/// # Safety
+///
+/// # Panics
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn pineappl_grid_new2(
+    pid_basis: *const c_char, // takes: `const char* pid_basis = "Evol";`
+    channels: *const Lumi,
+    orders: usize,
+    order_params: *const u32,
+    bins: usize,
+    bin_limits: *const f64,
+    nb_convolutions: usize,
+    convolution_types: *const *const c_char, // takes: `const char* convtype[] = { "UnpolPDF" };`
+    pdg_ids: *const c_int,                   // takes: `const char* pdg_dis[] = { 2212 }`
+    kinematics: *const *const c_char, // takes: `const char* kinematics[] = { "scale", "x1" }`
+    interpolations: *const InterpTuples, // takes: `struct InterpTuples interpdata[] = { {...} }`
+) -> Box<Grid> {
+    // PID Basis
+    let pid_basis = match unsafe {
+        CStr::from_ptr(pid_basis)
+            .to_str()
+            .expect("Failed to convert `pid_basis` into a proper string.")
+    } {
+        "Evol" => PidBasis::Evol,
+        "Pdg" => PidBasis::Pdg,
+        _ => todo!(),
+    };
+
+    // Luminosity channels
+    let channels = unsafe { &*channels };
+
+    // Perturbative orders
+    let order_params = unsafe { slice::from_raw_parts(order_params, 4 * orders) };
+    let orders: Vec<_> = order_params
+        .chunks(4)
+        .map(|s| Order {
+            alphas: s[0].try_into().unwrap(),
+            alpha: s[1].try_into().unwrap(),
+            logxir: s[2].try_into().unwrap(),
+            logxif: s[3].try_into().unwrap(),
+            logxia: s[4].try_into().unwrap(),
+        })
+        .collect();
+
+    // Bin limits
+    let bin_limits = unsafe { slice::from_raw_parts(bin_limits, bins + 1).to_vec() };
+
+    // Types of convolutions
+    let mut convolutions = Vec::new();
+    for i in 0..nb_convolutions {
+        let c_conv = unsafe {
+            let str_ptr = *convolution_types.add(i);
+            CStr::from_ptr(str_ptr)
+                .to_str()
+                .expect("Failed to convert one of the `convolution_types` into a proper string.")
+        };
+
+        let pid_value = unsafe { *pdg_ids.add(i) };
+
+        let cvtype = match c_conv {
+            "UnpolPDF" => Conv::new(ConvType::UnpolPDF, pid_value),
+            "PolPDF" => Conv::new(ConvType::PolPDF, pid_value),
+            "UnpolFF" => Conv::new(ConvType::UnpolFF, pid_value),
+            "PolFF" => Conv::new(ConvType::PolFF, pid_value),
+            _ => todo!(),
+        };
+        convolutions.push(cvtype);
+    }
+
+    // Grid interpolations
+    let mut interp_vecs = Vec::new();
+    let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
+    for interp_ref in interp_slices {
+        interp_vecs.push(construct_interpolation(interp_ref));
+    }
+
+    // Kinematics
+    let mut kinematics_vec = Vec::new();
+    for k in 0..=nb_convolutions {
+        let kin = unsafe {
+            let kin_ptr = *kinematics.add(k);
+            CStr::from_ptr(kin_ptr)
+                .to_str()
+                .expect("Failed to convert one of the `kinematics` types into a proper string.")
+        };
+
+        let kin_type = match kin {
+            "scale" => Kinematics::Scale(0),
+            "x1" => Kinematics::X1,
+            "x2" => Kinematics::X2,
+            _ => todo!(),
+        };
+        kinematics_vec.push(kin_type);
+    }
+
+    Box::new(Grid::new(
+        pid_basis,
+        channels.0.clone(),
+        orders,
+        bin_limits,
+        convolutions,
+        interp_vecs,
+        kinematics_vec,
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
+    ))
+}
+
+/// Fill `grid` for the given momentum fractions {`x1`, `x2`,..., `xn`}, at the scale `q2`
+/// for the given value of the `order`, `observable`, and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill2(
+    grid: *mut Grid,
+    order: usize,
+    observable: f64,
+    lumi: usize,
+    ntuple: *const f64,
+    weight: f64,
+    size_tuple: usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let ntuple = unsafe { slice::from_raw_parts(ntuple, size_tuple) };
+
+    grid.fill(order, observable, lumi, ntuple, weight);
 }
