@@ -1480,10 +1480,16 @@ pub unsafe extern "C" fn pineappl_channel_add(
 ///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
 /// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
 /// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
-///   Grid. These can be the energy and the various momentum fractions. The mapping is as follows:
-///   `0` => `Scale`, `1` => `x1`, ..., `n` => `xn`.
+///   Grid. These can be the energy scales and the various momentum fractions. `kinematics` is of
+///   type `KinematicTuples` and contains two fiels: `scales` and `momentum_fraction`. Each of these
+///   field is an array representing the required kinematics. The index `0` of `scales` for example
+///   maps to `Kinematics::Scale(0)` and so on `n` => `Kinematics::Scale(n)`. The same thing for
+///   `momentum_fraction`.
 /// - The specifications of the interpolation methods `interpolations`: provide the specifications on
 ///   how each of the kinematics should be interpolated.
+/// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entires
+///   have to be ordered following {ren, fac, frg}. The mapping is as follows: `0` -> `ScaleFuncForm::NoScale`,
+///   `n` -> `ScaleFuncForm::Scale(n - 1)`.
 ///
 /// # Safety
 ///
@@ -1500,8 +1506,9 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     nb_convolutions: usize,
     convolution_types: *const *const c_char, // takes: `const char* convtype[] = { "UnpolPDF" };`
     pdg_ids: *const c_int,                   // takes: `const char* pdg_dis[] = { 2212 }`
-    kinematics: *const KinematicTuples, // takes: `KinematicTuples(scales: {0..m}, momentum_fraction: {0,,n})`
-    interpolations: *const InterpTuples, // takes: `struct InterpTuples interpdata[] = { {...} }`
+    kinematics: *const KinematicTuples,      // takes: `KinematicTuples kins[] = { {}, {} }`
+    interpolations: *const InterpTuples,     // takes: `InterpTuples interpdata[] = { {...}, ... }`
+    mu_scales: *const usize,                 // takes: `const char* mu_scales[] = { 1, 1, 0 }`
 ) -> Box<Grid> {
     // PID Basis
     let pid_basis = match unsafe {
@@ -1575,6 +1582,19 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         .collect();
     kinematics_vec.extend(momenta_vec);
 
+    // Scales. An array containing the values of {ren, fac, frg}
+    let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
+    let mu_scales_vec: Vec<ScaleFuncForm> = mu_scales
+        .iter()
+        .map(|&scale| {
+            if scale == 0 {
+                ScaleFuncForm::NoScale
+            } else {
+                ScaleFuncForm::Scale(scale - 1)
+            }
+        })
+        .collect();
+
     Box::new(Grid::new(
         pid_basis,
         channels.0.clone(),
@@ -1584,9 +1604,9 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         interp_vecs,
         kinematics_vec,
         Scales {
-            ren: ScaleFuncForm::Scale(0),
-            fac: ScaleFuncForm::Scale(0),
-            frg: ScaleFuncForm::Scale(0), // TODO: Is this consistent?
+            ren: mu_scales_vec[0].clone(),
+            fac: mu_scales_vec[1].clone(),
+            frg: mu_scales_vec[2].clone(),
         },
     ))
 }
