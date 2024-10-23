@@ -66,6 +66,15 @@ impl ScaleFuncForm {
             Self::QuadraticSum(_, _) => todo!(),
         }
     }
+
+    /// TODO
+    pub fn idx(&self, indices: &[usize]) -> usize {
+        match self.clone() {
+            Self::NoScale => unreachable!(),
+            Self::Scale(index) => indices[index],
+            Self::QuadraticSum(_, _) => todo!(),
+        }
+    }
 }
 
 /// TODO

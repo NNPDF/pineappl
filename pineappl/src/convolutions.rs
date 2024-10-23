@@ -1,6 +1,7 @@
 //! Module for everything related to convolution functions.
 
 use super::boc::Kinematics;
+use super::boc::Scales;
 use super::grid::Grid;
 use super::pids;
 use super::subgrid::{Subgrid, SubgridEnum};
@@ -17,7 +18,6 @@ struct ConvCache1d<'a> {
     xfx: &'a mut dyn FnMut(i32, f64, f64) -> f64,
     cache: FxHashMap<(i32, usize, usize), f64>,
     conv: Conv,
-    scale: usize,
 }
 
 /// A cache for evaluating PDFs. Methods like [`Grid::convolve`] accept instances of this `struct`
@@ -44,10 +44,6 @@ impl<'a> ConvolutionCache<'a> {
                 .map(|(xfx, conv)| ConvCache1d {
                     xfx,
                     cache: FxHashMap::default(),
-                    scale: match conv.conv_type() {
-                        ConvType::UnpolPDF | ConvType::PolPDF => FAC_IDX,
-                        ConvType::UnpolFF | ConvType::PolFF => FRG_IDX,
-                    },
                     conv,
                 })
                 .collect(),
@@ -145,6 +141,7 @@ impl<'a> ConvolutionCache<'a> {
             cache: self,
             perm,
             imu2: [const { Vec::new() }; SCALES_CNT],
+            scales: grid.scales().clone(),
             ix: Vec::new(),
         }
     }
@@ -167,6 +164,7 @@ pub struct GridConvCache<'a, 'b> {
     cache: &'b mut ConvolutionCache<'a>,
     perm: Vec<(usize, bool)>,
     imu2: [Vec<usize>; SCALES_CNT],
+    scales: Scales,
     ix: Vec<Vec<usize>>,
 }
 
@@ -178,13 +176,11 @@ impl GridConvCache<'_, '_> {
         // - indices[1] is x1 and
         // - indices[2] is x2.
         // Lift this restriction!
+        let x_start = indices.len() - pdg_ids.len();
+        let indices_scales = &indices[0..x_start];
+        let indices_x = &indices[x_start..];
 
-        let skip_to_x = indices.len() - pdg_ids.len();
-        let ix = self
-            .ix
-            .iter()
-            .zip(indices.iter().skip(skip_to_x))
-            .map(|(ix, &index)| ix[index]);
+        let ix = self.ix.iter().zip(indices_x).map(|(ix, &index)| ix[index]);
         let idx_pid = self.perm.iter().zip(pdg_ids).map(|(&(idx, cc), &pdg_id)| {
             (
                 idx,
@@ -199,12 +195,19 @@ impl GridConvCache<'_, '_> {
         let fx_prod: f64 = ix
             .zip(idx_pid)
             .map(|(ix, (idx, pid))| {
-                let ConvCache1d {
-                    xfx, cache, scale, ..
-                } = &mut self.cache.caches[idx];
+                let ConvCache1d { xfx, cache, conv } = &mut self.cache.caches[idx];
 
-                let imu2 = self.imu2[*scale][indices[0]];
-                let mu2 = self.cache.mu2[*scale][imu2];
+                let (scale, scale_idx) = match conv.conv_type() {
+                    ConvType::UnpolPDF | ConvType::PolPDF => {
+                        (FAC_IDX, self.scales.fac.idx(indices_scales))
+                    }
+                    ConvType::UnpolFF | ConvType::PolFF => {
+                        (FRG_IDX, self.scales.frg.idx(indices_scales))
+                    }
+                };
+
+                let imu2 = self.imu2[scale][scale_idx];
+                let mu2 = self.cache.mu2[scale][imu2];
 
                 *cache.entry((pid, ix, imu2)).or_insert_with(|| {
                     let x = self.cache.x_grid[ix];
@@ -213,7 +216,8 @@ impl GridConvCache<'_, '_> {
             })
             .product();
         let alphas_powers = if as_order != 0 {
-            self.cache.alphas_cache[self.imu2[REN_IDX][indices[0]]].powi(as_order.into())
+            let ren_scale_idx = self.scales.ren.idx(indices_scales);
+            self.cache.alphas_cache[self.imu2[REN_IDX][ren_scale_idx]].powi(as_order.into())
         } else {
             1.0
         };
