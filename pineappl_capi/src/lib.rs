@@ -1467,7 +1467,8 @@ pub unsafe extern "C" fn pineappl_lumi_add2(
 ///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
 /// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
 /// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
-///   Grid. These can be the energy and the various momentum fractions.
+///   Grid. These can be the energy and the various momentum fractions. The mapping is as follows:
+///   `0` => `Scale`, `1` => `x1`, ..., `n` => `xn`.
 /// - The specifications of the interpolation methods `interpolations`: provide the specifications on
 ///   how each of the kinematics should be interpolated.
 ///
@@ -1486,7 +1487,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     nb_convolutions: usize,
     convolution_types: *const *const c_char, // takes: `const char* convtype[] = { "UnpolPDF" };`
     pdg_ids: *const c_int,                   // takes: `const char* pdg_dis[] = { 2212 }`
-    kinematics: *const *const c_char, // takes: `const char* kinematics[] = { "scale", "x1" }`
+    kinematics: *const usize,                // takes: `uintptr_t kinematics[] = { 0, 1, 2, ... }`
     interpolations: *const InterpTuples, // takes: `struct InterpTuples interpdata[] = { {...} }`
 ) -> Box<Grid> {
     // PID Basis
@@ -1549,23 +1550,17 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     }
 
     // Kinematics
-    let mut kinematics_vec = Vec::new();
-    for k in 0..=nb_convolutions {
-        let kin = unsafe {
-            let kin_ptr = *kinematics.add(k);
-            CStr::from_ptr(kin_ptr)
-                .to_str()
-                .expect("Failed to convert one of the `kinematics` types into a proper string.")
-        };
-
-        let kin_type = match kin {
-            "scale" => Kinematics::Scale(0),
-            "x1" => Kinematics::X1,
-            "x2" => Kinematics::X2,
-            _ => todo!(),
-        };
-        kinematics_vec.push(kin_type);
-    }
+    let kinematics = unsafe { slice::from_raw_parts(kinematics, nb_convolutions + 1) };
+    let kinematics_vec = kinematics
+        .iter()
+        .map(|&kin| {
+            if kin == 0 {
+                Kinematics::Scale(0)
+            } else {
+                Kinematics::X(kin - 1)
+            }
+        })
+        .collect();
 
     Box::new(Grid::new(
         pid_basis,
@@ -1578,7 +1573,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         Scales {
             ren: ScaleFuncForm::Scale(0),
             fac: ScaleFuncForm::Scale(0),
-            frg: ScaleFuncForm::NoScale,
+            frg: ScaleFuncForm::Scale(0), // TODO: Is this consistent?
         },
     ))
 }
