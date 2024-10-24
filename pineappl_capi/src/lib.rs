@@ -1365,66 +1365,21 @@ pub struct InterpTuples {
     node_max: f64,
     nb_nodes: usize,
     interp_degree: usize,
-    reweighting_method: *const c_char,
-    mapping: *const c_char,
-    interpolation_method: *const c_char,
-}
-
-/// Type for defining the kinematic object.
-/// `KinematicTuples` is a tuple that has the following entries:
-/// - `scales`: each scale is represented by an integer and the
-///   mapping is as follows: `n` => `Kinematics::Scale(n)`
-/// - `momentum_fraction`: each momentum fraction is represented
-///   by an integer and the mapping is as follows:
-///   `0` => `Kinematics::X(0), ..., ``n` => `Kinematics::X(n)`
-#[repr(C)]
-pub struct KinematicTuples {
-    scales: *const usize,
-    momentum_fraction: *const usize,
+    reweighting_method: ReweightMeth,
+    mapping: Map,
+    interpolation_method: InterpMeth,
 }
 
 #[must_use]
 fn construct_interpolation(interp: &InterpTuples) -> Interp {
-    // Interpolation specs for the reweighting
-    let reweight_mth = match unsafe {
-        CStr::from_ptr(interp.reweighting_method)
-            .to_str()
-            .expect("Failed to convert `reweighting_method` into a proper string.")
-    } {
-        "ApplGridX" => ReweightMeth::ApplGridX,
-        "NoReweight" => ReweightMeth::NoReweight,
-        _ => todo!(),
-    };
-
-    // Interpolation specs for the mapping
-    let mapping = match unsafe {
-        CStr::from_ptr(interp.mapping)
-            .to_str()
-            .expect("Failed to convert `mapping` into a proper string.")
-    } {
-        "ApplGridF2" => Map::ApplGridF2,
-        "ApplGridH0" => Map::ApplGridH0,
-        _ => todo!(),
-    };
-
-    // Interpolation specs for the Interpolation Method
-    let interp_meth = match unsafe {
-        CStr::from_ptr(interp.interpolation_method)
-            .to_str()
-            .expect("Failed to convert `interpolation_method` into a proper string.")
-    } {
-        "Lagrange" => InterpMeth::Lagrange,
-        _ => todo!(),
-    };
-
     Interp::new(
         interp.node_min,
         interp.node_max,
         interp.nb_nodes,
         interp.interp_degree,
-        reweight_mth,
-        mapping,
-        interp_meth,
+        interp.reweighting_method,
+        interp.mapping,
+        interp.interpolation_method,
     )
 }
 
@@ -1480,11 +1435,7 @@ pub unsafe extern "C" fn pineappl_channel_add(
 ///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
 /// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
 /// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
-///   Grid. These can be the energy scales and the various momentum fractions. `kinematics` is of
-///   type `KinematicTuples` and contains two fiels: `scales` and `momentum_fraction`. Each of these
-///   field is an array representing the required kinematics. The index `0` of `scales` for example
-///   maps to `Kinematics::Scale(0)` and so on `n` => `Kinematics::Scale(n)`. The same thing for
-///   `momentum_fraction`.
+///   Grid. These can be the energy scales and the various momentum fractions.
 /// - The specifications of the interpolation methods `interpolations`: provide the specifications on
 ///   how each of the kinematics should be interpolated.
 /// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entires
@@ -1497,30 +1448,19 @@ pub unsafe extern "C" fn pineappl_channel_add(
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
-    pid_basis: *const c_char, // takes: `const char* pid_basis = "Evol";`
+    pid_basis: PidBasis,
     channels: *const Lumi,
     orders: usize,
     order_params: *const u8,
     bins: usize,
     bin_limits: *const f64,
     nb_convolutions: usize,
-    convolution_types: *const *const c_char, // takes: `const char* convtype[] = { "UnpolPDF" };`
-    pdg_ids: *const c_int,                   // takes: `const char* pdg_dis[] = { 2212 }`
-    kinematics: *const KinematicTuples,      // takes: `KinematicTuples kins[] = { {}, {} }`
-    interpolations: *const InterpTuples,     // takes: `InterpTuples interpdata[] = { {...}, ... }`
-    mu_scales: *const usize,                 // takes: `const char* mu_scales[] = { 1, 1, 0 }`
+    convolution_types: *const ConvType,
+    pdg_ids: *const c_int,
+    kinematics: *const Kinematics,
+    interpolations: *const InterpTuples,
+    mu_scales: *const usize,
 ) -> Box<Grid> {
-    // PID Basis
-    let pid_basis = match unsafe {
-        CStr::from_ptr(pid_basis)
-            .to_str()
-            .expect("Failed to convert `pid_basis` into a proper string.")
-    } {
-        "Evol" => PidBasis::Evol,
-        "Pdg" => PidBasis::Pdg,
-        _ => todo!(),
-    };
-
     // Luminosity channels
     let channels = unsafe { &*channels };
 
@@ -1540,47 +1480,20 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     // Bin limits
     let bin_limits = unsafe { slice::from_raw_parts(bin_limits, bins + 1).to_vec() };
 
-    // Types of convolutions
-    let mut convolutions = Vec::new();
-    for i in 0..nb_convolutions {
-        let c_conv = unsafe {
-            let str_ptr = *convolution_types.add(i);
-            CStr::from_ptr(str_ptr)
-                .to_str()
-                .expect("Failed to convert one of the `convolution_types` into a proper string.")
-        };
-
-        let pid_value = unsafe { *pdg_ids.add(i) };
-
-        let cvtype = match c_conv {
-            "UnpolPDF" => Conv::new(ConvType::UnpolPDF, pid_value),
-            "PolPDF" => Conv::new(ConvType::PolPDF, pid_value),
-            "UnpolFF" => Conv::new(ConvType::UnpolFF, pid_value),
-            "PolFF" => Conv::new(ConvType::PolFF, pid_value),
-            _ => todo!(),
-        };
-        convolutions.push(cvtype);
-    }
+    // Construct the convolution objects
+    let convolution_types =
+        unsafe { slice::from_raw_parts(convolution_types, nb_convolutions).to_vec() };
+    let pdg_ids = unsafe { slice::from_raw_parts(pdg_ids, nb_convolutions).to_vec() };
+    let convolutions = izip!(convolution_types.iter(), pdg_ids.iter())
+        .map(|(&conv, &pdg_value)| Conv::new(conv, pdg_value))
+        .collect();
 
     // Grid interpolations
     let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
     let interp_vecs: Vec<Interp> = interp_slices.iter().map(construct_interpolation).collect();
 
-    // Kinematics. A tuple: Tuple(scales: {0..n}, momentum_fraction: {0..n} )
-    let kinematics = unsafe { &*kinematics };
-    let kin_scales = // `Scales`
-        unsafe { slice::from_raw_parts(kinematics.scales, interp_vecs.len() - nb_convolutions) };
-    let mut kinematics_vec: Vec<Kinematics> = kin_scales
-        .iter()
-        .map(|&scale| Kinematics::Scale(scale))
-        .collect();
-    let kin_momenta = // `momentum_fraction`
-        unsafe { slice::from_raw_parts(kinematics.momentum_fraction, nb_convolutions) };
-    let momenta_vec: Vec<Kinematics> = kin_momenta
-        .iter()
-        .map(|&momentum| Kinematics::X(momentum))
-        .collect();
-    kinematics_vec.extend(momenta_vec);
+    // Construct the kinematic variables
+    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()).to_vec() };
 
     // Scales. An array containing the values of {ren, fac, frg}
     let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
@@ -1602,7 +1515,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         bin_limits,
         convolutions,
         interp_vecs,
-        kinematics_vec,
+        kinematics,
         Scales {
             ren: mu_scales_vec[0].clone(),
             fac: mu_scales_vec[1].clone(),

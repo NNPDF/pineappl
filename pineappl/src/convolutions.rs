@@ -281,6 +281,7 @@ impl GridConvCache<'_, '_> {
 }
 
 /// TODO
+#[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ConvType {
     /// Unpolarized parton distribution function.
@@ -307,6 +308,7 @@ impl ConvType {
 }
 
 /// Data type that indentifies different types of convolutions.
+#[repr(C)]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Conv {
     conv_type: ConvType,

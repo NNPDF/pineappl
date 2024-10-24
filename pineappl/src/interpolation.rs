@@ -58,6 +58,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 }
 
 /// TODO
+#[repr(C)]
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub enum ReweightMeth {
     /// TODO
@@ -67,6 +68,7 @@ pub enum ReweightMeth {
 }
 
 /// TODO
+#[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum Map {
     /// TODO
@@ -76,7 +78,8 @@ pub enum Map {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[repr(C)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,

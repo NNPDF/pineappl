@@ -12,6 +12,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// TODO
+#[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Kinematics {
     /// TODO
@@ -29,6 +30,7 @@ impl Kinematics {
 }
 
 /// TODO
+#[repr(C)]
 #[derive(Clone, Deserialize, Serialize)]
 pub enum ScaleFuncForm {
     /// TODO

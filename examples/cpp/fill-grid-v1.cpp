@@ -192,21 +192,30 @@ int main() {
     // First we define the types of convolutions required by the involved initial-/final-state
     // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
     // Basis onto which the partons are mapped.
-    const char* pid_basis = "Evol";
+    PidBasis pid_basis = Evol;
     int32_t pdg_ids[2] = { 2212, 2212};
-    const char* convolution_types[2] = { "UnpolPDF", "UnpolPDF" };
+    ConvType h1 = UnpolPDF;
+    ConvType h2 = UnpolPDF;
+    ConvType convolution_types[2] = { h1, h2 };
 
     // Define the kinematics required for this process. In the following example we have ONE
     // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
-    size_t _scales[] = { 0 };
-    size_t _momentum_fraction[] = { 0, 1 };
-    KinematicTuples kinematics[2] = { _scales, _momentum_fraction };
+    // The format of the kinematics is: { type, value }.
+    Kinematics scales = { Scale, 0 };
+    Kinematics x1 = { X, 0 };
+    Kinematics x2 = { X, 1 };
+    Kinematics kinematics[3] = { scales, x1, x2 };
 
     // Define the specificities of the interpolations for each of the kinematic variables.
+    ReweightMeth scales_reweight = NoReweight; // Reweighting method
+    ReweightMeth moment_reweight = ApplGridX;
+    Map scales_mapping = ApplGridH0; // Mapping method
+    Map moment_mapping = ApplGridF2;
+    InterpMeth interpolation_meth = Lagrange;
     InterpTuples interpolations[3] = {
-        { 1e2, 1e8, 50, 3, "NoReweight", "ApplGridH0", "Lagrange" },
-        { 1e2, 1e8, 50, 3, "ApplGridX", "ApplGridF2", "Lagrange" },
-        { 1e2, 1e8, 50, 3, "ApplGridX", "ApplGridF2", "Lagrange" },
+        { 1e2, 1e8, 50, 3, scales_reweight, scales_mapping, interpolation_meth },
+        { 1e2, 1e8, 50, 3, moment_reweight, moment_mapping, interpolation_meth },
+        { 1e2, 1e8, 50, 3, moment_reweight, moment_mapping, interpolation_meth },
     };
 
     // Define the unphysical scale objecs
@@ -241,11 +250,4 @@ int main() {
 
     // destroy the object
     pineappl_grid_delete(grid);
-
-    std::cout << "Generated " << filename << " containing a a -> l+ l-.\n\n"
-        "Try running (PDF sets must contain non-zero photon PDF):\n"
-        "  - pineappl convolve " << filename << " NNPDF31_nnlo_as_0118_luxqed\n"
-        "  - pineappl --silence-lhapdf plot " << filename
-        << " NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py\n"
-        "  - pineappl --help\n";
 }
