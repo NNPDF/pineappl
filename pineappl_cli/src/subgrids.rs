@@ -2,7 +2,7 @@ use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::{Args, Parser, ValueHint};
-use pineappl::subgrid::Mu2;
+use pineappl::boc::Kinematics;
 use pineappl::subgrid::{Subgrid, SubgridEnum};
 use prettytable::{cell, row};
 use std::path::PathBuf;
@@ -14,24 +14,12 @@ struct Group {
     /// Show the subgrid type.
     #[arg(long = "type")]
     type_: bool,
-    /// Show the renormalization grid values.
-    #[arg(long)]
-    mur: bool,
-    /// Show the squared renormalization grid values.
-    #[arg(long)]
-    mur2: bool,
-    /// Show the factorization grid values.
-    #[arg(long)]
-    muf: bool,
-    /// Show the squared factorization grid values.
-    #[arg(long)]
-    muf2: bool,
-    /// Show the x1 grid values.
-    #[arg(long)]
-    x1: bool,
-    /// Show the x2 grid values.
-    #[arg(long)]
-    x2: bool,
+    /// Show the scale node values for the given indices.
+    #[arg(long, require_equals = true, value_delimiter = ',', value_name = "IDX")]
+    scale: Vec<usize>,
+    /// Show the x-node values for the given indices.
+    #[arg(long, require_equals = true, value_delimiter = ',', value_name = "IDX")]
+    x: Vec<usize>,
     /// Show grid statistics (figures are the number of entries).
     #[arg(long)]
     stats: bool,
@@ -62,23 +50,11 @@ impl Subcommand for Opts {
         if self.group.type_ {
             titles.add_cell(cell!(c->"type"));
         }
-        if self.group.mur {
-            titles.add_cell(cell!(c->"mur"));
+        for index in &self.group.scale {
+            titles.add_cell(cell!(c->format!("scale{index}")));
         }
-        if self.group.mur2 {
-            titles.add_cell(cell!(c->"mur2"));
-        }
-        if self.group.muf {
-            titles.add_cell(cell!(c->"muf"));
-        }
-        if self.group.muf2 {
-            titles.add_cell(cell!(c->"muf2"));
-        }
-        if self.group.x1 {
-            titles.add_cell(cell!(c->"x1"));
-        }
-        if self.group.x2 {
-            titles.add_cell(cell!(c->"x2"));
+        for index in &self.group.x {
+            titles.add_cell(cell!(c->format!("x{index}")));
         }
         if self.group.stats {
             titles.add_cell(cell!(c->"total"));
@@ -102,65 +78,40 @@ impl Subcommand for Opts {
             if self.group.type_ {
                 row.add_cell(cell!(l->
                     match subgrid {
-                        SubgridEnum::LagrangeSubgridV1(_) => "LagrangeSubgridV1",
-                        SubgridEnum::NtupleSubgridV1(_) => "NtupleSubgridV1",
-                        SubgridEnum::LagrangeSparseSubgridV1(_) => "LagrangeSparseSubgridV1",
-                        SubgridEnum::LagrangeSubgridV2(_) => "LagrangeSubgridV2",
-                        SubgridEnum::ImportOnlySubgridV1(_) => "ImportOnlySubgridV1",
-                        SubgridEnum::ImportOnlySubgridV2(_) => "ImportOnlySubgridV2",
+                        SubgridEnum::InterpSubgridV1(_) => "InterpSubgridV1",
                         SubgridEnum::EmptySubgridV1(_) => "EmptySubgridV1",
+                        SubgridEnum::ImportSubgridV1(_) => "ImportSubgridV1",
                     }
                 ));
             }
-            if self.group.mur {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
+            for &index in &self.group.scale {
+                let values: Vec<_> = grid
+                    .kinematics()
                     .iter()
-                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren.sqrt()))
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::Scale(idx) if idx == index)
+                            .then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .into_iter()
+                    .map(|x| format!("{:.*}", self.digits, x))
                     .collect();
 
                 row.add_cell(cell!(l->values.join(", ")));
             }
-            if self.group.mur2 {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
+            for &index in &self.group.x {
+                let values: Vec<_> = grid
+                    .kinematics()
                     .iter()
-                    .map(|Mu2 { ren, .. }| format!("{:.*}", self.digits, ren))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.muf {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac.sqrt()))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.muf2 {
-                let values: Vec<_> = subgrid
-                    .mu2_grid()
-                    .iter()
-                    .map(|Mu2 { fac, .. }| format!("{:.*}", self.digits, fac))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.x1 {
-                let values: Vec<_> = subgrid
-                    .x1_grid()
-                    .iter()
-                    .map(|x| format!("{:.*e}", self.digits, x))
-                    .collect();
-
-                row.add_cell(cell!(l->values.join(", ")));
-            }
-            if self.group.x2 {
-                let values: Vec<_> = subgrid
-                    .x2_grid()
-                    .iter()
+                    .zip(subgrid.node_values())
+                    .find_map(|(kin, node_values)| {
+                        matches!(kin, &Kinematics::X(idx) if idx == index).then_some(node_values)
+                    })
+                    // TODO: convert this into an error
+                    .unwrap()
+                    .into_iter()
                     .map(|x| format!("{:.*e}", self.digits, x))
                     .collect();
 

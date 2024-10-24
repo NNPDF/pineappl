@@ -790,6 +790,7 @@ impl BinLimits {
 #[cfg(test)]
 mod test {
     use super::*;
+    use float_cmp::assert_approx_eq;
     use std::iter;
 
     #[test]
@@ -806,16 +807,16 @@ mod test {
             ]))
             .unwrap();
 
-        assert_eq!(limits.left(), 0.0);
-        assert_eq!(limits.right(), 2.0);
+        assert_approx_eq!(f64, limits.left(), 0.0, ulps = 2);
+        assert_approx_eq!(f64, limits.right(), 2.0, ulps = 2);
         assert_eq!(limits.bins(), 6);
 
         let non_consecutive_bins = BinLimits::new(vec![3.0, 4.0]);
 
         assert!(limits.merge(&non_consecutive_bins).is_err());
 
-        assert_eq!(limits.left(), 0.0);
-        assert_eq!(limits.right(), 2.0);
+        assert_approx_eq!(f64, limits.left(), 0.0, ulps = 2);
+        assert_approx_eq!(f64, limits.right(), 2.0, ulps = 2);
         assert_eq!(limits.bins(), 6);
 
         // left merge
@@ -828,8 +829,8 @@ mod test {
             ]))
             .is_err());
 
-        assert_eq!(limits.left(), 0.0);
-        assert_eq!(limits.right(), 2.0);
+        assert_approx_eq!(f64, limits.left(), 0.0, ulps = 2);
+        assert_approx_eq!(f64, limits.right(), 2.0, ulps = 2);
         assert_eq!(limits.bins(), 6);
     }
 

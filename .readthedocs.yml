@@ -8,7 +8,10 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
-    rust: "1.70"
+  commands:
+    - export RUST_WITHOUT=rust-docs,rustfmt
+    - asdf install rust latest
+    - asdf global rust latest
 
 python:
   install:

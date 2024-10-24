@@ -30,12 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - by default `pineappl plot` no longer shows a channel breakdown in the panel
   with absolute PDF predictions. However, this feature can be enabled with via
   a new array added at the start of the script
+- raised MSRV to 1.80.1
+- changed the order of elements in `Grid::fill` of the parameter `ntuple` to
+  reflect the ordering of `kinematics` given to `Grid::new`
 
 ### Removed
 
 - Python API: removed `pineappl.grid.Grid.create()` and
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
+- removed the constructor `Grid::with_subgrid_type`
 
 ## [0.8.6] - 18/10/2024
 
@@ -103,8 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
-- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
-  choosing with convolution function uncertainty should be plotted
+- added new switch `--conv-fun-uncert-from` to subcommand `plot` to allow
+  choosing which convolution function uncertainty should be plotted
 
 ### Changed
 

@@ -117,6 +117,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
       - name: Install dependencies
         run: |
@@ -379,6 +380,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -429,6 +431,7 @@ jobs:
             3.9
             3.11
             3.12
+            3.13
             3.10
           architecture: ${{ matrix.target }}
       - name: Build wheels

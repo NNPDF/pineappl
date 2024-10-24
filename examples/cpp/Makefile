@@ -5,6 +5,7 @@ LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
 PROGRAMS = \
 	fill-grid \
+	fill-grid-v1 \
 	fill-custom-grid \
 	advanced-convolution \
 	advanced-filling \
@@ -42,6 +43,9 @@ fill-custom-grid: fill-grid.cpp
 	$(CXX) $(CXXFLAGS) $< -DUSE_CUSTOM_GRID_PARAMETERS $(PINEAPPL_DEPS) -o $@
 
 fill-grid: fill-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+fill-grid-v1: fill-grid-v1.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 merge-grids: merge-grids.cpp

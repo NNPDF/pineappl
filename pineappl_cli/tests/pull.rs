@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use std::num::NonZeroUsize;
 use std::thread;
