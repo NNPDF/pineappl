@@ -244,17 +244,17 @@ jobs:
             --- src/combine.cxx	2024-04-23 16:35:27.000000000 +0200
             +++ src/combine.cxx.new	2024-07-06 12:29:12.813303074 +0200
             @@ -56,12 +56,6 @@
-             }
-
-
-            -double integral( appl::TH1D* h ) {
+             } 
+             
+             
+            -double integral( appl::TH1D* h ) { 
             -  double d = 0;
             -  for ( int i=0 ; i<h->GetNbinsX() ; i++ ) d += h->GetBinContent(i+1);
             -  return d;
             -}
             -
-
-             void print( appl::TH1D* h ) {
+             
+             void print( appl::TH1D* h ) { 
                for ( int i=1 ; i<=h->GetNbinsX() ; i++ ) std::cout << h->GetBinContent(i) << " ";
             EOF
             # compile static libraries with PIC to make statically linking PineAPPL's CLI work
