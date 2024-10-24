@@ -43,7 +43,10 @@ class TestFkTable:
         try:
             g.evolve_with_slice_iter(
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 np.array([], dtype=bool),
                 (1.0, 1.0),
@@ -52,17 +55,23 @@ class TestFkTable:
             )
 
             assert False
-        except:
+        except:  # noqa: E722
             assert True
 
         # TODO: write a better test
         try:
             g.evolve_with_slice_iter2(
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 iter(
-                    [(info, np.ndarray([0, 0, 0, 0])), (info, np.ndarray([0, 0, 0, 0]))]
+                    [
+                        (info, np.ndarray([0, 0, 0, 0])),
+                        (info, np.ndarray([0, 0, 0, 0])),
+                    ]
                 ),
                 np.array([], dtype=bool),
                 (1.0, 1.0),
@@ -71,5 +80,5 @@ class TestFkTable:
             )
 
             assert False
-        except:
+        except:  # noqa: E722
             assert True
