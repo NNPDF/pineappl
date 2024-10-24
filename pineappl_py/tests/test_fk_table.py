@@ -13,7 +13,12 @@ from pineappl.convolutions import Conv, ConvType
 from pineappl.fk_table import FkAssumptions, FkTable
 from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
-from pineappl.interpolation import Interp
+from pineappl.interpolation import (
+    Interp,
+    InterpolationMethod,
+    MappingMethod,
+    ReweightingMethod,
+)
 from pineappl.pids import PidBasis
 
 
@@ -26,9 +31,9 @@ class TestFkTable:
         bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
-            Kinematics(0),  # Scale
-            Kinematics(1),  # x1 momentum fraction
-            Kinematics(2),  # x2 momentum fraction
+            Kinematics("Scale", 0),  # Scale
+            Kinematics("X", 0),  # x1 momentum fraction
+            Kinematics("X", 1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
@@ -37,24 +42,27 @@ class TestFkTable:
                 max=1e8,
                 nodes=40,
                 order=3,
-                reweight_meth="noreweight",
-                map="applgrid_h0",
+                reweight_meth=ReweightingMethod.NoReweight,
+                map=MappingMethod.ApplGridH0,
+                interpolation_meth=InterpolationMethod.Lagrange,
             ),  # Interpolation on the Scale
             Interp(
                 min=2e-7,
                 max=1.0,
                 nodes=50,
                 order=3,
-                reweight_meth="applgrid",
-                map="applgrid_f2",
+                reweight_meth=ReweightingMethod.ApplGridX,
+                map=MappingMethod.ApplGridF2,
+                interpolation_meth=InterpolationMethod.Lagrange,
             ),  # Interpolation on x1 momentum fraction
             Interp(
                 min=2e-7,
                 max=1.0,
                 nodes=50,
                 order=3,
-                reweight_meth="applgrid",
-                map="applgrid_f2",
+                reweight_meth=ReweightingMethod.ApplGridX,
+                map=MappingMethod.ApplGridF2,
+                interpolation_meth=InterpolationMethod.Lagrange,
             ),  # Interpolation on x2 momentum fraction
         ]
         bin_limits = np.array(bins)
@@ -86,10 +94,10 @@ class TestFkTable:
         # DIS grid
         xs = np.linspace(0.5, 1.0, 5)
         vs = xs.copy()
+        q2_values = np.array([90.0])
         subgrid = ImportSubgridV1(
             array=vs[np.newaxis, :],  # DIS shape: (len(q2), len(x_grid))
-            scales=np.array([90.0]),
-            x_grids=[xs],  # Vector containing one single `x-grid`
+            node_values=[q2_values, xs],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 

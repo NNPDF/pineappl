@@ -25,9 +25,9 @@ class TestEvolution:
         bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
-            Kinematics(0),  # Scale
-            Kinematics(1),  # x1 momentum fraction
-            Kinematics(2),  # x2 momentum fraction
+            Kinematics("Scale", 0),  # Scale
+            Kinematics("X", 0),  # x1 momentum fraction
+            Kinematics("X", 1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [

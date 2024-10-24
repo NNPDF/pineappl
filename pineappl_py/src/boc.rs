@@ -69,11 +69,10 @@ impl PyKinematics {
     ///     represents the momentum fraction of the second parton.
     #[new]
     #[must_use]
-    pub const fn new_kin(kinematic: usize) -> Self {
-        let kins = match kinematic {
-            0 => Kinematics::Scale(0),
-            1 => Kinematics::X(0),
-            2 => Kinematics::X(1),
+    pub fn new_kin(kintype: &str, value: usize) -> Self {
+        let kins = match kintype {
+            "X" => Kinematics::X(value),
+            "Scale" => Kinematics::Scale(value),
             _ => todo!(),
         };
         Self::new(kins)

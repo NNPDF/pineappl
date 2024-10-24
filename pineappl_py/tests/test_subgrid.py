@@ -24,9 +24,9 @@ def fake_dis_grid(
     # on the meaning of the following parameters
     convolutions = [CONVOBJECT]  # Consider DIS-case
     kinematics = [
-        Kinematics(0),  # Scale
-        Kinematics(1),  # x1 momentum fraction
-        Kinematics(2),  # x2 momentum fraction
+        Kinematics("Scale", 0),  # Scale
+        Kinematics("X", 0),  # x1 momentum fraction
+        Kinematics("X", 1),  # x2 momentum fraction
     ]
     interpolations = [
         Interp(
@@ -99,13 +99,9 @@ class TestSubgrid:
         x_grids = [np.linspace(0.1, 1, 2) for _ in range(nb_dim)]
         xgrid_size = [x.size for x in x_grids]
         Q2s = np.linspace(10, 20, 2)
-        scale = [q2 for q2 in Q2s]
+        scale = [q2 for q2 in Q2s]  # One single scale Q2
         array = np.random.rand(len(Q2s), *xgrid_size)
-        subgrid = ImportSubgridV1(
-            array=array,
-            scales=scale,
-            x_grids=x_grids,
-        )
+        subgrid = ImportSubgridV1(array=array, node_values=[scale, *x_grids])
         return subgrid, [*x_grids, scale, array]
 
     def test_mu2(self):

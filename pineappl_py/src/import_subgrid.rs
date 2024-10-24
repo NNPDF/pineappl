@@ -25,18 +25,12 @@ impl PyImportSubgridV1 {
     /// ----------
     /// array : numpy.ndarray(float)
     ///     `N`-dimensional array with all weights
-    /// scales : list(float)
-    ///     scales grid
-    /// x_grids : list(list(float))
-    ///     list with length `N` containing the momentum fractions (x1, x2, ...)
-    ///     which are also expressed as lists
+    /// node_values: list(list(float))
+    ///     list containing the arrays of energy scales {q1, ..., qn} and momentum fractions
+    ///     {x1, ..., xn}.
     #[new]
     #[must_use]
-    pub fn new(array: PyReadonlyArrayDyn<f64>, scales: Vec<f64>, x_grids: Vec<Vec<f64>>) -> Self {
-        // Total number of nodes = (scales + x-grids)
-        let mut node_values: Vec<Vec<f64>> = vec![scales];
-        node_values.extend(x_grids); // Extend nodes with x-grids
-
+    pub fn new(array: PyReadonlyArrayDyn<f64>, node_values: Vec<Vec<f64>>) -> Self {
         let mut sparse_array: PackedArray<f64> =
             PackedArray::new(node_values.iter().map(Vec::len).collect());
 

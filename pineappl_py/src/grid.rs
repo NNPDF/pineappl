@@ -33,6 +33,8 @@ pub struct PyGrid {
 impl PyGrid {
     /// Constructor to instantiate a new Grid.
     ///
+    /// TODO: Exposes `Scales`
+    ///
     /// # Panics
     ///
     /// TODO

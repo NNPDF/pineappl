@@ -105,9 +105,9 @@ class TestGrid:
         # 2nd item: parton momentum fraction of the 1st convolution
         # 3rd tiem: parton momentum fraction of the 2nd convolution
         kinematics = [
-            Kinematics(0),  # Scale
-            Kinematics(1),  # x1 momentum fraction
-            Kinematics(2),  # x2 momentum fraction
+            Kinematics("Scale", 0),  # Scale
+            Kinematics("X", 0),  # x1 momentum fraction
+            Kinematics("X", 1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
@@ -168,8 +168,7 @@ class TestGrid:
         vs = np.random.rand(len(xs))
         subgrid = ImportSubgridV1(
             array=vs[np.newaxis, :, np.newaxis],
-            scales=np.array([90.0]),
-            x_grids=[xs, np.array([1.0])],
+            node_values=[np.array([90.0]), xs, np.array([1.0])],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 
@@ -179,8 +178,7 @@ class TestGrid:
         Q2s = np.linspace(10, 20, 2)
         subgrid = ImportSubgridV1(
             array=np.random.rand(len(Q2s), len(x1s), len(x2s)),
-            scales=Q2s,
-            x_grids=[x1s, x2s],
+            node_values=[Q2s, x1s, x2s],
         )
         g.set_subgrid(0, 1, 0, subgrid.into())
         g.optimize()
@@ -232,8 +230,7 @@ class TestGrid:
         vs = xs.copy()
         subgrid = ImportSubgridV1(
             array=vs[np.newaxis, :, np.newaxis],
-            scales=np.array([90.0]),
-            x_grids=[xs, np.array([1.0])],
+            node_values=[np.array([90.0]), xs, np.array([1.0])],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
 
