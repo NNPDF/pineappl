@@ -18,7 +18,8 @@ repos:
         args: [--fix]
         exclude: ^pineappl_cli/src/plot.py
       - id: ruff-format
-        args: [--line-length=80]
+        args: []
+        # TODO: remove this exclusion once we've merged this into master
         exclude: ^pineappl_cli/src/plot.py
   - repo: local
     hooks:

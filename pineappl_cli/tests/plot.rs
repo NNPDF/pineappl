@@ -443,9 +443,7 @@ sym_max = max(fabs(np.min(x)), fabs(np.max(x)))
 
 xi = np.linspace(sym_min, sym_max, (nrap // 2) * 2 + 1)
 yi = np.logspace(log10(np.min(y)), log10(np.max(y)), nmass)
-zi = griddata(
-    (x, y), z, (xi[None, :], yi[:, None]), method="linear", rescale=True
-)
+zi = griddata((x, y), z, (xi[None, :], yi[:, None]), method="linear", rescale=True)
 
 # print(xi.shape)
 # print(yi.shape)
@@ -478,9 +476,7 @@ z12i = griddata(
     (x1, x2), z, (x1i[None, :], x2i[:, None]), method="linear", rescale=True
 )
 
-mesh = axes[1].pcolormesh(
-    x1i, x2i, z12i, shading="nearest", linewidth=0, snap=True
-)
+mesh = axes[1].pcolormesh(x1i, x2i, z12i, shading="nearest", linewidth=0, snap=True)
 axes[1].set_xscale("log")
 axes[1].set_yscale("log")
 axes[1].scatter(x1, x2, marker="*", s=5)
