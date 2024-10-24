@@ -5,7 +5,9 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^pineappl_cli/tests/
+        # `.rs` files are taken care of by `cargo fmt`
+        # `.github/workflows/release.yml` contains vital spaces
+        exclude: ^(.*\.rs|\.github/workflows/release.yml)$
       - id: end-of-file-fixer
       - id: check-merge-conflict
   - repo: https://github.com/astral-sh/ruff-pre-commit
