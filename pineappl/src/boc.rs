@@ -37,6 +37,30 @@ pub enum ScaleFuncForm {
     Scale(usize),
     /// TODO
     QuadraticSum(usize, usize),
+    /// TODO
+    QuadraticMean(usize, usize),
+    /// TODO
+    QuadraticSumOver4(usize, usize),
+    /// TODO
+    LinearMean(usize, usize),
+    /// TODO
+    LinearSum(usize, usize),
+    /// TODO
+    ScaleMax(usize, usize),
+    /// TODO
+    ScaleMin(usize, usize),
+    /// TODO
+    Prod(usize, usize),
+    /// TODO
+    S2plusS1half(usize, usize),
+    /// TODO
+    Pow4Sum(usize, usize),
+    /// TODO
+    WgtAvg(usize, usize),
+    /// TODO
+    S2plusS1fourth(usize, usize),
+    /// TODO
+    ExpProd2(usize, usize),
 }
 
 impl ScaleFuncForm {
@@ -63,16 +87,79 @@ impl ScaleFuncForm {
                     )
                 }
             }
-            Self::QuadraticSum(_, _) => todo!(),
+            Self::QuadraticSum(idx1, idx2)
+            | Self::QuadraticMean(idx1, idx2)
+            | Self::QuadraticSumOver4(idx1, idx2)
+            | Self::LinearMean(idx1, idx2)
+            | Self::LinearSum(idx1, idx2)
+            | Self::ScaleMax(idx1, idx2)
+            | Self::ScaleMin(idx1, idx2)
+            | Self::Prod(idx1, idx2)
+            | Self::S2plusS1half(idx1, idx2)
+            | Self::Pow4Sum(idx1, idx2)
+            | Self::WgtAvg(idx1, idx2)
+            | Self::S2plusS1fourth(idx1, idx2)
+            | Self::ExpProd2(idx1, idx2) => {
+                let calc_scale: fn((f64, f64)) -> f64 = match self.clone() {
+                    Self::QuadraticSum(_, _) => |(s1, s2)| s1 + s2,
+                    Self::QuadraticMean(_, _) => |(s1, s2)| 0.5 * (s1 + s2),
+                    Self::QuadraticSumOver4(_, _) => |(s1, s2)| 0.25 * (s1 + s2),
+                    Self::LinearMean(_, _) => |(s1, s2)| 0.25 * (s1.sqrt() + s2.sqrt()).powi(2),
+                    Self::LinearSum(_, _) => |(s1, s2)| (s1.sqrt() + s2.sqrt()).powi(2),
+                    Self::ScaleMax(_, _) => |(s1, s2)| s1.max(s2),
+                    Self::ScaleMin(_, _) => |(s1, s2)| s1.min(s2),
+                    Self::Prod(_, _) => |(s1, s2)| s1 * s2,
+                    Self::S2plusS1half(_, _) => |(s1, s2)| 0.5 * (s1 + 2.0 * s2),
+                    Self::Pow4Sum(_, _) => |(s1, s2)| (s1 * s1 + s2 * s2).sqrt(),
+                    Self::WgtAvg(_, _) => |(s1, s2)| (s1 * s1 + s2 * s2) / (s1 + s2),
+                    Self::S2plusS1fourth(_, _) => |(s1, s2)| 0.25 * s1 + s2,
+                    Self::ExpProd2(_, _) => {
+                        |(s1, s2)| (s1.sqrt() * (0.3 * s2.sqrt()).exp()).powi(2)
+                    }
+                    _ => unreachable!(),
+                };
+
+                let scales1 = &node_values[kinematics
+                    .iter()
+                    .position(|&kin| kin == Kinematics::Scale(idx1))
+                    // UNWRAP: this should be guaranteed by `Grid::new`
+                    .unwrap_or_else(|| unreachable!())];
+                let scales2 = &node_values[kinematics
+                    .iter()
+                    .position(|&kin| kin == Kinematics::Scale(idx2))
+                    // UNWRAP: this should be guaranteed by `Grid::new`
+                    .unwrap_or_else(|| unreachable!())];
+
+                Cow::Owned(
+                    scales1
+                        .iter()
+                        .copied()
+                        .cartesian_product(scales2.iter().copied())
+                        .map(calc_scale)
+                        .collect(),
+                )
+            }
         }
     }
 
     /// TODO
-    pub fn idx(&self, indices: &[usize]) -> usize {
+    pub fn idx(&self, indices: &[usize], scale_dims: &[usize]) -> usize {
         match self.clone() {
             Self::NoScale => unreachable!(),
             Self::Scale(index) => indices[index],
-            Self::QuadraticSum(_, _) => todo!(),
+            Self::QuadraticSum(idx1, idx2)
+            | Self::QuadraticMean(idx1, idx2)
+            | Self::QuadraticSumOver4(idx1, idx2)
+            | Self::LinearMean(idx1, idx2)
+            | Self::LinearSum(idx1, idx2)
+            | Self::ScaleMax(idx1, idx2)
+            | Self::ScaleMin(idx1, idx2)
+            | Self::Prod(idx1, idx2)
+            | Self::S2plusS1half(idx1, idx2)
+            | Self::Pow4Sum(idx1, idx2)
+            | Self::WgtAvg(idx1, idx2)
+            | Self::S2plusS1fourth(idx1, idx2)
+            | Self::ExpProd2(idx1, idx2) => indices[idx1] * scale_dims[1] + indices[idx2],
         }
     }
 }
@@ -105,6 +192,18 @@ impl Scales {
                         .iter()
                         .any(|&kin| kin == Kinematics::Scale(index)) => {}
                 ScaleFuncForm::QuadraticSum(idx1, idx2)
+                | ScaleFuncForm::QuadraticMean(idx1, idx2)
+                | ScaleFuncForm::QuadraticSumOver4(idx1, idx2)
+                | ScaleFuncForm::LinearMean(idx1, idx2)
+                | ScaleFuncForm::LinearSum(idx1, idx2)
+                | ScaleFuncForm::ScaleMax(idx1, idx2)
+                | ScaleFuncForm::ScaleMin(idx1, idx2)
+                | ScaleFuncForm::Prod(idx1, idx2)
+                | ScaleFuncForm::S2plusS1half(idx1, idx2)
+                | ScaleFuncForm::Pow4Sum(idx1, idx2)
+                | ScaleFuncForm::WgtAvg(idx1, idx2)
+                | ScaleFuncForm::S2plusS1fourth(idx1, idx2)
+                | ScaleFuncForm::ExpProd2(idx1, idx2)
                     if kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx1))
                         && kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx2)) => {}
                 _ => return false,
@@ -656,6 +755,7 @@ macro_rules! channel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn order_from_str() {
@@ -907,5 +1007,30 @@ mod tests {
                 .to_string(),
             "PID tuples have different lengths"
         );
+    }
+
+    #[test]
+    fn scale_func_form() {
+        let node_values = [vec![1.0, 2.0, 3.0], vec![4.0, 5.0]];
+        let kinematics = [Kinematics::Scale(0), Kinematics::Scale(1)];
+        let sff = ScaleFuncForm::QuadraticSum(0, 1);
+
+        let ref_calc = [5.0, 6.0, 6.0, 7.0, 7.0, 8.0];
+        let calc = sff.calc(&node_values, &kinematics).into_owned();
+
+        assert_eq!(calc.len(), ref_calc.len());
+
+        for (&calc, ref_calc) in calc.iter().zip(ref_calc) {
+            assert_approx_eq!(f64, calc, ref_calc, ulps = 2);
+        }
+
+        let scale_dims = [3, 2];
+
+        assert_eq!(sff.idx(&[0, 0, 1], &scale_dims), 0);
+        assert_eq!(sff.idx(&[0, 1, 1], &scale_dims), 1);
+        assert_eq!(sff.idx(&[1, 0, 1], &scale_dims), 2);
+        assert_eq!(sff.idx(&[1, 1, 1], &scale_dims), 3);
+        assert_eq!(sff.idx(&[2, 0, 1], &scale_dims), 4);
+        assert_eq!(sff.idx(&[2, 1, 1], &scale_dims), 5);
     }
 }

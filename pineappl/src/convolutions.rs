@@ -143,6 +143,7 @@ impl<'a> ConvolutionCache<'a> {
             imu2: [const { Vec::new() }; SCALES_CNT],
             scales: grid.scales().clone(),
             ix: Vec::new(),
+            scale_dims: Vec::new(),
         }
     }
 
@@ -166,6 +167,7 @@ pub struct GridConvCache<'a, 'b> {
     imu2: [Vec<usize>; SCALES_CNT],
     scales: Scales,
     ix: Vec<Vec<usize>>,
+    scale_dims: Vec<usize>,
 }
 
 impl GridConvCache<'_, '_> {
@@ -198,12 +200,14 @@ impl GridConvCache<'_, '_> {
                 let ConvCache1d { xfx, cache, conv } = &mut self.cache.caches[idx];
 
                 let (scale, scale_idx) = match conv.conv_type() {
-                    ConvType::UnpolPDF | ConvType::PolPDF => {
-                        (FAC_IDX, self.scales.fac.idx(indices_scales))
-                    }
-                    ConvType::UnpolFF | ConvType::PolFF => {
-                        (FRG_IDX, self.scales.frg.idx(indices_scales))
-                    }
+                    ConvType::UnpolPDF | ConvType::PolPDF => (
+                        FAC_IDX,
+                        self.scales.fac.idx(indices_scales, &self.scale_dims),
+                    ),
+                    ConvType::UnpolFF | ConvType::PolFF => (
+                        FRG_IDX,
+                        self.scales.frg.idx(indices_scales, &self.scale_dims),
+                    ),
                 };
 
                 let imu2 = self.imu2[scale][scale_idx];
@@ -216,7 +220,7 @@ impl GridConvCache<'_, '_> {
             })
             .product();
         let alphas_powers = if as_order != 0 {
-            let ren_scale_idx = self.scales.ren.idx(indices_scales);
+            let ren_scale_idx = self.scales.ren.idx(indices_scales, &self.scale_dims);
             self.cache.alphas_cache[self.imu2[REN_IDX][ren_scale_idx]].powi(as_order.into())
         } else {
             1.0
@@ -262,6 +266,15 @@ impl GridConvCache<'_, '_> {
                             .unwrap_or_else(|| unreachable!())
                     })
                     .collect()
+            })
+            .collect();
+
+        self.scale_dims = grid
+            .kinematics()
+            .iter()
+            .zip(node_values)
+            .filter_map(|(kin, node_values)| {
+                matches!(kin, Kinematics::Scale(_)).then_some(node_values.len())
             })
             .collect();
     }

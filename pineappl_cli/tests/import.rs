@@ -89,9 +89,9 @@ const IMPORT_FLEX_GRID_QUADRATIC_SUM_STR: &str =
     "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
 -+------------+------------+--------------+-------------
 0  8.1098571e1  8.1098571e1 -4.7739590e-15 7.3274720e-15
-1  3.5222658e1  3.5222658e1  1.1102230e-15 6.6613381e-15
+1  3.5222658e1  3.5222658e1  1.1102230e-15 6.8833828e-15
 2  7.7939468e0  7.7939468e0  1.9984014e-15 4.5519144e-15
-3 9.1540624e-1 9.1540624e-1 -5.9952043e-15 7.7715612e-15
+3 9.1540624e-1 9.1540624e-1 -5.7731597e-15 7.7715612e-15
 ";
 
 #[cfg(feature = "fastnlo")]
@@ -100,8 +100,8 @@ const IMPORT_FLEX_GRID_QUADRATIC_MEAN_STR: &str =
 -+------------+------------+--------------+-------------
 0  8.2712488e1  8.2712488e1  2.2204460e-16 1.0214052e-14
 1  3.6091182e1  3.6091182e1 -7.7715612e-16 5.9952043e-15
-2  7.9809031e0  7.9809031e0 -6.9944051e-15 9.5479180e-15
-3 9.3467326e-1 9.3467326e-1  6.6613381e-16 2.4424907e-15
+2  7.9809031e0  7.9809031e0 -6.9944051e-15 9.3258734e-15
+3 9.3467326e-1 9.3467326e-1  8.8817842e-16 2.4424907e-15
 ";
 
 #[cfg(feature = "fastnlo")]
@@ -190,14 +190,14 @@ const IMPORT_FLEX_GRID_14_STR: &str = "b   PineAPPL     fastNLO      rel. diff  
 -+------------+------------+--------------+-------------
 0  8.2850540e1  8.2850540e1  6.8833828e-15 7.1054274e-15
 1  3.5828674e1  3.5828674e1  2.6645353e-15 1.0103030e-14
-2  7.9087501e0  7.9087501e0 -8.1046281e-15 8.1046281e-15
+2  7.9087501e0  7.9087501e0 -8.2156504e-15 8.2156504e-15
 3 9.3462321e-1 9.3462321e-1  4.4408921e-16 8.2156504e-15
 ";
 
 #[cfg(feature = "fastnlo")]
 const IMPORT_FLEX_GRID_15_STR: &str = "b   PineAPPL     fastNLO      rel. diff    svmaxreldiff
 -+------------+------------+--------------+-------------
-0  6.6997861e1  6.6997861e1  5.7731597e-15 1.1879386e-14
+0  6.6997861e1  6.6997861e1  5.5511151e-15 1.1879386e-14
 1  2.6049196e1  2.6049196e1 -7.7715612e-16 1.3100632e-14
 2  5.2022797e0  5.2022797e0  8.4376950e-15 8.4376950e-15
 3 7.2427500e-1 7.2427500e-1  1.9984014e-15 9.5479180e-15
@@ -348,7 +348,6 @@ fn import_fix_grid() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -407,7 +406,6 @@ fn import_flex_grid_scale_2() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_quadratic_sum() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -430,7 +428,6 @@ fn import_flex_grid_quadratic_sum() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_quadratic_mean() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -453,7 +450,6 @@ fn import_flex_grid_quadratic_mean() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_5() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -474,7 +470,6 @@ fn import_flex_grid_5() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_6() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -495,7 +490,6 @@ fn import_flex_grid_6() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_7() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -516,7 +510,6 @@ fn import_flex_grid_7() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_8() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -537,7 +530,6 @@ fn import_flex_grid_8() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_9() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -558,7 +550,6 @@ fn import_flex_grid_9() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_10() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -579,7 +570,6 @@ fn import_flex_grid_10() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_11() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -600,7 +590,6 @@ fn import_flex_grid_11() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_12() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -621,7 +610,6 @@ fn import_flex_grid_12() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_13() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -642,7 +630,6 @@ fn import_flex_grid_13() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_14() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();
@@ -663,7 +650,6 @@ fn import_flex_grid_14() {
 }
 
 #[test]
-#[ignore]
 #[cfg(feature = "fastnlo")]
 fn import_flex_grid_15() {
     let output = NamedTempFile::new("converted2.pineappl.lz4").unwrap();

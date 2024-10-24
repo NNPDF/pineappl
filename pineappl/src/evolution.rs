@@ -294,6 +294,14 @@ fn ndarray_from_subgrid_orders_slice_many(
         }
 
         let node_values = subgrid.node_values();
+        let scale_dims: Vec<_> = grid
+            .kinematics()
+            .iter()
+            .zip(&node_values)
+            .filter_map(|(kin, node_values)| {
+                matches!(kin, Kinematics::Scale(_)).then_some(node_values.len())
+            })
+            .collect();
 
         let x1_indices: Vec<Vec<_>> = kinematics
             .iter()
@@ -318,8 +326,8 @@ fn ndarray_from_subgrid_orders_slice_many(
 
         for (indices, value) in subgrid.indexed_iter() {
             // TODO: implement evolution for non-zero fragmentation scales
-            let ren = rens[grid.scales().ren.idx(&indices)];
-            let fac = facs[grid.scales().fac.idx(&indices)];
+            let ren = rens[grid.scales().ren.idx(&indices, &scale_dims)];
+            let fac = facs[grid.scales().fac.idx(&indices, &scale_dims)];
 
             if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
                 continue;
