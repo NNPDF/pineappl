@@ -4,12 +4,6 @@ Try running (PDF sets must contain non-zero photon PDF):
   - pineappl convolve drell-yan-rap-ll.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
   - pineappl --silence-lhapdf plot drell-yan-rap-ll.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
   - pineappl --help
-Generated drell-yan-rap-ll-v1.pineappl.lz4 containing a a -> l+ l-.
-
-Try running (PDF sets must contain non-zero photon PDF):
-  - pineappl convolve drell-yan-rap-ll-v1.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
-  - pineappl --silence-lhapdf plot drell-yan-rap-ll-v1.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
-  - pineappl --help
 Generated drell-yan-rap-ll-custom-grid.pineappl.lz4 containing a a -> l+ l-.
 
 Try running (PDF sets must contain non-zero photon PDF):
