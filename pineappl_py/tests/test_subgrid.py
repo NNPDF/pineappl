@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from pineappl.boc import Channel, Kinematics, Order
+from pineappl.boc import Channel, Kinematics, Order, ScaleFuncForm, Scales
 from pineappl.convolutions import Conv, ConvType
 from pineappl.grid import Grid
 from pineappl.import_subgrid import ImportSubgridV1
@@ -24,9 +24,9 @@ def fake_dis_grid(
     # on the meaning of the following parameters
     convolutions = [CONVOBJECT]  # Consider DIS-case
     kinematics = [
-        Kinematics("Scale", 0),  # Scale
-        Kinematics("X", 0),  # x1 momentum fraction
-        Kinematics("X", 1),  # x2 momentum fraction
+        Kinematics(kintype="Scale", value=0),  # Scale
+        Kinematics(kintype="X", value=0),  # x1 momentum fraction
+        Kinematics(kintype="X", value=1),  # x2 momentum fraction
     ]
     interpolations = [
         Interp(
@@ -48,6 +48,11 @@ def fake_dis_grid(
             order=3,
         ),  # Interpolation on x2 momentum fraction
     ]
+    # Construct the `Scales` object
+    w_scale = ScaleFuncForm(scaletype="Scale", value=[0])
+    no_scale = ScaleFuncForm(scaletype="NoScale", value=[0])
+    scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
+
     return Grid(
         pid_basis=PidBasis.Evol,
         channels=channels,
@@ -56,6 +61,7 @@ def fake_dis_grid(
         convolutions=convolutions,
         interpolations=interpolations,
         kinematics=kinematics,
+        scale_funcs=scale_funcs,
     )
 
 

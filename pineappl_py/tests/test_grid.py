@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pytest
 from pineappl.bin import BinRemapper
-from pineappl.boc import Channel, Kinematics
+from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales
 from pineappl.convolutions import Conv, ConvType
 from pineappl.grid import Grid, Order
 from pineappl.import_subgrid import ImportSubgridV1
@@ -105,9 +105,9 @@ class TestGrid:
         # 2nd item: parton momentum fraction of the 1st convolution
         # 3rd tiem: parton momentum fraction of the 2nd convolution
         kinematics = [
-            Kinematics("Scale", 0),  # Scale
-            Kinematics("X", 0),  # x1 momentum fraction
-            Kinematics("X", 1),  # x2 momentum fraction
+            Kinematics(kintype="Scale", value=0),  # Scale
+            Kinematics(kintype="X", value=0),  # x1 momentum fraction
+            Kinematics(kintype="X", value=1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
@@ -130,7 +130,13 @@ class TestGrid:
                 order=3,
             ),  # Interpolation on x2 momentum fraction
         ]
+        # Define the bin limits
         bin_limits = np.array(bins)
+        # Construct the `Scales` object
+        w_scale = ScaleFuncForm(scaletype="Scale", value=[0])
+        no_scale = ScaleFuncForm(scaletype="NoScale", value=[0])
+        scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
+
         return Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
@@ -139,6 +145,7 @@ class TestGrid:
             convolutions=convolutions,
             interpolations=interpolations,
             kinematics=kinematics,
+            scale_funcs=scale_funcs,
         )
 
     def test_init(self):

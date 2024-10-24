@@ -8,7 +8,7 @@ import itertools
 from typing import List
 
 import numpy as np
-from pineappl.boc import Channel, Kinematics
+from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import EvolveInfo, OperatorSliceInfo
 from pineappl.grid import Grid, Order
@@ -25,9 +25,9 @@ class TestEvolution:
         bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
-            Kinematics("Scale", 0),  # Scale
-            Kinematics("X", 0),  # x1 momentum fraction
-            Kinematics("X", 1),  # x2 momentum fraction
+            Kinematics(kintype="Scale", value=0),  # Scale
+            Kinematics(kintype="X", value=0),  # x1 momentum fraction
+            Kinematics(kintype="X", value=1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
@@ -50,7 +50,13 @@ class TestEvolution:
                 order=3,
             ),  # Interpolation on x2 momentum fraction
         ]
+        # Define the bin limits
         bin_limits = np.array(bins)
+        # Construct the `Scales` object
+        w_scale = ScaleFuncForm(scaletype="Scale", value=[0])
+        no_scale = ScaleFuncForm(scaletype="NoScale", value=[0])
+        scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
+
         return Grid(
             pid_basis=PidBasis.Evol,
             channels=channels,
@@ -59,6 +65,7 @@ class TestEvolution:
             convolutions=convolutions,
             interpolations=interpolations,
             kinematics=kinematics,
+            scale_funcs=scale_funcs,
         )
 
     def test_evolveinfo(self):

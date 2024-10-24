@@ -11,7 +11,7 @@ class TestChannel:
 
 class TestKinematics:
     def test_init(self):
-        kin = Kinematics("Scale", 0)
+        kin = Kinematics(kintype="Scale", value=0)
         assert isinstance(kin, Kinematics)
 
 

@@ -1,7 +1,7 @@
 //! Grid interface.
 
 use super::bin::PyBinRemapper;
-use super::boc::{PyChannel, PyKinematics, PyOrder};
+use super::boc::{PyChannel, PyKinematics, PyOrder, PyScales};
 use super::convolutions::PyConv;
 use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
@@ -10,7 +10,6 @@ use super::pids::PyPidBasis;
 use super::subgrid::PySubgridEnum;
 use ndarray::CowArray;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
-use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
@@ -55,6 +54,8 @@ impl PyGrid {
     ///     types of interpolations required by each kinematic
     /// kinematics : list(PyKinematics)
     ///     list of kinematics
+    /// scale_funcs : PyScales
+    ///     `Scales` object
     #[new]
     #[must_use]
     pub fn new_grid(
@@ -65,6 +66,7 @@ impl PyGrid {
         convolutions: Vec<PyRef<PyConv>>,
         interpolations: Vec<PyRef<PyInterp>>,
         kinematics: Vec<PyRef<PyKinematics>>,
+        scale_funcs: PyRef<PyScales>,
     ) -> Self {
         Self {
             grid: Grid::new(
@@ -81,11 +83,7 @@ impl PyGrid {
                     .map(|pyi| pyi.interp.clone())
                     .collect(),
                 kinematics.into_iter().map(|pyk| pyk.kinematics).collect(),
-                Scales {
-                    ren: ScaleFuncForm::Scale(0),
-                    fac: ScaleFuncForm::Scale(0),
-                    frg: ScaleFuncForm::NoScale,
-                },
+                scale_funcs.scales.clone(),
             ),
         }
     }

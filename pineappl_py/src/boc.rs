@@ -1,7 +1,7 @@
 //! Interface for bins, orders and channels.
 
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::boc::{Channel, Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
@@ -63,10 +63,10 @@ impl PyKinematics {
     ///
     /// Parameters
     /// ----------
-    /// kinematic: int
-    ///     an integer representing the kinematic. 0 represents the scale,
-    ///     1 represents the momentum fraction of the first parton, and 2
-    ///     represents the momentum fraction of the second parton.
+    /// kintype: str
+    ///     the type of the kinematics, can be either `Scale` or `X`
+    /// value: int
+    ///     the index mapping to the value, eg. for `X` the integer `0` => `X1`
     #[new]
     #[must_use]
     pub fn new_kin(kintype: &str, value: usize) -> Self {
@@ -76,6 +76,93 @@ impl PyKinematics {
             _ => todo!(),
         };
         Self::new(kins)
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
+#[pyclass(name = "ScaleFuncForm")]
+#[repr(transparent)]
+pub struct PyScaleFuncForm {
+    pub(crate) scale_func: ScaleFuncForm,
+}
+
+impl PyScaleFuncForm {
+    pub(crate) const fn new(scale_func: ScaleFuncForm) -> Self {
+        Self { scale_func }
+    }
+}
+
+#[pymethods]
+impl PyScaleFuncForm {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// scaletype: str
+    ///     the type of the scales, can be `NoScale`, `Scale(int)`, etc.
+    /// value: list(int)
+    ///     list containing the index mapping to the corresponding value
+    #[new]
+    #[must_use]
+    pub fn new_scale(scaletype: &str, value: Vec<usize>) -> Self {
+        let scale = match scaletype {
+            "NoScale" => ScaleFuncForm::NoScale,
+            "Scale" => ScaleFuncForm::Scale(value[0]),
+            "QuadraticSum" => ScaleFuncForm::QuadraticSum(value[0], value[1]),
+            "QuadraticMean" => ScaleFuncForm::QuadraticMean(value[0], value[1]),
+            "QuadraticSumOver4" => ScaleFuncForm::QuadraticSumOver4(value[0], value[1]),
+            "LinearMean" => ScaleFuncForm::LinearMean(value[0], value[1]),
+            "LinearSum" => ScaleFuncForm::LinearSum(value[0], value[1]),
+            "ScaleMax" => ScaleFuncForm::ScaleMax(value[0], value[1]),
+            "ScaleMin" => ScaleFuncForm::ScaleMin(value[0], value[1]),
+            "Prod" => ScaleFuncForm::Prod(value[0], value[1]),
+            "S2plusS1half" => ScaleFuncForm::S2plusS1half(value[0], value[1]),
+            "Pow4Sum" => ScaleFuncForm::Pow4Sum(value[0], value[1]),
+            "WgtAvg" => ScaleFuncForm::WgtAvg(value[0], value[1]),
+            "S2plusS1fourth" => ScaleFuncForm::S2plusS1fourth(value[0], value[1]),
+            "ExpProd2" => ScaleFuncForm::ExpProd2(value[0], value[1]),
+            _ => todo!(),
+        };
+        Self::new(scale)
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Scales <boc/struct.Scales.html>`.
+#[pyclass(name = "Scales")]
+pub struct PyScales {
+    pub(crate) scales: Scales,
+}
+
+impl PyScales {
+    pub(crate) const fn new(scales: Scales) -> Self {
+        Self { scales }
+    }
+}
+
+impl Default for PyScales {
+    fn default() -> Self {
+        Self::new(Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        })
+    }
+}
+
+#[pymethods]
+impl PyScales {
+    /// Constructor for `Scales`
+    #[new]
+    #[must_use]
+    pub fn news_scales(
+        ren: PyRef<PyScaleFuncForm>,
+        fac: PyRef<PyScaleFuncForm>,
+        frg: PyRef<PyScaleFuncForm>,
+    ) -> Self {
+        let ren = ren.scale_func.clone();
+        let fac = fac.scale_func.clone();
+        let frg = frg.scale_func.clone();
+        Self::new(Scales { ren, fac, frg })
     }
 }
 
@@ -189,5 +276,7 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyChannel>()?;
     m.add_class::<PyOrder>()?;
     m.add_class::<PyKinematics>()?;
+    m.add_class::<PyScaleFuncForm>()?;
+    m.add_class::<PyScales>()?;
     parent_module.add_submodule(&m)
 }
