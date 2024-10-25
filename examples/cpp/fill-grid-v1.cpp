@@ -213,9 +213,9 @@ int main() {
     Map moment_mapping = ApplGridF2;
     InterpMeth interpolation_meth = Lagrange;
     InterpTuples interpolations[3] = {
-        { 1e2, 1e8, 50, 3, scales_reweight, scales_mapping, interpolation_meth },
-        { 1e2, 1e8, 50, 3, moment_reweight, moment_mapping, interpolation_meth },
-        { 1e2, 1e8, 50, 3, moment_reweight, moment_mapping, interpolation_meth },
+        { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
+        { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
+        { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
     };
 
     // Define the unphysical scale objecs

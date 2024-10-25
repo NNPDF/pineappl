@@ -1524,8 +1524,8 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     ))
 }
 
-/// Fill `grid` for the given momentum fractions {`x1`, `x2`,..., `xn`}, at the scale `q2`
-/// for the given value of the `order`, `observable`, and `lumi` with `weight`.
+/// Similar to  `pineappl_grid_fill` but accepts any given momentum fractions {`x1`, ...,`xn`} at
+/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
 ///
 /// # Safety
 ///
@@ -1544,4 +1544,97 @@ pub unsafe extern "C" fn pineappl_grid_fill2(
     let ntuple = unsafe { slice::from_raw_parts(ntuple, grid.kinematics().len()) };
 
     grid.fill(order, observable, channel, ntuple, weight);
+}
+
+/// Similar to  `pineappl_grid_fill_all` but accepts any given momentum fractions {`x1`, ...,`xn`} at
+/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill_all2(
+    grid: *mut Grid,
+    order: usize,
+    observable: f64,
+    ntuple: *const f64,
+    weights: *const f64,
+) {
+    let grid = unsafe { &mut *grid };
+    let ntuple = unsafe { slice::from_raw_parts(ntuple, grid.kinematics().len()) };
+    let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
+
+    for (channel, &weight) in weights.iter().enumerate() {
+        grid.fill(order, observable, channel, ntuple, weight);
+    }
+}
+
+/// Similar to  `pineappl_grid_fill_array` but accepts any given momentum fractions
+/// {`x1`, ...,`xn`} at various energy scalesfor the given value of the `order`, `observable`,
+/// and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. Additionally, all remaining pointer parameters must be
+/// arrays as long as specified by `size`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill_array2(
+    grid: *mut Grid,
+    orders: *const usize,
+    observables: *const f64,
+    ntuples: *const f64,
+    lumis: *const usize,
+    weights: *const f64,
+    size: usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let orders = unsafe { slice::from_raw_parts(orders, size) };
+    let observables = unsafe { slice::from_raw_parts(observables, size) };
+    let lumis = unsafe { slice::from_raw_parts(lumis, size) };
+    let weights = unsafe { slice::from_raw_parts(weights, size) };
+
+    // Convert the 1D slice into a 2D array
+    let ntuples = unsafe { slice::from_raw_parts(ntuples, size * grid.kinematics().len()) };
+    let ntuples_2d: Vec<&[f64]> = ntuples.chunks(grid.kinematics().len()).collect();
+
+    for (ntuple, &order, &observable, &lumi, &weight) in
+        izip!(ntuples_2d, orders, observables, lumis, weights)
+    {
+        grid.fill(order, observable, lumi, ntuple, weight);
+    }
+}
+
+/// Similar to `pineappl_channel_entry` but for luminosity channels that involve 3 partons, ie.
+/// in the case of three convolutions.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
+/// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
+/// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
+/// long.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channel_entry(
+    lumi: *const Lumi,
+    entry: usize,
+    pdg_ids: *mut i32,
+    factors: *mut f64,
+) {
+    let lumi = unsafe { &*lumi };
+    let entry = lumi.0[entry].entry();
+    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, 3 * entry.len()) };
+    let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
+
+    entry
+        .iter()
+        .flat_map(|(pids, _)| pids)
+        .zip(pdg_ids.iter_mut())
+        .for_each(|(from, to)| *to = *from);
+    entry
+        .iter()
+        .map(|(_, factor)| factor)
+        .zip(factors.iter_mut())
+        .for_each(|(from, to)| *to = *from);
 }
