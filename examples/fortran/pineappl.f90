@@ -125,10 +125,27 @@ module pineappl
             integer (c_size_t), value :: order, lumi
         end subroutine
 
+        subroutine grid_fill2(grid, ntuple, order, observable, lumi, weight) bind(c, name = 'pineappl_grid_fill2')
+            use iso_c_binding
+            type (c_ptr), value       :: grid
+            real (c_double)           :: ntuple(*)
+            real (c_double), value    :: observable, weight
+            integer (c_size_t), value :: order, lumi
+        end subroutine
+
         subroutine grid_fill_all(grid, x1, x2, q2, order, observable, weights) bind(c, name = 'pineappl_grid_fill_all')
             use iso_c_binding
             type (c_ptr), value       :: grid
             real (c_double), value    :: x1, x2, q2, observable
+            real (c_double)           :: weights(*)
+            integer (c_size_t), value :: order
+        end subroutine
+
+        subroutine grid_fill_all2(grid, ntuple, order, observable, weights) bind(c, name = 'pineappl_grid_fill_all2')
+            use iso_c_binding
+            type (c_ptr), value       :: grid
+            real (c_double)           :: ntuple(*)
+            real (c_double), value    :: observable
             real (c_double)           :: weights(*)
             integer (c_size_t), value :: order
         end subroutine
@@ -138,6 +155,16 @@ module pineappl
             use iso_c_binding
             type (c_ptr), value       :: grid
             real (c_double)           :: x1(*), x2(*), q2(*), observables(*), weights(*)
+            integer (c_size_t)        :: orders(*), lumis(*)
+            integer (c_size_t), value :: size
+        end subroutine
+
+        subroutine grid_fill_array2(grid, ntuple, orders, observables, lumis, weights, size) &
+            bind(c, name = 'pineappl_grid_fill_array2')
+            use iso_c_binding
+            type (c_ptr), value       :: grid
+            real (c_double)           :: ntuple(*)
+            real (c_double)           :: observables(*), weights(*)
             integer (c_size_t)        :: orders(*), lumis(*)
             integer (c_size_t), value :: size
         end subroutine
@@ -315,6 +342,14 @@ module pineappl
             real (c_double)           :: factors(*)
         end subroutine
 
+        subroutine channel_add(lumi, combinations, pdg_id_combinations, factors) bind(c, name = 'pineappl_channel_add')
+            use iso_c_binding
+            type (c_ptr), value       :: lumi
+            integer (c_size_t), value :: combinations
+            integer (c_int32_t)       :: pdg_id_combinations(*)
+            real (c_double)           :: factors(*)
+        end subroutine
+
         integer (c_size_t) function lumi_combinations(lumi, entry) bind(c, name = 'pineappl_lumi_combinations')
             use iso_c_binding
             type (c_ptr), value       :: lumi
@@ -332,6 +367,14 @@ module pineappl
         end subroutine
 
         subroutine lumi_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_lumi_entry')
+            use iso_c_binding
+            type (c_ptr), value       :: lumi
+            integer (c_size_t), value :: entry
+            integer (c_int32_t)       :: pdg_ids(*)
+            real (c_double)           :: factors(*)
+        end subroutine
+
+        subroutine channel_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_channel_entry')
             use iso_c_binding
             type (c_ptr), value       :: lumi
             integer (c_size_t), value :: entry
@@ -536,6 +579,19 @@ contains
         call grid_fill(grid%ptr, x1, x2, q2, int(order, c_size_t), observable, int(lumi, c_size_t), weight)
     end subroutine
 
+    subroutine pineappl_grid_fill2(grid, ntuple, order, observable, lumi, weight)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in)    :: grid
+        real (dp), dimension(*), intent(in) :: ntuple
+        real (dp), intent(in)               :: observable, weight
+        integer, intent(in)                 :: order, lumi
+
+        call grid_fill2(grid%ptr, ntuple, int(order, c_size_t), observable, int(lumi, c_size_t), weight)
+    end subroutine
+
     subroutine pineappl_grid_fill_all(grid, x1, x2, q2, order, observable, weights)
         use iso_c_binding
 
@@ -546,6 +602,19 @@ contains
         integer, intent(in)              :: order
 
         call grid_fill_all(grid%ptr, x1, x2, q2, int(order, c_size_t), observable, weights)
+    end subroutine
+
+    subroutine pineappl_grid_fill_all2(grid, ntuple, order, observable, weights)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in)    :: grid
+        real (dp), dimension(*), intent(in) :: ntuple
+        real (dp), intent(in)               :: observable, weights(*)
+        integer, intent(in)                 :: order
+
+        call grid_fill_all2(grid%ptr, ntuple, int(order, c_size_t), observable, weights)
     end subroutine
 
     subroutine pineappl_grid_fill_array(grid, x1, x2, q2, orders, observables, lumis, weights)
@@ -559,6 +628,21 @@ contains
         integer (c_size_t)               :: i
 
         call grid_fill_array(grid%ptr, x1, x2, q2, [(int(orders(i), c_size_t), i = 1, size(orders))], &
+            observables, [(int(lumis(i), c_size_t), i = 1, size(lumis))], weights, int(size(orders), c_size_t))
+    end subroutine
+
+    subroutine pineappl_grid_fill_array2(grid, ntuple, orders, observables, lumis, weights)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_grid), intent(in)    :: grid
+        real (dp), dimension(*), intent(in) :: ntuple
+        real (dp), intent(in)               :: observables(*), weights(*)
+        integer, intent(in)                 :: orders(:), lumis(:)
+        integer (c_size_t)                  :: i
+
+        call grid_fill_array2(grid%ptr, ntuple, [(int(orders(i), c_size_t), i = 1, size(orders))], &
             observables, [(int(lumis(i), c_size_t), i = 1, size(lumis))], weights, int(size(orders), c_size_t))
     end subroutine
 
@@ -856,6 +940,19 @@ contains
         call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
     end subroutine
 
+    subroutine pineappl_channel_add(lumi, combinations, pdg_id_combinations, factors)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_lumi), intent(in)                 :: lumi
+        integer, intent(in)                              :: combinations
+        integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
+        real (dp), dimension(combinations), intent(in)   :: factors
+
+        call channel_add(lumi%ptr, int(combinations, c_size_t), pdg_id_combinations, factors)
+    end subroutine
+
     integer function pineappl_lumi_combinations(lumi, entry)
         use iso_c_binding
 
@@ -896,6 +993,19 @@ contains
         real (dp), intent(out)           :: factors(*)
 
         call lumi_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
+    end subroutine
+
+    subroutine pineappl_channel_entry(lumi, entry, pdg_ids, factors)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_lumi), intent(in) :: lumi
+        integer, intent(in)              :: entry
+        integer, intent(out)             :: pdg_ids(*)
+        real (dp), intent(out)           :: factors(*)
+
+        call channel_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
     end subroutine
 
     type (pineappl_lumi) function pineappl_lumi_new()
