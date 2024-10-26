@@ -341,6 +341,49 @@ class TestGrid:
         )
         pytest.approx(res) == 0.0
 
+    def test_fill_array(self):
+        g = self.fake_grid()
+        g.fill_array(
+            order=0,
+            observables=np.array([1e-3, 1e-2]),
+            channel=0,
+            ntuples=[
+                np.array([0.5, 1.0, 1.0]),
+                np.array([0.5, 1.0, 1.0]),
+                np.array([0.5, 1.0, 1.0]),
+            ],
+            weights=np.array([10.0, 100.0]),
+        )
+
+        # Convolution of two symmetrical hadrons
+        h = ConvType(polarized=False, time_like=False)
+        h_conv = Conv(conv_type=h, pid=2212)
+        res = g.convolve(
+            pdg_convs=[h_conv, h_conv],
+            xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
+            alphas=lambda q2: 1.0,
+        )
+        pytest.approx(res) == 0.0
+
+    def test_fill_all(self):
+        g = self.fake_grid()
+        g.fill_all(
+            order=0,
+            observable=1e-2,
+            ntuple=[1.0, 1.0, 1.0],
+            weights=np.array([10.0]),
+        )
+
+        # Convolution of two symmetrical hadrons
+        h = ConvType(polarized=False, time_like=False)
+        h_conv = Conv(conv_type=h, pid=2212)
+        res = g.convolve(
+            pdg_convs=[h_conv, h_conv],
+            xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
+            alphas=lambda q2: 1.0,
+        )
+        pytest.approx(res) == 0.0
+
     def test_merge(self):
         g = self.fake_grid(bins=[1, 2, 3])
         g1 = self.fake_grid(bins=[3, 4, 5])

@@ -8,6 +8,7 @@ use super::fk_table::PyFkTable;
 use super::interpolation::PyInterp;
 use super::pids::PyPidBasis;
 use super::subgrid::PySubgridEnum;
+use itertools::izip;
 use ndarray::CowArray;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
 use pineappl::convolutions::ConvolutionCache;
@@ -118,6 +119,55 @@ impl PyGrid {
     pub fn subgrid(&self, order: usize, bin: usize, channel: usize) -> PySubgridEnum {
         PySubgridEnum {
             subgrid_enum: self.grid.subgrids()[[order, bin, channel]].clone(),
+        }
+    }
+
+    /// Add an array to the grid.
+    ///
+    /// Useful to avoid multiple python calls, leading to performance improvement.
+    ///
+    /// Parameters
+    /// ----------
+    /// order : int
+    ///     order index
+    /// observables : list(float)
+    ///     list of reference point (to be binned)
+    /// channel : int
+    ///     channel index
+    /// ntuples: list(list(float))
+    ///     list of `ntuple` kinematics
+    /// weights : np.array(float)
+    ///     cross section weight for all events
+    pub fn fill_array(
+        &mut self,
+        order: usize,
+        observables: Vec<f64>,
+        channel: usize,
+        ntuples: Vec<Vec<f64>>,
+        weights: Vec<f64>,
+    ) {
+        for (ntuple, &observable, &weight) in
+            izip!(ntuples.iter(), observables.iter(), weights.iter())
+        {
+            self.grid.fill(order, observable, channel, ntuple, weight);
+        }
+    }
+
+    /// Add a point to the grid for all channels.
+    ///
+    /// Parameters
+    /// ----------
+    /// order : int
+    ///     order index
+    /// observable : float
+    ///     reference point (to be binned)
+    /// ntuple: list(float)
+    ///     list containing information on kinematics
+    /// weights : np.array(float)
+    ///     cross section weights, one for each channels
+    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Vec<f64>, weights: Vec<f64>) {
+        for (channel, &weight) in weights.iter().enumerate() {
+            self.grid.fill(order, observable, channel, &ntuple, weight);
         }
     }
 
