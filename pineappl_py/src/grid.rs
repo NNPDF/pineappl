@@ -83,7 +83,10 @@ impl PyGrid {
                     .into_iter()
                     .map(|pyi| pyi.interp.clone())
                     .collect(),
-                kinematics.into_iter().map(|pyk| pyk.kinematics).collect(),
+                kinematics
+                    .into_iter()
+                    .map(|pyk| pyk.clone().into())
+                    .collect(),
                 scale_funcs.scales.clone(),
             ),
         }

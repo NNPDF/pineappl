@@ -31,9 +31,9 @@ class TestFkTable:
         bins: List[float] = [1e-7, 1e-3, 1],
     ) -> Grid:
         kinematics = [
-            Kinematics("Scale", 0),  # Scale
-            Kinematics("X", 0),  # x1 momentum fraction
-            Kinematics("X", 1),  # x2 momentum fraction
+            Kinematics.Scale(0),  # Scale
+            Kinematics.X(0),  # x1 momentum fraction
+            Kinematics.X(1),  # x2 momentum fraction
         ]
         # Define the interpolation specs for each item of the Kinematics
         interpolations = [
@@ -68,8 +68,8 @@ class TestFkTable:
         # Define the bin limits
         bin_limits = np.array(bins)
         # Construct the `Scales` object
-        w_scale = ScaleFuncForm(scaletype="Scale", value=[0])
-        no_scale = ScaleFuncForm(scaletype="NoScale", value=[0])
+        w_scale = ScaleFuncForm.Scale(0)
+        no_scale = ScaleFuncForm.NoScale(0)
         scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
 
         return Grid(

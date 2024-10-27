@@ -1,5 +1,5 @@
 import numpy as np
-from pineappl.boc import Channel, Kinematics, Order
+from pineappl.boc import Channel, Kinematics, Order, ScaleFuncForm
 
 
 class TestChannel:
@@ -11,8 +11,10 @@ class TestChannel:
 
 class TestKinematics:
     def test_init(self):
-        kin = Kinematics(kintype="Scale", value=0)
+        kin = Kinematics.Scale(0)
+        scale_func = ScaleFuncForm.Scale(0)
         assert isinstance(kin, Kinematics)
+        assert isinstance(scale_func, ScaleFuncForm)
 
 
 class TestOrder:

@@ -46,84 +46,79 @@ impl PyChannel {
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
 #[pyclass(name = "Kinematics")]
-#[repr(transparent)]
-pub struct PyKinematics {
-    pub(crate) kinematics: Kinematics,
+#[derive(Clone)]
+pub enum PyKinematics {
+    /// map to Kinematics::Scale
+    Scale(usize),
+    /// map to Kinematics::X
+    X(usize),
 }
 
-impl PyKinematics {
-    pub(crate) const fn new(kinematics: Kinematics) -> Self {
-        Self { kinematics }
-    }
-}
-
-#[pymethods]
-impl PyKinematics {
-    /// Constructor.
-    ///
-    /// Parameters
-    /// ----------
-    /// kintype: str
-    ///     the type of the kinematics, can be either `Scale` or `X`
-    /// value: int
-    ///     the index mapping to the value, eg. for `X` the integer `0` => `X1`
-    #[new]
-    #[must_use]
-    pub fn new_kin(kintype: &str, value: usize) -> Self {
-        let kins = match kintype {
-            "X" => Kinematics::X(value),
-            "Scale" => Kinematics::Scale(value),
-            _ => todo!(),
-        };
-        Self::new(kins)
+impl From<PyKinematics> for Kinematics {
+    fn from(item: PyKinematics) -> Self {
+        match item {
+            PyKinematics::X(v) => Self::X(v),
+            PyKinematics::Scale(v) => Self::Scale(v),
+        }
     }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
 #[pyclass(name = "ScaleFuncForm")]
-#[repr(transparent)]
-pub struct PyScaleFuncForm {
-    pub(crate) scale_func: ScaleFuncForm,
+#[derive(Clone)]
+pub enum PyScaleFuncForm {
+    /// map to ScaleFuncForm::NoScale
+    /// NOTE No variant is not supported in complex enums
+    NoScale(usize),
+    /// map to ScaleFuncForm::Scale
+    Scale(usize),
+    /// map to ScaleFuncForm::QuadraticSum
+    QuadraticSum(usize, usize),
+    /// map to ScaleFuncForm::QuadraticMean
+    QuadraticMean(usize, usize),
+    /// map to ScaleFuncForm::QuadraticSumOver4
+    QuadraticSumOver4(usize, usize),
+    /// map to ScaleFuncForm::LinearMean
+    LinearMean(usize, usize),
+    /// map to ScaleFuncForm::LinearSum
+    LinearSum(usize, usize),
+    /// map to ScaleFuncForm::ScaleMax
+    ScaleMax(usize, usize),
+    /// map to ScaleFuncForm::ScaleMin
+    ScaleMin(usize, usize),
+    /// map to ScaleFuncForm::Prod
+    Prod(usize, usize),
+    /// map to ScaleFuncForm::S2plusS1half
+    S2plusS1half(usize, usize),
+    /// map to ScaleFuncForm::Pow4Sum
+    Pow4Sum(usize, usize),
+    /// map to ScaleFuncForm::WgtAvg
+    WgtAvg(usize, usize),
+    /// map to ScaleFuncForm::S2plusS1fourth
+    S2plusS1fourth(usize, usize),
+    /// map to ScaleFuncForm::ExpProd2
+    ExpProd2(usize, usize),
 }
 
-impl PyScaleFuncForm {
-    pub(crate) const fn new(scale_func: ScaleFuncForm) -> Self {
-        Self { scale_func }
-    }
-}
-
-#[pymethods]
-impl PyScaleFuncForm {
-    /// Constructor.
-    ///
-    /// Parameters
-    /// ----------
-    /// scaletype: str
-    ///     the type of the scales, can be `NoScale`, `Scale(int)`, etc.
-    /// value: list(int)
-    ///     list containing the index mapping to the corresponding value
-    #[new]
-    #[must_use]
-    pub fn new_scale(scaletype: &str, value: Vec<usize>) -> Self {
-        let scale = match scaletype {
-            "NoScale" => ScaleFuncForm::NoScale,
-            "Scale" => ScaleFuncForm::Scale(value[0]),
-            "QuadraticSum" => ScaleFuncForm::QuadraticSum(value[0], value[1]),
-            "QuadraticMean" => ScaleFuncForm::QuadraticMean(value[0], value[1]),
-            "QuadraticSumOver4" => ScaleFuncForm::QuadraticSumOver4(value[0], value[1]),
-            "LinearMean" => ScaleFuncForm::LinearMean(value[0], value[1]),
-            "LinearSum" => ScaleFuncForm::LinearSum(value[0], value[1]),
-            "ScaleMax" => ScaleFuncForm::ScaleMax(value[0], value[1]),
-            "ScaleMin" => ScaleFuncForm::ScaleMin(value[0], value[1]),
-            "Prod" => ScaleFuncForm::Prod(value[0], value[1]),
-            "S2plusS1half" => ScaleFuncForm::S2plusS1half(value[0], value[1]),
-            "Pow4Sum" => ScaleFuncForm::Pow4Sum(value[0], value[1]),
-            "WgtAvg" => ScaleFuncForm::WgtAvg(value[0], value[1]),
-            "S2plusS1fourth" => ScaleFuncForm::S2plusS1fourth(value[0], value[1]),
-            "ExpProd2" => ScaleFuncForm::ExpProd2(value[0], value[1]),
-            _ => todo!(),
-        };
-        Self::new(scale)
+impl From<PyScaleFuncForm> for ScaleFuncForm {
+    fn from(item: PyScaleFuncForm) -> Self {
+        match item {
+            PyScaleFuncForm::NoScale(_) => Self::NoScale,
+            PyScaleFuncForm::Scale(v) => Self::Scale(v),
+            PyScaleFuncForm::QuadraticSum(v1, v2) => Self::QuadraticSum(v1, v2),
+            PyScaleFuncForm::QuadraticMean(v1, v2) => Self::QuadraticMean(v1, v2),
+            PyScaleFuncForm::QuadraticSumOver4(v1, v2) => Self::QuadraticSumOver4(v1, v2),
+            PyScaleFuncForm::LinearMean(v1, v2) => Self::LinearMean(v1, v2),
+            PyScaleFuncForm::LinearSum(v1, v2) => Self::LinearSum(v1, v2),
+            PyScaleFuncForm::ScaleMax(v1, v2) => Self::ScaleMax(v1, v2),
+            PyScaleFuncForm::ScaleMin(v1, v2) => Self::ScaleMin(v1, v2),
+            PyScaleFuncForm::Prod(v1, v2) => Self::Prod(v1, v2),
+            PyScaleFuncForm::S2plusS1half(v1, v2) => Self::S2plusS1half(v1, v2),
+            PyScaleFuncForm::Pow4Sum(v1, v2) => Self::Pow4Sum(v1, v2),
+            PyScaleFuncForm::WgtAvg(v1, v2) => Self::WgtAvg(v1, v2),
+            PyScaleFuncForm::S2plusS1fourth(v1, v2) => Self::S2plusS1fourth(v1, v2),
+            PyScaleFuncForm::ExpProd2(v1, v2) => Self::ExpProd2(v1, v2),
+        }
     }
 }
 
@@ -159,9 +154,9 @@ impl PyScales {
         fac: PyRef<PyScaleFuncForm>,
         frg: PyRef<PyScaleFuncForm>,
     ) -> Self {
-        let ren = ren.scale_func.clone();
-        let fac = fac.scale_func.clone();
-        let frg = frg.scale_func.clone();
+        let ren = ren.clone().into();
+        let fac = fac.clone().into();
+        let frg = frg.clone().into();
         Self::new(Scales { ren, fac, frg })
     }
 }

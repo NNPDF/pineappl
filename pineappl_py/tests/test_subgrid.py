@@ -24,9 +24,9 @@ def fake_dis_grid(
     # on the meaning of the following parameters
     convolutions = [CONVOBJECT]  # Consider DIS-case
     kinematics = [
-        Kinematics(kintype="Scale", value=0),  # Scale
-        Kinematics(kintype="X", value=0),  # x1 momentum fraction
-        Kinematics(kintype="X", value=1),  # x2 momentum fraction
+        Kinematics.Scale(0),  # Scale
+        Kinematics.X(0),  # x1 momentum fraction
+        Kinematics.X(1),  # x2 momentum fraction
     ]
     interpolations = [
         Interp(
@@ -49,8 +49,8 @@ def fake_dis_grid(
         ),  # Interpolation on x2 momentum fraction
     ]
     # Construct the `Scales` object
-    w_scale = ScaleFuncForm(scaletype="Scale", value=[0])
-    no_scale = ScaleFuncForm(scaletype="NoScale", value=[0])
+    w_scale = ScaleFuncForm.Scale(0)
+    no_scale = ScaleFuncForm.NoScale(0)
     scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
 
     return Grid(
