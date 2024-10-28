@@ -207,9 +207,13 @@ impl Interp {
     /// TODO
     #[must_use]
     pub fn node_values(&self) -> Vec<f64> {
-        (0..self.nodes)
-            .map(|node| self.map_y_to_x(self.gety(node)))
-            .collect()
+        if self.nodes == 1 {
+            vec![self.map_y_to_x(self.min)]
+        } else {
+            (0..self.nodes)
+                .map(|node| self.map_y_to_x(self.gety(node)))
+                .collect()
+        }
     }
 
     fn map_y_to_x(&self, y: f64) -> f64 {
@@ -248,6 +252,18 @@ impl Interp {
     #[must_use]
     pub const fn map(&self) -> Map {
         self.map
+    }
+
+    /// TODO
+    #[must_use]
+    pub const fn interp_meth(&self) -> InterpMeth {
+        self.interp_meth
+    }
+
+    /// TODO
+    #[must_use]
+    pub const fn reweight_meth(&self) -> ReweightMeth {
+        self.reweight
     }
 }
 
@@ -682,7 +698,6 @@ mod tests {
 
         assert_eq!(node_values.len(), 1);
 
-        // TODO: the return value is not the one expected (90^2), because `deltay` is zero
-        assert!(node_values[0].is_nan());
+        assert_approx_eq!(f64, node_values[0], 90.0 * 90.0, ulps = 16);
     }
 }

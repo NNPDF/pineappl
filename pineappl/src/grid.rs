@@ -850,7 +850,7 @@ impl Grid {
         }
     }
 
-    fn optimize_subgrid_type(&mut self, static_scale_detection: bool) {
+    fn optimize_subgrid_type(&mut self, optimize_static_nodes: bool) {
         for subgrid in &mut self.subgrids {
             match subgrid {
                 // replace empty subgrids of any type with `EmptySubgridV1`
@@ -858,15 +858,10 @@ impl Grid {
                     *subgrid = EmptySubgridV1.into();
                 }
                 _ => {
-                    // TODO: this requires a `pub(crate)` in `InterpSubgridV1`; we should
-                    // replace this with a method
-                    if !static_scale_detection {
-                        if let SubgridEnum::InterpSubgridV1(subgrid) = subgrid {
-                            // disable static-scale detection
-                            subgrid.static_q2 = -1.0;
-                        }
+                    if optimize_static_nodes {
+                        subgrid.optimize_static_nodes();
                     }
-
+                    // TODO: check if we should remove this
                     *subgrid = ImportSubgridV1::from(&*subgrid).into();
                 }
             }

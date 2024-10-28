@@ -1,7 +1,7 @@
 //! TODO
 
 use super::interpolation::Interp;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
 use std::iter;
 
@@ -47,9 +47,7 @@ impl Subgrid for EmptySubgridV1 {
         }
     }
 
-    fn static_scale(&self) -> Option<Mu2> {
-        None
-    }
+    fn optimize_static_nodes(&mut self) {}
 }
 
 #[cfg(test)]
@@ -66,6 +64,7 @@ mod tests {
         subgrid.merge(&EmptySubgridV1.into(), None);
         subgrid.scale(2.0);
         subgrid.symmetrize(1, 2);
+        subgrid.optimize_static_nodes();
         assert_eq!(
             subgrid.stats(),
             Stats {
@@ -76,7 +75,6 @@ mod tests {
                 bytes_per_value: 0,
             }
         );
-        assert_eq!(subgrid.static_scale(), None);
     }
 
     #[test]

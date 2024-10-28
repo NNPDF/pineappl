@@ -3,8 +3,8 @@
 use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use super::packed_array::PackedArray;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use float_cmp::{approx_eq, assert_approx_eq};
+use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use float_cmp::approx_eq;
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -130,17 +130,7 @@ impl Subgrid for ImportSubgridV1 {
         }
     }
 
-    fn static_scale(&self) -> Option<Mu2> {
-        if let &[static_scale] = self.node_values()[0].as_slice() {
-            Some(Mu2 {
-                ren: static_scale,
-                fac: static_scale,
-                frg: -1.0,
-            })
-        } else {
-            None
-        }
-    }
+    fn optimize_static_nodes(&mut self) {}
 }
 
 impl From<&SubgridEnum> for ImportSubgridV1 {
@@ -161,32 +151,18 @@ impl From<&SubgridEnum> for ImportSubgridV1 {
             },
         );
 
-        let mut new_node_values: Vec<_> = subgrid
+        let new_node_values: Vec<_> = subgrid
             .node_values()
             .iter()
             .zip(&ranges)
             .map(|(values, range)| values[range.clone()].to_vec())
             .collect();
-        let static_scale = if let Some(Mu2 { ren, fac, frg }) = subgrid.static_scale() {
-            assert_approx_eq!(f64, ren, fac, ulps = 4);
-            assert_approx_eq!(f64, frg, -1.0, ulps = 4);
-            new_node_values[0] = vec![fac];
-            true
-        } else {
-            false
-        };
 
         let mut array = PackedArray::new(new_node_values.iter().map(Vec::len).collect());
 
         for (mut indices, value) in subgrid.indexed_iter() {
-            for (idx, (index, range)) in indices.iter_mut().zip(&ranges).enumerate() {
-                // TODO: generalize static scale detection
-                *index = if static_scale && idx == 0 {
-                    // if there's a static scale we want every value to be added to same grid point
-                    0
-                } else {
-                    *index - range.start
-                };
+            for (index, range) in indices.iter_mut().zip(&ranges) {
+                *index = *index - range.start;
             }
 
             array[indices.as_slice()] += value;
