@@ -71,7 +71,7 @@ pub enum GridError {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-pub(crate) struct Mmv4;
+struct Mmv4;
 
 fn default_metadata() -> BTreeMap<String, String> {
     iter::once((
@@ -87,7 +87,7 @@ fn default_metadata() -> BTreeMap<String, String> {
 }
 
 #[derive(Clone, Deserialize, Serialize)]
-pub(crate) enum MoreMembers {
+enum MoreMembers {
     V4(Mmv4),
 }
 
@@ -119,18 +119,18 @@ bitflags! {
 /// bin, and coupling order it was created with.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
-    pub(crate) subgrids: Array3<SubgridEnum>,
-    pub(crate) channels: Vec<Channel>,
-    pub(crate) bin_limits: BinLimits,
-    pub(crate) orders: Vec<Order>,
-    pub(crate) metadata: BTreeMap<String, String>,
-    pub(crate) convolutions: Vec<Conv>,
-    pub(crate) pid_basis: PidBasis,
-    pub(crate) more_members: MoreMembers,
-    pub(crate) kinematics: Vec<Kinematics>,
-    pub(crate) interps: Vec<Interp>,
-    pub(crate) remapper: Option<BinRemapper>,
-    pub(crate) scales: Scales,
+    subgrids: Array3<SubgridEnum>,
+    channels: Vec<Channel>,
+    bin_limits: BinLimits,
+    orders: Vec<Order>,
+    metadata: BTreeMap<String, String>,
+    convolutions: Vec<Conv>,
+    pid_basis: PidBasis,
+    more_members: MoreMembers,
+    kinematics: Vec<Kinematics>,
+    interps: Vec<Interp>,
+    remapper: Option<BinRemapper>,
+    scales: Scales,
 }
 
 impl Grid {

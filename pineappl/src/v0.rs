@@ -1,14 +1,12 @@
-use super::bin::{BinLimits, BinRemapper};
+use super::bin::BinRemapper;
 use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType};
-use super::empty_subgrid::EmptySubgridV1;
-use super::grid::{Grid, GridError, Mmv4, MoreMembers};
+use super::grid::{Grid, GridError};
 use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
 use super::subgrid::Mu2;
-use ndarray::Array3;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
@@ -53,65 +51,18 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
 
     assert_eq!(convolutions.len(), 2);
 
-    let result = Grid {
-        subgrids: Array3::from_shape_vec(
-            grid.subgrids().dim(),
-            grid.subgrids()
-                .into_iter()
-                .map(|subgrid| {
-                    if subgrid.is_empty() {
-                        EmptySubgridV1.into()
-                    } else {
-                        let mu2_grid: Vec<_> = subgrid
-                            .mu2_grid()
-                            .iter()
-                            .map(|mu2v0| Mu2 {
-                                ren: mu2v0.ren,
-                                fac: mu2v0.fac,
-                                frg: -1.0,
-                            })
-                            .collect();
-
-                        let mut dim = vec![mu2_grid.len()];
-                        if convolutions[0].is_some() {
-                            dim.push(subgrid.x1_grid().len());
-                        }
-                        if convolutions[1].is_some() {
-                            dim.push(subgrid.x2_grid().len());
-                        }
-                        let mut array = PackedArray::new(dim);
-
-                        if convolutions[0].is_none() {
-                            for (index, v) in subgrid.indexed_iter() {
-                                array[[index.0, index.2]] = v;
-                            }
-                        } else if convolutions[1].is_none() {
-                            for (index, v) in subgrid.indexed_iter() {
-                                array[[index.0, index.1]] = v;
-                            }
-                        } else {
-                            for (index, v) in subgrid.indexed_iter() {
-                                array[<[usize; 3]>::from(index)] = v;
-                            }
-                        }
-
-                        let mut node_values =
-                            vec![mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect()];
-                        if convolutions[0].is_some() {
-                            node_values.push(subgrid.x1_grid().into_owned());
-                        }
-                        if convolutions[1].is_some() {
-                            node_values.push(subgrid.x2_grid().into_owned());
-                        }
-                        ImportSubgridV1::new(array, node_values).into()
-                    }
-                })
-                .collect(),
-        )
-        // UNWRAP: the dimensions must be the same as in the v0 grid
-        .unwrap(),
-        channels: grid
-            .channels()
+    let mut result = Grid::new(
+        grid.key_values()
+            .and_then(|kv| kv.get("lumi_id_types"))
+            // TODO: use PidBasis::from_str
+            .map_or(PidBasis::Pdg, |lumi_id_types| {
+                match lumi_id_types.as_str() {
+                    "pdg_mc_ids" => PidBasis::Pdg,
+                    "evol" => PidBasis::Evol,
+                    _ => panic!("unknown PID basis '{lumi_id_types}'"),
+                }
+            }),
+        grid.channels()
             .iter()
             .map(|c| {
                 Channel::new(
@@ -131,20 +82,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 )
             })
             .collect(),
-        // TODO: change this member to something much easier to handle
-        bin_limits: BinLimits::new(if grid.remapper().is_none() {
-            let limits = &grid.bin_info().limits();
-            iter::once(limits[0][0].0)
-                .chain(limits.iter().map(|v| v[0].1))
-                .collect()
-        } else {
-            // if there is a BinRemapper this member will likely have no impact
-            (0..=grid.bin_info().bins())
-                .map(|i| f64::from(u16::try_from(i).unwrap()))
-                .collect()
-        }),
-        orders: grid
-            .orders()
+        grid.orders()
             .iter()
             .map(|o| Order {
                 // UNWRAP: there shouldn't be orders with exponents larger than 255
@@ -155,38 +93,92 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 logxia: 0,
             })
             .collect(),
-        metadata: grid
-            .key_values()
-            .cloned()
-            .unwrap_or_default()
-            .into_iter()
-            .collect(),
-        interps: default_interps(convolutions.len()),
-        convolutions: convolutions.into_iter().flatten().collect(),
-        pid_basis: grid
-            .key_values()
-            .and_then(|kv| kv.get("lumi_id_types"))
-            .map_or(PidBasis::Pdg, |lumi_id_types| {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => PidBasis::Pdg,
-                    "evol" => PidBasis::Evol,
-                    _ => panic!("unknown PID basis '{lumi_id_types}'"),
-                }
-            }),
-        more_members: MoreMembers::V4(Mmv4),
-        remapper: grid.remapper().map(|r| {
-            // UNWRAP: if the old grid could be constructed with the given normalizations
-            // and limits we should be able to do the same without error
-            BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec()).unwrap()
-        }),
+        if grid.remapper().is_none() {
+            let limits = &grid.bin_info().limits();
+            iter::once(limits[0][0].0)
+                .chain(limits.iter().map(|v| v[0].1))
+                .collect()
+        } else {
+            // if there is a BinRemapper this member will likely have no impact
+            (0..=grid.bin_info().bins())
+                .map(|i| f64::from(u16::try_from(i).unwrap()))
+                .collect()
+        },
+        convolutions.clone().into_iter().flatten().collect(),
+        default_interps(convolutions.clone().into_iter().flatten().count()),
         kinematics,
-        scales: Scales {
+        Scales {
             // TODO: read in flexible-scale grids properly
             ren: ScaleFuncForm::Scale(0),
             fac: ScaleFuncForm::Scale(0),
             frg: ScaleFuncForm::NoScale,
         },
-    };
+    );
+
+    for (new_subgrid, old_subgrid) in result.subgrids_mut().iter_mut().zip(grid.subgrids().iter()) {
+        if !old_subgrid.is_empty() {
+            let mu2_grid: Vec<_> = old_subgrid
+                .mu2_grid()
+                .iter()
+                .map(|mu2v0| Mu2 {
+                    ren: mu2v0.ren,
+                    fac: mu2v0.fac,
+                    frg: -1.0,
+                })
+                .collect();
+
+            let mut dim = vec![mu2_grid.len()];
+            if convolutions[0].is_some() {
+                dim.push(old_subgrid.x1_grid().len());
+            }
+            if convolutions[1].is_some() {
+                dim.push(old_subgrid.x2_grid().len());
+            }
+            let mut array = PackedArray::new(dim);
+
+            if convolutions[0].is_none() {
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[[index.0, index.2]] = v;
+                }
+            } else if convolutions[1].is_none() {
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[[index.0, index.1]] = v;
+                }
+            } else {
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[<[usize; 3]>::from(index)] = v;
+                }
+            }
+
+            let mut node_values = vec![mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect()];
+            if convolutions[0].is_some() {
+                node_values.push(old_subgrid.x1_grid().into_owned());
+            }
+            if convolutions[1].is_some() {
+                node_values.push(old_subgrid.x2_grid().into_owned());
+            }
+            *new_subgrid = ImportSubgridV1::new(array, node_values).into();
+        }
+    }
+
+    *result.metadata_mut() = grid
+        .key_values()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .collect();
+
+    if let Some(r) = grid.remapper() {
+        result
+            .set_remapper(
+                BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec())
+                    // UNWRAP: if the old grid could be constructed with the given normalizations
+                    // and limits we should be able to do the same without error
+                    .unwrap(),
+            )
+            // UNWRAP: there's a bug if this fails
+            .unwrap();
+    }
 
     assert_eq!(result.bin_info().bins(), grid.bin_info().bins());
 
