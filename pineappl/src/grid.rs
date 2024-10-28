@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::boc::{Channel, Kinematics, Order, Scales};
+use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
@@ -1322,6 +1322,17 @@ impl Grid {
                 alphas_table,
             )?;
 
+            let fac = if matches!(self.scales().fac, ScaleFuncForm::NoScale) {
+                ScaleFuncForm::NoScale
+            } else {
+                ScaleFuncForm::Scale(0)
+            };
+            let frg = if matches!(self.scales().frg, ScaleFuncForm::NoScale) {
+                ScaleFuncForm::NoScale
+            } else {
+                ScaleFuncForm::Scale(0)
+            };
+
             let rhs = Self {
                 subgrids,
                 channels,
@@ -1334,8 +1345,12 @@ impl Grid {
                 more_members: self.more_members.clone(),
                 kinematics: self.kinematics.clone(),
                 remapper: self.remapper.clone(),
-                // TODO: is this correct?
-                scales: self.scales.clone(),
+                scales: Scales {
+                    // FK-tables have their renormalization scales burnt in
+                    ren: ScaleFuncForm::NoScale,
+                    fac,
+                    frg,
+                },
             };
 
             if let Some(lhs) = &mut lhs {
