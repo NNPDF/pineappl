@@ -1383,6 +1383,14 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
     )
 }
 
+/// An exact duplicate of `pineappl_lumi_entry` to make naming (lumi -> channel) consistent.
+/// should be deleted using `pineappl_lumi_delete`.
+#[no_mangle]
+#[must_use]
+pub extern "C" fn pineappl_channel_new() -> Box<Lumi> {
+    Box::default()
+}
+
 /// Adds a generalized linear combination of initial states to the Luminosity.
 ///
 /// # Safety
@@ -1637,4 +1645,106 @@ pub unsafe extern "C" fn pineappl_channel_entry(
         .map(|(_, factor)| factor)
         .zip(factors.iter_mut())
         .for_each(|(from, to)| *to = *from);
+}
+
+/// An extension of `pineappl_grid_order_params` that accounts for the order of the fragmentation
+/// logs.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The pointer `order_params` must point to an array as large
+/// as four times the number of orders in `grid`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_params: *mut u32) {
+    let grid = unsafe { &*grid };
+    let orders = grid.orders();
+    let order_params = unsafe { slice::from_raw_parts_mut(order_params, 5 * orders.len()) };
+
+    for (i, order) in orders.iter().enumerate() {
+        order_params[5 * i] = order.alphas.into();
+        order_params[5 * i + 1] = order.alpha.into();
+        order_params[5 * i + 2] = order.logxir.into();
+        order_params[5 * i + 3] = order.logxif.into();
+        order_params[5 * i + 4] = order.logxia.into();
+    }
+}
+
+/// A generalization of the convolution function.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
+/// must either be null pointers or point to arrays that are as long as `grid` has orders and
+/// channels, respectively. Finally, `results` must be as long as `grid` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_convolve(
+    grid: *const Grid,
+    xfxs: *const extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: *const bool,
+    channel_mask: *const bool,
+    bin_indices: *const usize,
+    nb_scales: usize,
+    mu_scales: *const f64,
+    results: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        vec![]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
+    };
+
+    let channel_mask = if channel_mask.is_null() {
+        vec![]
+    } else {
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+    };
+
+    let bin_indices = if bin_indices.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(bin_indices, grid.bin_info().bins()) }
+    };
+
+    // Construct the alphas and PDFs functions
+    let mut als = |q2| alphas(q2, state);
+
+    let mut xfxs = unsafe { slice::from_raw_parts(xfxs, grid.convolutions().len()).to_vec() };
+    let mut xfx_funcs: Vec<_> = xfxs
+        .iter_mut()
+        .map(|xfx| move |id, x, q2| xfx(id, x, q2, state))
+        .collect();
+
+    // Construct the Convolution cache
+    let mut convolution_cache = ConvolutionCache::new(
+        grid.convolutions().to_vec(),
+        xfx_funcs
+            .iter_mut()
+            .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+            .collect(),
+        &mut als,
+    );
+
+    // The factorization, renormalization, and fragmentation scale factors
+    let mu_scales = if mu_scales.is_null() {
+        &[(1.0, 1.0, 1.0)]
+    } else {
+        unsafe { slice::from_raw_parts(mu_scales.cast::<(f64, f64, f64)>(), nb_scales) }
+    };
+
+    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
+
+    results.copy_from_slice(&grid.convolve(
+        &mut convolution_cache,
+        &order_mask,
+        bin_indices,
+        &channel_mask,
+        mu_scales,
+    ));
 }
