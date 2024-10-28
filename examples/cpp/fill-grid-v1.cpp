@@ -15,7 +15,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <random>
 #include <string>
 #include <vector>

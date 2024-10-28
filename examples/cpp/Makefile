@@ -10,6 +10,7 @@ PROGRAMS = \
 	advanced-convolution \
 	advanced-filling \
 	convolve-grid \
+	convolve-grid-v1 \
 	deprecated \
 	display-channels \
 	display-orders \
@@ -28,6 +29,9 @@ advanced-filling: advanced-filling.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 convolve-grid: convolve-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+convolve-grid-v1: convolve-grid-v1.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 deprecated: deprecated.cpp
