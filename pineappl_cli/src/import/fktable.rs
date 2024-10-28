@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
@@ -86,14 +86,14 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| channel![basis[index / 14], basis[index % 14], 1.0])
+                        .map(|(index, _)| channel![1.0 * (basis[index / 14], basis[index % 14])])
                         .collect()
                 } else {
                     flavor_mask
                         .iter()
                         .enumerate()
                         .filter(|&(_, &value)| value)
-                        .map(|(index, _)| Channel::new(vec![(vec![basis[index]], 1.0)]))
+                        .map(|(index, _)| channel![1.0 * (basis[index])])
                         .collect()
                 };
 

@@ -120,15 +120,15 @@ fn hadronic_pspgen(rng: &mut impl Rng, mmin: f64, mmax: f64) -> Psp2to2 {
 fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: u32, dynamic: bool, reweight: bool) -> Grid {
     let channels = vec![
         // photons
-        channel![22, 22, 1.0],
+        channel![1.0 * (22, 22)],
         // up-antiup
-        channel![2, -2, 1.0; 4, -4, 1.0],
+        channel![1.0 * (2, -2) + 1.0 * (4, -4)],
         // antiup-up
-        channel![-2, 2, 1.0; -4, 4, 1.0],
+        channel![1.0 * (-2, 2) + 1.0 * (-4, 4)],
         // down-antidown
-        channel![1, -1, 1.0; 3, -3, 1.0; 5, -5, 1.0],
+        channel![1.0 * (1, -1) + 1.0 * (3, -3) + 1.0 * (5, -5)],
         // antidown-down
-        channel![-1, 1, 1.0; -3, 3, 1.0; -5, 5, 1.0],
+        channel![1.0 * (-1, 1) + 1.0 * (-3, 3) + 1.0 * (-5, 5)],
     ];
 
     let orders = vec![

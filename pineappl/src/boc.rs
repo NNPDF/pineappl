@@ -571,12 +571,12 @@ impl Channel {
     /// use pineappl::boc::Channel;
     /// use pineappl::channel;
     ///
-    /// let entry = channel![103, 11, 10.0].translate(&|evol_id| match evol_id {
+    /// let entry = channel![10.0 * (103, 11)].translate(&|evol_id| match evol_id {
     ///     103 => vec![(2, 1.0), (-2, -1.0), (1, -1.0), (-1, 1.0)],
     ///     _ => vec![(evol_id, 1.0)],
     /// });
     ///
-    /// assert_eq!(entry, channel![2, 11, 10.0; -2, 11, -10.0; 1, 11, -10.0; -1, 11, 10.0]);
+    /// assert_eq!(entry, channel![10.0 * (2, 11) + -10.0 * (-2, 11) + -10.0 * (1, 11) + 10.0 * (-1, 11)]);
     /// ```
     #[must_use]
     pub fn translate(&self, translator: &dyn Fn(i32) -> Vec<(i32, f64)>) -> Self {
@@ -606,7 +606,7 @@ impl Channel {
     /// use pineappl::channel;
     /// use pineappl::boc::Channel;
     ///
-    /// let entry = channel![4, 4, 1.0; 2, 2, 1.0];
+    /// let entry = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
     ///
     /// assert_eq!(entry.entry(), [(vec![2, 2], 1.0), (vec![4, 4], 1.0)]);
     /// ```
@@ -639,11 +639,11 @@ impl Channel {
     /// ```rust
     /// use pineappl::channel;
     ///
-    /// let ch1 = channel![2, 2, 2.0; 4, 4, 2.0];
-    /// let ch2 = channel![4, 4, 1.0; 2, 2, 1.0];
-    /// let ch3 = channel![3, 4, 1.0; 2, 2, 1.0];
-    /// let ch4 = channel![4, 3, 1.0; 2, 3, 2.0];
-    /// let ch5 = channel![2, 2, 1.0; 4, 4, 2.0];
+    /// let ch1 = channel![2.0 * (2, 2) + 2.0 * (4, 4)];
+    /// let ch2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
+    /// let ch3 = channel![1.0 * (3, 4) + 1.0 * (2, 2)];
+    /// let ch4 = channel![1.0 * (4, 3) + 2.0 * (2, 3)];
+    /// let ch5 = channel![1.0 * (2, 2) + 2.0 * (4, 4)];
     ///
     /// // ch1 is ch2 multiplied by two
     /// assert_eq!(ch1.common_factor(&ch2), Some(2.0));
@@ -741,16 +741,21 @@ impl FromStr for Channel {
 /// ```rust
 /// use pineappl::channel;
 ///
-/// let entry1 = channel![2, 2, 1.0; 4, 4, 1.0];
-/// let entry2 = channel![4, 4, 1.0; 2, 2, 1.0];
+/// let entry1 = channel![1.0 * (2, 2) + 1.0 * (4, 4)];
+/// let entry2 = channel![1.0 * (4, 4) + 1.0 * (2, 2)];
 ///
 /// assert_eq!(entry1, entry2);
 /// ```
 #[macro_export]
 macro_rules! channel {
-    // TODO: generalize this to accept an arbitrary number of PIDs
-    ($a:expr, $b:expr, $factor:expr $(; $c:expr, $d:expr, $fac:expr)*) => {
-        $crate::boc::Channel::new(vec![(vec![$a, $b], $factor), $((vec![$c, $d], $fac)),*])
+    ($factor:literal * ($($pids:expr),+) $(+ $more_factors:literal * ($($more_pids:expr),+))*) => {
+        $crate::boc::Channel::new(
+            vec![
+                (vec![$($pids),+], $factor) $(,
+                (vec![$($more_pids),+], $more_factors)
+                )*
+            ]
+        )
     };
 }
 
@@ -965,7 +970,7 @@ mod tests {
     fn channel_from_str() {
         assert_eq!(
             str::parse::<Channel>(" 1   * (  2 , -2) + 2* (4,-4)").unwrap(),
-            channel![2, -2, 1.0; 4, -4, 2.0]
+            channel![1.0 * (2, -2) + 2.0 * (4, -4)]
         );
 
         assert_eq!(

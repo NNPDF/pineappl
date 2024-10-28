@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the macro `channel!` now accepts a channel specification that is of the
+  format `factor * (pid, ..) + ...`
 - Python API: dropped top-level Python interface layer
 - Python API: renamed `lumi` to `channel` in PyO3 Python interface. This
   concerns 1) the argument names of `convolute_with_one` and similar functions;

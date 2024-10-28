@@ -1667,8 +1667,8 @@ mod tests {
         let mut grid = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1690,8 +1690,8 @@ mod tests {
             PidBasis::Pdg,
             vec![
                 // differently ordered than `grid`
-                channel![1, 1, 1.0; 3, 3, 1.0],
-                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
             vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1718,8 +1718,8 @@ mod tests {
         let mut grid = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1740,8 +1740,8 @@ mod tests {
         let mut other = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![
                 Order::new(1, 2, 0, 0, 0),
@@ -1777,8 +1777,8 @@ mod tests {
         let mut grid = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
@@ -1798,7 +1798,10 @@ mod tests {
 
         let mut other = Grid::new(
             PidBasis::Pdg,
-            vec![channel![22, 22, 1.0], channel![2, 2, 1.0; 4, 4, 1.0]],
+            vec![
+                channel![1.0 * (22, 22)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+            ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
@@ -1826,8 +1829,8 @@ mod tests {
         let mut grid = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5],
@@ -1849,8 +1852,8 @@ mod tests {
             PidBasis::Pdg,
             vec![
                 // channels are differently sorted
-                channel![1, 1, 1.0; 3, 3, 1.0],
-                channel![2, 2, 1.0; 4, 4, 1.0],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.5, 0.75, 1.0],
@@ -1878,7 +1881,7 @@ mod tests {
     fn grid_convolutions() {
         let mut grid = Grid::new(
             PidBasis::Pdg,
-            vec![channel![21, 21, 1.0]],
+            vec![channel![1.0 * (21, 21)]],
             vec![Order {
                 alphas: 0,
                 alpha: 0,
@@ -1923,8 +1926,8 @@ mod tests {
         let mut grid = Grid::new(
             PidBasis::Pdg,
             vec![
-                channel![2, 2, 1.0; 4, 4, 1.0],
-                channel![1, 1, 1.0; 3, 3, 1.0],
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
             vec![Order::new(0, 2, 0, 0, 0)],
             vec![0.0, 0.25, 0.5, 0.75, 1.0],

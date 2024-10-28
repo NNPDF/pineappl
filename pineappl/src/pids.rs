@@ -938,7 +938,7 @@ mod tests {
     #[test]
     fn inverse_inverse_evol() {
         for pid in [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6] {
-            let result = &channel![pid, pid, 1.0]
+            let result = &channel![1.0 * (pid, pid)]
                 .translate(&pdg_mc_pids_to_evol)
                 .translate(&evol_to_pdg_mc_ids);
 
@@ -1031,14 +1031,28 @@ mod tests {
 
     #[test]
     fn translate() {
-        let channel = PidBasis::Evol.translate(PidBasis::Pdg, channel![103, 203, 2.0]);
+        let channel = PidBasis::Evol.translate(PidBasis::Pdg, channel![2.0 * (103, 203)]);
 
         assert_eq!(
             channel,
-            channel![ 2,  2,  2.0;  2, -2, -2.0;  2,  1, -2.0;  2, -1,  2.0;
-                     -2,  2,  2.0; -2, -2, -2.0; -2,  1, -2.0; -2, -1,  2.0;
-                      1,  2, -2.0;  1, -2,  2.0;  1,  1,  2.0;  1, -1, -2.0;
-                     -1,  2, -2.0; -1, -2,  2.0; -1,  1,  2.0; -1, -1, -2.0]
+            channel![
+                2.0 * (2, 2)
+                    + -2.0 * (2, -2)
+                    + -2.0 * (2, 1)
+                    + 2.0 * (2, -1)
+                    + 2.0 * (-2, 2)
+                    + -2.0 * (-2, -2)
+                    + -2.0 * (-2, 1)
+                    + 2.0 * (-2, -1)
+                    + -2.0 * (1, 2)
+                    + 2.0 * (1, -2)
+                    + 2.0 * (1, 1)
+                    + -2.0 * (1, -1)
+                    + -2.0 * (-1, 2)
+                    + 2.0 * (-1, -2)
+                    + 2.0 * (-1, 1)
+                    + -2.0 * (-1, -1)
+            ]
         );
     }
 }
