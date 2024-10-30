@@ -96,12 +96,11 @@ bitflags! {
     #[derive(Clone, Copy)]
     #[repr(transparent)]
     pub struct GridOptFlags: u32 {
-        /// Change the [`Subgrid`] type to optimize storage efficiency.
-        const OPTIMIZE_SUBGRID_TYPE = 0b1;
         /// Recognize whether a subgrid was filled with events with a static scale and if this is
-        /// the case, optimize it by undoing the interpolation in the scale. This flag requires
-        /// [`Self::OPTIMIZE_SUBGRID_TYPE`] to be active.
-        const STATIC_SCALE_DETECTION = 0b10;
+        /// the case, optimize it by undoing the interpolation in the scale.
+        const OPTIMIZE_NODES = 0b1;
+        /// Change the [`Subgrid`] type to optimize storage efficiency.
+        const OPTIMIZE_SUBGRID_TYPE = 0b10;
         /// If two channels differ by transposition of the two initial states and the functions
         /// this grid is convolved with are the same for both initial states, this will merge one
         /// channel into the other, with the correct transpositions.
@@ -832,9 +831,11 @@ impl Grid {
     /// Optimizes the internal datastructures for space efficiency. The parameter `flags`
     /// determines which optimizations are applied, see [`GridOptFlags`].
     pub fn optimize_using(&mut self, flags: GridOptFlags) {
+        if flags.contains(GridOptFlags::OPTIMIZE_NODES) {
+            self.optimize_nodes();
+        }
         if flags.contains(GridOptFlags::OPTIMIZE_SUBGRID_TYPE) {
-            let ssd = flags.contains(GridOptFlags::STATIC_SCALE_DETECTION);
-            self.optimize_subgrid_type(ssd);
+            self.optimize_subgrid_type();
         }
         if flags.contains(GridOptFlags::SYMMETRIZE_CHANNELS) {
             self.symmetrize_channels();
@@ -850,7 +851,13 @@ impl Grid {
         }
     }
 
-    fn optimize_subgrid_type(&mut self, optimize_static_nodes: bool) {
+    fn optimize_nodes(&mut self) {
+        for subgrid in &mut self.subgrids {
+            subgrid.optimize_nodes();
+        }
+    }
+
+    fn optimize_subgrid_type(&mut self) {
         for subgrid in &mut self.subgrids {
             match subgrid {
                 // replace empty subgrids of any type with `EmptySubgridV1`
@@ -858,9 +865,6 @@ impl Grid {
                     *subgrid = EmptySubgridV1.into();
                 }
                 _ => {
-                    if optimize_static_nodes {
-                        subgrid.optimize_static_nodes();
-                    }
                     // TODO: check if we should remove this
                     *subgrid = ImportSubgridV1::from(&*subgrid).into();
                 }

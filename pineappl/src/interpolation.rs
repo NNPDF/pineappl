@@ -5,6 +5,7 @@ use super::packed_array::PackedArray;
 use arrayvec::ArrayVec;
 use serde::{Deserialize, Serialize};
 use std::mem;
+use std::ops::Range;
 
 const MAX_INTERP_ORDER_PLUS_ONE: usize = 8;
 const MAX_DIMENSIONS: usize = 8;
@@ -265,6 +266,20 @@ impl Interp {
     pub const fn reweight_meth(&self) -> ReweightMeth {
         self.reweight
     }
+
+    /// TODO
+    #[must_use]
+    pub fn sub_interp(&self, range: Range<usize>) -> Self {
+        Self {
+            min: self.gety(range.start),
+            max: self.gety(range.end - 1),
+            nodes: range.clone().count(),
+            order: self.order,
+            reweight: self.reweight,
+            map: self.map,
+            interp_meth: self.interp_meth,
+        }
+    }
 }
 
 /// TODO
@@ -295,8 +310,6 @@ pub fn interpolate(
     else {
         return false;
     };
-
-    // TODO: add static value detection
 
     let weight = weight
         / interps

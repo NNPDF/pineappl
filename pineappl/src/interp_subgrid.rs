@@ -4,6 +4,7 @@ use super::interpolation::{self, Interp};
 use super::packed_array::PackedArray;
 use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use float_cmp::approx_eq;
+use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
 
@@ -110,20 +111,42 @@ impl Subgrid for InterpSubgridV1 {
         }
     }
 
-    fn optimize_static_nodes(&mut self) {
+    fn optimize_nodes(&mut self) {
+        // find the optimal ranges in which the nodes are used
+        let ranges: Vec<_> = self.array.indexed_iter().fold(
+            self.node_values()
+                .iter()
+                .map(|values| values.len()..0)
+                .collect(),
+            |mut prev, (indices, _)| {
+                for (i, index) in indices.iter().enumerate() {
+                    prev[i].start = prev[i].start.min(*index);
+                    prev[i].end = prev[i].end.max(*index + 1);
+                }
+                prev
+            },
+        );
+
         let mut new_array = PackedArray::new(
-            self.array
-                .shape()
+            ranges
                 .iter()
                 .zip(&self.static_nodes)
-                .map(|(&dim, static_node)| if static_node.is_some() { 1 } else { dim })
+                .map(|(range, static_node)| {
+                    if static_node.is_some() {
+                        1
+                    } else {
+                        range.clone().count()
+                    }
+                })
                 .collect(),
         );
 
         for (mut index, value) in self.array.indexed_iter() {
-            for (idx, static_node) in index.iter_mut().zip(&self.static_nodes) {
+            for (idx, range, static_node) in izip!(&mut index, &ranges, &self.static_nodes) {
                 if static_node.is_some() {
                     *idx = 0;
+                } else {
+                    *idx -= range.start;
                 }
             }
             new_array[index.as_slice()] += value;
@@ -131,9 +154,10 @@ impl Subgrid for InterpSubgridV1 {
 
         self.array = new_array;
 
-        for (static_node, interp) in self.static_nodes.iter_mut().zip(&mut self.interps) {
-            if let &mut Some(value) = static_node {
-                *interp = Interp::new(
+        for (interp, static_node, range) in izip!(&mut self.interps, &mut self.static_nodes, ranges)
+        {
+            *interp = if let &mut Some(value) = static_node {
+                Interp::new(
                     value,
                     value,
                     1,
@@ -141,8 +165,10 @@ impl Subgrid for InterpSubgridV1 {
                     interp.reweight_meth(),
                     interp.map(),
                     interp.interp_meth(),
-                );
-            }
+                )
+            } else {
+                interp.sub_interp(range)
+            };
         }
     }
 }
@@ -228,5 +254,13 @@ mod tests {
                 bytes_per_value: mem::size_of::<f64>()
             }
         );
+
+        subgrid.optimize_nodes();
+
+        let node_values = subgrid.node_values();
+
+        assert_eq!(node_values[0].len(), 23);
+        assert_eq!(node_values[1].len(), 1);
+        assert_eq!(node_values[2].len(), 1);
     }
 }

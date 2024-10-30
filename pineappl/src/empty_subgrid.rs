@@ -47,7 +47,7 @@ impl Subgrid for EmptySubgridV1 {
         }
     }
 
-    fn optimize_static_nodes(&mut self) {}
+    fn optimize_nodes(&mut self) {}
 }
 
 #[cfg(test)]
@@ -64,7 +64,7 @@ mod tests {
         subgrid.merge(&EmptySubgridV1.into(), None);
         subgrid.scale(2.0);
         subgrid.symmetrize(1, 2);
-        subgrid.optimize_static_nodes();
+        subgrid.optimize_nodes();
         assert_eq!(
             subgrid.stats(),
             Stats {

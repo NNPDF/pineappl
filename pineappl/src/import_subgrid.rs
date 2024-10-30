@@ -130,7 +130,7 @@ impl Subgrid for ImportSubgridV1 {
         }
     }
 
-    fn optimize_static_nodes(&mut self) {}
+    fn optimize_nodes(&mut self) {}
 }
 
 impl From<&SubgridEnum> for ImportSubgridV1 {

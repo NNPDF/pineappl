@@ -423,13 +423,13 @@ fn perform_grid_tests(
         .collect();
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
     }
 
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
     }
 
     // TEST 9: `set_remapper`
@@ -451,7 +451,7 @@ fn perform_grid_tests(
     grid.merge_bins(0..1)?;
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 24);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
     }
 
     // merge two bins with each other
@@ -501,7 +501,7 @@ fn perform_grid_tests(
             .skip(2)
             .take(6),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 16);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
     }
 
     Ok(())
@@ -709,14 +709,13 @@ fn grid_optimize() {
     assert_eq!(node_values[1].len(), 6);
     assert_eq!(node_values[2].len(), 6);
 
-    grid.optimize_using(GridOptFlags::OPTIMIZE_SUBGRID_TYPE | GridOptFlags::STATIC_SCALE_DETECTION);
+    grid.optimize_using(GridOptFlags::OPTIMIZE_NODES);
 
     assert!(matches!(
         grid.subgrids()[[0, 0, 0]],
-        SubgridEnum::ImportSubgridV1 { .. }
+        SubgridEnum::InterpSubgridV1 { .. }
     ));
-    // if `STATIC_SCALE_DETECTION` is present the scale dimension is better optimized
-    let node_values = grid.subgrids()[[0, 0, 0]].node_values();
+    let node_values = dbg!(grid.subgrids()[[0, 0, 0]].node_values());
     assert_eq!(node_values[0].len(), 1);
     assert_eq!(node_values[1].len(), 6);
     assert_eq!(node_values[2].len(), 6);

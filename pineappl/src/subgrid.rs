@@ -75,7 +75,7 @@ pub trait Subgrid {
     fn stats(&self) -> Stats;
 
     /// TODO
-    fn optimize_static_nodes(&mut self);
+    fn optimize_nodes(&mut self);
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
