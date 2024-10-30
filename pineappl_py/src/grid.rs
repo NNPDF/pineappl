@@ -16,7 +16,6 @@ use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyIterator;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -326,8 +325,9 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// slices : Iterable
-    ///     list of (PyOperatorSliceInfo, 5D array) describing each convolution
+    /// slices : list(list(tuple(PyOperatorSliceInfo, PyReadOnlyArray4)))
+    ///     list of EKOs where each element is a list of (PyOperatorSliceInfo, 5D array)
+    ///     describing each convolution
     /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     /// xi : (float, float)
@@ -341,9 +341,9 @@ impl PyGrid {
     /// -------
     /// PyFkTable :
     ///     produced FK table
-    pub fn evolve<'py>(
+    pub fn evolve(
         &self,
-        slices: &Bound<'py, PyIterator>,
+        slices: Vec<Vec<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>>,
         order_mask: Vec<bool>,
         xi: (f64, f64, f64),
         ren1: Vec<f64>,
@@ -352,17 +352,18 @@ impl PyGrid {
         Ok(self
             .grid
             .evolve(
-                vec![slices.into_iter().map(|slice| {
-                    let (info, op) = slice
-                        .unwrap()
-                        .extract::<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>()
-                        .unwrap();
-                    Ok::<_, std::io::Error>((
-                        info.info,
-                        // TODO: avoid copying
-                        CowArray::from(op.as_array().to_owned()),
-                    ))
-                })],
+                slices
+                    .iter()
+                    .map(|subslice| {
+                        subslice.iter().map(|(info, op)| {
+                            Ok::<_, std::io::Error>((
+                                info.info.clone(),
+                                // TODO: avoid copying
+                                CowArray::from(op.as_array().to_owned()),
+                            ))
+                        })
+                    })
+                    .collect(),
                 &order_mask,
                 xi,
                 &AlphasTable { ren1, alphas },

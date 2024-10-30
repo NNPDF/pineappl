@@ -4,86 +4,18 @@ It checks the cases in which we have one, two, and
 three (general) convolutions.
 """
 
-import tempfile
-from typing import List
-
 import numpy as np
-from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales
+import tempfile
+
+from pineappl.boc import Channel
 from pineappl.convolutions import Conv, ConvType
 from pineappl.fk_table import FkAssumptions, FkTable
-from pineappl.grid import Grid, Order
+from pineappl.grid import Order
 from pineappl.import_subgrid import ImportSubgridV1
-from pineappl.interpolation import (
-    Interp,
-    InterpolationMethod,
-    MappingMethod,
-    ReweightingMethod,
-)
-from pineappl.pids import PidBasis
 
 
 class TestFkTable:
-    def fake_grid(
-        self,
-        channels: List[Channel],
-        orders: List[Order],
-        convolutions: List[Conv],
-        bins: List[float] = [1e-7, 1e-3, 1],
-    ) -> Grid:
-        kinematics = [
-            Kinematics.Scale(0),  # Scale
-            Kinematics.X(0),  # x1 momentum fraction
-            Kinematics.X(1),  # x2 momentum fraction
-        ]
-        # Define the interpolation specs for each item of the Kinematics
-        interpolations = [
-            Interp(
-                min=1e2,
-                max=1e8,
-                nodes=40,
-                order=3,
-                reweight_meth=ReweightingMethod.NoReweight,
-                map=MappingMethod.ApplGridH0,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on the Scale
-            Interp(
-                min=2e-7,
-                max=1.0,
-                nodes=50,
-                order=3,
-                reweight_meth=ReweightingMethod.ApplGridX,
-                map=MappingMethod.ApplGridF2,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on x1 momentum fraction
-            Interp(
-                min=2e-7,
-                max=1.0,
-                nodes=50,
-                order=3,
-                reweight_meth=ReweightingMethod.ApplGridX,
-                map=MappingMethod.ApplGridF2,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on x2 momentum fraction
-        ]
-        # Define the bin limits
-        bin_limits = np.array(bins)
-        # Construct the `Scales` object
-        w_scale = ScaleFuncForm.Scale(0)
-        no_scale = ScaleFuncForm.NoScale(0)
-        scale_funcs = Scales(ren=w_scale, fac=w_scale, frg=no_scale)
-
-        return Grid(
-            pid_basis=PidBasis.Evol,
-            channels=channels,
-            orders=orders,
-            bin_limits=bin_limits,
-            convolutions=convolutions,
-            interpolations=interpolations,
-            kinematics=kinematics,
-            scale_funcs=scale_funcs,
-        )
-
-    def test_convolve(self):
+    def test_convolve(self, fake_grids):
         # Define convolution types and the initial state hadrons
         # We consider an initial state Polarized Proton
         h = ConvType(polarized=True, time_like=False)
@@ -96,7 +28,9 @@ class TestFkTable:
         channels = [Channel(down_channel), Channel(up_channel)]
         # Now we define the perturbative orders
         orders = [Order(0, 0, 0, 0, 0)]
-        g = self.fake_grid(channels, orders, convolutions)
+        g = fake_grids.grid_with_one_convolution(
+            channels=channels, orders=orders, convolutions=convolutions
+        )
 
         # DIS grid
         xs = np.linspace(0.5, 1.0, 5)
