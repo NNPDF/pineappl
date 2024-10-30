@@ -8,7 +8,6 @@ use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::Mu2;
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::pin::Pin;
@@ -182,16 +181,7 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
             let igrid = unsafe { &*igrid };
             let reweight = ffi::igrid_m_reweight(igrid);
 
-            let mu2_values: Vec<_> = (0..igrid.Ntau())
-                .map(|i| {
-                    let q2 = igrid.getQ2(i);
-                    Mu2 {
-                        ren: q2,
-                        fac: q2,
-                        frg: -1.0,
-                    }
-                })
-                .collect();
+            let scale_values: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let x1_values: Vec<_> = (0..igrid.Ny1())
                 .map(|i| igrid.getx1(i).clamp(0.0, 1.0))
                 .collect();
@@ -223,12 +213,12 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
                 let matrix = unsafe { &*matrix };
 
                 let mut array = PackedArray::new(if dis {
-                    vec![mu2_values.len(), x1_values.len()]
+                    vec![scale_values.len(), x1_values.len()]
                 } else {
-                    vec![mu2_values.len(), x1_values.len(), x2_values.len()]
+                    vec![scale_values.len(), x1_values.len(), x2_values.len()]
                 });
 
-                for itau in 0..mu2_values.len() {
+                for itau in 0..scale_values.len() {
                     for ix1 in 0..x1_values.len() {
                         for ix2 in 0..x2_values.len() {
                             let value = ffi::sparse_matrix_get(
@@ -255,16 +245,9 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
                         ImportSubgridV1::new(
                             array,
                             if dis {
-                                vec![
-                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                    x1_values.clone(),
-                                ]
+                                vec![scale_values.clone(), x1_values.clone()]
                             } else {
-                                vec![
-                                    mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                    x1_values.clone(),
-                                    x2_values.clone(),
-                                ]
+                                vec![scale_values.clone(), x1_values.clone(), x2_values.clone()]
                             },
                         )
                         .into();

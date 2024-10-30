@@ -10,7 +10,6 @@ use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
-use pineappl::subgrid::Mu2;
 use pineappl_fastnlo::ffi::{
     self, fastNLOCoeffAddBase, fastNLOCoeffAddFix, fastNLOCoeffAddFlex, fastNLOLHAPDF,
     fastNLOPDFLinearCombinations, EScaleFunctionalForm,
@@ -212,17 +211,10 @@ fn convert_coeff_add_fix(
                 }
 
                 let q_values = ffi::GetScaleNodes(table, obs, j);
-                let mu2_values: Vec<_> = q_values
-                    .iter()
-                    .map(|q| Mu2 {
-                        ren: q * q,
-                        fac: q * q,
-                        frg: -1.0,
-                    })
-                    .collect();
+                let scale_values: Vec<_> = q_values.into_iter().map(|q| q * q).collect();
 
                 let mut array =
-                    PackedArray::new(vec![mu2_values.len(), x1_values.len(), x2_values.len()]);
+                    PackedArray::new(vec![scale_values.len(), x1_values.len(), x2_values.len()]);
 
                 // TODO: figure out what the general case is supposed to be
                 assert_eq!(j, 0);
@@ -278,11 +270,7 @@ fn convert_coeff_add_fix(
                         [[0, obs.try_into().unwrap(), subproc.try_into().unwrap()]] =
                         ImportSubgridV1::new(
                             array,
-                            vec![
-                                mu2_values.iter().map(|&Mu2 { ren, .. }| ren).collect(),
-                                x1_values.clone(),
-                                x2_values.clone(),
-                            ],
+                            vec![scale_values.clone(), x1_values.clone(), x2_values.clone()],
                         )
                         .into();
                 }

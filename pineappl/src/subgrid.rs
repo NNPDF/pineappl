@@ -23,17 +23,6 @@ pub enum SubgridEnum {
     ImportSubgridV1,
 }
 
-/// Structure denoting renormalization and factorization scale values.
-#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, Serialize)]
-pub struct Mu2 {
-    /// The (squared) renormalization scale value.
-    pub ren: f64,
-    /// The (squared) factorization scale value.
-    pub fac: f64,
-    /// The (squared) fragmentation scale value.
-    pub frg: f64,
-}
-
 /// Size-related statistics for a subgrid.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Stats {

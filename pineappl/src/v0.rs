@@ -6,7 +6,7 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::Mu2;
+use float_cmp::assert_approx_eq;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
@@ -117,17 +117,18 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
 
     for (new_subgrid, old_subgrid) in result.subgrids_mut().iter_mut().zip(grid.subgrids().iter()) {
         if !old_subgrid.is_empty() {
-            let mu2_grid: Vec<_> = old_subgrid
+            let scale_node_values: Vec<_> = old_subgrid
                 .mu2_grid()
                 .iter()
-                .map(|mu2v0| Mu2 {
-                    ren: mu2v0.ren,
-                    fac: mu2v0.fac,
-                    frg: -1.0,
+                .map(|mu2v0| {
+                    // TODO: implement importing flexible-scale grids
+                    assert_approx_eq!(f64, mu2v0.ren, mu2v0.fac, ulps = 4);
+
+                    mu2v0.fac
                 })
                 .collect();
 
-            let mut dim = vec![mu2_grid.len()];
+            let mut dim = vec![scale_node_values.len()];
             if convolutions[0].is_some() {
                 dim.push(old_subgrid.x1_grid().len());
             }
@@ -150,7 +151,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 }
             }
 
-            let mut node_values = vec![mu2_grid.iter().map(|&Mu2 { ren, .. }| ren).collect()];
+            let mut node_values = vec![scale_node_values];
             if convolutions[0].is_some() {
                 node_values.push(old_subgrid.x1_grid().into_owned());
             }
