@@ -209,6 +209,23 @@ impl PyGrid {
         self.grid.set_remapper(remapper.bin_remapper).unwrap();
     }
 
+    /// Set a metadata key-value pair in the grid.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// key : str
+    ///     key
+    /// value : str
+    ///     value
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.grid
+            .metadata_mut()
+            .insert(key.to_owned(), value.to_owned());
+    }
+
     /// Convolve the grid with as many distributions.
     ///
     /// # Panics

@@ -400,6 +400,16 @@ class TestGrid:
         assert isinstance(gg, Grid)
         _ = Grid.read(str(p))
 
+    def test_set_key_value(self, fake_grids):
+        g = fake_grids.grid_with_two_convolutions(
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
+        g.set_key_value("bla", "blub")
+        g.set_key_value('"', "'")
+        g.set_key_value("äöü", "ß\\")
+
     def test_fill(self, fake_grids):
         g = fake_grids.grid_with_two_convolutions(
             channels=CHANNELS,
