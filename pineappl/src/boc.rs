@@ -111,10 +111,10 @@ impl ScaleFuncForm {
                     Self::ScaleMax(_, _) => |(s1, s2)| s1.max(s2),
                     Self::ScaleMin(_, _) => |(s1, s2)| s1.min(s2),
                     Self::Prod(_, _) => |(s1, s2)| s1 * s2,
-                    Self::S2plusS1half(_, _) => |(s1, s2)| 0.5 * (s1 + 2.0 * s2),
-                    Self::Pow4Sum(_, _) => |(s1, s2)| (s1 * s1 + s2 * s2).sqrt(),
-                    Self::WgtAvg(_, _) => |(s1, s2)| (s1 * s1 + s2 * s2) / (s1 + s2),
-                    Self::S2plusS1fourth(_, _) => |(s1, s2)| 0.25 * s1 + s2,
+                    Self::S2plusS1half(_, _) => |(s1, s2)| 0.5 * s2.mul_add(2.0, s1),
+                    Self::Pow4Sum(_, _) => |(s1, s2)| s1.hypot(s2),
+                    Self::WgtAvg(_, _) => |(s1, s2)| s1.mul_add(s1, s2 * s2) / (s1 + s2),
+                    Self::S2plusS1fourth(_, _) => |(s1, s2)| s1.mul_add(0.25, s2),
                     Self::ExpProd2(_, _) => {
                         |(s1, s2)| (s1.sqrt() * (0.3 * s2.sqrt()).exp()).powi(2)
                     }
@@ -145,6 +145,7 @@ impl ScaleFuncForm {
     }
 
     /// TODO
+    #[must_use]
     pub fn idx(&self, indices: &[usize], scale_dims: &[usize]) -> usize {
         match self.clone() {
             Self::NoScale => unreachable!(),

@@ -162,7 +162,7 @@ impl From<&SubgridEnum> for ImportSubgridV1 {
 
         for (mut indices, value) in subgrid.indexed_iter() {
             for (index, range) in indices.iter_mut().zip(&ranges) {
-                *index = *index - range.start;
+                *index -= range.start;
             }
 
             array[indices.as_slice()] += value;

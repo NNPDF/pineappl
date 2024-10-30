@@ -11,7 +11,7 @@ const MAX_DIMENSIONS: usize = 8;
 
 mod applgrid {
     pub fn reweight_x(x: f64) -> f64 {
-        (x.sqrt() / (1.0 - 0.99 * x)).powi(3)
+        (x.sqrt() / x.mul_add(-0.99, 1.0)).powi(3)
     }
 
     pub fn fx2(y: f64) -> f64 {
@@ -23,7 +23,7 @@ mod applgrid {
             if delta.abs() < 1e-12 {
                 return x;
             }
-            let deriv = -1.0 - 5.0 * x;
+            let deriv = x.mul_add(-5.0, -1.0);
             yp -= delta / deriv;
         }
 
