@@ -6,7 +6,7 @@ from pineappl.grid import Grid
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.interpolation import Interp
 from pineappl.pids import PidBasis
-from pineappl.subgrid import Mu2, SubgridEnum
+from pineappl.subgrid import SubgridEnum
 
 # Define some default for the minimum value of `Q2`
 Q2_MIN = 1e2
@@ -109,20 +109,6 @@ class TestSubgrid:
         array = np.random.rand(len(Q2s), *xgrid_size)
         subgrid = ImportSubgridV1(array=array, node_values=[scale, *x_grids])
         return subgrid, [*x_grids, scale, array]
-
-    def test_mu2(self):
-        mu2_obj = Mu2(ren=1.0, fac=2.0, frg=0.0)
-        assert mu2_obj.ren == 1.0
-        assert mu2_obj.fac == 2.0
-        assert mu2_obj.frg == 0.0
-
-        # Overwrite the constructed values
-        mu2_obj.ren = 10.0
-        mu2_obj.fac = 20.0
-        mu2_obj.frg = 10.0
-        assert mu2_obj.ren == 10.0
-        assert mu2_obj.fac == 20.0
-        assert mu2_obj.frg == 10.0
 
     def test_subgrid_methods(self):
         # TODO: extract the values of the scales and x grids
