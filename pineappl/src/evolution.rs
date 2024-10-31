@@ -6,21 +6,13 @@ use super::grid::{Grid, GridError};
 use super::import_subgrid::ImportSubgridV1;
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{self, Subgrid, SubgridEnum};
 use float_cmp::approx_eq;
 use itertools::izip;
 use itertools::Itertools;
 use ndarray::linalg;
 use ndarray::{s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, Axis, Ix1, Ix2};
 use std::iter;
-
-/// Number of ULPS used to de-duplicate grid values in [`Grid::evolve_info`].
-pub(crate) const EVOLVE_INFO_TOL_ULPS: i64 = 256;
-
-/// Number of ULPS used to search for grid values in this module. This value must be a large-enough
-/// multiple of [`EVOLVE_INFO_TOL_ULPS`], because otherwise similar values are not found in
-/// [`Grid::evolve`]. See <https://github.com/NNPDF/pineappl/issues/223> for details.
-const EVOLUTION_TOL_ULPS: i64 = 4 * EVOLVE_INFO_TOL_ULPS;
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
 /// a specific [`Grid`].
@@ -180,7 +172,7 @@ fn operator_slices(
         .map(|&x1p| {
             info.x1
                 .iter()
-                .position(|&x1| approx_eq!(f64, x1p, x1, ulps = EVOLUTION_TOL_ULPS))
+                .position(|&x1| subgrid::node_value_eq(x1p, x1))
                 .ok_or_else(|| {
                     GridError::EvolutionFailure(format!("no operator for x = {x1p} found"))
                 })
@@ -250,7 +242,7 @@ fn ndarray_from_subgrid_orders_slice_many(
 
     for x1 in &mut x1n {
         x1.sort_by(f64::total_cmp);
-        x1.dedup_by(|&mut a, &mut b| approx_eq!(f64, a, b, ulps = EVOLUTION_TOL_ULPS));
+        x1.dedup_by(subgrid::node_value_eq_ref_mut);
     }
 
     let dim: Vec<_> = x1n.iter().map(Vec::len).collect();
@@ -313,7 +305,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                     .iter()
                     .map(|&xs| {
                         x1.iter()
-                            .position(|&x| approx_eq!(f64, x, xs, ulps = EVOLUTION_TOL_ULPS))
+                            .position(|&x| subgrid::node_value_eq(x, xs))
                             // UNWRAP: `x1n` contains all x-values, so we must find each `x`
                             .unwrap()
                     })
@@ -329,7 +321,7 @@ fn ndarray_from_subgrid_orders_slice_many(
             let ren = rens[grid.scales().ren.idx(&indices, &scale_dims)];
             let fac = facs[grid.scales().fac.idx(&indices, &scale_dims)];
 
-            if !approx_eq!(f64, xif * xif * fac, fac1, ulps = EVOLUTION_TOL_ULPS) {
+            if !subgrid::node_value_eq(xif * xif * fac, fac1) {
                 continue;
             }
 
@@ -341,9 +333,7 @@ fn ndarray_from_subgrid_orders_slice_many(
                 .ren1
                 .iter()
                 .zip(alphas_table.alphas.iter())
-                .find_map(|(&ren1, &alphas)| {
-                    approx_eq!(f64, ren1, mur2, ulps = EVOLUTION_TOL_ULPS).then(|| alphas)
-                })
+                .find_map(|(&ren1, &alphas)| subgrid::node_value_eq(ren1, mur2).then_some(alphas))
             {
                 alphas.powi(order.alphas.into())
             } else {
@@ -380,12 +370,9 @@ pub(crate) fn evolve_slice_with_many(
     // TODO: implement matching of different scales for different EKOs
     let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
     fac1_scales.sort_by(f64::total_cmp);
-    assert!(fac1_scales.windows(2).all(|scales| approx_eq!(
-        f64,
-        scales[0],
-        scales[1],
-        ulps = EVOLUTION_TOL_ULPS
-    )));
+    assert!(fac1_scales
+        .windows(2)
+        .all(|scales| subgrid::node_value_eq(scales[0], scales[1])));
     let fac1 = fac1_scales[0];
 
     assert_eq!(operators.len(), infos.len());
@@ -452,7 +439,7 @@ pub(crate) fn evolve_slice_with_many(
                     || last_x1
                         .iter()
                         .zip(x1.iter())
-                        .any(|(&lhs, &rhs)| !approx_eq!(f64, lhs, rhs, ulps = EVOLUTION_TOL_ULPS))
+                        .any(|(&lhs, &rhs)| !subgrid::node_value_eq(lhs, rhs))
                 {
                     *slices = operator_slices(operator, info, pid_indices, &x1)?;
                     *last_x1 = x1;

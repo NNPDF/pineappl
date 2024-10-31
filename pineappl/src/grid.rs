@@ -10,10 +10,10 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interp_subgrid::InterpSubgridV1;
 use super::interpolation::Interp;
 use super::pids::PidBasis;
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{self, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
-use float_cmp::{approx_eq, assert_approx_eq};
+use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
@@ -1082,8 +1082,6 @@ impl Grid {
     /// [`Grid::convolve`] with the parameter `order_mask`.
     #[must_use]
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
         let mut x1 = Vec::new();
@@ -1104,7 +1102,7 @@ impl Grid {
                     .iter(),
             );
             ren1.sort_by(f64::total_cmp);
-            ren1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            ren1.dedup_by(subgrid::node_value_eq_ref_mut);
 
             fac1.extend(
                 self.scales()
@@ -1113,7 +1111,7 @@ impl Grid {
                     .iter(),
             );
             fac1.sort_by(f64::total_cmp);
-            fac1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            fac1.dedup_by(subgrid::node_value_eq_ref_mut);
 
             x1.extend(
                 subgrid
@@ -1125,7 +1123,7 @@ impl Grid {
             );
 
             x1.sort_by(f64::total_cmp);
-            x1.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = EVOLVE_INFO_TOL_ULPS));
+            x1.dedup_by(subgrid::node_value_eq_ref_mut);
 
             for (index, _) in self.convolutions().iter().enumerate() {
                 pids1.extend(channel.entry().iter().map(|(pids, _)| pids[index]));
@@ -1203,8 +1201,6 @@ impl Grid {
             }
         }
 
-        use super::evolution::EVOLVE_INFO_TOL_ULPS;
-
         let mut lhs: Option<Self> = None;
         // Q2 slices we use
         let mut used_op_fac1 = Vec::new();
@@ -1249,7 +1245,8 @@ impl Grid {
 
             for (index, info) in infos_rest.iter().enumerate() {
                 // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
-                assert_approx_eq!(f64, info_0.fac1, info.fac1, ulps = EVOLVE_INFO_TOL_ULPS);
+                assert!(subgrid::node_value_eq(info_0.fac1, info.fac1));
+
                 assert_eq!(info_0.pid_basis, info.pid_basis);
 
                 let dim_op_info = (
@@ -1301,7 +1298,7 @@ impl Grid {
             // almost the same. We have to skip those in order not to evolve the 'same' slice twice
             if used_op_fac1
                 .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_0.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+                .any(|&fac| subgrid::node_value_eq(fac, info_0.fac1))
             {
                 continue;
             }
@@ -1309,7 +1306,7 @@ impl Grid {
             // skip slices that the grid doesn't use
             if !grid_fac1
                 .iter()
-                .any(|&fac| approx_eq!(f64, fac, info_0.fac1, ulps = EVOLVE_INFO_TOL_ULPS))
+                .any(|&fac| subgrid::node_value_eq(fac, info_0.fac1))
             {
                 continue;
             }
@@ -1373,7 +1370,7 @@ impl Grid {
         if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
             !used_op_fac1
                 .iter()
-                .any(|&eko_mu2| approx_eq!(f64, grid_mu2, eko_mu2, ulps = EVOLVE_INFO_TOL_ULPS))
+                .any(|&eko_mu2| subgrid::node_value_eq(grid_mu2, eko_mu2))
         }) {
             return Err(GridError::EvolutionFailure(format!(
                 "no operator for muf2 = {muf2} found in {op_fac1:?}"
@@ -1592,6 +1589,7 @@ mod tests {
     use crate::boc::ScaleFuncForm;
     use crate::channel;
     use crate::convolutions::ConvType;
+    use float_cmp::assert_approx_eq;
     use std::fs::File;
 
     #[test]

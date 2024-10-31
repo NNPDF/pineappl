@@ -1,10 +1,8 @@
 //! TODO
 
-use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
 use super::packed_array::PackedArray;
-use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use float_cmp::approx_eq;
+use super::subgrid::{self, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -49,9 +47,7 @@ impl Subgrid for ImportSubgridV1 {
             for (new, rhs) in new_node_values.iter_mut().zip(&rhs_node_values) {
                 new.extend(rhs);
                 new.sort_by(f64::total_cmp);
-                new.dedup_by(|&mut lhs, &mut rhs| {
-                    approx_eq!(f64, lhs, rhs, ulps = EVOLVE_INFO_TOL_ULPS)
-                });
+                new.dedup_by(subgrid::node_value_eq_ref_mut);
             }
 
             let mut array = PackedArray::new(new_node_values.iter().map(Vec::len).collect());
@@ -60,9 +56,7 @@ impl Subgrid for ImportSubgridV1 {
                 let target: Vec<_> = izip!(indices, &new_node_values, &lhs_node_values)
                     .map(|(index, new, lhs)| {
                         new.iter()
-                            .position(|&value| {
-                                approx_eq!(f64, value, lhs[index], ulps = EVOLVE_INFO_TOL_ULPS)
-                            })
+                            .position(|&value| subgrid::node_value_eq(value, lhs[index]))
                             // UNWRAP: must succeed, `new_node_values` is the union of
                             // `lhs_node_values` and `rhs_node_values`
                             .unwrap()
@@ -84,9 +78,7 @@ impl Subgrid for ImportSubgridV1 {
             let target: Vec<_> = izip!(indices, &new_node_values, &rhs_node_values)
                 .map(|(index, new, rhs)| {
                     new.iter()
-                        .position(|&value| {
-                            approx_eq!(f64, value, rhs[index], ulps = EVOLVE_INFO_TOL_ULPS)
-                        })
+                        .position(|&value| subgrid::node_value_eq(value, rhs[index]))
                         // UNWRAP: must succeed, `new_node_values` is the union of
                         // `lhs_node_values` and `rhs_node_values`
                         .unwrap()

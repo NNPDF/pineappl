@@ -1,7 +1,6 @@
 #![allow(missing_docs)]
 
 use assert_cmd::Command;
-use float_cmp::assert_approx_eq;
 
 #[cfg(any(feature = "applgrid", feature = "fastnlo", feature = "fktable"))]
 use assert_fs::NamedTempFile;
@@ -672,6 +671,7 @@ fn import_flex_grid_15() {
 #[test]
 #[cfg(feature = "fktable")]
 fn import_dis_fktable() {
+    use float_cmp::assert_approx_eq;
     use ndarray::Array3;
     use pineappl::fk_table::FkTable;
     use pineappl::grid::Grid;

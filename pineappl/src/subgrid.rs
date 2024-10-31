@@ -8,7 +8,20 @@ use enum_dispatch::enum_dispatch;
 // use ndarray::Array3;
 // use super::evolution::EVOLVE_INFO_TOL_ULPS;
 use super::interpolation::Interp;
+use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
+
+/// TODO
+#[must_use]
+pub fn node_value_eq(lhs: f64, rhs: f64) -> bool {
+    approx_eq!(f64, lhs, rhs, ulps = 4 * 256)
+}
+
+/// TODO
+#[must_use]
+pub fn node_value_eq_ref_mut(lhs: &mut f64, rhs: &mut f64) -> bool {
+    node_value_eq(*lhs, *rhs)
+}
 
 /// Enum which lists all possible `Subgrid` variants possible.
 #[enum_dispatch(Subgrid)]
