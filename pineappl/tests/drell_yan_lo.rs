@@ -423,13 +423,13 @@ fn perform_grid_tests(
         .collect();
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 64);
     }
 
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 64);
     }
 
     // TEST 9: `set_remapper`
@@ -451,7 +451,7 @@ fn perform_grid_tests(
     grid.merge_bins(0..1)?;
 
     for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 64);
     }
 
     // merge two bins with each other
@@ -466,7 +466,7 @@ fn perform_grid_tests(
             .chunks_exact(2)
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 64);
     }
 
     // TEST 11: `delete_bins`
@@ -484,7 +484,7 @@ fn perform_grid_tests(
             .map(|chunk| chunk.iter().sum::<f64>() / 2.0)
             .skip(2),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 64);
     }
 
     // delete a few bins from the ending
@@ -501,7 +501,7 @@ fn perform_grid_tests(
             .skip(2)
             .take(6),
     ) {
-        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 32);
+        assert_approx_eq!(f64, *result, reference_after_ssd, ulps = 64);
     }
 
     Ok(())

@@ -582,7 +582,7 @@ impl BinLimits {
     /// TODO
     #[must_use]
     pub fn new(mut limits: Vec<f64>) -> Self {
-        limits.sort_by(|left, right| left.partial_cmp(right).unwrap());
+        limits.sort_by(f64::total_cmp);
 
         if limits
             .iter()

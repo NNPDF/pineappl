@@ -1,12 +1,12 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use float_cmp::{approx_eq, assert_approx_eq};
+use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
-use pineappl::subgrid::Subgrid;
+use pineappl::subgrid::{self, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
 use std::iter;
@@ -36,7 +36,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
                 .into_owned()
         })
         .collect();
-    mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
+    mu2_grid.dedup_by(subgrid::node_value_eq_ref_mut);
 
     // TODO: implement the general case
     let mut result = vec![
@@ -235,7 +235,7 @@ pub fn convert_into_applgrid(
                     .map(|&fac| {
                         appl_q2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, fac))
                             .map_or_else(
                                 || {
                                     if discard_non_matching_scales {
@@ -307,7 +307,7 @@ pub fn convert_into_applgrid(
                     .map(|&x1| {
                         appl_x1
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, x1))
                             .map_or_else(
                                 || bail!("momentum fraction x1 = {x1} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -319,7 +319,7 @@ pub fn convert_into_applgrid(
                     .map(|&x2| {
                         appl_x2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, x2))
                             .map_or_else(
                                 || bail!("momentum fraction x2 = {x2} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),

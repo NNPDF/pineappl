@@ -4,7 +4,7 @@ use super::boc::Kinematics;
 use super::boc::Scales;
 use super::grid::Grid;
 use super::pids;
-use super::subgrid::{Subgrid, SubgridEnum};
+use super::subgrid::{self, Subgrid, SubgridEnum};
 use itertools::izip;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -241,7 +241,7 @@ impl GridConvCache<'_, '_> {
             result.extend(scale.calc(&node_values, kinematics).iter().map(|s| {
                 values
                     .iter()
-                    .position(|&value| value == xi * xi * s)
+                    .position(|&value| subgrid::node_value_eq(value, xi * xi * s))
                     // UNWRAP: if this fails, `new_grid_conv_cache` hasn't been called properly
                     .unwrap_or_else(|| unreachable!())
             }));
@@ -258,11 +258,11 @@ impl GridConvCache<'_, '_> {
                     // UNWRAP: guaranteed by the grid constructor
                     .unwrap_or_else(|| unreachable!())
                     .iter()
-                    .map(|xd| {
+                    .map(|&xd| {
                         self.cache
                             .x_grid
                             .iter()
-                            .position(|x| xd == x)
+                            .position(|&x| subgrid::node_value_eq(xd, x))
                             .unwrap_or_else(|| unreachable!())
                     })
                     .collect()

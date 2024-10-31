@@ -6,7 +6,7 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use float_cmp::assert_approx_eq;
+use super::subgrid;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 use std::iter;
@@ -122,7 +122,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 .iter()
                 .map(|mu2v0| {
                     // TODO: implement importing flexible-scale grids
-                    assert_approx_eq!(f64, mu2v0.ren, mu2v0.fac, ulps = 4);
+                    assert!(subgrid::node_value_eq(mu2v0.ren, mu2v0.fac));
 
                     mu2v0.fac
                 })

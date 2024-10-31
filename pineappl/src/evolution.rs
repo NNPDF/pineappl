@@ -90,9 +90,8 @@ impl AlphasTable {
                     .map(|ren| xir * xir * ren)
             })
             .collect();
-        // UNWRAP: if we can't sort numbers the grid is fishy
-        ren1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
-        ren1.dedup();
+        ren1.sort_by(f64::total_cmp);
+        ren1.dedup_by(subgrid::node_value_eq_ref_mut);
         let ren1 = ren1;
         let alphas: Vec<_> = ren1.iter().map(|&mur2| alphas(mur2)).collect();
 

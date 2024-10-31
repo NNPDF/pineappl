@@ -3,8 +3,7 @@
 use super::boc::{Kinematics, Order};
 use super::convolutions::ConvolutionCache;
 use super::grid::Grid;
-use super::subgrid::Subgrid;
-use float_cmp::approx_eq;
+use super::subgrid::{self, Subgrid};
 use ndarray::ArrayD;
 use std::fmt::{self, Display, Formatter};
 use std::iter;
@@ -171,7 +170,7 @@ impl FkTable {
                                     .map(|&s| {
                                         x_grid
                                             .iter()
-                                            .position(|&x| approx_eq!(f64, s, x, ulps = 2))
+                                            .position(|&x| subgrid::node_value_eq(s, x))
                                             // UNWRAP: must be guaranteed by the grid constructor
                                             .unwrap()
                                     })
@@ -341,7 +340,7 @@ impl TryFrom<Grid> for FkTable {
 
             if muf2 < 0.0 {
                 muf2 = fac;
-            } else if !approx_eq!(f64, muf2, fac, ulps = 4) {
+            } else if !subgrid::node_value_eq(muf2, fac) {
                 return Err(TryFromGridError::MultipleScales);
             }
         }
@@ -349,7 +348,7 @@ impl TryFrom<Grid> for FkTable {
         for channel in grid.channels() {
             let entry = channel.entry();
 
-            if entry.len() != 1 || !approx_eq!(f64, entry[0].1, 1.0, ulps = 4) {
+            if entry.len() != 1 || !subgrid::node_value_eq(entry[0].1, 1.0) {
                 return Err(TryFromGridError::InvalidChannel);
             }
         }

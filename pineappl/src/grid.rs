@@ -1363,8 +1363,7 @@ impl Grid {
             used_op_fac1.push(info_0.fac1);
         }
 
-        // UNWRAP: if we can't compare two numbers there's a bug
-        op_fac1.sort_by(|a, b| a.partial_cmp(b).unwrap_or_else(|| unreachable!()));
+        op_fac1.sort_by(f64::total_cmp);
 
         // make sure we've evolved all slices
         if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {

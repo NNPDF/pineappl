@@ -2,8 +2,7 @@
 
 use super::interpolation::{self, Interp};
 use super::packed_array::PackedArray;
-use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
-use float_cmp::approx_eq;
+use super::subgrid::{self, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::mem;
@@ -37,7 +36,7 @@ impl Subgrid for InterpSubgridV1 {
                 if let Some(previous_value) = previous_node {
                     if *previous_value < 0.0 {
                         *previous_value = *value;
-                    } else if !approx_eq!(f64, *previous_value, *value, ulps = 4) {
+                    } else if !subgrid::node_value_eq(*previous_value, *value) {
                         *previous_node = None;
                     }
                 }
