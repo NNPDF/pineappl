@@ -334,7 +334,7 @@ impl Grid {
 
         cache.set_grids(self, subgrid, xi);
 
-        let node_values: Vec<_> = subgrid.node_values();
+        let node_values = subgrid.node_values();
         // TODO: generalize this to N dimensions
         assert_eq!(node_values.len(), 3);
         let dim: Vec<_> = node_values.iter().map(Vec::len).collect();
@@ -1181,13 +1181,7 @@ impl Grid {
             type Item = Vec<T::Item>;
 
             fn next(&mut self) -> Option<Self::Item> {
-                let v: Vec<_> = self.iters.iter_mut().filter_map(Iterator::next).collect();
-
-                if v.len() == self.iters.len() {
-                    Some(v)
-                } else {
-                    None
-                }
+                self.iters.iter_mut().map(Iterator::next).collect()
             }
         }
 

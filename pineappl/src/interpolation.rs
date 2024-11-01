@@ -275,7 +275,7 @@ impl Interp {
         Self {
             min: self.gety(range.start),
             max: self.gety(range.end - 1),
-            nodes: range.clone().count(),
+            nodes: range.count(),
             order: self.order,
             reweight: self.reweight,
             map: self.map,

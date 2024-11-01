@@ -195,9 +195,7 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                                 hadronic = match value {
                                     "0" => false,
                                     "1" => true,
-                                    _ => {
-                                        unimplemented!("hadronic value: '{value}' is not supported")
-                                    }
+                                    _ => unreachable!(),
                                 }
                             }
                             "*NDATA:" => ndata = value.parse()?,

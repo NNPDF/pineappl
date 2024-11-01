@@ -122,59 +122,28 @@ fn convert_coeff_add_fix(
             .collect(),
         convolutions,
         // TODO: read out interpolation parameters from fastNLO
-        if npdf == 2 {
-            vec![
-                Interp::new(
-                    1e2,
-                    1e8,
-                    40,
-                    3,
-                    ReweightMeth::NoReweight,
-                    Map::ApplGridH0,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    2e-7,
-                    1.0,
-                    50,
-                    3,
-                    ReweightMeth::ApplGridX,
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    2e-7,
-                    1.0,
-                    50,
-                    3,
-                    ReweightMeth::ApplGridX,
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-            ]
-        } else {
-            vec![
-                Interp::new(
-                    1e2,
-                    1e8,
-                    40,
-                    3,
-                    ReweightMeth::NoReweight,
-                    Map::ApplGridH0,
-                    InterpMeth::Lagrange,
-                ),
-                Interp::new(
-                    2e-7,
-                    1.0,
-                    50,
-                    3,
-                    ReweightMeth::ApplGridX,
-                    Map::ApplGridF2,
-                    InterpMeth::Lagrange,
-                ),
-            ]
-        },
-        // TODO: change kinematics for DIS
+        iter::once(Interp::new(
+            1e2,
+            1e8,
+            40,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ))
+        .chain(
+            iter::repeat(Interp::new(
+                2e-7,
+                1.0,
+                50,
+                3,
+                ReweightMeth::ApplGridX,
+                Map::ApplGridF2,
+                InterpMeth::Lagrange,
+            ))
+            .take(npdf),
+        )
+        .collect(),
         if npdf == 2 {
             vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
         } else {

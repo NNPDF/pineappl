@@ -29,6 +29,8 @@ fn int_photo(s: f64, t: f64, u: f64) -> f64 {
     alpha0.powi(2) / 2.0 / s * (t / u + u / t)
 }
 
+// ALLOW: in this example we care more about readability than floating-point accuracy
+#[allow(clippy::suboptimal_flops)]
 // Eq. (2.12) - quark-antiquark contribution to DY lepton pair production
 fn int_quark(s: f64, t: f64, u: f64, qq: f64, i3_wq: f64) -> f64 {
     let alphagf: f64 = 1.0 / 132.30818655547878;
@@ -701,7 +703,7 @@ fn grid_optimize() {
         grid.subgrids()[[0, 0, 0]],
         SubgridEnum::InterpSubgridV1 { .. }
     ));
-    let node_values = dbg!(grid.subgrids()[[0, 0, 0]].node_values());
+    let node_values = grid.subgrids()[[0, 0, 0]].node_values();
     assert_eq!(node_values[0].len(), 1);
     assert_eq!(node_values[1].len(), 6);
     assert_eq!(node_values[2].len(), 6);
