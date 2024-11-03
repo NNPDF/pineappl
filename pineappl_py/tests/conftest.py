@@ -42,12 +42,11 @@ class PDF:
 class FakeGrid:
     """Class that mocks a PineAPPL grid. This should contain functions
     that return all the possible number of convolutions.
-
-    TODO: combine the different convolutions
     """
 
-    def grid_with_one_convolution(
+    def grid_with_generic_convolution(
         self,
+        nb_convolutions: int,
         channels: List[Channel],
         orders: List[Order],
         convolutions: List[Conv],
@@ -59,6 +58,11 @@ class FakeGrid:
         xmax: float = 1,
         xnodes: int = 50,
     ) -> Grid:
+        """A function to generate fake GRIDs that can take any number of convolutions.
+        Note that the `nb_convolutions` can be different from the number of convolution
+        types passed to `convolutions`. Indeed, if all the types of convolutions are
+        the same, then only one single element can be passed to `convolutions`.
+        """
         kinematics = [
             Kinematics.Scale(0),  # Scale
             Kinematics.X(0),  # momentum fraction x
@@ -84,72 +88,23 @@ class FakeGrid:
                 interpolation_meth=InterpolationMethod.Lagrange,
             ),  # Interpolation on momentum fraction x
         ]
-        # Construct the `Scales` object
-        scale_funcs = Scales(
-            ren=ScaleFuncForm.Scale(0),
-            fac=ScaleFuncForm.Scale(0),
-            frg=ScaleFuncForm.NoScale(0),
-        )
 
-        return Grid(
-            pid_basis=PidBasis.Evol,
-            channels=channels,
-            orders=orders,
-            bin_limits=np.array(bins),
-            convolutions=convolutions,
-            interpolations=interpolations,
-            kinematics=kinematics,
-            scale_funcs=scale_funcs,
-        )
+        # Extend the Kinematics and Interpolations
+        if nb_convolutions > 1:
+            for i in range(1, nb_convolutions):
+                kinematics.append(Kinematics.X(i))
+                interpolations.append(
+                    Interp(
+                        min=xmin,
+                        max=xmax,
+                        nodes=xnodes,
+                        order=3,
+                        reweight_meth=ReweightingMethod.ApplGridX,
+                        map=MappingMethod.ApplGridF2,
+                        interpolation_meth=InterpolationMethod.Lagrange,
+                    )
+                )
 
-    def grid_with_two_convolutions(
-        self,
-        channels: List[Channel],
-        orders: List[Order],
-        convolutions: List[Conv],
-        bins: List[float] = [1e-7, 1e-3, 1],
-        q2min: float = 1e2,
-        q2max: float = 1e8,
-        q2nodes: int = 40,
-        xmin: float = 2e-7,
-        xmax: float = 1,
-        xnodes: int = 50,
-    ) -> Grid:
-        kinematics = [
-            Kinematics.Scale(0),  # Scale
-            Kinematics.X(0),  # x1 momentum fraction
-            Kinematics.X(1),  # x2 momentum fraction
-        ]
-        # Define the interpolation specs for each item of the Kinematics
-        interpolations = [
-            Interp(
-                min=q2min,
-                max=q2max,
-                nodes=q2nodes,
-                order=3,
-                reweight_meth=ReweightingMethod.NoReweight,
-                map=MappingMethod.ApplGridH0,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on the Scale
-            Interp(
-                min=xmin,
-                max=xmax,
-                nodes=xnodes,
-                order=3,
-                reweight_meth=ReweightingMethod.ApplGridX,
-                map=MappingMethod.ApplGridF2,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on x1 momentum fraction
-            Interp(
-                min=xmin,
-                max=xmax,
-                nodes=xnodes,
-                order=3,
-                reweight_meth=ReweightingMethod.ApplGridX,
-                map=MappingMethod.ApplGridF2,
-                interpolation_meth=InterpolationMethod.Lagrange,
-            ),  # Interpolation on x2 momentum fraction
-        ]
         # Construct the `Scales` object
         scale_funcs = Scales(
             ren=ScaleFuncForm.Scale(0),

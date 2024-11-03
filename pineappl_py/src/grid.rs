@@ -10,10 +10,12 @@ use super::pids::PyPidBasis;
 use super::subgrid::PySubgridEnum;
 use itertools::izip;
 use ndarray::CowArray;
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
+use numpy::{IntoPyArray, PyArray1, PyArrayDyn, PyReadonlyArray4};
+use pineappl::boc::Kinematics;
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
+use pineappl::pids::PidBasis;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::fs::File;
@@ -288,7 +290,7 @@ impl PyGrid {
             })
             .collect();
 
-        let mut lumi_cache = ConvolutionCache::new(
+        let mut convolution_cache = ConvolutionCache::new(
             pdg_convs.into_iter().map(|pdg| pdg.conv.clone()).collect(),
             xfx_funcs
                 .iter_mut()
@@ -299,11 +301,63 @@ impl PyGrid {
 
         self.grid
             .convolve(
-                &mut lumi_cache,
+                &mut convolution_cache,
                 &order_mask.unwrap_or_default(),
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
                 &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
+            )
+            .into_pyarray_bound(py)
+    }
+
+    /// Convolve a single subgrid `(order, bin, channel)` with the distributions.
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    #[must_use]
+    #[pyo3(signature = (pdg_convs, xfxs, alphas, ord, bin, channel, xi = None))]
+    pub fn convolve_subgrid<'py>(
+        &self,
+        pdg_convs: Vec<PyRef<PyConv>>,
+        xfxs: Vec<PyObject>,
+        alphas: PyObject,
+        ord: usize,
+        bin: usize,
+        channel: usize,
+        xi: Option<(f64, f64, f64)>,
+        py: Python<'py>,
+    ) -> Bound<'py, PyArrayDyn<f64>> {
+        let mut alphas = |q2: f64| {
+            let result: f64 = alphas.call1(py, (q2,)).unwrap().extract(py).unwrap();
+            result
+        };
+
+        let mut xfx_funcs: Vec<_> = xfxs
+            .iter()
+            .map(|xfx| {
+                move |id: i32, x: f64, q2: f64| {
+                    xfx.call1(py, (id, x, q2)).unwrap().extract(py).unwrap()
+                }
+            })
+            .collect();
+
+        let mut convolution_cache = ConvolutionCache::new(
+            pdg_convs.into_iter().map(|pdg| pdg.conv.clone()).collect(),
+            xfx_funcs
+                .iter_mut()
+                .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+                .collect(),
+            &mut alphas,
+        );
+
+        self.grid
+            .convolve_subgrid(
+                &mut convolution_cache,
+                ord,
+                bin,
+                channel,
+                xi.unwrap_or((1.0, 1.0, 0.0)),
             )
             .into_pyarray_bound(py)
     }
@@ -441,7 +495,42 @@ impl PyGrid {
         self.grid.write_lz4(File::create(path).unwrap()).unwrap();
     }
 
-    /// Optimize content.
+    /// Return the convention by which the channels' PIDS are encoded.
+    #[getter]
+    #[must_use]
+    pub const fn pid_basis(&self) -> PyPidBasis {
+        match self.grid.pid_basis() {
+            PidBasis::Pdg => PyPidBasis::Pdg,
+            PidBasis::Evol => PyPidBasis::Evol,
+        }
+    }
+
+    /// Return the convention by which the Kinematics are encoded.
+    /// TODO
+    #[getter]
+    #[must_use]
+    pub fn kinematics(&self) -> Vec<PyKinematics> {
+        self.grid
+            .kinematics()
+            .iter()
+            .map(|&kin| match kin {
+                Kinematics::X(v) => PyKinematics::X(v),
+                Kinematics::Scale(v) => PyKinematics::Scale(v),
+            })
+            .collect()
+    }
+
+    /// Return the convention by which the Scales are encoded.
+    /// TODO
+    #[getter]
+    #[must_use]
+    pub fn scales(&self) -> PyScales {
+        PyScales {
+            scales: self.grid.scales().clone(),
+        }
+    }
+
+    /// Optimize the contents of the Grid.
     pub fn optimize(&mut self) {
         self.grid.optimize();
     }
@@ -564,9 +653,9 @@ impl PyGrid {
     ///
     /// Returns
     /// -------
-    /// list(list(tuple(float,float,int))) :
-    ///     channels as tuples (pid, pid, factor) (multiple tuples can be associated to the same
-    ///     contribution)
+    /// list(list(tuple(list[float],int))) :
+    ///     channels as tuples (List of PIDs, factor) (multiple tuples can be associated
+    ///     to the same contribution)
     #[must_use]
     pub fn channels(&self) -> Vec<Vec<(Vec<i32>, f64)>> {
         self.grid

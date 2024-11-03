@@ -1,9 +1,12 @@
+import itertools
 import numpy as np
 import pytest
 import tempfile
 
+from numpy.random import Generator, PCG64
+
 from pineappl.bin import BinRemapper
-from pineappl.boc import Channel
+from pineappl.boc import Channel, Kinematics, Scales
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
@@ -111,10 +114,18 @@ EVOL_BASIS_PIDS = (
 
 TARGET_PIDS = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6]
 
+# Results from consecutively filling and convolving grids
+FILL_CONV_RESUTLS = [
+    3.88554594e3,
+    3.97251851e3,
+    4.09227318e3,
+]
+
 
 class TestGrid:
     def test_init(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -124,7 +135,8 @@ class TestGrid:
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0, 0)
 
     def test_channels(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -133,7 +145,8 @@ class TestGrid:
         assert g.channels()[0] == UP_ANTIUP_CHANNEL
 
     def test_write(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -145,7 +158,8 @@ class TestGrid:
             g.write_lz4(f"{tmpdir}/toy_grid.pineappl.lz4")
 
     def test_set_subgrid(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -172,7 +186,8 @@ class TestGrid:
         g.optimize()
 
     def test_bins(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -242,7 +257,8 @@ class TestGrid:
 
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, fake_grids, params, expected):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -266,8 +282,9 @@ class TestGrid:
         download_objects,
         gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
     ):
-        """Tes convolution with an actual Grid. In the following example,
-        it is a DIS grid that involves a single unique hadron/proton.
+        """Test convolution with an actual Grid. In the following example,
+        it is a Fixed-target DY grid involving two hadrons in the initial
+        state.
         """
         expected_results = [
             +3.71019208e4,
@@ -281,14 +298,16 @@ class TestGrid:
         grid = download_objects(f"{gridname}")
         g = Grid.read(grid)
 
-        # Convolution object of the Unpolarized proton
+        # Convolution object of the Unpolarized proton. Given that the two
+        # initial state hadrons are both Unpolarized Proton, we can pass ONE
+        # single convolution type and ONE singe PDF set.
         h = ConvType(polarized=False, time_like=False)
         h_conv = Conv(conv_type=h, pid=2212)
 
         np.testing.assert_allclose(
             g.convolve(
-                pdg_convs=[h_conv],  # Requires ONE single convolutions
-                xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
+                pdg_convs=[h_conv],  # need only to pass ONE convtype
+                xfxs=[pdf.polarized_pdf],  # need only to pass ONE PDF
                 alphas=pdf.alphasQ,
             ),
             expected_results,
@@ -328,6 +347,54 @@ class TestGrid:
             ),
             expected_results,
         )
+
+    def test_convolve_subgrid(self, fake_grids):
+        binning = [1e-2, 1e-1, 0.5, 1]
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+            bins=binning,
+        )
+
+        # Fill the grid with `fill_array`
+        rndgen = Generator(PCG64(seed=1234))
+        q2s = np.geomspace(1e3, 1e5, 10)
+        xxs = np.geomspace(1e-5, 1, 20)
+        ntuples = [
+            np.array([q2, x1, x2])
+            for q2, x1, x2 in itertools.product(q2s, xxs, xxs)
+        ]
+        obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
+        for pto in range(len(ORDERS)):
+            for channel_id in range(len(CHANNELS)):
+                g.fill_array(
+                    order=pto,
+                    observables=obs,
+                    channel=channel_id,
+                    ntuples=ntuples,
+                    weights=np.repeat(10, len(obs)),
+                )
+
+        ptos_res = []
+        for pto in range(len(g.orders())):
+            res_by_bin = []
+            for bin in range(g.bins()):
+                res_by_channel = 0
+                for channel in range(len(g.channels())):
+                    res_by_channel += g.convolve_subgrid(
+                        pdg_convs=[CONVOBJECT, CONVOBJECT],
+                        xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
+                        alphas=lambda q2: 1.0,
+                        ord=pto,
+                        bin=bin,
+                        channel=channel,
+                    ).sum()
+                res_by_bin.append(res_by_channel)
+            ptos_res.append(res_by_bin)
+
+        np.testing.assert_allclose(ptos_res, [FILL_CONV_RESUTLS])
 
     def test_evolve_with_two_ekos(
         self,
@@ -388,7 +455,8 @@ class TestGrid:
         assert isinstance(fktable, FkTable)
 
     def test_io(self, tmp_path, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -401,7 +469,8 @@ class TestGrid:
         _ = Grid.read(str(p))
 
     def test_set_key_value(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -410,88 +479,141 @@ class TestGrid:
         g.set_key_value('"', "'")
         g.set_key_value("äöü", "ß\\")
 
-    def test_fill(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+    def test_pid_basis(self, fake_grids):
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
-        # Fill the Grid with some values
-        n_tuple = [10.0, 0.5, 0.5]
-        g.fill(
-            order=0,
-            observable=0.01,
-            channel=0,
-            ntuple=n_tuple,
-            weight=10,
+        assert g.pid_basis == PidBasis.Evol
+
+    def test_bocs(self, fake_grids):
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
         )
+        for kin in g.kinematics:
+            assert isinstance(kin, Kinematics)
+        assert isinstance(g.scales, Scales)
+
+    def test_fill(self, fake_grids):
+        binning = [1e-2, 1e-1, 0.5, 1]
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+            bins=binning,
+        )
+
+        # Fill the Grid with some values
+        rndgen = Generator(PCG64(seed=1234))
+        q2s = np.geomspace(1e3, 1e5, 10)
+        xxs = np.geomspace(1e-5, 1, 20)
+        for pto in range(len(ORDERS)):
+            for channel_id in range(len(CHANNELS)):
+                for q2, x1, x2 in itertools.product(q2s, xxs, xxs):
+                    n_tuple = [q2, x1, x2]
+                    obs = rndgen.uniform(binning[0], binning[-1])
+                    g.fill(
+                        order=pto,
+                        observable=obs,
+                        channel=channel_id,
+                        ntuple=n_tuple,
+                        weight=10,
+                    )
+
         # Peform convolutions using Toy LHPDF & AlphasQ2 functions
         res = g.convolve(
             pdg_convs=[CONVOBJECT, CONVOBJECT],
             xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
             alphas=lambda q2: 1.0,
         )
-        np.testing.assert_allclose(res, [0.0, 0.0])
+        np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
     def test_fill_array(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        binning = [1e-2, 1e-1, 0.5, 1]
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
-        )
-        g.fill_array(
-            order=0,
-            observables=np.array([1e-3, 1e-2]),
-            channel=0,
-            ntuples=[
-                np.array([15.0, 1.0, 1.0]),
-                np.array([15.0, 1.0, 1.0]),
-                np.array([15.0, 1.0, 1.0]),
-            ],
-            weights=np.array([10.0, 100.0]),
+            bins=binning,
         )
 
+        # Fill the grid with arrays instead of looping on them
+        rndgen = Generator(PCG64(seed=1234))
+        q2s = np.geomspace(1e3, 1e5, 10)
+        xxs = np.geomspace(1e-5, 1, 20)
+        ntuples = [
+            np.array([q2, x1, x2])
+            for q2, x1, x2 in itertools.product(q2s, xxs, xxs)
+        ]
+        obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
+        for pto in range(len(ORDERS)):
+            for channel_id in range(len(CHANNELS)):
+                g.fill_array(
+                    order=pto,
+                    observables=obs,
+                    channel=channel_id,
+                    ntuples=ntuples,
+                    weights=np.repeat(10, len(obs)),
+                )
+
         # Convolution of two symmetrical hadrons
-        h = ConvType(polarized=False, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
         res = g.convolve(
-            pdg_convs=[h_conv, h_conv],
+            pdg_convs=[CONVOBJECT, CONVOBJECT],
             xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
             alphas=lambda q2: 1.0,
         )
-        np.testing.assert_allclose(res, [0.0, 0.0])
+        np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
     def test_fill_all(self, fake_grids):
-        g = fake_grids.grid_with_two_convolutions(
+        binning = [1e-2, 1e-1, 0.5, 1]
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
-        )
-        g.fill_all(
-            order=0,
-            observable=1e-2,
-            ntuple=[1.0, 1.0, 1.0],
-            weights=np.array([10.0]),
+            bins=binning,
         )
 
+        # Add a point to the grid for all channels (and loop over the points)
+        rndgen = Generator(PCG64(seed=1234))
+        q2s = np.geomspace(1e3, 1e5, 10)
+        xxs = np.geomspace(1e-5, 1, 20)
+        for pto in range(len(ORDERS)):
+            for q2, x1, x2 in itertools.product(q2s, xxs, xxs):
+                n_tuple = [q2, x1, x2]
+                obs = rndgen.uniform(binning[0], binning[-1])
+                g.fill_all(
+                    order=pto,
+                    observable=obs,
+                    ntuple=n_tuple,
+                    weights=np.array([10.0]),
+                )
+
         # Convolution of two symmetrical hadrons
-        h = ConvType(polarized=False, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
         res = g.convolve(
-            pdg_convs=[h_conv, h_conv],
+            pdg_convs=[CONVOBJECT, CONVOBJECT],
             xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
             alphas=lambda q2: 1.0,
         )
-        np.testing.assert_allclose(res, [0.0, 0.0])
+        np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
     def test_merge(self, fake_grids):
-        g0 = fake_grids.grid_with_two_convolutions(
+        g0 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
-        g1 = fake_grids.grid_with_two_convolutions(
+        g1 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -502,13 +624,15 @@ class TestGrid:
         g0.merge(g1)
         assert g0.bins() == 4
 
-        g2 = fake_grids.grid_with_two_convolutions(
+        g2 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
-        g3 = fake_grids.grid_with_two_convolutions(
+        g3 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -520,13 +644,15 @@ class TestGrid:
         g2.merge(g3)
         assert g2.bins() == 2
 
-        g4 = fake_grids.grid_with_two_convolutions(
+        g4 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
             bins=[2, 3, 4],
         )
-        g5 = fake_grids.grid_with_two_convolutions(
+        g5 = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],

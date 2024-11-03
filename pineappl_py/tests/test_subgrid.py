@@ -21,7 +21,8 @@ def test_issue_164(pdf, fake_grids):
     orders = [Order(0, 0, 0, 0, 0)]
 
     def convolve_grid(q2_min: float = Q2_MIN) -> Grid:
-        grid = fake_grids.grid_with_one_convolution(
+        grid = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=1,
             orders=orders,
             channels=channels,
             convolutions=[CONVOBJECT],
@@ -54,7 +55,8 @@ class TestSubgrid:
     def fake_grid(self, fake_grids):
         channels = [Channel([([2], 1.0)]), Channel([([3], 0.5)])]
         orders = [Order(0, 0, 0, 0, 0)]
-        return fake_grids.grid_with_one_convolution(
+        return fake_grids.grid_with_generic_convolution(
+            nb_convolutions=1,
             orders=orders,
             channels=channels,
             convolutions=[CONVOBJECT],

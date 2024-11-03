@@ -28,8 +28,11 @@ class TestFkTable:
         channels = [Channel(down_channel), Channel(up_channel)]
         # Now we define the perturbative orders
         orders = [Order(0, 0, 0, 0, 0)]
-        g = fake_grids.grid_with_one_convolution(
-            channels=channels, orders=orders, convolutions=convolutions
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=1,
+            channels=channels,
+            orders=orders,
+            convolutions=convolutions,
         )
 
         # DIS grid
