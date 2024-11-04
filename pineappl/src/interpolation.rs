@@ -731,7 +731,7 @@ mod tests {
         .node_values();
 
         for &x in &x_ref {
-            // these two functions should are inverse to each other, within numerical noise
+            // these two functions should be inverse to each other, within numerical noise
             assert!(applgrid::fx2(applgrid::fy2(x)).ulps(&x) < 4);
         }
     }
@@ -750,7 +750,7 @@ mod tests {
         .node_values();
 
         for &q2 in &q2_ref {
-            // these two functions should are inverse to each other, within numerical noise
+            // these two functions should be inverse to each other, within numerical noise
             assert!(applgrid::fq20(applgrid::ftau0(q2)).ulps(&q2) < 4);
         }
     }
