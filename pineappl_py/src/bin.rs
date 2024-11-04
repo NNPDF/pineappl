@@ -13,11 +13,12 @@ pub struct PyBinRemapper {
 
 #[pymethods]
 impl PyBinRemapper {
-    /// Constructor.
+    /// Constructor for remapping bin limits.
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics when `bin_limits` does not have the same length as `normalizations` or the bins or
+    /// if the `bin_limits` edges are not within the observable bins.
     ///
     /// Parameters
     /// ----------
@@ -34,6 +35,7 @@ impl PyBinRemapper {
 }
 
 /// Register submodule in parent.
+///
 /// # Errors
 ///
 /// Raises an error if (sub)module is not found.

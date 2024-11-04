@@ -32,13 +32,13 @@ pub struct PyGrid {
 
 #[pymethods]
 impl PyGrid {
-    /// Constructor to instantiate a new Grid.
-    ///
-    /// TODO: Exposes `Scales`
+    /// Constructor to instantiate a new PineAPPL Grid.
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics when the number of PIDs in `channels` is not equal to `convolutions.len()`, or
+    /// `interps` and `kinematics` have different lengths or if `kinematics` are not compatible
+    /// with `scales`.
     ///
     /// Parameters
     /// ----------
@@ -201,7 +201,7 @@ impl PyGrid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if the size of the bins in the grid and in the `remapper` are not consistent.
     ///
     /// Parameters
     /// ----------
@@ -386,18 +386,20 @@ impl PyGrid {
 
     /// Evolve the grid with as many EKOs as Convolutions.
     ///
-    /// TODO: Expose `slices` to be a vector!!!
-    ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics when the operators returned by either slice have different dimensions than promised
+    /// by the corresponding [`OperatorSliceInfo`].
     ///
     /// # Errors
-    /// TODO
+    ///
+    /// Raises error if either the `operator` or its `info` is incompatible with the Grid.
+    /// Another error is raised if the iterator from `slices` themselves return an error.
     ///
     /// Parameters
     /// ----------
     /// slices : list(list(tuple(PyOperatorSliceInfo, PyReadOnlyArray4)))
-    ///     list of EKOs where each element is a list of (PyOperatorSliceInfo, 5D array)
+    ///     list of EKOs where each element is a list of (PyOperatorSliceInfo, 4D array)
     ///     describing each convolution
     /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
@@ -448,7 +450,7 @@ impl PyGrid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if the grid specified by the path is non-existent.
     ///
     /// Parameters
     /// ----------
@@ -471,7 +473,7 @@ impl PyGrid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if the specified path to write the grid is non-existent or requires permission.
     ///
     /// Parameters
     /// ----------
@@ -485,7 +487,7 @@ impl PyGrid {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// Panics if the specified path to write the grid is non-existent or requires permission.
     ///
     /// Parameters
     /// ----------
@@ -506,7 +508,6 @@ impl PyGrid {
     }
 
     /// Return the convention by which the Kinematics are encoded.
-    /// TODO
     #[getter]
     #[must_use]
     pub fn kinematics(&self) -> Vec<PyKinematics> {
@@ -521,7 +522,6 @@ impl PyGrid {
     }
 
     /// Return the convention by which the Scales are encoded.
-    /// TODO
     #[getter]
     #[must_use]
     pub fn scales(&self) -> PyScales {
@@ -543,7 +543,8 @@ impl PyGrid {
     ///
     /// # Errors
     ///
-    /// TODO
+    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
+    /// not be merged with `self` an error is returned.
     pub fn merge(&mut self, other: Self) -> PyResult<()> {
         match self.grid.merge(other.grid) {
             Ok(()) => Ok(()),
@@ -707,6 +708,7 @@ impl PyGrid {
 }
 
 /// Register submodule in parent.
+///
 /// # Errors
 ///
 /// Raises an error if (sub)module is not found.

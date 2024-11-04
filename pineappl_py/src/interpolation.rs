@@ -16,7 +16,7 @@ impl PyInterp {
     }
 }
 
-/// TODO
+/// PyO3 wrapper to :rustdoc:`pineappl::interpolation::ReweightMeth <interpolation/enum.ReweightMeth.html>`.
 #[pyclass(eq, eq_int, name = "ReweightingMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyReweightingMethod {
@@ -35,7 +35,7 @@ impl From<PyReweightingMethod> for ReweightMeth {
     }
 }
 
-/// TODO
+/// PyO3 wrapper to :rustdoc:`pineappl::interpolation::Map <interpolation/enum.Map.html>`.
 #[pyclass(eq, eq_int, name = "MappingMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyMappingMethod {
@@ -54,7 +54,7 @@ impl From<PyMappingMethod> for Map {
     }
 }
 
-/// TODO
+/// PyO3 wrapper to :rustdoc:`pineappl::interpolation::InterpMeth <interpolation/enum.InterpMeth.html>`.
 #[pyclass(eq, eq_int, name = "InterpolationMethod")]
 #[derive(Clone, PartialEq, Eq)]
 pub enum PyInterpolationMethod {
@@ -73,8 +73,6 @@ impl From<PyInterpolationMethod> for InterpMeth {
 #[pymethods]
 impl PyInterp {
     /// Constructor.
-    ///
-    /// TODO: Exposes ReweightMeth,reweight Map, and InterpMeth
     ///
     /// Parameteters
     /// ------------
@@ -121,6 +119,7 @@ impl PyInterp {
 }
 
 /// Register submodule in parent.
+///
 /// # Errors
 ///
 /// Raises an error if (sub)module is not found.

@@ -22,8 +22,10 @@ pub struct PyFkAssumptions {
 #[pymethods]
 impl PyFkAssumptions {
     /// Constructor.
+    ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if the `assumption` is not one of the possibilities.
     #[new]
     #[must_use]
     pub fn new(assumption: &str) -> Self {
@@ -43,6 +45,7 @@ pub struct PyFkTable {
 #[pymethods]
 impl PyFkTable {
     /// Constructor from an existing grid.
+    ///
     /// # Panics
     /// TODO
     #[new]
@@ -55,13 +58,13 @@ impl PyFkTable {
 
     /// Read an FK Table from given path.
     ///
+    /// # Panics
+    /// TODO
+    ///
     /// Parameteters
     /// ------------
     /// path : str
     ///     path to the FK table
-    ///
-    /// # Panics
-    /// TODO
     #[must_use]
     #[staticmethod]
     pub fn read(path: PathBuf) -> Self {
@@ -201,7 +204,8 @@ impl PyFkTable {
     /// Write to file.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if the specified path is non-writeable (non-existent or missing permissions).
     ///
     /// Parameters
     /// ----------
@@ -217,7 +221,8 @@ impl PyFkTable {
     /// Write to file using lz4.
     ///
     /// # Panics
-    /// TODO
+    ///
+    /// Panics if the specified path is non-writeable (non-existent or missing permissions).
     ///
     /// Parameters
     /// ----------

@@ -20,6 +20,7 @@ impl PyImportSubgridV1 {
     /// Constructor.
     ///
     /// # Panics
+    /// TODO
     ///
     /// Parameters
     /// ----------
@@ -47,7 +48,7 @@ impl PyImportSubgridV1 {
         }
     }
 
-    /// TODO
+    /// Ensures that the subgrid has type `PySubgridEnum`.
     #[must_use]
     pub fn into(&self) -> PySubgridEnum {
         PySubgridEnum {
@@ -57,6 +58,7 @@ impl PyImportSubgridV1 {
 }
 
 /// Register submodule in parent.
+///
 /// # Errors
 ///
 /// Raises an error if (sub)module is not found.

@@ -254,6 +254,7 @@ impl PyOrder {
 }
 
 /// Register submodule in parent.
+///
 /// # Errors
 ///
 /// Raises an error if (sub)module is not found.
