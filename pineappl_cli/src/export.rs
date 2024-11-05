@@ -198,16 +198,6 @@ impl Subcommand for Opts {
                     })
                     .collect();
 
-                let max_rel_diff = rel_diffs
-                    .iter()
-                    .max_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap())
-                    .unwrap()
-                    .abs();
-
-                if max_rel_diff > self.accuracy {
-                    different = true;
-                }
-
                 let mut row = row![
                     bin.to_string(),
                     r->format!("{:.*e}", self.digits_abs, one[0]),
@@ -215,7 +205,22 @@ impl Subcommand for Opts {
                     r->format!("{:.*e}", self.digits_rel, rel_diffs[0])
                 ];
 
+                if rel_diffs[0].abs() > self.accuracy {
+                    different = true;
+                }
+
                 if scale_variations > 1 {
+                    // skip central scale choice
+                    let &max_rel_diff = rel_diffs[1..]
+                        .iter()
+                        .max_by(|a, b| a.abs().total_cmp(&b.abs()))
+                        // UNWRAP: in this branch we know there are scale variations
+                        .unwrap();
+
+                    if max_rel_diff.abs() > self.accuracy {
+                        different = true;
+                    }
+
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, max_rel_diff)));
                 }
 
