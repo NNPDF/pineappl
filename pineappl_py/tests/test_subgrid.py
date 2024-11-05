@@ -72,13 +72,16 @@ class TestSubgrid:
         return subgrid, [*x_grids, scale, array]
 
     def test_subgrid_methods(self, fake_grids):
-        # TODO: extract the values of the scales and x grids
         grid = self.fake_grid(fake_grids)
         test_subgrid, infos = self.fake_importonlysubgrid()
         x1s, x2s, mu2s, _ = (obj for obj in infos)
         grid.set_subgrid(0, 0, 0, test_subgrid.into())
         extr_subgrid = grid.subgrid(0, 0, 0)
         assert isinstance(extr_subgrid, SubgridEnum)
+
+        # Check that the subgrid can be scaled
+        extr_subgrid.scale(factor=100)
+        assert isinstance(extr_subgrid.into(), SubgridEnum)
 
     @pytest.mark.parametrize("nb_dim", [1, 2, 3, 4])
     def test_subgrid_arrays(self, nb_dim):
