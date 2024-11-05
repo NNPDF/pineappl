@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added new method `Grid::delete_orders` and the corresponding switch
   `--delete-orders` in the subcommand `write` of the CLI
+- added the switches `--xir` and `--xif`, which allow varying the
+  renormalization and factorization scales with a custom factor in the
+  subcommand `convolve`.
 
 ### Changed
 
