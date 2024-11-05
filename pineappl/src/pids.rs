@@ -1,6 +1,7 @@
 //! TODO
 
 use super::boc::Channel;
+use super::fk_table::FkAssumptions;
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -114,7 +115,65 @@ impl PidBasis {
             (&Self::Evol, Self::Pdg) => channel.translate(&evol_to_pdg_mc_ids),
         }
     }
+
+    /// TODO
+    #[must_use]
+    pub fn opt_rules(&self, assumptions: FkAssumptions) -> OptRules {
+        match (*self, assumptions) {
+            (Self::Evol | Self::Pdg, FkAssumptions::Nf6Ind) => OptRules(Vec::new(), Vec::new()),
+            (Self::Evol, FkAssumptions::Nf6Sym) => OptRules(vec![(235, 200)], Vec::new()),
+            (Self::Evol, FkAssumptions::Nf5Ind) => {
+                OptRules(vec![(235, 200), (135, 100)], Vec::new())
+            }
+            (Self::Evol, FkAssumptions::Nf5Sym) => {
+                OptRules(vec![(235, 200), (135, 100), (224, 200)], Vec::new())
+            }
+            (Self::Evol, FkAssumptions::Nf4Ind) => OptRules(
+                vec![(235, 200), (135, 100), (224, 200), (124, 100)],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf4Sym) => OptRules(
+                vec![(235, 200), (135, 100), (224, 200), (124, 100), (215, 200)],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf3Ind) => OptRules(
+                vec![
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                ],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf3Sym) => OptRules(
+                vec![
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                    (208, 200),
+                ],
+                Vec::new(),
+            ),
+            (Self::Pdg, FkAssumptions::Nf6Sym) => OptRules(vec![(-6, 6)], Vec::new()),
+            (Self::Pdg, FkAssumptions::Nf5Ind) => OptRules(Vec::new(), vec![-6, 6]),
+            (Self::Pdg, FkAssumptions::Nf5Sym) => OptRules(vec![(-5, 5)], vec![-6, 6]),
+            (Self::Pdg, FkAssumptions::Nf4Ind) => OptRules(Vec::new(), vec![-6, 6, -5, 5]),
+            (Self::Pdg, FkAssumptions::Nf4Sym) => OptRules(vec![(-4, 4)], vec![-6, 6, -5, 5]),
+            (Self::Pdg, FkAssumptions::Nf3Ind) => OptRules(Vec::new(), vec![-6, 6, -5, 5, -4, 4]),
+            (Self::Pdg, FkAssumptions::Nf3Sym) => {
+                OptRules(vec![(-3, 3)], vec![-6, 6, -5, 5, -4, 4])
+            }
+        }
+    }
 }
+
+/// Return type of [`PidBasis::optimization_rules`].
+pub struct OptRules(pub Vec<(i32, i32)>, pub Vec<i32>);
 
 /// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
 #[derive(Debug, Error)]

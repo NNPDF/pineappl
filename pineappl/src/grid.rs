@@ -1505,53 +1505,6 @@ impl Grid {
         }
     }
 
-    pub(crate) fn rewrite_channels(&mut self, add: &[(i32, i32)], del: &[i32]) {
-        // TODO: generalize this method to n convolutions
-        assert_eq!(self.convolutions().len(), 2);
-
-        self.channels = self
-            .channels()
-            .iter()
-            .map(|entry| {
-                Channel::new(
-                    entry
-                        .entry()
-                        .iter()
-                        .map(|(pids, f)| {
-                            (
-                                vec![
-                                    // if `a` is to be added to another pid replace it with this pid
-                                    add.iter().fold(pids[0], |id, &(source, target)| {
-                                        if id == source {
-                                            target
-                                        } else {
-                                            id
-                                        }
-                                    }),
-                                    // if `b` is to be added to another pid replace it with this pid
-                                    add.iter().fold(pids[1], |id, &(source, target)| {
-                                        if id == source {
-                                            target
-                                        } else {
-                                            id
-                                        }
-                                    }),
-                                ],
-                                // if any of the pids `a` or `b` are to b deleted set the factor to
-                                // zero
-                                if del.iter().any(|&id| id == pids[0] || id == pids[1]) {
-                                    0.0
-                                } else {
-                                    *f
-                                },
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect();
-    }
-
     /// Splits the grid such that each channel contains only a single tuple of PIDs.
     pub fn split_channels(&mut self) {
         let indices: Vec<_> = self

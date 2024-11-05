@@ -1,10 +1,12 @@
 //! Provides the [`FkTable`] type.
 
-use super::boc::{Kinematics, Order};
+use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvolutionCache;
+use super::empty_subgrid::EmptySubgridV1;
 use super::grid::Grid;
+use super::pids::OptRules;
 use super::subgrid::{self, Subgrid};
-use ndarray::ArrayD;
+use ndarray::{s, ArrayD};
 use std::fmt::{self, Display, Formatter};
 use std::iter;
 use std::str::FromStr;
@@ -240,70 +242,40 @@ impl FkTable {
         )
     }
 
-    /// Optimizes the storage of FK tables based of assumptions of the PDFs at the FK table's
-    /// scale.
-    ///
-    /// # Panics
-    ///
-    /// TODO
+    /// Optimize the size of this FK-table by throwing away heavy quark flavors assumed to be zero
+    /// at the FK-table's scales and calling [`Grid::optimize`].
     pub fn optimize(&mut self, assumptions: FkAssumptions) {
-        let mut add = Vec::new();
+        let OptRules(sum, delete) = self.grid.pid_basis().opt_rules(assumptions);
 
-        match assumptions {
-            FkAssumptions::Nf6Ind => {
-                // nothing to do here
+        for idx in 0..self.grid.channels().len() {
+            let &[(ref pids, factor)] = self.grid.channels()[idx].entry() else {
+                // every FK-table must have a trivial channel definition
+                unreachable!()
+            };
+            let mut pids = pids.clone();
+
+            for pid in &mut pids {
+                if delete.iter().any(|&delete| *pid == delete) {
+                    for subgrid in self.grid.subgrids_mut().slice_mut(s![.., .., idx]) {
+                        *subgrid = EmptySubgridV1.into();
+                    }
+                } else if let Some(replace) = sum
+                    .iter()
+                    .find_map(|&(search, replace)| (*pid == search).then_some(replace))
+                {
+                    *pid = replace;
+                }
             }
-            FkAssumptions::Nf6Sym => {
-                add.push((235, 200));
-            }
-            FkAssumptions::Nf5Ind => {
-                add.extend_from_slice(&[(235, 200), (135, 100)]);
-            }
-            FkAssumptions::Nf5Sym => {
-                add.extend_from_slice(&[(235, 200), (135, 100), (224, 200)]);
-            }
-            FkAssumptions::Nf4Ind => {
-                add.extend_from_slice(&[(235, 200), (135, 100), (224, 200), (124, 100)]);
-            }
-            FkAssumptions::Nf4Sym => {
-                add.extend_from_slice(&[
-                    (235, 200),
-                    (135, 100),
-                    (224, 200),
-                    (124, 100),
-                    (215, 200),
-                ]);
-            }
-            FkAssumptions::Nf3Ind => {
-                add.extend_from_slice(&[
-                    (235, 200),
-                    (135, 100),
-                    (224, 200),
-                    (124, 100),
-                    (215, 200),
-                    (115, 100),
-                ]);
-            }
-            FkAssumptions::Nf3Sym => {
-                add.extend_from_slice(&[
-                    (235, 200),
-                    (135, 100),
-                    (224, 200),
-                    (124, 100),
-                    (215, 200),
-                    (115, 100),
-                    (208, 200),
-                ]);
-            }
+
+            self.grid.channels_mut()[idx] = Channel::new(vec![(pids, factor)]);
         }
 
-        self.grid.rewrite_channels(&add, &[]);
+        self.grid.optimize();
 
         // store the assumption so that we can check it later on
         self.grid
             .metadata_mut()
             .insert("fk_assumptions".to_owned(), assumptions.to_string());
-        self.grid.optimize();
     }
 }
 
