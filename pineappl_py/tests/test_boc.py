@@ -12,52 +12,47 @@ class TestChannel:
 
 class TestKinematics:
     @pytest.mark.parametrize(
-        "kintype, argument, expected_type",
+        "kintype, argument",
         [
-            ("Scale", 0, Kinematics),
-            ("Scale", 1, Kinematics),
-            ("Scale", 2, Kinematics),
-            ("X", 0, Kinematics),
-            ("X", 1, Kinematics),
-            ("X", 2, Kinematics),
+            ("Scale", 0),
+            ("Scale", 1),
+            ("Scale", 2),
+            ("X", 0),
+            ("X", 1),
+            ("X", 2),
         ],
     )
-    def test_init(self, kintype: str, argument: int, expected_type: Kinematics):
+    def test_init(self, kintype: str, argument: int):
         kin_method = getattr(Kinematics, kintype)
         result = kin_method(argument)
-        assert isinstance(result, expected_type)
+        assert isinstance(result, Kinematics)
 
 
 class TestScaleFuncForm:
     @pytest.mark.parametrize(
-        "scaletype, argument, expected_type",
+        "scaletype, argument",
         [
-            ("NoScale", [0], ScaleFuncForm),
-            ("Scale", [0], ScaleFuncForm),
-            ("QuadraticSum", [0, 1], ScaleFuncForm),
-            ("QuadraticMean", [0, 1], ScaleFuncForm),
-            ("QuadraticSumOver4", [0, 1], ScaleFuncForm),
-            ("LinearMean", [0, 1], ScaleFuncForm),
-            ("LinearSum", [0, 1], ScaleFuncForm),
-            ("ScaleMax", [0, 1], ScaleFuncForm),
-            ("ScaleMin", [0, 1], ScaleFuncForm),
-            ("Prod", [0, 1], ScaleFuncForm),
-            ("S2plusS1half", [0, 1], ScaleFuncForm),
-            ("Pow4Sum", [0, 1], ScaleFuncForm),
-            ("WgtAvg", [0, 1], ScaleFuncForm),
-            ("S2plusS1fourth", [0, 1], ScaleFuncForm),
-            ("ExpProd2", [0, 1], ScaleFuncForm),
+            ("NoScale", [0]),
+            ("Scale", [0]),
+            ("QuadraticSum", [0, 1]),
+            ("QuadraticMean", [0, 1]),
+            ("QuadraticSumOver4", [0, 1]),
+            ("LinearMean", [0, 1]),
+            ("LinearSum", [0, 1]),
+            ("ScaleMax", [0, 1]),
+            ("ScaleMin", [0, 1]),
+            ("Prod", [0, 1]),
+            ("S2plusS1half", [0, 1]),
+            ("Pow4Sum", [0, 1]),
+            ("WgtAvg", [0, 1]),
+            ("S2plusS1fourth", [0, 1]),
+            ("ExpProd2", [0, 1]),
         ],
     )
-    def test_init(
-        self,
-        scaletype: ScaleFuncForm,
-        argument: list,
-        expected_type: ScaleFuncForm,
-    ):
+    def test_init(self, scaletype: ScaleFuncForm, argument: list):
         scale_method = getattr(ScaleFuncForm, scaletype)
         result = scale_method(*argument)
-        assert isinstance(result, expected_type)
+        assert isinstance(result, ScaleFuncForm)
 
 
 class TestOrder:
