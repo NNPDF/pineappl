@@ -42,6 +42,8 @@ class PDF:
 class FakeGrid:
     """Class that mocks a PineAPPL grid. This should contain functions
     that return all the possible number of convolutions.
+
+    TODO: Expose the index that defines the `ScaleFuncForm`.
     """
 
     def grid_with_generic_convolution(
@@ -106,10 +108,15 @@ class FakeGrid:
                 )
 
         # Construct the `Scales` object
+        fragmentation_scale = (
+            ScaleFuncForm.Scale(0)
+            if nb_convolutions >= 3
+            else ScaleFuncForm.NoScale(0)
+        )
         scale_funcs = Scales(
             ren=ScaleFuncForm.Scale(0),
             fac=ScaleFuncForm.Scale(0),
-            frg=ScaleFuncForm.NoScale(0),
+            frg=fragmentation_scale,
         )
 
         return Grid(

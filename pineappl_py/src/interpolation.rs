@@ -92,16 +92,18 @@ impl PyInterp {
     ///     the type of interpolation to be used
     #[new]
     #[must_use]
-    #[pyo3(signature = (min, max, nodes, order, reweight_meth = None, map = None, interpolation_meth = None))]
+    #[pyo3(signature = (min, max, nodes = None, order = None, reweight_meth = None, map = None, interpolation_meth = None))]
     pub fn new_interp(
         min: f64,
         max: f64,
-        nodes: usize,
-        order: usize,
+        nodes: Option<usize>,
+        order: Option<usize>,
         reweight_meth: Option<PyReweightingMethod>,
         map: Option<PyMappingMethod>,
         interpolation_meth: Option<PyInterpolationMethod>,
     ) -> Self {
+        let default_nodes: usize = 50;
+        let default_order: usize = 3;
         let reweight = reweight_meth.unwrap_or(PyReweightingMethod::NoReweight);
         let mapping = map.unwrap_or(PyMappingMethod::ApplGridF2);
         let interp_method = interpolation_meth.unwrap_or(PyInterpolationMethod::Lagrange);
@@ -109,8 +111,8 @@ impl PyInterp {
         Self::new(Interp::new(
             min,
             max,
-            nodes,
-            order,
+            nodes.unwrap_or(default_nodes),
+            order.unwrap_or(default_order),
             reweight.into(),
             mapping.into(),
             interp_method.into(),
