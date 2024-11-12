@@ -24,6 +24,20 @@ impl PyConvType {
     pub const fn new_convtype(polarized: bool, time_like: bool) -> Self {
         Self::new(ConvType::new(polarized, time_like))
     }
+
+    /// Returns a boolean on whether or not the convolution type is polarized
+    #[getter]
+    #[must_use]
+    pub const fn polarized(&self) -> bool {
+        matches!(self.convtype, ConvType::PolPDF | ConvType::PolFF)
+    }
+
+    /// Returns a boolean on whether or not the convolution type is timelike
+    #[getter]
+    #[must_use]
+    pub const fn time_like(&self) -> bool {
+        matches!(self.convtype, ConvType::UnpolFF | ConvType::PolFF)
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::convolutions::Conv <convolutions/struct.Conv.html>`.
@@ -46,6 +60,15 @@ impl PyConv {
     #[must_use]
     pub fn new_conv(conv_type: PyRef<PyConvType>, pid: i32) -> Self {
         Self::new(Conv::new(conv_type.convtype, pid))
+    }
+
+    /// Return the convolution type of this convolution.
+    #[getter]
+    #[must_use]
+    pub const fn conv_type(&self) -> PyConvType {
+        PyConvType {
+            convtype: self.conv.conv_type(),
+        }
     }
 }
 

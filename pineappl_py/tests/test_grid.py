@@ -333,6 +333,14 @@ class TestGrid:
         grid = download_objects(f"{gridname}")
         g = Grid.read(grid)
 
+        # Check the Grid convolutions - can be used to construct `grid.convolve`
+        convolutions = g.convolutions()
+        assert len(convolutions) == 2
+        assert convolutions[0].conv_type.polarized
+        assert not convolutions[0].conv_type.time_like
+        assert not convolutions[1].conv_type.polarized
+        assert not convolutions[1].conv_type.time_like
+
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)
         h1_conv = Conv(conv_type=h1, pid=2212)
