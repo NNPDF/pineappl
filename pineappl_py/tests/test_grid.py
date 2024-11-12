@@ -6,11 +6,11 @@ import tempfile
 from numpy.random import Generator, PCG64
 
 from pineappl.bin import BinRemapper
-from pineappl.boc import Channel, Kinematics, Scales
+from pineappl.boc import Channel, Kinematics, Scales, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
-from pineappl.grid import Grid, Order
+from pineappl.grid import Grid
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.pids import PidBasis
 
@@ -221,7 +221,7 @@ class TestGrid:
         g = Grid.read(grid)
 
         # Get the types of convolutions for this grid
-        for conv in g.convolutions():
+        for conv in g.convolutions:
             assert isinstance(conv, Conv)
 
         # Check that the scalings work, ie run without error
@@ -334,7 +334,7 @@ class TestGrid:
         g = Grid.read(grid)
 
         # Check the Grid convolutions - can be used to construct `grid.convolve`
-        convolutions = g.convolutions()
+        convolutions = g.convolutions
         assert len(convolutions) == 2
         assert convolutions[0].conv_type.polarized
         assert not convolutions[0].conv_type.time_like

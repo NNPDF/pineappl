@@ -641,6 +641,7 @@ impl PyGrid {
     /// Returns
     /// list(PyConv):
     ///     list of convolution type with the corresponding PIDs
+    #[getter]
     #[must_use]
     pub fn convolutions(&self) -> Vec<PyConv> {
         self.grid
@@ -721,6 +722,5 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
         "import sys; sys.modules['pineappl.grid'] = m"
     );
     m.add_class::<PyGrid>()?;
-    m.add_class::<PyOrder>()?;
     parent_module.add_submodule(&m)
 }

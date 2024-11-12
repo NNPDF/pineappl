@@ -3,9 +3,9 @@ import pytest
 import subprocess
 from typing import List
 
-from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales
+from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales, Order
 from pineappl.convolutions import Conv
-from pineappl.grid import Grid, Order
+from pineappl.grid import Grid
 from pineappl.interpolation import (
     Interp,
     InterpolationMethod,

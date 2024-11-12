@@ -7,10 +7,9 @@ three (general) convolutions.
 import numpy as np
 import tempfile
 
-from pineappl.boc import Channel
+from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.fk_table import FkAssumptions, FkTable
-from pineappl.grid import Order
 from pineappl.import_subgrid import ImportSubgridV1
 
 
@@ -146,6 +145,14 @@ class TestFkTable:
         ]
         fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
+
+        # Check the FK table convolutions
+        convolutions = fk.convolutions
+        assert len(convolutions) == 2
+        assert convolutions[0].conv_type.polarized
+        assert not convolutions[0].conv_type.time_like
+        assert not convolutions[1].conv_type.polarized
+        assert not convolutions[1].conv_type.time_like
 
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)

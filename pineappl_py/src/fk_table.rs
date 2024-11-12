@@ -89,6 +89,22 @@ impl PyFkTable {
         Ok(self.fk_table.table().into_pyarray_bound(py))
     }
 
+    /// Get the type(s) of convolution(s) for the current FK table.
+    ///
+    /// Returns
+    /// list(PyConv):
+    ///     list of convolution type with the corresponding PIDs
+    #[getter]
+    #[must_use]
+    pub fn convolutions(&self) -> Vec<PyConv> {
+        self.fk_table
+            .grid()
+            .convolutions()
+            .iter()
+            .map(|conv| PyConv { conv: conv.clone() })
+            .collect()
+    }
+
     /// Get number of bins.
     ///
     /// Returns
