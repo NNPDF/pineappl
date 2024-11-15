@@ -17,7 +17,7 @@
 #include <vector>
 
 int main(int argc, char* argv[]) {
-    std::string filename = "drell-yan-rap-ll.pineappl.lz4";
+    std::string filename = "drell-yan-rap-ll-v1.pineappl.lz4";
     std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
 
     switch (argc) {

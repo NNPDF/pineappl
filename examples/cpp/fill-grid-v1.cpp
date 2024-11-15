@@ -110,7 +110,7 @@ void fill_grid(pineappl_grid* grid, std::size_t calls) {
         std::size_t channel = 0;
 
         // Values of the kinematic variables
-        std::vector<double> ntuples = {x1, x2, q2};
+        std::vector<double> ntuples = {q2, x1, x2};
 
         // fill the LO `weight` into `grid` for parton fractions `x1` and `x2`, and the (squared)
         // renormalization/factorization scale `q2`. The parameters `order` and `channel` are
