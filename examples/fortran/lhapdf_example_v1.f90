@@ -7,40 +7,67 @@ program lhapdf_example
     integer, parameter :: dp = kind(0.0d0)
 
     type(pineappl_grid) :: grid
-    type(pineappl_lumi) :: lumi
-    type(pineappl_keyval) :: key_vals
+    type(pineappl_lumi) :: channels
+    type(pineappl_kinematics) :: kinematics(3)
+    type(pineappl_interp_tuples) :: interpolations(3)
 
-    type(pineappl_xfx) :: xfx
-    type(pineappl_alphas) :: alphas
+    type (pineappl_xfx) :: xfx(2)
+    type (pineappl_alphas) :: alphas
+
+    integer(kind(pineappl_reweight_meth)) :: q2_reweight
+    integer(kind(pineappl_reweight_meth)) :: x_reweight
+    integer(kind(pineappl_map)) :: q2_mapping
+    integer(kind(pineappl_map)) :: x_mapping
+    integer(kind(pineappl_interp_meth)) :: interpolation_meth
 
     integer, target :: flags(2)
 
-    lumi = pineappl_lumi_new()
-    call pineappl_lumi_add(lumi, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    channels = pineappl_channel_new()
+    call pineappl_channel_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
-    key_vals = pineappl_keyval_new()
-    grid = pineappl_grid_new(lumi, 1, [2, 0, 0, 0], 2, [0.0_dp, 1.0_dp, 2.0_dp], key_vals)
+    kinematics = [&
+        pineappl_kinematics(pineappl_scale, 0), &
+        pineappl_kinematics(pineappl_x, 0), &
+        pineappl_kinematics(pineappl_x, 1) &
+    ]
 
-    call pineappl_grid_fill_all(grid, 0.5_dp, 0.5_dp, 100.0_dp, 0, 0.5_dp, [0.5_dp, 0.5_dp, 0.5_dp])
-    call pineappl_grid_fill_all(grid, 0.5_dp, 0.5_dp, 100.0_dp, 0, 1.5_dp, [1.5_dp, 1.5_dp, 1.5_dp])
+    q2_reweight = pineappl_no_reweight
+    x_reweight = pineappl_applgrid_x
+    q2_mapping = pineappl_applgrid_h0
+    x_mapping = pineappl_applgrid_f2
+    interpolation_meth = pineappl_lagrange
+    interpolations = [ &
+        pineappl_interp_tuples(1e2, 1e8, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth) &
+    ]
+
+    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1], 2, &
+        [0.0_dp, 1.0_dp, 2.0_dp], 2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
+
+    call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
+    call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])
 
     call lhapdf_initpdfset_byname(0, "nCTEQ15_1_1")
+    ! call lhapdf_initpdfset_byname(0, "nCTEQ15FullNuc_208_82")
     call lhapdf_initpdfset_byname(1, "nCTEQ15FullNuc_208_82")
+
+    ! write(*, *) "xfx_test1: ", xfx_test1(0, 0.5_dp, 100.0_dp, c_null_ptr)
     
     ! calling pineappl_grid_convolve without any flags
     xfx = pineappl_xfx(xfx_test1)
     alphas = pineappl_alphas(alphas_test1)
-    write(*, *) "first pineappl_grid_convolve_with_one: "
-    write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp)
+    write(*, *) "first pineappl_grid_convolve: "
+    write(*, *) pineappl_grid_convolve(grid, [xfx, xfx], alphas, &
+        [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp])
 
     ! calling pineappl_grid_convolve with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
     xfx = pineappl_xfx(xfx_test2)
     alphas = pineappl_alphas(alphas_test2)
     flags = [1, 0]
-    write(*, *) "second pineappl_grid_convolve_with_one: "
-    write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
+    write(*, *) "second pineappl_grid_convolve: "
+    write(*, *) pineappl_grid_convolve(grid, [xfx, xfx], alphas, &
+        [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp], c_loc(flags(1)))
 contains
 
     ! Passing a Fortran procedure to C needs the iso_c_binding
