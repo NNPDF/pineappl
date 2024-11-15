@@ -1,5 +1,6 @@
 module pineappl
-    use iso_c_binding, only: c_null_ptr, c_ptr
+    use iso_c_binding
+    use iso_fortran_env
 
     implicit none
 
@@ -17,8 +18,78 @@ module pineappl
         type (c_ptr) :: ptr = c_null_ptr
     end type
 
+
+    ! As a workaround for typing Fortran enums, we define the name of the enum as the last enum value. This way, variables can be declared as, e.g. for pineappl_conv_type, integer(kind(pineappl_conv_type)). The compiler doesn't check that a value is from the right enum, but it clarifies the code for the user.
+
+    enum, bind(c) ! :: pineappl_conv_type
+        enumerator :: pineappl_unpol_pdf
+        enumerator :: pineappl_pol_pdf
+        enumerator :: pineappl_unpol_ff
+        enumerator :: pineappl_pol_ff
+
+        enumerator :: pineappl_conv_type
+    end enum
+
+    enum, bind(c) ! :: pineappl_interp_meth
+        enumerator :: pineappl_lagrange
+
+        enumerator :: pineappl_interp_meth
+    end enum
+
+    enum, bind(c) ! :: pineappl_map
+        enumerator :: pineappl_applgrid_f2
+        enumerator :: pineappl_applgrid_h0
+
+        enumerator :: pineappl_map
+    end enum
+
+    enum, bind(c) ! :: pineappl_pid_basis
+        enumerator :: pineappl_pdg
+        enumerator :: pineappl_evol
+
+        enumerator :: pineappl_pid_basis
+    end enum
+
+    enum, bind(c) ! :: pineappl_reweight_meth
+        enumerator :: pineappl_applgrid_x
+        enumerator :: pineappl_no_reweight
+
+        enumerator :: pineappl_reweight_meth
+    end enum
+
+    enum, bind(c) ! :: pineappl_kinematics_tag
+        enumerator :: pineappl_scale
+        enumerator :: pineappl_x
+
+        enumerator :: pineappl_kinematics_tag
+    end enum
+
+    ! The Kinematics struct is a tuple-like struct in the Pineappl Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
+    type, bind(c) :: pineappl_kinematics
+        integer(kind(pineappl_kinematics_tag)) :: tag
+        integer(c_size_t) :: index
+    end type
+
+    type, bind(c) :: pineappl_interp_tuples
+        real(c_double) :: node_min
+        real(c_double) :: node_max
+        integer(c_size_t) :: nb_nodes
+        integer(c_size_t) :: interp_degree
+        integer(kind(pineappl_reweight_meth)) :: reweighting_method
+        integer(kind(pineappl_map)) :: mapping
+        integer(kind(pineappl_interp_meth)) :: interpolation_method
+    end type
+
+    type :: pineappl_xfx
+        procedure (pineappl_xfx_proc), pointer, nopass :: proc
+    end type
+
+    type :: pineappl_alphas
+        procedure (pineappl_alphas_proc), pointer, nopass :: proc
+    end type
+
     abstract interface
-        function pineappl_xfx(pdg_id, x, q2, state) bind(c)
+        function pineappl_xfx_proc(pdg_id, x, q2, state) bind(c)
             use iso_c_binding
 
             implicit none
@@ -26,17 +97,17 @@ module pineappl
             integer(c_int32_t), value, intent(in) :: pdg_id
             real(c_double), value, intent(in)     :: x, q2
             type (c_ptr), value, intent(in)       :: state
-            real(c_double)                        :: pineappl_xfx
+            real(c_double)                        :: pineappl_xfx_proc
         end function
 
-        function pineappl_alphas(q2, state) bind(c)
+        function pineappl_alphas_proc(q2, state) bind(c)
             use iso_c_binding
 
             implicit none
             
             real(c_double), value, intent(in) :: q2
             type (c_ptr), value, intent(in)   :: state
-            real(c_double)                    :: pineappl_alphas
+            real(c_double)                    :: pineappl_alphas_proc
         end function
     end interface
 
@@ -49,6 +120,20 @@ module pineappl
             type (c_ptr), value :: s
             integer (c_size_t)  :: strlen
         end function strlen
+
+        subroutine channel_add(lumi, combinations, nb_combinations, pdg_id_combinations, factors) &
+            bind(c, name = 'pineappl_channel_add')
+            
+            use iso_c_binding
+            type (c_ptr), value       :: lumi
+            integer (c_size_t), value :: combinations, nb_combinations
+            integer (c_int32_t)       :: pdg_id_combinations(*)
+            real (c_double)           :: factors(*)
+        end subroutine
+
+        type (c_ptr) function channel_new() bind(c, name = 'pineappl_channel_new')
+            use iso_c_binding
+        end function
 
         integer (c_size_t) function grid_bin_count(grid) bind(c, name = 'pineappl_grid_bin_count')
             use iso_c_binding
@@ -84,6 +169,20 @@ module pineappl
             use iso_c_binding
             type (c_ptr), value :: grid
         end function
+
+        subroutine grid_convolve(grid, xfxs, alphas, state, order_mask, channel_mask, &
+            bin_indices, nb_scales, mu_scales, results) &
+            bind(c, name = 'pineappl_grid_convolve')
+            
+            use iso_c_binding
+            type (c_ptr), value        :: grid, state
+            type (c_funptr)            :: xfxs(*)
+            type (c_funptr), value     :: alphas
+            logical (c_bool)           :: order_mask(*), channel_mask(*)
+            integer (c_size_t)         :: bin_indices(*)
+            integer (c_size_t), value  :: nb_scales
+            real (c_double)            :: mu_scales(*), results(*)
+        end subroutine
 
         subroutine grid_convolve_with_one(grid, pdg_id, xfx, alphas, state, order_mask, lumi_mask, xi_ren, xi_fac, results) &
             bind(c, name = 'pineappl_grid_convolve_with_one')
@@ -125,12 +224,12 @@ module pineappl
             integer (c_size_t), value :: order, lumi
         end subroutine
 
-        subroutine grid_fill2(grid, ntuple, order, observable, lumi, weight) bind(c, name = 'pineappl_grid_fill2')
+        subroutine grid_fill2(grid, order, observable, channel, ntuple, weight) bind(c, name = 'pineappl_grid_fill2')
             use iso_c_binding
             type (c_ptr), value       :: grid
-            real (c_double)           :: ntuple(*)
+            integer (c_size_t), value :: order, channel
             real (c_double), value    :: observable, weight
-            integer (c_size_t), value :: order, lumi
+            real (c_double)           :: ntuple(*)
         end subroutine
 
         subroutine grid_fill_all(grid, x1, x2, q2, order, observable, weights) bind(c, name = 'pineappl_grid_fill_all')
@@ -141,13 +240,13 @@ module pineappl
             integer (c_size_t), value :: order
         end subroutine
 
-        subroutine grid_fill_all2(grid, ntuple, order, observable, weights) bind(c, name = 'pineappl_grid_fill_all2')
+        subroutine grid_fill_all2(grid, order, observable, ntuple, weights) bind(c, name = 'pineappl_grid_fill_all2')
             use iso_c_binding
             type (c_ptr), value       :: grid
-            real (c_double)           :: ntuple(*)
-            real (c_double), value    :: observable
-            real (c_double)           :: weights(*)
             integer (c_size_t), value :: order
+            real (c_double), value    :: observable
+            real (c_double)           :: ntuple(*)
+            real (c_double)           :: weights(*)
         end subroutine
 
         subroutine grid_fill_array(grid, x1, x2, q2, orders, observables, lumis, weights, size) &
@@ -159,13 +258,12 @@ module pineappl
             integer (c_size_t), value :: size
         end subroutine
 
-        subroutine grid_fill_array2(grid, ntuple, orders, observables, lumis, weights, size) &
+        subroutine grid_fill_array2(grid, orders, observables, ntuples, lumis, weights, size) &
             bind(c, name = 'pineappl_grid_fill_array2')
             use iso_c_binding
             type (c_ptr), value       :: grid
-            real (c_double)           :: ntuple(*)
-            real (c_double)           :: observables(*), weights(*)
             integer (c_size_t)        :: orders(*), lumis(*)
+            real (c_double)           :: observables(*), ntuples(*), weights(*)
             integer (c_size_t), value :: size
         end subroutine
 
@@ -200,6 +298,23 @@ module pineappl
             integer (c_size_t), value :: orders, bins
             integer (c_int32_t)       :: order_params(*)
             real (c_double)           :: bin_limits(*)
+        end function
+
+        type (c_ptr) function grid_new2(pid_basis, channels, orders, order_params, bins, bin_limits, nb_convolutions, &
+            convolution_types, pdg_ids, kinematics, interpolations, mu_scales) bind(c, name = 'pineappl_grid_new2')
+            use iso_c_binding
+            import ! so we can use pineappl_kinematics and pineappl_interp_tuples
+
+            integer (c_int32_t), value :: pid_basis
+            type (c_ptr), value :: channels
+            integer (c_int32_t) :: convolution_types(*)
+            integer (c_size_t), value :: orders, bins, nb_convolutions
+            integer (c_int8_t) :: order_params(*)
+            real (c_double) :: bin_limits(*)
+            integer (c_int32_t) :: pdg_ids(*)
+            type (pineappl_kinematics) :: kinematics(*)
+            type (pineappl_interp_tuples) :: interpolations(*)
+            integer (c_size_t) :: mu_scales(*)
         end function
 
         subroutine grid_optimize(grid) bind(c, name = 'pineappl_grid_optimize')
@@ -342,14 +457,6 @@ module pineappl
             real (c_double)           :: factors(*)
         end subroutine
 
-        subroutine channel_add(lumi, combinations, pdg_id_combinations, factors) bind(c, name = 'pineappl_channel_add')
-            use iso_c_binding
-            type (c_ptr), value       :: lumi
-            integer (c_size_t), value :: combinations
-            integer (c_int32_t)       :: pdg_id_combinations(*)
-            real (c_double)           :: factors(*)
-        end subroutine
-
         integer (c_size_t) function lumi_combinations(lumi, entry) bind(c, name = 'pineappl_lumi_combinations')
             use iso_c_binding
             type (c_ptr), value       :: lumi
@@ -415,6 +522,12 @@ contains
         do i = 1, length
             f_str(i:i) = arr_f_ptr(i)
         end do
+    end function
+
+    type (pineappl_lumi) function pineappl_channel_new()
+        implicit none
+        
+        pineappl_channel_new = pineappl_lumi(channel_new())
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -487,9 +600,8 @@ contains
         
         type (pineappl_grid), intent(in)   :: grid
         integer, intent(in)                :: pdg_id
-        ! no pointer attribute here, see https://community.intel.com/t5/Intel-Fortran-Compiler/Segfault-when-passing-procedure-pointer-to-function-but-not-when/m-p/939797
-        procedure (pineappl_xfx)           :: xfx
-        procedure (pineappl_alphas)        :: alphas
+        type (pineappl_xfx)                :: xfx
+        type (pineappl_alphas)             :: alphas
         logical, intent(in)                :: order_mask(:), lumi_mask(:)
         real (dp), intent(in)              :: xi_ren, xi_fac
         real (dp), allocatable             :: res(:)
@@ -499,10 +611,10 @@ contains
 
         allocate(res(pineappl_grid_bin_count(grid)))
 
-        if (.not. c_associated(c_funloc(xfx))) then
+        if (.not. c_associated(c_funloc(xfx%proc))) then
             error stop "xfx is null"
         end if
-        if (.not. c_associated(c_funloc(alphas))) then
+        if (.not. c_associated(c_funloc(alphas%proc))) then
             error stop "alphas is null"
         end if
 
@@ -512,7 +624,7 @@ contains
             state_ = c_null_ptr
         end if
 
-        call grid_convolve_with_one(grid%ptr, pdg_id, c_funloc(xfx), c_funloc(alphas), state_, &
+        call grid_convolve_with_one(grid%ptr, pdg_id, c_funloc(xfx%proc), c_funloc(alphas%proc), state_, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(lumi_mask(i), c_bool), i = 1, size(lumi_mask))], &
             xi_ren, xi_fac, res)
@@ -526,8 +638,8 @@ contains
         
         type (pineappl_grid), intent(in)   :: grid
         integer, intent(in)                :: pdg_id1, pdg_id2
-        procedure (pineappl_xfx)           :: xfx1, xfx2
-        procedure (pineappl_alphas)        :: alphas
+        type (pineappl_xfx)                :: xfx1, xfx2
+        type (pineappl_alphas)             :: alphas
         logical, intent(in)                :: order_mask(:), lumi_mask(:)
         real (dp), intent(in)              :: xi_ren, xi_fac
         real (dp), allocatable             :: res(:)
@@ -537,13 +649,13 @@ contains
 
         allocate(res(pineappl_grid_bin_count(grid)))
 
-        if (.not. c_associated(c_funloc(xfx1))) then
+        if (.not. c_associated(c_funloc(xfx1%proc))) then
             error stop "xfx1 is null"
         end if
-        if (.not. c_associated(c_funloc(xfx2))) then
+        if (.not. c_associated(c_funloc(xfx2%proc))) then
             error stop "xfx1 is null"
         end if
-        if (.not. c_associated(c_funloc(alphas))) then
+        if (.not. c_associated(c_funloc(alphas%proc))) then
             error stop "alphas is null"
         end if
 
@@ -553,10 +665,61 @@ contains
             state_ = c_null_ptr
         end if
 
-        call grid_convolve_with_two(grid%ptr, pdg_id1, c_funloc(xfx1), pdg_id2, c_funloc(xfx2), c_funloc(alphas), state_, &
-            [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
+        call grid_convolve_with_two(grid%ptr, pdg_id1, c_funloc(xfx1%proc), pdg_id2, c_funloc(xfx2%proc), &
+            c_funloc(alphas%proc), state_, [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(lumi_mask(i), c_bool), i = 1, size(lumi_mask))], &
             xi_ren, xi_fac, res)
+    end function
+
+    function pineappl_grid_convolve(grid, xfxs, alphas, order_mask, channel_mask, bin_indices, &
+        nb_scales, mu_scales, state) result(res)
+        
+        use iso_c_binding
+
+        implicit none
+        
+        type (pineappl_grid), intent(in)   :: grid
+        type (pineappl_xfx)                :: xfxs(:)
+        type (pineappl_alphas)             :: alphas
+        logical, intent(in)                :: order_mask(:), channel_mask(:)
+        integer, intent(in)                :: bin_indices(:), nb_scales
+        real (dp), intent(in)              :: mu_scales(:)
+        type (c_ptr), optional, intent(in) :: state
+        real (dp), allocatable             :: res(:)
+        
+        integer                            :: i
+        type (c_ptr)                       :: state_
+
+        allocate(res(size(bin_indices)))
+
+        do i = 1, size(xfxs)
+            if (.not. c_associated(c_funloc(xfxs(i)%proc))) then
+                error stop "at least one proc is null in xfxs"
+            end if
+        end do
+        if (.not. c_associated(c_funloc(alphas%proc))) then
+            error stop "alphas%proc is null"
+        end if
+        
+        if (present(state)) then
+            state_ = state
+        else
+            state_ = c_null_ptr
+        end if
+
+        call grid_convolve( &
+            grid%ptr, &
+            [(c_funloc(xfxs(i)%proc), i = 1, size(xfxs))], &
+            c_funloc(alphas%proc), &
+            state_, &
+            [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
+            [(logical(channel_mask(i), c_bool), i = 1, size(channel_mask))], &
+            [(int(bin_indices, c_size_t), i = 1, size(bin_indices))], &
+            int(nb_scales, c_size_t), &
+            mu_scales, &
+            res &
+        )
+
     end function
 
     subroutine pineappl_grid_delete(grid)
@@ -579,17 +742,16 @@ contains
         call grid_fill(grid%ptr, x1, x2, q2, int(order, c_size_t), observable, int(lumi, c_size_t), weight)
     end subroutine
 
-    subroutine pineappl_grid_fill2(grid, ntuple, order, observable, lumi, weight)
+    subroutine pineappl_grid_fill2(grid, order, observable, channel, ntuple, weight)
         use iso_c_binding
 
         implicit none
 
         type (pineappl_grid), intent(in)    :: grid
-        real (dp), dimension(*), intent(in) :: ntuple
-        real (dp), intent(in)               :: observable, weight
-        integer, intent(in)                 :: order, lumi
+        real (dp), intent(in)               :: observable, ntuple(*), weight
+        integer, intent(in)                 :: order, channel
 
-        call grid_fill2(grid%ptr, ntuple, int(order, c_size_t), observable, int(lumi, c_size_t), weight)
+        call grid_fill2(grid%ptr, int(order, c_size_t), observable, int(channel, c_size_t), ntuple, weight)
     end subroutine
 
     subroutine pineappl_grid_fill_all(grid, x1, x2, q2, order, observable, weights)
@@ -604,17 +766,17 @@ contains
         call grid_fill_all(grid%ptr, x1, x2, q2, int(order, c_size_t), observable, weights)
     end subroutine
 
-    subroutine pineappl_grid_fill_all2(grid, ntuple, order, observable, weights)
+    subroutine pineappl_grid_fill_all2(grid, order, observable, ntuple, weights)
         use iso_c_binding
 
         implicit none
 
         type (pineappl_grid), intent(in)    :: grid
-        real (dp), dimension(*), intent(in) :: ntuple
-        real (dp), intent(in)               :: observable, weights(*)
         integer, intent(in)                 :: order
+        real (dp), intent(in)               :: observable, weights(*)
+        real (dp), dimension(*), intent(in) :: ntuple
 
-        call grid_fill_all2(grid%ptr, ntuple, int(order, c_size_t), observable, weights)
+        call grid_fill_all2(grid%ptr, int(order, c_size_t), observable, ntuple, weights)
     end subroutine
 
     subroutine pineappl_grid_fill_array(grid, x1, x2, q2, orders, observables, lumis, weights)
@@ -631,19 +793,18 @@ contains
             observables, [(int(lumis(i), c_size_t), i = 1, size(lumis))], weights, int(size(orders), c_size_t))
     end subroutine
 
-    subroutine pineappl_grid_fill_array2(grid, ntuple, orders, observables, lumis, weights)
+    subroutine pineappl_grid_fill_array2(grid, orders, observables, ntuples, lumis, weights)
         use iso_c_binding
 
         implicit none
 
         type (pineappl_grid), intent(in)    :: grid
-        real (dp), dimension(*), intent(in) :: ntuple
-        real (dp), intent(in)               :: observables(*), weights(*)
+        real (dp), intent(in)               :: observables(*), ntuples(*), weights(*)
         integer, intent(in)                 :: orders(:), lumis(:)
         integer (c_size_t)                  :: i
 
-        call grid_fill_array2(grid%ptr, ntuple, [(int(orders(i), c_size_t), i = 1, size(orders))], &
-            observables, [(int(lumis(i), c_size_t), i = 1, size(lumis))], weights, int(size(orders), c_size_t))
+        call grid_fill_array2(grid%ptr, [(int(orders(i), c_size_t), i = 1, size(orders))], &
+            observables, ntuples, [(int(lumis(i), c_size_t), i = 1, size(lumis))], weights, int(size(orders), c_size_t))
     end subroutine
 
     function pineappl_grid_key_value(grid, key) result(res)
@@ -699,6 +860,40 @@ contains
 
         pineappl_grid_new = pineappl_grid(grid_new(lumi%ptr, int(orders, c_size_t), &
             order_params, int(bins, c_size_t), bin_limits, key_vals%ptr))
+    end function
+
+    type (pineappl_grid) function pineappl_grid_new2(pid_basis, channels, orders, order_params, &
+        bins, bin_limits, nb_convolutions, convolution_types, pdg_ids, kinematics, &
+        interpolations, mu_scales)
+        implicit none
+
+        integer(kind(pineappl_pid_basis)), intent(in)                             :: pid_basis
+        type (pineappl_lumi), intent(in)                                          :: channels
+        integer, intent(in)                                                       :: orders, bins, nb_convolutions
+        integer(int8), dimension(4 * orders), intent(in)                          :: order_params
+        real (dp), dimension(bins + 1), intent(in)                                :: bin_limits
+        integer(kind(pineappl_conv_type)), dimension(nb_convolutions), intent(in) :: convolution_types
+        integer, dimension(nb_convolutions), intent(in)                           :: pdg_ids
+        type (pineappl_kinematics), dimension(nb_convolutions + 1), intent(in), target    :: kinematics
+        type (pineappl_interp_tuples), dimension(nb_convolutions + 1), intent(in) :: interpolations
+        integer, dimension(3)                                                     :: mu_scales
+
+        integer :: i
+
+        pineappl_grid_new2 = pineappl_grid(grid_new2(&
+            pid_basis, &
+            channels%ptr, &
+            int(orders, c_size_t), &
+            order_params, &
+            int(bins, c_size_t), &
+            bin_limits, &
+            int(nb_convolutions, c_size_t), &
+            convolution_types, &
+            pdg_ids, &
+            kinematics, &
+            interpolations, &
+            [(int(mu_scales(i), c_size_t), i = 1, size(mu_scales))]) &
+        )
     end function
 
     subroutine pineappl_grid_optimize(grid)
@@ -940,17 +1135,17 @@ contains
         call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
     end subroutine
 
-    subroutine pineappl_channel_add(lumi, combinations, pdg_id_combinations, factors)
+    subroutine pineappl_channel_add(channels, combinations, nb_combinations, pdg_id_combinations, factors)
         use iso_c_binding
 
         implicit none
 
-        type (pineappl_lumi), intent(in)                 :: lumi
-        integer, intent(in)                              :: combinations
+        type (pineappl_lumi), intent(in)                 :: channels
+        integer, intent(in)                              :: combinations, nb_combinations
         integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
         real (dp), dimension(combinations), intent(in)   :: factors
 
-        call channel_add(lumi%ptr, int(combinations, c_size_t), pdg_id_combinations, factors)
+        call channel_add(channels%ptr, int(combinations, c_size_t), int(nb_combinations, c_size_t), pdg_id_combinations, factors)
     end subroutine
 
     integer function pineappl_lumi_combinations(lumi, entry)
