@@ -153,6 +153,9 @@ class TestFkTable:
         assert not convolutions[0].conv_type.time_like
         assert not convolutions[1].conv_type.polarized
         assert not convolutions[1].conv_type.time_like
+        # Check that the initial states are protons
+        assert convolutions[0].pid == 2212
+        assert convolutions[1].pid == 2212
 
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)

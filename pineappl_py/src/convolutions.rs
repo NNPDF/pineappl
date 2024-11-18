@@ -70,6 +70,13 @@ impl PyConv {
             convtype: self.conv.conv_type(),
         }
     }
+
+    /// Return the PID of this convolution.
+    #[getter]
+    #[must_use]
+    pub const fn pid(&self) -> i32 {
+        self.conv.pid()
+    }
 }
 
 /// Register submodule in parent.
