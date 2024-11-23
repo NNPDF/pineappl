@@ -445,14 +445,14 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     let mut xfx = |id, x, q2| xfx(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
     };
     let channel_mask = if channel_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut convolution_cache = ConvolutionCache::new(
@@ -463,7 +463,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
-        &order_mask,
+        order_mask,
         &[],
         &channel_mask,
         &[(xi_ren, xi_fac, 1.0)],
@@ -511,14 +511,14 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
     };
     let channel_mask = if channel_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
     let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
     let mut convolution_cache = ConvolutionCache::new(
@@ -532,7 +532,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
-        &order_mask,
+        order_mask,
         &[],
         &channel_mask,
         &[(xi_ren, xi_fac, 1.0)],
@@ -1699,15 +1699,15 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     let grid = unsafe { &*grid };
 
     let order_mask = if order_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
     };
 
     let channel_mask = if channel_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
 
     let bin_indices = if bin_indices.is_null() {
@@ -1746,9 +1746,9 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,
-        &order_mask,
+        order_mask,
         bin_indices,
-        &channel_mask,
+        channel_mask,
         mu_scales,
     ));
 }

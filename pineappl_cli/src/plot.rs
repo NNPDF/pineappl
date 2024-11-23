@@ -379,7 +379,7 @@ impl Subcommand for Opts {
                     .collect();
 
                 let channels = if matches!(mode, ConvoluteMode::Asymmetry) {
-                    vec![]
+                    Vec::new()
                 } else {
                     let mut channels: Vec<_> = (0..grid.channels().len())
                         .map(|channel| {
@@ -692,9 +692,9 @@ metadata = {{
                 // TODO: convert this into an error
                 .unwrap();
 
-            let mut x1_vals = vec![];
-            let mut x2_vals = vec![];
-            let mut vals = vec![];
+            let mut x1_vals = Vec::new();
+            let mut x2_vals = Vec::new();
+            let mut vals = Vec::new();
 
             for (((ix1, ix2), &one), &two) in res1.indexed_iter().zip(res2.iter()) {
                 if one == 0.0 {

@@ -28,9 +28,9 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     #[must_use]
     pub const fn new(shape: Vec<usize>) -> Self {
         Self {
-            entries: vec![],
-            start_indices: vec![],
-            lengths: vec![],
+            entries: Vec::new(),
+            start_indices: Vec::new(),
+            lengths: Vec::new(),
             shape,
         }
     }

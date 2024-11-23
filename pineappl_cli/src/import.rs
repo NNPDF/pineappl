@@ -133,7 +133,7 @@ fn convert_fastnlo(
 fn convert_fktable(input: &Path) -> Result<(&'static str, Grid, Vec<f64>, usize)> {
     let fktable = fktable::convert_fktable(input)?;
 
-    Ok(("fktable", fktable, vec![], 1))
+    Ok(("fktable", fktable, Vec::new(), 1))
 }
 
 #[cfg(not(feature = "fktable"))]
@@ -195,7 +195,7 @@ fn fnlo_mu_possible_values() -> Vec<&'static str> {
 
 #[cfg(not(feature = "fastnlo"))]
 const fn fnlo_mu_possible_values() -> Vec<&'static str> {
-    vec![]
+    Vec::new()
 }
 
 /// Converts APPLgrid/fastNLO/FastKernel files to PineAPPL grids.

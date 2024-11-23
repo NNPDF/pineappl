@@ -206,7 +206,7 @@ impl Subcommand for Opts {
                 };
 
             let mut pull_tuples = if self.limit == 0 {
-                vec![]
+                Vec::new()
             } else {
                 let channel_results1 = channel_results(
                     self.conv_funs1.members[self.pull_from],
