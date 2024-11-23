@@ -205,13 +205,19 @@ impl Grid {
         &mut self.pid_basis
     }
 
-    /// TODO
+    /// Return a vector containing the interpolation specifications for this grid.
+    #[must_use]
+    pub fn interpolations(&self) -> &[Interp] {
+        &self.interps
+    }
+
+    /// Return a vector containing the kinematic specifications for this grid.
     #[must_use]
     pub fn kinematics(&self) -> &[Kinematics] {
         &self.kinematics
     }
 
-    /// TODO
+    /// Return a vector containg the scale specifications for this grid.
     #[must_use]
     pub const fn scales(&self) -> &Scales {
         &self.scales

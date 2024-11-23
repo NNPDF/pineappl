@@ -18,6 +18,7 @@ use pineappl::grid::Grid;
 use pineappl::pids::PidBasis;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -226,6 +227,19 @@ impl PyGrid {
         self.grid
             .metadata_mut()
             .insert(key.to_owned(), value.to_owned());
+    }
+
+    /// Get metadata values stored in the grid.
+    ///
+    ///
+    /// Returns
+    /// -------
+    /// dict :
+    ///     key, value map
+    #[getter]
+    #[must_use]
+    pub fn key_values(&self) -> BTreeMap<String, String> {
+        self.grid.metadata().clone()
     }
 
     /// Convolve the grid with as many distributions.
@@ -648,6 +662,23 @@ impl PyGrid {
             .convolutions()
             .iter()
             .map(|conv| PyConv { conv: conv.clone() })
+            .collect()
+    }
+
+    /// Get the interpolation specifications for the current grid.
+    ///
+    /// Returns
+    /// list(PyInterp):
+    ///     list of interpolation specifications
+    #[getter]
+    #[must_use]
+    pub fn interpolations(&mut self) -> Vec<PyInterp> {
+        self.grid
+            .interpolations()
+            .iter()
+            .map(|interp| PyInterp {
+                interp: interp.clone(),
+            })
             .collect()
     }
 
