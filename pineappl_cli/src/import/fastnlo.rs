@@ -145,9 +145,9 @@ fn convert_coeff_add_fix(
         )
         .collect(),
         if npdf == 2 {
-            vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)]
         } else {
-            vec![Kinematics::Scale(0), Kinematics::X1]
+            vec![Kinematics::Scale(0), Kinematics::X(0)]
         },
         Scales {
             ren: ScaleFuncForm::Scale(0),

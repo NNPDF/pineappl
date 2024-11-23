@@ -213,9 +213,9 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: u32, dynamic: bool, reweigh
         // 1st dimension is factorization and at the same time also the renormalization scale
         Kinematics::Scale(0),
         // 2nd dimension is the parton momentum fraction of the first convolution
-        Kinematics::X1,
+        Kinematics::X(0),
         // 3rd dimension is the parton momentum fraction of the second convolution
-        Kinematics::X2,
+        Kinematics::X(1),
     ];
 
     let scales = Scales {

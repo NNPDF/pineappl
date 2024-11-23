@@ -765,7 +765,7 @@ pub unsafe extern "C" fn pineappl_grid_new(
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
         convolutions,
         interps,
-        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2],
+        vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
         Scales {
             ren: ScaleFuncForm::Scale(0),
             fac: ScaleFuncForm::Scale(0),

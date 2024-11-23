@@ -165,9 +165,9 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
                         ]
                     },
                     if hadronic {
-                        vec![Kinematics::Scale(0), Kinematics::X1, Kinematics::X2]
+                        vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)]
                     } else {
-                        vec![Kinematics::Scale(0), Kinematics::X1]
+                        vec![Kinematics::Scale(0), Kinematics::X(0)]
                     },
                     // TODO: is this correct?
                     Scales {

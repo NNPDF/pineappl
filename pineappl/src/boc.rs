@@ -21,14 +21,6 @@ pub enum Kinematics {
     X(usize),
 }
 
-impl Kinematics {
-    /// TODO
-    pub const X1: Self = Self::X(0);
-
-    /// TODO
-    pub const X2: Self = Self::X(1);
-}
-
 /// TODO
 #[repr(C)]
 #[derive(Clone, Deserialize, Serialize)]
