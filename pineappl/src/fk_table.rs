@@ -219,6 +219,13 @@ impl FkTable {
         muf2
     }
 
+    /// Set a metadata key-value pair for this FK table.
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.grid
+            .metadata_mut()
+            .insert(key.to_owned(), value.to_owned());
+    }
+
     /// Returns the x grid that all subgrids for all hadronic initial states share.
     #[must_use]
     pub fn x_grid(&self) -> Vec<f64> {

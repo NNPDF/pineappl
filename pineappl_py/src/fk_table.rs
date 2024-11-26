@@ -7,6 +7,7 @@ use pineappl::convolutions::ConvolutionCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
 use pyo3::prelude::*;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -249,6 +250,31 @@ impl PyFkTable {
             .grid()
             .write_lz4(File::create(path).unwrap())
             .unwrap();
+    }
+
+    /// Set a metadata key-value pair in the FK Table.
+    ///
+    /// Parameters
+    /// ----------
+    /// key : str
+    ///     key
+    /// value : str
+    ///     value
+    pub fn set_key_value(&mut self, key: &str, value: &str) {
+        self.fk_table.set_key_value(key, value);
+    }
+
+    /// Get metadata values stored in the grid.
+    ///
+    ///
+    /// Returns
+    /// -------
+    /// dict :
+    ///     key, value map
+    #[getter]
+    #[must_use]
+    pub fn key_values(&self) -> BTreeMap<String, String> {
+        self.fk_table.grid().metadata().clone()
     }
 
     /// Convolve the FK table with as many distributions.
