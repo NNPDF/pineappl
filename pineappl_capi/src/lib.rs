@@ -1387,7 +1387,7 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
 /// should be deleted using `pineappl_lumi_delete`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_channel_new() -> Box<Lumi> {
+pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
     Box::default()
 }
 
@@ -1399,14 +1399,14 @@ pub extern "C" fn pineappl_channel_new() -> Box<Lumi> {
 /// `pdg_id_combinations` must be an array with length `n_combinations * combinations`, and
 /// `factors` with length of `combinations`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_channel_add(
-    lumi: *mut Lumi,
+pub unsafe extern "C" fn pineappl_channels_add(
+    channels: *mut Lumi,
     combinations: usize,
     nb_combinations: usize,
     pdg_id_combinations: *const i32,
     factors: *const f64,
 ) {
-    let lumi = unsafe { &mut *lumi };
+    let channels = unsafe { &mut *channels };
     let pdg_id_pairs =
         unsafe { slice::from_raw_parts(pdg_id_combinations, nb_combinations * combinations) };
     let factors = if factors.is_null() {
@@ -1415,7 +1415,7 @@ pub unsafe extern "C" fn pineappl_channel_add(
         unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
     };
 
-    lumi.0.push(Channel::new(
+    channels.0.push(Channel::new(
         pdg_id_pairs
             .chunks(nb_combinations)
             .zip(factors)
@@ -1446,13 +1446,15 @@ pub unsafe extern "C" fn pineappl_channel_add(
 ///   Grid. These can be the energy scales and the various momentum fractions.
 /// - The specifications of the interpolation methods `interpolations`: provide the specifications on
 ///   how each of the kinematics should be interpolated.
-/// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entires
-///   have to be ordered following {ren, fac, frg}. The mapping is as follows: `0` -> `ScaleFuncForm::NoScale`,
-///   `n` -> `ScaleFuncForm::Scale(n - 1)`.
+/// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entries
+///   have to be ordered following {ren, fac, frg}. The mapping is as follows:
+///   `0` -> `ScaleFuncForm::NoScale`, ..., `n` -> `ScaleFuncForm::Scale(n - 1)`.
 ///
 /// # Safety
+/// TODO
 ///
 /// # Panics
+/// TODO
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
@@ -1593,28 +1595,28 @@ pub unsafe extern "C" fn pineappl_grid_fill_array2(
     orders: *const usize,
     observables: *const f64,
     ntuples: *const f64,
-    lumis: *const usize,
+    channels: *const usize,
     weights: *const f64,
     size: usize,
 ) {
     let grid = unsafe { &mut *grid };
     let orders = unsafe { slice::from_raw_parts(orders, size) };
     let observables = unsafe { slice::from_raw_parts(observables, size) };
-    let lumis = unsafe { slice::from_raw_parts(lumis, size) };
+    let channels = unsafe { slice::from_raw_parts(channels, size) };
     let weights = unsafe { slice::from_raw_parts(weights, size) };
 
     // Convert the 1D slice into a 2D array
     let ntuples = unsafe { slice::from_raw_parts(ntuples, size * grid.kinematics().len()) };
     let ntuples_2d: Vec<&[f64]> = ntuples.chunks(grid.kinematics().len()).collect();
 
-    for (ntuple, &order, &observable, &lumi, &weight) in
-        izip!(ntuples_2d, orders, observables, lumis, weights)
+    for (ntuple, &order, &observable, &channel, &weight) in
+        izip!(ntuples_2d, orders, observables, channels, weights)
     {
-        grid.fill(order, observable, lumi, ntuple, weight);
+        grid.fill(order, observable, channel, ntuple, weight);
     }
 }
 
-/// Similar to `pineappl_channel_entry` but for luminosity channels that involve 3 partons, ie.
+/// Similar to `pineappl_lumi_entry` but for luminosity channels that involve 3 partons, ie.
 /// in the case of three convolutions.
 ///
 /// # Safety
@@ -1624,14 +1626,14 @@ pub unsafe extern "C" fn pineappl_grid_fill_array2(
 /// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
 /// long.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_channel_entry(
-    lumi: *const Lumi,
+pub unsafe extern "C" fn pineappl_channels_entry(
+    channels: *const Lumi,
     entry: usize,
     pdg_ids: *mut i32,
     factors: *mut f64,
 ) {
-    let lumi = unsafe { &*lumi };
-    let entry = lumi.0[entry].entry();
+    let channels = unsafe { &*channels };
+    let entry = channels.0[entry].entry();
     let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, 3 * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 

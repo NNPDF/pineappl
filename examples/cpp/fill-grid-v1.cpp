@@ -138,7 +138,7 @@ int main() {
     double factors1[] = { 1.0 };
 
     // define the channel #0
-    pineappl_channel_add(channels, 1, nb_convolutions, pids1, factors1);
+    pineappl_channels_add(channels, 1, nb_convolutions, pids1, factors1);
 
     // create another channel, which we won't fill, however
 
@@ -153,7 +153,7 @@ int main() {
     // can also pass `nullptr`
 
     // define the channel #1
-    pineappl_channel_add(channels, 3, nb_convolutions, pids2, nullptr);
+    pineappl_channels_add(channels, 3, nb_convolutions, pids2, nullptr);
 
     // ---
     // Specify the perturbative orders that will be filled into the grid
