@@ -22,8 +22,8 @@ program test_pineappl
     type (pineappl_xfx)    :: xfx1, xfx2
     type (pineappl_alphas) :: alphas
 
-    channels = pineappl_channel_new()
-    call pineappl_channel_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    channels = pineappl_channels_new()
+    call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
     
     if (pineappl_lumi_count(channels) /= 1) then
         write(*, *) "pineappl_lumi_count(): ", pineappl_lumi_count(channels)

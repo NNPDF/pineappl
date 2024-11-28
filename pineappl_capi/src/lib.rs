@@ -1396,19 +1396,21 @@ pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
 /// # Safety
 ///
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
-/// `pdg_id_combinations` must be an array with length `n_combinations * combinations`, and
-/// `factors` with length of `combinations`.
+/// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
+/// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
+/// parton distributions involved, while `combinations` represent the number of different
+/// channel combinations.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_add(
     channels: *mut Lumi,
     combinations: usize,
-    nb_combinations: usize,
+    nb_convolutions: usize,
     pdg_id_combinations: *const i32,
     factors: *const f64,
 ) {
     let channels = unsafe { &mut *channels };
     let pdg_id_pairs =
-        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_combinations * combinations) };
+        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_convolutions * combinations) };
     let factors = if factors.is_null() {
         vec![1.0; combinations]
     } else {
@@ -1417,9 +1419,9 @@ pub unsafe extern "C" fn pineappl_channels_add(
 
     channels.0.push(Channel::new(
         pdg_id_pairs
-            .chunks(nb_combinations)
+            .chunks(nb_convolutions)
             .zip(factors)
-            .map(|x| ((0..nb_combinations).map(|i| x.0[i]).collect(), x.1))
+            .map(|x| ((0..nb_convolutions).map(|i| x.0[i]).collect(), x.1))
             .collect(),
     ));
 }

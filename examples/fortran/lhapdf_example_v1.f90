@@ -11,8 +11,8 @@ program lhapdf_example
     type(pineappl_kinematics) :: kinematics(3)
     type(pineappl_interp_tuples) :: interpolations(3)
 
-    type (pineappl_xfx) :: xfx(2)
-    type (pineappl_alphas) :: alphas
+    type(pineappl_xfx) :: xfx(2)
+    type(pineappl_alphas) :: alphas
 
     integer(kind(pineappl_reweight_meth)) :: q2_reweight
     integer(kind(pineappl_reweight_meth)) :: x_reweight
@@ -22,8 +22,8 @@ program lhapdf_example
 
     integer, target :: flags(2)
 
-    channels = pineappl_channel_new()
-    call pineappl_channel_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    channels = pineappl_channels_new()
+    call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     kinematics = [&
         pineappl_kinematics(pineappl_scale, 0), &
@@ -42,7 +42,7 @@ program lhapdf_example
         pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
 
-    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1], 2, &
+    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 2, &
         [0.0_dp, 1.0_dp, 2.0_dp], 2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
 
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])

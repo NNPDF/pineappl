@@ -121,8 +121,8 @@ module pineappl
             integer (c_size_t)  :: strlen
         end function strlen
 
-        subroutine channel_add(lumi, combinations, nb_combinations, pdg_id_combinations, factors) &
-            bind(c, name = 'pineappl_channel_add')
+        subroutine channels_add(lumi, combinations, nb_combinations, pdg_id_combinations, factors) &
+            bind(c, name = 'pineappl_channels_add')
             
             use iso_c_binding
             type (c_ptr), value       :: lumi
@@ -131,7 +131,7 @@ module pineappl
             real (c_double)           :: factors(*)
         end subroutine
 
-        type (c_ptr) function channel_new() bind(c, name = 'pineappl_channel_new')
+        type (c_ptr) function channels_new() bind(c, name = 'pineappl_channels_new')
             use iso_c_binding
         end function
 
@@ -481,7 +481,7 @@ module pineappl
             real (c_double)           :: factors(*)
         end subroutine
 
-        subroutine channel_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_channel_entry')
+        subroutine channels_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_channels_entry')
             use iso_c_binding
             type (c_ptr), value       :: lumi
             integer (c_size_t), value :: entry
@@ -524,10 +524,10 @@ contains
         end do
     end function
 
-    type (pineappl_lumi) function pineappl_channel_new()
+    type (pineappl_lumi) function pineappl_channels_new()
         implicit none
         
-        pineappl_channel_new = pineappl_lumi(channel_new())
+        pineappl_channels_new = pineappl_lumi(channels_new())
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -1135,7 +1135,7 @@ contains
         call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
     end subroutine
 
-    subroutine pineappl_channel_add(channels, combinations, nb_combinations, pdg_id_combinations, factors)
+    subroutine pineappl_channels_add(channels, combinations, nb_combinations, pdg_id_combinations, factors)
         use iso_c_binding
 
         implicit none
@@ -1145,7 +1145,7 @@ contains
         integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
         real (dp), dimension(combinations), intent(in)   :: factors
 
-        call channel_add(channels%ptr, int(combinations, c_size_t), int(nb_combinations, c_size_t), pdg_id_combinations, factors)
+        call channels_add(channels%ptr, int(combinations, c_size_t), int(nb_combinations, c_size_t), pdg_id_combinations, factors)
     end subroutine
 
     integer function pineappl_lumi_combinations(lumi, entry)
@@ -1190,7 +1190,7 @@ contains
         call lumi_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
     end subroutine
 
-    subroutine pineappl_channel_entry(lumi, entry, pdg_ids, factors)
+    subroutine pineappl_channels_entry(lumi, entry, pdg_ids, factors)
         use iso_c_binding
 
         implicit none
@@ -1200,7 +1200,7 @@ contains
         integer, intent(out)             :: pdg_ids(*)
         real (dp), intent(out)           :: factors(*)
 
-        call channel_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
+        call channels_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
     end subroutine
 
     type (pineappl_lumi) function pineappl_lumi_new()
