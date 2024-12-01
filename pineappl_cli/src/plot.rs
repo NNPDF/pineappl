@@ -16,6 +16,10 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::thread;
 
+const MARKER_CONFIG_BEGIN: &str = "# CLI_INSERT_CONFIG_BEGIN\n";
+const MARKER_CONFIG_END: &str = "# CLI_INSERT_CONFIG_END";
+const MARKER_DATA_INSERT: &str = "# CLI_INSERT_DATA";
+
 /// Creates a matplotlib script plotting the contents of the grid.
 #[derive(Parser)]
 pub struct Opts {
@@ -56,10 +60,12 @@ pub struct Opts {
     no_conv_fun_unc: bool,
 }
 
+/// Convert `slice` to (unformatted) Python list.
 fn map_format_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{x}")).join(", ")
 }
 
+/// Convert `slice` to Python list using `.7e`.
 fn map_format_e_join(slice: &[f64]) -> String {
     slice.iter().map(|x| format!("{x:.7e}")).join(", ")
 }
@@ -72,7 +78,13 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
         .join(", ")
 }
 
-fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
+/// Convert a channel to a good Python string representation.
+fn map_format_channel(
+    channel: &Channel,
+    has_pdf1: bool,
+    has_pdf2: bool,
+    pid_basis: PidBasis,
+) -> String {
     channel
         .entry()
         .iter()
@@ -85,12 +97,13 @@ fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
         .join(" + ")
 }
 
+/// Convert channel contributions to Python tuples.
 fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
     channels
         .iter()
         .map(|(label, bins)| {
             format!(
-                "                (r\"${}$\", np.array([{}]))",
+                "            (r\"${}$\", np.array([{}]))",
                 label,
                 map_format_e_join_repeat_last(bins)
             )
@@ -98,14 +111,15 @@ fn map_format_channels(channels: &[(String, Vec<f64>)]) -> String {
         .join(",\n")
 }
 
+/// Convert PDF results to a Python tuple.
 fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns]) -> String {
     pdf_uncertainties
         .iter()
         .zip(conv_funs.iter().map(|fun| &fun.label))
         .map(|(values, label)| {
             format!(
-                "                (
-                    \"{}\",
+                "            (
+                    r\"{}\",
                     np.array([{}]),
                     np.array([{}]),
                     np.array([{}]),
@@ -119,6 +133,7 @@ fn format_pdf_results(pdf_uncertainties: &[Vec<Vec<f64>>], conv_funs: &[ConvFuns
         .join("\n")
 }
 
+/// Convert metadata into a Python dict.
 fn format_metadata(metadata: &[(&String, &String)]) -> String {
     metadata
         .iter()
@@ -128,7 +143,7 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
                 None
             } else {
                 Some(format!(
-                    "        \"{}\": r\"{}\",",
+                    "    \"{}\": r\"{}\",",
                     key,
                     if *key == "description" {
                         value.replace('\u{2013}', "--").replace('\u{2014}', "---")
@@ -144,6 +159,15 @@ fn format_metadata(metadata: &[(&String, &String)]) -> String {
             }
         })
         .join("\n")
+}
+
+/// Convert `b` into a Python bool literal.
+fn map_bool(b: bool) -> String {
+    if b {
+        "True".to_owned()
+    } else {
+        "False".to_owned()
+    }
 }
 
 impl Subcommand for Opts {
@@ -393,23 +417,23 @@ impl Subcommand for Opts {
 
                 writeln!(
                     &mut data_string,
-                    "        {{
-            \"slice_label\"    : r\"{slice_label}\",
-            \"x\"        : np.array([{x}]),
-            \"mid\"      : np.array([{mid}]),
-            \"pdf_results\" : [
+                    "    {{
+        \"slice_label\"    : r\"{slice_label}\",
+        \"x\"        : np.array([{x}]),
+        \"mid\"      : np.array([{mid}]),
+        \"pdf_results\" : [
 {pdf_results}
-            ],
-            \"qcd_y\"    : np.array([{qcd_y}]),
-            \"qcd_min\"  : np.array([{qcd_min}]),
-            \"qcd_max\"  : np.array([{qcd_max}]),
-            \"y\"        : np.array([{y}]),
-            \"ymin\"     : np.array([{ymin}]),
-            \"ymax\"     : np.array([{ymax}]),
-            \"channels\" : [
+        ],
+        \"qcd_y\"    : np.array([{qcd_y}]),
+        \"qcd_min\"  : np.array([{qcd_min}]),
+        \"qcd_max\"  : np.array([{qcd_max}]),
+        \"y\"        : np.array([{y}]),
+        \"ymin\"     : np.array([{ymin}]),
+        \"ymax\"     : np.array([{ymax}]),
+        \"channels\" : [
 {channels}
-            ],
-        }},",
+        ],
+    }},",
                     slice_label = label,
                     mid = map_format_join(&mid),
                     pdf_results = format_pdf_results(&conv_fun_uncertainties, &self.conv_funs),
@@ -425,7 +449,7 @@ impl Subcommand for Opts {
                 .unwrap_or_else(|_| unreachable!());
             }
 
-            data_string.push_str("    ]");
+            data_string.push_str("]");
 
             // prepare metadata
             let metadata = grid.metadata();
@@ -470,45 +494,85 @@ impl Subcommand for Opts {
                     format!(" [\\si{{{yunit}}}]")
                 }
             );
-            let xlog = if xunit.is_empty() { "False" } else { "True" };
+            let xlog = !xunit.is_empty();
             let ylog = xlog;
             let title = metadata.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 
-            let enable_int = if bins == 1 { "" } else { "# " };
-            let enable_abs = if bins == 1 { "# " } else { "" };
+            let enable_int = bins == 1;
+            let enable_abs = !enable_int;
             // TODO: only enable if there are EW corrections
             let enable_rel_ewonoff = enable_abs;
-            let enable_abs_pdfs = if nconvs == 1 || bins == 1 { "# " } else { "" };
+            let enable_abs_pdfs = !(nconvs == 1 || bins == 1);
             let enable_ratio_pdf = enable_abs_pdfs;
             let enable_double_ratio_pdf = enable_abs_pdfs;
-            let enable_rel_pdfunc = if nconvs == 1 || bins == 1 || self.no_conv_fun_unc {
-                "# "
-            } else {
-                ""
-            };
+            let enable_rel_pdfunc = !(nconvs == 1 || bins == 1 || self.no_conv_fun_unc);
             let enable_rel_pdfpull = enable_rel_pdfunc;
 
-            print!(
-                include_str!("plot.py"),
-                enable_int = enable_int,
-                enable_abs = enable_abs,
-                enable_rel_ewonoff = enable_rel_ewonoff,
-                enable_abs_pdfs = enable_abs_pdfs,
-                enable_ratio_pdf = enable_ratio_pdf,
-                enable_double_ratio_pdf = enable_double_ratio_pdf,
-                enable_rel_pdfunc = enable_rel_pdfunc,
-                enable_rel_pdfpull = enable_rel_pdfpull,
+            let config = format!(
+                "title = r\"{title}\"
+xlabel = r\"{xlabel}\"
+ylabel = r\"{ylabel}\"
+xlog = {xlog}
+ylog = {ylog}
+scales = {scales}
+plot_panels = {{
+    \"int\": {enable_int},
+    \"abs\": {enable_abs},
+    \"rel_ewonoff\": {enable_rel_ewonoff},
+    \"abs_pdfs\": {enable_abs_pdfs},
+    \"ratio_pdf\": {enable_ratio_pdf},
+    \"double_ratio_pdf\": {enable_double_ratio_pdf},
+    \"rel_pdfunc\": {enable_rel_pdfunc},
+    \"rel_pdfpull\": {enable_rel_pdfpull},
+}}
+output = r\"{output}\"",
+                enable_int = map_bool(enable_int),
+                enable_abs = map_bool(enable_abs),
+                enable_rel_ewonoff = map_bool(enable_rel_ewonoff),
+                enable_abs_pdfs = map_bool(enable_abs_pdfs),
+                enable_ratio_pdf = map_bool(enable_ratio_pdf),
+                enable_double_ratio_pdf = map_bool(enable_double_ratio_pdf),
+                enable_rel_pdfunc = map_bool(enable_rel_pdfunc),
+                enable_rel_pdfpull = map_bool(enable_rel_pdfpull),
                 xlabel = xlabel,
                 ylabel = ylabel,
-                xlog = xlog,
-                ylog = ylog,
+                xlog = map_bool(xlog),
+                ylog = map_bool(ylog),
                 title = title,
                 scales = self.scales,
                 output = output.to_str().unwrap(),
-                data = data_string,
+            );
+
+            let data = format!(
+                "data = {data_string}
+metadata = {{
+{metadata}
+}}",
+                data_string = data_string,
                 metadata = format_metadata(&vector),
+            );
+            let template = include_str!("plot.py");
+            // UNWRAP: if there are no markers the template is wrong
+            let config_marker_begin = template.find(MARKER_CONFIG_BEGIN).unwrap();
+            let config_marker_end = template.find(MARKER_CONFIG_END).unwrap();
+            let data_marker = template.find(MARKER_DATA_INSERT).unwrap();
+            // echo template and dynamic content
+            print!("{}", template.get(0..config_marker_begin).unwrap());
+            print!("{}", config);
+            print!(
+                "{}",
+                template
+                    .get((config_marker_end + MARKER_CONFIG_END.len())..data_marker)
+                    .unwrap()
+            );
+            print!("{}", data);
+            print!(
+                "{}",
+                template
+                    .get((data_marker + MARKER_DATA_INSERT.len())..)
+                    .unwrap()
             );
         } else {
             // TODO: enforce two arguments with clap

@@ -1,0 +1,49 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        # `.rs` files are taken care of by `cargo fmt`
+        exclude: ^.*\.rs$
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # A fast Python linter and code formatter. See
+    # https://docs.astral.sh/ruff/ for more details.
+    rev: v0.6.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: ^pineappl_cli/src/plot.py
+      - id: ruff-format
+        args: []
+  - repo: local
+    hooks:
+    - id: fmt
+      name: cargo fmt
+      description: Format Rust files with cargo fmt.
+      entry: cargo fmt --
+      language: system
+      files: ^pineappl\S*\/.*\.rs$
+      args: []
+    - id: check
+      name: cargo check
+      description: Run cargo check.
+      entry: bash -c 'cargo check --all-targets --features=evolve,fktable'
+      language: system
+      require_serial: true
+      types: [rust]
+    - id: clippy
+      name: cargo clippy
+      description: Check Rust files with cargo clippy.
+      # Show only errors and ignore warnings
+      entry: cargo clippy --all-targets --features=evolve,fktable -- -Awarnings
+      pass_filenames: false
+      types: [file, rust]
+      language: system
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v3.8.0
+    hooks:
+      - id: validate_manifest

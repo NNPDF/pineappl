@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added new method `Grid::delete_orders` and the corresponding switch
   `--delete-orders` in the subcommand `write` of the CLI
+- added the switches `--xir` and `--xif`, which allow varying the
+  renormalization and factorization scales with a custom factor in the
+  subcommand `convolve`.
 
 ### Changed
 
@@ -714,6 +717,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - first release
 
 [Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
+[0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/NNPDF/pineappl/compare/v0.8.1...v0.8.2

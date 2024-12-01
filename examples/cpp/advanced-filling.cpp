@@ -66,4 +66,3 @@ int main() {
     // release memory
     pineappl_grid_delete(grid);
 }
-

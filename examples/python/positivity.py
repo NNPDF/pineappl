@@ -38,9 +38,7 @@ def main(filename, Q2):
         )
         grid.set_subgrid(0, bin_, 0, subgrid.into())
     # set the correct observables
-    normalizations = np.array(
-        [1.0] * bins
-    )  # `normalizations` has to be `np.ndarray`
+    normalizations = np.array([1.0] * bins)  # `normalizations` has to be `np.ndarray`
     remapper = pineappl.bin.BinRemapper(normalizations, limits)
     grid.set_remapper(remapper)
 

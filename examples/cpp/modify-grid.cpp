@@ -82,4 +82,3 @@ int main(int argc, char* argv[]) {
     // release memory
     pineappl_grid_delete(grid);
 }
-
