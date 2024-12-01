@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////
 // Exactly the same as `fill-grid.cpp` but using the generalization features
 // introduced by v1. This in particular concerns the following functions:
-// 
+//
 // - pineappl_add_channel
 // - pineappl_grid_new2
 // - pineappl_grid_fill2
@@ -129,7 +129,7 @@ int main() {
     auto* channels = pineappl_lumi_new();
 
     // Specify the dimension of the channel, ie the number of convolutions required
-    std::size_t nb_convolutions = 2; 
+    std::size_t nb_convolutions = 2;
 
     // photon-photon initial state, where `22` is the photon (PDG MC ids)
     int32_t pids1[] = { 22, 22 };

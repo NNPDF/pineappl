@@ -73,7 +73,9 @@ class TestSubgrid:
             convolutions=[CONVOBJECT],
         )
 
-    def fake_importonlysubgrid(self, nb_xdim: int = 1) -> Tuple[ImportSubgridV1, OperatorInfo]:
+    def fake_importonlysubgrid(
+        self, nb_xdim: int = 1
+    ) -> Tuple[ImportSubgridV1, OperatorInfo]:
         x_grids = [np.linspace(0.1, 1, 2) for _ in range(nb_xdim)]
         xgrid_size = [x.size for x in x_grids]
         Q2s = np.linspace(10, 20, 2)

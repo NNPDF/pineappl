@@ -1,7 +1,7 @@
 program test_pineappl
     use pineappl
     use iso_c_binding
-    
+
     implicit none
 
     integer, parameter :: dp = kind(0.0d0)
@@ -24,7 +24,7 @@ program test_pineappl
 
     channels = pineappl_channels_new()
     call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
-    
+
     if (pineappl_lumi_count(channels) /= 1) then
         write(*, *) "pineappl_lumi_count(): ", pineappl_lumi_count(channels)
         error stop "error: pineappl_lumi_count"
@@ -190,7 +190,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -203,7 +203,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
@@ -216,7 +216,7 @@ contains
         use iso_c_binding
 
         implicit none
-        
+
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test

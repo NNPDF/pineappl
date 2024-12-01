@@ -37,9 +37,7 @@ class TestBinRemapper:
         bin_dims = g.bin_dimensions()
         bin_limits = [
             (left, right)
-            for left, right in zip(
-                g.bin_left(bin_dims - 1), g.bin_right(bin_dims - 1)
-            )
+            for left, right in zip(g.bin_left(bin_dims - 1), g.bin_right(bin_dims - 1))
         ]
         normalizations = [10.0 for _ in g.bin_normalizations()]
 

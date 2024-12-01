@@ -253,9 +253,7 @@ class TestGrid:
                 xfxs=[pdf.polarized_pdf],  # Requires ONE single PDF
                 alphas=pdf.alphasQ,
             )
-        assert "called `Option::unwrap()` on a `None` value" == str(
-            err_func.value
-        )
+        assert "called `Option::unwrap()` on a `None` value" == str(err_func.value)
 
     @pytest.mark.parametrize("params,expected", TESTING_SPECS)
     def test_toy_convolution(self, fake_grids, params, expected):
@@ -440,9 +438,7 @@ class TestGrid:
         _q2grid = np.geomspace(1e3, 1e5, 5)
         _xgrid = np.geomspace(1e-5, 1, 4)
         comb_nodes = [_q2grid] + [_xgrid for _ in range(nb_convolutions)]
-        ntuples = [
-            np.array(list(kins)) for kins in itertools.product(*comb_nodes)
-        ]
+        ntuples = [np.array(list(kins)) for kins in itertools.product(*comb_nodes)]
         obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
         for pto in range(len(ORDERS)):
             for channel_id in range(len(channels)):

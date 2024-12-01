@@ -109,9 +109,7 @@ class FakeGrid:
 
         # Construct the `Scales` object
         fragmentation_scale = (
-            ScaleFuncForm.Scale(0)
-            if nb_convolutions >= 3
-            else ScaleFuncForm.NoScale(0)
+            ScaleFuncForm.Scale(0) if nb_convolutions >= 3 else ScaleFuncForm.NoScale(0)
         )
         scale_funcs = Scales(
             ren=ScaleFuncForm.Scale(0),
