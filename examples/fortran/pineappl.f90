@@ -123,7 +123,7 @@ module pineappl
 
         subroutine channels_add(lumi, combinations, nb_combinations, pdg_id_combinations, factors) &
             bind(c, name = 'pineappl_channels_add')
-            
+
             use iso_c_binding
             type (c_ptr), value       :: lumi
             integer (c_size_t), value :: combinations, nb_combinations
@@ -173,7 +173,7 @@ module pineappl
         subroutine grid_convolve(grid, xfxs, alphas, state, order_mask, channel_mask, &
             bin_indices, nb_scales, mu_scales, results) &
             bind(c, name = 'pineappl_grid_convolve')
-            
+
             use iso_c_binding
             type (c_ptr), value        :: grid, state
             type (c_funptr)            :: xfxs(*)
@@ -526,7 +526,7 @@ contains
 
     type (pineappl_lumi) function pineappl_channels_new()
         implicit none
-        
+
         pineappl_channels_new = pineappl_lumi(channels_new())
     end function
 
@@ -673,11 +673,11 @@ contains
 
     function pineappl_grid_convolve(grid, xfxs, alphas, order_mask, channel_mask, bin_indices, &
         nb_scales, mu_scales, state) result(res)
-        
+
         use iso_c_binding
 
         implicit none
-        
+
         type (pineappl_grid), intent(in)   :: grid
         type (pineappl_xfx)                :: xfxs(:)
         type (pineappl_alphas)             :: alphas
@@ -686,7 +686,7 @@ contains
         real (dp), intent(in)              :: mu_scales(:)
         type (c_ptr), optional, intent(in) :: state
         real (dp), allocatable             :: res(:)
-        
+
         integer                            :: i
         type (c_ptr)                       :: state_
 
@@ -700,7 +700,7 @@ contains
         if (.not. c_associated(c_funloc(alphas%proc))) then
             error stop "alphas%proc is null"
         end if
-        
+
         if (present(state)) then
             state_ = state
         else

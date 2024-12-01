@@ -79,12 +79,7 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
 }
 
 /// Convert a channel to a good Python string representation.
-fn map_format_channel(
-    channel: &Channel,
-    has_pdf1: bool,
-    has_pdf2: bool,
-    pid_basis: PidBasis,
-) -> String {
+fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
     channel
         .entry()
         .iter()
