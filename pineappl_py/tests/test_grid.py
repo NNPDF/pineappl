@@ -5,6 +5,7 @@ import tempfile
 
 from numpy.random import Generator, PCG64
 
+from typing import List
 from pineappl.bin import BinRemapper
 from pineappl.boc import Channel, Kinematics, Scales, Order
 from pineappl.convolutions import Conv, ConvType
@@ -227,7 +228,7 @@ class TestGrid:
         self,
         download_objects,
         gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
-        order_indices: list[int] = [1],
+        order_indices: List[int] = [1],
     ):
         grid = download_objects(f"{gridname}")
         g = Grid.read(grid)
@@ -240,7 +241,7 @@ class TestGrid:
         self,
         download_objects,
         gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
-        channel_indices: list[int] = [1, 4, 5],
+        channel_indices: List[int] = [1, 4, 5],
     ):
         grid = download_objects(f"{gridname}")
         g = Grid.read(grid)
