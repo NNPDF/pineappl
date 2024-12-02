@@ -1,5 +1,9 @@
 //! TODO
 
+use super::boc::Channel;
+use super::fk_table::FkAssumptions;
+use float_cmp::approx_eq;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -8,7 +12,8 @@ const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 
 /// Particle ID bases. In `PineAPPL` every particle is identified using a particle identifier
 /// (PID), which is represented as an `i32`. The values of this `enum` specify how this value is
 /// interpreted.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum PidBasis {
     /// This basis uses the [particle data group](https://pdg.lbl.gov/) (PDG) PIDs. For a complete
     /// definition see the section 'Monte Carlo Particle Numbering Scheme' of the PDG Review, for
@@ -100,7 +105,75 @@ impl PidBasis {
             ),
         }
     }
+
+    /// TODO
+    #[must_use]
+    pub fn translate(&self, to: Self, channel: Channel) -> Channel {
+        match (self, to) {
+            (&Self::Pdg, Self::Pdg) | (&Self::Evol, Self::Evol) => channel,
+            (&Self::Pdg, Self::Evol) => channel.translate(&pdg_mc_pids_to_evol),
+            (&Self::Evol, Self::Pdg) => channel.translate(&evol_to_pdg_mc_ids),
+        }
+    }
+
+    /// TODO
+    #[must_use]
+    pub fn opt_rules(&self, assumptions: FkAssumptions) -> OptRules {
+        match (*self, assumptions) {
+            (Self::Evol | Self::Pdg, FkAssumptions::Nf6Ind) => OptRules(Vec::new(), Vec::new()),
+            (Self::Evol, FkAssumptions::Nf6Sym) => OptRules(vec![(235, 200)], Vec::new()),
+            (Self::Evol, FkAssumptions::Nf5Ind) => {
+                OptRules(vec![(235, 200), (135, 100)], Vec::new())
+            }
+            (Self::Evol, FkAssumptions::Nf5Sym) => {
+                OptRules(vec![(235, 200), (135, 100), (224, 200)], Vec::new())
+            }
+            (Self::Evol, FkAssumptions::Nf4Ind) => OptRules(
+                vec![(235, 200), (135, 100), (224, 200), (124, 100)],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf4Sym) => OptRules(
+                vec![(235, 200), (135, 100), (224, 200), (124, 100), (215, 200)],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf3Ind) => OptRules(
+                vec![
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                ],
+                Vec::new(),
+            ),
+            (Self::Evol, FkAssumptions::Nf3Sym) => OptRules(
+                vec![
+                    (235, 200),
+                    (135, 100),
+                    (224, 200),
+                    (124, 100),
+                    (215, 200),
+                    (115, 100),
+                    (208, 200),
+                ],
+                Vec::new(),
+            ),
+            (Self::Pdg, FkAssumptions::Nf6Sym) => OptRules(vec![(-6, 6)], Vec::new()),
+            (Self::Pdg, FkAssumptions::Nf5Ind) => OptRules(Vec::new(), vec![-6, 6]),
+            (Self::Pdg, FkAssumptions::Nf5Sym) => OptRules(vec![(-5, 5)], vec![-6, 6]),
+            (Self::Pdg, FkAssumptions::Nf4Ind) => OptRules(Vec::new(), vec![-6, 6, -5, 5]),
+            (Self::Pdg, FkAssumptions::Nf4Sym) => OptRules(vec![(-4, 4)], vec![-6, 6, -5, 5]),
+            (Self::Pdg, FkAssumptions::Nf3Ind) => OptRules(Vec::new(), vec![-6, 6, -5, 5, -4, 4]),
+            (Self::Pdg, FkAssumptions::Nf3Sym) => {
+                OptRules(vec![(-3, 3)], vec![-6, 6, -5, 5, -4, 4])
+            }
+        }
+    }
 }
+
+/// Return type of [`PidBasis::optimization_rules`].
+pub struct OptRules(pub Vec<(i32, i32)>, pub Vec<i32>);
 
 /// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
 #[derive(Debug, Error)]
@@ -111,7 +184,7 @@ pub struct UnknownPidBasis {
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
 #[must_use]
-pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
+fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
     match id {
         100 => vec![
             (2, 1.0),
@@ -237,7 +310,7 @@ pub fn evol_to_pdg_mc_ids(id: i32) -> Vec<(i32, f64)> {
 
 /// Translates PDG Monte Carlo IDs to particle IDs from the evolution basis.
 #[must_use]
-pub fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
+fn pdg_mc_pids_to_evol(pid: i32) -> Vec<(i32, f64)> {
     match pid {
         -6 => vec![
             (100, 1.0 / 12.0),
@@ -406,7 +479,7 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
         .collect();
 
     if let &[(pid, factor)] = non_zero.as_slice() {
-        if factor == 1.0 {
+        if approx_eq!(f64, factor, 1.0, ulps = 4) {
             return Some(pid);
         }
     }
@@ -417,7 +490,6 @@ pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boc::Channel;
     use crate::channel;
     use float_cmp::assert_approx_eq;
 
@@ -925,15 +997,14 @@ mod tests {
     #[test]
     fn inverse_inverse_evol() {
         for pid in [-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6] {
-            let result = Channel::translate(
-                &Channel::translate(&channel![pid, pid, 1.0], &pdg_mc_pids_to_evol),
-                &evol_to_pdg_mc_ids,
-            );
+            let result = &channel![1.0 * (pid, pid)]
+                .translate(&pdg_mc_pids_to_evol)
+                .translate(&evol_to_pdg_mc_ids);
 
             assert_eq!(result.entry().len(), 1);
-            assert_eq!(result.entry()[0].0, pid);
-            assert_eq!(result.entry()[0].1, pid);
-            assert_approx_eq!(f64, result.entry()[0].2, 1.0, ulps = 8);
+            assert_eq!(result.entry()[0].0[0], pid);
+            assert_eq!(result.entry()[0].0[1], pid);
+            assert_approx_eq!(f64, result.entry()[0].1, 1.0, ulps = 8);
         }
     }
 
@@ -1015,5 +1086,32 @@ mod tests {
     #[should_panic(expected = "conversion of PID `999` in basis Pdg to LaTeX string unknown")]
     fn to_latex_str_error() {
         let _ = PidBasis::Pdg.to_latex_str(999);
+    }
+
+    #[test]
+    fn translate() {
+        let channel = PidBasis::Evol.translate(PidBasis::Pdg, channel![2.0 * (103, 203)]);
+
+        assert_eq!(
+            channel,
+            channel![
+                2.0 * (2, 2)
+                    + -2.0 * (2, -2)
+                    + -2.0 * (2, 1)
+                    + 2.0 * (2, -1)
+                    + 2.0 * (-2, 2)
+                    + -2.0 * (-2, -2)
+                    + -2.0 * (-2, 1)
+                    + 2.0 * (-2, -1)
+                    + -2.0 * (1, 2)
+                    + 2.0 * (1, -2)
+                    + 2.0 * (1, 1)
+                    + -2.0 * (1, -1)
+                    + -2.0 * (-1, 2)
+                    + 2.0 * (-1, -2)
+                    + 2.0 * (-1, 1)
+                    + -2.0 * (-1, -1)
+            ]
+        );
     }
 }

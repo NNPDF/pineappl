@@ -5,10 +5,12 @@ LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
 PROGRAMS = \
 	fill-grid \
+	fill-grid-v1 \
 	fill-custom-grid \
 	advanced-convolution \
 	advanced-filling \
 	convolve-grid \
+	convolve-grid-v1 \
 	deprecated \
 	display-channels \
 	display-orders \
@@ -29,6 +31,9 @@ advanced-filling: advanced-filling.cpp
 convolve-grid: convolve-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
+convolve-grid-v1: convolve-grid-v1.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
 deprecated: deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
@@ -42,6 +47,9 @@ fill-custom-grid: fill-grid.cpp
 	$(CXX) $(CXXFLAGS) $< -DUSE_CUSTOM_GRID_PARAMETERS $(PINEAPPL_DEPS) -o $@
 
 fill-grid: fill-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+fill-grid-v1: fill-grid-v1.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 merge-grids: merge-grids.cpp

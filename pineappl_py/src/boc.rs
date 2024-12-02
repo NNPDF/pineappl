@@ -1,16 +1,15 @@
 //! Interface for bins, orders and channels.
 
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
 ///
 /// Each entry consists of a tuple, which contains, in the following order:
 ///
-/// 1. the PDG id of the first incoming parton
-/// 2. the PDG id of the second parton
-/// 3. a numerical factor that will multiply the result for this specific combination.
+/// 1. a list containing the PDG value of the 1st, 2nd, and etc. of the incoming parton
+/// 2. a numerical factor that will multiply the result for this specific combination.
 #[pyclass(name = "Channel")]
 #[repr(transparent)]
 pub struct PyChannel {
@@ -23,10 +22,11 @@ impl PyChannel {
     ///
     /// Parameters
     /// ----------
-    /// entry: list(tuple(int, int, float))
+    /// entry: list(tuple(list(int),float))
     ///     channel configuration
     #[new]
-    pub fn new(entry: Vec<(i32, i32, f64)>) -> Self {
+    #[must_use]
+    pub fn new(entry: Vec<(Vec<i32>, f64)>) -> Self {
         Self {
             entry: Channel::new(entry),
         }
@@ -36,27 +36,129 @@ impl PyChannel {
     ///
     /// Returns
     /// -------
-    /// list(tuple(int,int,float)) :
+    /// list(tuple(list(int),float)) :
     ///     list representation
-    pub fn into_array(&self) -> Vec<(i32, i32, f64)> {
+    #[must_use]
+    pub fn into_array(&self) -> Vec<(Vec<i32>, f64)> {
         self.entry.entry().to_vec()
     }
 }
 
-/// Register submodule in parent.
-pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "boc")?;
-    m.setattr(
-        pyo3::intern!(m.py(), "__doc__"),
-        "Interface for bins, orders and channels.",
-    )?;
-    pyo3::py_run!(
-        parent_module.py(),
-        m,
-        "import sys; sys.modules['pineappl.channel'] = m"
-    );
-    m.add_class::<PyChannel>()?;
-    parent_module.add_submodule(&m)
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
+#[pyclass(name = "Kinematics")]
+#[derive(Clone)]
+pub enum PyKinematics {
+    /// map to Kinematics::Scale
+    Scale(usize),
+    /// map to Kinematics::X
+    X(usize),
+}
+
+impl From<PyKinematics> for Kinematics {
+    fn from(item: PyKinematics) -> Self {
+        match item {
+            PyKinematics::X(v) => Self::X(v),
+            PyKinematics::Scale(v) => Self::Scale(v),
+        }
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
+#[pyclass(name = "ScaleFuncForm")]
+#[derive(Clone)]
+pub enum PyScaleFuncForm {
+    /// map to ScaleFuncForm::NoScale
+    /// NOTE No variant is not supported in complex enums
+    NoScale(usize),
+    /// map to ScaleFuncForm::Scale
+    Scale(usize),
+    /// map to ScaleFuncForm::QuadraticSum
+    QuadraticSum(usize, usize),
+    /// map to ScaleFuncForm::QuadraticMean
+    QuadraticMean(usize, usize),
+    /// map to ScaleFuncForm::QuadraticSumOver4
+    QuadraticSumOver4(usize, usize),
+    /// map to ScaleFuncForm::LinearMean
+    LinearMean(usize, usize),
+    /// map to ScaleFuncForm::LinearSum
+    LinearSum(usize, usize),
+    /// map to ScaleFuncForm::ScaleMax
+    ScaleMax(usize, usize),
+    /// map to ScaleFuncForm::ScaleMin
+    ScaleMin(usize, usize),
+    /// map to ScaleFuncForm::Prod
+    Prod(usize, usize),
+    /// map to ScaleFuncForm::S2plusS1half
+    S2plusS1half(usize, usize),
+    /// map to ScaleFuncForm::Pow4Sum
+    Pow4Sum(usize, usize),
+    /// map to ScaleFuncForm::WgtAvg
+    WgtAvg(usize, usize),
+    /// map to ScaleFuncForm::S2plusS1fourth
+    S2plusS1fourth(usize, usize),
+    /// map to ScaleFuncForm::ExpProd2
+    ExpProd2(usize, usize),
+}
+
+impl From<PyScaleFuncForm> for ScaleFuncForm {
+    fn from(item: PyScaleFuncForm) -> Self {
+        match item {
+            PyScaleFuncForm::NoScale(_) => Self::NoScale,
+            PyScaleFuncForm::Scale(v) => Self::Scale(v),
+            PyScaleFuncForm::QuadraticSum(v1, v2) => Self::QuadraticSum(v1, v2),
+            PyScaleFuncForm::QuadraticMean(v1, v2) => Self::QuadraticMean(v1, v2),
+            PyScaleFuncForm::QuadraticSumOver4(v1, v2) => Self::QuadraticSumOver4(v1, v2),
+            PyScaleFuncForm::LinearMean(v1, v2) => Self::LinearMean(v1, v2),
+            PyScaleFuncForm::LinearSum(v1, v2) => Self::LinearSum(v1, v2),
+            PyScaleFuncForm::ScaleMax(v1, v2) => Self::ScaleMax(v1, v2),
+            PyScaleFuncForm::ScaleMin(v1, v2) => Self::ScaleMin(v1, v2),
+            PyScaleFuncForm::Prod(v1, v2) => Self::Prod(v1, v2),
+            PyScaleFuncForm::S2plusS1half(v1, v2) => Self::S2plusS1half(v1, v2),
+            PyScaleFuncForm::Pow4Sum(v1, v2) => Self::Pow4Sum(v1, v2),
+            PyScaleFuncForm::WgtAvg(v1, v2) => Self::WgtAvg(v1, v2),
+            PyScaleFuncForm::S2plusS1fourth(v1, v2) => Self::S2plusS1fourth(v1, v2),
+            PyScaleFuncForm::ExpProd2(v1, v2) => Self::ExpProd2(v1, v2),
+        }
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Scales <boc/struct.Scales.html>`.
+#[pyclass(name = "Scales")]
+pub struct PyScales {
+    pub(crate) scales: Scales,
+}
+
+impl PyScales {
+    pub(crate) const fn new(scales: Scales) -> Self {
+        Self { scales }
+    }
+}
+
+impl Default for PyScales {
+    fn default() -> Self {
+        Self::new(Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        })
+    }
+}
+
+#[pymethods]
+impl PyScales {
+    /// Constructor for `Scales`
+    #[new]
+    #[must_use]
+    pub fn news_scales(
+        ren: PyRef<PyScaleFuncForm>,
+        fac: PyRef<PyScaleFuncForm>,
+        frg: PyRef<PyScaleFuncForm>,
+    ) -> Self {
+        let ren = ren.clone().into();
+        let fac = fac.clone().into();
+        let frg = frg.clone().into();
+        Self::new(Scales { ren, fac, frg })
+    }
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Order <boc/struct.Order.html>`.
@@ -67,7 +169,7 @@ pub struct PyOrder {
 }
 
 impl PyOrder {
-    pub(crate) fn new(order: Order) -> Self {
+    pub(crate) const fn new(order: Order) -> Self {
         Self { order }
     }
 }
@@ -86,9 +188,12 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
     #[new]
-    pub fn new_order(alphas: u32, alpha: u32, logxir: u32, logxif: u32) -> Self {
-        Self::new(Order::new(alphas, alpha, logxir, logxif))
+    #[must_use]
+    pub const fn new_order(alphas: u8, alpha: u8, logxir: u8, logxif: u8, logxia: u8) -> Self {
+        Self::new(Order::new(alphas, alpha, logxir, logxif, logxia))
     }
 
     /// Tuple representation.
@@ -103,12 +208,16 @@ impl PyOrder {
     ///     power of :math:`\ln(\xi_r)`
     /// logxif : int
     ///     power of :math:`\ln(\xi_f)`
-    pub fn as_tuple(&self) -> (u32, u32, u32, u32) {
+    /// logxia : int
+    ///     power of :math:`\ln(\xi_a)`
+    #[must_use]
+    pub const fn as_tuple(&self) -> (u8, u8, u8, u8, u8) {
         (
             self.order.alphas,
             self.order.alpha,
             self.order.logxir,
             self.order.logxif,
+            self.order.logxia,
         )
     }
 
@@ -126,10 +235,11 @@ impl PyOrder {
     /// numpy.ndarray(bool)
     ///     boolean array, to be used as orders' mask
     #[staticmethod]
+    #[must_use]
     pub fn create_mask<'py>(
         orders: Vec<PyRef<Self>>,
-        max_as: u32,
-        max_al: u32,
+        max_as: u8,
+        max_al: u8,
         logs: bool,
         py: Python<'py>,
     ) -> Bound<'py, PyArray1<bool>> {
@@ -141,4 +251,28 @@ impl PyOrder {
         )
         .into_pyarray_bound(py)
     }
+}
+
+/// Register submodule in parent.
+///
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
+pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
+    let m = PyModule::new_bound(parent_module.py(), "boc")?;
+    m.setattr(
+        pyo3::intern!(m.py(), "__doc__"),
+        "Interface for bins, orders and channels.",
+    )?;
+    pyo3::py_run!(
+        parent_module.py(),
+        m,
+        "import sys; sys.modules['pineappl.boc'] = m"
+    );
+    m.add_class::<PyChannel>()?;
+    m.add_class::<PyOrder>()?;
+    m.add_class::<PyKinematics>()?;
+    m.add_class::<PyScaleFuncForm>()?;
+    m.add_class::<PyScales>()?;
+    parent_module.add_submodule(&m)
 }

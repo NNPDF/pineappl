@@ -14,8 +14,8 @@ program test_pineappl
 
     character(len=:), allocatable :: string
 
-    procedure (pineappl_xfx), pointer    :: xfx1, xfx2
-    procedure (pineappl_alphas), pointer :: alphas
+    type(pineappl_xfx)    :: xfx1, xfx2
+    type(pineappl_alphas) :: alphas
 
     lumi = pineappl_lumi_new()
     call pineappl_lumi_add(lumi, 2, [0, 0, 1, -1], [1.0_dp, 1.0_dp])
@@ -71,6 +71,16 @@ program test_pineappl
     call pineappl_grid_delete(grid2)
 
     lumi2 = pineappl_grid_lumi(grid)
+
+    if (pineappl_lumi_count(lumi2) /= 1) then
+        write(*, *) "pineappl_lumi_count(): ", pineappl_lumi_count(lumi2)
+        error stop "error: pineappl_lumi_count"
+    end if
+
+    if (pineappl_lumi_combinations(lumi2, 0) /= 2) then
+        write(*, *) "pineappl_lumi_combinations(): ", pineappl_lumi_combinations(lumi2, 0)
+        error stop "error: pineappl_lumi_combinations"
+    end if
 
     grid2 = pineappl_grid_new(lumi, 1, [2, 0, 0, 0], 1, [2.0_dp, 3.0_dp], key_vals)
 
@@ -132,9 +142,9 @@ program test_pineappl
         error stop "error: pineappl_keyval_string"
     end if
 
-    xfx1 => xfx1_test
-    xfx2 => xfx2_test
-    alphas => alphas_test
+    xfx1 = pineappl_xfx(xfx1_test)
+    xfx2 = pineappl_xfx(xfx2_test)
+    alphas = pineappl_alphas(alphas_test)
 
     result = pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &
         [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)

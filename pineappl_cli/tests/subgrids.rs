@@ -1,8 +1,10 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 
 const HELP_STR: &str = "Print information about the internal subgrid types
 
-Usage: pineappl subgrids [OPTIONS] <--type|--mur|--mur2|--muf|--muf2|--x1|--x2|--stats> <INPUT>
+Usage: pineappl subgrids [OPTIONS] <--type|--scale=<IDX>|--x=<IDX>|--stats> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
@@ -10,342 +12,14 @@ Arguments:
 Options:
       --show-empty       Show empty subgrids
       --type             Show the subgrid type
-      --mur              Show the renormalization grid values
-      --mur2             Show the squared renormalization grid values
-      --muf              Show the factorization grid values
-      --muf2             Show the squared factorization grid values
-      --x1               Show the x1 grid values
-      --x2               Show the x2 grid values
+      --scale=<IDX>      Show the scale node values for the given indices
+      --x=<IDX>          Show the x-node values for the given indices
       --stats            Show grid statistics (figures are the number of entries)
       --digits <DIGITS>  Set the number of digits shown for numerical values [default: 3]
   -h, --help             Print help
 ";
 
-const MUF_STR: &str = "o b c  muf
--+-+-+------
-0 0 0 80.352
-0 1 0 80.352
-0 2 0 80.352
-0 3 0 80.352
-0 4 0 80.352
-0 5 0 80.352
-0 6 0 80.352
-0 7 0 80.352
-1 0 0 80.352
-1 0 1 80.352
-1 0 3 80.352
-1 1 0 80.352
-1 1 1 80.352
-1 1 3 80.352
-1 2 0 80.352
-1 2 1 80.352
-1 2 3 80.352
-1 3 0 80.352
-1 3 1 80.352
-1 3 3 80.352
-1 4 0 80.352
-1 4 1 80.352
-1 4 3 80.352
-1 5 0 80.352
-1 5 1 80.352
-1 5 3 80.352
-1 6 0 80.352
-1 6 1 80.352
-1 6 3 80.352
-1 7 0 80.352
-1 7 1 80.352
-1 7 3 80.352
-2 0 0 80.352
-2 0 1 80.352
-2 0 3 80.352
-2 1 0 80.352
-2 1 1 80.352
-2 1 3 80.352
-2 2 0 80.352
-2 2 1 80.352
-2 2 3 80.352
-2 3 0 80.352
-2 3 1 80.352
-2 3 3 80.352
-2 4 0 80.352
-2 4 1 80.352
-2 4 3 80.352
-2 5 0 80.352
-2 5 1 80.352
-2 5 3 80.352
-2 6 0 80.352
-2 6 1 80.352
-2 6 3 80.352
-2 7 0 80.352
-2 7 1 80.352
-2 7 3 80.352
-3 0 0 80.352
-3 0 2 80.352
-3 0 4 80.352
-3 1 0 80.352
-3 1 2 80.352
-3 1 4 80.352
-3 2 0 80.352
-3 2 2 80.352
-3 2 4 80.352
-3 3 0 80.352
-3 3 2 80.352
-3 3 4 80.352
-3 4 0 80.352
-3 4 2 80.352
-3 4 4 80.352
-3 5 0 80.352
-3 5 2 80.352
-3 5 4 80.352
-3 6 0 80.352
-3 6 2 80.352
-3 6 4 80.352
-3 7 0 80.352
-3 7 2 80.352
-3 7 4 80.352
-4 0 0 80.352
-4 0 2 80.352
-4 0 4 80.352
-4 1 0 80.352
-4 1 2 80.352
-4 1 4 80.352
-4 2 0 80.352
-4 2 2 80.352
-4 2 4 80.352
-4 3 0 80.352
-4 3 2 80.352
-4 3 4 80.352
-4 4 0 80.352
-4 4 2 80.352
-4 4 4 80.352
-4 5 0 80.352
-4 5 2 80.352
-4 5 4 80.352
-4 6 0 80.352
-4 6 2 80.352
-4 6 4 80.352
-4 7 0 80.352
-4 7 2 80.352
-4 7 4 80.352
-";
-
-const MUF2_STR: &str = "o b c   muf2
--+-+-+--------
-0 0 0 6456.444
-0 1 0 6456.444
-0 2 0 6456.444
-0 3 0 6456.444
-0 4 0 6456.444
-0 5 0 6456.444
-0 6 0 6456.444
-0 7 0 6456.444
-1 0 0 6456.444
-1 0 1 6456.444
-1 0 3 6456.444
-1 1 0 6456.444
-1 1 1 6456.444
-1 1 3 6456.444
-1 2 0 6456.444
-1 2 1 6456.444
-1 2 3 6456.444
-1 3 0 6456.444
-1 3 1 6456.444
-1 3 3 6456.444
-1 4 0 6456.444
-1 4 1 6456.444
-1 4 3 6456.444
-1 5 0 6456.444
-1 5 1 6456.444
-1 5 3 6456.444
-1 6 0 6456.444
-1 6 1 6456.444
-1 6 3 6456.444
-1 7 0 6456.444
-1 7 1 6456.444
-1 7 3 6456.444
-2 0 0 6456.444
-2 0 1 6456.444
-2 0 3 6456.444
-2 1 0 6456.444
-2 1 1 6456.444
-2 1 3 6456.444
-2 2 0 6456.444
-2 2 1 6456.444
-2 2 3 6456.444
-2 3 0 6456.444
-2 3 1 6456.444
-2 3 3 6456.444
-2 4 0 6456.444
-2 4 1 6456.444
-2 4 3 6456.444
-2 5 0 6456.444
-2 5 1 6456.444
-2 5 3 6456.444
-2 6 0 6456.444
-2 6 1 6456.444
-2 6 3 6456.444
-2 7 0 6456.444
-2 7 1 6456.444
-2 7 3 6456.444
-3 0 0 6456.444
-3 0 2 6456.444
-3 0 4 6456.444
-3 1 0 6456.444
-3 1 2 6456.444
-3 1 4 6456.444
-3 2 0 6456.444
-3 2 2 6456.444
-3 2 4 6456.444
-3 3 0 6456.444
-3 3 2 6456.444
-3 3 4 6456.444
-3 4 0 6456.444
-3 4 2 6456.444
-3 4 4 6456.444
-3 5 0 6456.444
-3 5 2 6456.444
-3 5 4 6456.444
-3 6 0 6456.444
-3 6 2 6456.444
-3 6 4 6456.444
-3 7 0 6456.444
-3 7 2 6456.444
-3 7 4 6456.444
-4 0 0 6456.444
-4 0 2 6456.444
-4 0 4 6456.444
-4 1 0 6456.444
-4 1 2 6456.444
-4 1 4 6456.444
-4 2 0 6456.444
-4 2 2 6456.444
-4 2 4 6456.444
-4 3 0 6456.444
-4 3 2 6456.444
-4 3 4 6456.444
-4 4 0 6456.444
-4 4 2 6456.444
-4 4 4 6456.444
-4 5 0 6456.444
-4 5 2 6456.444
-4 5 4 6456.444
-4 6 0 6456.444
-4 6 2 6456.444
-4 6 4 6456.444
-4 7 0 6456.444
-4 7 2 6456.444
-4 7 4 6456.444
-";
-
-const MUR_STR: &str = "o b c  mur
--+-+-+------
-0 0 0 80.352
-0 1 0 80.352
-0 2 0 80.352
-0 3 0 80.352
-0 4 0 80.352
-0 5 0 80.352
-0 6 0 80.352
-0 7 0 80.352
-1 0 0 80.352
-1 0 1 80.352
-1 0 3 80.352
-1 1 0 80.352
-1 1 1 80.352
-1 1 3 80.352
-1 2 0 80.352
-1 2 1 80.352
-1 2 3 80.352
-1 3 0 80.352
-1 3 1 80.352
-1 3 3 80.352
-1 4 0 80.352
-1 4 1 80.352
-1 4 3 80.352
-1 5 0 80.352
-1 5 1 80.352
-1 5 3 80.352
-1 6 0 80.352
-1 6 1 80.352
-1 6 3 80.352
-1 7 0 80.352
-1 7 1 80.352
-1 7 3 80.352
-2 0 0 80.352
-2 0 1 80.352
-2 0 3 80.352
-2 1 0 80.352
-2 1 1 80.352
-2 1 3 80.352
-2 2 0 80.352
-2 2 1 80.352
-2 2 3 80.352
-2 3 0 80.352
-2 3 1 80.352
-2 3 3 80.352
-2 4 0 80.352
-2 4 1 80.352
-2 4 3 80.352
-2 5 0 80.352
-2 5 1 80.352
-2 5 3 80.352
-2 6 0 80.352
-2 6 1 80.352
-2 6 3 80.352
-2 7 0 80.352
-2 7 1 80.352
-2 7 3 80.352
-3 0 0 80.352
-3 0 2 80.352
-3 0 4 80.352
-3 1 0 80.352
-3 1 2 80.352
-3 1 4 80.352
-3 2 0 80.352
-3 2 2 80.352
-3 2 4 80.352
-3 3 0 80.352
-3 3 2 80.352
-3 3 4 80.352
-3 4 0 80.352
-3 4 2 80.352
-3 4 4 80.352
-3 5 0 80.352
-3 5 2 80.352
-3 5 4 80.352
-3 6 0 80.352
-3 6 2 80.352
-3 6 4 80.352
-3 7 0 80.352
-3 7 2 80.352
-3 7 4 80.352
-4 0 0 80.352
-4 0 2 80.352
-4 0 4 80.352
-4 1 0 80.352
-4 1 2 80.352
-4 1 4 80.352
-4 2 0 80.352
-4 2 2 80.352
-4 2 4 80.352
-4 3 0 80.352
-4 3 2 80.352
-4 3 4 80.352
-4 4 0 80.352
-4 4 2 80.352
-4 4 4 80.352
-4 5 0 80.352
-4 5 2 80.352
-4 5 4 80.352
-4 6 0 80.352
-4 6 2 80.352
-4 6 4 80.352
-4 7 0 80.352
-4 7 2 80.352
-4 7 4 80.352
-";
-
-const MUR2_STR: &str = "o b c   mur2
+const SCALE0_STR: &str = "o b c  scale0
 -+-+-+--------
 0 0 0 6456.444
 0 1 0 6456.444
@@ -455,425 +129,425 @@ const MUR2_STR: &str = "o b c   mur2
 
 const STATS_STR: &str = "o b c total allocated zeros overhead
 -+-+-+-----+---------+-----+--------
-0 0 0  1156      1012     3       70
-0 1 0  1156      1009     8       70
-0 2 0  1225      1018    16       72
-0 3 0  1296      1006    16       74
-0 4 0  1296       983    21       74
-0 5 0  1369       945    45       76
-0 6 0  1444      1025    77       78
-0 7 0  1521       833    37       80
-1 0 0  1156      1013     0       70
-1 0 1  1156      1009     0       70
-1 0 3  1156      1011     0       70
-1 1 0  1156      1016     0       70
-1 1 1  1156      1005     0       70
-1 1 3  1156      1011     0       70
-1 2 0  1225      1031     0       72
-1 2 1  1225      1022     0       72
-1 2 3  1225      1030     0       72
-1 3 0  1296      1031     0       74
-1 3 1  1296      1026     0       74
-1 3 3  1296      1030     0       74
-1 4 0  1296      1038     2       74
-1 4 1  1296      1025     0       74
-1 4 3  1296      1027     0       74
-1 5 0  1369      1039     0       76
-1 5 1  1369      1022     2       76
-1 5 3  1369      1032     0       76
-1 6 0  1444      1033     0       78
-1 6 1  1444      1029     0       78
-1 6 3  1444      1032     0       78
-1 7 0  1521       982     0       80
-1 7 1  1521       980     2       80
-1 7 3  1521       981     0       80
-2 0 0  1156      1013     0       70
-2 0 1  1156       952     0       70
-2 0 3  1156      1011     2       70
-2 1 0  1156      1016     0       70
-2 1 1  1156       953     7       70
-2 1 3  1156      1005     0       70
-2 2 0  1225      1031     0       72
-2 2 1  1225      1018     6       72
-2 2 3  1225      1029     0       72
-2 3 0  1296      1031     0       74
-2 3 1  1296       998     0       74
-2 3 3  1296      1027     0       74
-2 4 0  1296      1038     2       74
-2 4 1  1296      1022    10       74
-2 4 3  1296      1021     0       74
-2 5 0  1369      1039     0       76
-2 5 1  1332      1007    18       74
-2 5 3  1369      1028     0       76
-2 6 0  1444      1033     0       78
-2 6 1  1444      1027    11       78
-2 6 3  1444      1028     0       78
-2 7 0  1521       982     0       80
-2 7 1  1482       976    58       78
-2 7 3  1521       973     0       80
-3 0 0  1156      1013     0       70
-3 0 2  1156       936    20       70
-3 0 4  1156       930    10       70
-3 1 0  1156      1013     0       70
-3 1 2  1156       938    20       70
-3 1 4  1156       949    16       70
-3 2 0  1225      1026     0       72
-3 2 2  1225       933    32       72
-3 2 4  1225       943     0       72
-3 3 0  1296      1031     0       74
-3 3 2  1260       884     6       72
-3 3 4  1260       983    11       72
-3 4 0  1296      1038     3       74
-3 4 2  1296       894    37       74
-3 4 4  1296       940     0       74
-3 5 0  1369      1035     0       76
-3 5 2  1332       869    16       74
-3 5 4  1332       962    14       74
-3 6 0  1444      1033     0       78
-3 6 2  1406       861    21       76
-3 6 4  1406       969    22       76
-3 7 0  1521       980     0       80
-3 7 2  1444       873   114       78
-3 7 4  1444       817    38       78
-4 0 0  1156      1013     3       70
-4 0 2  1156       767    37       70
-4 0 4  1156       868    11       70
-4 1 0  1156      1013     1       70
-4 1 2  1122       718    15       68
-4 1 4  1156       854    17       70
-4 2 0  1225      1018     3       72
-4 2 2  1225       832    22       72
-4 2 4  1225       898    17       72
-4 3 0  1296      1023     0       74
-4 3 2  1260       840    54       72
-4 3 4  1225       913    39       72
-4 4 0  1296      1038     3       74
-4 4 2  1296       825    80       74
-4 4 4  1296       877     9       74
-4 5 0  1369      1035     0       76
-4 5 2  1332       841    72       74
-4 5 4  1332       911    20       74
-4 6 0  1444      1033     0       78
-4 6 2  1406       855   116       76
-4 6 4  1369       867    13       76
-4 7 0  1521       980     0       80
-4 7 2  1444       869   173       78
-4 7 4  1444       745    36       78
+0 0 0  1156      1014     5       30
+0 1 0  1156      1012    11       30
+0 2 0  1225      1014    12       46
+0 3 0  1296      1000    10       62
+0 4 0  1296       966     4       66
+0 5 0  1369       903     3       82
+0 6 0  1444       958    10       82
+0 7 0  1521       798     2       92
+1 0 0  1156      1016     3       28
+1 0 1  1156      1012     3       28
+1 0 3  1156      1015     4       28
+1 1 0  1156      1018     2       26
+1 1 1  1156      1008     3       28
+1 1 3  1156      1012     1       28
+1 2 0  1225      1034     3       32
+1 2 1  1225      1025     3       34
+1 2 3  1225      1033     3       32
+1 3 0  1296      1040     9       38
+1 3 1  1296      1037    11       38
+1 3 3  1296      1040    10       38
+1 4 0  1296      1039     3       38
+1 4 1  1296      1029     4       38
+1 4 3  1296      1031     4       36
+1 5 0  1369      1046     7       42
+1 5 1  1369      1030    10       46
+1 5 3  1369      1040     8       42
+1 6 0  1444      1039     6       50
+1 6 1  1444      1035     6       50
+1 6 3  1444      1039     7       50
+1 7 0  1521       989     7       56
+1 7 1  1521       986     8       58
+1 7 3  1521       987     6       58
+2 0 0  1156      1016     3       28
+2 0 1  1156       955     3       46
+2 0 3  1156      1013     4       30
+2 1 0  1156      1018     2       26
+2 1 1  1156       947     1       44
+2 1 3  1156      1009     4       28
+2 2 0  1225      1034     3       32
+2 2 1  1225      1021     9       36
+2 2 3  1225      1032     3       32
+2 3 0  1296      1040     9       38
+2 3 1  1296      1004     6       54
+2 3 3  1296      1037    10       38
+2 4 0  1296      1039     3       38
+2 4 1  1296      1020     8       44
+2 4 3  1296      1025     4       36
+2 5 0  1369      1046     7       42
+2 5 1  1332       998     9       56
+2 5 3  1369      1036     8       42
+2 6 0  1444      1039     6       50
+2 6 1  1444      1024     8       54
+2 6 3  1444      1035     7       50
+2 7 0  1521       989     7       56
+2 7 1  1482       924     6       90
+2 7 3  1521       979     6       58
+3 0 0  1156      1016     3       28
+3 0 2  1156       925     9       56
+3 0 4  1156       925     5       54
+3 1 0  1156      1018     5       26
+3 1 2  1156       922     4       56
+3 1 4  1156       936     3       50
+3 2 0  1225      1030     4       36
+3 2 2  1225       909     8       64
+3 2 4  1225       946     3       50
+3 3 0  1296      1040     9       38
+3 3 2  1260       878     0       74
+3 3 4  1260       984    12       52
+3 4 0  1296      1038     3       38
+3 4 2  1296       863     6       70
+3 4 4  1296       942     2       52
+3 5 0  1369      1045    10       42
+3 5 2  1332       857     4       82
+3 5 4  1332       955     7       60
+3 6 0  1444      1039     6       50
+3 6 2  1406       844     4       86
+3 6 4  1406       956     9       62
+3 7 0  1521       988     8       56
+3 7 2  1444       759     0      116
+3 7 4  1444       781     2       76
+4 0 0  1156      1014     4       30
+4 0 2  1156       733     3       80
+4 0 4  1156       862     5       52
+4 1 0  1156      1018     6       26
+4 1 2  1122       710     7       68
+4 1 4  1156       840     3       54
+4 2 0  1225      1023     8       38
+4 2 2  1225       816     6       86
+4 2 4  1225       885     4       56
+4 3 0  1296      1032     9       40
+4 3 2  1260       791     5      104
+4 3 4  1225       878     4       68
+4 4 0  1296      1038     3       38
+4 4 2  1296       745     0      104
+4 4 4  1296       872     4       56
+4 5 0  1369      1045    10       42
+4 5 2  1332       771     2      108
+4 5 4  1332       900     9       62
+4 6 0  1444      1039     6       50
+4 6 2  1406       739     0      112
+4 6 4  1369       859     5       54
+4 7 0  1521       988     8       56
+4 7 2  1444       696     0      116
+4 7 4  1444       709     0       76
 ";
 
-const TYPE_STR: &str = "o b c        type
--+-+-+-------------------
-0 0 0 ImportOnlySubgridV2
-0 1 0 ImportOnlySubgridV2
-0 2 0 ImportOnlySubgridV2
-0 3 0 ImportOnlySubgridV2
-0 4 0 ImportOnlySubgridV2
-0 5 0 ImportOnlySubgridV2
-0 6 0 ImportOnlySubgridV2
-0 7 0 ImportOnlySubgridV2
-1 0 0 ImportOnlySubgridV2
-1 0 1 ImportOnlySubgridV2
-1 0 3 ImportOnlySubgridV2
-1 1 0 ImportOnlySubgridV2
-1 1 1 ImportOnlySubgridV2
-1 1 3 ImportOnlySubgridV2
-1 2 0 ImportOnlySubgridV2
-1 2 1 ImportOnlySubgridV2
-1 2 3 ImportOnlySubgridV2
-1 3 0 ImportOnlySubgridV2
-1 3 1 ImportOnlySubgridV2
-1 3 3 ImportOnlySubgridV2
-1 4 0 ImportOnlySubgridV2
-1 4 1 ImportOnlySubgridV2
-1 4 3 ImportOnlySubgridV2
-1 5 0 ImportOnlySubgridV2
-1 5 1 ImportOnlySubgridV2
-1 5 3 ImportOnlySubgridV2
-1 6 0 ImportOnlySubgridV2
-1 6 1 ImportOnlySubgridV2
-1 6 3 ImportOnlySubgridV2
-1 7 0 ImportOnlySubgridV2
-1 7 1 ImportOnlySubgridV2
-1 7 3 ImportOnlySubgridV2
-2 0 0 ImportOnlySubgridV2
-2 0 1 ImportOnlySubgridV2
-2 0 3 ImportOnlySubgridV2
-2 1 0 ImportOnlySubgridV2
-2 1 1 ImportOnlySubgridV2
-2 1 3 ImportOnlySubgridV2
-2 2 0 ImportOnlySubgridV2
-2 2 1 ImportOnlySubgridV2
-2 2 3 ImportOnlySubgridV2
-2 3 0 ImportOnlySubgridV2
-2 3 1 ImportOnlySubgridV2
-2 3 3 ImportOnlySubgridV2
-2 4 0 ImportOnlySubgridV2
-2 4 1 ImportOnlySubgridV2
-2 4 3 ImportOnlySubgridV2
-2 5 0 ImportOnlySubgridV2
-2 5 1 ImportOnlySubgridV2
-2 5 3 ImportOnlySubgridV2
-2 6 0 ImportOnlySubgridV2
-2 6 1 ImportOnlySubgridV2
-2 6 3 ImportOnlySubgridV2
-2 7 0 ImportOnlySubgridV2
-2 7 1 ImportOnlySubgridV2
-2 7 3 ImportOnlySubgridV2
-3 0 0 ImportOnlySubgridV2
-3 0 2 ImportOnlySubgridV2
-3 0 4 ImportOnlySubgridV2
-3 1 0 ImportOnlySubgridV2
-3 1 2 ImportOnlySubgridV2
-3 1 4 ImportOnlySubgridV2
-3 2 0 ImportOnlySubgridV2
-3 2 2 ImportOnlySubgridV2
-3 2 4 ImportOnlySubgridV2
-3 3 0 ImportOnlySubgridV2
-3 3 2 ImportOnlySubgridV2
-3 3 4 ImportOnlySubgridV2
-3 4 0 ImportOnlySubgridV2
-3 4 2 ImportOnlySubgridV2
-3 4 4 ImportOnlySubgridV2
-3 5 0 ImportOnlySubgridV2
-3 5 2 ImportOnlySubgridV2
-3 5 4 ImportOnlySubgridV2
-3 6 0 ImportOnlySubgridV2
-3 6 2 ImportOnlySubgridV2
-3 6 4 ImportOnlySubgridV2
-3 7 0 ImportOnlySubgridV2
-3 7 2 ImportOnlySubgridV2
-3 7 4 ImportOnlySubgridV2
-4 0 0 ImportOnlySubgridV2
-4 0 2 ImportOnlySubgridV2
-4 0 4 ImportOnlySubgridV2
-4 1 0 ImportOnlySubgridV2
-4 1 2 ImportOnlySubgridV2
-4 1 4 ImportOnlySubgridV2
-4 2 0 ImportOnlySubgridV2
-4 2 2 ImportOnlySubgridV2
-4 2 4 ImportOnlySubgridV2
-4 3 0 ImportOnlySubgridV2
-4 3 2 ImportOnlySubgridV2
-4 3 4 ImportOnlySubgridV2
-4 4 0 ImportOnlySubgridV2
-4 4 2 ImportOnlySubgridV2
-4 4 4 ImportOnlySubgridV2
-4 5 0 ImportOnlySubgridV2
-4 5 2 ImportOnlySubgridV2
-4 5 4 ImportOnlySubgridV2
-4 6 0 ImportOnlySubgridV2
-4 6 2 ImportOnlySubgridV2
-4 6 4 ImportOnlySubgridV2
-4 7 0 ImportOnlySubgridV2
-4 7 2 ImportOnlySubgridV2
-4 7 4 ImportOnlySubgridV2
+const TYPE_STR: &str = "o b c      type
+-+-+-+---------------
+0 0 0 ImportSubgridV1
+0 1 0 ImportSubgridV1
+0 2 0 ImportSubgridV1
+0 3 0 ImportSubgridV1
+0 4 0 ImportSubgridV1
+0 5 0 ImportSubgridV1
+0 6 0 ImportSubgridV1
+0 7 0 ImportSubgridV1
+1 0 0 ImportSubgridV1
+1 0 1 ImportSubgridV1
+1 0 3 ImportSubgridV1
+1 1 0 ImportSubgridV1
+1 1 1 ImportSubgridV1
+1 1 3 ImportSubgridV1
+1 2 0 ImportSubgridV1
+1 2 1 ImportSubgridV1
+1 2 3 ImportSubgridV1
+1 3 0 ImportSubgridV1
+1 3 1 ImportSubgridV1
+1 3 3 ImportSubgridV1
+1 4 0 ImportSubgridV1
+1 4 1 ImportSubgridV1
+1 4 3 ImportSubgridV1
+1 5 0 ImportSubgridV1
+1 5 1 ImportSubgridV1
+1 5 3 ImportSubgridV1
+1 6 0 ImportSubgridV1
+1 6 1 ImportSubgridV1
+1 6 3 ImportSubgridV1
+1 7 0 ImportSubgridV1
+1 7 1 ImportSubgridV1
+1 7 3 ImportSubgridV1
+2 0 0 ImportSubgridV1
+2 0 1 ImportSubgridV1
+2 0 3 ImportSubgridV1
+2 1 0 ImportSubgridV1
+2 1 1 ImportSubgridV1
+2 1 3 ImportSubgridV1
+2 2 0 ImportSubgridV1
+2 2 1 ImportSubgridV1
+2 2 3 ImportSubgridV1
+2 3 0 ImportSubgridV1
+2 3 1 ImportSubgridV1
+2 3 3 ImportSubgridV1
+2 4 0 ImportSubgridV1
+2 4 1 ImportSubgridV1
+2 4 3 ImportSubgridV1
+2 5 0 ImportSubgridV1
+2 5 1 ImportSubgridV1
+2 5 3 ImportSubgridV1
+2 6 0 ImportSubgridV1
+2 6 1 ImportSubgridV1
+2 6 3 ImportSubgridV1
+2 7 0 ImportSubgridV1
+2 7 1 ImportSubgridV1
+2 7 3 ImportSubgridV1
+3 0 0 ImportSubgridV1
+3 0 2 ImportSubgridV1
+3 0 4 ImportSubgridV1
+3 1 0 ImportSubgridV1
+3 1 2 ImportSubgridV1
+3 1 4 ImportSubgridV1
+3 2 0 ImportSubgridV1
+3 2 2 ImportSubgridV1
+3 2 4 ImportSubgridV1
+3 3 0 ImportSubgridV1
+3 3 2 ImportSubgridV1
+3 3 4 ImportSubgridV1
+3 4 0 ImportSubgridV1
+3 4 2 ImportSubgridV1
+3 4 4 ImportSubgridV1
+3 5 0 ImportSubgridV1
+3 5 2 ImportSubgridV1
+3 5 4 ImportSubgridV1
+3 6 0 ImportSubgridV1
+3 6 2 ImportSubgridV1
+3 6 4 ImportSubgridV1
+3 7 0 ImportSubgridV1
+3 7 2 ImportSubgridV1
+3 7 4 ImportSubgridV1
+4 0 0 ImportSubgridV1
+4 0 2 ImportSubgridV1
+4 0 4 ImportSubgridV1
+4 1 0 ImportSubgridV1
+4 1 2 ImportSubgridV1
+4 1 4 ImportSubgridV1
+4 2 0 ImportSubgridV1
+4 2 2 ImportSubgridV1
+4 2 4 ImportSubgridV1
+4 3 0 ImportSubgridV1
+4 3 2 ImportSubgridV1
+4 3 4 ImportSubgridV1
+4 4 0 ImportSubgridV1
+4 4 2 ImportSubgridV1
+4 4 4 ImportSubgridV1
+4 5 0 ImportSubgridV1
+4 5 2 ImportSubgridV1
+4 5 4 ImportSubgridV1
+4 6 0 ImportSubgridV1
+4 6 2 ImportSubgridV1
+4 6 4 ImportSubgridV1
+4 7 0 ImportSubgridV1
+4 7 2 ImportSubgridV1
+4 7 4 ImportSubgridV1
 ";
 
-const TYPE_SHOW_EMPTY_STR: &str = "o b c        type
--+-+-+-------------------
-0 0 0 ImportOnlySubgridV2
+const TYPE_SHOW_EMPTY_STR: &str = "o b c      type
+-+-+-+---------------
+0 0 0 ImportSubgridV1
 0 0 1 EmptySubgridV1
 0 0 2 EmptySubgridV1
 0 0 3 EmptySubgridV1
 0 0 4 EmptySubgridV1
-0 1 0 ImportOnlySubgridV2
+0 1 0 ImportSubgridV1
 0 1 1 EmptySubgridV1
 0 1 2 EmptySubgridV1
 0 1 3 EmptySubgridV1
 0 1 4 EmptySubgridV1
-0 2 0 ImportOnlySubgridV2
+0 2 0 ImportSubgridV1
 0 2 1 EmptySubgridV1
 0 2 2 EmptySubgridV1
 0 2 3 EmptySubgridV1
 0 2 4 EmptySubgridV1
-0 3 0 ImportOnlySubgridV2
+0 3 0 ImportSubgridV1
 0 3 1 EmptySubgridV1
 0 3 2 EmptySubgridV1
 0 3 3 EmptySubgridV1
 0 3 4 EmptySubgridV1
-0 4 0 ImportOnlySubgridV2
+0 4 0 ImportSubgridV1
 0 4 1 EmptySubgridV1
 0 4 2 EmptySubgridV1
 0 4 3 EmptySubgridV1
 0 4 4 EmptySubgridV1
-0 5 0 ImportOnlySubgridV2
+0 5 0 ImportSubgridV1
 0 5 1 EmptySubgridV1
 0 5 2 EmptySubgridV1
 0 5 3 EmptySubgridV1
 0 5 4 EmptySubgridV1
-0 6 0 ImportOnlySubgridV2
+0 6 0 ImportSubgridV1
 0 6 1 EmptySubgridV1
 0 6 2 EmptySubgridV1
 0 6 3 EmptySubgridV1
 0 6 4 EmptySubgridV1
-0 7 0 ImportOnlySubgridV2
+0 7 0 ImportSubgridV1
 0 7 1 EmptySubgridV1
 0 7 2 EmptySubgridV1
 0 7 3 EmptySubgridV1
 0 7 4 EmptySubgridV1
-1 0 0 ImportOnlySubgridV2
-1 0 1 ImportOnlySubgridV2
+1 0 0 ImportSubgridV1
+1 0 1 ImportSubgridV1
 1 0 2 EmptySubgridV1
-1 0 3 ImportOnlySubgridV2
+1 0 3 ImportSubgridV1
 1 0 4 EmptySubgridV1
-1 1 0 ImportOnlySubgridV2
-1 1 1 ImportOnlySubgridV2
+1 1 0 ImportSubgridV1
+1 1 1 ImportSubgridV1
 1 1 2 EmptySubgridV1
-1 1 3 ImportOnlySubgridV2
+1 1 3 ImportSubgridV1
 1 1 4 EmptySubgridV1
-1 2 0 ImportOnlySubgridV2
-1 2 1 ImportOnlySubgridV2
+1 2 0 ImportSubgridV1
+1 2 1 ImportSubgridV1
 1 2 2 EmptySubgridV1
-1 2 3 ImportOnlySubgridV2
+1 2 3 ImportSubgridV1
 1 2 4 EmptySubgridV1
-1 3 0 ImportOnlySubgridV2
-1 3 1 ImportOnlySubgridV2
+1 3 0 ImportSubgridV1
+1 3 1 ImportSubgridV1
 1 3 2 EmptySubgridV1
-1 3 3 ImportOnlySubgridV2
+1 3 3 ImportSubgridV1
 1 3 4 EmptySubgridV1
-1 4 0 ImportOnlySubgridV2
-1 4 1 ImportOnlySubgridV2
+1 4 0 ImportSubgridV1
+1 4 1 ImportSubgridV1
 1 4 2 EmptySubgridV1
-1 4 3 ImportOnlySubgridV2
+1 4 3 ImportSubgridV1
 1 4 4 EmptySubgridV1
-1 5 0 ImportOnlySubgridV2
-1 5 1 ImportOnlySubgridV2
+1 5 0 ImportSubgridV1
+1 5 1 ImportSubgridV1
 1 5 2 EmptySubgridV1
-1 5 3 ImportOnlySubgridV2
+1 5 3 ImportSubgridV1
 1 5 4 EmptySubgridV1
-1 6 0 ImportOnlySubgridV2
-1 6 1 ImportOnlySubgridV2
+1 6 0 ImportSubgridV1
+1 6 1 ImportSubgridV1
 1 6 2 EmptySubgridV1
-1 6 3 ImportOnlySubgridV2
+1 6 3 ImportSubgridV1
 1 6 4 EmptySubgridV1
-1 7 0 ImportOnlySubgridV2
-1 7 1 ImportOnlySubgridV2
+1 7 0 ImportSubgridV1
+1 7 1 ImportSubgridV1
 1 7 2 EmptySubgridV1
-1 7 3 ImportOnlySubgridV2
+1 7 3 ImportSubgridV1
 1 7 4 EmptySubgridV1
-2 0 0 ImportOnlySubgridV2
-2 0 1 ImportOnlySubgridV2
+2 0 0 ImportSubgridV1
+2 0 1 ImportSubgridV1
 2 0 2 EmptySubgridV1
-2 0 3 ImportOnlySubgridV2
+2 0 3 ImportSubgridV1
 2 0 4 EmptySubgridV1
-2 1 0 ImportOnlySubgridV2
-2 1 1 ImportOnlySubgridV2
+2 1 0 ImportSubgridV1
+2 1 1 ImportSubgridV1
 2 1 2 EmptySubgridV1
-2 1 3 ImportOnlySubgridV2
+2 1 3 ImportSubgridV1
 2 1 4 EmptySubgridV1
-2 2 0 ImportOnlySubgridV2
-2 2 1 ImportOnlySubgridV2
+2 2 0 ImportSubgridV1
+2 2 1 ImportSubgridV1
 2 2 2 EmptySubgridV1
-2 2 3 ImportOnlySubgridV2
+2 2 3 ImportSubgridV1
 2 2 4 EmptySubgridV1
-2 3 0 ImportOnlySubgridV2
-2 3 1 ImportOnlySubgridV2
+2 3 0 ImportSubgridV1
+2 3 1 ImportSubgridV1
 2 3 2 EmptySubgridV1
-2 3 3 ImportOnlySubgridV2
+2 3 3 ImportSubgridV1
 2 3 4 EmptySubgridV1
-2 4 0 ImportOnlySubgridV2
-2 4 1 ImportOnlySubgridV2
+2 4 0 ImportSubgridV1
+2 4 1 ImportSubgridV1
 2 4 2 EmptySubgridV1
-2 4 3 ImportOnlySubgridV2
+2 4 3 ImportSubgridV1
 2 4 4 EmptySubgridV1
-2 5 0 ImportOnlySubgridV2
-2 5 1 ImportOnlySubgridV2
+2 5 0 ImportSubgridV1
+2 5 1 ImportSubgridV1
 2 5 2 EmptySubgridV1
-2 5 3 ImportOnlySubgridV2
+2 5 3 ImportSubgridV1
 2 5 4 EmptySubgridV1
-2 6 0 ImportOnlySubgridV2
-2 6 1 ImportOnlySubgridV2
+2 6 0 ImportSubgridV1
+2 6 1 ImportSubgridV1
 2 6 2 EmptySubgridV1
-2 6 3 ImportOnlySubgridV2
+2 6 3 ImportSubgridV1
 2 6 4 EmptySubgridV1
-2 7 0 ImportOnlySubgridV2
-2 7 1 ImportOnlySubgridV2
+2 7 0 ImportSubgridV1
+2 7 1 ImportSubgridV1
 2 7 2 EmptySubgridV1
-2 7 3 ImportOnlySubgridV2
+2 7 3 ImportSubgridV1
 2 7 4 EmptySubgridV1
-3 0 0 ImportOnlySubgridV2
+3 0 0 ImportSubgridV1
 3 0 1 EmptySubgridV1
-3 0 2 ImportOnlySubgridV2
+3 0 2 ImportSubgridV1
 3 0 3 EmptySubgridV1
-3 0 4 ImportOnlySubgridV2
-3 1 0 ImportOnlySubgridV2
+3 0 4 ImportSubgridV1
+3 1 0 ImportSubgridV1
 3 1 1 EmptySubgridV1
-3 1 2 ImportOnlySubgridV2
+3 1 2 ImportSubgridV1
 3 1 3 EmptySubgridV1
-3 1 4 ImportOnlySubgridV2
-3 2 0 ImportOnlySubgridV2
+3 1 4 ImportSubgridV1
+3 2 0 ImportSubgridV1
 3 2 1 EmptySubgridV1
-3 2 2 ImportOnlySubgridV2
+3 2 2 ImportSubgridV1
 3 2 3 EmptySubgridV1
-3 2 4 ImportOnlySubgridV2
-3 3 0 ImportOnlySubgridV2
+3 2 4 ImportSubgridV1
+3 3 0 ImportSubgridV1
 3 3 1 EmptySubgridV1
-3 3 2 ImportOnlySubgridV2
+3 3 2 ImportSubgridV1
 3 3 3 EmptySubgridV1
-3 3 4 ImportOnlySubgridV2
-3 4 0 ImportOnlySubgridV2
+3 3 4 ImportSubgridV1
+3 4 0 ImportSubgridV1
 3 4 1 EmptySubgridV1
-3 4 2 ImportOnlySubgridV2
+3 4 2 ImportSubgridV1
 3 4 3 EmptySubgridV1
-3 4 4 ImportOnlySubgridV2
-3 5 0 ImportOnlySubgridV2
+3 4 4 ImportSubgridV1
+3 5 0 ImportSubgridV1
 3 5 1 EmptySubgridV1
-3 5 2 ImportOnlySubgridV2
+3 5 2 ImportSubgridV1
 3 5 3 EmptySubgridV1
-3 5 4 ImportOnlySubgridV2
-3 6 0 ImportOnlySubgridV2
+3 5 4 ImportSubgridV1
+3 6 0 ImportSubgridV1
 3 6 1 EmptySubgridV1
-3 6 2 ImportOnlySubgridV2
+3 6 2 ImportSubgridV1
 3 6 3 EmptySubgridV1
-3 6 4 ImportOnlySubgridV2
-3 7 0 ImportOnlySubgridV2
+3 6 4 ImportSubgridV1
+3 7 0 ImportSubgridV1
 3 7 1 EmptySubgridV1
-3 7 2 ImportOnlySubgridV2
+3 7 2 ImportSubgridV1
 3 7 3 EmptySubgridV1
-3 7 4 ImportOnlySubgridV2
-4 0 0 ImportOnlySubgridV2
+3 7 4 ImportSubgridV1
+4 0 0 ImportSubgridV1
 4 0 1 EmptySubgridV1
-4 0 2 ImportOnlySubgridV2
+4 0 2 ImportSubgridV1
 4 0 3 EmptySubgridV1
-4 0 4 ImportOnlySubgridV2
-4 1 0 ImportOnlySubgridV2
+4 0 4 ImportSubgridV1
+4 1 0 ImportSubgridV1
 4 1 1 EmptySubgridV1
-4 1 2 ImportOnlySubgridV2
+4 1 2 ImportSubgridV1
 4 1 3 EmptySubgridV1
-4 1 4 ImportOnlySubgridV2
-4 2 0 ImportOnlySubgridV2
+4 1 4 ImportSubgridV1
+4 2 0 ImportSubgridV1
 4 2 1 EmptySubgridV1
-4 2 2 ImportOnlySubgridV2
+4 2 2 ImportSubgridV1
 4 2 3 EmptySubgridV1
-4 2 4 ImportOnlySubgridV2
-4 3 0 ImportOnlySubgridV2
+4 2 4 ImportSubgridV1
+4 3 0 ImportSubgridV1
 4 3 1 EmptySubgridV1
-4 3 2 ImportOnlySubgridV2
+4 3 2 ImportSubgridV1
 4 3 3 EmptySubgridV1
-4 3 4 ImportOnlySubgridV2
-4 4 0 ImportOnlySubgridV2
+4 3 4 ImportSubgridV1
+4 4 0 ImportSubgridV1
 4 4 1 EmptySubgridV1
-4 4 2 ImportOnlySubgridV2
+4 4 2 ImportSubgridV1
 4 4 3 EmptySubgridV1
-4 4 4 ImportOnlySubgridV2
-4 5 0 ImportOnlySubgridV2
+4 4 4 ImportSubgridV1
+4 5 0 ImportSubgridV1
 4 5 1 EmptySubgridV1
-4 5 2 ImportOnlySubgridV2
+4 5 2 ImportSubgridV1
 4 5 3 EmptySubgridV1
-4 5 4 ImportOnlySubgridV2
-4 6 0 ImportOnlySubgridV2
+4 5 4 ImportSubgridV1
+4 6 0 ImportSubgridV1
 4 6 1 EmptySubgridV1
-4 6 2 ImportOnlySubgridV2
+4 6 2 ImportSubgridV1
 4 6 3 EmptySubgridV1
-4 6 4 ImportOnlySubgridV2
-4 7 0 ImportOnlySubgridV2
+4 6 4 ImportSubgridV1
+4 7 0 ImportSubgridV1
 4 7 1 EmptySubgridV1
-4 7 2 ImportOnlySubgridV2
+4 7 2 ImportSubgridV1
 4 7 3 EmptySubgridV1
-4 7 4 ImportOnlySubgridV2
+4 7 4 ImportSubgridV1
 ";
 
-const X1_STR: &str = "o b c                                                                                                                                                                                                 x1
+const X0_STR: &str = "o b c                                                                                                                                                                                                 x0
 -+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
 0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
@@ -981,7 +655,7 @@ const X1_STR: &str = "o b c                                                     
 4 7 4 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4, 1.038e-4, 6.844e-5, 4.511e-5, 2.974e-5
 ";
 
-const X2_STR: &str = "o b c                                                                                                                                                                                                 x2
+const X1_STR: &str = "o b c                                                                                                                                                                                                 x1
 -+-+-+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 0 0 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
 0 1 0 1.000e0, 9.309e-1, 8.628e-1, 7.956e-1, 7.296e-1, 6.648e-1, 6.015e-1, 5.398e-1, 4.799e-1, 4.222e-1, 3.669e-1, 3.144e-1, 2.651e-1, 2.195e-1, 1.780e-1, 1.411e-1, 1.091e-1, 8.228e-2, 6.048e-2, 4.341e-2, 3.052e-2, 2.109e-2, 1.438e-2, 9.699e-3, 6.496e-3, 4.329e-3, 2.874e-3, 1.903e-3, 1.259e-3, 8.314e-4, 5.488e-4, 3.621e-4, 2.388e-4, 1.575e-4
@@ -1100,59 +774,17 @@ fn help() {
 }
 
 #[test]
-fn muf() {
+fn scale0() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "subgrids",
-            "--muf",
+            "--scale=0",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
-        .stdout(MUF_STR);
-}
-
-#[test]
-fn muf2() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "subgrids",
-            "--muf2",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-        ])
-        .assert()
-        .success()
-        .stdout(MUF2_STR);
-}
-
-#[test]
-fn mur() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "subgrids",
-            "--mur",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-        ])
-        .assert()
-        .success()
-        .stdout(MUR_STR);
-}
-
-#[test]
-fn mur2() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "subgrids",
-            "--mur2",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-        ])
-        .assert()
-        .success()
-        .stdout(MUR2_STR);
+        .stdout(SCALE0_STR);
 }
 
 #[test]
@@ -1199,29 +831,29 @@ fn type_show_empty() {
 }
 
 #[test]
+fn x0() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "subgrids",
+            "--x=0",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+        ])
+        .assert()
+        .success()
+        .stdout(X0_STR);
+}
+
+#[test]
 fn x1() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "subgrids",
-            "--x1",
+            "--x=1",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()
         .success()
         .stdout(X1_STR);
-}
-
-#[test]
-fn x2() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "subgrids",
-            "--x2",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-        ])
-        .assert()
-        .success()
-        .stdout(X2_STR);
 }

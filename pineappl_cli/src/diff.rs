@@ -34,7 +34,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders1: Vec<(u32, u32)>,
+    orders1: Vec<(u8, u8)>,
     /// Select orders of the second grid.
     #[arg(
         long,
@@ -42,7 +42,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders2: Vec<(u32, u32)>,
+    orders2: Vec<(u8, u8)>,
     /// Scale all results of the first grid.
     #[arg(long, default_value = "1.0")]
     scale1: f64,
@@ -183,10 +183,18 @@ impl Subcommand for Opts {
                 let result1 = result1 * self.scale1;
                 let result2 = result2 * self.scale2;
 
+                // ALLOW: here we really need an exact comparison
+                // TODO: change allow to `expect` if MSRV >= 1.81.0
+                #[allow(clippy::float_cmp)]
+                let diff = if result1 == result2 {
+                    0.0
+                } else {
+                    result2 / result1 - 1.0
+                };
+
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                 row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
-                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
+                row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, diff)));
             }
         } else {
             let orders = orders1;
@@ -242,10 +250,19 @@ impl Subcommand for Opts {
                 for (result1, result2) in order_results1.iter().zip(order_results2.iter()) {
                     let result1 = result1[bin] * self.scale1;
                     let result2 = result2[bin] * self.scale2;
+
+                    // ALLOW: here we really need an exact comparison
+                    // TODO: change allow to `expect` if MSRV >= 1.81.0
+                    #[allow(clippy::float_cmp)]
+                    let diff = if result1 == result2 {
+                        0.0
+                    } else {
+                        result2 / result1 - 1.0
+                    };
+
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result1)));
                     row.add_cell(cell!(r->format!("{:.*e}", self.digits_abs, result2)));
-                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel,
-                    if result1 == result2 { 0.0 } else { result2 / result1 - 1.0 })));
+                    row.add_cell(cell!(r->format!("{:.*e}", self.digits_rel, diff)));
                 }
             }
         }
