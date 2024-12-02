@@ -15,6 +15,9 @@ Options:
   -b, --bins <BINS>       Selects a subset of bins
   -i, --integrated        Show integrated numbers (without bin widths) instead of differential ones
   -o, --orders <ORDERS>   Select orders manually
+      --xir <XIR>         Set the variation of the renormalization scale [default: 1.0]
+      --xif <XIF>         Set the variation of the factorization scale [default: 1.0]
+      --xia <XIA>         Set the variation of the fragmentation scale [default: 1.0]
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
   -h, --help              Print help
@@ -168,6 +171,19 @@ const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal
 const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
 
 For more information, try '--help'.
+";
+
+const XIR_XIF_STR: &str = "b   etal    dsig/detal 
+     []        [pb]    
+-+----+----+-----------
+0    2 2.25 7.6241231e2
+1 2.25  2.5 6.9755130e2
+2  2.5 2.75 6.0636076e2
+3 2.75    3 4.9019741e2
+4    3 3.25 3.6518490e2
+5 3.25  3.5 2.4783934e2
+6  3.5    4 1.1656958e2
+7    4  4.5 2.7565811e1
 ";
 
 #[test]
@@ -376,4 +392,20 @@ fn wrong_orders() {
         .assert()
         .failure()
         .stderr(WRONG_ORDERS_STR);
+}
+
+#[test]
+fn xir_xif() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "--xir=2.34",
+            "--xif=1.79",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            "NNPDF31_nlo_as_0118_luxqed",
+        ])
+        .assert()
+        .success()
+        .stdout(XIR_XIF_STR);
 }
