@@ -37,9 +37,9 @@ program lhapdf_example
     x_mapping = pineappl_applgrid_f2
     interpolation_meth = pineappl_lagrange
     interpolations = [ &
-        pineappl_interp_tuples(1e2, 1e8, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth) &
+        pineappl_interp_tuples(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
 
     grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 2, &

@@ -870,7 +870,7 @@ contains
         integer(kind(pineappl_pid_basis)), intent(in)                             :: pid_basis
         type (pineappl_lumi), intent(in)                                          :: channels
         integer, intent(in)                                                       :: orders, bins, nb_convolutions
-        integer(int8), dimension(4 * orders), intent(in)                          :: order_params
+        integer(int8), dimension(5 * orders), intent(in)                          :: order_params
         real (dp), dimension(bins + 1), intent(in)                                :: bin_limits
         integer(kind(pineappl_conv_type)), dimension(nb_convolutions), intent(in) :: convolution_types
         integer, dimension(nb_convolutions), intent(in)                           :: pdg_ids

@@ -47,11 +47,11 @@ program test_pineappl
     x_mapping = pineappl_applgrid_f2
     interpolation_meth = pineappl_lagrange
     interpolations = [ &
-        pineappl_interp_tuples(1e2, 1e8, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7, 1.0, 50, 3, x_reweight, x_mapping, interpolation_meth) &
+        pineappl_interp_tuples(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
+        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
-    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1], 2, [0.0_dp, 1.0_dp, 2.0_dp], &
+    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 2, [0.0_dp, 1.0_dp, 2.0_dp], &
         2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
 
     if (pineappl_grid_order_count(grid) /= 1) then
@@ -113,7 +113,7 @@ program test_pineappl
         error stop "error: pineappl_lumi_combinations"
     end if
 
-    grid2 = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1], 1, [2.0_dp, 3.0_dp], &
+    grid2 = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 1, [2.0_dp, 3.0_dp], &
     2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
 
     call pineappl_grid_merge_and_delete(grid, grid2)
@@ -130,7 +130,7 @@ program test_pineappl
         error stop "error: pineappl_grid_order_count"
     end if
 
-    call pineappl_grid_optimize_using(grid, int(b'11111'))
+    ! call pineappl_grid_optimize_using(grid, int(b'11111'))
 
     if (pineappl_grid_order_count(grid) /= 1) then
         write(*, *) "pineappl_grid_order_count(): ", pineappl_grid_order_count(grid)
@@ -160,21 +160,21 @@ program test_pineappl
     alphas = pineappl_alphas(alphas_test)
 
     result = pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &
-        [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
+        [.true.], [.true.], 1.0_dp, 1.0_dp)
     if (any(result > 0 .neqv. [.true., .true., .false.])) then
         write(*, *) "pineappl_grid_convolve_with_one(): ", result
         error stop "error: pineappl_grid_convolve_with_one"
     end if
 
     result = pineappl_grid_convolve_with_two(grid, 2212, xfx1, 2212, xfx2, alphas, &
-        [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
+        [.true.], [.true.], 1.0_dp, 1.0_dp)
     if (any(result < 0 .neqv. [.true., .true., .false.])) then
         write(*, *) "pineappl_grid_convolve_with_two(): ", result
         error stop "error: pineappl_grid_convolve_with_two"
     end if
 
-    result = pineappl_grid_convolve(grid, [xfx1, xfx2], alphas, [.true., .true.], [.true., .true.], &
-        [0, 1, 2], 1, [1.0_dp, 1.0_dp])
+    result = pineappl_grid_convolve(grid, [xfx1, xfx2], alphas, [.true.], [.true.], &
+        [0, 1, 2], 1, [1.0_dp, 1.0_dp, 1.0_dp])
     if (any(result < 0 .neqv. [.true., .true., .false.])) then
         write(*, *) "pineappl_grid_convolve_with_two(): ", result
         error stop "error: pineappl_grid_convolve_with_two"
