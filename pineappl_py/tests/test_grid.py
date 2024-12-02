@@ -213,16 +213,33 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
-    def test_rotate_pidbasis(self, fake_grids):
-        g = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
-            orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
+    def test_rotate_pidbasis(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+        target_basis: PidBasis = PidBasis.Evol,
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        conv_ref = g.convolve(
+            pdg_convs=g.convolutions,
+            xfxs=[pdf.polarized_pdf, pdf.unpolarized_pdf],
+            alphas=pdf.alphasQ,
         )
-        # Rotate the Grid into the PDG basis
-        g.rotate_pid_basis(PidBasis.Pdg)
         assert g.pid_basis == PidBasis.Pdg
+
+        # Rotate the Grid into the PDG basis
+        g.rotate_pid_basis(target_basis)
+        assert g.pid_basis == target_basis
+
+        conv_rot = g.convolve(
+            pdg_convs=g.convolutions,
+            xfxs=[pdf.polarized_pdf, pdf.unpolarized_pdf],
+            alphas=pdf.alphasQ,
+        )
+        np.testing.assert_allclose(conv_ref, conv_rot)
 
     def test_delete_orders(
         self,
