@@ -212,6 +212,55 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
+    def test_rotate_pidbasis(self, fake_grids):
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
+        # Rotate the Grid into the PDG basis
+        g.rotate_pid_basis(PidBasis.Pdg)
+        assert g.pid_basis == PidBasis.Pdg
+
+    def test_delete_orders(
+        self,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+        order_indices: list[int] = [1],
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+        orders = [o.as_tuple() for o in g.orders()]
+        g.delete_orders(order_indices)
+        for idx in order_indices:
+            assert orders[idx] not in g.orders()
+
+    def test_delete_channels(
+        self,
+        download_objects,
+        gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
+        channel_indices: list[int] = [1, 4, 5],
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+        channels = g.channels()
+        g.delete_channels(channel_indices)
+        for idx in channel_indices:
+            assert channels[idx] not in g.channels()
+
+    def test_split_channels(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+        assert len(g.channels()) == 15
+        g.split_channels()
+        assert len(g.channels()) == 170
+
     def test_grid(
         self,
         download_objects,

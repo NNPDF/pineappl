@@ -698,6 +698,16 @@ impl PyGrid {
             .collect()
     }
 
+    /// Rotate the Grid into the specified basis
+    ///
+    /// Parameters
+    /// ----------
+    /// pid_basis: PyPidBasis
+    ///     PID basis of the resulting Grid
+    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
+        self.grid.rotate_pid_basis(pid_basis.into());
+    }
+
     /// Scale all subgrids.
     ///
     /// Parameters
@@ -716,10 +726,21 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// factors : numpy.ndarray[float]
+    /// factors : list[float]
     ///     bin-dependent factors by which to scale
     pub fn scale_by_bin(&mut self, factors: Vec<f64>) {
         self.grid.scale_by_bin(&factors);
+    }
+
+    /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger
+    /// or equal than the number of orders are ignored.
+    ///
+    /// Parameters
+    /// ----------
+    /// order_indices : list[int]
+    ///     list of indices of orders to be removed
+    pub fn delete_orders(&mut self, order_indices: Vec<usize>) {
+        self.grid.delete_orders(&order_indices);
     }
 
     /// Delete bins.
@@ -732,10 +753,26 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// bin_indices : numpy.ndarray[int]
-    ///     list of indices of bins to removed
+    /// bin_indices : list[int]
+    ///     list of indices of bins to be removed
     pub fn delete_bins(&mut self, bin_indices: Vec<usize>) {
         self.grid.delete_bins(&bin_indices);
+    }
+
+    /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
+    /// larger or equal than the number of channels are ignored.
+    ///
+    /// Parameters
+    /// ----------
+    /// bin_indices : list[int]
+    ///     list of indices of bins to be removed
+    pub fn delete_channels(&mut self, channel_indices: Vec<usize>) {
+        self.grid.delete_channels(&channel_indices);
+    }
+
+    /// Splits the grid such that each channel contains only a single tuple of PIDs.
+    pub fn split_channels(&mut self) {
+        self.grid.split_channels();
     }
 }
 
