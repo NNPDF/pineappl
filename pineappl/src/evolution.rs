@@ -465,7 +465,7 @@ pub(crate) fn evolve_slice_with_many(
                                 .map(|ops| (fk_table, ops))
                         })
                 {
-                    general_tensor_mul(*factor, array.view(), &ops, &mut fk_table.view_mut());
+                    general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
                 }
             }
         }
@@ -501,18 +501,34 @@ fn general_tensor_mul(
     factor: f64,
     array: ArrayViewD<f64>,
     ops: &[&Array2<f64>],
-    fk_table: &mut ArrayViewMutD<f64>,
+    mut fk_table: ArrayViewMutD<f64>,
 ) {
-    match array.shape().len() {
-        0 => unreachable!(),
+    let convolutions = array.shape().len();
+
+    match convolutions {
+        // the case `0` is not possible
         1 => {
-            let array = array.view().into_dimensionality::<Ix1>().unwrap();
-            let mut fk_table = fk_table.view_mut().into_dimensionality::<Ix1>().unwrap();
-            fk_table.scaled_add(factor, &ops[0].dot(&array));
+            let array = array
+                .into_dimensionality::<Ix1>()
+                // UNWRAP: cannot fail due to previous `match`
+                .unwrap();
+            let mut fk_table = fk_table
+                .into_dimensionality::<Ix1>()
+                // UNWRAP: cannot fail due to previous `match`
+                .unwrap();
+
+            // fk_table += factor * ops[0] * array
+            linalg::general_mat_vec_mul(factor, ops[0], &array, 1.0, &mut fk_table);
         }
         2 => {
-            let array = array.view().into_dimensionality::<Ix2>().unwrap();
-            let mut fk_table = fk_table.view_mut().into_dimensionality::<Ix2>().unwrap();
+            let array = array
+                .into_dimensionality::<Ix2>()
+                // UNWRAP: cannot fail due to previous `match`
+                .unwrap();
+            let mut fk_table = fk_table
+                .into_dimensionality::<Ix2>()
+                // UNWRAP: cannot fail due to previous `match`
+                .unwrap();
 
             let mut tmp = Array2::zeros((array.shape()[0], ops[1].shape()[0]));
             // tmp = array * ops[1]^T
@@ -528,7 +544,7 @@ fn general_tensor_mul(
                 .zip(ops_0.axis_iter(Axis(0)))
             {
                 for (array_j, ops_0_ij) in array.axis_iter(Axis(0)).zip(ops_0_i.iter()) {
-                    general_tensor_mul(factor * ops_0_ij, array_j, &ops_dm1, &mut fk_table_i);
+                    general_tensor_mul(factor * ops_0_ij, array_j, ops_dm1, fk_table_i.view_mut());
                 }
             }
         }
