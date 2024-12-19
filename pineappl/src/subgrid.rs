@@ -74,9 +74,6 @@ pub trait Subgrid {
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);
 
-    /// Return the shape of the subgrid
-    fn shape(&mut self) -> &[usize];
-
     /// Assume that the convolution functions for indices `a` and `b` for this grid are the same
     /// and use this to optimize the size of the grid.
     fn symmetrize(&mut self, a: usize, b: usize);
