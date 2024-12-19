@@ -444,7 +444,7 @@ impl Subcommand for Opts {
                 .unwrap_or_else(|_| unreachable!());
             }
 
-            data_string.push_str("]");
+            data_string.push(']');
 
             // prepare metadata
             let metadata = grid.metadata();
@@ -555,14 +555,14 @@ metadata = {{
             let data_marker = template.find(MARKER_DATA_INSERT).unwrap();
             // echo template and dynamic content
             print!("{}", template.get(0..config_marker_begin).unwrap());
-            print!("{}", config);
+            print!("{config}");
             print!(
                 "{}",
                 template
                     .get((config_marker_end + MARKER_CONFIG_END.len())..data_marker)
                     .unwrap()
             );
-            print!("{}", data);
+            print!("{data}");
             print!(
                 "{}",
                 template

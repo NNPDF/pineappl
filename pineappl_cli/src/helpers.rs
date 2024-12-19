@@ -110,7 +110,7 @@ pub fn write_grid(output: &Path, grid: &Grid) -> Result<ExitCode> {
         .open(output)
         .context(format!("unable to write '{}'", output.display()))?;
 
-    if output.extension().map_or(false, |ext| ext == "lz4") {
+    if output.extension().is_some_and(|ext| ext == "lz4") {
         grid.write_lz4(file)?;
     } else {
         grid.write(file)?;

@@ -159,7 +159,7 @@ fn convert_grid(
                 && input
                     .with_extension("")
                     .extension()
-                    .map_or(false, |ext| ext == "tab"))
+                    .is_some_and(|ext| ext == "tab"))
         {
             return convert_fastnlo(input, alpha, fun_names, member, scales, fnlo_mur, fnlo_muf);
         } else if extension == "dat" {

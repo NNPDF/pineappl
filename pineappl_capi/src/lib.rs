@@ -465,7 +465,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
         &mut convolution_cache,
         order_mask,
         &[],
-        &channel_mask,
+        channel_mask,
         &[(xi_ren, xi_fac, 1.0)],
     ));
 }
@@ -534,7 +534,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
         &mut convolution_cache,
         order_mask,
         &[],
-        &channel_mask,
+        channel_mask,
         &[(xi_ren, xi_fac, 1.0)],
     ));
 }
@@ -1063,7 +1063,7 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
     let path = Path::new(filename.as_ref());
     let writer = File::create(path).unwrap();
 
-    if path.extension().map_or(false, |ext| ext == "lz4") {
+    if path.extension().is_some_and(|ext| ext == "lz4") {
         grid.write_lz4(writer).unwrap();
     } else {
         grid.write(writer).unwrap();
