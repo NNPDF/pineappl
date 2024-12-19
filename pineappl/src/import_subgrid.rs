@@ -112,6 +112,10 @@ impl Subgrid for ImportSubgridV1 {
         Box::new(self.array.indexed_iter())
     }
 
+    fn shape(&mut self) -> &[usize] {
+        self.array.shape()
+    }
+
     fn stats(&self) -> Stats {
         Stats {
             total: self.array.shape().iter().product(),

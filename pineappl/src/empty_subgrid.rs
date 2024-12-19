@@ -18,6 +18,10 @@ impl Subgrid for EmptySubgridV1 {
         Vec::new()
     }
 
+    fn shape(&mut self) -> &[usize] {
+        panic!("EmptySubgridV1 doesn't have a shape");
+    }
+
     fn is_empty(&self) -> bool {
         true
     }
@@ -102,5 +106,11 @@ mod tests {
     #[test]
     fn node_values() {
         assert!(EmptySubgridV1.node_values().is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "EmptySubgridV1 doesn't have a shape")]
+    fn shape() {
+        let _ = EmptySubgridV1.shape();
     }
 }

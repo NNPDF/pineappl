@@ -52,6 +52,10 @@ impl Subgrid for InterpSubgridV1 {
         self.array.is_empty()
     }
 
+    fn shape(&mut self) -> &[usize] {
+        self.array.shape()
+    }
+
     fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::InterpSubgridV1(other) = other {
@@ -261,5 +265,7 @@ mod tests {
         assert_eq!(node_values[0].len(), 23);
         assert_eq!(node_values[1].len(), 1);
         assert_eq!(node_values[2].len(), 1);
+
+        assert_eq!(subgrid.shape(), [23, 1, 1]);
     }
 }

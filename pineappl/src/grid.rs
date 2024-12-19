@@ -205,6 +205,12 @@ impl Grid {
         &mut self.pid_basis
     }
 
+    /// Return a vector containing the interpolation specifications for this grid.
+    #[must_use]
+    pub fn interpolations(&self) -> &[Interp] {
+        &self.interps
+    }
+
     /// Return a vector containing the kinematic specifications for this grid.
     #[must_use]
     pub fn kinematics(&self) -> &[Kinematics] {
@@ -1535,8 +1541,35 @@ mod tests {
     use crate::boc::ScaleFuncForm;
     use crate::channel;
     use crate::convolutions::ConvType;
+    use crate::interpolation::Map;
     use float_cmp::assert_approx_eq;
     use std::fs::File;
+
+    #[test]
+    fn interpolations() {
+        let grid = Grid::new(
+            PidBasis::Pdg,
+            vec![Channel::new(vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)])],
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![0.0, 1.0],
+            vec![
+                Conv::new(ConvType::UnpolPDF, 2212),
+                Conv::new(ConvType::UnpolPDF, 2212),
+            ],
+            v0::default_interps(2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        let interps = grid.interpolations();
+        assert!(matches!(interps[0].map(), Map::ApplGridH0));
+        assert!(matches!(interps[1].map(), Map::ApplGridF2));
+        assert!(matches!(interps[2].map(), Map::ApplGridF2));
+    }
 
     #[test]
     #[should_panic(expected = "channel #0 has wrong number of PIDs: expected 2, found 3")]
