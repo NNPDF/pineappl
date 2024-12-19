@@ -39,7 +39,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
@@ -206,7 +206,7 @@ impl Subcommand for Opts {
                 };
 
             let mut pull_tuples = if self.limit == 0 {
-                vec![]
+                Vec::new()
             } else {
                 let channel_results1 = channel_results(
                     self.conv_funs1.members[self.pull_from],

@@ -1,0 +1,3 @@
+doc-valid-idents = ["APPLgrid", "PineAPPL", ".."]
+too-many-arguments-threshold = 12
+allowed-duplicate-crates = ["pineappl"]

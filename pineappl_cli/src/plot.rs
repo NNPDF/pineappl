@@ -3,11 +3,11 @@ use super::{GlobalConfiguration, Subcommand};
 use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Parser, ValueHint};
+use float_cmp::assert_approx_eq;
 use itertools::Itertools;
 use ndarray::Axis;
-use pineappl::boc::Channel;
-use pineappl::convolutions::Convolution;
-use pineappl::pids::PidBasis;
+use pineappl::boc::{Channel, Kinematics};
+use pineappl::grid::Grid;
 use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
@@ -79,29 +79,15 @@ fn map_format_e_join_repeat_last(slice: &[f64]) -> String {
 }
 
 /// Convert a channel to a good Python string representation.
-fn map_format_channel(
-    channel: &Channel,
-    has_pdf1: bool,
-    has_pdf2: bool,
-    pid_basis: PidBasis,
-) -> String {
+fn map_format_channel(channel: &Channel, grid: &Grid) -> String {
     channel
         .entry()
         .iter()
-        .map(|&(a, b, _)| {
-            format!(
-                "{}{}",
-                if has_pdf1 {
-                    pid_basis.to_latex_str(a)
-                } else {
-                    ""
-                },
-                if has_pdf2 {
-                    pid_basis.to_latex_str(b)
-                } else {
-                    ""
-                }
-            )
+        .map(|(pids, _)| {
+            pids.iter()
+                .map(|&pid| grid.pid_basis().to_latex_str(pid))
+                .collect::<Vec<_>>()
+                .join("")
         })
         .join(" + ")
 }
@@ -207,14 +193,16 @@ impl Subcommand for Opts {
                             "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
                             left = grid.bin_info().left(d)[begin],
                             obs = grid
-                                .key_values()
-                                .and_then(|map| map.get(&format!("x{}_label_tex", d + 1)).cloned())
+                                .metadata()
+                                .get(&format!("x{}_label_tex", d + 1))
+                                .cloned()
                                 .unwrap_or_else(|| format!("x{}", d + 1))
                                 .replace('$', ""),
                             right = grid.bin_info().right(d)[end - 1],
                             unit = grid
-                                .key_values()
-                                .and_then(|map| map.get(&format!("x{}_unit", d + 1)).cloned())
+                                .metadata()
+                                .get(&format!("x{}_unit", d + 1))
+                                .cloned()
                                 .unwrap_or_default()
                         )
                     })
@@ -391,19 +379,14 @@ impl Subcommand for Opts {
                     .collect();
 
                 let channels = if matches!(mode, ConvoluteMode::Asymmetry) {
-                    vec![]
+                    Vec::new()
                 } else {
                     let mut channels: Vec<_> = (0..grid.channels().len())
                         .map(|channel| {
                             let mut channel_mask = vec![false; grid.channels().len()];
                             channel_mask[channel] = true;
                             (
-                                map_format_channel(
-                                    &grid.channels()[channel],
-                                    grid.convolutions()[0] != Convolution::None,
-                                    grid.convolutions()[1] != Convolution::None,
-                                    grid.pid_basis(),
-                                ),
+                                map_format_channel(&grid.channels()[channel], &grid),
                                 helpers::convolve(
                                     &grid,
                                     &mut conv_funs,
@@ -461,13 +444,11 @@ impl Subcommand for Opts {
                 .unwrap_or_else(|_| unreachable!());
             }
 
-            data_string.push_str("]");
+            data_string.push(']');
 
             // prepare metadata
-            let key_values = grid.key_values().cloned().unwrap_or_default();
-            let mut vector: Vec<_> = key_values.iter().collect();
-            vector.sort();
-            let vector = vector;
+            let metadata = grid.metadata();
+            let vector: Vec<_> = metadata.iter().collect();
 
             let mut output = self.input.clone();
 
@@ -484,12 +465,12 @@ impl Subcommand for Opts {
             }
 
             let xaxis = format!("x{}", grid.bin_info().dimensions());
-            let xunit = key_values
+            let xunit = metadata
                 .get(&format!("{xaxis}_unit"))
                 .map_or("", String::as_str);
             let xlabel = format!(
                 "{}{}",
-                key_values
+                metadata
                     .get(&format!("{xaxis}_label_tex"))
                     .map_or("", String::as_str),
                 if xunit.is_empty() {
@@ -498,10 +479,10 @@ impl Subcommand for Opts {
                     format!(" [\\si{{{xunit}}}]")
                 }
             );
-            let yunit = key_values.get("y_unit").map_or("", String::as_str);
+            let yunit = metadata.get("y_unit").map_or("", String::as_str);
             let ylabel = format!(
                 "{}{}",
-                key_values.get("y_label_tex").map_or("", String::as_str),
+                metadata.get("y_label_tex").map_or("", String::as_str),
                 if yunit.is_empty() {
                     String::new()
                 } else {
@@ -510,7 +491,7 @@ impl Subcommand for Opts {
             );
             let xlog = !xunit.is_empty();
             let ylog = xlog;
-            let title = key_values.get("description").map_or("", String::as_str);
+            let title = metadata.get("description").map_or("", String::as_str);
             let bins = grid.bin_info().bins();
             let nconvs = self.conv_funs.len();
 
@@ -574,14 +555,14 @@ metadata = {{
             let data_marker = template.find(MARKER_DATA_INSERT).unwrap();
             // echo template and dynamic content
             print!("{}", template.get(0..config_marker_begin).unwrap());
-            print!("{}", config);
+            print!("{config}");
             print!(
                 "{}",
                 template
                     .get((config_marker_end + MARKER_CONFIG_END.len())..data_marker)
                     .unwrap()
             );
-            print!("{}", data);
+            print!("{data}");
             print!(
                 "{}",
                 template
@@ -596,7 +577,7 @@ metadata = {{
                 helpers::create_conv_funs_for_set(&self.conv_funs[0], self.conv_fun_uncert_from)?;
             let (set2, mut conv_funs2) =
                 helpers::create_conv_funs_for_set(&self.conv_funs[1], self.conv_fun_uncert_from)?;
-            let (order, bin, channel) = self
+            let index @ (order, bin, channel) = self
                 .subgrid_pull
                 .iter()
                 .map(|num| num.parse::<usize>().unwrap())
@@ -605,6 +586,9 @@ metadata = {{
 
             let cl = lhapdf::CL_1_SIGMA;
             let grid = helpers::read_grid(&self.input)?;
+
+            // TODO: convert this into an error
+            assert_eq!(grid.convolutions().len(), 2);
 
             let member1 = self.conv_funs[0].members[self.conv_fun_uncert_from];
             let member2 = self.conv_funs[1].members[self.conv_fun_uncert_from];
@@ -686,18 +670,35 @@ metadata = {{
             )
             .sum_axis(Axis(0));
 
-            let subgrid = &grid.subgrids()[[order, bin, channel]];
+            let subgrid = &grid.subgrids()[<[usize; 3]>::from(index)];
             //let q2 = subgrid.q2_grid();
-            let x1 = subgrid.x1_grid();
-            let x2 = subgrid.x2_grid();
+            let x1 = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::X(idx) if idx == 0).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap();
 
-            let mut x1_vals = vec![];
-            let mut x2_vals = vec![];
-            let mut vals = vec![];
+            let x2 = grid
+                .kinematics()
+                .iter()
+                .zip(subgrid.node_values())
+                .find_map(|(kin, node_values)| {
+                    matches!(kin, &Kinematics::X(idx) if idx == 1).then_some(node_values)
+                })
+                // TODO: convert this into an error
+                .unwrap();
+
+            let mut x1_vals = Vec::new();
+            let mut x2_vals = Vec::new();
+            let mut vals = Vec::new();
 
             for (((ix1, ix2), &one), &two) in res1.indexed_iter().zip(res2.iter()) {
                 if one == 0.0 {
-                    assert_eq!(two, 0.0);
+                    assert_approx_eq!(f64, two, 0.0, ulps = 4);
                     continue;
                 }
 
