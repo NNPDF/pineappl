@@ -1395,7 +1395,7 @@ pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
 ///
 /// # Safety
 ///
-/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new`.
 /// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
 /// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
 /// parton distributions involved, while `combinations` represent the number of different
@@ -1424,6 +1424,48 @@ pub unsafe extern "C" fn pineappl_channels_add(
             .map(|x| ((0..nb_convolutions).map(|i| x.0[i]).collect(), x.1))
             .collect(),
     ));
+}
+
+/// An exact duplicate of `pineappl_grid_lumi` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Lumi> {
+    let grid = unsafe { &*grid };
+
+    Box::new(Lumi(grid.channels().to_vec()))
+}
+
+/// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
+/// `pineappl_grid_channels`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_count(channels: *const Lumi) -> usize {
+    let channels = unsafe { &*channels };
+
+    channels.0.len()
+}
+
+/// An exact duplicate of `pineappl_lumi_combinations` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
+/// `pineappl_grid_channels`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_combinations(
+    channels: *const Lumi,
+    entry: usize,
+) -> usize {
+    let channels = unsafe { &*channels };
+
+    channels.0[entry].entry().len()
 }
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.

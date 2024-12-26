@@ -1,10 +1,4 @@
-////////////////////////////////////////////////////////////////////////////
-//
-// Exactly the same as `convolve-grid.cpp` but using PineAPPL v1 syntaxes
-//
-////////////////////////////////////////////////////////////////////////////
 #include <LHAPDF/PDF.h>
-#include <cstdint>
 #include <pineappl_capi.h>
 
 #include <cstddef>
@@ -15,7 +9,7 @@
 #include <vector>
 
 int main(int argc, char* argv[]) {
-    std::string filename = "drell-yan-rap-ll-v1.pineappl.lz4";
+    std::string filename = "drell-yan-rap-ll-deprecated.pineappl.lz4";
     std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
 
     switch (argc) {
@@ -78,11 +72,8 @@ int main(int argc, char* argv[]) {
     // The parameters `order_mask` and `channel_mask` can be used to select specific orders and
     // channels, respectively. Using `xir` and `xif` the renormalization and factorization scales
     // can be varied around its central values, respectively.
-    std::vector<double> mu_scales = { xir, xif, 1.0 };
-    using LambdaType = double(*)(int32_t, double, double, void *);
-    LambdaType xfxs[] = { xfx, xfx};
-    pineappl_grid_convolve(grid, xfxs, alphas, pdf, order_mask, channel_mask, nullptr, 1,
-        mu_scales.data(), dxsec.data());
+    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
+        channel_mask, xir, xif, dxsec.data());
 
     std::vector<double> normalizations(bins);
 

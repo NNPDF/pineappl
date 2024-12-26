@@ -1,14 +1,20 @@
+Generated drell-yan-rap-ll-deprecated.pineappl.lz4 containing a a -> l+ l-.
+
+Try running (PDF sets must contain non-zero photon PDF):
+  - pineappl convolve drell-yan-rap-ll-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+  - pineappl --silence-lhapdf plot drell-yan-rap-ll-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+  - pineappl --help
 Generated drell-yan-rap-ll.pineappl.lz4 containing a a -> l+ l-.
 
 Try running (PDF sets must contain non-zero photon PDF):
   - pineappl convolve drell-yan-rap-ll.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
   - pineappl --silence-lhapdf plot drell-yan-rap-ll.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
   - pineappl --help
-Generated drell-yan-rap-ll-custom-grid.pineappl.lz4 containing a a -> l+ l-.
+Generated drell-yan-rap-ll-custom-grid-deprecated.pineappl.lz4 containing a a -> l+ l-.
 
 Try running (PDF sets must contain non-zero photon PDF):
-  - pineappl convolve drell-yan-rap-ll-custom-grid.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
-  - pineappl --silence-lhapdf plot drell-yan-rap-ll-custom-grid.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+  - pineappl convolve drell-yan-rap-ll-custom-grid-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+  - pineappl --silence-lhapdf plot drell-yan-rap-ll-custom-grid-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
   - pineappl --help
 idx  p-p c#0 l#0 p-p~ c#0 l#  p-d c#0 l#0       p-d       dx
 --- ------------ ----------- ------------- ------------ ------
@@ -114,6 +120,8 @@ idx  p-p c#0 l#0 p-p~ c#0 l#  p-d c#0 l#0       p-d       dx
  21 3.491788e-02 3.491788e-02 3.491788e-02 3.491788e-02    0.1
  22 1.967518e-02 1.967518e-02 1.967518e-02 1.967518e-02    0.1
  23 5.565306e-03 5.565306e-03 5.565306e-03 5.565306e-03    0.1
+   0 1 x ( 22,  22)
+   1 1 x (  1,  -1) + 1 x (  3,  -3) + 1 x (  5,  -5)
    0 1 x ( 22,  22)
    1 1 x (  1,  -1) + 1 x (  3,  -3) + 1 x (  5,  -5)
    0 O(as^0 a^2 lr^0 lf^0)

@@ -4,15 +4,16 @@ PINEAPPL_DEPS != pkg-config --cflags --libs pineappl_capi
 LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
 PROGRAMS = \
+	fill-grid-deprecated \
 	fill-grid \
-	fill-grid-v1 \
-	fill-custom-grid \
-	advanced-convolution \
+	fill-custom-grid-deprecated \
+	advanced-convolution-deprecated \
+	advanced-filling-deprecated \
 	advanced-filling \
-	advanced-filling-v1 \
+	convolve-grid-deprecated \
 	convolve-grid \
-	convolve-grid-v1 \
 	deprecated \
+	display-channels-deprecated \
 	display-channels \
 	display-orders \
 	merge-grids \
@@ -23,23 +24,26 @@ all: $(PROGRAMS)
 test-examples: $(PROGRAMS)
 	set -e && for i in $(PROGRAMS); do ./$${i}; done > test-output && diff -u output test-output && rm test-output
 
-advanced-convolution: advanced-convolution.cpp
+advanced-convolution-deprecated: advanced-convolution-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+advanced-filling-deprecated: advanced-filling-deprecated.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 advanced-filling: advanced-filling.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
-advanced-filling-v1: advanced-filling-v1.cpp
-	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+convolve-grid-deprecated: convolve-grid-deprecated.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 convolve-grid: convolve-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
-convolve-grid-v1: convolve-grid-v1.cpp
-	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
-
 deprecated: deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+display-channels-deprecated: display-channels-deprecated.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 display-channels: display-channels.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
@@ -47,13 +51,13 @@ display-channels: display-channels.cpp
 display-orders: display-orders.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
-fill-custom-grid: fill-grid.cpp
+fill-custom-grid-deprecated: fill-grid-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< -DUSE_CUSTOM_GRID_PARAMETERS $(PINEAPPL_DEPS) -o $@
 
-fill-grid: fill-grid.cpp
+fill-grid-deprecated: fill-grid-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
-fill-grid-v1: fill-grid-v1.cpp
+fill-grid: fill-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 merge-grids: merge-grids.cpp
