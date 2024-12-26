@@ -1,9 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////
-// Exactly the same as `convolve-grid.cpp` but using the generalized
-// convolution: `pineappl_grid_convolve`.
 //
-// TODO: Make it such that it does not exactly copy `convolve-grid.cpp`,
-// perhaps showing as an example something with 3 Convolutions.
+// Exactly the same as `convolve-grid.cpp` but using PineAPPL v1 syntaxes
+//
 ////////////////////////////////////////////////////////////////////////////
 #include <LHAPDF/PDF.h>
 #include <cstdint>

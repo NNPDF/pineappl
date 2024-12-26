@@ -1383,8 +1383,8 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
     )
 }
 
-/// An exact duplicate of `pineappl_lumi_entry` to make naming (lumi -> channel) consistent.
-/// should be deleted using `pineappl_lumi_delete`.
+/// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
+/// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
@@ -1425,6 +1425,11 @@ pub unsafe extern "C" fn pineappl_channels_add(
             .collect(),
     ));
 }
+
+/// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Lumi>>) {}
 
 /// Creates a new and empty grid that can accept any number of convolutions. The creation requires
 /// the following different sets of parameters:

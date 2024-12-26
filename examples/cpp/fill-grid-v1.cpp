@@ -5,9 +5,6 @@
 // - pineappl_add_channel
 // - pineappl_grid_new2
 // - pineappl_grid_fill2
-//
-// TODO: Make it such that it does not exactly copy `fill-grid.cpp`, perhaps
-// showing as an example something with 3 Convolutions.
 ////////////////////////////////////////////////////////////////////////////
 #include <cstdint>
 #include <pineappl_capi.h>
@@ -126,7 +123,7 @@ int main() {
     // Create all channels
 
     // this object will contain all channels (initial states) that we define
-    auto* channels = pineappl_lumi_new();
+    auto* channels = pineappl_channels_new();
 
     // Specify the dimension of the channel, ie the number of convolutions required
     std::size_t nb_convolutions = 2;
@@ -230,7 +227,7 @@ int main() {
         bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
 
     // now we no longer need `keyval` and `lumi`
-    pineappl_lumi_delete(channels);
+    pineappl_channels_delete(channels);
 
     // ---
     // Fill the grid with phase-space points
