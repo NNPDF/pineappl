@@ -20,8 +20,8 @@ classifiers = [
   "Programming Language :: Rust",
   "Topic :: Scientific/Engineering :: Physics",
 ]
-
 dependencies = ["numpy>=1.16.0"]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 cli = ["pineappl-cli"]
