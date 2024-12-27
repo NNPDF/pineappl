@@ -8,6 +8,7 @@ PROGRAMS = \
 	fill-grid \
 	fill-custom-grid-deprecated \
 	advanced-convolution-deprecated \
+	advanced-convolution \
 	advanced-filling-deprecated \
 	advanced-filling \
 	convolve-grid-deprecated \
@@ -25,6 +26,9 @@ test-examples: $(PROGRAMS)
 	set -e && for i in $(PROGRAMS); do ./$${i}; done > test-output && diff -u output test-output && rm test-output
 
 advanced-convolution-deprecated: advanced-convolution-deprecated.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+advanced-convolution: advanced-convolution.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 advanced-filling-deprecated: advanced-filling-deprecated.cpp

@@ -1,11 +1,3 @@
-////////////////////////////////////////////////////////////////////////////
-// Exactly the same as `fill-grid.cpp` but using the generalization features
-// introduced by v1. This in particular concerns the following functions:
-//
-// - pineappl_add_channel
-// - pineappl_grid_new2
-// - pineappl_grid_fill2
-////////////////////////////////////////////////////////////////////////////
 #include <cstdint>
 #include <pineappl_capi.h>
 
