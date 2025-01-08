@@ -101,12 +101,10 @@ pub fn convert_into_fastnlo(
         &convolutions,
         &channels,
     );
-
-    todo!()
 }
 
 pub fn convolve_fastnlo(_grid: Pin<&mut fastNLOLHAPDF>, conv_funs: &mut [Pdf]) -> Vec<f64> {
-    // TODO: add support for convolving an APPLgrid with two functions
+    // TODO: add support for convolving an fastNLO table with two functions
     assert_eq!(conv_funs.len(), 1);
 
     todo!()
