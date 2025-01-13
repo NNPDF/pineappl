@@ -13,7 +13,7 @@ use super::pids::PidBasis;
 use super::subgrid::{self, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
-use float_cmp::approx_eq;
+use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
@@ -1214,6 +1214,8 @@ impl Grid {
             // TODO: also take care of the fragmentation scale
             .map(|fac| xi.1 * xi.1 * fac)
             .collect();
+        let mut fac0 = -1.0;
+        let mut frg0 = -1.0;
 
         let mut perm = Vec::new();
 
@@ -1243,6 +1245,20 @@ impl Grid {
                 operators[0].dim(),
             );
 
+            if info_0.conv_type.is_pdf() {
+                if fac0 < 0.0 {
+                    fac0 = info_0.fac0;
+                } else {
+                    assert_approx_eq!(f64, fac0, info_0.fac0, ulps = 8);
+                }
+            } else {
+                if frg0 < 0.0 {
+                    frg0 = info_0.fac0;
+                } else {
+                    assert_approx_eq!(f64, frg0, info_0.fac0, ulps = 8);
+                }
+            }
+
             for (index, info) in infos_rest.iter().enumerate() {
                 // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
                 assert!(subgrid::node_value_eq(info_0.fac1, info.fac1));
@@ -1263,6 +1279,20 @@ impl Grid {
                     dim_op_info,
                     operators[index + 1].dim(),
                 );
+
+                if info.conv_type.is_pdf() {
+                    if fac0 < 0.0 {
+                        fac0 = info.fac0;
+                    } else {
+                        assert_approx_eq!(f64, fac0, info.fac0, ulps = 8);
+                    }
+                } else {
+                    if frg0 < 0.0 {
+                        frg0 = info.fac0;
+                    } else {
+                        assert_approx_eq!(f64, frg0, info.fac0, ulps = 8);
+                    }
+                }
             }
 
             if perm.is_empty() {
@@ -1314,25 +1344,30 @@ impl Grid {
             let operators: Vec<_> = perm.iter().map(|&idx| operators[idx].view()).collect();
             let infos: Vec<_> = perm.iter().map(|&idx| infos[idx].clone()).collect();
 
+            let fac = if fac0 < 0.0 {
+                ScaleFuncForm::NoScale
+            } else {
+                ScaleFuncForm::Scale(0)
+            };
+            let (frg, scale_values) = if frg0 < 0.0 {
+                (ScaleFuncForm::NoScale, vec![fac0])
+            } else {
+                if fac0 < 0.0 || approx_eq!(f64, fac0, frg0, ulps = 8) {
+                    (ScaleFuncForm::Scale(0), vec![frg0])
+                } else {
+                    (ScaleFuncForm::Scale(1), vec![fac0, frg0])
+                }
+            };
+
             let (subgrids, channels) = evolution::evolve_slice_with_many(
                 self,
                 &operators,
                 &infos,
+                &scale_values,
                 order_mask,
                 xi,
                 alphas_table,
             )?;
-
-            let fac = if matches!(self.scales().fac, ScaleFuncForm::NoScale) {
-                ScaleFuncForm::NoScale
-            } else {
-                ScaleFuncForm::Scale(0)
-            };
-            let frg = if matches!(self.scales().frg, ScaleFuncForm::NoScale) {
-                ScaleFuncForm::NoScale
-            } else {
-                ScaleFuncForm::Scale(0)
-            };
 
             let rhs = Self {
                 subgrids,

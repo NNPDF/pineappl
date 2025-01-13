@@ -63,7 +63,9 @@ pub struct OperatorSliceInfo {
 
     /// Particle ID basis for `FkTable`.
     pub pid_basis: PidBasis,
-    /// TODO
+    /// Type of convolution which this operator evolves. This also determines whether [`fac0`]
+    /// and ['fac1`] is a factorization ([`ConvType::UnpolPDF`] or [`ConvType::PolPDF`]) or a
+    /// fragmentation ([`ConvType::UnpolFF`] or [`ConvType::PolFF`]) scale.
     pub conv_type: ConvType,
 }
 
@@ -363,6 +365,7 @@ pub(crate) fn evolve_slice_with_many(
     grid: &Grid,
     operators: &[ArrayView4<f64>],
     infos: &[OperatorSliceInfo],
+    scale_values: &[f64],
     order_mask: &[bool],
     xi: (f64, f64, f64),
     alphas_table: &AlphasTable,
@@ -470,8 +473,7 @@ pub(crate) fn evolve_slice_with_many(
             }
         }
 
-        // TODO: generalize this for arbitrary scales and x values
-        let mut node_values = vec![vec![infos[0].fac0]];
+        let mut node_values = vec![scale_values.to_vec()];
 
         for info in infos {
             node_values.push(info.x0.clone());
