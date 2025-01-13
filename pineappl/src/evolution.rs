@@ -22,6 +22,8 @@ use std::iter;
 pub struct EvolveInfo {
     /// Squared factorization scales of the `Grid`.
     pub fac1: Vec<f64>,
+    /// Squared fragmentation scales of the `Grid`.
+    pub frg1: Vec<f64>,
     /// Particle identifiers of the `Grid`.
     pub pids1: Vec<i32>,
     /// `x`-grid coordinates of the `Grid`.

@@ -1090,6 +1090,7 @@ impl Grid {
     pub fn evolve_info(&self, order_mask: &[bool]) -> EvolveInfo {
         let mut ren1 = Vec::new();
         let mut fac1 = Vec::new();
+        let mut frg1 = Vec::new();
         let mut x1 = Vec::new();
         let mut pids1 = Vec::new();
 
@@ -1119,6 +1120,15 @@ impl Grid {
             fac1.sort_by(f64::total_cmp);
             fac1.dedup_by(subgrid::node_value_eq_ref_mut);
 
+            frg1.extend(
+                self.scales()
+                    .frg
+                    .calc(&subgrid.node_values(), self.kinematics())
+                    .iter(),
+            );
+            frg1.sort_by(f64::total_cmp);
+            frg1.dedup_by(subgrid::node_value_eq_ref_mut);
+
             x1.extend(
                 subgrid
                     .node_values()
@@ -1141,6 +1151,7 @@ impl Grid {
 
         EvolveInfo {
             fac1,
+            frg1,
             pids1,
             x1,
             ren1,
