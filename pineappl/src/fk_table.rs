@@ -219,6 +219,17 @@ impl FkTable {
         muf2
     }
 
+    /// Return the initial fragmentation scale.
+    #[must_use]
+    pub fn frg0(&self) -> f64 {
+        let [frg0] = self.grid.evolve_info(&[true]).frg1[..]
+            .try_into()
+            // UNWRAP: every `FkTable` has only a single fragmentation scale
+            .unwrap_or_else(|_| unreachable!());
+
+        frg0
+    }
+
     /// Set a metadata key-value pair for this FK table.
     pub fn set_key_value(&mut self, key: &str, value: &str) {
         self.grid
