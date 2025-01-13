@@ -14,11 +14,13 @@ class TestEvolution:
     def test_evolveinfo(self):
         evinfo = EvolveInfo(
             fac1=[0.5, 1.0, 2.0],
+            frg1=[0.5, 1.0, 2.0],
             pids1=[-2, 0, 2],
             x1=[1e-3, 0.5, 1],
             ren1=[0.5, 1.0, 2.0],
         )
         np.testing.assert_array_equal(evinfo.fac1, [0.5, 1.0, 2.0])
+        np.testing.assert_array_equal(evinfo.frg1, [0.5, 1.0, 2.0])
         np.testing.assert_array_equal(evinfo.pids1, [-2, 0, 2])
         np.testing.assert_array_equal(evinfo.x1, [1e-3, 0.5, 1.0])
         np.testing.assert_array_equal(evinfo.fac1, [0.5, 1.0, 2.0])
