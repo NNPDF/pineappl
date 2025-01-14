@@ -68,8 +68,6 @@ idx  p-p c#0 l#0      p-d       dx
  21 3.491788e-02 3.491788e-02    0.1
  22 1.967518e-02 1.967518e-02    0.1
  23 5.565306e-03 5.565306e-03    0.1
-LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/NNPDF31_nlo_as_0118_luxqed/NNPDF31_nlo_as_0118_luxqed_0000.dat
-NNPDF31_nlo_as_0118_luxqed PDF set, member #0, version 2; LHAPDF ID = 324900
   bin left   bin right        dsig/dx
 -------------------------------------
          0         0.1      0.000e+00
@@ -96,8 +94,6 @@ NNPDF31_nlo_as_0118_luxqed PDF set, member #0, version 2; LHAPDF ID = 324900
  2.100e+00   2.200e+00      0.000e+00
  2.200e+00   2.300e+00      0.000e+00
  2.300e+00   2.400e+00      0.000e+00
-Thanks for using LHAPDF 6.5.4. Please make sure to cite the paper:
-  Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
 idx   left  right    dsig/dx     dx
 --- ----dim #0--- ------------ ------
   0      0    0.1 5.263109e-01    0.1

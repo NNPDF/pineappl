@@ -118,6 +118,8 @@ int main() {
 
     //-------------------- Check Convolution ----------------------//
     std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    // disable LHAPDF banners to guarantee deterministic output
+    LHAPDF::setVerbosity(0);
     auto* pdf = LHAPDF::mkPDF(pdfset, 0);
 
     // define callables for the PDFs and alphas
