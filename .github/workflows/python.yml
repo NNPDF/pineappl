@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    # `ubuntu-22.04` doesn't support Python 3.7 anymore
+    # `ubuntu-24.04` doesn't support Python 3.7 anymore
     runs-on: ubuntu-22.04
 
     strategy:
