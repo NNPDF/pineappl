@@ -1,8 +1,10 @@
+#include <LHAPDF/PDF.h>
 #include <pineappl_capi.h>
 
 #include <cassert>
 #include <cstddef>
 #include <vector>
+#include <iomanip>
 
 int main() {
     // Construct the channel object based on the nb of convolutions
@@ -113,6 +115,44 @@ int main() {
 
     pineappl_grid_fill_array2(grid, order_array.data(), yll_array.data(),
         ntuples_array.data(), channel_array.data(), weight_array.data(), weight_array.size());
+
+    //-------------------- Check Convolution ----------------------//
+    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+
+    // define callables for the PDFs and alphas
+    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
+    };
+    auto alphas = [](double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
+    };
+
+    auto order_mask = nullptr;
+    auto channel_mask = nullptr;
+    std::vector<double> mmu_scales = { 1.0, 1.0, 1.0 };
+    using LambdaType = double(*)(int32_t, double, double, void *);
+    LambdaType xfxs[] = { xfx, xfx };
+
+    // allocate a vector holding the differential cross sections
+    std::vector<double> dxsec(bins.size() - 1);
+    pineappl_grid_convolve(grid, xfxs, alphas, pdf, order_mask, channel_mask, nullptr, 1,
+        mmu_scales.data(), dxsec.data());
+
+    // Print table header
+    std::cout << std::setw(10) << "bin left"
+              << std::setw(12) << "bin right"
+              << std::setw(15) << "dsig/dx" << std::endl;
+    std::cout << std::string(37, '-') << std::endl;
+
+    // Loop through bins and print results
+    for (size_t i = 0; i < dxsec.size(); ++i) {
+        std::cout << std::setw(10) << bins[i]
+                  << std::setw(12) << bins[i + 1]
+                  << std::setw(15) << std::scientific << std::setprecision(3) << dxsec[i]
+                  << std::endl;
+    }
+    //-----------------------------------------------------------------------//
 
     pineappl_grid_write(grid, "advanced-filling.pineappl.lz4");
 

@@ -35,7 +35,7 @@ advanced-filling-deprecated: advanced-filling-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 advanced-filling: advanced-filling.cpp
-	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 convolve-grid-deprecated: convolve-grid-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
