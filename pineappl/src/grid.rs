@@ -99,11 +99,13 @@ bitflags! {
     #[derive(Clone, Copy)]
     #[repr(transparent)]
     pub struct GridOptFlags: u32 {
+        /// Change the [`Subgrid`] type to optimize storage efficiency.
+        const OPTIMIZE_SUBGRID_TYPE = 0b1;
         /// Recognize whether a subgrid was filled with events with a static scale and if this is
         /// the case, optimize it by undoing the interpolation in the scale.
-        const OPTIMIZE_NODES = 0b1;
-        /// Change the [`Subgrid`] type to optimize storage efficiency.
-        const OPTIMIZE_SUBGRID_TYPE = 0b10;
+        const OPTIMIZE_NODES = 0b10;
+        /// Deprecated name for [`GridOptFlags::OPTIMIZE_NODES`].
+        const STATIC_SCALE_DETECTION = 0b10;
         /// If two channels differ by transposition of the two initial states and the functions
         /// this grid is convolved with are the same for both initial states, this will merge one
         /// channel into the other, with the correct transpositions.
