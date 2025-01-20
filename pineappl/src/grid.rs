@@ -68,6 +68,9 @@ pub enum GridError {
     /// Errors that do no originate from this crate itself.
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+    /// TODO
+    #[error("{0}")]
+    General(String),
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -546,13 +549,33 @@ impl Grid {
     ///
     /// # Errors
     ///
-    /// If the bin limits of `self` and `other` are different and if the bin limits of `other` can
-    /// not be merged with `self` an error is returned.
+    /// If `self` and `other` in have different convolutions, PID bases, kinematics, 
+    /// interpolations, or scales an error is returned. If the bin limits of `self` and `other` 
+    /// are different and if the bin limits of `other` cannot be merged with `self` an error is 
+    /// returned.
     ///
     /// # Panics
     ///
     /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
+        if self.convolutions() != other.convolutions() {
+            return Err(GridError::General("convolutions do not match".to_owned()));
+        }
+        if self.pid_basis() != other.pid_basis() {
+            return Err(GridError::General("PID bases do not match".to_owned()));
+        }
+        // TODO: relax check if kinematic variables are permutations of each other
+        if self.kinematics() != other.kinematics() {
+            return Err(GridError::General("kinematics do not match".to_owned()));
+        }
+        // TODO: relax check if subgrid types don't use interpolation
+        if self.interpolations() != other.interpolations() {
+            return Err(GridError::General("interpolations do not match".to_owned()));
+        }
+        if self.scales() != other.scales() {
+            return Err(GridError::General("scales do not match".to_owned()));
+        }
+
         let mut new_orders: Vec<Order> = Vec::new();
         let mut new_bins = 0;
         let mut new_entries: Vec<Channel> = Vec::new();

@@ -23,7 +23,7 @@ pub enum Kinematics {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, PartialEq, Serialize)]
 pub enum ScaleFuncForm {
     /// TODO
     NoScale,
@@ -160,7 +160,7 @@ impl ScaleFuncForm {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, PartialEq, Serialize)]
 pub struct Scales {
     /// TODO
     pub ren: ScaleFuncForm,

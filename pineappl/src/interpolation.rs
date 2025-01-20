@@ -62,7 +62,7 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
 pub enum ReweightMeth {
     /// TODO
     ApplGridX,
@@ -72,7 +72,7 @@ pub enum ReweightMeth {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Map {
     /// TODO
     ApplGridF2,
@@ -82,14 +82,14 @@ pub enum Map {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize, PartialEq, Serialize)]
 pub enum InterpMeth {
     /// TODO
     Lagrange,
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, PartialEq, Serialize)]
 pub struct Interp {
     min: f64,
     max: f64,
