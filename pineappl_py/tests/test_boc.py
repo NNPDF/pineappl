@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from pineappl.boc import Channel, Kinematics, Order, ScaleFuncForm
+from pineappl.boc import Channel, Kinematics, Order, ScaleFuncForm, Scales
 
 
 class TestChannel:
@@ -52,7 +52,9 @@ class TestScaleFuncForm:
     def test_init(self, scaletype: ScaleFuncForm, argument: list):
         scale_method = getattr(ScaleFuncForm, scaletype)
         result = scale_method(*argument)
+        scale_funcs = Scales(ren=result, fac=result, frg=result)
         assert isinstance(result, ScaleFuncForm)
+        assert isinstance(scale_funcs, Scales)
 
 
 class TestOrder:

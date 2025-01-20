@@ -17,6 +17,7 @@ PROGRAMS = \
 	display-channels-deprecated \
 	display-channels \
 	display-orders \
+	display-orders-deprecated \
 	merge-grids \
 	modify-grid
 
@@ -50,6 +51,9 @@ display-channels-deprecated: display-channels-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 display-channels: display-channels.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+display-orders-deprecated: display-orders-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 display-orders: display-orders.cpp
