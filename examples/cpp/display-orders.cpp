@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         std::uint32_t exp_la = order_params.at(5 * order + 4);
 
         std::cout << "O(as^" << exp_as << " a^" << exp_al << " lr^" << exp_lr << " lf^" << exp_lf
-            << " la^" << exp_la<< ")\n";
+            << " la^" << exp_la << ")\n";
     }
 
     // release memory
