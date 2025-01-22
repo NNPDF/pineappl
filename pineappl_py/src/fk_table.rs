@@ -273,7 +273,7 @@ impl PyFkTable {
         bin_indices: Option<PyReadonlyArray1<usize>>,
         lumi_mask: Option<PyReadonlyArray1<bool>>,
         py: Python<'py>,
-    ) -> &'py PyArray1<f64> {
+    ) -> Bound<'py, PyArray1<f64>> {
         let mut xfx1 = |id, x, q2| f64::extract(xfx1.call1((id, x, q2)).unwrap()).unwrap();
         let mut xfx2 = |id, x, q2| f64::extract(xfx2.call1((id, x, q2)).unwrap()).unwrap();
         let mut alphas = |_| 1.0;
@@ -285,7 +285,7 @@ impl PyFkTable {
                 &bin_indices.map_or(vec![], |b| b.to_vec().unwrap()),
                 &lumi_mask.map_or(vec![], |l| l.to_vec().unwrap()),
             )
-            .into_pyarray(py)
+            .into_pyarray_bound(py)
     }
 
     /// Optimize FK table storage
