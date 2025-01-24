@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - raised MSRV to 1.80.1
 - changed the order of elements in `Grid::fill` of the parameter `ntuple` to
   reflect the ordering of `kinematics` given to `Grid::new`
+- renamed the following switches of `pineappl write`: `--remap` to
+  `--set-bins`, `--remap-norm-ignore` to `--div-bin-norm-dims` and
+  `--remap-norm` to `--mul-bin-norm`. These names should be reflect the
+  corresponding operations
 
 ### Removed
 
