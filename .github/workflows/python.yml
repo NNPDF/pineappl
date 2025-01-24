@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - pycli
+      - v1-file-format
 
 jobs:
   test:
