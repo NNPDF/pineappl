@@ -12,6 +12,7 @@ use pineappl::subgrid::Subgrid;
 use rayon::{prelude::*, ThreadPoolBuilder};
 use std::fmt::Write;
 use std::num::NonZeroUsize;
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::thread;
@@ -181,34 +182,39 @@ impl Subcommand for Opts {
 
             let grid = helpers::read_grid(&self.input)?;
             let mut conv_funs = helpers::create_conv_funs(&self.conv_funs[0])?;
-            let slices = grid.bin_info().slices();
+            let slices = grid.bwfl().slices();
             let mut data_string = String::new();
 
             data_string.push_str("[\n");
 
-            for (slice, label) in slices.iter().zip(slices.iter().map(|&(begin, end)| {
-                (0..grid.bin_info().dimensions() - 1)
-                    .map(|d| {
-                        format!(
-                            "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
-                            left = grid.bin_info().left(d)[begin],
-                            obs = grid
-                                .metadata()
-                                .get(&format!("x{}_label_tex", d + 1))
-                                .cloned()
-                                .unwrap_or_else(|| format!("x{}", d + 1))
-                                .replace('$', ""),
-                            right = grid.bin_info().right(d)[end - 1],
-                            unit = grid
-                                .metadata()
-                                .get(&format!("x{}_unit", d + 1))
-                                .cloned()
-                                .unwrap_or_default()
-                        )
-                    })
-                    .join(r"\\")
-            })) {
-                let bins: Vec<_> = (slice.0..slice.1).collect();
+            for (slice, label) in
+                slices
+                    .iter()
+                    .cloned()
+                    .zip(slices.iter().map(|&Range { start, end }| {
+                        (0..grid.bwfl().dimensions() - 1)
+                            .map(|d| {
+                                format!(
+                                "$\\SI{{{left}}}{{{unit}}} < {obs} < \\SI{{{right}}}{{{unit}}}$",
+                                left = grid.bwfl().bins()[start].limits()[d].0,
+                                obs = grid
+                                    .metadata()
+                                    .get(&format!("x{}_label_tex", d + 1))
+                                    .cloned()
+                                    .unwrap_or_else(|| format!("x{}", d + 1))
+                                    .replace('$', ""),
+                                right = grid.bwfl().bins()[end - 1].limits()[d].1,
+                                unit = grid
+                                    .metadata()
+                                    .get(&format!("x{}_unit", d + 1))
+                                    .cloned()
+                                    .unwrap_or_default()
+                            )
+                            })
+                            .join(r"\\")
+                    }))
+            {
+                let bins: Vec<_> = slice.collect();
 
                 let results = helpers::convolve(
                     &grid,
@@ -464,7 +470,7 @@ impl Subcommand for Opts {
                 }
             }
 
-            let xaxis = format!("x{}", grid.bin_info().dimensions());
+            let xaxis = format!("x{}", grid.bwfl().dimensions());
             let xunit = metadata
                 .get(&format!("{xaxis}_unit"))
                 .map_or("", String::as_str);
@@ -492,7 +498,7 @@ impl Subcommand for Opts {
             let xlog = !xunit.is_empty();
             let ylog = xlog;
             let title = metadata.get("description").map_or("", String::as_str);
-            let bins = grid.bin_info().bins();
+            let bins = grid.bwfl().len();
             let nconvs = self.conv_funs.len();
 
             let enable_int = bins == 1;

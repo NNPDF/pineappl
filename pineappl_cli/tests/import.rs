@@ -923,11 +923,10 @@ fn import_hadronic_fktable() {
         ]
     );
 
-    assert_eq!(fk_table.grid().bin_info().bins(), 1);
-    assert_eq!(fk_table.grid().bin_info().normalizations(), [1.0]);
-    assert_eq!(fk_table.grid().bin_info().dimensions(), 1);
-    assert_eq!(fk_table.grid().bin_info().left(0), [0.0]);
-    assert_eq!(fk_table.grid().bin_info().right(0), [1.0]);
+    assert_eq!(fk_table.grid().bwfl().len(), 1);
+    assert_eq!(fk_table.grid().bwfl().normalizations(), [1.0]);
+    assert_eq!(fk_table.grid().bwfl().dimensions(), 1);
+    assert_eq!(fk_table.grid().bwfl().bins()[0].limits(), [(0.0, 1.0)]);
     assert_eq!(
         fk_table.grid().convolutions(),
         [

@@ -113,12 +113,12 @@ impl Subcommand for Opts {
             bail!("selected orders differ");
         }
 
-        if !self.ignore_bin_limits && (grid1.bin_info() != grid2.bin_info()) {
-            bail!("bins limits differ");
+        if self.ignore_bin_limits && (grid1.bwfl().len() != grid2.bwfl().len()) {
+            bail!("number of bins differ");
         }
 
-        if self.ignore_bin_limits && (grid1.bin_info().bins() != grid2.bin_info().bins()) {
-            bail!("number of bins differ");
+        if !self.ignore_bin_limits && !grid1.bwfl().bins_partial_eq_with_ulps(grid2.bwfl(), 8) {
+            bail!("bins limits differ");
         }
 
         // TODO: use approximate comparison
@@ -131,7 +131,7 @@ impl Subcommand for Opts {
         let mut table = helpers::create_table();
         let mut title = Row::empty();
         title.add_cell(cell!(c->"b"));
-        for i in 0..grid1.bin_info().dimensions() {
+        for i in 0..grid1.bwfl().dimensions() {
             let mut cell = cell!(c->format!("x{}", i + 1));
             cell.set_hspan(2);
             title.add_cell(cell);

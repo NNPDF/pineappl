@@ -407,7 +407,7 @@ pub(crate) fn evolve_slice_with_many(
     channels0.dedup();
     let channels0 = channels0;
 
-    let mut sub_fk_tables = Vec::with_capacity(grid.bin_info().bins() * channels0.len());
+    let mut sub_fk_tables = Vec::with_capacity(grid.bwfl().len() * channels0.len());
 
     // TODO: generalize to `n`
     let mut last_x1 = vec![Vec::new(); infos.len()];
@@ -492,7 +492,7 @@ pub(crate) fn evolve_slice_with_many(
 
     Ok((
         Array1::from_iter(sub_fk_tables)
-            .into_shape((1, grid.bin_info().bins(), channels0.len()))
+            .into_shape((1, grid.bwfl().len(), channels0.len()))
             .unwrap(),
         channels0
             .into_iter()

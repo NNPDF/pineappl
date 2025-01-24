@@ -3,11 +3,14 @@
 //!
 //! [`Grid`]: super::grid::Grid
 
+// use super::grid::GridError;
+use super::convert;
 use float_cmp::approx_eq;
-use itertools::Itertools;
+use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
+use std::ops::{Bound, Range, RangeBounds};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -207,6 +210,432 @@ impl Scales {
 
         true
     }
+}
+
+/// TODO
+#[derive(Clone, Deserialize, Serialize)]
+pub struct Bin {
+    limits: Vec<(f64, f64)>,
+    normalization: f64,
+}
+
+impl Bin {
+    /// TODO
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    pub fn new(limits: Vec<(f64, f64)>, normalization: f64) -> Self {
+        for limits in &limits {
+            assert!(limits.1 >= limits.0);
+        }
+
+        Self {
+            limits,
+            normalization,
+        }
+    }
+
+    /// TODO
+    pub fn dimensions(&self) -> usize {
+        self.limits.len()
+    }
+
+    /// TODO
+    pub fn normalization(&self) -> f64 {
+        self.normalization
+    }
+
+    /// TODO
+    pub fn limits(&self) -> &[(f64, f64)] {
+        &self.limits
+    }
+
+    /// TODO
+    pub fn partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
+        self.limits.iter().zip(other.limits()).all(|(&lhs, &rhs)| {
+            approx_eq!(f64, lhs.0, rhs.0, ulps = ulps) && approx_eq!(f64, lhs.1, rhs.1, ulps = ulps)
+        }) && approx_eq!(f64, self.normalization, other.normalization, ulps = ulps)
+    }
+}
+
+/// TODO
+#[derive(Clone, Deserialize, Serialize)]
+pub struct BinsWithFillLimits {
+    bins: Vec<Bin>,
+    fill_limits: Vec<f64>,
+}
+
+impl BinsWithFillLimits {
+    /// TODO
+    pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self, ()> {
+        // TODO: validate the bins
+
+        // - there must be at least one bin
+        // - all fill limits must be ascending
+        // - all dimensions must be the same
+        // - limits must not overlap
+
+        if fill_limits.len() != bins.len() + 1 {
+            // TODO: do proper error handling
+            return Err(());
+        }
+
+        Ok(Self { bins, fill_limits })
+    }
+
+    /// TODO
+    pub fn from_fill_limits(fill_limits: Vec<f64>) -> Result<Self, ()> {
+        let bins = fill_limits
+            .windows(2)
+            .map(|win| Bin::new(vec![(win[0], win[1])], win[1] - win[0]))
+            .collect();
+
+        Self::new(bins, fill_limits)
+    }
+
+    /// TODO
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    pub fn from_limits_and_normalizations(
+        limits: Vec<Vec<(f64, f64)>>,
+        normalizations: Vec<f64>,
+    ) -> Result<Self, ()> {
+        assert_eq!(limits.len(), normalizations.len());
+
+        let fill_limits = (0..=limits.len()).map(convert::f64_from_usize).collect();
+        let bins = limits
+            .into_iter()
+            .zip(normalizations)
+            .map(|(limits, normalization)| Bin::new(limits, normalization))
+            .collect();
+
+        Self::new(bins, fill_limits)
+    }
+
+    /// TODO
+    pub fn slices(&self) -> Vec<Range<usize>> {
+        if self.dimensions() == 1 {
+            // TODO: check that bins are contiguous
+            vec![0..self.len()]
+        } else {
+            self.bins()
+                .iter()
+                .flat_map(Bin::limits)
+                .enumerate()
+                .filter_map(|(index, x)| {
+                    ((index % self.dimensions()) != (self.dimensions() - 1)).then_some(x)
+                })
+                .collect::<Vec<_>>()
+                .chunks_exact(self.dimensions() - 1)
+                .enumerate()
+                .dedup_by_with_count(|(_, x), (_, y)| x == y)
+                .map(|(count, (index, _))| index..index + count)
+                .collect()
+        }
+    }
+
+    /// TODO
+    pub fn bins(&self) -> &[Bin] {
+        &self.bins
+    }
+
+    /// TODO
+    pub fn len(&self) -> usize {
+        self.bins.len()
+    }
+
+    /// TODO
+    pub fn dimensions(&self) -> usize {
+        self.bins
+            .first()
+            // UNWRAP: `Bin::new` should guarantee that there's at least one bin
+            .unwrap_or_else(|| unreachable!())
+            .dimensions()
+    }
+
+    /// TODO
+    pub fn fill_index(&self, value: f64) -> Option<usize> {
+        match self
+            .fill_limits
+            .binary_search_by(|left| left.total_cmp(&value))
+        {
+            Err(0) => None,
+            Err(index) if index == self.fill_limits.len() => None,
+            Ok(index) if index == (self.fill_limits.len() - 1) => None,
+            Ok(index) => Some(index),
+            Err(index) => Some(index - 1),
+        }
+    }
+
+    /// TODO
+    pub fn fill_limits(&self) -> &[f64] {
+        &self.fill_limits
+    }
+
+    /// TODO
+    pub fn normalizations(&self) -> Vec<f64> {
+        self.bins.iter().map(Bin::normalization).collect()
+    }
+
+    /// TODO
+    pub fn subset(&self, range: impl RangeBounds<usize>) -> Result<Self, ()> {
+        let range_plus_one = (
+            range.start_bound().cloned(),
+            match range.end_bound().cloned() {
+                Bound::Excluded(end) => Bound::Included(end),
+                Bound::Included(end) => Bound::Included(end + 1),
+                Bound::Unbounded => Bound::Unbounded,
+            },
+        );
+
+        Self::new(
+            self.bins
+                .iter()
+                .enumerate()
+                .filter_map(|(index, bin)| {
+                    if range.contains(&index) {
+                        Some(bin.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            self.fill_limits
+                .iter()
+                .enumerate()
+                .filter_map(|(index, &limit)| {
+                    if range_plus_one.contains(&index) {
+                        Some(limit)
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+        )
+    }
+
+    /// TODO
+    // TODO: change range to `RangeBounds<usize>`
+    pub fn merge(&self, range: Range<usize>) -> Result<Self, ()> {
+        // TODO: allow more flexible merging
+        if !self
+            .slices()
+            .iter()
+            .any(|&Range { start, end }| (start <= range.start) && (range.end <= end))
+        {
+            // TODO: implement proper error handling
+            return Err(());
+        }
+
+        let mut limits: Vec<_> = self.bins.iter().map(|bin| bin.limits().to_vec()).collect();
+        let mut normalizations = self.normalizations();
+        let mut fill_limits = self.fill_limits.clone();
+        let dim = self.dimensions();
+
+        limits [range.start]
+        [dim - 1]
+        .1 = limits [range.end - 1]
+        [dim - 1]
+        .1;
+        normalizations[range.start] += normalizations[range.start + 1..range.end]
+            .iter()
+            .sum::<f64>();
+
+        limits.drain(range.start + 1..range.end);
+        normalizations.drain(range.start + 1..range.end);
+        fill_limits.drain(range.start + 1..range.end);
+
+        Self::new(
+            limits
+                .into_iter()
+                .zip(normalizations)
+                .map(|(limits, normalization)| Bin::new(limits, normalization))
+                .collect(),
+            fill_limits,
+        )
+    }
+
+    /// TODO
+    pub fn remove(&mut self, index: usize) -> Bin {
+        if self.len() == 1 {
+            panic!("TODO");
+        }
+
+        self.fill_limits.pop().unwrap();
+        self.bins.remove(index)
+    }
+
+    /// TODO
+    pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
+        self.bins
+            .iter()
+            .zip(other.bins())
+            .all(|(lhs, rhs)| lhs.partial_eq_with_ulps(rhs, ulps))
+    }
+}
+
+impl FromStr for BinsWithFillLimits {
+    type Err = Bla;
+
+    fn from_str(s: &str) -> Result<Self, Bla> {
+        let remaps: Result<Vec<Vec<Vec<f64>>>, Bla> = s
+            .split(';')
+            .map(|string| {
+                string
+                    .split('|')
+                    .map(|string| {
+                        string
+                            .split_once(':')
+                            .map_or(Ok(string), |(lhs, rhs)| {
+                                match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
+                                    (Err(lhs), Err(rhs)) => Err(Bla::Error(format!(
+                                        "unable to parse 'N:M' syntax from: '{string}' (N: '{lhs}', M: '{rhs}')"
+                                    ))),
+                                    // skip :N specification
+                                    (Err(_), Ok(_)) => Ok(lhs),
+                                    // skip N: specification
+                                    (Ok(_), Err(_)) => Ok(rhs),
+                                    // skip N:M specification
+                                    (Ok(_), Ok(_)) => Ok(""),
+                                }
+                            })?
+                            .split(',')
+                            .filter_map(|string| {
+                                let string = string.trim();
+                                if string.is_empty() {
+                                    None
+                                } else {
+                                    Some(string.parse::<f64>().map_err(|err| {
+                                        Bla::Error(format!(
+                                            "unable to parse limit '{string}': '{err}')"
+                                        ))
+                                    }))
+                                }
+                            })
+                            .collect()
+                    })
+                    .collect()
+            })
+            .collect();
+        let mut remaps = remaps?;
+
+        if let Some(first) = remaps.first() {
+            if first.len() != 1 {
+                return Err(Bla::Error(
+                    "'|' syntax not meaningful for first dimension".to_owned(),
+                ));
+            }
+        }
+
+        // go over `remaps` again, and repeat previous entries as requested with the `|` syntax
+        for vec in &mut remaps {
+            for i in 1..vec.len() {
+                if vec[i].is_empty() {
+                    if vec[i - 1].is_empty() {
+                        return Err(Bla::Error("empty repetition with '|'".to_owned()));
+                    }
+
+                    vec[i] = vec[i - 1].clone();
+                }
+            }
+        }
+
+        // go over `remaps` again, this time remove bin as requested with the `:N` or `N:` syntax
+        for (vec, string) in remaps.iter_mut().zip(s.split(';')) {
+            for (vec, string) in vec.iter_mut().zip(string.split('|')) {
+                let (lhs, rhs) = {
+                    if let Some((lhs, rhs)) = string.split_once(':') {
+                        (lhs.parse::<usize>(), rhs.parse::<usize>())
+                    } else {
+                        // there's no colon
+                        continue;
+                    }
+                };
+
+                if let Ok(num) = rhs {
+                    vec.truncate(vec.len() - num);
+                }
+
+                if let Ok(num) = lhs {
+                    vec.drain(0..num);
+                }
+
+                if vec.len() <= 1 {
+                    return Err(Bla::Error("no limits due to ':' syntax".to_owned()));
+                }
+            }
+        }
+
+        let dimensions = remaps.len();
+        let mut normalizations = Vec::new();
+        let mut limits = Vec::new();
+        let mut buffer = Vec::with_capacity(dimensions);
+        let mut pipe_indices = vec![0; dimensions];
+        let mut last_indices = vec![0; dimensions];
+
+        'looop: for indices in remaps
+            .iter()
+            .map(|vec| 0..vec.iter().map(|vec| vec.len() - 1).max().unwrap())
+            .multi_cartesian_product()
+        {
+            // calculate `pipe_indices`, which stores the indices for the second dimension of `remaps`
+            for d in 0..dimensions - 1 {
+                if indices[d] > last_indices[d] {
+                    for dp in d + 1..dimensions {
+                        if remaps[dp].len() != 1 {
+                            pipe_indices[dp] += 1;
+                        }
+                    }
+                }
+            }
+
+            last_indices.clone_from(&indices);
+
+            let mut normalization = 1.0;
+
+            for (remap, &pipe_index, &i) in izip!(&remaps, &pipe_indices, &indices) {
+                if let Some(r) = remap.get(pipe_index) {
+                    if r.len() <= (i + 1) {
+                        buffer.clear();
+
+                        // this index doesn't exist
+                        continue 'looop;
+                    }
+
+                    let left = r[i];
+                    let right = r[i + 1];
+
+                    buffer.push((left, right));
+                    normalization *= right - left;
+                } else {
+                    return Err(Bla::Error(
+                        "missing '|' specification: number of variants too small".to_owned(),
+                    ));
+                }
+            }
+
+            // TODO: rewrite the code to avoid `buffer.clear()`
+            limits.push(buffer.clone());
+            buffer.clear();
+            normalizations.push(normalization);
+        }
+
+        Ok(BinsWithFillLimits::from_limits_and_normalizations(limits, normalizations)
+    // TODO: implement proper error handling
+    .unwrap()
+    )
+    }
+}
+
+/// Error type returned by [`BinRemapper::from_str`]
+#[derive(Debug, Error)]
+pub enum Bla {
+    /// An error that occured while parsing the string in [`BinRemapper::from_str`].
+    #[error("{0}")]
+    Error(String),
 }
 
 /// Error type keeping information if [`Order::from_str`] went wrong.

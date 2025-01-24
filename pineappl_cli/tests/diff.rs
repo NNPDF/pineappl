@@ -188,7 +188,7 @@ fn bin_limits_differ() {
         .unwrap()
         .args([
             "write",
-            "--remap=0,1,2,3,4,5,6,7,8",
+            "--set-bins=0,1,2,3,4,5,6,7,8",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             output.path().to_str().unwrap(),
         ])

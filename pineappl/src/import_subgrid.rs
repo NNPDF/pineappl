@@ -35,7 +35,7 @@ impl Subgrid for ImportSubgridV1 {
         self.array.is_empty()
     }
 
-    fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
+    fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         let lhs_node_values = self.node_values();
         let mut rhs_node_values = other.node_values();
         let mut new_node_values = lhs_node_values.clone();

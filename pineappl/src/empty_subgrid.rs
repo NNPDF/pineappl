@@ -26,7 +26,7 @@ impl Subgrid for EmptySubgridV1 {
         true
     }
 
-    fn merge(&mut self, subgrid: &SubgridEnum, _: Option<(usize, usize)>) {
+    fn merge_impl(&mut self, subgrid: &SubgridEnum, _: Option<(usize, usize)>) {
         assert!(
             subgrid.is_empty(),
             "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
@@ -65,7 +65,7 @@ mod tests {
     fn create_empty() {
         let mut subgrid = EmptySubgridV1;
         assert!(subgrid.is_empty());
-        subgrid.merge(&EmptySubgridV1.into(), None);
+        subgrid.merge_impl(&EmptySubgridV1.into(), None);
         subgrid.scale(2.0);
         subgrid.symmetrize(1, 2);
         subgrid.optimize_nodes();
@@ -100,7 +100,7 @@ mod tests {
         let node_values = vec![vec![1.0]; 2];
         let subgrid_rhs = ImportSubgridV1::new(array, node_values).into();
 
-        subgrid_lhs.merge(&subgrid_rhs, None);
+        subgrid_lhs.merge_impl(&subgrid_rhs, None);
     }
 
     #[test]

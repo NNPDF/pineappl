@@ -96,8 +96,7 @@ pub fn convert_into_applgrid(
     output: &Path,
     discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
-    let bin_info = grid.bin_info();
-    let dim = bin_info.dimensions();
+    let dim = grid.bwfl().dimensions();
 
     if dim > 1 {
         bail!(
@@ -106,7 +105,8 @@ pub fn convert_into_applgrid(
         );
     }
 
-    if bin_info.slices().len() != 1 {
+    // APPLgrid can only be used with one-dimensional consecutive bin limits
+    if grid.bwfl().slices().len() != 1 {
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
@@ -152,11 +152,24 @@ pub fn convert_into_applgrid(
     // this object is managed by APPLgrid internally
     ffi::make_lumi_pdf(id, &combinations).into_raw();
 
-    let limits = &bin_info.limits();
-    let limits: Vec<_> = limits
+    let limits: Vec<_> = grid
+        .bwfl()
+        .bins()
         .iter()
-        .map(|vec| vec[0].0)
-        .chain(limits.last().map(|vec| vec[0].1))
+        .map(|bin| {
+            // TODO: instead of `bin.limits()[0]` we should use `bin.fill_limits()`, but this
+            // requires changing the normalization
+            bin.limits()[0].0
+        })
+        .chain(Some(
+            grid.bwfl()
+                .bins()
+                .last()
+                // UNWRAP: every `grid` should have at least one bin
+                .unwrap()
+                .limits()[0]
+                .1,
+        ))
         .collect();
 
     let order_mask = Order::create_mask(grid.orders(), 3, 0, false);

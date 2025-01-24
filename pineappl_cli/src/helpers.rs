@@ -188,7 +188,7 @@ pub fn labels_and_units(grid: &Grid, integrated: bool) -> (Vec<(String, &str)>, 
     let metadata = grid.metadata();
 
     (
-        (0..grid.bin_info().dimensions())
+        (0..grid.bwfl().dimensions())
             .map(|d| {
                 (
                     metadata
@@ -311,7 +311,7 @@ pub fn convolve_scales(
 
     match mode {
         ConvoluteMode::Asymmetry => {
-            let bin_count = grid.bin_info().bins();
+            let bin_count = grid.bwfl().len();
 
             // calculating the asymmetry for a subset of bins doesn't work
             assert!((bins.is_empty() || (bins.len() == bin_count)) && (bin_count % 2 == 0));
@@ -330,13 +330,12 @@ pub fn convolve_scales(
                 .collect()
         }
         ConvoluteMode::Integrated => {
-            let normalizations = grid.bin_info().normalizations();
-
             results
                 .iter_mut()
                 .zip(
-                    normalizations
-                        .iter()
+                    grid.bwfl()
+                        .normalizations()
+                        .into_iter()
                         .enumerate()
                         .filter(|(index, _)| (bins.is_empty() || bins.contains(index)))
                         .flat_map(|(_, norm)| iter::repeat(norm).take(scales.len())),
@@ -389,9 +388,10 @@ pub fn convolve(
 
 pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<Vec<(f64, f64)>> {
     let limits: Vec<_> = grid
-        .bin_info()
-        .limits()
-        .into_iter()
+        .bwfl()
+        .bins()
+        .iter()
+        .map(|bin| bin.limits().to_vec())
         .enumerate()
         .filter_map(|(index, limits)| (bins.is_empty() || bins.contains(&index)).then_some(limits))
         .collect();

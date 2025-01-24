@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use ndarray::s;
-use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
@@ -105,10 +105,13 @@ fn read_fktable(reader: impl BufRead) -> Result<Grid> {
 
                 // construct `Grid`
                 let fktable = Grid::new(
-                    PidBasis::Evol,
-                    lumis,
+                    BinsWithFillLimits::from_fill_limits((0..=ndata).map(Into::into).collect())
+                        // UNWRAP: panic indicates an incompatibility between legacy FK-tables and
+                        // PineAPPL
+                        .unwrap(),
                     vec![Order::new(0, 0, 0, 0, 0)],
-                    (0..=ndata).map(Into::into).collect(),
+                    lumis,
+                    PidBasis::Evol,
                     // legacy FK-tables only support unpolarized proton PDFs
                     convolutions.clone(),
                     // TODO: what are sensible parameters for FK-tables?

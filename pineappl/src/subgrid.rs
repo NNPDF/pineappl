@@ -33,6 +33,20 @@ pub enum SubgridEnum {
     ImportSubgridV1,
 }
 
+impl SubgridEnum {
+    /// TODO
+    pub fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
+        if other.is_empty() {
+            return;
+        }
+        if let SubgridEnum::EmptySubgridV1(_) = self {
+            if transpose.is_none() {*self = other.clone();} else {todo!();}
+        } else {
+        self.merge_impl(other, transpose);
+        }
+    }
+}
+
 /// Size-related statistics for a subgrid.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Stats {
@@ -69,7 +83,7 @@ pub trait Subgrid {
 
     /// Merge `other` into this subgrid, possibly transposing the two dimensions given by
     /// `transpose`.
-    fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>);
+    fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>);
 
     /// Scale the subgrid by `factor`.
     fn scale(&mut self, factor: f64);

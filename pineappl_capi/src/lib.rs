@@ -56,8 +56,7 @@
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
-use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
@@ -239,7 +238,7 @@ pub struct Lumi(Vec<Channel>);
 pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
-    grid.bin_info().bins()
+    grid.bwfl().len()
 }
 
 /// Returns the number of dimensions of the bins this grid has.
@@ -252,7 +251,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
 pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
-    grid.bin_info().dimensions()
+    grid.bwfl().dimensions()
 }
 
 /// Stores the bin sizes of `grid` in `bin_sizes`.
@@ -265,10 +264,10 @@ pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usiz
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin_sizes: *mut f64) {
     let grid = unsafe { &*grid };
-    let sizes = grid.bin_info().normalizations();
-    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes, sizes.len()) };
+    let bins = grid.bwfl().len();
+    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes, bins) };
 
-    for (i, size) in sizes.iter().copied().enumerate() {
+    for (i, size) in grid.bwfl().normalizations().into_iter().enumerate() {
         bin_sizes[i] = size;
     }
 }
@@ -288,10 +287,17 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
     left: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let limits = grid.bin_info().left(dimension);
-    let left_limits = unsafe { slice::from_raw_parts_mut(left, limits.len()) };
+    let bins = grid.bwfl().len();
+    let result = unsafe { slice::from_raw_parts_mut(left, bins) };
 
-    left_limits.copy_from_slice(&limits);
+    for (lhs, rhs) in result.iter_mut().zip(
+        grid.bwfl()
+            .bins()
+            .iter()
+            .map(|bin| bin.limits()[dimension].0),
+    ) {
+        *lhs = rhs;
+    }
 }
 
 /// Write the right limits for the specified dimension into `right`.
@@ -309,10 +315,17 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     right: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let limits = grid.bin_info().right(dimension);
-    let right_limits = unsafe { slice::from_raw_parts_mut(right, limits.len()) };
+    let bins = grid.bwfl().len();
+    let result = unsafe { slice::from_raw_parts_mut(right, bins) };
 
-    right_limits.copy_from_slice(&limits);
+    for (lhs, rhs) in result.iter_mut().zip(
+        grid.bwfl()
+            .bins()
+            .iter()
+            .map(|bin| bin.limits()[dimension].1),
+    ) {
+        *lhs = rhs;
+    }
 }
 
 /// Returns a cloned object of `grid`.
@@ -454,7 +467,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     } else {
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
-    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
+    let bins = grid.bwfl().len();
+    let results = unsafe { slice::from_raw_parts_mut(results, bins) };
     let mut convolution_cache = ConvolutionCache::new(
         vec![Conv::new(ConvType::UnpolPDF, pdg_id)],
         vec![&mut xfx],
@@ -520,7 +534,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     } else {
         unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
-    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
+    let bins = grid.bwfl().len();
+    let results = unsafe { slice::from_raw_parts_mut(results, bins) };
     let mut convolution_cache = ConvolutionCache::new(
         vec![
             Conv::new(ConvType::UnpolPDF, pdg_id1),
@@ -758,11 +773,16 @@ pub unsafe extern "C" fn pineappl_grid_new(
         }
     }
 
-    Box::new(Grid::new(
-        PidBasis::Pdg,
-        lumi.0.clone(),
-        orders,
+    let bins = BinsWithFillLimits::from_fill_limits(
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
+
+    Box::new(Grid::new(
+        bins,
+        orders,
+        lumi.0.clone(),
+        PidBasis::Pdg,
         convolutions,
         interps,
         vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1026,20 +1046,30 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
     limits: *const f64,
 ) {
     let grid = unsafe { &mut *grid };
-    let bins = grid.bin_info().bins();
+    let bins = grid.bwfl().len();
     let normalizations = unsafe { slice::from_raw_parts(normalizations, bins) };
     let limits = unsafe { slice::from_raw_parts(limits, 2 * dimensions * bins) };
 
-    grid.set_remapper(
-        BinRemapper::new(
-            normalizations.to_vec(),
-            limits
-                .chunks_exact(2)
-                .map(|chunk| (chunk[0], chunk[1]))
-                .collect(),
-        )
-        .unwrap(),
+    let new_bins: Vec<_> = limits
+        .chunks_exact(2 * dimensions)
+        .zip(normalizations)
+        .map(|(limits, &normalization)| {
+            Bin::new(
+                limits
+                    .chunks_exact(2)
+                    .map(|limits| (limits[0], limits[1]))
+                    .collect(),
+                normalization,
+            )
+        })
+        .collect();
+
+    grid.set_bwfl(
+        BinsWithFillLimits::new(new_bins, grid.bwfl().fill_limits().to_vec())
+            // UNWRAP: error handling in the CAPI is to abort
+            .unwrap(),
     )
+    // UNWRAP: error handling in the CAPI is to abort
     .unwrap();
 }
 
@@ -1536,8 +1566,10 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         })
         .collect();
 
-    // Bin limits
-    let bin_limits = unsafe { slice::from_raw_parts(bin_limits, bins + 1).to_vec() };
+    let bins = BinsWithFillLimits::from_fill_limits(
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
 
     // Construct the convolution objects
     let convolution_types =
@@ -1568,10 +1600,10 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         .collect();
 
     Box::new(Grid::new(
-        pid_basis,
-        channels.0.clone(),
+        bins,
         orders,
-        bin_limits,
+        channels.0.clone(),
+        pid_basis,
         convolutions,
         interp_vecs,
         kinematics,
@@ -1760,7 +1792,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     let bin_indices = if bin_indices.is_null() {
         &[]
     } else {
-        unsafe { slice::from_raw_parts(bin_indices, grid.bin_info().bins()) }
+        unsafe { slice::from_raw_parts(bin_indices, grid.bwfl().len()) }
     };
 
     // Construct the alphas and PDFs functions
@@ -1789,7 +1821,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
         unsafe { slice::from_raw_parts(mu_scales.cast::<(f64, f64, f64)>(), nb_scales) }
     };
 
-    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
+    let results = unsafe { slice::from_raw_parts_mut(results, grid.bwfl().len()) };
 
     results.copy_from_slice(&grid.convolve(
         &mut convolution_cache,

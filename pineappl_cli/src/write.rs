@@ -1,13 +1,12 @@
 use super::helpers;
 use super::{GlobalConfiguration, Subcommand};
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{
     value_parser, Arg, ArgAction, ArgMatches, Args, Command, Error, FromArgMatches, Parser,
     ValueHint,
 };
-use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
+use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Order};
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::pids::PidBasis;
 use std::fs;
@@ -34,20 +33,20 @@ enum OpsArg {
     DedupChannels(i64),
     DeleteBins(Vec<RangeInclusive<usize>>),
     DeleteChannels(Vec<RangeInclusive<usize>>),
-    DeleteOrders(Vec<RangeInclusive<usize>>),
     DeleteKey(String),
+    DeleteOrders(Vec<RangeInclusive<usize>>),
+    DivBinNormDims(Vec<usize>),
     MergeBins(Vec<RangeInclusive<usize>>),
+    MulBinNorm(f64),
     Optimize(bool),
     OptimizeFkTable(FkAssumptions),
-    Remap(String),
-    RemapNorm(f64),
-    RemapNormIgnore(Vec<usize>),
     RewriteChannel((usize, Channel)),
     RewriteOrder((usize, Order)),
     RotatePidBasis(PidBasis),
     Scale(f64),
     ScaleByBin(Vec<f64>),
     ScaleByOrder(Vec<f64>),
+    SetBins(String),
     SetKeyFile(Vec<String>),
     SetKeyValue(Vec<String>),
     SplitChannels(bool),
@@ -103,7 +102,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "remap_norm_ignore" => {
+                "div_bin_norm_dims" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -111,7 +110,7 @@ impl FromArgMatches for MoreArgs {
                             .map(Iterator::collect::<Vec<_>>),
                     ) {
                         args[index] = Some(match id.as_str() {
-                            "remap_norm_ignore" => OpsArg::RemapNormIgnore(arg),
+                            "div_bin_norm_dims" => OpsArg::DivBinNormDims(arg),
                             _ => unreachable!(),
                         });
                     }
@@ -130,7 +129,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "delete_key" | "remap" => {
+                "delete_key" | "set_bins" => {
                     for (index, mut arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -140,7 +139,7 @@ impl FromArgMatches for MoreArgs {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
                             "delete_key" => OpsArg::DeleteKey(arg.pop().unwrap()),
-                            "remap" => OpsArg::Remap(arg.pop().unwrap()),
+                            "set_bins" => OpsArg::SetBins(arg.pop().unwrap()),
                             _ => unreachable!(),
                         });
                     }
@@ -175,7 +174,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "remap_norm" | "scale" => {
+                "mul_bin_norm" | "scale" => {
                     for (index, arg) in indices.into_iter().zip(
                         matches
                             .remove_occurrences(&id)
@@ -184,7 +183,7 @@ impl FromArgMatches for MoreArgs {
                     ) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
-                            "remap_norm" => OpsArg::RemapNorm(arg[0]),
+                            "mul_bin_norm" => OpsArg::MulBinNorm(arg[0]),
                             "scale" => OpsArg::Scale(arg[0]),
                             _ => unreachable!(),
                         });
@@ -328,6 +327,16 @@ impl Args for MoreArgs {
                 .value_name("KEY"),
         )
         .arg(
+            Arg::new("div_bin_norm_dims")
+                .action(ArgAction::Append)
+                .help("Divide each bin normalizations by the bin lengths for the given dimensions")
+                .long("div-bin-norm-dims")
+                .num_args(1)
+                .value_delimiter(',')
+                .value_name("DIM1,...")
+                .value_parser(value_parser!(usize)),
+        )
+        .arg(
             Arg::new("merge_bins")
                 .action(ArgAction::Append)
                 .help("Merge specific bins together")
@@ -336,6 +345,15 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("BIN1-BIN2,...")
                 .value_parser(helpers::parse_integer_range),
+        )
+        .arg(
+            Arg::new("mul_bin_norm")
+                .action(ArgAction::Append)
+                .help("Multiply all bin normalizations with the given factor")
+                .long("mul-bin-norm")
+                .value_delimiter(',')
+                .value_name("NORM")
+                .value_parser(value_parser!(f64)),
         )
         .arg(
             Arg::new("optimize")
@@ -362,32 +380,6 @@ impl Args for MoreArgs {
                     ])
                     .try_map(|s| s.parse::<FkAssumptions>()),
                 ),
-        )
-        .arg(
-            Arg::new("remap")
-                .action(ArgAction::Append)
-                .help("Modify the bin dimensions and widths")
-                .long("remap")
-                .value_name("REMAPPING"),
-        )
-        .arg(
-            Arg::new("remap_norm")
-                .action(ArgAction::Append)
-                .help("Modify the bin normalizations with a common factor")
-                .long("remap-norm")
-                .value_delimiter(',')
-                .value_name("NORM")
-                .value_parser(value_parser!(f64)),
-        )
-        .arg(
-            Arg::new("remap_norm_ignore")
-                .action(ArgAction::Append)
-                .help("Modify the bin normalizations by multiplying with the bin lengths for the given dimensions")
-                .long("remap-norm-ignore")
-                .num_args(1)
-                .value_delimiter(',')
-                .value_name("DIM1,...")
-                .value_parser(value_parser!(usize)),
         )
         .arg(
             Arg::new("rewrite_channel")
@@ -445,6 +437,13 @@ impl Args for MoreArgs {
                 .value_delimiter(',')
                 .value_name("FAC1,FAC2,...")
                 .value_parser(value_parser!(f64)),
+        )
+        .arg(
+            Arg::new("set_bins")
+                .action(ArgAction::Append)
+                .help("Set the bin limits")
+                .long("set-bins")
+                .value_name("LIMITS"),
         )
         .arg(
             Arg::new("set_key_value")
@@ -519,48 +518,56 @@ impl Subcommand for Opts {
                 OpsArg::DeleteKey(key) => {
                     grid.metadata_mut().remove(key);
                 }
+                OpsArg::DivBinNormDims(dimensions) => {
+                    grid.set_bwfl(
+                        BinsWithFillLimits::new(
+                            grid.bwfl()
+                                .bins()
+                                .iter()
+                                .map(|bin| {
+                                    Bin::new(
+                                        bin.limits().to_vec(),
+                                        bin.normalization()
+                                            / dimensions
+                                                .iter()
+                                                .map(|&index| {
+                                                    bin.limits()[index].1 - bin.limits()[index].0
+                                                })
+                                                .product::<f64>(),
+                                    )
+                                })
+                                .collect(),
+                            grid.bwfl().fill_limits().to_vec(),
+                        )
+                        // UNWRAP: this cannot fail because we only modify the normalizations
+                        .unwrap(),
+                    )
+                    // UNWRAP: this cannot fail because we only modify the normalizations
+                    .unwrap();
+                }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices
                     for range in ranges.iter().rev() {
                         grid.merge_bins(*range.start()..(range.end() + 1))?;
                     }
                 }
-                OpsArg::Remap(remapping) => grid.set_remapper(str::parse(remapping)?)?,
-                OpsArg::RemapNorm(factor) => {
-                    let remapper = grid
-                        .remapper()
-                        .ok_or_else(|| anyhow!("grid does not have a remapper"))?;
-                    let normalizations = remapper
-                        .normalizations()
-                        .iter()
-                        .copied()
-                        .map(|value| factor * value)
-                        .collect();
-
-                    grid.set_remapper(
-                        BinRemapper::new(normalizations, remapper.limits().to_vec()).unwrap(),
-                    )?;
-                }
-                OpsArg::RemapNormIgnore(dimensions) => {
-                    let remapper = grid
-                        .remapper()
-                        .ok_or_else(|| anyhow!("grid does not have a remapper"))?;
-                    let normalizations = remapper
-                        .limits()
-                        .chunks_exact(remapper.dimensions())
-                        .zip(remapper.normalizations())
-                        .map(|(limits, normalization)| {
-                            normalization
-                                / dimensions
-                                    .iter()
-                                    .map(|&index| limits[index].1 - limits[index].0)
-                                    .product::<f64>()
-                        })
-                        .collect();
-
-                    grid.set_remapper(
-                        BinRemapper::new(normalizations, remapper.limits().to_vec()).unwrap(),
-                    )?;
+                OpsArg::MulBinNorm(factor) => {
+                    grid.set_bwfl(
+                        BinsWithFillLimits::new(
+                            grid.bwfl()
+                                .bins()
+                                .iter()
+                                .map(|bin| {
+                                    Bin::new(bin.limits().to_vec(), factor * bin.normalization())
+                                })
+                                .collect(),
+                            grid.bwfl().fill_limits().to_vec(),
+                        )
+                        // UNWRAP: this cannot fail because we only modify the normalizations
+                        .unwrap(),
+                    )
+                    // UNWRAP: this cannot fail because we only modify the normalizations
+                    .unwrap();
                 }
                 OpsArg::RewriteChannel((index, new_channel)) => {
                     // TODO: check that `index` is valid
@@ -585,6 +592,7 @@ impl Subcommand for Opts {
                         factors[0], factors[1], factors[2], factors[3], factors[4], 1.0,
                     );
                 }
+                OpsArg::SetBins(bins) => grid.set_bwfl(str::parse(bins)?)?,
                 OpsArg::SetKeyValue(key_value) => {
                     grid.metadata_mut()
                         .insert(key_value[0].clone(), key_value[1].clone());

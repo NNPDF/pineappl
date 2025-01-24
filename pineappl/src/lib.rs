@@ -36,7 +36,6 @@
 mod convert;
 mod v0;
 
-pub mod bin;
 pub mod boc;
 pub mod convolutions;
 pub mod empty_subgrid;

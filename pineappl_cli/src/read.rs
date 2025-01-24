@@ -77,24 +77,16 @@ impl Subcommand for Opts {
 
             table.set_titles(titles);
 
-            let left_limits: Vec<_> = (0..grid.bin_info().dimensions())
-                .map(|i| grid.bin_info().left(i))
-                .collect();
-            let right_limits: Vec<_> = (0..grid.bin_info().dimensions())
-                .map(|i| grid.bin_info().right(i))
-                .collect();
-            let normalizations = grid.bin_info().normalizations();
-
-            for bin in 0..grid.bin_info().bins() {
+            for (bin_index, bin) in grid.bwfl().bins().iter().enumerate() {
                 let row = table.add_empty_row();
-                row.add_cell(cell!(bin.to_string()));
+                row.add_cell(cell!(bin_index.to_string()));
 
-                for (left, right) in left_limits.iter().zip(right_limits.iter()) {
-                    row.add_cell(cell!(r->format!("{}", left[bin])));
-                    row.add_cell(cell!(r->format!("{}", right[bin])));
+                for (left, right) in bin.limits() {
+                    row.add_cell(cell!(r->left.to_string()));
+                    row.add_cell(cell!(r->right.to_string()));
                 }
 
-                row.add_cell(cell!(r->format!("{}", normalizations[bin])));
+                row.add_cell(cell!(r->bin.normalization().to_string()));
             }
         } else if self.group.fktable {
             if let Err(err) = FkTable::try_from(grid) {

@@ -1,7 +1,6 @@
 //! Module containing all traits and supporting structures for grids.
 
-use super::bin::{BinInfo, BinLimits, BinRemapper};
-use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use super::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
@@ -17,21 +16,24 @@ use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{s, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4};
+use ndarray::{
+    s, Array2, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
-use std::iter;
-use std::mem;
 use std::ops::Range;
+use std::{iter, mem};
 use thiserror::Error;
+
+const BIN_AXIS: Axis = Axis(1);
+
+// const ORDER_AXIS: Axis = Axis(0);
+// const CHANNEL_AXIS: Axis = Axis(2);
 
 /// Error returned when merging two grids fails.
 #[derive(Debug, Error)]
 pub enum GridError {
-    /// Returned when trying to merge two `Grid` objects with incompatible bin limits.
-    #[error(transparent)]
-    InvalidBinLimits(super::bin::MergeBinError),
     /// Returned if the number of bins in the grid and in the remapper do not agree.
     #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
     BinNumberMismatch {
@@ -40,9 +42,6 @@ pub enum GridError {
         /// Number of bins in the remapper.
         remapper_bins: usize,
     },
-    /// Returned when it was tried to merge bins that are non-consecutive.
-    #[error(transparent)]
-    MergeBinError(super::bin::MergeBinError),
     /// Returned when trying to construct a `Grid` using an unknown subgrid type.
     #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
     UnknownSubgridType(String),
@@ -124,17 +123,16 @@ bitflags! {
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Grid {
     subgrids: Array3<SubgridEnum>,
-    channels: Vec<Channel>,
-    bin_limits: BinLimits,
+    bwfl: BinsWithFillLimits,
     orders: Vec<Order>,
-    metadata: BTreeMap<String, String>,
-    convolutions: Vec<Conv>,
+    channels: Vec<Channel>,
     pid_basis: PidBasis,
-    more_members: MoreMembers,
-    kinematics: Vec<Kinematics>,
+    convolutions: Vec<Conv>,
     interps: Vec<Interp>,
-    remapper: Option<BinRemapper>,
+    kinematics: Vec<Kinematics>,
     scales: Scales,
+    metadata: BTreeMap<String, String>,
+    more_members: MoreMembers,
 }
 
 impl Grid {
@@ -147,10 +145,10 @@ impl Grid {
     /// with `scales`.
     #[must_use]
     pub fn new(
-        pid_basis: PidBasis,
-        channels: Vec<Channel>,
+        bwfl: BinsWithFillLimits,
         orders: Vec<Order>,
-        bin_limits: Vec<f64>,
+        channels: Vec<Channel>,
+        pid_basis: PidBasis,
         convolutions: Vec<Conv>,
         interps: Vec<Interp>,
         kinematics: Vec<Kinematics>,
@@ -182,20 +180,19 @@ impl Grid {
 
         Self {
             subgrids: Array3::from_shape_simple_fn(
-                (orders.len(), bin_limits.len() - 1, channels.len()),
+                (orders.len(), bwfl.len(), channels.len()),
                 || EmptySubgridV1.into(),
             ),
+            bwfl,
             orders,
-            bin_limits: BinLimits::new(bin_limits),
-            metadata: default_metadata(),
-            more_members: MoreMembers::V4(Mmv4),
-            convolutions,
-            pid_basis,
             channels,
+            pid_basis,
+            convolutions,
             interps,
             kinematics,
-            remapper: None,
             scales,
+            metadata: default_metadata(),
+            more_members: MoreMembers::V4(Mmv4),
         }
     }
 
@@ -248,12 +245,12 @@ impl Grid {
         let mut cache = cache.new_grid_conv_cache(self, xi);
 
         let bin_indices = if bin_indices.is_empty() {
-            (0..self.bin_info().bins()).collect()
+            (0..self.bwfl().len()).collect()
         } else {
             bin_indices.to_vec()
         };
         let mut bins = vec![0.0; bin_indices.len() * xi.len()];
-        let normalizations = self.bin_info().normalizations();
+        let normalizations = self.bwfl().normalizations();
         let pdg_channels = self.channels_pdg();
 
         for (xi_index, &xis @ (xir, xif, xia)) in xi.iter().enumerate() {
@@ -335,7 +332,7 @@ impl Grid {
     ) -> ArrayD<f64> {
         let mut cache = cache.new_grid_conv_cache(self, &[(xir, xif, xia)]);
 
-        let normalizations = self.bin_info().normalizations();
+        let normalizations = self.bwfl().normalizations();
         let pdg_channels = self.channels_pdg();
 
         let subgrid = &self.subgrids[[ord, bin, channel]];
@@ -397,7 +394,7 @@ impl Grid {
         ntuple: &[f64],
         weight: f64,
     ) {
-        if let Some(bin) = self.bin_limits.index(observable) {
+        if let Some(bin) = self.bwfl().fill_index(observable) {
             let subgrid = &mut self.subgrids[[order, bin, channel]];
             if let SubgridEnum::EmptySubgridV1(_) = subgrid {
                 *subgrid = InterpSubgridV1::new(&self.interps).into();
@@ -495,70 +492,47 @@ impl Grid {
             .collect()
     }
 
-    /// Merges the bins for the corresponding range together in a single one.
+    /// Merge the bins in indices in `range` together in a single one.
     ///
     /// # Errors
     ///
     /// When the given bins are non-consecutive, an error is returned.
-    pub fn merge_bins(&mut self, bins: Range<usize>) -> Result<(), GridError> {
-        self.bin_limits
-            .merge_bins(bins.clone())
-            .map_err(GridError::MergeBinError)?;
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), GridError> {
+        // check if the bins in `range` can be merged - if not return without changing `self`
+        self.bwfl = self.bwfl().merge(range.clone()).unwrap();
 
-        if let Some(remapper) = self.remapper_mut() {
-            remapper
-                .merge_bins(bins.clone())
-                .map_err(GridError::MergeBinError)?;
-        }
+        let (intermediate, right) = self.subgrids.view().split_at(BIN_AXIS, range.end);
+        let (left, merge) = intermediate.split_at(BIN_AXIS, range.start);
 
-        let bin_count = self.bin_info().bins();
-        let mut old_subgrids = mem::replace(
-            &mut self.subgrids,
-            Array3::from_shape_simple_fn(
-                (self.orders.len(), bin_count, self.channels.len()),
-                || EmptySubgridV1.into(),
-            ),
+        let mut merged: Array2<SubgridEnum> = Array2::from_elem(
+            (self.orders().len(), self.channels().len()),
+            EmptySubgridV1.into(),
         );
 
-        for ((order, bin, channel), subgrid) in old_subgrids.indexed_iter_mut() {
-            if subgrid.is_empty() {
-                continue;
-            }
-
-            if bins.contains(&bin) {
-                let new_subgrid = &mut self.subgrids[[order, bins.start, channel]];
-
-                if new_subgrid.is_empty() {
-                    mem::swap(new_subgrid, subgrid);
-                } else {
-                    new_subgrid.merge(subgrid, None);
-                }
-            } else {
-                let new_bin = if bin > bins.start {
-                    bin - (bins.end - bins.start) + 1
-                } else {
-                    bin
-                };
-
-                mem::swap(&mut self.subgrids[[order, new_bin, channel]], subgrid);
-            }
+        // merge the corresponding subgrids
+        for subview in merge.axis_iter(BIN_AXIS) {
+            Zip::from(&mut merged)
+                .and(subview)
+                .for_each(|lhs, rhs| lhs.merge(rhs, None));
         }
+        let merged = merged.insert_axis(BIN_AXIS);
+
+        self.subgrids = ndarray::concatenate(BIN_AXIS, &[left, merged.view(), right])
+            // UNWRAP: if this fails there's a bug
+            .unwrap();
 
         Ok(())
     }
 
-    /// Merges the non-empty `Subgrid`s contained in `other` into `self`.
+    /// Merge non-empty `Subgrid`s contained in `other` into `self`. Subgrids with the same bin
+    /// limits are summed and subgrids with non-overlapping bin limits create new bins in `self`.
     ///
     /// # Errors
     ///
-    /// If `self` and `other` in have different convolutions, PID bases, kinematics, 
-    /// interpolations, or scales an error is returned. If the bin limits of `self` and `other` 
-    /// are different and if the bin limits of `other` cannot be merged with `self` an error is 
+    /// If `self` and `other` in have different convolutions, PID bases, kinematics,
+    /// interpolations, or scales an error is returned. If the bin limits of `self` and `other`
+    /// are different and if the bin limits of `other` cannot be merged with `self` an error is
     /// returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
         if self.convolutions() != other.convolutions() {
             return Err(GridError::General("convolutions do not match".to_owned()));
@@ -582,34 +556,43 @@ impl Grid {
         let mut new_bins = 0;
         let mut new_entries: Vec<Channel> = Vec::new();
 
-        if self.bin_info() != other.bin_info() {
-            let lhs_bins = self.bin_info().bins();
-            new_bins = other.bin_info().bins();
+        if !self.bwfl().bins_partial_eq_with_ulps(other.bwfl(), 8) {
+            new_bins = other.bwfl().len();
 
-            let lhs_remapper = self.remapper_mut();
-            let rhs_remapper = other.remapper();
-
-            if let Some(lhs) = lhs_remapper {
-                if let Some(rhs) = rhs_remapper {
-                    lhs.merge(rhs).map_err(GridError::MergeBinError)?;
-
-                    let a = u32::try_from(lhs_bins).unwrap_or_else(|_| unreachable!());
-                    let b = u32::try_from(lhs_bins + new_bins).unwrap_or_else(|_| unreachable!());
-
-                    self.bin_limits = BinLimits::new((0..=b).map(f64::from).collect());
-                    other.bin_limits = BinLimits::new((a..=b).map(f64::from).collect());
-                } else {
-                    // Return an error
-                    todo!();
-                }
-            } else if rhs_remapper.is_none() {
-                self.bin_limits
-                    .merge(&other.bin_limits)
-                    .map_err(GridError::InvalidBinLimits)?;
-            } else {
-                // Return an error
-                todo!();
-            }
+            // TODO: the following just appends bins to self, make this more general
+            let lhs_r = self
+                .bwfl()
+                .fill_limits()
+                .last()
+                .copied()
+                // UNWRAP: `BinsWithFillLimits` should guarantee there's always at least one bin
+                .unwrap_or_else(|| unreachable!());
+            let rhs_l = other
+                .bwfl()
+                .fill_limits()
+                .first()
+                .copied()
+                // UNWRAP: `BinsWithFillLimits` should guarantee there's always at least one bin
+                .unwrap_or_else(|| unreachable!());
+            let new_bwfl = BinsWithFillLimits::new(
+                [self.bwfl().bins(), other.bwfl().bins()].concat(),
+                self.bwfl()
+                    .fill_limits()
+                    .iter()
+                    .copied()
+                    .chain(
+                        other
+                            .bwfl()
+                            .fill_limits()
+                            .iter()
+                            .skip(1)
+                            .map(|&limit| limit + lhs_r - rhs_l),
+                    )
+                    .collect(),
+            )
+            // TODO: do proper error handling
+            .unwrap();
+            self.bwfl = new_bwfl;
         }
 
         for ((i, _, k), _) in other
@@ -640,17 +623,37 @@ impl Grid {
         }
 
         if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
-            self.increase_shape(&(new_orders.len(), new_bins, new_entries.len()));
+            let old_dim = self.subgrids.raw_dim().into_pattern();
+            let mut new_subgrids = Array3::from_shape_simple_fn(
+                (
+                    old_dim.0 + new_orders.len(),
+                    old_dim.1 + new_bins,
+                    old_dim.2 + new_entries.len(),
+                ),
+                || EmptySubgridV1.into(),
+            );
+
+            for (index, subgrid) in self.subgrids.indexed_iter_mut() {
+                mem::swap(&mut new_subgrids[<[usize; 3]>::from(index)], subgrid);
+            }
+
+            self.subgrids = new_subgrids;
         }
 
         self.orders.append(&mut new_orders);
         self.channels.append(&mut new_entries);
 
-        let bin_indices: Vec<_> = (0..other.bin_info().bins())
+        let bin_indices: Vec<_> = other
+            .bwfl()
+            .bins()
+            .iter()
             .map(|bin| {
-                self.bin_info()
-                    .find_bin(&other.bin_info().bin_limits(bin))
-                    .unwrap_or_else(|| panic!("failed for {bin}"))
+                self.bwfl()
+                    .bins()
+                    .iter()
+                    .position(|other_bin| bin.partial_eq_with_ulps(other_bin, 8))
+                    // UNWRAP: we've inserted the bins above so we must find them
+                    .unwrap_or_else(|| unreachable!())
             })
             .collect();
 
@@ -714,24 +717,6 @@ impl Grid {
         }
 
         self.convolutions_mut()[convolution] = self.convolutions()[convolution].cc();
-    }
-
-    fn increase_shape(&mut self, new_dim: &(usize, usize, usize)) {
-        let old_dim = self.subgrids.raw_dim().into_pattern();
-        let mut new_subgrids = Array3::from_shape_simple_fn(
-            (
-                old_dim.0 + new_dim.0,
-                old_dim.1 + new_dim.1,
-                old_dim.2 + new_dim.2,
-            ),
-            || EmptySubgridV1.into(),
-        );
-
-        for (index, subgrid) in self.subgrids.indexed_iter_mut() {
-            mem::swap(&mut new_subgrids[<[usize; 3]>::from(index)], subgrid);
-        }
-
-        self.subgrids = new_subgrids;
     }
 
     /// Scale all subgrids by `factor`.
@@ -810,47 +795,24 @@ impl Grid {
         self.subgrids.view_mut()
     }
 
-    /// Sets a remapper. A remapper can change the dimensions and limits of each bin in this grid.
-    /// This is useful because many Monte Carlo integrators and also `PineAPPL` do not support
-    /// multi-dimensional bins. To work around the problem the multi-dimensional bins can be
-    /// projected to one-dimensional bins, and the remapper can be used to restore the multi
-    /// dimensionality. Furthermore, it allows to normalize each bin separately, and independently
-    /// of the bin widths.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the number of bins in the grid and in the remapper do not agree.
-    ///
-    /// # Panics
-    ///
     /// TODO
-    pub fn set_remapper(&mut self, remapper: BinRemapper) -> Result<(), GridError> {
-        if remapper.bins() != self.bin_info().bins() {
+    pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<(), GridError> {
+        if bwfl.len() != self.bwfl().len() {
             return Err(GridError::BinNumberMismatch {
-                grid_bins: self.bin_info().bins(),
-                remapper_bins: remapper.bins(),
+                grid_bins: self.bwfl().len(),
+                // TODO: rename this member
+                remapper_bins: bwfl.len(),
             });
         }
 
-        self.remapper = Some(remapper);
+        self.bwfl = bwfl;
 
         Ok(())
     }
 
-    /// Return the currently set remapper, if there is any.
-    #[must_use]
-    pub const fn remapper(&self) -> Option<&BinRemapper> {
-        self.remapper.as_ref()
-    }
-
-    fn remapper_mut(&mut self) -> Option<&mut BinRemapper> {
-        self.remapper.as_mut()
-    }
-
-    /// Returns all information about the bins in this grid.
-    #[must_use]
-    pub const fn bin_info(&self) -> BinInfo {
-        BinInfo::new(&self.bin_limits, self.remapper())
+    /// TODO
+    pub fn bwfl(&self) -> &BinsWithFillLimits {
+        &self.bwfl
     }
 
     /// Calls [`Self::optimize_using`] with all possible optimization options
@@ -1407,22 +1369,21 @@ impl Grid {
 
             let rhs = Self {
                 subgrids,
-                channels,
-                bin_limits: self.bin_limits.clone(),
+                bwfl: self.bwfl().clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
-                interps: self.interps.clone(),
-                metadata: self.metadata.clone(),
-                convolutions: self.convolutions.clone(),
+                channels,
                 pid_basis: infos[0].pid_basis,
-                more_members: self.more_members.clone(),
+                convolutions: self.convolutions.clone(),
+                interps: self.interps.clone(),
                 kinematics: self.kinematics.clone(),
-                remapper: self.remapper.clone(),
                 scales: Scales {
                     // FK-tables have their renormalization scales burnt in
                     ren: ScaleFuncForm::NoScale,
                     fac,
                     frg,
                 },
+                metadata: self.metadata.clone(),
+                more_members: self.more_members.clone(),
             };
 
             if let Some(lhs) = &mut lhs {
@@ -1461,7 +1422,7 @@ impl Grid {
             .iter()
             .copied()
             // ignore indices corresponding to bin that don't exist
-            .filter(|&index| index < self.bin_info().bins())
+            .filter(|&index| index < self.bwfl().len())
             .collect();
 
         // sort and remove repeated indices
@@ -1469,63 +1430,9 @@ impl Grid {
         bin_indices.dedup();
         let bin_indices = bin_indices;
 
-        let mut bin_ranges: Vec<Range<_>> = Vec::new();
-
-        // convert indices into consecutive ranges
-        for &bin_index in &bin_indices {
-            match bin_ranges.last_mut() {
-                Some(range) if range.end == bin_index => range.end += 1,
-                _ => bin_ranges.push(bin_index..(bin_index + 1)),
-            }
-        }
-
-        let bin_ranges = bin_ranges;
-        let mut ranges = bin_ranges.as_slice();
-        let old_limits = self.bin_limits.limits();
-
-        // remove the bins from the right first, so as not to invalidate any indices
-        if let Some((range, remainder)) = ranges.split_last() {
-            if range.end == self.bin_info().bins() {
-                self.bin_limits.delete_bins_right(range.end - range.start);
-                ranges = remainder;
-            }
-        }
-
-        // indices on the left aren't affected by removal of bins to their right
-        if let Some((range, remainder)) = ranges.split_first() {
-            if range.start == 0 {
-                self.bin_limits.delete_bins_left(range.end);
-                ranges = remainder;
-            }
-        }
-
-        if !ranges.is_empty() {
-            // if there's no remapper we need to store the bin limits in a new remapper
-            if self.remapper_mut().is_none() {
-                self.set_remapper(
-                    BinRemapper::new(
-                        old_limits.windows(2).map(|win| win[1] - win[0]).collect(),
-                        old_limits.windows(2).map(|win| (win[0], win[1])).collect(),
-                    )
-                    .unwrap_or_else(|_| unreachable!()),
-                )
-                .unwrap_or_else(|_| unreachable!());
-            }
-
-            // the following should not be needed, but let's set these limits to integer values
-            self.bin_limits = BinLimits::new(
-                iter::successors(Some(0.0), |x| Some(x + 1.0))
-                    .take(old_limits.len() - bin_indices.len())
-                    .collect(),
-            );
-        }
-
-        if let Some(remapper) = self.remapper_mut() {
-            remapper.delete_bins(&bin_ranges);
-        }
-
         for &bin_index in bin_indices.iter().rev() {
             self.subgrids.remove_index(Axis(1), bin_index);
+            self.bwfl.remove(bin_index);
         }
     }
 
@@ -1619,10 +1526,10 @@ mod tests {
     #[test]
     fn interpolations() {
         let grid = Grid::new(
-            PidBasis::Pdg,
-            vec![Channel::new(vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)])],
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
             vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 1.0],
+            vec![Channel::new(vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)])],
+            PidBasis::Pdg,
             vec![
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
@@ -1648,10 +1555,10 @@ mod tests {
         let channel = vec![(vec![1, -1, 1], 1.0), (vec![2, -2, 2], 1.0)];
 
         let _ = Grid::new(
-            PidBasis::Pdg,
-            vec![Channel::new(channel)],
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
             vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 1.0],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
             vec![
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
@@ -1672,10 +1579,10 @@ mod tests {
         let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
 
         let _ = Grid::new(
-            PidBasis::Pdg,
-            vec![Channel::new(channel)],
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
             vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 1.0],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
             vec![
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
@@ -1696,10 +1603,10 @@ mod tests {
         let channel = vec![(vec![1, -1], 1.0), (vec![2, -2], 1.0)];
 
         let _ = Grid::new(
-            PidBasis::Pdg,
-            vec![Channel::new(channel)],
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
             vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 1.0],
+            vec![Channel::new(channel)],
+            PidBasis::Pdg,
             vec![
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
@@ -1727,13 +1634,13 @@ mod tests {
     #[test]
     fn grid_merge_empty_subgrids() {
         let mut grid = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1744,19 +1651,19 @@ mod tests {
             },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let other = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
             vec![
                 // differently ordered than `grid`
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
-            vec![Order::new(1, 2, 0, 0, 0), Order::new(1, 2, 0, 1, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1770,7 +1677,7 @@ mod tests {
         // merging with empty subgrids should not change the grid
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -1778,13 +1685,13 @@ mod tests {
     #[test]
     fn grid_merge_orders() {
         let mut grid = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1795,22 +1702,22 @@ mod tests {
             },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
-            PidBasis::Pdg,
-            vec![
-                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
-                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
-            ],
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
             vec![
                 Order::new(1, 2, 0, 0, 0),
                 Order::new(1, 2, 0, 1, 0),
                 Order::new(0, 2, 0, 0, 0),
             ],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            vec![
+                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+            ],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1829,7 +1736,7 @@ mod tests {
         // merge with four non-empty subgrids
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 3);
     }
@@ -1837,13 +1744,13 @@ mod tests {
     #[test]
     fn grid_merge_channels_entries() {
         let mut grid = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1854,18 +1761,18 @@ mod tests {
             },
         );
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 channel![1.0 * (22, 22)],
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1881,7 +1788,7 @@ mod tests {
 
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 3);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -1889,13 +1796,13 @@ mod tests {
     #[test]
     fn grid_merge_bins() {
         let mut grid = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1906,19 +1813,19 @@ mod tests {
             },
         );
 
-        assert_eq!(grid.bin_info().bins(), 2);
+        assert_eq!(grid.bwfl().len(), 2);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
 
         let mut other = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
             vec![
                 // channels are differently sorted
                 channel![1.0 * (1, 1) + 1.0 * (3, 3)],
                 channel![1.0 * (2, 2) + 1.0 * (4, 4)],
             ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.5, 0.75, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1934,7 +1841,7 @@ mod tests {
 
         grid.merge(other).unwrap();
 
-        assert_eq!(grid.bin_info().bins(), 4);
+        assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
     }
@@ -1942,16 +1849,10 @@ mod tests {
     #[test]
     fn grid_convolutions() {
         let mut grid = Grid::new(
-            PidBasis::Pdg,
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 0, 0, 0, 0)],
             vec![channel![1.0 * (21, 21)]],
-            vec![Order {
-                alphas: 0,
-                alpha: 0,
-                logxir: 0,
-                logxif: 0,
-                logxia: 0,
-            }],
-            vec![0.0, 1.0],
+            PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
             v0::default_interps(2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
@@ -1983,34 +1884,34 @@ mod tests {
         );
     }
 
-    #[test]
-    fn grid_set_remapper_bin_number_mismatch() {
-        let mut grid = Grid::new(
-            PidBasis::Pdg,
-            vec![
-                channel![1.0 * (2, 2) + 1.0 * (4, 4)],
-                channel![1.0 * (1, 1) + 1.0 * (3, 3)],
-            ],
-            vec![Order::new(0, 2, 0, 0, 0)],
-            vec![0.0, 0.25, 0.5, 0.75, 1.0],
-            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
-            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
-            Scales {
-                ren: ScaleFuncForm::Scale(0),
-                fac: ScaleFuncForm::Scale(0),
-                frg: ScaleFuncForm::NoScale,
-            },
-        );
+    // #[test]
+    // fn grid_set_remapper_bin_number_mismatch() {
+    //     let mut grid = Grid::new(
+    //         BinsWithFillLimits::with_one_dim_limits(0.0, 0.25, 0.5, 0.75, 1.0).unwrap(),
+    //         vec![Order::new(0, 2, 0, 0, 0)],
+    //         vec![
+    //             channel![1.0 * (2, 2) + 1.0 * (4, 4)],
+    //             channel![1.0 * (1, 1) + 1.0 * (3, 3)],
+    //         ],
+    //         PidBasis::Pdg,
+    //         vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+    //         v0::default_interps(2),
+    //         vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+    //         Scales {
+    //             ren: ScaleFuncForm::Scale(0),
+    //             fac: ScaleFuncForm::Scale(0),
+    //             frg: ScaleFuncForm::NoScale,
+    //         },
+    //     );
 
-        assert!(matches!(
-            grid.set_remapper(BinRemapper::new(vec![1.0], vec![(0.0, 1.0)]).unwrap()),
-            Err(GridError::BinNumberMismatch {
-                grid_bins: 4,
-                remapper_bins: 1
-            })
-        ));
-    }
+    //     assert!(matches!(
+    //         grid.set_remapper(BinRemapper::new(vec![1.0], vec![(0.0, 1.0)]).unwrap()),
+    //         Err(GridError::BinNumberMismatch {
+    //             grid_bins: 4,
+    //             remapper_bins: 1
+    //         })
+    //     ));
+    // }
 
     #[test]
     fn evolve_info() {

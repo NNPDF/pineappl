@@ -1,7 +1,7 @@
 use anyhow::Result;
 use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
-use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::import_subgrid::ImportSubgridV1;
@@ -160,10 +160,13 @@ pub fn convert_applgrid(grid: Pin<&mut grid>, alpha: u8) -> Result<Grid> {
         let channels = reconstruct_channels(&grid, i.try_into().unwrap());
         let lumis_len = channels.len();
         let mut pgrid = Grid::new(
-            PidBasis::Pdg,
-            channels,
+            BinsWithFillLimits::from_fill_limits(bin_limits.clone())
+                // UNWRAP: panic here denotes a possible incompatibility between APPLgrid and
+                // PineAPPL
+                .unwrap(),
             vec![order],
-            bin_limits.clone(),
+            channels,
+            PidBasis::Pdg,
             convolutions.clone(),
             interps.clone(),
             iter::once(Kinematics::Scale(0))

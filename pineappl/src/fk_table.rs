@@ -149,7 +149,7 @@ impl FkTable {
     pub fn table(&self) -> ArrayD<f64> {
         let x_grid = self.x_grid();
 
-        let mut dim = vec![self.grid.bin_info().bins(), self.grid.channels().len()];
+        let mut dim = vec![self.grid.bwfl().len(), self.grid.channels().len()];
         dim.extend(iter::repeat(x_grid.len()).take(self.grid.convolutions().len()));
         let mut idx = vec![0; dim.len()];
         let mut result = ArrayD::zeros(dim);

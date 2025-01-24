@@ -1,5 +1,5 @@
-use super::bin::BinRemapper;
-use super::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use super::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use super::convert;
 use super::convolutions::{Conv, ConvType};
 use super::grid::{Grid, GridError};
 use super::import_subgrid::ImportSubgridV1;
@@ -9,7 +9,6 @@ use super::pids::PidBasis;
 use super::subgrid;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
-use std::iter;
 
 pub fn default_interps(convolutions: usize) -> Vec<Interp> {
     let mut interps = vec![Interp::new(
@@ -51,17 +50,51 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
 
     assert_eq!(convolutions.len(), 2);
 
+    let fill_limits = if grid.remapper().is_none() {
+        // if there's no BinRemapper, the limits must one dimensional and we simply take the first
+        // dimension
+        grid.bin_info()
+            .limits()
+            .into_iter()
+            .map(|limits| limits[0].0)
+            .chain(
+                grid.bin_info()
+                    .limits()
+                    .into_iter()
+                    .map(|limits| limits[0].1)
+                    .last(),
+            )
+            .collect()
+    } else {
+        // if there's a BinRemapper, we use the canonical fill limits 0, 1, 2, ...
+        (0..=grid.bin_info().bins())
+            .map(convert::f64_from_usize)
+            .collect()
+    };
+    let bins = BinsWithFillLimits::new(
+        grid.bin_info()
+            .limits()
+            .into_iter()
+            .zip(grid.bin_info().normalizations())
+            .map(|(limits, normalization)| Bin::new(limits, normalization))
+            .collect(),
+        fill_limits,
+    )
+    // UNWRAP: if we could build a v0 grid, we should be able to build v1 grid with panicking
+    .unwrap();
     let mut result = Grid::new(
-        grid.key_values()
-            .and_then(|kv| kv.get("lumi_id_types"))
-            // TODO: use PidBasis::from_str
-            .map_or(PidBasis::Pdg, |lumi_id_types| {
-                match lumi_id_types.as_str() {
-                    "pdg_mc_ids" => PidBasis::Pdg,
-                    "evol" => PidBasis::Evol,
-                    _ => panic!("unknown PID basis '{lumi_id_types}'"),
-                }
-            }),
+        bins,
+        grid.orders()
+            .iter()
+            .map(|o| Order {
+                // UNWRAP: there shouldn't be orders with exponents larger than 255
+                alphas: o.alphas.try_into().unwrap(),
+                alpha: o.alpha.try_into().unwrap(),
+                logxir: o.logxir.try_into().unwrap(),
+                logxif: o.logxif.try_into().unwrap(),
+                logxia: 0,
+            })
+            .collect(),
         grid.channels()
             .iter()
             .map(|c| {
@@ -82,28 +115,16 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 )
             })
             .collect(),
-        grid.orders()
-            .iter()
-            .map(|o| Order {
-                // UNWRAP: there shouldn't be orders with exponents larger than 255
-                alphas: o.alphas.try_into().unwrap(),
-                alpha: o.alpha.try_into().unwrap(),
-                logxir: o.logxir.try_into().unwrap(),
-                logxif: o.logxif.try_into().unwrap(),
-                logxia: 0,
-            })
-            .collect(),
-        if grid.remapper().is_none() {
-            let limits = &grid.bin_info().limits();
-            iter::once(limits[0][0].0)
-                .chain(limits.iter().map(|v| v[0].1))
-                .collect()
-        } else {
-            // if there is a BinRemapper this member will likely have no impact
-            (0..=grid.bin_info().bins())
-                .map(|i| f64::from(u16::try_from(i).unwrap()))
-                .collect()
-        },
+        grid.key_values()
+            .and_then(|kv| kv.get("lumi_id_types"))
+            // TODO: use PidBasis::from_str
+            .map_or(PidBasis::Pdg, |lumi_id_types| {
+                match lumi_id_types.as_str() {
+                    "pdg_mc_ids" => PidBasis::Pdg,
+                    "evol" => PidBasis::Evol,
+                    _ => panic!("unknown PID basis '{lumi_id_types}'"),
+                }
+            }),
         convolutions.clone().into_iter().flatten().collect(),
         default_interps(convolutions.clone().into_iter().flatten().count()),
         kinematics,
@@ -169,19 +190,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
         .into_iter()
         .collect();
 
-    if let Some(r) = grid.remapper() {
-        result
-            .set_remapper(
-                BinRemapper::new(r.normalizations().to_vec(), r.limits().to_vec())
-                    // UNWRAP: if the old grid could be constructed with the given normalizations
-                    // and limits we should be able to do the same without error
-                    .unwrap(),
-            )
-            // UNWRAP: there's a bug if this fails
-            .unwrap();
-    }
-
-    assert_eq!(result.bin_info().bins(), grid.bin_info().bins());
+    assert_eq!(result.bwfl().len(), grid.bin_info().bins());
 
     Ok(result)
 }

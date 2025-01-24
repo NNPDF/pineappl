@@ -5,8 +5,7 @@ use float_cmp::assert_approx_eq;
 use itertools::izip;
 use lhapdf::Pdf;
 use num_complex::Complex;
-use pineappl::bin::BinRemapper;
-use pineappl::boc::{Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::channel;
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
@@ -161,7 +160,9 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: u32, dynamic: bool, reweigh
     ];
 
     // we bin in rapidity from 0 to 2.4 in steps of 0.1
-    let bin_limits: Vec<_> = (0..=24).map(|x: u32| f64::from(x) / 10.0).collect();
+    let bins =
+        BinsWithFillLimits::from_fill_limits((0..=24).map(|x: u32| f64::from(x) / 10.0).collect())
+            .unwrap();
 
     // the grid represents data with two unpolarized proton PDFs
     let convolutions = vec![
@@ -226,11 +227,11 @@ fn fill_drell_yan_lo_grid(rng: &mut impl Rng, calls: u32, dynamic: bool, reweigh
 
     // create the PineAPPL grid
     let mut grid = Grid::new(
+        bins,
+        orders,
+        channels,
         // the integers in the channel definition are PDG Monte Carlo IDs
         PidBasis::Pdg,
-        channels,
-        orders,
-        bin_limits,
         convolutions,
         interps,
         kinematics,
@@ -387,7 +388,7 @@ fn perform_grid_tests(
     mem::drop(bins2);
 
     // TEST 6: `convolve_subgrid`
-    let bins: Vec<_> = (0..grid.bin_info().bins())
+    let bins: Vec<_> = (0..grid.bwfl().len())
         .map(|bin| {
             (0..grid.channels().len())
                 .map(|channel| {
@@ -417,7 +418,7 @@ fn perform_grid_tests(
     }
 
     // TEST 8: `convolve_subgrid` for the optimized subgrids
-    let bins: Vec<_> = (0..grid.bin_info().bins())
+    let bins: Vec<_> = (0..grid.bwfl().len())
         .map(|bin| {
             (0..grid.channels().len())
                 .map(|channel| {
@@ -438,18 +439,21 @@ fn perform_grid_tests(
         assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 64);
     }
 
-    // TEST 9: `set_remapper`
+    // TEST 9: `set_bins`
 
     // make a two-dimensional distribution out of it
-    grid.set_remapper(BinRemapper::new(
-        vec![0.1; 24],
-        (0..24)
-            .flat_map(|index| {
-                let index = f64::from(index);
-                vec![(60.0, 120.0), (index * 0.1, (index + 1.0) * 0.1)]
-            })
-            .collect::<Vec<(f64, f64)>>(),
-    )?)?;
+    grid.set_bwfl(
+        BinsWithFillLimits::from_limits_and_normalizations(
+            (0..24)
+                .map(|index| {
+                    let index = f64::from(index);
+                    vec![(60.0, 120.0), (index * 0.1, (index + 1.0) * 0.1)]
+                })
+                .collect(),
+            vec![0.1; 24],
+        )
+        .unwrap(),
+    )?;
 
     // TEST 10: `merge_bins`
 

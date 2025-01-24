@@ -56,7 +56,7 @@ impl Subgrid for InterpSubgridV1 {
         self.array.shape()
     }
 
-    fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
+    fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         // we cannot use `Self::indexed_iter` because it multiplies with `reweight`
         if let SubgridEnum::InterpSubgridV1(other) = other {
             // TODO: make sure `other` has the same interpolation as `self`

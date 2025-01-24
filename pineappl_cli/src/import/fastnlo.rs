@@ -2,8 +2,7 @@ use anyhow::Result;
 use float_cmp::approx_eq;
 use itertools::Itertools;
 use ndarray::s;
-use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
 use pineappl::import_subgrid::ImportSubgridV1;
@@ -108,8 +107,13 @@ fn convert_coeff_add_fix(
     let convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); npdf];
 
     let mut grid = Grid::new(
-        PidBasis::Pdg,
-        reconstruct_channels(table_as_add_base, comb),
+        BinsWithFillLimits::from_fill_limits(
+            (0..=bins)
+                .map(|limit| u16::try_from(limit).unwrap().into())
+                .collect(),
+        )
+        // UNWRAP: this shouldn't panic
+        .unwrap(),
         vec![Order {
             alphas: table_as_add_base.GetNpow().try_into().unwrap(),
             alpha,
@@ -117,9 +121,8 @@ fn convert_coeff_add_fix(
             logxif: 0,
             logxia: 0,
         }],
-        (0..=bins)
-            .map(|limit| u16::try_from(limit).unwrap().into())
-            .collect(),
+        reconstruct_channels(table_as_add_base, comb),
+        PidBasis::Pdg,
         convolutions,
         // TODO: read out interpolation parameters from fastNLO
         iter::once(Interp::new(
@@ -312,12 +315,16 @@ fn convert_coeff_add_flex(
     let npdf: usize = npdf.try_into().unwrap();
 
     let mut grid = Grid::new(
-        PidBasis::Pdg,
-        reconstruct_channels(table_as_add_base, comb),
+        BinsWithFillLimits::from_fill_limits(
+            (0..=bins)
+                .map(|limit| u16::try_from(limit).unwrap().into())
+                .collect(),
+        )
+        // UNWRAP: this shouldn't panic
+        .unwrap(),
         orders,
-        (0..=bins)
-            .map(|limit| u16::try_from(limit).unwrap().into())
-            .collect(),
+        reconstruct_channels(table_as_add_base, comb),
+        PidBasis::Pdg,
         convolutions,
         // TODO: read out interpolation parameters from fastNLO
         iter::repeat(Interp::new(
@@ -534,12 +541,12 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u8) -> Result<Grid> {
 
     result.scale_by_order(1.0 / TAU, 1.0, 1.0, 1.0, 1.0, 1.0);
 
-    let dimensions: usize = file_as_table.GetNumDiffBin().try_into().unwrap();
-    let mut limits = Vec::new();
-    let normalizations = vec![1.0; bins];
-    limits.reserve(2 * dimensions * bins);
+    let dimensions = file_as_table.GetNumDiffBin().try_into().unwrap();
+    let mut limits = Vec::with_capacity(2 * dimensions * bins);
 
     for i in 0..bins {
+        let mut lim = Vec::with_capacity(dimensions);
+
         for j in 0..dimensions {
             let pair = ffi::GetObsBinDimBounds(
                 file_as_table,
@@ -547,11 +554,18 @@ pub fn convert_fastnlo_table(file: &fastNLOLHAPDF, alpha: u8) -> Result<Grid> {
                 j.try_into().unwrap(),
             );
 
-            limits.push((pair.first, pair.second));
+            lim.push((pair.first, pair.second));
         }
+
+        limits.push(lim);
     }
 
-    result.set_remapper(BinRemapper::new(normalizations, limits).unwrap())?;
+    result.set_bwfl(
+        BinsWithFillLimits::from_limits_and_normalizations(limits, vec![1.0; bins])
+            // UNWRAP: panic would indicate an incompatibility between fastNLO and PineAPPL or bug
+            // somewhere in this code
+            .unwrap(),
+    )?;
 
     let labels = ffi::GetDimLabels(file_as_table);
 
