@@ -47,4 +47,5 @@ pub mod interp_subgrid;
 pub mod interpolation;
 pub mod packed_array;
 pub mod pids;
+pub mod reference;
 pub mod subgrid;

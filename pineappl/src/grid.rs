@@ -25,6 +25,7 @@ use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::ops::Range;
 use std::{iter, mem};
 use thiserror::Error;
+use super::reference::Reference;
 
 const BIN_AXIS: Axis = Axis(1);
 
@@ -133,6 +134,7 @@ pub struct Grid {
     scales: Scales,
     metadata: BTreeMap<String, String>,
     more_members: MoreMembers,
+    reference: Reference,
 }
 
 impl Grid {
@@ -193,6 +195,7 @@ impl Grid {
             scales,
             metadata: default_metadata(),
             more_members: MoreMembers::V4(Mmv4),
+            reference: Reference::default(),
         }
     }
 
@@ -1384,6 +1387,8 @@ impl Grid {
                 },
                 metadata: self.metadata.clone(),
                 more_members: self.more_members.clone(),
+                // TODO: transform the reference result to match the FKTable structure
+                reference: self.reference.clone(),
             };
 
             if let Some(lhs) = &mut lhs {
