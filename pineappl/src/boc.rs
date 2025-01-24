@@ -26,7 +26,7 @@ pub enum Kinematics {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ScaleFuncForm {
     /// TODO
     NoScale,
@@ -163,7 +163,7 @@ impl ScaleFuncForm {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Scales {
     /// TODO
     pub ren: ScaleFuncForm,
@@ -225,6 +225,7 @@ impl Bin {
     /// # Panics
     ///
     /// TODO
+    #[must_use]
     pub fn new(limits: Vec<(f64, f64)>, normalization: f64) -> Self {
         for limits in &limits {
             assert!(limits.1 >= limits.0);
@@ -237,21 +238,25 @@ impl Bin {
     }
 
     /// TODO
+    #[must_use]
     pub fn dimensions(&self) -> usize {
         self.limits.len()
     }
 
     /// TODO
-    pub fn normalization(&self) -> f64 {
+    #[must_use]
+    pub const fn normalization(&self) -> f64 {
         self.normalization
     }
 
     /// TODO
+    #[must_use]
     pub fn limits(&self) -> &[(f64, f64)] {
         &self.limits
     }
 
     /// TODO
+    #[must_use]
     pub fn partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
         self.limits.iter().zip(other.limits()).all(|(&lhs, &rhs)| {
             approx_eq!(f64, lhs.0, rhs.0, ulps = ulps) && approx_eq!(f64, lhs.1, rhs.1, ulps = ulps)
@@ -267,6 +272,10 @@ pub struct BinsWithFillLimits {
 }
 
 impl BinsWithFillLimits {
+    /// TODO
+    ///
+    /// # Errors
+    ///
     /// TODO
     pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self, ()> {
         // TODO: validate the bins
@@ -285,6 +294,10 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn from_fill_limits(fill_limits: Vec<f64>) -> Result<Self, ()> {
         let bins = fill_limits
             .windows(2)
@@ -294,6 +307,10 @@ impl BinsWithFillLimits {
         Self::new(bins, fill_limits)
     }
 
+    /// TODO
+    ///
+    /// # Errors
+    ///
     /// TODO
     ///
     /// # Panics
@@ -338,16 +355,19 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    #[must_use]
     pub fn bins(&self) -> &[Bin] {
         &self.bins
     }
 
     /// TODO
+    #[must_use]
     pub fn len(&self) -> usize {
         self.bins.len()
     }
 
     /// TODO
+    #[must_use]
     pub fn dimensions(&self) -> usize {
         self.bins
             .first()
@@ -357,6 +377,7 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    #[must_use]
     pub fn fill_index(&self, value: f64) -> Option<usize> {
         match self
             .fill_limits
@@ -371,6 +392,7 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    #[must_use]
     pub fn fill_limits(&self) -> &[f64] {
         &self.fill_limits
     }
@@ -380,6 +402,10 @@ impl BinsWithFillLimits {
         self.bins.iter().map(Bin::normalization).collect()
     }
 
+    /// TODO
+    ///
+    /// # Errors
+    ///
     /// TODO
     pub fn subset(&self, range: impl RangeBounds<usize>) -> Result<Self, ()> {
         let range_plus_one = (
@@ -418,6 +444,10 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
     // TODO: change range to `RangeBounds<usize>`
     pub fn merge(&self, range: Range<usize>) -> Result<Self, ()> {
         // TODO: allow more flexible merging
@@ -435,11 +465,7 @@ impl BinsWithFillLimits {
         let mut fill_limits = self.fill_limits.clone();
         let dim = self.dimensions();
 
-        limits [range.start]
-        [dim - 1]
-        .1 = limits [range.end - 1]
-        [dim - 1]
-        .1;
+        limits[range.start][dim - 1].1 = limits[range.end - 1][dim - 1].1;
         normalizations[range.start] += normalizations[range.start + 1..range.end]
             .iter()
             .sum::<f64>();
@@ -459,16 +485,19 @@ impl BinsWithFillLimits {
     }
 
     /// TODO
+    ///
+    /// # Panics
+    ///
+    /// TODO
     pub fn remove(&mut self, index: usize) -> Bin {
-        if self.len() == 1 {
-            panic!("TODO");
-        }
+        assert!(self.len() > 1);
 
         self.fill_limits.pop().unwrap();
         self.bins.remove(index)
     }
 
     /// TODO
+    #[must_use]
     pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
         self.bins
             .iter()
@@ -623,10 +652,9 @@ impl FromStr for BinsWithFillLimits {
             normalizations.push(normalization);
         }
 
-        Ok(BinsWithFillLimits::from_limits_and_normalizations(limits, normalizations)
-    // TODO: implement proper error handling
-    .unwrap()
-    )
+        Ok(Self::from_limits_and_normalizations(limits, normalizations)
+            // TODO: implement proper error handling
+            .unwrap())
     }
 }
 

@@ -9,6 +9,7 @@ use super::import_subgrid::ImportSubgridV1;
 use super::interp_subgrid::InterpSubgridV1;
 use super::interpolation::Interp;
 use super::pids::PidBasis;
+use super::reference::Reference;
 use super::subgrid::{self, Subgrid, SubgridEnum};
 use super::v0;
 use bitflags::bitflags;
@@ -25,7 +26,6 @@ use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::ops::Range;
 use std::{iter, mem};
 use thiserror::Error;
-use super::reference::Reference;
 
 const BIN_AXIS: Axis = Axis(1);
 
@@ -502,7 +502,11 @@ impl Grid {
     /// When the given bins are non-consecutive, an error is returned.
     pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), GridError> {
         // check if the bins in `range` can be merged - if not return without changing `self`
-        self.bwfl = self.bwfl().merge(range.clone()).unwrap();
+        self.bwfl = self
+            .bwfl()
+            .merge(range.clone())
+            // TODO: use proper error handling
+            .unwrap_or_else(|_| unreachable!());
 
         let (intermediate, right) = self.subgrids.view().split_at(BIN_AXIS, range.end);
         let (left, merge) = intermediate.split_at(BIN_AXIS, range.start);
@@ -522,7 +526,7 @@ impl Grid {
 
         self.subgrids = ndarray::concatenate(BIN_AXIS, &[left, merged.view(), right])
             // UNWRAP: if this fails there's a bug
-            .unwrap();
+            .unwrap_or_else(|_| unreachable!());
 
         Ok(())
     }
@@ -594,7 +598,7 @@ impl Grid {
                     .collect(),
             )
             // TODO: do proper error handling
-            .unwrap();
+            .unwrap_or_else(|_| unreachable!());
             self.bwfl = new_bwfl;
         }
 
@@ -668,9 +672,19 @@ impl Grid {
             let other_order = &other.orders[i];
             let other_entry = &other.channels[k];
 
-            let self_i = self.orders.iter().position(|x| x == other_order).unwrap();
+            let self_i = self
+                .orders
+                .iter()
+                .position(|x| x == other_order)
+                // UNWRAP: we added the orders previously so we must find it
+                .unwrap_or_else(|| unreachable!());
             let self_j = bin_indices[j];
-            let self_k = self.channels.iter().position(|y| y == other_entry).unwrap();
+            let self_k = self
+                .channels
+                .iter()
+                .position(|y| y == other_entry)
+                // UNWRAP: we added the channels previously so we must find it
+                .unwrap_or_else(|| unreachable!());
 
             if self.subgrids[[self_i, self_j, self_k]].is_empty() {
                 mem::swap(&mut self.subgrids[[self_i, self_j, self_k]], subgrid);
@@ -799,6 +813,10 @@ impl Grid {
     }
 
     /// TODO
+    ///
+    /// # Errors
+    ///
+    /// TODO
     pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<(), GridError> {
         if bwfl.len() != self.bwfl().len() {
             return Err(GridError::BinNumberMismatch {
@@ -814,7 +832,8 @@ impl Grid {
     }
 
     /// TODO
-    pub fn bwfl(&self) -> &BinsWithFillLimits {
+    #[must_use]
+    pub const fn bwfl(&self) -> &BinsWithFillLimits {
         &self.bwfl
     }
 
@@ -1252,12 +1271,10 @@ impl Grid {
                 } else {
                     assert_approx_eq!(f64, fac0, info_0.fac0, ulps = 8);
                 }
+            } else if frg0 < 0.0 {
+                frg0 = info_0.fac0;
             } else {
-                if frg0 < 0.0 {
-                    frg0 = info_0.fac0;
-                } else {
-                    assert_approx_eq!(f64, frg0, info_0.fac0, ulps = 8);
-                }
+                assert_approx_eq!(f64, frg0, info_0.fac0, ulps = 8);
             }
 
             for (index, info) in infos_rest.iter().enumerate() {
@@ -1287,12 +1304,10 @@ impl Grid {
                     } else {
                         assert_approx_eq!(f64, fac0, info.fac0, ulps = 8);
                     }
+                } else if frg0 < 0.0 {
+                    frg0 = info.fac0;
                 } else {
-                    if frg0 < 0.0 {
-                        frg0 = info.fac0;
-                    } else {
-                        assert_approx_eq!(f64, frg0, info.fac0, ulps = 8);
-                    }
+                    assert_approx_eq!(f64, frg0, info.fac0, ulps = 8);
                 }
             }
 
@@ -1352,12 +1367,10 @@ impl Grid {
             };
             let (frg, scale_values) = if frg0 < 0.0 {
                 (ScaleFuncForm::NoScale, vec![fac0])
+            } else if fac0 < 0.0 || approx_eq!(f64, fac0, frg0, ulps = 8) {
+                (ScaleFuncForm::Scale(0), vec![frg0])
             } else {
-                if fac0 < 0.0 || approx_eq!(f64, fac0, frg0, ulps = 8) {
-                    (ScaleFuncForm::Scale(0), vec![frg0])
-                } else {
-                    (ScaleFuncForm::Scale(1), vec![fac0, frg0])
-                }
+                (ScaleFuncForm::Scale(1), vec![fac0, frg0])
             };
 
             let (subgrids, channels) = evolution::evolve_slice_with_many(

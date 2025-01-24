@@ -35,14 +35,18 @@ pub enum SubgridEnum {
 
 impl SubgridEnum {
     /// TODO
-    pub fn merge(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
+    pub fn merge(&mut self, other: &Self, transpose: Option<(usize, usize)>) {
         if other.is_empty() {
             return;
         }
-        if let SubgridEnum::EmptySubgridV1(_) = self {
-            if transpose.is_none() {*self = other.clone();} else {todo!();}
+        if let Self::EmptySubgridV1(_) = self {
+            if transpose.is_none() {
+                *self = other.clone();
+            } else {
+                todo!();
+            }
         } else {
-        self.merge_impl(other, transpose);
+            self.merge_impl(other, transpose);
         }
     }
 }

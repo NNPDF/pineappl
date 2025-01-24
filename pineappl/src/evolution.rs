@@ -66,7 +66,7 @@ pub struct OperatorSliceInfo {
     /// Particle ID basis for `FkTable`.
     pub pid_basis: PidBasis,
     /// Type of convolution which this operator evolves. This also determines whether [`fac0`]
-    /// and ['fac1`] is a factorization ([`ConvType::UnpolPDF`] or [`ConvType::PolPDF`]) or a
+    /// and [`fac1`] is a factorization ([`ConvType::UnpolPDF`] or [`ConvType::PolPDF`]) or a
     /// fragmentation ([`ConvType::UnpolFF`] or [`ConvType::PolFF`]) scale.
     pub conv_type: ConvType,
 }

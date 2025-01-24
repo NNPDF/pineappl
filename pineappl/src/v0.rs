@@ -62,7 +62,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                     .limits()
                     .into_iter()
                     .map(|limits| limits[0].1)
-                    .last(),
+                    .next_back(),
             )
             .collect()
     } else {

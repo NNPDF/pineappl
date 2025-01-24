@@ -307,6 +307,7 @@ impl ConvType {
     }
 
     /// TODO
+    #[must_use]
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)
     }
