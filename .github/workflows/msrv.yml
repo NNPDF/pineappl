@@ -18,6 +18,8 @@ jobs:
 
       - name: Run check
         run: |
+          # extract the MSRV
+          MSRV=$(grep '^rust-version ' Cargo.toml | cut -d= -f2- | tr -d ' "')
           # enable the MSRV
-          rustup default 1.80.1
+          rustup default "${MSRV}"
           cargo check --all-features --all-targets
