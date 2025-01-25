@@ -28,7 +28,9 @@ jobs:
           key: test-data-v16
       - name: Download test data
         if: steps.cache-test-data.outputs.cache-hit != 'true'
-        run: maintainer/download-test-data.sh
+        run: |
+          cd maintainer
+          ./download-test-data.sh
 
       - name: Set RUSTDOCFLAGS
         run: |
