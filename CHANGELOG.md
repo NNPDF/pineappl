@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reflect the ordering of `kinematics` given to `Grid::new`
 - renamed the following switches of `pineappl write`: `--remap` to
   `--set-bins`, `--remap-norm-ignore` to `--div-bin-norm-dims` and
-  `--remap-norm` to `--mul-bin-norm`. These names should be reflect the
+  `--remap-norm` to `--mul-bin-norm`. These names should reflect the
   corresponding operations
 
 ### Removed
