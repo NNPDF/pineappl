@@ -427,7 +427,7 @@ fn star_wmwp_510gev_wm_al_pol() {
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
-            "240608-tr-pol-nlo-100,NNPDF40_nlo_pch_as_01180",
+            "240608-tr-pol-nlo-100+p,NNPDF40_nlo_pch_as_01180",
             "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
         ])
         .assert()

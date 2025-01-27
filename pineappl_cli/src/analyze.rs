@@ -87,6 +87,7 @@ impl Subcommand for CkfOpts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &[self.order],
                     &[],
                     &lumi_mask,
@@ -103,6 +104,7 @@ impl Subcommand for CkfOpts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &orders_den,
                     &[],
                     &lumi_mask,

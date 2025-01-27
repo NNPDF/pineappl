@@ -93,6 +93,7 @@ impl Subcommand for Opts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &self.orders,
                     &[],
                     &channel_mask,

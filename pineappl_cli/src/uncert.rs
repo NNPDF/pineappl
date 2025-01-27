@@ -123,6 +123,7 @@ impl Subcommand for Opts {
                         Ok::<_, Error>(helpers::convolve(
                             &grid,
                             &mut funs,
+                            &self.conv_funs.conv_types,
                             &self.orders,
                             &[],
                             &[],
@@ -161,6 +162,7 @@ impl Subcommand for Opts {
         let scale_results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &self.orders,
             &[],
             &[],

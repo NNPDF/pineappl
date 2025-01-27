@@ -219,6 +219,7 @@ impl Subcommand for Opts {
                 let results = helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs[0].conv_types,
                     &[],
                     &bins,
                     &[],
@@ -245,6 +246,7 @@ impl Subcommand for Opts {
                     helpers::convolve(
                         &grid,
                         &mut conv_funs,
+                        &self.conv_funs[0].conv_types,
                         &qcd_orders,
                         &bins,
                         &[],
@@ -274,11 +276,13 @@ impl Subcommand for Opts {
                     .par_iter()
                     .map(|conv_funs| {
                         if self.no_conv_fun_unc {
+                            let conv_types = &conv_funs.conv_types;
                             let mut conv_funs = helpers::create_conv_funs(conv_funs)?;
 
                             let results = helpers::convolve(
                                 &grid,
                                 &mut conv_funs,
+                                conv_types,
                                 &[],
                                 &bins,
                                 &[],
@@ -300,6 +304,7 @@ impl Subcommand for Opts {
                                     helpers::convolve(
                                         &grid,
                                         &mut funs,
+                                        &conv_funs.conv_types,
                                         &[],
                                         &bins,
                                         &[],
@@ -396,6 +401,7 @@ impl Subcommand for Opts {
                                 helpers::convolve(
                                     &grid,
                                     &mut conv_funs,
+                                    &self.conv_funs[0].conv_types,
                                     &[],
                                     &bins,
                                     &channel_mask,
@@ -605,6 +611,7 @@ metadata = {{
                     let values = helpers::convolve(
                         &grid,
                         conv_funs,
+                        &self.conv_funs[0].conv_types,
                         &[],
                         &[bin],
                         &[],
@@ -622,6 +629,7 @@ metadata = {{
                     let values = helpers::convolve(
                         &grid,
                         conv_funs,
+                        &self.conv_funs[1].conv_types,
                         &[],
                         &[bin],
                         &[],
@@ -660,6 +668,7 @@ metadata = {{
             let res1 = helpers::convolve_subgrid(
                 &grid,
                 &mut conv_funs1[member1.unwrap_or(0)],
+                &self.conv_funs[0].conv_types,
                 order,
                 bin,
                 channel,
@@ -669,6 +678,7 @@ metadata = {{
             let res2 = helpers::convolve_subgrid(
                 &grid,
                 &mut conv_funs2[member2.unwrap_or(0)],
+                &self.conv_funs[1].conv_types,
                 order,
                 bin,
                 channel,

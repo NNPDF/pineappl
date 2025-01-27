@@ -66,6 +66,7 @@ impl Subcommand for Opts {
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    &self.conv_funs.conv_types,
                     &[(order.alphas, order.alpha)],
                     &[],
                     &[],

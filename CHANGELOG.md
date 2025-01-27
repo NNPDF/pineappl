@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--delete-orders` in the subcommand `write` of the CLI
 - added the switches `--xir` and `--xif`, which allow varying the
   renormalization and factorization scales with a custom factor in the
-  subcommand `convolve`.
+  subcommand `convolve`
+- the CLI now allows the user to mark convolution functions as polarized
+  by adding `+p` to its LHAPDF name, as a fragmentation function by adding
+  `+f` and both by adding `+pf` or `+fp`
 
 ### Changed
 

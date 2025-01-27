@@ -272,6 +272,7 @@ impl Subcommand for Opts {
             let results = helpers::convolve(
                 &grid,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &[],
                 &[],
                 &[],

@@ -64,6 +64,7 @@ impl Subcommand for Opts {
         let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs_0,
+            &self.conv_funs[0].conv_types,
             &self.orders,
             &bins,
             &[],
@@ -89,10 +90,12 @@ impl Subcommand for Opts {
         let other_results: Vec<_> = self.conv_funs[1..]
             .iter()
             .flat_map(|conv_funs| {
+                let conv_types = &conv_funs.conv_types;
                 let mut conv_funs = helpers::create_conv_funs(conv_funs).unwrap();
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    conv_types,
                     &self.orders,
                     &bins,
                     &[],

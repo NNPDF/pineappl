@@ -539,6 +539,7 @@ impl Subcommand for Opts {
         let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &self.orders,
             &[],
             &[],
@@ -563,6 +564,7 @@ impl Subcommand for Opts {
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &[],
             &[],
             &[],

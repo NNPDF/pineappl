@@ -149,6 +149,7 @@ impl Subcommand for Opts {
             let results1 = helpers::convolve(
                 &grid1,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &orders1,
                 &[],
                 &[],
@@ -159,6 +160,7 @@ impl Subcommand for Opts {
             let results2 = helpers::convolve(
                 &grid2,
                 &mut conv_funs,
+                &self.conv_funs.conv_types,
                 &orders2,
                 &[],
                 &[],
@@ -213,6 +215,7 @@ impl Subcommand for Opts {
                     helpers::convolve(
                         &grid1,
                         &mut conv_funs,
+                        &self.conv_funs.conv_types,
                         &[order],
                         &[],
                         &[],
@@ -228,6 +231,7 @@ impl Subcommand for Opts {
                     helpers::convolve(
                         &grid2,
                         &mut conv_funs,
+                        &self.conv_funs.conv_types,
                         &[order],
                         &[],
                         &[],

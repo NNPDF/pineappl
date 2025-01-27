@@ -1,5 +1,6 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, ensure, Context, Error, Result};
+use anyhow::{anyhow, bail, ensure, Context, Error, Result};
+use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use ndarray::{Array3, Ix3};
 use pineappl::boc::{ScaleFuncForm, Scales};
@@ -18,6 +19,7 @@ use std::str::FromStr;
 pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
     pub members: Vec<Option<usize>>,
+    pub conv_types: Vec<ConvType>,
     pub label: String,
 }
 
@@ -26,22 +28,38 @@ impl FromStr for ConvFuns {
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
         let (names, label) = arg.split_once('=').unwrap_or((arg, arg));
-        let (lhapdf_names, members) = names
+        let (lhapdf_names, members, conv_types) = names
             .split(',')
             .map(|fun| {
-                Ok::<_, Error>(if let Some((name, mem)) = fun.split_once('/') {
-                    (name.to_owned(), Some(mem.parse()?))
-                } else {
-                    (fun.to_owned(), None)
-                })
+                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
+                let (name, mem) = name.split_once('/').map_or((name, None), |(name, mem)| {
+                    (
+                        name,
+                        Some(
+                            mem.parse()
+                                // TODO: do proper error handling
+                                .unwrap(),
+                        ),
+                    )
+                });
+                let name = name.to_owned();
+                let typ = match typ {
+                    "" => ConvType::UnpolPDF,
+                    "p" => ConvType::PolPDF,
+                    "f" => ConvType::UnpolFF,
+                    "pf" | "fp" => ConvType::PolFF,
+                    _ => bail!("unknown convolution type '{typ}'"),
+                };
+                Ok::<_, Error>((name, mem, typ))
             })
-            .collect::<Result<Vec<(_, _)>, _>>()?
+            .collect::<Result<Vec<(_, _, _)>, _>>()?
             .into_iter()
-            .unzip();
+            .multiunzip();
 
         Ok(Self {
             lhapdf_names,
             members,
+            conv_types,
             label: label.to_owned(),
         })
     }
@@ -224,6 +242,7 @@ pub enum ConvoluteMode {
 pub fn convolve_scales(
     grid: &Grid,
     conv_funs: &mut [Pdf],
+    conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],
     channels: &[bool],
@@ -282,8 +301,8 @@ pub fn convolve_scales(
         .collect();
     let convolutions: Vec<_> = conv_funs
         .iter()
-        .zip(grid.convolutions())
-        .map(|(fun, convolution)| {
+        .zip(conv_types)
+        .map(|(fun, &conv_type)| {
             let pid = fun
                 .set()
                 .entry("Particle")
@@ -292,17 +311,7 @@ pub fn convolve_scales(
                 // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
                 .unwrap();
 
-            match fun.set().entry("SetType").unwrap_or_default().as_str() {
-                "fragfn" => Conv::new(ConvType::UnpolFF, pid),
-                "" => {
-                    // if we can not figure out the type of the convolution from the PDF set, we
-                    // assume it from the grid convolution at the same index
-                    convolution.with_pid(pid)
-                }
-                // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
-                // PDFs and all FFs
-                _ => unimplemented!(),
-            }
+            Conv::new(conv_type, pid)
         })
         .collect();
 
@@ -367,6 +376,7 @@ pub fn scales_vector(grid: &Grid, scales: usize) -> &[(f64, f64, f64)] {
 pub fn convolve(
     grid: &Grid,
     conv_funs: &mut [Pdf],
+    conv_types: &[ConvType],
     orders: &[(u8, u8)],
     bins: &[usize],
     lumis: &[bool],
@@ -377,6 +387,7 @@ pub fn convolve(
     convolve_scales(
         grid,
         conv_funs,
+        conv_types,
         orders,
         bins,
         lumis,
@@ -405,6 +416,7 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
 pub fn convolve_subgrid(
     grid: &Grid,
     conv_funs: &mut [Pdf],
+    conv_types: &[ConvType],
     order: usize,
     bin: usize,
     lumi: usize,
@@ -450,8 +462,8 @@ pub fn convolve_subgrid(
         .collect();
     let convolutions: Vec<_> = conv_funs
         .iter()
-        .zip(grid.convolutions())
-        .map(|(fun, convolution)| {
+        .zip(conv_types)
+        .map(|(fun, &conv_type)| {
             let pid = fun
                 .set()
                 .entry("Particle")
@@ -460,17 +472,7 @@ pub fn convolve_subgrid(
                 // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
                 .unwrap();
 
-            match fun.set().entry("SetType").unwrap_or_default().as_str() {
-                "fragfn" => Conv::new(ConvType::UnpolFF, pid),
-                "" => {
-                    // if we can not figure out the type of the convolution from the PDF set, we
-                    // assume it from the grid convolution at the same index
-                    convolution.with_pid(pid)
-                }
-                // TODO: convince the LHAPDF maintainers to make SetType necessary for polarized
-                // PDFs and all FFs
-                _ => unimplemented!(),
-            }
+            Conv::new(conv_type, pid)
         })
         .collect();
 
@@ -538,19 +540,28 @@ pub fn parse_order(order: &str) -> Result<(u8, u8)> {
 #[cfg(test)]
 mod test {
     use super::ConvFuns;
+    use pineappl::convolutions::ConvType;
 
     #[test]
     fn conv_fun_from_str() {
         assert_eq!(
-            "A/2,B/1,C/0,D=X".parse::<ConvFuns>().unwrap(),
+            "A/2+p,B/1+f,C/0+fp,D+pf,E=X".parse::<ConvFuns>().unwrap(),
             ConvFuns {
                 lhapdf_names: vec![
                     "A".to_owned(),
                     "B".to_owned(),
                     "C".to_owned(),
-                    "D".to_owned()
+                    "D".to_owned(),
+                    "E".to_owned()
                 ],
-                members: vec![Some(2), Some(1), Some(0), None],
+                members: vec![Some(2), Some(1), Some(0), None, None],
+                conv_types: vec![
+                    ConvType::PolPDF,
+                    ConvType::UnpolFF,
+                    ConvType::PolFF,
+                    ConvType::PolFF,
+                    ConvType::UnpolPDF
+                ],
                 label: "X".to_owned()
             }
         );
