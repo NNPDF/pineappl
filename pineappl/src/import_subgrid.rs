@@ -178,7 +178,7 @@ mod tests {
     fn fill_packed_q1x2_subgrid_v1() {
         let mut subgrid =
             ImportSubgridV1::new(PackedArray::new(vec![0, 0, 0]), vec![Vec::new(); 3]);
-        subgrid.fill(&v0::default_interps(2), &[0.0; 3], 0.0);
+        subgrid.fill(&v0::default_interps(false, 2), &[0.0; 3], 0.0);
     }
 
     #[test]

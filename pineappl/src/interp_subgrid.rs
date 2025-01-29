@@ -183,7 +183,7 @@ mod tests {
 
     #[test]
     fn fill_zero() {
-        let interps = v0::default_interps(2);
+        let interps = v0::default_interps(false, 2);
         let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 0.0);
@@ -204,7 +204,7 @@ mod tests {
 
     #[test]
     fn fill_outside_range() {
-        let interps = v0::default_interps(2);
+        let interps = v0::default_interps(false, 2);
         let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 1e-10, 0.5], 0.0);
@@ -225,7 +225,7 @@ mod tests {
 
     #[test]
     fn fill() {
-        let interps = v0::default_interps(2);
+        let interps = v0::default_interps(false, 2);
         let mut subgrid = InterpSubgridV1::new(&interps);
 
         subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 1.0);

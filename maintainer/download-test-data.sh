@@ -46,3 +46,5 @@ download 'https://ploughshare.web.cern.ch/ploughshare/db/atlas/atlas-atlas-wpm-a
 download 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4'
 download 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar'
 download 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar'
+download 'https://data.nnpdf.science/pineappl/test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.pineappl.lz4'
+download 'https://data.nnpdf.science/pineappl/test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.tar'

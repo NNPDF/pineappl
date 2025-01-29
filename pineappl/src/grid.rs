@@ -1390,8 +1390,21 @@ impl Grid {
                 channels,
                 pid_basis: infos[0].pid_basis,
                 convolutions: self.convolutions.clone(),
+                // TODO: the next line is probably wrong for flexible-scale grids
                 interps: self.interps.clone(),
-                kinematics: self.kinematics.clone(),
+                kinematics: iter::once(Kinematics::Scale(0))
+                    .chain(if fac0 < 0.0 && frg0 < 0.0 {
+                        Some(Kinematics::Scale(1))
+                    } else {
+                        None
+                    })
+                    .chain(
+                        self.kinematics
+                            .iter()
+                            .filter(|kin| matches!(kin, Kinematics::X(_)))
+                            .cloned(),
+                    )
+                    .collect(),
                 scales: Scales {
                     // FK-tables have their renormalization scales burnt in
                     ren: ScaleFuncForm::NoScale,
@@ -1552,7 +1565,7 @@ mod tests {
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
             ],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1581,7 +1594,7 @@ mod tests {
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
             ],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1605,7 +1618,7 @@ mod tests {
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
             ],
-            v0::default_interps(1),
+            v0::default_interps(false, 1),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1629,7 +1642,7 @@ mod tests {
                 Conv::new(ConvType::UnpolPDF, 2212),
                 Conv::new(ConvType::UnpolPDF, 2212),
             ],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1660,7 +1673,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1683,7 +1696,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1711,7 +1724,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1737,7 +1750,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1770,7 +1783,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1792,7 +1805,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1822,7 +1835,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1845,7 +1858,7 @@ mod tests {
             ],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),
@@ -1872,7 +1885,7 @@ mod tests {
             vec![channel![1.0 * (21, 21)]],
             PidBasis::Pdg,
             vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-            v0::default_interps(2),
+            v0::default_interps(false, 2),
             vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
             Scales {
                 ren: ScaleFuncForm::Scale(0),

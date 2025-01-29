@@ -216,16 +216,12 @@ fn ndarray_from_subgrid_orders_slice_many(
 ) -> Result<X1aX1bOpDTuple, GridError> {
     // TODO: remove these assumptions from the following code
     assert_eq!(grid.kinematics()[0], Kinematics::Scale(0));
-    assert_eq!(
-        grid.kinematics()[1..]
-            .iter()
-            .map(|kin| match kin {
-                &Kinematics::X(idx) => idx,
-                Kinematics::Scale(_) => unreachable!(),
-            })
-            .collect::<Vec<_>>(),
-        (0..(grid.kinematics().len() - 1)).collect::<Vec<_>>()
-    );
+    let x_start = grid
+        .kinematics()
+        .iter()
+        .position(|kin| matches!(kin, Kinematics::X(_)))
+        // UNWRAP: there is always at least one X
+        .unwrap();
 
     // create a Vec of all x values for each dimension
     let mut x1n: Vec<_> = kinematics
@@ -350,9 +346,7 @@ fn ndarray_from_subgrid_orders_slice_many(
 
             zero = false;
 
-            // TODO: here we assume that all X are consecutive starting from the second element and
-            // are in ascending order
-            for (i, &index) in indices.iter().skip(1).enumerate() {
+            for (i, &index) in indices.iter().skip(x_start).enumerate() {
                 x1_idx[i] = x1_indices[i][index];
             }
 
@@ -483,6 +477,7 @@ pub(crate) fn evolve_slice_with_many(
 
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportSubgridV1::new(
+                // TODO: insert one more axis if initial frg scale unequals fac
                 PackedArray::from(table.insert_axis(Axis(0)).view()),
                 node_values.clone(),
             )

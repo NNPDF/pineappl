@@ -183,6 +183,13 @@ const STAR_WMWP_510GEV_WM_AL_POL: &str = "b    Grid       FkTable     rel. diff
 5 5.8386697e2 5.8336795e2 -8.5468266e-4
 ";
 
+const ZEUS_2JET_STR: &str = "b     Grid       FkTable      rel. diff
+-+------------+------------+-------------
+0 8.8139165e-2 8.8034383e-2 -1.1888247e-3
+1 3.3383261e-2 3.3326664e-2 -1.6953697e-3
+2 3.6247796e-3 3.6162230e-3 -2.3605729e-3
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -433,4 +440,23 @@ fn star_wmwp_510gev_wm_al_pol() {
         .assert()
         .success()
         .stdout(STAR_WMWP_510GEV_WM_AL_POL);
+}
+
+#[test]
+fn zeus_2jet() {
+    let output = NamedTempFile::new("fktable7.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "--accuracy=3e-3",
+            "../test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.pineappl.lz4",
+            "../test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(ZEUS_2JET_STR);
 }

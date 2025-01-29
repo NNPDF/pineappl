@@ -10,16 +10,20 @@ use super::subgrid;
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 
-pub fn default_interps(convolutions: usize) -> Vec<Interp> {
-    let mut interps = vec![Interp::new(
-        1e2,
-        1e8,
-        40,
-        3,
-        ReweightMeth::NoReweight,
-        Map::ApplGridH0,
-        InterpMeth::Lagrange,
-    )];
+pub fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp> {
+    let scales = if flexible_scale { 2 } else { 1 };
+    let mut interps = Vec::with_capacity(convolutions + scales);
+    for _ in 0..scales {
+        interps.push(Interp::new(
+            1e2,
+            1e8,
+            40,
+            3,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ));
+    }
 
     for _ in 0..convolutions {
         interps.push(Interp::new(
@@ -42,8 +46,17 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
     let grid = GridV0::read(&mut reader).map_err(|err| GridError::Other(err.into()))?;
     let convolutions = read_convolutions_from_metadata(&grid);
 
-    // TODO: read in flexible-scale grids properly
-    let mut kinematics = vec![Kinematics::Scale(0), Kinematics::X(0)];
+    let flexible_scale_grid = grid.subgrids().iter().any(|subgrid| {
+        subgrid
+            .mu2_grid()
+            .iter()
+            .any(|mu2v0| !subgrid::node_value_eq(mu2v0.ren, mu2v0.fac))
+    });
+    let mut kinematics = vec![Kinematics::Scale(0)];
+    if flexible_scale_grid {
+        kinematics.push(Kinematics::Scale(1));
+    }
+    kinematics.push(Kinematics::X(0));
     if convolutions[0].is_some() && convolutions[1].is_some() {
         kinematics.push(Kinematics::X(1));
     }
@@ -126,30 +139,58 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
                 }
             }),
         convolutions.clone().into_iter().flatten().collect(),
-        default_interps(convolutions.clone().into_iter().flatten().count()),
+        default_interps(
+            flexible_scale_grid,
+            convolutions.clone().into_iter().flatten().count(),
+        ),
         kinematics,
         Scales {
-            // TODO: read in flexible-scale grids properly
             ren: ScaleFuncForm::Scale(0),
-            fac: ScaleFuncForm::Scale(0),
+            fac: if flexible_scale_grid {
+                ScaleFuncForm::Scale(1)
+            } else {
+                ScaleFuncForm::Scale(0)
+            },
             frg: ScaleFuncForm::NoScale,
         },
     );
 
     for (new_subgrid, old_subgrid) in result.subgrids_mut().iter_mut().zip(grid.subgrids().iter()) {
         if !old_subgrid.is_empty() {
-            let scale_node_values: Vec<_> = old_subgrid
-                .mu2_grid()
-                .iter()
-                .map(|mu2v0| {
-                    // TODO: implement importing flexible-scale grids
-                    assert!(subgrid::node_value_eq(mu2v0.ren, mu2v0.fac));
+            let scale_node_values: Vec<Vec<_>> = if flexible_scale_grid {
+                let mut ren: Vec<_> = old_subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|mu2v0| mu2v0.ren)
+                    .collect();
+                ren.sort_unstable_by(|a, b| a.total_cmp(b));
+                ren.dedup_by(subgrid::node_value_eq_ref_mut);
+                let mut fac: Vec<_> = old_subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|mu2v0| mu2v0.fac)
+                    .collect();
+                fac.sort_unstable_by(|a, b| a.total_cmp(b));
+                fac.dedup_by(subgrid::node_value_eq_ref_mut);
+                vec![ren, fac]
+            } else {
+                vec![old_subgrid
+                    .mu2_grid()
+                    .iter()
+                    .map(|mu2v0| {
+                        // TODO: implement importing flexible-scale grids
+                        assert!(subgrid::node_value_eq(mu2v0.ren, mu2v0.fac));
 
-                    mu2v0.fac
-                })
-                .collect();
+                        mu2v0.fac
+                    })
+                    .collect()]
+            };
 
-            let mut dim = vec![scale_node_values.len()];
+            let mut dim = if flexible_scale_grid {
+                vec![scale_node_values[0].len(), scale_node_values[1].len()]
+            } else {
+                vec![scale_node_values[0].len()]
+            };
             if convolutions[0].is_some() {
                 dim.push(old_subgrid.x1_grid().len());
             }
@@ -158,21 +199,49 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError>
             }
             let mut array = PackedArray::new(dim);
 
-            if convolutions[0].is_none() {
+            if flexible_scale_grid {
                 for (index, v) in old_subgrid.indexed_iter() {
-                    array[[index.0, index.2]] = v;
-                }
-            } else if convolutions[1].is_none() {
-                for (index, v) in old_subgrid.indexed_iter() {
-                    array[[index.0, index.1]] = v;
+                    let index_r = scale_node_values[0]
+                        .iter()
+                        .position(|&ren| {
+                            subgrid::node_value_eq(ren, old_subgrid.mu2_grid()[index.0].ren)
+                        })
+                        // UNWRAP: if no index can be found, `scale_node_values` isn't sorted
+                        // correctly
+                        .unwrap();
+                    let index_f = scale_node_values[1]
+                        .iter()
+                        .position(|&fac| {
+                            subgrid::node_value_eq(fac, old_subgrid.mu2_grid()[index.0].fac)
+                        })
+                        // UNWRAP: if no index can be found, `scale_node_values` isn't sorted
+                        // correctly
+                        .unwrap();
+                    if convolutions[0].is_none() {
+                        array[[index_r, index_f, index.2]] = v;
+                    } else if convolutions[1].is_none() {
+                        array[[index_r, index_f, index.1]] = v;
+                    } else {
+                        array[[index_r, index_f, index.1, index.2]] = v;
+                    }
                 }
             } else {
-                for (index, v) in old_subgrid.indexed_iter() {
-                    array[<[usize; 3]>::from(index)] = v;
+                if convolutions[0].is_none() {
+                    for (index, v) in old_subgrid.indexed_iter() {
+                        array[[index.0, index.2]] = v;
+                    }
+                } else if convolutions[1].is_none() {
+                    for (index, v) in old_subgrid.indexed_iter() {
+                        array[[index.0, index.1]] = v;
+                    }
+                } else {
+                    for (index, v) in old_subgrid.indexed_iter() {
+                        array[<[usize; 3]>::from(index)] = v;
+                    }
                 }
             }
 
-            let mut node_values = vec![scale_node_values];
+            let mut node_values = scale_node_values;
             if convolutions[0].is_some() {
                 node_values.push(old_subgrid.x1_grid().into_owned());
             }
