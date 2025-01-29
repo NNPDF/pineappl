@@ -328,15 +328,6 @@ impl Conv {
         Self { conv_type, pid }
     }
 
-    /// TODO
-    #[must_use]
-    pub const fn with_pid(&self, pid: i32) -> Self {
-        Self {
-            conv_type: self.conv_type,
-            pid,
-        }
-    }
-
     /// Return the convolution if the PID is charged conjugated.
     #[must_use]
     pub const fn cc(&self) -> Self {

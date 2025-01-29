@@ -10,7 +10,7 @@ use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::ops::{Bound, Range, RangeBounds};
+use std::ops::Range;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -400,47 +400,6 @@ impl BinsWithFillLimits {
     /// TODO
     pub fn normalizations(&self) -> Vec<f64> {
         self.bins.iter().map(Bin::normalization).collect()
-    }
-
-    /// TODO
-    ///
-    /// # Errors
-    ///
-    /// TODO
-    pub fn subset(&self, range: impl RangeBounds<usize>) -> Result<Self, ()> {
-        let range_plus_one = (
-            range.start_bound().cloned(),
-            match range.end_bound().cloned() {
-                Bound::Excluded(end) => Bound::Included(end),
-                Bound::Included(end) => Bound::Included(end + 1),
-                Bound::Unbounded => Bound::Unbounded,
-            },
-        );
-
-        Self::new(
-            self.bins
-                .iter()
-                .enumerate()
-                .filter_map(|(index, bin)| {
-                    if range.contains(&index) {
-                        Some(bin.clone())
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-            self.fill_limits
-                .iter()
-                .enumerate()
-                .filter_map(|(index, &limit)| {
-                    if range_plus_one.contains(&index) {
-                        Some(limit)
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        )
     }
 
     /// TODO
