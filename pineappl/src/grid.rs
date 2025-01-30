@@ -217,11 +217,6 @@ impl Grid {
         &self.pid_basis
     }
 
-    /// Set the convention by which PIDs of channels are interpreted.
-    pub fn pid_basis_mut(&mut self) -> &mut PidBasis {
-        &mut self.pid_basis
-    }
-
     /// Return a vector containing the interpolation specifications for this grid.
     #[must_use]
     pub fn interpolations(&self) -> &[Interp] {
@@ -1485,7 +1480,7 @@ impl Grid {
         for channel in &mut self.channels {
             *channel = self_pid_basis.translate(pid_basis, channel.clone());
         }
-        *self.pid_basis_mut() = pid_basis;
+        self.pid_basis = pid_basis;
     }
 
     /// Deletes channels with the corresponding `channel_indices`. Repeated indices and indices
