@@ -199,6 +199,18 @@ impl Grid {
         }
     }
 
+    /// TODO
+    pub fn reference(&self) -> &Reference {
+        &self.reference
+    }
+
+    /// TODO
+    pub fn set_reference(&mut self, reference: Reference) {
+        // TODO: check that the number of bins and channels is consistent between the grid and
+        // `reference`
+        self.reference = reference;
+    }
+
     /// Return the convention by which the channels' PIDs are encoded.
     #[must_use]
     pub const fn pid_basis(&self) -> &PidBasis {
