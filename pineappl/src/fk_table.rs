@@ -139,8 +139,8 @@ impl FkTable {
         self.grid
     }
 
-    /// Returns the FK table represented as a four-dimensional array indexed by `bin`, `channel`,
-    /// `x1` and `x2`, in this order.
+    /// Return the FK-table represented as an n-dimensional array indexed by `bin`, `channel`
+    /// and parton fractions, in this order.
     ///
     /// # Panics
     ///
