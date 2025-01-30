@@ -3,7 +3,14 @@ import pytest
 import subprocess
 from typing import List
 
-from pineappl.boc import Channel, Kinematics, ScaleFuncForm, Scales, Order
+from pineappl.boc import (
+    BinsWithFillLimits,
+    Channel,
+    Kinematics,
+    ScaleFuncForm,
+    Scales,
+    Order,
+)
 from pineappl.convolutions import Conv
 from pineappl.grid import Grid
 from pineappl.interpolation import (
@@ -13,6 +20,48 @@ from pineappl.interpolation import (
     ReweightingMethod,
 )
 from pineappl.pids import PidBasis
+
+
+class CustomGrid(Grid):
+    def _get_bins_array(self) -> np.ndarray:
+        """Get the bin values as a combined array.
+
+        Returns
+        -------
+        np.ndarray:
+            an array of shape (n_bins, bin_dim, 2)
+        """
+        return np.array(self.bin_limits())
+
+    def bin_left(self, bin_dim_index: int) -> np.ndarray:
+        """Get the left-hand bin for a given dimension of bin.
+
+        Parameters
+        ----------
+        bin_index: int
+            the index-th dimension of the bins
+
+        Returns
+        -------
+        np.ndarray:
+            the array of bins with shape (n_bins,)
+        """
+        return self._get_bins_array()[:, bin_dim_index, 0]
+
+    def bin_right(self, bin_dim_index: int) -> np.ndarray:
+        """Get the right-hand bin for a given dimension of bin.
+
+        Parameters
+        ----------
+        bin_index: int
+            the index-th dimension of the bins
+
+        Returns
+        -------
+        np.ndarray:
+            the array of bins with shape (n_bins,)
+        """
+        return self._get_bins_array()[:, bin_dim_index, 1]
 
 
 class PDF:
@@ -59,7 +108,7 @@ class FakeGrid:
         xmin: float = 2e-7,
         xmax: float = 1,
         xnodes: int = 50,
-    ) -> Grid:
+    ) -> CustomGrid:
         """A function to generate fake GRIDs that can take any number of convolutions.
         Note that the `nb_convolutions` can be different from the number of convolution
         types passed to `convolutions`. Indeed, if all the types of convolutions are
@@ -117,11 +166,14 @@ class FakeGrid:
             frg=fragmentation_scale,
         )
 
-        return Grid(
+        #  Construct the bin object
+        bin_limits = BinsWithFillLimits.from_fill_limits(fill_limits=bins)
+
+        return CustomGrid(
             pid_basis=PidBasis.Evol,
             channels=channels,
             orders=orders,
-            bin_limits=np.array(bins),
+            bins=bin_limits,
             convolutions=convolutions,
             interpolations=interpolations,
             kinematics=kinematics,

@@ -81,9 +81,10 @@ class TestFkTable:
 
         # Check the various aspects of the Bins
         assert fk.bins() == 1
+        bin_limits = np.array(fk.bin_limits())
         np.testing.assert_allclose(fk.bin_normalizations(), [1.0])
-        np.testing.assert_allclose(fk.bin_right(dimension=0), [1.0])
-        np.testing.assert_allclose(fk.bin_left(dimension=0), [0.0])
+        np.testing.assert_allclose(bin_limits[:, 0, 0], [0.0])
+        np.testing.assert_allclose(bin_limits[:, 0, 1], [1.0])
 
         # Check the various aspects of the Channels
         channels = fk.channels()

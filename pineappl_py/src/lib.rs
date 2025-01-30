@@ -4,7 +4,6 @@
 
 use pyo3::prelude::*;
 
-pub mod bin;
 pub mod boc;
 pub mod convolutions;
 pub mod evolution;
@@ -18,7 +17,6 @@ pub mod subgrid;
 /// PyO3 Python module that contains all exposed classes from Rust.
 #[pymodule]
 fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    bin::register(m)?;
     boc::register(m)?;
     convolutions::register(m)?;
     evolution::register(m)?;

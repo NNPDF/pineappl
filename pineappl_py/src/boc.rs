@@ -1,8 +1,247 @@
 //! Interface for bins, orders and channels.
 
 use numpy::{IntoPyArray, PyArray1};
-use pineappl::boc::{Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pyo3::prelude::*;
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
+#[pyclass(name = "Bin")]
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct PyBin {
+    pub(crate) bin: Bin,
+}
+
+#[pymethods]
+impl PyBin {
+    /// Constructor.
+    ///
+    /// Parameters
+    /// ----------
+    /// bin_limits: list(tuple(float, float))
+    ///     edges of the bins
+    /// normalization: float
+    ///     normalization factor
+    #[new]
+    #[must_use]
+    pub fn new(bin_limits: Vec<(f64, f64)>, normalization: f64) -> Self {
+        Self {
+            bin: Bin::new(bin_limits, normalization),
+        }
+    }
+
+    /// Get the dimension for a given bin.
+    ///
+    /// Returns
+    /// -------
+    /// int:
+    ///     dimension on which the observable is defined
+    #[must_use]
+    pub fn dimensions(&self) -> usize {
+        self.bin.dimensions()
+    }
+
+    /// Get the normalization factor for this given bin.
+    ///
+    /// Returns
+    /// -------
+    /// float:
+    ///     normalization factor
+    #[must_use]
+    pub const fn normalization(&self) -> f64 {
+        self.bin.normalization()
+    }
+
+    /// Get the edges of this given bin.
+    ///
+    /// Returns
+    /// -------
+    /// list(tuple(float, float)):
+    ///     edges of the current bin
+    #[must_use]
+    pub fn bin_limits(&self) -> Vec<(f64, f64)> {
+        self.bin.limits().to_vec()
+    }
+}
+
+/// PyO3 wrapper to :rustdoc:`pineappl::boc::Bin <boc/struct.Bin.html>`.
+#[pyclass(name = "BinsWithFillLimits")]
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct PyBinsWithFillLimits {
+    pub(crate) bins_fill_limits: BinsWithFillLimits,
+}
+
+#[pymethods]
+impl PyBinsWithFillLimits {
+    /// Constructor for `BinsWithFillLimits`.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// # Errors
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// bins: Bin
+    ///     a list containing the bin specifications
+    /// fill_limits: list(float)
+    ///     edges of the bins
+    #[new]
+    #[must_use]
+    pub fn new(bins: Vec<PyRef<PyBin>>, fill_limits: Vec<f64>) -> Self {
+        Self {
+            bins_fill_limits: BinsWithFillLimits::new(
+                bins.into_iter().map(|b| b.bin.clone()).collect(),
+                fill_limits,
+            )
+            .unwrap(),
+        }
+    }
+
+    /// Construct the bin specifications using the bin edges.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// fill_limits: list(float)
+    ///     edges of the bins
+    #[must_use]
+    #[staticmethod]
+    pub fn from_fill_limits(fill_limits: Vec<f64>) -> Self {
+        Self {
+            bins_fill_limits: BinsWithFillLimits::from_fill_limits(fill_limits).unwrap(),
+        }
+    }
+
+    /// Construct the bin specifications using the edges and the normalizations.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// limits: list(list(float, float))
+    ///     edges of the bins
+    /// normalizations: list(float)
+    ///     a list of normalization factors
+    #[must_use]
+    #[staticmethod]
+    pub fn from_limits_and_normalizations(
+        limits: Vec<Vec<(f64, f64)>>,
+        normalizations: Vec<f64>,
+    ) -> Self {
+        Self {
+            bins_fill_limits: BinsWithFillLimits::from_limits_and_normalizations(
+                limits,
+                normalizations,
+            )
+            .unwrap(),
+        }
+    }
+
+    /// Get the list of `Bin` specifications.
+    ///
+    /// Returns
+    /// -------
+    /// list(Bin):
+    ///     a list of `Bin` objects
+    #[must_use]
+    pub fn bins(&self) -> Vec<PyBin> {
+        self.bins_fill_limits
+            .bins()
+            .iter()
+            .map(|b| PyBin { bin: b.clone() })
+            .collect()
+    }
+
+    /// Get the size/length of the bins.
+    ///
+    /// Returns
+    /// -------
+    /// int:
+    ///     the size of the bins
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.bins_fill_limits.len()
+    }
+
+    /// Get the dimensions of the bins.
+    ///
+    /// Returns
+    /// -------
+    /// int:
+    ///     dimension of the defined observable
+    #[must_use]
+    pub fn dimensions(&self) -> usize {
+        self.bins_fill_limits.dimensions()
+    }
+
+    /// Remove a given bin using the index.
+    ///
+    /// Parameters
+    /// ----------
+    /// index: int
+    ///     index of the bin to be removed
+    /// Returns
+    /// -------
+    /// Bin:
+    ///     a `Bin` object with the given indexed removed
+    #[must_use]
+    pub fn remove(&self, index: usize) -> PyBin {
+        PyBin {
+            bin: self.bins_fill_limits.clone().remove(index),
+        }
+    }
+
+    /// Get the bin slices.
+    ///
+    /// Returns
+    /// -------
+    /// list(list(int)):
+    ///     a list of indices representing the slices
+    #[must_use]
+    pub fn slices(&self) -> Vec<Vec<usize>> {
+        self.bins_fill_limits
+            .slices()
+            .iter()
+            .map(|slice| slice.clone().collect())
+            .collect()
+    }
+
+    /// Get the bin limits/edges.
+    ///
+    /// Returns
+    /// -------
+    /// list(list(tuple(float, float))):
+    ///     the bin edges with shape (n_bins, n_dimension, 2)
+    #[must_use]
+    pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
+        self.bins_fill_limits
+            .bins()
+            .iter()
+            .map(|b| b.limits().to_vec())
+            .collect()
+    }
+
+    /// Get the normalizations of all bins.
+    ///
+    /// Returns
+    /// -------
+    /// list(float):
+    ///     a list containing the normalizations
+    #[must_use]
+    pub fn bin_normalizations(&self) -> Vec<f64> {
+        self.bins_fill_limits
+            .bins()
+            .iter()
+            .map(Bin::normalization)
+            .collect()
+    }
+}
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Channel <boc/struct.Channel.html>`.
 ///
@@ -269,6 +508,8 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
         m,
         "import sys; sys.modules['pineappl.boc'] = m"
     );
+    m.add_class::<PyBin>()?;
+    m.add_class::<PyBinsWithFillLimits>()?;
     m.add_class::<PyChannel>()?;
     m.add_class::<PyOrder>()?;
     m.add_class::<PyKinematics>()?;

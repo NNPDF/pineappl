@@ -106,15 +106,21 @@ impl PyFkTable {
             .collect()
     }
 
-    /// Get number of bins.
+    /// Get the limits/edges of all the bins.
     ///
     /// Returns
     /// -------
-    /// int :
-    ///     number of bins
+    /// list(list(float)):
+    ///     limits/edges of the bins with shape (n_bins, n_dimension, 2)
     #[must_use]
-    pub fn bins(&self) -> usize {
-        self.fk_table.grid().bin_info().bins()
+    pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
+        self.fk_table
+            .grid()
+            .bwfl()
+            .bins()
+            .iter()
+            .map(|b| b.limits().to_vec())
+            .collect()
     }
 
     /// Extract the normalizations for each bin.
@@ -127,7 +133,7 @@ impl PyFkTable {
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table
             .grid()
-            .bin_info()
+            .bwfl()
             .normalizations()
             .into_pyarray_bound(py)
     }
@@ -142,47 +148,18 @@ impl PyFkTable {
     ///     bin dimension
     #[must_use]
     pub fn bin_dimensions(&self) -> usize {
-        self.fk_table.grid().bin_info().dimensions()
+        self.fk_table.grid().bwfl().dimensions()
     }
 
-    /// Extract the left edges of a specific bin dimension.
-    ///
-    /// Parameters
-    /// ----------
-    /// dimension : int
-    ///     bin dimension
+    /// Get number of bins.
     ///
     /// Returns
     /// -------
-    /// numpy.ndarray(float) :
-    ///     left edges of bins
+    /// int :
+    ///     number of bins
     #[must_use]
-    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table
-            .grid()
-            .bin_info()
-            .left(dimension)
-            .into_pyarray_bound(py)
-    }
-
-    /// Extract the right edges of a specific bin dimension.
-    ///
-    /// Parameters
-    /// ----------
-    /// dimension : int
-    ///     bin dimension
-    ///
-    /// Returns
-    /// -------
-    /// numpy.ndarray(float) :
-    ///     right edges of bins
-    #[must_use]
-    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table
-            .grid()
-            .bin_info()
-            .right(dimension)
-            .into_pyarray_bound(py)
+    pub fn bins(&self) -> usize {
+        self.fk_table.grid().bwfl().len()
     }
 
     /// Get channels.

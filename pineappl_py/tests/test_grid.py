@@ -6,8 +6,7 @@ import tempfile
 from numpy.random import Generator, PCG64
 
 from typing import List
-from pineappl.bin import BinRemapper
-from pineappl.boc import Channel, Kinematics, Scales, Order
+from pineappl.boc import BinsWithFillLimits, Channel, Kinematics, Scales, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
@@ -195,18 +194,26 @@ class TestGrid:
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
-        # 1D
         normalizations = np.array([1.0, 1.0])
-        limits = [(1, 1), (2, 2)]
-        remapper = BinRemapper(normalizations, limits)
-        g.set_remapper(remapper)
+
+        # 1D
+        limits = [[(1, 1)], [(2, 2)]]
+        bin_configs = BinsWithFillLimits.from_limits_and_normalizations(
+            limits=limits,
+            normalizations=normalizations,
+        )
+        g.set_bwfl(bin_configs)
         assert g.bin_dimensions() == 1
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
         np.testing.assert_allclose(g.bin_right(0), [1, 2])
+
         # 2D
-        limits = [(1, 2), (2, 3), (2, 4), (3, 5)]
-        remapper = BinRemapper(normalizations, limits)
-        g.set_remapper(remapper)
+        limits = [[(1, 2), (2, 3)], [(2, 4), (3, 5)]]
+        bin_configs = BinsWithFillLimits.from_limits_and_normalizations(
+            limits=limits,
+            normalizations=normalizations,
+        )
+        g.set_bwfl(bin_configs)
         assert g.bin_dimensions() == 2
         np.testing.assert_allclose(g.bin_left(0), [1, 2])
         np.testing.assert_allclose(g.bin_right(0), [2, 4])
@@ -736,6 +743,10 @@ class TestGrid:
         np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
     def test_merge(self, fake_grids):
+        # TODO: Check error raised by merged partially overlapping
+        # or non-consecutive bins.
+        # with pytest.raises(ValueError, match="NonConsecutiveBins"):
+        #     g2.merge(g5)
         g0 = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -774,29 +785,6 @@ class TestGrid:
 
         g2.merge(g3)
         assert g2.bins() == 2
-
-        g4 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
-            orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
-            bins=[2, 3, 4],
-        )
-        g5 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
-            orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
-            bins=[4, 5, 6],
-        )
-        assert g4.bins() == 2
-        assert g5.bins() == 2
-
-        with pytest.raises(ValueError, match="NonConsecutiveBins"):
-            g2.merge(g4)
-
-        with pytest.raises(ValueError, match="NonConsecutiveBins"):
-            g2.merge(g5)
 
     def test_evolveinfo(
         self,

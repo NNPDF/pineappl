@@ -1,7 +1,6 @@
 //! Grid interface.
 
-use super::bin::PyBinRemapper;
-use super::boc::{PyChannel, PyKinematics, PyOrder, PyScales};
+use super::boc::{PyBin, PyBinsWithFillLimits, PyChannel, PyKinematics, PyOrder, PyScales};
 use super::convolutions::PyConv;
 use super::evolution::{PyEvolveInfo, PyOperatorSliceInfo};
 use super::fk_table::PyFkTable;
@@ -16,7 +15,7 @@ use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
 use pineappl::pids::PidBasis;
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -24,7 +23,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::grid::Grid <grid/struct.Grid.html>`.
-#[pyclass(name = "Grid")]
+#[pyclass(name = "Grid", subclass)]
 #[repr(transparent)]
 #[derive(Clone)]
 pub struct PyGrid {
@@ -49,7 +48,7 @@ impl PyGrid {
     ///     channels
     /// orders : list(PyOrder)
     ///     orders
-    /// bin_limits : list(float)
+    /// bins : PyBinsWithFillLimits
     ///     bin configurations
     /// convolutions : list(PyConv)
     ///     contains the types of convolution
@@ -65,7 +64,7 @@ impl PyGrid {
         pid_basis: PyPidBasis,
         channels: Vec<PyRef<PyChannel>>,
         orders: Vec<PyRef<PyOrder>>,
-        bin_limits: Vec<f64>,
+        bins: PyRef<PyBinsWithFillLimits>,
         convolutions: Vec<PyRef<PyConv>>,
         interpolations: Vec<PyRef<PyInterp>>,
         kinematics: Vec<PyRef<PyKinematics>>,
@@ -73,10 +72,10 @@ impl PyGrid {
     ) -> Self {
         Self {
             grid: Grid::new(
-                pid_basis.into(),
-                channels.into_iter().map(|pyc| pyc.entry.clone()).collect(),
+                bins.bins_fill_limits.clone(),
                 orders.into_iter().map(|pyo| pyo.order.clone()).collect(),
-                bin_limits,
+                channels.into_iter().map(|pyc| pyc.entry.clone()).collect(),
+                pid_basis.into(),
                 convolutions
                     .into_iter()
                     .map(|pyx| pyx.conv.clone())
@@ -198,18 +197,122 @@ impl PyGrid {
         self.grid.subgrids_mut()[[order, bin, channel]] = subgrid.subgrid_enum;
     }
 
-    /// Set the bin normalizations.
+    /// Get the bin specifications for this grid.
     ///
-    /// # Panics
+    /// Returns
+    /// -------
+    /// PyBinsWithFillLimits:
+    ///     a `PyBinsWithFillLimits` object with containing the bin specifications
+    #[must_use]
+    pub fn bwfl(&self) -> PyBinsWithFillLimits {
+        PyBinsWithFillLimits {
+            bins_fill_limits: self.grid.bwfl().clone(),
+        }
+    }
+
+    /// Set the bin specifications for this grid.
     ///
-    /// Panics if the size of the bins in the grid and in the `remapper` are not consistent.
+    /// # Errors
+    /// TODO
     ///
     /// Parameters
     /// ----------
-    /// remapper: BinRemapper
-    ///     Remapper object
-    pub fn set_remapper(&mut self, remapper: PyBinRemapper) {
-        self.grid.set_remapper(remapper.bin_remapper).unwrap();
+    /// specs: PyBinsWithFillLimits
+    ///     the object to define the bin specs
+    pub fn set_bwfl(&mut self, specs: PyBinsWithFillLimits) -> PyResult<()> {
+        match self.grid.set_bwfl(specs.bins_fill_limits) {
+            Ok(()) => Ok(()),
+            Err(msg) => Err(PyErr::new::<PyTypeError, _>(format!("{msg}"))),
+        }
+    }
+
+    /// Return the number of bins.
+    ///
+    /// Returns
+    /// -------
+    /// int :
+    ///     Number of bins
+    #[must_use]
+    pub fn bins(&self) -> usize {
+        self.grid.bwfl().len()
+    }
+
+    /// Get the length/size of the bins.
+    ///
+    /// Returns
+    /// -------
+    /// int:
+    ///     the size/length of the bins
+    pub fn len(&mut self) -> usize {
+        self.grid.bwfl().len()
+    }
+
+    /// Get the dimension of the bins that define the observable.
+    ///
+    /// Returns
+    /// -------
+    /// int:
+    ///     the dimention of the bins
+    pub fn bin_dimensions(&mut self) -> usize {
+        self.grid.bwfl().dimensions()
+    }
+
+    /// Get the limits/edges of all the bins.
+    ///
+    /// Returns
+    /// -------
+    /// list(list(float)):
+    ///     limits/edges of the bins with shape (n_bins, n_dimension, 2)
+    #[must_use]
+    pub fn bin_limits(&self) -> Vec<Vec<(f64, f64)>> {
+        self.grid
+            .bwfl()
+            .bins()
+            .iter()
+            .map(|b| b.limits().to_vec())
+            .collect()
+    }
+
+    /// Extract the normalizations for each bin.
+    ///
+    /// Returns
+    /// -------
+    /// numpy.ndarray
+    ///     bin normalizations
+    #[must_use]
+    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.grid.bwfl().normalizations().into_pyarray_bound(py)
+    }
+
+    /// Get the bin slices for this grid.
+    ///
+    /// Returns
+    /// -------
+    /// list(list(int)):
+    ///     a list of indices representing the slices
+    pub fn bin_slices(&mut self) -> Vec<Vec<usize>> {
+        self.grid
+            .bwfl()
+            .slices()
+            .iter()
+            .map(|slice| slice.clone().collect())
+            .collect()
+    }
+
+    /// Remove a given bin for this grid using the index.
+    ///
+    /// Parameters
+    /// ----------
+    /// index: int
+    ///     index of the bin to be removed
+    /// Returns
+    /// -------
+    /// Bin:
+    ///     a `Bin` object with the given indexed removed
+    pub fn remove_bin(&mut self, index: usize) -> PyBin {
+        PyBin {
+            bin: self.grid.bwfl().clone().remove(index),
+        }
     }
 
     /// Set a metadata key-value pair in the grid.
@@ -327,7 +430,6 @@ impl PyGrid {
     /// Convolve a single subgrid `(order, bin, channel)` with the distributions.
     ///
     /// # Panics
-    ///
     /// TODO
     #[must_use]
     #[pyo3(signature = (pdg_convs, xfxs, alphas, ord, bin, channel, xi = None))]
@@ -379,7 +481,6 @@ impl PyGrid {
     /// Collect information for convolution with an evolution operator.
     ///
     /// # Panics
-    ///
     /// TODO
     ///
     /// Parameters
@@ -552,7 +653,6 @@ impl PyGrid {
     /// Merge with another grid.
     ///
     /// # Panics
-    ///
     /// TODO
     ///
     /// # Errors
@@ -564,73 +664,6 @@ impl PyGrid {
             Ok(()) => Ok(()),
             Err(x) => Err(PyValueError::new_err(format!("{x:?}"))),
         }
-    }
-
-    /// Extract the number of dimensions for bins.
-    ///
-    /// E.g.: two differential cross-sections will return 2.
-    ///
-    /// Returns
-    /// -------
-    /// int :
-    ///     bin dimension
-    #[must_use]
-    pub fn bin_dimensions(&self) -> usize {
-        self.grid.bin_info().dimensions()
-    }
-
-    /// Extract the normalizations for each bin.
-    ///
-    /// Returns
-    /// -------
-    /// np.ndarray
-    ///     bin normalizations
-    #[must_use]
-    pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.grid.bin_info().normalizations().into_pyarray_bound(py)
-    }
-
-    /// Extract the left edges of a specific bin dimension.
-    ///
-    /// Parameters
-    /// ----------
-    /// dimension : int
-    ///     bin dimension
-    ///
-    /// Returns
-    /// -------
-    /// numpy.ndarray(float) :
-    ///     left edges of bins
-    #[must_use]
-    pub fn bin_left<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.grid.bin_info().left(dimension).into_pyarray_bound(py)
-    }
-
-    /// Extract the right edges of a specific bin dimension.
-    ///
-    /// Parameters
-    /// ----------
-    /// dimension : int
-    ///     bin dimension
-    ///
-    /// Returns
-    /// -------
-    /// numpy.ndarray(float) :
-    ///     right edges of bins
-    #[must_use]
-    pub fn bin_right<'py>(&self, dimension: usize, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.grid.bin_info().right(dimension).into_pyarray_bound(py)
-    }
-
-    /// Return the number of bins.
-    ///
-    /// Returns
-    /// -------
-    /// int :
-    ///     Number of bins
-    #[must_use]
-    pub fn bins(&self) -> usize {
-        self.grid.bin_info().bins()
     }
 
     /// Extract the available perturbative orders and scale variations.
@@ -698,6 +731,16 @@ impl PyGrid {
             .collect()
     }
 
+    /// Deduplicate channels
+    ///
+    /// Parameters
+    /// ----------
+    /// ulps: i64
+    ///    value of the tolerance to be used
+    pub fn dedup_channels(&mut self, ulps: i64) {
+        self.grid.dedup_channels(ulps);
+    }
+
     /// Rotate the Grid into the specified basis
     ///
     /// Parameters
@@ -721,7 +764,6 @@ impl PyGrid {
     /// Scale subgrids bin by bin.
     ///
     /// # Panics
-    ///
     /// TODO
     ///
     /// Parameters
@@ -730,6 +772,36 @@ impl PyGrid {
     ///     bin-dependent factors by which to scale
     pub fn scale_by_bin(&mut self, factors: Vec<f64>) {
         self.grid.scale_by_bin(&factors);
+    }
+
+    /// Scale subgrids by order.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// alphas : float
+    ///     value of the strong coupling constant
+    /// alpha : float
+    ///     value of the electroweak constant
+    /// logxir : float
+    ///     value of the renormalization scale
+    /// logxif : float
+    ///     value of the factorization scale
+    /// logxia : float
+    ///     value of the fragmentation scale
+    pub fn scale_by_order(
+        &mut self,
+        alphas: f64,
+        alpha: f64,
+        logxir: f64,
+        logxif: f64,
+        logxia: f64,
+        global: f64,
+    ) {
+        self.grid
+            .scale_by_order(alphas, alpha, logxir, logxif, logxia, global);
     }
 
     /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger
@@ -746,7 +818,6 @@ impl PyGrid {
     /// Delete bins.
     ///
     /// # Panics
-    ///
     /// TODO
     ///
     /// Repeated bins and those exceeding the length are ignored.
