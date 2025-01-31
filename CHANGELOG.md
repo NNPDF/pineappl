@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the respective class instead
 - removed the constructor `Grid::with_subgrid_type`
 
+## [0.8.7] - 22/01/2025
+
+### Added
+
+- added support for Python 3.13 to the Python interface
+
 ## [0.8.6] - 18/10/2024
 
 ### Fixed
@@ -724,6 +730,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - first release
 
 [Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4
