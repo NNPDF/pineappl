@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
+have an arbitrary number of convolutions in the initial (PDFs with a
+factorization scale) and in the final (FFs with a fragmentation scale) state.
+This required a change in the file format that is used to write out grids, but
+the old file format can still be read with this new version.
+
 ### Added
 
 - added new method `Grid::delete_orders` and the corresponding switch
