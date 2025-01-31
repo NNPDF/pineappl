@@ -1,6 +1,6 @@
 //! Provides the [`PackedArray`] struct.
 
-use ndarray::ArrayView3;
+use ndarray::{ArrayView3, ArrayViewD};
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::mem;
@@ -9,8 +9,8 @@ use std::ops::{Index, IndexMut, MulAssign};
 /// `D`-dimensional array similar to [`ndarray::ArrayBase`], except that `T::default()` is not
 /// stored to save space. Instead, adjacent non-default elements are grouped together and the index
 /// of their first element (`start_index`) and the length of the group (`lengths`) is stored.
-#[derive(Clone, Deserialize, Serialize)]
-pub struct PackedArray<T, const D: usize> {
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PackedArray<T> {
     /// The actual values stored in the array. The length of `entries` is always the sum of the
     /// elements in `lengths`.
     entries: Vec<T>,
@@ -23,15 +23,15 @@ pub struct PackedArray<T, const D: usize> {
     shape: Vec<usize>,
 }
 
-impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
+impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Constructs a new and empty `PackedArray` of shape `shape`.
     #[must_use]
-    pub fn new(shape: [usize; D]) -> Self {
+    pub const fn new(shape: Vec<usize>) -> Self {
         Self {
-            entries: vec![],
-            start_indices: vec![],
-            lengths: vec![],
-            shape: shape.to_vec(),
+            entries: Vec::new(),
+            start_indices: Vec::new(),
+            lengths: Vec::new(),
+            shape,
         }
     }
 
@@ -77,10 +77,8 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
         self.entries.iter().filter(|x| **x != T::default()).count()
     }
 
-    /// Returns an `Iterator` over the non-default (non-zero) elements of this array. The type of
-    /// an iterator element is `([usize; D], T)` where the first element of the tuple is the index
-    /// and the second element is the value.
-    pub fn indexed_iter(&self) -> impl Iterator<Item = ([usize; D], T)> + '_ {
+    /// TODO
+    pub fn indexed_iter(&self) -> impl Iterator<Item = (Vec<usize>, T)> + '_ {
         self.start_indices
             .iter()
             .zip(&self.lengths)
@@ -91,21 +89,53 @@ impl<T: Copy + Default + PartialEq, const D: usize> PackedArray<T, D> {
             .filter(|&(_, entry)| *entry != Default::default())
             .map(|(indices, entry)| (indices, *entry))
     }
+
+    /// TODO
+    ///
+    /// # Panics
+    ///
+    /// TODO
+    // TODO: rewrite this method into `sub_block_iter_mut() -> impl Iterator<Item = &mut f64>`
+    #[must_use]
+    pub fn sub_block_idx(
+        &self,
+        start_index: &[usize],
+        mut i: usize,
+        fill_shape: &[usize],
+    ) -> usize {
+        use super::packed_array;
+
+        assert_eq!(start_index.len(), fill_shape.len());
+
+        let mut index = {
+            assert!(i < fill_shape.iter().product());
+            let mut indices = vec![0; start_index.len()];
+            for (j, d) in indices.iter_mut().zip(fill_shape).rev() {
+                *j = i % d;
+                i /= d;
+            }
+            indices
+        };
+        for (entry, start_index) in index.iter_mut().zip(start_index) {
+            *entry += start_index;
+        }
+        packed_array::ravel_multi_index(&index, &self.shape)
+    }
 }
 
-impl<T: Copy + MulAssign<T>, const D: usize> MulAssign<T> for PackedArray<T, D> {
+impl<T: Copy + MulAssign<T>> MulAssign<T> for PackedArray<T> {
     fn mul_assign(&mut self, rhs: T) {
         self.entries.iter_mut().for_each(|x| *x *= rhs);
     }
 }
 
-impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
-    /// Converts `array` into a `PackedArray<T, 3>`.
+impl<T: Copy + Default + PartialEq> PackedArray<T> {
+    /// Converts `array` into a `PackedArray<T>`.
     #[must_use]
     pub fn from_ndarray(array: ArrayView3<T>, xstart: usize, xsize: usize) -> Self {
         let shape = array.shape();
 
-        let mut result = Self::new([xsize, shape[1], shape[2]]);
+        let mut result = Self::new(vec![xsize, shape[1], shape[2]]);
 
         for ((i, j, k), &entry) in array
             .indexed_iter()
@@ -118,8 +148,24 @@ impl<T: Copy + Default + PartialEq> PackedArray<T, 3> {
     }
 }
 
+impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
+    fn from(array: ArrayViewD<T>) -> Self {
+        let mut result = Self::new(array.shape().to_vec());
+
+        for (i, &entry) in array
+            .iter()
+            .enumerate()
+            .filter(|(_, &entry)| entry != Default::default())
+        {
+            result[i] = entry;
+        }
+
+        result
+    }
+}
+
 /// Converts a `multi_index` into a flat index.
-fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) -> usize {
+fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
     assert_eq!(multi_index.len(), shape.len());
 
     multi_index
@@ -128,10 +174,15 @@ fn ravel_multi_index<const D: usize>(multi_index: &[usize; D], shape: &[usize]) 
         .fold(0, |acc, (i, d)| acc * d + i)
 }
 
-/// Converts a flat `index` into a `multi_index`.
-fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D] {
+/// TODO
+///
+/// # Panics
+///
+/// TODO
+#[must_use]
+pub fn unravel_index(mut index: usize, shape: &[usize]) -> Vec<usize> {
     assert!(index < shape.iter().product());
-    let mut indices = [0; D];
+    let mut indices = vec![0; shape.len()];
     for (i, d) in indices.iter_mut().zip(shape).rev() {
         *i = index % d;
         index /= d;
@@ -139,10 +190,18 @@ fn unravel_index<const D: usize>(mut index: usize, shape: &[usize]) -> [usize; D
     indices
 }
 
-impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for PackedArray<T, D> {
+impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for PackedArray<T> {
     type Output = T;
 
     fn index(&self, index: [usize; D]) -> &Self::Output {
+        &self[index.as_slice()]
+    }
+}
+
+impl<T: Copy + Default + PartialEq> Index<&[usize]> for PackedArray<T> {
+    type Output = T;
+
+    fn index(&self, index: &[usize]) -> &Self::Output {
         assert_eq!(index.len(), self.shape.len());
         assert!(
             index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
@@ -151,7 +210,7 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
             self.shape
         );
 
-        let raveled_index = ravel_multi_index(&index, &self.shape);
+        let raveled_index = ravel_multi_index(index, &self.shape);
         let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
         assert!(
@@ -174,34 +233,67 @@ impl<T: Copy + Default + PartialEq, const D: usize> Index<[usize; D]> for Packed
     }
 }
 
-impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
-    for PackedArray<T, D>
-{
-    fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
-        assert_eq!(index.len(), self.shape.len());
+impl<T: Copy + Default + PartialEq> Index<usize> for PackedArray<T> {
+    type Output = T;
 
-        // Panic if the index value for any dimension is greater or equal than the length of this
-        // dimension.
+    fn index(&self, index: usize) -> &Self::Output {
         assert!(
-            index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
-            "index {:?} is out of bounds for array of shape {:?}",
-            index,
+            index < self.shape.iter().product(),
+            "index {index} is out of bounds for array of shape {:?}",
             self.shape
         );
 
-        // The insertion cases are:
-        // 1. this array already stores an element at `index`:
-        //    -> we just have to update this element
-        // 2. this array does not store an element at `index`:
-        //    a. the distance of the (raveled) `index` is `threshold_distance` away from the next
-        //       or previous element that is already stored:
-        //       -> we can merge the new element into already stored groups, potentially padding
-        //          with `T::default()` elements
-        //    b. the distance of the (raveled) `index` from the existing elements is greater than
-        //       `threshold_distance`:
-        //       -> we insert the element as a new group
+        let raveled_index = index;
+        // let raveled_index = ravel_multi_index(&index, &self.shape);
+        let point = self.start_indices.partition_point(|&i| i <= raveled_index);
 
-        let raveled_index = ravel_multi_index(&index, &self.shape);
+        assert!(
+            point > 0,
+            "entry at index {index:?} is implicitly set to the default value"
+        );
+
+        let start_index = self.start_indices[point - 1];
+        let length = self.lengths[point - 1];
+
+        let point_entries =
+            self.lengths.iter().take(point - 1).sum::<usize>() + raveled_index - start_index;
+
+        assert!(
+            raveled_index < (start_index + length),
+            "entry at index {index:?} is implicitly set to the default value"
+        );
+
+        &self.entries[point_entries]
+    }
+}
+
+impl<T: Clone + Copy + Default + PartialEq> IndexMut<usize> for PackedArray<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        // assert_eq!(index.len(), self.shape.len());
+
+        // // Panic if the index value for any dimension is greater or equal than the length of this
+        // // dimension.
+        // assert!(
+        //     index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
+        //     "index {:?} is out of bounds for array of shape {:?}",
+        //     index,
+        //     self.shape
+        // );
+
+        // // The insertion cases are:
+        // // 1. this array already stores an element at `index`:
+        // //    -> we just have to update this element
+        // // 2. this array does not store an element at `index`:
+        // //    a. the distance of the (raveled) `index` is `threshold_distance` away from the next
+        // //       or previous element that is already stored:
+        // //       -> we can merge the new element into already stored groups, potentially padding
+        // //          with `T::default()` elements
+        // //    b. the distance of the (raveled) `index` from the existing elements is greater than
+        // //       `threshold_distance`:
+        // //       -> we insert the element as a new group
+
+        // let raveled_index = ravel_multi_index(&index, &self.shape);
+        let raveled_index = index;
 
         // To determine which groups the new element is close to, `point` is the index of the
         // start_index of the first group after the new element. `point` is 0 if no elements before
@@ -292,21 +384,135 @@ impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
     }
 }
 
+impl<T: Clone + Copy + Default + PartialEq> IndexMut<&[usize]> for PackedArray<T> {
+    fn index_mut(&mut self, index: &[usize]) -> &mut Self::Output {
+        assert_eq!(index.len(), self.shape.len());
+
+        // Panic if the index value for any dimension is greater or equal than the length of this
+        // dimension.
+        assert!(
+            index.iter().zip(self.shape.iter()).all(|(&i, &d)| i < d),
+            "index {:?} is out of bounds for array of shape {:?}",
+            index,
+            self.shape
+        );
+
+        // The insertion cases are:
+        // 1. this array already stores an element at `index`:
+        //    -> we just have to update this element
+        // 2. this array does not store an element at `index`:
+        //    a. the distance of the (raveled) `index` is `threshold_distance` away from the next
+        //       or previous element that is already stored:
+        //       -> we can merge the new element into already stored groups, potentially padding
+        //          with `T::default()` elements
+        //    b. the distance of the (raveled) `index` from the existing elements is greater than
+        //       `threshold_distance`:
+        //       -> we insert the element as a new group
+
+        let raveled_index = ravel_multi_index(index, &self.shape);
+
+        // To determine which groups the new element is close to, `point` is the index of the
+        // start_index of the first group after the new element. `point` is 0 if no elements before
+        // the new element are stored, and point is `self.start_indices.len()` if no elements after
+        // the new element are stored.
+        let point = self.start_indices.partition_point(|&i| i <= raveled_index);
+
+        // `point_entries` is the index of the first element of the next group, given in
+        // `self.entries`, i.e. the element at index `self.start_indices[point]`.
+        let point_entries = self.lengths.iter().take(point).sum::<usize>();
+
+        // Maximum distance for merging groups. If the new element is within `threshold_distance`
+        // of an existing group (i.e. there are `threshold_distance - 1` implicit elements
+        // between them), we merge the new element into the existing group. We choose 2 as the
+        // `threshold_distance` based on memory: in the case of `T` = `f64`, it is more economical
+        // to store one zero explicitly than to store the start_index and length of a new group.
+        let threshold_distance = 2;
+
+        // If `point > 0`, there is at least one group preceding the new element. Thus, in the
+        // following we determine if we can insert the new element into this group.
+        if point > 0 {
+            // start_index and length of the group before the new element, i.e. the group
+            // (potentially) getting the new element
+            let start_index = self.start_indices[point - 1];
+            let length = self.lengths[point - 1];
+
+            // Case 1: an element is already stored at this `index`
+            if raveled_index < start_index + length {
+                return &mut self.entries[point_entries - length + raveled_index - start_index];
+            // Case 2a: the new element can be merged into the preceding group
+            } else if raveled_index < start_index + length + threshold_distance {
+                let distance = raveled_index - (start_index + length) + 1;
+                // Merging happens by increasing the length of the group
+                self.lengths[point - 1] += distance;
+                // and inserting the necessary number of default elements.
+                self.entries.splice(
+                    point_entries..point_entries,
+                    iter::repeat(Default::default()).take(distance),
+                );
+
+                // If the new element is within `threshold_distance` of the *next* group, we merge
+                // the next group into this group.
+                if let Some(start_index_next) = self.start_indices.get(point) {
+                    if raveled_index + threshold_distance >= *start_index_next {
+                        let distance_next = start_index_next - raveled_index;
+
+                        // Increase the length of this group
+                        self.lengths[point - 1] += distance_next - 1 + self.lengths[point];
+                        // and remove the next group. we don't have to manipulate `self.entries`,
+                        // since the grouping of the elements is handled only by
+                        // `self.start_indices` and `self.lengths`
+                        self.lengths.remove(point);
+                        self.start_indices.remove(point);
+                        // Insert the default elements between the groups.
+                        self.entries.splice(
+                            point_entries..point_entries,
+                            iter::repeat(Default::default()).take(distance_next - 1),
+                        );
+                    }
+                }
+
+                return &mut self.entries[point_entries - 1 + distance];
+            }
+        }
+
+        // Case 2a: the new element can be merged into the next group. No `self.lengths.remove` and
+        // `self.start_indices.remove` here, since we are not merging two groups.
+        if let Some(start_index_next) = self.start_indices.get(point) {
+            if raveled_index + threshold_distance >= *start_index_next {
+                let distance = start_index_next - raveled_index;
+
+                self.start_indices[point] = raveled_index;
+                self.lengths[point] += distance;
+                self.entries.splice(
+                    point_entries..point_entries,
+                    iter::repeat(Default::default()).take(distance),
+                );
+                return &mut self.entries[point_entries];
+            }
+        }
+
+        // Case 2b: we insert a new group of length 1
+        self.start_indices.insert(point, raveled_index);
+        self.lengths.insert(point, 1);
+        self.entries.insert(point_entries, Default::default());
+
+        &mut self.entries[point_entries]
+    }
+}
+
+impl<T: Clone + Copy + Default + PartialEq, const D: usize> IndexMut<[usize; D]>
+    for PackedArray<T>
+{
+    fn index_mut(&mut self, index: [usize; D]) -> &mut Self::Output {
+        &mut self[index.as_slice()]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use ndarray::Array3;
     use std::mem;
-
-    #[test]
-    fn unravel_index() {
-        assert_eq!(super::unravel_index(0, &[3, 2]), [0, 0]);
-        assert_eq!(super::unravel_index(1, &[3, 2]), [0, 1]);
-        assert_eq!(super::unravel_index(2, &[3, 2]), [1, 0]);
-        assert_eq!(super::unravel_index(3, &[3, 2]), [1, 1]);
-        assert_eq!(super::unravel_index(4, &[3, 2]), [2, 0]);
-        assert_eq!(super::unravel_index(5, &[3, 2]), [2, 1]);
-    }
 
     #[test]
     fn ravel_multi_index() {
@@ -320,7 +526,7 @@ mod tests {
 
     #[test]
     fn index() {
-        let mut a = PackedArray::new([4, 2]);
+        let mut a = PackedArray::new(vec![4, 2]);
 
         a[[0, 0]] = 1;
         assert_eq!(a[[0, 0]], 1);
@@ -373,8 +579,63 @@ mod tests {
     }
 
     #[test]
+    fn flat_index() {
+        let shape = vec![4, 2];
+        let mut a = PackedArray::new(shape.clone());
+
+        a[[0, 0]] = 1;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a.entries, vec![1]);
+        assert_eq!(a.start_indices, vec![0]);
+        assert_eq!(a.lengths, vec![1]);
+
+        a[[3, 0]] = 2;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a.entries, vec![1, 2]);
+        assert_eq!(a.start_indices, vec![0, 6]);
+        assert_eq!(a.lengths, vec![1, 1]);
+
+        a[[3, 1]] = 3;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a.entries, vec![1, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 6]);
+        assert_eq!(a.lengths, vec![1, 2]);
+
+        a[[2, 0]] = 9;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 9);
+        assert_eq!(a.entries, vec![1, 9, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 4]);
+        assert_eq!(a.lengths, vec![1, 4]);
+
+        a[[2, 0]] = 4;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 4);
+        assert_eq!(a.entries, vec![1, 4, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0, 4]);
+        assert_eq!(a.lengths, vec![1, 4]);
+
+        a[[1, 0]] = 5;
+        assert_eq!(a[super::ravel_multi_index(&[0, 0], &shape)], 1);
+        assert_eq!(a[super::ravel_multi_index(&[3, 0], &shape)], 2);
+        assert_eq!(a[super::ravel_multi_index(&[3, 1], &shape)], 3);
+        assert_eq!(a[super::ravel_multi_index(&[2, 0], &shape)], 4);
+        assert_eq!(a[super::ravel_multi_index(&[1, 0], &shape)], 5);
+        assert_eq!(a.entries, vec![1, 0, 5, 0, 4, 0, 2, 3]);
+        assert_eq!(a.start_indices, vec![0]);
+        assert_eq!(a.lengths, vec![8]);
+    }
+
+    #[test]
     fn iter() {
-        let mut a = PackedArray::new([6, 5]);
+        let mut a = PackedArray::new(vec![6, 5]);
         a[[2, 2]] = 1;
         a[[2, 4]] = 2;
         a[[4, 1]] = 3;
@@ -383,18 +644,18 @@ mod tests {
         assert_eq!(
             a.indexed_iter().collect::<Vec<_>>(),
             &[
-                ([2, 2], 1),
-                ([2, 4], 2),
-                ([4, 1], 3),
-                ([4, 4], 4),
-                ([5, 0], 5),
+                (vec![2, 2], 1),
+                (vec![2, 4], 2),
+                (vec![4, 1], 3),
+                (vec![4, 4], 4),
+                (vec![5, 0], 5),
             ]
         );
     }
 
     #[test]
     fn index_access() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         // after creation the array must be empty
         assert_eq!(array.overhead(), 0);
@@ -539,7 +800,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [40, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[40, 0, 50]] = 1.0;
     }
@@ -547,7 +808,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 50, 0]] = 1.0;
     }
@@ -555,7 +816,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "index [0, 0, 50] is out of bounds for array of shape [40, 50, 50]")]
     fn index_mut_panic_dim2() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 50]] = 1.0;
     }
@@ -563,56 +824,89 @@ mod tests {
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0);
+        let _ = array[[0, 0, 0]];
     }
 
     #[test]
     #[should_panic(expected = "entry at index [2, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim0_1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[2, 0, 0]], 0);
+        let _ = array[[2, 0, 0]];
     }
 
     #[test]
     #[should_panic(expected = "index [1, 50, 0] is out of bounds for array of shape [40, 50, 50]")]
     fn index_panic_dim1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[1, 0, 0]] = 1;
 
-        assert_eq!(array[[1, 50, 0]], 0);
+        let _ = array[[1, 50, 0]];
     }
 
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 0] is implicitly set to the default value")]
     fn index_panic_dim2_0() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 0]], 0);
+        let _ = array[[0, 0, 0]];
     }
 
     #[test]
     #[should_panic(expected = "entry at index [0, 0, 2] is implicitly set to the default value")]
     fn index_panic_dim2_1() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[0, 0, 1]] = 1;
 
-        assert_eq!(array[[0, 0, 2]], 0);
+        let _ = array[[0, 0, 2]];
+    }
+
+    #[test]
+    #[should_panic(expected = "entry at index 0 is implicitly set to the default value")]
+    fn flat_index_panic_0() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[1, 0, 0]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[0, 0, 0], &shape)];
+    }
+
+    #[test]
+    #[should_panic(expected = "entry at index 2 is implicitly set to the default value")]
+    fn flat_index_panic_2() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[0, 0, 1]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[0, 0, 2], &shape)];
+    }
+
+    #[test]
+    #[should_panic(expected = "index 102550 is out of bounds for array of shape [40, 50, 50]")]
+    fn flat_index_panic_102550() {
+        let shape = vec![40, 50, 50];
+        let mut array = PackedArray::new(shape.clone());
+
+        array[[1, 0, 0]] = 1;
+
+        let _ = array[super::ravel_multi_index(&[40, 50, 50], &shape)];
     }
 
     #[test]
     fn indexed_iter() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         // check shape
         assert_eq!(array.shape(), [40, 50, 50]);
@@ -626,7 +920,7 @@ mod tests {
         let mut iter = array.indexed_iter();
 
         // check iterator with one element
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -636,8 +930,8 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -647,9 +941,9 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
 
         mem::drop(iter);
@@ -659,16 +953,16 @@ mod tests {
 
         let mut iter = array.indexed_iter();
 
-        assert_eq!(iter.next(), Some(([2, 0, 0], 4)));
-        assert_eq!(iter.next(), Some(([2, 3, 4], 1)));
-        assert_eq!(iter.next(), Some(([2, 3, 6], 2)));
-        assert_eq!(iter.next(), Some(([4, 5, 7], 3)));
+        assert_eq!(iter.next(), Some((vec![2, 0, 0], 4)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 4], 1)));
+        assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
+        assert_eq!(iter.next(), Some((vec![4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
     }
 
     #[test]
     fn clear() {
-        let mut array = PackedArray::new([40, 50, 50]);
+        let mut array = PackedArray::new(vec![40, 50, 50]);
 
         array[[3, 5, 1]] = 1;
         array[[7, 8, 9]] = 2;

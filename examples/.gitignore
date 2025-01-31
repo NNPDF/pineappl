@@ -3,7 +3,9 @@
 
 fortran/dyaa
 fortran/test
+fortran/test_v1
 fortran/lhapdf_example
+fortran/lhapdf_example_v1
 
 **/*.o
 **/*.mod

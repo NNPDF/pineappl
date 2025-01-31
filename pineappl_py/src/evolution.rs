@@ -1,5 +1,6 @@
 //! Evolution interface.
 
+use super::convolutions::PyConvType;
 use super::pids::PyPidBasis;
 use numpy::{IntoPyArray, PyArray1};
 use pineappl::evolution::{EvolveInfo, OperatorSliceInfo};
@@ -33,7 +34,10 @@ impl PyOperatorSliceInfo {
     ///     x-grid at the final scale
     /// pid_basis : PyPidBasis
     ///     flavor basis reprentation at the initial scale
+    /// conv_type : PyConvType
+    ///     the type of convolution required
     #[new]
+    #[must_use]
     pub fn new(
         fac0: f64,
         pids0: Vec<i32>,
@@ -42,6 +46,7 @@ impl PyOperatorSliceInfo {
         pids1: Vec<i32>,
         x1: Vec<f64>,
         pid_basis: PyPidBasis,
+        conv_type: PyRef<PyConvType>,
     ) -> Self {
         Self {
             info: OperatorSliceInfo {
@@ -52,6 +57,7 @@ impl PyOperatorSliceInfo {
                 pids1,
                 x1,
                 pid_basis: pid_basis.into(),
+                conv_type: conv_type.convtype,
             },
         }
     }
@@ -66,10 +72,37 @@ pub struct PyEvolveInfo {
 
 #[pymethods]
 impl PyEvolveInfo {
+    /// Constructor.
+    #[new]
+    #[must_use]
+    pub const fn new(
+        fac1: Vec<f64>,
+        frg1: Vec<f64>,
+        pids1: Vec<i32>,
+        x1: Vec<f64>,
+        ren1: Vec<f64>,
+    ) -> Self {
+        Self {
+            evolve_info: EvolveInfo {
+                fac1,
+                frg1,
+                pids1,
+                x1,
+                ren1,
+            },
+        }
+    }
+
     /// Squared factorization scales of the `Grid`.
     #[getter]
     fn fac1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.evolve_info.fac1.clone().into_pyarray_bound(py)
+    }
+
+    /// Squared fragmentation scales of the `Grid`.
+    #[getter]
+    fn frg1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
+        self.evolve_info.frg1.clone().into_pyarray_bound(py)
     }
 
     /// Particle identifiers of the `Grid`.
@@ -92,6 +125,10 @@ impl PyEvolveInfo {
 }
 
 /// Register submodule in parent.
+///
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "evolution")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Evolution interface.")?;

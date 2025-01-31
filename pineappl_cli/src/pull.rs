@@ -39,7 +39,7 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Number of threads to utilize.
     #[arg(default_value_t = thread::available_parallelism().map_or(1, NonZeroUsize::get), long)]
     threads: usize,
@@ -70,6 +70,7 @@ impl Subcommand for Opts {
                 Ok::<_, Error>(helpers::convolve(
                     &grid,
                     funs,
+                    &self.conv_funs1.conv_types,
                     &self.orders,
                     &[],
                     &[],
@@ -88,6 +89,7 @@ impl Subcommand for Opts {
                 Ok::<_, Error>(helpers::convolve(
                     &grid,
                     funs,
+                    &self.conv_funs2.conv_types,
                     &self.orders,
                     &[],
                     &[],
@@ -140,8 +142,8 @@ impl Subcommand for Opts {
             };
 
             let channel_results =
-                |member: Option<usize>, pdfset: &mut [Vec<Pdf>], set: &PdfSet| -> Vec<f64> {
-                    if let Some(member) = member {
+                |conv_funs: &ConvFuns, pdfset: &mut [Vec<Pdf>], set: &PdfSet| -> Vec<f64> {
+                    if let Some(member) = conv_funs.members[self.pull_from] {
                         (0..grid.channels().len())
                             .map(|channel| {
                                 let mut channel_mask = vec![false; grid.channels().len()];
@@ -149,6 +151,7 @@ impl Subcommand for Opts {
                                 match helpers::convolve(
                                     &grid,
                                     &mut pdfset[member],
+                                    &conv_funs.conv_types,
                                     &self.orders,
                                     &[bin],
                                     &channel_mask,
@@ -174,6 +177,7 @@ impl Subcommand for Opts {
                                         match helpers::convolve(
                                             &grid,
                                             fun,
+                                            &conv_funs.conv_types,
                                             &self.orders,
                                             &[bin],
                                             &channel_mask,
@@ -206,18 +210,10 @@ impl Subcommand for Opts {
                 };
 
             let mut pull_tuples = if self.limit == 0 {
-                vec![]
+                Vec::new()
             } else {
-                let channel_results1 = channel_results(
-                    self.conv_funs1.members[self.pull_from],
-                    &mut conv_funs1,
-                    &set1,
-                );
-                let channel_results2 = channel_results(
-                    self.conv_funs2.members[self.pull_from],
-                    &mut conv_funs2,
-                    &set2,
-                );
+                let channel_results1 = channel_results(&self.conv_funs1, &mut conv_funs1, &set1);
+                let channel_results2 = channel_results(&self.conv_funs2, &mut conv_funs2, &set2);
 
                 let pull_tuples: Vec<_> = channel_results2
                     .iter()

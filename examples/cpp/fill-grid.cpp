@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <pineappl_capi.h>
 
 #include <cassert>
@@ -6,6 +7,7 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <vector>
 
 double int_photo(double s, double t, double u) {
     double alpha0 = 1.0 / 137.03599911;
@@ -97,12 +99,15 @@ void fill_grid(pineappl_grid* grid, std::size_t calls) {
         std::size_t order = 0;
         std::size_t channel = 0;
 
+        // Values of the kinematic variables
+        std::vector<double> ntuples = {q2, x1, x2};
+
         // fill the LO `weight` into `grid` for parton fractions `x1` and `x2`, and the (squared)
         // renormalization/factorization scale `q2`. The parameters `order` and `channel` are
         // indices defined from the arrays `orders` and `channel` used in creating the grid. In this
         // case they are both `0` and denote the order #0 (leading order) and the channel #0
         // (photon-photon channel), respectively
-        pineappl_grid_fill(grid, x1, x2, q2, order, fabs(yll), channel, weight);
+        pineappl_grid_fill2(grid, order, fabs(yll), channel, ntuples.data(), weight);
     }
 }
 
@@ -111,7 +116,10 @@ int main() {
     // Create all channels
 
     // this object will contain all channels (initial states) that we define
-    auto* channels = pineappl_lumi_new();
+    auto* channels = pineappl_channels_new();
+
+    // Specify the dimension of the channel, ie the number of convolutions required
+    std::size_t nb_convolutions = 2;
 
     // photon-photon initial state, where `22` is the photon (PDG MC ids)
     int32_t pids1[] = { 22, 22 };
@@ -120,7 +128,7 @@ int main() {
     double factors1[] = { 1.0 };
 
     // define the channel #0
-    pineappl_lumi_add(channels, 1, pids1, factors1);
+    pineappl_channels_add(channels, 1, nb_convolutions, pids1, factors1);
 
     // create another channel, which we won't fill, however
 
@@ -135,7 +143,7 @@ int main() {
     // can also pass `nullptr`
 
     // define the channel #1
-    pineappl_lumi_add(channels, 3, pids2, nullptr);
+    pineappl_channels_add(channels, 3, nb_convolutions, pids2, nullptr);
 
     // ---
     // Specify the perturbative orders that will be filled into the grid
@@ -145,10 +153,10 @@ int main() {
     // - 2 of alpha (electroweak coupling),
     // - 0 of log (xiR^2) (renormalization scale logarithm) and
     // - 0 of log (xiF^2) (factorization scale logarithm)
-    std::vector<uint32_t> orders = {
-        0, 2, 0, 0, // order #0: LO
-        1, 2, 0, 0, // order #1: NLO QCD
-        1, 2, 0, 1  // order #2: NLO QCD factorization log
+    std::vector<uint8_t> orders = {
+        0, 2, 0, 0, 0, // order #0: LO
+        1, 2, 0, 0, 0, // order #1: NLO QCD
+        1, 2, 0, 1, 0  // order #2: NLO QCD factorization log
     };
 
     // ---
@@ -168,72 +176,57 @@ int main() {
     };
 
     // ---
+    // Construct the objects that are needed to fill the Grid
+
+    // First we define the types of convolutions required by the involved initial-/final-state
+    // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
+    // Basis onto which the partons are mapped.
+    PidBasis pid_basis = Evol;
+    int32_t pdg_ids[2] = { 2212, 2212};
+    ConvType h1 = UnpolPDF;
+    ConvType h2 = UnpolPDF;
+    ConvType convolution_types[2] = { h1, h2 };
+
+    // Define the kinematics required for this process. In the following example we have ONE
+    // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
+    // The format of the kinematics is: { type, value }.
+    Kinematics scales = { Scale, 0 };
+    Kinematics x1 = { X, 0 };
+    Kinematics x2 = { X, 1 };
+    Kinematics kinematics[3] = { scales, x1, x2 };
+
+    // Define the specificities of the interpolations for each of the kinematic variables.
+    ReweightMeth scales_reweight = NoReweight; // Reweighting method
+    ReweightMeth moment_reweight = ApplGridX;
+    Map scales_mapping = ApplGridH0; // Mapping method
+    Map moment_mapping = ApplGridF2;
+    InterpMeth interpolation_meth = Lagrange;
+    InterpTuples interpolations[3] = {
+        { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
+        { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
+        { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
+    };
+
+    // Define the unphysical scale objecs
+    size_t mu_scales[] = { 1, 1, 0 };
+
+    // ---
     // Create the grid using the previously set information about orders, bins and channels
-
-    // create the PineAPPL grid with default interpolation and binning parameters
-    auto* keyval = pineappl_keyval_new();
-
-#ifdef USE_CUSTOM_GRID_PARAMETERS
-    // set custom grid parameters. If left out, the standard values will be used, which are the ones
-    // used below
-    pineappl_keyval_set_int(keyval, "q2_bins", 40);
-    pineappl_keyval_set_double(keyval, "q2_max", 1e8);
-    pineappl_keyval_set_double(keyval, "q2_min", 1e2);
-    pineappl_keyval_set_int(keyval, "q2_order", 3);
-    pineappl_keyval_set_bool(keyval, "reweight", true);
-
-    // Settings for all x-values (x1 and x2)
-    pineappl_keyval_set_int(keyval, "x_bins", 50);
-    pineappl_keyval_set_double(keyval, "x_max", 1.0);
-    pineappl_keyval_set_double(keyval, "x_min", 2e-7);
-    pineappl_keyval_set_int(keyval, "x_order", 3);
-
-    // these parameters can be used to override the values specifically for x1
-    pineappl_keyval_set_int(keyval, "x1_bins", 50);
-    pineappl_keyval_set_double(keyval, "x1_max", 1.0);
-    pineappl_keyval_set_double(keyval, "x1_min", 2e-7);
-    pineappl_keyval_set_int(keyval, "x1_order", 3);
-
-    // these parameters can be used to override the values specifically for x2
-    pineappl_keyval_set_int(keyval, "x2_bins", 50);
-    pineappl_keyval_set_double(keyval, "x2_max", 1.0);
-    pineappl_keyval_set_double(keyval, "x2_min", 2e-7);
-    pineappl_keyval_set_int(keyval, "x2_order", 3);
-
-    // determine the subgrid which are being filled
-    pineappl_keyval_set_string(keyval, "subgrid_type", "LagrangeSubgrid");
-
-    // set the PDG ids of hadrons whose PDFs should be used to convolve the grid with
-    pineappl_keyval_set_string(keyval, "initial_state_1", "2212");
-    pineappl_keyval_set_string(keyval, "initial_state_2", "2212");
-
-    // check the getter functions
-    assert( pineappl_keyval_bool(keyval, "reweight") == true );
-    assert( pineappl_keyval_double(keyval, "q2_max") == 1e8 );
-    assert( pineappl_keyval_int(keyval, "q2_bins") == 40 );
-    assert( std::string(pineappl_keyval_string(keyval, "subgrid_type")) == "LagrangeSubgrid" );
-#endif
 
     // create a new grid with the previously defined channels, 3 perturbative orders defined by the
     // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
     // parameters in `keyval`.
-    auto* grid = pineappl_grid_new(channels, orders.size() / 4, orders.data(), bins.size() - 1,
-        bins.data(), keyval);
+    auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
+        bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
 
     // now we no longer need `keyval` and `lumi`
-    pineappl_keyval_delete(keyval);
-    pineappl_lumi_delete(channels);
+    pineappl_channels_delete(channels);
 
     // ---
     // Fill the grid with phase-space points
     fill_grid(grid, 10000000);
 
-    std::string filename =
-#ifdef USE_CUSTOM_GRID_PARAMETERS
-        "drell-yan-rap-ll-custom-grid.pineappl";
-#else
-        "drell-yan-rap-ll.pineappl";
-#endif
+    std::string filename = "drell-yan-rap-ll.pineappl";
 
     // ---
     // Write the grid to disk - the filename can be anything ...

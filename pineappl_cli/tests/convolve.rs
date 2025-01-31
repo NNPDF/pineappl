@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use assert_cmd::Command;
 use predicates::str;
 
@@ -15,6 +17,7 @@ Options:
   -o, --orders <ORDERS>   Select orders manually
       --xir <XIR>         Set the variation of the renormalization scale [default: 1.0]
       --xif <XIF>         Set the variation of the factorization scale [default: 1.0]
+      --xia <XIA>         Set the variation of the fragmentation scale [default: 1.0]
       --digits-abs <ABS>  Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>  Set the number of fractional digits shown for relative numbers [default: 2]
   -h, --help              Print help
@@ -34,9 +37,6 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal
 ";
 
 const USE_ALPHAS_FROM_ERROR_STR: &str = "expected `use_alphas_from` to be `0` or `1`, is `2`
-";
-
-const THREE_PDF_ERROR_STR: &str = "convolutions with 3 convolution functions is not supported
 ";
 
 const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 
@@ -224,20 +224,6 @@ fn use_alphas_from_error() {
         .assert()
         .failure()
         .stderr(str::contains(USE_ALPHAS_FROM_ERROR_STR));
-}
-
-#[test]
-fn three_pdf_error() {
-    Command::cargo_bin("pineappl")
-        .unwrap()
-        .args([
-            "convolve",
-            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
-            "NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed,NNPDF31_nlo_as_0118_luxqed",
-        ])
-        .assert()
-        .failure()
-        .stderr(str::contains(THREE_PDF_ERROR_STR));
 }
 
 #[test]

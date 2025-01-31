@@ -1,52 +1,93 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use float_cmp::approx_eq;
+use float_cmp::assert_approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::boc::Order;
-use pineappl::convolutions::Convolution;
+use pineappl::boc::{Kinematics, Order};
 use pineappl::grid::Grid;
-use pineappl::subgrid::{Mu2, Subgrid, SubgridParams};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::subgrid::{self, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
-use std::borrow::Cow;
 use std::f64::consts::TAU;
 use std::iter;
 use std::path::Path;
 use std::pin::Pin;
 
-fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<SubgridParams> {
-    let mut result = SubgridParams::default();
+fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<Vec<Interp>> {
+    if grid
+        .kinematics()
+        .iter()
+        .filter(|kin| matches!(kin, Kinematics::Scale(_)))
+        .count()
+        > 1
+    {
+        bail!("APPLgrid does not support grids with more than one scale");
+    }
 
-    let mu2_grid: Vec<_> = grid
+    let mut mu2_grid: Vec<_> = grid
         .subgrids()
         .slice(s![order, bin, ..])
         .iter()
-        .map(|subgrid| {
-            subgrid
-                .mu2_grid()
-                .iter()
-                .map(|&Mu2 { ren, fac }| {
-                    if !approx_eq!(f64, ren, fac, ulps = 128) {
-                        bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-                    }
-
-                    Ok(fac)
-                })
-                .collect::<Result<Vec<_>>>()
+        .filter(|subgrid| !subgrid.is_empty())
+        .flat_map(|subgrid| {
+            grid.scales()
+                .fac
+                .calc(&subgrid.node_values(), grid.kinematics())
+                .into_owned()
         })
-        .collect::<Result<_>>()?;
-    let mut mu2_grid: Vec<_> = mu2_grid.into_iter().flatten().collect();
-    mu2_grid.dedup_by(|a, b| approx_eq!(f64, *a, *b, ulps = 128));
-    let mu2_grid = mu2_grid.as_slice();
-
-    if let &[fac] = mu2_grid {
-        result.set_q2_bins(1);
-        result.set_q2_max(fac);
-        result.set_q2_min(fac);
-        result.set_q2_order(0);
-    }
+        .collect();
+    mu2_grid.dedup_by(subgrid::node_value_eq_ref_mut);
 
     // TODO: implement the general case
+    let mut result = vec![
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            2e-7,
+            1.0,
+            50,
+            3,
+            ReweightMeth::ApplGridX,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ];
+
+    if let &[fac] = mu2_grid.as_slice() {
+        result.insert(
+            0,
+            Interp::new(
+                fac,
+                fac,
+                1,
+                0,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+        );
+    } else {
+        result.insert(
+            0,
+            Interp::new(
+                1e2,
+                1e8,
+                40,
+                3,
+                ReweightMeth::NoReweight,
+                Map::ApplGridH0,
+                InterpMeth::Lagrange,
+            ),
+        );
+    }
+
     Ok(result)
 }
 
@@ -55,8 +96,7 @@ pub fn convert_into_applgrid(
     output: &Path,
     discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
-    let bin_info = grid.bin_info();
-    let dim = bin_info.dimensions();
+    let dim = grid.bwfl().dimensions();
 
     if dim > 1 {
         bail!(
@@ -65,53 +105,71 @@ pub fn convert_into_applgrid(
         );
     }
 
-    if bin_info.slices().len() != 1 {
+    // APPLgrid can only be used with one-dimensional consecutive bin limits
+    if grid.bwfl().slices().len() != 1 {
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
+    if grid.convolutions().len() > 2 {
+        bail!("APPLgrid does not support grids with more than two convolutions");
+    }
+
     let lumis = grid.channels().len();
-    let has_pdf1 = grid.convolutions()[0] != Convolution::None;
-    let has_pdf2 = grid.convolutions()[1] != Convolution::None;
+    let has_pdf1 = !grid.convolutions().is_empty();
+    let has_pdf2 = grid.convolutions().get(1).is_some();
 
     // TODO: check that PDG MC IDs are used
 
-    let combinations: Vec<_> = iter::once(lumis.try_into().unwrap())
-        .chain(
-            grid.channels()
-                .iter()
-                .enumerate()
-                .flat_map(|(index, entry)| {
-                    [
-                        index.try_into().unwrap(),
-                        entry.entry().len().try_into().unwrap(),
-                    ]
-                    .into_iter()
-                    .chain(entry.entry().iter().flat_map(|&(a, b, factor)| {
-                        // TODO: if the factors aren't trivial, we have to find some other way to
-                        // propagate them
-                        assert_eq!(factor, 1.0);
+    let combinations: Vec<_> =
+        iter::once(lumis.try_into().unwrap())
+            .chain(
+                grid.channels()
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, entry)| {
+                        [
+                            index.try_into().unwrap(),
+                            entry.entry().len().try_into().unwrap(),
+                        ]
+                        .into_iter()
+                        .chain(entry.entry().iter().flat_map(|&(ref pids, factor)| {
+                            // TODO: if the factors aren't trivial, we have to find some other way
+                            // to propagate them
+                            assert_approx_eq!(f64, factor, 1.0, ulps = 4);
 
-                        match (has_pdf1, has_pdf2) {
-                            (true, true) => [a, b],
-                            (true, false) => [a, 0],
-                            (false, true) => [b, 0],
-                            (false, false) => unreachable!(),
-                        }
-                    }))
-                }),
-        )
-        .collect();
+                            pids.iter()
+                                .copied()
+                                .chain(iter::repeat(0))
+                                .take(2)
+                                .collect::<Vec<_>>()
+                        }))
+                    }),
+            )
+            .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
     let id = "PineAPPL-Lumi.config";
     // this object is managed by APPLgrid internally
     ffi::make_lumi_pdf(id, &combinations).into_raw();
 
-    let limits = &bin_info.limits();
-    let limits: Vec<_> = limits
+    let limits: Vec<_> = grid
+        .bwfl()
+        .bins()
         .iter()
-        .map(|vec| vec[0].0)
-        .chain(limits.last().map(|vec| vec[0].1))
+        .map(|bin| {
+            // TODO: instead of `bin.limits()[0]` we should use `bin.fill_limits()`, but this
+            // requires changing the normalization
+            bin.limits()[0].0
+        })
+        .chain(Some(
+            grid.bwfl()
+                .bins()
+                .last()
+                // UNWRAP: every `grid` should have at least one bin
+                .unwrap()
+                .limits()[0]
+                .1,
+        ))
         .collect();
 
     let order_mask = Order::create_mask(grid.orders(), 3, 0, false);
@@ -133,14 +191,8 @@ pub fn convert_into_applgrid(
         .unwrap()
         - lo_alphas;
 
-    let mut applgrid = ffi::make_empty_grid(
-        &limits,
-        id,
-        lo_alphas.try_into().unwrap(),
-        loops.try_into().unwrap(),
-        "f2",
-        "h0",
-    );
+    let mut applgrid =
+        ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
 
     for (appl_order, order) in order_mask
         .iter()
@@ -148,7 +200,7 @@ pub fn convert_into_applgrid(
         .filter_map(|(index, keep)| keep.then_some(index))
         .enumerate()
     {
-        let factor = TAU.powi(grid.orders()[order].alphas.try_into().unwrap());
+        let factor = TAU.powi(grid.orders()[order].alphas.into());
 
         for (bin, subgrids) in grid
             .subgrids()
@@ -156,46 +208,55 @@ pub fn convert_into_applgrid(
             .axis_iter(Axis(0))
             .enumerate()
         {
-            let p = reconstruct_subgrid_params(grid, order, bin)?;
+            let interps = reconstruct_subgrid_params(grid, order, bin)?;
+            // TODO: support DIS case
+            assert_eq!(interps.len(), 3);
+
+            // TODO: make sure interps[1] is the same as interps[2]
 
             let mut igrid = ffi::make_igrid(
-                p.q2_bins().try_into().unwrap(),
-                p.q2_min(),
-                p.q2_max(),
-                p.q2_order().try_into().unwrap(),
-                p.x_bins().try_into().unwrap(),
-                p.x_min(),
-                p.x_max(),
-                p.x_order().try_into().unwrap(),
-                "f2",
-                "h0",
+                interps[0].nodes().try_into().unwrap(),
+                interps[0].min(),
+                interps[0].max(),
+                interps[0].order().try_into().unwrap(),
+                interps[1].nodes().try_into().unwrap(),
+                interps[1].min(),
+                interps[1].max(),
+                interps[1].order().try_into().unwrap(),
+                match interps[1].map() {
+                    Map::ApplGridF2 => "f2",
+                    map @ Map::ApplGridH0 => panic!("export does not support {map:?}"),
+                },
+                match interps[0].map() {
+                    Map::ApplGridH0 => "h0",
+                    map @ Map::ApplGridF2 => panic!("export does not support {map:?}"),
+                },
                 grid.channels().len().try_into().unwrap(),
-                has_pdf1 != has_pdf2,
+                grid.convolutions().len() == 1,
             );
             let appl_q2: Vec<_> = (0..igrid.Ntau()).map(|i| igrid.getQ2(i)).collect();
             let appl_x1: Vec<_> = (0..igrid.Ny1()).map(|i| igrid.getx1(i)).collect();
             let appl_x2: Vec<_> = (0..igrid.Ny2()).map(|i| igrid.getx2(i)).collect();
 
-            for (lumi, subgrid) in subgrids.iter().enumerate() {
-                let appl_q2_idx: Vec<_> = subgrid
-                    .mu2_grid()
+            for (channel, subgrid) in subgrids
+                .iter()
+                .enumerate()
+                .filter(|(_, subgrid)| !subgrid.is_empty())
+            {
+                let appl_q2_idx: Vec<_> = grid.scales().fac.calc(&subgrid.node_values(), grid.kinematics())
                     .iter()
-                    .map(|&Mu2 { ren, fac }| {
-                        if !approx_eq!(f64, ren, fac, ulps = 128) {
-                            bail!("subgrid has mur2 != muf2, which APPLgrid does not support");
-                        }
+                    .map(|&fac| {
                         appl_q2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, fac, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, fac))
                             .map_or_else(
                                 || {
                                     if discard_non_matching_scales {
                                         Ok(-1)
                                     } else {
-                                        Err(anyhow!(
-                                            "factorization scale muf2 = {} not found in APPLgrid",
-                                            fac
-                                        ))
+                                        bail!(
+                                            "factorization scale muf2 = {fac} not found in APPLgrid",
+                                        )
                                     }
                                 },
                                 |idx| Ok(idx.try_into().unwrap()),
@@ -204,12 +265,54 @@ pub fn convert_into_applgrid(
                     .collect::<Result<_>>()?;
 
                 // in the DIS case APPLgrid always uses the first x dimension
+
                 let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
-                    (subgrid.x1_grid(), subgrid.x2_grid())
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap(),
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap(),
+                    )
                 } else if has_pdf1 {
-                    (subgrid.x1_grid(), Cow::Owned(vec![]))
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap(),
+                        Vec::new(),
+                    )
                 } else {
-                    (subgrid.x2_grid(), Cow::Owned(vec![]))
+                    (
+                        grid.kinematics()
+                            .iter()
+                            .zip(subgrid.node_values())
+                            .find_map(|(kin, node_values)| {
+                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                    .then_some(node_values)
+                            })
+                            // TODO: convert this into an error
+                            .unwrap(),
+                        Vec::new(),
+                    )
                 };
 
                 let appl_x1_idx: Vec<_> = x1_grid
@@ -217,14 +320,9 @@ pub fn convert_into_applgrid(
                     .map(|&x1| {
                         appl_x1
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x1, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, x1))
                             .map_or_else(
-                                || {
-                                    Err(anyhow!(
-                                        "momentum fraction x1 = {} not found in APPLgrid",
-                                        x1
-                                    ))
-                                },
+                                || bail!("momentum fraction x1 = {x1} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
@@ -234,29 +332,29 @@ pub fn convert_into_applgrid(
                     .map(|&x2| {
                         appl_x2
                             .iter()
-                            .position(|&x| approx_eq!(f64, x, x2, ulps = 128))
+                            .position(|&x| subgrid::node_value_eq(x, x2))
                             .map_or_else(
-                                || {
-                                    Err(anyhow!(
-                                        "momentum fraction x2 = {} not found in APPLgrid",
-                                        x2
-                                    ))
-                                },
+                                || bail!("momentum fraction x2 = {x2} not found in APPLgrid"),
                                 |idx| Ok(idx.try_into().unwrap()),
                             )
                     })
                     .collect::<Result<_>>()?;
 
-                let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), lumi);
+                let mut weightgrid = ffi::igrid_weightgrid(igrid.pin_mut(), channel);
 
-                for ((iq2, ix1, ix2), value) in subgrid.indexed_iter() {
+                for (indices, value) in subgrid.indexed_iter() {
+                    // TODO: here we assume that all X are consecutive starting from the second
+                    // element and are in ascending order
+                    let iq2 = indices[0];
                     let appl_q2_idx = appl_q2_idx[iq2];
 
                     if appl_q2_idx == -1 {
                         if value != 0.0 {
                             println!(
                                 "WARNING: discarding non-matching scale muf2 = {}",
-                                subgrid.mu2_grid()[iq2].fac
+                                grid.scales()
+                                    .fac
+                                    .calc(&subgrid.node_values(), grid.kinematics())[iq2]
                             );
                         }
 
@@ -266,9 +364,9 @@ pub fn convert_into_applgrid(
                     ffi::sparse_matrix_set(
                         weightgrid.as_mut(),
                         appl_q2_idx,
-                        appl_x1_idx[ix1],
+                        appl_x1_idx[indices[1]],
                         if has_pdf1 && has_pdf2 {
-                            appl_x2_idx[ix2]
+                            appl_x2_idx[indices[2]]
                         } else {
                             0
                         },

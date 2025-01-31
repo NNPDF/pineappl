@@ -1,9 +1,8 @@
 //! TODO
 
-use super::grid::Ntuple;
-use super::subgrid::{Mu2, Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
+use super::interpolation::Interp;
+use super::subgrid::{Stats, Subgrid, SubgridEnum, SubgridIndexedIter};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::iter;
 
 /// A subgrid type that is always empty.
@@ -11,37 +10,23 @@ use std::iter;
 pub struct EmptySubgridV1;
 
 impl Subgrid for EmptySubgridV1 {
-    fn convolve(
-        &self,
-        _: &[f64],
-        _: &[f64],
-        _: &[Mu2],
-        _: &mut dyn FnMut(usize, usize, usize) -> f64,
-    ) -> f64 {
-        0.0
-    }
-
-    fn fill(&mut self, _: &Ntuple<f64>) {
+    fn fill(&mut self, _: &[Interp], _: &[f64], _: f64) {
         panic!("EmptySubgridV1 doesn't support the fill operation");
     }
 
-    fn mu2_grid(&self) -> Cow<[Mu2]> {
-        Cow::Borrowed(&[])
+    fn node_values(&self) -> Vec<Vec<f64>> {
+        Vec::new()
     }
 
-    fn x1_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&[])
-    }
-
-    fn x2_grid(&self) -> Cow<[f64]> {
-        Cow::Borrowed(&[])
+    fn shape(&mut self) -> &[usize] {
+        panic!("EmptySubgridV1 doesn't have a shape");
     }
 
     fn is_empty(&self) -> bool {
         true
     }
 
-    fn merge(&mut self, subgrid: &mut SubgridEnum, _: bool) {
+    fn merge_impl(&mut self, subgrid: &SubgridEnum, _: Option<(usize, usize)>) {
         assert!(
             subgrid.is_empty(),
             "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
@@ -50,11 +35,7 @@ impl Subgrid for EmptySubgridV1 {
 
     fn scale(&mut self, _: f64) {}
 
-    fn symmetrize(&mut self) {}
-
-    fn clone_empty(&self) -> SubgridEnum {
-        Self.into()
-    }
+    fn symmetrize(&mut self, _: usize, _: usize) {}
 
     fn indexed_iter(&self) -> SubgridIndexedIter {
         Box::new(iter::empty())
@@ -70,24 +51,24 @@ impl Subgrid for EmptySubgridV1 {
         }
     }
 
-    fn static_scale(&self) -> Option<Mu2> {
-        None
-    }
+    fn optimize_nodes(&mut self) {}
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::import_subgrid::ImportSubgridV1;
+    use crate::packed_array::PackedArray;
+    use crate::v0;
 
     #[test]
     fn create_empty() {
         let mut subgrid = EmptySubgridV1;
-        assert_eq!(subgrid.convolve(&[], &[], &[], &mut |_, _, _| 0.0), 0.0,);
         assert!(subgrid.is_empty());
-        subgrid.merge(&mut EmptySubgridV1.into(), false);
+        subgrid.merge_impl(&EmptySubgridV1.into(), None);
         subgrid.scale(2.0);
-        subgrid.symmetrize();
-        assert!(subgrid.clone_empty().is_empty());
+        subgrid.symmetrize(1, 2);
+        subgrid.optimize_nodes();
         assert_eq!(
             subgrid.stats(),
             Stats {
@@ -98,33 +79,38 @@ mod tests {
                 bytes_per_value: 0,
             }
         );
-        assert_eq!(subgrid.static_scale(), None);
     }
 
     #[test]
     #[should_panic(expected = "EmptySubgridV1 doesn't support the fill operation")]
     fn fill() {
         let mut subgrid = EmptySubgridV1;
-        subgrid.fill(&Ntuple {
-            x1: 0.0,
-            x2: 0.0,
-            q2: 0.0,
-            weight: 0.0,
-        });
+        subgrid.fill(&v0::default_interps(false, 2), &[0.0; 3], 0.0);
     }
 
     #[test]
-    fn q2_grid() {
-        assert!(EmptySubgridV1.mu2_grid().is_empty());
+    #[should_panic(
+        expected = "EmptySubgridV1 doesn't support the merge operation for non-empty subgrids"
+    )]
+    fn merge_non_empty() {
+        let mut subgrid_lhs = EmptySubgridV1;
+
+        let mut array = PackedArray::new(vec![1, 1]);
+        array[0] = 1.0;
+        let node_values = vec![vec![1.0]; 2];
+        let subgrid_rhs = ImportSubgridV1::new(array, node_values).into();
+
+        subgrid_lhs.merge_impl(&subgrid_rhs, None);
     }
 
     #[test]
-    fn x1_grid() {
-        assert!(EmptySubgridV1.x1_grid().is_empty());
+    fn node_values() {
+        assert!(EmptySubgridV1.node_values().is_empty());
     }
 
     #[test]
-    fn x2_grid() {
-        assert!(EmptySubgridV1.x2_grid().is_empty());
+    #[should_panic(expected = "EmptySubgridV1 doesn't have a shape")]
+    fn shape() {
+        let _ = EmptySubgridV1.shape();
     }
 }

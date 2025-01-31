@@ -10,13 +10,13 @@ program lhapdf_example
     type(pineappl_lumi) :: lumi
     type(pineappl_keyval) :: key_vals
 
-    procedure (pineappl_xfx), pointer :: xfx
-    procedure (pineappl_alphas), pointer :: alphas
+    type(pineappl_xfx) :: xfx
+    type(pineappl_alphas) :: alphas
 
     integer, target :: flags(2)
 
     lumi = pineappl_lumi_new()
-    call pineappl_lumi_add(lumi, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    call pineappl_lumi_add(lumi, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     key_vals = pineappl_keyval_new()
     grid = pineappl_grid_new(lumi, 1, [2, 0, 0, 0], 2, [0.0_dp, 1.0_dp, 2.0_dp], key_vals)
@@ -28,19 +28,19 @@ program lhapdf_example
     call lhapdf_initpdfset_byname(1, "nCTEQ15FullNuc_208_82")
 
     ! calling pineappl_grid_convolve without any flags
-    xfx => xfx_test1
-    alphas => alphas_test1
+    xfx = pineappl_xfx(xfx_test1)
+    alphas = pineappl_alphas(alphas_test1)
     write(*, *) "first pineappl_grid_convolve_with_one: "
     write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
-        [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp)
+        [.true.], [.true.], 1.0_dp, 1.0_dp)
 
     ! calling pineappl_grid_convolve with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
-    xfx => xfx_test2
-    alphas => alphas_test2
+    xfx = pineappl_xfx(xfx_test2)
+    alphas = pineappl_alphas(alphas_test2)
     flags = [1, 0]
     write(*, *) "second pineappl_grid_convolve_with_one: "
     write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
-        [.true., .true.], [.true., .true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
+        [.true.], [.true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
 contains
 
     ! Passing a Fortran procedure to C needs the iso_c_binding
@@ -99,7 +99,7 @@ contains
 
         call c_f_pointer(state, flags, [2])
 
-        call lhapdf_alphasq2(0, 0, q2, alphas_test2)
+        call lhapdf_alphasq2(flags(1), flags(2), q2, alphas_test2)
     end function
 
 end program lhapdf_example

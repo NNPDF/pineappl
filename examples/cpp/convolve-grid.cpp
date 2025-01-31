@@ -1,4 +1,5 @@
 #include <LHAPDF/PDF.h>
+#include <cstdint>
 #include <pineappl_capi.h>
 
 #include <cstddef>
@@ -72,8 +73,11 @@ int main(int argc, char* argv[]) {
     // The parameters `order_mask` and `channel_mask` can be used to select specific orders and
     // channels, respectively. Using `xir` and `xif` the renormalization and factorization scales
     // can be varied around its central values, respectively.
-    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
-        channel_mask, xir, xif, dxsec.data());
+    std::vector<double> mu_scales = { xir, xif, 1.0 };
+    using LambdaType = double(*)(int32_t, double, double, void *);
+    LambdaType xfxs[] = { xfx, xfx };
+    pineappl_grid_convolve(grid, xfxs, alphas, pdf, order_mask, channel_mask, nullptr, 1,
+        mu_scales.data(), dxsec.data());
 
     std::vector<double> normalizations(bins);
 

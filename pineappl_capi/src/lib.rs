@@ -56,25 +56,35 @@
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
-use pineappl::bin::BinRemapper;
-use pineappl::boc::{Channel, Order};
-use pineappl::convolutions::LumiCache;
-use pineappl::grid::{Grid, GridOptFlags, Ntuple};
-use pineappl::subgrid::{ExtraSubgridParams, SubgridParams};
+use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
+use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
+use pineappl::grid::{Grid, GridOptFlags};
+use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 use std::path::Path;
 use std::slice;
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgridParams) {
-    let mut subgrid_type = "LagrangeSubgrid".to_owned();
-    let mut subgrid_params = SubgridParams::default();
-    let mut extra = ExtraSubgridParams::default();
+fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
+    let mut q2_min = 1e2;
+    let mut q2_max = 1e8;
+    let mut q2_nodes = 40;
+    let mut q2_order = 3;
+    let mut x1_min = 2e-7;
+    let mut x1_max = 1.0;
+    let mut x1_nodes = 50;
+    let mut x1_order = 3;
+    let mut x2_min = 2e-7;
+    let mut x2_max = 1.0;
+    let mut x2_nodes = 50;
+    let mut x2_order = 3;
+    let mut reweight = ReweightMeth::ApplGridX;
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval
@@ -82,7 +92,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_bins")
             .or_else(|| keyval.ints.get("nq2"))
         {
-            subgrid_params.set_q2_bins(usize::try_from(*value).unwrap());
+            q2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval
@@ -90,7 +100,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_max")
             .or_else(|| keyval.doubles.get("q2max"))
         {
-            subgrid_params.set_q2_max(*value);
+            q2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -98,7 +108,7 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_min")
             .or_else(|| keyval.doubles.get("q2min"))
         {
-            subgrid_params.set_q2_min(*value);
+            q2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -106,17 +116,19 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("q2_order")
             .or_else(|| keyval.ints.get("q2order"))
         {
-            subgrid_params.set_q2_order(usize::try_from(*value).unwrap());
+            q2_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.bools.get("reweight") {
-            subgrid_params.set_reweight(*value);
+            if !value {
+                reweight = ReweightMeth::NoReweight;
+            }
         }
 
         if let Some(value) = keyval.ints.get("x_bins").or_else(|| keyval.ints.get("nx")) {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_bins(value);
-            extra.set_x2_bins(value);
+            x1_nodes = value;
+            x2_nodes = value;
         }
 
         if let Some(value) = keyval
@@ -124,8 +136,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_max")
             .or_else(|| keyval.doubles.get("xmax"))
         {
-            subgrid_params.set_x_max(*value);
-            extra.set_x2_max(*value);
+            x1_max = *value;
+            x2_max = *value;
         }
 
         if let Some(value) = keyval
@@ -133,8 +145,8 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .get("x_min")
             .or_else(|| keyval.doubles.get("xmin"))
         {
-            subgrid_params.set_x_min(*value);
-            extra.set_x2_min(*value);
+            x1_min = *value;
+            x2_min = *value;
         }
 
         if let Some(value) = keyval
@@ -143,48 +155,72 @@ fn grid_params(key_vals: Option<&KeyVal>) -> (String, SubgridParams, ExtraSubgri
             .or_else(|| keyval.ints.get("xorder"))
         {
             let value = usize::try_from(*value).unwrap();
-            subgrid_params.set_x_order(value);
-            extra.set_x2_order(value);
+            x1_order = value;
+            x2_order = value;
         }
 
         if let Some(value) = keyval.ints.get("x1_bins") {
-            subgrid_params.set_x_bins(usize::try_from(*value).unwrap());
+            x1_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x1_max") {
-            subgrid_params.set_x_max(*value);
+            x1_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x1_min") {
-            subgrid_params.set_x_min(*value);
+            x1_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x1_order") {
-            subgrid_params.set_x_order(usize::try_from(*value).unwrap());
+            x1_order = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.ints.get("x2_bins") {
-            extra.set_x2_bins(usize::try_from(*value).unwrap());
+            x2_nodes = usize::try_from(*value).unwrap();
         }
 
         if let Some(value) = keyval.doubles.get("x2_max") {
-            extra.set_x2_max(*value);
+            x2_max = *value;
         }
 
         if let Some(value) = keyval.doubles.get("x2_min") {
-            extra.set_x2_min(*value);
+            x2_min = *value;
         }
 
         if let Some(value) = keyval.ints.get("x2_order") {
-            extra.set_x2_order(usize::try_from(*value).unwrap());
-        }
-
-        if let Some(value) = keyval.strings.get("subgrid_type") {
-            value.to_str().unwrap().clone_into(&mut subgrid_type);
+            x2_order = usize::try_from(*value).unwrap();
         }
     }
 
-    (subgrid_type, subgrid_params, extra)
+    vec![
+        Interp::new(
+            q2_min,
+            q2_max,
+            q2_nodes,
+            q2_order,
+            ReweightMeth::NoReweight,
+            Map::ApplGridH0,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x1_min,
+            x1_max,
+            x1_nodes,
+            x1_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+        Interp::new(
+            x2_min,
+            x2_max,
+            x2_nodes,
+            x2_order,
+            reweight,
+            Map::ApplGridF2,
+            InterpMeth::Lagrange,
+        ),
+    ]
 }
 
 /// Type for defining a luminosity function.
@@ -202,7 +238,7 @@ pub struct Lumi(Vec<Channel>);
 pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
-    grid.bin_info().bins()
+    grid.bwfl().len()
 }
 
 /// Returns the number of dimensions of the bins this grid has.
@@ -215,7 +251,7 @@ pub unsafe extern "C" fn pineappl_grid_bin_count(grid: *const Grid) -> usize {
 pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usize {
     let grid = unsafe { &*grid };
 
-    grid.bin_info().dimensions()
+    grid.bwfl().dimensions()
 }
 
 /// Stores the bin sizes of `grid` in `bin_sizes`.
@@ -228,10 +264,10 @@ pub unsafe extern "C" fn pineappl_grid_bin_dimensions(grid: *const Grid) -> usiz
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_bin_normalizations(grid: *const Grid, bin_sizes: *mut f64) {
     let grid = unsafe { &*grid };
-    let sizes = grid.bin_info().normalizations();
-    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes, sizes.len()) };
+    let bins = grid.bwfl().len();
+    let bin_sizes = unsafe { slice::from_raw_parts_mut(bin_sizes, bins) };
 
-    for (i, size) in sizes.iter().copied().enumerate() {
+    for (i, size) in grid.bwfl().normalizations().into_iter().enumerate() {
         bin_sizes[i] = size;
     }
 }
@@ -251,10 +287,17 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_left(
     left: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let limits = grid.bin_info().left(dimension);
-    let left_limits = unsafe { slice::from_raw_parts_mut(left, limits.len()) };
+    let bins = grid.bwfl().len();
+    let result = unsafe { slice::from_raw_parts_mut(left, bins) };
 
-    left_limits.copy_from_slice(&limits);
+    for (lhs, rhs) in result.iter_mut().zip(
+        grid.bwfl()
+            .bins()
+            .iter()
+            .map(|bin| bin.limits()[dimension].0),
+    ) {
+        *lhs = rhs;
+    }
 }
 
 /// Write the right limits for the specified dimension into `right`.
@@ -272,10 +315,17 @@ pub unsafe extern "C" fn pineappl_grid_bin_limits_right(
     right: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let limits = grid.bin_info().right(dimension);
-    let right_limits = unsafe { slice::from_raw_parts_mut(right, limits.len()) };
+    let bins = grid.bwfl().len();
+    let result = unsafe { slice::from_raw_parts_mut(right, bins) };
 
-    right_limits.copy_from_slice(&limits);
+    for (lhs, rhs) in result.iter_mut().zip(
+        grid.bwfl()
+            .bins()
+            .iter()
+            .map(|bin| bin.limits()[dimension].1),
+    ) {
+        *lhs = rhs;
+    }
 }
 
 /// Returns a cloned object of `grid`.
@@ -292,6 +342,10 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_one`].
+///
+/// # Safety
+///
+/// See [`pineappl_grid_convolve_with_one`].
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_one` instead"
@@ -326,6 +380,10 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 }
 
 /// Wrapper for [`pineappl_grid_convolve_with_two`].
+///
+/// # Safety
+///
+/// See [`pineappl_grid_convolve_with_two`].
 #[deprecated(
     since = "0.8.0",
     note = "please use `pineappl_grid_convolve_with_two` instead"
@@ -397,27 +455,32 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf = |id, x, q2| xfx(id, x, q2, state);
+    let mut xfx = |id, x, q2| xfx(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_owned()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
     };
     let channel_mask = if channel_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
-    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_one(pdg_id, &mut pdf, &mut als);
+    let bins = grid.bwfl().len();
+    let results = unsafe { slice::from_raw_parts_mut(results, bins) };
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![Conv::new(ConvType::UnpolPDF, pdg_id)],
+        vec![&mut xfx],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
-        &order_mask,
+        &mut convolution_cache,
+        order_mask,
         &[],
-        &channel_mask,
-        &[(xi_ren, xi_fac)],
+        channel_mask,
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 
@@ -458,28 +521,36 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut pdf1 = |id, x, q2| xfx1(id, x, q2, state);
-    let mut pdf2 = |id, x, q2| xfx2(id, x, q2, state);
+    let mut xfx1 = |id, x, q2| xfx1(id, x, q2, state);
+    let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
     let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
     };
     let channel_mask = if channel_mask.is_null() {
-        vec![]
+        &[]
     } else {
-        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }.to_vec()
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
     };
-    let results = unsafe { slice::from_raw_parts_mut(results, grid.bin_info().bins()) };
-    let mut lumi_cache = LumiCache::with_two(pdg_id1, &mut pdf1, pdg_id2, &mut pdf2, &mut als);
+    let bins = grid.bwfl().len();
+    let results = unsafe { slice::from_raw_parts_mut(results, bins) };
+    let mut convolution_cache = ConvolutionCache::new(
+        vec![
+            Conv::new(ConvType::UnpolPDF, pdg_id1),
+            Conv::new(ConvType::UnpolPDF, pdg_id2),
+        ],
+        vec![&mut xfx1, &mut xfx2],
+        &mut als,
+    );
 
     results.copy_from_slice(&grid.convolve(
-        &mut lumi_cache,
-        &order_mask,
+        &mut convolution_cache,
+        order_mask,
         &[],
-        &channel_mask,
-        &[(xi_ren, xi_fac)],
+        channel_mask,
+        &[(xi_ren, xi_fac, 1.0)],
     ));
 }
 
@@ -523,7 +594,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+    grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
 }
 
 /// Fill `grid` for the given momentum fractions `x1` and `x2`, at the scale `q2` for the given
@@ -547,17 +618,9 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
     let grid = unsafe { &mut *grid };
     let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
 
-    grid.fill_all(
-        order,
-        observable,
-        &Ntuple {
-            x1,
-            x2,
-            q2,
-            weight: (),
-        },
-        weights,
-    );
+    for (channel, &weight) in weights.iter().enumerate() {
+        grid.fill(order, observable, channel, &[q2, x1, x2], weight);
+    }
 }
 
 /// Fill `grid` with as many points as indicated by `size`.
@@ -591,7 +654,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
     for (&x1, &x2, &q2, &order, &observable, &lumi, &weight) in
         izip!(x1, x2, q2, orders, observables, lumis, weights)
     {
-        grid.fill(order, observable, lumi, &Ntuple { x1, x2, q2, weight });
+        grid.fill(order, observable, lumi, &[q2, x1, x2], weight);
     }
 }
 
@@ -622,10 +685,10 @@ pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_par
     let order_params = unsafe { slice::from_raw_parts_mut(order_params, 4 * orders.len()) };
 
     for (i, order) in orders.iter().enumerate() {
-        order_params[4 * i] = order.alphas;
-        order_params[4 * i + 1] = order.alpha;
-        order_params[4 * i + 2] = order.logxir;
-        order_params[4 * i + 3] = order.logxif;
+        order_params[4 * i] = order.alphas.into();
+        order_params[4 * i + 1] = order.alpha.into();
+        order_params[4 * i + 2] = order.logxir.into();
+        order_params[4 * i + 3] = order.logxif.into();
     }
 }
 
@@ -681,40 +744,54 @@ pub unsafe extern "C" fn pineappl_grid_new(
     let orders: Vec<_> = order_params
         .chunks(4)
         .map(|s| Order {
-            alphas: s[0],
-            alpha: s[1],
-            logxir: s[2],
-            logxif: s[3],
+            // UNWRAP: there shouldn't be orders with exponents larger than 255
+            alphas: s[0].try_into().unwrap(),
+            alpha: s[1].try_into().unwrap(),
+            logxir: s[2].try_into().unwrap(),
+            logxif: s[3].try_into().unwrap(),
+            // this function doesn't support fragmentation scale logs
+            logxia: 0,
         })
         .collect();
 
     let key_vals = unsafe { key_vals.as_ref() };
-    let (subgrid_type, subgrid_params, extra) = grid_params(key_vals);
+    let interps = grid_interpolation_params(key_vals);
 
     let lumi = unsafe { &*lumi };
-    let mut grid = Box::new(
-        Grid::with_subgrid_type(
-            lumi.0.clone(),
-            orders,
-            unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-            subgrid_params,
-            extra,
-            &subgrid_type,
-        )
-        .unwrap(),
-    );
+
+    let mut convolutions = vec![Conv::new(ConvType::UnpolPDF, 2212); 2];
 
     if let Some(keyval) = key_vals {
         if let Some(value) = keyval.strings.get("initial_state_1") {
-            grid.set_key_value("initial_state_1", value.to_str().unwrap());
+            convolutions[0] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
 
         if let Some(value) = keyval.strings.get("initial_state_2") {
-            grid.set_key_value("initial_state_2", value.to_str().unwrap());
+            convolutions[1] =
+                Conv::new(ConvType::UnpolPDF, value.to_string_lossy().parse().unwrap());
         }
     }
 
-    grid
+    let bins = BinsWithFillLimits::from_fill_limits(
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
+
+    Box::new(Grid::new(
+        bins,
+        orders,
+        lumi.0.clone(),
+        PidBasis::Pdg,
+        convolutions,
+        interps,
+        vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+        Scales {
+            ren: ScaleFuncForm::Scale(0),
+            fac: ScaleFuncForm::Scale(0),
+            frg: ScaleFuncForm::NoScale,
+        },
+    ))
 }
 
 /// Read a `PineAPPL` grid from a file with name `filename`.
@@ -867,7 +944,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 ) {
     let grid = unsafe { &mut *grid };
 
-    grid.scale_by_order(alphas, alpha, logxir, logxif, global);
+    grid.scale_by_order(alphas, alpha, logxir, logxif, 1.0, global);
 }
 
 /// Return the value for `key` stored in `grid`. If `key` isn't found, `NULL` will be returned.
@@ -891,12 +968,22 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
     let key = unsafe { CStr::from_ptr(key) };
     let key = key.to_string_lossy();
 
-    CString::new(
-        grid.key_values()
-            .map_or("", |kv| kv.get(key.as_ref()).map_or("", String::as_str)),
-    )
-    .unwrap()
-    .into_raw()
+    // backwards compatibility
+    let index = match key.as_ref() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        return CString::new(grid.convolutions()[index].pid().to_string())
+            .unwrap()
+            .into_raw();
+    }
+
+    CString::new(grid.metadata().get(key.as_ref()).map_or("", String::as_str))
+        .unwrap()
+        .into_raw()
 }
 
 /// Sets an internal key-value pair for the grid.
@@ -917,13 +1004,25 @@ pub unsafe extern "C" fn pineappl_grid_set_key_value(
     value: *const c_char,
 ) {
     let grid = unsafe { &mut *grid };
-    let key = unsafe { CStr::from_ptr(key) };
-    let value = unsafe { CStr::from_ptr(value) };
+    let key = unsafe { CStr::from_ptr(key) }
+        .to_string_lossy()
+        .into_owned();
+    let value = unsafe { CStr::from_ptr(value) }
+        .to_string_lossy()
+        .into_owned();
 
-    grid.set_key_value(
-        key.to_string_lossy().as_ref(),
-        value.to_string_lossy().as_ref(),
-    );
+    // backwards compatibility
+    let index = match key.as_str() {
+        "initial_state_1" => Some(0),
+        "initial_state_2" => Some(1),
+        _ => None,
+    };
+
+    if let Some(index) = index {
+        grid.convolutions_mut()[index] = Conv::new(ConvType::UnpolPDF, value.parse().unwrap());
+    }
+
+    grid.metadata_mut().insert(key, value);
 }
 
 /// Sets a remapper for the grid. This can be used to 'upgrade' one-dimensional bin limits to
@@ -947,20 +1046,30 @@ pub unsafe extern "C" fn pineappl_grid_set_remapper(
     limits: *const f64,
 ) {
     let grid = unsafe { &mut *grid };
-    let bins = grid.bin_info().bins();
+    let bins = grid.bwfl().len();
     let normalizations = unsafe { slice::from_raw_parts(normalizations, bins) };
     let limits = unsafe { slice::from_raw_parts(limits, 2 * dimensions * bins) };
 
-    grid.set_remapper(
-        BinRemapper::new(
-            normalizations.to_vec(),
-            limits
-                .chunks_exact(2)
-                .map(|chunk| (chunk[0], chunk[1]))
-                .collect(),
-        )
-        .unwrap(),
+    let new_bins: Vec<_> = limits
+        .chunks_exact(2 * dimensions)
+        .zip(normalizations)
+        .map(|(limits, &normalization)| {
+            Bin::new(
+                limits
+                    .chunks_exact(2)
+                    .map(|limits| (limits[0], limits[1]))
+                    .collect(),
+                normalization,
+            )
+        })
+        .collect();
+
+    grid.set_bwfl(
+        BinsWithFillLimits::new(new_bins, grid.bwfl().fill_limits().to_vec())
+            // UNWRAP: error handling in the CAPI is to abort
+            .unwrap(),
     )
+    // UNWRAP: error handling in the CAPI is to abort
     .unwrap();
 }
 
@@ -984,7 +1093,7 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
     let path = Path::new(filename.as_ref());
     let writer = File::create(path).unwrap();
 
-    if path.extension().map_or(false, |ext| ext == "lz4") {
+    if path.extension().is_some_and(|ext| ext == "lz4") {
         grid.write_lz4(writer).unwrap();
     } else {
         grid.write(writer).unwrap();
@@ -1017,7 +1126,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
         pdg_id_pairs
             .chunks(2)
             .zip(factors)
-            .map(|x| (x.0[0], x.0[1], x.1))
+            .map(|x| (vec![x.0[0], x.0[1]], x.1))
             .collect(),
     ));
 }
@@ -1076,12 +1185,12 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
     entry
         .iter()
-        .flat_map(|(id1, id2, _)| vec![id1, id2])
+        .flat_map(|(pids, _)| pids)
         .zip(pdg_ids.iter_mut())
         .for_each(|(from, to)| *to = *from);
     entry
         .iter()
-        .map(|(_, _, factor)| factor)
+        .map(|(_, factor)| factor)
         .zip(factors.iter_mut())
         .for_each(|(from, to)| *to = *from);
 }
@@ -1275,4 +1384,450 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
     if !string.is_null() {
         mem::drop(unsafe { CString::from_raw(string) });
     }
+}
+
+// Here starts the generalized C-API interface.
+
+/// Type for defining the interpolation object
+#[repr(C)]
+pub struct InterpTuples {
+    node_min: f64,
+    node_max: f64,
+    nb_nodes: usize,
+    interp_degree: usize,
+    reweighting_method: ReweightMeth,
+    mapping: Map,
+    interpolation_method: InterpMeth,
+}
+
+#[must_use]
+fn construct_interpolation(interp: &InterpTuples) -> Interp {
+    Interp::new(
+        interp.node_min,
+        interp.node_max,
+        interp.nb_nodes,
+        interp.interp_degree,
+        interp.reweighting_method,
+        interp.mapping,
+        interp.interpolation_method,
+    )
+}
+
+/// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
+/// should be deleted using `pineappl_channels_delete`.
+#[no_mangle]
+#[must_use]
+pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
+    Box::default()
+}
+
+/// Adds a generalized linear combination of initial states to the Luminosity.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new`.
+/// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
+/// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
+/// parton distributions involved, while `combinations` represent the number of different
+/// channel combinations.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_add(
+    channels: *mut Lumi,
+    combinations: usize,
+    nb_convolutions: usize,
+    pdg_id_combinations: *const i32,
+    factors: *const f64,
+) {
+    let channels = unsafe { &mut *channels };
+    let pdg_id_pairs =
+        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_convolutions * combinations) };
+    let factors = if factors.is_null() {
+        vec![1.0; combinations]
+    } else {
+        unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
+    };
+
+    channels.0.push(Channel::new(
+        pdg_id_pairs
+            .chunks(nb_convolutions)
+            .zip(factors)
+            .map(|x| ((0..nb_convolutions).map(|i| x.0[i]).collect(), x.1))
+            .collect(),
+    ));
+}
+
+/// An exact duplicate of `pineappl_grid_lumi` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Lumi> {
+    let grid = unsafe { &*grid };
+
+    Box::new(Lumi(grid.channels().to_vec()))
+}
+
+/// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
+/// `pineappl_grid_channels`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_count(channels: *const Lumi) -> usize {
+    let channels = unsafe { &*channels };
+
+    channels.0.len()
+}
+
+/// An exact duplicate of `pineappl_lumi_combinations` to make naming (lumi -> channel) consistent.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
+/// `pineappl_grid_channels`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_combinations(
+    channels: *const Lumi,
+    entry: usize,
+) -> usize {
+    let channels = unsafe { &*channels };
+
+    channels.0[entry].entry().len()
+}
+
+/// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Lumi>>) {}
+
+/// Creates a new and empty grid that can accept any number of convolutions. The creation requires
+/// the following different sets of parameters:
+/// - The PID basis `pid_basis`: The basis onto which the partons are mapped, can be `Evol` or `Pdg`.
+/// - The channel function `channels`: A pointer to the luminosity function that specifies how the
+///   cross section should be reconstructed.
+/// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
+///   different perturbative orders, specified by `orders`. The array `order_params` stores the
+///   exponent of each perturbative order and must contain 4 integers denoting the exponent of the
+///   string coupling, of the electromagnetic coupling, of the logarithm of the renormalization
+///   scale, and finally of the logarithm of the factorization scale.
+/// - The observable definition `bins` and `bin_limits`. Each `PineAPPL` grid can store observables
+///   from a one-dimensional distribution. To this end `bins` specifies how many observables are
+///   stored and `bin_limits` must contain `bins + 1` entries denoting the left and right limit for
+///   each bin.
+/// - The types of convolutions `convolution_types` and their numbers `nb_convolutions`: specify how
+///   how many different convolutions are involved and their types - which are a cross product of the
+///   the following combination: (unpolarized, polarized) ⊗ (PDF, Fragmentation Function).
+/// - The PDG IDs of the involved initial- or final-state hadrons `pdg_ids`.
+/// - The types of kinematics `kinematics`: specify the various kinematics required to construct the
+///   Grid. These can be the energy scales and the various momentum fractions.
+/// - The specifications of the interpolation methods `interpolations`: provide the specifications on
+///   how each of the kinematics should be interpolated.
+/// - The unphysical renormalization, factorization, and fragmentation scales: `mu_scales`. Its entries
+///   have to be ordered following {ren, fac, frg}. The mapping is as follows:
+///   `0` -> `ScaleFuncForm::NoScale`, ..., `n` -> `ScaleFuncForm::Scale(n - 1)`.
+///
+/// # Safety
+/// TODO
+///
+/// # Panics
+/// TODO
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn pineappl_grid_new2(
+    pid_basis: PidBasis,
+    channels: *const Lumi,
+    orders: usize,
+    order_params: *const u8,
+    bins: usize,
+    bin_limits: *const f64,
+    nb_convolutions: usize,
+    convolution_types: *const ConvType,
+    pdg_ids: *const c_int,
+    kinematics: *const Kinematics,
+    interpolations: *const InterpTuples,
+    mu_scales: *const usize,
+) -> Box<Grid> {
+    // Luminosity channels
+    let channels = unsafe { &*channels };
+
+    // Perturbative orders
+    let order_params = unsafe { slice::from_raw_parts(order_params, 5 * orders) };
+    let orders: Vec<_> = order_params
+        .chunks(5)
+        .map(|s| Order {
+            alphas: s[0],
+            alpha: s[1],
+            logxir: s[2],
+            logxif: s[3],
+            logxia: s[4],
+        })
+        .collect();
+
+    let bins = BinsWithFillLimits::from_fill_limits(
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
+
+    // Construct the convolution objects
+    let convolution_types =
+        unsafe { slice::from_raw_parts(convolution_types, nb_convolutions).to_vec() };
+    let pdg_ids = unsafe { slice::from_raw_parts(pdg_ids, nb_convolutions).to_vec() };
+    let convolutions = izip!(convolution_types.iter(), pdg_ids.iter())
+        .map(|(&conv, &pdg_value)| Conv::new(conv, pdg_value))
+        .collect();
+
+    // Grid interpolations
+    let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
+    let interp_vecs: Vec<Interp> = interp_slices.iter().map(construct_interpolation).collect();
+
+    // Construct the kinematic variables
+    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()).to_vec() };
+
+    // Scales. An array containing the values of {ren, fac, frg}
+    let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
+    let mu_scales_vec: Vec<ScaleFuncForm> = mu_scales
+        .iter()
+        .map(|&scale| {
+            if scale == 0 {
+                ScaleFuncForm::NoScale
+            } else {
+                ScaleFuncForm::Scale(scale - 1)
+            }
+        })
+        .collect();
+
+    Box::new(Grid::new(
+        bins,
+        orders,
+        channels.0.clone(),
+        pid_basis,
+        convolutions,
+        interp_vecs,
+        kinematics,
+        Scales {
+            ren: mu_scales_vec[0].clone(),
+            fac: mu_scales_vec[1].clone(),
+            frg: mu_scales_vec[2].clone(),
+        },
+    ))
+}
+
+/// Similar to  `pineappl_grid_fill` but accepts any given momentum fractions {`x1`, ...,`xn`} at
+/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill2(
+    grid: *mut Grid,
+    order: usize,
+    observable: f64,
+    channel: usize,
+    ntuple: *const f64,
+    weight: f64,
+) {
+    let grid = unsafe { &mut *grid };
+    let ntuple = unsafe { slice::from_raw_parts(ntuple, grid.kinematics().len()) };
+
+    grid.fill(order, observable, channel, ntuple, weight);
+}
+
+/// Similar to  `pineappl_grid_fill_all` but accepts any given momentum fractions {`x1`, ...,`xn`} at
+/// various energy scalesfor the given value of the `order`, `observable`, and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill_all2(
+    grid: *mut Grid,
+    order: usize,
+    observable: f64,
+    ntuple: *const f64,
+    weights: *const f64,
+) {
+    let grid = unsafe { &mut *grid };
+    let ntuple = unsafe { slice::from_raw_parts(ntuple, grid.kinematics().len()) };
+    let weights = unsafe { slice::from_raw_parts(weights, grid.channels().len()) };
+
+    for (channel, &weight) in weights.iter().enumerate() {
+        grid.fill(order, observable, channel, ntuple, weight);
+    }
+}
+
+/// Similar to  `pineappl_grid_fill_array` but accepts any given momentum fractions
+/// {`x1`, ...,`xn`} at various energy scalesfor the given value of the `order`, `observable`,
+/// and `lumi` with `weight`.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. Additionally, all remaining pointer parameters must be
+/// arrays as long as specified by `size`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_fill_array2(
+    grid: *mut Grid,
+    orders: *const usize,
+    observables: *const f64,
+    ntuples: *const f64,
+    channels: *const usize,
+    weights: *const f64,
+    size: usize,
+) {
+    let grid = unsafe { &mut *grid };
+    let orders = unsafe { slice::from_raw_parts(orders, size) };
+    let observables = unsafe { slice::from_raw_parts(observables, size) };
+    let channels = unsafe { slice::from_raw_parts(channels, size) };
+    let weights = unsafe { slice::from_raw_parts(weights, size) };
+
+    // Convert the 1D slice into a 2D array
+    let ntuples = unsafe { slice::from_raw_parts(ntuples, size * grid.kinematics().len()) };
+    let ntuples_2d: Vec<&[f64]> = ntuples.chunks(grid.kinematics().len()).collect();
+
+    for (ntuple, &order, &observable, &channel, &weight) in
+        izip!(ntuples_2d, orders, observables, channels, weights)
+    {
+        grid.fill(order, observable, channel, ntuple, weight);
+    }
+}
+
+/// Similar to `pineappl_lumi_entry` but for luminosity channels that involve 3 partons, ie.
+/// in the case of three convolutions.
+///
+/// # Safety
+///
+/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
+/// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
+/// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
+/// long.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_channels_entry(
+    channels: *const Lumi,
+    entry: usize,
+    pdg_ids: *mut i32,
+    factors: *mut f64,
+) {
+    let channels = unsafe { &*channels };
+    let entry = channels.0[entry].entry();
+    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, 3 * entry.len()) };
+    let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
+
+    entry
+        .iter()
+        .flat_map(|(pids, _)| pids)
+        .zip(pdg_ids.iter_mut())
+        .for_each(|(from, to)| *to = *from);
+    entry
+        .iter()
+        .map(|(_, factor)| factor)
+        .zip(factors.iter_mut())
+        .for_each(|(from, to)| *to = *from);
+}
+
+/// An extension of `pineappl_grid_order_params` that accounts for the order of the fragmentation
+/// logs.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The pointer `order_params` must point to an array as large
+/// as four times the number of orders in `grid`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_params: *mut u32) {
+    let grid = unsafe { &*grid };
+    let orders = grid.orders();
+    let order_params = unsafe { slice::from_raw_parts_mut(order_params, 5 * orders.len()) };
+
+    for (i, order) in orders.iter().enumerate() {
+        order_params[5 * i] = order.alphas.into();
+        order_params[5 * i + 1] = order.alpha.into();
+        order_params[5 * i + 2] = order.logxir.into();
+        order_params[5 * i + 3] = order.logxif.into();
+        order_params[5 * i + 4] = order.logxia.into();
+    }
+}
+
+/// A generalization of the convolution function.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
+/// must either be null pointers or point to arrays that are as long as `grid` has orders and
+/// channels, respectively. Finally, `results` must be as long as `grid` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_convolve(
+    grid: *const Grid,
+    xfxs: *const extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
+    state: *mut c_void,
+    order_mask: *const bool,
+    channel_mask: *const bool,
+    bin_indices: *const usize,
+    nb_scales: usize,
+    mu_scales: *const f64,
+    results: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    let channel_mask = if channel_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(channel_mask, grid.channels().len()) }
+    };
+
+    let bin_indices = if bin_indices.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(bin_indices, grid.bwfl().len()) }
+    };
+
+    // Construct the alphas and PDFs functions
+    let mut als = |q2| alphas(q2, state);
+
+    let mut xfxs = unsafe { slice::from_raw_parts(xfxs, grid.convolutions().len()).to_vec() };
+    let mut xfx_funcs: Vec<_> = xfxs
+        .iter_mut()
+        .map(|xfx| move |id, x, q2| xfx(id, x, q2, state))
+        .collect();
+
+    // Construct the Convolution cache
+    let mut convolution_cache = ConvolutionCache::new(
+        grid.convolutions().to_vec(),
+        xfx_funcs
+            .iter_mut()
+            .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+            .collect(),
+        &mut als,
+    );
+
+    // The factorization, renormalization, and fragmentation scale factors
+    let mu_scales = if mu_scales.is_null() {
+        &[(1.0, 1.0, 1.0)]
+    } else {
+        unsafe { slice::from_raw_parts(mu_scales.cast::<(f64, f64, f64)>(), nb_scales) }
+    };
+
+    let results = unsafe { slice::from_raw_parts_mut(results, grid.bwfl().len()) };
+
+    results.copy_from_slice(&grid.convolve(
+        &mut convolution_cache,
+        order_mask,
+        bin_indices,
+        channel_mask,
+        mu_scales,
+    ));
 }

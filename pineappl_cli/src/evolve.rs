@@ -20,6 +20,7 @@ mod eko {
     use ndarray::iter::AxisIter;
     use ndarray::{Array4, Array5, Axis, CowArray, Ix4};
     use ndarray_npy::{NpzReader, ReadNpyExt};
+    use pineappl::convolutions::ConvType;
     use pineappl::evolution::OperatorSliceInfo;
     use pineappl::pids::{self, PidBasis};
     use serde::Deserialize;
@@ -74,8 +75,15 @@ mod eko {
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
 
     #[derive(Deserialize)]
+    struct OperatorConfigsV1 {
+        polarized: bool,
+        time_like: bool,
+    }
+
+    #[derive(Deserialize)]
     struct OperatorV1 {
         mu0: f64,
+        configs: OperatorConfigsV1,
     }
 
     #[derive(Deserialize)]
@@ -162,6 +170,7 @@ mod eko {
                     fac1: 0.0,
                     pids1: metadata.targetpids,
                     x1: metadata.targetgrid,
+                    conv_type: ConvType::UnpolPDF,
                 },
                 operator,
             })
@@ -240,6 +249,7 @@ mod eko {
                         .rotations
                         .targetgrid
                         .unwrap_or(metadata.rotations.xgrid),
+                    conv_type: ConvType::UnpolPDF,
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -306,6 +316,10 @@ mod eko {
                         .bases
                         .targetgrid
                         .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                    conv_type: ConvType::new(
+                        operator.configs.polarized,
+                        operator.configs.time_like,
+                    ),
                 },
                 archive: Archive::new(File::open(eko_path)?),
             })
@@ -426,14 +440,13 @@ fn evolve_grid(
     grid: &Grid,
     ekos: &[&Path],
     use_alphas_from: &Pdf,
-    orders: &[(u32, u32)],
+    orders: &[(u8, u8)],
     xir: f64,
     xif: f64,
-    use_old_evolve: bool,
+    xia: f64,
 ) -> Result<FkTable> {
-    use anyhow::bail;
     use eko::EkoSlices;
-    use pineappl::evolution::{AlphasTable, OperatorInfo};
+    use pineappl::evolution::AlphasTable;
 
     let order_mask: Vec<_> = grid
         .orders()
@@ -450,54 +463,10 @@ fn evolve_grid(
         .iter()
         .map(|eko| EkoSlices::new(eko))
         .collect::<Result<_, _>>()?;
+    let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
 
-    if use_old_evolve {
-        assert_eq!(eko_slices.len(), 1);
-
-        if let EkoSlices::V0 {
-            fac1,
-            info,
-            operator,
-        } = eko_slices.remove(0)
-        {
-            let op_info = OperatorInfo {
-                fac0: info.fac0,
-                pids0: info.pids0.clone(),
-                x0: info.x0.clone(),
-                fac1,
-                pids1: info.pids1.clone(),
-                x1: info.x1.clone(),
-                ren1: alphas_table.ren1,
-                alphas: alphas_table.alphas,
-                xir,
-                xif,
-                pid_basis: info.pid_basis,
-            };
-
-            #[allow(deprecated)]
-            Ok(grid.evolve(operator.view(), &op_info, &order_mask)?)
-        } else {
-            bail!("`--use-old-evolve` can only be used with the old EKO format (`V0`)")
-        }
-    } else {
-        match eko_slices.as_mut_slice() {
-            [eko] => {
-                Ok(grid.evolve_with_slice_iter(eko, &order_mask, (xir, xif), &alphas_table)?)
-            }
-            [eko_a, eko_b] => Ok(grid.evolve_with_slice_iter2(
-                eko_a,
-                eko_b,
-                &order_mask,
-                (xir, xif),
-                &alphas_table,
-            )?),
-            _ => unimplemented!(
-                "evolution with {} EKOs is not implemented",
-                eko_slices.len()
-            ),
-        }
-    }
+    Ok(grid.evolve(eko_slices, &order_mask, (xir, xif, xia), &alphas_table)?)
 }
 
 #[cfg(not(feature = "evolve"))]
@@ -505,10 +474,10 @@ fn evolve_grid(
     _: &Grid,
     _: &[&Path],
     _: &Pdf,
-    _: &[(u32, u32)],
+    _: &[(u8, u8)],
     _: f64,
     _: f64,
-    _: bool,
+    _: f64,
 ) -> Result<FkTable> {
     Err(anyhow!(
         "you need to install `pineappl` with feature `evolve`"
@@ -549,15 +518,16 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Rescale the renormalization scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xir: f64,
     /// Rescale the factorization scale with this factor.
     #[arg(default_value_t = 1.0, long)]
     xif: f64,
-    #[arg(hide = true, long)]
-    use_old_evolve: bool,
+    /// Rescale the fragmentation scale with this factor.
+    #[arg(default_value_t = 1.0, long)]
+    xia: f64,
 }
 
 impl Subcommand for Opts {
@@ -569,10 +539,11 @@ impl Subcommand for Opts {
         let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &self.orders,
             &[],
             &[],
-            &[(self.xir, self.xif)],
+            &[(self.xir, self.xif, self.xia)],
             ConvoluteMode::Normal,
             cfg,
         );
@@ -587,16 +558,17 @@ impl Subcommand for Opts {
             &self.orders,
             self.xir,
             self.xif,
-            self.use_old_evolve,
+            self.xia,
         )?;
 
         let evolved_results = helpers::convolve_scales(
             fk_table.grid(),
             &mut conv_funs,
+            &self.conv_funs.conv_types,
             &[],
             &[],
             &[],
-            &[(1.0, 1.0)],
+            &[(1.0, 1.0, 1.0)],
             ConvoluteMode::Normal,
             cfg,
         );
@@ -614,7 +586,9 @@ impl Subcommand for Opts {
             .zip(evolved_results.into_iter())
             .enumerate()
         {
-            // catches the case where both results are zero
+            // ALLOW: here we really need an exact comparison
+            // TODO: change allow to `expect` if MSRV >= 1.81.0
+            #[allow(clippy::float_cmp)]
             let rel_diff = if one == two { 0.0 } else { two / one - 1.0 };
 
             if rel_diff.abs() > self.accuracy {

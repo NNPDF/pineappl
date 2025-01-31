@@ -7,16 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
+have an arbitrary number of convolutions in the initial (PDFs with a
+factorization scale) and in the final (FFs with a fragmentation scale) state.
+This required a change in the file format that is used to write out grids, but
+the old file format can still be read with this new version.
+
 ### Added
 
 - added new method `Grid::delete_orders` and the corresponding switch
   `--delete-orders` in the subcommand `write` of the CLI
 - added the switches `--xir` and `--xif`, which allow varying the
   renormalization and factorization scales with a custom factor in the
-  subcommand `convolve`.
+  subcommand `convolve`
+- the CLI now allows the user to mark convolution functions as polarized
+  by adding `+p` to its LHAPDF name, as a fragmentation function by adding
+  `+f` and both by adding `+pf` or `+fp`
 
 ### Changed
 
+- the macro `channel!` now accepts a channel specification that is of the
+  format `factor * (pid, ..) + ...`
 - Python API: dropped top-level Python interface layer
 - Python API: renamed `lumi` to `channel` in PyO3 Python interface. This
   concerns 1) the argument names of `convolute_with_one` and similar functions;
@@ -33,12 +44,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - by default `pineappl plot` no longer shows a channel breakdown in the panel
   with absolute PDF predictions. However, this feature can be enabled with via
   a new array added at the start of the script
+- raised MSRV to 1.80.1
+- changed the order of elements in `Grid::fill` of the parameter `ntuple` to
+  reflect the ordering of `kinematics` given to `Grid::new`
+- renamed the following switches of `pineappl write`: `--remap` to
+  `--set-bins`, `--remap-norm-ignore` to `--div-bin-norm-dims` and
+  `--remap-norm` to `--mul-bin-norm`. These names should reflect the
+  corresponding operations
 
 ### Removed
 
 - Python API: removed `pineappl.grid.Grid.create()` and
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
+- removed the constructor `Grid::with_subgrid_type`
+
+## [0.8.7] - 22/01/2025
+
+### Added
+
+- added support for Python 3.13 to the Python interface
 
 ## [0.8.6] - 18/10/2024
 
@@ -106,8 +131,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added `PidBasis::charge_conjugate` and `PidBasis::guess`
 - added `Grid::set_pid_basis` method
 - added `Grid::subgrids` and `Grid::subgrids_mut` methods
-- added new switch `conv_fun_uncert_from` to subcommand `plot` to allow
-  choosing with convolution function uncertainty should be plotted
+- added new switch `--conv-fun-uncert-from` to subcommand `plot` to allow
+  choosing which convolution function uncertainty should be plotted
 
 ### Changed
 
@@ -711,6 +736,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - first release
 
 [Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/NNPDF/pineappl/compare/v0.8.3...v0.8.4

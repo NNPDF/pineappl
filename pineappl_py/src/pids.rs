@@ -4,8 +4,8 @@ use pineappl::pids::PidBasis;
 use pyo3::prelude::*;
 
 /// PyO3 wrapper to :rustdoc:`pineappl::pids::PidBasis <pids/enum.PidBasis.html>`.
-#[pyclass(name = "PidBasis")]
-#[derive(Clone)]
+#[pyclass(eq, eq_int, name = "PidBasis")]
+#[derive(Clone, PartialEq)]
 pub enum PyPidBasis {
     /// PDG Monte Carlo IDs.
     Pdg,
@@ -23,6 +23,10 @@ impl From<PyPidBasis> for PidBasis {
 }
 
 /// Register submodule in parent.
+///
+/// # Errors
+///
+/// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
     let m = PyModule::new_bound(parent_module.py(), "pids")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "PIDs interface.")?;

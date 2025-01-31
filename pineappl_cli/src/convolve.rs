@@ -37,13 +37,16 @@ pub struct Opts {
         value_delimiter = ',',
         value_parser = helpers::parse_order
     )]
-    orders: Vec<(u32, u32)>,
+    orders: Vec<(u8, u8)>,
     /// Set the variation of the renormalization scale.
     #[arg(default_value = "1.0", long, num_args = 1)]
     xir: f64,
     /// Set the variation of the factorization scale.
     #[arg(default_value = "1.0", long, num_args = 1)]
     xif: f64,
+    /// Set the variation of the fragmentation scale.
+    #[arg(default_value = "1.0", long, num_args = 1)]
+    xia: f64,
     /// Set the number of fractional digits shown for absolute numbers.
     #[arg(default_value_t = 7, long, value_name = "ABS")]
     digits_abs: usize,
@@ -61,10 +64,11 @@ impl Subcommand for Opts {
         let results = helpers::convolve_scales(
             &grid,
             &mut conv_funs_0,
+            &self.conv_funs[0].conv_types,
             &self.orders,
             &bins,
             &[],
-            &[(self.xir, self.xif)],
+            &[(self.xir, self.xif, self.xia)],
             if self.integrated {
                 ConvoluteMode::Integrated
             } else {
@@ -86,10 +90,12 @@ impl Subcommand for Opts {
         let other_results: Vec<_> = self.conv_funs[1..]
             .iter()
             .flat_map(|conv_funs| {
+                let conv_types = &conv_funs.conv_types;
                 let mut conv_funs = helpers::create_conv_funs(conv_funs).unwrap();
                 helpers::convolve(
                     &grid,
                     &mut conv_funs,
+                    conv_types,
                     &self.orders,
                     &bins,
                     &[],

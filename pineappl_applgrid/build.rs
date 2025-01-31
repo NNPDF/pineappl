@@ -86,7 +86,7 @@ fn main() {
     let std = cxx_flags
         .iter()
         .filter_map(|token| token.strip_prefix("-std="))
-        .last();
+        .next_back();
 
     let libs = String::from_utf8(
         Command::new("applgrid-config")
