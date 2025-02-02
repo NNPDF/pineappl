@@ -58,14 +58,14 @@ impl PyConv {
     /// Constructor.
     #[new]
     #[must_use]
-    pub fn new_conv(conv_type: PyRef<PyConvType>, pid: i32) -> Self {
-        Self::new(Conv::new(conv_type.convtype, pid))
+    pub fn new_conv(convolution_types: PyRef<PyConvType>, pid: i32) -> Self {
+        Self::new(Conv::new(convolution_types.convtype, pid))
     }
 
     /// Return the convolution type of this convolution.
     #[getter]
     #[must_use]
-    pub const fn conv_type(&self) -> PyConvType {
+    pub const fn convolution_types(&self) -> PyConvType {
         PyConvType {
             convtype: self.conv.conv_type(),
         }

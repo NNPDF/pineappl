@@ -36,6 +36,7 @@ impl PyBin {
     /// -------
     /// int:
     ///     dimension on which the observable is defined
+    #[getter]
     #[must_use]
     pub fn dimensions(&self) -> usize {
         self.bin.dimensions()
@@ -47,6 +48,7 @@ impl PyBin {
     /// -------
     /// float:
     ///     normalization factor
+    #[getter]
     #[must_use]
     pub const fn normalization(&self) -> f64 {
         self.bin.normalization()
@@ -58,6 +60,7 @@ impl PyBin {
     /// -------
     /// list(tuple(float, float)):
     ///     edges of the current bin
+    #[getter]
     #[must_use]
     pub fn bin_limits(&self) -> Vec<(f64, f64)> {
         self.bin.limits().to_vec()

@@ -34,7 +34,7 @@ impl PyOperatorSliceInfo {
     ///     x-grid at the final scale
     /// pid_basis : PyPidBasis
     ///     flavor basis reprentation at the initial scale
-    /// conv_type : PyConvType
+    /// convolutions_types : PyConvType
     ///     the type of convolution required
     #[new]
     #[must_use]
@@ -46,7 +46,7 @@ impl PyOperatorSliceInfo {
         pids1: Vec<i32>,
         x1: Vec<f64>,
         pid_basis: PyPidBasis,
-        conv_type: PyRef<PyConvType>,
+        convolution_types: PyRef<PyConvType>,
     ) -> Self {
         Self {
             info: OperatorSliceInfo {
@@ -57,7 +57,7 @@ impl PyOperatorSliceInfo {
                 pids1,
                 x1,
                 pid_basis: pid_basis.into(),
-                conv_type: conv_type.convtype,
+                conv_type: convolution_types.convtype,
             },
         }
     }

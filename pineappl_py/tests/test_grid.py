@@ -17,7 +17,7 @@ from pineappl.pids import PidBasis
 # Construct the type of convolutions and the convolution object
 # We assume unpolarized protons in the initial state
 TYPECONV = ConvType(polarized=False, time_like=False)
-CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
+CONVOBJECT = Conv(convolution_types=TYPECONV, pid=2212)
 
 # Construct the Channel and Order objetcs
 UP_ANTIUP_CHANNEL = [([2, -2], 0.1)]
@@ -319,7 +319,7 @@ class TestGrid:
         # The following grid has UNPOLARIZED proton, ie should be
         # `polarized=False`.
         h = ConvType(polarized=True, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
 
         with pytest.raises(BaseException) as err_func:
             g.convolve(
@@ -376,7 +376,7 @@ class TestGrid:
         # initial state hadrons are both Unpolarized Proton, we can pass ONE
         # single convolution type and ONE singe PDF set.
         h = ConvType(polarized=False, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
 
         np.testing.assert_allclose(
             g.convolve(
@@ -408,21 +408,21 @@ class TestGrid:
         # Check the Grid convolutions - can be used to construct `grid.convolve`
         convolutions = g.convolutions
         assert len(convolutions) == 2
-        assert convolutions[0].conv_type.polarized
-        assert not convolutions[0].conv_type.time_like
-        assert not convolutions[1].conv_type.polarized
-        assert not convolutions[1].conv_type.time_like
+        assert convolutions[0].convolution_types.polarized
+        assert not convolutions[0].convolution_types.time_like
+        assert not convolutions[1].convolution_types.polarized
+        assert not convolutions[1].convolution_types.time_like
         # Check that the initial states are protons
         assert convolutions[0].pid == 2212
         assert convolutions[1].pid == 2212
 
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)
-        h1_conv = Conv(conv_type=h1, pid=2212)
+        h1_conv = Conv(convolution_types=h1, pid=2212)
 
         # Convolution object of the 2nd hadron - Unpolarized
         h2 = ConvType(polarized=False, time_like=False)
-        h2_conv = Conv(conv_type=h2, pid=2212)
+        h2_conv = Conv(convolution_types=h2, pid=2212)
 
         np.testing.assert_allclose(
             g.convolve(
@@ -492,7 +492,7 @@ class TestGrid:
 
         # Define the convolutions
         convtypes = [ConvType(polarized=p, time_like=t) for p, t in rbools]
-        convolutions = [Conv(conv_type=c, pid=2212) for c in convtypes]
+        convolutions = [Conv(convolution_types=c, pid=2212) for c in convtypes]
 
         # Define the channel combinations
         pids = rndgen.choice(
@@ -553,11 +553,11 @@ class TestGrid:
         # Define the convolution types objects
         h1 = ConvType(polarized=True, time_like=False)
         h2 = ConvType(polarized=False, time_like=False)
-        conv_type = [h1, h2]
+        convolution_types = [h1, h2]
 
         input_xgrid = np.geomspace(2e-7, 1, num=50)
         slices = []
-        for conv_id, cvtype in enumerate(conv_type):
+        for conv_id, cvtype in enumerate(convolution_types):
             sub_slices = []
             for q2 in evinfo.fac1:
                 info = OperatorSliceInfo(
@@ -568,7 +568,7 @@ class TestGrid:
                     pids0=EVOL_BASIS_PIDS,
                     pids1=TARGET_PIDS,
                     pid_basis=PidBasis.Evol,
-                    conv_type=cvtype,
+                    convolution_types=cvtype,
                 )
                 op = np.random.uniform(
                     low=1,
