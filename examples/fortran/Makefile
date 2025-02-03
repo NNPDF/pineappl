@@ -1,5 +1,5 @@
 FC = gfortran
-FFLAGS = -Wall -Wextra -O0 -g
+FFLAGS = -Wall -Wextra -O0 -g -ffree-line-length-none
 PINEAPPL_LIBS != pkg-config pineappl_capi --libs
 LHAPDF_LIBS != pkg-config lhapdf --libs
 
