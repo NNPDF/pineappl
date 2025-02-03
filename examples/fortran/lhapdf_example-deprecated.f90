@@ -30,7 +30,7 @@ program lhapdf_example
     ! calling pineappl_grid_convolve without any flags
     xfx = pineappl_xfx(xfx_test1)
     alphas = pineappl_alphas(alphas_test1)
-    write(*, *) "first pineappl_grid_convolve_with_one: "
+    write(*, *) "first pineappl_grid_convolve_with_one:"
     write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
         [.true.], [.true.], 1.0_dp, 1.0_dp)
 
@@ -38,7 +38,7 @@ program lhapdf_example
     xfx = pineappl_xfx(xfx_test2)
     alphas = pineappl_alphas(alphas_test2)
     flags = [1, 0]
-    write(*, *) "second pineappl_grid_convolve_with_one: "
+    write(*, *) "second pineappl_grid_convolve_with_one:"
     write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
         [.true.], [.true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
 

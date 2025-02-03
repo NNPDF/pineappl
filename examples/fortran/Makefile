@@ -3,17 +3,37 @@ FFLAGS = -Wall -Wextra -O0 -g
 PINEAPPL_LIBS != pkg-config pineappl_capi --libs
 LHAPDF_LIBS != pkg-config lhapdf --libs
 
-%.o: %.f90
-	$(FC) $(FFLAGS) -c $<
+PROGRAMS = \
+	dyaa-deprecated \
+	test \
+	test-deprecated \
+	lhapdf_example \
+	lhapdf_example-deprecated
 
-all: pineappl.o dyaa-deprecated.o test.o test-deprecated.o
-	$(FC) $(FFLAGS) dyaa-deprecated.o pineappl.o $(PINEAPPL_LIBS) -o dyaa-deprecated
-	$(FC) $(FFLAGS) test.o pineappl.o $(PINEAPPL_LIBS) -o test
-	$(FC) $(FFLAGS) test-deprecated.o pineappl.o $(PINEAPPL_LIBS) -o test-deprecated
+all: $(PROGRAMS)
 
-lhapdf_examples: pineappl.o lhapdf_example.o lhapdf_example-deprecated.o
-	$(FC) $(FFLAGS) lhapdf_example.o pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o lhapdf_example
-	$(FC) $(FFLAGS) lhapdf_example-deprecated.o pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o lhapdf_example-deprecated
+test-examples: $(PROGRAMS)
+	set -e && for i in $(PROGRAMS); do ./$${i}; done > output && diff -u output test-output && rm test-output
+
+pineappl.o: pineappl.f90
+	$(FC) $(FFLAGS) -c $< -o $@
+
+dyaa-deprecated: dyaa-deprecated.f90 pineappl.o
+	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
+
+test: test.f90 pineappl.o
+	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
+
+test-deprecated: test-deprecated.f90 pineappl.o
+	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
+
+lhapdf_example: lhapdf_example.f90 pineappl.o
+	$(FC) $(FFLAGS) $< pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o $@
+
+lhapdf_example-deprecated: lhapdf_example-deprecated.f90 pineappl.o
+	$(FC) $(FFLAGS) $< pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o $@
+
+PHONY: clean
 
 clean:
-	rm -f *.o *.mod dyaa-deprecated test test-deprecated lhapdf_example lhapdf_example-deprecated
+	rm -f *.o *.mod $(PROGRAMS)

@@ -1,0 +1,25 @@
+ Generated DY-LO-AA-deprecated.pineappl.lz4 containing a a -> l+ l-.
+ Try running (PDF sets must contain non-zero photon PDF):
+   - pineappl convolve DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+   - pineappl --silence-lhapdf plot DY-LO-AA-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+   - pineappl --help
+LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/nCTEQ15_1_1/nCTEQ15_1_1_0000.dat
+nCTEQ15_1_1 PDF set, member #0, version 1; LHAPDF ID = 100000
+LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/nCTEQ15FullNuc_208_82/nCTEQ15FullNuc_208_82_0000.dat
+nCTEQ15FullNuc_208_82 PDF set, member #0, version 1; LHAPDF ID = 103100
+Thanks for using LHAPDF 6.5.4. Please make sure to cite the paper:
+  Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
+ first pineappl_grid_convolve:
+   6.1999219403037188E-005   1.8599765820911157E-004
+ second pineappl_grid_convolve:
+   2.5883784137528261E-005   7.7651352412584784E-005
+LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/nCTEQ15_1_1/nCTEQ15_1_1_0000.dat
+nCTEQ15_1_1 PDF set, member #0, version 1; LHAPDF ID = 100000
+LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/nCTEQ15FullNuc_208_82/nCTEQ15FullNuc_208_82_0000.dat
+nCTEQ15FullNuc_208_82 PDF set, member #0, version 1; LHAPDF ID = 103100
+Thanks for using LHAPDF 6.5.4. Please make sure to cite the paper:
+  Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
+ first pineappl_grid_convolve_with_one:
+   6.1999219403037188E-005   1.8599765820911157E-004
+ second pineappl_grid_convolve_with_one:
+   2.5883784137528261E-005   7.7651352412584784E-005
