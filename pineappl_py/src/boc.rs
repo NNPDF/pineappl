@@ -183,7 +183,7 @@ impl PyBinsWithFillLimits {
         self.bins_fill_limits.dimensions()
     }
 
-    /// Remove a given bin using the index.
+    /// Get the removed bin using the index.
     ///
     /// Parameters
     /// ----------
@@ -192,9 +192,9 @@ impl PyBinsWithFillLimits {
     /// Returns
     /// -------
     /// Bin:
-    ///     a `Bin` object with the given indexed removed
+    ///     a `Bin` object from the removed index
     #[must_use]
-    pub fn remove(&self, index: usize) -> PyBin {
+    pub fn removed_index(&self, index: usize) -> PyBin {
         PyBin {
             bin: self.bins_fill_limits.clone().remove(index),
         }

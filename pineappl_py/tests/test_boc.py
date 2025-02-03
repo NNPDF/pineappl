@@ -151,6 +151,12 @@ class TestBinsWithFillLimits:
         assert bin_config.dimensions() == 1
         np.testing.assert_allclose(bin_config.bin_limits(), fill_edges)
 
+        index_to_remove = 0
+        removed_bin = bin_config.removed_index(index=0)
+        np.testing.assert_allclose(
+            removed_bin.bin_limits, bin_config.bin_limits()[index_to_remove]
+        )
+
     @pytest.mark.parametrize(
         "n_bins, n_dimensions, slices",
         [(6, 1, [[i for i in range(6)]]), (6, 4, [[i] for i in range(6)])],

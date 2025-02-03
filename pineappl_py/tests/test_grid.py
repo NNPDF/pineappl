@@ -10,6 +10,7 @@ from pineappl.boc import BinsWithFillLimits, Channel, Kinematics, Scales, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
+from pineappl.interpolation import Interp
 from pineappl.grid import Grid
 from pineappl.import_subgrid import ImportSubgridV1
 from pineappl.pids import PidBasis
@@ -128,8 +129,9 @@ Q2GRID = np.geomspace(1e3, 1e5, 10)
 
 class TestGrid:
     def test_init(self, fake_grids):
+        nb_convolutions = 2
         g = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
+            nb_convolutions=nb_convolutions,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -138,15 +140,27 @@ class TestGrid:
         assert len(g.orders()) == 1
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0, 0)
 
+        interpolations = g.interpolations
+        for interpolation in interpolations:
+            assert isinstance(interpolation, Interp)
+        assert len(interpolations) == nb_convolutions + 1
+
     def test_channels(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
-            channels=CHANNELS,
+            channels=[Channel(UP_ANTIUP_CHANNEL), Channel(UP_ANTIUP_CHANNEL)],
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
-        assert len(g.channels()) == 1
+        assert len(g.channels()) == 2
         assert g.channels()[0] == UP_ANTIUP_CHANNEL
+        assert g.channels()[1] == UP_ANTIUP_CHANNEL
+
+        # De-duplicate the channels
+        g.dedup_channels(ulps=2)
+        assert len(g.channels()) == 1
+        with pytest.raises(expected_exception=IndexError):
+            assert g.channels()[1]
 
     def test_write(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
@@ -188,6 +202,32 @@ class TestGrid:
         g.optimize()
 
     def test_bins(self, fake_grids):
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
+        bin_specs = g.bwfl()  # Get the Bin specifications
+
+        assert isinstance(bin_specs, BinsWithFillLimits)
+        assert g.bins() == g.len()
+        assert g.bins() == bin_specs.len()
+        assert g.bin_dimensions() == bin_specs.dimensions()
+
+        np.testing.assert_allclose(
+            g.bin_normalizations(), bin_specs.bin_normalizations()
+        )
+        np.testing.assert_allclose(g.bin_limits(), bin_specs.bin_limits())
+        np.testing.assert_allclose(g.bin_slices(), bin_specs.slices())
+
+        index_to_remove = 0
+        removed_bin = g.removed_bin(index_to_remove)
+        np.testing.assert_allclose(
+            removed_bin.bin_limits, g.bin_limits()[index_to_remove]
+        )
+
+    def test_bins_redefinition(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -286,7 +326,7 @@ class TestGrid:
         g.split_channels()
         assert len(g.channels()) == 170
 
-    def test_grid(
+    def test_grid_specs(
         self,
         download_objects,
         gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
@@ -300,6 +340,9 @@ class TestGrid:
 
         # Check that the scalings work, ie run without error
         # TODO: implement method to check the actual values
+        g.scale_by_order(
+            alphas=2, alpha=1.5, logxir=1, logxif=1, logxia=1, global_factor=10
+        )
         g.scale(factor=10.0)
         g.scale_by_bin(factors=[10.0, 20.0])
         g.delete_bins(bin_indices=[0, 1, 2])
@@ -606,7 +649,7 @@ class TestGrid:
         assert isinstance(gg, Grid)
         _ = Grid.read(str(p))
 
-    def test_set_key_value(self, fake_grids):
+    def test_key_values(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -616,6 +659,10 @@ class TestGrid:
         g.set_key_value("bla", "blub")
         g.set_key_value('"', "'")
         g.set_key_value("äöü", "ß\\")
+
+        assert g.key_values["bla"] == "blub"
+        assert g.key_values['"'] == "'"
+        assert g.key_values["äöü"] == "ß\\"
 
     def test_pid_basis(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(

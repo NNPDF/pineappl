@@ -299,7 +299,7 @@ impl PyGrid {
             .collect()
     }
 
-    /// Remove a given bin for this grid using the index.
+    /// Get the removed bin using the index for this grid.
     ///
     /// Parameters
     /// ----------
@@ -308,8 +308,8 @@ impl PyGrid {
     /// Returns
     /// -------
     /// Bin:
-    ///     a `Bin` object with the given indexed removed
-    pub fn remove_bin(&mut self, index: usize) -> PyBin {
+    ///     a `Bin` object from the removed index
+    pub fn removed_bin(&mut self, index: usize) -> PyBin {
         PyBin {
             bin: self.grid.bwfl().clone().remove(index),
         }
@@ -798,10 +798,10 @@ impl PyGrid {
         logxir: f64,
         logxif: f64,
         logxia: f64,
-        global: f64,
+        global_factor: f64,
     ) {
         self.grid
-            .scale_by_order(alphas, alpha, logxir, logxif, logxia, global);
+            .scale_by_order(alphas, alpha, logxir, logxif, logxia, global_factor);
     }
 
     /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger
