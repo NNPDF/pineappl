@@ -5,21 +5,21 @@
    - pineappl --help
 LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/NNPDF31_nlo_as_0118_luxqed/NNPDF31_nlo_as_0118_luxqed_0000.dat
 NNPDF31_nlo_as_0118_luxqed PDF set, member #0, version 2; LHAPDF ID = 324900
-LHAPDF 6.5.4 loading /usr/share/lhapdf/LHAPDF/MSHT20qed_nnlo/MSHT20qed_nnlo_0000.dat
-MSHT20qed_nnlo PDF set, member #0, version 2; LHAPDF ID = 28500
+LHAPDF 6.5.4 loading /usr/share/lhapdf/LHAPDF/MSHT20nnlo_as118/MSHT20nnlo_as118_0000.dat
+MSHT20nnlo_as118 PDF set, member #0, version 4; LHAPDF ID = 27400
 Thanks for using LHAPDF 6.5.4. Please make sure to cite the paper:
   Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
  first pineappl_grid_convolve:
    7.1330573367785985E-005   2.1399172010335785E-004
  second pineappl_grid_convolve:
-   8.8010904839647280E-005   2.6403271451894172E-004
+   8.8341366915946628E-005   2.6502410074783980E-004
 LHAPDF 6.5.4 loading /home/tanjona/LHAPDF_PATH/NNPDF31_nlo_as_0118_luxqed/NNPDF31_nlo_as_0118_luxqed_0000.dat
 NNPDF31_nlo_as_0118_luxqed PDF set, member #0, version 2; LHAPDF ID = 324900
-LHAPDF 6.5.4 loading /usr/share/lhapdf/LHAPDF/MSHT20qed_nnlo/MSHT20qed_nnlo_0000.dat
-MSHT20qed_nnlo PDF set, member #0, version 2; LHAPDF ID = 28500
+LHAPDF 6.5.4 loading /usr/share/lhapdf/LHAPDF/MSHT20nnlo_as118/MSHT20nnlo_as118_0000.dat
+MSHT20nnlo_as118 PDF set, member #0, version 4; LHAPDF ID = 27400
 Thanks for using LHAPDF 6.5.4. Please make sure to cite the paper:
   Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
  first pineappl_grid_convolve_with_one:
    7.1330573367785985E-005   2.1399172010335785E-004
  second pineappl_grid_convolve_with_one:
-   8.8010904839647280E-005   2.6403271451894172E-004
+   8.8341366915946628E-005   2.6502410074783980E-004

@@ -25,7 +25,7 @@ program lhapdf_example
     call pineappl_grid_fill_all(grid, 0.5_dp, 0.5_dp, 100.0_dp, 0, 1.5_dp, [1.5_dp, 1.5_dp, 1.5_dp])
 
     call lhapdf_initpdfset_byname(0, "NNPDF31_nlo_as_0118_luxqed")
-    call lhapdf_initpdfset_byname(1, "MSHT20qed_nnlo")
+    call lhapdf_initpdfset_byname(1, "MSHT20nnlo_as118")
 
     ! calling pineappl_grid_convolve without any flags
     xfx = pineappl_xfx(xfx_test1)
