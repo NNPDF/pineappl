@@ -287,8 +287,8 @@ impl PyChannel {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
-#[pyclass(name = "Kinematics")]
-#[derive(Clone)]
+#[pyclass(eq, name = "Kinematics")]
+#[derive(Clone, PartialEq, Eq)]
 pub enum PyKinematics {
     /// map to Kinematics::Scale
     Scale(usize),
@@ -306,8 +306,8 @@ impl From<PyKinematics> for Kinematics {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
-#[pyclass(name = "ScaleFuncForm")]
-#[derive(Clone)]
+#[pyclass(eq, name = "ScaleFuncForm")]
+#[derive(Clone, PartialEq, Eq)]
 pub enum PyScaleFuncForm {
     /// map to ScaleFuncForm::NoScale
     /// NOTE No variant is not supported in complex enums

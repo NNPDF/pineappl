@@ -81,10 +81,19 @@ class TestFkTable:
 
         # Check the various aspects of the Bins
         assert fk.bins() == 1
+        assert fk.bin_dimensions() == 1
         bin_limits = np.array(fk.bin_limits())
         np.testing.assert_allclose(fk.bin_normalizations(), [1.0])
         np.testing.assert_allclose(bin_limits[:, 0, 0], [0.0])
         np.testing.assert_allclose(bin_limits[:, 0, 1], [1.0])
+
+        # Check setting key values
+        fk.set_key_value("bla", "blub")
+        fk.set_key_value('"', "'")
+        fk.set_key_value("äöü", "ß\\")
+        assert fk.key_values["bla"] == "blub"
+        assert fk.key_values['"'] == "'"
+        assert fk.key_values["äöü"] == "ß\\"
 
         # Check the various aspects of the Channels
         channels = fk.channels()
