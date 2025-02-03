@@ -473,6 +473,11 @@ module pineappl
             type (c_ptr), value :: lumi
         end subroutine
 
+        subroutine channels_delete(lumi) bind(c, name = 'pineappl_channels_delete')
+            use iso_c_binding
+            type (c_ptr), value :: lumi
+        end subroutine
+
         subroutine lumi_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_lumi_entry')
             use iso_c_binding
             type (c_ptr), value       :: lumi
@@ -1175,6 +1180,14 @@ contains
         type (pineappl_lumi), intent(in) :: lumi
 
         call lumi_delete(lumi%ptr)
+    end subroutine
+
+    subroutine pineappl_channels_delete(lumi)
+        implicit none
+
+        type (pineappl_lumi), intent(in) :: lumi
+
+        call channels_delete(lumi%ptr)
     end subroutine
 
     subroutine pineappl_lumi_entry(lumi, entry, pdg_ids, factors)
