@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 import pytest
-from typing import List
+from typing import List, Optional
 
 from pineappl.boc import (
     Bin,
@@ -23,15 +23,29 @@ class BinFields:
 
 @dataclass
 class BwflFields:
-    limits: List
-    normalizations: List
-    dimensions: int
+    bins: Optional[Bin] = Bin([(1, 2)], 1.0)
+    fill_limits: Optional[List] = field(default_factory=list)
+    limits: Optional[List] = field(default_factory=list)
+    normalizations: Optional[List] = field(default_factory=list)
+    dimensions: Optional[int] = 1
 
 
 def _generate_bin_fields(n_dimensions: int, normalization: float) -> BinFields:
     bin_limits = [(i, i + 1) for i in range(n_dimensions)]
     return BinFields(
         bin_limits=bin_limits, normalization=normalization, dimensions=n_dimensions
+    )
+
+
+def _generate_new_bwfl(
+    n_bins: int, n_dimensions: int, normalization: int
+) -> BwflFields:
+    limits = [[(i + j, i + 2 * j) for j in range(n_dimensions)] for i in range(n_bins)]
+    bins = [Bin(lim, normalization) for lim in limits]
+    fill_limits = [i for i in range(n_bins + 1)]
+    normalizations = [normalization for _ in range(n_bins)]
+    return BwflFields(
+        bins=bins, fill_limits=fill_limits, normalizations=normalizations, limits=limits
     )
 
 
@@ -153,6 +167,20 @@ class TestBinsWithFillLimits:
         assert bin_config.len() == n_bins
         assert bin_config.dimensions() == n_dimensions
         assert bin_config.slices() == slices
+        np.testing.assert_allclose(
+            bin_config.bin_normalizations(), bwfl_field.normalizations
+        )
+        np.testing.assert_allclose(bin_config.bin_limits(), bwfl_field.limits)
+
+    @pytest.mark.parametrize("n_bins, n_dimensions, normalization", [(4, 1, 10.0)])
+    def test_new_bwfl(self, n_bins: int, n_dimensions: int, normalization: int):
+        bwfl_field = _generate_new_bwfl(n_bins, n_dimensions, normalization)
+        bin_config = BinsWithFillLimits(bwfl_field.bins, bwfl_field.fill_limits)
+
+        assert isinstance(bin_config.bins()[0], Bin)
+        assert bin_config.len() == n_bins
+        assert bin_config.dimensions() == n_dimensions
+        assert bin_config.slices() == [[i for i in range(n_bins)]]
         np.testing.assert_allclose(
             bin_config.bin_normalizations(), bwfl_field.normalizations
         )
