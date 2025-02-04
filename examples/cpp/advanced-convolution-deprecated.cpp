@@ -84,7 +84,11 @@ int main(int argc, char* argv[]) {
     // how does the grid know which PDFs it must be convolved with? This is determined by the
     // metadata keys `initial_state_1` and `initial_state_2`, which are by default set to `2212`,
     // the PDG MC ID for the proton. Let's change the second value to an antiproton:
+    pineappl_grid_set_key_value(grid, "initial_state_1", "2212");
+    assert( std::string(pineappl_grid_key_value(grid, "initial_state_1")) == "2212" );
+
     pineappl_grid_set_key_value(grid, "initial_state_2", "-2212");
+    assert( std::string(pineappl_grid_key_value(grid, "initial_state_2")) == "-2212" );
 
     std::vector<double> dxsec2(bins);
 
@@ -97,6 +101,7 @@ int main(int argc, char* argv[]) {
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
     // protons with deuterons:
     pineappl_grid_set_key_value(grid, "initial_state_2", "1000010020"); // 1000010020 = deuteron
+    assert( std::string(pineappl_grid_key_value(grid, "initial_state_2")) == "1000010020" );
 
     std::vector<double> dxsec3(bins);
 

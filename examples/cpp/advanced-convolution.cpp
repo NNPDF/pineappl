@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
     // use these variables to perform scale variations
     double xir = 1.0;
     double xif = 1.0;
+    double xia = 1.0;
 
     // with this choice `order_mask` and `channel_mask` we extract the contribution of the first
     // perturbative order and first channel stored in the grid. If the grid contains cross sections
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
     // perform the necessary charge conjugations to yield the correct convolutions.
     // In the case where the convolution requires two different PDFs, it suffices to modify `xfx1`
     // and `xfx2`.
-    std::vector<double> mu_scales = { xir, xif, 1.0 };
+    std::vector<double> mu_scales = { xir, xif, xia };
     using LambdaType = double(*)(int32_t, double, double, void *);
     LambdaType xfxs[] = { xfx1, xfx2 };
 
@@ -91,14 +92,20 @@ int main(int argc, char* argv[]) {
     pineappl_grid_convolve(grid, xfxs, alphas, pdf, nullptr, nullptr, nullptr, 1,
         mu_scales.data(), dxsec2.data());
 
+    // test with both `mu_scales` set to `nullptr`
+    std::vector<double> dxsec3(bins);
+
+    pineappl_grid_convolve(grid, xfxs, alphas, pdf, nullptr, nullptr, nullptr, 1,
+        nullptr, dxsec3.data());
+
     std::vector<double> normalizations(bins);
 
     // read out the bin normalizations, which is usually the size of each bin
     pineappl_grid_bin_normalizations(grid, normalizations.data());
 
     // print table header
-    std::cout << "idx  p-p c#0 l#0      p-d       dx\n"
-                 "--- ------------ ------------ ------\n";
+    std::cout << "idx  p-p c#0 l#0      p-d      p-d (w/o μ)   dx\n"
+                 "--- ------------ ------------ ------------ ------\n";
 
     for (std::size_t bin = 0; bin != bins; ++bin) {
         // print the bin index
@@ -106,7 +113,8 @@ int main(int argc, char* argv[]) {
 
         // print the result together with the normalization
         std::cout << std::scientific << dxsec1.at(bin) << ' ' << dxsec2.at(bin) << ' '
-            << std::defaultfloat << std::setw(6) << normalizations.at(bin) << '\n';
+            << dxsec3.at(bin) << ' ' << std::defaultfloat << std::setw(6)
+            << normalizations.at(bin) << '\n';
     }
 
     pineappl_grid_delete(grid);

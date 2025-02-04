@@ -26,6 +26,7 @@ int main() {
     };
 
     auto* keyval = pineappl_keyval_new();
+    pineappl_keyval_set_bool(keyval, "reweight", false);
 
     auto* grid = pineappl_grid_new(channels, orders.size() / 4, orders.data(), bins.size() - 1,
         bins.data(), keyval);
