@@ -51,10 +51,10 @@ int main(int argc, char* argv[]) {
     std::size_t bins = pineappl_grid_bin_count(grid);
 
     // how many channels does the grid have?
-    auto* lumi = pineappl_grid_channels(grid);
-    std::size_t channels = pineappl_channels_count(lumi);
+    auto* channels = pineappl_grid_channels(grid);
+    std::size_t channels_length = pineappl_channels_count(channels);
 
-    pineappl_channels_delete(lumi);
+    pineappl_channels_delete(channels);
 
     // std::vector<bool> doesn't have `.data()` member
     std::unique_ptr<bool[]> order_mask(new bool[orders]());
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     // allocate a vector holding the differential cross sections
     std::vector<double> dxsec1(bins);
 
-    std::unique_ptr<bool[]> channel_mask(new bool[channels]());
+    std::unique_ptr<bool[]> channel_mask(new bool[channels_length]());
 
     // use the variables to select the included orders and channels
     order_mask[0] = true;

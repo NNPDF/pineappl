@@ -219,7 +219,7 @@ int main() {
     auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
         bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
 
-    // now we no longer need `keyval` and `lumi`
+    // now we no longer need `keyval` and `channels`
     pineappl_channels_delete(channels);
 
     // ---

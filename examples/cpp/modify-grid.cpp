@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     // 3a. split channels. A grid with multiple initial states in a single channel will then have
     // multiple channels with one initial state
-    pineappl_grid_split_lumi(grid);
+    pineappl_grid_split_channels(grid);
 
     // 3b. undo the previous operation, detecting equal subgrids by allowing them to differ by up to
     // 64 ULPS
