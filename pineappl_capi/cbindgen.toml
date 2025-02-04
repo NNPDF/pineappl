@@ -32,6 +32,7 @@ style = "type"
 [export.rename]
 "Grid" = "pineappl_grid"
 "Lumi" = "pineappl_lumi"
+"Channels" = "pineappl_channels"
 "KeyVal" = "pineappl_keyval"
 "SubGrid" = "pineappl_subgrid"
 "GridOptFlags" = "pineappl_gof"

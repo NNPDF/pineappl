@@ -6,7 +6,7 @@ program test_pineappl
 
     integer, parameter :: dp = kind(0.0d0)
 
-    type(pineappl_lumi) :: channels, channels2
+    type(pineappl_channels) :: channels, channels2
     type(pineappl_grid) :: grid, grid2
     type(pineappl_kinematics) :: kinematics(3)
     type(pineappl_interp_tuples) :: interpolations(3)
@@ -25,14 +25,14 @@ program test_pineappl
     channels = pineappl_channels_new()
     call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
-    if (pineappl_lumi_count(channels) /= 1) then
-        write(*, *) "pineappl_lumi_count(): ", pineappl_lumi_count(channels)
-        error stop "error: pineappl_lumi_count"
+    if (pineappl_channels_count(channels) /= 1) then
+        write(*, *) "pineappl_channels_count(): ", pineappl_channels_count(channels)
+        error stop "error: pineappl_channels_count"
     end if
 
-    if (pineappl_lumi_combinations(channels, 0) /= 3) then
-        write(*, *) "pineappl_lumi_combinations(): ", pineappl_lumi_combinations(channels, 0)
-        error stop "error: pineappl_lumi_combinations"
+    if (pineappl_channels_combinations(channels, 0) /= 3) then
+        write(*, *) "pineappl_channels_combinations(): ", pineappl_channels_combinations(channels, 0)
+        error stop "error: pineappl_channels_combinations"
     end if
 
     kinematics = [&
@@ -101,16 +101,16 @@ program test_pineappl
 
     call pineappl_grid_delete(grid2)
 
-    channels2 = pineappl_grid_lumi(grid)
+    channels2 = pineappl_grid_channels(grid)
 
-    if (pineappl_lumi_count(channels2) /= 1) then
-        write(*, *) "pineappl_lumi_count(): ", pineappl_lumi_count(channels2)
-        error stop "error: pineappl_lumi_count"
+    if (pineappl_channels_count(channels2) /= 1) then
+        write(*, *) "pineappl_channels_count(): ", pineappl_channels_count(channels2)
+        error stop "error: pineappl_channels_count"
     end if
 
-    if (pineappl_lumi_combinations(channels2, 0) /= 3) then
-        write(*, *) "pineappl_lumi_combinations(): ", pineappl_lumi_combinations(channels2, 0)
-        error stop "error: pineappl_lumi_combinations"
+    if (pineappl_channels_combinations(channels2, 0) /= 3) then
+        write(*, *) "pineappl_channels_combinations(): ", pineappl_channels_combinations(channels2, 0)
+        error stop "error: pineappl_channels_combinations"
     end if
 
     grid2 = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 1, [2.0_dp, 3.0_dp], &
@@ -154,7 +154,7 @@ program test_pineappl
     call pineappl_grid_set_remapper(grid, 2, [1.0_dp, 1.0_dp, 1.0_dp], &
         [0.0_dp, 1.0_dp, 10.0_dp, 11.0_dp, 1.0_dp, 3.0_dp, 11.0_dp, 13.0_dp, 15.0_dp, 20.0_dp])
 
-    call pineappl_grid_split_lumi(grid)
+    call pineappl_grid_split_channels(grid)
 
     xfx1 = pineappl_xfx(xfx1_test)
     xfx2 = pineappl_xfx(xfx2_test)

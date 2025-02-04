@@ -24,6 +24,7 @@ program lhapdf_example
     call pineappl_grid_fill_all(grid, 0.5_dp, 0.5_dp, 100.0_dp, 0, 0.5_dp, [0.5_dp, 0.5_dp, 0.5_dp])
     call pineappl_grid_fill_all(grid, 0.5_dp, 0.5_dp, 100.0_dp, 0, 1.5_dp, [1.5_dp, 1.5_dp, 1.5_dp])
 
+    call setlhaparm("SILENT")
     call lhapdf_initpdfset_byname(0, "NNPDF31_nlo_as_0118_luxqed")
     call lhapdf_initpdfset_byname(1, "MSHT20nnlo_as118")
 

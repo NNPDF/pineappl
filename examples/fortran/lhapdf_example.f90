@@ -6,9 +6,9 @@ program lhapdf_example
 
     integer, parameter :: dp = kind(0.0d0)
 
-    type(pineappl_grid) :: grid
-    type(pineappl_lumi) :: channels
-    type(pineappl_kinematics) :: kinematics(3)
+    type(pineappl_grid)          :: grid
+    type(pineappl_channels)      :: channels
+    type(pineappl_kinematics)    :: kinematics(3)
     type(pineappl_interp_tuples) :: interpolations(3)
 
     type(pineappl_xfx) :: xfx(2)
@@ -48,6 +48,7 @@ program lhapdf_example
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
     call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])
 
+    call setlhaparm("SILENT")
     call lhapdf_initpdfset_byname(0, "NNPDF31_nlo_as_0118_luxqed")
     call lhapdf_initpdfset_byname(1, "MSHT20nnlo_as118")
 

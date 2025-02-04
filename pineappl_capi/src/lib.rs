@@ -1388,6 +1388,10 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 
 // Here starts the generalized C-API interface.
 
+/// Type for defining a Channel function.
+#[derive(Default)]
+pub struct Channels(Vec<Channel>);
+
 /// Type for defining the interpolation object
 #[repr(C)]
 pub struct InterpTuples {
@@ -1417,7 +1421,7 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
+pub extern "C" fn pineappl_channels_new() -> Box<Channels> {
     Box::default()
 }
 
@@ -1425,14 +1429,14 @@ pub extern "C" fn pineappl_channels_new() -> Box<Lumi> {
 ///
 /// # Safety
 ///
-/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new`.
+/// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new`.
 /// `pdg_id_combinations` must be an array with length `nb_combinations * combinations`, and
 /// `factors` with length of `combinations`. The `nb_convolutions` describe the number of
 /// parton distributions involved, while `combinations` represent the number of different
 /// channel combinations.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_add(
-    channels: *mut Lumi,
+    channels: *mut Channels,
     combinations: usize,
     nb_convolutions: usize,
     pdg_id_combinations: *const i32,
@@ -1463,10 +1467,10 @@ pub unsafe extern "C" fn pineappl_channels_add(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Lumi> {
+pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channels> {
     let grid = unsafe { &*grid };
 
-    Box::new(Lumi(grid.channels().to_vec()))
+    Box::new(Channels(grid.channels().to_vec()))
 }
 
 /// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
@@ -1476,7 +1480,7 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Lumi> 
 /// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_channels_count(channels: *const Lumi) -> usize {
+pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
     let channels = unsafe { &*channels };
 
     channels.0.len()
@@ -1486,11 +1490,11 @@ pub unsafe extern "C" fn pineappl_channels_count(channels: *const Lumi) -> usize
 ///
 /// # Safety
 ///
-/// The parameter `channels` must point to a valid `Lumi` object created by `pineappl_channels_new` or
+/// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new` or
 /// `pineappl_grid_channels`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_combinations(
-    channels: *const Lumi,
+    channels: *const Channels,
     entry: usize,
 ) -> usize {
     let channels = unsafe { &*channels };
@@ -1501,12 +1505,12 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
 #[no_mangle]
 #[allow(unused_variables)]
-pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Lumi>>) {}
+pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 
 /// Creates a new and empty grid that can accept any number of convolutions. The creation requires
 /// the following different sets of parameters:
 /// - The PID basis `pid_basis`: The basis onto which the partons are mapped, can be `Evol` or `Pdg`.
-/// - The channel function `channels`: A pointer to the luminosity function that specifies how the
+/// - The channel function `channels`: A pointer to the channels function that specifies how the
 ///   cross section should be reconstructed.
 /// - Order specification `orders` and `order_params`. Each `PineAPPL` grid contains a number of
 ///   different perturbative orders, specified by `orders`. The array `order_params` stores the
@@ -1538,7 +1542,7 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Lumi>>) {}
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
     pid_basis: PidBasis,
-    channels: *const Lumi,
+    channels: *const Channels,
     orders: usize,
     order_params: *const u8,
     bins: usize,
@@ -1697,18 +1701,31 @@ pub unsafe extern "C" fn pineappl_grid_fill_array2(
     }
 }
 
-/// Similar to `pineappl_lumi_entry` but for luminosity channels that involve 3 partons, ie.
-/// in the case of three convolutions.
+/// Similar to `pineappl_grid_split_channels`.
 ///
 /// # Safety
 ///
-/// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
-/// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
-/// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_split_channels(grid: *mut Grid) {
+    let grid = unsafe { &mut *grid };
+
+    grid.split_channels();
+}
+
+/// Similar to `pineappl_lumi_entry` but for luminosity channels that involve 3 or more partons, ie.
+/// in the case of multiple convolutions.
+///
+/// # Safety
+///
+/// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new` or
+/// `pineappl_grid_channels`. The parameter `factors` must point to an array as long as the size
+/// returned by `pineappl_channels_combinations` and `pdg_ids` must point to an array that is twice as
 /// long.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_entry(
-    channels: *const Lumi,
+    channels: *const Channels,
     entry: usize,
     pdg_ids: *mut i32,
     factors: *mut f64,
