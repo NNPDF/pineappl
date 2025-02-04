@@ -213,7 +213,7 @@ impl Scales {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Bin {
     limits: Vec<(f64, f64)>,
     normalization: f64,
@@ -265,7 +265,7 @@ impl Bin {
 }
 
 /// TODO
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BinsWithFillLimits {
     bins: Vec<Bin>,
     fill_limits: Vec<f64>,
@@ -466,10 +466,10 @@ impl BinsWithFillLimits {
 }
 
 impl FromStr for BinsWithFillLimits {
-    type Err = Bla;
+    type Err = ParseBWFLError;
 
-    fn from_str(s: &str) -> Result<Self, Bla> {
-        let remaps: Result<Vec<Vec<Vec<f64>>>, Bla> = s
+    fn from_str(s: &str) -> Result<Self, ParseBWFLError> {
+        let remaps: Result<Vec<Vec<Vec<f64>>>, ParseBWFLError> = s
             .split(';')
             .map(|string| {
                 string
@@ -479,7 +479,7 @@ impl FromStr for BinsWithFillLimits {
                             .split_once(':')
                             .map_or(Ok(string), |(lhs, rhs)| {
                                 match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
-                                    (Err(lhs), Err(rhs)) => Err(Bla::Error(format!(
+                                    (Err(lhs), Err(rhs)) => Err(ParseBWFLError::Error(format!(
                                         "unable to parse 'N:M' syntax from: '{string}' (N: '{lhs}', M: '{rhs}')"
                                     ))),
                                     // skip :N specification
@@ -497,7 +497,7 @@ impl FromStr for BinsWithFillLimits {
                                     None
                                 } else {
                                     Some(string.parse::<f64>().map_err(|err| {
-                                        Bla::Error(format!(
+                                        ParseBWFLError::Error(format!(
                                             "unable to parse limit '{string}': '{err}')"
                                         ))
                                     }))
@@ -512,7 +512,7 @@ impl FromStr for BinsWithFillLimits {
 
         if let Some(first) = remaps.first() {
             if first.len() != 1 {
-                return Err(Bla::Error(
+                return Err(ParseBWFLError::Error(
                     "'|' syntax not meaningful for first dimension".to_owned(),
                 ));
             }
@@ -523,7 +523,9 @@ impl FromStr for BinsWithFillLimits {
             for i in 1..vec.len() {
                 if vec[i].is_empty() {
                     if vec[i - 1].is_empty() {
-                        return Err(Bla::Error("empty repetition with '|'".to_owned()));
+                        return Err(ParseBWFLError::Error(
+                            "empty repetition with '|'".to_owned(),
+                        ));
                     }
 
                     vec[i] = vec[i - 1].clone();
@@ -552,7 +554,9 @@ impl FromStr for BinsWithFillLimits {
                 }
 
                 if vec.len() <= 1 {
-                    return Err(Bla::Error("no limits due to ':' syntax".to_owned()));
+                    return Err(ParseBWFLError::Error(
+                        "no limits due to ':' syntax".to_owned(),
+                    ));
                 }
             }
         }
@@ -599,7 +603,7 @@ impl FromStr for BinsWithFillLimits {
                     buffer.push((left, right));
                     normalization *= right - left;
                 } else {
-                    return Err(Bla::Error(
+                    return Err(ParseBWFLError::Error(
                         "missing '|' specification: number of variants too small".to_owned(),
                     ));
                 }
@@ -617,10 +621,10 @@ impl FromStr for BinsWithFillLimits {
     }
 }
 
-/// Error type returned by [`BinRemapper::from_str`]
+/// Error type returned by [`BinsWithFillLimits::from_str`]
 #[derive(Debug, Error)]
-pub enum Bla {
-    /// An error that occured while parsing the string in [`BinRemapper::from_str`].
+pub enum ParseBWFLError {
+    /// An error that occured while parsing the string in [`BinsWithFillLimits::from_str`].
     #[error("{0}")]
     Error(String),
 }
@@ -1448,5 +1452,85 @@ mod tests {
         assert_eq!(sff.idx(&[1, 1, 1], &scale_dims), 3);
         assert_eq!(sff.idx(&[2, 0, 1], &scale_dims), 4);
         assert_eq!(sff.idx(&[2, 1, 1], &scale_dims), 5);
+    }
+
+    #[test]
+    fn bwfl_limit_parsing_failure() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2,x")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse limit 'x': 'invalid float literal')"
+        );
+    }
+
+    #[test]
+    fn bwfl_pipe_syntax_first_dimension() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("|0,1,2")
+                .unwrap_err()
+                .to_string(),
+            "'|' syntax not meaningful for first dimension"
+        );
+    }
+
+    #[test]
+    fn bwfl_pipe_syntax_first_empty() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;||")
+                .unwrap_err()
+                .to_string(),
+            "empty repetition with '|'"
+        );
+    }
+
+    #[test]
+    fn bwfl_colon_syntax_bad_string() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;1,2,3,4,5|::")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: '::' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+        );
+    }
+
+    #[test]
+    fn bwfl_colon_syntax_bad_lhs() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;1,2,3,4,5|2.5:|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: '2.5:' (N: 'invalid digit found in string', M: 'cannot parse integer from empty string')"
+        );
+    }
+
+    #[test]
+    fn bwfl_colon_syntax_bad_rhs() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;1,2,3,4,5|:2.5|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "unable to parse 'N:M' syntax from: ':2.5' (N: 'cannot parse integer from empty string', M: 'invalid digit found in string')"
+        );
+    }
+
+    #[test]
+    fn bwfl_colon_syntax_no_limits() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;1,2,3,4,5|:4|:3|:3")
+                .unwrap_err()
+                .to_string(),
+            "no limits due to ':' syntax"
+        );
+    }
+
+    #[test]
+    fn bwfl_pipe_syntax_too_few_pipes() {
+        assert_eq!(
+            BinsWithFillLimits::from_str("0,1,2;0,2,4;1,2,3|4,5,6|7,8,9")
+                .unwrap_err()
+                .to_string(),
+            "missing '|' specification: number of variants too small"
+        );
     }
 }
