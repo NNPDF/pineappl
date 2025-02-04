@@ -15,7 +15,7 @@ use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
 use pineappl::pids::PidBasis;
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -222,7 +222,7 @@ impl PyGrid {
     pub fn set_bwfl(&mut self, specs: PyBinsWithFillLimits) -> PyResult<()> {
         match self.grid.set_bwfl(specs.bins_fill_limits) {
             Ok(()) => Ok(()),
-            Err(msg) => Err(PyErr::new::<PyTypeError, _>(format!("{msg}"))),
+            Err(msg) => Err(PyValueError::new_err(format!("{msg:?}"))),
         }
     }
 
@@ -662,7 +662,7 @@ impl PyGrid {
     pub fn merge(&mut self, other: Self) -> PyResult<()> {
         match self.grid.merge(other.grid) {
             Ok(()) => Ok(()),
-            Err(x) => Err(PyValueError::new_err(format!("{x:?}"))),
+            Err(msg) => Err(PyValueError::new_err(format!("{msg:?}"))),
         }
     }
 

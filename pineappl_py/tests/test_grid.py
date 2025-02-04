@@ -260,6 +260,12 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
 
+        # Test error due to bin mismatch
+        fill_limits = [float(i) for i in range(10)]
+        bin_configs = BinsWithFillLimits.from_fill_limits(fill_limits=fill_limits)
+        with pytest.raises(ValueError, match="BinNumberMismatch"):
+            g.set_bwfl(bin_configs)
+
     def test_rotate_pidbasis(
         self,
         pdf,
@@ -792,8 +798,6 @@ class TestGrid:
     def test_merge(self, fake_grids):
         # TODO: Check error raised by merged partially overlapping
         # or non-consecutive bins.
-        # with pytest.raises(ValueError, match="NonConsecutiveBins"):
-        #     g2.merge(g5)
         g0 = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -814,17 +818,17 @@ class TestGrid:
         assert g0.bins() == 4
 
         g2 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
+            nb_convolutions=3,
+            channels=[Channel([([2, -2, 0], 0.1)])],
             orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
+            convolutions=[CONVOBJECT, CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
         g3 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
+            nb_convolutions=3,
+            channels=[Channel([([2, -2, 0], 0.1)])],
             orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
+            convolutions=[CONVOBJECT, CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
         assert g2.bins() == 2
@@ -832,6 +836,10 @@ class TestGrid:
 
         g2.merge(g3)
         assert g2.bins() == 2
+
+        # Check error when merging different grid
+        with pytest.raises(ValueError, match="convolutions do not match"):
+            g0.merge(g2)
 
     def test_evolveinfo(
         self,
