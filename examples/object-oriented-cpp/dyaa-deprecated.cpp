@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <cstdio>
 #include <random>
 #include <vector>
@@ -57,7 +56,7 @@ Psp2to2 hadronic_pspgen(std::mt19937& rng, double mmin, double mmax) {
   return {s, t, u, x1, x2, jacobian};
 }
 
-void fill_grid(PineAPPL::GridV1& grid, std::size_t calls) {
+void fill_grid(PineAPPL::Grid& grid, std::size_t calls) {
   using std::acosh;
   using std::fabs;
   using std::log;
@@ -96,74 +95,55 @@ void fill_grid(PineAPPL::GridV1& grid, std::size_t calls) {
     auto weight = jacobian * int_photo(s, t, u);
     double q2 = 90.0 * 90.0;
 
-    std::vector<double> ntuples = {q2, x1, x2};
-    grid.fill(0, fabs(yll), 0, ntuples, weight);
+    grid.fill(x1, x2, q2, 0, fabs(yll), 0, weight);
   }
 }
 
 int main() {
-  // --- create a new `Channels` function for the $\gamma\gamma$ initial state
-  PineAPPL::Channels channels;
-  PineAPPL::SubChannelEntry subchannels;
-  subchannels.entry.push_back({{22, 22}, 1.0});
-  PineAPPL::ChannelsEntry channels_entry;
-  channels_entry.channels_entry.push_back(subchannels);
-  channels.add(channels_entry);
+  // create a new luminosity function for the $\gamma\gamma$ initial state
+  PineAPPL::Lumi lumi;
+  lumi.add({PineAPPL::LumiEntry{22, 22, 1.0}});
 
-  // --- Instatiate the Order object
   // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R})
-  // \log^0(\xi_\mathrm{F}) \log^0(\xi_\mathrm{A})$
-  std::vector<PineAPPL::OrderV1> orders = {PineAPPL::OrderV1{0, 2, 0, 0, 0}};
+  // \log^0(\xi_\mathrm{F})$
+  std::vector<PineAPPL::Order> orders = {PineAPPL::Order{0, 2, 0, 0}};
 
-  // --- Define the binning
   // we bin in rapidity from 0 to 2.4 in steps of 0.1
   std::vector<double> bins = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,
                               0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7,
                               1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4};
 
-  // --- Construct the PineAPPL grid
-  PidBasis pid_basis = Evol;
-  std::vector<std::int32_t> pids = {2212, 2212};
-
-  // Define the types of convolutions
-  ConvType h1 = UnpolPDF;
-  ConvType h2 = UnpolPDF;
-  std::vector<ConvType> convolution_types = {h1, h2};
-
-  // Define the Kinematics
-  Kinematics scales = {Scale, 0};
-  Kinematics x1 = {X, 0};
-  Kinematics x2 = {X, 1};
-  std::vector<Kinematics> kinematics = {scales, x1, x2};
-
-  // Define the interpolation configurations
-  ReweightMeth scales_reweight = NoReweight;  // Reweighting method
-  ReweightMeth moment_reweight = ApplGridX;
-  Map scales_mapping = ApplGridH0;  // Mapping method
-  Map moment_mapping = ApplGridF2;
-  InterpMeth interpolation_meth = Lagrange;
-  std::vector<InterpTuples> interpolations = {
-      {1e2, 1e8, 40, 3, scales_reweight, scales_mapping,
-       interpolation_meth},  // Interpolation fo `scales`
-      {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping,
-       interpolation_meth},  // Interpolation fo `x1`
-      {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping,
-       interpolation_meth},  // Interpolation fo `x2`
-  };
-
-  // Define the μ scale
-  std::vector<std::size_t> mu_scales = {1, 1, 1};
-
-  PineAPPL::GridV1 grid(orders, channels, pid_basis, pids, convolution_types,
-                        kinematics, interpolations, bins, mu_scales);
+  // create the PineAPPL grid with default interpolation and binning parameters
+  PineAPPL::KeyVal kv;
+  PineAPPL::Grid grid(lumi, orders, bins, kv);
 
   // fill the grid with phase-space points
   fill_grid(grid, 10000000);
+
+  // Optimize the Grid
   grid.optimize();
+
+  LHAPDF::setVerbosity(0);
+  // perform a convolution of the grid with PDFs
+  std::unique_ptr<LHAPDF::PDF> pdf(
+      LHAPDF::mkPDF("NNPDF31_nlo_as_0118_luxqed", 0));
+  std::vector<double> dxsec = grid.convolve_with_one(2212, *pdf.get());
+
+  // print the results
+  for (std::size_t j = 0; j != dxsec.size(); ++j) {
+    std::printf("%02zu %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
+  }
+
+  // store some metadata in the grid
+  grid.set_key_value("events", "10000000");
+
+  // read out the stored value and print it on stdout
+  const auto value = grid.get_key_value("events");
+  std::printf("Finished running %s events.\n", value.c_str());
 
   // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4
   // compressed
-  const std::string filename = "DY-LO-AA.pineappl.lz4";
+  const std::string filename = "DY-LO-AA-deprecated.pineappl.lz4";
   grid.write(filename);
 
   std::printf(

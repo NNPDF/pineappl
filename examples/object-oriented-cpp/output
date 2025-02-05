@@ -1,0 +1,37 @@
+00 0.0 0.1 5.263e-01
+01 0.1 0.2 5.255e-01
+02 0.2 0.3 5.247e-01
+03 0.3 0.4 5.188e-01
+04 0.4 0.5 5.175e-01
+05 0.5 0.6 5.009e-01
+06 0.6 0.7 4.905e-01
+07 0.7 0.8 4.676e-01
+08 0.8 0.9 4.393e-01
+09 0.9 1.0 3.993e-01
+10 1.0 1.1 3.707e-01
+11 1.1 1.2 3.265e-01
+12 1.2 1.3 2.849e-01
+13 1.3 1.4 2.487e-01
+14 1.4 1.5 2.110e-01
+15 1.5 1.6 1.797e-01
+16 1.6 1.7 1.471e-01
+17 1.7 1.8 1.206e-01
+18 1.8 1.9 9.492e-02
+19 1.9 2.0 7.256e-02
+20 2.0 2.1 5.057e-02
+21 2.1 2.2 3.492e-02
+22 2.2 2.3 1.968e-02
+23 2.3 2.4 5.565e-03
+Finished running 10000000 events.
+Generated DY-LO-AA-deprecated.pineappl.lz4 containing a a -> l+ l-.
+
+Try running (PDF sets must contain non-zero photon PDF):
+  - pineappl convolve DY-LO-AA-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+  - pineappl --silence-lhapdf plot DY-LO-AA-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+  - pineappl --help
+Generated DY-LO-AA.pineappl.lz4 containing a a -> l+ l-.
+
+Try running (PDF sets must contain non-zero photon PDF):
+  - pineappl convolve DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+  - pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+  - pineappl --help
