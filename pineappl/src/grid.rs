@@ -3,6 +3,7 @@
 use super::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType, ConvolutionCache};
 use super::empty_subgrid::EmptySubgridV1;
+use super::error::{Error, Result};
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
 use super::import_subgrid::ImportSubgridV1;
@@ -20,56 +21,14 @@ use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::ops::Range;
 use std::{iter, mem};
-use thiserror::Error;
 
 const BIN_AXIS: Axis = Axis(1);
 
 // const ORDER_AXIS: Axis = Axis(0);
 // const CHANNEL_AXIS: Axis = Axis(2);
-
-/// Error returned when merging two grids fails.
-#[derive(Debug, Error)]
-pub enum GridError {
-    /// Returned if the number of bins in the grid and in the remapper do not agree.
-    #[error("the remapper has {remapper_bins} bins, but the grid has {grid_bins}")]
-    BinNumberMismatch {
-        /// Number of bins in the grid.
-        grid_bins: usize,
-        /// Number of bins in the remapper.
-        remapper_bins: usize,
-    },
-    /// Returned when trying to construct a `Grid` using an unknown subgrid type.
-    #[error("tried constructing a Grid with unknown Subgrid type `{0}`")]
-    UnknownSubgridType(String),
-    /// Returned when failed to read a Grid.
-    #[error(transparent)]
-    ReadFailure(bincode::Error),
-    /// Returned when failed to write a Grid.
-    #[error(transparent)]
-    WriteFailure(bincode::Error),
-    /// Returned while performing IO operations.
-    #[error(transparent)]
-    IoFailure(io::Error),
-    /// Returned when trying to read a `PineAPPL` file with file format version that is not
-    /// supported.
-    #[error("file version {file_version} is not supported")]
-    FileVersionUnsupported {
-        /// File format version of the file read.
-        file_version: u64,
-    },
-    /// Returned from [`Grid::evolve_with_slice_iter`] if the evolution failed.
-    #[error("failed to evolve grid: {0}")]
-    EvolutionFailure(String),
-    /// Errors that do no originate from this crate itself.
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-    /// TODO
-    #[error("{0}")]
-    General(String),
-}
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
@@ -352,9 +311,9 @@ impl Grid {
     /// # Errors
     ///
     /// If reading from the compressed or uncompressed stream fails an error is returned.
-    pub fn read(reader: impl Read) -> Result<Self, GridError> {
+    pub fn read(reader: impl Read) -> Result<Self> {
         let mut reader = BufReader::new(reader);
-        let buffer = reader.fill_buf().map_err(GridError::IoFailure)?;
+        let buffer = reader.fill_buf().map_err(|err| Error::Other(err.into()))?;
         let magic_bytes: [u8; 4] = buffer[0..4].try_into().unwrap_or_else(|_| unreachable!());
 
         if u32::from_le_bytes(magic_bytes) == 0x18_4D_22_04 {
@@ -364,8 +323,9 @@ impl Grid {
         }
     }
 
-    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self, GridError> {
-        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(GridError::IoFailure)?[0..16]
+    fn read_uncompressed(mut reader: impl BufRead) -> Result<Self> {
+        let magic_bytes: [u8; 16] = reader.fill_buf().map_err(|err| Error::Other(err.into()))?
+            [0..16]
             .try_into()
             .unwrap_or_else(|_| unreachable!());
 
@@ -382,8 +342,10 @@ impl Grid {
 
         match file_version {
             0 => v0::read_uncompressed_v0(reader),
-            1 => bincode::deserialize_from(reader).map_err(GridError::ReadFailure),
-            _ => Err(GridError::FileVersionUnsupported { file_version }),
+            1 => bincode::deserialize_from(reader).map_err(|err| Error::Other(err.into())),
+            _ => Err(Error::General(format!(
+                "file version {file_version} is not supported"
+            ))),
         }
     }
 
@@ -392,15 +354,17 @@ impl Grid {
     /// # Errors
     ///
     /// If writing fails an error is returned.
-    pub fn write(&self, writer: impl Write) -> Result<(), GridError> {
+    pub fn write(&self, writer: impl Write) -> Result<()> {
         let mut writer = BufWriter::new(writer);
         let file_header = b"PineAPPL\x01\0\0\0\0\0\0\0";
 
         // first write PineAPPL file header
-        writer.write(file_header).map_err(GridError::IoFailure)?;
+        writer
+            .write(file_header)
+            .map_err(|err| Error::Other(err.into()))?;
 
         // then serialize
-        bincode::serialize_into(writer, self).map_err(GridError::WriteFailure)
+        bincode::serialize_into(writer, self).map_err(|err| Error::Other(err.into()))
     }
 
     /// Serializes `self` into `writer`, using LZ4 compression. Writing is buffered.
@@ -408,15 +372,12 @@ impl Grid {
     /// # Errors
     ///
     /// If writing or compression fails an error is returned.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn write_lz4(&self, writer: impl Write) -> Result<(), GridError> {
+    pub fn write_lz4(&self, writer: impl Write) -> Result<()> {
         let mut encoder = FrameEncoder::new(writer);
         self.write(&mut encoder)?;
-        // TODO: get rid of the unwrap call and return the error
-        encoder.try_finish().unwrap();
+        encoder
+            .try_finish()
+            .map_err(|err| Error::Other(err.into()))?;
 
         Ok(())
     }
@@ -440,7 +401,7 @@ impl Grid {
     /// # Errors
     ///
     /// When the given bins are non-consecutive, an error is returned.
-    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<(), GridError> {
+    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<()> {
         // check if the bins in `range` can be merged - if not return without changing `self`
         self.bwfl = self
             .bwfl()
@@ -480,23 +441,23 @@ impl Grid {
     /// interpolations, or scales an error is returned. If the bin limits of `self` and `other`
     /// are different and if the bin limits of `other` cannot be merged with `self` an error is
     /// returned.
-    pub fn merge(&mut self, mut other: Self) -> Result<(), GridError> {
+    pub fn merge(&mut self, mut other: Self) -> Result<()> {
         if self.convolutions() != other.convolutions() {
-            return Err(GridError::General("convolutions do not match".to_owned()));
+            return Err(Error::General("convolutions do not match".to_owned()));
         }
         if self.pid_basis() != other.pid_basis() {
-            return Err(GridError::General("PID bases do not match".to_owned()));
+            return Err(Error::General("PID bases do not match".to_owned()));
         }
         // TODO: relax check if kinematic variables are permutations of each other
         if self.kinematics() != other.kinematics() {
-            return Err(GridError::General("kinematics do not match".to_owned()));
+            return Err(Error::General("kinematics do not match".to_owned()));
         }
         // TODO: relax check if subgrid types don't use interpolation
         if self.interpolations() != other.interpolations() {
-            return Err(GridError::General("interpolations do not match".to_owned()));
+            return Err(Error::General("interpolations do not match".to_owned()));
         }
         if self.scales() != other.scales() {
-            return Err(GridError::General("scales do not match".to_owned()));
+            return Err(Error::General("scales do not match".to_owned()));
         }
 
         let mut new_orders: Vec<Order> = Vec::new();
@@ -757,13 +718,14 @@ impl Grid {
     /// # Errors
     ///
     /// TODO
-    pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<(), GridError> {
-        if bwfl.len() != self.bwfl().len() {
-            return Err(GridError::BinNumberMismatch {
-                grid_bins: self.bwfl().len(),
-                // TODO: rename this member
-                remapper_bins: bwfl.len(),
-            });
+    pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<()> {
+        let bins = bwfl.len();
+        let grid_bins = self.bwfl().len();
+
+        if bins != grid_bins {
+            return Err(Error::General(format!(
+                "{bins} are given, but the grid has {grid_bins}"
+            )));
         }
 
         self.bwfl = bwfl;
@@ -1131,14 +1093,14 @@ impl Grid {
     pub fn evolve<
         'a,
         E: Into<anyhow::Error>,
-        S: IntoIterator<Item = Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
+        S: IntoIterator<Item = std::result::Result<(OperatorSliceInfo, CowArray<'a, f64, Ix4>), E>>,
     >(
         &self,
         slices: Vec<S>,
         order_mask: &[bool],
         xi: (f64, f64, f64),
         alphas_table: &AlphasTable,
-    ) -> Result<FkTable, GridError> {
+    ) -> Result<FkTable> {
         struct Iter<T> {
             iters: Vec<T>,
         }
@@ -1182,8 +1144,8 @@ impl Grid {
         for result in zip_n(slices) {
             let (infos, operators): (Vec<OperatorSliceInfo>, Vec<CowArray<'_, f64, Ix4>>) = result
                 .into_iter()
-                .map(|res| res.map_err(|err| GridError::Other(err.into())))
-                .collect::<Result<_, _>>()?;
+                .map(|res| res.map_err(|err| Error::Other(err.into())))
+                .collect::<Result<_>>()?;
 
             let (info_0, infos_rest) = infos
                 .split_first()
@@ -1374,7 +1336,7 @@ impl Grid {
                 .iter()
                 .any(|&eko_mu2| subgrid::node_value_eq(grid_mu2, eko_mu2))
         }) {
-            return Err(GridError::EvolutionFailure(format!(
+            return Err(Error::General(format!(
                 "no operator for muf2 = {muf2} found in {op_fac1:?}"
             )));
         }
@@ -1594,12 +1556,15 @@ mod tests {
 
     #[test]
     fn grid_read_file_version_unsupported() {
-        assert!(matches!(
-            Grid::read(
-                &[b'P', b'i', b'n', b'e', b'A', b'P', b'P', b'L', 99, 0, 0, 0, 0, 0, 0, 0][..]
-            ),
-            Err(GridError::FileVersionUnsupported { file_version: 99 })
-        ));
+        let result = Grid::read(
+            &[
+                b'P', b'i', b'n', b'e', b'A', b'P', b'P', b'L', 99, 0, 0, 0, 0, 0, 0, 0,
+            ][..],
+        );
+
+        assert!(
+            matches!(result, Err(Error::General(msg)) if msg == "file version 99 is not supported")
+        );
     }
 
     #[test]
@@ -1854,35 +1819,6 @@ mod tests {
             ]
         );
     }
-
-    // #[test]
-    // fn grid_set_remapper_bin_number_mismatch() {
-    //     let mut grid = Grid::new(
-    //         BinsWithFillLimits::with_one_dim_limits(0.0, 0.25, 0.5, 0.75, 1.0).unwrap(),
-    //         vec![Order::new(0, 2, 0, 0, 0)],
-    //         vec![
-    //             channel![1.0 * (2, 2) + 1.0 * (4, 4)],
-    //             channel![1.0 * (1, 1) + 1.0 * (3, 3)],
-    //         ],
-    //         PidBasis::Pdg,
-    //         vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
-    //         v0::default_interps(2),
-    //         vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
-    //         Scales {
-    //             ren: ScaleFuncForm::Scale(0),
-    //             fac: ScaleFuncForm::Scale(0),
-    //             frg: ScaleFuncForm::NoScale,
-    //         },
-    //     );
-
-    //     assert!(matches!(
-    //         grid.set_remapper(BinRemapper::new(vec![1.0], vec![(0.0, 1.0)]).unwrap()),
-    //         Err(GridError::BinNumberMismatch {
-    //             grid_bins: 4,
-    //             remapper_bins: 1
-    //         })
-    //     ));
-    // }
 
     #[test]
     fn evolve_info() {

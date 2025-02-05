@@ -103,7 +103,8 @@ const LHCB_WP_7TEV_V2_XIF_2_STR: &str = "b        Grid             FkTable      
 7 3.01346299826566e1 3.01308723713458e1 -1.2469412e-4
 ";
 
-const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str = "Error: failed to evolve grid: no operator for muf2 = 25825.775616000003 found in [6456.443904000001]
+const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str =
+    "Error: no operator for muf2 = 25825.775616000003 found in [6456.443904000001]
 ";
 
 const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 

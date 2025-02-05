@@ -1,11 +1,11 @@
 //! TODO
 
 use super::boc::Channel;
+use super::error::{Error, Result};
 use super::fk_table::FkAssumptions;
 use float_cmp::approx_eq;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use thiserror::Error;
 
 const EVOL_BASIS_IDS: [i32; 12] = [100, 103, 108, 115, 124, 135, 200, 203, 208, 215, 224, 235];
 
@@ -26,15 +26,13 @@ pub enum PidBasis {
 }
 
 impl FromStr for PidBasis {
-    type Err = UnknownPidBasis;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         match s {
             "Pdg" | "PDG" | "pdg_mc_ids" => Ok(Self::Pdg),
             "Evol" | "EVOL" | "evol" => Ok(Self::Evol),
-            _ => Err(UnknownPidBasis {
-                basis: s.to_owned(),
-            }),
+            _ => Err(Error::General(format!("unknown PID basis: {s}"))),
         }
     }
 }
@@ -174,13 +172,6 @@ impl PidBasis {
 
 /// Return type of [`PidBasis::optimization_rules`].
 pub struct OptRules(pub Vec<(i32, i32)>, pub Vec<i32>);
-
-/// Error returned by [`PidBasis::from_str`] when passed with an unknown argument.
-#[derive(Debug, Error)]
-#[error("unknown PID basis: {basis}")]
-pub struct UnknownPidBasis {
-    basis: String,
-}
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
 #[must_use]

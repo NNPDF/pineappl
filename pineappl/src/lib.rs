@@ -39,6 +39,7 @@ mod v0;
 pub mod boc;
 pub mod convolutions;
 pub mod empty_subgrid;
+pub mod error;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;

@@ -5,6 +5,7 @@
 
 // use super::grid::GridError;
 use super::convert;
+use super::error::{Error, Result};
 use float_cmp::approx_eq;
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,6 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::ops::Range;
 use std::str::FromStr;
-use thiserror::Error;
 
 /// TODO
 #[repr(C)]
@@ -277,7 +277,7 @@ impl BinsWithFillLimits {
     /// # Errors
     ///
     /// TODO
-    pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self, ()> {
+    pub fn new(bins: Vec<Bin>, fill_limits: Vec<f64>) -> Result<Self> {
         // TODO: validate the bins
 
         // - there must be at least one bin
@@ -285,9 +285,13 @@ impl BinsWithFillLimits {
         // - all dimensions must be the same
         // - limits must not overlap
 
-        if fill_limits.len() != bins.len() + 1 {
-            // TODO: do proper error handling
-            return Err(());
+        let fill_limits_len = fill_limits.len();
+        let bins_len_p1 = bins.len() + 1;
+
+        if fill_limits_len != bins_len_p1 {
+            return Err(Error::General(format!(
+                "number of bins must agree with the number of fill limits plus 1"
+            )));
         }
 
         Ok(Self { bins, fill_limits })
@@ -298,7 +302,7 @@ impl BinsWithFillLimits {
     /// # Errors
     ///
     /// TODO
-    pub fn from_fill_limits(fill_limits: Vec<f64>) -> Result<Self, ()> {
+    pub fn from_fill_limits(fill_limits: Vec<f64>) -> Result<Self> {
         let bins = fill_limits
             .windows(2)
             .map(|win| Bin::new(vec![(win[0], win[1])], win[1] - win[0]))
@@ -319,8 +323,15 @@ impl BinsWithFillLimits {
     pub fn from_limits_and_normalizations(
         limits: Vec<Vec<(f64, f64)>>,
         normalizations: Vec<f64>,
-    ) -> Result<Self, ()> {
-        assert_eq!(limits.len(), normalizations.len());
+    ) -> Result<Self> {
+        let limits_len = limits.len();
+        let normalizations_len = normalizations.len();
+
+        if limits_len != normalizations_len {
+            return Err(Error::General(format!(
+                "number of limits be the same as the number of normalizations"
+            )));
+        }
 
         let fill_limits = (0..=limits.len()).map(convert::f64_from_usize).collect();
         let bins = limits
@@ -408,7 +419,7 @@ impl BinsWithFillLimits {
     ///
     /// TODO
     // TODO: change range to `RangeBounds<usize>`
-    pub fn merge(&self, range: Range<usize>) -> Result<Self, ()> {
+    pub fn merge(&self, range: Range<usize>) -> Result<Self> {
         // TODO: allow more flexible merging
         if !self
             .slices()
@@ -416,7 +427,7 @@ impl BinsWithFillLimits {
             .any(|&Range { start, end }| (start <= range.start) && (range.end <= end))
         {
             // TODO: implement proper error handling
-            return Err(());
+            return Err(Error::General("bins are not simply connected".to_string()));
         }
 
         let mut limits: Vec<_> = self.bins.iter().map(|bin| bin.limits().to_vec()).collect();
@@ -466,10 +477,10 @@ impl BinsWithFillLimits {
 }
 
 impl FromStr for BinsWithFillLimits {
-    type Err = ParseBWFLError;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, ParseBWFLError> {
-        let remaps: Result<Vec<Vec<Vec<f64>>>, ParseBWFLError> = s
+    fn from_str(s: &str) -> Result<Self> {
+        let remaps: Result<Vec<Vec<Vec<f64>>>> = s
             .split(';')
             .map(|string| {
                 string
@@ -479,7 +490,7 @@ impl FromStr for BinsWithFillLimits {
                             .split_once(':')
                             .map_or(Ok(string), |(lhs, rhs)| {
                                 match (lhs.trim().parse::<usize>(), rhs.trim().parse::<usize>()) {
-                                    (Err(lhs), Err(rhs)) => Err(ParseBWFLError::Error(format!(
+                                    (Err(lhs), Err(rhs)) => Err(Error::General(format!(
                                         "unable to parse 'N:M' syntax from: '{string}' (N: '{lhs}', M: '{rhs}')"
                                     ))),
                                     // skip :N specification
@@ -497,7 +508,7 @@ impl FromStr for BinsWithFillLimits {
                                     None
                                 } else {
                                     Some(string.parse::<f64>().map_err(|err| {
-                                        ParseBWFLError::Error(format!(
+                                        Error::General(format!(
                                             "unable to parse limit '{string}': '{err}')"
                                         ))
                                     }))
@@ -512,7 +523,7 @@ impl FromStr for BinsWithFillLimits {
 
         if let Some(first) = remaps.first() {
             if first.len() != 1 {
-                return Err(ParseBWFLError::Error(
+                return Err(Error::General(
                     "'|' syntax not meaningful for first dimension".to_owned(),
                 ));
             }
@@ -523,9 +534,7 @@ impl FromStr for BinsWithFillLimits {
             for i in 1..vec.len() {
                 if vec[i].is_empty() {
                     if vec[i - 1].is_empty() {
-                        return Err(ParseBWFLError::Error(
-                            "empty repetition with '|'".to_owned(),
-                        ));
+                        return Err(Error::General("empty repetition with '|'".to_owned()));
                     }
 
                     vec[i] = vec[i - 1].clone();
@@ -554,9 +563,7 @@ impl FromStr for BinsWithFillLimits {
                 }
 
                 if vec.len() <= 1 {
-                    return Err(ParseBWFLError::Error(
-                        "no limits due to ':' syntax".to_owned(),
-                    ));
+                    return Err(Error::General("no limits due to ':' syntax".to_owned()));
                 }
             }
         }
@@ -603,7 +610,7 @@ impl FromStr for BinsWithFillLimits {
                     buffer.push((left, right));
                     normalization *= right - left;
                 } else {
-                    return Err(ParseBWFLError::Error(
+                    return Err(Error::General(
                         "missing '|' specification: number of variants too small".to_owned(),
                     ));
                 }
@@ -620,21 +627,6 @@ impl FromStr for BinsWithFillLimits {
             .unwrap())
     }
 }
-
-/// Error type returned by [`BinsWithFillLimits::from_str`]
-#[derive(Debug, Error)]
-pub enum ParseBWFLError {
-    /// An error that occured while parsing the string in [`BinsWithFillLimits::from_str`].
-    #[error("{0}")]
-    Error(String),
-}
-
-/// Error type keeping information if [`Order::from_str`] went wrong.
-#[derive(Debug, Error, Eq, PartialEq)]
-#[error("{0}")]
-pub struct ParseOrderError(String);
-
-// TODO: when possible change the types from `u32` to `u8` to change `try_into` to `into`
 
 /// Coupling powers for each grid.
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -655,9 +647,9 @@ pub struct Order {
 }
 
 impl FromStr for Order {
-    type Err = ParseOrderError;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         let mut result = Self {
             alphas: 0,
             alpha: 0,
@@ -692,12 +684,12 @@ impl FromStr for Order {
                     result.logxia = num;
                 }
                 (label, Err(err)) => {
-                    return Err(ParseOrderError(format!(
+                    return Err(Error::General(format!(
                         "error while parsing exponent of '{label}': {err}"
                     )));
                 }
                 (label, Ok(_)) => {
-                    return Err(ParseOrderError(format!("unknown coupling: '{label}'")));
+                    return Err(Error::General(format!("unknown coupling: '{label}'")));
                 }
             }
         }
@@ -1093,50 +1085,43 @@ impl Channel {
     }
 }
 
-/// Error type keeping information if [`Channel::from_str`] went wrong.
-#[derive(Debug, Error)]
-#[error("{0}")]
-pub struct ParseChannelError(String);
-
 impl FromStr for Channel {
-    type Err = ParseChannelError;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         let result: Vec<_> = s
             .split('+')
             .map(|sub| {
                 sub.split_once('*').map_or_else(
                     // TODO: allow a missing numerical factor which then is assumed to be `1`
-                    || Err(ParseChannelError(format!("missing '*' in '{sub}'"))),
+                    || Err(Error::General(format!("missing '*' in '{sub}'"))),
                     |(factor, pids)| {
                         let vector: Vec<_> = pids
                             .trim()
                             .strip_prefix('(')
-                            .ok_or_else(|| ParseChannelError(format!("missing '(' in '{pids}'")))?
+                            .ok_or_else(|| Error::General(format!("missing '(' in '{pids}'")))?
                             .strip_suffix(')')
-                            .ok_or_else(|| ParseChannelError(format!("missing ')' in '{pids}'")))?
+                            .ok_or_else(|| Error::General(format!("missing ')' in '{pids}'")))?
                             .split(',')
                             .map(|pid| {
                                 pid.trim().parse::<i32>().map_err(|err| {
-                                    ParseChannelError(format!(
-                                        "could not parse PID: '{pid}', '{err}'"
-                                    ))
+                                    Error::General(format!("could not parse PID: '{pid}', '{err}'"))
                                 })
                             })
-                            .collect::<Result<_, _>>()?;
+                            .collect::<Result<_>>()?;
 
                         Ok((
                             vector,
                             str::parse::<f64>(factor.trim())
-                                .map_err(|err| ParseChannelError(err.to_string()))?,
+                                .map_err(|err| Error::General(err.to_string()))?,
                         ))
                     },
                 )
             })
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
 
         if !result.iter().map(|(pids, _)| pids.len()).all_equal() {
-            return Err(ParseChannelError(
+            return Err(Error::General(
                 "PID tuples have different lengths".to_owned(),
             ));
         }
@@ -1179,11 +1164,20 @@ mod tests {
 
     #[test]
     fn order_from_str() {
-        assert_eq!("as1".parse(), Ok(Order::new(1, 0, 0, 0, 0)));
-        assert_eq!("a1".parse(), Ok(Order::new(0, 1, 0, 0, 0)));
-        assert_eq!("as1lr1".parse(), Ok(Order::new(1, 0, 1, 0, 0)));
-        assert_eq!("as1lf1".parse(), Ok(Order::new(1, 0, 0, 1, 0)));
-        assert_eq!("as1la1".parse(), Ok(Order::new(1, 0, 0, 0, 1)));
+        assert_eq!("as1".parse::<Order>().unwrap(), Order::new(1, 0, 0, 0, 0));
+        assert_eq!("a1".parse::<Order>().unwrap(), Order::new(0, 1, 0, 0, 0));
+        assert_eq!(
+            "as1lr1".parse::<Order>().unwrap(),
+            Order::new(1, 0, 1, 0, 0)
+        );
+        assert_eq!(
+            "as1lf1".parse::<Order>().unwrap(),
+            Order::new(1, 0, 0, 1, 0)
+        );
+        assert_eq!(
+            "as1la1".parse::<Order>().unwrap(),
+            Order::new(1, 0, 0, 0, 1)
+        );
         assert_eq!(
             "ab12".parse::<Order>().unwrap_err().to_string(),
             "unknown coupling: 'ab'"

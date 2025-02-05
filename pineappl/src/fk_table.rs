@@ -3,6 +3,7 @@
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvolutionCache;
 use super::empty_subgrid::EmptySubgridV1;
+use super::error::{Error, Result};
 use super::grid::Grid;
 use super::pids::OptRules;
 use super::subgrid::{self, Subgrid};
@@ -10,7 +11,6 @@ use ndarray::{s, ArrayD};
 use std::fmt::{self, Display, Formatter};
 use std::iter;
 use std::str::FromStr;
-use thiserror::Error;
 
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
 /// additional guarantees are given:
@@ -26,20 +26,6 @@ use thiserror::Error;
 #[repr(transparent)]
 pub struct FkTable {
     grid: Grid,
-}
-
-/// The error type returned when a conversion of a [`Grid`] to an [`FkTable`] fails.
-#[derive(Debug, Error)]
-pub enum TryFromGridError {
-    /// Error if the grid contains multiple scales instead of a single one.
-    #[error("multiple scales detected")]
-    MultipleScales,
-    /// Error if the channels are not simple.
-    #[error("complicated channel function detected")]
-    InvalidChannel,
-    /// Error if the order of the grid was not a single one with all zeros in the exponents.
-    #[error("multiple orders detected")]
-    NonTrivialOrder,
 }
 
 /// The optimization assumptions for an [`FkTable`], needed for [`FkTable::optimize`]. Since FK
@@ -74,13 +60,6 @@ pub enum FkAssumptions {
     Nf3Sym,
 }
 
-/// Error type when trying to construct [`FkAssumptions`] with a string.
-#[derive(Debug, Eq, Error, PartialEq)]
-#[error("unknown variant for FkAssumptions: {variant}")]
-pub struct UnknownFkAssumption {
-    variant: String,
-}
-
 impl Display for FkAssumptions {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
@@ -101,9 +80,9 @@ impl Display for FkAssumptions {
 }
 
 impl FromStr for FkAssumptions {
-    type Err = UnknownFkAssumption;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         Ok(match s {
             "Nf6Ind" => Self::Nf6Ind,
             "Nf6Sym" => Self::Nf6Sym,
@@ -114,9 +93,9 @@ impl FromStr for FkAssumptions {
             "Nf3Ind" => Self::Nf3Ind,
             "Nf3Sym" => Self::Nf3Sym,
             _ => {
-                return Err(UnknownFkAssumption {
-                    variant: s.to_owned(),
-                });
+                return Err(Error::General(format!(
+                    "unknown variant for FkAssumptions: {s}",
+                )));
             }
         })
     }
@@ -298,9 +277,9 @@ impl FkTable {
 }
 
 impl TryFrom<Grid> for FkTable {
-    type Error = TryFromGridError;
+    type Error = Error;
 
-    fn try_from(grid: Grid) -> Result<Self, Self::Error> {
+    fn try_from(grid: Grid) -> Result<Self> {
         let mut muf2 = -1.0;
 
         if grid.orders()
@@ -312,7 +291,7 @@ impl TryFrom<Grid> for FkTable {
                 logxia: 0,
             }]
         {
-            return Err(TryFromGridError::NonTrivialOrder);
+            return Err(Error::General("multiple orders detected".to_owned()));
         }
 
         for subgrid in grid.subgrids() {
@@ -325,13 +304,13 @@ impl TryFrom<Grid> for FkTable {
                 .fac
                 .calc(&subgrid.node_values(), grid.kinematics())[..]
             else {
-                return Err(TryFromGridError::MultipleScales);
+                return Err(Error::General("multiple scales detected".to_owned()));
             };
 
             if muf2 < 0.0 {
                 muf2 = fac;
             } else if !subgrid::node_value_eq(muf2, fac) {
-                return Err(TryFromGridError::MultipleScales);
+                return Err(Error::General("multiple scales detected".to_owned()));
             }
         }
 
@@ -339,14 +318,18 @@ impl TryFrom<Grid> for FkTable {
             let entry = channel.entry();
 
             if entry.len() != 1 || !subgrid::node_value_eq(entry[0].1, 1.0) {
-                return Err(TryFromGridError::InvalidChannel);
+                return Err(Error::General(
+                    "complicated channel function detected".to_owned(),
+                ));
             }
         }
 
         if (1..grid.channels().len())
             .any(|i| grid.channels()[i..].contains(&grid.channels()[i - 1]))
         {
-            return Err(TryFromGridError::InvalidChannel);
+            return Err(Error::General(
+                "complicated channel function detected".to_owned(),
+            ));
         }
 
         Ok(Self { grid })
@@ -359,14 +342,38 @@ mod tests {
 
     #[test]
     fn fk_assumptions_try_from() {
-        assert_eq!(FkAssumptions::from_str("Nf6Ind"), Ok(FkAssumptions::Nf6Ind));
-        assert_eq!(FkAssumptions::from_str("Nf6Sym"), Ok(FkAssumptions::Nf6Sym));
-        assert_eq!(FkAssumptions::from_str("Nf5Ind"), Ok(FkAssumptions::Nf5Ind));
-        assert_eq!(FkAssumptions::from_str("Nf5Sym"), Ok(FkAssumptions::Nf5Sym));
-        assert_eq!(FkAssumptions::from_str("Nf4Ind"), Ok(FkAssumptions::Nf4Ind));
-        assert_eq!(FkAssumptions::from_str("Nf4Sym"), Ok(FkAssumptions::Nf4Sym));
-        assert_eq!(FkAssumptions::from_str("Nf3Ind"), Ok(FkAssumptions::Nf3Ind));
-        assert_eq!(FkAssumptions::from_str("Nf3Sym"), Ok(FkAssumptions::Nf3Sym));
+        assert_eq!(
+            FkAssumptions::from_str("Nf6Ind").unwrap(),
+            FkAssumptions::Nf6Ind
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf6Sym").unwrap(),
+            FkAssumptions::Nf6Sym
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf5Ind").unwrap(),
+            FkAssumptions::Nf5Ind
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf5Sym").unwrap(),
+            FkAssumptions::Nf5Sym
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf4Ind").unwrap(),
+            FkAssumptions::Nf4Ind
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf4Sym").unwrap(),
+            FkAssumptions::Nf4Sym
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf3Ind").unwrap(),
+            FkAssumptions::Nf3Ind
+        );
+        assert_eq!(
+            FkAssumptions::from_str("Nf3Sym").unwrap(),
+            FkAssumptions::Nf3Sym
+        );
         assert_eq!(
             FkAssumptions::from_str("XXXXXX").unwrap_err().to_string(),
             "unknown variant for FkAssumptions: XXXXXX"

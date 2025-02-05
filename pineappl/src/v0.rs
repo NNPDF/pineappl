@@ -1,7 +1,8 @@
 use super::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convert;
 use super::convolutions::{Conv, ConvType};
-use super::grid::{Grid, GridError};
+use super::error::{Error, Result};
+use super::grid::Grid;
 use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
@@ -40,10 +41,10 @@ pub fn default_interps(flexible_scale: bool, convolutions: usize) -> Vec<Interp>
     interps
 }
 
-pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid, GridError> {
+pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
     use pineappl_v0::subgrid::Subgrid as _;
 
-    let grid = GridV0::read(&mut reader).map_err(|err| GridError::Other(err.into()))?;
+    let grid = GridV0::read(&mut reader).map_err(|err| Error::Other(err.into()))?;
     let convolutions = read_convolutions_from_metadata(&grid);
 
     let flexible_scale_grid = grid.subgrids().iter().any(|subgrid| {

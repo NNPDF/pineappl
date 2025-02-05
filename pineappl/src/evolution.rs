@@ -2,7 +2,8 @@
 
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvType;
-use super::grid::{Grid, GridError};
+use super::error::{Error, Result};
+use super::grid::Grid;
 use super::import_subgrid::ImportSubgridV1;
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
@@ -123,7 +124,7 @@ fn pid_slices(
     info: &OperatorSliceInfo,
     gluon_has_pid_zero: bool,
     pid1_nonzero: &dyn Fn(i32) -> bool,
-) -> Result<(Pid01IndexTuples, Pid01Tuples), GridError> {
+) -> Result<(Pid01IndexTuples, Pid01Tuples)> {
     // list of all non-zero PID indices
     let pid_indices: Vec<_> = (0..operator.dim().2)
         .cartesian_product(0..operator.dim().0)
@@ -143,7 +144,7 @@ fn pid_slices(
         .collect();
 
     if pid_indices.is_empty() {
-        return Err(GridError::EvolutionFailure(
+        return Err(Error::General(
             "no non-zero operator found; result would be an empty FkTable".to_owned(),
         ));
     }
@@ -171,7 +172,7 @@ fn operator_slices(
     info: &OperatorSliceInfo,
     pid_indices: &[(usize, usize)],
     x1: &[f64],
-) -> Result<Vec<Array2<f64>>, GridError> {
+) -> Result<Vec<Array2<f64>>> {
     // permutation between the grid x values and the operator x1 values
     let x1_indices: Vec<_> = x1
         .iter()
@@ -179,12 +180,10 @@ fn operator_slices(
             info.x1
                 .iter()
                 .position(|&x1| subgrid::node_value_eq(x1p, x1))
-                .ok_or_else(|| {
-                    GridError::EvolutionFailure(format!("no operator for x = {x1p} found"))
-                })
+                .ok_or_else(|| Error::General(format!("no operator for x = {x1p} found")))
         })
         // TODO: use `try_collect` once stabilized
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<_>>()?;
 
     // create the corresponding operators accessible in the form [muf2, x0, x1]
     let operators: Vec<_> = pid_indices
@@ -213,7 +212,7 @@ fn ndarray_from_subgrid_orders_slice(
     order_mask: &[bool],
     (xir, xif, xia): (f64, f64, f64),
     alphas_table: &AlphasTable,
-) -> Result<X1aX1bOpDTuple, GridError> {
+) -> Result<X1aX1bOpDTuple> {
     // TODO: remove these assumptions from the following code
     assert_eq!(grid.kinematics()[0], Kinematics::Scale(0));
     let x_start = grid
@@ -339,9 +338,7 @@ fn ndarray_from_subgrid_orders_slice(
             {
                 alphas.powi(order.alphas.into())
             } else {
-                return Err(GridError::EvolutionFailure(format!(
-                    "no alphas for mur2 = {mur2} found"
-                )));
+                return Err(Error::General(format!("no alphas for mur2 = {mur2} found")));
             };
 
             zero = false;
@@ -365,7 +362,7 @@ pub(crate) fn evolve_slice(
     order_mask: &[bool],
     xi: (f64, f64, f64),
     alphas_table: &AlphasTable,
-) -> Result<(Array3<SubgridEnum>, Vec<Channel>), GridError> {
+) -> Result<(Array3<SubgridEnum>, Vec<Channel>)> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
     // TODO: implement matching of different scales for different EKOs
@@ -388,7 +385,7 @@ pub(crate) fn evolve_slice(
                     .any(|(pids, _)| pids[d] == pid1)
             })
         })
-        .collect::<Result<Vec<_>, _>>()?
+        .collect::<Result<Vec<_>>>()?
         .into_iter()
         .unzip();
 
