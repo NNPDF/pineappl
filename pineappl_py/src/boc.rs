@@ -376,16 +376,6 @@ impl PyScales {
     }
 }
 
-impl Default for PyScales {
-    fn default() -> Self {
-        Self::new(Scales {
-            ren: ScaleFuncForm::Scale(0),
-            fac: ScaleFuncForm::Scale(0),
-            frg: ScaleFuncForm::NoScale,
-        })
-    }
-}
-
 #[pymethods]
 impl PyScales {
     /// Constructor for `Scales`
