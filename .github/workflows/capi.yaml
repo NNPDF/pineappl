@@ -35,13 +35,11 @@ jobs:
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           make test-examples
 
-      - name: Test OO C++ example
+      - name: Test OO C++ examples
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make
-          ./dyaa
-          test -f ./DY-LO-AA.pineappl.lz4
+          make test-examples
 
       - name: Generate code coverage
         run: |
