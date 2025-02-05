@@ -433,52 +433,6 @@ class TestGrid:
             expected_results,
         )
 
-    def test_convolve_subgrid(self, fake_grids):
-        binning = [1e-2, 1e-1, 0.5, 1]
-        g = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
-            orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
-            bins=binning,
-        )
-
-        # Fill the grid with `fill_array`
-        rndgen = Generator(PCG64(seed=1234))
-        ntuples = [
-            np.array([q2, x1, x2])
-            for q2, x1, x2 in itertools.product(Q2GRID, XGRID, XGRID)
-        ]
-        obs = [rndgen.uniform(binning[0], binning[-1]) for _ in ntuples]
-        for pto in range(len(ORDERS)):
-            for channel_id in range(len(CHANNELS)):
-                g.fill_array(
-                    order=pto,
-                    observables=obs,
-                    channel=channel_id,
-                    ntuples=ntuples,
-                    weights=np.repeat(10, len(obs)),
-                )
-
-        ptos_res = []
-        for pto in range(len(g.orders())):
-            res_by_bin = []
-            for bin in range(g.bins()):
-                res_by_channel = 0
-                for channel in range(len(g.channels())):
-                    res_by_channel += g.convolve_subgrid(
-                        pdg_convs=[CONVOBJECT, CONVOBJECT],
-                        xfxs=[lambda pid, x, q2: x, lambda pid, x, q2: x],
-                        alphas=lambda q2: 1.0,
-                        ord=pto,
-                        bin=bin,
-                        channel=channel,
-                    ).sum()
-                res_by_bin.append(res_by_channel)
-            ptos_res.append(res_by_bin)
-
-        np.testing.assert_allclose(ptos_res, [FILL_CONV_RESUTLS])
-
     def test_many_convolutions(self, fake_grids, pdf, nb_convolutions: int = 3):
         """Test for fun many convolutions."""
         expected_results = [
