@@ -2,7 +2,6 @@ use super::GlobalConfiguration;
 use anyhow::{anyhow, bail, ensure, Context, Error, Result};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
-use ndarray::{Array3, Ix3};
 use pineappl::boc::{ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::Grid;
@@ -411,78 +410,6 @@ pub fn convolve_limits(grid: &Grid, bins: &[usize], mode: ConvoluteMode) -> Vec<
         ConvoluteMode::Asymmetry => limits[limits.len() / 2..].to_vec(),
         ConvoluteMode::Integrated | ConvoluteMode::Normal => limits,
     }
-}
-
-pub fn convolve_subgrid(
-    grid: &Grid,
-    conv_funs: &mut [Pdf],
-    conv_types: &[ConvType],
-    order: usize,
-    bin: usize,
-    lumi: usize,
-    cfg: &GlobalConfiguration,
-) -> Array3<f64> {
-    if cfg.force_positive {
-        for fun in conv_funs.iter_mut() {
-            fun.set_force_positive(1);
-        }
-    }
-
-    // TODO: promote this to an error
-    assert!(
-        cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
-        cfg.use_alphas_from
-    );
-
-    let x_min_max: Vec<_> = conv_funs
-        .iter_mut()
-        .map(|fun| (fun.x_min(), fun.x_max()))
-        .collect();
-    let mut funs: Vec<_> = conv_funs
-        .iter()
-        .zip(x_min_max)
-        .map(|(fun, (x_min, x_max))| {
-            move |id, x, q2| {
-                if !cfg.allow_extrapolation && (x < x_min || x > x_max) {
-                    0.0
-                } else {
-                    fun.xfx_q2(id, x, q2)
-                }
-            }
-        })
-        .collect();
-    let xfx: Vec<_> = funs
-        .iter_mut()
-        .map(|fun| fun as &mut dyn FnMut(i32, f64, f64) -> f64)
-        .collect();
-    let mut alphas_funs: Vec<_> = conv_funs
-        .iter()
-        .map(|fun| move |q2| fun.alphas_q2(q2))
-        .collect();
-    let convolutions: Vec<_> = conv_funs
-        .iter()
-        .zip(conv_types)
-        .map(|(fun, &conv_type)| {
-            let pid = fun
-                .set()
-                .entry("Particle")
-                // if the field 'Particle' is missing we assume it's a proton PDF
-                .map_or(Ok(2212), |string| string.parse::<i32>())
-                // UNWRAP: if this fails, there's a non-integer string in the LHAPDF info file
-                .unwrap();
-
-            Conv::new(conv_type, pid)
-        })
-        .collect();
-
-    let mut cache = ConvolutionCache::new(convolutions, xfx, &mut alphas_funs[cfg.use_alphas_from]);
-    let subgrid = grid.convolve_subgrid(&mut cache, order, bin, lumi, (1.0, 1.0, 1.0));
-
-    subgrid
-        .into_dimensionality::<Ix3>()
-        .map_err(|_| anyhow!("Only 3-dimensional subgrids are supported",))
-        .unwrap()
 }
 
 pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {

@@ -17,9 +17,7 @@ use float_cmp::{approx_eq, assert_approx_eq};
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
-use ndarray::{
-    s, Array2, Array3, ArrayD, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip,
-};
+use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
@@ -322,71 +320,6 @@ impl Grid {
         }
 
         bins
-    }
-
-    /// Convolutes a single subgrid `(order, bin, channel)` with the PDFs strong coupling given by
-    /// `xfx1`, `xfx2` and `alphas`. The convolution result is fully differentially, such that the
-    /// axes of the result correspond to the values given by the subgrid `q2`, `x1` and `x2` grid
-    /// values.
-    ///
-    /// # Panics
-    ///
-    /// TODO
-    pub fn convolve_subgrid(
-        &self,
-        cache: &mut ConvolutionCache,
-        ord: usize,
-        bin: usize,
-        channel: usize,
-        xi @ (xir, xif, xia): (f64, f64, f64),
-    ) -> ArrayD<f64> {
-        let mut cache = cache.new_grid_conv_cache(self, &[(xir, xif, xia)]);
-
-        let normalizations = self.bwfl().normalizations();
-        let pdg_channels = self.channels_pdg();
-
-        let subgrid = &self.subgrids[[ord, bin, channel]];
-        let order = &self.orders[ord];
-
-        let channel = &pdg_channels[channel];
-
-        cache.set_grids(self, subgrid, xi);
-
-        let node_values = subgrid.node_values();
-        // TODO: generalize this to N dimensions
-        assert_eq!(node_values.len(), 3);
-        let dim: Vec<_> = node_values.iter().map(Vec::len).collect();
-
-        let mut array = ArrayD::zeros(dim);
-
-        for (idx, value) in subgrid.indexed_iter() {
-            assert_eq!(idx.len(), 3);
-            let mut lumi = 0.0;
-
-            for entry in channel.entry() {
-                debug_assert_eq!(entry.0.len(), 2);
-                // TODO: we assume `idx` to be ordered as scale, x1, x2
-                let fx_prod = cache.as_fx_prod(&entry.0, order.alphas, &idx);
-                lumi += fx_prod * entry.1;
-            }
-
-            array[idx.as_slice()] = lumi * value;
-        }
-
-        if order.logxir != 0 {
-            array *= (xir * xir).ln().powi(order.logxir.into());
-        }
-
-        if order.logxif != 0 {
-            array *= (xif * xif).ln().powi(order.logxif.into());
-        }
-
-        if order.logxia != 0 {
-            array *= (xia * xia).ln().powi(order.logxia.into());
-        }
-
-        array /= normalizations[bin];
-        array
     }
 
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The

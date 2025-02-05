@@ -387,22 +387,6 @@ fn perform_grid_tests(
     mem::drop(convolution_cache2);
     mem::drop(bins2);
 
-    // TEST 6: `convolve_subgrid`
-    let bins: Vec<_> = (0..grid.bwfl().len())
-        .map(|bin| {
-            (0..grid.channels().len())
-                .map(|channel| {
-                    grid.convolve_subgrid(&mut convolution_cache, 0, bin, channel, (1.0, 1.0, 1.0))
-                        .sum()
-                })
-                .sum()
-        })
-        .collect();
-
-    for (result, reference) in bins.iter().zip(reference.iter()) {
-        assert_approx_eq!(f64, *result, *reference, ulps = 16);
-    }
-
     // TEST 7a: `optimize_using` - tests `symmetrize` for each subgrid type
     grid.optimize_using(GridOptFlags::SYMMETRIZE_CHANNELS);
 
@@ -415,22 +399,6 @@ fn perform_grid_tests(
     {
         assert_approx_eq!(f64, node_value1, ref_value, ulps = 4);
         assert_approx_eq!(f64, node_value2, ref_value, ulps = 4);
-    }
-
-    // TEST 8: `convolve_subgrid` for the optimized subgrids
-    let bins: Vec<_> = (0..grid.bwfl().len())
-        .map(|bin| {
-            (0..grid.channels().len())
-                .map(|channel| {
-                    grid.convolve_subgrid(&mut convolution_cache, 0, bin, channel, (1.0, 1.0, 1.0))
-                        .sum()
-                })
-                .sum()
-        })
-        .collect();
-
-    for (result, reference_after_ssd) in bins.iter().zip(reference_after_ssd.iter()) {
-        assert_approx_eq!(f64, *result, *reference_after_ssd, ulps = 32);
     }
 
     let bins = grid.convolve(&mut convolution_cache, &[], &[], &[], &[(1.0, 1.0, 1.0)]);

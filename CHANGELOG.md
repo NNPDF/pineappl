@@ -58,6 +58,9 @@ the old file format can still be read with this new version.
   `pineappl.fk_table.FkTable.from_grid()` methods; use the constructors
   of the respective class instead
 - removed the constructor `Grid::with_subgrid_type`
+- removed `Grid::convolve_subgrid` and `--subgrid-pull` from `pineappl plot`
+  that was using the method. The CLI subgrid-pull plotting routine only ever
+  worked for grids with two convolutions
 
 ## [0.8.7] - 22/01/2025
 
