@@ -1380,7 +1380,7 @@ impl Grid {
                 (ScaleFuncForm::Scale(1), vec![fac0, frg0])
             };
 
-            let (subgrids, channels) = evolution::evolve_slice_with_many(
+            let (subgrids, channels) = evolution::evolve_slice(
                 self,
                 &operators,
                 &infos,

@@ -204,7 +204,7 @@ fn operator_slices(
 
 type X1aX1bOpDTuple = (Vec<Vec<f64>>, Option<ArrayD<f64>>);
 
-fn ndarray_from_subgrid_orders_slice_many(
+fn ndarray_from_subgrid_orders_slice(
     grid: &Grid,
     fac1: f64,
     kinematics: &[Kinematics],
@@ -357,7 +357,7 @@ fn ndarray_from_subgrid_orders_slice_many(
     Ok((x1n, (!zero).then_some(array)))
 }
 
-pub(crate) fn evolve_slice_with_many(
+pub(crate) fn evolve_slice(
     grid: &Grid,
     operators: &[ArrayView4<f64>],
     infos: &[OperatorSliceInfo],
@@ -412,7 +412,7 @@ pub(crate) fn evolve_slice_with_many(
         let mut tables = vec![ArrayD::zeros(dim.clone()); channels0.len()];
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
-            let (x1, array) = ndarray_from_subgrid_orders_slice_many(
+            let (x1, array) = ndarray_from_subgrid_orders_slice(
                 grid,
                 fac1,
                 grid.kinematics(),
