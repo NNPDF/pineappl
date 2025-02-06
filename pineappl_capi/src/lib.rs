@@ -439,7 +439,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// this function is not safe to call. The function pointers `xfx` and `alphas` must not
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
@@ -486,7 +486,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     ));
 }
 
-/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`, which are the PDFs of hadrons
+/// Convolutes the specified grid with the PDFs two (different) PDFs, which are the PDFs of hadrons
 /// with PDG ids `pdg_id1` and `pdg_id2`, respectively, and strong coupling `alphas`. These
 /// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
 /// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
@@ -503,7 +503,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// this function is not safe to call. The function pointers `xfx` and `alphas` must not
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
@@ -1778,17 +1778,17 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
+/// this function is not safe to call. The function pointers `xfx` and `alphas` must not
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolve(
     grid: *const Grid,
-    xfxs: *const extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    pdf_states: *mut *mut c_void,
-    alphas_states: *mut c_void,
+    pdfs_state: *mut *mut c_void,
+    alphas_state: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     bin_indices: *const usize,
@@ -1817,14 +1817,12 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     };
 
     // Construct the alphas and PDFs functions
-    let mut als = |q2| alphas(q2, alphas_states);
+    let mut als = |q2| alphas(q2, alphas_state);
 
-    let state_slices = unsafe { slice::from_raw_parts(pdf_states, grid.convolutions().len()) };
-    let mut xfxs = unsafe { slice::from_raw_parts(xfxs, grid.convolutions().len()).to_vec() };
-    let mut xfx_funcs: Vec<_> = xfxs
-        .iter_mut()
-        .zip(state_slices.iter())
-        .map(|(xfx, &state)| move |id, x, q2| xfx(id, x, q2, state))
+    let pdfs_slices = unsafe { slice::from_raw_parts(pdfs_state, grid.convolutions().len()) };
+    let mut xfx_funcs: Vec<_> = pdfs_slices
+        .iter()
+        .map(|&state| move |id, x, q2| xfx(id, x, q2, state))
         .collect();
 
     // Construct the Convolution cache
