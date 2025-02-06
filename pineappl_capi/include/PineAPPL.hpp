@@ -411,9 +411,9 @@ struct GridV1 : public GridBase {
    * @param mu_scales indexed representing the scales
    */
   GridV1(std::vector<OrderV1> &orders, const Channels &channels,
-         PidBasis pid_basis, std::vector<int32_t> pids,
-         std::vector<ConvType> &convolution_types,
-         std::vector<Kinematics> &kinematics, std::vector<InterpTuples> &interp,
+         pineappl_pid_basis pid_basis, std::vector<int32_t> pids,
+         std::vector<pineappl_conv_type> &convolution_types,
+         std::vector<pineappl_kinematics> &kinematics, std::vector<pineappl_interp_tuples> &interp,
          std::vector<double> &bin_limits, std::vector<std::size_t> &mu_scales)
       : GridBase(nullptr) {
     const std::size_t n_orders = orders.size();
