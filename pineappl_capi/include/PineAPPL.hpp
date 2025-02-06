@@ -306,8 +306,6 @@ struct GridBase {
 
 /** @brief The central grid object. */
 struct Grid : public GridBase {
-  // /** @brief Underlying raw object. */
-  // pineappl_grid *raw;
 
   /**
    * @brief Constructor.
