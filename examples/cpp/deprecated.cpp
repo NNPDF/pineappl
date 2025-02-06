@@ -31,13 +31,11 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+    auto* pdf1 = LHAPDF::mkPDF(pdfset, 0);
+    auto* pdf2 = LHAPDF::mkPDF(pdfset, 0); // TODO: use different PDF
 
     // define callables for the PDFs and alphas
-    auto xfx1 = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto xfx2 = [](int32_t id, double x, double q2, void* pdf) {
+    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
         return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
     };
     auto alphas = [](double q2, void* pdf) {
@@ -74,7 +72,7 @@ int main(int argc, char* argv[]) {
     double xif = 1.0;
 
     // use `pineappl_grid_convolve_with_one` instead
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf1, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec1.data());
 
     // how does the grid know which PDFs it must be convolved with? This is determined by the
@@ -85,7 +83,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> dxsec2(bins);
 
     // use `pineappl_grid_convolve_with_one` instead
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    pineappl_grid_convolute_with_one(grid, 2212, xfx, alphas, pdf1, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec2.data());
 
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
@@ -94,14 +92,16 @@ int main(int argc, char* argv[]) {
 
     std::vector<double> dxsec3(bins);
 
-    // use `pineappl_grid_convolve_with_two` instead
-    pineappl_grid_convolute_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf,
+    // use `pineappl_grid_convolve_with_two` instead. Here we use the first PDF to compute
+    // alphasQ2
+    pineappl_grid_convolute_with_two(grid, 2212, 1000010020, xfx, alphas, pdf1, pdf2, pdf1,
         order_mask.get(), channel_mask.get(), xir, xif, dxsec3.data());
 
     std::vector<double> dxsec4(bins);
 
-    // use `pineappl_grid_convolve_with_two` instead
-    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf, nullptr,
+    // use `pineappl_grid_convolve_with_two` instead. While here we use the value of the
+    // second PDF to compute alphasQ2
+    pineappl_grid_convolve_with_two(grid, 2212, 1000010020, xfx, alphas, pdf1, pdf2, pdf2, nullptr,
         nullptr, xir, xif, dxsec4.data());
 
     std::vector<double> normalizations(bins);

@@ -392,11 +392,12 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     grid: *const Grid,
     pdg_id1: i32,
-    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     pdg_id2: i32,
-    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    state: *mut c_void,
+    pdf1_state: *mut c_void,
+    pdf2_state: *mut c_void,
+    alphas_state: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     xi_ren: f64,
@@ -407,11 +408,12 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
         pineappl_grid_convolve_with_two(
             grid,
             pdg_id1,
-            xfx1,
             pdg_id2,
-            xfx2,
+            xfx,
             alphas,
-            state,
+            pdf1_state,
+            pdf2_state,
+            alphas_state,
             order_mask,
             channel_mask,
             xi_ren,
@@ -509,11 +511,12 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     grid: *const Grid,
     pdg_id1: i32,
-    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     pdg_id2: i32,
-    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    state: *mut c_void,
+    pdf1_state: *mut c_void,
+    pdf2_state: *mut c_void,
+    alphas_states: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     xi_ren: f64,
@@ -521,9 +524,9 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut xfx1 = |id, x, q2| xfx1(id, x, q2, state);
-    let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
-    let mut als = |q2| alphas(q2, state);
+    let mut xfx1 = |id, x, q2| xfx(id, x, q2, pdf1_state);
+    let mut xfx2 = |id, x, q2| xfx(id, x, q2, pdf2_state);
+    let mut als = |q2| alphas(q2, alphas_states);
     let order_mask = if order_mask.is_null() {
         &[]
     } else {
