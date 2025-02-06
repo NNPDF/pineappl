@@ -1784,7 +1784,8 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     grid: *const Grid,
     xfxs: *const extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    state: *mut c_void,
+    pdf_states: *mut *mut c_void,
+    alphas_states: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     bin_indices: *const usize,
@@ -1813,12 +1814,14 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     };
 
     // Construct the alphas and PDFs functions
-    let mut als = |q2| alphas(q2, state);
+    let mut als = |q2| alphas(q2, alphas_states);
 
+    let state_slices = unsafe { slice::from_raw_parts(pdf_states, grid.convolutions().len()) };
     let mut xfxs = unsafe { slice::from_raw_parts(xfxs, grid.convolutions().len()).to_vec() };
     let mut xfx_funcs: Vec<_> = xfxs
         .iter_mut()
-        .map(|xfx| move |id, x, q2| xfx(id, x, q2, state))
+        .zip(state_slices.iter())
+        .map(|(xfx, &state)| move |id, x, q2| xfx(id, x, q2, state))
         .collect();
 
     // Construct the Convolution cache

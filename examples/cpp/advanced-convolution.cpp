@@ -77,25 +77,28 @@ int main(int argc, char* argv[]) {
     // perturbative order and first channel stored in the grid. If the grid contains cross sections
     // of either a proton-proton, proton-antiproton or antiproton-antiproton collision PineAPPL will
     // perform the necessary charge conjugations to yield the correct convolutions.
-    // In the case where the convolution requires two different PDFs, it suffices to modify `xfx1`
-    // and `xfx2`.
+    // In the case where the convolution requires two different PDFs, it suffices to use different
+    // PDF sets in `pdf_states`.
     std::vector<double> mu_scales = { xir, xif, xia };
     using LambdaType = double(*)(int32_t, double, double, void *);
     LambdaType xfxs[] = { xfx1, xfx2 };
 
-    pineappl_grid_convolve(grid, xfxs, alphas, pdf, order_mask.get(), channel_mask.get(), nullptr, 1,
+    std::vector<LHAPDF::PDF*> pdfs = {pdf, pdf};
+    void** pdf_states = reinterpret_cast<void**>(pdfs.data());
+
+    pineappl_grid_convolve(grid, xfxs, alphas, pdf_states, pdf, order_mask.get(), channel_mask.get(), nullptr, 1,
         mu_scales.data(), dxsec1.data());
 
     // test with both masks set to `nullptr`
     std::vector<double> dxsec2(bins);
 
-    pineappl_grid_convolve(grid, xfxs, alphas, pdf, nullptr, nullptr, nullptr, 1,
+    pineappl_grid_convolve(grid, xfxs, alphas, pdf_states, pdf, nullptr, nullptr, nullptr, 1,
         mu_scales.data(), dxsec2.data());
 
     // test with both `mu_scales` set to `nullptr`
     std::vector<double> dxsec3(bins);
 
-    pineappl_grid_convolve(grid, xfxs, alphas, pdf, nullptr, nullptr, nullptr, 1,
+    pineappl_grid_convolve(grid, xfxs, alphas,pdf_states, pdf, nullptr, nullptr, nullptr, 1,
         nullptr, dxsec3.data());
 
     std::vector<double> normalizations(bins);

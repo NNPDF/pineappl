@@ -136,9 +136,12 @@ int main() {
     using LambdaType = double(*)(int32_t, double, double, void *);
     LambdaType xfxs[] = { xfx, xfx };
 
+    std::vector<LHAPDF::PDF*> pdfs = {pdf, pdf};
+    void** pdf_states = reinterpret_cast<void**>(pdfs.data());
+
     // allocate a vector holding the differential cross sections
     std::vector<double> dxsec(bins.size() - 1);
-    pineappl_grid_convolve(grid, xfxs, alphas, pdf, order_mask, channel_mask, nullptr, 1,
+    pineappl_grid_convolve(grid, xfxs, alphas,pdf_states, pdf, order_mask, channel_mask, nullptr, 1,
         mmu_scales.data(), dxsec.data());
 
     // Print table header
