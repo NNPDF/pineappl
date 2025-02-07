@@ -58,7 +58,7 @@ Psp2to2 hadronic_pspgen(std::mt19937& rng, double mmin, double mmax) {
   return {s, t, u, x1, x2, jacobian};
 }
 
-void fill_grid(PineAPPL::GridV1& grid, std::size_t calls) {
+void fill_grid(PineAPPL::Grid& grid, std::size_t calls) {
   using std::acosh;
   using std::fabs;
   using std::log;
@@ -114,7 +114,7 @@ int main() {
   // --- Instatiate the Order object
   // only LO $\alpha_\mathrm{s}^0 \alpha^2 \log^0(\xi_\mathrm{R})
   // \log^0(\xi_\mathrm{F}) \log^0(\xi_\mathrm{A})$
-  std::vector<PineAPPL::OrderV1> orders = {PineAPPL::OrderV1{0, 2, 0, 0, 0}};
+  std::vector<PineAPPL::Order> orders = {PineAPPL::Order{0, 2, 0, 0, 0}};
 
   // --- Define the binning
   // we bin in rapidity from 0 to 2.4 in steps of 0.1
@@ -155,7 +155,7 @@ int main() {
   // Define the μ scale
   std::vector<std::size_t> mu_scales = {1, 1, 1};
 
-  PineAPPL::GridV1 grid(orders, channels, pid_basis, pids, convolution_types,
+  PineAPPL::Grid grid(orders, channels, pid_basis, pids, convolution_types,
                         kinematics, interpolations, bins, mu_scales);
 
   // fill the grid with phase-space points
