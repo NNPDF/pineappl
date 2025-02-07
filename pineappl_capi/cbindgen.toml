@@ -29,6 +29,10 @@ style = "type"
 
 ############################## Codegen Options ##################################
 
+[enum]
+prefix_with_name = true
+rename_variants = "ScreamingSnakeCase"
+
 [export.rename]
 "Grid" = "pineappl_grid"
 "Lumi" = "pineappl_lumi"

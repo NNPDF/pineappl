@@ -35,26 +35,26 @@ int main() {
     // First we define the types of convolutions required by the involved initial-/final-state
     // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
     // Basis onto which the partons are mapped.
-    pineappl_pid_basis pid_basis = Evol;
+    pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
     int32_t pdg_ids[2] = { 2212, 2212};
-    pineappl_conv_type h1 = UnpolPDF;
-    pineappl_conv_type h2 = UnpolPDF;
+    pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
+    pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
     pineappl_conv_type convolution_types[2] = { h1, h2 };
 
     // Define the kinematics required for this process. In the following example we have ONE
     // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
     // The format of the kinematics is: { type, value }.
-    pineappl_kinematics scales = { Scale, 0 };
-    pineappl_kinematics x1k = { X, 0 };
-    pineappl_kinematics x2k = { X, 1 };
+    pineappl_kinematics scales = { PINEAPPL_KINEMATICS_SCALE, 0 };
+    pineappl_kinematics x1k = { PINEAPPL_KINEMATICS_X, 0 };
+    pineappl_kinematics x2k = { PINEAPPL_KINEMATICS_X, 1 };
     pineappl_kinematics kinematics[3] = { scales, x1k, x2k };
 
     // Define the specificities of the interpolations for each of the kinematic variables.
-    pineappl_reweight_meth scales_reweight = NoReweight; // Reweighting method
-    pineappl_reweight_meth moment_reweight = ApplGridX;
-    pineappl_map scales_mapping = ApplGridH0; // Mapping method
-    pineappl_map moment_mapping = ApplGridF2;
-    pineappl_interp_meth interpolation_meth = Lagrange;
+    pineappl_reweight_meth scales_reweight = PINEAPPL_REWEIGHT_METH_NO_REWEIGHT; // Reweighting method
+    pineappl_reweight_meth moment_reweight = PINEAPPL_REWEIGHT_METH_APPL_GRID_X;
+    pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0; // Mapping method
+    pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
+    pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
     pineappl_interp_tuples interpolations[3] = {
         { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
