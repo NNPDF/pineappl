@@ -12,11 +12,17 @@
 
 int main(int argc, char* argv[]) {
     std::string filename = "drell-yan-rap-ll.pineappl.lz4";
-    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    std::string pdfset1 = "NNPDF31_nlo_as_0118_luxqed";
+    std::string pdfset2 = "MSHT20qed_nnlo";
 
     switch (argc) {
+    case 4:
+        pdfset1 = argv[2];
+        pdfset2 = argv[3];
+        // fall through
     case 3:
-        pdfset = argv[2];
+        pdfset1 = argv[2];
+        pdfset2 = argv[2];
         // fall through
     case 2:
         filename = argv[1];
@@ -33,7 +39,8 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset1, 0));
+    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset2, 0));
 
     // define callables for the PDFs and alphas
     auto xfx = [](int32_t id, double x, double q2, void* pdf) {
@@ -76,10 +83,10 @@ int main(int argc, char* argv[]) {
     // can be varied around its central values, respectively.
     std::vector<double> mu_scales = { xir, xif, 1.0 };
 
-    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
+    std::vector<LHAPDF::PDF*> pdfs = {pdf1.get(), pdf2.get()};
     void** pdf_states = reinterpret_cast<void**>(pdfs.data());
 
-    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), order_mask, channel_mask,
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf1.get(), order_mask, channel_mask,
         nullptr, 1, mu_scales.data(), dxsec.data());
 
     std::vector<double> normalizations(bins);

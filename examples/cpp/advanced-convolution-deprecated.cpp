@@ -34,11 +34,17 @@ double alphas(double q2, void* state) {
 
 int main(int argc, char* argv[]) {
     std::string filename = "drell-yan-rap-ll-deprecated.pineappl.lz4";
-    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    std::string pdfset1 = "NNPDF31_nlo_as_0118_luxqed";
+    std::string pdfset2 = "MSHT20qed_nnlo";
 
     switch (argc) {
+    case 4:
+        pdfset1 = argv[2];
+        pdfset2 = argv[3];
+        // fall through
     case 3:
-        pdfset = argv[2];
+        pdfset1 = argv[2];
+        pdfset2 = argv[2];
         // fall through
     case 2:
         filename = argv[1];
@@ -55,8 +61,8 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
-    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0)); // TODO: use different PDF
+    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset1, 0));
+    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset2, 0));
     PDFState state = {pdf1.get(), pdf2.get()};
 
     // how many perturbative orders does the grid contain?
