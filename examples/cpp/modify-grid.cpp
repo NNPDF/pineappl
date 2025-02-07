@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     // 4. optimize grid selectively. The following example removes all perturbative orders whose
     // subgrids are empty
-    pineappl_grid_optimize_using(grid, pineappl_gof_STRIP_EMPTY_ORDERS);
+    pineappl_grid_optimize_using(grid, PINEAPPL_GOF_STRIP_EMPTY_ORDERS);
 
     // 5. set a remapper. This function is important if one wants to generate multi-dimensional
     // differential distributions, which first must be generated one-dimensional, because

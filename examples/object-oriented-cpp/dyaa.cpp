@@ -123,26 +123,26 @@ int main() {
                               1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4};
 
   // --- Construct the PineAPPL grid
-  pineappl_pid_basis pid_basis = Evol;
+  pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
   std::vector<std::int32_t> pids = {2212, 2212};
 
   // Define the types of convolutions
-  pineappl_conv_type h1 = UnpolPDF;
-  pineappl_conv_type h2 = UnpolPDF;
+  pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
+  pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
   std::vector<pineappl_conv_type> convolution_types = {h1, h2};
 
   // Define the Kinematics
-  pineappl_kinematics scales = {Scale, 0};
-  pineappl_kinematics x1 = {X, 0};
-  pineappl_kinematics x2 = {X, 1};
+  pineappl_kinematics scales = {PINEAPPL_KINEMATICS_SCALE, 0};
+  pineappl_kinematics x1 = {PINEAPPL_KINEMATICS_X, 0};
+  pineappl_kinematics x2 = {PINEAPPL_KINEMATICS_X, 1};
   std::vector<pineappl_kinematics> kinematics = {scales, x1, x2};
 
   // Define the interpolation configurations
-  pineappl_reweight_meth scales_reweight = NoReweight;  // Reweighting method
-  pineappl_reweight_meth moment_reweight = ApplGridX;
-  pineappl_map scales_mapping = ApplGridH0;  // Mapping method
-  pineappl_map moment_mapping = ApplGridF2;
-  pineappl_interp_meth interpolation_meth = Lagrange;
+  pineappl_reweight_meth scales_reweight = PINEAPPL_REWEIGHT_METH_NO_REWEIGHT;  // Reweighting method
+  pineappl_reweight_meth moment_reweight = PINEAPPL_REWEIGHT_METH_APPL_GRID_X;
+  pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0;  // Mapping method
+  pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
+  pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
   std::vector<pineappl_interp_tuples> interpolations = {
       {1e2, 1e8, 40, 3, scales_reweight, scales_mapping,
        interpolation_meth},  // Interpolation fo `scales`

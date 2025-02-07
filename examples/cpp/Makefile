@@ -77,4 +77,4 @@ modify-grid: modify-grid.cpp
 PHONY: clean
 
 clean:
-	rm -f $(PROGRAMS)
+	rm -f $(PROGRAMS) *.pineappl *.lz4

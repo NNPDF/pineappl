@@ -534,7 +534,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
     pdf1_state: *mut c_void,
     pdf2_state: *mut c_void,
-    alphas_states: *mut c_void,
+    alphas_state: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     xi_ren: f64,
@@ -544,7 +544,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     let grid = unsafe { &*grid };
     let mut xfx1 = |id, x, q2| xfx(id, x, q2, pdf1_state);
     let mut xfx2 = |id, x, q2| xfx(id, x, q2, pdf2_state);
-    let mut als = |q2| alphas(q2, alphas_states);
+    let mut als = |q2| alphas(q2, alphas_state);
     let order_mask = if order_mask.is_null() {
         &[]
     } else {
