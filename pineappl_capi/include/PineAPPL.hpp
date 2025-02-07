@@ -163,7 +163,6 @@ struct Grid {
         pid_basis, channels.raw, n_orders, raw_orders.data(), n_bins,
         bin_limits.data(), n_convs, convolution_types.data(), pids.data(),
         kinematics.data(), interp.data(), mu_scales.data());
-    //
   }
 
   /**

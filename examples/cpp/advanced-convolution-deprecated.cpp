@@ -8,6 +8,29 @@
 #include <string>
 #include <vector>
 
+// An object to hold the state of the different PDFs
+struct PDFState {
+    LHAPDF::PDF* pdfs[2];
+};
+
+// The callable PDF function using the 1st PDF
+double xfx1(int32_t id, double x, double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[0];
+    return pdf -> xfxQ2(id, x, q2);
+};
+
+// The callable PDF function using the 2nd PDF
+double xfx2(int32_t id, double x, double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[1];
+    return pdf -> xfxQ2(id, x, q2);
+};
+
+// The callable alphasQ2 function using the 2nd PDF
+double alphas(double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[1];
+    return pdf -> alphasQ2(q2);
+};
+
 int main(int argc, char* argv[]) {
     std::string filename = "drell-yan-rap-ll-deprecated.pineappl.lz4";
     std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
@@ -33,14 +56,7 @@ int main(int argc, char* argv[]) {
 
     auto* pdf1 = LHAPDF::mkPDF(pdfset, 0);
     auto* pdf2 = LHAPDF::mkPDF(pdfset, 0); // TODO: use different PDF
-
-    // define callables for the PDFs and alphas
-    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
-    };
+    PDFState state = {pdf1, pdf2};
 
     // how many perturbative orders does the grid contain?
     std::size_t orders = pineappl_grid_order_count(grid);
@@ -76,7 +92,7 @@ int main(int argc, char* argv[]) {
     // `xfx1` and `alphas` are *proton* PDFs. If the grid contains cross sections of either a
     // proton-proton, proton-antiproton or antiproton-antiproton collision PineAPPL will perform the
     // necessary charge conjugations to yield the correct convolutions
-    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf1, order_mask.get(),
+    pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &state, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec1.data());
 
     // how does the grid know which PDFs it must be convolved with? This is determined by the
@@ -93,7 +109,7 @@ int main(int argc, char* argv[]) {
     // this calculates the corresponding proton-antiproton differential cross sections. Since the
     // grid itself is unchanged, this change effectively means that for the second PDF the charge
     // convolved PDFs are used
-    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf1, order_mask.get(),
+    pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &state, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec2.data());
 
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
@@ -106,14 +122,14 @@ int main(int argc, char* argv[]) {
     // For proton-deuteron collisions we can't easily relate the PDFs and have to actually pass two
     // different PDFs, each with their ID of the particle they represent. In this example, we use
     // the first PDF to compute alphasQ2.
-    pineappl_grid_convolve_with_two(grid, 2212, 1000010020, xfx, alphas, pdf1, pdf2, pdf1,
+    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, &state,
         order_mask.get(), channel_mask.get(), xir, xif, dxsec3.data());
 
     std::vector<double> dxsec4(bins);
 
     // test with both masks set to `nullptr`. And in the following example, we use the second PDF
     // to compue the values of alphasQ2
-    pineappl_grid_convolve_with_two(grid, 2212, 1000010020, xfx, alphas, pdf1, pdf2, pdf2, nullptr,
+    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, &state, nullptr,
         nullptr, xir, xif, dxsec4.data());
 
     std::vector<double> normalizations(bins);

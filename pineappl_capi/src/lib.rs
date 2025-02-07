@@ -410,12 +410,11 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
     grid: *const Grid,
     pdg_id1: i32,
+    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     pdg_id2: i32,
-    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    pdf1_state: *mut c_void,
-    pdf2_state: *mut c_void,
-    alphas_state: *mut c_void,
+    state: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     xi_ren: f64,
@@ -426,12 +425,11 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
         pineappl_grid_convolve_with_two(
             grid,
             pdg_id1,
+            xfx1,
             pdg_id2,
-            xfx,
+            xfx2,
             alphas,
-            pdf1_state,
-            pdf2_state,
-            alphas_state,
+            state,
             order_mask,
             channel_mask,
             xi_ren,
@@ -504,7 +502,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
     ));
 }
 
-/// Convolutes the specified grid with the PDFs two (different) PDFs, which are the PDFs of hadrons
+/// Convolutes the specified grid with the PDFs `xfx1` and `xfx2`, which are the PDFs of hadrons
 /// with PDG ids `pdg_id1` and `pdg_id2`, respectively, and strong coupling `alphas`. These
 /// functions must evaluate the PDFs for the given `x` and `q2` for the parton with the given PDG
 /// id, `pdg_id`, and return the result. Note that the value must be the PDF multiplied with its
@@ -521,7 +519,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
-/// this function is not safe to call. The function pointers `xfx` and `alphas` must not
+/// this function is not safe to call. The function pointers `xfx1`, `xfx2`, and `alphas` must not
 /// be null pointers and point to valid functions. The parameters `order_mask` and `channel_mask`
 /// must either be null pointers or point to arrays that are as long as `grid` has orders and
 /// channels, respectively. Finally, `results` must be as long as `grid` has bins.
@@ -529,12 +527,11 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_one(
 pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     grid: *const Grid,
     pdg_id1: i32,
+    xfx1: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     pdg_id2: i32,
-    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    xfx2: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     alphas: extern "C" fn(q2: f64, state: *mut c_void) -> f64,
-    pdf1_state: *mut c_void,
-    pdf2_state: *mut c_void,
-    alphas_state: *mut c_void,
+    state: *mut c_void,
     order_mask: *const bool,
     channel_mask: *const bool,
     xi_ren: f64,
@@ -542,9 +539,9 @@ pub unsafe extern "C" fn pineappl_grid_convolve_with_two(
     results: *mut f64,
 ) {
     let grid = unsafe { &*grid };
-    let mut xfx1 = |id, x, q2| xfx(id, x, q2, pdf1_state);
-    let mut xfx2 = |id, x, q2| xfx(id, x, q2, pdf2_state);
-    let mut als = |q2| alphas(q2, alphas_state);
+    let mut xfx1 = |id, x, q2| xfx1(id, x, q2, state);
+    let mut xfx2 = |id, x, q2| xfx2(id, x, q2, state);
+    let mut als = |q2| alphas(q2, state);
     let order_mask = if order_mask.is_null() {
         &[]
     } else {
