@@ -69,6 +69,24 @@ use std::os::raw::{c_char, c_int, c_void};
 use std::path::Path;
 use std::slice;
 
+/// TODO
+pub const PINEAPPL_GOF_OPTIMIZE_SUBGRID_TYPE: GridOptFlags = GridOptFlags::OPTIMIZE_SUBGRID_TYPE;
+
+/// TODO
+pub const PINEAPPL_GOF_OPTIMIZE_NODES: GridOptFlags = GridOptFlags::OPTIMIZE_NODES;
+
+/// TODO
+pub const PINEAPPL_GOF_SYMMETRIZE_CHANNELS: GridOptFlags = GridOptFlags::SYMMETRIZE_CHANNELS;
+
+/// TODO
+pub const PINEAPPL_GOF_STRIP_EMPTY_ORDERS: GridOptFlags = GridOptFlags::STRIP_EMPTY_ORDERS;
+
+/// TODO
+pub const PINEAPPL_GOF_MERGE_SAME_CHANNELS: GridOptFlags = GridOptFlags::MERGE_SAME_CHANNELS;
+
+/// TODO
+pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_EMPTY_CHANNELS;
+
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
 fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
