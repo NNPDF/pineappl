@@ -29,8 +29,13 @@ struct Group {
     channels: bool,
     /// Check if input is an FK table.
     #[arg(long)]
-    fktable: bool,
-
+    fk_table: bool,
+    /// Return the (squared) factorization scale of the FK-table.
+    #[arg(long)]
+    fk_table_fac0: bool,
+    /// Return the (squared) fragmentation scale of the FK-table.
+    #[arg(long)]
+    fk_table_frg0: bool,
     /// For each order print a list of the largest EW order.
     #[arg(long)]
     ew: bool,
@@ -88,13 +93,33 @@ impl Subcommand for Opts {
 
                 row.add_cell(cell!(r->bin.normalization().to_string()));
             }
-        } else if self.group.fktable {
+        } else if self.group.fk_table {
             if let Err(err) = FkTable::try_from(grid) {
                 println!("no\n{err}");
                 return Ok(ExitCode::FAILURE);
             }
 
             println!("yes");
+            return Ok(ExitCode::SUCCESS);
+        } else if self.group.fk_table_fac0 {
+            let fk_table = FkTable::try_from(grid)?;
+
+            if let Some(fac0) = fk_table.fac0() {
+                println!("{fac0}");
+            } else {
+                println!("None");
+            }
+
+            return Ok(ExitCode::SUCCESS);
+        } else if self.group.fk_table_frg0 {
+            let fk_table = FkTable::try_from(grid)?;
+
+            if let Some(frg0) = fk_table.frg0() {
+                println!("{frg0}");
+            } else {
+                println!("None");
+            }
+
             return Ok(ExitCode::SUCCESS);
         } else if self.group.channels {
             let mut titles = row![c => "c"];

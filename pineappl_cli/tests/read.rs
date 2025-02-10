@@ -4,7 +4,7 @@ use assert_cmd::Command;
 
 const HELP_STR: &str = "Read out information of a grid
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fk-table|--fk-table-fac0|--fk-table-frg0|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 Arguments:
   <INPUT>  Path to the input grid
@@ -15,7 +15,9 @@ Options:
       --orders-long    Show the orders of a grid, including zero powers
   -b, --bins           Show the bins of a grid
       --channels       Show the channel definition of a grid
-      --fktable        Check if input is an FK table
+      --fk-table       Check if input is an FK table
+      --fk-table-fac0  Return the (squared) factorization scale of the FK-table
+      --fk-table-frg0  Return the (squared) fragmentation scale of the FK-table
       --ew             For each order print a list of the largest EW order
       --get <KEY>      Gets an internal key-value pair
       --keys           Show all keys stored in the grid
@@ -78,7 +80,7 @@ multiple orders detected
 
 const WRONG_ORDERS_STR: &str = "error: the argument '--orders' cannot be used with '--orders-long'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fk-table|--fk-table-fac0|--fk-table-frg0|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -545,7 +547,7 @@ y_unit: pb
 
 const WRONG_ARGUMENTS_STR: &str = "error: the argument '--ew' cannot be used with '--qcd'
 
-Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fktable|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
+Usage: pineappl read <--orders|--orders-spaces|--orders-long|--bins|--channels|--fk-table|--fk-table-fac0|--fk-table-frg0|--ew|--get <KEY>|--keys|--qcd|--show> <INPUT>
 
 For more information, try '--help'.
 ";
@@ -631,12 +633,12 @@ fn orders_spaces() {
 }
 
 #[test]
-fn fktable() {
+fn fk_table() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "read",
-            "--fktable",
+            "--fk-table",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
         ])
         .assert()

@@ -23,6 +23,8 @@ the old file format can still be read with this new version.
 - the CLI now allows the user to mark convolution functions as polarized
   by adding `+p` to its LHAPDF name, as a fragmentation function by adding
   `+f` and both by adding `+pf` or `+fp`
+- added switches `--fk-table-fac0` and `--fk-table-frg0` to `pineappl read` to
+  read out the squared factorization and fragmentation scales of FK-tables
 
 ### Changed
 
@@ -51,6 +53,7 @@ the old file format can still be read with this new version.
   `--set-bins`, `--remap-norm-ignore` to `--div-bin-norm-dims` and
   `--remap-norm` to `--mul-bin-norm`. These names should reflect the
   corresponding operations
+- renamed the switch `--fktable` to `--fk-table` of `pineappl read`
 
 ### Removed
 

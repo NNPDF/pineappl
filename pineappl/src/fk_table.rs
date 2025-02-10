@@ -8,6 +8,7 @@ use super::grid::Grid;
 use super::pids::OptRules;
 use super::subgrid::{self, Subgrid};
 use ndarray::{s, ArrayD};
+use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
 use std::iter;
 use std::str::FromStr;
@@ -189,24 +190,32 @@ impl FkTable {
 
     /// Returns the single `muf2` scale of this `FkTable`.
     #[must_use]
-    pub fn muf2(&self) -> f64 {
-        let [muf2] = self.grid.evolve_info(&[true]).fac1[..]
-            .try_into()
-            // UNWRAP: every `FkTable` has only a single factorization scale
-            .unwrap_or_else(|_| unreachable!());
+    pub fn fac0(&self) -> Option<f64> {
+        let fac1 = self.grid.evolve_info(&[true]).fac1;
 
-        muf2
+        if let [fac0] = fac1[..] {
+            Some(fac0)
+        } else if fac1.is_empty() {
+            None
+        } else {
+            // UNWRAP: every `FkTable` has either a single factorization scale or none
+            unreachable!()
+        }
     }
 
     /// Return the initial fragmentation scale.
     #[must_use]
-    pub fn frg0(&self) -> f64 {
-        let [frg0] = self.grid.evolve_info(&[true]).frg1[..]
-            .try_into()
-            // UNWRAP: every `FkTable` has only a single fragmentation scale
-            .unwrap_or_else(|_| unreachable!());
+    pub fn frg0(&self) -> Option<f64> {
+        let frg1 = self.grid.evolve_info(&[true]).frg1;
 
-        frg0
+        if let [frg0] = frg1[..] {
+            Some(frg0)
+        } else if frg1.is_empty() {
+            None
+        } else {
+            // UNWRAP: every `FkTable` has either a single fragmentation scale or none
+            unreachable!()
+        }
     }
 
     /// Set a metadata key-value pair for this FK table.

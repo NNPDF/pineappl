@@ -705,10 +705,24 @@ fn import_dis_fktable() {
 
     Command::cargo_bin("pineappl")
         .unwrap()
-        .args(["read", "--fktable", output.path().to_str().unwrap()])
+        .args(["read", "--fk-table", output.path().to_str().unwrap()])
         .assert()
         .success()
         .stdout("yes\n");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--fk-table-fac0", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout("2.7224999999999997\n");
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args(["read", "--fk-table-frg0", output.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout("None\n");
 
     let fk_table =
         FkTable::try_from(Grid::read(File::open(output.path()).unwrap()).unwrap()).unwrap();
@@ -716,7 +730,7 @@ fn import_dis_fktable() {
     // TODO: this should ideally be a unit test, but we need an FK table that we don't convert
 
     assert_eq!(fk_table.grid().kinematics().len(), 2);
-    assert_approx_eq!(f64, fk_table.muf2(), 1.65 * 1.65, ulps = 2);
+    assert_approx_eq!(f64, fk_table.fac0().unwrap(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [
@@ -985,7 +999,7 @@ fn import_hadronic_fktable() {
             [115, 115]
         ]
     );
-    assert_approx_eq!(f64, fk_table.muf2(), 1.65 * 1.65, ulps = 2);
+    assert_approx_eq!(f64, fk_table.fac0().unwrap(), 1.65 * 1.65, ulps = 2);
     assert_eq!(
         fk_table.x_grid(),
         [

@@ -77,7 +77,8 @@ class TestFkTable:
         fk = FkTable.read(fk_table)
 
         assert fk.table().shape == (1, 51, 34, 34)
-        np.testing.assert_allclose(fk.muf2(), 2.7224999999999997)
+        np.testing.assert_allclose(fk.fac0(), 2.7224999999999997)
+        assert fk.frg0() == None
 
         # Check the various aspects of the Bins
         assert fk.bins() == 1

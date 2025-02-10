@@ -173,15 +173,26 @@ impl PyFkTable {
         self.fk_table.channels()
     }
 
-    /// Get reference (fitting) scale.
+    /// Get squared factorization scale.
     ///
     /// Returns
     /// -------
     /// float :
-    ///     reference scale
+    ///     squared factorization scale
     #[must_use]
-    pub fn muf2(&self) -> f64 {
-        self.fk_table.muf2()
+    pub fn fac0(&self) -> Option<f64> {
+        self.fk_table.fac0()
+    }
+
+    /// Get squared fragmentation scale.
+    ///
+    /// Returns
+    /// -------
+    /// float :
+    ///     squared fragmentation scale
+    #[must_use]
+    pub fn frg0(&self) -> Option<f64> {
+        self.fk_table.frg0()
     }
 
     /// Get (unique) interpolation grid.
