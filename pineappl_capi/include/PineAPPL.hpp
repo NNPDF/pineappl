@@ -7,16 +7,18 @@
 #include <LHAPDF/LHAPDF.h>
 #include <pineappl_capi.h>
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <vector>
 
 /** @brief Object oriented interface to PineAPPL.*/
 namespace PineAPPL {
 
-  // TODO: Add checks within various functions/calls
-  // TODO: Implement `grid_convolve`
+// TODO: Add checks within various functions/calls
+// TODO: Implement `grid_convolve`
 
 /** @brief Entry in sub-channel function. A sub-channel consists of a vector of
  * tuple. Each tuple contains two elements. The first elements store the list of
@@ -58,6 +60,8 @@ struct Channels {
    */
   void add(const ChannelsEntry &c) const {
     const std::size_t combinations = c.channels_entry.size();
+    if (combinations == 0) return;
+
     const std::size_t nb_convolutions =
         c.channels_entry[0].entry[0].first.size();
 
@@ -106,6 +110,18 @@ struct Order {
   std::uint8_t logxia;
 };
 
+/** @brief Object containing the values of the scale factors. */
+struct MuScales {
+  /** @brief renormalization scale factor. */
+  const double xir;
+
+  /** @brief factorization scale factor. */
+  const double xif;
+
+  /** @brief fragmentation scale factor. */
+  const double xia;
+};
+
 /** @brief Base Grid struct that contains the common data in v0 and v1. */
 struct Grid {
   /** @brief Underlying raw object. */
@@ -136,7 +152,7 @@ struct Grid {
    * @param convolutions_types convolution_types
    * @param interp interp
    * @param bin_limits bin_limits
-   * @param mu_scales indexed representing the scales
+   * @param mu_scales indexes representing the scales
    */
   Grid(std::vector<Order> &orders, const Channels &channels,
        pineappl_pid_basis pid_basis, std::vector<int32_t> pids,
@@ -148,6 +164,16 @@ struct Grid {
     const std::size_t n_orders = orders.size();
     const std::size_t n_bins = bin_limits.size() - 1;
     const std::size_t n_convs = convolution_types.size();
+
+    // Various checks for the input arguments
+    assert(n_orders >= 1 && "Orders cannot be empty.");
+    assert(n_convs == pids.size() &&
+           "Number of convolutions and pids are different.");
+    assert(n_convs == kinematics.size() - 1 &&
+           "Mismatch in the number of convolutions and the kinematics.");
+    assert(kinematics.size() == interp.size() &&
+           "Mismatch in the number of kinematics and the corresponding "
+           "interpolations.");
 
     // Cast the Orders
     std::vector<std::uint8_t> raw_orders;
@@ -235,6 +261,69 @@ struct Grid {
    * @brief Optimizes the grid representation for space efficiency.
    */
   void optimize() const { pineappl_grid_optimize(this->raw); }
+
+  /**
+   * @brief Perform the convolution of a Grid with the PDF(s).
+   */
+  std::vector<double> convolve(std::vector<LHAPDF::PDF *> lhapdfs,
+                               const size_t alphas_pdf_index,
+                               const std::vector<bool> &order_mask = {},
+                               const std::vector<bool> &channels_mask = {},
+                               const std::vector<std::size_t> &bin_indices = {},
+                               const std::vector<MuScales> &mu_scales = {
+                                   {1.0, 1.0, 1.0}}) {
+    // Define callables to compute the PDFs and alphas(Q2)
+    auto xfx = [](std::int32_t id, double x, double q2, void *pdf) {
+      return static_cast<LHAPDF::PDF *>(pdf)->xfxQ2(id, x, q2);
+    };
+    auto alphas = [](double q2, void *pdf) {
+      return static_cast<LHAPDF::PDF *>(pdf)->alphasQ2(q2);
+    };
+
+    // Select the PDF objec to compute the alphas(Q2) from
+    LHAPDF::PDF *alphas_pdf = lhapdfs[alphas_pdf_index];
+    void **pdfs_state = reinterpret_cast<void **>(lhapdfs.data());
+
+    // cast order_mask
+    std::unique_ptr<bool[]> raw_order_mask;
+    if (!order_mask.empty()) {
+      raw_order_mask = std::unique_ptr<bool[]>(new bool[order_mask.size()]);
+      std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
+    }
+
+    // cast channels mask
+    std::unique_ptr<bool[]> raw_channels_mask;
+    if (!channels_mask.empty()) {
+      raw_channels_mask =
+          std::unique_ptr<bool[]>(new bool[channels_mask.size()]);
+      std::copy(channels_mask.begin(), channels_mask.end(),
+                &raw_channels_mask[0]);
+    }
+
+    // cast bin indices mask
+    std::unique_ptr<std::size_t[]> raw_bin_indices;
+    if (!bin_indices.empty()) {
+      raw_bin_indices =
+          std::unique_ptr<std::size_t[]>(new std::size_t[bin_indices.size()]);
+      std::copy(bin_indices.begin(), bin_indices.end(), &raw_bin_indices[0]);
+    }
+
+    // Linearize the scales
+    std::vector<double> raw_mu_scales;
+    raw_mu_scales.reserve(mu_scales.size() * 3);
+    for (const auto &scale_tuple : mu_scales) {
+      raw_mu_scales.push_back(scale_tuple.xir);
+      raw_mu_scales.push_back(scale_tuple.xif);
+      raw_mu_scales.push_back(scale_tuple.xia);
+    }
+
+    std::vector<double> results(this->bin_count());
+    pineappl_grid_convolve(this->raw, xfx, alphas, pdfs_state, alphas_pdf,
+                           raw_order_mask.get(), raw_channels_mask.get(),
+                           raw_bin_indices.get(), mu_scales.size(),
+                           raw_mu_scales.data(), results.data());
+    return results;
+  }
 };
 
 }  // namespace PineAPPL

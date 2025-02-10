@@ -1,9 +1,11 @@
+#include <LHAPDF/Config.h>
 #include <LHAPDF/LHAPDF.h>
 
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <memory>
 #include <random>
 #include <vector>
 
@@ -103,6 +105,10 @@ void fill_grid(PineAPPL::Grid& grid, std::size_t calls) {
 }
 
 int main() {
+  // Name of the PDF sets to be used for the convolutions
+  std::string pdfset1 = "NNPDF31_nlo_as_0118_luxqed";
+  std::string pdfset2 = "MSHT20qed_nnlo";
+
   // --- create a new `Channels` function for the $\gamma\gamma$ initial state
   PineAPPL::Channels channels;
   PineAPPL::SubChannelEntry subchannels;
@@ -138,7 +144,8 @@ int main() {
   std::vector<pineappl_kinematics> kinematics = {scales, x1, x2};
 
   // Define the interpolation configurations
-  pineappl_reweight_meth scales_reweight = PINEAPPL_REWEIGHT_METH_NO_REWEIGHT;  // Reweighting method
+  pineappl_reweight_meth scales_reweight =
+      PINEAPPL_REWEIGHT_METH_NO_REWEIGHT;  // Reweighting method
   pineappl_reweight_meth moment_reweight = PINEAPPL_REWEIGHT_METH_APPL_GRID_X;
   pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0;  // Mapping method
   pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
@@ -156,11 +163,45 @@ int main() {
   std::vector<std::size_t> mu_scales = {1, 1, 1};
 
   PineAPPL::Grid grid(orders, channels, pid_basis, pids, convolution_types,
-                        kinematics, interpolations, bins, mu_scales);
+                      kinematics, interpolations, bins, mu_scales);
 
   // fill the grid with phase-space points
   fill_grid(grid, 10000000);
   grid.optimize();
+
+  //--- Perform the convolution of the Grid with the PDFs --- //
+  // Instantiate the PDF objects
+  LHAPDF::setVerbosity(0);
+  auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset1, 0));
+  auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset2, 0));
+  std::vector<LHAPDF::PDF*> pdfs = {pdf1.get(), pdf2.get()};
+
+  // Perform the convolution: Using the 1st PDF to compute the value of
+  // alphas(Q2)
+  std::vector<double> dxsec = grid.convolve(pdfs, 0);
+
+  // print the results
+  std::printf("Computing predictions using alphasQ2(%s):\n", pdfset1.c_str());
+  for (std::size_t j = 0; j != dxsec.size(); ++j) {
+    std::printf("%02zu %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
+  }
+
+  // Perform the convolution: Using the 2nd PDF to compute the value of
+  // alphas(Q2)
+  dxsec = grid.convolve(pdfs, 1);
+
+  // print the results
+  std::printf("Computing predictions using alphasQ2(%s):\n", pdfset2.c_str());
+  for (std::size_t j = 0; j != dxsec.size(); ++j) {
+    std::printf("%02zu %.1f %.1f %.3e\n", j, bins[j], bins[j + 1], dxsec[j]);
+  }
+
+  // store some metadata in the grid
+  grid.set_key_value("events", "10000000");
+
+  // read out the stored value and print it on stdout
+  const auto value = grid.get_key_value("events");
+  std::printf("Finished running %s events.\n", value.c_str());
 
   // write the grid to disk - with `.lz4` suffix the grid is automatically LZ4
   // compressed
