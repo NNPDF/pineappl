@@ -188,33 +188,33 @@ impl FkTable {
             .collect()
     }
 
-    /// Returns the single `muf2` scale of this `FkTable`.
+    /// Return the squared factorization scale.
     #[must_use]
     pub fn fac0(&self) -> Option<f64> {
         let fac1 = self.grid.evolve_info(&[true]).fac1;
 
         if let [fac0] = fac1[..] {
             Some(fac0)
-        } else if fac1.is_empty() {
-            None
         } else {
-            // UNWRAP: every `FkTable` has either a single factorization scale or none
-            unreachable!()
+            // every `FkTable` has either a single factorization scale or none
+            assert!(fac1.is_empty());
+
+            None
         }
     }
 
-    /// Return the initial fragmentation scale.
+    /// Return the squared fragmentation scale.
     #[must_use]
     pub fn frg0(&self) -> Option<f64> {
         let frg1 = self.grid.evolve_info(&[true]).frg1;
 
         if let [frg0] = frg1[..] {
             Some(frg0)
-        } else if frg1.is_empty() {
-            None
         } else {
-            // UNWRAP: every `FkTable` has either a single fragmentation scale or none
-            unreachable!()
+            // every `FkTable` has either a single fragmentation scale or none
+            assert!(frg1.is_empty());
+
+            None
         }
     }
 
