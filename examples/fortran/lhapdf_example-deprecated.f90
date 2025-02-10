@@ -13,7 +13,7 @@ program lhapdf_example
     type(pineappl_xfx) :: xfx
     type(pineappl_alphas) :: alphas
 
-    integer, target :: flags(2)
+    integer, target :: alphas_flags(2)
 
     lumi = pineappl_lumi_new()
     call pineappl_lumi_add(lumi, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
@@ -38,10 +38,10 @@ program lhapdf_example
     ! calling pineappl_grid_convolve with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
     xfx = pineappl_xfx(xfx_test2)
     alphas = pineappl_alphas(alphas_test2)
-    flags = [1, 0]
+    alphas_flags = [1, 0]
     write(*, *) "second pineappl_grid_convolve_with_one:"
     write(*, *) pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp, c_loc(flags(1)))
+        [.true.], [.true.], 1.0_dp, 1.0_dp, c_loc(alphas_flags(1)))
 
     call pineappl_lumi_delete(lumi)
     call pineappl_grid_delete(grid)

@@ -11,7 +11,7 @@ program lhapdf_example
     type(pineappl_kinematics)    :: kinematics(3)
     type(pineappl_interp_tuples) :: interpolations(3)
 
-    type(pineappl_xfx) :: xfx(2)
+    type(pineappl_xfx) :: xfx
     type(pineappl_alphas) :: alphas
 
     integer(kind(pineappl_reweight_meth)) :: q2_reweight
@@ -20,7 +20,10 @@ program lhapdf_example
     integer(kind(pineappl_map)) :: x_mapping
     integer(kind(pineappl_interp_meth)) :: interpolation_meth
 
-    integer, target :: flags(2)
+    integer, target        :: alphas_flags(2)
+    type(c_ptr), target    :: pdfs_state(2)
+    integer(c_int), target :: pdfs_array(2,2)
+    character(len=30)      :: pdfset1, pdfset2
 
     channels = pineappl_channels_new()
     call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
@@ -49,32 +52,49 @@ program lhapdf_example
     call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])
 
     call setlhaparm("SILENT")
-    call lhapdf_initpdfset_byname(0, "NNPDF31_nlo_as_0118_luxqed")
-    call lhapdf_initpdfset_byname(1, "MSHT20nnlo_as118")
+    pdfset1 = "NNPDF31_nlo_as_0118_luxqed"
+    pdfset2 = "MSHT20qed_nnlo"
+    call lhapdf_initpdfset_byname(0, trim(pdfset1)) ! Init 1st PDF with ID=0
+    call lhapdf_initpdfset_byname(1, trim(pdfset2)) ! Init 2nd PDF with ID=1
 
-    ! write(*, *) "xfx_test1: ", xfx_test1(0, 0.5_dp, 100.0_dp, c_null_ptr)
+    ! Construct the callable to the function `xfx` and `alphasQ2`
+    xfx = pineappl_xfx(wrap_xfx)
+    alphas = pineappl_alphas(wrap_alphasq2)
 
-    ! calling pineappl_grid_convolve without any flags
-    xfx = pineappl_xfx(xfx_test1)
-    alphas = pineappl_alphas(alphas_test1)
-    write(*, *) "first pineappl_grid_convolve:"
-    write(*, *) pineappl_grid_convolve(grid, [xfx, xfx], alphas, &
+    ! Define the array used to select the PDF and member ID.
+    ! The array is of the form [[ISET, IMEMBER], ...] where the first element represents
+    ! the 1st PDF set and is a tuple containing the set identification and the replica id.
+    pdfs_array = reshape([0, 0, 0, 0], [2,2])
+    pdfs_state(1) = c_loc(pdfs_array(1,1))
+    pdfs_state(2) = c_loc(pdfs_array(1,2))
+
+    ! [ISET, IMEMBER] for the computation of alphasQ2
+    ! Here we first choose the 1st PDF to compute the alphasQ2
+    alphas_flags = [0, 0]
+    print *, "Computing predictions with the same PDF: ", trim(pdfset1)
+    write(*, *) pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, c_loc(alphas_flags(1)), &
         [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp])
 
-    ! calling pineappl_grid_convolve with two integer flags that are used in xfx_test2 and alphas_test2 to determine the set and member indices
-    xfx = pineappl_xfx(xfx_test2)
-    alphas = pineappl_alphas(alphas_test2)
-    flags = [1, 0]
-    write(*, *) "second pineappl_grid_convolve:"
-    write(*, *) pineappl_grid_convolve(grid, [xfx, xfx], alphas, &
-        [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp], c_loc(flags(1)))
+    pdfs_array = reshape([0, 0, 1, 0], [2,2])
+    pdfs_state(1) = c_loc(pdfs_array(1,1))
+    pdfs_state(2) = c_loc(pdfs_array(1,2))
+    print *, "Computing predictions with different PDFs and alphasQ2(", trim(pdfset1), "):"
+    write(*, *) pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, c_loc(alphas_flags(1)), &
+        [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp])
 
+    ! [ISET, IMEMBER] for the computation of alphasQ2
+    ! Here we first choose the 1st PDF to compute the alphasQ2
+    alphas_flags = [1, 0]
+    print *, "Computing predictions with different PDFs and alphasQ2(", trim(pdfset2), "):"
+    write(*, *) pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, c_loc(alphas_flags(1)), &
+        [.true.], [.true.], [0, 1], 1, [1.0_dp, 1.0_dp, 1.0_dp])
+
+    ! call pineappl_grid_write(grid, 'test.pineappl.lz4')
     call pineappl_channels_delete(channels)
     call pineappl_grid_delete(grid)
 contains
 
-    ! Passing a Fortran procedure to C needs the iso_c_binding
-    function xfx_test1(pdg_id, x, q2, state) bind(c)
+    function wrap_xfx(pdg_id, x, q2, state) bind(c)
         use iso_c_binding
 
         implicit none
@@ -82,54 +102,25 @@ contains
         integer(c_int32_t), value, intent(in) :: pdg_id
         real(c_double), value, intent(in)     :: x, q2
         type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx_test1
+        real(c_double)                        :: wrap_xfx
+        integer, pointer                      :: state_array(:)
 
-        call lhapdf_xfxq2(0, 0, pdg_id, x, q2, xfx_test1)
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_xfxq2(state_array(1), state_array(2), pdg_id, x, q2, wrap_xfx)
     end function
 
-    function xfx_test2(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx_test2
-
-        integer, pointer :: flags(:)
-
-        call c_f_pointer(state, flags, [2])
-
-        call lhapdf_xfxq2(flags(1), flags(2), pdg_id, x, q2, xfx_test2)
-    end function
-
-    function alphas_test1(q2, state) bind(c)
+    function wrap_alphasq2(q2, state) bind(c)
         use iso_c_binding
 
         implicit none
 
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: alphas_test1
+        real(c_double)                    :: wrap_alphasq2
+        integer, pointer                      :: state_array(:)
 
-        call lhapdf_alphasq2(0, 0, q2, alphas_test1)
-    end function
-
-    function alphas_test2(q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        real(c_double), value, intent(in) :: q2
-        type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: alphas_test2
-
-        integer, pointer :: flags(:)
-
-        call c_f_pointer(state, flags, [2])
-
-        call lhapdf_alphasq2(flags(1), flags(2), q2, alphas_test2)
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_alphasq2(state_array(1), state_array(2), q2, wrap_alphasq2)
     end function
 
 end program lhapdf_example

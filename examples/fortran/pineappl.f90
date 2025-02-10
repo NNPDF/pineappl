@@ -174,14 +174,16 @@ module pineappl
             type (c_ptr), value :: grid
         end function
 
-        subroutine grid_convolve(grid, xfxs, alphas, state, order_mask, channel_mask, &
+        subroutine grid_convolve(grid, xfx, alphas, pdfs_state, alphas_state, order_mask, channel_mask, &
             bin_indices, nb_scales, mu_scales, results) &
             bind(c, name = 'pineappl_grid_convolve')
 
             use iso_c_binding
-            type (c_ptr), value        :: grid, state
-            type (c_funptr)            :: xfxs(*)
+            type (c_ptr), value        :: grid
+            type (c_funptr), value     :: xfx
             type (c_funptr), value     :: alphas
+            type(c_ptr)                :: pdfs_state(*)
+            type (c_ptr), value        :: alphas_state
             logical (c_bool)           :: order_mask(*), channel_mask(*)
             integer (c_size_t)         :: bin_indices(*)
             integer (c_size_t), value  :: nb_scales
@@ -702,47 +704,40 @@ contains
             xi_ren, xi_fac, res)
     end function
 
-    function pineappl_grid_convolve(grid, xfxs, alphas, order_mask, channel_mask, bin_indices, &
-        nb_scales, mu_scales, state) result(res)
+    function pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, alphas_state, order_mask, &
+        channel_mask, bin_indices, nb_scales, mu_scales) result(res)
 
         use iso_c_binding
 
         implicit none
 
         type (pineappl_grid), intent(in)   :: grid
-        type (pineappl_xfx)                :: xfxs(:)
+        type (pineappl_xfx), value         :: xfx
         type (pineappl_alphas)             :: alphas
+        type (c_ptr), intent(in)           :: pdfs_state(:)
+        type (c_ptr), intent(in)           :: alphas_state
         logical, intent(in)                :: order_mask(:), channel_mask(:)
         integer, intent(in)                :: bin_indices(:), nb_scales
         real (dp), intent(in)              :: mu_scales(:)
-        type (c_ptr), optional, intent(in) :: state
         real (dp), allocatable             :: res(:)
-
         integer                            :: i
-        type (c_ptr)                       :: state_
 
         allocate(res(size(bin_indices)))
 
-        do i = 1, size(xfxs)
-            if (.not. c_associated(c_funloc(xfxs(i)%proc))) then
-                error stop "at least one proc is null in xfxs"
-            end if
-        end do
+        if (.not. c_associated(c_funloc(xfx%proc))) then
+            error stop "xfx%proc is null"
+        end if
+
         if (.not. c_associated(c_funloc(alphas%proc))) then
             error stop "alphas%proc is null"
         end if
 
-        if (present(state)) then
-            state_ = state
-        else
-            state_ = c_null_ptr
-        end if
-
         call grid_convolve( &
             grid%ptr, &
-            [(c_funloc(xfxs(i)%proc), i = 1, size(xfxs))], &
+            c_funloc(xfx%proc), &
             c_funloc(alphas%proc), &
-            state_, &
+            pdfs_state, &
+            alphas_state, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(channel_mask(i), c_bool), i = 1, size(channel_mask))], &
             [(int(bin_indices, c_size_t), i = 1, size(bin_indices))], &

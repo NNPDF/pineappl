@@ -19,8 +19,11 @@ program test_pineappl
     integer(kind(pineappl_map)) :: x_mapping
     integer(kind(pineappl_interp_meth)) :: interpolation_meth
 
-    type (pineappl_xfx)    :: xfx1, xfx2
+    type (pineappl_xfx)    :: xfx1, xfx2, xfx
     type (pineappl_alphas) :: alphas
+
+    type(c_ptr), target    :: pdfs_state(2)
+    integer(c_int), target :: pdfs_array(2,2)
 
     channels = pineappl_channels_new()
     call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
@@ -156,6 +159,7 @@ program test_pineappl
 
     call pineappl_grid_split_channels(grid)
 
+    ! Construct the callable to the function `xfx` and `alphasQ2`
     xfx1 = pineappl_xfx(xfx1_test)
     xfx2 = pineappl_xfx(xfx2_test)
     alphas = pineappl_alphas(alphas_test)
@@ -174,11 +178,15 @@ program test_pineappl
         error stop "error: pineappl_grid_convolve_with_two"
     end if
 
-    result = pineappl_grid_convolve(grid, [xfx1, xfx2], alphas, [.true.], [.true.], &
-        [0, 1, 2], 1, [1.0_dp, 1.0_dp, 1.0_dp])
+    xfx = pineappl_xfx(xfx_test)
+    pdfs_array = reshape([0, 0, 1, 0], [2,2])
+    pdfs_state(1) = c_loc(pdfs_array(1,1))
+    pdfs_state(2) = c_loc(pdfs_array(1,2))
+    result = pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, c_null_ptr, &
+        [.true.], [.true.], [0, 1, 2], 1, [1.0_dp, 1.0_dp, 1.0_dp])
     if (any(result < 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolve_with_two(): ", result
-        error stop "error: pineappl_grid_convolve_with_two"
+        write(*, *) "pineappl_grid_convolve(): ", result
+        error stop "error: pineappl_grid_convolve"
     end if
 
     call pineappl_channels_delete(channels)
@@ -186,6 +194,21 @@ program test_pineappl
     call pineappl_grid_delete(grid)
 
 contains
+
+    function xfx_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx_test
+        integer, pointer                      :: state_array(:)
+
+        call c_f_pointer(state, state_array, [2])
+        xfx_test = merge(x, -x, state_array(1).eq.0)
+    end function
 
     function xfx1_test(pdg_id, x, q2, state) bind(c)
         use iso_c_binding
