@@ -1,4 +1,4 @@
-//! Supporting classes and functions for [`Grid::evolve_with_slice_iter`].
+//! Supporting classes and functions for [`Grid::evolve`].
 
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvType;
@@ -33,21 +33,22 @@ pub struct EvolveInfo {
     pub ren1: Vec<f64>,
 }
 
-/// Information about the evolution kernel operator slice (EKO) passed to
-/// [`Grid::evolve_with_slice_iter`](super::grid::Grid::evolve_with_slice_iter) as `operator`,
-/// which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable). The
-/// dimensions of the EKO must correspond to the values given in [`fac1`](Self::fac1),
+/// Information about the evolution kernel operator slice (EKO) passed to [`Grid::evolve`] as
+/// `operator`, which is used to convert a [`Grid`] into an [`FkTable`](super::fk_table::FkTable).
+/// The dimensions of the EKO must correspond to the values given in [`fac1`](Self::fac1),
 /// [`pids0`](Self::pids0), [`x0`](Self::x0), [`pids1`](Self::pids1) and [`x1`](Self::x1), exactly
 /// in this order. Members with a `1` are defined at the squared factorization scale given as
-/// `fac1` (often called process scale) and are found in the [`Grid`] that
-/// `Grid::evolve_with_slice_iter` is called with. Members with a `0` are defined at the squared
-/// factorization scale [`fac0`](Self::fac0) (often called fitting scale or starting scale) and are
-/// found in the `FkTable` resulting from [`Grid::evolve_with_slice_iter`].
+/// `fac1` (often called process scale) and are found in the [`Grid`] that [`Grid::evolve`] is
+/// called with. Members with a `0` are defined at the squared factorization scale
+/// [`fac0`](Self::fac0) (often called fitting scale or starting scale) and are found in the
+/// `FkTable` resulting from [`Grid::evolve`].
 ///
 /// The EKO slice may convert a `Grid` from a basis given by the particle identifiers `pids1` to a
 /// possibly different basis given by `pids0`. This basis must also be identified using
 /// [`pid_basis`](Self::pid_basis), which tells
 /// [`FkTable::convolve`](super::fk_table::FkTable::convolve) how to perform a convolution.
+///
+/// [`Grid::evolve`]: super::grid::Grid::evolve
 #[derive(Clone)]
 pub struct OperatorSliceInfo {
     /// Squared factorization/fragmentation scale of the `FkTable`.
@@ -66,9 +67,10 @@ pub struct OperatorSliceInfo {
 
     /// Particle ID basis for `FkTable`.
     pub pid_basis: PidBasis,
-    /// Type of convolution which this operator evolves. This also determines whether [`fac0`]
-    /// and [`fac1`] is a factorization ([`ConvType::UnpolPDF`] or [`ConvType::PolPDF`]) or a
-    /// fragmentation ([`ConvType::UnpolFF`] or [`ConvType::PolFF`]) scale.
+    /// Type of convolution which this operator evolves. This also determines whether
+    /// [`Self::fac0`] and [`Self::fac1`] is a factorization ([`ConvType::UnpolPDF`] or
+    /// [`ConvType::PolPDF`]) or a fragmentation ([`ConvType::UnpolFF`] or [`ConvType::PolFF`])
+    /// scale.
     pub conv_type: ConvType,
 }
 

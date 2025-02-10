@@ -16,11 +16,10 @@ use std::str::FromStr;
 /// Structure implementing FK tables. These are special [`Grid`]s, for which the following
 /// additional guarantees are given:
 ///
-/// - all subgrids of the grid evaluate the PDFs at a single factorization scale given by
-///   [`FkTable::muf2`].
-/// - all subgrids, for both hadronic initial states (if both initial states are hadronic), share
-///   the same `x` grid. See [`FkTable::x_grid`].
-/// - the channel definitions are *simple*, meaning that every entry consists of a single pair of
+/// - all subgrids of the grid evaluate the convolution functions at a single factorization and
+///   fragmentation scale given by [`FkTable::fac0`] and [`FkTable::frg0`], respectively.
+/// - all subgrids share the same `x` grid. See [`FkTable::x_grid`].
+/// - the channel definitions are *simple*, meaning that every entry consists of a single tuple of
 ///   partons with trivial factor `1.0`, and all tuples are distinct from each other. See
 ///   [`Grid::channels`].
 /// - the FK table's grid contains only a single [`Order`], whose exponents are all zero.

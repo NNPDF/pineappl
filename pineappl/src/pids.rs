@@ -170,7 +170,7 @@ impl PidBasis {
     }
 }
 
-/// Return type of [`PidBasis::optimization_rules`].
+/// Return type of [`PidBasis::opt_rules`].
 pub struct OptRules(pub Vec<(i32, i32)>, pub Vec<i32>);
 
 /// Translates IDs from the evolution basis into IDs using PDG Monte Carlo IDs.
@@ -444,9 +444,9 @@ pub const fn charge_conjugate_pdg_pid(pid: i32) -> i32 {
     }
 }
 
-/// Given `tuples` represting a linear combination of PDG MC IDs, return a PID for the `evol`
-/// basis. The order of each tuple in `tuples` is not relevant. This function inverts
-/// [`evol_to_pdg_mc_ids`]. If the inversion is not possible, `None` is returned.
+/// Given `tuples` representing a linear combination of PDG MC IDs, return a PID for the
+/// [`PidBasis::Evol`] basis. The order of each tuple in `tuples` is not relevant. If the inversion
+/// is not possible, `None` is returned.
 #[must_use]
 pub fn pdg_mc_ids_to_evol(tuples: &[(i32, f64)]) -> Option<i32> {
     let mut tuples = tuples.to_vec();

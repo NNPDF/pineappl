@@ -1,5 +1,5 @@
-//! Module containing structures for the 3 dimensions of a [`Grid`]: bins, [`Order`] and channels
-//! (`boc`).
+//! Module containing structures for the 3 dimensions of a [`Grid`]: [`Bin`], [`Order`] and
+//! channels (`boc`).
 //!
 //! [`Grid`]: super::grid::Grid
 
@@ -734,13 +734,13 @@ impl Order {
     }
 
     /// Return a mask suitable to pass as the `order_mask` parameter of [`Grid::convolve`],
-    /// [`Grid::evolve_with_slice_iter`] or [`Grid::evolve_info`]. The selection of `orders` is
-    /// controlled using the `max_as` and `max_al` parameters, for instance setting `max_as = 1`
-    /// and `max_al = 0` selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD;
-    /// setting `max_as = 3` and `max_al = 2` would select all NLOs, and the NNLO QCD.
+    /// [`Grid::evolve`] or [`Grid::evolve_info`]. The selection of `orders` is controlled using
+    /// the `max_as` and `max_al` parameters, for instance setting `max_as = 1` and `max_al = 0`
+    /// selects the LO QCD only, `max_as = 2` and `max_al = 0` the NLO QCD; setting `max_as = 3`
+    /// and `max_al = 2` would select all NLOs, and the NNLO QCD.
     ///
     /// [`Grid::convolve`]: super::grid::Grid::convolve
-    /// [`Grid::evolve_with_slice_iter`]: super::grid::Grid::evolve_with_slice_iter
+    /// [`Grid::evolve`]: super::grid::Grid::evolve
     /// [`Grid::evolve_info`]: super::grid::Grid::evolve_info
     ///
     /// # Example

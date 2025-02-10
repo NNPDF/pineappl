@@ -1089,9 +1089,8 @@ impl Grid {
     ///
     /// # Errors
     ///
-    /// Returns a [`GridError::EvolutionFailure`] if either the `operator` or its `info` is
-    /// incompatible with this `Grid`. Returns a [`GridError::Other`] if the iterator from `slices`
-    /// return an error.
+    /// Returns an error if either the `operator` or its `info` is incompatible with this `Grid`,
+    /// or if the iterator from `slices` return an error.
     ///
     /// # Panics
     ///
