@@ -31,11 +31,11 @@ jobs:
           # run tests with sanitizer
           make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
 
-      # - name: Test Fortran examples
-      #   run: |
-      #     cd examples/fortran
-      #     sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-      #     make test-examples
+      - name: Test Fortran examples
+        run: |
+          cd examples/fortran
+          sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
+          make test-examples
 
       - name: Test OO C++ examples
         run: |
