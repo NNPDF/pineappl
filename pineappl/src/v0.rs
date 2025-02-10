@@ -122,7 +122,7 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
                             }
                             if convolutions[1].is_some() {
                                 pids.push(b);
-                            };
+                            }
                             (pids, f)
                         })
                         .collect(),
@@ -164,14 +164,14 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
                     .iter()
                     .map(|mu2v0| mu2v0.ren)
                     .collect();
-                ren.sort_unstable_by(|a, b| a.total_cmp(b));
+                ren.sort_unstable_by(f64::total_cmp);
                 ren.dedup_by(subgrid::node_value_eq_ref_mut);
                 let mut fac: Vec<_> = old_subgrid
                     .mu2_grid()
                     .iter()
                     .map(|mu2v0| mu2v0.fac)
                     .collect();
-                fac.sort_unstable_by(|a, b| a.total_cmp(b));
+                fac.sort_unstable_by(f64::total_cmp);
                 fac.dedup_by(subgrid::node_value_eq_ref_mut);
                 vec![ren, fac]
             } else {
@@ -226,19 +226,17 @@ pub fn read_uncompressed_v0(mut reader: impl BufRead) -> Result<Grid> {
                         array[[index_r, index_f, index.1, index.2]] = v;
                     }
                 }
+            } else if convolutions[0].is_none() {
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[[index.0, index.2]] = v;
+                }
+            } else if convolutions[1].is_none() {
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[[index.0, index.1]] = v;
+                }
             } else {
-                if convolutions[0].is_none() {
-                    for (index, v) in old_subgrid.indexed_iter() {
-                        array[[index.0, index.2]] = v;
-                    }
-                } else if convolutions[1].is_none() {
-                    for (index, v) in old_subgrid.indexed_iter() {
-                        array[[index.0, index.1]] = v;
-                    }
-                } else {
-                    for (index, v) in old_subgrid.indexed_iter() {
-                        array[<[usize; 3]>::from(index)] = v;
-                    }
+                for (index, v) in old_subgrid.indexed_iter() {
+                    array[<[usize; 3]>::from(index)] = v;
                 }
             }
 

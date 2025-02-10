@@ -1041,8 +1041,8 @@ impl Grid {
                     .node_values()
                     .iter()
                     .zip(self.kinematics())
-                    .filter_map(|(nv, kin)| matches!(kin, Kinematics::X(_)).then(|| nv))
-                    .flatten(),
+                    .filter(|(_, kin)| matches!(kin, Kinematics::X(_)))
+                    .flat_map(|(nv, _)| nv),
             );
 
             x1.sort_by(f64::total_cmp);
@@ -1300,7 +1300,7 @@ impl Grid {
                         self.kinematics
                             .iter()
                             .filter(|kin| matches!(kin, Kinematics::X(_)))
-                            .cloned(),
+                            .copied(),
                     )
                     .collect(),
                 scales: Scales {

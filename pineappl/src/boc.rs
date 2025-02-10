@@ -289,9 +289,9 @@ impl BinsWithFillLimits {
         let bins_len_p1 = bins.len() + 1;
 
         if fill_limits_len != bins_len_p1 {
-            return Err(Error::General(format!(
-                "number of bins must agree with the number of fill limits plus 1"
-            )));
+            return Err(Error::General(
+                "number of bins must agree with the number of fill limits plus 1".to_owned(),
+            ));
         }
 
         Ok(Self { bins, fill_limits })
@@ -328,9 +328,9 @@ impl BinsWithFillLimits {
         let normalizations_len = normalizations.len();
 
         if limits_len != normalizations_len {
-            return Err(Error::General(format!(
-                "number of limits be the same as the number of normalizations"
-            )));
+            return Err(Error::General(
+                "number of limits be the same as the number of normalizations".to_owned(),
+            ));
         }
 
         let fill_limits = (0..=limits.len()).map(convert::f64_from_usize).collect();
