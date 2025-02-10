@@ -33,19 +33,6 @@ const BIN_AXIS: Axis = Axis(1);
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
 
-fn default_metadata() -> BTreeMap<String, String> {
-    iter::once((
-        "pineappl_gitversion".to_owned(),
-        git_version!(
-            args = ["--always", "--dirty", "--long", "--tags"],
-            cargo_prefix = "cargo:",
-            fallback = "unknown"
-        )
-        .to_owned(),
-    ))
-    .collect()
-}
-
 #[derive(Clone, Deserialize, Serialize)]
 enum MoreMembers {
     V4(Mmv4),
@@ -150,7 +137,16 @@ impl Grid {
             interps,
             kinematics,
             scales,
-            metadata: default_metadata(),
+            metadata: iter::once((
+                "pineappl_gitversion".to_owned(),
+                git_version!(
+                    args = ["--always", "--dirty", "--long", "--tags"],
+                    cargo_prefix = "cargo:",
+                    fallback = "unknown"
+                )
+                .to_owned(),
+            ))
+            .collect(),
             more_members: MoreMembers::V4(Mmv4),
             reference: Reference::default(),
         }
