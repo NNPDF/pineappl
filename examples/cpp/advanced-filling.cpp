@@ -3,8 +3,9 @@
 
 #include <cassert>
 #include <cstddef>
-#include <vector>
 #include <iomanip>
+#include <memory>
+#include <vector>
 
 int main() {
     // Construct the channel object based on the nb of convolutions
@@ -120,7 +121,7 @@ int main() {
     std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
     // disable LHAPDF banners to guarantee deterministic output
     LHAPDF::setVerbosity(0);
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
 
     // define callables for the PDFs and alphas
     auto xfx = [](int32_t id, double x, double q2, void* pdf) {
@@ -134,13 +135,13 @@ int main() {
     auto channel_mask = nullptr;
     std::vector<double> mmu_scales = { 1.0, 1.0, 1.0 };
 
-    std::vector<LHAPDF::PDF*> pdfs = {pdf, pdf};
+    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
     void** pdf_states = reinterpret_cast<void**>(pdfs.data());
 
     // allocate a vector holding the differential cross sections
     std::vector<double> dxsec(bins.size() - 1);
-    pineappl_grid_convolve(grid, xfx, alphas,pdf_states, pdf, order_mask, channel_mask, nullptr, 1,
-        mmu_scales.data(), dxsec.data());
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), order_mask, channel_mask,
+        nullptr, 1, mmu_scales.data(), dxsec.data());
 
     // Print table header
     std::cout << std::setw(10) << "bin left"

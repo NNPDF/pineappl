@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -54,9 +55,9 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf1 = LHAPDF::mkPDF(pdfset, 0);
-    auto* pdf2 = LHAPDF::mkPDF(pdfset, 0); // TODO: use different PDF
-    PDFState state = {pdf1, pdf2};
+    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0)); // TODO: use different PDF
+    PDFState state = {pdf1.get(), pdf2.get()};
 
     // how many perturbative orders does the grid contain?
     std::size_t orders = pineappl_grid_order_count(grid);

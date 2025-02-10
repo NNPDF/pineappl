@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -54,9 +55,9 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf1 = LHAPDF::mkPDF(pdfset, 0);
-    auto* pdf2 = LHAPDF::mkPDF(pdfset, 0); // TODO: use different PDF
-    PDFState state = {pdf1, pdf2};
+    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0)); // TODO: use different PDF
+    PDFState state = {pdf1.get(), pdf2.get()};
 
     // how many perturbative orders does the grid contain?
     std::size_t orders = pineappl_grid_order_count(grid);
@@ -99,10 +100,16 @@ int main(int argc, char* argv[]) {
     // metadata keys `initial_state_1` and `initial_state_2`, which are by default set to `2212`,
     // the PDG MC ID for the proton. Let's change the second value to an antiproton:
     pineappl_grid_set_key_value(grid, "initial_state_1", "2212");
-    assert( std::string(pineappl_grid_key_value(grid, "initial_state_1")) == "2212" );
+    char* initial_state_1 = pineappl_grid_key_value(grid, "initial_state_1");
+    assert( std::string(initial_state_1) == "2212" );
+    // don't forget to deallocate!
+    pineappl_string_delete(initial_state_1);
 
     pineappl_grid_set_key_value(grid, "initial_state_2", "-2212");
-    assert( std::string(pineappl_grid_key_value(grid, "initial_state_2")) == "-2212" );
+    char* initial_state_2 = pineappl_grid_key_value(grid, "initial_state_2");
+    assert( std::string(initial_state_2) == "-2212" );
+    // don't forget to deallocate!
+    pineappl_string_delete(initial_state_2);
 
     std::vector<double> dxsec2(bins);
 
@@ -115,7 +122,10 @@ int main(int argc, char* argv[]) {
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
     // protons with deuterons:
     pineappl_grid_set_key_value(grid, "initial_state_2", "1000010020"); // 1000010020 = deuteron
-    assert( std::string(pineappl_grid_key_value(grid, "initial_state_2")) == "1000010020" );
+    char* new_initial_state_2 = pineappl_grid_key_value(grid, "initial_state_2");
+    assert( std::string(new_initial_state_2) == "1000010020" );
+    // don't forget to deallocate!
+    pineappl_string_delete(new_initial_state_2);
 
     std::vector<double> dxsec3(bins);
 

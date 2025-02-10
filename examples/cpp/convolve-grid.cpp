@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
 
     // define callables for the PDFs and alphas
     auto xfx = [](int32_t id, double x, double q2, void* pdf) {
@@ -75,11 +76,11 @@ int main(int argc, char* argv[]) {
     // can be varied around its central values, respectively.
     std::vector<double> mu_scales = { xir, xif, 1.0 };
 
-    std::vector<LHAPDF::PDF*> pdfs = {pdf, pdf};
+    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
     void** pdf_states = reinterpret_cast<void**>(pdfs.data());
 
-    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf, order_mask, channel_mask, nullptr, 1,
-        mu_scales.data(), dxsec.data());
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), order_mask, channel_mask,
+        nullptr, 1, mu_scales.data(), dxsec.data());
 
     std::vector<double> normalizations(bins);
 

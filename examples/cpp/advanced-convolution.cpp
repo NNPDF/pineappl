@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
 
     // define callables for the PDFs and alphas, the grid collides two protons
     auto xfx = [](int32_t id, double x, double q2, void* pdf) {
@@ -78,22 +79,22 @@ int main(int argc, char* argv[]) {
     // PDF sets in `pdf_states`.
     std::vector<double> mu_scales = { xir, xif, xia };
 
-    std::vector<LHAPDF::PDF*> pdfs = {pdf, pdf};
+    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
     void** pdf_states = reinterpret_cast<void**>(pdfs.data());
 
-    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf, order_mask.get(), channel_mask.get(), nullptr, 1,
-        mu_scales.data(), dxsec1.data());
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), order_mask.get(),
+        channel_mask.get(), nullptr, 1, mu_scales.data(), dxsec1.data());
 
     // test with both masks set to `nullptr`
     std::vector<double> dxsec2(bins);
 
-    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf, nullptr, nullptr, nullptr, 1,
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(), nullptr, nullptr, nullptr, 1,
         mu_scales.data(), dxsec2.data());
 
     // test with both `mu_scales` set to `nullptr`
     std::vector<double> dxsec3(bins);
 
-    pineappl_grid_convolve(grid, xfx, alphas,pdf_states, pdf, nullptr, nullptr, nullptr, 1,
+    pineappl_grid_convolve(grid, xfx, alphas,pdf_states, pdf.get(), nullptr, nullptr, nullptr, 1,
         nullptr, dxsec3.data());
 
     std::vector<double> normalizations(bins);
