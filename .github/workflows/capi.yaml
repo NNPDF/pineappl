@@ -41,7 +41,7 @@ jobs:
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make test-examples
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
 
       - name: Generate code coverage
         run: |
