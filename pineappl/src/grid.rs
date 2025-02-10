@@ -2,16 +2,15 @@
 
 use super::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use super::convolutions::{Conv, ConvType, ConvolutionCache};
-use super::empty_subgrid::EmptySubgridV1;
 use super::error::{Error, Result};
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
-use super::import_subgrid::ImportSubgridV1;
-use super::interp_subgrid::InterpSubgridV1;
 use super::interpolation::Interp;
 use super::pids::PidBasis;
 use super::reference::Reference;
-use super::subgrid::{self, Subgrid, SubgridEnum};
+use super::subgrid::{
+    self, EmptySubgridV1, ImportSubgridV1, InterpSubgridV1, Subgrid, SubgridEnum,
+};
 use super::v0;
 use bitflags::bitflags;
 use float_cmp::{approx_eq, assert_approx_eq};

@@ -38,13 +38,10 @@ mod v0;
 
 pub mod boc;
 pub mod convolutions;
-pub mod empty_subgrid;
 pub mod error;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
-pub mod import_subgrid;
-pub mod interp_subgrid;
 pub mod interpolation;
 pub mod packed_array;
 pub mod pids;

@@ -5,10 +5,10 @@ use pineappl::boc::{BinsWithFillLimits, Kinematics, Order, ScaleFuncForm, Scales
 use pineappl::channel;
 use pineappl::convolutions::{Conv, ConvType};
 use pineappl::grid::Grid;
-use pineappl::import_subgrid::ImportSubgridV1;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::PackedArray;
 use pineappl::pids::PidBasis;
+use pineappl::subgrid::ImportSubgridV1;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter;

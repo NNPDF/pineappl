@@ -2,11 +2,10 @@
 
 use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvolutionCache;
-use super::empty_subgrid::EmptySubgridV1;
 use super::error::{Error, Result};
 use super::grid::Grid;
 use super::pids::OptRules;
-use super::subgrid::{self, Subgrid};
+use super::subgrid::{self, EmptySubgridV1, Subgrid};
 use ndarray::{s, ArrayD};
 use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};

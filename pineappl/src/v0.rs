@@ -3,11 +3,10 @@ use super::convert;
 use super::convolutions::{Conv, ConvType};
 use super::error::{Error, Result};
 use super::grid::Grid;
-use super::import_subgrid::ImportSubgridV1;
 use super::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use super::packed_array::PackedArray;
 use super::pids::PidBasis;
-use super::subgrid;
+use super::subgrid::{self, ImportSubgridV1};
 use pineappl_v0::grid::Grid as GridV0;
 use std::io::BufRead;
 
