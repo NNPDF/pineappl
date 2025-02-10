@@ -1,9 +1,60 @@
 //! Subgrid interface.
 
-use ndarray::ArrayD;
-use numpy::{IntoPyArray, PyArrayDyn};
-use pineappl::subgrid::{Subgrid, SubgridEnum};
+use ndarray::{ArrayD, Dimension};
+use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArrayDyn};
+use pineappl::packed_array::PackedArray;
+use pineappl::subgrid::{ImportSubgridV1, Subgrid, SubgridEnum};
 use pyo3::prelude::*;
+
+/// PyO3 wrapper to :rustdoc:`pineappl::subgrid::ImportSubgridV1 <subgrid/struct.ImportSubgridV1.html>`.
+#[pyclass(name = "ImportSubgridV1")]
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct PyImportSubgridV1 {
+    pub(crate) import_subgrid: ImportSubgridV1,
+}
+
+#[pymethods]
+impl PyImportSubgridV1 {
+    /// Constructor.
+    ///
+    /// # Panics
+    /// TODO
+    ///
+    /// Parameters
+    /// ----------
+    /// array : numpy.ndarray(float)
+    ///     `N`-dimensional array with all weights
+    /// node_values: list(list(float))
+    ///     list containing the arrays of energy scales {q1, ..., qn} and momentum fractions
+    ///     {x1, ..., xn}.
+    #[new]
+    #[must_use]
+    pub fn new(array: PyReadonlyArrayDyn<f64>, node_values: Vec<Vec<f64>>) -> Self {
+        let mut sparse_array: PackedArray<f64> =
+            PackedArray::new(node_values.iter().map(Vec::len).collect());
+
+        for (index, value) in array
+            .as_array()
+            .indexed_iter()
+            .filter(|(_, value)| **value != 0.0)
+        {
+            sparse_array[index.as_array_view().to_slice().unwrap()] = *value;
+        }
+
+        Self {
+            import_subgrid: ImportSubgridV1::new(sparse_array, node_values),
+        }
+    }
+
+    /// Ensures that the subgrid has type `PySubgridEnum`.
+    #[must_use]
+    pub fn into(&self) -> PySubgridEnum {
+        PySubgridEnum {
+            subgrid_enum: self.import_subgrid.clone().into(),
+        }
+    }
+}
 
 /// PyO3 wrapper to :rustdoc:`pineappl::subgrid::SubgridEnum <subgrid/struct.SubgridEnum.html>`
 #[pyclass(name = "SubgridEnum")]
@@ -72,6 +123,7 @@ pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
         m,
         "import sys; sys.modules['pineappl.subgrid'] = m"
     );
+    m.add_class::<PyImportSubgridV1>()?;
     m.add_class::<PySubgridEnum>()?;
     parent_module.add_submodule(&m)
 }

@@ -11,7 +11,7 @@ from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
 from pineappl.grid import Grid
-from pineappl.import_subgrid import ImportSubgridV1
+from pineappl.subgrid import ImportSubgridV1
 from pineappl.pids import PidBasis
 
 # Construct the type of convolutions and the convolution object

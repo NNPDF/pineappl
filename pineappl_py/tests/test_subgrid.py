@@ -7,7 +7,7 @@ from typing import List, Tuple
 from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.grid import Grid
-from pineappl.import_subgrid import ImportSubgridV1
+from pineappl.subgrid import ImportSubgridV1
 from pineappl.subgrid import SubgridEnum
 
 # Define some default for the minimum value of `Q2`

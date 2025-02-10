@@ -10,7 +10,7 @@ import tempfile
 from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.fk_table import FkAssumptions, FkTable
-from pineappl.import_subgrid import ImportSubgridV1
+from pineappl.subgrid import ImportSubgridV1
 
 
 class TestFkTable:

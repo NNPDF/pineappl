@@ -9,7 +9,6 @@ pub mod convolutions;
 pub mod evolution;
 pub mod fk_table;
 pub mod grid;
-pub mod import_subgrid;
 pub mod interpolation;
 pub mod pids;
 pub mod subgrid;
@@ -23,7 +22,6 @@ fn pineappl(m: &Bound<'_, PyModule>) -> PyResult<()> {
     fk_table::register(m)?;
     grid::register(m)?;
     interpolation::register(m)?;
-    import_subgrid::register(m)?;
     pids::register(m)?;
     subgrid::register(m)?;
     m.add("version", env!("CARGO_PKG_VERSION"))?;
