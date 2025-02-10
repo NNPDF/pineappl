@@ -547,8 +547,8 @@ impl Subcommand for Opts {
                 }
                 OpsArg::MergeBins(ranges) => {
                     // TODO: sort after increasing start indices
-                    for range in ranges.iter().rev() {
-                        grid.merge_bins(*range.start()..(range.end() + 1))?;
+                    for range in ranges.iter().rev().cloned() {
+                        grid.merge_bins(range)?;
                     }
                 }
                 OpsArg::MulBinNorm(factor) => {

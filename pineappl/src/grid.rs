@@ -22,7 +22,7 @@ use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dime
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
-use std::ops::Range;
+use std::ops::{Bound, RangeBounds};
 use std::{iter, mem};
 
 const BIN_AXIS: Axis = Axis(1);
@@ -397,16 +397,27 @@ impl Grid {
     /// # Errors
     ///
     /// When the given bins are non-consecutive, an error is returned.
-    pub fn merge_bins(&mut self, range: Range<usize>) -> Result<()> {
+    pub fn merge_bins(&mut self, range: impl RangeBounds<usize>) -> Result<()> {
+        let range_start = match range.start_bound().cloned() {
+            Bound::Included(start) => start,
+            Bound::Excluded(start) => start + 1,
+            Bound::Unbounded => 0,
+        };
+        let range_end = match range.end_bound().cloned() {
+            Bound::Included(end) => end + 1,
+            Bound::Excluded(end) => end,
+            Bound::Unbounded => self.bwfl().len(),
+        };
+
         // check if the bins in `range` can be merged - if not return without changing `self`
         self.bwfl = self
             .bwfl()
-            .merge(range.clone())
+            .merge(range_start..range_end)
             // TODO: use proper error handling
             .unwrap_or_else(|_| unreachable!());
 
-        let (intermediate, right) = self.subgrids.view().split_at(BIN_AXIS, range.end);
-        let (left, merge) = intermediate.split_at(BIN_AXIS, range.start);
+        let (intermediate, right) = self.subgrids.view().split_at(BIN_AXIS, range_end);
+        let (left, merge) = intermediate.split_at(BIN_AXIS, range_start);
 
         let mut merged: Array2<SubgridEnum> = Array2::from_elem(
             (self.orders().len(), self.channels().len()),
