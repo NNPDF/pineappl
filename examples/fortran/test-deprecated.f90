@@ -68,6 +68,11 @@ program test_pineappl
 
     grid2 = pineappl_grid_clone(grid)
 
+    ! Remove objects from Memory
+    deallocate(bin_limits_left)
+    deallocate(bin_limits_right)
+    deallocate(bin_normalizations)
+
     call pineappl_grid_delete(grid2)
 
     lumi2 = pineappl_grid_lumi(grid)
@@ -160,6 +165,10 @@ program test_pineappl
         write(*, *) "pineappl_grid_convolve_with_two(): ", result
         error stop "error: pineappl_grid_convolve_with_two"
     end if
+
+    ! Remove objects from Memory
+    deallocate(result)
+    deallocate(string)
 
     call pineappl_keyval_delete(key_vals)
 

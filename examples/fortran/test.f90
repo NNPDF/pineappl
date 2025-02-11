@@ -102,6 +102,11 @@ program test_pineappl
 
     grid2 = pineappl_grid_clone(grid)
 
+    ! Remove objects from Memory
+    deallocate(bin_limits_left)
+    deallocate(bin_limits_right)
+    deallocate(bin_normalizations)
+
     call pineappl_grid_delete(grid2)
 
     channels2 = pineappl_grid_channels(grid)
@@ -188,6 +193,9 @@ program test_pineappl
         write(*, *) "pineappl_grid_convolve(): ", result
         error stop "error: pineappl_grid_convolve"
     end if
+
+    ! Remove objects from Memory
+    deallocate(result)
 
     call pineappl_channels_delete(channels)
 
