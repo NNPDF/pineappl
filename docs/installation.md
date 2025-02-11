@@ -179,7 +179,7 @@ operators (EKO)](https://eko.readthedocs.io/), add the switch
 
     cargo install --locked --features=evolve pineappl_cli
 
-### Optional: fastNLO importer
+#### Optional: fastNLO importer
 
 If you'd like to convert fastNLO tables to PineAPPL grids, make sure to install
 [fastNLO](https://fastnlo.hepforge.org/) first and add the switch
@@ -200,8 +200,8 @@ An alternative way to easily get started with building `pineappl` is to use
 [nix-shell](https://nixos.wiki/wiki/Development_environment_with_nix-shell).
 `nix-shell` is a powerful tool from the [Nix](https://nixos.org/) ecosystem
 that provides a reproducible development environment without modifying the
-system's global state. It is especially convenient when building `pineappl_cli`
-with the various features such as `APPLgrid` or `fastNLO`.
+system's global state. It is especially convenient when building `pineappl`
+with the various features such as `applgrid` and/or `fastnlo`.
 
 The interactive nix-based shell and its package manager can be easily installed
 using the OS' package manager by following the instructions on
@@ -212,19 +212,25 @@ the following contents:
 ```nix
 with import <nixpkgs> {}; {
   qpidEnv = stdenvNoCC.mkDerivation {
-    name = "build-pineappl";
+    name = "pineappl-with-all-features";
     buildInputs = [
-        gcc
+        gcc10
         gfortran
+        root
         lhapdf
         cargo
         cargo-c
+        zlib
+        fastnlo-toolkit
     ];
   };
 }
 ```
-This will provide all the necessary dependencies to build `pineappl` as well as its
-C-/Fortran APIs and CLI version. Finally, to invoke the shell, simply run:
+This will provide with all the necessary dependencies required to build PineAPPL
+with all the features except `applgrid`. APPLgrid needs to be compiled from
+source as described in [this section](#optional-applgrid-exporterimporter).
+
+Then, to invoke the shell, simply run:
 ```
 nix-shell
 ```
