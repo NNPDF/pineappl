@@ -761,7 +761,7 @@ class TestGrid:
         )
         np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
-    def test_fill_all(self, fake_grids):
+    def test_fill_all_channels(self, fake_grids):
         """Test filling the Grid by filling at once the kinematics and the observable,
         should yield the same result as `Grid.fill` above.
         """
@@ -780,7 +780,7 @@ class TestGrid:
             for q2, x1, x2 in itertools.product(Q2GRID, XGRID, XGRID):
                 n_tuple = [q2, x1, x2]
                 obs = rndgen.uniform(binning[0], binning[-1])
-                g.fill_all(
+                g.fill_all_channels(
                     order=pto,
                     observable=obs,
                     ntuple=n_tuple,

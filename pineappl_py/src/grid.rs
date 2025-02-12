@@ -169,7 +169,13 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weights : np.array(float)
     ///     cross section weights, one for each channels
-    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Vec<f64>, weights: Vec<f64>) {
+    pub fn fill_all_channels(
+        &mut self,
+        order: usize,
+        observable: f64,
+        ntuple: Vec<f64>,
+        weights: Vec<f64>,
+    ) {
         for (channel, &weight) in weights.iter().enumerate() {
             self.grid.fill(order, observable, channel, &ntuple, weight);
         }
