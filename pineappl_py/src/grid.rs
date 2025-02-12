@@ -422,7 +422,7 @@ impl PyGrid {
                 &order_mask.unwrap_or_default(),
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 1.0)]),
             )
             .into_pyarray_bound(py)
     }
