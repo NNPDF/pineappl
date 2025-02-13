@@ -248,8 +248,10 @@ impl PyFkTable {
     ///     key
     /// value : str
     ///     value
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.fk_table.set_key_value(key, value);
+    pub fn set_metadata(&mut self, key: &str, value: &str) {
+        self.fk_table
+            .metadata_mut()
+            .insert(key.to_owned(), value.to_owned());
     }
 
     /// Get metadata values stored in the grid.
@@ -261,7 +263,7 @@ impl PyFkTable {
     ///     key, value map
     #[getter]
     #[must_use]
-    pub fn key_values(&self) -> BTreeMap<String, String> {
+    pub fn metadata(&self) -> BTreeMap<String, String> {
         self.fk_table.grid().metadata().clone()
     }
 

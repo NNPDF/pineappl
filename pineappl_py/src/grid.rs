@@ -332,7 +332,7 @@ impl PyGrid {
     ///     key
     /// value : str
     ///     value
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
+    pub fn set_metadata(&mut self, key: &str, value: &str) {
         self.grid
             .metadata_mut()
             .insert(key.to_owned(), value.to_owned());
@@ -347,7 +347,7 @@ impl PyGrid {
     ///     key, value map
     #[getter]
     #[must_use]
-    pub fn key_values(&self) -> BTreeMap<String, String> {
+    pub fn metadata(&self) -> BTreeMap<String, String> {
         self.grid.metadata().clone()
     }
 

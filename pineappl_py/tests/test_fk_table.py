@@ -88,13 +88,13 @@ class TestFkTable:
         np.testing.assert_allclose(bin_limits[:, 0, 0], [0.0])
         np.testing.assert_allclose(bin_limits[:, 0, 1], [1.0])
 
-        # Check setting key values
-        fk.set_key_value("bla", "blub")
-        fk.set_key_value('"', "'")
-        fk.set_key_value("äöü", "ß\\")
-        assert fk.key_values["bla"] == "blub"
-        assert fk.key_values['"'] == "'"
-        assert fk.key_values["äöü"] == "ß\\"
+        # Check setting metadata
+        fk.set_metadata("bla", "blub")
+        fk.set_metadata('"', "'")
+        fk.set_metadata("äöü", "ß\\")
+        assert fk.metadata["bla"] == "blub"
+        assert fk.metadata['"'] == "'"
+        assert fk.metadata["äöü"] == "ß\\"
 
         # Check the various aspects of the Channels
         channels = fk.channels()

@@ -609,20 +609,20 @@ class TestGrid:
         assert isinstance(gg, Grid)
         _ = Grid.read(str(p))
 
-    def test_key_values(self, fake_grids):
+    def test_metadata(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
-        g.set_key_value("bla", "blub")
-        g.set_key_value('"', "'")
-        g.set_key_value("äöü", "ß\\")
+        g.set_metadata("bla", "blub")
+        g.set_metadata('"', "'")
+        g.set_metadata("äöü", "ß\\")
 
-        assert g.key_values["bla"] == "blub"
-        assert g.key_values['"'] == "'"
-        assert g.key_values["äöü"] == "ß\\"
+        assert g.metadata["bla"] == "blub"
+        assert g.metadata['"'] == "'"
+        assert g.metadata["äöü"] == "ß\\"
 
     def test_pid_basis(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(

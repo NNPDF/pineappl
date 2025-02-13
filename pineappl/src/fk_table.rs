@@ -7,6 +7,7 @@ use super::grid::Grid;
 use super::pids::OptRules;
 use super::subgrid::{self, EmptySubgridV1, Subgrid};
 use ndarray::{s, ArrayD};
+use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
 use std::iter;
 use std::str::FromStr;
@@ -215,11 +216,9 @@ impl FkTable {
         }
     }
 
-    /// Set a metadata key-value pair for this FK table.
-    pub fn set_key_value(&mut self, key: &str, value: &str) {
-        self.grid
-            .metadata_mut()
-            .insert(key.to_owned(), value.to_owned());
+    /// Return the metadata of this FK-table.
+    pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
+        self.grid.metadata_mut()
     }
 
     /// Returns the x grid that all subgrids for all hadronic initial states share.
