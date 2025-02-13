@@ -16,12 +16,12 @@ int main(int argc, char* argv[]) {
 
     switch (argc) {
     case 4:
-        pdfset1 = argv[2];
         pdfset2 = argv[3];
         // fall through
     case 3:
         pdfset1 = argv[2];
-        pdfset2 = argv[2];
+        // set the two PDFs the same if only one is provided
+        if (argc == 3) pdfset2 = argv[2];
         // fall through
     case 2:
         filename = argv[1];
