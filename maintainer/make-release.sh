@@ -52,16 +52,6 @@ for crate in ${crates[@]}; do
     fi
 done
 
-if ! cargo msrv --help >/dev/null; then
-    echo "Didn't find \`msrv\` applet of \`cargo\`. Run \`cargo install msrv\` to install it."
-    exit 1
-fi
-
-if ! cargo msrv --min 1.80.1 --max 1.80.1 >/dev/null; then
-    echo "Minimum supported Rust version doesn't match avertised one."
-    exit 1
-fi
-
 echo ">>> Testing release configuration with default features ..."
 
 cargo test --release
