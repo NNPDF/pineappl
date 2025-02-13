@@ -7,7 +7,6 @@ use super::grid::Grid;
 use super::pids::OptRules;
 use super::subgrid::{self, EmptySubgridV1, Subgrid};
 use ndarray::{s, ArrayD};
-use std::collections::BTreeMap;
 use std::fmt::{self, Display, Formatter};
 use std::iter;
 use std::str::FromStr;
