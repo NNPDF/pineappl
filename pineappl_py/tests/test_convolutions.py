@@ -17,10 +17,10 @@ class TestConvolutions:
         ],
     )
     def test_init(self, polarized: bool, time_like: bool):
-        conv_type = ConvType(polarized=polarized, time_like=time_like)
-        convolutions = Conv(conv_type=conv_type, pid=2212)
+        convolution_types = ConvType(polarized=polarized, time_like=time_like)
+        convolutions = Conv(convolution_types=convolution_types, pid=2212)
 
-        assert conv_type.polarized == polarized
-        assert conv_type.time_like == time_like
-        assert convolutions.conv_type.polarized == polarized
-        assert convolutions.conv_type.time_like == time_like
+        assert convolution_types.polarized == polarized
+        assert convolution_types.time_like == time_like
+        assert convolutions.convolution_types.polarized == polarized
+        assert convolutions.convolution_types.time_like == time_like

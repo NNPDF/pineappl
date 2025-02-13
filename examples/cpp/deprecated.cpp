@@ -5,8 +5,32 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
+
+// An object to hold the state of the different PDFs
+struct PDFState {
+    LHAPDF::PDF* pdfs[2];
+};
+
+// The callable PDF function using the 1st PDF
+double xfx1(int32_t id, double x, double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[0];
+    return pdf -> xfxQ2(id, x, q2);
+};
+
+// The callable PDF function using the 2nd PDF
+double xfx2(int32_t id, double x, double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[1];
+    return pdf -> xfxQ2(id, x, q2);
+};
+
+// The callable alphasQ2 function using the 2nd PDF
+double alphas(double q2, void* state) {
+    auto* pdf = static_cast <PDFState*> (state)->pdfs[1];
+    return pdf -> alphasQ2(q2);
+};
 
 int main(int argc, char* argv[]) {
     std::string filename = "drell-yan-rap-ll-deprecated.pineappl.lz4";
@@ -31,18 +55,9 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
-
-    // define callables for the PDFs and alphas
-    auto xfx1 = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto xfx2 = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
-    };
+    auto pdf1 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+    auto pdf2 = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0)); // TODO: use different PDF
+    PDFState state = {pdf1.get(), pdf2.get()};
 
     // how many perturbative orders does the grid contain?
     std::size_t orders = pineappl_grid_order_count(grid);
@@ -74,7 +89,7 @@ int main(int argc, char* argv[]) {
     double xif = 1.0;
 
     // use `pineappl_grid_convolve_with_one` instead
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, &state, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec1.data());
 
     // how does the grid know which PDFs it must be convolved with? This is determined by the
@@ -85,7 +100,7 @@ int main(int argc, char* argv[]) {
     std::vector<double> dxsec2(bins);
 
     // use `pineappl_grid_convolve_with_one` instead
-    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, pdf, order_mask.get(),
+    pineappl_grid_convolute_with_one(grid, 2212, xfx1, alphas, &state, order_mask.get(),
         channel_mask.get(), xir, xif, dxsec2.data());
 
     // what if we have a collision where we actually need two PDFs? Let's simulate the collision of
@@ -94,14 +109,16 @@ int main(int argc, char* argv[]) {
 
     std::vector<double> dxsec3(bins);
 
-    // use `pineappl_grid_convolve_with_two` instead
-    pineappl_grid_convolute_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf,
+    // use `pineappl_grid_convolve_with_two` instead. Here we use the first PDF to compute
+    // alphasQ2
+    pineappl_grid_convolute_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, &state,
         order_mask.get(), channel_mask.get(), xir, xif, dxsec3.data());
 
     std::vector<double> dxsec4(bins);
 
-    // use `pineappl_grid_convolve_with_two` instead
-    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, pdf, nullptr,
+    // use `pineappl_grid_convolve_with_two` instead. While here we use the value of the
+    // second PDF to compute alphasQ2
+    pineappl_grid_convolve_with_two(grid, 2212, xfx1, 1000010020, xfx2, alphas, &state, nullptr,
         nullptr, xir, xif, dxsec4.data());
 
     std::vector<double> normalizations(bins);

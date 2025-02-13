@@ -36,6 +36,7 @@ impl PyBin {
     /// -------
     /// int:
     ///     dimension on which the observable is defined
+    #[getter]
     #[must_use]
     pub fn dimensions(&self) -> usize {
         self.bin.dimensions()
@@ -47,6 +48,7 @@ impl PyBin {
     /// -------
     /// float:
     ///     normalization factor
+    #[getter]
     #[must_use]
     pub const fn normalization(&self) -> f64 {
         self.bin.normalization()
@@ -58,6 +60,7 @@ impl PyBin {
     /// -------
     /// list(tuple(float, float)):
     ///     edges of the current bin
+    #[getter]
     #[must_use]
     pub fn bin_limits(&self) -> Vec<(f64, f64)> {
         self.bin.limits().to_vec()
@@ -180,7 +183,7 @@ impl PyBinsWithFillLimits {
         self.bins_fill_limits.dimensions()
     }
 
-    /// Remove a given bin using the index.
+    /// Get the removed bin using the index.
     ///
     /// Parameters
     /// ----------
@@ -189,9 +192,9 @@ impl PyBinsWithFillLimits {
     /// Returns
     /// -------
     /// Bin:
-    ///     a `Bin` object with the given indexed removed
+    ///     a `Bin` object from the removed index
     #[must_use]
-    pub fn remove(&self, index: usize) -> PyBin {
+    pub fn removed_index(&self, index: usize) -> PyBin {
         PyBin {
             bin: self.bins_fill_limits.clone().remove(index),
         }
@@ -284,8 +287,8 @@ impl PyChannel {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::Kinematics <boc/enum.Kinematics.html>`.
-#[pyclass(name = "Kinematics")]
-#[derive(Clone)]
+#[pyclass(eq, name = "Kinematics")]
+#[derive(Clone, PartialEq, Eq)]
 pub enum PyKinematics {
     /// map to Kinematics::Scale
     Scale(usize),
@@ -303,8 +306,8 @@ impl From<PyKinematics> for Kinematics {
 }
 
 /// PyO3 wrapper to :rustdoc:`pineappl::boc::ScaleFuncForm <boc/enum.ScaleFuncForm.html>`.
-#[pyclass(name = "ScaleFuncForm")]
-#[derive(Clone)]
+#[pyclass(eq, name = "ScaleFuncForm")]
+#[derive(Clone, PartialEq, Eq)]
 pub enum PyScaleFuncForm {
     /// map to ScaleFuncForm::NoScale
     /// NOTE No variant is not supported in complex enums
@@ -370,16 +373,6 @@ pub struct PyScales {
 impl PyScales {
     pub(crate) const fn new(scales: Scales) -> Self {
         Self { scales }
-    }
-}
-
-impl Default for PyScales {
-    fn default() -> Self {
-        Self::new(Scales {
-            ren: ScaleFuncForm::Scale(0),
-            fac: ScaleFuncForm::Scale(0),
-            frg: ScaleFuncForm::NoScale,
-        })
     }
 }
 

@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
-    auto* pdf = LHAPDF::mkPDF(pdfset, 0);
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
 
     // define callables for the PDFs and alphas
     auto xfx = [](int32_t id, double x, double q2, void* pdf) {
@@ -72,8 +73,8 @@ int main(int argc, char* argv[]) {
     // The parameters `order_mask` and `channel_mask` can be used to select specific orders and
     // channels, respectively. Using `xir` and `xif` the renormalization and factorization scales
     // can be varied around its central values, respectively.
-    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf, order_mask,
-        channel_mask, xir, xif, dxsec.data());
+    pineappl_grid_convolve_with_one(grid, 2212, xfx, alphas, pdf.get(), order_mask, channel_mask,
+        xir, xif, dxsec.data());
 
     std::vector<double> normalizations(bins);
 

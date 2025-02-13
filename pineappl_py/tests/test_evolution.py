@@ -34,7 +34,7 @@ class TestEvolution:
             pids1=[],
             x1=[],
             pid_basis=PidBasis.Pdg,
-            conv_type=ConvType(polarized=False, time_like=False),
+            convolution_types=ConvType(polarized=False, time_like=False),
         )
 
         assert isinstance(info, OperatorSliceInfo)

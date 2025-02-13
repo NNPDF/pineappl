@@ -1,191 +1,210 @@
 /**
- * @brief Object oriented interface to PineAPPL.
+ * @brief Object oriented interface to PineAPPL using only v1 features.
  */
 #ifndef PineAPPL_HPP_
 #define PineAPPL_HPP_
 
-#include <pineappl_capi.h>
 #include <LHAPDF/LHAPDF.h>
+#include <pineappl_capi.h>
+
+#include <cassert>
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <vector>
-#include <memory>
-#include <algorithm>
 
-/** @brief Object oriented interface to PineAPPL.  */
+/** @brief Object oriented interface to PineAPPL.*/
 namespace PineAPPL {
 
-/** @brief Key-value storage for passing optional information during grid
- * creation. */
-struct KeyVal {
-  /** @brief Underlying raw object. */
-  pineappl_keyval *raw;
+// TODO: Add checks within various functions/calls
+// TODO: Implement `grid_convolve`
 
-  /** @brief Constructor. */
-  KeyVal() : raw(pineappl_keyval_new()) {}
-
-  KeyVal(const KeyVal &) = delete;
-
-  KeyVal(KeyVal &&) = delete;
-
-  KeyVal &operator=(const KeyVal &) = delete;
-
-  KeyVal &operator=(KeyVal &&) = delete;
-
-  /** @brief Destructor. */
-  ~KeyVal() { pineappl_keyval_delete(this->raw); }
-
-  /** @name Setter. */
-  ///@{
-  void set_double(const std::string &key, const double value) const {
-    pineappl_keyval_set_double(this->raw, key.c_str(), value);
-  }
-  void set_bool(const std::string &key, const bool value) const {
-    pineappl_keyval_set_bool(this->raw, key.c_str(), value);
-  }
-  void set_int(const std::string &key, const int value) const {
-    pineappl_keyval_set_int(this->raw, key.c_str(), value);
-  }
-  void set_string(const std::string &key, const std::string &value) const {
-    pineappl_keyval_set_string(this->raw, key.c_str(), value.c_str());
-  }
-  ///@}
-
-  /** @name Getter. */
-  ///@{
-  double get_double(const std::string &key) const {
-    return pineappl_keyval_double(this->raw, key.c_str());
-  }
-  bool get_bool(const std::string &key) const {
-    return pineappl_keyval_bool(this->raw, key.c_str());
-  }
-  int get_int(const std::string &key) const {
-    return pineappl_keyval_int(this->raw, key.c_str());
-  }
-  std::string get_string(const std::string &key) const {
-    return pineappl_keyval_string(this->raw, key.c_str());
-  }
-  ///@}
-};
-
-/** @brief Entry in luminosity function.  */
-struct LumiEntry {
+/** @brief Entry in sub-channel function. A sub-channel consists of a vector of
+ * tuple. Each tuple contains two elements. The first elements store the list of
+ * PIDs as a vector while the second represent the weighting factor. Note that
+ * the number of PIDs must correspond to the number of convolutions involved.*/
+struct SubChannelEntry {
   /** @brief First parton id. */
-  std::int32_t pid1;
-
-  /** @brief Second parton id. */
-  std::int32_t pid2;
-
-  /** @brief Relative weight. */
-  double weight;
+  std::vector<std::pair<std::vector<int>, double>> entry;
 };
 
-/** @brief Luminosity function. */
-struct Lumi {
+/** @brief Entry in channels function.  */
+struct ChannelsEntry {
+  /** @brief First parton id. */
+  std::vector<SubChannelEntry> channels_entry;
+};
+
+/** @brief Channels function. */
+struct Channels {
   /** @brief Underlying raw object. */
-  pineappl_lumi *raw;
+  pineappl_channels *raw;
 
   /** @brief Constructor. */
-  Lumi() : raw(pineappl_lumi_new()) {}
+  Channels() : raw(pineappl_channels_new()) {}
+  Channels(const Channels &) = delete;
+  Channels(Channels &&) = delete;
 
-  Lumi(const Lumi &) = delete;
-
-  Lumi(Lumi &&) = delete;
-
-  Lumi &operator=(const Lumi &) = delete;
-
-  Lumi &operator=(Lumi &&) = delete;
+  Channels &operator=(const Channels &) = delete;
+  Channels &operator=(Channels &&) = delete;
 
   /** @brief Destructor. */
-  ~Lumi() { pineappl_lumi_delete(this->raw); }
+  ~Channels() { pineappl_channels_delete(this->raw); }
 
   /** @brief Number of elements. */
-  std::size_t count() const { return pineappl_lumi_count(this->raw); }
+  std::size_t count() const { return pineappl_channels_count(this->raw); }
 
   /**
-   * @brief Add a luminosity function.
-   * @param c luminosity function
+   * @brief Add a channel function.
+   * @param c channel function
    */
-  void add(const std::vector<LumiEntry> &c) const {
-    const std::size_t n = c.size();
+  void add(const ChannelsEntry &c) const {
+    const std::size_t combinations = c.channels_entry.size();
+    if (combinations == 0) return;
+
+    const std::size_t nb_convolutions =
+        c.channels_entry[0].entry[0].first.size();
+
     std::vector<std::int32_t> pids;
     std::vector<double> weights;
-    for (const LumiEntry &l : c) {
-      pids.push_back(l.pid1);
-      pids.push_back(l.pid2);
-      weights.push_back(l.weight);
+    for (const SubChannelEntry &s : c.channels_entry) {
+      for (const std::pair<std::vector<int>, double> &m : s.entry) {
+        for (const int &pid : m.first) {
+          pids.push_back(pid);
+        }
+        weights.push_back(m.second);
+      }
     }
-    pineappl_lumi_add(this->raw, n, pids.data(), weights.data());
+    pineappl_channels_add(this->raw, combinations, nb_convolutions, pids.data(),
+                          weights.data());
   }
 
   /**
-   * @brief Returns the number of combinations of the luminosity function `lumi`
-   * for the specified entry.
-   * @param entry position in lumi
+   * @brief Returns the number of combinations of the channels function
+   * `channels` for the specified entry.
+   * @param entry position in channels
    */
   std::size_t combinations(const std::size_t entry) const {
-    return pineappl_lumi_combinations(this->raw, entry);
+    return pineappl_channels_combinations(this->raw, entry);
   }
 };
 
-/** @brief Coupling powers for each grid. */
+/** @brief Extension of `Order` to accommodate for v1 representation. */
 struct Order {
   /** @brief Exponent of the strong coupling. */
-  std::uint32_t alphas;
+  std::uint8_t alphas;
 
   /** @brief Exponent of the electromagnetic coupling. */
-  std::uint32_t alpha;
+  std::uint8_t alpha;
 
-  /** @brief Exponent of the logarithm of the scale factor of the renomalization
-   * scale. */
-  std::uint32_t logxir;
+  /** @brief Exponent of the logarithm of the scale factor of the
+   * renomalization scale. */
+  std::uint8_t logxir;
 
-  /** @brief Exponent of the logarithm of the scale factor of the factorization
-   * scale. */
-  std::uint32_t logxif;
+  /** @brief Exponent of the logarithm of the scale factor of the
+   * factorization scale. */
+  std::uint8_t logxif;
+
+  /** @brief Exponent of the logarithm of the scale factor of the
+   * fragmentation scale. */
+  std::uint8_t logxia;
 };
 
-/** @brief The central grid object. */
-struct Grid {
+/** @brief Object containing the values of the scale factors. */
+struct MuScales {
+  /** @brief renormalization scale factor. */
+  const double xir;
 
+  /** @brief factorization scale factor. */
+  const double xif;
+
+  /** @brief fragmentation scale factor. */
+  const double xia;
+};
+
+/** @brief Base Grid struct that contains the common data in v0 and v1. */
+struct Grid {
   /** @brief Underlying raw object. */
   pineappl_grid *raw;
 
+  /** @brief Constructor (protected to avoid direct instantiation). */
+ protected:
+  Grid(pineappl_grid *grid) : raw(grid) {}
+
+  /** @brief Deleted copy/move semantics. */
+  Grid() = delete;
+  Grid(const Grid &) = delete;
+  Grid(Grid &&) = delete;
+
+  Grid &operator=(const Grid &) = delete;
+  Grid &operator=(Grid &&) = delete;
+
+ public:
+  /** @brief Destructor. */
+  virtual ~Grid() { pineappl_grid_delete(this->raw); }
+
   /**
    * @brief Constructor.
-   * @param lumi luminosity
    * @param orders orders
-   * @param bin_limits bin limits
-   * @param key_val additional informations
+   * @param channels channels
+   * @param pid_basis pid_basis
+   * @param pids pids
+   * @param convolutions_types convolution_types
+   * @param interp interp
+   * @param bin_limits bin_limits
+   * @param mu_scales indexes representing the scales
    */
-  Grid(const Lumi &lumi, const std::vector<Order> &orders,
-       const std::vector<double> &bin_limits, const KeyVal &key_val) {
-    // cast orders
+  Grid(std::vector<Order> &orders, const Channels &channels,
+       pineappl_pid_basis pid_basis, std::vector<int32_t> pids,
+       std::vector<pineappl_conv_type> &convolution_types,
+       std::vector<pineappl_kinematics> &kinematics,
+       std::vector<pineappl_interp_tuples> &interp,
+       std::vector<double> &bin_limits, std::vector<std::size_t> &mu_scales)
+      : Grid(nullptr) {
     const std::size_t n_orders = orders.size();
-    std::vector<std::uint32_t> raw_orders;
+    const std::size_t n_bins = bin_limits.size() - 1;
+    const std::size_t n_convs = convolution_types.size();
+
+    // Various checks for the input arguments
+    assert(n_orders >= 1 && "Orders cannot be empty.");
+    assert(n_convs == pids.size() &&
+           "Number of convolutions and pids are different.");
+    assert(n_convs == kinematics.size() - 1 &&
+           "Mismatch in the number of convolutions and the kinematics.");
+    assert(kinematics.size() == interp.size() &&
+           "Mismatch in the number of kinematics and the corresponding "
+           "interpolations.");
+
+    // Cast the Orders
+    std::vector<std::uint8_t> raw_orders;
     for (const Order &order : orders) {
       raw_orders.push_back(order.alphas);
       raw_orders.push_back(order.alpha);
       raw_orders.push_back(order.logxir);
       raw_orders.push_back(order.logxif);
+      raw_orders.push_back(order.logxia);
     }
-    this->raw = pineappl_grid_new(lumi.raw, n_orders, raw_orders.data(),
-                                  bin_limits.size() - 1, bin_limits.data(),
-                                  key_val.raw);
+
+    this->raw = pineappl_grid_new2(
+        pid_basis, channels.raw, n_orders, raw_orders.data(), n_bins,
+        bin_limits.data(), n_convs, convolution_types.data(), pids.data(),
+        kinematics.data(), interp.data(), mu_scales.data());
   }
 
-  Grid() = delete;
-
-  Grid(const Grid &) = delete;
-
-  Grid(Grid &&) = delete;
-
-  Grid &operator=(const Grid &) = delete;
-
-  Grid &operator=(Grid &&) = delete;
-
-  /** @brief Destructor. */
-  ~Grid() { pineappl_grid_delete(this->raw); }
+  /**
+   * @brief Fill grid for the given parameters.
+   * @param order perturbative order
+   * @param observable value of the observable
+   * @param channel index of the channel
+   * @param ntuples tuples containing the kinematics {q2, x1, ...}
+   * @param weight value of the weighting factor
+   */
+  void fill(const std::size_t order, const double observable,
+            const std::size_t channel, std::vector<double> &ntuples,
+            const double weight) const {
+    pineappl_grid_fill2(this->raw, order, observable, channel, ntuples.data(),
+                        weight);
+  }
 
   /**
    * @brief Number of orders.
@@ -200,64 +219,6 @@ struct Grid {
    * @return number of bins
    */
   std::size_t bin_count() const { return pineappl_grid_bin_count(this->raw); }
-
-  /**
-   * @brief Fill grid for the given parameters.
-   * @param x1 first momentum fraction
-   * @param x2 second momentum fraction
-   * @param q2 scale
-   * @param order order index
-   * @param observable observable value
-   * @param lumi luminosity index
-   * @param weight weight
-   */
-  void fill(const double x1, const double x2, const double q2,
-            const std::size_t order, const double observable,
-            const std::size_t lumi, const double weight) const {
-    pineappl_grid_fill(this->raw, x1, x2, q2, order, observable, lumi, weight);
-  }
-
-  /**
-   * @brief Perform a convolution of the grid with PDFs.
-   * @param pdg_id hadron ID
-   * @param pdf PDF
-   * @param xi_ren renormalization scale variation
-   * @param xi_fac factorization scale variation
-   * @param order_mask order mask
-   * @param lumi_mask luminosity mask
-   * @return prediction for each bin
-   */
-  std::vector<double>
-  convolve_with_one(const std::int32_t pdg_id, LHAPDF::PDF &pdf,
-                     const double xi_ren = 1.0, const double xi_fac = 1.0,
-                     const std::vector<bool> &order_mask = {},
-                     const std::vector<bool> &lumi_mask = {}) const {
-    // prepare LHAPDF stuff
-    auto xfx = [](std::int32_t id, double x, double q2, void *pdf) {
-      return static_cast<LHAPDF::PDF *>(pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void *pdf) {
-      return static_cast<LHAPDF::PDF *>(pdf)->alphasQ2(q2);
-    };
-    // cast order_mask
-    std::unique_ptr<bool[]> raw_order_mask;
-    if (!order_mask.empty()) {
-      raw_order_mask = std::unique_ptr<bool[]>(new bool[order_mask.size()]);
-      std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
-    }
-    // cast lumi mask
-    std::unique_ptr<bool[]> raw_lumi_mask;
-    if (!lumi_mask.empty()) {
-      raw_lumi_mask = std::unique_ptr<bool[]>(new bool[lumi_mask.size()]);
-      std::copy(lumi_mask.begin(), lumi_mask.end(), &raw_lumi_mask[0]);
-    }
-    // do it!
-    std::vector<double> results(this->bin_count());
-    pineappl_grid_convolve_with_one(this->raw, pdg_id, xfx, alphas, &pdf,
-                                     raw_order_mask.get(), raw_lumi_mask.get(),
-                                     xi_ren, xi_fac, results.data());
-    return results;
-  }
 
   /**
    * @brief Write grid to file.
@@ -294,18 +255,77 @@ struct Grid {
    * This multiplies all subgrids with the given number.
    * @param s factor
    */
-  void scale(const double s) const {
-    pineappl_grid_scale(this->raw, s);
-  }
+  void scale(const double s) const { pineappl_grid_scale(this->raw, s); }
 
   /**
    * @brief Optimizes the grid representation for space efficiency.
    */
-  void optimize() const {
-    pineappl_grid_optimize(this->raw);
+  void optimize() const { pineappl_grid_optimize(this->raw); }
+
+  /**
+   * @brief Perform the convolution of a Grid with the PDF(s).
+   */
+  std::vector<double> convolve(std::vector<LHAPDF::PDF *> lhapdfs,
+                               const size_t alphas_pdf_index,
+                               const std::vector<bool> &order_mask = {},
+                               const std::vector<bool> &channels_mask = {},
+                               const std::vector<std::size_t> &bin_indices = {},
+                               const std::vector<MuScales> &mu_scales = {
+                                   {1.0, 1.0, 1.0}}) {
+    // Define callables to compute the PDFs and alphas(Q2)
+    auto xfx = [](std::int32_t id, double x, double q2, void *pdf) {
+      return static_cast<LHAPDF::PDF *>(pdf)->xfxQ2(id, x, q2);
+    };
+    auto alphas = [](double q2, void *pdf) {
+      return static_cast<LHAPDF::PDF *>(pdf)->alphasQ2(q2);
+    };
+
+    // Select the PDF objec to compute the alphas(Q2) from
+    LHAPDF::PDF *alphas_pdf = lhapdfs[alphas_pdf_index];
+    void **pdfs_state = reinterpret_cast<void **>(lhapdfs.data());
+
+    // cast order_mask
+    std::unique_ptr<bool[]> raw_order_mask;
+    if (!order_mask.empty()) {
+      raw_order_mask = std::unique_ptr<bool[]>(new bool[order_mask.size()]);
+      std::copy(order_mask.begin(), order_mask.end(), &raw_order_mask[0]);
+    }
+
+    // cast channels mask
+    std::unique_ptr<bool[]> raw_channels_mask;
+    if (!channels_mask.empty()) {
+      raw_channels_mask =
+          std::unique_ptr<bool[]>(new bool[channels_mask.size()]);
+      std::copy(channels_mask.begin(), channels_mask.end(),
+                &raw_channels_mask[0]);
+    }
+
+    // cast bin indices mask
+    std::unique_ptr<std::size_t[]> raw_bin_indices;
+    if (!bin_indices.empty()) {
+      raw_bin_indices =
+          std::unique_ptr<std::size_t[]>(new std::size_t[bin_indices.size()]);
+      std::copy(bin_indices.begin(), bin_indices.end(), &raw_bin_indices[0]);
+    }
+
+    // Linearize the scales
+    std::vector<double> raw_mu_scales;
+    raw_mu_scales.reserve(mu_scales.size() * 3);
+    for (const auto &scale_tuple : mu_scales) {
+      raw_mu_scales.push_back(scale_tuple.xir);
+      raw_mu_scales.push_back(scale_tuple.xif);
+      raw_mu_scales.push_back(scale_tuple.xia);
+    }
+
+    std::vector<double> results(this->bin_count());
+    pineappl_grid_convolve(this->raw, xfx, alphas, pdfs_state, alphas_pdf,
+                           raw_order_mask.get(), raw_channels_mask.get(),
+                           raw_bin_indices.get(), mu_scales.size(),
+                           raw_mu_scales.data(), results.data());
+    return results;
   }
 };
 
-} // namespace PineAPPL
+}  // namespace PineAPPL
 
-#endif // PineAPPL_HPP_
+#endif  // PineAPPL_HPP_

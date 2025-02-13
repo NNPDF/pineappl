@@ -18,6 +18,10 @@ module pineappl
         type (c_ptr) :: ptr = c_null_ptr
     end type
 
+    type pineappl_channels
+        type (c_ptr) :: ptr = c_null_ptr
+    end type
+
 
     ! As a workaround for typing Fortran enums, we define the name of the enum as the last enum value. This way, variables can be declared as, e.g. for pineappl_conv_type, integer(kind(pineappl_conv_type)). The compiler doesn't check that a value is from the right enum, but it clarifies the code for the user.
 
@@ -121,11 +125,11 @@ module pineappl
             integer (c_size_t)  :: strlen
         end function strlen
 
-        subroutine channels_add(lumi, combinations, nb_combinations, pdg_id_combinations, factors) &
+        subroutine channels_add(channels, combinations, nb_combinations, pdg_id_combinations, factors) &
             bind(c, name = 'pineappl_channels_add')
 
             use iso_c_binding
-            type (c_ptr), value       :: lumi
+            type (c_ptr), value       :: channels
             integer (c_size_t), value :: combinations, nb_combinations
             integer (c_int32_t)       :: pdg_id_combinations(*)
             real (c_double)           :: factors(*)
@@ -170,14 +174,16 @@ module pineappl
             type (c_ptr), value :: grid
         end function
 
-        subroutine grid_convolve(grid, xfxs, alphas, state, order_mask, channel_mask, &
+        subroutine grid_convolve(grid, xfx, alphas, pdfs_state, alphas_state, order_mask, channel_mask, &
             bin_indices, nb_scales, mu_scales, results) &
             bind(c, name = 'pineappl_grid_convolve')
 
             use iso_c_binding
-            type (c_ptr), value        :: grid, state
-            type (c_funptr)            :: xfxs(*)
+            type (c_ptr), value        :: grid
+            type (c_funptr), value     :: xfx
             type (c_funptr), value     :: alphas
+            type(c_ptr)                :: pdfs_state(*)
+            type (c_ptr), value        :: alphas_state
             logical (c_bool)           :: order_mask(*), channel_mask(*)
             integer (c_size_t)         :: bin_indices(*)
             integer (c_size_t), value  :: nb_scales
@@ -278,6 +284,12 @@ module pineappl
             use iso_c_binding
             type (c_ptr), value :: grid
             type (c_ptr)        :: grid_lumi
+        end function
+
+        function grid_channels(grid) bind(c, name = 'pineappl_grid_channels')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+            type (c_ptr)        :: grid_channels
         end function
 
         subroutine grid_merge_and_delete(grid, other) bind(c, name = 'pineappl_grid_merge_and_delete')
@@ -382,6 +394,11 @@ module pineappl
             type (c_ptr), value :: grid
         end subroutine
 
+        subroutine grid_split_channels(grid) bind(c, name = 'pineappl_grid_split_channels')
+            use iso_c_binding
+            type (c_ptr), value :: grid
+        end subroutine
+
         subroutine grid_write(grid, filename) bind(c, name = 'pineappl_grid_write')
             use iso_c_binding
             type (c_ptr), value :: grid
@@ -463,14 +480,30 @@ module pineappl
             integer (c_size_t), value :: entry
         end function
 
+        integer (c_size_t) function channels_combinations(channels, entry) bind(c, name = 'pineappl_channels_combinations')
+            use iso_c_binding
+            type (c_ptr), value       :: channels
+            integer (c_size_t), value :: entry
+        end function
+
         integer (c_size_t) function lumi_count(lumi) bind(c, name = 'pineappl_lumi_count')
             use iso_c_binding
             type (c_ptr), value :: lumi
         end function
 
+        integer (c_size_t) function channels_count(channels) bind(c, name = 'pineappl_channels_count')
+            use iso_c_binding
+            type (c_ptr), value :: channels
+        end function
+
         subroutine lumi_delete(lumi) bind(c, name = 'pineappl_lumi_delete')
             use iso_c_binding
             type (c_ptr), value :: lumi
+        end subroutine
+
+        subroutine channels_delete(channels) bind(c, name = 'pineappl_channels_delete')
+            use iso_c_binding
+            type (c_ptr), value :: channels
         end subroutine
 
         subroutine lumi_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_lumi_entry')
@@ -481,9 +514,9 @@ module pineappl
             real (c_double)           :: factors(*)
         end subroutine
 
-        subroutine channels_entry(lumi, entry, pdg_ids, factors) bind(c, name = 'pineappl_channels_entry')
+        subroutine channels_entry(channels, entry, pdg_ids, factors) bind(c, name = 'pineappl_channels_entry')
             use iso_c_binding
-            type (c_ptr), value       :: lumi
+            type (c_ptr), value       :: channels
             integer (c_size_t), value :: entry
             integer (c_int32_t)       :: pdg_ids(*)
             real (c_double)           :: factors(*)
@@ -524,10 +557,10 @@ contains
         end do
     end function
 
-    type (pineappl_lumi) function pineappl_channels_new()
+    type (pineappl_channels) function pineappl_channels_new()
         implicit none
 
-        pineappl_channels_new = pineappl_lumi(channels_new())
+        pineappl_channels_new = pineappl_channels(channels_new())
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -671,47 +704,40 @@ contains
             xi_ren, xi_fac, res)
     end function
 
-    function pineappl_grid_convolve(grid, xfxs, alphas, order_mask, channel_mask, bin_indices, &
-        nb_scales, mu_scales, state) result(res)
+    function pineappl_grid_convolve(grid, xfx, alphas, pdfs_state, alphas_state, order_mask, &
+        channel_mask, bin_indices, nb_scales, mu_scales) result(res)
 
         use iso_c_binding
 
         implicit none
 
         type (pineappl_grid), intent(in)   :: grid
-        type (pineappl_xfx)                :: xfxs(:)
+        type (pineappl_xfx), value         :: xfx
         type (pineappl_alphas)             :: alphas
+        type (c_ptr), intent(in)           :: pdfs_state(:)
+        type (c_ptr), intent(in)           :: alphas_state
         logical, intent(in)                :: order_mask(:), channel_mask(:)
         integer, intent(in)                :: bin_indices(:), nb_scales
         real (dp), intent(in)              :: mu_scales(:)
-        type (c_ptr), optional, intent(in) :: state
         real (dp), allocatable             :: res(:)
-
         integer                            :: i
-        type (c_ptr)                       :: state_
 
         allocate(res(size(bin_indices)))
 
-        do i = 1, size(xfxs)
-            if (.not. c_associated(c_funloc(xfxs(i)%proc))) then
-                error stop "at least one proc is null in xfxs"
-            end if
-        end do
+        if (.not. c_associated(c_funloc(xfx%proc))) then
+            error stop "xfx%proc is null"
+        end if
+
         if (.not. c_associated(c_funloc(alphas%proc))) then
             error stop "alphas%proc is null"
         end if
 
-        if (present(state)) then
-            state_ = state
-        else
-            state_ = c_null_ptr
-        end if
-
         call grid_convolve( &
             grid%ptr, &
-            [(c_funloc(xfxs(i)%proc), i = 1, size(xfxs))], &
+            c_funloc(xfx%proc), &
             c_funloc(alphas%proc), &
-            state_, &
+            pdfs_state, &
+            alphas_state, &
             [(logical(order_mask(i), c_bool), i = 1, size(order_mask))], &
             [(logical(channel_mask(i), c_bool), i = 1, size(channel_mask))], &
             [(int(bin_indices, c_size_t), i = 1, size(bin_indices))], &
@@ -827,6 +853,14 @@ contains
         pineappl_grid_lumi = pineappl_lumi(grid_lumi(grid%ptr))
     end function
 
+    type (pineappl_channels) function pineappl_grid_channels(grid)
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+
+        pineappl_grid_channels = pineappl_channels(grid_channels(grid%ptr))
+    end function
+
     subroutine pineappl_grid_merge_and_delete(grid, other)
         implicit none
 
@@ -868,7 +902,7 @@ contains
         implicit none
 
         integer(kind(pineappl_pid_basis)), intent(in)                             :: pid_basis
-        type (pineappl_lumi), intent(in)                                          :: channels
+        type (pineappl_channels), intent(in)                                      :: channels
         integer, intent(in)                                                       :: orders, bins, nb_convolutions
         integer(int8), dimension(5 * orders), intent(in)                          :: order_params
         real (dp), dimension(bins + 1), intent(in)                                :: bin_limits
@@ -1006,6 +1040,14 @@ contains
         call grid_split_lumi(grid%ptr)
     end subroutine
 
+    subroutine pineappl_grid_split_channels(grid)
+        implicit none
+
+        type (pineappl_grid), intent(in) :: grid
+
+        call grid_split_channels(grid%ptr)
+    end subroutine
+
     subroutine pineappl_grid_write(grid, filename)
         use iso_c_binding
 
@@ -1140,7 +1182,7 @@ contains
 
         implicit none
 
-        type (pineappl_lumi), intent(in)                 :: channels
+        type (pineappl_channels), intent(in)             :: channels
         integer, intent(in)                              :: combinations, nb_combinations
         integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
         real (dp), dimension(combinations), intent(in)   :: factors
@@ -1159,6 +1201,17 @@ contains
         pineappl_lumi_combinations = int(lumi_combinations(lumi%ptr, int(entry, c_size_t)))
     end function
 
+    integer function pineappl_channels_combinations(channels, entry)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_channels), intent(in) :: channels
+        integer, intent(in)                  :: entry
+
+        pineappl_channels_combinations = int(channels_combinations(channels%ptr, int(entry, c_size_t)))
+    end function
+
     integer function pineappl_lumi_count(lumi)
         use iso_c_binding
 
@@ -1169,12 +1222,30 @@ contains
         pineappl_lumi_count = int(lumi_count(lumi%ptr))
     end function
 
+    integer function pineappl_channels_count(channels)
+        use iso_c_binding
+
+        implicit none
+
+        type (pineappl_channels), intent(in) :: channels
+
+        pineappl_channels_count = int(channels_count(channels%ptr))
+    end function
+
     subroutine pineappl_lumi_delete(lumi)
         implicit none
 
         type (pineappl_lumi), intent(in) :: lumi
 
         call lumi_delete(lumi%ptr)
+    end subroutine
+
+    subroutine pineappl_channels_delete(channels)
+        implicit none
+
+        type (pineappl_channels), intent(in) :: channels
+
+        call channels_delete(channels%ptr)
     end subroutine
 
     subroutine pineappl_lumi_entry(lumi, entry, pdg_ids, factors)
@@ -1190,17 +1261,17 @@ contains
         call lumi_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
     end subroutine
 
-    subroutine pineappl_channels_entry(lumi, entry, pdg_ids, factors)
+    subroutine pineappl_channels_entry(channels, entry, pdg_ids, factors)
         use iso_c_binding
 
         implicit none
 
-        type (pineappl_lumi), intent(in) :: lumi
-        integer, intent(in)              :: entry
-        integer, intent(out)             :: pdg_ids(*)
-        real (dp), intent(out)           :: factors(*)
+        type (pineappl_channels), intent(in) :: channels
+        integer, intent(in)                  :: entry
+        integer, intent(out)                 :: pdg_ids(*)
+        real (dp), intent(out)               :: factors(*)
 
-        call channels_entry(lumi%ptr, int(entry, c_size_t), pdg_ids, factors)
+        call channels_entry(channels%ptr, int(entry, c_size_t), pdg_ids, factors)
     end subroutine
 
     type (pineappl_lumi) function pineappl_lumi_new()

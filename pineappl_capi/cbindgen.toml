@@ -29,9 +29,21 @@ style = "type"
 
 ############################## Codegen Options ##################################
 
+[enum]
+prefix_with_name = true
+rename_variants = "ScreamingSnakeCase"
+
 [export.rename]
 "Grid" = "pineappl_grid"
 "Lumi" = "pineappl_lumi"
+"Channels" = "pineappl_channels"
+"PidBasis" = "pineappl_pid_basis"
+"ConvType" = "pineappl_conv_type"
+"Kinematics" = "pineappl_kinematics"
+"ReweightMeth" = "pineappl_reweight_meth"
+"Map" = "pineappl_map"
+"InterpMeth" = "pineappl_interp_meth"
+"InterpTuples" = "pineappl_interp_tuples"
 "KeyVal" = "pineappl_keyval"
 "SubGrid" = "pineappl_subgrid"
 "GridOptFlags" = "pineappl_gof"

@@ -181,27 +181,27 @@ int main() {
     // First we define the types of convolutions required by the involved initial-/final-state
     // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
     // Basis onto which the partons are mapped.
-    PidBasis pid_basis = Evol;
+    pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
     int32_t pdg_ids[2] = { 2212, 2212};
-    ConvType h1 = UnpolPDF;
-    ConvType h2 = UnpolPDF;
-    ConvType convolution_types[2] = { h1, h2 };
+    pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
+    pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
+    pineappl_conv_type convolution_types[2] = { h1, h2 };
 
     // Define the kinematics required for this process. In the following example we have ONE
     // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
     // The format of the kinematics is: { type, value }.
-    Kinematics scales = { Scale, 0 };
-    Kinematics x1 = { X, 0 };
-    Kinematics x2 = { X, 1 };
-    Kinematics kinematics[3] = { scales, x1, x2 };
+    pineappl_kinematics scales = { PINEAPPL_KINEMATICS_SCALE, 0 };
+    pineappl_kinematics x1 = { PINEAPPL_KINEMATICS_X, 0 };
+    pineappl_kinematics x2 = { PINEAPPL_KINEMATICS_X, 1 };
+    pineappl_kinematics kinematics[3] = { scales, x1, x2 };
 
     // Define the specificities of the interpolations for each of the kinematic variables.
-    ReweightMeth scales_reweight = NoReweight; // Reweighting method
-    ReweightMeth moment_reweight = ApplGridX;
-    Map scales_mapping = ApplGridH0; // Mapping method
-    Map moment_mapping = ApplGridF2;
-    InterpMeth interpolation_meth = Lagrange;
-    InterpTuples interpolations[3] = {
+    pineappl_reweight_meth scales_reweight = PINEAPPL_REWEIGHT_METH_NO_REWEIGHT; // Reweighting method
+    pineappl_reweight_meth moment_reweight = PINEAPPL_REWEIGHT_METH_APPL_GRID_X;
+    pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0; // Mapping method
+    pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
+    pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
+    pineappl_interp_tuples interpolations[3] = {
         { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
@@ -219,7 +219,7 @@ int main() {
     auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
         bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
 
-    // now we no longer need `keyval` and `lumi`
+    // now we no longer need `keyval` and `channels`
     pineappl_channels_delete(channels);
 
     // ---

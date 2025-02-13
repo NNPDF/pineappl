@@ -18,7 +18,7 @@ class TestFkTable:
         # Define convolution types and the initial state hadrons
         # We consider an initial state Polarized Proton
         h = ConvType(polarized=True, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
         # The length of the convolutions has to match the nb of hadrons
         convolutions = [h_conv]
         # We define the PIDs of the partons out of the Proton
@@ -82,10 +82,19 @@ class TestFkTable:
 
         # Check the various aspects of the Bins
         assert fk.bins() == 1
+        assert fk.bin_dimensions() == 1
         bin_limits = np.array(fk.bin_limits())
         np.testing.assert_allclose(fk.bin_normalizations(), [1.0])
         np.testing.assert_allclose(bin_limits[:, 0, 0], [0.0])
         np.testing.assert_allclose(bin_limits[:, 0, 1], [1.0])
+
+        # Check setting key values
+        fk.set_key_value("bla", "blub")
+        fk.set_key_value('"', "'")
+        fk.set_key_value("äöü", "ß\\")
+        assert fk.key_values["bla"] == "blub"
+        assert fk.key_values['"'] == "'"
+        assert fk.key_values["äöü"] == "ß\\"
 
         # Check the various aspects of the Channels
         channels = fk.channels()
@@ -116,7 +125,7 @@ class TestFkTable:
 
         # Convolution object of the 1st hadron - Polarized
         h = ConvType(polarized=False, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
 
         np.testing.assert_allclose(
             fk.convolve(
@@ -151,21 +160,21 @@ class TestFkTable:
         # Check the FK table convolutions
         convolutions = fk.convolutions
         assert len(convolutions) == 2
-        assert convolutions[0].conv_type.polarized
-        assert not convolutions[0].conv_type.time_like
-        assert not convolutions[1].conv_type.polarized
-        assert not convolutions[1].conv_type.time_like
+        assert convolutions[0].convolution_types.polarized
+        assert not convolutions[0].convolution_types.time_like
+        assert not convolutions[1].convolution_types.polarized
+        assert not convolutions[1].convolution_types.time_like
         # Check that the initial states are protons
         assert convolutions[0].pid == 2212
         assert convolutions[1].pid == 2212
 
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)
-        h1_conv = Conv(conv_type=h1, pid=2212)
+        h1_conv = Conv(convolution_types=h1, pid=2212)
 
         # Convolution object of the 2nd hadron - Unpolarized
         h2 = ConvType(polarized=False, time_like=False)
-        h2_conv = Conv(conv_type=h2, pid=2212)
+        h2_conv = Conv(convolution_types=h2, pid=2212)
 
         np.testing.assert_allclose(
             fk.convolve(

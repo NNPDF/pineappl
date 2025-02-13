@@ -108,13 +108,12 @@ program dyaa
     call pineappl_grid_optimize(grid)
 
     ! write the grid to disk - with `.lz4` suffix the grid is automatically LZ4 compressed
-    call pineappl_grid_write(grid, 'DY-LO-AA.pineappl.lz4')
+    call pineappl_grid_write(grid, 'DY-LO-AA-deprecated.pineappl.lz4')
 
-    print *, 'Generated DY-LO-AA.pineappl.lz4 containing a a -> l+ l-.'
-    print *, ''
+    print *, 'Generated DY-LO-AA-deprecated.pineappl.lz4 containing a a -> l+ l-.'
     print *, 'Try running (PDF sets must contain non-zero photon PDF):'
     print *, '  - pineappl convolve DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed'
-    print *, '  - pineappl --silence-lhapdf plot DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py'
+    print *, '  - pineappl --silence-lhapdf plot DY-LO-AA-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py'
     print *, '  - pineappl --help'
 
     call pineappl_grid_delete(grid)

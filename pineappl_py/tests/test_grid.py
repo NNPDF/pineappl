@@ -10,6 +10,7 @@ from pineappl.boc import BinsWithFillLimits, Channel, Kinematics, Scales, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.evolution import OperatorSliceInfo
 from pineappl.fk_table import FkTable
+from pineappl.interpolation import Interp
 from pineappl.grid import Grid
 from pineappl.subgrid import ImportSubgridV1
 from pineappl.pids import PidBasis
@@ -17,7 +18,7 @@ from pineappl.pids import PidBasis
 # Construct the type of convolutions and the convolution object
 # We assume unpolarized protons in the initial state
 TYPECONV = ConvType(polarized=False, time_like=False)
-CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
+CONVOBJECT = Conv(convolution_types=TYPECONV, pid=2212)
 
 # Construct the Channel and Order objetcs
 UP_ANTIUP_CHANNEL = [([2, -2], 0.1)]
@@ -128,8 +129,9 @@ Q2GRID = np.geomspace(1e3, 1e5, 10)
 
 class TestGrid:
     def test_init(self, fake_grids):
+        nb_convolutions = 2
         g = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
+            nb_convolutions=nb_convolutions,
             channels=CHANNELS,
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
@@ -138,15 +140,27 @@ class TestGrid:
         assert len(g.orders()) == 1
         assert g.orders()[0].as_tuple() == (3, 0, 0, 0, 0)
 
+        interpolations = g.interpolations
+        for interpolation in interpolations:
+            assert isinstance(interpolation, Interp)
+        assert len(interpolations) == nb_convolutions + 1
+
     def test_channels(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
-            channels=CHANNELS,
+            channels=[Channel(UP_ANTIUP_CHANNEL), Channel(UP_ANTIUP_CHANNEL)],
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
-        assert len(g.channels()) == 1
+        assert len(g.channels()) == 2
         assert g.channels()[0] == UP_ANTIUP_CHANNEL
+        assert g.channels()[1] == UP_ANTIUP_CHANNEL
+
+        # De-duplicate the channels
+        g.dedup_channels(ulps=2)
+        assert len(g.channels()) == 1
+        with pytest.raises(expected_exception=IndexError):
+            assert g.channels()[1]
 
     def test_write(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
@@ -194,6 +208,32 @@ class TestGrid:
             orders=ORDERS,
             convolutions=[CONVOBJECT, CONVOBJECT],
         )
+        bin_specs = g.bwfl()  # Get the Bin specifications
+
+        assert isinstance(bin_specs, BinsWithFillLimits)
+        assert g.bins() == g.len()
+        assert g.bins() == bin_specs.len()
+        assert g.bin_dimensions() == bin_specs.dimensions()
+
+        np.testing.assert_allclose(
+            g.bin_normalizations(), bin_specs.bin_normalizations()
+        )
+        np.testing.assert_allclose(g.bin_limits(), bin_specs.bin_limits())
+        np.testing.assert_allclose(g.bin_slices(), bin_specs.slices())
+
+        index_to_remove = 0
+        removed_bin = g.removed_bin(index_to_remove)
+        np.testing.assert_allclose(
+            removed_bin.bin_limits, g.bin_limits()[index_to_remove]
+        )
+
+    def test_bins_redefinition(self, fake_grids):
+        g = fake_grids.grid_with_generic_convolution(
+            nb_convolutions=2,
+            channels=CHANNELS,
+            orders=ORDERS,
+            convolutions=[CONVOBJECT, CONVOBJECT],
+        )
         normalizations = np.array([1.0, 1.0])
 
         # 1D
@@ -219,6 +259,12 @@ class TestGrid:
         np.testing.assert_allclose(g.bin_right(0), [2, 4])
         np.testing.assert_allclose(g.bin_left(1), [2, 3])
         np.testing.assert_allclose(g.bin_right(1), [3, 5])
+
+        # Test error due to bin mismatch
+        fill_limits = [float(i) for i in range(10)]
+        bin_configs = BinsWithFillLimits.from_fill_limits(fill_limits=fill_limits)
+        with pytest.raises(ValueError, match="BinNumberMismatch"):
+            g.set_bwfl(bin_configs)
 
     def test_rotate_pidbasis(
         self,
@@ -286,7 +332,7 @@ class TestGrid:
         g.split_channels()
         assert len(g.channels()) == 170
 
-    def test_grid(
+    def test_grid_specs(
         self,
         download_objects,
         gridname: str = "GRID_STAR_WMWP_510GEV_WP-AL-POL.pineappl.lz4",
@@ -300,6 +346,9 @@ class TestGrid:
 
         # Check that the scalings work, ie run without error
         # TODO: implement method to check the actual values
+        g.scale_by_order(
+            alphas=2, alpha=1.5, logxir=1, logxif=1, logxia=1, global_factor=10
+        )
         g.scale(factor=10.0)
         g.scale_by_bin(factors=[10.0, 20.0])
         g.delete_bins(bin_indices=[0, 1, 2])
@@ -319,7 +368,7 @@ class TestGrid:
         # The following grid has UNPOLARIZED proton, ie should be
         # `polarized=False`.
         h = ConvType(polarized=True, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
 
         with pytest.raises(BaseException) as err_func:
             g.convolve(
@@ -376,7 +425,7 @@ class TestGrid:
         # initial state hadrons are both Unpolarized Proton, we can pass ONE
         # single convolution type and ONE singe PDF set.
         h = ConvType(polarized=False, time_like=False)
-        h_conv = Conv(conv_type=h, pid=2212)
+        h_conv = Conv(convolution_types=h, pid=2212)
 
         np.testing.assert_allclose(
             g.convolve(
@@ -408,21 +457,21 @@ class TestGrid:
         # Check the Grid convolutions - can be used to construct `grid.convolve`
         convolutions = g.convolutions
         assert len(convolutions) == 2
-        assert convolutions[0].conv_type.polarized
-        assert not convolutions[0].conv_type.time_like
-        assert not convolutions[1].conv_type.polarized
-        assert not convolutions[1].conv_type.time_like
+        assert convolutions[0].convolution_types.polarized
+        assert not convolutions[0].convolution_types.time_like
+        assert not convolutions[1].convolution_types.polarized
+        assert not convolutions[1].convolution_types.time_like
         # Check that the initial states are protons
         assert convolutions[0].pid == 2212
         assert convolutions[1].pid == 2212
 
         # Convolution object of the 1st hadron - Polarized
         h1 = ConvType(polarized=True, time_like=False)
-        h1_conv = Conv(conv_type=h1, pid=2212)
+        h1_conv = Conv(convolution_types=h1, pid=2212)
 
         # Convolution object of the 2nd hadron - Unpolarized
         h2 = ConvType(polarized=False, time_like=False)
-        h2_conv = Conv(conv_type=h2, pid=2212)
+        h2_conv = Conv(convolution_types=h2, pid=2212)
 
         np.testing.assert_allclose(
             g.convolve(
@@ -446,7 +495,7 @@ class TestGrid:
 
         # Define the convolutions
         convtypes = [ConvType(polarized=p, time_like=t) for p, t in rbools]
-        convolutions = [Conv(conv_type=c, pid=2212) for c in convtypes]
+        convolutions = [Conv(convolution_types=c, pid=2212) for c in convtypes]
 
         # Define the channel combinations
         pids = rndgen.choice(
@@ -507,11 +556,11 @@ class TestGrid:
         # Define the convolution types objects
         h1 = ConvType(polarized=True, time_like=False)
         h2 = ConvType(polarized=False, time_like=False)
-        conv_type = [h1, h2]
+        convolution_types = [h1, h2]
 
         input_xgrid = np.geomspace(2e-7, 1, num=50)
         slices = []
-        for conv_id, cvtype in enumerate(conv_type):
+        for conv_id, cvtype in enumerate(convolution_types):
             sub_slices = []
             for q2 in evinfo.fac1:
                 info = OperatorSliceInfo(
@@ -522,7 +571,7 @@ class TestGrid:
                     pids0=EVOL_BASIS_PIDS,
                     pids1=TARGET_PIDS,
                     pid_basis=PidBasis.Evol,
-                    conv_type=cvtype,
+                    convolution_types=cvtype,
                 )
                 op = np.random.uniform(
                     low=1,
@@ -560,7 +609,7 @@ class TestGrid:
         assert isinstance(gg, Grid)
         _ = Grid.read(str(p))
 
-    def test_set_key_value(self, fake_grids):
+    def test_key_values(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -570,6 +619,10 @@ class TestGrid:
         g.set_key_value("bla", "blub")
         g.set_key_value('"', "'")
         g.set_key_value("äöü", "ß\\")
+
+        assert g.key_values["bla"] == "blub"
+        assert g.key_values['"'] == "'"
+        assert g.key_values["äöü"] == "ß\\"
 
     def test_pid_basis(self, fake_grids):
         g = fake_grids.grid_with_generic_convolution(
@@ -662,7 +715,7 @@ class TestGrid:
         )
         np.testing.assert_allclose(res, FILL_CONV_RESUTLS)
 
-    def test_fill_all(self, fake_grids):
+    def test_fill_all_channels(self, fake_grids):
         """Test filling the Grid by filling at once the kinematics and the observable,
         should yield the same result as `Grid.fill` above.
         """
@@ -681,7 +734,7 @@ class TestGrid:
             for q2, x1, x2 in itertools.product(Q2GRID, XGRID, XGRID):
                 n_tuple = [q2, x1, x2]
                 obs = rndgen.uniform(binning[0], binning[-1])
-                g.fill_all(
+                g.fill_all_channels(
                     order=pto,
                     observable=obs,
                     ntuple=n_tuple,
@@ -699,8 +752,6 @@ class TestGrid:
     def test_merge(self, fake_grids):
         # TODO: Check error raised by merged partially overlapping
         # or non-consecutive bins.
-        # with pytest.raises(ValueError, match="NonConsecutiveBins"):
-        #     g2.merge(g5)
         g0 = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -721,17 +772,17 @@ class TestGrid:
         assert g0.bins() == 4
 
         g2 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
+            nb_convolutions=3,
+            channels=[Channel([([2, -2, 0], 0.1)])],
             orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
+            convolutions=[CONVOBJECT, CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
         g3 = fake_grids.grid_with_generic_convolution(
-            nb_convolutions=2,
-            channels=CHANNELS,
+            nb_convolutions=3,
+            channels=[Channel([([2, -2, 0], 0.1)])],
             orders=ORDERS,
-            convolutions=[CONVOBJECT, CONVOBJECT],
+            convolutions=[CONVOBJECT, CONVOBJECT, CONVOBJECT],
             bins=[1, 2, 3],
         )
         assert g2.bins() == 2
@@ -739,6 +790,10 @@ class TestGrid:
 
         g2.merge(g3)
         assert g2.bins() == 2
+
+        # Check error when merging different grid
+        with pytest.raises(ValueError, match="convolutions do not match"):
+            g0.merge(g2)
 
     def test_evolveinfo(
         self,

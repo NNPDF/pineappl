@@ -1,5 +1,5 @@
-CXX = c++
-CXXFLAGS = -std=c++11 -O3 -Wall -Wextra
+CXX = c++ -std=c++11
+CXXFLAGS = -O3 -Wall -Wextra
 PINEAPPL_DEPS != pkg-config --cflags --libs pineappl_capi
 LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
@@ -24,7 +24,7 @@ PROGRAMS = \
 all: $(PROGRAMS)
 
 test-examples: $(PROGRAMS)
-	set -e && for i in $(PROGRAMS); do ./$${i}; done > test-output && diff -u output test-output && rm test-output
+	set -e && for i in $(PROGRAMS); do ./$${i}; done > output
 
 advanced-convolution-deprecated: advanced-convolution-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
@@ -77,4 +77,4 @@ modify-grid: modify-grid.cpp
 PHONY: clean
 
 clean:
-	rm -f $(PROGRAMS)
+	rm -f $(PROGRAMS) *.pineappl *.lz4

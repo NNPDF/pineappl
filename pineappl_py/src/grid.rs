@@ -15,7 +15,7 @@ use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
 use pineappl::grid::Grid;
 use pineappl::pids::PidBasis;
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -169,7 +169,13 @@ impl PyGrid {
     ///     list containing information on kinematics
     /// weights : np.array(float)
     ///     cross section weights, one for each channels
-    pub fn fill_all(&mut self, order: usize, observable: f64, ntuple: Vec<f64>, weights: Vec<f64>) {
+    pub fn fill_all_channels(
+        &mut self,
+        order: usize,
+        observable: f64,
+        ntuple: Vec<f64>,
+        weights: Vec<f64>,
+    ) {
         for (channel, &weight) in weights.iter().enumerate() {
             self.grid.fill(order, observable, channel, &ntuple, weight);
         }
@@ -222,7 +228,7 @@ impl PyGrid {
     pub fn set_bwfl(&mut self, specs: PyBinsWithFillLimits) -> PyResult<()> {
         match self.grid.set_bwfl(specs.bins_fill_limits) {
             Ok(()) => Ok(()),
-            Err(msg) => Err(PyErr::new::<PyTypeError, _>(format!("{msg}"))),
+            Err(msg) => Err(PyValueError::new_err(format!("{msg:?}"))),
         }
     }
 
@@ -299,7 +305,7 @@ impl PyGrid {
             .collect()
     }
 
-    /// Remove a given bin for this grid using the index.
+    /// Get the removed bin using the index for this grid.
     ///
     /// Parameters
     /// ----------
@@ -308,8 +314,8 @@ impl PyGrid {
     /// Returns
     /// -------
     /// Bin:
-    ///     a `Bin` object with the given indexed removed
-    pub fn remove_bin(&mut self, index: usize) -> PyBin {
+    ///     a `Bin` object from the removed index
+    pub fn removed_bin(&mut self, index: usize) -> PyBin {
         PyBin {
             bin: self.grid.bwfl().clone().remove(index),
         }
@@ -422,7 +428,7 @@ impl PyGrid {
                 &order_mask.unwrap_or_default(),
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
-                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 0.0)]),
+                &xi.unwrap_or_else(|| vec![(1.0, 1.0, 1.0)]),
             )
             .into_pyarray_bound(py)
     }
@@ -611,7 +617,7 @@ impl PyGrid {
     pub fn merge(&mut self, other: Self) -> PyResult<()> {
         match self.grid.merge(other.grid) {
             Ok(()) => Ok(()),
-            Err(x) => Err(PyValueError::new_err(format!("{x:?}"))),
+            Err(msg) => Err(PyValueError::new_err(format!("{msg:?}"))),
         }
     }
 
@@ -747,10 +753,10 @@ impl PyGrid {
         logxir: f64,
         logxif: f64,
         logxia: f64,
-        global: f64,
+        global_factor: f64,
     ) {
         self.grid
-            .scale_by_order(alphas, alpha, logxir, logxif, logxia, global);
+            .scale_by_order(alphas, alpha, logxir, logxif, logxia, global_factor);
     }
 
     /// Delete orders with the corresponding `order_indices`. Repeated indices and indices larger

@@ -1,0 +1,15 @@
+ Generated DY-LO-AA-deprecated.pineappl.lz4 containing a a -> l+ l-.
+ Try running (PDF sets must contain non-zero photon PDF):
+   - pineappl convolve DY-LO-AA.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed
+   - pineappl --silence-lhapdf plot DY-LO-AA-deprecated.pineappl.lz4 NNPDF31_nnlo_as_0118_luxqed MSHT20qed_nnlo > plot_script.py
+   - pineappl --help
+ Computing predictions with the same PDF: NNPDF31_nlo_as_0118_luxqed
+   7.1330573367785985E-005   2.1399172010335785E-004
+ Computing predictions with different PDFs and alphasQ2(NNPDF31_nlo_as_0118_luxqed):
+   7.3091433321743418E-005   2.1927429996523019E-004
+ Computing predictions with different PDFs and alphasQ2(MSHT20qed_nnlo):
+   7.3462246623863024E-005   2.2038673987158908E-004
+ first pineappl_grid_convolve_with_one:
+   7.1330573367785985E-005   2.1399172010335785E-004
+ second pineappl_grid_convolve_with_one:
+   8.8341366915946628E-005   2.6502410074783980E-004

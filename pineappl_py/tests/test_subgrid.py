@@ -15,7 +15,7 @@ Q2_MIN = 1e2
 
 # See `test_grid.py` for more detailed information
 TYPECONV = ConvType(polarized=False, time_like=False)
-CONVOBJECT = Conv(conv_type=TYPECONV, pid=2212)
+CONVOBJECT = Conv(convolution_types=TYPECONV, pid=2212)
 
 
 @dataclass
