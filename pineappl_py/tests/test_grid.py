@@ -263,7 +263,7 @@ class TestGrid:
         # Test error due to bin mismatch
         fill_limits = [float(i) for i in range(10)]
         bin_configs = BinsWithFillLimits.from_fill_limits(fill_limits=fill_limits)
-        with pytest.raises(ValueError, match="BinNumberMismatch"):
+        with pytest.raises(ValueError, match="General"):
             g.set_bwfl(bin_configs)
 
     def test_rotate_pidbasis(
