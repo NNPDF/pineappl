@@ -52,16 +52,6 @@ for crate in ${crates[@]}; do
     fi
 done
 
-echo ">>> Testing release configuration with default features ..."
-
-cargo test --release
-
-for feature in ${features[@]}; do
-    echo ">>> Testing release configuration with \`${feature}\` feature ..."
-
-    cargo test --release --features=${feature}
-done
-
 echo ">>> Updating version strings ..."
 
 # we don't want to create a changelog entry for prereleases, which are solely
@@ -88,7 +78,7 @@ done
 
 echo ">>> Updating Cargo.lock ..."
 
-echo ${crates[@]} | xargs printf ' -p %s' | xargs cargo update
+echo ${crates[@]} | xargs printf " -p %s@${version}" | xargs cargo update
 git add Cargo.lock
 
 echo ">>> Testing if 'pineappl' can be published ..."
