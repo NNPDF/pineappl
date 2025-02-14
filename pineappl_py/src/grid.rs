@@ -9,7 +9,7 @@ use super::pids::PyPidBasis;
 use super::subgrid::PySubgridEnum;
 use itertools::izip;
 use ndarray::CowArray;
-use numpy::{IntoPyArray, PyArray1, PyArrayDyn, PyReadonlyArray4};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray4};
 use pineappl::boc::Kinematics;
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::evolution::AlphasTable;
