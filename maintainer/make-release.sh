@@ -78,7 +78,7 @@ done
 
 echo ">>> Updating Cargo.lock ..."
 
-echo ${crates[@]} | xargs printf " -p %s@${version}" | xargs cargo update
+for crate in "${crates[@]}"; do cargo pkgid path+file://$(cd ../"${crate}" && pwd); done | xargs printf " -p %s" | xargs cargo update
 git add Cargo.lock
 
 echo ">>> Testing if 'pineappl' can be published ..."
