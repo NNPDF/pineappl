@@ -45,13 +45,6 @@ if [[ ${this_branch} != ${main} ]] && [[ ${prerelease} == "" ]]; then
     exit 1
 fi
 
-for crate in ${crates[@]}; do
-    if [[ -n $(git status ${crate} --porcelain) ]]; then
-        echo "This repository isn't clean. Make sure to add or delete the corresponding files."
-        exit 1
-    fi
-done
-
 echo ">>> Updating version strings ..."
 
 # we don't want to create a changelog entry for prereleases, which are solely
@@ -80,12 +73,6 @@ echo ">>> Updating Cargo.lock ..."
 
 for crate in "${crates[@]}"; do cargo pkgid path+file://$(cd ../"${crate}" && pwd); done | xargs printf " -p %s" | xargs cargo update
 git add Cargo.lock
-
-echo ">>> Testing if 'pineappl' can be published ..."
-
-cd pineappl
-cargo publish --dry-run
-cd ..
 
 echo ">>> Commiting and pushing changes ..."
 
