@@ -38,6 +38,11 @@ if [[ $(echo ${version} | grep -oP '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:
     exit 1
 fi
 
+if [[ $(git tag -l v${version}) ]]; then
+    echo "Version already exists."
+    exit 1
+fi
+
 # in branches that are not master we only allow prereleases
 if [[ ${this_branch} != ${main} ]] && [[ ${prerelease} == "" ]]; then
     echo "Ordinary releases are only allowed in the '${main}' branch."
