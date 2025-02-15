@@ -71,7 +71,12 @@ done
 
 echo ">>> Updating Cargo.lock ..."
 
-for crate in "${crates[@]}"; do cargo pkgid path+file://$(cd ../"${crate}" && pwd); done | xargs printf " -p %s" | xargs cargo update
+for crate in "${crates[@]}"; do
+    # convert packages in the lockfile that correspond to files in this
+    # repository to PKGIDs - important because we may depend on crate with
+    # different version multiple times
+    cargo pkgid path+file://$(cd "${crate}" && pwd)
+done | xargs printf " -p %s" | xargs cargo update
 git add Cargo.lock
 
 echo ">>> Commiting and pushing changes ..."
