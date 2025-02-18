@@ -79,13 +79,17 @@ class PDF:
     def alphasQ(self, q):
         return 1.0
 
+    # Define the Toy Unpolarized PDF set
+    def unpolarized_pdf(self, pid, x, q2):
+        return 1.0
+
     # Define the Toy Polarized PDF set
     def polarized_pdf(self, pid, x, q2):
         return 2.0
 
-    # Define the Toy Unpolarized PDF set
-    def unpolarized_pdf(self, pid, x, q2):
-        return 1.0
+    # Define the Toy Fragmentation set
+    def ff_set(self, pid, x, q2):
+        return 3.0
 
 
 class FakeGrid:
