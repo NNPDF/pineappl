@@ -21,6 +21,8 @@ pdf_sets=(
     NNPDF40_nlo_as_01180
     NNPDF40_nlo_pch_as_01180
     NNPDF40_nnlo_as_01180
+    NNPDFpol11_100
+    MAPFF10NLOPIsum
 )
 
 apt update

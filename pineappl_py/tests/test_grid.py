@@ -482,6 +482,49 @@ class TestGrid:
             expected_results,
         )
 
+    def test_three_convolutions_with_ff(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+    ):
+        expected_results = [
+            -3.90292729e09,
+            +3.43682719e11,
+            -3.58390524e10,
+            -4.66855347e10,
+            -2.15171695e09,
+            +1.57010877e10,
+        ]  # Numbers computed using `v1.0.0a2`
+
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # Check the Grid convolutions - can be used to construct `grid.convolve`
+        convolutions = g.convolutions
+        assert len(convolutions) == 3
+        # Check the polarization
+        assert convolutions[0].convolution_types.polarized
+        assert convolutions[1].convolution_types.polarized
+        assert not convolutions[2].convolution_types.polarized
+        # Check if it is timelike
+        assert not convolutions[0].convolution_types.time_like
+        assert not convolutions[1].convolution_types.time_like
+        assert convolutions[2].convolution_types.time_like
+        # Check that the initial states are protons
+        assert convolutions[0].pid == 2212
+        assert convolutions[1].pid == 2212
+        assert convolutions[2].pid == 211
+
+        np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=g.convolutions,
+                xfxs=[pdf.polarized_pdf, pdf.polarized_pdf, pdf.ff_set],
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
+
     def test_many_convolutions(self, fake_grids, pdf, nb_convolutions: int = 3):
         """Test for fun many convolutions."""
         expected_results = [

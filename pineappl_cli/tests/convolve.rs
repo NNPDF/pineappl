@@ -186,6 +186,17 @@ const XIR_XIF_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.7565811e1
 ";
 
+const THREE_CONVOLUTIONS_STR: &str = "b                  pT                  dsig/dpT (pol)
+                 [GeV]                    [pb/GeV]   
+-+-----------------+------------------+--------------
+0 5.108395099639893  6.045444965362549    2.2605116e3
+1 6.045444965362549  6.982494831085205    1.0361301e3
+2 6.982494831085205  7.992245197296143    4.8947508e2
+3 7.992245197296143  8.960753917694092    2.4023939e2
+4 8.960753917694092  9.929026126861572    1.2464463e2
+5 9.929026126861572 11.660773754119873    5.2680349e1
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -408,4 +419,18 @@ fn xir_xif() {
         .assert()
         .success()
         .stdout(XIR_XIF_STR);
+}
+
+#[test]
+fn three_convolutions() {
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "convolve",
+            "../test-data/SIHP-PP-POLARIZED-STAR-NLO.pineappl.lz4",
+            "NNPDFpol11_100+p,MAPFF10NLOPIsum+f",
+        ])
+        .assert()
+        .success()
+        .stdout(THREE_CONVOLUTIONS_STR);
 }
