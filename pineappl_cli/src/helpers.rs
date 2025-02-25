@@ -15,12 +15,12 @@ use std::process::ExitCode;
 use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EkoNames {
+pub struct EkoPaths {
     pub eko_names: Vec<String>,
     pub conv_types: Vec<ConvType>,
 }
 
-impl FromStr for EkoNames {
+impl FromStr for EkoPaths {
     type Err = Error;
 
     fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
@@ -50,7 +50,7 @@ impl FromStr for EkoNames {
     }
 }
 
-pub fn create_eko_paths(eko_obj: &EkoNames, conv_types: &[ConvType]) -> Vec<PathBuf> {
+pub fn create_eko_paths(eko_obj: &EkoPaths, conv_types: &[ConvType]) -> Vec<PathBuf> {
     let vec_ekonames: Vec<String> = conv_types
         .iter()
         .map(|convtype| {

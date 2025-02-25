@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFuns, ConvoluteMode, EkoNames};
+use super::helpers::{self, ConvFuns, ConvoluteMode, EkoPaths};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
@@ -492,7 +492,7 @@ pub struct Opts {
     input: PathBuf,
     /// Path to the evolution kernel operator(s).
     #[arg(value_name = "EKOs")]
-    ekos: EkoNames,
+    ekos: EkoPaths,
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
