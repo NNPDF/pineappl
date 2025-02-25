@@ -1,11 +1,11 @@
-use super::helpers::{self, ConvFuns, ConvoluteMode};
+use super::helpers::{self, ConvFuns, ConvoluteMode, EkoNames};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
@@ -438,7 +438,7 @@ mod eko {
 #[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
-    ekos: &[&Path],
+    ekos: &[PathBuf],
     use_alphas_from: &Pdf,
     orders: &[(u8, u8)],
     xir: f64,
@@ -461,7 +461,7 @@ fn evolve_grid(
 
     let mut eko_slices: Vec<_> = ekos
         .iter()
-        .map(|eko| EkoSlices::new(eko))
+        .map(|eko| EkoSlices::new(eko.as_path()))
         .collect::<Result<_, _>>()?;
     let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
@@ -490,17 +490,14 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// Path to the evolution kernel operator.
-    #[arg(value_hint = ValueHint::FilePath)]
-    eko: PathBuf,
+    /// Path to the evolution kernel operator(s).
+    #[arg(value_name = "EKOs")]
+    ekos: EkoNames,
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
     conv_funs: ConvFuns,
-    /// Additional path to the 2nd evolution kernel operator.
-    #[arg(value_hint = ValueHint::FilePath, long)]
-    ekob: Option<PathBuf>,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -548,12 +545,10 @@ impl Subcommand for Opts {
             cfg,
         );
 
+        let ekonames = helpers::create_eko_paths(&self.ekos, &self.conv_funs.conv_types);
         let fk_table = evolve_grid(
             &grid,
-            &self.ekob.as_ref().map_or_else(
-                || vec![self.eko.as_path()],
-                |ekob| vec![self.eko.as_path(), ekob],
-            ),
+            &ekonames,
             &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,

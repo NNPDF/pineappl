@@ -10,9 +10,61 @@ use prettytable::Table;
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::str::FromStr;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EkoNames {
+    pub eko_names: Vec<String>,
+    pub conv_types: Vec<ConvType>,
+}
+
+impl FromStr for EkoNames {
+    type Err = Error;
+
+    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
+        let (eko_names, conv_types) = arg
+            .split(',')
+            .map(|fun| {
+                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
+                let name = name.to_owned();
+
+                let typ = match typ {
+                    "" => ConvType::UnpolPDF,
+                    "p" => ConvType::PolPDF,
+                    "f" => ConvType::UnpolFF,
+                    "pf" | "fp" => ConvType::PolFF,
+                    _ => bail!("unknown convolution type '{typ}'"),
+                };
+                Ok::<_, Error>((name, typ))
+            })
+            .collect::<Result<Vec<(String, ConvType)>>>()?
+            .into_iter()
+            .multiunzip();
+
+        Ok(Self {
+            eko_names,
+            conv_types,
+        })
+    }
+}
+
+pub fn create_eko_paths(eko_obj: &EkoNames, conv_types: &[ConvType]) -> Vec<PathBuf> {
+    let vec_ekonames: Vec<String> = conv_types
+        .iter()
+        .map(|convtype| {
+            let eko_cv_idx = eko_obj
+                .conv_types
+                .iter()
+                .position(|&x| x == *convtype)
+                .unwrap_or(0);
+            eko_obj.eko_names[eko_cv_idx].clone()
+        })
+        .collect();
+
+    vec_ekonames.iter().map(PathBuf::from).collect()
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvFuns {
@@ -269,7 +321,8 @@ pub fn convolve_scales(
     // TODO: promote this to an error
     assert!(
         cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
+        "expected `use_alphas_from` to be an integer within `[0, {})`, but got `{}`",
+        conv_funs.len(),
         cfg.use_alphas_from
     );
 
