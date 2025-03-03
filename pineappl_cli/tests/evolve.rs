@@ -427,13 +427,14 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
 fn star_wmwp_510gev_wm_al_pol() {
     let output = NamedTempFile::new("fktable6.lz4").unwrap();
 
-    // Here the order of the EKOs are swapped to check that mapping convtype is working
+    // Grid is (PolPDF, UnpolPDF) but EKOs are ordered as {UnpolEko, PolEko} to
+    // check that order doesn't matter.
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "evolve",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
-            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar,../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar+p",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar,../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
             "240608-tr-pol-nlo-100+p,NNPDF40_nlo_pch_as_01180",
         ])

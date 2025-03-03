@@ -1,4 +1,4 @@
-use super::helpers::{self, ConvFuns, ConvoluteMode, EkoPaths};
+use super::helpers::{self, ConvFuns, ConvoluteMode};
 use super::{GlobalConfiguration, Subcommand};
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueHint};
@@ -492,7 +492,7 @@ pub struct Opts {
     input: PathBuf,
     /// Path to the evolution kernel operator(s).
     #[arg(value_name = "EKOs")]
-    ekos: EkoPaths,
+    ekos: String,
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
@@ -545,7 +545,7 @@ impl Subcommand for Opts {
             cfg,
         );
 
-        let ekonames = helpers::create_eko_paths(&self.ekos, &self.conv_funs.conv_types);
+        let ekonames = helpers::parse_ekos(&self.ekos);
         let fk_table = evolve_grid(
             &grid,
             &ekonames,

@@ -15,58 +15,6 @@ use std::process::ExitCode;
 use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EkoPaths {
-    pub eko_names: Vec<String>,
-    pub conv_types: Vec<ConvType>,
-}
-
-impl FromStr for EkoPaths {
-    type Err = Error;
-
-    fn from_str(arg: &str) -> std::result::Result<Self, Self::Err> {
-        let (eko_names, conv_types) = arg
-            .split(',')
-            .map(|fun| {
-                let (name, typ) = fun.split_once('+').unwrap_or((fun, ""));
-                let name = name.to_owned();
-
-                let typ = match typ {
-                    "" => ConvType::UnpolPDF,
-                    "p" => ConvType::PolPDF,
-                    "f" => ConvType::UnpolFF,
-                    "pf" | "fp" => ConvType::PolFF,
-                    _ => bail!("unknown convolution type '{typ}'"),
-                };
-                Ok::<_, Error>((name, typ))
-            })
-            .collect::<Result<Vec<(String, ConvType)>>>()?
-            .into_iter()
-            .multiunzip();
-
-        Ok(Self {
-            eko_names,
-            conv_types,
-        })
-    }
-}
-
-pub fn create_eko_paths(eko_obj: &EkoPaths, conv_types: &[ConvType]) -> Vec<PathBuf> {
-    let vec_ekonames: Vec<String> = conv_types
-        .iter()
-        .map(|convtype| {
-            let eko_cv_idx = eko_obj
-                .conv_types
-                .iter()
-                .position(|&x| x == *convtype)
-                .unwrap_or(0);
-            eko_obj.eko_names[eko_cv_idx].clone()
-        })
-        .collect();
-
-    vec_ekonames.iter().map(PathBuf::from).collect()
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvFuns {
     pub lhapdf_names: Vec<String>,
     pub members: Vec<Option<usize>>,
@@ -515,6 +463,11 @@ pub fn parse_order(order: &str) -> Result<(u8, u8)> {
     }
 
     Ok((alphas, alpha))
+}
+
+pub fn parse_ekos(ekos_str: &str) -> Vec<PathBuf> {
+    let eko_names = ekos_str.split(',');
+    eko_names.into_iter().map(PathBuf::from).collect()
 }
 
 #[cfg(test)]
