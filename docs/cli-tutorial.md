@@ -62,8 +62,8 @@ Let's have a closer look at what the output shows:
 
 In the case where the grid requires different types of convolution functions,
 the LHAPDF names need to be appended with `+p`, `+f`, or `+pf` (equivalently
-`+fp`) which respectively correspond to polarized, fragmentation function, or
-both.
+`+fp`) which respectively correspond to a polarized PDF, a fragmentation function, or
+a polarized fragmentation function.
 
 As an example, let's download a grid that contains one polarized and one
 unpolarized proton:
