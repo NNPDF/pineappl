@@ -107,10 +107,6 @@ impl FkTable {
         &self.grid
     }
 
-    // TODO: when trying to convert the following function to `const` as per clippy's suggestion,
-    // the compiler errors out with: 'the destructor for this type cannot be evaluated in constant
-    // functions'
-
     /// Converts the `FkTable` back to a [`Grid`].
     #[must_use]
     pub fn into_grid(self) -> Grid {
@@ -122,7 +118,9 @@ impl FkTable {
     ///
     /// # Panics
     ///
-    /// TODO
+    /// This function may panic in two cases: first when there is a mismatch between the `xgrid`
+    /// and the subgrid nodes, and second when the defined kinematic is not part of the `Kinematic`
+    /// object.
     #[must_use]
     pub fn table(&self) -> ArrayD<f64> {
         let x_grid = self.x_grid();
