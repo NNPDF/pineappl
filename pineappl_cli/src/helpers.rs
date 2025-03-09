@@ -10,7 +10,7 @@ use prettytable::Table;
 use std::fs::{File, OpenOptions};
 use std::iter;
 use std::ops::RangeInclusive;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::ExitCode;
 use std::str::FromStr;
 
@@ -463,11 +463,6 @@ pub fn parse_order(order: &str) -> Result<(u8, u8)> {
     }
 
     Ok((alphas, alpha))
-}
-
-pub fn parse_ekos(ekos_str: &str) -> Vec<PathBuf> {
-    let eko_names = ekos_str.split(',');
-    eko_names.into_iter().map(PathBuf::from).collect()
 }
 
 #[cfg(test)]

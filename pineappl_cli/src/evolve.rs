@@ -545,10 +545,10 @@ impl Subcommand for Opts {
             cfg,
         );
 
-        let ekonames = helpers::parse_ekos(&self.ekos);
+        let eko_paths: Vec<_> = self.ekos.split(',').map(PathBuf::from).collect();
         let fk_table = evolve_grid(
             &grid,
-            &ekonames,
+            &eko_paths,
             &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,
