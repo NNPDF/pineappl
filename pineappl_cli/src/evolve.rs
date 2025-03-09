@@ -490,17 +490,14 @@ pub struct Opts {
     /// Path to the input grid.
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
-    /// Path to the evolution kernel operator.
-    #[arg(value_hint = ValueHint::FilePath)]
-    eko: PathBuf,
+    /// Path to the evolution kernel operator(s).
+    #[arg(value_name = "EKO1,...")]
+    ekos: String,
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
     output: PathBuf,
     /// LHAPDF ID(s) or name of the PDF(s)/FF(s).
     conv_funs: ConvFuns,
-    /// Additional path to the 2nd evolution kernel operator.
-    #[arg(value_hint = ValueHint::FilePath, long)]
-    ekob: Option<PathBuf>,
     /// Relative threshold between the table and the converted grid when comparison fails.
     #[arg(default_value = "1e-3", long)]
     accuracy: f64,
@@ -548,12 +545,10 @@ impl Subcommand for Opts {
             cfg,
         );
 
+        let eko_paths: Vec<_> = self.ekos.split(',').map(Path::new).collect();
         let fk_table = evolve_grid(
             &grid,
-            &self.ekob.as_ref().map_or_else(
-                || vec![self.eko.as_path()],
-                |ekob| vec![self.eko.as_path(), ekob],
-            ),
+            &eko_paths,
             &conv_funs[cfg.use_alphas_from],
             &self.orders,
             self.xir,

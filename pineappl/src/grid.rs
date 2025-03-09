@@ -1225,20 +1225,10 @@ impl Grid {
                 perm = self
                     .convolutions()
                     .iter()
-                    .enumerate()
-                    .map(|(max_idx, conv)| {
+                    .map(|conv| {
                         eko_conv_types
                             .iter()
-                            .take(max_idx + 1)
-                            .enumerate()
-                            .rev()
-                            .find_map(|(idx, &eko_conv_type)| {
-                                if conv.conv_type() == eko_conv_type {
-                                    Some(idx)
-                                } else {
-                                    None
-                                }
-                            })
+                            .position(|idx| idx == &conv.conv_type())
                             // TODO: convert `unwrap` to `Err`
                             .unwrap()
                     })

@@ -6,16 +6,15 @@ use assert_fs::NamedTempFile;
 
 const HELP_STR: &str = "Evolve a grid with an evolution kernel operator to an FK table
 
-Usage: pineappl evolve [OPTIONS] <INPUT> <EKO> <OUTPUT> <CONV_FUNS>
+Usage: pineappl evolve [OPTIONS] <INPUT> <EKO1,...> <OUTPUT> <CONV_FUNS>
 
 Arguments:
   <INPUT>      Path to the input grid
-  <EKO>        Path to the evolution kernel operator
+  <EKO1,...>   Path to the evolution kernel operator(s)
   <OUTPUT>     Path to the converted grid
   <CONV_FUNS>  LHAPDF ID(s) or name of the PDF(s)/FF(s)
 
 Options:
-      --ekob <EKOB>          Additional path to the 2nd evolution kernel operator
       --accuracy <ACCURACY>  Relative threshold between the table and the converted grid when comparison fails [default: 1e-3]
       --digits-abs <ABS>     Set the number of fractional digits shown for absolute numbers [default: 7]
       --digits-rel <REL>     Set the number of fractional digits shown for relative numbers [default: 7]
@@ -428,15 +427,16 @@ fn cms_ttb_8tev_2d_ttm_trap_tot() {
 fn star_wmwp_510gev_wm_al_pol() {
     let output = NamedTempFile::new("fktable6.lz4").unwrap();
 
+    // Grid is (PolPDF, UnpolPDF) but EKOs are ordered as {UnpolEko, PolEko} to
+    // check that order doesn't matter.
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
             "evolve",
             "../test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4",
-            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
+            "../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar,../test-data/STAR_WMWP_510GEV_WM-AL-POL_PolPDF.tar",
             output.path().to_str().unwrap(),
             "240608-tr-pol-nlo-100+p,NNPDF40_nlo_pch_as_01180",
-            "--ekob=../test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar",
         ])
         .assert()
         .success()

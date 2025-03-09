@@ -36,7 +36,8 @@ const DEFAULT_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.7517266e1
 ";
 
-const USE_ALPHAS_FROM_ERROR_STR: &str = "expected `use_alphas_from` to be `0` or `1`, is `2`
+const USE_ALPHAS_FROM_ERROR_STR: &str =
+    "expected `use_alphas_from` to be an integer within `[0, 2)`, but got `2`
 ";
 
 const FORCE_POSITIVE_STR: &str = "b   etal    dsig/detal 

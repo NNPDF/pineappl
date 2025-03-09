@@ -269,7 +269,8 @@ pub fn convolve_scales(
     // TODO: promote this to an error
     assert!(
         cfg.use_alphas_from < conv_funs.len(),
-        "expected `use_alphas_from` to be `0` or `1`, is `{}`",
+        "expected `use_alphas_from` to be an integer within `[0, {})`, but got `{}`",
+        conv_funs.len(),
         cfg.use_alphas_from
     );
 
