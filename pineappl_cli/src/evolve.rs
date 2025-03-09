@@ -491,7 +491,7 @@ pub struct Opts {
     #[arg(value_hint = ValueHint::FilePath)]
     input: PathBuf,
     /// Path to the evolution kernel operator(s).
-    #[arg(value_name = "EKOs")]
+    #[arg(value_name = "EKO1,...")]
     ekos: String,
     /// Path to the converted grid.
     #[arg(value_hint = ValueHint::FilePath)]
