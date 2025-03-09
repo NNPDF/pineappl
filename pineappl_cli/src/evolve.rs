@@ -5,7 +5,7 @@ use clap::{Parser, ValueHint};
 use lhapdf::Pdf;
 use pineappl::fk_table::FkTable;
 use pineappl::grid::Grid;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 #[cfg(feature = "evolve")]
@@ -438,7 +438,7 @@ mod eko {
 #[cfg(feature = "evolve")]
 fn evolve_grid(
     grid: &Grid,
-    ekos: &[PathBuf],
+    ekos: &[&Path],
     use_alphas_from: &Pdf,
     orders: &[(u8, u8)],
     xir: f64,
@@ -461,7 +461,7 @@ fn evolve_grid(
 
     let mut eko_slices: Vec<_> = ekos
         .iter()
-        .map(|eko| EkoSlices::new(eko.as_path()))
+        .map(|eko| EkoSlices::new(eko))
         .collect::<Result<_, _>>()?;
     let eko_slices: Vec<_> = eko_slices.iter_mut().collect();
     let alphas_table = AlphasTable::from_grid(grid, xir, &|q2| use_alphas_from.alphas_q2(q2));
@@ -545,7 +545,7 @@ impl Subcommand for Opts {
             cfg,
         );
 
-        let eko_paths: Vec<_> = self.ekos.split(',').map(PathBuf::from).collect();
+        let eko_paths: Vec<_> = self.ekos.split(',').map(Path::new).collect();
         let fk_table = evolve_grid(
             &grid,
             &eko_paths,
