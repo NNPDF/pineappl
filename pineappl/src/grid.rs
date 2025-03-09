@@ -1,7 +1,7 @@
 //! Module containing all traits and supporting structures for grids.
 
 use super::boc::{BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
-use super::convolutions::{Conv, ConvType, ConvolutionCache};
+use super::convolutions::{Conv, ConvolutionCache};
 use super::error::{Error, Result};
 use super::evolution::{self, AlphasTable, EvolveInfo, OperatorSliceInfo};
 use super::fk_table::FkTable;
@@ -13,7 +13,7 @@ use super::subgrid::{
 };
 use super::v0;
 use bitflags::bitflags;
-use float_cmp::{approx_eq, assert_approx_eq};
+use float_cmp::approx_eq;
 use git_version::git_version;
 use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
@@ -1090,11 +1090,6 @@ impl Grid {
     ///
     /// Returns an error if either the `operator` or its `info` is incompatible with this `Grid`,
     /// or if the iterator from `slices` return an error.
-    ///
-    /// # Panics
-    ///
-    /// Panics when the operators returned by either slice have different dimensions than promised
-    /// by the corresponding [`OperatorSliceInfo`].
     pub fn evolve<
         'a,
         E: Into<anyhow::Error>,
@@ -1114,10 +1109,12 @@ impl Grid {
             type Item = Vec<T::Item>;
 
             fn next(&mut self) -> Option<Self::Item> {
+                // this will return `None` as soon as one of the Iterators retuns `None`
                 self.iters.iter_mut().map(Iterator::next).collect()
             }
         }
 
+        // convert a `Vec<IntoIterator<Item = T>>` to a `IntoIterator<Item = Vec<T>>`
         fn zip_n<O, T>(iters: O) -> impl Iterator<Item = Vec<T::Item>>
         where
             O: IntoIterator<Item = T>,
@@ -1128,68 +1125,58 @@ impl Grid {
             }
         }
 
-        let mut lhs: Option<Self> = None;
-        // Q2 slices we use
+        // result of this method
+        let mut result: Option<Self> = None;
+        // the EKOs' indices matching this Grid's convolutions
+        let mut eko_map = Vec::new();
+
+        // initial factorization scale
+        let mut fac0 = None;
+        // factorization slices we use
         let mut used_op_fac1 = Vec::new();
-        // Q2 slices we encounter, but possibly don't use
+        // factorization slices we encounter, but possibly don't use
         let mut op_fac1 = Vec::new();
-        // Q2 slices needed by the grid
+
+        // initial fragmentation scale
+        let mut frg0 = None;
+        // fragmentation slices we use
+        let mut used_op_frg1 = Vec::new();
+        // fragmentation slices we encounter, but possibly don't use
+        let mut op_frg1 = Vec::new();
+
+        // factorization scales needed by the grid
         let grid_fac1: Vec<_> = self
             .evolve_info(order_mask)
             .fac1
             .into_iter()
-            // TODO: also take care of the fragmentation scale
             .map(|fac| xi.1 * xi.1 * fac)
             .collect();
-        let mut fac0 = -1.0;
-        let mut frg0 = -1.0;
+        // fragmentation scales needed by the grid
+        let grid_frg1: Vec<_> = self
+            .evolve_info(order_mask)
+            .frg1
+            .into_iter()
+            .map(|frg| xi.1 * xi.1 * frg)
+            .collect();
 
-        let mut perm = Vec::new();
-
-        for result in zip_n(slices) {
-            let (infos, operators): (Vec<OperatorSliceInfo>, Vec<CowArray<'_, f64, Ix4>>) = result
+        for slice in zip_n(slices) {
+            let (infos, operators): (Vec<_>, Vec<_>) = slice
                 .into_iter()
                 .map(|res| res.map_err(|err| Error::Other(err.into())))
                 .collect::<Result<_>>()?;
 
-            let (info_0, infos_rest) = infos
-                .split_first()
-                // UNWRAP: TODO
-                .unwrap();
+            let pid_basis = infos[0].pid_basis;
 
-            let dim_op_info_0 = (
-                info_0.pids1.len(),
-                info_0.x1.len(),
-                info_0.pids0.len(),
-                info_0.x0.len(),
-            );
-
-            assert_eq!(
-                operators[0].dim(),
-                dim_op_info_0,
-                "operator information {:?} does not match the operator's dimensions: {:?}",
-                dim_op_info_0,
-                operators[0].dim(),
-            );
-
-            if info_0.conv_type.is_pdf() {
-                if fac0 < 0.0 {
-                    fac0 = info_0.fac0;
-                } else {
-                    assert_approx_eq!(f64, fac0, info_0.fac0, ulps = 8);
-                }
-            } else if frg0 < 0.0 {
-                frg0 = info_0.fac0;
-            } else {
-                assert_approx_eq!(f64, frg0, info_0.fac0, ulps = 8);
+            if !infos.iter().all(|info| info.pid_basis == pid_basis) {
+                return Err(Error::General(
+                    "the EKOs' PID bases are not all equal".to_owned(),
+                ));
             }
 
-            for (index, info) in infos_rest.iter().enumerate() {
-                // TODO: what if the scales of the EKOs don't agree? Is there an ordering problem?
-                assert!(subgrid::node_value_eq(info_0.fac1, info.fac1));
+            let mut fac1 = None;
+            let mut frg1 = None;
 
-                assert_eq!(info_0.pid_basis, info.pid_basis);
-
+            for (info, operator) in infos.iter().zip(&operators) {
                 let dim_op_info = (
                     info.pids1.len(),
                     info.x1.len(),
@@ -1197,77 +1184,142 @@ impl Grid {
                     info.x0.len(),
                 );
 
-                assert_eq!(
-                    operators[index + 1].dim(),
-                    dim_op_info,
-                    "operator information {:?} does not match the operator's dimensions: {:?}",
-                    dim_op_info,
-                    operators[index + 1].dim(),
-                );
+                if operator.dim() != dim_op_info {
+                    return Err(Error::General(format!(
+                        "operator information {dim_op_info:?} does not match the operator's dimensions: {:?}",
+                        operator.dim()
+                    )));
+                }
 
                 if info.conv_type.is_pdf() {
-                    if fac0 < 0.0 {
-                        fac0 = info.fac0;
+                    if let Some(fac0) = fac0 {
+                        // check that this EKO slice is compatible with all previous slices
+                        if !approx_eq!(f64, fac0, info.fac0, ulps = 8) {
+                            return Err(Error::General(format!(
+                                "EKO slice's fac0 = '{}' is incompatible with previous slices' fac0 = '{fac0}'",
+                                info.fac0
+                            )));
+                        }
                     } else {
-                        assert_approx_eq!(f64, fac0, info.fac0, ulps = 8);
+                        fac0 = Some(info.fac0);
                     }
-                } else if frg0 < 0.0 {
-                    frg0 = info.fac0;
+
+                    if let Some(fac1) = fac1 {
+                        // we assume that all EKO slices always share the same factorization and/or
+                        // fragmentation scale at process level. If this isn't the case, for
+                        // instance when the fragmentation scale is functionally different from the
+                        // factorization scale, this implementation isn't general enough and has to
+                        // be changed
+                        if !subgrid::node_value_eq(info.fac1, fac1) {
+                            unimplemented!();
+                        }
+                    } else {
+                        fac1 = Some(info.fac1);
+                    }
                 } else {
-                    assert_approx_eq!(f64, frg0, info.fac0, ulps = 8);
+                    if let Some(frg0) = frg0 {
+                        if !approx_eq!(f64, frg0, info.fac0, ulps = 8) {
+                            return Err(Error::General(format!(
+                                "EKO slice's frg0 = '{}' is incompatible with previous slices' frg0 = '{frg0}'",
+                                info.fac0
+                            )));
+                        }
+                    } else {
+                        frg0 = Some(info.fac0);
+                    }
+
+                    if let Some(frg1) = frg1 {
+                        if !subgrid::node_value_eq(info.fac1, frg1) {
+                            unimplemented!();
+                        }
+                    } else {
+                        frg1 = Some(info.fac1);
+                    }
                 }
             }
 
-            if perm.is_empty() {
-                let eko_conv_types: Vec<ConvType> =
-                    infos.iter().map(|info| info.conv_type).collect();
+            if eko_map.is_empty() {
+                let eko_conv_types: Vec<_> = infos.iter().map(|info| info.conv_type).collect();
 
-                perm = self
+                // match this Grid's convolution types to the EKOs' convolution types
+                eko_map = self
                     .convolutions()
                     .iter()
                     .map(|conv| {
                         eko_conv_types
                             .iter()
-                            .position(|idx| idx == &conv.conv_type())
-                            // TODO: convert `unwrap` to `Err`
-                            .unwrap()
+                            .position(|&eko_conv_type| eko_conv_type == conv.conv_type())
+                            .ok_or_else(|| {
+                                Error::General(format!(
+                                    "no EKO for convolution type `{conv:?}` found"
+                                ))
+                            })
                     })
-                    .collect();
+                    .collect::<Result<_>>()?;
             }
 
-            op_fac1.push(info_0.fac1);
+            if let Some(fac1) = fac1 {
+                op_fac1.push(fac1);
 
-            // it's possible that due to small numerical differences we get two slices which are
-            // almost the same. We have to skip those in order not to evolve the 'same' slice twice
-            if used_op_fac1
-                .iter()
-                .any(|&fac| subgrid::node_value_eq(fac, info_0.fac1))
-            {
-                continue;
+                // it's possible that due to small numerical differences we get two slices which
+                // are almost the same. We have to skip those in order not to evolve the 'same'
+                // slice twice
+                if used_op_fac1
+                    .iter()
+                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
+                {
+                    continue;
+                }
+
+                // skip slices that the grid doesn't use
+                if !grid_fac1
+                    .iter()
+                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
+                {
+                    continue;
+                }
             }
 
-            // skip slices that the grid doesn't use
-            if !grid_fac1
-                .iter()
-                .any(|&fac| subgrid::node_value_eq(fac, info_0.fac1))
-            {
-                continue;
+            if let Some(frg1) = frg1 {
+                op_frg1.push(frg1);
+
+                // it's possible that due to small numerical differences we get two slices which
+                // are almost the same. We have to skip those in order not to evolve the 'same'
+                // slice twice
+                if used_op_frg1
+                    .iter()
+                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
+                {
+                    continue;
+                }
+
+                // skip slices that the grid doesn't use
+                if !grid_frg1
+                    .iter()
+                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
+                {
+                    continue;
+                }
             }
 
-            let operators: Vec<_> = perm.iter().map(|&idx| operators[idx].view()).collect();
-            let infos: Vec<_> = perm.iter().map(|&idx| infos[idx].clone()).collect();
+            let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
+            let infos: Vec<_> = eko_map.iter().map(|&idx| infos[idx].clone()).collect();
 
-            let fac = if fac0 < 0.0 {
-                ScaleFuncForm::NoScale
-            } else {
-                ScaleFuncForm::Scale(0)
-            };
-            let (frg, scale_values) = if frg0 < 0.0 {
-                (ScaleFuncForm::NoScale, vec![fac0])
-            } else if fac0 < 0.0 || approx_eq!(f64, fac0, frg0, ulps = 8) {
-                (ScaleFuncForm::Scale(0), vec![frg0])
-            } else {
-                (ScaleFuncForm::Scale(1), vec![fac0, frg0])
+            let (fac, frg, scale_values) = match (fac0, frg0) {
+                (None, None) => unreachable!(),
+                (Some(fac0), None) => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
+                (None, Some(frg0)) => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
+                (Some(fac0), Some(frg0)) => {
+                    if approx_eq!(f64, fac0, frg0, ulps = 8) {
+                        (ScaleFuncForm::Scale(0), ScaleFuncForm::Scale(0), vec![fac0])
+                    } else {
+                        (
+                            ScaleFuncForm::Scale(0),
+                            ScaleFuncForm::Scale(1),
+                            vec![fac0, frg0],
+                        )
+                    }
+                }
             };
 
             let (subgrids, channels) = evolution::evolve_slice(
@@ -1280,21 +1332,17 @@ impl Grid {
                 alphas_table,
             )?;
 
-            let rhs = Self {
+            let evolved_slice = Self {
                 subgrids,
                 bwfl: self.bwfl().clone(),
                 orders: vec![Order::new(0, 0, 0, 0, 0)],
                 channels,
-                pid_basis: infos[0].pid_basis,
+                pid_basis,
                 convolutions: self.convolutions.clone(),
                 // TODO: the next line is probably wrong for flexible-scale grids
                 interps: self.interps.clone(),
-                kinematics: iter::once(Kinematics::Scale(0))
-                    .chain(if fac0 < 0.0 && frg0 < 0.0 {
-                        Some(Kinematics::Scale(1))
-                    } else {
-                        None
-                    })
+                kinematics: (0..scale_values.len())
+                    .map(Kinematics::Scale)
                     .chain(
                         self.kinematics
                             .iter()
@@ -1314,33 +1362,51 @@ impl Grid {
                 reference: self.reference.clone(),
             };
 
-            if let Some(lhs) = &mut lhs {
-                lhs.merge(rhs)?;
+            if let Some(result) = &mut result {
+                result.merge(evolved_slice)?;
             } else {
-                lhs = Some(rhs);
+                result = Some(evolved_slice);
             }
 
-            used_op_fac1.push(info_0.fac1);
+            if let Some(fac1) = fac1 {
+                used_op_fac1.push(fac1);
+            }
+
+            if let Some(frg1) = frg1 {
+                used_op_frg1.push(frg1);
+            }
         }
 
         op_fac1.sort_by(f64::total_cmp);
+        op_frg1.sort_by(f64::total_cmp);
 
         // make sure we've evolved all slices
-        if let Some(muf2) = grid_fac1.into_iter().find(|&grid_mu2| {
+        if let Some(fac1) = grid_fac1.into_iter().find(|&grid_fac1| {
             !used_op_fac1
                 .iter()
-                .any(|&eko_mu2| subgrid::node_value_eq(grid_mu2, eko_mu2))
+                .any(|&eko_fac1| subgrid::node_value_eq(grid_fac1, eko_fac1))
         }) {
             return Err(Error::General(format!(
-                "no operator for muf2 = {muf2} found in {op_fac1:?}"
+                "no operator for fac1 = {fac1} found in {op_fac1:?}"
             )));
         }
 
-        // TODO: convert this unwrap into error
-        let grid = lhs.unwrap();
+        // make sure we've evolved all slices
+        if let Some(frg1) = grid_frg1.into_iter().find(|&grid_frg1| {
+            !used_op_frg1
+                .iter()
+                .any(|&eko_frg1| subgrid::node_value_eq(grid_frg1, eko_frg1))
+        }) {
+            return Err(Error::General(format!(
+                "no operator for frg1 = {frg1} found in {op_frg1:?}"
+            )));
+        }
+
+        let result =
+            result.ok_or_else(|| Error::General("no evolution was performed".to_owned()))?;
 
         // UNWRAP: merging evolved slices should be a proper FkTable again
-        Ok(FkTable::try_from(grid).unwrap_or_else(|_| unreachable!()))
+        Ok(FkTable::try_from(result).unwrap_or_else(|_| unreachable!()))
     }
 
     /// Deletes bins with the corresponding `bin_indices`. Repeated indices and indices larger or
