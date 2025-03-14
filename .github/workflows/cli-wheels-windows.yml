@@ -27,7 +27,6 @@ jobs:
             gcc
             make
             autoconf
-            mingw-w64-ucrt-x86_64-python
             curl
             tar
             mingw-w64-ucrt-x86_64-pkg-config
@@ -52,7 +51,7 @@ jobs:
       - name: Install LHAPDF
         run: |
           export LHAPDF_V=6.5.4
-          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" | tar xzf -
+          wget "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" -O- | tar xzf -
           cd LHAPDF-${LHAPDF_V}
           # compiling with Python gives errors, but we also don't need Python
           ./configure --disable-python --disable-shared
