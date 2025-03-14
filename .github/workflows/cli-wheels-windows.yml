@@ -53,6 +53,19 @@ jobs:
           export LHAPDF_V=6.5.4
           wget "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" -O- | tar xzf -
           cd LHAPDF-${LHAPDF_V}
+          # add missing header
+          patch -l -p0 <<EOF
+          --- src/Paths.cc.orig	2025-03-14 19:42:49.896178357 +0100
+          +++ src/Paths.cc	2025-03-14 19:43:02.604043903 +0100
+          @@ -7,6 +7,7 @@
+           #include "LHAPDF/Info.h"
+           #include "LHAPDF/Config.h"
+           #include <dirent.h>
+          +#include <stdlib.h>
+
+           #ifdef HAVE_MPI
+           #include <mpi.h>
+          EOF
           # compiling with Python gives errors, but we also don't need Python
           ./configure --disable-python --disable-shared
           make -j
