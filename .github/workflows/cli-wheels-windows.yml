@@ -29,6 +29,7 @@ jobs:
             autoconf
             curl
             tar
+            patch
             mingw-w64-ucrt-x86_64-pkg-config
             mingw-w64-ucrt-x86_64-rust
             mingw-w64-ucrt-x86_64-python-maturin
