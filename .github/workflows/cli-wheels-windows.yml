@@ -56,16 +56,16 @@ jobs:
           cd LHAPDF-${LHAPDF_V}
           # add missing header
           patch -l -p0 <<EOF
-          --- src/Paths.cc.orig	2025-03-14 19:42:49.896178357 +0100
-          +++ src/Paths.cc	2025-03-14 19:43:02.604043903 +0100
+          --- src/Paths.cc.orig	2025-03-14 19:56:45.562770878 +0100
+          +++ src/Paths.cc	2025-03-14 19:57:01.741378573 +0100
           @@ -7,6 +7,7 @@
            #include "LHAPDF/Info.h"
            #include "LHAPDF/Config.h"
            #include <dirent.h>
           +#include <stdlib.h>
+           using namespace std;
 
            #ifdef HAVE_MPI
-           #include <mpi.h>
           EOF
           # compiling with Python gives errors, but we also don't need Python
           ./configure --disable-python --disable-shared
