@@ -3,6 +3,7 @@ name: Generate CLI wheels for Windows
 # this workflow doesn't do (yet) what it promises; we keep this file to not lose the progress
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -26,12 +27,12 @@ jobs:
             gcc
             make
             autoconf
-            python3
             curl
             tar
+            patch
             mingw-w64-ucrt-x86_64-pkg-config
-            mingw-w64-rust
-            mingw-w64-python-maturin
+            mingw-w64-ucrt-x86_64-rust
+            mingw-w64-ucrt-x86_64-python-maturin
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -50,16 +51,30 @@ jobs:
             3.10
       - name: Install LHAPDF
         run: |
-          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
-          cd LHAPDF-6.5.4
+          export LHAPDF_V=6.5.4
+          wget "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" -O- | tar xzf -
+          cd LHAPDF-${LHAPDF_V}
+          # add missing header
+          patch -l -p0 <<EOF
+          --- src/Paths.cc.orig	2025-03-14 19:56:45.562770878 +0100
+          +++ src/Paths.cc	2025-03-14 19:57:01.741378573 +0100
+          @@ -7,6 +7,7 @@
+           #include "LHAPDF/Info.h"
+           #include "LHAPDF/Config.h"
+           #include <dirent.h>
+          +#include <stdlib.h>
+           using namespace std;
+
+           #ifdef HAVE_MPI
+          EOF
           # compiling with Python gives errors, but we also don't need Python
           ./configure --disable-python --disable-shared
           make -j
           make install
-          # print the path of `pkgconf`
-          command -v pkg-config
       - name: Set pkg-config paths
         run: |
+          # print the path of `pkgconf`
+          command -v pkg-config
           # for some reason `pkg-config` isn't properly found by Rust
           echo "PKG_CONFIG=$(command -v pkg-config)" >> ${GITHUB_ENV}
           echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
