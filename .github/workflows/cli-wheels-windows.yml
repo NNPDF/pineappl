@@ -3,7 +3,6 @@ name: Generate CLI wheels for Windows
 # this workflow doesn't do (yet) what it promises; we keep this file to not lose the progress
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -27,12 +26,12 @@ jobs:
             gcc
             make
             autoconf
-            mingw-w64-ucrt-x86_64-python
+            python3
             curl
             tar
             mingw-w64-ucrt-x86_64-pkg-config
-            mingw-w64-ucrt-x86_64-rust
-            mingw-w64-ucrt-x86_64-python-maturin
+            mingw-w64-rust
+            mingw-w64-python-maturin
       - uses: actions/setup-python@v5
         with:
           # WARNING: be careful with the ordering - the last version is the
@@ -51,9 +50,8 @@ jobs:
             3.10
       - name: Install LHAPDF
         run: |
-          export LHAPDF_V=6.5.4
-          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-${LHAPDF_V}.tar.gz" | tar xzf -
-          cd LHAPDF-${LHAPDF_V}
+          curl "https://lhapdf.hepforge.org/downloads/?f=LHAPDF-6.5.4.tar.gz" | tar xzf -
+          cd LHAPDF-6.5.4
           # compiling with Python gives errors, but we also don't need Python
           ./configure --disable-python --disable-shared
           make -j
