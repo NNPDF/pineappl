@@ -198,7 +198,7 @@ const THREE_CONVOLUTIONS_STR: &str = "b                  pT                  dsi
 5 9.929026126861572 11.660773754119873    5.2680349e1
 ";
 
-const EMPTY_POSITIVITY_GRIDS: &str =
+const NO_CHANNELS_GRID_STR: &str =
     "b    Q2                            x                             F2d    
    [GeV^2]                        []                             []     
 --+---+---+------------------------+------------------------+-----------
@@ -463,7 +463,7 @@ fn three_convolutions() {
 }
 
 #[test]
-fn empty_positivity_grid() {
+fn no_channels_grid() {
     Command::cargo_bin("pineappl")
         .unwrap()
         .args([
@@ -473,5 +473,5 @@ fn empty_positivity_grid() {
         ])
         .assert()
         .success()
-        .stdout(EMPTY_POSITIVITY_GRIDS);
+        .stdout(NO_CHANNELS_GRID_STR);
 }
