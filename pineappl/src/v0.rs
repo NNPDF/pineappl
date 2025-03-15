@@ -291,17 +291,22 @@ fn read_convolutions_from_metadata(grid: &GridV0) -> Vec<Option<Conv>> {
                                 .map(|s| s.parse::<i32>())
                             {
                                 Some(Ok(pid)) => {
-                                    let condition = !grid.channels().iter().all(|entry| {
-                                        entry.entry().iter().all(|&(a, b, _)|
-                                            match index {
-                                                1 => a,
-                                                2 => b,
-                                                _ => unreachable!()
-                                            } == pid
-                                        )
-                                    });
+                                    // Addresses: https://github.com/NNPDF/pineappl/issues/334
+                                    if grid.channels().is_empty() && pid == 2212 {
+                                        Some(Conv::new(ConvType::UnpolPDF, 2212))
+                                    } else {
+                                        let condition = !grid.channels().iter().all(|entry| {
+                                            entry.entry().iter().all(|&(a, b, _)|
+                                                match index {
+                                                    1 => a,
+                                                    2 => b,
+                                                    _ => unreachable!()
+                                                } == pid
+                                            )
+                                        });
 
-                                    condition.then_some(Conv::new(ConvType::UnpolPDF, pid))
+                                        condition.then_some(Conv::new(ConvType::UnpolPDF, pid))
+                                    }
                                 }
                                 None => Some(Conv::new(ConvType::UnpolPDF, 2212)),
                                 Some(Err(err)) => panic!(
