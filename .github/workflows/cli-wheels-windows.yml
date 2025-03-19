@@ -56,9 +56,9 @@ jobs:
           cd LHAPDF-${LHAPDF_V}
           # add missing header
           patch -l -p0 <<EOF
-          --- src/Paths.cc        2023-03-10 18:35:19.000000000 +0100
-          +++ src/Paths.cc.new    2025-03-19 19:29:14.832384033 +0100
-          @@ -35,7 +35,9 @@
+          --- src/Paths.cc	2023-03-10 18:35:19.000000000 +0100
+          +++ src/Paths.cc.new	2025-03-19 19:42:02.330512613 +0100
+          @@ -35,7 +35,8 @@
 
 
              void setPaths(const string& pathstr) {
