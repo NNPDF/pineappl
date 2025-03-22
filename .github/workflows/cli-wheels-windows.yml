@@ -9,9 +9,6 @@ on:
 jobs:
   cli-wheels-windows:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [x64]
     defaults:
       run:
         shell: msys2 {0}
@@ -83,9 +80,9 @@ jobs:
           echo "${PKG_CONFIG_PATH}"
       - name: Build wheels
         run:
-          maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml --target ${{ matrix.target }}
+          maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.job }}-${{ matrix.target }}
+          name: ${{ github.job }}
           path: dist
