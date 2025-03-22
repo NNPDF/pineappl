@@ -67,7 +67,7 @@ jobs:
 
           EOF
           # compiling with Python gives errors, but we also don't need Python
-          ./configure --disable-python --disable-shared
+          ./configure --disable-python --disable-shared --prefix=/ucrt64/
           make -j
           make install
       - name: Test pkg-config
