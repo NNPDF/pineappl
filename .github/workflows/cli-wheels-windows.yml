@@ -27,7 +27,7 @@ jobs:
             curl
             tar
             patch
-            mingw-w64-ucrt-x86_64-pkg-config
+            pkgconf
             mingw-w64-ucrt-x86_64-rust
             mingw-w64-ucrt-x86_64-python-maturin
       - uses: actions/setup-python@v5
