@@ -78,9 +78,14 @@ jobs:
           echo "PKG_CONFIG=$(command -v pkg-config)" >> ${GITHUB_ENV}
           echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
           echo "${PKG_CONFIG_PATH}"
+      #- name: Build wheels
+      #  run:
+      #    maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml --features=static
       - name: Build wheels
-        run:
-          maturin build --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml
+        uses: PyO3/maturin-action@v1
+        with:
+          # `--find-interpreter` is needed to generate wheels for *all* Python versions
+          args: --release --out dist --find-interpreter --manifest-path pineappl_cli/Cargo.toml --features=static
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
