@@ -77,6 +77,8 @@ jobs:
           # show LHAPDF's .pc file
           pkg-config lhapdf --path
           cat $(pkg-config lhapdf --path)
+          echo ${PKG_CONFIG_PATH}
+          echo "PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig:${PKG_CONFIG_PATH}" >> ${GITHUB_ENV}
       - name: Patch pineappl_cli/pyproject.toml
         run: |
           # on Windows we can't build with all features (yet)
