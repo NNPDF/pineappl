@@ -27,7 +27,7 @@ jobs:
             curl
             tar
             patch
-            pkgconf
+            mingw-w64-ucrt-x86_64-pkgconf
             mingw-w64-ucrt-x86_64-rust
             mingw-w64-ucrt-x86_64-python-maturin
       - uses: actions/setup-python@v5
@@ -74,6 +74,7 @@ jobs:
         run: |
           # print the path of `pkgconf`
           command -v pkg-config
+          command -v pkgconf
           # show LHAPDF's .pc file
           pkg-config lhapdf --path
           cat $(pkg-config lhapdf --path)
