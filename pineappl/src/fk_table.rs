@@ -257,7 +257,7 @@ impl FkTable {
             let mut pids = pids.clone();
 
             for pid in &mut pids {
-                if delete.iter().any(|&delete| *pid == delete) {
+                if delete.contains(pid) {
                     for subgrid in self.grid.subgrids_mut().slice_mut(s![.., .., idx]) {
                         *subgrid = EmptySubgridV1.into();
                     }

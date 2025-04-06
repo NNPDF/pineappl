@@ -152,7 +152,8 @@ impl Grid {
     }
 
     /// TODO
-    pub fn reference(&self) -> &Reference {
+    #[must_use]
+    pub const fn reference(&self) -> &Reference {
         &self.reference
     }
 
