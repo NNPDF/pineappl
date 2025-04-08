@@ -124,15 +124,13 @@ int main(int argc, char* argv[]) {
     }
 
     // modify the particle ID representation of the Grid
-    char* ref_pid_repr_basis = pineappl_get_pid_basis(grid);
-    assert(std::string(ref_pid_repr_basis) == "PINEAPPL_PID_BASIS_EVOL");
-    pineappl_string_delete(ref_pid_repr_basis);
+    pineappl_pid_basis ref_pid_repr_basis = pineappl_grid_pid_basis(grid);
+    assert(ref_pid_repr_basis == PINEAPPL_PID_BASIS_EVOL);
 
-    pineappl_rotate_pid_basis(grid, PINEAPPL_PID_BASIS_PDG);
+    pineappl_grid_rotate_pid_basis(grid, PINEAPPL_PID_BASIS_PDG);
 
-    char* mod_pid_repr_basis = pineappl_get_pid_basis(grid);
-    assert(std::string(mod_pid_repr_basis) == "PINEAPPL_PID_BASIS_PDG");
-    pineappl_string_delete(mod_pid_repr_basis);
+    pineappl_pid_basis mod_pid_repr_basis = pineappl_grid_pid_basis(grid);
+    assert(mod_pid_repr_basis == PINEAPPL_PID_BASIS_PDG);
 
     pineappl_grid_delete(grid);
 }

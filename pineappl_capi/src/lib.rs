@@ -895,40 +895,30 @@ pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
     grid.split_channels();
 }
 
-/// Change the particle ID representation of a given Grid.
+/// Change the particle ID basis of a given Grid.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object (for example when `grid` is the null pointer)
-/// or if `pid_basis` doe not refer to a correct basis, then this function is not safe to call.
+/// or if `pid_basis` does not refer to a correct basis, then this function is not safe to call.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_rotate_pid_basis(grid: *mut Grid, pid_basis: PidBasis) {
+pub unsafe extern "C" fn pineappl_grid_rotate_pid_basis(grid: *mut Grid, pid_basis: PidBasis) {
     let grid = unsafe { &mut *grid };
 
     grid.rotate_pid_basis(pid_basis);
 }
 
-/// Get the particle ID representation of a Grid.
+/// Get the particle ID basis of a Grid.
 ///
 /// # Safety
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the `NULL`
-/// pointer, this function is not safe to call. The parameter `key` must be non-`NULL` and a valid
-/// C string.
-///
-/// # Panics
-///
-/// This function might panic if `pid_basis` contains interior null bytes. This occurs if  a new
-/// variant is added to the `PidBasis` enum in the future and the match statement isn't updated.
+/// pointer, this function is not safe to call.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_get_pid_basis(grid: *mut Grid) -> *mut c_char {
+pub unsafe extern "C" fn pineappl_grid_pid_basis(grid: *mut Grid) -> PidBasis {
     let grid = unsafe { &mut *grid };
-    let pid_basis = match grid.pid_basis() {
-        PidBasis::Pdg => "PINEAPPL_PID_BASIS_PDG",
-        PidBasis::Evol => "PINEAPPL_PID_BASIS_EVOL",
-    };
 
-    CString::new(pid_basis).unwrap().into_raw()
+    *grid.pid_basis()
 }
 
 /// Optimizes the grid representation for space efficiency.
