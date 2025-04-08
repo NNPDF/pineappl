@@ -287,7 +287,7 @@ impl PyGrid {
     ///     bin normalizations
     #[must_use]
     pub fn bin_normalizations<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.grid.bwfl().normalizations().into_pyarray_bound(py)
+        self.grid.bwfl().normalizations().into_pyarray(py)
     }
 
     /// Get the bin slices for this grid.
@@ -430,7 +430,7 @@ impl PyGrid {
                 &channel_mask.unwrap_or_default(),
                 &xi.unwrap_or_else(|| vec![(1.0, 1.0, 1.0)]),
             )
-            .into_pyarray_bound(py)
+            .into_pyarray(py)
     }
 
     /// Collect information for convolution with an evolution operator.
@@ -808,7 +808,7 @@ impl PyGrid {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "grid")?;
+    let m = PyModule::new(parent_module.py(), "grid")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Grid interface.")?;
     pyo3::py_run!(
         parent_module.py(),

@@ -96,31 +96,31 @@ impl PyEvolveInfo {
     /// Squared factorization scales of the `Grid`.
     #[getter]
     fn fac1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.evolve_info.fac1.clone().into_pyarray_bound(py)
+        self.evolve_info.fac1.clone().into_pyarray(py)
     }
 
     /// Squared fragmentation scales of the `Grid`.
     #[getter]
     fn frg1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.evolve_info.frg1.clone().into_pyarray_bound(py)
+        self.evolve_info.frg1.clone().into_pyarray(py)
     }
 
     /// Particle identifiers of the `Grid`.
     #[getter]
     fn pids1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<i32>> {
-        self.evolve_info.pids1.clone().into_pyarray_bound(py)
+        self.evolve_info.pids1.clone().into_pyarray(py)
     }
 
     /// `x`-grid coordinates of the `Grid`.
     #[getter]
     fn x1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.evolve_info.x1.clone().into_pyarray_bound(py)
+        self.evolve_info.x1.clone().into_pyarray(py)
     }
 
     /// Renormalization scales of the `Grid`.
     #[getter]
     fn ren1<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.evolve_info.ren1.clone().into_pyarray_bound(py)
+        self.evolve_info.ren1.clone().into_pyarray(py)
     }
 }
 
@@ -130,7 +130,7 @@ impl PyEvolveInfo {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "evolution")?;
+    let m = PyModule::new(parent_module.py(), "evolution")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Evolution interface.")?;
     pyo3::py_run!(
         parent_module.py(),

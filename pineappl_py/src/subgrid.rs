@@ -100,7 +100,7 @@ impl PySubgridEnum {
         for (index, value) in self.subgrid_enum.indexed_iter() {
             array_subgrid[index.as_slice()] = value;
         }
-        array_subgrid.into_pyarray_bound(py)
+        array_subgrid.into_pyarray(py)
     }
 
     /// Clone.
@@ -116,7 +116,7 @@ impl PySubgridEnum {
 ///
 /// Raises Errors if (sub-)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "subgrid")?;
+    let m = PyModule::new(parent_module.py(), "subgrid")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Subgrid interface.")?;
     pyo3::py_run!(
         parent_module.py(),
