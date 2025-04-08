@@ -87,7 +87,7 @@ impl PyFkTable {
     /// numpy.ndarray :
     ///     4-dimensional tensor with indixes: bin, channel, x1, x2
     pub fn table<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArrayDyn<f64>>> {
-        Ok(self.fk_table.table().into_pyarray_bound(py))
+        Ok(self.fk_table.table().into_pyarray(py))
     }
 
     /// Get the type(s) of convolution(s) for the current FK table.
@@ -135,7 +135,7 @@ impl PyFkTable {
             .grid()
             .bwfl()
             .normalizations()
-            .into_pyarray_bound(py)
+            .into_pyarray(py)
     }
 
     /// Extract the number of dimensions for bins.
@@ -203,7 +203,7 @@ impl PyFkTable {
     ///     interpolation grid
     #[must_use]
     pub fn x_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.fk_table.x_grid().into_pyarray_bound(py)
+        self.fk_table.x_grid().into_pyarray(py)
     }
 
     /// Write to file.
@@ -325,7 +325,7 @@ impl PyFkTable {
                 &bin_indices.unwrap_or_default(),
                 &channel_mask.unwrap_or_default(),
             )
-            .into_pyarray_bound(py)
+            .into_pyarray(py)
     }
 
     /// Optimize storage.
@@ -348,7 +348,7 @@ impl PyFkTable {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "fk_table")?;
+    let m = PyModule::new(parent_module.py(), "fk_table")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "FK table interface.")?;
     pyo3::py_run!(
         parent_module.py(),

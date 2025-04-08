@@ -85,7 +85,7 @@ impl PyConv {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "convolutions")?;
+    let m = PyModule::new(parent_module.py(), "convolutions")?;
     m.setattr(
         pyo3::intern!(m.py(), "__doc__"),
         "Define the type of convolutions.",
