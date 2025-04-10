@@ -20,7 +20,7 @@ int main() {
     std::size_t channel = 0;
 
     // Get the dimension of the subgrids
-    std::size_t subgrid_dim = pineappl_convolutions_len(grid) + 1;
+    std::size_t subgrid_dim = pineappl_grid_kinematics_len(grid);
 
     std::cout << std::right << std::setw(10) << "bin" << std::setw(10) << "sg idx"
         << std::setw(16) << "sg value" << "\n";
@@ -29,7 +29,7 @@ int main() {
 
     for (std::size_t b = 0; b < n_bins; ++b) {
         std::vector<std::size_t> subgrid_shape(subgrid_dim);
-        pineappl_subgrid_shape(grid, b, order, channel, subgrid_shape.data());
+        pineappl_grid_subgrid_shape(grid, b, order, channel, subgrid_shape.data());
 
         // Check if the subgrid is not empty
         if (subgrid_shape[0] != 0) {
@@ -37,7 +37,7 @@ int main() {
                 subgrid_shape.end(), 1, std::multiplies<std::size_t>());
             std::vector<double> subgrid_array(flat_shape);
 
-            pineappl_subgrid_array(grid, b, order, channel, subgrid_array.data());
+            pineappl_grid_subgrid_array(grid, b, order, channel, subgrid_array.data());
 
             // TODO: Unravel of the index & check against some reference values
             for (std::size_t value = 0; value < subgrid_array.size(); ++value) {

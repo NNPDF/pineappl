@@ -1903,9 +1903,21 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_convolutions_len(grid: *mut Grid) -> usize {
+pub unsafe extern "C" fn pineappl_grid_convolutions_len(grid: *mut Grid) -> usize {
     let grid = unsafe { &mut *grid };
     grid.convolutions().len()
+}
+
+/// Get the number of different kinematics for a given Grid.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_kinematics_len(grid: *mut Grid) -> usize {
+    let grid = unsafe { &mut *grid };
+    grid.kinematics().len()
 }
 
 /// Get the shape of a subgrid for a given bin, channel, and order.
@@ -1914,10 +1926,9 @@ pub unsafe extern "C" fn pineappl_convolutions_len(grid: *mut Grid) -> usize {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, the pointer that specifies the shape of the
-/// subgrid must be an array whose size must be `(n+1)` where `n` represents the number of
-/// convolutions as given by `pineappl_convolutions_len`.
+/// subgrid has to be an array whose size must be as given by `pineappl_grid_kinematics_len`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_shape(
+pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     grid: *mut Grid,
     bin: usize,
     order: usize,
@@ -1928,13 +1939,13 @@ pub unsafe extern "C" fn pineappl_subgrid_shape(
     let mut subgrid = grid.subgrids()[[order, bin, channel]].clone();
 
     let subgrid_shape = if subgrid.is_empty() {
-        let subgrid_dim = grid.convolutions().len() + 1;
+        let subgrid_dim = grid.kinematics().len();
         &vec![0; subgrid_dim]
     } else {
         subgrid.shape()
     };
 
-    let shape = unsafe { slice::from_raw_parts_mut(shape, grid.convolutions().len() + 1) };
+    let shape = unsafe { slice::from_raw_parts_mut(shape, grid.kinematics().len()) };
     shape.copy_from_slice(subgrid_shape);
 }
 
@@ -1945,9 +1956,9 @@ pub unsafe extern "C" fn pineappl_subgrid_shape(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, the pointer that specifies the size of the subgrid
 /// when flattened must be an array; its size must be computed by multiplying the shape dimension as
-/// given by `pineappl_subgrid_shape`.
+/// given by `pineappl_grid_subgrid_shape`.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_subgrid_array(
+pub unsafe extern "C" fn pineappl_grid_subgrid_array(
     grid: *mut Grid,
     bin: usize,
     order: usize,
@@ -1957,15 +1968,14 @@ pub unsafe extern "C" fn pineappl_subgrid_array(
     let grid = unsafe { &mut *grid };
     let mut subgrid = grid.subgrids()[[order, bin, channel]].clone();
 
-    let flattened_shape = subgrid.shape().iter().copied().product();
-    let mut flattened_subgrid_array = vec![0.0; flattened_shape];
+    let subgrid_array =
+        unsafe { slice::from_raw_parts_mut(subgrid_array, subgrid.shape().iter().product()) };
+    let mut flattened_subgrid_array = vec![0.0; subgrid_array.len()];
 
     for (index, value) in subgrid.indexed_iter() {
         let ravel_index = ravel_multi_index(index.as_slice(), subgrid.clone().shape());
         flattened_subgrid_array[ravel_index] = value;
     }
-
-    let subgrid_array = unsafe { slice::from_raw_parts_mut(subgrid_array, flattened_shape) };
 
     subgrid_array.copy_from_slice(&flattened_subgrid_array);
 }
