@@ -123,9 +123,15 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     }
 }
 
-impl<T: Copy + MulAssign<T>> MulAssign<T> for PackedArray<T> {
+impl<T: Copy + Default + MulAssign<T> + PartialEq> MulAssign<T> for PackedArray<T> {
     fn mul_assign(&mut self, rhs: T) {
-        self.entries.iter_mut().for_each(|x| *x *= rhs);
+        if rhs == Default::default() {
+            // if we scale with zero, we must clear the array. Otherwise `array.indexed_iter()`
+            // will return an empty Iterator, but `array.is_empty()` will return `false`
+            self.clear();
+        } else {
+            self.entries.iter_mut().for_each(|x| *x *= rhs);
+        }
     }
 }
 
@@ -958,6 +964,14 @@ mod tests {
         assert_eq!(iter.next(), Some((vec![2, 3, 6], 2)));
         assert_eq!(iter.next(), Some((vec![4, 5, 7], 3)));
         assert_eq!(iter.next(), None);
+
+        mem::drop(iter);
+
+        // check that scaling the array with zero clears it
+        array *= 0;
+
+        assert!(array.is_empty());
+        assert_eq!(array.indexed_iter().next(), None);
     }
 
     #[test]
