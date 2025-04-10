@@ -132,7 +132,11 @@ impl FkTable {
         let mut idx = vec![0; dim.len()];
         let mut result = ArrayD::zeros(dim);
 
-        for ((_, bin, channel), subgrid) in self.grid().subgrids().indexed_iter() {
+        for ((_, bin, channel), subgrid) in
+            self.grid().subgrids().indexed_iter().filter(|(_, subgrid)|
+                // skip empty subgrids, because they have no node values
+                !subgrid.is_empty())
+        {
             let indices: Vec<Vec<_>> = self
                 .grid
                 .convolutions()
