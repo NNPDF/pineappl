@@ -158,6 +158,13 @@ int main() {
     }
     //-----------------------------------------------------------------------//
 
+    // Check that the Grid contains an empty subgrid at (b, o, c)=(0, 0, 0)
+    auto subgrid_dim = pineappl_grid_kinematics_len(grid);
+    std::vector<std::size_t> subgrid_shape(subgrid_dim);
+    std::vector<std::size_t> zero_vector(subgrid_dim, 0);
+    pineappl_grid_subgrid_shape(grid, 0, 0, 0, subgrid_shape.data());
+    assert(subgrid_shape == zero_vector);
+
     pineappl_grid_write(grid, "advanced-filling.pineappl.lz4");
 
     // release memory
