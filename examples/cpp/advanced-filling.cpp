@@ -6,7 +6,6 @@
 #include <iomanip>
 #include <memory>
 #include <vector>
-#include <numeric>
 
 int main() {
     // Construct the channel object based on the nb of convolutions
