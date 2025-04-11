@@ -1932,24 +1932,24 @@ pub unsafe extern "C" fn pineappl_grid_kinematics_len(grid: *mut Grid) -> usize 
 /// subgrid has to be an array whose size must be as given by `pineappl_grid_kinematics_len`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
-    grid: *mut Grid,
+    grid: *const Grid,
     bin: usize,
     order: usize,
     channel: usize,
     shape: *mut usize,
 ) {
-    let grid = unsafe { &mut *grid };
+    let grid = unsafe { &*grid };
     let subgrid = &grid.subgrids()[[order, bin, channel]];
-
     let subgrid_shape = if subgrid.is_empty() {
+        // avoid calling `Subgrid::shape()` for empty grids, which may panic
         let subgrid_dim = grid.kinematics().len();
         &vec![0; subgrid_dim]
     } else {
         subgrid.shape()
     };
-
     let shape = unsafe { slice::from_raw_parts_mut(shape, grid.kinematics().len()) };
-    shape.copy_from_slice(subgrid_shape);
+
+    shape.copy_from_slice(&subgrid_shape);
 }
 
 /// Get the subgrid for a given bin, channel, and order
@@ -1962,23 +1962,24 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
 /// given by `pineappl_grid_subgrid_shape`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_subgrid_array(
-    grid: *mut Grid,
+    grid: *const Grid,
     bin: usize,
     order: usize,
     channel: usize,
     subgrid_array: *mut f64,
 ) {
-    let grid = unsafe { &mut *grid };
+    let grid = unsafe { &*grid };
     let subgrid = &grid.subgrids()[[order, bin, channel]];
 
-    let subgrid_array =
-        unsafe { slice::from_raw_parts_mut(subgrid_array, subgrid.shape().iter().product()) };
-    let mut flattened_subgrid_array = vec![0.0; subgrid_array.len()];
+    // avoid calling `Subgrid::shape()` for empty grids, which may panic
+    if !subgrid.is_empty() {
+        let shape = subgrid.shape();
+        let subgrid_array =
+            unsafe { slice::from_raw_parts_mut(subgrid_array, shape.iter().product()) };
 
-    for (index, value) in subgrid.indexed_iter() {
-        let ravel_index = ravel_multi_index(index.as_slice(), subgrid.shape());
-        flattened_subgrid_array[ravel_index] = value;
+        for (index, value) in subgrid.indexed_iter() {
+            let ravel_index = ravel_multi_index(index.as_slice(), &shape);
+            subgrid_array[ravel_index] = value;
+        }
     }
-
-    subgrid_array.copy_from_slice(&flattened_subgrid_array);
 }
