@@ -1906,6 +1906,7 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolutions_len(grid: *mut Grid) -> usize {
     let grid = unsafe { &mut *grid };
+
     grid.convolutions().len()
 }
 
@@ -1918,6 +1919,7 @@ pub unsafe extern "C" fn pineappl_grid_convolutions_len(grid: *mut Grid) -> usiz
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_kinematics_len(grid: *mut Grid) -> usize {
     let grid = unsafe { &mut *grid };
+
     grid.kinematics().len()
 }
 
