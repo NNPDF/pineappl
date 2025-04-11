@@ -1939,7 +1939,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     shape: *mut usize,
 ) {
     let grid = unsafe { &mut *grid };
-    let mut subgrid = grid.subgrids()[[order, bin, channel]].clone();
+    let subgrid = &grid.subgrids()[[order, bin, channel]];
 
     let subgrid_shape = if subgrid.is_empty() {
         let subgrid_dim = grid.kinematics().len();
@@ -1969,14 +1969,14 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
     subgrid_array: *mut f64,
 ) {
     let grid = unsafe { &mut *grid };
-    let mut subgrid = grid.subgrids()[[order, bin, channel]].clone();
+    let subgrid = &grid.subgrids()[[order, bin, channel]];
 
     let subgrid_array =
         unsafe { slice::from_raw_parts_mut(subgrid_array, subgrid.shape().iter().product()) };
     let mut flattened_subgrid_array = vec![0.0; subgrid_array.len()];
 
     for (index, value) in subgrid.indexed_iter() {
-        let ravel_index = ravel_multi_index(index.as_slice(), subgrid.clone().shape());
+        let ravel_index = ravel_multi_index(index.as_slice(), subgrid.shape());
         flattened_subgrid_array[ravel_index] = value;
     }
 

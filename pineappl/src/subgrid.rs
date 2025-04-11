@@ -33,7 +33,7 @@ impl Subgrid for EmptySubgridV1 {
         Vec::new()
     }
 
-    fn shape(&mut self) -> &[usize] {
+    fn shape(&self) -> &[usize] {
         panic!("EmptySubgridV1 doesn't have a shape");
     }
 
@@ -166,7 +166,7 @@ impl Subgrid for ImportSubgridV1 {
         Box::new(self.array.indexed_iter())
     }
 
-    fn shape(&mut self) -> &[usize] {
+    fn shape(&self) -> &[usize] {
         self.array.shape()
     }
 
@@ -275,7 +275,7 @@ impl Subgrid for InterpSubgridV1 {
         self.array.is_empty()
     }
 
-    fn shape(&mut self) -> &[usize] {
+    fn shape(&self) -> &[usize] {
         self.array.shape()
     }
 
@@ -471,7 +471,7 @@ pub trait Subgrid {
     fn scale(&mut self, factor: f64);
 
     /// Return the shape of the subgrid
-    fn shape(&mut self) -> &[usize];
+    fn shape(&self) -> &[usize];
 
     /// Assume that the convolution functions for indices `a` and `b` for this grid are the same
     /// and use this to optimize the size of the grid.
