@@ -171,7 +171,12 @@ impl<T: Copy + Default + PartialEq> From<ArrayViewD<'_, T>> for PackedArray<T> {
 }
 
 /// Converts a `multi_index` into a flat index.
-fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
+///
+/// # Panics
+///
+/// TODO
+#[must_use]
+pub fn ravel_multi_index(multi_index: &[usize], shape: &[usize]) -> usize {
     assert_eq!(multi_index.len(), shape.len());
 
     multi_index
