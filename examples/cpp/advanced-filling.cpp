@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <memory>
 #include <vector>
+#include <numeric>
 
 int main() {
     // Construct the channel object based on the nb of convolutions
@@ -164,6 +165,10 @@ int main() {
     std::vector<std::size_t> zero_vector(subgrid_dim, 0);
     pineappl_grid_subgrid_shape(grid, 0, 0, 0, subgrid_shape.data());
     assert(subgrid_shape == zero_vector);
+
+    // Check that a call to an empty subgrid does not panic
+    std::vector<double> subgrid_array(0);
+    pineappl_grid_subgrid_array(grid, 0, 0, 0, subgrid_array.data());
 
     pineappl_grid_write(grid, "advanced-filling.pineappl.lz4");
 
