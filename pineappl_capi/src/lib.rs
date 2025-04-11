@@ -1773,12 +1773,13 @@ pub unsafe extern "C" fn pineappl_grid_split_channels(grid: *mut Grid) {
 pub unsafe extern "C" fn pineappl_channels_entry(
     channels: *const Channels,
     entry: usize,
+    nb_convolutions: usize,
     pdg_ids: *mut i32,
     factors: *mut f64,
 ) {
     let channels = unsafe { &*channels };
     let entry = channels.0[entry].entry();
-    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, 3 * entry.len()) };
+    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, nb_convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
     entry
