@@ -13,6 +13,7 @@ PROGRAMS = \
 	advanced-filling \
 	convolve-grid-deprecated \
 	convolve-grid \
+	get-subgrids \
 	deprecated \
 	display-channels-deprecated \
 	display-channels \
@@ -46,6 +47,9 @@ convolve-grid: convolve-grid.cpp
 
 deprecated: deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+get-subgrids: get-subgrids.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 display-channels-deprecated: display-channels-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@

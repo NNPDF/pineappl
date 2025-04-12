@@ -123,5 +123,14 @@ int main(int argc, char* argv[]) {
             << normalizations.at(bin) << '\n';
     }
 
+    // modify the particle ID representation of the Grid
+    pineappl_pid_basis ref_pid_repr_basis = pineappl_grid_pid_basis(grid);
+    assert(ref_pid_repr_basis == PINEAPPL_PID_BASIS_EVOL);
+
+    pineappl_grid_rotate_pid_basis(grid, PINEAPPL_PID_BASIS_PDG);
+
+    pineappl_pid_basis mod_pid_repr_basis = pineappl_grid_pid_basis(grid);
+    assert(mod_pid_repr_basis == PINEAPPL_PID_BASIS_PDG);
+
     pineappl_grid_delete(grid);
 }
