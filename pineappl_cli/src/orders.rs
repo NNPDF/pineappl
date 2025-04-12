@@ -119,10 +119,7 @@ impl Subcommand for Opts {
             // calculate the sum of all leading orders
             for (index, order) in orders.iter().enumerate() {
                 if (self.normalize.is_empty() && ((order.alphas + order.alpha) == lo_power))
-                    || (self
-                        .normalize
-                        .iter()
-                        .any(|o| *o == (order.alphas, order.alpha)))
+                    || (self.normalize.contains(&(order.alphas, order.alpha)))
                 {
                     normalization += results[index][bin];
                 }

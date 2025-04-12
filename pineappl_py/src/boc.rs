@@ -481,7 +481,7 @@ impl PyOrder {
             max_al,
             logs,
         )
-        .into_pyarray_bound(py)
+        .into_pyarray(py)
     }
 }
 
@@ -491,7 +491,7 @@ impl PyOrder {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "boc")?;
+    let m = PyModule::new(parent_module.py(), "boc")?;
     m.setattr(
         pyo3::intern!(m.py(), "__doc__"),
         "Interface for bins, orders and channels.",

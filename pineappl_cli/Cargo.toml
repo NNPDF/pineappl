@@ -30,9 +30,9 @@ lhapdf = { package = "managed-lhapdf", version = "0.3.4" }
 lz4_flex = { optional = true, version = "0.9.2" }
 ndarray = "0.15.4"
 ndarray-npy = { optional = true, version = "0.8.1" }
-pineappl = { path = "../pineappl", version = "=1.0.0-alpha2" }
-pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "=1.0.0-alpha2" }
-pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "=1.0.0-alpha2" }
+pineappl = { path = "../pineappl", version = "=1.0.0-alpha4" }
+pineappl_applgrid = { optional = true, path = "../pineappl_applgrid", version = "=1.0.0-alpha4" }
+pineappl_fastnlo = { optional = true, path = "../pineappl_fastnlo", version = "=1.0.0-alpha4" }
 prettytable-rs = { default-features = false, features = ["win_crlf"], version = "0.10.0" }
 rayon = "1.5.1"
 serde = { features = ["derive"], optional = true, version = "1.0.130" }

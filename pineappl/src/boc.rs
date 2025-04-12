@@ -185,10 +185,7 @@ impl Scales {
         for scale in [&self.ren, &self.fac, &self.frg].map(Clone::clone) {
             match scale {
                 ScaleFuncForm::NoScale => {}
-                ScaleFuncForm::Scale(index)
-                    if kinematics
-                        .iter()
-                        .any(|&kin| kin == Kinematics::Scale(index)) => {}
+                ScaleFuncForm::Scale(index) if kinematics.contains(&Kinematics::Scale(index)) => {}
                 ScaleFuncForm::QuadraticSum(idx1, idx2)
                 | ScaleFuncForm::QuadraticMean(idx1, idx2)
                 | ScaleFuncForm::QuadraticSumOver4(idx1, idx2)
@@ -202,8 +199,8 @@ impl Scales {
                 | ScaleFuncForm::WgtAvg(idx1, idx2)
                 | ScaleFuncForm::S2plusS1fourth(idx1, idx2)
                 | ScaleFuncForm::ExpProd2(idx1, idx2)
-                    if kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx1))
-                        && kinematics.iter().any(|&kin| kin == Kinematics::Scale(idx2)) => {}
+                    if kinematics.contains(&Kinematics::Scale(idx1))
+                        && kinematics.contains(&Kinematics::Scale(idx2)) => {}
                 _ => return false,
             }
         }
@@ -538,6 +535,10 @@ impl FromStr for BinsWithFillLimits {
                     }
 
                     vec[i] = vec[i - 1].clone();
+
+                    // // MSRV 1.86: replace the previous line with the following
+                    // let [lhs, rhs] = vec.get_disjoint_mut([i, i - 1]).unwrap();
+                    // lhs.clone_from(rhs);
                 }
             }
         }

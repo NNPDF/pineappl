@@ -130,7 +130,11 @@ impl FkTable {
         let mut idx = vec![0; dim.len()];
         let mut result = ArrayD::zeros(dim);
 
-        for ((_, bin, channel), subgrid) in self.grid().subgrids().indexed_iter() {
+        for ((_, bin, channel), subgrid) in
+            self.grid().subgrids().indexed_iter().filter(|(_, subgrid)|
+                // skip empty subgrids, because they have no node values
+                !subgrid.is_empty())
+        {
             let indices: Vec<Vec<_>> = self
                 .grid
                 .convolutions()
@@ -255,7 +259,7 @@ impl FkTable {
             let mut pids = pids.clone();
 
             for pid in &mut pids {
-                if delete.iter().any(|&delete| *pid == delete) {
+                if delete.contains(pid) {
                     for subgrid in self.grid.subgrids_mut().slice_mut(s![.., .., idx]) {
                         *subgrid = EmptySubgridV1.into();
                     }

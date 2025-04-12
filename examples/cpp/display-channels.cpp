@@ -22,6 +22,9 @@ int main(int argc, char* argv[]) {
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
+    // How many convolutions are there?
+    auto n_conv = pineappl_grid_convolutions_len(grid);
+
     // extract all channels
     auto* channels = pineappl_grid_channels(grid);
 
@@ -36,7 +39,7 @@ int main(int argc, char* argv[]) {
         auto combinations = pineappl_channels_combinations(channels, channel);
 
         std::vector<double> factors(combinations);
-        std::vector<int> pids(2 * combinations);
+        std::vector<int> pids(n_conv * combinations);
 
         // read out the channel with index given by `channel`, writing the particle identifiers into
         // `pids` and the corresponding factors into `factors`

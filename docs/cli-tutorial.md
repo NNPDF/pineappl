@@ -60,6 +60,44 @@ Let's have a closer look at what the output shows:
 - the last column `dsig/detal` shows the differential cross section (`dsig`)
   for the bin limits given in the previous two columns.
 
+In the case where the grid requires different types of convolution functions,
+the LHAPDF names need to be appended with `+p`, `+f`, or `+pf` (equivalently
+`+fp`) which respectively correspond to a polarized PDF, a fragmentation function, or
+a polarized fragmentation function.
+
+As an example, let's download a grid that contains one polarized and one
+unpolarized proton:
+```
+wget 'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4'
+```
+
+Then, to perform the convolution, run the following command:
+```
+pineappl convolve STAR_WMWP_510GEV_WM-AL-POL.pineappl.lz4 NNPDFpol11_100+p,CT18NNLO
+```
+
+where we specified the PDF set `NNPDFpol10_100` to be polarized. Note that
+the order in which the PDF sets are passed do not matter; `pineappl` will
+automatically identify which object should be convolved with a given PDF set.
+
+If successful, the command above should print the following result (again the
+numbers don't really matter):
+```
+b                  eta                   dsig/deta
+                   []                      [pb]
+-+------------------+------------------+-----------
+0               -1.5                 -1 7.6327588e1
+1                 -1               -0.5 5.6712977e2
+2               -0.5                  0 1.8279428e3
+3                  0 0.4999999999999999 3.5666164e3
+4 0.4999999999999999                  1 3.9650498e3
+5                  1                1.5 1.2597799e3
+```
+
+By default, `pineappl` uses the first PDF set to compute the value of
+$\alpha_s(Q^2)$. This can be changed by passing the position of the PDF set as
+an index (starting from `0`) to the `--use-alphas-from` flag.
+
 ## `pineappl -h`: Getting help
 
 One of the most difficult aspects of learning a new program is remembering how

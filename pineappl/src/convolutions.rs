@@ -285,13 +285,13 @@ impl GridConvCache<'_, '_> {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ConvType {
-    /// Unpolarized initial-state hadron.
+    /// Unpolarized parton distribution function.
     UnpolPDF,
-    /// Polarized initial-state hadron.
+    /// Polarized parton distribution function.
     PolPDF,
-    /// Unpolarized final-state hadron.
+    /// Unpolarized fragmentation function.
     UnpolFF,
-    /// Polarized final-state hadron.
+    /// Polarized fragmentation function.
     PolFF,
 }
 
@@ -307,7 +307,7 @@ impl ConvType {
         }
     }
 
-    /// Check whether the current convolution is of type initial-state hadron.
+    /// Check whether the current convolution is of type parton distribution function.
     #[must_use]
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)

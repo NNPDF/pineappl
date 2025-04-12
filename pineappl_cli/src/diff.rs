@@ -69,10 +69,7 @@ impl Subcommand for Opts {
                 (order.logxir == 0)
                     && (order.logxif == 0)
                     && (self.orders1.is_empty()
-                        || self
-                            .orders1
-                            .iter()
-                            .any(|&o| (order.alphas, order.alpha) == o))
+                        || self.orders1.contains(&(order.alphas, order.alpha)))
             })
             .collect();
         let orders2: HashSet<_> = grid2
@@ -82,10 +79,7 @@ impl Subcommand for Opts {
                 (order.logxir == 0)
                     && (order.logxif == 0)
                     && (self.orders2.is_empty()
-                        || self
-                            .orders2
-                            .iter()
-                            .any(|&o| (order.alphas, order.alpha) == o))
+                        || self.orders2.contains(&(order.alphas, order.alpha)))
             })
             .collect();
 

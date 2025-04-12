@@ -126,7 +126,7 @@ impl PyInterp {
 ///
 /// Raises an error if (sub)module is not found.
 pub fn register(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "interpolation")?;
+    let m = PyModule::new(parent_module.py(), "interpolation")?;
     m.setattr(pyo3::intern!(m.py(), "__doc__"), "Interpolation submodule.")?;
     pyo3::py_run!(
         parent_module.py(),
