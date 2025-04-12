@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
         // read out the channel with index given by `channel`, writing the particle identifiers into
         // `pids` and the corresponding factors into `factors`
-        pineappl_channels_entry(channels, channel, n_conv, pids.data(), factors.data());
+        pineappl_channels_entry(channels, channel, pids.data(), factors.data());
 
         for (std::size_t combination = 0; combination != combinations; ++combination) {
             auto factor = factors.at(combination);

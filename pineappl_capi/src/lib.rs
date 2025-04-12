@@ -1760,26 +1760,28 @@ pub unsafe extern "C" fn pineappl_grid_split_channels(grid: *mut Grid) {
     grid.split_channels();
 }
 
-/// Similar to `pineappl_lumi_entry` but for luminosity channels that involve 3 or more partons, ie.
-/// in the case of multiple convolutions.
+/// Read out the channel with index `entry` of the given `channels`. The PDG ids and factors will
+/// be copied into `pdg_ids` and `factors`.
 ///
 /// # Safety
 ///
-/// The parameter `channels` must point to a valid `Channels` object created by `pineappl_channels_new` or
-/// `pineappl_grid_channels`. The parameter `factors` must point to an array as long as the size
-/// returned by `pineappl_channels_combinations` and `pdg_ids` must point to an array that is twice as
-/// long.
+/// The parameter `channels` must point to a valid [`Channels`] object created by
+/// [`pineappl_channels_new`] or [`pineappl_grid_channels`]. The parameter `factors` must point to
+/// an array as long as the result of [`pineappl_channels_combinations`] and `pdg_ids` must
+/// point to an array as long as the result multiplied with the number of convolutions.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_entry(
     channels: *const Channels,
     entry: usize,
-    nb_convolutions: usize,
     pdg_ids: *mut i32,
     factors: *mut f64,
 ) {
     let channels = unsafe { &*channels };
     let entry = channels.0[entry].entry();
-    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, nb_convolutions * entry.len()) };
+    // if the channel has no entries we assume no convolutions, which is OK we don't copy anything
+    // in this case
+    let convolutions = entry.get(0).map_or(0, |x| x.0.len());
+    let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
     entry
