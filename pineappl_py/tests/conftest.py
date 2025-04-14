@@ -214,6 +214,7 @@ def download_objects(tmp_path_factory):
                 args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                timeout=15,
             )
             return file_path
         except OSError as error:
