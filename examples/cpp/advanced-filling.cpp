@@ -56,7 +56,7 @@ int main() {
     pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0; // Mapping method
     pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
     pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-    pineappl_interp_tuples interpolations[3] = {
+    pineappl_interp interpolations[3] = {
         { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
@@ -71,8 +71,8 @@ int main() {
     // create a new grid with the previously defined channels, 3 perturbative orders defined by the
     // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
     // parameters in `keyval`.
-    auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
-        bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
+    auto* grid = pineappl_grid_new2(bins.size() - 1, bins.data(), orders.size() / 5, orders.data(),
+        channels, pid_basis, convolution_types, pdg_ids, 3, interpolations, kinematics, mu_scales);
 
     // now we no longer need `channels`
     pineappl_channels_delete(channels);

@@ -59,7 +59,7 @@ use itertools::izip;
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
-use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
@@ -91,7 +91,7 @@ pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
+fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
     let mut q2_min = 1e2;
     let mut q2_max = 1e8;
     let mut q2_nodes = 40;
@@ -213,7 +213,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
     }
 
     vec![
-        Interp::new(
+        InterpMain::new(
             q2_min,
             q2_max,
             q2_nodes,
@@ -222,7 +222,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         ),
-        Interp::new(
+        InterpMain::new(
             x1_min,
             x1_max,
             x1_nodes,
@@ -231,7 +231,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
             Map::ApplGridF2,
             InterpMeth::Lagrange,
         ),
-        Interp::new(
+        InterpMain::new(
             x2_min,
             x2_max,
             x2_nodes,
@@ -1465,27 +1465,21 @@ pub struct Channels(Vec<Channel>);
 
 /// Type for defining the interpolation object
 #[repr(C)]
-pub struct InterpTuples {
-    node_min: f64,
-    node_max: f64,
-    nb_nodes: usize,
-    interp_degree: usize,
-    reweighting_method: ReweightMeth,
-    mapping: Map,
-    interpolation_method: InterpMeth,
-}
-
-#[must_use]
-fn construct_interpolation(interp: &InterpTuples) -> Interp {
-    Interp::new(
-        interp.node_min,
-        interp.node_max,
-        interp.nb_nodes,
-        interp.interp_degree,
-        interp.reweighting_method,
-        interp.mapping,
-        interp.interpolation_method,
-    )
+pub struct Interp {
+    /// TODO
+    pub min: f64,
+    /// TODO
+    pub max: f64,
+    /// TODO
+    pub nodes: usize,
+    /// TODO
+    pub order: usize,
+    /// TODO
+    pub reweight: ReweightMeth,
+    /// TODO
+    pub map: Map,
+    /// TODO
+    pub interp_meth: InterpMeth,
 }
 
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
@@ -1605,30 +1599,32 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 ///   `0` -> `ScaleFuncForm::NoScale`, ..., `n` -> `ScaleFuncForm::Scale(n - 1)`.
 ///
 /// # Safety
+///
 /// TODO
 ///
 /// # Panics
+///
 /// TODO
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
-    pid_basis: PidBasis,
-    channels: *const Channels,
-    orders: usize,
-    order_params: *const u8,
     bins: usize,
     bin_limits: *const f64,
-    nb_convolutions: usize,
+    orders: usize,
+    order_params: *const u8,
+    channels: *const Channels,
+    pid_basis: PidBasis,
     convolution_types: *const ConvType,
-    pdg_ids: *const c_int,
+    convolution_pdg_ids: *const c_int,
+    interpolations: usize,
+    interp_info: *const Interp,
     kinematics: *const Kinematics,
-    interpolations: *const InterpTuples,
     mu_scales: *const usize,
 ) -> Box<Grid> {
-    // Luminosity channels
-    let channels = unsafe { &*channels };
-
-    // Perturbative orders
+    let bins = BinsWithFillLimits::from_fill_limits(
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
     let order_params = unsafe { slice::from_raw_parts(order_params, 5 * orders) };
     let orders: Vec<_> = order_params
         .chunks(5)
@@ -1640,32 +1636,47 @@ pub unsafe extern "C" fn pineappl_grid_new2(
             logxia: s[4],
         })
         .collect();
-
-    let bins = BinsWithFillLimits::from_fill_limits(
-        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-    )
-    .unwrap();
+    let channels = unsafe { &*channels };
 
     // Construct the convolution objects
+    let convolutions = channels.0[0].entry()[0].0.len();
     let convolution_types =
-        unsafe { slice::from_raw_parts(convolution_types, nb_convolutions).to_vec() };
-    let pdg_ids = unsafe { slice::from_raw_parts(pdg_ids, nb_convolutions).to_vec() };
-    let convolutions = izip!(convolution_types.iter(), pdg_ids.iter())
-        .map(|(&conv, &pdg_value)| Conv::new(conv, pdg_value))
+        unsafe { slice::from_raw_parts(convolution_types, convolutions).to_vec() };
+    let convolution_pdg_ids =
+        unsafe { slice::from_raw_parts(convolution_pdg_ids, convolutions).to_vec() };
+    let convolutions = convolution_types
+        .iter()
+        .zip(convolution_pdg_ids)
+        .map(|(&convolution_type, pdg_id)| Conv::new(convolution_type, pdg_id))
         .collect();
 
     // Grid interpolations
-    let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
-    let interp_vecs: Vec<Interp> = interp_slices.iter().map(construct_interpolation).collect();
+    let interp_slices = unsafe { std::slice::from_raw_parts(interp_info, interpolations) };
+    let interp_vecs: Vec<_> = interp_slices
+        .iter()
+        .map(|interp| {
+            InterpMain::new(
+                interp.min,
+                interp.max,
+                interp.nodes,
+                interp.order,
+                interp.reweight,
+                interp.map,
+                interp.interp_meth,
+            )
+        })
+        .collect();
 
     // Construct the kinematic variables
-    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()).to_vec() };
+    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
 
     // Scales. An array containing the values of {ren, fac, frg}
     let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
-    let mu_scales_vec: Vec<ScaleFuncForm> = mu_scales
+    let mu_scales_vec: Vec<_> = mu_scales
         .iter()
         .map(|&scale| {
+            // TODO: this doesn't allow all other `ScaleFuncForm`, for instance
+            // `ScaleFuncForm::QuadraticSum`
             if scale == 0 {
                 ScaleFuncForm::NoScale
             } else {
