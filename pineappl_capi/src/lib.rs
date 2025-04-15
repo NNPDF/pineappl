@@ -1460,8 +1460,11 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 // Here starts the generalized C-API interface.
 
 /// Type for defining a Channel function.
-#[derive(Default)]
-pub struct Channels(Vec<Channel>, usize);
+#[derive(Clone)]
+pub struct Channels {
+    channels: Vec<Channel>,
+    convolutions: usize,
+}
 
 /// Type for defining the interpolation object
 #[repr(C)]
@@ -1487,7 +1490,10 @@ pub struct Interp {
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
-    Box::new(Channels(Vec::new(), convolutions))
+    Box::new(Channels {
+        channels: Vec::new(),
+        convolutions,
+    })
 }
 
 /// Adds a generalized linear combination of initial states to the Luminosity.
@@ -1506,20 +1512,23 @@ pub unsafe extern "C" fn pineappl_channels_add(
     pdg_id_combinations: *const i32,
     factors: *const f64,
 ) {
-    let channels = unsafe { &mut *channels };
+    let &mut Channels {
+        ref mut channels,
+        convolutions,
+    } = unsafe { &mut *channels };
     let pdg_id_pairs =
-        unsafe { slice::from_raw_parts(pdg_id_combinations, channels.1 * combinations) };
+        unsafe { slice::from_raw_parts(pdg_id_combinations, convolutions * combinations) };
     let factors = if factors.is_null() {
         vec![1.0; combinations]
     } else {
         unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
     };
 
-    channels.0.push(Channel::new(
+    channels.push(Channel::new(
         pdg_id_pairs
-            .chunks(channels.1)
+            .chunks(convolutions)
             .zip(factors)
-            .map(|x| ((0..channels.1).map(|i| x.0[i]).collect(), x.1))
+            .map(|x| ((0..convolutions).map(|i| x.0[i]).collect(), x.1))
             .collect(),
     ));
 }
@@ -1534,10 +1543,10 @@ pub unsafe extern "C" fn pineappl_channels_add(
 pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channels> {
     let grid = unsafe { &*grid };
 
-    Box::new(Channels(
-        grid.channels().to_vec(),
-        grid.convolutions().len(),
-    ))
+    Box::new(Channels {
+        channels: grid.channels().to_vec(),
+        convolutions: grid.convolutions().len(),
+    })
 }
 
 /// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
@@ -1548,9 +1557,9 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
 /// `pineappl_grid_channels`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
-    let channels = unsafe { &*channels };
+    let Channels { channels, .. } = unsafe { &*channels };
 
-    channels.0.len()
+    channels.len()
 }
 
 /// An exact duplicate of `pineappl_lumi_combinations` to make naming (lumi -> channel) consistent.
@@ -1564,9 +1573,9 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
     channels: *const Channels,
     entry: usize,
 ) -> usize {
-    let channels = unsafe { &*channels };
+    let Channels { channels, .. } = unsafe { &*channels };
 
-    channels.0[entry].entry().len()
+    channels[entry].entry().len()
 }
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
@@ -1638,10 +1647,12 @@ pub unsafe extern "C" fn pineappl_grid_new2(
             logxia: s[4],
         })
         .collect();
-    let channels = unsafe { &*channels };
+    let Channels {
+        channels,
+        convolutions,
+    } = unsafe { &*channels }.clone();
 
     // Construct the convolution objects
-    let convolutions = channels.1;
     let convolution_types =
         unsafe { slice::from_raw_parts(convolution_types, convolutions).to_vec() };
     let convolution_pdg_ids =
@@ -1690,7 +1701,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     Box::new(Grid::new(
         bins,
         orders,
-        channels.0.clone(),
+        channels,
         pid_basis,
         convolutions,
         interp_vecs,
@@ -1814,11 +1825,11 @@ pub unsafe extern "C" fn pineappl_channels_entry(
     pdg_ids: *mut i32,
     factors: *mut f64,
 ) {
-    let channels = unsafe { &*channels };
-    let entry = channels.0[entry].entry();
-    // if the channel has no entries we assume no convolutions, which is OK we don't copy anything
-    // in this case
-    let convolutions = entry.get(0).map_or(0, |x| x.0.len());
+    let Channels {
+        channels,
+        convolutions,
+    } = unsafe { &*channels };
+    let entry = channels[entry].entry();
     let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
