@@ -115,11 +115,8 @@ int main() {
     // ---
     // Create all channels
 
-    // this object will contain all channels (initial states) that we define
-    auto* channels = pineappl_channels_new();
-
-    // Specify the dimension of the channel, ie the number of convolutions required
-    std::size_t nb_convolutions = 2;
+    // this object will contain all channels (for two initial states) that we define
+    auto* channels = pineappl_channels_new(2);
 
     // photon-photon initial state, where `22` is the photon (PDG MC ids)
     int32_t pids1[] = { 22, 22 };
@@ -128,7 +125,7 @@ int main() {
     double factors1[] = { 1.0 };
 
     // define the channel #0
-    pineappl_channels_add(channels, 1, nb_convolutions, pids1, factors1);
+    pineappl_channels_add(channels, 1, pids1, factors1);
 
     // create another channel, which we won't fill, however
 
@@ -143,7 +140,7 @@ int main() {
     // can also pass `nullptr`
 
     // define the channel #1
-    pineappl_channels_add(channels, 3, nb_convolutions, pids2, nullptr);
+    pineappl_channels_add(channels, 3, pids2, nullptr);
 
     // ---
     // Specify the perturbative orders that will be filled into the grid
@@ -201,7 +198,7 @@ int main() {
     pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0; // Mapping method
     pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
     pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-    pineappl_interp_tuples interpolations[3] = {
+    pineappl_interp interpolations[3] = {
         { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
@@ -216,8 +213,8 @@ int main() {
     // create a new grid with the previously defined channels, 3 perturbative orders defined by the
     // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
     // parameters in `keyval`.
-    auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
-        bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
+    auto* grid = pineappl_grid_new2(bins.size() - 1, bins.data(), orders.size() / 5, orders.data(),
+        channels, pid_basis, convolution_types, pdg_ids, 3, interpolations, kinematics, mu_scales);
 
     // now we no longer need `keyval` and `channels`
     pineappl_channels_delete(channels);
