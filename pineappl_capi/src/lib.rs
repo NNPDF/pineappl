@@ -368,7 +368,7 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 /// See [`pineappl_grid_convolve_with_one`].
 #[deprecated(
     since = "0.8.0",
-    note = "please use `pineappl_grid_convolve_with_one` instead"
+    note = "use `pineappl_grid_convolve_with_one` instead"
 )]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
@@ -406,7 +406,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 /// See [`pineappl_grid_convolve_with_two`].
 #[deprecated(
     since = "0.8.0",
-    note = "please use `pineappl_grid_convolve_with_two` instead"
+    note = "use `pineappl_grid_convolve_with_two` instead"
 )]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
@@ -601,6 +601,7 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill(
     grid: *mut Grid,
@@ -625,6 +626,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_all2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill_all(
     grid: *mut Grid,
@@ -650,6 +652,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, all remaining pointer parameters must be
 /// arrays as long as specified by `size`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_array2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill_array(
     grid: *mut Grid,
@@ -684,6 +687,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_channels` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
     let grid = unsafe { &*grid };
@@ -698,6 +702,7 @@ pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The pointer `order_params` must point to an array as large
 /// as four times the number of orders in `grid`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_order_params2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_params: *mut u32) {
     let grid = unsafe { &*grid };
@@ -750,6 +755,7 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_new2` instead")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new(
@@ -890,6 +896,7 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_split_channels` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
@@ -1005,6 +1012,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_metadata` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_key_value(
     grid: *const Grid,
@@ -1043,6 +1051,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_set_metadata` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid: *mut Grid,
@@ -1153,6 +1162,7 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
 /// `pdg_id_pairs` must be an array with length `2 * combinations`, and `factors` with length of
 /// `combinations`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_add` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_add(
     lumi: *mut Lumi,
@@ -1183,6 +1193,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 ///
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_combinations` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: usize) -> usize {
     let lumi = unsafe { &*lumi };
@@ -1196,6 +1207,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 ///
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_count` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
@@ -1204,6 +1216,7 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_delete` instead")]
 #[no_mangle]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
@@ -1217,6 +1230,7 @@ pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 /// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
 /// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
 /// long.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_entry` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_entry(
     lumi: *const Lumi,
@@ -1243,6 +1257,7 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
 /// Creates a new luminosity function and returns a pointer to it. If no longer needed, the object
 /// should be deleted using `pineappl_lumi_delete`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_new` instead")]
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
@@ -1260,6 +1275,7 @@ pub struct KeyVal {
 }
 
 /// Delete the previously created object pointed to by `key_vals`.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
@@ -1270,6 +1286,7 @@ pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
@@ -1285,6 +1302,7 @@ pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *con
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_double(
@@ -1303,6 +1321,7 @@ pub unsafe extern "C" fn pineappl_keyval_double(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
@@ -1318,6 +1337,7 @@ pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *cons
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_string(
@@ -1331,6 +1351,7 @@ pub unsafe extern "C" fn pineappl_keyval_string(
 }
 
 /// Return a pointer to newly-created `pineappl_keyval` object.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
@@ -1343,6 +1364,7 @@ pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_bool(
     key_vals: *mut KeyVal,
@@ -1363,6 +1385,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_bool(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_double(
     key_vals: *mut KeyVal,
@@ -1383,6 +1406,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_double(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_int(
     key_vals: *mut KeyVal,
@@ -1403,6 +1427,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_int(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_string(
     key_vals: *mut KeyVal,
