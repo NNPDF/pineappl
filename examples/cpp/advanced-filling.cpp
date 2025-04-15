@@ -11,10 +11,10 @@ int main() {
     // Construct the channel object based on the nb of convolutions
     std::size_t nb_convolutions = 2;
     std::size_t nb_channels = 2;
-    auto* channels = pineappl_channels_new();
+    auto* channels = pineappl_channels_new(nb_convolutions);
     int32_t pids[] = { 2, -2, 4, -4 };
     double factors[] = { 1.0, 1.0 };
-    pineappl_channels_add(channels, nb_channels, nb_convolutions, pids, factors);
+    pineappl_channels_add(channels, nb_channels, pids, factors);
 
     std::size_t channel_count = 1;
 

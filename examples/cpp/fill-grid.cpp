@@ -115,11 +115,8 @@ int main() {
     // ---
     // Create all channels
 
-    // this object will contain all channels (initial states) that we define
-    auto* channels = pineappl_channels_new();
-
-    // Specify the dimension of the channel, ie the number of convolutions required
-    std::size_t nb_convolutions = 2;
+    // this object will contain all channels (for two initial states) that we define
+    auto* channels = pineappl_channels_new(2);
 
     // photon-photon initial state, where `22` is the photon (PDG MC ids)
     int32_t pids1[] = { 22, 22 };
@@ -128,7 +125,7 @@ int main() {
     double factors1[] = { 1.0 };
 
     // define the channel #0
-    pineappl_channels_add(channels, 1, nb_convolutions, pids1, factors1);
+    pineappl_channels_add(channels, 1, pids1, factors1);
 
     // create another channel, which we won't fill, however
 
@@ -143,7 +140,7 @@ int main() {
     // can also pass `nullptr`
 
     // define the channel #1
-    pineappl_channels_add(channels, 3, nb_convolutions, pids2, nullptr);
+    pineappl_channels_add(channels, 3, pids2, nullptr);
 
     // ---
     // Specify the perturbative orders that will be filled into the grid

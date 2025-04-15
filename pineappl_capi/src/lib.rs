@@ -1461,7 +1461,7 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 
 /// Type for defining a Channel function.
 #[derive(Default)]
-pub struct Channels(Vec<Channel>);
+pub struct Channels(Vec<Channel>, usize);
 
 /// Type for defining the interpolation object
 #[repr(C)]
@@ -1486,8 +1486,8 @@ pub struct Interp {
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_channels_new() -> Box<Channels> {
-    Box::default()
+pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
+    Box::new(Channels(Vec::new(), convolutions))
 }
 
 /// Adds a generalized linear combination of initial states to the Luminosity.
@@ -1503,13 +1503,12 @@ pub extern "C" fn pineappl_channels_new() -> Box<Channels> {
 pub unsafe extern "C" fn pineappl_channels_add(
     channels: *mut Channels,
     combinations: usize,
-    nb_convolutions: usize,
     pdg_id_combinations: *const i32,
     factors: *const f64,
 ) {
     let channels = unsafe { &mut *channels };
     let pdg_id_pairs =
-        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_convolutions * combinations) };
+        unsafe { slice::from_raw_parts(pdg_id_combinations, channels.1 * combinations) };
     let factors = if factors.is_null() {
         vec![1.0; combinations]
     } else {
@@ -1518,9 +1517,9 @@ pub unsafe extern "C" fn pineappl_channels_add(
 
     channels.0.push(Channel::new(
         pdg_id_pairs
-            .chunks(nb_convolutions)
+            .chunks(channels.1)
             .zip(factors)
-            .map(|x| ((0..nb_convolutions).map(|i| x.0[i]).collect(), x.1))
+            .map(|x| ((0..channels.1).map(|i| x.0[i]).collect(), x.1))
             .collect(),
     ));
 }
@@ -1535,7 +1534,10 @@ pub unsafe extern "C" fn pineappl_channels_add(
 pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channels> {
     let grid = unsafe { &*grid };
 
-    Box::new(Channels(grid.channels().to_vec()))
+    Box::new(Channels(
+        grid.channels().to_vec(),
+        grid.convolutions().len(),
+    ))
 }
 
 /// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
@@ -1639,7 +1641,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let channels = unsafe { &*channels };
 
     // Construct the convolution objects
-    let convolutions = channels.0[0].entry()[0].0.len();
+    let convolutions = channels.1;
     let convolution_types =
         unsafe { slice::from_raw_parts(convolution_types, convolutions).to_vec() };
     let convolution_pdg_ids =
