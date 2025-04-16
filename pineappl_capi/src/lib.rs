@@ -1951,10 +1951,31 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     };
     let shape = unsafe { slice::from_raw_parts_mut(shape, grid.kinematics().len()) };
 
-    shape.copy_from_slice(&subgrid_shape);
+    shape.copy_from_slice(subgrid_shape);
 }
 
-/// Get the subgrid for a given bin, channel, and order
+/// Get the nodes of the subgrid.
+///
+/// # Safety
+///
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_node_values(
+    grid: *const Grid,
+    bin: usize,
+    order: usize,
+    channel: usize,
+    node_values: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+    let subgrid = &grid.subgrids()[[order, bin, channel]];
+
+    let flatten_subgrid: Vec<f64> = subgrid.node_values().into_iter().flatten().collect();
+    let node_values = unsafe { slice::from_raw_parts_mut(node_values, flatten_subgrid.len()) };
+
+    node_values.copy_from_slice(flatten_subgrid.as_slice());
+}
+
+/// Get the subgrid for a given bin, channel, and order.
 ///
 /// # Safety
 ///
@@ -1980,7 +2001,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
             unsafe { slice::from_raw_parts_mut(subgrid_array, shape.iter().product()) };
 
         for (index, value) in subgrid.indexed_iter() {
-            let ravel_index = ravel_multi_index(index.as_slice(), &shape);
+            let ravel_index = ravel_multi_index(index.as_slice(), shape);
             subgrid_array[ravel_index] = value;
         }
     }
