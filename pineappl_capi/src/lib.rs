@@ -1959,7 +1959,7 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
 /// # Safety
 ///
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_node_values(
+pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
     grid: *const Grid,
     bin: usize,
     order: usize,

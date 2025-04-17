@@ -69,7 +69,7 @@ std::vector<double> get_node_values(
 
     // Extract the values of the nodes as a flattened array
     std::vector<double> node_values(nodes_size);
-    pineappl_grid_node_values(grid, bin, order, channel, node_values.data());
+    pineappl_grid_subgrid_node_values(grid, bin, order, channel, node_values.data());
 
     return node_values;
 }
