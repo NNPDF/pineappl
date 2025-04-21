@@ -198,27 +198,8 @@ def fake_grids():
 @pytest.fixture
 def download_objects(tmp_path_factory):
     def _download_fk(objname: str) -> None:
-        download_dir = tmp_path_factory.mktemp("data")
-        file_path = download_dir / f"{objname}"
-        args = [
-            "wget",
-            "--no-verbose",
-            "--no-clobber",
-            "-P",
-            f"{download_dir}",
-            f"https://data.nnpdf.science/pineappl/test-data/{objname}",
-        ]
-
-        try:
-            _ = subprocess.run(
-                args,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=15,
-            )
-            return file_path
-        except OSError as error:
-            msg = f"Failed to execute the command {args}."
-            raise EnvironmentError(msg) from error
+        import os
+        path = os.path.abspath(f"../test-data/{objname}")
+        return path
 
     return _download_fk
