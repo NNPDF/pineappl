@@ -1798,7 +1798,7 @@ pub unsafe extern "C" fn pineappl_channels_entry(
     let entry = channels.0[entry].entry();
     // if the channel has no entries we assume no convolutions, which is OK we don't copy anything
     // in this case
-    let convolutions = entry.get(0).map_or(0, |x| x.0.len());
+    let convolutions = entry.first().map_or(0, |x| x.0.len());
     let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
@@ -1915,6 +1915,18 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
         channel_mask,
         mu_scales,
     ));
+}
+
+/// Get the type of convolutions for this Grid given an index.
+///
+/// # Safety
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_conv_type(grid: *const Grid, index: usize) -> ConvType {
+    let grid = unsafe { &*grid };
+
+    grid.convolutions()[index].conv_type()
 }
 
 /// Get the number of convolutions for a given Grid.
@@ -2154,7 +2166,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     let operators =
         unsafe { slice::from_raw_parts(operators, conv_types.len() * flattened_shapes) };
 
-    // Chunk the operators
+    // Split the operators into vectors corresponding to the Q2 slices
     let mut start_index = 0;
     let op_chunk: Vec<_> = op_info
         .iter()
@@ -2166,11 +2178,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
             op_range
         })
         .collect();
-    let op_slice: &[Vec<_>] = &op_chunk;
 
-    // Chunk the objects
+    // Chunk the operators depending on the number of convolutions
     let opinfo_chunk = op_info.chunks_exact(conv_types.len());
-    let operator_chunk = op_slice.chunks_exact(conv_types.len());
+    let operator_chunk = op_chunk.chunks_exact(conv_types.len());
 
     let ren1_len = evolve_info.ren1.len();
     let ren1 = unsafe { Vec::from_raw_parts(ren1, ren1_len, ren1_len) };
