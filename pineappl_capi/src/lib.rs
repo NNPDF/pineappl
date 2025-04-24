@@ -56,14 +56,18 @@
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
+use ndarray::{Array4, CowArray, Ix4};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
+use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
+use pineappl::fk_table::FkTable;
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
@@ -1463,6 +1467,20 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
     )
 }
 
+/// Type for defining the Operator info.
+#[repr(C)]
+pub struct OperatorInfo {
+    fac0: f64,
+    fac1: f64,
+    x0: *mut f64,
+    x1: *mut f64,
+    pids0: *mut i32,
+    pids1: *mut i32,
+    pid_basis: PidBasis,
+    conv_type: ConvType,
+    tensor_shape: *mut usize,
+}
+
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
@@ -2005,4 +2023,203 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
             subgrid_array[ravel_index] = value;
         }
     }
+}
+
+/// Get the shape of the objects represented in the evolve info.
+///
+/// # Safety
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
+    grid: *const Grid,
+    order_mask: *const bool,
+    shape_info: *mut usize,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+    let shape_info = unsafe { slice::from_raw_parts_mut(shape_info, 5) };
+
+    let evolve_info = grid.evolve_info(order_mask);
+    let evinfo_shapes = [
+        evolve_info.fac1.len(),
+        evolve_info.frg1.len(),
+        evolve_info.pids1.len(),
+        evolve_info.x1.len(),
+        evolve_info.ren1.len(),
+    ];
+
+    shape_info.copy_from_slice(&evinfo_shapes);
+}
+
+/// Get the values of the parameters contained in evolve info.
+///
+/// # Safety
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info(
+    grid: *const Grid,
+    order_mask: *const bool,
+    fac1: *mut f64,
+    frg1: *mut f64,
+    pids1: *mut i32,
+    x1: *mut f64,
+    ren1: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    let evolve_info = grid.evolve_info(order_mask);
+    let evinfo_shapes = [
+        evolve_info.fac1.len(),
+        evolve_info.frg1.len(),
+        evolve_info.pids1.len(),
+        evolve_info.x1.len(),
+        evolve_info.ren1.len(),
+    ];
+
+    let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evinfo_shapes[0]) };
+    let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evinfo_shapes[1]) };
+    let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evinfo_shapes[2]) };
+    let x1 = unsafe { slice::from_raw_parts_mut(x1, evinfo_shapes[3]) };
+    let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evinfo_shapes[4]) };
+
+    fac1.copy_from_slice(&grid.evolve_info(order_mask).fac1);
+    frg1.copy_from_slice(&grid.evolve_info(order_mask).frg1);
+    pids1.copy_from_slice(&grid.evolve_info(order_mask).pids1);
+    x1.copy_from_slice(&grid.evolve_info(order_mask).x1);
+    ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
+}
+
+/// Evolve a grid and dump the resulting FK table
+///
+/// # Safety
+///
+/// TODO
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve(
+    grid: *mut Grid,
+    op_info: *mut OperatorInfo,
+    order_mask: *const bool,
+    operators: *mut f64,
+    xi: *mut f64,
+    ren1: *mut f64,
+    alphas: *mut f64,
+) -> Box<FkTable> {
+    let grid = unsafe { &mut *grid };
+
+    // Determine the number of EKOs needed to evolve this Grid
+    let conv_types: HashSet<_> = grid
+        .convolutions()
+        .iter()
+        .map(pineappl::convolutions::Conv::conv_type)
+        .collect();
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    // Determine the number of q2 values which defines the slices
+    let evolve_info = grid.evolve_info(order_mask);
+
+    // The length of the operator info is `N_conv * N_q2`
+    let op_info =
+        unsafe { slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len()) };
+
+    // Determine the total length of the operators when flattened
+    let flattened_shapes: usize = op_info
+        .iter()
+        .map(|op| {
+            let shape = unsafe { slice::from_raw_parts(op.tensor_shape, 4) };
+            shape.iter().product::<usize>()
+        })
+        .sum();
+    let operators =
+        unsafe { slice::from_raw_parts(operators, conv_types.len() * flattened_shapes) };
+
+    // Chunk the operators
+    let mut start_index = 0;
+    let op_chunk: Vec<_> = op_info
+        .iter()
+        .map(|op| {
+            let eko_shape = unsafe { slice::from_raw_parts(op.tensor_shape, 4) };
+            let end_idx = start_index + eko_shape.iter().product::<usize>();
+            let op_range = operators[start_index..end_idx].to_vec();
+            start_index = end_idx + 1;
+            op_range
+        })
+        .collect();
+    let op_slice: &[Vec<_>] = &op_chunk;
+
+    // Chunk the objects
+    let opinfo_chunk = op_info.chunks_exact(conv_types.len());
+    let operator_chunk = op_slice.chunks_exact(conv_types.len());
+
+    let ren1_len = evolve_info.ren1.len();
+    let ren1 = unsafe { Vec::from_raw_parts(ren1, ren1_len, ren1_len) };
+    let alphas = unsafe { Vec::from_raw_parts(alphas, ren1_len, ren1_len) };
+    let xi = unsafe { Vec::from_raw_parts(xi, 3, 3) };
+
+    // let mut start_idx = 0;
+    let slices = opinfo_chunk
+        .into_iter()
+        .zip(operator_chunk)
+        .map(|(op_chunk, op_range)| {
+            op_chunk.iter().zip(op_range).map(|(opinfo, op_values)| {
+                let eko_shape = unsafe { slice::from_raw_parts(opinfo.tensor_shape, 4) };
+
+                let op_pids0 =
+                    unsafe { Vec::from_raw_parts(opinfo.pids0, eko_shape[0], eko_shape[0]) };
+                let op_x0 = unsafe { Vec::from_raw_parts(opinfo.x0, eko_shape[1], eko_shape[1]) };
+                let op_pids1 =
+                    unsafe { Vec::from_raw_parts(opinfo.pids1, eko_shape[2], eko_shape[2]) };
+                let op_x1 = unsafe { Vec::from_raw_parts(opinfo.x1, eko_shape[3], eko_shape[3]) };
+
+                let operator_slice_info = OperatorSliceInfo {
+                    pid_basis: opinfo.pid_basis,
+                    fac0: opinfo.fac0,
+                    pids0: op_pids0,
+                    x0: op_x0,
+                    fac1: opinfo.fac1,
+                    pids1: op_pids1,
+                    x1: op_x1,
+                    conv_type: opinfo.conv_type,
+                };
+
+                let array = Array4::from_shape_vec(
+                    Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
+                    op_values.clone(),
+                )
+                .expect("Shape mismatch or invalid input.");
+
+                Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
+            })
+        })
+        .collect();
+
+    let fk_table = grid.evolve(
+        slices,
+        order_mask,
+        (xi[0], xi[1], xi[2]),
+        &AlphasTable { ren1, alphas },
+    );
+
+    Box::new(fk_table.unwrap())
 }

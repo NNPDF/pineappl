@@ -282,7 +282,7 @@ impl GridConvCache<'_, '_> {
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, Hash)]
 pub enum ConvType {
     /// Unpolarized parton distribution function.
     UnpolPDF,
