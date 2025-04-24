@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <pineappl_capi.h>
 
 #include <cassert>
@@ -11,6 +12,7 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include <random>
 
 double FAC0 = 1.65;
 
@@ -43,6 +45,33 @@ std::vector<OperatorInfo> get_operator_info(
     return opinfo_slices;
 }
 
+std::vector<double> generate_fake_ekos(
+    double q2,
+    std::vector<int> pids0,
+    std::vector<double> x0,
+    std::vector<int> pids1,
+    std::vector<double> x1
+) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> distrib(q2 / 1000, q2 / 100);
+
+    std::size_t flat_len = x0.size() * x1.size() * pids0.size() * pids1.size();
+    std::vector<double> ops(flat_len);
+
+    for (std::size_t i = 0; i != pids1.size(); i++) {
+        for (std::size_t j = 0; j != x1.size(); j++) {
+            for (std::size_t k = 0; k != pids0.size(); i++) {
+                for (std::size_t l = 0; l != x0.size(); i++) {
+                    ops.push_back(distrib(gen));
+                }
+            }
+        }
+    }
+
+    return ops;
+}
+
 int main() {
     std::string filename = "drell-yan-rap-ll.pineappl.lz4";
 
@@ -69,9 +98,8 @@ int main() {
 
     // Get the shape of the evolve info objects
     std::vector<std::size_t> evinfo_shape(5);
-    std::unique_ptr<bool[]> order_mask(new bool[orders]());
-    order_mask[orders - 1] = true; // Choose the highest order
-    pineappl_grid_evolve_info_shape(grid, order_mask.get(), evinfo_shape.data());
+    std::vector<uint8_t> order_mask = {1, 2};
+    pineappl_grid_evolve_info_shape(grid, order_mask.data(), evinfo_shape.data());
 
     // Get the values of the evolve info parameters. These contain, for example, the
     // information on the `x`-grid and `PID` used to interpolate the Grid.
@@ -81,17 +109,40 @@ int main() {
     std::vector<int> pids1(evinfo_shape[2]);
     std::vector<double> x1(evinfo_shape[3]);
     std::vector<double> ren1(evinfo_shape[4]);
-    pineappl_grid_evolve_info(grid, order_mask.get(), fac1.data(),
+    pineappl_grid_evolve_info(grid, order_mask.data(), fac1.data(),
         frg1.data(), pids1.data(), x1.data(), ren1.data());
 
-    // Construct the Operator Info
+    // ------------------ Construct the Operator Info ------------------
+    // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
+    // elements are `OperatorInfo` objects.
     std::vector<OperatorInfo> opinfo_slices(n_convs * fac1.size());
-    for (std::size_t i = 0; i != n_convs; i++) {
+    for (std::size_t i = 0; i != conv_types.size(); i++) {
         std::vector<OperatorInfo> opinfo = get_operator_info(fac1, pids1, x1, pid_basis, conv_types[i]);
         for (std::size_t j = 0; j != fac1.size(); j++) {
             opinfo_slices.push_back(opinfo[j]);
         }
     }
+
+    // ------------------ Construct the Evolution Operator ------------------
+    // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
+    std::size_t flat_len = x1.size() * x1.size() * pids1.size() * pids1.size();
+    std::vector<double> op_slices(flat_len);
+    for (std::size_t i = 0; i != conv_types.size(); i++) {
+        std::cout << conv_types[i] << "\n";
+        for (std::size_t j = 0; j != fac1.size(); j++) {
+            std::vector<double> eko = generate_fake_ekos(fac1[j], pids1, x1, pids1, x1);
+            for (std::size_t k = 0; k != flat_len; k++) {
+                op_slices.push_back(eko[k]);
+            }
+        }
+    }
+
+    // Construct the values of alphas
+    std::vector<double> alphas_table(ren1.size(), 0.118);
+    std::vector<double> xi = {1.0, 1.0, 1.0};
+
+    pineappl_grid_evolve(grid, opinfo_slices.data(), order_mask.data(),
+        op_slices.data(), xi.data(), ren1.data(), alphas_table.data());
 
     pineappl_grid_delete(grid);
 }

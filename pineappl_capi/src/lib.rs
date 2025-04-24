@@ -1469,6 +1469,7 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
 
 /// Type for defining the Operator info.
 #[repr(C)]
+#[derive(Debug)]
 pub struct OperatorInfo {
     fac0: f64,
     fac1: f64,
@@ -2045,19 +2046,16 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
     grid: *const Grid,
-    order_mask: *const bool,
+    orders: *const u8,
     shape_info: *mut usize,
 ) {
     let grid = unsafe { &*grid };
 
-    let order_mask = if order_mask.is_null() {
-        &[]
-    } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
-    };
+    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
     let shape_info = unsafe { slice::from_raw_parts_mut(shape_info, 5) };
 
-    let evolve_info = grid.evolve_info(order_mask);
+    let evolve_info = grid.evolve_info(&order_mask);
     let evinfo_shapes = [
         evolve_info.fac1.len(),
         evolve_info.frg1.len(),
@@ -2077,7 +2075,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info(
     grid: *const Grid,
-    order_mask: *const bool,
+    orders: *const u8,
     fac1: *mut f64,
     frg1: *mut f64,
     pids1: *mut i32,
@@ -2086,13 +2084,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 ) {
     let grid = unsafe { &*grid };
 
-    let order_mask = if order_mask.is_null() {
-        &[]
-    } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
-    };
+    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
 
-    let evolve_info = grid.evolve_info(order_mask);
+    let evolve_info = grid.evolve_info(&order_mask);
     let evinfo_shapes = [
         evolve_info.fac1.len(),
         evolve_info.frg1.len(),
@@ -2107,11 +2102,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     let x1 = unsafe { slice::from_raw_parts_mut(x1, evinfo_shapes[3]) };
     let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evinfo_shapes[4]) };
 
-    fac1.copy_from_slice(&grid.evolve_info(order_mask).fac1);
-    frg1.copy_from_slice(&grid.evolve_info(order_mask).frg1);
-    pids1.copy_from_slice(&grid.evolve_info(order_mask).pids1);
-    x1.copy_from_slice(&grid.evolve_info(order_mask).x1);
-    ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
+    fac1.copy_from_slice(&grid.evolve_info(&order_mask).fac1);
+    frg1.copy_from_slice(&grid.evolve_info(&order_mask).frg1);
+    pids1.copy_from_slice(&grid.evolve_info(&order_mask).pids1);
+    x1.copy_from_slice(&grid.evolve_info(&order_mask).x1);
+    ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
 }
 
 /// Evolve a grid and dump the resulting FK table
@@ -2127,7 +2122,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *mut Grid,
     op_info: *mut OperatorInfo,
-    order_mask: *const bool,
+    orders: *const u8,
     operators: *mut f64,
     xi: *mut f64,
     ren1: *mut f64,
@@ -2142,14 +2137,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .map(pineappl::convolutions::Conv::conv_type)
         .collect();
 
-    let order_mask = if order_mask.is_null() {
-        &[]
-    } else {
-        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
-    };
+    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
 
     // Determine the number of q2 values which defines the slices
-    let evolve_info = grid.evolve_info(order_mask);
+    let evolve_info = grid.evolve_info(&order_mask);
 
     // The length of the operator info is `N_conv * N_q2`
     let op_info =
@@ -2227,7 +2219,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let fk_table = grid.evolve(
         slices,
-        order_mask,
+        &order_mask,
         (xi[0], xi[1], xi[2]),
         &AlphasTable { ren1, alphas },
     );

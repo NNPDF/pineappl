@@ -35,6 +35,7 @@ rename_variants = "ScreamingSnakeCase"
 
 [export.rename]
 "Grid" = "pineappl_grid"
+"FkTable" = "pineappl_fk_table"
 "Lumi" = "pineappl_lumi"
 "Channels" = "pineappl_channels"
 "PidBasis" = "pineappl_pid_basis"
