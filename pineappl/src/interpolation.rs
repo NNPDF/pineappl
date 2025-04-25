@@ -60,35 +60,35 @@ fn lagrange_weights(i: usize, n: usize, u: f64) -> f64 {
     product / convert::f64_from_usize(factorials)
 }
 
-/// TODO
+/// Represents the method used to reweight the grid.
 #[repr(C)]
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReweightMeth {
-    /// TODO
+    /// Reweight the x grid according the `APPLGrid` definition.
     ApplGridX,
-    /// TODO
+    /// No reweighting is applied.
     NoReweight,
 }
 
-/// TODO
+/// Defines the mapping methods.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Map {
-    /// TODO
+    /// Uses the `APPLGrid` method [`applgrid::fq20`] for the mapping.
     ApplGridF2,
-    /// TODO
+    /// Uses the `APPLGrid` method [`applgrid::fx2`] for the mapping.
     ApplGridH0,
 }
 
-/// TODO
+/// Specifies the interpolation method.
 #[repr(C)]
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
 pub enum InterpMeth {
-    /// TODO
+    /// Uses Lagrange interpolation method.
     Lagrange,
 }
 
-/// TODO
+/// Defines the interpolation configurations.
 #[derive(Clone, Deserialize, PartialEq, Serialize)]
 pub struct Interp {
     min: f64,
@@ -101,7 +101,7 @@ pub struct Interp {
 }
 
 impl Interp {
-    /// TODO
+    /// Constructor.
     ///
     /// # Panics
     ///
@@ -157,7 +157,7 @@ impl Interp {
         convert::f64_from_usize(index).mul_add(self.deltay(), self.min)
     }
 
-    /// TODO
+    /// Reweights a particular x value.
     #[must_use]
     pub fn reweight(&self, x: f64) -> f64 {
         match self.reweight {
@@ -166,7 +166,12 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Interpolates the given x-value and returns the corresponding node index and fractional position.
+    ///
+    /// The function maps `x` to `y` using `map_x_to_y` and checks if it falls within the interpolation
+    /// range. If `y` is outside the range `[min, max]`, `None` is returned. If there is only one node,
+    /// the function returns `(0, 0.0)`. Otherwise, it calculates the index of the closest node and
+    /// determines the fractional value `y_fraction` within the interpolation interval.
     #[must_use]
     pub fn interpolate(&self, x: f64) -> Option<(usize, f64)> {
         let y = self.map_x_to_y(x);
@@ -191,7 +196,10 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Reweights a given node given some fractional value.
+    ///
+    /// The function applies weights based on the interpolation method set in `interp_meth`.
+    /// Currently, it supports Lagrange interpolation.
     #[must_use]
     pub fn node_weights(&self, fraction: f64) -> ArrayVec<f64, MAX_INTERP_ORDER_PLUS_ONE> {
         (0..=self.order)
@@ -201,13 +209,16 @@ impl Interp {
             .collect()
     }
 
-    /// TODO
+    /// Returns the interpolation order.
     #[must_use]
     pub const fn order(&self) -> usize {
         self.order
     }
 
-    /// TODO
+    /// Returns the values of the interpolation nodes.
+    ///
+    /// If there is only one node, the function returns the maps of `min` directly. Otherwise,
+    /// it returns the maps of the `y`'s values.
     #[must_use]
     pub fn node_values(&self) -> Vec<f64> {
         if self.nodes == 1 {
@@ -233,43 +244,43 @@ impl Interp {
         }
     }
 
-    /// TODO
+    /// Returns the number of nodes.
     #[must_use]
     pub const fn nodes(&self) -> usize {
         self.nodes
     }
 
-    /// TODO
+    /// Returns the minimum value between the different mappings.
     #[must_use]
     pub fn min(&self) -> f64 {
         self.map_y_to_x(self.min).min(self.map_y_to_x(self.max))
     }
 
-    /// TODO
+    /// Returns the maximum value between the different mappings.
     #[must_use]
     pub fn max(&self) -> f64 {
         self.map_y_to_x(self.min).max(self.map_y_to_x(self.max))
     }
 
-    /// TODO
+    /// Returns the mapping method used.
     #[must_use]
     pub const fn map(&self) -> Map {
         self.map
     }
 
-    /// TODO
+    /// Returns the interpolation method used.
     #[must_use]
     pub const fn interp_meth(&self) -> InterpMeth {
         self.interp_meth
     }
 
-    /// TODO
+    /// Returns the reweighting method used.
     #[must_use]
     pub const fn reweight_meth(&self) -> ReweightMeth {
         self.reweight
     }
 
-    /// TODO
+    /// Returns the interpolation object within a specified range.
     #[must_use]
     pub fn sub_interp(&self, range: Range<usize>) -> Self {
         Self {
@@ -284,7 +295,22 @@ impl Interp {
     }
 }
 
-/// TODO
+/// Performs multi-dimensional interpolation and updates the provided array.
+///
+/// # Parameters
+/// - `interps`: A slice of `Interp` objects, each representing an interpolation configurations.
+/// - `ntuple`: A slice of floating-point values corresponding to interpolation objects.
+/// - `weight`: A weight factor applied to the interpolated values.
+/// - `array`: A mutable reference to a `PackedArray<f64>` where interpolated values will be stored.
+///
+/// # Returns
+/// - `true` if interpolation is successful and values are updated.
+/// - `false` if interpolation fails (e.g., if weight is zero or interpolation points are invalid).
+///
+/// # Notes
+/// - Ensures that the number of interpolation variables matches the number of provided values.
+/// - Uses Cartesian product expansion to compute weighted interpolated values.
+/// - Currently allocates memory during iteration; future optimization may be needed.
 pub fn interpolate(
     interps: &[Interp],
     ntuple: &[f64],
