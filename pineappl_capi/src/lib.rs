@@ -2133,9 +2133,9 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     let evolve_info = grid.evolve_info(&order_mask);
 
     let ren1_len = evolve_info.ren1.len();
-    let ren1 = unsafe { Vec::from_raw_parts(ren1, ren1_len, ren1_len) };
-    let alphas = unsafe { Vec::from_raw_parts(alphas, ren1_len, ren1_len) };
-    let xi = unsafe { Vec::from_raw_parts(xi, 3, 3) };
+    let ren1 = unsafe { slice::from_raw_parts(ren1, ren1_len) };
+    let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
+    let xi = unsafe { slice::from_raw_parts(xi, 3) };
 
     let conv_types: HashSet<_> = grid
         .convolutions()
@@ -2197,7 +2197,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         slices,
         &order_mask,
         (xi[0], xi[1], xi[2]),
-        &AlphasTable { ren1, alphas },
+        &AlphasTable {
+            ren1: ren1.to_vec(),
+            alphas: alphas.to_vec(),
+        },
     );
 
     Box::new(fk_table.unwrap())

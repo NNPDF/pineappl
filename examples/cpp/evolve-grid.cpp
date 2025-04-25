@@ -109,7 +109,6 @@ int main() {
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 
     pineappl_fktable_write(fktable, "evolved-grid.pineappl.lz4");
-
     pineappl_grid_delete(grid);
     pineappl_fk_table_delete(fktable);
 }
