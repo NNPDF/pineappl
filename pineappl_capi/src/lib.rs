@@ -2096,7 +2096,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
 }
 
-/// Evolve a grid and dump the resulting FK table
+/// Evolve a grid and dump the resulting FK table.
 ///
 /// # Safety
 ///
@@ -2201,4 +2201,36 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     );
 
     Box::new(fk_table.unwrap())
+}
+
+/// Delete an FK table.
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn pineappl_fk_table_delete(fktable: Option<Box<FkTable>>) {}
+
+/// Write `fktable` to a file with name `filename`. If `filename` ends in `.lz4` the Fk table is
+/// automatically LZ4 compressed.
+///
+/// # Safety
+///
+/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is a null
+/// pointer, this function is not safe to call. The parameter `filename` must be a non-`NULL`,
+/// non-empty, and valid C string pointing to a non-existing, but writable file.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const FkTable, filename: *const c_char) {
+    let fktable = unsafe { &*fktable };
+    let filename = unsafe { CStr::from_ptr(filename) };
+    let filename = filename.to_string_lossy();
+    let path = Path::new(filename.as_ref());
+    let writer = File::create(path).unwrap();
+
+    if path.extension().is_some_and(|ext| ext == "lz4") {
+        fktable.grid().write_lz4(writer).unwrap();
+    } else {
+        fktable.grid().write(writer).unwrap();
+    }
 }

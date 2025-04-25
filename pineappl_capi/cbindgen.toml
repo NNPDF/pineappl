@@ -48,7 +48,7 @@ rename_variants = "ScreamingSnakeCase"
 "KeyVal" = "pineappl_keyval"
 "SubGrid" = "pineappl_subgrid"
 "GridOptFlags" = "pineappl_gof"
-"OperatorSliceInfo" = "pineappl_operator_slice_info"
+"OperatorInfo" = "pineappl_operator_info"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 
