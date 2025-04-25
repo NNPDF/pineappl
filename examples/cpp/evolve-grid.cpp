@@ -1,10 +1,8 @@
+#include <pineappl_capi.h>
 #include <cstdint>
 #include <cstdlib>
-#include <pineappl_capi.h>
-
 #include <cassert>
 #include <cstddef>
-#include <iostream>
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -27,14 +25,15 @@ std::vector<double> generate_fake_ekos(
     std::vector<double> ops(flat_len);
 
     for (std::size_t i = 0; i != flat_len; i++) {
-        ops.push_back(distrib(gen));
+        ops[i] = distrib(gen);
     }
 
     return ops;
 }
 
 int main() {
-    std::string filename = "advanced-filling.pineappl.lz4";
+    // TODO: How to get a Grid that can be evolved??
+    std::string filename = "LHCB_WP_7TEV_opt.pineappl.lz4";
 
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
@@ -45,7 +44,8 @@ int main() {
     // Get the number of convolutions
     std::size_t n_convs = pineappl_grid_convolutions_len(grid);
 
-    // Fill the vector of unique convolution types
+    // Fill the vector of unique convolution types. If the EKOs required for the Grid
+    // are the same, then it suffices to only pass ONE single EKO.
     std::vector<pineappl_conv_type> conv_types;
     for (std::size_t i = 0; i != n_convs; i++) {
         pineappl_conv_type conv = pineappl_grid_conv_type(grid, i);
@@ -73,20 +73,14 @@ int main() {
     // ------------------ Construct the Operator Info ------------------
     // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
     // elements are `OperatorInfo` objects.
-    std::vector<OperatorInfo> opinfo_slices(conv_types.size() * fac1.size());
-    std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
+    std::vector<pineappl_operator_info> opinfo_slices(conv_types.size() * fac1.size());
     for (std::size_t i = 0; i != conv_types.size(); i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
-            OperatorInfo opinfo = {
+            pineappl_operator_info opinfo = {
                 FAC0, // fac0
                 fac1[j], // fac1
-                x1.data(), // x0
-                x1.data(), // x1
-                pids1.data(), // pids0
-                pids1.data(), // pids1
                 pid_basis,
                 conv_types[i],
-                tensor_shape.data()
             };
             opinfo_slices[i * fac1.size() + j] = opinfo;
         }
@@ -104,15 +98,18 @@ int main() {
             }
         }
     }
-    std::cout << "Arrived Here!" << "\n";
 
     // Construct the values of alphas
     std::vector<double> alphas_table(ren1.size(), 0.118);
     std::vector<double> xi = {1.0, 1.0, 1.0};
+    std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
 
-    pineappl_grid_evolve(grid, opinfo_slices.data(), order_mask.data(),
-        op_slices.data(), xi.data(), ren1.data(), alphas_table.data());
-    std::cout << "Where does the double free happen!" << "\n";
+    pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(), order_mask.data(),
+        op_slices.data(), x1.data(), x1.data(), pids1.data(), pids1.data(),
+        tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
+
+    pineappl_fktable_write(fktable, "evolved-grid.pineappl.lz4");
 
     pineappl_grid_delete(grid);
+    pineappl_fk_table_delete(fktable);
 }
