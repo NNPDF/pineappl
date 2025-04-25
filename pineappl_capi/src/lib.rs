@@ -1473,13 +1473,8 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
 pub struct OperatorInfo {
     fac0: f64,
     fac1: f64,
-    x0: *mut f64,
-    x1: *mut f64,
-    pids0: *mut i32,
-    pids1: *mut i32,
     pid_basis: PidBasis,
     conv_type: ConvType,
-    tensor_shape: *mut usize,
 }
 
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
@@ -2116,85 +2111,74 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     op_info: *mut OperatorInfo,
     orders: *const u8,
     operators: *mut f64,
+    x_grid: *mut f64,
+    x_fktable: *mut f64,
+    pids_grid: *mut i32,
+    pids_fktable: *mut i32,
+    eko_shape: *mut usize,
     xi: *mut f64,
     ren1: *mut f64,
     alphas: *mut f64,
 ) -> Box<FkTable> {
     let grid = unsafe { &mut *grid };
 
-    // Determine the number of EKOs needed to evolve this Grid
-    let conv_types: HashSet<_> = grid
-        .convolutions()
-        .iter()
-        .map(pineappl::convolutions::Conv::conv_type)
-        .collect();
-
     let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
+    let pids_fktable = unsafe { slice::from_raw_parts(pids_fktable, eko_shape[0]) };
+    let x_fktable = unsafe { slice::from_raw_parts(x_fktable, eko_shape[1]) };
+    let pids_grid = unsafe { slice::from_raw_parts(pids_grid, eko_shape[2]) };
+    let x_grid = unsafe { slice::from_raw_parts(x_grid, eko_shape[3]) };
+
     let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
-
-    // Determine the number of q2 values which defines the slices
     let evolve_info = grid.evolve_info(&order_mask);
-
-    // The length of the operator info is `N_conv * N_q2`
-    let op_info =
-        unsafe { slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len()) };
-
-    // Determine the total length of the operators when flattened
-    let flattened_shapes: usize = op_info
-        .iter()
-        .map(|op| {
-            let shape = unsafe { slice::from_raw_parts(op.tensor_shape, 4) };
-            shape.iter().product::<usize>()
-        })
-        .sum();
-    let operators =
-        unsafe { slice::from_raw_parts(operators, conv_types.len() * flattened_shapes) };
-
-    // Split the operators into vectors corresponding to the Q2 slices
-    let mut start_index = 0;
-    let op_chunk: Vec<_> = op_info
-        .iter()
-        .map(|op| {
-            let eko_shape = unsafe { slice::from_raw_parts(op.tensor_shape, 4) };
-            let end_idx = start_index + eko_shape.iter().product::<usize>();
-            let op_range = operators[start_index..end_idx].to_vec();
-            start_index = end_idx;
-            op_range
-        })
-        .collect();
-
-    // Chunk the operators depending on the number of convolutions
-    let opinfo_chunk = op_info.chunks_exact(conv_types.len());
-    let operator_chunk = op_chunk.chunks_exact(conv_types.len());
 
     let ren1_len = evolve_info.ren1.len();
     let ren1 = unsafe { Vec::from_raw_parts(ren1, ren1_len, ren1_len) };
     let alphas = unsafe { Vec::from_raw_parts(alphas, ren1_len, ren1_len) };
     let xi = unsafe { Vec::from_raw_parts(xi, 3, 3) };
 
-    // let mut start_idx = 0;
+    let conv_types: HashSet<_> = grid
+        .convolutions()
+        .iter()
+        .map(pineappl::convolutions::Conv::conv_type)
+        .collect();
+
+    let op_info =
+        unsafe { slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len()) };
+    let opinfo_chunk = op_info.chunks_exact(conv_types.len());
+
+    let flattened_shapes: usize = op_info
+        .iter()
+        .map(|_| eko_shape.iter().product::<usize>())
+        .sum();
+    let operators =
+        unsafe { slice::from_raw_parts(operators, conv_types.len() * flattened_shapes) };
+
+    let mut start_idx = 0;
+    let op_split: Vec<_> = op_info
+        .iter()
+        .map(|_| {
+            let end_idx = start_idx + eko_shape.iter().product::<usize>();
+            let op_range = operators[start_idx..end_idx].to_vec();
+            start_idx = end_idx;
+            op_range
+        })
+        .collect();
+    let ops_chunk = op_split.chunks_exact(conv_types.len());
+
     let slices = opinfo_chunk
         .into_iter()
-        .zip(operator_chunk)
-        .map(|(op_chunk, op_range)| {
-            op_chunk.iter().zip(op_range).map(|(opinfo, op_values)| {
-                let eko_shape = unsafe { slice::from_raw_parts(opinfo.tensor_shape, 4) };
-
-                let op_pids0 =
-                    unsafe { Vec::from_raw_parts(opinfo.pids0, eko_shape[0], eko_shape[0]) };
-                let op_x0 = unsafe { Vec::from_raw_parts(opinfo.x0, eko_shape[1], eko_shape[1]) };
-                let op_pids1 =
-                    unsafe { Vec::from_raw_parts(opinfo.pids1, eko_shape[2], eko_shape[2]) };
-                let op_x1 = unsafe { Vec::from_raw_parts(opinfo.x1, eko_shape[3], eko_shape[3]) };
-
+        .zip(ops_chunk)
+        .map(|(op_subinfo, op_range)| {
+            op_subinfo.iter().zip(op_range).map(|(opinfo, op_values)| {
                 let operator_slice_info = OperatorSliceInfo {
                     pid_basis: opinfo.pid_basis,
                     fac0: opinfo.fac0,
-                    pids0: op_pids0,
-                    x0: op_x0,
+                    pids0: pids_fktable.to_vec(),
+                    x0: x_fktable.to_vec(),
                     fac1: opinfo.fac1,
-                    pids1: op_pids1,
-                    x1: op_x1,
+                    pids1: pids_grid.to_vec(),
+                    x1: x_grid.to_vec(),
                     conv_type: opinfo.conv_type,
                 };
 
