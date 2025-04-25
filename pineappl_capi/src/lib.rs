@@ -2088,19 +2088,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
 
     let evolve_info = grid.evolve_info(&order_mask);
-    let evinfo_shapes = [
-        evolve_info.fac1.len(),
-        evolve_info.frg1.len(),
-        evolve_info.pids1.len(),
-        evolve_info.x1.len(),
-        evolve_info.ren1.len(),
-    ];
-
-    let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evinfo_shapes[0]) };
-    let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evinfo_shapes[1]) };
-    let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evinfo_shapes[2]) };
-    let x1 = unsafe { slice::from_raw_parts_mut(x1, evinfo_shapes[3]) };
-    let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evinfo_shapes[4]) };
+    let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evolve_info.fac1.len()) };
+    let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evolve_info.frg1.len()) };
+    let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evolve_info.pids1.len()) };
+    let x1 = unsafe { slice::from_raw_parts_mut(x1, evolve_info.x1.len()) };
+    let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evolve_info.ren1.len()) };
 
     fac1.copy_from_slice(&grid.evolve_info(&order_mask).fac1);
     frg1.copy_from_slice(&grid.evolve_info(&order_mask).frg1);
@@ -2166,7 +2158,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
             let eko_shape = unsafe { slice::from_raw_parts(op.tensor_shape, 4) };
             let end_idx = start_index + eko_shape.iter().product::<usize>();
             let op_range = operators[start_index..end_idx].to_vec();
-            start_index = end_idx + 1;
+            start_index = end_idx;
             op_range
         })
         .collect();

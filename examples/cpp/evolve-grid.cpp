@@ -1,49 +1,16 @@
 #include <cstdint>
+#include <cstdlib>
 #include <pineappl_capi.h>
 
 #include <cassert>
 #include <cstddef>
-#include <iomanip>
-#include <ios>
 #include <iostream>
-#include <numeric>
-#include <sstream>
 #include <string>
-#include <memory>
 #include <algorithm>
 #include <vector>
 #include <random>
 
 double FAC0 = 1.65;
-
-std::vector<OperatorInfo> get_operator_info(
-    std::vector<double> fac1,
-    std::vector<int> pids1,
-    std::vector<double> x1,
-    pineappl_pid_basis pid_basis,
-    pineappl_conv_type conv_type
-) {
-    std::vector<OperatorInfo> opinfo_slices(fac1.size());
-    std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
-
-    for (std::size_t q2 = 0; q2 != fac1.size(); q2++) {
-        OperatorInfo opinfo = {
-            FAC0, // fac0
-            fac1[q2], // fac1
-            x1.data(), // x0
-            x1.data(), // x1
-            pids1.data(), // pids0
-            pids1.data(), // pids1
-            pid_basis,
-            conv_type,
-            tensor_shape.data()
-        };
-
-        opinfo_slices[q2] = opinfo;
-    }
-
-    return opinfo_slices;
-}
 
 std::vector<double> generate_fake_ekos(
     double q2,
@@ -59,27 +26,18 @@ std::vector<double> generate_fake_ekos(
     std::size_t flat_len = x0.size() * x1.size() * pids0.size() * pids1.size();
     std::vector<double> ops(flat_len);
 
-    for (std::size_t i = 0; i != pids1.size(); i++) {
-        for (std::size_t j = 0; j != x1.size(); j++) {
-            for (std::size_t k = 0; k != pids0.size(); i++) {
-                for (std::size_t l = 0; l != x0.size(); i++) {
-                    ops.push_back(distrib(gen));
-                }
-            }
-        }
+    for (std::size_t i = 0; i != flat_len; i++) {
+        ops.push_back(distrib(gen));
     }
 
     return ops;
 }
 
 int main() {
-    std::string filename = "drell-yan-rap-ll.pineappl.lz4";
+    std::string filename = "advanced-filling.pineappl.lz4";
 
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
-
-    // Get the number of perturbative orders
-    std::size_t orders = pineappl_grid_order_count(grid);
 
     // Get the PID basis representation
     pineappl_pid_basis pid_basis = pineappl_grid_pid_basis(grid);
@@ -88,7 +46,7 @@ int main() {
     std::size_t n_convs = pineappl_grid_convolutions_len(grid);
 
     // Fill the vector of unique convolution types
-    std::vector<pineappl_conv_type> conv_types(n_convs);
+    std::vector<pineappl_conv_type> conv_types;
     for (std::size_t i = 0; i != n_convs; i++) {
         pineappl_conv_type conv = pineappl_grid_conv_type(grid, i);
         if (std::find(conv_types.begin(), conv_types.end(), conv) == conv_types.end()) {
@@ -98,7 +56,7 @@ int main() {
 
     // Get the shape of the evolve info objects
     std::vector<std::size_t> evinfo_shape(5);
-    std::vector<uint8_t> order_mask = {1, 2};
+    std::vector<uint8_t> order_mask = {3, 0};
     pineappl_grid_evolve_info_shape(grid, order_mask.data(), evinfo_shape.data());
 
     // Get the values of the evolve info parameters. These contain, for example, the
@@ -115,20 +73,30 @@ int main() {
     // ------------------ Construct the Operator Info ------------------
     // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
     // elements are `OperatorInfo` objects.
-    std::vector<OperatorInfo> opinfo_slices(n_convs * fac1.size());
+    std::vector<OperatorInfo> opinfo_slices(conv_types.size() * fac1.size());
+    std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
     for (std::size_t i = 0; i != conv_types.size(); i++) {
-        std::vector<OperatorInfo> opinfo = get_operator_info(fac1, pids1, x1, pid_basis, conv_types[i]);
         for (std::size_t j = 0; j != fac1.size(); j++) {
-            opinfo_slices.push_back(opinfo[j]);
+            OperatorInfo opinfo = {
+                FAC0, // fac0
+                fac1[j], // fac1
+                x1.data(), // x0
+                x1.data(), // x1
+                pids1.data(), // pids0
+                pids1.data(), // pids1
+                pid_basis,
+                conv_types[i],
+                tensor_shape.data()
+            };
+            opinfo_slices[i * fac1.size() + j] = opinfo;
         }
     }
 
     // ------------------ Construct the Evolution Operator ------------------
     // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
+    std::vector<double> op_slices;
     std::size_t flat_len = x1.size() * x1.size() * pids1.size() * pids1.size();
-    std::vector<double> op_slices(flat_len);
     for (std::size_t i = 0; i != conv_types.size(); i++) {
-        std::cout << conv_types[i] << "\n";
         for (std::size_t j = 0; j != fac1.size(); j++) {
             std::vector<double> eko = generate_fake_ekos(fac1[j], pids1, x1, pids1, x1);
             for (std::size_t k = 0; k != flat_len; k++) {
@@ -136,6 +104,7 @@ int main() {
             }
         }
     }
+    std::cout << "Arrived Here!" << "\n";
 
     // Construct the values of alphas
     std::vector<double> alphas_table(ren1.size(), 0.118);
@@ -143,6 +112,7 @@ int main() {
 
     pineappl_grid_evolve(grid, opinfo_slices.data(), order_mask.data(),
         op_slices.data(), xi.data(), ren1.data(), alphas_table.data());
+    std::cout << "Where does the double free happen!" << "\n";
 
     pineappl_grid_delete(grid);
 }
