@@ -2143,53 +2143,46 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .map(pineappl::convolutions::Conv::conv_type)
         .collect();
 
-    let op_info =
-        unsafe { slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len()) };
-    let opinfo_chunk = op_info.chunks_exact(conv_types.len());
+    let op_info = unsafe {
+        slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len())
+            .chunks_exact(conv_types.len())
+    };
 
-    let flattened_shapes: usize = op_info
-        .iter()
-        .map(|_| eko_shape.iter().product::<usize>())
-        .sum();
-    let operators =
-        unsafe { slice::from_raw_parts(operators, conv_types.len() * flattened_shapes) };
+    let total_shape: usize = eko_shape.iter().product();
+    let operators = unsafe {
+        slice::from_raw_parts(
+            operators,
+            conv_types.len() * evolve_info.fac1.len() * total_shape,
+        )
+        .chunks_exact(total_shape)
+    };
 
-    let mut start_idx = 0;
-    let op_split: Vec<_> = op_info
-        .iter()
-        .map(|_| {
-            let end_idx = start_idx + eko_shape.iter().product::<usize>();
-            let op_range = operators[start_idx..end_idx].to_vec();
-            start_idx = end_idx;
-            op_range
-        })
-        .collect();
-    let ops_chunk = op_split.chunks_exact(conv_types.len());
+    let slices = op_info
+        .zip(operators)
+        .map(|(op_infos, op_vals)| {
+            op_infos
+                .iter()
+                .zip(std::iter::once(op_vals))
+                .map(|(op_info, values)| {
+                    let operator_slice_info = OperatorSliceInfo {
+                        pid_basis: op_info.pid_basis,
+                        fac0: op_info.fac0,
+                        pids0: pids_fktable.to_vec(),
+                        x0: x_fktable.to_vec(),
+                        fac1: op_info.fac1,
+                        pids1: pids_grid.to_vec(),
+                        x1: x_grid.to_vec(),
+                        conv_type: op_info.conv_type,
+                    };
 
-    let slices = opinfo_chunk
-        .into_iter()
-        .zip(ops_chunk)
-        .map(|(op_subinfo, op_range)| {
-            op_subinfo.iter().zip(op_range).map(|(opinfo, op_values)| {
-                let operator_slice_info = OperatorSliceInfo {
-                    pid_basis: opinfo.pid_basis,
-                    fac0: opinfo.fac0,
-                    pids0: pids_fktable.to_vec(),
-                    x0: x_fktable.to_vec(),
-                    fac1: opinfo.fac1,
-                    pids1: pids_grid.to_vec(),
-                    x1: x_grid.to_vec(),
-                    conv_type: opinfo.conv_type,
-                };
+                    let array = Array4::from_shape_vec(
+                        Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
+                        values.to_vec(),
+                    )
+                    .expect("Shape mismatch or invalid input.");
 
-                let array = Array4::from_shape_vec(
-                    Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
-                    op_values.clone(),
-                )
-                .expect("Shape mismatch or invalid input.");
-
-                Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
-            })
+                    Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
+                })
         })
         .collect();
 
@@ -2203,7 +2196,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         },
     );
 
-    Box::new(fk_table.unwrap())
+    Box::new(fk_table.expect("Evolving grid failed"))
 }
 
 /// Delete an FK table.
