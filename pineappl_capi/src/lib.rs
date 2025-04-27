@@ -1833,7 +1833,7 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
     }
 }
 
-/// A generalization of the convolution function.
+/// A generalization of the convolution function for Grids.
 ///
 /// # Safety
 ///
@@ -2229,4 +2229,61 @@ pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const FkTable, filenam
     } else {
         fktable.grid().write(writer).unwrap();
     }
+}
+
+/// A generalization of the convolution function for FK tables.
+///
+/// # Safety
+///
+/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is
+/// a null pointer, this function is not safe to call. The function pointer `xfx` must not
+/// be null pointers and point to valid functions. The parameter `channel_mask` must either
+/// be null pointers or point to arrays that are as long as `fktable` has channels, respectively.
+/// Finally, `results` must be as long as `FkTable` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fk_table_convolve(
+    fktable: *const FkTable,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    pdfs_state: *mut *mut c_void,
+    channel_mask: *const bool,
+    bin_indices: *const usize,
+    results: *mut f64,
+) {
+    let fktable = unsafe { &*fktable };
+
+    let channel_mask = if channel_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(channel_mask, fktable.channels().len()) }
+    };
+
+    let bin_indices = if bin_indices.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(bin_indices, fktable.grid().bwfl().len()) }
+    };
+
+    // TODO: Better way to do this?
+    let mut als = |_| 1.0;
+
+    let pdfs_slices =
+        unsafe { slice::from_raw_parts(pdfs_state, fktable.grid().convolutions().len()) };
+    let mut xfx_funcs: Vec<_> = pdfs_slices
+        .iter()
+        .map(|&state| move |id, x, q2| xfx(id, x, q2, state))
+        .collect();
+
+    // Construct the Convolution cache
+    let mut convolution_cache = ConvolutionCache::new(
+        fktable.grid().convolutions().to_vec(),
+        xfx_funcs
+            .iter_mut()
+            .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+            .collect(),
+        &mut als,
+    );
+
+    let results = unsafe { slice::from_raw_parts_mut(results, fktable.grid().bwfl().len()) };
+
+    results.copy_from_slice(&fktable.convolve(&mut convolution_cache, bin_indices, channel_mask));
 }
