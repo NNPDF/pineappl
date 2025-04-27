@@ -1,31 +1,46 @@
+#include <LHAPDF/PDF.h>
 #include <pineappl_capi.h>
+
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <cassert>
 #include <cstddef>
 #include <string>
-#include <algorithm>
 #include <vector>
-#include <random>
 
-double FAC0 = 1.65;
+// NOTE: Uses the scale of the Grid as the starting scale such that we can use an IDENTITY EKO.
+double FAC0 = 6456.44;
+
+std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector<std::size_t>& shape) {
+    std::size_t ndim = shape.size();
+    std::vector<std::size_t> coords(ndim);
+
+    for (int i = ndim - 1; i >= 0; --i) {
+        coords[i] = flat_index % shape[i];
+        flat_index /= shape[i];
+    }
+
+    return coords;
+}
 
 std::vector<double> generate_fake_ekos(
-    double q2,
     std::vector<int> pids0,
     std::vector<double> x0,
     std::vector<int> pids1,
     std::vector<double> x1
 ) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> distrib(q2 / 1000, q2 / 100);
-
     std::size_t flat_len = x0.size() * x1.size() * pids0.size() * pids1.size();
     std::vector<double> ops(flat_len);
 
+    std::vector<std::size_t> shape = {pids0.size(), x0.size(), pids1.size(), x1.size()};
     for (std::size_t i = 0; i != flat_len; i++) {
-        ops[i] = distrib(gen);
+        std::vector<std::size_t> coords = unravel_index(i, shape);
+
+        double delta_ik = (coords[0] == coords[2]) ? 1.0 : 0.0;
+        double delta_jl = (coords[1] == coords[3]) ? 1.0 : 0.0;
+
+        ops[i] = delta_ik * delta_jl;
     }
 
     return ops;
@@ -56,8 +71,8 @@ int main() {
 
     // Get the shape of the evolve info objects
     std::vector<std::size_t> evinfo_shape(5);
-    std::vector<uint8_t> order_mask = {3, 0};
-    pineappl_grid_evolve_info_shape(grid, order_mask.data(), evinfo_shape.data());
+    std::vector<uint8_t> apply_order = {3, 0};
+    pineappl_grid_evolve_info_shape(grid, apply_order.data(), evinfo_shape.data());
 
     // Get the values of the evolve info parameters. These contain, for example, the
     // information on the `x`-grid and `PID` used to interpolate the Grid.
@@ -67,7 +82,7 @@ int main() {
     std::vector<int> pids1(evinfo_shape[2]);
     std::vector<double> x1(evinfo_shape[3]);
     std::vector<double> ren1(evinfo_shape[4]);
-    pineappl_grid_evolve_info(grid, order_mask.data(), fac1.data(),
+    pineappl_grid_evolve_info(grid, apply_order.data(), fac1.data(),
         frg1.data(), pids1.data(), x1.data(), ren1.data());
 
     // ------------------ Construct the Operator Info ------------------
@@ -90,9 +105,9 @@ int main() {
     // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
     std::vector<double> op_slices;
     std::size_t flat_len = x1.size() * x1.size() * pids1.size() * pids1.size();
-    for (std::size_t i = 0; i != conv_types.size(); i++) {
+    for (std::size_t _i = 0; _i != conv_types.size(); _i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
-            std::vector<double> eko = generate_fake_ekos(fac1[j], pids1, x1, pids1, x1);
+            std::vector<double> eko = generate_fake_ekos(pids1, x1, pids1, x1);
             for (std::size_t k = 0; k != flat_len; k++) {
                 op_slices.push_back(eko[k]);
             }
@@ -104,11 +119,72 @@ int main() {
     std::vector<double> xi = {1.0, 1.0, 1.0};
     std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
 
-    pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(), order_mask.data(),
-        op_slices.data(), x1.data(), x1.data(), pids1.data(), pids1.data(),
+    pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
+        apply_order.data(), op_slices.data(), x1.data(),
+        x1.data(), pids1.data(), pids1.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 
+    // ------------------ Compare Grid & FK after convolution ------------------
+    // disable LHAPDF banners to guarantee deterministic output
+    LHAPDF::setVerbosity(0);
+    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+
+    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
+    };
+    auto alphas = [](double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
+    };
+
+    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
+    void** pdf_states = reinterpret_cast<void**>(pdfs.data());
+
+    // how many bins does this grid have?
+    std::size_t bins = pineappl_grid_bin_count(grid);
+
+    // [ convolve the Grid ]
+    std::vector<double> mu_scales = { 1.0, 1.0, 1.0 };
+    std::vector<double> dxsec_grid(bins);
+    pineappl_grid_convolve(grid, xfx, alphas, pdf_states, pdf.get(),
+        nullptr, nullptr, nullptr, 1,
+        mu_scales.data(), dxsec_grid.data());
+
+    // [ convolve the FK Table ]
+    std::vector<double> dxsec_fktable(bins);
+    pineappl_fk_table_convolve(fktable, xfx, pdf_states, nullptr,
+        nullptr, dxsec_fktable.data());
+
+    // Print the results
+    const int idx_width = 6;
+    const int num_width = 15;
+    const int dif_width = 15;
+
+    // Print headers
+    std::cout << std::setw(idx_width) << "Bin"
+              << std::setw(num_width) << "Grid"
+              << std::setw(num_width) << "FkTable"
+              << std::setw(dif_width) << "reldiff" << std::endl;
+
+    // Print dashed lines
+    std::cout << std::setw(idx_width) << std::string(idx_width - 2, '-')
+              << std::setw(num_width) << std::string(num_width - 2, '-')
+              << std::setw(num_width) << std::string(num_width - 2, '-')
+              << std::setw(dif_width) << std::string(dif_width - 2, '-') << std::endl;
+
+    // Print the data
+    std::cout << std::scientific << std::setprecision(6);
+    for (size_t i = 0; i < dxsec_grid.size(); ++i) {
+        double reldiff = std::abs(dxsec_grid[i] - dxsec_fktable[i]) / (std::abs(dxsec_grid[i]));
+        std::cout << std::setw(idx_width) << i
+                  << std::setw(num_width) << dxsec_grid[i]
+                  << std::setw(num_width) << dxsec_fktable[i]
+                  << std::setw(dif_width) << reldiff
+                  << std::endl;
+    }
+
     pineappl_fktable_write(fktable, "evolved-grid.pineappl.lz4");
+
     pineappl_grid_delete(grid);
     pineappl_fk_table_delete(fktable);
 }
