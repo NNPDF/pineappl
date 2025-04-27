@@ -2037,7 +2037,8 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 ///
 /// # Safety
 ///
-/// TODO
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
     grid: *const Grid,
@@ -2066,7 +2067,8 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
 ///
 /// # Safety
 ///
-/// TODO
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info(
     grid: *const Grid,
@@ -2096,25 +2098,47 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
 }
 
-/// Evolve a grid and dump the resulting FK table.
+/// Evolve a grid with an evolution operator and dump the resulting FK table.
+///
+/// # Arguments
+///
+/// * `grid` - A `Grid` object
+/// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
+///               Its length must be `(N_{conv} * N_{Q2_slices})`.
+/// * `orders` - The maximum QCD and EW orders `(αs, α)`
+/// * `operators` - An array of evolution operators. Each operator is a flattend version of a rank-4
+///                 tensor whose shape is defined by: `pids_out`, `x_out`, `pids_in`, `x_in`, in that
+///                 order. The size of `operators` must be `(N_{conv} * N_{Q2_slices} * len_flat_op)`.
+/// * `x_in` - The  x-grid that defines the Grid
+/// * `x_out` - The x-grid that will define the evolved Grid
+/// * `pids_in` - The list of PID values that defines the Grid
+/// * `pids_out` - The list of PID values that will define the evolved Grid
+/// * `eko_shape` - The shape of the evolution operator
+/// * `xi` - The values that defines that scale variations
+/// * `ren` - An array containing the values of the renormalization scale variation
+/// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
 ///
 /// # Safety
 ///
-/// TODO
+/// This function is not safe to call if: (a) the `grid` does not point to a valid `Grid` object or
+/// is a null pointer; (b) the `op_info` and `operators` objects do not have the expected lengths,
+/// (c) the shape of `eko_shape` is different from the actual size of `pids_out`, `x_out`, `pids_in`,
+/// `x_in`.
 ///
 /// # Panics
 ///
-/// TODO
+/// This function might panic if the either the `op_info` and/or `operators` are/is incompatible
+/// with the `Grid`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *mut Grid,
     op_info: *mut OperatorInfo,
-    orders: *const u8,
+    max_orders: *const u8,
     operators: *mut f64,
-    x_grid: *mut f64,
-    x_fktable: *mut f64,
-    pids_grid: *mut i32,
-    pids_fktable: *mut i32,
+    x_in: *mut f64,
+    x_out: *mut f64,
+    pids_in: *mut i32,
+    pids_out: *mut i32,
     eko_shape: *mut usize,
     xi: *mut f64,
     ren1: *mut f64,
@@ -2122,14 +2146,14 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 ) -> Box<FkTable> {
     let grid = unsafe { &mut *grid };
 
-    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let max_orders = unsafe { slice::from_raw_parts(max_orders, 2) };
     let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
-    let pids_fktable = unsafe { slice::from_raw_parts(pids_fktable, eko_shape[0]) };
-    let x_fktable = unsafe { slice::from_raw_parts(x_fktable, eko_shape[1]) };
-    let pids_grid = unsafe { slice::from_raw_parts(pids_grid, eko_shape[2]) };
-    let x_grid = unsafe { slice::from_raw_parts(x_grid, eko_shape[3]) };
+    let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[0]) };
+    let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[1]) };
+    let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[2]) };
+    let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[3]) };
 
-    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
+    let order_mask = Order::create_mask(grid.orders(), max_orders[0], max_orders[1], true);
     let evolve_info = grid.evolve_info(&order_mask);
 
     let ren1_len = evolve_info.ren1.len();
@@ -2167,11 +2191,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                     let operator_slice_info = OperatorSliceInfo {
                         pid_basis: op_info.pid_basis,
                         fac0: op_info.fac0,
-                        pids0: pids_fktable.to_vec(),
-                        x0: x_fktable.to_vec(),
+                        pids0: pids_out.to_vec(),
+                        x0: x_out.to_vec(),
                         fac1: op_info.fac1,
-                        pids1: pids_grid.to_vec(),
-                        x1: x_grid.to_vec(),
+                        pids1: pids_in.to_vec(),
+                        x1: x_in.to_vec(),
                         conv_type: op_info.conv_type,
                     };
 
