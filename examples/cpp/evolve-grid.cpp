@@ -50,6 +50,21 @@ int main() {
     // TODO: How to get a Grid that can be evolved??
     std::string filename = "LHCB_WP_7TEV_opt.pineappl.lz4";
 
+    // disable LHAPDF banners to guarantee deterministic output
+    LHAPDF::setVerbosity(0);
+    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
+    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
+
+    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
+    };
+    auto alphas = [](double q2, void* pdf) {
+        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
+    };
+
+    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
+    void** pdf_states = reinterpret_cast<void**>(pdfs.data());
+
     // read the grid from a file
     auto* grid = pineappl_grid_read(filename.c_str());
 
@@ -71,8 +86,8 @@ int main() {
 
     // Get the shape of the evolve info objects
     std::vector<std::size_t> evinfo_shape(5);
-    std::vector<uint8_t> apply_order = {3, 0};
-    pineappl_grid_evolve_info_shape(grid, apply_order.data(), evinfo_shape.data());
+    std::vector<uint8_t> max_orders = {3, 2};
+    pineappl_grid_evolve_info_shape(grid, max_orders.data(), evinfo_shape.data());
 
     // Get the values of the evolve info parameters. These contain, for example, the
     // information on the `x`-grid and `PID` used to interpolate the Grid.
@@ -82,7 +97,7 @@ int main() {
     std::vector<int> pids1(evinfo_shape[2]);
     std::vector<double> x1(evinfo_shape[3]);
     std::vector<double> ren1(evinfo_shape[4]);
-    pineappl_grid_evolve_info(grid, apply_order.data(), fac1.data(),
+    pineappl_grid_evolve_info(grid, max_orders.data(), fac1.data(),
         frg1.data(), pids1.data(), x1.data(), ren1.data());
 
     // ------------------ Construct the Operator Info ------------------
@@ -114,32 +129,22 @@ int main() {
         }
     }
 
-    // Construct the values of alphas
-    std::vector<double> alphas_table(ren1.size(), 0.118);
+    // Construct the values of alphas table
+    std::vector<double> alphas_table;
+    for (double q2 : ren1) {
+        double alpha = alphas(q2, pdf.get());
+        alphas_table.push_back(alpha);
+    }
+
     std::vector<double> xi = {1.0, 1.0, 1.0};
     std::vector<std::size_t> tensor_shape = {pids1.size(), x1.size(), pids1.size(), x1.size()};
 
     pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        apply_order.data(), op_slices.data(), x1.data(),
+        max_orders.data(), op_slices.data(), x1.data(),
         x1.data(), pids1.data(), pids1.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 
     // ------------------ Compare Grid & FK after convolution ------------------
-    // disable LHAPDF banners to guarantee deterministic output
-    LHAPDF::setVerbosity(0);
-    std::string pdfset = "NNPDF31_nlo_as_0118_luxqed";
-    auto pdf = std::unique_ptr<LHAPDF::PDF>(LHAPDF::mkPDF(pdfset, 0));
-
-    auto xfx = [](int32_t id, double x, double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->xfxQ2(id, x, q2);
-    };
-    auto alphas = [](double q2, void* pdf) {
-        return static_cast <LHAPDF::PDF*> (pdf)->alphasQ2(q2);
-    };
-
-    std::vector<LHAPDF::PDF*> pdfs = {pdf.get(), pdf.get()};
-    void** pdf_states = reinterpret_cast<void**>(pdfs.data());
-
     // how many bins does this grid have?
     std::size_t bins = pineappl_grid_bin_count(grid);
 
@@ -175,7 +180,7 @@ int main() {
     // Print the data
     std::cout << std::scientific << std::setprecision(6);
     for (size_t i = 0; i < dxsec_grid.size(); ++i) {
-        double reldiff = std::abs(dxsec_grid[i] - dxsec_fktable[i]) / (std::abs(dxsec_grid[i]));
+        double reldiff = (dxsec_fktable[i] - dxsec_grid[i]) / dxsec_grid[i];
         std::cout << std::setw(idx_width) << i
                   << std::setw(num_width) << dxsec_grid[i]
                   << std::setw(num_width) << dxsec_fktable[i]
