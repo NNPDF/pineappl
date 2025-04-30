@@ -23,6 +23,9 @@ jobs:
           cargo cinstall --verbose --prefix=/usr/local/ --libdir=/usr/local/lib
           ldconfig
 
+      - name: Download test data if not cached
+        uses: ./.github/workflows/download-test-data.yml
+
       - name: Test C++ examples
         run: |
           cd examples/cpp
