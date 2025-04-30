@@ -996,6 +996,7 @@ name = "pineappl_capi"
 version = "1.0.0-alpha4"
 dependencies = [
  "itertools",
+ "ndarray",
  "pineappl 1.0.0-alpha4",
 ]
 
