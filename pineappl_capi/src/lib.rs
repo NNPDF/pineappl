@@ -2148,10 +2148,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let max_orders = unsafe { slice::from_raw_parts(max_orders, 2) };
     let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
-    let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[0]) };
-    let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[1]) };
-    let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[2]) };
-    let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[3]) };
+    let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[0]) };
+    let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[1]) };
+    let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[2]) };
+    let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[3]) };
 
     let order_mask = Order::create_mask(grid.orders(), max_orders[0], max_orders[1], true);
     let evolve_info = grid.evolve_info(&order_mask);
