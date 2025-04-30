@@ -78,7 +78,7 @@ void print_results(std::vector<double> dxsec_grid, std::vector<double> dxsec_fkt
 
 int main() {
     // TODO: How to get a Grid that can be evolved??
-    std::string filename = "../../test-data/LHCB_WP_7TEV_opt.pineappl.lz4";
+    std::string filename = "LHCB_WP_7TEV_opt.pineappl.lz4";
 
     // disable LHAPDF banners to guarantee deterministic output
     LHAPDF::setVerbosity(0);
