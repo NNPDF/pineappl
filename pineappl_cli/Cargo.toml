@@ -18,7 +18,7 @@ workspace = true
 [dependencies]
 anyhow = "1.0.48"
 base64 = { optional = true, version = "0.22.1" }
-clap = { features = ["derive"], version = "4.4.18" }
+clap = { features = ["derive"], version = "4.5.28" }
 cxx = { optional = true, version = "1.0.65" }
 either = { features = ["serde"], optional = true, version = "1.8.0" }
 enum_dispatch = "0.3.7"
