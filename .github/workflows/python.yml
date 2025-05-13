@@ -23,19 +23,8 @@ jobs:
       - name: Set up Rust
         run: |
           rustup component add llvm-tools
-
-      - name: Get test data
-        id: cache-test-data
-        uses: actions/cache@v4
-        with:
-          path: test-data
-          key: test-data-v20
-      - name: Download test data
-        if: steps.cache-test-data.outputs.cache-hit != 'true'
-        run: |
-          cd maintainer
-          ./download-test-data.sh
-
+      - name: Get data if not cached
+        uses: NNPDF/pineappl/.github/workflows/cache-data.yml@master
       - name: Test
         env:
           # `-C link-dead-code` is needed to prevent 'warning: XX functions have mismatched data' warnings
