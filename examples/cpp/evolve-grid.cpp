@@ -1,6 +1,7 @@
 #include <LHAPDF/PDF.h>
 #include <pineappl_capi.h>
 
+#include <fstream>
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -10,7 +11,64 @@
 #include <vector>
 
 // NOTE: Uses the scale of the Grid as the starting scale such that we can use an IDENTITY EKO.
-double FAC0 = 6456.44;
+double FAC0 = 2.7224999999999997;
+
+// x-grid nodes definition for the `in` and `out`
+std::vector<double> XGRID = {
+    2.00000000000000e-07,
+    3.03430476586795e-07,
+    4.60350147489639e-07,
+    6.98420853070036e-07,
+    1.05960949591010e-06,
+    1.60758549847081e-06,
+    2.43894329289168e-06,
+    3.70022720698550e-06,
+    5.61375771693015e-06,
+    8.51680667757335e-06,
+    1.29210156907473e-05,
+    1.96025050023917e-05,
+    2.97384953722449e-05,
+    4.51143839496404e-05,
+    6.84374491896790e-05,
+    1.03811729865769e-04,
+    1.57456056008414e-04,
+    2.38787829185619e-04,
+    3.62054496381397e-04,
+    5.48779532367080e-04,
+    8.31406883648814e-04,
+    1.25867971442728e-03,
+    1.90346340228674e-03,
+    2.87386758128175e-03,
+    4.32850063882081e-03,
+    6.49620619463380e-03,
+    9.69915957404340e-03,
+    1.43750685810901e-02,
+    2.10891866837872e-02,
+    3.05215840078289e-02,
+    4.34149174170227e-02,
+    6.04800287544474e-02,
+    8.22812212620489e-02,
+    1.09143757463307e-01,
+    1.41120806444403e-01,
+    1.78025660425694e-01,
+    2.19504126500389e-01,
+    2.65113704158282e-01,
+    3.14387400769276e-01,
+    3.66875318648224e-01,
+    4.22166775358965e-01,
+    4.79898902961025e-01,
+    5.39757233788045e-01,
+    6.01472197967335e-01,
+    6.64813948247382e-01,
+    7.29586844241431e-01,
+    7.95624252292276e-01,
+    8.62783932390611e-01,
+    9.30944080871754e-01,
+    1.00000000000000e+00
+};
+
+// Particle PIDs for both `in` and `out`
+std::vector<int> PIDS = {- 22 , -6 , -5 , -4 , -3 , -2 , -1 , 21 , 1 , 2 , 3 , 4 , 5 , 6};
 
 std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector<std::size_t>& shape) {
     std::size_t ndim = shape.size();
@@ -24,24 +82,13 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
     return coords;
 }
 
-std::vector<double> generate_fake_ekos(
-    std::vector<int> pids_in,
-    std::vector<double> x_in,
-    std::vector<int> pids_out,
-    std::vector<double> x_out
-) {
-    std::size_t flat_len = x_out.size() * x_in.size() * pids_out.size() * pids_in.size();
-    std::vector<double> ops(flat_len);
+std::vector<double> generate_fake_ekos(std::string filename) {
+    std::ifstream input_file(filename);
+    std::vector<double> ops;
+    double weight_value;
 
-    // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
-    std::vector<std::size_t> shape = {pids_in.size(), x_in.size(), pids_out.size(), x_out.size()};
-    for (std::size_t i = 0; i != flat_len; i++) {
-        std::vector<std::size_t> coords = unravel_index(i, shape);
-
-        double delta_ik = (coords[0] == coords[2]) ? 1.0 : 0.0;
-        double delta_jl = (coords[1] == coords[3]) ? 1.0 : 0.0;
-
-        ops[i] = delta_ik * delta_jl;
+    while (input_file >> weight_value) {
+        ops.push_back(weight_value);
     }
 
     return ops;
@@ -125,11 +172,11 @@ int main() {
     // NOTE: These are used to construct the Evolution Operator
     std::vector<double> fac1(evinfo_shape[0]);
     std::vector<double> frg1(evinfo_shape[1]);
-    std::vector<int> pids_in(evinfo_shape[2]);
-    std::vector<double> x_in(evinfo_shape[3]);
+    std::vector<int> _pids_in(evinfo_shape[2]);
+    std::vector<double> _x_in(evinfo_shape[3]);
     std::vector<double> ren1(evinfo_shape[4]);
     pineappl_grid_evolve_info(grid, max_orders.data(), fac1.data(),
-        frg1.data(), pids_in.data(), x_in.data(), ren1.data());
+        frg1.data(), _pids_in.data(), _x_in.data(), ren1.data());
 
     // ------------------ Construct the Operator Info ------------------
     // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
@@ -148,16 +195,16 @@ int main() {
     }
 
     // ------------------ Construct the Evolution Operator ------------------
-    // Choose a different PID basis for the FK table
-    // std::vector<int> pids_out = {-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 21, 22};
-    std::vector<int> pids_out = pids_in;
+    // Define the same PIDs for both `in` and `out` according to the EKO
+    std::vector<int> pids_in = PIDS;
+    std::vector<int> pids_out = PIDS;
 
     // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
     std::vector<double> op_slices;
-    std::size_t flat_len = x_in.size() * x_in.size() * pids_in.size() * pids_out.size();
+    std::size_t flat_len = XGRID.size() * XGRID.size() * pids_in.size() * pids_out.size();
     for (std::size_t _i = 0; _i != conv_types.size(); _i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
-            std::vector<double> eko = generate_fake_ekos(pids_in, x_in, pids_out, x_in);
+            std::vector<double> eko = generate_fake_ekos("EKO_LHCB_WP_7TEV.txt");
             for (std::size_t k = 0; k != flat_len; k++) {
                 op_slices.push_back(eko[k]);
             }
@@ -173,7 +220,7 @@ int main() {
 
     std::vector<double> xi = {1.0, 1.0, 1.0};
     // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
-    std::vector<std::size_t> tensor_shape = {pids_in.size(), x_in.size(), pids_out.size(), x_in.size()};
+    std::vector<std::size_t> tensor_shape = {pids_in.size(), XGRID.size(), pids_out.size(), XGRID.size()};
 
     // NOTE: The arguments of `pineappl_grid_evolve` must follow the following orders:
     //     - `grid`: PineAPPL Grid
@@ -189,8 +236,8 @@ int main() {
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
     pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        max_orders.data(), op_slices.data(), x_in.data(),
-        x_in.data(), pids_in.data(), pids_out.data(),
+        max_orders.data(), op_slices.data(), XGRID.data(),
+        XGRID.data(), pids_in.data(), pids_out.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 
     // ------------------ Compare Grid & FK after convolution ------------------

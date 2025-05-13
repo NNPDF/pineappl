@@ -15,6 +15,7 @@ PROGRAMS = \
 	convolve-grid \
 	get-subgrids \
 	evolve-grid \
+	evolve-grid-identity \
 	deprecated \
 	display-channels-deprecated \
 	display-channels \
@@ -53,6 +54,9 @@ get-subgrids: get-subgrids.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 evolve-grid: evolve-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
+
+evolve-grid-identity: evolve-grid-identity.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 display-channels-deprecated: display-channels-deprecated.cpp
