@@ -125,7 +125,8 @@ void print_results(std::vector<double> dxsec_grid, std::vector<double> dxsec_fkt
 
 int main() {
     // TODO: How to get a Grid that can be evolved??
-    std::string filename = "LHCB_WP_7TEV_opt.pineappl.lz4";
+    std::string filename = "../../test-data/LHCB_WP_7TEV_opt.pineappl.lz4";
+    std::string ekoname = "../../test-data/EKO_LHCB_WP_7TEV.txt";
 
     // disable LHAPDF banners to guarantee deterministic output
     LHAPDF::setVerbosity(0);
@@ -204,7 +205,7 @@ int main() {
     std::size_t flat_len = XGRID.size() * XGRID.size() * pids_in.size() * pids_out.size();
     for (std::size_t _i = 0; _i != conv_types.size(); _i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
-            std::vector<double> eko = generate_fake_ekos("EKO_LHCB_WP_7TEV.txt");
+            std::vector<double> eko = generate_fake_ekos(ekoname);
             for (std::size_t k = 0; k != flat_len; k++) {
                 op_slices.push_back(eko[k]);
             }
