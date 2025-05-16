@@ -35,6 +35,7 @@ files=(
     'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_DY_8TEV.tar'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV.tar'
+    'https://data.nnpdf.science/pineappl/test-data/EKO_LHCB_WP_7TEV.txt'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_old.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_opt.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_7TEV_v2.tar'
