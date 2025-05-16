@@ -467,9 +467,9 @@ impl Grid {
             return Err(Error::General("scales do not match".to_owned()));
         }
 
-        let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bins: Vec<Bin> = Vec::new();
-        let mut new_entries: Vec<Channel> = Vec::new();
+        let mut new_orders = Vec::new();
+        let mut new_bins = Vec::new();
+        let mut new_entries = Vec::new();
 
         for ((i, j, k), subgrid) in other.subgrids.indexed_iter_mut() {
             let other_order = &other.orders[i];
