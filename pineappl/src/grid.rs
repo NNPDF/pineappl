@@ -467,82 +467,53 @@ impl Grid {
             return Err(Error::General("scales do not match".to_owned()));
         }
 
-        let mut new_orders: Vec<Order> = Vec::new();
-        let mut new_bins = 0;
-        let mut new_entries: Vec<Channel> = Vec::new();
+        let mut new_orders = Vec::new();
+        let mut new_bins = Vec::new();
+        let mut new_entries = Vec::new();
 
-        if !self.bwfl().bins_partial_eq_with_ulps(other.bwfl(), 8) {
-            new_bins = other.bwfl().len();
-
-            // TODO: the following just appends bins to self, make this more general
-            let lhs_r = self
-                .bwfl()
-                .fill_limits()
-                .last()
-                .copied()
-                // UNWRAP: `BinsWithFillLimits` should guarantee there's always at least one bin
-                .unwrap_or_else(|| unreachable!());
-            let rhs_l = other
-                .bwfl()
-                .fill_limits()
-                .first()
-                .copied()
-                // UNWRAP: `BinsWithFillLimits` should guarantee there's always at least one bin
-                .unwrap_or_else(|| unreachable!());
-            let new_bwfl = BinsWithFillLimits::new(
-                [self.bwfl().bins(), other.bwfl().bins()].concat(),
-                self.bwfl()
-                    .fill_limits()
-                    .iter()
-                    .copied()
-                    .chain(
-                        other
-                            .bwfl()
-                            .fill_limits()
-                            .iter()
-                            .skip(1)
-                            .map(|&limit| limit + lhs_r - rhs_l),
-                    )
-                    .collect(),
-            )
-            // TODO: do proper error handling
-            .unwrap_or_else(|_| unreachable!());
-            self.bwfl = new_bwfl;
-        }
-
-        for ((i, _, k), _) in other
-            .subgrids
-            .indexed_iter_mut()
-            .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
-        {
+        for ((i, j, k), subgrid) in other.subgrids.indexed_iter_mut() {
             let other_order = &other.orders[i];
+            let other_bin = &other.bwfl.bins()[j];
             let other_entry = &other.channels[k];
 
-            if !self
-                .orders
-                .iter()
-                .chain(new_orders.iter())
-                .any(|x| x == other_order)
+            if !subgrid.is_empty()
+                && !self
+                    .orders
+                    .iter()
+                    .chain(new_orders.iter())
+                    .any(|x| x == other_order)
             {
                 new_orders.push(other_order.clone());
             }
 
+            // add bins even if there are only empty subgrids
             if !self
-                .channels()
+                .bwfl
+                .bins()
                 .iter()
-                .chain(new_entries.iter())
-                .any(|y| y == other_entry)
+                .chain(new_bins.iter())
+                .any(|b| b.partial_eq_with_ulps(other_bin, 8))
+            {
+                new_bins.push(other_bin.clone());
+            }
+
+            if !subgrid.is_empty()
+                && !self
+                    .channels()
+                    .iter()
+                    .chain(new_entries.iter())
+                    .any(|y| y == other_entry)
             {
                 new_entries.push(other_entry.clone());
             }
         }
 
-        if !new_orders.is_empty() || !new_entries.is_empty() || (new_bins != 0) {
+        if !new_orders.is_empty() || !new_entries.is_empty() || !new_bins.is_empty() {
             let old_dim = self.subgrids.raw_dim().into_pattern();
             let mut new_subgrids = Array3::from_shape_simple_fn(
                 (
                     old_dim.0 + new_orders.len(),
-                    old_dim.1 + new_bins,
+                    old_dim.1 + new_bins.len(),
                     old_dim.2 + new_entries.len(),
                 ),
                 || EmptySubgridV1.into(),
@@ -555,22 +526,20 @@ impl Grid {
             self.subgrids = new_subgrids;
         }
 
+        let total_bins = u32::try_from(self.bwfl.bins().len() + new_bins.len())
+            // UNWRAP: if we have more than 2^32 bins something else is surely wrong
+            .unwrap_or_else(|_| unreachable!());
+
+        // if there are no new bins preserve the fill limits
+        if !new_bins.is_empty() {
+            self.bwfl = BinsWithFillLimits::new(
+                self.bwfl.bins().iter().chain(&new_bins).cloned().collect(),
+                (0..=total_bins).map(f64::from).collect(),
+            )?;
+        }
+
         self.orders.append(&mut new_orders);
         self.channels.append(&mut new_entries);
-
-        let bin_indices: Vec<_> = other
-            .bwfl()
-            .bins()
-            .iter()
-            .map(|bin| {
-                self.bwfl()
-                    .bins()
-                    .iter()
-                    .position(|other_bin| bin.partial_eq_with_ulps(other_bin, 8))
-                    // UNWRAP: we've inserted the bins above so we must find them
-                    .unwrap_or_else(|| unreachable!())
-            })
-            .collect();
 
         for ((i, j, k), subgrid) in other
             .subgrids
@@ -578,6 +547,7 @@ impl Grid {
             .filter(|((_, _, _), subgrid)| !subgrid.is_empty())
         {
             let other_order = &other.orders[i];
+            let other_bin = &other.bwfl.bins()[j];
             let other_entry = &other.channels[k];
 
             let self_i = self
@@ -586,7 +556,13 @@ impl Grid {
                 .position(|x| x == other_order)
                 // UNWRAP: we added the orders previously so we must find it
                 .unwrap_or_else(|| unreachable!());
-            let self_j = bin_indices[j];
+            let self_j = self
+                .bwfl()
+                .bins()
+                .iter()
+                .position(|b| b.partial_eq_with_ulps(other_bin, 8))
+                // UNWRAP: we added the channels previously so we must find it
+                .unwrap_or_else(|| unreachable!());
             let self_k = self
                 .channels
                 .iter()

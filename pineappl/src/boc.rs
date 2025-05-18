@@ -466,10 +466,12 @@ impl BinsWithFillLimits {
     /// TODO
     #[must_use]
     pub fn bins_partial_eq_with_ulps(&self, other: &Self, ulps: i64) -> bool {
-        self.bins
-            .iter()
-            .zip(other.bins())
-            .all(|(lhs, rhs)| lhs.partial_eq_with_ulps(rhs, ulps))
+        (self.bins.len() == other.bins.len())
+            && self
+                .bins
+                .iter()
+                .zip(other.bins())
+                .all(|(lhs, rhs)| lhs.partial_eq_with_ulps(rhs, ulps))
     }
 }
 
