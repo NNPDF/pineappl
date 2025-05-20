@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <memory>
 #include <random>
 #include <vector>
 
@@ -108,9 +107,10 @@ int main() {
   // Name of the PDF sets to be used for the convolutions
   std::string pdfset1 = "NNPDF31_nlo_as_0118_luxqed";
   std::string pdfset2 = "MSHT20qed_nnlo";
+  const std::size_t nb_convolutions = 2;
 
   // --- create a new `Channels` function for the $\gamma\gamma$ initial state
-  PineAPPL::Channels channels;
+  PineAPPL::Channels channels(nb_convolutions);
   PineAPPL::SubChannelEntry subchannels;
   subchannels.entry.push_back({{22, 22}, 1.0});
   PineAPPL::ChannelsEntry channels_entry;
@@ -150,7 +150,7 @@ int main() {
   pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0;  // Mapping method
   pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
   pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-  std::vector<pineappl_interp_tuples> interpolations = {
+  std::vector<pineappl_interp> interpolations = {
       {1e2, 1e8, 40, 3, scales_reweight, scales_mapping,
        interpolation_meth},  // Interpolation fo `scales`
       {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping,
