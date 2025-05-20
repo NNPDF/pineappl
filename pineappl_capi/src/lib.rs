@@ -2135,14 +2135,14 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     op_info: *mut OperatorInfo,
     max_orders: *const u8,
     operators: *mut f64,
-    x_in: *mut f64,
-    x_out: *mut f64,
-    pids_in: *mut i32,
-    pids_out: *mut i32,
-    eko_shape: *mut usize,
-    xi: *mut f64,
-    ren1: *mut f64,
-    alphas: *mut f64,
+    x_in: *const f64,
+    x_out: *const f64,
+    pids_in: *const i32,
+    pids_out: *const i32,
+    eko_shape: *const usize,
+    xi: *const f64,
+    ren1: *const f64,
+    alphas: *const f64,
 ) -> Box<FkTable> {
     let grid = unsafe { &mut *grid };
 
@@ -2220,7 +2220,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         },
     );
 
-    Box::new(fk_table.expect("Evolving grid failed"))
+    Box::new(fk_table.unwrap())
 }
 
 /// Delete an FK table.
