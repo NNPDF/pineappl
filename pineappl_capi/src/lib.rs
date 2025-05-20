@@ -2169,7 +2169,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let op_info = unsafe {
         slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len())
-            .chunks_exact(conv_types.len())
+            .chunks_exact(evolve_info.fac1.len())
     };
 
     let total_shape: usize = eko_shape.iter().product();
@@ -2178,7 +2178,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
             operators,
             conv_types.len() * evolve_info.fac1.len() * total_shape,
         )
-        .chunks_exact(total_shape)
+        .chunks_exact(evolve_info.fac1.len() * total_shape)
     };
 
     let slices = op_info
@@ -2186,7 +2186,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .map(|(op_infos, op_vals)| {
             op_infos
                 .iter()
-                .zip(std::iter::once(op_vals))
+                .zip(op_vals.chunks_exact(total_shape))
                 .map(|(op_info, values)| {
                     let operator_slice_info = OperatorSliceInfo {
                         pid_basis: op_info.pid_basis,
