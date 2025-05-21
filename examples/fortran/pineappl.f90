@@ -68,10 +68,41 @@ module pineappl
         enumerator :: pineappl_kinematics_tag
     end enum
 
-    ! The Kinematics struct is a tuple-like struct in the Pineappl Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
+    enum, bind(c) ! :: pineappl_scale_func_form_tag
+        enumerator :: pineappl_scale_func_form_no_scale
+        enumerator :: pineappl_scale_func_form_scale
+        enumerator :: pineappl_scale_func_form_quadratic_sum
+        enumerator :: pineappl_scale_func_form_quadratic_mean
+        enumerator :: pineappl_scale_func_form_quadratic_sum_over4
+        enumerator :: pineappl_scale_func_form_linear_mean
+        enumerator :: pineappl_scale_func_form_linear_sum
+        enumerator :: pineappl_scale_func_form_scale_max
+        enumerator :: pineappl_scale_func_form_scale_min
+        enumerator :: pineappl_scale_func_form_prod
+        enumerator :: pineappl_scale_func_form_s2plus_s1half
+        enumerator :: pineappl_scale_func_form_pow4_sum
+        enumerator :: pineappl_scale_func_form_wgt_avg
+        enumerator :: pineappl_scale_func_form_s2plus_s1fourth
+        enumerator :: pineappl_scale_func_form_exp_prod2
+
+        enumerator :: pineappl_scale_func_form_tag
+    end enum
+
+    ! The Kinematics struct is a tuple-like struct in the PineAPPL Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
     type, bind(c) :: pineappl_kinematics
         integer(kind(pineappl_kinematics_tag)) :: tag
         integer(c_size_t) :: index
+    end type
+
+    ! Implement the ScaleFuncForm struct which is also a tuple-like struct ine PineAPPL Rust code.
+    type, bind(c) :: pineappl_scale_func_form_body
+        integer(c_size_t) :: index_0 ! index_0 maps to C union field _0
+        integer(c_size_t) :: index_1 ! index_1 maps to C union field _1
+    end type
+
+    type, bind(c) :: pineappl_scale_func_form
+        integer(kind(pineappl_scale_func_form_tag)) :: tag
+        type(pineappl_scale_func_form_body) :: body
     end type
 
     type, bind(c) :: pineappl_interp
@@ -328,7 +359,7 @@ module pineappl
             integer (c_int32_t) :: convolution_pdg_ids(*)
             type (pineappl_kinematics) :: kinematics(*)
             type (pineappl_interp) :: interp_info(*)
-            integer (c_size_t) :: mu_scales(*)
+            type (pineappl_scale_func_form) :: mu_scales(*)
         end function
 
         subroutine grid_optimize(grid) bind(c, name = 'pineappl_grid_optimize')
@@ -914,7 +945,7 @@ contains
         integer, dimension(interpolations - 1), intent(in)                        :: convolution_pdg_ids
         type (pineappl_kinematics), dimension(interpolations), intent(in), target :: kinematics
         type (pineappl_interp), dimension(interpolations), intent(in)             :: interp_info
-        integer, dimension(3)                                                     :: mu_scales
+        type (pineappl_scale_func_form), dimension(interpolations)                :: mu_scales
 
         integer :: i
 
@@ -930,7 +961,7 @@ contains
             int(interpolations, c_size_t), &
             interp_info, &
             kinematics, &
-            [(int(mu_scales(i), c_size_t), i = 1, size(mu_scales))]) &
+            mu_scales) &
         )
     end function
 

@@ -6,10 +6,11 @@ program lhapdf_example
 
     integer, parameter :: dp = kind(0.0d0)
 
-    type(pineappl_grid)          :: grid
-    type(pineappl_channels)      :: channels
-    type(pineappl_kinematics)    :: kinematics(3)
-    type(pineappl_interp)        :: interp_info(3)
+    type(pineappl_grid)            :: grid
+    type(pineappl_channels)        :: channels
+    type(pineappl_kinematics)      :: kinematics(3)
+    type(pineappl_scale_func_form) :: mu_scales_form(3)
+    type(pineappl_interp)          :: interp_info(3)
 
     type(pineappl_xfx) :: xfx
     type(pineappl_alphas) :: alphas
@@ -45,8 +46,15 @@ program lhapdf_example
         pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
 
+    ! All the `_body` have to defined with two fields - if not required, the value(s) will be ignored
+    mu_scales_form = [ &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+    ]
+
     grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
-        [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], 3, interp_info, kinematics, [1, 1, 0])
+        [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
     call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])
