@@ -25,7 +25,7 @@ program lhapdf_example
     integer(c_int), target :: pdfs_array(2,2)
     character(len=30)      :: pdfset1, pdfset2
 
-    channels = pineappl_channels_new(int(2, kind=8))
+    channels = pineappl_channels_new(2)
     call pineappl_channels_add(channels, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     kinematics = [&

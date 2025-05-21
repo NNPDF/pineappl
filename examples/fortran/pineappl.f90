@@ -137,7 +137,7 @@ module pineappl
 
         type (c_ptr) function channels_new(convolutions) bind(c, name = 'pineappl_channels_new')
             use iso_c_binding
-            integer (c_size_t), value :: convolutions
+            integer (c_int32_t), value :: convolutions
         end function
 
         integer (c_size_t) function grid_bin_count(grid) bind(c, name = 'pineappl_grid_bin_count')
@@ -562,7 +562,7 @@ contains
     type (pineappl_channels) function pineappl_channels_new(convolutions)
         implicit none
 
-        integer (c_size_t), value :: convolutions
+        integer (c_int32_t), value :: convolutions
 
         pineappl_channels_new = pineappl_channels(channels_new(convolutions))
     end function
