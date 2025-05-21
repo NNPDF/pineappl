@@ -158,7 +158,7 @@ struct Grid {
        std::vector<pineappl_kinematics> &kinematics,
        std::vector<pineappl_interp> &interp,
        std::vector<double> &bin_limits,
-       std::vector<std::size_t> &mu_scales)
+       std::vector<pineappl_scale_func_form> &mu_scales)
       : Grid(nullptr) {
     const std::size_t n_orders = orders.size();
     const std::size_t n_bins = bin_limits.size() - 1;
