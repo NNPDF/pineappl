@@ -1630,7 +1630,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     interpolations: usize,
     interp_info: *const Interp,
     kinematics: *const Kinematics,
-    mu_scales: *const usize,
+    mu_scales: *const ScaleFuncForm,
 ) -> Box<Grid> {
     let bins = BinsWithFillLimits::from_fill_limits(
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
@@ -1683,20 +1683,8 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     // Construct the kinematic variables
     let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
 
-    // Scales. An array containing the values of {ren, fac, frg}
+    // Scales. An array containing the values of `ScaleFuncForm` objects
     let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
-    let mu_scales_vec: Vec<_> = mu_scales
-        .iter()
-        .map(|&scale| {
-            // TODO: this doesn't allow all other `ScaleFuncForm`, for instance
-            // `ScaleFuncForm::QuadraticSum`
-            if scale == 0 {
-                ScaleFuncForm::NoScale
-            } else {
-                ScaleFuncForm::Scale(scale - 1)
-            }
-        })
-        .collect();
 
     Box::new(Grid::new(
         bins,
@@ -1707,9 +1695,9 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         interp_vecs,
         kinematics,
         Scales {
-            ren: mu_scales_vec[0].clone(),
-            fac: mu_scales_vec[1].clone(),
-            frg: mu_scales_vec[2].clone(),
+            ren: mu_scales[0].clone(),
+            fac: mu_scales[1].clone(),
+            frg: mu_scales[2].clone(),
         },
     ))
 }

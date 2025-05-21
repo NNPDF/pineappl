@@ -63,7 +63,9 @@ int main() {
     };
 
     // Define the unphysical scale objecs
-    size_t mu_scales[] = { 1, 1, 0 };
+    pineappl_scale_func_form scale_mu = { PINEAPPL_SCALE_FUNC_FORM_SCALE, 0 };
+    pineappl_scale_func_form no_scale_mu = { PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0 };
+    pineappl_scale_func_form mu_scales[3] = { scale_mu, scale_mu, no_scale_mu };
 
     // ---
     // Create the grid using the previously set information about orders, bins and channels
