@@ -94,7 +94,7 @@ module pineappl
         integer(c_size_t) :: index
     end type
 
-    ! Implement the ScaleFuncForm struct which is also a tuple-like struct ine PineAPPL Rust code.
+    ! Implement the ScaleFuncForm struct which is also a tuple-like struct ine PineAPPL Rust code. The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored.
     type, bind(c) :: pineappl_scale_func_form_body
         integer(c_size_t) :: index_0 ! index_0 maps to C union field _0
         integer(c_size_t) :: index_1 ! index_1 maps to C union field _1

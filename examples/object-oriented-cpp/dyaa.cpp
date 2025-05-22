@@ -159,7 +159,7 @@ int main() {
        interpolation_meth},  // Interpolation fo `x2`
   };
 
-  // Define the μ ScaleFuncForm objects
+  // Define the μ `ScaleFuncForm` objects
   pineappl_scale_func_form scale_form = {PINEAPPL_SCALE_FUNC_FORM_SCALE, 0};
   pineappl_scale_func_form no_scale_form = {PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0};
   std::vector<pineappl_scale_func_form> mu_scales = {scale_form, scale_form, no_scale_form};

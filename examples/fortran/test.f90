@@ -26,7 +26,7 @@ program test_pineappl
     type(c_ptr), target    :: pdfs_state(2)
     integer(c_int), target :: pdfs_array(2,2)
 
-    channels = pineappl_channels_new(2)
+    channels = pineappl_channels_new(2) ! The argument is the number of convolutions
     call pineappl_channels_add(channels, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     if (pineappl_channels_count(channels) /= 1) then
@@ -56,7 +56,7 @@ program test_pineappl
         pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
 
-    ! All the `_body` have to defined with two fields - if not required, the value(s) will be ignored
+    ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
     mu_scales_form = [ &
         pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
         pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &

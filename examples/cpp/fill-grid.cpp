@@ -116,7 +116,8 @@ int main() {
     // Create all channels
 
     // this object will contain all channels (for two initial states) that we define
-    auto* channels = pineappl_channels_new(2);
+    std::size_t nb_convolutions = 2;
+    auto* channels = pineappl_channels_new(nb_convolutions);
 
     // photon-photon initial state, where `22` is the photon (PDG MC ids)
     int32_t pids1[] = { 22, 22 };
@@ -206,7 +207,7 @@ int main() {
 
     // Define the unphysical scale objecs
     pineappl_scale_func_form scale_mu = { PINEAPPL_SCALE_FUNC_FORM_SCALE, 0 };
-    pineappl_scale_func_form no_scale_mu = { PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0 };
+    pineappl_scale_func_form no_scale_mu = { PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0 }; // Here `.scale=0` is dummy value
     pineappl_scale_func_form mu_scales[3] = { scale_mu, scale_mu, no_scale_mu };
 
     // ---
