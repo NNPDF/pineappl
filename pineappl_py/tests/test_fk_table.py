@@ -11,6 +11,7 @@ from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
 from pineappl.fk_table import FkAssumptions, FkTable
 from pineappl.subgrid import ImportSubgridV1
+from pineappl.pids import PidBasis
 
 
 class TestFkTable:
@@ -78,7 +79,7 @@ class TestFkTable:
 
         assert fk.table().shape == (1, 51, 34, 34)
         np.testing.assert_allclose(fk.fac0(), 2.7224999999999997)
-        assert fk.frg0() == None
+        assert fk.frg0() is None
 
         # Check the various aspects of the Bins
         assert fk.bins() == 1
@@ -109,6 +110,11 @@ class TestFkTable:
         # Test FK optimization
         assumption = FkAssumptions("Nf6Sym")
         fk.optimize(assumption)
+
+        # Check that FK table is in the Evolution basis and rotate into PDG
+        assert fk.pid_basis == PidBasis.Evol
+        new_fk = fk.rotate_pid_basis(PidBasis.Pdg)
+        assert new_fk.pid_basis == PidBasis.Pdg
 
     def test_unpolarized_convolution(
         self,
