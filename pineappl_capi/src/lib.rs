@@ -2203,7 +2203,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                         Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
                         values.to_vec(),
                     )
-                    .expect("Shape mismatch or invalid input.");
+                    .unwrap();
 
                     Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
                 })
