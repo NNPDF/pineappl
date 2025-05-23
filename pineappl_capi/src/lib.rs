@@ -56,14 +56,18 @@
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
+use ndarray::{Array4, CowArray, Ix4};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
+use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
+use pineappl::fk_table::FkTable;
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
@@ -1463,6 +1467,16 @@ fn construct_interpolation(interp: &InterpTuples) -> Interp {
     )
 }
 
+/// Type for defining the Operator info.
+#[repr(C)]
+#[derive(Debug)]
+pub struct OperatorInfo {
+    fac0: f64,
+    fac1: f64,
+    pid_basis: PidBasis,
+    conv_type: ConvType,
+}
+
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
@@ -1780,7 +1794,7 @@ pub unsafe extern "C" fn pineappl_channels_entry(
     let entry = channels.0[entry].entry();
     // if the channel has no entries we assume no convolutions, which is OK we don't copy anything
     // in this case
-    let convolutions = entry.get(0).map_or(0, |x| x.0.len());
+    let convolutions = entry.first().map_or(0, |x| x.0.len());
     let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
@@ -1819,7 +1833,7 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
     }
 }
 
-/// A generalization of the convolution function.
+/// A generalization of the convolution function for Grids.
 ///
 /// # Safety
 ///
@@ -1899,6 +1913,18 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     ));
 }
 
+/// Get the type of convolutions for this Grid given an index.
+///
+/// # Safety
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_conv_type(grid: *const Grid, index: usize) -> ConvType {
+    let grid = unsafe { &*grid };
+
+    grid.convolutions()[index].conv_type()
+}
+
 /// Get the number of convolutions for a given Grid.
 ///
 /// # Safety
@@ -1951,10 +1977,31 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     };
     let shape = unsafe { slice::from_raw_parts_mut(shape, grid.kinematics().len()) };
 
-    shape.copy_from_slice(&subgrid_shape);
+    shape.copy_from_slice(subgrid_shape);
 }
 
-/// Get the subgrid for a given bin, channel, and order
+/// Get the nodes of the subgrid.
+///
+/// # Safety
+///
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
+    grid: *const Grid,
+    bin: usize,
+    order: usize,
+    channel: usize,
+    node_values: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+    let subgrid = &grid.subgrids()[[order, bin, channel]];
+
+    let flatten_subgrid: Vec<f64> = subgrid.node_values().into_iter().flatten().collect();
+    let node_values = unsafe { slice::from_raw_parts_mut(node_values, flatten_subgrid.len()) };
+
+    node_values.copy_from_slice(flatten_subgrid.as_slice());
+}
+
+/// Get the subgrid for a given bin, channel, and order.
 ///
 /// # Safety
 ///
@@ -1980,8 +2027,287 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
             unsafe { slice::from_raw_parts_mut(subgrid_array, shape.iter().product()) };
 
         for (index, value) in subgrid.indexed_iter() {
-            let ravel_index = ravel_multi_index(index.as_slice(), &shape);
+            let ravel_index = ravel_multi_index(index.as_slice(), shape);
             subgrid_array[ravel_index] = value;
         }
     }
+}
+
+/// Get the shape of the objects represented in the evolve info.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
+    grid: *const Grid,
+    orders: *const u8,
+    shape_info: *mut usize,
+) {
+    let grid = unsafe { &*grid };
+
+    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
+    let shape_info = unsafe { slice::from_raw_parts_mut(shape_info, 5) };
+
+    let evolve_info = grid.evolve_info(&order_mask);
+    let evinfo_shapes = [
+        evolve_info.fac1.len(),
+        evolve_info.frg1.len(),
+        evolve_info.pids1.len(),
+        evolve_info.x1.len(),
+        evolve_info.ren1.len(),
+    ];
+
+    shape_info.copy_from_slice(&evinfo_shapes);
+}
+
+/// Get the values of the parameters contained in evolve info.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info(
+    grid: *const Grid,
+    orders: *const u8,
+    fac1: *mut f64,
+    frg1: *mut f64,
+    pids1: *mut i32,
+    x1: *mut f64,
+    ren1: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+
+    let orders = unsafe { slice::from_raw_parts(orders, 2) };
+    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
+
+    let evolve_info = grid.evolve_info(&order_mask);
+    let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evolve_info.fac1.len()) };
+    let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evolve_info.frg1.len()) };
+    let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evolve_info.pids1.len()) };
+    let x1 = unsafe { slice::from_raw_parts_mut(x1, evolve_info.x1.len()) };
+    let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evolve_info.ren1.len()) };
+
+    fac1.copy_from_slice(&grid.evolve_info(&order_mask).fac1);
+    frg1.copy_from_slice(&grid.evolve_info(&order_mask).frg1);
+    pids1.copy_from_slice(&grid.evolve_info(&order_mask).pids1);
+    x1.copy_from_slice(&grid.evolve_info(&order_mask).x1);
+    ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
+}
+
+/// Evolve a grid with an evolution operator and dump the resulting FK table.
+///
+/// # Arguments
+///
+/// * `grid` - A `Grid` object
+/// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
+///               Its length must be `(N_{conv} * N_{Q2_slices})`.
+/// * `orders` - The maximum QCD and EW orders `(αs, α)`
+/// * `operators` - An array of evolution operators. Each operator is a flattend version of a rank-4
+///                 tensor whose shape is defined by: `pids_out`, `x_out`, `pids_in`, `x_in`, in that
+///                 order. The size of `operators` must be `(N_{conv} * N_{Q2_slices} * len_flat_op)`.
+/// * `x_in` - The  x-grid that defines the Grid
+/// * `x_out` - The x-grid that will define the evolved Grid
+/// * `pids_in` - The list of PID values that defines the Grid
+/// * `pids_out` - The list of PID values that will define the evolved Grid
+/// * `eko_shape` - The shape of the evolution operator
+/// * `xi` - The values that defines that scale variations
+/// * `ren` - An array containing the values of the renormalization scale variation
+/// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
+///
+/// # Safety
+///
+/// This function is not safe to call if: (a) the `grid` does not point to a valid `Grid` object or
+/// is a null pointer; (b) the `op_info` and `operators` objects do not have the expected lengths,
+/// (c) the shape of `eko_shape` is different from the actual size of `pids_out`, `x_out`, `pids_in`,
+/// `x_in`.
+///
+/// # Panics
+///
+/// This function might panic if the either the `op_info` and/or `operators` are/is incompatible
+/// with the `Grid`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve(
+    grid: *mut Grid,
+    op_info: *mut OperatorInfo,
+    max_orders: *const u8,
+    operators: *mut f64,
+    x_in: *const f64,
+    x_out: *const f64,
+    pids_in: *const i32,
+    pids_out: *const i32,
+    eko_shape: *const usize,
+    xi: *const f64,
+    ren1: *const f64,
+    alphas: *const f64,
+) -> Box<FkTable> {
+    let grid = unsafe { &mut *grid };
+
+    let max_orders = unsafe { slice::from_raw_parts(max_orders, 2) };
+    let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
+    let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[0]) };
+    let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[1]) };
+    let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[2]) };
+    let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[3]) };
+
+    let order_mask = Order::create_mask(grid.orders(), max_orders[0], max_orders[1], true);
+    let evolve_info = grid.evolve_info(&order_mask);
+
+    let ren1_len = evolve_info.ren1.len();
+    let ren1 = unsafe { slice::from_raw_parts(ren1, ren1_len) };
+    let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
+    let xi = unsafe { slice::from_raw_parts(xi, 3) };
+
+    let conv_types: HashSet<_> = grid
+        .convolutions()
+        .iter()
+        .map(pineappl::convolutions::Conv::conv_type)
+        .collect();
+
+    let op_info = unsafe {
+        slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len())
+            .chunks_exact(evolve_info.fac1.len())
+    };
+
+    let total_shape: usize = eko_shape.iter().product();
+    let operators = unsafe {
+        slice::from_raw_parts(
+            operators,
+            conv_types.len() * evolve_info.fac1.len() * total_shape,
+        )
+        .chunks_exact(evolve_info.fac1.len() * total_shape)
+    };
+
+    let slices = op_info
+        .zip(operators)
+        .map(|(op_infos, op_vals)| {
+            op_infos
+                .iter()
+                .zip(op_vals.chunks_exact(total_shape))
+                .map(|(op_info, values)| {
+                    let operator_slice_info = OperatorSliceInfo {
+                        pid_basis: op_info.pid_basis,
+                        fac0: op_info.fac0,
+                        pids0: pids_out.to_vec(),
+                        x0: x_out.to_vec(),
+                        fac1: op_info.fac1,
+                        pids1: pids_in.to_vec(),
+                        x1: x_in.to_vec(),
+                        conv_type: op_info.conv_type,
+                    };
+
+                    let array = Array4::from_shape_vec(
+                        Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
+                        values.to_vec(),
+                    )
+                    .unwrap();
+
+                    Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
+                })
+        })
+        .collect();
+
+    let fk_table = grid.evolve(
+        slices,
+        &order_mask,
+        (xi[0], xi[1], xi[2]),
+        &AlphasTable {
+            ren1: ren1.to_vec(),
+            alphas: alphas.to_vec(),
+        },
+    );
+
+    Box::new(fk_table.unwrap())
+}
+
+/// Delete an FK table.
+#[no_mangle]
+#[allow(unused_variables)]
+pub extern "C" fn pineappl_fk_table_delete(fktable: Option<Box<FkTable>>) {}
+
+/// Write `fktable` to a file with name `filename`. If `filename` ends in `.lz4` the Fk table is
+/// automatically LZ4 compressed.
+///
+/// # Safety
+///
+/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is a null
+/// pointer, this function is not safe to call. The parameter `filename` must be a non-`NULL`,
+/// non-empty, and valid C string pointing to a non-existing, but writable file.
+///
+/// # Panics
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const FkTable, filename: *const c_char) {
+    let fktable = unsafe { &*fktable };
+    let filename = unsafe { CStr::from_ptr(filename) };
+    let filename = filename.to_string_lossy();
+    let path = Path::new(filename.as_ref());
+    let writer = File::create(path).unwrap();
+
+    if path.extension().is_some_and(|ext| ext == "lz4") {
+        fktable.grid().write_lz4(writer).unwrap();
+    } else {
+        fktable.grid().write(writer).unwrap();
+    }
+}
+
+/// A generalization of the convolution function for FK tables.
+///
+/// # Safety
+///
+/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is
+/// a null pointer, this function is not safe to call. The function pointer `xfx` must not
+/// be null pointers and point to valid functions. The parameter `channel_mask` must either
+/// be null pointers or point to arrays that are as long as `fktable` has channels, respectively.
+/// Finally, `results` must be as long as `FkTable` has bins.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fk_table_convolve(
+    fktable: *const FkTable,
+    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
+    pdfs_state: *mut *mut c_void,
+    channel_mask: *const bool,
+    bin_indices: *const usize,
+    results: *mut f64,
+) {
+    let fktable = unsafe { &*fktable };
+
+    let channel_mask = if channel_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(channel_mask, fktable.channels().len()) }
+    };
+
+    let bin_indices = if bin_indices.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(bin_indices, fktable.grid().bwfl().len()) }
+    };
+
+    // TODO: Better way to do this?
+    let mut als = |_| 1.0;
+
+    let pdfs_slices =
+        unsafe { slice::from_raw_parts(pdfs_state, fktable.grid().convolutions().len()) };
+    let mut xfx_funcs: Vec<_> = pdfs_slices
+        .iter()
+        .map(|&state| move |id, x, q2| xfx(id, x, q2, state))
+        .collect();
+
+    // Construct the Convolution cache
+    let mut convolution_cache = ConvolutionCache::new(
+        fktable.grid().convolutions().to_vec(),
+        xfx_funcs
+            .iter_mut()
+            .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
+            .collect(),
+        &mut als,
+    );
+
+    let results = unsafe { slice::from_raw_parts_mut(results, fktable.grid().bwfl().len()) };
+
+    results.copy_from_slice(&fktable.convolve(&mut convolution_cache, bin_indices, channel_mask));
 }
