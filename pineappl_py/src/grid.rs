@@ -696,7 +696,7 @@ impl PyGrid {
         self.grid.dedup_channels(ulps);
     }
 
-    /// Rotate the Grid into the specified basis
+    /// Rotate the Grid into the specified basis.
     ///
     /// Parameters
     /// ----------
