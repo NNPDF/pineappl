@@ -2,7 +2,8 @@
 authors = [
     "Christopher Schwan <handgranaten-herbert@posteo.de>",
     "Alessandro Candido <candido.ale@gmail.com>",
-    "Felix Hekhorn <felix.hekhorn@mi.infn.it>"
+    "Felix Hekhorn <felix.hekhorn@mi.infn.it>",
+    "Tanjona R. Rabemananjara <tanjona.hepc@gmail.com>"
 ]
 description = "Python bindings to PineAPPL"
 name = "pineappl_py"
