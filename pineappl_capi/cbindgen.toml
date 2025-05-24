@@ -34,20 +34,20 @@ prefix_with_name = true
 rename_variants = "ScreamingSnakeCase"
 
 [export.rename]
-"Grid" = "pineappl_grid"
-"Lumi" = "pineappl_lumi"
 "Channels" = "pineappl_channels"
-"PidBasis" = "pineappl_pid_basis"
 "ConvType" = "pineappl_conv_type"
-"Kinematics" = "pineappl_kinematics"
-"ScaleFuncForm" = "pineappl_scale_func_form"
-"ReweightMeth" = "pineappl_reweight_meth"
-"Map" = "pineappl_map"
-"InterpMeth" = "pineappl_interp_meth"
-"Interp" = "pineappl_interp"
-"KeyVal" = "pineappl_keyval"
-"SubGrid" = "pineappl_subgrid"
+"Grid" = "pineappl_grid"
 "GridOptFlags" = "pineappl_gof"
+"Interp" = "pineappl_interp"
+"InterpMeth" = "pineappl_interp_meth"
+"KeyVal" = "pineappl_keyval"
+"Kinematics" = "pineappl_kinematics"
+"Lumi" = "pineappl_lumi"
+"Map" = "pineappl_map"
+"PidBasis" = "pineappl_pid_basis"
+"ReweightMeth" = "pineappl_reweight_meth"
+"ScaleFuncForm" = "pineappl_scale_func_form"
+"SubGrid" = "pineappl_subgrid"
 
 ############## Options for How Your Rust library Should Be Parsed ##############
 
