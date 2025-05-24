@@ -1,5 +1,5 @@
 use super::GlobalConfiguration;
-use anyhow::{anyhow, bail, ensure, Context, Error, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
 use itertools::Itertools;
 use lhapdf::{Pdf, PdfSet};
 use pineappl::boc::{ScaleFuncForm, Scales};
@@ -433,36 +433,61 @@ pub fn parse_integer_range(range: &str) -> Result<RangeInclusive<usize>> {
 }
 
 pub fn parse_order(order: &str) -> Result<(u8, u8)> {
-    let mut alphas = 0;
-    let mut alpha = 0;
+    const FORMAT: &str = "must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer";
 
-    let matches: Vec<_> = order.match_indices('a').collect();
+    // since 'a' is a substring of 'as', the latter must be given first
+    let couplings = ["as", "a"];
+    let mut variables = [None, None];
+    let mut parsed;
 
-    ensure!(
-        matches.len() <= 2,
-        "unable to parse order; too many couplings in '{}'",
-        order
-    );
+    let mut chunk = order;
 
-    for (index, _) in matches {
-        if &order[index..index + 2] == "as" {
-            let len = order[index + 2..]
-                .chars()
-                .take_while(|c| c.is_numeric())
-                .count();
-            alphas = str::parse::<u8>(&order[index + 2..index + 2 + len])
-                .context(format!("unable to parse order '{order}'"))?;
-        } else {
-            let len = order[index + 1..]
-                .chars()
-                .take_while(|c| c.is_numeric())
-                .count();
-            alpha = str::parse::<u8>(&order[index + 1..index + 1 + len])
-                .context(format!("unable to parse order '{order}'"))?;
+    loop {
+        parsed = false;
+
+        for (coupling, variable) in couplings.iter().zip(&mut variables) {
+            if let Some(stripped) = chunk.strip_prefix(*coupling) {
+                // find the index of the next coupling
+                let len = couplings
+                    .iter()
+                    .filter_map(|c| stripped.find(c))
+                    .min()
+                    .unwrap_or(stripped.len());
+
+                let (exponent, new_chunk) = stripped.split_at(len);
+                chunk = new_chunk;
+
+                if let Some(var) = variable {
+                    bail!("exponent of '{coupling}' has already been set to '{var}'");
+                } else if exponent.is_empty() {
+                    // if there's no exponent, we assume it to be one
+                    *variable = Some(1);
+                } else {
+                    *variable = Some(exponent.parse().map_err(|err| {
+                        anyhow!("parsing exponent '{exponent}' of '{coupling}' failed with '{err}'")
+                    })?);
+                }
+
+                parsed = true;
+                break;
+            }
+        }
+
+        if !parsed {
+            break;
         }
     }
 
-    Ok((alphas, alpha))
+    if !chunk.is_empty() {
+        bail!("found remainder '{chunk}', but order {FORMAT}");
+    }
+
+    Ok(match variables {
+        [Some(alphas), Some(alpha)] => (alphas, alpha),
+        [Some(alphas), None] => (alphas, 0),
+        [None, Some(alpha)] => (0, alpha),
+        [None, None] => bail!("{FORMAT}"),
+    })
 }
 
 #[cfg(test)]
@@ -492,6 +517,48 @@ mod test {
                 ],
                 label: "X".to_owned()
             }
+        );
+    }
+
+    #[test]
+    fn parse_order() {
+        // that's OK
+        assert_eq!(super::parse_order("as16a28").unwrap(), (16, 28));
+
+        // empty exponents are set to 1
+        assert_eq!(super::parse_order("asa28").unwrap(), (1, 28));
+        assert_eq!(super::parse_order("as16a").unwrap(), (16, 1));
+        assert_eq!(super::parse_order("asa").unwrap(), (1, 1));
+        assert_eq!(super::parse_order("aas").unwrap(), (1, 1));
+
+        // exponent is not an integer
+        assert_eq!(
+            format!("{}", super::parse_order("asBLA").unwrap_err()),
+            "parsing exponent 'BLA' of 'as' failed with 'invalid digit found in string'"
+        );
+
+        // 'LO' was previous accepted: https://github.com/NNPDF/pineappl/issues/347
+        assert_eq!(
+            format!("{}", super::parse_order("LO").unwrap_err()),
+            "found remainder 'LO', but order must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer"
+        );
+
+        // repeated couplings must raise an error
+        assert_eq!(
+            format!("{}", super::parse_order("as3as2").unwrap_err()),
+            "exponent of 'as' has already been set to '3'"
+        );
+
+        // different repeat coupling
+        assert_eq!(
+            format!("{}", super::parse_order("a3a2as2").unwrap_err()),
+            "exponent of 'a' has already been set to '3'"
+        );
+
+        // empty is wrong as well
+        assert_eq!(
+            format!("{}", super::parse_order("").unwrap_err()),
+            "must be one of `asX`, `aY`, `asXaY` or `aYasX` with `X` and `Y` integer"
         );
     }
 }
