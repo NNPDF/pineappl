@@ -27,6 +27,3 @@ capi = []
 
 [package.metadata.capi]
 min_version = "0.9.0"
-
-[package.metadata.capi.install.include]
-asset = [{from = "include/PineAPPL.hpp"}]
