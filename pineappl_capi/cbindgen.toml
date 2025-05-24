@@ -4,7 +4,8 @@ language = "C"
 
 header = """/*
  * PineAPPL - PDF-independent binning of phase space weights
- * Copyright (C) 2020-2024  Christopher Schwan
+ * Copyright (C) 2020-2025  Christopher Schwan
+ * Copyright (C) 2024-2025  Tanjona R. Rabemananjara
 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
