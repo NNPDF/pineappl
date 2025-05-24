@@ -82,16 +82,36 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
     return coords;
 }
 
-std::vector<double> generate_fake_ekos(std::string filename) {
-    std::ifstream input_file(filename);
-    std::vector<double> ops;
+extern "C" void generate_fake_ekos(
+    const int* pids_in,
+    const double* x_in,
+    const int* pids_out,
+    const double* x_out,
+    double* eko_buffer,
+    pineappl_conv_type conv_type,
+    std::size_t pids_in_len,
+    std::size_t x_in_len,
+    std::size_t pids_out_len,
+    std::size_t x_out_len
+) {
+    // Ignore unused variables
+    (void)pids_in;
+    (void)x_in;
+    (void)pids_out;
+    (void)x_out;
+    (void) conv_type;
+    (void)pids_in_len;
+    (void)x_in_len;
+    (void)pids_out_len;
+    (void)x_out_len;
+
+    std::ifstream input_file("../../test-data/EKO_LHCB_WP_7TEV.txt");
     double weight_value;
 
+    std::size_t count = 0;
     while (input_file >> weight_value) {
-        ops.push_back(weight_value);
+        eko_buffer[count++] = weight_value;
     }
-
-    return ops;
 }
 
 void print_results(std::vector<double> dxsec_grid, std::vector<double> dxsec_fktable) {
@@ -126,7 +146,6 @@ void print_results(std::vector<double> dxsec_grid, std::vector<double> dxsec_fkt
 int main() {
     // TODO: How to get a Grid that can be evolved??
     std::string filename = "../../test-data/LHCB_WP_7TEV_opt.pineappl.lz4";
-    std::string ekoname = "../../test-data/EKO_LHCB_WP_7TEV.txt";
 
     // disable LHAPDF banners to guarantee deterministic output
     LHAPDF::setVerbosity(0);
@@ -200,18 +219,6 @@ int main() {
     std::vector<int> pids_in = PIDS;
     std::vector<int> pids_out = PIDS;
 
-    // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
-    std::vector<double> op_slices;
-    std::size_t flat_len = XGRID.size() * XGRID.size() * pids_in.size() * pids_out.size();
-    for (std::size_t _i = 0; _i != conv_types.size(); _i++) {
-        for (std::size_t j = 0; j != fac1.size(); j++) {
-            std::vector<double> eko = generate_fake_ekos(ekoname);
-            for (std::size_t k = 0; k != flat_len; k++) {
-                op_slices.push_back(eko[k]);
-            }
-        }
-    }
-
     // Construct the values of alphas table
     std::vector<double> alphas_table;
     for (double q2 : ren1) {
@@ -237,7 +244,7 @@ int main() {
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
     pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        max_orders.data(), op_slices.data(), XGRID.data(),
+        max_orders.data(), generate_fake_ekos, XGRID.data(),
         XGRID.data(), pids_in.data(), pids_out.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 

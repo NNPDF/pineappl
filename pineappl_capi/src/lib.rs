@@ -2132,9 +2132,20 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *mut Grid,
-    op_info: *mut OperatorInfo,
+    operator_infos: *mut OperatorInfo,
     max_orders: *const u8,
-    operators: *mut f64,
+    operators: extern "C" fn(
+        *const i32,
+        *const f64,
+        *const i32,
+        *const f64,
+        *mut f64,
+        ConvType,
+        usize,
+        usize,
+        usize,
+        usize,
+    ),
     x_in: *const f64,
     x_out: *const f64,
     pids_in: *const i32,
@@ -2167,46 +2178,50 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .map(pineappl::convolutions::Conv::conv_type)
         .collect();
 
-    let op_info = unsafe {
-        slice::from_raw_parts(op_info, conv_types.len() * evolve_info.fac1.len())
+    let operator_infos = unsafe {
+        slice::from_raw_parts(operator_infos, conv_types.len() * evolve_info.fac1.len())
             .chunks_exact(evolve_info.fac1.len())
     };
-
     let total_shape: usize = eko_shape.iter().product();
-    let operators = unsafe {
-        slice::from_raw_parts(
-            operators,
-            conv_types.len() * evolve_info.fac1.len() * total_shape,
-        )
-        .chunks_exact(evolve_info.fac1.len() * total_shape)
-    };
 
-    let slices = op_info
-        .zip(operators)
-        .map(|(op_infos, op_vals)| {
-            op_infos
-                .iter()
-                .zip(op_vals.chunks_exact(total_shape))
-                .map(|(op_info, values)| {
-                    let operator_slice_info = OperatorSliceInfo {
-                        pid_basis: op_info.pid_basis,
-                        fac0: op_info.fac0,
-                        pids0: pids_out.to_vec(),
-                        x0: x_out.to_vec(),
-                        fac1: op_info.fac1,
-                        pids1: pids_in.to_vec(),
-                        x1: x_in.to_vec(),
-                        conv_type: op_info.conv_type,
-                    };
+    let slices = operator_infos
+        .map(|op_infos| {
+            op_infos.iter().map(|op_info| {
+                let operator_slice_info = OperatorSliceInfo {
+                    pid_basis: op_info.pid_basis,
+                    fac0: op_info.fac0,
+                    pids0: pids_out.to_vec(),
+                    x0: x_out.to_vec(),
+                    fac1: op_info.fac1,
+                    pids1: pids_in.to_vec(),
+                    x1: x_in.to_vec(),
+                    conv_type: op_info.conv_type,
+                };
 
-                    let array = Array4::from_shape_vec(
-                        Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
-                        values.to_vec(),
-                    )
-                    .unwrap();
+                // Let Rust manages the memory by allocating a flat vector of zeros as a placeholder
+                // to hold the evolution operator data.
+                let mut eko_slice = vec![0.0; total_shape];
+                operators(
+                    pids_in.as_ptr(),
+                    x_in.as_ptr(),
+                    pids_out.as_ptr(),
+                    x_out.as_ptr(),
+                    eko_slice.as_mut_ptr(),
+                    op_info.conv_type,
+                    pids_in.len(),
+                    x_in.len(),
+                    pids_out.len(),
+                    x_out.len(),
+                );
 
-                    Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
-                })
+                let array = Array4::from_shape_vec(
+                    Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
+                    eko_slice,
+                )
+                .unwrap();
+
+                Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
+            })
         })
         .collect();
 

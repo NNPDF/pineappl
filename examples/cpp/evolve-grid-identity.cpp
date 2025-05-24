@@ -24,27 +24,36 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
     return coords;
 }
 
-std::vector<double> generate_fake_ekos(
-    std::vector<int> pids_in,
-    std::vector<double> x_in,
-    std::vector<int> pids_out,
-    std::vector<double> x_out
+extern "C" void generate_fake_ekos(
+    const int* pids_in,
+    const double* x_in,
+    const int* pids_out,
+    const double* x_out,
+    double* eko_buffer,
+    pineappl_conv_type conv_type,
+    std::size_t pids_in_len,
+    std::size_t x_in_len,
+    std::size_t pids_out_len,
+    std::size_t x_out_len
 ) {
-    std::size_t flat_len = x_out.size() * x_in.size() * pids_out.size() * pids_in.size();
-    std::vector<double> ops(flat_len);
+    // Ignore unused variables
+    (void)pids_in;
+    (void)x_in;
+    (void)pids_out;
+    (void)x_out;
+    (void) conv_type;
 
+    std::size_t flat_len = pids_in_len * x_in_len * pids_out_len * x_out_len;
     // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
-    std::vector<std::size_t> shape = {pids_in.size(), x_in.size(), pids_out.size(), x_out.size()};
+    std::vector<std::size_t> shape = {pids_in_len, x_in_len, pids_out_len, x_out_len};
     for (std::size_t i = 0; i != flat_len; i++) {
         std::vector<std::size_t> coords = unravel_index(i, shape);
 
         double delta_ik = (coords[0] == coords[2]) ? 1.0 : 0.0;
         double delta_jl = (coords[1] == coords[3]) ? 1.0 : 0.0;
 
-        ops[i] = delta_ik * delta_jl;
+        eko_buffer[i] = delta_ik * delta_jl;
     }
-
-    return ops;
 }
 
 void print_results(std::vector<double> dxsec_grid, std::vector<double> dxsec_fktable) {
@@ -152,18 +161,6 @@ int main() {
     // std::vector<int> pids_out = {-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 21, 22};
     std::vector<int> pids_out = pids_in;
 
-    // The Evolution Operator is a vector with length `N_conv * N_Q2_slices * Σ product(OP shape)`
-    std::vector<double> op_slices;
-    std::size_t flat_len = x_in.size() * x_in.size() * pids_in.size() * pids_out.size();
-    for (std::size_t _i = 0; _i != conv_types.size(); _i++) {
-        for (std::size_t j = 0; j != fac1.size(); j++) {
-            std::vector<double> eko = generate_fake_ekos(pids_in, x_in, pids_out, x_in);
-            for (std::size_t k = 0; k != flat_len; k++) {
-                op_slices.push_back(eko[k]);
-            }
-        }
-    }
-
     // Construct the values of alphas table
     std::vector<double> alphas_table;
     for (double q2 : ren1) {
@@ -189,7 +186,7 @@ int main() {
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
     pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        max_orders.data(), op_slices.data(), x_in.data(),
+        max_orders.data(), generate_fake_ekos, x_in.data(),
         x_in.data(), pids_in.data(), pids_out.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 
