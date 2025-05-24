@@ -153,8 +153,7 @@ struct Grid {
   Grid(std::vector<Order> &orders,
        const Channels &channels,
        pineappl_pid_basis pid_basis,
-       std::vector<int32_t> pids,
-       std::vector<pineappl_conv_type> &convolution_types,
+       std::vector<pineappl_conv> &convolutions,
        std::vector<pineappl_kinematics> &kinematics,
        std::vector<pineappl_interp> &interp,
        std::vector<double> &bin_limits,
@@ -162,12 +161,10 @@ struct Grid {
       : Grid(nullptr) {
     const std::size_t n_orders = orders.size();
     const std::size_t n_bins = bin_limits.size() - 1;
-    const std::size_t n_convs = convolution_types.size();
+    const std::size_t n_convs = convolutions.size();
 
     // Various checks for the input arguments
     assert(n_orders >= 1 && "Orders cannot be empty.");
-    assert(n_convs == pids.size() &&
-           "Number of convolutions and pids are different.");
     assert(n_convs == kinematics.size() - 1 &&
            "Mismatch in the number of convolutions and the kinematics.");
     assert(kinematics.size() == interp.size() &&
@@ -186,7 +183,7 @@ struct Grid {
 
     this->raw = pineappl_grid_new2(
         n_bins, bin_limits.data(), n_orders, raw_orders.data(), channels.raw,
-        pid_basis, convolution_types.data(), pids.data(), interp.size(),
+        pid_basis, convolutions.data(), interp.size(),
         interp.data(), kinematics.data(), mu_scales.data());
   }
 

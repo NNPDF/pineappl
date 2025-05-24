@@ -35,6 +35,7 @@ rename_variants = "ScreamingSnakeCase"
 
 [export.rename]
 "Channels" = "pineappl_channels"
+"Conv" = "pineappl_conv"
 "ConvType" = "pineappl_conv_type"
 "Grid" = "pineappl_grid"
 "GridOptFlags" = "pineappl_gof"

@@ -11,6 +11,7 @@ program test_pineappl
     type(pineappl_kinematics)      :: kinematics(3)
     type(pineappl_scale_func_form) :: mu_scales_form(3)
     type(pineappl_interp)          :: interp_info(3)
+    type(pineappl_conv)            :: convolutions(2)
 
     real(dp), allocatable :: result(:), bin_limits_left(:), bin_limits_right(:), bin_normalizations(:)
 
@@ -63,8 +64,13 @@ program test_pineappl
         pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
     ]
 
+    convolutions = [ &
+        pineappl_conv(pineappl_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_unpol_pdf, 2212) &
+    ]
+
     grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
-        [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], 3, interp_info, kinematics, mu_scales_form)
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     if (pineappl_grid_order_count(grid) /= 1) then
         write(*, *) "pineappl_grid_order_count(): ", pineappl_grid_order_count(grid)
@@ -131,7 +137,7 @@ program test_pineappl
     end if
 
     grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
-        [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], 3, interp_info, kinematics, mu_scales_form)
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_merge_and_delete(grid, grid2)
 

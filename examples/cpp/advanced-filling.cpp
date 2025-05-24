@@ -37,10 +37,10 @@ int main() {
     // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
     // Basis onto which the partons are mapped.
     pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
-    int32_t pdg_ids[2] = { 2212, 2212};
-    pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-    pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-    pineappl_conv_type convolution_types[2] = { h1, h2 };
+    pineappl_conv convs[] = {
+        { PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212 },
+        { PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212 },
+    };
 
     // Define the kinematics required for this process. In the following example we have ONE
     // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
@@ -74,7 +74,7 @@ int main() {
     // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
     // parameters in `keyval`.
     auto* grid = pineappl_grid_new2(bins.size() - 1, bins.data(), orders.size() / 5, orders.data(),
-        channels, pid_basis, convolution_types, pdg_ids, 3, interpolations, kinematics, mu_scales);
+        channels, pid_basis, convs, 3, interpolations, kinematics, mu_scales);
 
     // now we no longer need `channels`
     pineappl_channels_delete(channels);

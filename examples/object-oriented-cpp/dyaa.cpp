@@ -130,12 +130,12 @@ int main() {
 
   // --- Construct the PineAPPL grid
   pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
-  std::vector<std::int32_t> pids = {2212, 2212};
 
   // Define the types of convolutions
-  pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-  pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-  std::vector<pineappl_conv_type> convolution_types = {h1, h2};
+  std::vector<pineappl_conv> convolutions = {
+      {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212},
+      {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212}
+  };
 
   // Define the Kinematics
   pineappl_kinematics scales = {PINEAPPL_KINEMATICS_SCALE, 0};
@@ -164,7 +164,7 @@ int main() {
   pineappl_scale_func_form no_scale_form = {PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0};
   std::vector<pineappl_scale_func_form> mu_scales = {scale_form, scale_form, no_scale_form};
 
-  PineAPPL::Grid grid(orders, channels, pid_basis, pids, convolution_types,
+  PineAPPL::Grid grid(orders, channels, pid_basis, convolutions,
                       kinematics, interpolations, bins, mu_scales);
 
   // fill the grid with phase-space points

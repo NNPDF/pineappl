@@ -105,6 +105,11 @@ module pineappl
         type(pineappl_scale_func_form_body) :: body
     end type
 
+    type, bind(c) :: pineappl_conv
+        integer(kind(pineappl_conv_type)) :: conv_type
+        integer(c_int32_t) :: pid
+    end type
+
     type, bind(c) :: pineappl_interp
         real(c_double) :: min
         real(c_double) :: max
@@ -345,18 +350,17 @@ module pineappl
         end function
 
         type (c_ptr) function grid_new2(bins, bin_limits, orders, order_params, channels, &
-            pid_basis, convolution_types, convolution_pdg_ids, interpolations, interp_info, &
+            pid_basis, convolutions, interpolations, interp_info, &
             kinematics, mu_scales) bind(c, name = 'pineappl_grid_new2')
             use iso_c_binding
             import ! so we can use pineappl_kinematics and pineappl_interp
 
             integer (c_int32_t), value :: pid_basis
             type (c_ptr), value :: channels
-            integer (c_int32_t) :: convolution_types(*)
             integer (c_size_t), value :: orders, bins, interpolations
             integer (c_int8_t) :: order_params(*)
             real (c_double) :: bin_limits(*)
-            integer (c_int32_t) :: convolution_pdg_ids(*)
+            type (pineappl_conv) :: convolutions(*)
             type (pineappl_kinematics) :: kinematics(*)
             type (pineappl_interp) :: interp_info(*)
             type (pineappl_scale_func_form) :: mu_scales(*)
@@ -932,8 +936,7 @@ contains
     end function
 
     type (pineappl_grid) function pineappl_grid_new2(bins, bin_limits, orders, order_params, &
-        channels, pid_basis, convolution_types, convolution_pdg_ids, interpolations, interp_info, &
-        kinematics, mu_scales)
+        channels, pid_basis, convolutions, interpolations, interp_info, kinematics, mu_scales)
         implicit none
 
         integer(kind(pineappl_pid_basis)), intent(in)                             :: pid_basis
@@ -941,8 +944,7 @@ contains
         integer, intent(in)                                                       :: orders, bins, interpolations
         integer(int8), dimension(5 * orders), intent(in)                          :: order_params
         real (dp), dimension(bins + 1), intent(in)                                :: bin_limits
-        integer(kind(pineappl_conv_type)), dimension(interpolations - 1), intent(in) :: convolution_types
-        integer, dimension(interpolations - 1), intent(in)                        :: convolution_pdg_ids
+        type (pineappl_conv), dimension(*), intent(in), target                    :: convolutions
         type (pineappl_kinematics), dimension(interpolations), intent(in), target :: kinematics
         type (pineappl_interp), dimension(interpolations), intent(in)             :: interp_info
         type (pineappl_scale_func_form), dimension(interpolations)                :: mu_scales
@@ -956,8 +958,7 @@ contains
             order_params, &
             channels%ptr, &
             pid_basis, &
-            convolution_types, &
-            convolution_pdg_ids, &
+            convolutions, &
             int(interpolations, c_size_t), &
             interp_info, &
             kinematics, &

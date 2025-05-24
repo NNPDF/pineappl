@@ -11,6 +11,7 @@ program lhapdf_example
     type(pineappl_kinematics)      :: kinematics(3)
     type(pineappl_scale_func_form) :: mu_scales_form(3)
     type(pineappl_interp)          :: interp_info(3)
+    type(pineappl_conv)            :: convolutions(2)
 
     type(pineappl_xfx) :: xfx
     type(pineappl_alphas) :: alphas
@@ -53,8 +54,13 @@ program lhapdf_example
         pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
     ]
 
+    convolutions = [ &
+        pineappl_conv(pineappl_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_unpol_pdf, 2212) &
+    ]
+
     grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
-        [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], 3, interp_info, kinematics, mu_scales_form)
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
     call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])

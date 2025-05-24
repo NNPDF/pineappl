@@ -67,7 +67,7 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
 
@@ -1625,8 +1625,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     order_params: *const u8,
     channels: *const Channels,
     pid_basis: PidBasis,
-    convolution_types: *const ConvType,
-    convolution_pdg_ids: *const c_int,
+    convolutions: *const Conv,
     interpolations: usize,
     interps: *const Interp,
     kinematics: *const Kinematics,
@@ -1649,19 +1648,10 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         .collect();
     let Channels {
         channels,
-        convolutions,
+        convolutions: nb_convolutions,
     } = unsafe { &*channels }.clone();
 
-    // Construct the convolution objects
-    let convolution_types =
-        unsafe { slice::from_raw_parts(convolution_types, convolutions).to_vec() };
-    let convolution_pdg_ids =
-        unsafe { slice::from_raw_parts(convolution_pdg_ids, convolutions).to_vec() };
-    let convolutions = convolution_types
-        .iter()
-        .zip(convolution_pdg_ids)
-        .map(|(&convolution_type, pdg_id)| Conv::new(convolution_type, pdg_id))
-        .collect();
+    let convolutions = unsafe { slice::from_raw_parts(convolutions, nb_convolutions) }.to_vec();
 
     // Grid interpolations
     let interp_slices = unsafe { std::slice::from_raw_parts(interps, interpolations) };
