@@ -1,7 +1,7 @@
 [package]
 authors = [
     "Christopher Schwan <handgranaten-herbert@posteo.de>",
-    "Tanjona R. Rabemananjara <>"
+    "Tanjona R. Rabemananjara <tanjona.hepc@gmail.com>"
 ]
 description = "C language interface to PineAPPL"
 name = "pineappl_capi"
