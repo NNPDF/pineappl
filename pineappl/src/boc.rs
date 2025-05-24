@@ -16,7 +16,7 @@ use std::str::FromStr;
 
 /// TODO
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, Hash)]
 pub enum Kinematics {
     /// TODO
     Scale(usize),
