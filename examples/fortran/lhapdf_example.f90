@@ -6,10 +6,12 @@ program lhapdf_example
 
     integer, parameter :: dp = kind(0.0d0)
 
-    type(pineappl_grid)          :: grid
-    type(pineappl_channels)      :: channels
-    type(pineappl_kinematics)    :: kinematics(3)
-    type(pineappl_interp_tuples) :: interpolations(3)
+    type(pineappl_grid)            :: grid
+    type(pineappl_channels)        :: channels
+    type(pineappl_kinematics)      :: kinematics(3)
+    type(pineappl_scale_func_form) :: mu_scales_form(3)
+    type(pineappl_interp)          :: interp_info(3)
+    type(pineappl_conv)            :: convolutions(2)
 
     type(pineappl_xfx) :: xfx
     type(pineappl_alphas) :: alphas
@@ -25,8 +27,8 @@ program lhapdf_example
     integer(c_int), target :: pdfs_array(2,2)
     character(len=30)      :: pdfset1, pdfset2
 
-    channels = pineappl_channels_new()
-    call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    channels = pineappl_channels_new(2) ! The argument is the number of convolutions
+    call pineappl_channels_add(channels, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     kinematics = [&
         pineappl_kinematics(pineappl_scale, 0), &
@@ -39,14 +41,26 @@ program lhapdf_example
     q2_mapping = pineappl_applgrid_h0
     x_mapping = pineappl_applgrid_f2
     interpolation_meth = pineappl_lagrange
-    interpolations = [ &
-        pineappl_interp_tuples(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
+    interp_info = [ &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
 
-    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 2, &
-        [0.0_dp, 1.0_dp, 2.0_dp], 2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
+    ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
+    mu_scales_form = [ &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+    ]
+
+    convolutions = [ &
+        pineappl_conv(pineappl_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_unpol_pdf, 2212) &
+    ]
+
+    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
     call pineappl_grid_fill_all2(grid, 0, 1.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [1.5_dp, 1.5_dp, 1.5_dp])

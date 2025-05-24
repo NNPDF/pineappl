@@ -59,7 +59,7 @@ use itertools::izip;
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::grid::{Grid, GridOptFlags};
-use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
@@ -67,7 +67,7 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice;
 
@@ -91,7 +91,7 @@ pub const PINEAPPL_GOF_STRIP_EMPTY_CHANNELS: GridOptFlags = GridOptFlags::STRIP_
 
 // TODO: make sure no `panic` calls leave functions marked as `extern "C"`
 
-fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
+fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<InterpMain> {
     let mut q2_min = 1e2;
     let mut q2_max = 1e8;
     let mut q2_nodes = 40;
@@ -213,7 +213,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
     }
 
     vec![
-        Interp::new(
+        InterpMain::new(
             q2_min,
             q2_max,
             q2_nodes,
@@ -222,7 +222,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
             Map::ApplGridH0,
             InterpMeth::Lagrange,
         ),
-        Interp::new(
+        InterpMain::new(
             x1_min,
             x1_max,
             x1_nodes,
@@ -231,7 +231,7 @@ fn grid_interpolation_params(key_vals: Option<&KeyVal>) -> Vec<Interp> {
             Map::ApplGridF2,
             InterpMeth::Lagrange,
         ),
-        Interp::new(
+        InterpMain::new(
             x2_min,
             x2_max,
             x2_nodes,
@@ -368,7 +368,7 @@ pub unsafe extern "C" fn pineappl_grid_clone(grid: *const Grid) -> Box<Grid> {
 /// See [`pineappl_grid_convolve_with_one`].
 #[deprecated(
     since = "0.8.0",
-    note = "please use `pineappl_grid_convolve_with_one` instead"
+    note = "use `pineappl_grid_convolve_with_one` instead"
 )]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
@@ -406,7 +406,7 @@ pub unsafe extern "C" fn pineappl_grid_convolute_with_one(
 /// See [`pineappl_grid_convolve_with_two`].
 #[deprecated(
     since = "0.8.0",
-    note = "please use `pineappl_grid_convolve_with_two` instead"
+    note = "use `pineappl_grid_convolve_with_two` instead"
 )]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_convolute_with_two(
@@ -601,6 +601,7 @@ pub extern "C" fn pineappl_grid_delete(grid: Option<Box<Grid>>) {}
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill(
     grid: *mut Grid,
@@ -625,6 +626,7 @@ pub unsafe extern "C" fn pineappl_grid_fill(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_all2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill_all(
     grid: *mut Grid,
@@ -650,6 +652,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_all(
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. Additionally, all remaining pointer parameters must be
 /// arrays as long as specified by `size`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_fill_array2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_fill_array(
     grid: *mut Grid,
@@ -684,6 +687,7 @@ pub unsafe extern "C" fn pineappl_grid_fill_array(
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_channels` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
     let grid = unsafe { &*grid };
@@ -698,6 +702,7 @@ pub unsafe extern "C" fn pineappl_grid_lumi(grid: *const Grid) -> Box<Lumi> {
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call. The pointer `order_params` must point to an array as large
 /// as four times the number of orders in `grid`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_order_params2` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_order_params(grid: *const Grid, order_params: *mut u32) {
     let grid = unsafe { &*grid };
@@ -750,6 +755,7 @@ pub unsafe extern "C" fn pineappl_grid_order_count(grid: *const Grid) -> usize {
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_new2` instead")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new(
@@ -890,6 +896,7 @@ pub unsafe extern "C" fn pineappl_grid_scale(grid: *mut Grid, factor: f64) {
 ///
 /// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
 /// this function is not safe to call.
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_split_channels` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_split_lumi(grid: *mut Grid) {
     let grid = unsafe { &mut *grid };
@@ -1005,6 +1012,7 @@ pub unsafe extern "C" fn pineappl_grid_scale_by_order(
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_metadata` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_key_value(
     grid: *const Grid,
@@ -1043,6 +1051,7 @@ pub unsafe extern "C" fn pineappl_grid_key_value(
 /// # Panics
 ///
 /// TODO
+#[deprecated(since = "1.0.0", note = "use `pineappl_grid_set_metadata` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_set_key_value(
     grid: *mut Grid,
@@ -1153,6 +1162,7 @@ pub unsafe extern "C" fn pineappl_grid_write(grid: *const Grid, filename: *const
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new`.
 /// `pdg_id_pairs` must be an array with length `2 * combinations`, and `factors` with length of
 /// `combinations`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_add` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_add(
     lumi: *mut Lumi,
@@ -1183,6 +1193,7 @@ pub unsafe extern "C" fn pineappl_lumi_add(
 ///
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_combinations` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: usize) -> usize {
     let lumi = unsafe { &*lumi };
@@ -1196,6 +1207,7 @@ pub unsafe extern "C" fn pineappl_lumi_combinations(lumi: *const Lumi, entry: us
 ///
 /// The parameter `lumi` must point to a valid `Lumi` object created by `pineappl_lumi_new` or
 /// `pineappl_grid_lumi`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_count` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
     let lumi = unsafe { &*lumi };
@@ -1204,6 +1216,7 @@ pub unsafe extern "C" fn pineappl_lumi_count(lumi: *const Lumi) -> usize {
 }
 
 /// Delete luminosity function previously created with `pineappl_lumi_new`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_delete` instead")]
 #[no_mangle]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
@@ -1217,6 +1230,7 @@ pub extern "C" fn pineappl_lumi_delete(lumi: Option<Box<Lumi>>) {}
 /// `pineappl_grid_lumi`. The parameter `factors` must point to an array as long as the size
 /// returned by `pineappl_lumi_combinations` and `pdg_ids` must point to an array that is twice as
 /// long.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_entry` instead")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_lumi_entry(
     lumi: *const Lumi,
@@ -1243,6 +1257,7 @@ pub unsafe extern "C" fn pineappl_lumi_entry(
 
 /// Creates a new luminosity function and returns a pointer to it. If no longer needed, the object
 /// should be deleted using `pineappl_lumi_delete`.
+#[deprecated(since = "1.0.0", note = "use `pineappl_channels_new` instead")]
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_lumi_new() -> Box<Lumi> {
@@ -1260,6 +1275,7 @@ pub struct KeyVal {
 }
 
 /// Delete the previously created object pointed to by `key_vals`.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[allow(unused_variables)]
 pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
@@ -1270,6 +1286,7 @@ pub extern "C" fn pineappl_keyval_delete(key_vals: Option<Box<KeyVal>>) {}
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *const c_char) -> bool {
@@ -1285,6 +1302,7 @@ pub unsafe extern "C" fn pineappl_keyval_bool(key_vals: *const KeyVal, key: *con
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_double(
@@ -1303,6 +1321,7 @@ pub unsafe extern "C" fn pineappl_keyval_double(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *const c_char) -> i32 {
@@ -1318,6 +1337,7 @@ pub unsafe extern "C" fn pineappl_keyval_int(key_vals: *const KeyVal, key: *cons
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_keyval_string(
@@ -1331,6 +1351,7 @@ pub unsafe extern "C" fn pineappl_keyval_string(
 }
 
 /// Return a pointer to newly-created `pineappl_keyval` object.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 #[must_use]
 pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
@@ -1343,6 +1364,7 @@ pub extern "C" fn pineappl_keyval_new() -> Box<KeyVal> {
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_bool(
     key_vals: *mut KeyVal,
@@ -1363,6 +1385,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_bool(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_double(
     key_vals: *mut KeyVal,
@@ -1383,6 +1406,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_double(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_int(
     key_vals: *mut KeyVal,
@@ -1403,6 +1427,7 @@ pub unsafe extern "C" fn pineappl_keyval_set_int(
 ///
 /// The parameter `key_vals` must point to a valid `KeyVal` object created by
 /// `pineappl_keyval_new`. `key` must be a valid C string.
+#[deprecated(since = "1.0.0", note = "")]
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_keyval_set_string(
     key_vals: *mut KeyVal,
@@ -1435,40 +1460,40 @@ pub unsafe extern "C" fn pineappl_string_delete(string: *mut c_char) {
 // Here starts the generalized C-API interface.
 
 /// Type for defining a Channel function.
-#[derive(Default)]
-pub struct Channels(Vec<Channel>);
+#[derive(Clone)]
+pub struct Channels {
+    channels: Vec<Channel>,
+    convolutions: usize,
+}
 
 /// Type for defining the interpolation object
 #[repr(C)]
-pub struct InterpTuples {
-    node_min: f64,
-    node_max: f64,
-    nb_nodes: usize,
-    interp_degree: usize,
-    reweighting_method: ReweightMeth,
-    mapping: Map,
-    interpolation_method: InterpMeth,
-}
-
-#[must_use]
-fn construct_interpolation(interp: &InterpTuples) -> Interp {
-    Interp::new(
-        interp.node_min,
-        interp.node_max,
-        interp.nb_nodes,
-        interp.interp_degree,
-        interp.reweighting_method,
-        interp.mapping,
-        interp.interpolation_method,
-    )
+pub struct Interp {
+    /// TODO
+    pub min: f64,
+    /// TODO
+    pub max: f64,
+    /// TODO
+    pub nodes: usize,
+    /// TODO
+    pub order: usize,
+    /// TODO
+    pub reweight: ReweightMeth,
+    /// TODO
+    pub map: Map,
+    /// TODO
+    pub interp_meth: InterpMeth,
 }
 
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
 #[must_use]
-pub extern "C" fn pineappl_channels_new() -> Box<Channels> {
-    Box::default()
+pub extern "C" fn pineappl_channels_new(convolutions: usize) -> Box<Channels> {
+    Box::new(Channels {
+        channels: Vec::new(),
+        convolutions,
+    })
 }
 
 /// Adds a generalized linear combination of initial states to the Luminosity.
@@ -1484,24 +1509,26 @@ pub extern "C" fn pineappl_channels_new() -> Box<Channels> {
 pub unsafe extern "C" fn pineappl_channels_add(
     channels: *mut Channels,
     combinations: usize,
-    nb_convolutions: usize,
     pdg_id_combinations: *const i32,
     factors: *const f64,
 ) {
-    let channels = unsafe { &mut *channels };
+    let &mut Channels {
+        ref mut channels,
+        convolutions,
+    } = unsafe { &mut *channels };
     let pdg_id_pairs =
-        unsafe { slice::from_raw_parts(pdg_id_combinations, nb_convolutions * combinations) };
+        unsafe { slice::from_raw_parts(pdg_id_combinations, convolutions * combinations) };
     let factors = if factors.is_null() {
         vec![1.0; combinations]
     } else {
         unsafe { slice::from_raw_parts(factors, combinations) }.to_vec()
     };
 
-    channels.0.push(Channel::new(
+    channels.push(Channel::new(
         pdg_id_pairs
-            .chunks(nb_convolutions)
+            .chunks(convolutions)
             .zip(factors)
-            .map(|x| ((0..nb_convolutions).map(|i| x.0[i]).collect(), x.1))
+            .map(|x| ((0..convolutions).map(|i| x.0[i]).collect(), x.1))
             .collect(),
     ));
 }
@@ -1516,7 +1543,10 @@ pub unsafe extern "C" fn pineappl_channels_add(
 pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channels> {
     let grid = unsafe { &*grid };
 
-    Box::new(Channels(grid.channels().to_vec()))
+    Box::new(Channels {
+        channels: grid.channels().to_vec(),
+        convolutions: grid.convolutions().len(),
+    })
 }
 
 /// An exact duplicate of `pineappl_lumi_count` to make naming (lumi -> channel) consistent.
@@ -1527,9 +1557,9 @@ pub unsafe extern "C" fn pineappl_grid_channels(grid: *const Grid) -> Box<Channe
 /// `pineappl_grid_channels`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_channels_count(channels: *const Channels) -> usize {
-    let channels = unsafe { &*channels };
+    let Channels { channels, .. } = unsafe { &*channels };
 
-    channels.0.len()
+    channels.len()
 }
 
 /// An exact duplicate of `pineappl_lumi_combinations` to make naming (lumi -> channel) consistent.
@@ -1543,9 +1573,9 @@ pub unsafe extern "C" fn pineappl_channels_combinations(
     channels: *const Channels,
     entry: usize,
 ) -> usize {
-    let channels = unsafe { &*channels };
+    let Channels { channels, .. } = unsafe { &*channels };
 
-    channels.0[entry].entry().len()
+    channels[entry].entry().len()
 }
 
 /// An exact duplicate of `pineappl_lumi_delete` to make naming (lumi -> channel) consistent.
@@ -1580,30 +1610,31 @@ pub extern "C" fn pineappl_channels_delete(channels: Option<Box<Channels>>) {}
 ///   `0` -> `ScaleFuncForm::NoScale`, ..., `n` -> `ScaleFuncForm::Scale(n - 1)`.
 ///
 /// # Safety
+///
 /// TODO
 ///
 /// # Panics
+///
 /// TODO
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn pineappl_grid_new2(
-    pid_basis: PidBasis,
-    channels: *const Channels,
-    orders: usize,
-    order_params: *const u8,
     bins: usize,
     bin_limits: *const f64,
-    nb_convolutions: usize,
-    convolution_types: *const ConvType,
-    pdg_ids: *const c_int,
+    orders: usize,
+    order_params: *const u8,
+    channels: *const Channels,
+    pid_basis: PidBasis,
+    convolutions: *const Conv,
+    interpolations: usize,
+    interps: *const Interp,
     kinematics: *const Kinematics,
-    interpolations: *const InterpTuples,
-    mu_scales: *const usize,
+    scales: *const ScaleFuncForm,
 ) -> Box<Grid> {
-    // Luminosity channels
-    let channels = unsafe { &*channels };
-
-    // Perturbative orders
+    let bins = BinsWithFillLimits::from_fill_limits(
+        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
+    )
+    .unwrap();
     let order_params = unsafe { slice::from_raw_parts(order_params, 5 * orders) };
     let orders: Vec<_> = order_params
         .chunks(5)
@@ -1615,52 +1646,48 @@ pub unsafe extern "C" fn pineappl_grid_new2(
             logxia: s[4],
         })
         .collect();
+    let Channels {
+        channels,
+        convolutions: nb_convolutions,
+    } = unsafe { &*channels }.clone();
 
-    let bins = BinsWithFillLimits::from_fill_limits(
-        unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
-    )
-    .unwrap();
-
-    // Construct the convolution objects
-    let convolution_types =
-        unsafe { slice::from_raw_parts(convolution_types, nb_convolutions).to_vec() };
-    let pdg_ids = unsafe { slice::from_raw_parts(pdg_ids, nb_convolutions).to_vec() };
-    let convolutions = izip!(convolution_types.iter(), pdg_ids.iter())
-        .map(|(&conv, &pdg_value)| Conv::new(conv, pdg_value))
-        .collect();
+    let convolutions = unsafe { slice::from_raw_parts(convolutions, nb_convolutions) }.to_vec();
 
     // Grid interpolations
-    let interp_slices = unsafe { std::slice::from_raw_parts(interpolations, nb_convolutions + 1) };
-    let interp_vecs: Vec<Interp> = interp_slices.iter().map(construct_interpolation).collect();
-
-    // Construct the kinematic variables
-    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()).to_vec() };
-
-    // Scales. An array containing the values of {ren, fac, frg}
-    let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
-    let mu_scales_vec: Vec<ScaleFuncForm> = mu_scales
+    let interp_slices = unsafe { std::slice::from_raw_parts(interps, interpolations) };
+    let interp_vecs: Vec<_> = interp_slices
         .iter()
-        .map(|&scale| {
-            if scale == 0 {
-                ScaleFuncForm::NoScale
-            } else {
-                ScaleFuncForm::Scale(scale - 1)
-            }
+        .map(|interp| {
+            InterpMain::new(
+                interp.min,
+                interp.max,
+                interp.nodes,
+                interp.order,
+                interp.reweight,
+                interp.map,
+                interp.interp_meth,
+            )
         })
         .collect();
+
+    // Construct the kinematic variables
+    let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
+
+    // Scales. An array containing the values of `ScaleFuncForm` objects
+    let mu_scales = unsafe { std::slice::from_raw_parts(scales, 3) };
 
     Box::new(Grid::new(
         bins,
         orders,
-        channels.0.clone(),
+        channels,
         pid_basis,
         convolutions,
         interp_vecs,
         kinematics,
         Scales {
-            ren: mu_scales_vec[0].clone(),
-            fac: mu_scales_vec[1].clone(),
-            frg: mu_scales_vec[2].clone(),
+            ren: mu_scales[0].clone(),
+            fac: mu_scales[1].clone(),
+            frg: mu_scales[2].clone(),
         },
     ))
 }
@@ -1776,11 +1803,11 @@ pub unsafe extern "C" fn pineappl_channels_entry(
     pdg_ids: *mut i32,
     factors: *mut f64,
 ) {
-    let channels = unsafe { &*channels };
-    let entry = channels.0[entry].entry();
-    // if the channel has no entries we assume no convolutions, which is OK we don't copy anything
-    // in this case
-    let convolutions = entry.get(0).map_or(0, |x| x.0.len());
+    let Channels {
+        channels,
+        convolutions,
+    } = unsafe { &*channels };
+    let entry = channels[entry].entry();
     let pdg_ids = unsafe { slice::from_raw_parts_mut(pdg_ids, convolutions * entry.len()) };
     let factors = unsafe { slice::from_raw_parts_mut(factors, entry.len()) };
 
