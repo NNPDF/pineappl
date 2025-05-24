@@ -1628,9 +1628,9 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     convolution_types: *const ConvType,
     convolution_pdg_ids: *const c_int,
     interpolations: usize,
-    interp_info: *const Interp,
+    interps: *const Interp,
     kinematics: *const Kinematics,
-    mu_scales: *const ScaleFuncForm,
+    scales: *const ScaleFuncForm,
 ) -> Box<Grid> {
     let bins = BinsWithFillLimits::from_fill_limits(
         unsafe { slice::from_raw_parts(bin_limits, bins + 1) }.to_vec(),
@@ -1664,7 +1664,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
         .collect();
 
     // Grid interpolations
-    let interp_slices = unsafe { std::slice::from_raw_parts(interp_info, interpolations) };
+    let interp_slices = unsafe { std::slice::from_raw_parts(interps, interpolations) };
     let interp_vecs: Vec<_> = interp_slices
         .iter()
         .map(|interp| {
@@ -1684,7 +1684,7 @@ pub unsafe extern "C" fn pineappl_grid_new2(
     let kinematics = unsafe { slice::from_raw_parts(kinematics, interp_vecs.len()) }.to_vec();
 
     // Scales. An array containing the values of `ScaleFuncForm` objects
-    let mu_scales = unsafe { std::slice::from_raw_parts(mu_scales, 3) };
+    let mu_scales = unsafe { std::slice::from_raw_parts(scales, 3) };
 
     Box::new(Grid::new(
         bins,
