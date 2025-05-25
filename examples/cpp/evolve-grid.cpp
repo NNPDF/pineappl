@@ -88,22 +88,29 @@ extern "C" void generate_fake_ekos(
     const int* pids_out,
     const double* x_out,
     double* eko_buffer,
+    void* pdf_state,
     pineappl_conv_type conv_type,
+    double fac1,
     std::size_t pids_in_len,
     std::size_t x_in_len,
     std::size_t pids_out_len,
     std::size_t x_out_len
 ) {
     // Ignore unused variables
-    (void)pids_in;
-    (void)x_in;
-    (void)pids_out;
-    (void)x_out;
+    (void) pids_in;
+    (void) x_in;
+    (void) pids_out;
+    (void) x_out;
     (void) conv_type;
-    (void)pids_in_len;
-    (void)x_in_len;
-    (void)pids_out_len;
-    (void)x_out_len;
+    (void) pids_in_len;
+    (void) x_in_len;
+    (void) pids_out_len;
+    (void) x_out_len;
+    (void) fac1;
+
+    // Check to get the μ0 from the PDF
+    const double mu0_scale = static_cast<LHAPDF::PDF*> (pdf_state)->q2Min();
+    (void) mu0_scale; // Mark as unused variable
 
     std::ifstream input_file("../../test-data/EKO_LHCB_WP_7TEV.txt");
     double weight_value;
@@ -244,7 +251,7 @@ int main() {
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
     pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        max_orders.data(), generate_fake_ekos, XGRID.data(),
+        generate_fake_ekos, max_orders.data(), pdf.get(), XGRID.data(),
         XGRID.data(), pids_in.data(), pids_out.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
 

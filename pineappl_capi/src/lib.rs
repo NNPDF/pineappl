@@ -2098,6 +2098,22 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
     ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
 }
 
+/// Type alias for the operator callback
+type OperatorCallback = extern "C" fn(
+    *const i32,  // pids_in
+    *const f64,  // x_in
+    *const i32,  // pids_out
+    *const f64,  // x_out
+    *mut f64,    // Evolution Operator data buffer
+    *mut c_void, // Callable of PDF object
+    ConvType,    // Convolution type
+    f64,         // fac1
+    usize,       // Length of pids_in
+    usize,       // Length of x_in
+    usize,       // Length of pids_out
+    usize,       // Length of x_out
+);
+
 /// Evolve a grid with an evolution operator and dump the resulting FK table.
 ///
 /// # Arguments
@@ -2132,20 +2148,10 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *mut Grid,
-    operator_infos: *mut OperatorInfo,
+    operator_info: *mut OperatorInfo,
+    operator: OperatorCallback,
     max_orders: *const u8,
-    operators: extern "C" fn(
-        *const i32,
-        *const f64,
-        *const i32,
-        *const f64,
-        *mut f64,
-        ConvType,
-        usize,
-        usize,
-        usize,
-        usize,
-    ),
+    pdf_state: *mut c_void,
     x_in: *const f64,
     x_out: *const f64,
     pids_in: *const i32,
@@ -2178,13 +2184,13 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .map(pineappl::convolutions::Conv::conv_type)
         .collect();
 
-    let operator_infos = unsafe {
-        slice::from_raw_parts(operator_infos, conv_types.len() * evolve_info.fac1.len())
+    let operator_info = unsafe {
+        slice::from_raw_parts(operator_info, conv_types.len() * evolve_info.fac1.len())
             .chunks_exact(evolve_info.fac1.len())
     };
     let total_shape: usize = eko_shape.iter().product();
 
-    let slices = operator_infos
+    let slices = operator_info
         .map(|op_infos| {
             op_infos.iter().map(|op_info| {
                 let operator_slice_info = OperatorSliceInfo {
@@ -2201,13 +2207,15 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                 // Let Rust manages the memory by allocating a flat vector of zeros as a placeholder
                 // to hold the evolution operator data.
                 let mut eko_slice = vec![0.0; total_shape];
-                operators(
+                operator(
                     pids_in.as_ptr(),
                     x_in.as_ptr(),
                     pids_out.as_ptr(),
                     x_out.as_ptr(),
                     eko_slice.as_mut_ptr(),
+                    pdf_state,
                     op_info.conv_type,
+                    op_info.fac1,
                     pids_in.len(),
                     x_in.len(),
                     pids_out.len(),
