@@ -169,7 +169,7 @@ const ORDERS_A2_A3_STR: &str = "b   etal    dsig/detal
 7    4  4.5 2.2163265e1
 ";
 
-const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a2as2' for '--orders <ORDERS>': unable to parse order; too many couplings in 'a2a2as2'
+const WRONG_ORDERS_STR: &str = "error: invalid value 'a2a3as2' for '--orders <ORDERS>': exponent of 'a' has already been set to '2'
 
 For more information, try '--help'.
 ";
@@ -423,7 +423,7 @@ fn wrong_orders() {
         .unwrap()
         .args([
             "convolve",
-            "--orders=a2a2as2",
+            "--orders=a2a3as2",
             "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
             "NNPDF31_nlo_as_0118_luxqed",
         ])

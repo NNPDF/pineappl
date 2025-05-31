@@ -1,5 +1,8 @@
 [package]
-authors = ["Christopher Schwan <handgranaten-herbert@posteo.de>"]
+authors = [
+    "Christopher Schwan <handgranaten-herbert@posteo.de>",
+    "Tanjona R. Rabemananjara <tanjona.hepc@gmail.com>"
+]
 description = "C language interface to PineAPPL"
 name = "pineappl_capi"
 readme = "README.md"
@@ -16,7 +19,7 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-pineappl = { path = "../pineappl", version = "=1.0.0-alpha4" }
+pineappl = { path = "../pineappl", version = "=1.0.0-alpha5" }
 itertools = "0.10.1"
 
 [features]

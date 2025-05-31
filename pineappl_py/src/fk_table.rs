@@ -2,10 +2,12 @@
 
 use super::convolutions::PyConv;
 use super::grid::PyGrid;
+use super::pids::PyPidBasis;
 use numpy::{IntoPyArray, PyArray1, PyArrayDyn};
 use pineappl::convolutions::ConvolutionCache;
 use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::Grid;
+use pineappl::pids::PidBasis;
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -204,6 +206,30 @@ impl PyFkTable {
     #[must_use]
     pub fn x_grid<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
         self.fk_table.x_grid().into_pyarray(py)
+    }
+
+    /// Return the convention by which the channels' PIDS are encoded.
+    #[getter]
+    #[must_use]
+    pub const fn pid_basis(&self) -> PyPidBasis {
+        match self.fk_table.grid().pid_basis() {
+            PidBasis::Pdg => PyPidBasis::Pdg,
+            PidBasis::Evol => PyPidBasis::Evol,
+        }
+    }
+
+    /// Rotate the F Table into the specified basis.
+    ///
+    /// Parameters
+    /// ----------
+    /// pid_basis: PyPidBasis
+    ///     PID basis of the resulting FK Table
+    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) -> PyGrid {
+        let mut grid_mut = self.fk_table.grid().clone();
+        grid_mut.rotate_pid_basis(pid_basis.into());
+        PyGrid {
+            grid: grid_mut.clone(),
+        }
     }
 
     /// Write to file.

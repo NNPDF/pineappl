@@ -11,10 +11,10 @@ int main() {
     // Construct the channel object based on the nb of convolutions
     std::size_t nb_convolutions = 2;
     std::size_t nb_channels = 2;
-    auto* channels = pineappl_channels_new();
+    auto* channels = pineappl_channels_new(nb_convolutions);
     int32_t pids[] = { 2, -2, 4, -4 };
     double factors[] = { 1.0, 1.0 };
-    pineappl_channels_add(channels, nb_channels, nb_convolutions, pids, factors);
+    pineappl_channels_add(channels, nb_channels, pids, factors);
 
     std::size_t channel_count = 1;
 
@@ -37,10 +37,10 @@ int main() {
     // hadrons. Then we add the corresponding PID of each of the hadrons, and finally define the
     // Basis onto which the partons are mapped.
     pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
-    int32_t pdg_ids[2] = { 2212, 2212};
-    pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-    pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-    pineappl_conv_type convolution_types[2] = { h1, h2 };
+    pineappl_conv convs[] = {
+        { PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212 },
+        { PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212 },
+    };
 
     // Define the kinematics required for this process. In the following example we have ONE
     // single scale and two momentum fractions (corresponding to the two initial-state hadrons).
@@ -56,14 +56,16 @@ int main() {
     pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0; // Mapping method
     pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
     pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-    pineappl_interp_tuples interpolations[3] = {
+    pineappl_interp interpolations[3] = {
         { 1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth },  // Interpolation fo `scales`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x1`
         { 2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth }, // Interpolation fo `x2`
     };
 
     // Define the unphysical scale objecs
-    size_t mu_scales[] = { 1, 1, 0 };
+    pineappl_scale_func_form scale_mu = { PINEAPPL_SCALE_FUNC_FORM_SCALE, 0 };
+    pineappl_scale_func_form no_scale_mu = { PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0 }; // Here `.scale=0` is dummy value
+    pineappl_scale_func_form mu_scales[3] = { scale_mu, scale_mu, no_scale_mu };
 
     // ---
     // Create the grid using the previously set information about orders, bins and channels
@@ -71,8 +73,8 @@ int main() {
     // create a new grid with the previously defined channels, 3 perturbative orders defined by the
     // exponents in `orders`, 24 bins given as the 25 limits in `bins` and potential extra
     // parameters in `keyval`.
-    auto* grid = pineappl_grid_new2(pid_basis, channels, orders.size() / 5, orders.data(), bins.size() - 1,
-        bins.data(), nb_convolutions, convolution_types, pdg_ids, kinematics, interpolations, mu_scales);
+    auto* grid = pineappl_grid_new2(bins.size() - 1, bins.data(), orders.size() / 5, orders.data(),
+        channels, pid_basis, convs, 3, interpolations, kinematics, mu_scales);
 
     // now we no longer need `channels`
     pineappl_channels_delete(channels);
