@@ -30,7 +30,7 @@ extern "C" void generate_fake_ekos(
     const int* pids_out,
     const double* x_out,
     double* eko_buffer,
-    void* pdf_state,
+    void* params_state,
     pineappl_conv_type conv_type,
     double fac1,
     std::size_t pids_in_len,
@@ -46,8 +46,8 @@ extern "C" void generate_fake_ekos(
     (void) conv_type;
     (void) fac1;
 
-    // Check to get the μ0 from the PDF
-    const double mu0_scale = static_cast<LHAPDF::PDF*> (pdf_state)->q2Min();
+    // Check to get the μ0 of the PDF from the `params_state`
+    const double mu0_scale = static_cast<LHAPDF::PDF*> (params_state)->q2Min();
     (void) mu0_scale; // Mark as unused variable
 
     std::size_t flat_len = pids_in_len * x_in_len * pids_out_len * x_out_len;
@@ -182,8 +182,9 @@ int main() {
     // NOTE: The arguments of `pineappl_grid_evolve` must follow the following orders:
     //     - `grid`: PineAPPL Grid
     //     - `op_info`: operator info
+    //     - `operator`: callback that returns an evolution operator
     //     - `max_orders`: max orders to apply the evolution
-    //     - `operators`: evolution operator
+    //     - `params_state`: parameters that get passed to `operator`
     //     - `x_in`: x-grid of the Grid
     //     - `x_out`: x-grid of the FK table
     //     - `pids_in`: PIDs basis representation of the Grid

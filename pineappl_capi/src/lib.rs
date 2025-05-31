@@ -2120,18 +2120,16 @@ type OperatorCallback = extern "C" fn(
 ///
 /// * `grid` - A `Grid` object
 /// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
-///               Its length must be `(N_{conv} * N_{Q2_slices})`.
-/// * `orders` - The maximum QCD and EW orders `(αs, α)`
-/// * `operators` - An array of evolution operators. Each operator is a flattend version of a rank-4
-///                 tensor whose shape is defined by: `pids_out`, `x_out`, `pids_in`, `x_in`, in that
-///                 order. The size of `operators` must be `(N_{conv} * N_{Q2_slices} * len_flat_op)`.
-/// * `x_in` - The  x-grid that defines the Grid
-/// * `x_out` - The x-grid that will define the evolved Grid
-/// * `pids_in` - The list of PID values that defines the Grid
-/// * `pids_out` - The list of PID values that will define the evolved Grid
-/// * `eko_shape` - The shape of the evolution operator
-/// * `xi` - The values that defines that scale variations
-/// * `ren` - An array containing the values of the renormalization scale variation
+/// * `operator` - A callack that returns the evolution operator.
+/// * `max_orders` - The maximum QCD and EW orders `(αs, α)`.
+/// * `params_state` - Parameters that get passed to `operator`.
+/// * `x_in` - The  x-grid that defines the Grid.
+/// * `x_out` - The x-grid that will define the evolved Grid.
+/// * `pids_in` - The list of PID values that defines the Grid.
+/// * `pids_out` - The list of PID values that will define the evolved Grid.
+/// * `eko_shape` - The shape of the evolution operator.
+/// * `xi` - The values that defines that scale variations.
+/// * `ren` - An array containing the values of the renormalization scale variation.
 /// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
 ///
 /// # Safety
@@ -2151,7 +2149,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     operator_info: *mut OperatorInfo,
     operator: OperatorCallback,
     max_orders: *const u8,
-    pdf_state: *mut c_void,
+    params_state: *mut c_void,
     x_in: *const f64,
     x_out: *const f64,
     pids_in: *const i32,
@@ -2213,7 +2211,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                     pids_out.as_ptr(),
                     x_out.as_ptr(),
                     eko_slice.as_mut_ptr(),
-                    pdf_state,
+                    params_state,
                     op_info.conv_type,
                     op_info.fac1,
                     pids_in.len(),
