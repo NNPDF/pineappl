@@ -6,10 +6,12 @@ program test_pineappl
 
     integer, parameter :: dp = kind(0.0d0)
 
-    type(pineappl_channels) :: channels, channels2
-    type(pineappl_grid) :: grid, grid2
-    type(pineappl_kinematics) :: kinematics(3)
-    type(pineappl_interp_tuples) :: interpolations(3)
+    type(pineappl_channels)        :: channels, channels2
+    type(pineappl_grid)            :: grid, grid2
+    type(pineappl_kinematics)      :: kinematics(3)
+    type(pineappl_scale_func_form) :: mu_scales_form(3)
+    type(pineappl_interp)          :: interp_info(3)
+    type(pineappl_conv)            :: convolutions(2)
 
     real(dp), allocatable :: result(:), bin_limits_left(:), bin_limits_right(:), bin_normalizations(:)
 
@@ -25,8 +27,8 @@ program test_pineappl
     type(c_ptr), target    :: pdfs_state(2)
     integer(c_int), target :: pdfs_array(2,2)
 
-    channels = pineappl_channels_new()
-    call pineappl_channels_add(channels, 3, 2, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
+    channels = pineappl_channels_new(2) ! The argument is the number of convolutions
+    call pineappl_channels_add(channels, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     if (pineappl_channels_count(channels) /= 1) then
         write(*, *) "pineappl_channels_count(): ", pineappl_channels_count(channels)
@@ -38,7 +40,7 @@ program test_pineappl
         error stop "error: pineappl_channels_combinations"
     end if
 
-    kinematics = [&
+    kinematics = [ &
         pineappl_kinematics(pineappl_scale, 0), &
         pineappl_kinematics(pineappl_x, 0), &
         pineappl_kinematics(pineappl_x, 1) &
@@ -49,13 +51,26 @@ program test_pineappl
     q2_mapping = pineappl_applgrid_h0
     x_mapping = pineappl_applgrid_f2
     interpolation_meth = pineappl_lagrange
-    interpolations = [ &
-        pineappl_interp_tuples(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
-        pineappl_interp_tuples(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
+    interp_info = [ &
+        pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
+        pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth) &
     ]
-    grid = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 2, [0.0_dp, 1.0_dp, 2.0_dp], &
-        2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
+
+    ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
+    mu_scales_form = [ &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+    ]
+
+    convolutions = [ &
+        pineappl_conv(pineappl_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_unpol_pdf, 2212) &
+    ]
+
+    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     if (pineappl_grid_order_count(grid) /= 1) then
         write(*, *) "pineappl_grid_order_count(): ", pineappl_grid_order_count(grid)
@@ -121,8 +136,8 @@ program test_pineappl
         error stop "error: pineappl_channels_combinations"
     end if
 
-    grid2 = pineappl_grid_new2(pineappl_pdg, channels, 1, [2_1, 0_1, 0_1, 0_1, 0_1], 1, [2.0_dp, 3.0_dp], &
-    2, [pineappl_unpol_pdf, pineappl_unpol_pdf], [2212, 2212], kinematics, interpolations, [1, 1, 0])
+    grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+        convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_merge_and_delete(grid, grid2)
 

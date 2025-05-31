@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <memory>
 #include <random>
 #include <vector>
 
@@ -108,9 +107,10 @@ int main() {
   // Name of the PDF sets to be used for the convolutions
   std::string pdfset1 = "NNPDF31_nlo_as_0118_luxqed";
   std::string pdfset2 = "MSHT20qed_nnlo";
+  const std::size_t nb_convolutions = 2;
 
   // --- create a new `Channels` function for the $\gamma\gamma$ initial state
-  PineAPPL::Channels channels;
+  PineAPPL::Channels channels(nb_convolutions);
   PineAPPL::SubChannelEntry subchannels;
   subchannels.entry.push_back({{22, 22}, 1.0});
   PineAPPL::ChannelsEntry channels_entry;
@@ -130,12 +130,12 @@ int main() {
 
   // --- Construct the PineAPPL grid
   pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
-  std::vector<std::int32_t> pids = {2212, 2212};
 
   // Define the types of convolutions
-  pineappl_conv_type h1 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-  pineappl_conv_type h2 = PINEAPPL_CONV_TYPE_UNPOL_PDF;
-  std::vector<pineappl_conv_type> convolution_types = {h1, h2};
+  std::vector<pineappl_conv> convolutions = {
+      {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212},
+      {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212}
+  };
 
   // Define the Kinematics
   pineappl_kinematics scales = {PINEAPPL_KINEMATICS_SCALE, 0};
@@ -150,7 +150,7 @@ int main() {
   pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0;  // Mapping method
   pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
   pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-  std::vector<pineappl_interp_tuples> interpolations = {
+  std::vector<pineappl_interp> interpolations = {
       {1e2, 1e8, 40, 3, scales_reweight, scales_mapping,
        interpolation_meth},  // Interpolation fo `scales`
       {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping,
@@ -159,10 +159,12 @@ int main() {
        interpolation_meth},  // Interpolation fo `x2`
   };
 
-  // Define the μ scale
-  std::vector<std::size_t> mu_scales = {1, 1, 1};
+  // Define the μ `ScaleFuncForm` objects
+  pineappl_scale_func_form scale_form = {PINEAPPL_SCALE_FUNC_FORM_SCALE, 0};
+  pineappl_scale_func_form no_scale_form = {PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, 0};
+  std::vector<pineappl_scale_func_form> mu_scales = {scale_form, scale_form, no_scale_form};
 
-  PineAPPL::Grid grid(orders, channels, pid_basis, pids, convolution_types,
+  PineAPPL::Grid grid(orders, channels, pid_basis, convolutions,
                       kinematics, interpolations, bins, mu_scales);
 
   // fill the grid with phase-space points

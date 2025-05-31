@@ -68,17 +68,53 @@ module pineappl
         enumerator :: pineappl_kinematics_tag
     end enum
 
-    ! The Kinematics struct is a tuple-like struct in the Pineappl Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
+    enum, bind(c) ! :: pineappl_scale_func_form_tag
+        enumerator :: pineappl_scale_func_form_no_scale
+        enumerator :: pineappl_scale_func_form_scale
+        enumerator :: pineappl_scale_func_form_quadratic_sum
+        enumerator :: pineappl_scale_func_form_quadratic_mean
+        enumerator :: pineappl_scale_func_form_quadratic_sum_over4
+        enumerator :: pineappl_scale_func_form_linear_mean
+        enumerator :: pineappl_scale_func_form_linear_sum
+        enumerator :: pineappl_scale_func_form_scale_max
+        enumerator :: pineappl_scale_func_form_scale_min
+        enumerator :: pineappl_scale_func_form_prod
+        enumerator :: pineappl_scale_func_form_s2plus_s1half
+        enumerator :: pineappl_scale_func_form_pow4_sum
+        enumerator :: pineappl_scale_func_form_wgt_avg
+        enumerator :: pineappl_scale_func_form_s2plus_s1fourth
+        enumerator :: pineappl_scale_func_form_exp_prod2
+
+        enumerator :: pineappl_scale_func_form_tag
+    end enum
+
+    ! The Kinematics struct is a tuple-like struct in the PineAPPL Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
     type, bind(c) :: pineappl_kinematics
         integer(kind(pineappl_kinematics_tag)) :: tag
         integer(c_size_t) :: index
     end type
 
-    type, bind(c) :: pineappl_interp_tuples
-        real(c_double) :: node_min
-        real(c_double) :: node_max
-        integer(c_size_t) :: nb_nodes
-        integer(c_size_t) :: interp_degree
+    ! Implement the ScaleFuncForm struct which is also a tuple-like struct ine PineAPPL Rust code. The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored.
+    type, bind(c) :: pineappl_scale_func_form_body
+        integer(c_size_t) :: index_0 ! index_0 maps to C union field _0
+        integer(c_size_t) :: index_1 ! index_1 maps to C union field _1
+    end type
+
+    type, bind(c) :: pineappl_scale_func_form
+        integer(kind(pineappl_scale_func_form_tag)) :: tag
+        type(pineappl_scale_func_form_body) :: body
+    end type
+
+    type, bind(c) :: pineappl_conv
+        integer(kind(pineappl_conv_type)) :: conv_type
+        integer(c_int32_t) :: pid
+    end type
+
+    type, bind(c) :: pineappl_interp
+        real(c_double) :: min
+        real(c_double) :: max
+        integer(c_size_t) :: nodes
+        integer(c_size_t) :: order
         integer(kind(pineappl_reweight_meth)) :: reweighting_method
         integer(kind(pineappl_map)) :: mapping
         integer(kind(pineappl_interp_meth)) :: interpolation_method
@@ -125,18 +161,19 @@ module pineappl
             integer (c_size_t)  :: strlen
         end function strlen
 
-        subroutine channels_add(channels, combinations, nb_combinations, pdg_id_combinations, factors) &
+        subroutine channels_add(channels, combinations, pdg_id_combinations, factors) &
             bind(c, name = 'pineappl_channels_add')
 
             use iso_c_binding
             type (c_ptr), value       :: channels
-            integer (c_size_t), value :: combinations, nb_combinations
+            integer (c_size_t), value :: combinations
             integer (c_int32_t)       :: pdg_id_combinations(*)
             real (c_double)           :: factors(*)
         end subroutine
 
-        type (c_ptr) function channels_new() bind(c, name = 'pineappl_channels_new')
+        type (c_ptr) function channels_new(convolutions) bind(c, name = 'pineappl_channels_new')
             use iso_c_binding
+            integer (c_int32_t), value :: convolutions
         end function
 
         integer (c_size_t) function grid_bin_count(grid) bind(c, name = 'pineappl_grid_bin_count')
@@ -312,21 +349,21 @@ module pineappl
             real (c_double)           :: bin_limits(*)
         end function
 
-        type (c_ptr) function grid_new2(pid_basis, channels, orders, order_params, bins, bin_limits, nb_convolutions, &
-            convolution_types, pdg_ids, kinematics, interpolations, mu_scales) bind(c, name = 'pineappl_grid_new2')
+        type (c_ptr) function grid_new2(bins, bin_limits, orders, order_params, channels, &
+            pid_basis, convolutions, interpolations, interp_info, &
+            kinematics, mu_scales) bind(c, name = 'pineappl_grid_new2')
             use iso_c_binding
-            import ! so we can use pineappl_kinematics and pineappl_interp_tuples
+            import ! so we can use pineappl_kinematics and pineappl_interp
 
             integer (c_int32_t), value :: pid_basis
             type (c_ptr), value :: channels
-            integer (c_int32_t) :: convolution_types(*)
-            integer (c_size_t), value :: orders, bins, nb_convolutions
+            integer (c_size_t), value :: orders, bins, interpolations
             integer (c_int8_t) :: order_params(*)
             real (c_double) :: bin_limits(*)
-            integer (c_int32_t) :: pdg_ids(*)
+            type (pineappl_conv) :: convolutions(*)
             type (pineappl_kinematics) :: kinematics(*)
-            type (pineappl_interp_tuples) :: interpolations(*)
-            integer (c_size_t) :: mu_scales(*)
+            type (pineappl_interp) :: interp_info(*)
+            type (pineappl_scale_func_form) :: mu_scales(*)
         end function
 
         subroutine grid_optimize(grid) bind(c, name = 'pineappl_grid_optimize')
@@ -557,10 +594,12 @@ contains
         end do
     end function
 
-    type (pineappl_channels) function pineappl_channels_new()
+    type (pineappl_channels) function pineappl_channels_new(convolutions)
         implicit none
 
-        pineappl_channels_new = pineappl_channels(channels_new())
+        integer (c_int32_t), value :: convolutions
+
+        pineappl_channels_new = pineappl_channels(channels_new(convolutions))
     end function
 
     integer function pineappl_grid_bin_count(grid)
@@ -896,37 +935,34 @@ contains
             order_params, int(bins, c_size_t), bin_limits, key_vals%ptr))
     end function
 
-    type (pineappl_grid) function pineappl_grid_new2(pid_basis, channels, orders, order_params, &
-        bins, bin_limits, nb_convolutions, convolution_types, pdg_ids, kinematics, &
-        interpolations, mu_scales)
+    type (pineappl_grid) function pineappl_grid_new2(bins, bin_limits, orders, order_params, &
+        channels, pid_basis, convolutions, interpolations, interp_info, kinematics, mu_scales)
         implicit none
 
         integer(kind(pineappl_pid_basis)), intent(in)                             :: pid_basis
         type (pineappl_channels), intent(in)                                      :: channels
-        integer, intent(in)                                                       :: orders, bins, nb_convolutions
+        integer, intent(in)                                                       :: orders, bins, interpolations
         integer(int8), dimension(5 * orders), intent(in)                          :: order_params
         real (dp), dimension(bins + 1), intent(in)                                :: bin_limits
-        integer(kind(pineappl_conv_type)), dimension(nb_convolutions), intent(in) :: convolution_types
-        integer, dimension(nb_convolutions), intent(in)                           :: pdg_ids
-        type (pineappl_kinematics), dimension(nb_convolutions + 1), intent(in), target    :: kinematics
-        type (pineappl_interp_tuples), dimension(nb_convolutions + 1), intent(in) :: interpolations
-        integer, dimension(3)                                                     :: mu_scales
+        type (pineappl_conv), dimension(*), intent(in), target                    :: convolutions
+        type (pineappl_kinematics), dimension(interpolations), intent(in), target :: kinematics
+        type (pineappl_interp), dimension(interpolations), intent(in)             :: interp_info
+        type (pineappl_scale_func_form), dimension(interpolations)                :: mu_scales
 
         integer :: i
 
         pineappl_grid_new2 = pineappl_grid(grid_new2(&
-            pid_basis, &
-            channels%ptr, &
-            int(orders, c_size_t), &
-            order_params, &
             int(bins, c_size_t), &
             bin_limits, &
-            int(nb_convolutions, c_size_t), &
-            convolution_types, &
-            pdg_ids, &
+            int(orders, c_size_t), &
+            order_params, &
+            channels%ptr, &
+            pid_basis, &
+            convolutions, &
+            int(interpolations, c_size_t), &
+            interp_info, &
             kinematics, &
-            interpolations, &
-            [(int(mu_scales(i), c_size_t), i = 1, size(mu_scales))]) &
+            mu_scales) &
         )
     end function
 
@@ -1177,17 +1213,17 @@ contains
         call lumi_add(lumi%ptr, int(combinations, c_size_t), pdg_id_pairs, factors)
     end subroutine
 
-    subroutine pineappl_channels_add(channels, combinations, nb_combinations, pdg_id_combinations, factors)
+    subroutine pineappl_channels_add(channels, combinations, pdg_id_combinations, factors)
         use iso_c_binding
 
         implicit none
 
         type (pineappl_channels), intent(in)             :: channels
-        integer, intent(in)                              :: combinations, nb_combinations
+        integer, intent(in)                              :: combinations
         integer, dimension(2 * combinations), intent(in) :: pdg_id_combinations
         real (dp), dimension(combinations), intent(in)   :: factors
 
-        call channels_add(channels%ptr, int(combinations, c_size_t), int(nb_combinations, c_size_t), pdg_id_combinations, factors)
+        call channels_add(channels%ptr, int(combinations, c_size_t), pdg_id_combinations, factors)
     end subroutine
 
     integer function pineappl_lumi_combinations(lumi, entry)

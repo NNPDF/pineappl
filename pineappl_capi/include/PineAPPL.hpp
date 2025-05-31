@@ -41,7 +41,7 @@ struct Channels {
   pineappl_channels *raw;
 
   /** @brief Constructor. */
-  Channels() : raw(pineappl_channels_new()) {}
+  Channels(const std::size_t convolutions) : raw(pineappl_channels_new(convolutions)) {}
   Channels(const Channels &) = delete;
   Channels(Channels &&) = delete;
 
@@ -62,9 +62,6 @@ struct Channels {
     const std::size_t combinations = c.channels_entry.size();
     if (combinations == 0) return;
 
-    const std::size_t nb_convolutions =
-        c.channels_entry[0].entry[0].first.size();
-
     std::vector<std::int32_t> pids;
     std::vector<double> weights;
     for (const SubChannelEntry &s : c.channels_entry) {
@@ -75,8 +72,7 @@ struct Channels {
         weights.push_back(m.second);
       }
     }
-    pineappl_channels_add(this->raw, combinations, nb_convolutions, pids.data(),
-                          weights.data());
+    pineappl_channels_add(this->raw, combinations, pids.data(), weights.data());
   }
 
   /**
@@ -154,21 +150,21 @@ struct Grid {
    * @param bin_limits bin_limits
    * @param mu_scales indexes representing the scales
    */
-  Grid(std::vector<Order> &orders, const Channels &channels,
-       pineappl_pid_basis pid_basis, std::vector<int32_t> pids,
-       std::vector<pineappl_conv_type> &convolution_types,
+  Grid(std::vector<Order> &orders,
+       const Channels &channels,
+       pineappl_pid_basis pid_basis,
+       std::vector<pineappl_conv> &convolutions,
        std::vector<pineappl_kinematics> &kinematics,
-       std::vector<pineappl_interp_tuples> &interp,
-       std::vector<double> &bin_limits, std::vector<std::size_t> &mu_scales)
+       std::vector<pineappl_interp> &interp,
+       std::vector<double> &bin_limits,
+       std::vector<pineappl_scale_func_form> &mu_scales)
       : Grid(nullptr) {
     const std::size_t n_orders = orders.size();
     const std::size_t n_bins = bin_limits.size() - 1;
-    const std::size_t n_convs = convolution_types.size();
+    const std::size_t n_convs = convolutions.size();
 
     // Various checks for the input arguments
     assert(n_orders >= 1 && "Orders cannot be empty.");
-    assert(n_convs == pids.size() &&
-           "Number of convolutions and pids are different.");
     assert(n_convs == kinematics.size() - 1 &&
            "Mismatch in the number of convolutions and the kinematics.");
     assert(kinematics.size() == interp.size() &&
@@ -186,9 +182,9 @@ struct Grid {
     }
 
     this->raw = pineappl_grid_new2(
-        pid_basis, channels.raw, n_orders, raw_orders.data(), n_bins,
-        bin_limits.data(), n_convs, convolution_types.data(), pids.data(),
-        kinematics.data(), interp.data(), mu_scales.data());
+        n_bins, bin_limits.data(), n_orders, raw_orders.data(), channels.raw,
+        pid_basis, convolutions.data(), interp.size(),
+        interp.data(), kinematics.data(), mu_scales.data());
   }
 
   /**

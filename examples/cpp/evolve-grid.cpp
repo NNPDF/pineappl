@@ -251,7 +251,7 @@ int main() {
     //     - `xi`: scale variation
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
-    pineappl_fk_table* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
+    pineappl_fktable* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
         generate_fake_ekos, max_orders.data(), pdf.get(), XGRID.data(),
         XGRID.data(), pids_in.data(), pids_out.data(),
         tensor_shape.data(), xi.data(), ren1.data(), alphas_table.data());
