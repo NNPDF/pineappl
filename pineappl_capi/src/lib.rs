@@ -2185,7 +2185,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     xi: *const f64,
     ren1: *const f64,
     alphas: *const f64,
-) -> Box<FkTable> {
+) -> Box<Grid> {
     let grid = unsafe { &mut *grid };
 
     let max_orders = unsafe { slice::from_raw_parts(max_orders, 2) };
@@ -2268,20 +2268,20 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         },
     );
 
-    Box::new(fk_table.unwrap())
+    Box::new(fk_table.unwrap().grid().clone())
 }
 
 /// Delete an FK table.
 #[no_mangle]
 #[allow(unused_variables)]
-pub extern "C" fn pineappl_fk_table_delete(fktable: Option<Box<FkTable>>) {}
+pub extern "C" fn pineappl_fktable_delete(fktable: Option<Box<FkTable>>) {}
 
 /// Write `fktable` to a file with name `filename`. If `filename` ends in `.lz4` the Fk table is
 /// automatically LZ4 compressed.
 ///
 /// # Safety
 ///
-/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is a null
+/// If `fktable` does not point to a valid `Grid` object, for example when `fktable` is a null
 /// pointer, this function is not safe to call. The parameter `filename` must be a non-`NULL`,
 /// non-empty, and valid C string pointing to a non-existing, but writable file.
 ///
@@ -2289,17 +2289,9 @@ pub extern "C" fn pineappl_fk_table_delete(fktable: Option<Box<FkTable>>) {}
 ///
 /// TODO
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const FkTable, filename: *const c_char) {
-    let fktable = unsafe { &*fktable };
-    let filename = unsafe { CStr::from_ptr(filename) };
-    let filename = filename.to_string_lossy();
-    let path = Path::new(filename.as_ref());
-    let writer = File::create(path).unwrap();
-
-    if path.extension().is_some_and(|ext| ext == "lz4") {
-        fktable.grid().write_lz4(writer).unwrap();
-    } else {
-        fktable.grid().write(writer).unwrap();
+pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const Grid, filename: *const c_char) {
+    unsafe {
+        pineappl_grid_write(fktable, filename);
     }
 }
 
@@ -2307,55 +2299,43 @@ pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const FkTable, filenam
 ///
 /// # Safety
 ///
-/// If `fktable` does not point to a valid `FkTable` object, for example when `fktable` is
+/// If `fktable` does not point to a valid `Grid` object, for example when `fktable` is
 /// a null pointer, this function is not safe to call. The function pointer `xfx` must not
 /// be null pointers and point to valid functions. The parameter `channel_mask` must either
 /// be null pointers or point to arrays that are as long as `fktable` has channels, respectively.
 /// Finally, `results` must be as long as `FkTable` has bins.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_fk_table_convolve(
-    fktable: *const FkTable,
+pub unsafe extern "C" fn pineappl_fktable_convolve(
+    fktable: *const Grid,
     xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
     pdfs_state: *mut *mut c_void,
     channel_mask: *const bool,
     bin_indices: *const usize,
+    nb_scales: usize,
+    mu_scales: *const f64,
     results: *mut f64,
 ) {
-    let fktable = unsafe { &*fktable };
+    // define a dummy `alphas` function with the expected C ABI and signatures
+    const extern "C" fn alphas(_q2: f64, _state: *mut c_void) -> f64 {
+        1.0
+    }
 
-    let channel_mask = if channel_mask.is_null() {
-        &[]
-    } else {
-        unsafe { slice::from_raw_parts(channel_mask, fktable.channels().len()) }
-    };
+    let order_mask = std::ptr::null();
+    let alphas_state = std::ptr::null_mut();
 
-    let bin_indices = if bin_indices.is_null() {
-        &[]
-    } else {
-        unsafe { slice::from_raw_parts(bin_indices, fktable.grid().bwfl().len()) }
-    };
-
-    // TODO: Better way to do this?
-    let mut als = |_| 1.0;
-
-    let pdfs_slices =
-        unsafe { slice::from_raw_parts(pdfs_state, fktable.grid().convolutions().len()) };
-    let mut xfx_funcs: Vec<_> = pdfs_slices
-        .iter()
-        .map(|&state| move |id, x, q2| xfx(id, x, q2, state))
-        .collect();
-
-    // Construct the Convolution cache
-    let mut convolution_cache = ConvolutionCache::new(
-        fktable.grid().convolutions().to_vec(),
-        xfx_funcs
-            .iter_mut()
-            .map(|fx| fx as &mut dyn FnMut(i32, f64, f64) -> f64)
-            .collect(),
-        &mut als,
-    );
-
-    let results = unsafe { slice::from_raw_parts_mut(results, fktable.grid().bwfl().len()) };
-
-    results.copy_from_slice(&fktable.convolve(&mut convolution_cache, bin_indices, channel_mask));
+    unsafe {
+        pineappl_grid_convolve(
+            fktable,
+            xfx,
+            alphas,
+            pdfs_state,
+            alphas_state,
+            order_mask,
+            channel_mask,
+            bin_indices,
+            nb_scales,
+            mu_scales,
+            results,
+        );
+    }
 }

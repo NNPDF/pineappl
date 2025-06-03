@@ -269,8 +269,8 @@ int main() {
 
     // [ convolve the FK Table ]
     std::vector<double> dxsec_fktable(bins);
-    pineappl_fk_table_convolve(fktable, xfx, pdf_states, nullptr,
-        nullptr, dxsec_fktable.data());
+    pineappl_fktable_convolve(fktable, xfx, pdf_states, nullptr,
+        nullptr, 1, nullptr, dxsec_fktable.data());
 
     // Print the results
     print_results(dxsec_grid, dxsec_fktable);
@@ -278,5 +278,5 @@ int main() {
     pineappl_fktable_write(fktable, "evolved-grid.pineappl.lz4");
 
     pineappl_grid_delete(grid);
-    pineappl_fk_table_delete(fktable);
+    pineappl_fktable_delete(fktable);
 }
