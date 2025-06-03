@@ -60,14 +60,12 @@ use ndarray::{Array4, CowArray, Ix4};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
-use pineappl::fk_table::FkTable;
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::Subgrid;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem;
@@ -2069,16 +2067,20 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
     grid: *const Grid,
-    orders: *const u8,
+    order_mask: *const bool,
     shape_info: *mut usize,
 ) {
     let grid = unsafe { &*grid };
 
-    let orders = unsafe { slice::from_raw_parts(orders, 2) };
-    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
     let shape_info = unsafe { slice::from_raw_parts_mut(shape_info, 5) };
 
-    let evolve_info = grid.evolve_info(&order_mask);
+    let evolve_info = grid.evolve_info(order_mask);
     let evinfo_shapes = [
         evolve_info.fac1.len(),
         evolve_info.frg1.len(),
@@ -2099,7 +2101,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve_info(
     grid: *const Grid,
-    orders: *const u8,
+    order_mask: *const bool,
     fac1: *mut f64,
     frg1: *mut f64,
     pids1: *mut i32,
@@ -2108,21 +2110,24 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 ) {
     let grid = unsafe { &*grid };
 
-    let orders = unsafe { slice::from_raw_parts(orders, 2) };
-    let order_mask = Order::create_mask(grid.orders(), orders[0], orders[1], true);
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
 
-    let evolve_info = grid.evolve_info(&order_mask);
+    let evolve_info = grid.evolve_info(order_mask);
     let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evolve_info.fac1.len()) };
     let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evolve_info.frg1.len()) };
     let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evolve_info.pids1.len()) };
     let x1 = unsafe { slice::from_raw_parts_mut(x1, evolve_info.x1.len()) };
     let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evolve_info.ren1.len()) };
 
-    fac1.copy_from_slice(&grid.evolve_info(&order_mask).fac1);
-    frg1.copy_from_slice(&grid.evolve_info(&order_mask).frg1);
-    pids1.copy_from_slice(&grid.evolve_info(&order_mask).pids1);
-    x1.copy_from_slice(&grid.evolve_info(&order_mask).x1);
-    ren1.copy_from_slice(&grid.evolve_info(&order_mask).ren1);
+    fac1.copy_from_slice(&grid.evolve_info(order_mask).fac1);
+    frg1.copy_from_slice(&grid.evolve_info(order_mask).frg1);
+    pids1.copy_from_slice(&grid.evolve_info(order_mask).pids1);
+    x1.copy_from_slice(&grid.evolve_info(order_mask).x1);
+    ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
 }
 
 /// Type alias for the operator callback
@@ -2175,8 +2180,9 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *mut Grid,
     operator_info: *mut OperatorInfo,
     operator: OperatorCallback,
-    max_orders: *const u8,
+    order_mask: *const bool,
     params_state: *mut c_void,
+    nb_convolutions: usize,
     x_in: *const f64,
     x_out: *const f64,
     pids_in: *const i32,
@@ -2188,29 +2194,26 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 ) -> Box<Grid> {
     let grid = unsafe { &mut *grid };
 
-    let max_orders = unsafe { slice::from_raw_parts(max_orders, 2) };
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
     let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
     let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[0]) };
     let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[1]) };
     let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[2]) };
     let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[3]) };
 
-    let order_mask = Order::create_mask(grid.orders(), max_orders[0], max_orders[1], true);
-    let evolve_info = grid.evolve_info(&order_mask);
-
+    let evolve_info = grid.evolve_info(order_mask);
     let ren1_len = evolve_info.ren1.len();
     let ren1 = unsafe { slice::from_raw_parts(ren1, ren1_len) };
     let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
     let xi = unsafe { slice::from_raw_parts(xi, 3) };
 
-    let conv_types: HashSet<_> = grid
-        .convolutions()
-        .iter()
-        .map(pineappl::convolutions::Conv::conv_type)
-        .collect();
-
     let operator_info = unsafe {
-        slice::from_raw_parts(operator_info, conv_types.len() * evolve_info.fac1.len())
+        slice::from_raw_parts(operator_info, nb_convolutions * evolve_info.fac1.len())
             .chunks_exact(evolve_info.fac1.len())
     };
     let total_shape: usize = eko_shape.iter().product();
@@ -2260,7 +2263,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let fk_table = grid.evolve(
         slices,
-        &order_mask,
+        order_mask,
         (xi[0], xi[1], xi[2]),
         &AlphasTable {
             ren1: ren1.to_vec(),
@@ -2268,13 +2271,13 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         },
     );
 
-    Box::new(fk_table.unwrap().grid().clone())
+    Box::new(fk_table.unwrap().into_grid())
 }
 
 /// Delete an FK table.
 #[no_mangle]
 #[allow(unused_variables)]
-pub extern "C" fn pineappl_fktable_delete(fktable: Option<Box<FkTable>>) {}
+pub extern "C" fn pineappl_fktable_delete(fktable: Option<Box<Grid>>) {}
 
 /// Write `fktable` to a file with name `filename`. If `filename` ends in `.lz4` the Fk table is
 /// automatically LZ4 compressed.
@@ -2292,50 +2295,5 @@ pub extern "C" fn pineappl_fktable_delete(fktable: Option<Box<FkTable>>) {}
 pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const Grid, filename: *const c_char) {
     unsafe {
         pineappl_grid_write(fktable, filename);
-    }
-}
-
-/// A generalization of the convolution function for FK tables.
-///
-/// # Safety
-///
-/// If `fktable` does not point to a valid `Grid` object, for example when `fktable` is
-/// a null pointer, this function is not safe to call. The function pointer `xfx` must not
-/// be null pointers and point to valid functions. The parameter `channel_mask` must either
-/// be null pointers or point to arrays that are as long as `fktable` has channels, respectively.
-/// Finally, `results` must be as long as `FkTable` has bins.
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_fktable_convolve(
-    fktable: *const Grid,
-    xfx: extern "C" fn(pdg_id: i32, x: f64, q2: f64, state: *mut c_void) -> f64,
-    pdfs_state: *mut *mut c_void,
-    channel_mask: *const bool,
-    bin_indices: *const usize,
-    nb_scales: usize,
-    mu_scales: *const f64,
-    results: *mut f64,
-) {
-    // define a dummy `alphas` function with the expected C ABI and signatures
-    const extern "C" fn alphas(_q2: f64, _state: *mut c_void) -> f64 {
-        1.0
-    }
-
-    let order_mask = std::ptr::null();
-    let alphas_state = std::ptr::null_mut();
-
-    unsafe {
-        pineappl_grid_convolve(
-            fktable,
-            xfx,
-            alphas,
-            pdfs_state,
-            alphas_state,
-            order_mask,
-            channel_mask,
-            bin_indices,
-            nb_scales,
-            mu_scales,
-            results,
-        );
     }
 }
