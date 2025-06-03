@@ -222,8 +222,8 @@ int main() {
     // Print the results
     print_results(dxsec_grid, dxsec_fktable);
 
-    pineappl_fktable_write(fktable, "evolved-grid-identity.pineappl.lz4");
+    pineappl_grid_write(fktable, "evolved-grid-identity.pineappl.lz4");
 
     pineappl_grid_delete(grid);
-    pineappl_fktable_delete(fktable);
+    pineappl_grid_delete(fktable);
 }

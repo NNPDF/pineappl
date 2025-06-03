@@ -2273,27 +2273,3 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     Box::new(fk_table.unwrap().into_grid())
 }
-
-/// Delete an FK table.
-#[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn pineappl_fktable_delete(fktable: Option<Box<Grid>>) {}
-
-/// Write `fktable` to a file with name `filename`. If `filename` ends in `.lz4` the Fk table is
-/// automatically LZ4 compressed.
-///
-/// # Safety
-///
-/// If `fktable` does not point to a valid `Grid` object, for example when `fktable` is a null
-/// pointer, this function is not safe to call. The parameter `filename` must be a non-`NULL`,
-/// non-empty, and valid C string pointing to a non-existing, but writable file.
-///
-/// # Panics
-///
-/// TODO
-#[no_mangle]
-pub unsafe extern "C" fn pineappl_fktable_write(fktable: *const Grid, filename: *const c_char) {
-    unsafe {
-        pineappl_grid_write(fktable, filename);
-    }
-}
