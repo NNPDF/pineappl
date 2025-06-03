@@ -3,10 +3,8 @@
 #include <pineappl_capi.h>
 
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 #include <random>
-#include <string>
 #include <vector>
 
 struct Psp2to2Hadron {
@@ -21,12 +19,11 @@ struct Psp2to2Hadron {
     double jacobian;
 };
 
-double me_gg2qqbar(double s, double t, double u) {
-    (void) s; // ignore dummy variable
+double me_gg2qqbar(double /*s*/, double t, double u) {
     double as2 = 0.118 * 0.118;
-    double PI2 = M_PI * M_PI;
+    double PI2 = std::acos(-1.0) * std::acos(-1.0); // π^2
     // TODO: double-check
-    return (16 * PI2 * as2 / 6.0) * (std::pow(u, 2) + std::pow(t, 2)) / (u * t);
+    return (16 * PI2 * as2 / 6.0) * (u * u + t * t) / (u * t);
 }
 
 Psp2to2Hadron pspgen_pp2hadron(std::mt19937& rng, double mmin,
@@ -186,7 +183,7 @@ int main() {
     // choose the Evolution Basis to represent the grid
     pineappl_pid_basis pid_basis = PINEAPPL_PID_BASIS_EVOL;
     // define the types of hadrons and set them to be Unpolarised
-    pineappl_conv convs[] = {
+    std::vector<pineappl_conv> convs = {
         {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212}, // proton
         {PINEAPPL_CONV_TYPE_UNPOL_PDF, 2212}, // proton
         {PINEAPPL_CONV_TYPE_UNPOL_FF, 211},   // pion
@@ -197,7 +194,7 @@ int main() {
     pineappl_kinematics x1 = {PINEAPPL_KINEMATICS_X, 0};
     pineappl_kinematics x2 = {PINEAPPL_KINEMATICS_X, 1};
     pineappl_kinematics z = {PINEAPPL_KINEMATICS_X, 2};
-    pineappl_kinematics kinematics[4] = {scales, x1, x2, z};
+    std::vector<pineappl_kinematics> kinematics = {scales, x1, x2, z};
 
     // define the specificities of the interpolations `interpolations = (μ, x1, x2, z)`
     pineappl_reweight_meth scales_reweight = PINEAPPL_REWEIGHT_METH_NO_REWEIGHT;
@@ -205,7 +202,7 @@ int main() {
     pineappl_map scales_mapping = PINEAPPL_MAP_APPL_GRID_H0;
     pineappl_map moment_mapping = PINEAPPL_MAP_APPL_GRID_F2;
     pineappl_interp_meth interpolation_meth = PINEAPPL_INTERP_METH_LAGRANGE;
-    pineappl_interp interpolations[4] = {
+    std::vector<pineappl_interp> interpolations = {
         {1e2, 1e8, 40, 3, scales_reweight, scales_mapping, interpolation_meth},  // μ
         {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth}, // x1
         {2e-7, 1.0, 50, 3, moment_reweight, moment_mapping, interpolation_meth}, // x2
@@ -215,14 +212,14 @@ int main() {
     // define the values of the unphysical scales `mu_scales = (μR, μF, μD)`
     // where here we do not consider the fragmentation scale μD
     pineappl_scale_func_form scale_mu = {PINEAPPL_SCALE_FUNC_FORM_SCALE, 0};
-    pineappl_scale_func_form mu_scales[3] = {scale_mu, scale_mu, scale_mu};
+    std::vector<pineappl_scale_func_form> mu_scales = {scale_mu, scale_mu, scale_mu};
 
     // ---
     // Create the grid, fill it with Monte Carlo weights, and dump into disk
 
     auto* grid = pineappl_grid_new2(bins.size() - 1, bins.data(), orders.size() / 5,
-        orders.data(), channels, pid_basis, convs, nb_convolutions + 1,
-        interpolations, kinematics, mu_scales);
+        orders.data(), channels, pid_basis, convs.data(), interpolations.size(),
+        interpolations.data(), kinematics.data(), mu_scales.data());
 
     // delete no longer needed channel object
     pineappl_channels_delete(channels);
@@ -237,8 +234,7 @@ int main() {
     pineappl_grid_set_key_value(grid, "y_unit", "pb/GeV");
 
     // write the grid into disk
-    std::string filename = "pp2hadron-pt.pineappl.lz4";
-    pineappl_grid_write(grid, filename.c_str());
+    pineappl_grid_write(grid, "pp2hadron-pt.pineappl.lz4");
 
     // remove grid object from memory
     pineappl_grid_delete(grid);
