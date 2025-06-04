@@ -60,6 +60,7 @@ use ndarray::{Array4, CowArray, Ix4};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
+use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
@@ -2272,4 +2273,25 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     );
 
     Box::new(fk_table.unwrap().into_grid())
+}
+
+/// Optimize the size of this FK-table by removing heavy quark flavors assumed to be zero.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+///
+/// # Panics
+///
+/// This function panics if `grid` is not an FK table-like object.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fktable_optimize(
+    grid: *mut Grid,
+    assumptions: FkAssumptions,
+) -> Box<FkTable> {
+    let grid = unsafe { &mut *grid };
+    let mut fktable = FkTable::try_from(grid.clone()).unwrap();
+    fktable.optimize(assumptions);
+    Box::new(fktable)
 }
