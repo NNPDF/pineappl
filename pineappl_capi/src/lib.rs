@@ -2286,12 +2286,9 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 ///
 /// This function panics if `grid` is not an FK table-like object.
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_fktable_optimize(
-    grid: *mut Grid,
-    assumptions: FkAssumptions,
-) -> Box<FkTable> {
+pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
     let grid = unsafe { &mut *grid };
     let mut fktable = FkTable::try_from(grid.clone()).unwrap();
     fktable.optimize(assumptions);
-    Box::new(fktable)
+    unsafe { std::ptr::replace(grid, fktable.into_grid()) };
 }

@@ -280,8 +280,8 @@ int main() {
     pineappl_grid_write(fktable, "evolved-grid.pineappl.lz4");
 
     // optimise the FK table and then write into disk
-    pineappl_fktable* fktable_opt = pineappl_fktable_optimize(fktable, PINEAPPL_FK_ASSUMPTIONS_NF3_SYM);
-    pineappl_grid_write(fktable_opt, "evolved-grid-optimised.pineappl.lz4");
+    pineappl_fktable_optimize(fktable, PINEAPPL_FK_ASSUMPTIONS_NF3_SYM);
+    pineappl_grid_write(fktable, "evolved-grid-optimised.pineappl.lz4");
 
     pineappl_grid_delete(grid);
     pineappl_grid_delete(fktable);
