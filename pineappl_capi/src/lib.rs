@@ -2295,8 +2295,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
     let grid = unsafe { &mut *grid };
+    // SAFETY: this code has been copied from the `take_mut` crate
     let read_grid = unsafe { std::ptr::read(grid) };
-    let mut fktable = FkTable::try_from(read_grid).unwrap();
+    let mut fktable = FkTable::try_from(read_grid)
+        // UNWRAP: error handling in the CAPI is to abort
+        .unwrap();
     fktable.optimize(assumptions);
     unsafe { std::ptr::write(grid, fktable.into_grid()) };
 }
