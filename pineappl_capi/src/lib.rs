@@ -2178,8 +2178,8 @@ type OperatorCallback = extern "C" fn(
 /// with the `Grid`.
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve(
-    grid: *mut Grid,
-    operator_info: *mut OperatorInfo,
+    grid: *const Grid,
+    operator_info: *const OperatorInfo,
     operator: OperatorCallback,
     order_mask: *const bool,
     params_state: *mut c_void,
@@ -2193,7 +2193,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     ren1: *const f64,
     alphas: *const f64,
 ) -> Box<Grid> {
-    let grid = unsafe { &mut *grid };
+    let grid = unsafe { &*grid };
 
     let order_mask = if order_mask.is_null() {
         &[]
