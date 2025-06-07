@@ -56,7 +56,7 @@
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
 use itertools::izip;
-use ndarray::{Array4, CowArray, Ix4};
+use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
 use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
@@ -2217,7 +2217,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         slice::from_raw_parts(operator_info, nb_convolutions * evolve_info.fac1.len())
             .chunks_exact(evolve_info.fac1.len())
     };
-    let total_shape: usize = eko_shape.iter().product();
+
+    let shape: (usize, usize, usize, usize) = <[usize; 4]>::try_from(eko_shape)
+        // UNWRAP: guaranteed to work since `eko_shape` is exactly 4 elements long
+        .unwrap()
+        .into();
 
     let slices = operator_info
         .map(|op_infos| {
@@ -2233,15 +2237,18 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                     conv_type: op_info.conv_type,
                 };
 
-                // Let Rust manages the memory by allocating a flat vector of zeros as a placeholder
-                // to hold the evolution operator data.
-                let mut eko_slice = vec![0.0; total_shape];
+                let mut array = CowArray::from(Array4::zeros(shape));
+
                 operator(
                     pids_in.as_ptr(),
                     x_in.as_ptr(),
                     pids_out.as_ptr(),
                     x_out.as_ptr(),
-                    eko_slice.as_mut_ptr(),
+                    array
+                        .as_slice_mut()
+                        // UNWRAP: `array` is by construction contiguous and in standard order
+                        .unwrap()
+                        .as_mut_ptr(),
                     params_state,
                     op_info.conv_type,
                     op_info.fac1,
@@ -2251,13 +2258,8 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                     x_out.len(),
                 );
 
-                let array = Array4::from_shape_vec(
-                    Ix4(eko_shape[0], eko_shape[1], eko_shape[2], eko_shape[3]),
-                    eko_slice,
-                )
-                .unwrap();
-
-                Ok::<_, std::io::Error>((operator_slice_info, CowArray::from(array)))
+                // we specify an arbitrary error type since we don't return an error anywhere
+                Ok::<_, std::io::Error>((operator_slice_info, array))
             })
         })
         .collect();
