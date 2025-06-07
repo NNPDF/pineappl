@@ -2132,7 +2132,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 }
 
 /// Type alias for the operator callback
-type OperatorCallback = extern "C" fn(
+pub type OperatorCallback = unsafe extern "C" fn(
     *const i32,  // pids_in
     *const f64,  // x_in
     *const i32,  // pids_out
@@ -2239,24 +2239,26 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
                 let mut array = CowArray::from(Array4::zeros(shape));
 
-                operator(
-                    pids_in.as_ptr(),
-                    x_in.as_ptr(),
-                    pids_out.as_ptr(),
-                    x_out.as_ptr(),
-                    array
-                        .as_slice_mut()
-                        // UNWRAP: `array` is by construction contiguous and in standard order
-                        .unwrap()
-                        .as_mut_ptr(),
-                    params_state,
-                    op_info.conv_type,
-                    op_info.fac1,
-                    pids_in.len(),
-                    x_in.len(),
-                    pids_out.len(),
-                    x_out.len(),
-                );
+                unsafe {
+                    operator(
+                        pids_in.as_ptr(),
+                        x_in.as_ptr(),
+                        pids_out.as_ptr(),
+                        x_out.as_ptr(),
+                        array
+                            .as_slice_mut()
+                            // UNWRAP: `array` is by construction contiguous and in standard order
+                            .unwrap()
+                            .as_mut_ptr(),
+                        params_state,
+                        op_info.conv_type,
+                        op_info.fac1,
+                        pids_in.len(),
+                        x_in.len(),
+                        pids_out.len(),
+                        x_out.len(),
+                    );
+                }
 
                 // we specify an arbitrary error type since we don't return an error anywhere
                 Ok::<_, std::io::Error>((operator_slice_info, array))
