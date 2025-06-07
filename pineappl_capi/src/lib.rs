@@ -2266,17 +2266,20 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         })
         .collect();
 
-    let fk_table = grid.evolve(
-        slices,
-        order_mask,
-        (xi[0], xi[1], xi[2]),
-        &AlphasTable {
-            ren1: ren1.to_vec(),
-            alphas: alphas.to_vec(),
-        },
-    );
+    let fk_table = grid
+        .evolve(
+            slices,
+            order_mask,
+            (xi[0], xi[1], xi[2]),
+            &AlphasTable {
+                ren1: ren1.to_vec(),
+                alphas: alphas.to_vec(),
+            },
+        )
+        // UNWRAP: error handling in the CAPI is to abort
+        .unwrap();
 
-    Box::new(fk_table.unwrap().into_grid())
+    Box::new(fk_table.into_grid())
 }
 
 /// Optimize the size of this FK-table by removing heavy quark flavors assumed to be zero.
