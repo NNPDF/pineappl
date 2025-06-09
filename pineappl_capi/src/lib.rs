@@ -55,7 +55,7 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::izip;
+use itertools::{izip, Itertools};
 use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
@@ -1939,16 +1939,22 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     ));
 }
 
-/// Get the type of convolutions for this Grid given an index.
+/// Get the type of convolutions for this Grid.
 ///
 /// # Safety
 ///
 /// TODO
 #[no_mangle]
-pub unsafe extern "C" fn pineappl_grid_conv_type(grid: *const Grid, index: usize) -> ConvType {
+pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types: *mut ConvType) {
     let grid = unsafe { &*grid };
+    let conv_types = unsafe { slice::from_raw_parts_mut(conv_types, grid.convolutions().len()) };
+    let convs_array = grid
+        .convolutions()
+        .iter()
+        .map(Conv::conv_type)
+        .collect_vec();
 
-    grid.convolutions()[index].conv_type()
+    conv_types.copy_from_slice(&convs_array);
 }
 
 /// Get the number of convolutions for a given Grid.

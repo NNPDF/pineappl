@@ -163,16 +163,18 @@ int main() {
     pineappl_pid_basis pid_basis = pineappl_grid_pid_basis(grid);
     assert(pid_basis == PINEAPPL_PID_BASIS_PDG);
 
-    // Get the number of convolutions
+    // Get the number of convolutions and their types
     std::size_t n_convs = pineappl_grid_convolutions_len(grid);
+    std::vector<pineappl_conv_type> conv_types(n_convs);
+    pineappl_grid_conv_types(grid, conv_types.data());
 
-    // Fill the vector of unique convolution types. If the EKOs required for the Grid
-    // are the same, then it suffices to only pass ONE single EKO.
-    std::vector<pineappl_conv_type> conv_types;
+    // Fill the vector of unique convolution types. If the Operators required for the Grid
+    // are the same, then it suffices to only pass ONE single Operator.
+    std::vector<pineappl_conv_type> unique_convs;
     for (std::size_t i = 0; i != n_convs; i++) {
-        pineappl_conv_type conv = pineappl_grid_conv_type(grid, i);
-        if (std::find(conv_types.begin(), conv_types.end(), conv) == conv_types.end()) {
-            conv_types.push_back(conv);
+        pineappl_conv_type conv = conv_types[i];
+        if (std::find(unique_convs.begin(), unique_convs.end(), conv) == unique_convs.end()) {
+            unique_convs.push_back(conv);
         }
     }
 
@@ -204,14 +206,14 @@ int main() {
     // ------------------ Construct the Operator Info ------------------
     // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
     // elements are `OperatorInfo` objects.
-    std::vector<pineappl_operator_info> opinfo_slices(conv_types.size() * fac1.size());
-    for (std::size_t i = 0; i != conv_types.size(); i++) {
+    std::vector<pineappl_operator_info> opinfo_slices(unique_convs.size() * fac1.size());
+    for (std::size_t i = 0; i != unique_convs.size(); i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
             pineappl_operator_info opinfo = {
                 FAC0, // fac0
                 fac1[j], // fac1
                 pid_basis,
-                conv_types[i],
+                unique_convs[i],
             };
             opinfo_slices[i * fac1.size() + j] = opinfo;
         }
@@ -251,7 +253,7 @@ int main() {
     //     - `alphas_table`: values of alphas for each renormalization scales
     pineappl_grid* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
         generate_fake_ekos, nullptr, pdf.get(),
-        conv_types.size(), XGRID.data(), XGRID.data(),
+        unique_convs.size(), XGRID.data(), XGRID.data(),
         pids_in.data(), pids_out.data(), tensor_shape.data(),
         xi.data(), ren1.data(), alphas_table.data());
 
