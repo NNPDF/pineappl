@@ -83,18 +83,18 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
 }
 
 extern "C" void generate_fake_ekos(
-    const int* /*pids_in*/,
-    const double* /*x_in*/,
-    const int* /*pids_out*/,
-    const double* /*x_out*/,
-    double* eko_buffer,
-    void* params_state,
     pineappl_conv_type /*conv_type*/,
     double /*fac1*/,
     std::size_t /*pids_in_len*/,
+    const int* /*pids_in*/,
     std::size_t /*x_in_len*/,
+    const double* /*x_in*/,
     std::size_t /*pids_out_len*/,
-    std::size_t /*x_out_len*/
+    const int* /*pids_out*/,
+    std::size_t /*x_out_len*/,
+    const double* /*x_out*/,
+    double* eko_buffer,
+    void* params_state
 ) {
     // Check to get the μ0 from the PDF
     const double _ = static_cast<LHAPDF::PDF*> (params_state)->q2Min();
