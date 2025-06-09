@@ -2185,19 +2185,19 @@ pub type OperatorCallback = unsafe extern "C" fn(
 #[no_mangle]
 pub unsafe extern "C" fn pineappl_grid_evolve(
     grid: *const Grid,
+    nb_slices: usize,
+    slices: OperatorCallback,
     operator_info: *const OperatorInfo,
-    operator: OperatorCallback,
+    state: *mut c_void,
     order_mask: *const bool,
-    params_state: *mut c_void,
-    nb_convolutions: usize,
+    xi: *const f64,
+    ren1: *const f64,
+    alphas: *const f64,
     x_in: *const f64,
     x_out: *const f64,
     pids_in: *const i32,
     pids_out: *const i32,
     eko_shape: *const usize,
-    xi: *const f64,
-    ren1: *const f64,
-    alphas: *const f64,
 ) -> Box<Grid> {
     let grid = unsafe { &*grid };
 
@@ -2220,7 +2220,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     let xi = unsafe { slice::from_raw_parts(xi, 3) };
 
     let operator_info = unsafe {
-        slice::from_raw_parts(operator_info, nb_convolutions * evolve_info.fac1.len())
+        slice::from_raw_parts(operator_info, nb_slices * evolve_info.fac1.len())
             .chunks_exact(evolve_info.fac1.len())
     };
 
@@ -2229,7 +2229,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .unwrap()
         .into();
 
-    let slices = operator_info
+    let op_slices = operator_info
         .map(|op_infos| {
             op_infos.iter().map(|op_info| {
                 let operator_slice_info = OperatorSliceInfo {
@@ -2246,7 +2246,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                 let mut array = CowArray::from(Array4::zeros(shape));
 
                 unsafe {
-                    operator(
+                    slices(
                         pids_in.as_ptr(),
                         x_in.as_ptr(),
                         pids_out.as_ptr(),
@@ -2256,7 +2256,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                             // UNWRAP: `array` is by construction contiguous and in standard order
                             .unwrap()
                             .as_mut_ptr(),
-                        params_state,
+                        state,
                         op_info.conv_type,
                         op_info.fac1,
                         pids_in.len(),
@@ -2274,7 +2274,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let fk_table = grid
         .evolve(
-            slices,
+            op_slices,
             order_mask,
             (xi[0], xi[1], xi[2]),
             &AlphasTable {

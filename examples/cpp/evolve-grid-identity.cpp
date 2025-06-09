@@ -183,25 +183,23 @@ int main() {
 
     // NOTE: The arguments of `pineappl_grid_evolve` must follow the following orders:
     //     - `grid`: PineAPPL Grid
-    //     - `op_info`: operator info
-    //     - `operator`: callback that returns an evolution operator
+    //     - `nb_slices`: the number of convolution(s)/Evolution Operator(s) required
+    //     - `slices`: callback that returns the evolution operator(s) in slices
+    //     - `state`: parameters that get passed to `operator`
     //     - `order_mask`: array of booleans to mask the order(s) to apply the Evolution to,
     //                     `nullptr` selects all the orders
-    //     - `params_state`: parameters that get passed to `operator`
-    //     - `nb_convolutions`: the number of convolutions/Evolution Operators required
+    //     - `xi`: scale variation
+    //     - `ren1`: values of the renormalization scales
+    //     - `alphas_table`: values of alphas for each renormalization scales
+    //     - `operator_info`: operator info
     //     - `x_in`: x-grid of the Grid
     //     - `x_out`: x-grid of the FK table
     //     - `pids_in`: PIDs basis representation of the Grid
     //     - `pids_out`: PIDs basis representation of the FK table
     //     - `eko_shape`: shape of the evolution operators
-    //     - `xi`: scale variation
-    //     - `ren1`: values of the renormalization scales
-    //     - `alphas_table`: values of alphas for each renormalization scales
-    pineappl_grid* fktable = pineappl_grid_evolve(grid, opinfo_slices.data(),
-        generate_fake_ekos, nullptr, pdf.get(),
-        unique_convs.size(), x_in.data(), x_in.data(),
-        pids_in.data(), pids_out.data(), tensor_shape.data(),
-        xi.data(), ren1.data(), alphas_table.data());
+    pineappl_grid* fktable = pineappl_grid_evolve(grid, unique_convs.size(), generate_fake_ekos,
+        opinfo_slices.data(), pdf.get(), nullptr, xi.data(), ren1.data(), alphas_table.data(),
+        x_in.data(), x_in.data(), pids_in.data(), pids_out.data(), tensor_shape.data());
 
     // ------------------ Compare Grid & FK after convolution ------------------
     // how many bins does this grid have?
