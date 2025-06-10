@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 10/06/2025
+
 PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
 have an arbitrary number of convolutions in the initial (PDFs with a
 factorization scale) and in the final (FFs with a fragmentation scale) state.
@@ -741,7 +743,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
 [0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/NNPDF/pineappl/compare/v0.8.4...v0.8.5
