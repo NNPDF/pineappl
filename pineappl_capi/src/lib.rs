@@ -2139,18 +2139,15 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 
 /// Type alias for the operator callback
 pub type OperatorCallback = unsafe extern "C" fn(
-    ConvType,    // Convolution type
-    f64,         // fac1
-    usize,       // size of `pids_in`
-    *const i32,  // `pids_in`
-    usize,       // size of `x_in`
-    *const f64,  // `x_in`
-    usize,       // size of `pids_out`
-    *const i32,  // `pids_out`
-    usize,       // size of `x_out`
-    *const f64,  // `x_out`
-    *mut f64,    // Evolution Operator data buffer
-    *mut c_void, // Callable state of parameters
+    ConvType,     // Convolution type
+    f64,          // fac1
+    *const i32,   // `pids_in`
+    *const f64,   // `x_in`
+    *const i32,   // `pids_out`
+    *const f64,   // `x_out`
+    *const usize, // shape of the EKO
+    *mut f64,     // Evolution Operator data buffer
+    *mut c_void,  // Callable state of parameters
 );
 
 /// Evolve a grid with an evolution operator and dump the resulting FK table.
@@ -2188,16 +2185,16 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
     nb_slices: usize,
     slices: OperatorCallback,
     operator_info: *const OperatorInfo,
+    pids_in: *const i32,
+    x_in: *const f64,
+    pids_out: *const i32,
+    x_out: *const f64,
+    eko_shape: *const usize,
     state: *mut c_void,
     order_mask: *const bool,
     xi: *const f64,
     ren1: *const f64,
     alphas: *const f64,
-    x_in: *const f64,
-    x_out: *const f64,
-    pids_in: *const i32,
-    pids_out: *const i32,
-    eko_shape: *const usize,
 ) -> Box<Grid> {
     let grid = unsafe { &*grid };
 
@@ -2249,14 +2246,11 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
                     slices(
                         op_info.conv_type,
                         op_info.fac1,
-                        pids_in.len(),
                         pids_in.as_ptr(),
-                        x_in.len(),
                         x_in.as_ptr(),
-                        pids_out.len(),
                         pids_out.as_ptr(),
-                        x_out.len(),
                         x_out.as_ptr(),
+                        eko_shape.as_ptr(),
                         array
                             .as_slice_mut()
                             // UNWRAP: `array` is by construction contiguous and in standard order

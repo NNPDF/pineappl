@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <numeric>
 
 // NOTE: Uses the scale of the Grid as the starting scale such that we can use an IDENTITY EKO.
 double FAC0 = 6456.44;
@@ -27,23 +28,22 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
 extern "C" void generate_fake_ekos(
     pineappl_conv_type /*conv_type*/,
     double /*fac1*/,
-    std::size_t pids_in_len,
     const int* /*pids_in*/,
-    std::size_t x_in_len,
     const double* /*x_in*/,
-    std::size_t pids_out_len,
     const int* /*pids_out*/,
-    std::size_t x_out_len,
     const double* /*x_out*/,
+    const std::size_t* eko_shape,
     double* eko_buffer,
     void* params_state
 ) {
     // Check to get the μ0 of the PDF from the `params_state`
     const double _ = static_cast<LHAPDF::PDF*> (params_state)->q2Min();
 
-    std::size_t flat_len = pids_in_len * x_in_len * pids_out_len * x_out_len;
-    // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
-    std::vector<std::size_t> shape = {pids_in_len, x_in_len, pids_out_len, x_out_len};
+    // NOTE: This has to work because the Evolution Operator is always 4D
+    std::vector<std::size_t> shape(eko_shape, eko_shape + 4);
+    // Compute the length of the flattened shape by multiplying the entries
+    std::size_t flat_len = std::accumulate(shape.begin(),
+        shape.end(), 1, std::multiplies<std::size_t>());
     for (std::size_t i = 0; i != flat_len; i++) {
         std::vector<std::size_t> coords = unravel_index(i, shape);
 
@@ -185,21 +185,34 @@ int main() {
     //     - `grid`: PineAPPL Grid
     //     - `nb_slices`: the number of convolution(s)/Evolution Operator(s) required
     //     - `slices`: callback that returns the evolution operator(s) in slices
+    //     - `operator_info`: operator info
+    //     - `pids_in`: PIDs basis representation of the Grid
+    //     - `x_in`: x-grid of the Grid
+    //     - `pids_out`: PIDs basis representation of the FK table
+    //     - `x_out`: x-grid of the FK table
     //     - `state`: parameters that get passed to `operator`
     //     - `order_mask`: array of booleans to mask the order(s) to apply the Evolution to,
     //                     `nullptr` selects all the orders
     //     - `xi`: scale variation
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
-    //     - `operator_info`: operator info
-    //     - `x_in`: x-grid of the Grid
-    //     - `x_out`: x-grid of the FK table
-    //     - `pids_in`: PIDs basis representation of the Grid
-    //     - `pids_out`: PIDs basis representation of the FK table
     //     - `eko_shape`: shape of the evolution operators
-    pineappl_grid* fktable = pineappl_grid_evolve(grid, unique_convs.size(), generate_fake_ekos,
-        opinfo_slices.data(), pdf.get(), nullptr, xi.data(), ren1.data(), alphas_table.data(),
-        x_in.data(), x_in.data(), pids_in.data(), pids_out.data(), tensor_shape.data());
+    pineappl_grid* fktable = pineappl_grid_evolve(
+        grid,                 // `grid`
+        unique_convs.size(),  // `nb_slices`
+        generate_fake_ekos,   // `slices`
+        opinfo_slices.data(), // `operator_info`
+        pids_in.data(),       // `pids_in`
+        x_in.data(),          // `x_in`
+        pids_out.data(),      // `pids_out`
+        x_in.data(),          // `x_out`
+        tensor_shape.data(),  // `eko_shape`
+        pdf.get(),            // `state`
+        nullptr,              // `order_mask`
+        xi.data(),            // `xi`
+        ren1.data(),          // `ren1`
+        alphas_table.data()   // `alphas_table`
+    );
 
     // ------------------ Compare Grid & FK after convolution ------------------
     // how many bins does this grid have?

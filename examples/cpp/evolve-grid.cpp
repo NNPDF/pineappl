@@ -85,14 +85,11 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
 extern "C" void generate_fake_ekos(
     pineappl_conv_type /*conv_type*/,
     double /*fac1*/,
-    std::size_t /*pids_in_len*/,
     const int* /*pids_in*/,
-    std::size_t /*x_in_len*/,
     const double* /*x_in*/,
-    std::size_t /*pids_out_len*/,
     const int* /*pids_out*/,
-    std::size_t /*x_out_len*/,
     const double* /*x_out*/,
+    const std::size_t* /*eko_shape*/,
     double* eko_buffer,
     void* params_state
 ) {
@@ -239,21 +236,34 @@ int main() {
     //     - `grid`: PineAPPL Grid
     //     - `nb_slices`: the number of convolution(s)/Evolution Operator(s) required
     //     - `slices`: callback that returns the evolution operator(s) in slices
+    //     - `operator_info`: operator info
+    //     - `pids_in`: PIDs basis representation of the Grid
+    //     - `x_in`: x-grid of the Grid
+    //     - `pids_out`: PIDs basis representation of the FK table
+    //     - `x_out`: x-grid of the FK table
     //     - `state`: parameters that get passed to `operator`
     //     - `order_mask`: array of booleans to mask the order(s) to apply the Evolution to,
     //                     `nullptr` selects all the orders
     //     - `xi`: scale variation
     //     - `ren1`: values of the renormalization scales
     //     - `alphas_table`: values of alphas for each renormalization scales
-    //     - `operator_info`: operator info
-    //     - `x_in`: x-grid of the Grid
-    //     - `x_out`: x-grid of the FK table
-    //     - `pids_in`: PIDs basis representation of the Grid
-    //     - `pids_out`: PIDs basis representation of the FK table
     //     - `eko_shape`: shape of the evolution operators
-    pineappl_grid* fktable = pineappl_grid_evolve(grid, unique_convs.size(), generate_fake_ekos,
-        opinfo_slices.data(), pdf.get(), nullptr, xi.data(), ren1.data(), alphas_table.data(),
-        XGRID.data(), XGRID.data(), pids_in.data(), pids_out.data(), tensor_shape.data());
+    pineappl_grid* fktable = pineappl_grid_evolve(
+        grid,                 // `grid`
+        unique_convs.size(),  // `nb_slices`
+        generate_fake_ekos,   // `slices`
+        opinfo_slices.data(), // `operator_info`
+        pids_in.data(),       // `pids_in`
+        XGRID.data(),         // `x_in`
+        pids_out.data(),      // `pids_out`
+        XGRID.data(),         // `x_out`
+        tensor_shape.data(),  // `eko_shape`
+        pdf.get(),            // `state`
+        nullptr,              // `order_mask`
+        xi.data(),            // `xi`
+        ren1.data(),          // `ren1`
+        alphas_table.data()   // `alphas_table`
+    );
 
     // ------------------ Compare Grid & FK after convolution ------------------
     // how many bins does this grid have?
