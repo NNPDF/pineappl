@@ -17,6 +17,7 @@ use pineappl::grid::Grid;
 use pineappl::pids::PidBasis;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
@@ -468,9 +469,8 @@ impl PyGrid {
     ///
     /// Parameters
     /// ----------
-    /// slices : list(list(tuple(PyOperatorSliceInfo, PyReadOnlyArray4)))
-    ///     list of EKOs where each element is a list of (PyOperatorSliceInfo, 4D array)
-    ///     describing each convolution
+    /// slices : list(Generator(tuple(PyOperatorSliceInfo, PyReadOnlyArray4)))
+    ///     list of EKOs where each element is in turn a list of (PyOperatorSliceInfo, 4D array)
     /// order_mask : numpy.ndarray(bool)
     ///     boolean mask to activate orders
     /// xi : (float, float)
@@ -486,7 +486,7 @@ impl PyGrid {
     ///     produced FK table
     pub fn evolve(
         &self,
-        slices: Vec<Vec<(PyOperatorSliceInfo, PyReadonlyArray4<f64>)>>,
+        slices: Vec<Bound<PyAny>>,
         order_mask: Vec<bool>,
         xi: (f64, f64, f64),
         ren1: Vec<f64>,
@@ -496,12 +496,19 @@ impl PyGrid {
             .grid
             .evolve(
                 slices
-                    .iter()
+                    .into_iter()
                     .map(|subslice| {
-                        subslice.iter().map(|(info, op)| {
+                        // create lazy iterators from Python object
+                        subslice.try_iter().unwrap().map(|item| {
+                            let item = item.unwrap();
+                            let op_tuple = item.downcast::<PyTuple>().unwrap();
+                            let info: PyOperatorSliceInfo =
+                                op_tuple.get_item(0).unwrap().extract().unwrap();
+                            let op: PyReadonlyArray4<f64> =
+                                op_tuple.get_item(1).unwrap().extract().unwrap();
+
                             Ok::<_, std::io::Error>((
-                                info.info.clone(),
-                                // TODO: avoid copying
+                                info.info,
                                 CowArray::from(op.as_array().to_owned()),
                             ))
                         })
@@ -512,7 +519,6 @@ impl PyGrid {
                 &AlphasTable { ren1, alphas },
             )
             .map(|fk_table| PyFkTable { fk_table })
-            // TODO: avoid unwrap and convert `Result` into `PyResult`
             .unwrap())
     }
 

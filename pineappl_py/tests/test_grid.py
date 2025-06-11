@@ -601,10 +601,8 @@ class TestGrid:
         h2 = ConvType(polarized=False, time_like=False)
         convolution_types = [h1, h2]
 
-        input_xgrid = np.geomspace(2e-7, 1, num=50)
-        slices = []
-        for conv_id, cvtype in enumerate(convolution_types):
-            sub_slices = []
+        def _q2_slices(cvtype):
+            """Pass one Q2 at a time using Generators."""
             for q2 in evinfo.fac1:
                 info = OperatorSliceInfo(
                     fac0=1.0,
@@ -626,8 +624,12 @@ class TestGrid:
                         input_xgrid.size,
                     ),
                 )
-                sub_slices.append((info, op))
-            slices.append(sub_slices)
+                yield (info, op)
+
+        input_xgrid = np.geomspace(2e-7, 1, num=50)
+
+        # construct the slice object -- list of generator of slices
+        slices = [_q2_slices(cvtype=cvtype) for cvtype in convolution_types]
 
         fktable = g.evolve(
             slices=slices,
