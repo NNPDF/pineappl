@@ -216,16 +216,18 @@
     <!-- <circle cx="72" cy="47.25" r="1.5" fill="#374151" /> -->
   </g>
   <!-- PineAPPL text -->
+  <!-- Light color: fill="#FFDD44" -->
   <text
      id="svg_21"
-     fill="#374151"
+     fill="#FFDD44"
+     stroke="#374151"
      font-weight="bold"
      font-size="20px"
      font-family="'Klavika'"
      text-anchor="middle"
      y="85.866478"
      x="59.955414"
-     style="stroke-width:1.5">PineAPPL</text>
+     style="stroke-width:0.5">PineAPPL</text>
   <!-- Bottom grid background -->
   <rect
      x="30"
