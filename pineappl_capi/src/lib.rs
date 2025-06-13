@@ -2139,7 +2139,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve_info(
 
 /// Type alias for the operator callback
 pub type OperatorCallback = unsafe extern "C" fn(
-    ConvType,     // Convolution type
+    usize,        // index which selects Evolution parameters
     f64,          // fac1
     *const i32,   // `pids_in`
     *const f64,   // `x_in`
@@ -2228,7 +2228,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
     let op_slices = operator_info
         .map(|op_infos| {
-            op_infos.iter().map(|op_info| {
+            op_infos.iter().enumerate().map(|(op_index, op_info)| {
                 let operator_slice_info = OperatorSliceInfo {
                     pid_basis: op_info.pid_basis,
                     fac0: op_info.fac0,
@@ -2244,7 +2244,7 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
 
                 unsafe {
                     slices(
-                        op_info.conv_type,
+                        op_index,
                         op_info.fac1,
                         pids_in.as_ptr(),
                         x_in.as_ptr(),

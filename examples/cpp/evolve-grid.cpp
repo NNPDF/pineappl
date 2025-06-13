@@ -70,6 +70,13 @@ std::vector<double> XGRID = {
 // Particle PIDs for both `in` and `out`
 std::vector<int> PIDS = {- 22 , -6 , -5 , -4 , -3 , -2 , -1 , 21 , 1 , 2 , 3 , 4 , 5 , 6};
 
+/** @brief This struct can contain arbitrary parameters that need to be passed to Evolution
+ * Operator Callback (`generated_fake_ekos`).
+ */
+struct OperatorParams {
+    std::vector<pineappl_conv_type> conv_types;
+};
+
 std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector<std::size_t>& shape) {
     std::size_t ndim = shape.size();
     std::vector<std::size_t> coords(ndim);
@@ -83,7 +90,7 @@ std::vector<std::size_t> unravel_index(std::size_t flat_index, const std::vector
 }
 
 extern "C" void generate_fake_ekos(
-    pineappl_conv_type /*conv_type*/,
+    std::size_t op_index,
     double /*fac1*/,
     const int* /*pids_in*/,
     const double* /*x_in*/,
@@ -93,8 +100,9 @@ extern "C" void generate_fake_ekos(
     double* eko_buffer,
     void* params_state
 ) {
-    // Check to get the μ0 from the PDF
-    const double _ = static_cast<LHAPDF::PDF*> (params_state)->q2Min();
+    // select the type of convolution based on the Operator index
+    OperatorParams* op_params = static_cast<OperatorParams*>(params_state);
+    pineappl_conv_type _ = op_params->conv_types[op_index];
 
     std::ifstream input_file("../../test-data/EKO_LHCB_WP_7TEV.txt");
     double weight_value;
@@ -203,6 +211,7 @@ int main() {
     // ------------------ Construct the Operator Info ------------------
     // The Operator Info is a vector with length `N_conv * N_Q2_slices` whose
     // elements are `OperatorInfo` objects.
+    std::vector<pineappl_conv_type> convtypes(unique_convs.size());
     std::vector<pineappl_operator_info> opinfo_slices(unique_convs.size() * fac1.size());
     for (std::size_t i = 0; i != unique_convs.size(); i++) {
         for (std::size_t j = 0; j != fac1.size(); j++) {
@@ -214,6 +223,7 @@ int main() {
             };
             opinfo_slices[i * fac1.size() + j] = opinfo;
         }
+        conv_types[i] = unique_convs[i];
     }
 
     // ------------------ Construct the Evolution Operator ------------------
@@ -227,6 +237,11 @@ int main() {
         double alpha = alphas(q2, pdf.get());
         alphas_table.push_back(alpha);
     }
+
+    // Construct the Parameters that will get passed to the Callback
+    OperatorParams* op_params = new OperatorParams;
+    op_params->conv_types = convtypes;
+    void* params = static_cast<void*>(op_params);
 
     std::vector<double> xi = {1.0, 1.0, 1.0};
     // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
@@ -258,7 +273,7 @@ int main() {
         pids_out.data(),      // `pids_out`
         XGRID.data(),         // `x_out`
         tensor_shape.data(),  // `eko_shape`
-        pdf.get(),            // `state`
+        params,               // `state`
         nullptr,              // `order_mask`
         xi.data(),            // `xi`
         ren1.data(),          // `ren1`
