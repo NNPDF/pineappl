@@ -6,6 +6,7 @@ LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 PROGRAMS = \
 	fill-grid-deprecated \
 	fill-grid \
+	fill-grid-pp2hadron \
 	fill-custom-grid-deprecated \
 	advanced-convolution-deprecated \
 	advanced-convolution \
@@ -70,6 +71,9 @@ fill-grid-deprecated: fill-grid-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 fill-grid: fill-grid.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+fill-grid-pp2hadron: fill-grid-pp2hadron.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 merge-grids: merge-grids.cpp
