@@ -50,6 +50,8 @@ files=(
     'https://data.nnpdf.science/pineappl/test-data/STAR_WMWP_510GEV_WM-AL-POL_UnpolPDF.tar'
     'https://data.nnpdf.science/pineappl/test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.pineappl.lz4'
     'https://data.nnpdf.science/pineappl/test-data/ZEUS_2JET_319GEV_374PB-1_DIF_ETQ2_BIN6.tar'
+    'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_8TEV.pineappl.lz4'
+    'https://data.nnpdf.science/pineappl/test-data/LHCB_WP_8TEV.tar'
     'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-atlas-dijets-fnlo-arxiv-1312.3524/grids/applfast-atlas-dijets-fnlo-arxiv-1312.3524-xsec000.tab.gz'
     'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-dijets-appl-arxiv-0010054/grids/applfast-h1-dijets-appl-arxiv-0010054-xsec000.appl'
     'https://ploughshare.web.cern.ch/ploughshare/db/applfast/applfast-h1-incjets-fnlo-arxiv-0706.3722/grids/applfast-h1-incjets-fnlo-arxiv-0706.3722-xsec000.tab.gz'
