@@ -6,6 +6,11 @@ import pathlib
 import pineappl
 
 from eko.io import manipulate
+from packaging import version
+
+
+class MinEkoVersionNotSatisfied(Exception):
+    pass
 
 
 def main():
@@ -20,8 +25,10 @@ def main():
     parser.add_argument(
         "--max-al", type=int, default=0, help="Maximum al order (default: 0)"
     )
-
     args = parser.parse_args()
+
+    if version.parse(eko.__version__) < version.parse("0.15.0"):
+        raise MinEkoVersionNotSatisfied("At least EKO v0.15.0 is required.")
 
     grid = pineappl.grid.Grid.read(args.grid_path)
     mask = pineappl.boc.Order.create_mask(grid.orders(), args.max_as, args.max_al, True)
