@@ -1,17 +1,44 @@
 #!/usr/bin/env python3
 
+import argparse
 import eko
-import numpy
+import pathlib
 import pineappl
-import sys
 
-#grid = pineappl.grid.Grid.read('{}.pineappl.lz4'.format(sys.argv[1]))
-grid = pineappl.grid.Grid.read('test-data/ATLASPHT15_Et_1bin_last_three_bins.pineappl.lz4')
-mask = pineappl.grid.Order.create_mask(grid.orders(), 2, 0, True)
-x_grid = grid.evolve_info(mask).x1
+from eko.io import manipulate
 
-#operator = eko.EKO.edit('{}.tar'.format(sys.argv[1]))
-operator = eko.EKO.edit('test-data/ATLASPHT15-ATLASPHT15_Et_1bin.tar')
 
-eko.io.manipulate.xgrid_reshape(operator, targetgrid=eko.interpolation.XGrid(x_grid))
-operator.close()
+def main():
+    parser = argparse.ArgumentParser(
+        description="Re-interpolate EKO to match PineAPPL Grid x-nodes."
+    )
+    parser.add_argument("grid_path", help="Path to the PineAPPL Grid file")
+    parser.add_argument("eko_path", help="Path to the EKO tar file")
+    parser.add_argument(
+        "--max-as", type=int, default=3, help="Maximum as order (default: 3)"
+    )
+    parser.add_argument(
+        "--max-al", type=int, default=0, help="Maximum al order (default: 0)"
+    )
+
+    args = parser.parse_args()
+
+    grid = pineappl.grid.Grid.read(args.grid_path)
+    mask = pineappl.boc.Order.create_mask(grid.orders(), args.max_as, args.max_al, True)
+    evinfo = grid.evolve_info(mask)
+    x_grid = evinfo.x1
+
+    with eko.EKO.edit(pathlib.Path(args.eko_path)) as operator:
+        for (q2, _), op in operator.items():
+            op_slice = manipulate.xgrid_reshape(
+                op,
+                eko.interpolation.XGrid(x_grid),
+                operator.operator_card.configs.interpolation_polynomial_degree,
+                targetgrid=eko.interpolation.XGrid(x_grid),
+            )
+            operator[(q2, _)] = op_slice
+            operator.xgrid = eko.interpolation.XGrid(x_grid)
+
+
+if __name__ == "__main__":
+    main()
