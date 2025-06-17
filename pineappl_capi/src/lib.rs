@@ -55,9 +55,12 @@
 //!
 //! [translation tables]: https://github.com/eqrion/cbindgen/blob/master/docs.md#std-types
 
-use itertools::izip;
+use itertools::{izip, Itertools};
+use ndarray::{Array4, CowArray};
 use pineappl::boc::{Bin, BinsWithFillLimits, Channel, Kinematics, Order, ScaleFuncForm, Scales};
 use pineappl::convolutions::{Conv, ConvType, ConvolutionCache};
+use pineappl::evolution::{AlphasTable, OperatorSliceInfo};
+use pineappl::fk_table::{FkAssumptions, FkTable};
 use pineappl::grid::{Grid, GridOptFlags};
 use pineappl::interpolation::{Interp as InterpMain, InterpMeth, Map, ReweightMeth};
 use pineappl::packed_array::ravel_multi_index;
@@ -1485,6 +1488,16 @@ pub struct Interp {
     pub interp_meth: InterpMeth,
 }
 
+/// Type for defining the Operator info.
+#[repr(C)]
+#[derive(Debug)]
+pub struct OperatorInfo {
+    fac0: f64,
+    fac1: f64,
+    pid_basis: PidBasis,
+    conv_type: ConvType,
+}
+
 /// An exact duplicate of `pineappl_lumi_new` to make naming (lumi -> channel) consistent.
 /// should be deleted using `pineappl_channels_delete`.
 #[no_mangle]
@@ -1846,7 +1859,7 @@ pub unsafe extern "C" fn pineappl_grid_order_params2(grid: *const Grid, order_pa
     }
 }
 
-/// A generalization of the convolution function.
+/// A generalization of the convolution function for Grids.
 ///
 /// # Safety
 ///
@@ -1926,6 +1939,24 @@ pub unsafe extern "C" fn pineappl_grid_convolve(
     ));
 }
 
+/// Get the type of convolutions for this Grid.
+///
+/// # Safety
+///
+/// TODO
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_conv_types(grid: *const Grid, conv_types: *mut ConvType) {
+    let grid = unsafe { &*grid };
+    let conv_types = unsafe { slice::from_raw_parts_mut(conv_types, grid.convolutions().len()) };
+    let convs_array = grid
+        .convolutions()
+        .iter()
+        .map(Conv::conv_type)
+        .collect_vec();
+
+    conv_types.copy_from_slice(&convs_array);
+}
+
 /// Get the number of convolutions for a given Grid.
 ///
 /// # Safety
@@ -1978,10 +2009,31 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_shape(
     };
     let shape = unsafe { slice::from_raw_parts_mut(shape, grid.kinematics().len()) };
 
-    shape.copy_from_slice(&subgrid_shape);
+    shape.copy_from_slice(subgrid_shape);
 }
 
-/// Get the subgrid for a given bin, channel, and order
+/// Get the nodes of the subgrid.
+///
+/// # Safety
+///
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_subgrid_node_values(
+    grid: *const Grid,
+    bin: usize,
+    order: usize,
+    channel: usize,
+    node_values: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+    let subgrid = &grid.subgrids()[[order, bin, channel]];
+
+    let flatten_subgrid: Vec<f64> = subgrid.node_values().into_iter().flatten().collect();
+    let node_values = unsafe { slice::from_raw_parts_mut(node_values, flatten_subgrid.len()) };
+
+    node_values.copy_from_slice(flatten_subgrid.as_slice());
+}
+
+/// Get the subgrid for a given bin, channel, and order.
 ///
 /// # Safety
 ///
@@ -2007,8 +2059,247 @@ pub unsafe extern "C" fn pineappl_grid_subgrid_array(
             unsafe { slice::from_raw_parts_mut(subgrid_array, shape.iter().product()) };
 
         for (index, value) in subgrid.indexed_iter() {
-            let ravel_index = ravel_multi_index(index.as_slice(), &shape);
+            let ravel_index = ravel_multi_index(index.as_slice(), shape);
             subgrid_array[ravel_index] = value;
         }
     }
+}
+
+/// Get the shape of the objects represented in the evolve info.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info_shape(
+    grid: *const Grid,
+    order_mask: *const bool,
+    shape_info: *mut usize,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    let shape_info = unsafe { slice::from_raw_parts_mut(shape_info, 5) };
+
+    let evolve_info = grid.evolve_info(order_mask);
+    let evinfo_shapes = [
+        evolve_info.fac1.len(),
+        evolve_info.frg1.len(),
+        evolve_info.pids1.len(),
+        evolve_info.x1.len(),
+        evolve_info.ren1.len(),
+    ];
+
+    shape_info.copy_from_slice(&evinfo_shapes);
+}
+
+/// Get the values of the parameters contained in evolve info.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve_info(
+    grid: *const Grid,
+    order_mask: *const bool,
+    fac1: *mut f64,
+    frg1: *mut f64,
+    pids1: *mut i32,
+    x1: *mut f64,
+    ren1: *mut f64,
+) {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    let evolve_info = grid.evolve_info(order_mask);
+    let fac1 = unsafe { slice::from_raw_parts_mut(fac1, evolve_info.fac1.len()) };
+    let frg1 = unsafe { slice::from_raw_parts_mut(frg1, evolve_info.frg1.len()) };
+    let pids1 = unsafe { slice::from_raw_parts_mut(pids1, evolve_info.pids1.len()) };
+    let x1 = unsafe { slice::from_raw_parts_mut(x1, evolve_info.x1.len()) };
+    let ren1 = unsafe { slice::from_raw_parts_mut(ren1, evolve_info.ren1.len()) };
+
+    fac1.copy_from_slice(&grid.evolve_info(order_mask).fac1);
+    frg1.copy_from_slice(&grid.evolve_info(order_mask).frg1);
+    pids1.copy_from_slice(&grid.evolve_info(order_mask).pids1);
+    x1.copy_from_slice(&grid.evolve_info(order_mask).x1);
+    ren1.copy_from_slice(&grid.evolve_info(order_mask).ren1);
+}
+
+/// Type alias for the operator callback
+pub type OperatorCallback = unsafe extern "C" fn(
+    usize,        // index which selects Evolution parameters
+    f64,          // fac1
+    *const i32,   // `pids_in`
+    *const f64,   // `x_in`
+    *const i32,   // `pids_out`
+    *const f64,   // `x_out`
+    *const usize, // shape of the EKO
+    *mut f64,     // Evolution Operator data buffer
+    *mut c_void,  // Callable state of parameters
+);
+
+/// Evolve a grid with an evolution operator and dump the resulting FK table.
+///
+/// # Arguments
+///
+/// * `grid` - A `Grid` object
+/// * `op_info` - An array of `OperatorInfo` objects containing the information about the evolution.
+/// * `operator` - A callack that returns the evolution operator.
+/// * `max_orders` - The maximum QCD and EW orders `(αs, α)`.
+/// * `params_state` - Parameters that get passed to `operator`.
+/// * `x_in` - The  x-grid that defines the Grid.
+/// * `x_out` - The x-grid that will define the evolved Grid.
+/// * `pids_in` - The list of PID values that defines the Grid.
+/// * `pids_out` - The list of PID values that will define the evolved Grid.
+/// * `eko_shape` - The shape of the evolution operator.
+/// * `xi` - The values that defines that scale variations.
+/// * `ren` - An array containing the values of the renormalization scale variation.
+/// * `alphas` - An array containing the values of `αs`. It must have the same size as `ren1`.
+///
+/// # Safety
+///
+/// This function is not safe to call if: (a) the `grid` does not point to a valid `Grid` object or
+/// is a null pointer; (b) the `op_info` and `operators` objects do not have the expected lengths,
+/// (c) the shape of `eko_shape` is different from the actual size of `pids_out`, `x_out`, `pids_in`,
+/// `x_in`.
+///
+/// # Panics
+///
+/// This function might panic if the either the `op_info` and/or `operators` are/is incompatible
+/// with the `Grid`.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_grid_evolve(
+    grid: *const Grid,
+    nb_slices: usize,
+    slices: OperatorCallback,
+    operator_info: *const OperatorInfo,
+    pids_in: *const i32,
+    x_in: *const f64,
+    pids_out: *const i32,
+    x_out: *const f64,
+    eko_shape: *const usize,
+    state: *mut c_void,
+    order_mask: *const bool,
+    xi: *const f64,
+    ren1: *const f64,
+    alphas: *const f64,
+) -> Box<Grid> {
+    let grid = unsafe { &*grid };
+
+    let order_mask = if order_mask.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(order_mask, grid.orders().len()) }
+    };
+
+    let eko_shape = unsafe { slice::from_raw_parts(eko_shape, 4) };
+    let pids_in = unsafe { slice::from_raw_parts(pids_in, eko_shape[0]) };
+    let x_in = unsafe { slice::from_raw_parts(x_in, eko_shape[1]) };
+    let pids_out = unsafe { slice::from_raw_parts(pids_out, eko_shape[2]) };
+    let x_out = unsafe { slice::from_raw_parts(x_out, eko_shape[3]) };
+
+    let evolve_info = grid.evolve_info(order_mask);
+    let ren1_len = evolve_info.ren1.len();
+    let ren1 = unsafe { slice::from_raw_parts(ren1, ren1_len) };
+    let alphas = unsafe { slice::from_raw_parts(alphas, ren1_len) };
+    let xi = unsafe { slice::from_raw_parts(xi, 3) };
+
+    let operator_info = unsafe {
+        slice::from_raw_parts(operator_info, nb_slices * evolve_info.fac1.len())
+            .chunks_exact(evolve_info.fac1.len())
+    };
+
+    let shape: (usize, usize, usize, usize) = <[usize; 4]>::try_from(eko_shape)
+        // UNWRAP: guaranteed to work since `eko_shape` is exactly 4 elements long
+        .unwrap()
+        .into();
+
+    let op_slices = operator_info
+        .map(|op_infos| {
+            op_infos.iter().enumerate().map(|(op_index, op_info)| {
+                let operator_slice_info = OperatorSliceInfo {
+                    pid_basis: op_info.pid_basis,
+                    fac0: op_info.fac0,
+                    pids0: pids_out.to_vec(),
+                    x0: x_out.to_vec(),
+                    fac1: op_info.fac1,
+                    pids1: pids_in.to_vec(),
+                    x1: x_in.to_vec(),
+                    conv_type: op_info.conv_type,
+                };
+
+                let mut array = CowArray::from(Array4::zeros(shape));
+
+                unsafe {
+                    slices(
+                        op_index,
+                        op_info.fac1,
+                        pids_in.as_ptr(),
+                        x_in.as_ptr(),
+                        pids_out.as_ptr(),
+                        x_out.as_ptr(),
+                        eko_shape.as_ptr(),
+                        array
+                            .as_slice_mut()
+                            // UNWRAP: `array` is by construction contiguous and in standard order
+                            .unwrap()
+                            .as_mut_ptr(),
+                        state,
+                    );
+                }
+
+                // we specify an arbitrary error type since we don't return an error anywhere
+                Ok::<_, std::io::Error>((operator_slice_info, array))
+            })
+        })
+        .collect();
+
+    let fk_table = grid
+        .evolve(
+            op_slices,
+            order_mask,
+            (xi[0], xi[1], xi[2]),
+            &AlphasTable {
+                ren1: ren1.to_vec(),
+                alphas: alphas.to_vec(),
+            },
+        )
+        // UNWRAP: error handling in the CAPI is to abort
+        .unwrap();
+
+    Box::new(fk_table.into_grid())
+}
+
+/// Optimize the size of this FK-table by removing heavy quark flavors assumed to be zero.
+///
+/// # Safety
+///
+/// If `grid` does not point to a valid `Grid` object, for example when `grid` is the null pointer,
+/// this function is not safe to call.
+///
+/// # Panics
+///
+/// This function panics if `grid` is not an FK table-like object.
+#[no_mangle]
+pub unsafe extern "C" fn pineappl_fktable_optimize(grid: *mut Grid, assumptions: FkAssumptions) {
+    let grid = unsafe { &mut *grid };
+    // SAFETY: this code has been copied from the `take_mut` crate
+    let read_grid = unsafe { std::ptr::read(grid) };
+    let mut fktable = FkTable::try_from(read_grid)
+        // UNWRAP: error handling in the CAPI is to abort
+        .unwrap();
+    fktable.optimize(assumptions);
+    unsafe { std::ptr::write(grid, fktable.into_grid()) };
 }

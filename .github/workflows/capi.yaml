@@ -23,6 +23,9 @@ jobs:
           cargo cinstall --verbose --prefix=/usr/local/ --libdir=/usr/local/lib
           ldconfig
 
+      - name: Get test data
+        uses: ./.github/actions/cache-test-data
+
       - name: Test C++ examples
         run: |
           cd examples/cpp
