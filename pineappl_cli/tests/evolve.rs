@@ -190,6 +190,18 @@ const ZEUS_2JET_STR: &str = "b     Grid       FkTable      rel. diff
 2 3.6247796e-3 3.6162230e-3 -2.3605729e-3
 ";
 
+const LHCB_WP_8TEV_STR: &str = "b    Grid       FkTable     rel. diff
+-+-----------+-----------+-------------
+0 8.8660824e2 8.8745467e2  9.5468156e-4
+1 8.3324869e2 8.3388816e2  7.6744152e-4
+2 7.4379285e2 7.4420759e2  5.5761143e-4
+3 6.2114832e2 6.2135970e2  3.4030039e-4
+4 4.8212545e2 4.8218796e2  1.2966015e-4
+5 3.4357834e2 3.4355392e2 -7.1080989e-5
+6 1.7271792e2 1.7266488e2 -3.0707061e-4
+7 4.6738298e1 4.6715819e1 -4.8096830e-4
+";
+
 #[test]
 fn help() {
     Command::cargo_bin("pineappl")
@@ -460,4 +472,22 @@ fn zeus_2jet() {
         .assert()
         .success()
         .stdout(ZEUS_2JET_STR);
+}
+
+#[test]
+fn lhcb_wp_8tev() {
+    let output = NamedTempFile::new("fktable8.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "evolve",
+            "../test-data/LHCB_WP_8TEV.pineappl.lz4",
+            "../test-data/LHCB_WP_8TEV.tar",
+            output.path().to_str().unwrap(),
+            "NNPDF40_nnlo_as_01180",
+        ])
+        .assert()
+        .success()
+        .stdout(LHCB_WP_8TEV_STR);
 }

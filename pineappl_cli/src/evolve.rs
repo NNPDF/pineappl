@@ -70,7 +70,7 @@ mod eko {
         V0(MetadataV0),
         V1(MetadataV1),
         V2(MetadataV2),
-        V3(MetadataV3),
+        V3(MetadataV3), // v0.15 - v????
     }
 
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
@@ -363,10 +363,10 @@ mod eko {
             let operator =
                 operator.ok_or_else(|| anyhow!("no file 'operator.yaml' in EKO archive found"))?;
 
-            // NOTE: Since v0.15, EKOs are always in the flavour basis
             Ok(Self::V2 {
                 fac1,
                 info: OperatorSliceInfo {
+                    // NOTE: Since v0.15, EKOs are always in the flavour basis
                     pid_basis: PidBasis::Pdg,
                     fac0: operator.init[0] * operator.init[0],
                     pids0: BASES_V1_DEFAULT_PIDS.to_vec(),
