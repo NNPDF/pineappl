@@ -36,6 +36,28 @@ the old file format can still be read with this new version.
   `+f` and both by adding `+pf` or `+fp`
 - added switches `--fk-table-fac0` and `--fk-table-frg0` to `pineappl read` to
   read out the squared factorization and fragmentation scales of FK-tables
+- C API: added new functions `pineappl_channels_new` and `pineappl_channels_delete`
+  to create and delete an instance of `Channels` object
+- C API: added `pineappl_grid_channels` and `pineappl_channels_count` to get
+  the channel objects for a given grid and their numbers
+- C API: added a function `pineappl_channels_combinations` to retrieve the
+  number of combinations of channels for a specified entry, and
+  `pineappl_channels_entry` to retrieve the channel combination for a given
+  entry
+- C API: added a new function `pineappl_grid_new2` to create a grid with the
+  new features introduced in `v1.0.0`; this includes the support for an
+  arbitrary number of initial and final state hadrons
+- C API: added new functions to fill grids with an arbitrary number of
+  initial and final state hadrons; these include `pineappl_grid_fill2`,
+  `pineappl_grid_fill_all2`, and `pineappl_grid_fill_array2`
+- C API: added new functions to extract the various properties of a given
+  grid; these include `pineappl_grid_conv_types`, `pineappl_grid_convolutions_len`,
+  and `pineappl_grid_kinematics_len`
+- C API: added a new function `pineappl_grid_convolve` to convolve grids
+  with an arbitrary combination of initial and final state hadrons
+- C API: added various functions to extract the subgrids of a given grid;
+  these include `pineappl_grid_subgrid_shape`, `pineappl_grid_subgrid_node_values`,
+  and `pineappl_grid_subgrid_array`
 
 ### Changed
 
