@@ -70,6 +70,7 @@ mod eko {
         V0(MetadataV0),
         V1(MetadataV1),
         V2(MetadataV2),
+        V3(MetadataV3), // v0.15 - v????
     }
 
     const BASES_V1_DEFAULT_PIDS: [i32; 14] = [22, -6, -5, -4, -3, -2, -1, 21, 1, 2, 3, 4, 5, 6];
@@ -83,6 +84,12 @@ mod eko {
     #[derive(Deserialize)]
     struct OperatorV1 {
         mu0: f64,
+        configs: OperatorConfigsV1,
+    }
+
+    #[derive(Deserialize)]
+    struct OperatorV2 {
+        init: Vec<f64>,
         configs: OperatorConfigsV1,
     }
 
@@ -105,13 +112,18 @@ mod eko {
         bases: BasesV1,
     }
 
+    #[derive(Deserialize)]
+    struct MetadataV3 {
+        xgrid: Vec<f64>,
+    }
+
     pub enum EkoSlices {
         V0 {
             fac1: Vec<f64>,
             info: OperatorSliceInfo,
             operator: Array5<f64>,
         },
-        // V1 is a special case of V2
+        // V1 and V3 are special cases of V2
         V2 {
             fac1: HashMap<OsString, f64>,
             info: OperatorSliceInfo,
@@ -142,6 +154,7 @@ mod eko {
                 Metadata::V0(v0) => Self::with_v0(v0, eko_path),
                 Metadata::V1(v1) => Self::with_v1(v1, eko_path),
                 Metadata::V2(v2) => Self::with_v2(v2, eko_path),
+                Metadata::V3(v3) => Self::with_v3(v3, eko_path),
             }
         }
 
@@ -316,6 +329,51 @@ mod eko {
                         .bases
                         .targetgrid
                         .unwrap_or_else(|| metadata.bases.xgrid.clone()),
+                    conv_type: ConvType::new(
+                        operator.configs.polarized,
+                        operator.configs.time_like,
+                    ),
+                },
+                archive: Archive::new(File::open(eko_path)?),
+            })
+        }
+
+        fn with_v3(metadata: MetadataV3, eko_path: &Path) -> Result<Self> {
+            let mut fac1 = HashMap::new();
+            let mut operator: Option<OperatorV2> = None;
+
+            for entry in Archive::new(File::open(eko_path)?).entries_with_seek()? {
+                let entry = entry?;
+                let path = entry.path()?;
+
+                if path.starts_with("./operators")
+                    && (path.extension().is_some_and(|ext| ext == "yaml"))
+                {
+                    let Some(file_stem) = path.file_stem().map(ToOwned::to_owned) else {
+                        continue;
+                    };
+
+                    let op_info: OperatorInfoV1 = serde_yaml::from_reader(entry)?;
+                    fac1.insert(file_stem, op_info.scale);
+                } else if path.as_os_str() == "./operator.yaml" {
+                    operator = Some(serde_yaml::from_reader(entry)?);
+                }
+            }
+
+            let operator =
+                operator.ok_or_else(|| anyhow!("no file 'operator.yaml' in EKO archive found"))?;
+
+            Ok(Self::V2 {
+                fac1,
+                info: OperatorSliceInfo {
+                    // NOTE: Since v0.15, EKOs are always in the flavour basis
+                    pid_basis: PidBasis::Pdg,
+                    fac0: operator.init[0] * operator.init[0],
+                    pids0: BASES_V1_DEFAULT_PIDS.to_vec(),
+                    x0: metadata.xgrid.clone(),
+                    fac1: 0.0,
+                    pids1: BASES_V1_DEFAULT_PIDS.to_vec(),
+                    x1: metadata.xgrid,
                     conv_type: ConvType::new(
                         operator.configs.polarized,
                         operator.configs.time_like,
