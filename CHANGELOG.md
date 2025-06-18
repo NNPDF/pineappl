@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added a new `V3` metadata reader to the `pineappl evolve` CLI for EKOs
+  generated with `v0.15.0` or higher
+- C API: added new functions `pineappl_grid_evolve_info_shape`,
+  `pineappl_grid_evolve_info`, and `pineappl_grid_evolve` to evolve grids
+- C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
+  given an optimization assumption
+
 ## [1.0.0] - 10/06/2025
 
 PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
