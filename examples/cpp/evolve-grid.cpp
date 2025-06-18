@@ -223,7 +223,7 @@ int main() {
             };
             opinfo_slices[i * fac1.size() + j] = opinfo;
         }
-        conv_types[i] = unique_convs[i];
+        convtypes[i] = unique_convs[i];
     }
 
     // ------------------ Construct the Evolution Operator ------------------
