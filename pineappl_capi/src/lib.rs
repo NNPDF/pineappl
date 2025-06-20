@@ -2227,8 +2227,9 @@ pub unsafe extern "C" fn pineappl_grid_evolve(
         .into();
 
     let op_slices = operator_info
-        .map(|op_infos| {
-            op_infos.iter().enumerate().map(|(op_index, op_info)| {
+        .enumerate()
+        .map(|(op_index, op_infos)| {
+            op_infos.iter().map(move |op_info| {
                 let operator_slice_info = OperatorSliceInfo {
                     pid_basis: op_info.pid_basis,
                     fac0: op_info.fac0,
