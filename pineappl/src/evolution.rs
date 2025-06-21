@@ -215,7 +215,11 @@ fn ndarray_from_subgrid_orders_slice(
     alphas_table: &AlphasTable,
 ) -> Result<X1aX1bOpDTuple> {
     // TODO: remove these assumptions from the following code
-    assert_eq!(grid.kinematics()[0], Kinematics::Scale(0));
+    assert_eq!(
+        grid.kinematics()[0],
+        Kinematics::Scale(0),
+        "For the `Kinematics`, the scale must always go first."
+    );
     let x_start = grid
         .kinematics()
         .iter()

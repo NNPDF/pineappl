@@ -31,7 +31,7 @@ pub struct ConvolutionCache<'a> {
 }
 
 impl<'a> ConvolutionCache<'a> {
-    /// TODO
+    /// Constructor.
     pub fn new(
         convolutions: Vec<Conv>,
         xfx: Vec<&'a mut dyn FnMut(i32, f64, f64) -> f64>,
@@ -160,7 +160,8 @@ impl<'a> ConvolutionCache<'a> {
     }
 }
 
-/// TODO
+/// A cache for evaluating the full convolutions. Methods like [`Grid::convolve`] and
+/// [`FkTable::convolve`] calls this `struct`.
 pub struct GridConvCache<'a, 'b> {
     cache: &'b mut ConvolutionCache<'a>,
     perm: Vec<(usize, bool)>,
@@ -171,7 +172,7 @@ pub struct GridConvCache<'a, 'b> {
 }
 
 impl GridConvCache<'_, '_> {
-    /// TODO
+    /// Perform the convolution with the PDF(s) for a given channel entry of a subgrid.
     pub fn as_fx_prod(&mut self, pdg_ids: &[i32], as_order: u8, indices: &[usize]) -> f64 {
         // TODO: here we assume that
         // - indices[0] is the (squared) factorization scale,
@@ -280,7 +281,7 @@ impl GridConvCache<'_, '_> {
     }
 }
 
-/// TODO
+/// Defines the various types of convolutions.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ConvType {
@@ -295,7 +296,7 @@ pub enum ConvType {
 }
 
 impl ConvType {
-    /// TODO
+    /// Constructor.
     #[must_use]
     pub const fn new(polarized: bool, time_like: bool) -> Self {
         match (polarized, time_like) {
@@ -306,7 +307,7 @@ impl ConvType {
         }
     }
 
-    /// TODO
+    /// Check whether the current convolution is of type parton distribution function.
     #[must_use]
     pub const fn is_pdf(&self) -> bool {
         matches!(self, Self::UnpolPDF | Self::PolPDF)

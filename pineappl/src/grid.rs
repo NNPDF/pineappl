@@ -19,15 +19,12 @@ use itertools::Itertools;
 use lz4_flex::frame::{FrameDecoder, FrameEncoder};
 use ndarray::{s, Array2, Array3, ArrayView3, ArrayViewMut3, Axis, CowArray, Dimension, Ix4, Zip};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::ops::{Bound, RangeBounds};
 use std::{iter, mem};
 
 const BIN_AXIS: Axis = Axis(1);
-
-// const ORDER_AXIS: Axis = Axis(0);
-// const CHANNEL_AXIS: Axis = Axis(2);
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
@@ -151,13 +148,13 @@ impl Grid {
         }
     }
 
-    /// TODO
+    /// Get the Monte Carlo reference for the given grid.
     #[must_use]
     pub const fn reference(&self) -> &Reference {
         &self.reference
     }
 
-    /// TODO
+    /// Set the Monte Carlo reference for the given grid.
     pub fn set_reference(&mut self, reference: Reference) {
         // TODO: check that the number of bins and channels is consistent between the grid and
         // `reference`
@@ -193,10 +190,6 @@ impl Grid {
     /// and `channel_mask`. A variation of the scales is performed using the factors in `xi`; the
     /// first factor varies the renormalization scale, the second the factorization scale. Note
     /// that for the variation to be trusted all non-zero log-grids must be contained.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn convolve(
         &self,
         cache: &mut ConvolutionCache,
@@ -280,10 +273,6 @@ impl Grid {
     /// Fills the grid with an ntuple for the given `order`, `observable`, and `channel`. The
     /// parameter `ntuple` must contain the variables specified by the `kinematics` parameter in
     /// the constructor [`Grid::new`] in the same order.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn fill(
         &mut self,
         order: usize,
@@ -439,12 +428,28 @@ impl Grid {
         Ok(())
     }
 
+    /// Check if two `Kinematics` objects are the same even in the case they are ordered
+    /// differently.
+    fn are_kinematics_equal(kin_a: &[Kinematics], kin_b: &[Kinematics]) -> bool {
+        let mut count_a = HashMap::new();
+        let mut count_b = HashMap::new();
+
+        for item in kin_a {
+            *count_a.entry(item).or_insert(0) += 1;
+        }
+        for item in kin_b {
+            *count_b.entry(item).or_insert(0) += 1;
+        }
+
+        count_a == count_b
+    }
+
     /// Merge non-empty `Subgrid`s contained in `other` into `self`. Subgrids with the same bin
     /// limits are summed and subgrids with non-overlapping bin limits create new bins in `self`.
     ///
     /// # Errors
     ///
-    /// If `self` and `other` in have different convolutions, PID bases, kinematics,
+    /// Raises an error if `self` and `other` have different convolutions, PID bases, kinematics,
     /// interpolations, or scales an error is returned. If the bin limits of `self` and `other`
     /// are different and if the bin limits of `other` cannot be merged with `self` an error is
     /// returned.
@@ -455,16 +460,15 @@ impl Grid {
         if self.pid_basis() != other.pid_basis() {
             return Err(Error::General("PID bases do not match".to_owned()));
         }
-        // TODO: relax check if kinematic variables are permutations of each other
-        if self.kinematics() != other.kinematics() {
-            return Err(Error::General("kinematics do not match".to_owned()));
-        }
         // TODO: relax check if subgrid types don't use interpolation
         if self.interpolations() != other.interpolations() {
             return Err(Error::General("interpolations do not match".to_owned()));
         }
         if self.scales() != other.scales() {
             return Err(Error::General("scales do not match".to_owned()));
+        }
+        if !Self::are_kinematics_equal(self.kinematics(), other.kinematics()) {
+            return Err(Error::General("kinematics do not match".to_owned()));
         }
 
         let mut new_orders = Vec::new();
@@ -630,10 +634,6 @@ impl Grid {
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     pub fn scale_by_order(
         &mut self,
         alphas: f64,
@@ -696,11 +696,12 @@ impl Grid {
         self.subgrids.view_mut()
     }
 
-    /// TODO
+    /// Set the bin with filled limits for the grid. This is used to redefine the bin specifications
+    /// and normalizations.
     ///
     /// # Errors
     ///
-    /// TODO
+    /// Raises an error if the length of the bins in the grid and in the redefinition are different.
     pub fn set_bwfl(&mut self, bwfl: BinsWithFillLimits) -> Result<()> {
         let bins = bwfl.len();
         let grid_bins = self.bwfl().len();
@@ -716,7 +717,7 @@ impl Grid {
         Ok(())
     }
 
-    /// TODO
+    /// Get the bin specifications for this grid.
     #[must_use]
     pub const fn bwfl(&self) -> &BinsWithFillLimits {
         &self.bwfl
@@ -969,10 +970,6 @@ impl Grid {
     }
 
     /// Return the metadata of this grid.
-    ///
-    /// # Panics
-    ///
-    /// TODO
     #[must_use]
     pub fn metadata_mut(&mut self) -> &mut BTreeMap<String, String> {
         &mut self.metadata
