@@ -15,7 +15,7 @@ use ndarray::{
     s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis,
     Ix1, Ix2,
 };
-use rayon::prelude::*;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::iter;
 use std::sync::{Arc, Mutex};
 
@@ -428,7 +428,6 @@ pub(crate) fn evolve_slice(
                 continue;
             };
 
-            // Sequential lazy loading update (must remain sequential)
             for (last_x1, x1, pid_indices, slices, operator, info) in izip!(
                 &mut last_x1,
                 x1,
@@ -496,6 +495,7 @@ pub(crate) fn evolve_slice(
         let tables = Arc::try_unwrap(tables).unwrap().into_inner().unwrap();
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportSubgridV1::new(
+                // TODO: insert one more axis if initial frg scale unequals fac
                 PackedArray::from(table.insert_axis(Axis(0)).view()),
                 node_values.clone(),
             )
