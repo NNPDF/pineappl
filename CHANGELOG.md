@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
   given an optimization assumption
 
+### Changed
+
+- the function `evolution::evolve_slice` is now parallelized to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
 ## [1.0.0] - 10/06/2025
 
 PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
