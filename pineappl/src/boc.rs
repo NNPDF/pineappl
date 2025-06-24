@@ -1086,6 +1086,31 @@ impl Channel {
             }
         })
     }
+
+    /// TODO
+    pub fn factor(&self) -> (f64, Self) {
+        let factor = self
+            .entry
+            .iter()
+            .map(|(_, f)| f.abs())
+            .min_by(|a, b| {
+                a.partial_cmp(b)
+                    // UNWRAP: if we can't compare the numbers the data structure is bugged
+                    .unwrap()
+            })
+            // UNWRAP: every `Channel` has at least one entry
+            .unwrap();
+
+        let new_channel = Channel::new(
+            self.entry
+                .iter()
+                .cloned()
+                .map(|(e, f)| (e, f / factor))
+                .collect(),
+        );
+
+        (factor, new_channel)
+    }
 }
 
 impl FromStr for Channel {

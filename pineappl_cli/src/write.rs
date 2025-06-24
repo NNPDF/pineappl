@@ -37,6 +37,7 @@ enum OpsArg {
     DeleteOrders(Vec<RangeInclusive<usize>>),
     DivBinNormDims(Vec<usize>),
     MergeBins(Vec<RangeInclusive<usize>>),
+    MergeChannelFactors(bool),
     MulBinNorm(f64),
     Optimize(bool),
     OptimizeFkTable(FkAssumptions),
@@ -84,7 +85,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "optimize" | "split_channels" | "upgrade" => {
+                "merge_channel_factors" | "optimize" | "split_channels" | "upgrade" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -95,6 +96,7 @@ impl FromArgMatches for MoreArgs {
                     for (index, arg) in indices.into_iter().zip(arguments.into_iter()) {
                         assert_eq!(arg.len(), 1);
                         args[index] = Some(match id.as_str() {
+                            "merge_channel_factors" => OpsArg::MergeChannelFactors(arg[0]),
                             "optimize" => OpsArg::Optimize(arg[0]),
                             "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
@@ -347,6 +349,17 @@ impl Args for MoreArgs {
                 .value_parser(helpers::parse_integer_range),
         )
         .arg(
+            Arg::new("merge_channel_factors")
+                .action(ArgAction::Append)
+                .default_missing_value("true")
+                .help("Merge channel factors into the grid")
+                .long("merge-channel-factors")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_name("ENABLE")
+                .value_parser(clap::value_parser!(bool)),
+        )
+        .arg(
             Arg::new("mul_bin_norm")
                 .action(ArgAction::Append)
                 .help("Multiply all bin normalizations with the given factor")
@@ -551,6 +564,7 @@ impl Subcommand for Opts {
                         grid.merge_bins(range)?;
                     }
                 }
+                OpsArg::MergeChannelFactors(true) => grid.merge_channel_factors(),
                 OpsArg::MulBinNorm(factor) => {
                     grid.set_bwfl(
                         BinsWithFillLimits::new(
@@ -603,8 +617,10 @@ impl Subcommand for Opts {
                 }
                 OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),
-                OpsArg::Optimize(false) | OpsArg::SplitChannels(false) | OpsArg::Upgrade(false) => {
-                }
+                OpsArg::MergeChannelFactors(false)
+                | OpsArg::Optimize(false)
+                | OpsArg::SplitChannels(false)
+                | OpsArg::Upgrade(false) => {}
             }
         }
 
