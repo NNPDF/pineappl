@@ -356,7 +356,7 @@ impl Args for MoreArgs {
                 .long("merge-channel-factors")
                 .num_args(0..=1)
                 .require_equals(true)
-                .value_name("ENABLE")
+                .value_name("ON")
                 .value_parser(clap::value_parser!(bool)),
         )
         .arg(
