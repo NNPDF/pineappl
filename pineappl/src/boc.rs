@@ -1087,21 +1087,34 @@ impl Channel {
         })
     }
 
+    /// Finds the factor with the smallest absolute value in the channel and
+    /// divides all coefficients by this value.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - the factored-out coefficient
+    /// - a new `Channel` with all coefficients divided by the factored value
+    ///
+    /// # Panics
+    ///
     /// TODO
+    #[must_use]
     pub fn factor(&self) -> (f64, Self) {
         let factor = self
             .entry
             .iter()
-            .map(|(_, f)| f.abs())
+            .map(|(_, f)| *f)
             .min_by(|a, b| {
-                a.partial_cmp(b)
+                a.abs()
+                    .partial_cmp(&b.abs())
                     // UNWRAP: if we can't compare the numbers the data structure is bugged
                     .unwrap()
             })
             // UNWRAP: every `Channel` has at least one entry
             .unwrap();
 
-        let new_channel = Channel::new(
+        let new_channel = Self::new(
             self.entry
                 .iter()
                 .cloned()

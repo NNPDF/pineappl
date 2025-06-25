@@ -108,6 +108,12 @@ impl FkTable {
         &self.grid
     }
 
+    /// Returns a mutable reference to the [`Grid`] object for this `FkTable`.
+    #[must_use]
+    pub fn grid_mut(&mut self) -> &mut Grid {
+        &mut self.grid
+    }
+
     // TODO: when trying to convert the following function to `const` as per clippy's suggestion,
     // the compiler errors out with: 'the destructor for this type cannot be evaluated in constant
     // functions'

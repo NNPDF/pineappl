@@ -1484,7 +1484,10 @@ impl Grid {
             .collect();
     }
 
-    /// TODO
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    ///
+    /// This method factors out the smallest absolute coefficient from each channel using
+    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
     pub fn merge_channel_factors(&mut self) {
         let (factors, new_channels): (Vec<_>, Vec<_>) =
             self.channels().iter().map(Channel::factor).unzip();

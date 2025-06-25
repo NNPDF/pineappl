@@ -224,12 +224,18 @@ impl PyFkTable {
     /// ----------
     /// pid_basis: PyPidBasis
     ///     PID basis of the resulting FK Table
-    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) -> PyGrid {
-        let mut grid_mut = self.fk_table.grid().clone();
-        grid_mut.rotate_pid_basis(pid_basis.into());
-        PyGrid {
-            grid: grid_mut.clone(),
-        }
+    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
+        self.fk_table.grid_mut().rotate_pid_basis(pid_basis.into());
+    }
+
+    /// Merge the factors of all the channels.
+    pub fn merge_channel_factors(&mut self) {
+        self.fk_table.grid_mut().merge_channel_factors();
+    }
+
+    /// Splits the grid such that each channel contains only a single tuple of PIDs.
+    pub fn split_channels(&mut self) {
+        self.fk_table.grid_mut().split_channels();
     }
 
     /// Write to file.
