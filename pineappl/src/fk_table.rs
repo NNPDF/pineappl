@@ -4,7 +4,7 @@ use super::boc::{Channel, Kinematics, Order};
 use super::convolutions::ConvolutionCache;
 use super::error::{Error, Result};
 use super::grid::Grid;
-use super::pids::OptRules;
+use super::pids::{OptRules, PidBasis};
 use super::subgrid::{self, EmptySubgridV1, Subgrid};
 use ndarray::{s, ArrayD};
 use std::collections::BTreeMap;
@@ -106,12 +106,6 @@ impl FkTable {
     #[must_use]
     pub const fn grid(&self) -> &Grid {
         &self.grid
-    }
-
-    /// Returns a mutable reference to the [`Grid`] object for this `FkTable`.
-    #[must_use]
-    pub fn grid_mut(&mut self) -> &mut Grid {
-        &mut self.grid
     }
 
     // TODO: when trying to convert the following function to `const` as per clippy's suggestion,
@@ -253,6 +247,21 @@ impl FkTable {
             channel_mask,
             &[(1.0, 1.0, 1.0)],
         )
+    }
+
+    /// Rotate the FK Table into the specified basis.
+    pub fn rotate_pid_basis(&mut self, pid_basis: PidBasis) {
+        self.grid.rotate_pid_basis(pid_basis);
+    }
+
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    pub fn merge_channel_factors(&mut self) {
+        self.grid.merge_channel_factors();
+    }
+
+    /// Splits the grid such that each channel contains only a single tuple of PIDs.
+    pub fn split_channels(&mut self) {
+        self.grid.split_channels();
     }
 
     /// Optimize the size of this FK-table by throwing away heavy quark flavors assumed to be zero
