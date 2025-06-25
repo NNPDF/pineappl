@@ -113,8 +113,8 @@ class TestFkTable:
 
         # Check that FK table is in the Evolution basis and rotate into PDG
         assert fk.pid_basis == PidBasis.Evol
-        new_fk = fk.rotate_pid_basis(PidBasis.Pdg)
-        assert new_fk.pid_basis == PidBasis.Pdg
+        fk.rotate_pid_basis(PidBasis.Pdg)
+        assert fk.pid_basis == PidBasis.Pdg
 
     def test_unpolarized_convolution(
         self,
