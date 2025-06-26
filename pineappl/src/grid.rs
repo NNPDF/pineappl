@@ -1111,6 +1111,8 @@ impl Grid {
         let mut scales0 = [None, None];
         // factorization and fragmentation slices we use
         let mut op_scales1 = [Vec::new(), Vec::new()];
+        // names for the scales in the same ordering
+        let names = ["fac", "frg"];
 
         let EvolveInfo {
             fac1: grid_fac1,
@@ -1140,6 +1142,7 @@ impl Grid {
 
             let mut scales1 = [None, None];
 
+            // check that all operators are compatible with each other
             for (info, operator) in infos.iter().zip(&operators) {
                 let dim_op_info = (
                     info.pids1.len(),
@@ -1155,34 +1158,25 @@ impl Grid {
                     )));
                 }
 
-                let (scale0, name, scale1) = if info.conv_type.is_pdf() {
-                    (&mut scales0[0], "fac", &mut scales1[0])
-                } else {
-                    (&mut scales0[1], "frg", &mut scales1[1])
-                };
+                let idx = if info.conv_type.is_pdf() { 0 } else { 1 };
 
-                if let &mut Some(scale0) = scale0 {
-                    // check that the initial scale of all EKOs in this slice agree with each other
-                    if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
-                        return Err(Error::General(format!(
-                            "EKO slice's {name}0 = '{}' is incompatible with previous slices' {name}0 = '{scale0}'",
-                            info.fac0
-                        )));
+                // check that both initial- and process-level scales agree among all operators of
+                // the same convolution type
+                for (scale, op_scale) in [
+                    (&mut scales0[idx], info.fac0),
+                    (&mut scales1[idx], info.fac1),
+                ] {
+                    if let &mut Some(scale) = scale {
+                        // check that the initial scale of all EKOs in this slice agree with each other
+                        if !approx_eq!(f64, scale, op_scale, ulps = 8) {
+                            return Err(Error::General(format!(
+                                "EKO slice's {0}{idx} = '{op_scale}' is incompatible with previous slices' {0}{idx} = '{scale}'",
+                                names[idx],
+                            )));
+                        }
+                    } else {
+                        *scale = Some(op_scale);
                     }
-                } else {
-                    *scale0 = Some(info.fac0);
-                }
-
-                if let &mut Some(scale1) = scale1 {
-                    // check that the initial scale of all EKOs in this slice agree with each other
-                    if !approx_eq!(f64, scale1, info.fac1, ulps = 8) {
-                        return Err(Error::General(format!(
-                            "EKO slice's {name}1 = '{}' is incompatible with previous slices' {name}1 = '{scale1}'",
-                            info.fac1
-                        )));
-                    }
-                } else {
-                    *scale1 = Some(info.fac1);
                 }
             }
 
