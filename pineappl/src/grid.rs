@@ -1249,6 +1249,8 @@ impl Grid {
                 {
                     continue;
                 }
+
+                used_op_fac1.push(fac1);
             }
 
             if let Some(frg1) = frg1 {
@@ -1269,6 +1271,8 @@ impl Grid {
                 {
                     continue;
                 }
+
+                used_op_frg1.push(frg1);
             }
 
             let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
@@ -1335,14 +1339,6 @@ impl Grid {
                 result.merge(evolved_slice)?;
             } else {
                 result = Some(evolved_slice);
-            }
-
-            if let Some(fac1) = fac1 {
-                used_op_fac1.push(fac1);
-            }
-
-            if let Some(frg1) = frg1 {
-                used_op_frg1.push(frg1);
             }
         }
 
