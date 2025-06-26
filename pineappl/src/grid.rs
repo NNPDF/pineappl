@@ -1117,20 +1117,17 @@ impl Grid {
         // fragmentation slices we use
         let mut used_op_frg1 = Vec::new();
 
-        // factorization scales needed by the grid
-        let grid_fac1: Vec<_> = self
-            .evolve_info(order_mask)
-            .fac1
-            .into_iter()
-            .map(|fac| xi.1 * xi.1 * fac)
-            .collect();
-        // fragmentation scales needed by the grid
-        let grid_frg1: Vec<_> = self
-            .evolve_info(order_mask)
-            .frg1
-            .into_iter()
-            .map(|frg| xi.2 * xi.2 * frg)
-            .collect();
+        let EvolveInfo {
+            fac1: grid_fac1,
+            frg1: grid_frg1,
+            ..
+        } = self.evolve_info(order_mask);
+        let grid_scales1: [Vec<_>; 2] = [
+            // factorization scales needed by the grid
+            grid_fac1.into_iter().map(|fac| xi.1 * xi.1 * fac).collect(),
+            // fragmentation scales needed by the grid
+            grid_frg1.into_iter().map(|frg| xi.2 * xi.2 * frg).collect(),
+        ];
 
         for slice in zip_n(slices) {
             let (infos, operators): (Vec<_>, Vec<_>) = slice
@@ -1243,7 +1240,7 @@ impl Grid {
                 }
 
                 // skip slices that the grid doesn't use
-                if !grid_fac1
+                if !grid_scales1[0]
                     .iter()
                     .any(|&fac| subgrid::node_value_eq(fac, fac1))
                 {
@@ -1265,7 +1262,7 @@ impl Grid {
                 }
 
                 // skip slices that the grid doesn't use
-                if !grid_frg1
+                if !grid_scales1[1]
                     .iter()
                     .any(|&frg| subgrid::node_value_eq(frg, frg1))
                 {
@@ -1343,7 +1340,7 @@ impl Grid {
         }
 
         // make sure we've evolved all slices
-        if let Some(fac1) = grid_fac1.into_iter().find(|&grid_fac1| {
+        if let Some(fac1) = grid_scales1[0].iter().find(|&&grid_fac1| {
             !used_op_fac1
                 .iter()
                 .any(|&eko_fac1| subgrid::node_value_eq(grid_fac1, eko_fac1))
@@ -1354,7 +1351,7 @@ impl Grid {
         }
 
         // make sure we've evolved all slices
-        if let Some(frg1) = grid_frg1.into_iter().find(|&grid_frg1| {
+        if let Some(frg1) = grid_scales1[1].iter().find(|&&grid_frg1| {
             !used_op_frg1
                 .iter()
                 .any(|&eko_frg1| subgrid::node_value_eq(grid_frg1, eko_frg1))
