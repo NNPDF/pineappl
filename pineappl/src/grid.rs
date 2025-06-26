@@ -1111,15 +1111,11 @@ impl Grid {
         let mut fac0 = None;
         // factorization slices we use
         let mut used_op_fac1 = Vec::new();
-        // factorization slices we encounter, but possibly don't use
-        let mut op_fac1 = Vec::new();
 
         // initial fragmentation scale
         let mut frg0 = None;
         // fragmentation slices we use
         let mut used_op_frg1 = Vec::new();
-        // fragmentation slices we encounter, but possibly don't use
-        let mut op_frg1 = Vec::new();
 
         // factorization scales needed by the grid
         let grid_fac1: Vec<_> = self
@@ -1236,8 +1232,6 @@ impl Grid {
             }
 
             if let Some(fac1) = fac1 {
-                op_fac1.push(fac1);
-
                 // it's possible that due to small numerical differences we get two slices which
                 // are almost the same. We have to skip those in order not to evolve the 'same'
                 // slice twice
@@ -1258,8 +1252,6 @@ impl Grid {
             }
 
             if let Some(frg1) = frg1 {
-                op_frg1.push(frg1);
-
                 // it's possible that due to small numerical differences we get two slices which
                 // are almost the same. We have to skip those in order not to evolve the 'same'
                 // slice twice
@@ -1354,9 +1346,6 @@ impl Grid {
             }
         }
 
-        op_fac1.sort_by(f64::total_cmp);
-        op_frg1.sort_by(f64::total_cmp);
-
         // make sure we've evolved all slices
         if let Some(fac1) = grid_fac1.into_iter().find(|&grid_fac1| {
             !used_op_fac1
@@ -1364,7 +1353,7 @@ impl Grid {
                 .any(|&eko_fac1| subgrid::node_value_eq(grid_fac1, eko_fac1))
         }) {
             return Err(Error::General(format!(
-                "no operator for fac1 = {fac1} found in {op_fac1:?}"
+                "no operator for fac1 = {fac1} found"
             )));
         }
 
@@ -1375,7 +1364,7 @@ impl Grid {
                 .any(|&eko_frg1| subgrid::node_value_eq(grid_frg1, eko_frg1))
         }) {
             return Err(Error::General(format!(
-                "no operator for frg1 = {frg1} found in {op_frg1:?}"
+                "no operator for frg1 = {frg1} found"
             )));
         }
 
