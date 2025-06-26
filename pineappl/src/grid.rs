@@ -1293,28 +1293,20 @@ impl Grid {
             }
         }
 
-        // make sure we've evolved all slices
-        if let Some(fac1) = grid_scales1[0].iter().find(|&&grid_fac1| {
-            !op_scales1[0]
+        // make sure we've evolved all slices in the grid
+        for ((grid_scales1, op_scales1), name) in grid_scales1.iter().zip(&op_scales1).zip(&names) {
+            if let Some(scale1) = grid_scales1
                 .iter()
-                .any(|&eko_fac1| subgrid::node_value_eq(grid_fac1, eko_fac1))
-        }) {
-            return Err(Error::General(format!(
-                "no operator for fac1 = {fac1} found"
-            )));
+                .find(|&&a| !op_scales1.iter().any(|&b| subgrid::node_value_eq(a, b)))
+            {
+                return Err(Error::General(format!(
+                    "no operator for {name}1 = '{scale1}' found"
+                )));
+            }
         }
 
-        // make sure we've evolved all slices
-        if let Some(frg1) = grid_scales1[1].iter().find(|&&grid_frg1| {
-            !op_scales1[1]
-                .iter()
-                .any(|&eko_frg1| subgrid::node_value_eq(grid_frg1, eko_frg1))
-        }) {
-            return Err(Error::General(format!(
-                "no operator for frg1 = {frg1} found"
-            )));
-        }
-
+        // if we didn't actually perform an evolution an empty grid isn't guaranteed to be an
+        // FK-table
         let result =
             result.ok_or_else(|| Error::General("no evolution was performed".to_owned()))?;
 
