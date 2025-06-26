@@ -1107,11 +1107,8 @@ impl Grid {
         // the EKOs' indices matching this Grid's convolutions
         let mut eko_map = Vec::new();
 
-        // initial factorization scale
-        let mut fac0 = None;
-        // initial fragmentation scale
-        let mut frg0 = None;
-
+        // initial factorization and fragmentation scales
+        let mut scales0 = [None, None];
         // factorization and fragmentation slices we use
         let mut used_op_scales1 = [Vec::new(), Vec::new()];
 
@@ -1160,16 +1157,16 @@ impl Grid {
                 }
 
                 if info.conv_type.is_pdf() {
-                    if let Some(fac0) = fac0 {
+                    if let Some(scale0) = scales0[0] {
                         // check that this EKO slice is compatible with all previous slices
-                        if !approx_eq!(f64, fac0, info.fac0, ulps = 8) {
+                        if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
                             return Err(Error::General(format!(
-                                "EKO slice's fac0 = '{}' is incompatible with previous slices' fac0 = '{fac0}'",
+                                "EKO slice's fac0 = '{}' is incompatible with previous slices' fac0 = '{scale0}'",
                                 info.fac0
                             )));
                         }
                     } else {
-                        fac0 = Some(info.fac0);
+                        scales0[0] = Some(info.fac0);
                     }
 
                     if let Some(fac1) = fac1 {
@@ -1185,15 +1182,15 @@ impl Grid {
                         fac1 = Some(info.fac1);
                     }
                 } else {
-                    if let Some(frg0) = frg0 {
-                        if !approx_eq!(f64, frg0, info.fac0, ulps = 8) {
+                    if let Some(scale0) = scales0[1] {
+                        if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
                             return Err(Error::General(format!(
-                                "EKO slice's frg0 = '{}' is incompatible with previous slices' frg0 = '{frg0}'",
+                                "EKO slice's frg0 = '{}' is incompatible with previous slices' frg0 = '{scale0}'",
                                 info.fac0
                             )));
                         }
                     } else {
-                        frg0 = Some(info.fac0);
+                        scales0[1] = Some(info.fac0);
                     }
 
                     if let Some(frg1) = frg1 {
@@ -1273,11 +1270,11 @@ impl Grid {
             let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
             let infos: Vec<_> = eko_map.iter().map(|&idx| infos[idx].clone()).collect();
 
-            let (fac, frg, scale_values) = match (fac0, frg0) {
-                (None, None) => unreachable!(),
-                (Some(fac0), None) => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
-                (None, Some(frg0)) => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
-                (Some(fac0), Some(frg0)) => {
+            let (fac, frg, scale_values) = match scales0 {
+                [None, None] => unreachable!(),
+                [Some(fac0), None] => (ScaleFuncForm::Scale(0), ScaleFuncForm::NoScale, vec![fac0]),
+                [None, Some(frg0)] => (ScaleFuncForm::NoScale, ScaleFuncForm::Scale(0), vec![frg0]),
+                [Some(fac0), Some(frg0)] => {
                     if approx_eq!(f64, fac0, frg0, ulps = 8) {
                         (ScaleFuncForm::Scale(0), ScaleFuncForm::Scale(0), vec![fac0])
                     } else {
