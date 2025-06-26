@@ -1155,17 +1155,17 @@ impl Grid {
                     )));
                 }
 
-                let (scale0, name0, scale1) = if info.conv_type.is_pdf() {
-                    (&mut scales0[0], "fac0", &mut scales1[0])
+                let (scale0, name, scale1) = if info.conv_type.is_pdf() {
+                    (&mut scales0[0], "fac", &mut scales1[0])
                 } else {
-                    (&mut scales0[1], "frg0", &mut scales1[1])
+                    (&mut scales0[1], "frg", &mut scales1[1])
                 };
 
                 if let &mut Some(scale0) = scale0 {
-                    // check that this EKO slice is compatible with all previous slices
+                    // check that the initial scale of all EKOs in this slice agree with each other
                     if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
                         return Err(Error::General(format!(
-                            "EKO slice's {name0} = '{}' is incompatible with previous slices' {name0} = '{scale0}'",
+                            "EKO slice's {name}0 = '{}' is incompatible with previous slices' {name}0 = '{scale0}'",
                             info.fac0
                         )));
                     }
