@@ -1207,48 +1207,30 @@ impl Grid {
                     .collect::<Result<_>>()?;
             }
 
-            if let Some(scale1) = scales1[0] {
-                // it's possible that due to small numerical differences we get two slices which
-                // are almost the same. We have to skip those in order not to evolve the 'same'
-                // slice twice
-                if op_scales1[0]
-                    .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, scale1))
-                {
-                    continue;
+            for ((&scale1, op_scales1), grid_scales1) in
+                scales1.iter().zip(&mut op_scales1).zip(&grid_scales1)
+            {
+                if let Some(scale1) = scale1 {
+                    // it's possible that due to small numerical differences we get two slices which
+                    // are almost the same. We have to skip those in order not to evolve the 'same'
+                    // slice twice
+                    if op_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
+
+                    // skip slices that the grid doesn't use
+                    if !grid_scales1
+                        .iter()
+                        .any(|&s| subgrid::node_value_eq(s, scale1))
+                    {
+                        continue;
+                    }
+
+                    op_scales1.push(scale1);
                 }
-
-                // skip slices that the grid doesn't use
-                if !grid_scales1[0]
-                    .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, scale1))
-                {
-                    continue;
-                }
-
-                op_scales1[0].push(scale1);
-            }
-
-            if let Some(scale1) = scales1[1] {
-                // it's possible that due to small numerical differences we get two slices which
-                // are almost the same. We have to skip those in order not to evolve the 'same'
-                // slice twice
-                if op_scales1[1]
-                    .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, scale1))
-                {
-                    continue;
-                }
-
-                // skip slices that the grid doesn't use
-                if !grid_scales1[1]
-                    .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, scale1))
-                {
-                    continue;
-                }
-
-                op_scales1[1].push(scale1);
             }
 
             let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
