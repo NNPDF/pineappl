@@ -1133,7 +1133,7 @@ impl Grid {
             .evolve_info(order_mask)
             .frg1
             .into_iter()
-            .map(|frg| xi.1 * xi.1 * frg)
+            .map(|frg| xi.2 * xi.2 * frg)
             .collect();
 
         for slice in zip_n(slices) {
