@@ -1138,8 +1138,7 @@ impl Grid {
                 ));
             }
 
-            let mut fac1 = None;
-            let mut frg1 = None;
+            let mut scales1 = [None, None];
 
             for (info, operator) in infos.iter().zip(&operators) {
                 let dim_op_info = (
@@ -1169,17 +1168,17 @@ impl Grid {
                         scales0[0] = Some(info.fac0);
                     }
 
-                    if let Some(fac1) = fac1 {
+                    if let Some(scale1) = scales1[0] {
                         // we assume that all EKO slices always share the same factorization and/or
                         // fragmentation scale at process level. If this isn't the case, for
                         // instance when the fragmentation scale is functionally different from the
                         // factorization scale, this implementation isn't general enough and has to
                         // be changed
-                        if !subgrid::node_value_eq(info.fac1, fac1) {
+                        if !subgrid::node_value_eq(info.fac1, scale1) {
                             unimplemented!();
                         }
                     } else {
-                        fac1 = Some(info.fac1);
+                        scales1[0] = Some(info.fac1);
                     }
                 } else {
                     if let Some(scale0) = scales0[1] {
@@ -1193,12 +1192,12 @@ impl Grid {
                         scales0[1] = Some(info.fac0);
                     }
 
-                    if let Some(frg1) = frg1 {
-                        if !subgrid::node_value_eq(info.fac1, frg1) {
+                    if let Some(scale1) = scales1[1] {
+                        if !subgrid::node_value_eq(info.fac1, scale1) {
                             unimplemented!();
                         }
                     } else {
-                        frg1 = Some(info.fac1);
+                        scales1[1] = Some(info.fac1);
                     }
                 }
             }
@@ -1223,13 +1222,13 @@ impl Grid {
                     .collect::<Result<_>>()?;
             }
 
-            if let Some(fac1) = fac1 {
+            if let Some(scale1) = scales1[0] {
                 // it's possible that due to small numerical differences we get two slices which
                 // are almost the same. We have to skip those in order not to evolve the 'same'
                 // slice twice
                 if used_op_scales1[0]
                     .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
+                    .any(|&fac| subgrid::node_value_eq(fac, scale1))
                 {
                     continue;
                 }
@@ -1237,21 +1236,21 @@ impl Grid {
                 // skip slices that the grid doesn't use
                 if !grid_scales1[0]
                     .iter()
-                    .any(|&fac| subgrid::node_value_eq(fac, fac1))
+                    .any(|&fac| subgrid::node_value_eq(fac, scale1))
                 {
                     continue;
                 }
 
-                used_op_scales1[0].push(fac1);
+                used_op_scales1[0].push(scale1);
             }
 
-            if let Some(frg1) = frg1 {
+            if let Some(scale1) = scales1[1] {
                 // it's possible that due to small numerical differences we get two slices which
                 // are almost the same. We have to skip those in order not to evolve the 'same'
                 // slice twice
                 if used_op_scales1[1]
                     .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
+                    .any(|&frg| subgrid::node_value_eq(frg, scale1))
                 {
                     continue;
                 }
@@ -1259,12 +1258,12 @@ impl Grid {
                 // skip slices that the grid doesn't use
                 if !grid_scales1[1]
                     .iter()
-                    .any(|&frg| subgrid::node_value_eq(frg, frg1))
+                    .any(|&frg| subgrid::node_value_eq(frg, scale1))
                 {
                     continue;
                 }
 
-                used_op_scales1[1].push(frg1);
+                used_op_scales1[1].push(scale1);
             }
 
             let operators: Vec<_> = eko_map.iter().map(|&idx| operators[idx].view()).collect();
