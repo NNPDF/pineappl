@@ -1155,50 +1155,35 @@ impl Grid {
                     )));
                 }
 
-                if info.conv_type.is_pdf() {
-                    if let Some(scale0) = scales0[0] {
-                        // check that this EKO slice is compatible with all previous slices
-                        if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
-                            return Err(Error::General(format!(
-                                "EKO slice's fac0 = '{}' is incompatible with previous slices' fac0 = '{scale0}'",
-                                info.fac0
-                            )));
-                        }
-                    } else {
-                        scales0[0] = Some(info.fac0);
-                    }
+                let (scale0, name0, scale1) = if info.conv_type.is_pdf() {
+                    (&mut scales0[0], "fac0", &mut scales1[0])
+                } else {
+                    (&mut scales0[1], "frg0", &mut scales1[1])
+                };
 
-                    if let Some(scale1) = scales1[0] {
-                        // we assume that all EKO slices always share the same factorization and/or
-                        // fragmentation scale at process level. If this isn't the case, for
-                        // instance when the fragmentation scale is functionally different from the
-                        // factorization scale, this implementation isn't general enough and has to
-                        // be changed
-                        if !subgrid::node_value_eq(info.fac1, scale1) {
-                            unimplemented!();
-                        }
-                    } else {
-                        scales1[0] = Some(info.fac1);
+                if let &mut Some(scale0) = scale0 {
+                    // check that this EKO slice is compatible with all previous slices
+                    if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
+                        return Err(Error::General(format!(
+                            "EKO slice's {name0} = '{}' is incompatible with previous slices' {name0} = '{scale0}'",
+                            info.fac0
+                        )));
                     }
                 } else {
-                    if let Some(scale0) = scales0[1] {
-                        if !approx_eq!(f64, scale0, info.fac0, ulps = 8) {
-                            return Err(Error::General(format!(
-                                "EKO slice's frg0 = '{}' is incompatible with previous slices' frg0 = '{scale0}'",
-                                info.fac0
-                            )));
-                        }
-                    } else {
-                        scales0[1] = Some(info.fac0);
-                    }
+                    *scale0 = Some(info.fac0);
+                }
 
-                    if let Some(scale1) = scales1[1] {
-                        if !subgrid::node_value_eq(info.fac1, scale1) {
-                            unimplemented!();
-                        }
-                    } else {
-                        scales1[1] = Some(info.fac1);
+                if let &mut Some(scale1) = scale1 {
+                    // we assume that all EKO slices always share the same factorization and/or
+                    // fragmentation scale at process level. If this isn't the case, for
+                    // instance when the fragmentation scale is functionally different from the
+                    // factorization scale, this implementation isn't general enough and has to
+                    // be changed
+                    if !subgrid::node_value_eq(info.fac1, scale1) {
+                        unimplemented!();
                     }
+                } else {
+                    *scale1 = Some(info.fac1);
                 }
             }
 
