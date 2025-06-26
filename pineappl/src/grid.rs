@@ -1174,13 +1174,12 @@ impl Grid {
                 }
 
                 if let &mut Some(scale1) = scale1 {
-                    // we assume that all EKO slices always share the same factorization and/or
-                    // fragmentation scale at process level. If this isn't the case, for
-                    // instance when the fragmentation scale is functionally different from the
-                    // factorization scale, this implementation isn't general enough and has to
-                    // be changed
-                    if !subgrid::node_value_eq(info.fac1, scale1) {
-                        unimplemented!();
+                    // check that the initial scale of all EKOs in this slice agree with each other
+                    if !approx_eq!(f64, scale1, info.fac1, ulps = 8) {
+                        return Err(Error::General(format!(
+                            "EKO slice's {name}1 = '{}' is incompatible with previous slices' {name}1 = '{scale1}'",
+                            info.fac1
+                        )));
                     }
                 } else {
                     *scale1 = Some(info.fac1);
