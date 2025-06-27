@@ -244,16 +244,6 @@ impl PyFkTable {
         self.fk_table.rotate_pid_basis(pid_basis.into());
     }
 
-    /// Merge the factors of all the channels.
-    pub fn merge_channel_factors(&mut self) {
-        self.fk_table.merge_channel_factors();
-    }
-
-    /// Splits the grid such that each channel contains only a single tuple of PIDs.
-    pub fn split_channels(&mut self) {
-        self.fk_table.split_channels();
-    }
-
     /// Write to file.
     ///
     /// # Panics

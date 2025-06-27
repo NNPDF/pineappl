@@ -5,7 +5,6 @@ three (general) convolutions.
 """
 
 import numpy as np
-import pytest
 import tempfile
 
 from pineappl.boc import Channel, Order
@@ -129,20 +128,11 @@ class TestFkTable:
         fk_evol_facs = fk.channels_factors()
         np.testing.assert_array_equal(fk_evol_facs, 1)
 
-        # rotate in the PDG basis and check that some factors are not `1`
+        # rotate in the PDG basis and check that all the factors are unity
         fk.rotate_pid_basis(PidBasis.Pdg)
         assert fk.pid_basis == PidBasis.Pdg
         fk_pdg_facs = fk.channels_factors()
-        with pytest.raises(expected_exception=AssertionError):
-            np.testing.assert_array_equal(fk_pdg_facs, 1)
-
-        # merge the factors and check that they are back to unity
-        fk.split_channels()
-        fk.merge_channel_factors()
-        # optimize the FK table to remove duplicate channels
-        fk.optimize(FkAssumptions("Nf6Ind"))
-        fk_facs = fk.channels_factors()
-        np.testing.assert_array_equal(fk_facs, 1)
+        np.testing.assert_array_equal(fk_pdg_facs, 1)
 
         # check that the FK table can be loaded properly
         with tempfile.TemporaryDirectory() as tmpdir:
