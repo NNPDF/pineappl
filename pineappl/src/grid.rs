@@ -1158,7 +1158,7 @@ impl Grid {
                     )));
                 }
 
-                let idx = usize::from(info.conv_type.is_pdf());
+                let idx = usize::from(!info.conv_type.is_pdf());
 
                 // check that both initial- and process-level scales agree among all operators of
                 // the same convolution type
