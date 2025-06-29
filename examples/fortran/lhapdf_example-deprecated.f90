@@ -58,6 +58,9 @@ contains
         type(c_ptr), value, intent(in)        :: state
         real(c_double)                        :: xfx_test1
 
+        ! ignore unused argument
+        associate(state => state); end associate
+
         call lhapdf_xfxq2(0, 0, pdg_id, x, q2, xfx_test1)
     end function
 
@@ -86,6 +89,9 @@ contains
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test1
+
+        ! ignore unused argument
+        associate(state => state); end associate
 
         call lhapdf_alphasq2(0, 0, q2, alphas_test1)
     end function

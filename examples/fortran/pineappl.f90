@@ -607,7 +607,7 @@ contains
 
         type (pineappl_grid), intent(in) :: grid
 
-        pineappl_grid_bin_count = grid_bin_count(grid%ptr)
+        pineappl_grid_bin_count = int(grid_bin_count(grid%ptr))
     end function
 
     integer function pineappl_grid_bin_dimensions(grid)
@@ -615,7 +615,7 @@ contains
 
         type (pineappl_grid), intent(in) :: grid
 
-        pineappl_grid_bin_dimensions = grid_bin_dimensions(grid%ptr)
+        pineappl_grid_bin_dimensions = int(grid_bin_dimensions(grid%ptr))
     end function
 
     function pineappl_grid_bin_limits_left(grid, dimension) result(res)
@@ -948,8 +948,6 @@ contains
         type (pineappl_kinematics), dimension(interpolations), intent(in), target :: kinematics
         type (pineappl_interp), dimension(interpolations), intent(in)             :: interp_info
         type (pineappl_scale_func_form), dimension(interpolations)                :: mu_scales
-
-        integer :: i
 
         pineappl_grid_new2 = pineappl_grid(grid_new2(&
             int(bins, c_size_t), &

@@ -1,5 +1,5 @@
 FC = gfortran
-FFLAGS = -Wall -Wextra -O0 -g -ffree-line-length-none -Wno-unused-dummy-argument
+FFLAGS = -Wall -Wextra -O0 -g -ffree-line-length-none
 PINEAPPL_LIBS != pkg-config pineappl_capi --libs
 LHAPDF_LIBS != pkg-config lhapdf --libs
 
@@ -13,7 +13,7 @@ PROGRAMS = \
 all: $(PROGRAMS)
 
 test-examples: $(PROGRAMS)
-	set -e && for i in $(PROGRAMS); do ./$${i}; done > test-output && diff -u output test-output && rm test-output
+	set -e && for i in $(PROGRAMS); do ./$${i} > output; diff -u $${i}.output output; done; rm output
 
 pineappl.o: pineappl.f90
 	$(FC) $(FFLAGS) -c $< -o $@
