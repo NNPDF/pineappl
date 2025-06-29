@@ -115,16 +115,16 @@ program test_pineappl
     end if
 
     kinematics = [ &
-        pineappl_kinematics(pineappl_scale, 0), &
-        pineappl_kinematics(pineappl_x, 0), &
-        pineappl_kinematics(pineappl_x, 1) &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 1) &
     ]
 
-    q2_reweight = pineappl_no_reweight
-    x_reweight = pineappl_applgrid_x
-    q2_mapping = pineappl_applgrid_h0
-    x_mapping = pineappl_applgrid_f2
-    interpolation_meth = pineappl_lagrange
+    q2_reweight = pineappl_reweight_meth_no_reweight
+    x_reweight = pineappl_reweight_meth_applgrid_x
+    q2_mapping = pineappl_map_applgrid_h0
+    x_mapping = pineappl_map_applgrid_f2
+    interpolation_meth = pineappl_interp_meth_lagrange
     interp_info = [ &
         pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
         pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
@@ -133,17 +133,17 @@ program test_pineappl
 
     ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
     mu_scales_form = [ &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, pineappl_scale_func_form_body(0, 0)) &
     ]
 
     convolutions = [ &
-        pineappl_conv(pineappl_unpol_pdf, 2212), &
-        pineappl_conv(pineappl_unpol_pdf, 2212) &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212) &
     ]
 
-    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pid_basis_pdg, &
         convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     if (pineappl_grid_order_count(grid) /= 1) then
@@ -210,7 +210,7 @@ program test_pineappl
         error stop "error: pineappl_channels_combinations"
     end if
 
-    grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+    grid2 = pineappl_grid_new2(1, [2.0_dp, 3.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pid_basis_pdg, &
         convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_merge_and_delete(grid, grid2)
