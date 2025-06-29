@@ -15,7 +15,9 @@ use ndarray::{
     s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis,
     Ix1, Ix2,
 };
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::iter;
+use std::sync::{Arc, Mutex};
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
 /// a specific [`Grid`].
@@ -366,7 +368,6 @@ pub(crate) fn evolve_slice(
 ) -> Result<(Array3<SubgridEnum>, Vec<Channel>)> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
-    // TODO: implement matching of different scales for different EKOs
     let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
     fac1_scales.sort_by(f64::total_cmp);
     assert!(fac1_scales
@@ -400,14 +401,16 @@ pub(crate) fn evolve_slice(
     let channels0 = channels0;
 
     let mut sub_fk_tables = Vec::with_capacity(grid.bwfl().len() * channels0.len());
-
-    // TODO: generalize to `n`
     let mut last_x1 = vec![Vec::new(); infos.len()];
     let mut eko_slices = vec![Vec::new(); infos.len()];
     let dim: Vec<_> = infos.iter().map(|info| info.x0.len()).collect();
 
     for subgrids_oc in grid.subgrids().axis_iter(Axis(1)) {
-        let mut tables = vec![ArrayD::zeros(dim.clone()); channels0.len()];
+        // Use Arc<Mutex<>> for thread-safe access to tables
+        let tables = Arc::new(Mutex::new(vec![
+            ArrayD::zeros(dim.clone());
+            channels0.len()
+        ]));
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
@@ -421,7 +424,6 @@ pub(crate) fn evolve_slice(
                 alphas_table,
             )?;
 
-            // skip over zero arrays to speed up evolution and avoid problems with NaNs
             let Some(array) = array else {
                 continue;
             };
@@ -445,34 +447,52 @@ pub(crate) fn evolve_slice(
                 }
             }
 
-            for (pids1, factor) in channel1.entry() {
-                for (fk_table, ops) in
-                    channels0
+            // Collect channel entry operations for parallelization
+            let channel_operations: Vec<_> = channel1
+                .entry()
+                .iter()
+                .enumerate()
+                .map(|(entry_idx, (pids1, factor))| {
+                    let table_ops: Vec<_> = channels0
                         .iter()
-                        .zip(tables.iter_mut())
-                        .filter_map(|(pids0, fk_table)| {
+                        .enumerate()
+                        .filter_map(|(table_idx, pids0)| {
                             izip!(pids0, pids1, &pids01, &eko_slices)
                                 .map(|(&pid0, &pid1, pids, slices)| {
                                     pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
                                         ((p0 == pid0) && (p1 == pid1)).then_some(op)
                                     })
                                 })
-                                // TODO: avoid using `collect`
                                 .collect::<Option<Vec<_>>>()
-                                .map(|ops| (fk_table, ops))
+                                .map(|ops| (table_idx, ops))
                         })
-                {
-                    general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
-                }
-            }
+                        .collect();
+                    (entry_idx, *factor, table_ops)
+                })
+                .collect();
+
+            // Parallelize across channel operations
+            channel_operations
+                .into_par_iter()
+                .for_each(|(_, factor, table_ops)| {
+                    table_ops.into_par_iter().for_each(|(table_idx, ops)| {
+                        // Create temporary result
+                        let mut temp_table = ArrayD::zeros(dim.clone());
+                        general_tensor_mul(factor, array.view(), &ops, temp_table.view_mut());
+
+                        // Add to main table under lock
+                        let mut tables_guard = tables.lock().unwrap();
+                        tables_guard[table_idx] += &temp_table;
+                    });
+                });
         }
 
         let mut node_values = vec![scale_values.to_vec()];
-
         for info in infos {
             node_values.push(info.x0.clone());
         }
 
+        let tables = Arc::try_unwrap(tables).unwrap().into_inner().unwrap();
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportSubgridV1::new(
                 // TODO: insert one more axis if initial frg scale unequals fac
