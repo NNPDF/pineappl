@@ -6,6 +6,10 @@ on:
       - pycli
       - bump-pyo3-version
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   capi:
     runs-on: ubuntu-latest
