@@ -26,64 +26,64 @@ module pineappl
     ! As a workaround for typing Fortran enums, we define the name of the enum as the last enum value. This way, variables can be declared as, e.g. for pineappl_conv_type, integer(kind(pineappl_conv_type)). The compiler doesn't check that a value is from the right enum, but it clarifies the code for the user.
 
     enum, bind(c) ! :: pineappl_conv_type
-        enumerator :: pineappl_unpol_pdf
-        enumerator :: pineappl_pol_pdf
-        enumerator :: pineappl_unpol_ff
-        enumerator :: pineappl_pol_ff
+        enumerator :: pineappl_conv_type_unpol_pdf
+        enumerator :: pineappl_conv_type_pol_pdf
+        enumerator :: pineappl_conv_type_unpol_ff
+        enumerator :: pineappl_conv_type_pol_ff
 
         enumerator :: pineappl_conv_type
     end enum
 
     enum, bind(c) ! :: pineappl_interp_meth
-        enumerator :: pineappl_lagrange
+        enumerator :: pineappl_interp_meth_lagrange
 
         enumerator :: pineappl_interp_meth
     end enum
 
     enum, bind(c) ! :: pineappl_map
-        enumerator :: pineappl_applgrid_f2
-        enumerator :: pineappl_applgrid_h0
+        enumerator :: pineappl_map_applgrid_f2
+        enumerator :: pineappl_map_applgrid_h0
 
         enumerator :: pineappl_map
     end enum
 
     enum, bind(c) ! :: pineappl_pid_basis
-        enumerator :: pineappl_pdg
-        enumerator :: pineappl_evol
+        enumerator :: pineappl_pid_basis_pdg
+        enumerator :: pineappl_pid_basis_evol
 
         enumerator :: pineappl_pid_basis
     end enum
 
     enum, bind(c) ! :: pineappl_reweight_meth
-        enumerator :: pineappl_applgrid_x
-        enumerator :: pineappl_no_reweight
+        enumerator :: pineappl_reweight_meth_applgrid_x
+        enumerator :: pineappl_reweight_meth_no_reweight
 
         enumerator :: pineappl_reweight_meth
     end enum
 
     enum, bind(c) ! :: pineappl_kinematics_tag
-        enumerator :: pineappl_scale
-        enumerator :: pineappl_x
+        enumerator :: pineappl_kinematics_tag_scale
+        enumerator :: pineappl_kinematics_tag_x
 
         enumerator :: pineappl_kinematics_tag
     end enum
 
     enum, bind(c) ! :: pineappl_scale_func_form_tag
-        enumerator :: pineappl_scale_func_form_no_scale
-        enumerator :: pineappl_scale_func_form_scale
-        enumerator :: pineappl_scale_func_form_quadratic_sum
-        enumerator :: pineappl_scale_func_form_quadratic_mean
-        enumerator :: pineappl_scale_func_form_quadratic_sum_over4
-        enumerator :: pineappl_scale_func_form_linear_mean
-        enumerator :: pineappl_scale_func_form_linear_sum
-        enumerator :: pineappl_scale_func_form_scale_max
-        enumerator :: pineappl_scale_func_form_scale_min
-        enumerator :: pineappl_scale_func_form_prod
-        enumerator :: pineappl_scale_func_form_s2plus_s1half
-        enumerator :: pineappl_scale_func_form_pow4_sum
-        enumerator :: pineappl_scale_func_form_wgt_avg
-        enumerator :: pineappl_scale_func_form_s2plus_s1fourth
-        enumerator :: pineappl_scale_func_form_exp_prod2
+        enumerator :: pineappl_scale_func_form_tag_no_scale
+        enumerator :: pineappl_scale_func_form_tag_scale
+        enumerator :: pineappl_scale_func_form_tag_quadratic_sum
+        enumerator :: pineappl_scale_func_form_tag_quadratic_mean
+        enumerator :: pineappl_scale_func_form_tag_quadratic_sum_over4
+        enumerator :: pineappl_scale_func_form_tag_linear_mean
+        enumerator :: pineappl_scale_func_form_tag_linear_sum
+        enumerator :: pineappl_scale_func_form_tag_scale_max
+        enumerator :: pineappl_scale_func_form_tag_scale_min
+        enumerator :: pineappl_scale_func_form_tag_prod
+        enumerator :: pineappl_scale_func_form_tag_s2plus_s1half
+        enumerator :: pineappl_scale_func_form_tag_pow4_sum
+        enumerator :: pineappl_scale_func_form_tag_wgt_avg
+        enumerator :: pineappl_scale_func_form_tag_s2plus_s1fourth
+        enumerator :: pineappl_scale_func_form_tag_exp_prod2
 
         enumerator :: pineappl_scale_func_form_tag
     end enum
