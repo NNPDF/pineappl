@@ -90,7 +90,7 @@ module pineappl
 
     ! The Kinematics struct is a tuple-like struct in the PineAPPL Rust code, which is realized as a C union. Fortran does not support unions, but fortunately the union is only for storing ints, so we just use an integer variable for `index`
     type, bind(c) :: pineappl_kinematics
-        integer(kind(pineappl_kinematics_tag)) :: tag
+        integer(c_int) :: tag
         integer(c_size_t) :: index
     end type
 
@@ -101,12 +101,12 @@ module pineappl
     end type
 
     type, bind(c) :: pineappl_scale_func_form
-        integer(kind(pineappl_scale_func_form_tag)) :: tag
+        integer(c_int) :: tag
         type(pineappl_scale_func_form_body) :: body
     end type
 
     type, bind(c) :: pineappl_conv
-        integer(kind(pineappl_conv_type)) :: conv_type
+        integer(c_int) :: conv_type
         integer(c_int32_t) :: pid
     end type
 
@@ -115,9 +115,9 @@ module pineappl
         real(c_double) :: max
         integer(c_size_t) :: nodes
         integer(c_size_t) :: order
-        integer(kind(pineappl_reweight_meth)) :: reweighting_method
-        integer(kind(pineappl_map)) :: mapping
-        integer(kind(pineappl_interp_meth)) :: interpolation_method
+        integer(c_int) :: reweighting_method
+        integer(c_int) :: mapping
+        integer(c_int) :: interpolation_method
     end type
 
     type :: pineappl_xfx
