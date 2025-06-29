@@ -1,6 +1,62 @@
+module callbacks3
+    implicit none
+contains
+    function xfx1_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx1_test
+
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
+        xfx1_test = x
+    end function
+
+    function xfx2_test(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: xfx2_test
+
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
+        xfx2_test = -x
+    end function
+
+    function alphas_test(q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        real(c_double), value, intent(in) :: q2
+        type(c_ptr), value, intent(in)    :: state
+        real(c_double)                    :: alphas_test
+
+        ! ignore unused argument
+        associate(state => state); end associate
+
+        alphas_test = q2
+    end function
+end module
+
 program test_pineappl
     use pineappl
     use iso_c_binding
+    use callbacks3
 
     implicit none
 
@@ -177,58 +233,4 @@ program test_pineappl
     call pineappl_lumi_delete(lumi)
 
     call pineappl_grid_delete(grid)
-
-contains
-
-    function xfx1_test(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx1_test
-
-        ! ignore unused arguments
-        associate(pdg_id => pdg_id); end associate
-        associate(q2 => q2); end associate
-        associate(state => state); end associate
-
-        xfx1_test = x
-    end function
-
-    function xfx2_test(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: xfx2_test
-
-        ! ignore unused arguments
-        associate(pdg_id => pdg_id); end associate
-        associate(q2 => q2); end associate
-        associate(state => state); end associate
-
-        xfx2_test = -x
-    end function
-
-    function alphas_test(q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        real(c_double), value, intent(in) :: q2
-        type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: alphas_test
-
-        ! ignore unused argument
-        associate(state => state); end associate
-
-        alphas_test = q2
-    end function
-
 end program test_pineappl
