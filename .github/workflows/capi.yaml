@@ -32,7 +32,7 @@ jobs:
           # if `make` is too old, it doesn't support the `!=` operator
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
           # run tests with sanitizer
-          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
       - name: Test Fortran examples
         run: |
@@ -44,7 +44,7 @@ jobs:
         run: |
           cd examples/object-oriented-cpp
           sed -i "s/\([a-zA-Z_]\+\) != \(.*\)$/echo \1 = \$(\2)/e" Makefile
-          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -fsanitize=address,undefined" test-examples
+          make CXXFLAGS="-O0 -ggdb -Wall -Wextra -Werror -fsanitize=address,undefined" test-examples
 
       - name: Generate code coverage
         run: |
