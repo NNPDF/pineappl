@@ -27,7 +27,7 @@ PROGRAMS = \
 all: $(PROGRAMS)
 
 test-examples: $(PROGRAMS)
-	set -e && for i in $(PROGRAMS); do ./$${i} > output; diff -u $${i}.output output; done
+	set -e && for i in $(PROGRAMS); do ./$${i} > output; diff -u $${i}.output output; done; rm output
 
 advanced-convolution-deprecated: advanced-convolution-deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
