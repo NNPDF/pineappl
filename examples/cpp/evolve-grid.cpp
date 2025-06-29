@@ -102,7 +102,9 @@ extern "C" void generate_fake_ekos(
 ) {
     // select the type of convolution based on the Operator index
     OperatorParams* op_params = static_cast<OperatorParams*>(params_state);
-    pineappl_conv_type _ = op_params->conv_types[op_index];
+
+    pineappl_conv_type conv_type = op_params->conv_types[op_index];
+    assert( conv_type == PINEAPPL_CONV_TYPE_UNPOL_PDF );
 
     std::ifstream input_file("../../test-data/EKO_LHCB_WP_7TEV.txt");
     double weight_value;

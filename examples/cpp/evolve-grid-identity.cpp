@@ -45,7 +45,9 @@ extern "C" void generate_fake_ekos(
 ) {
     // select the type of convolution based on the Operator index
     OperatorParams* op_params = static_cast<OperatorParams*>(params_state);
-    pineappl_conv_type _ = op_params->conv_types[op_index];
+
+    pineappl_conv_type conv_type = op_params->conv_types[op_index];
+    assert( conv_type == PINEAPPL_CONV_TYPE_UNPOL_PDF );
 
     // NOTE: This has to work because the Evolution Operator is always 4D
     std::vector<std::size_t> shape(eko_shape, eko_shape + 4);
