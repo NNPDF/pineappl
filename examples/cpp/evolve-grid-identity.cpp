@@ -45,7 +45,9 @@ extern "C" void generate_fake_ekos(
 ) {
     // select the type of convolution based on the Operator index
     OperatorParams* op_params = static_cast<OperatorParams*>(params_state);
-    pineappl_conv_type _ = op_params->conv_types[op_index];
+
+    pineappl_conv_type conv_type = op_params->conv_types[op_index];
+    assert( conv_type == PINEAPPL_CONV_TYPE_UNPOL_PDF );
 
     // NOTE: This has to work because the Evolution Operator is always 4D
     std::vector<std::size_t> shape(eko_shape, eko_shape + 4);
@@ -188,9 +190,8 @@ int main() {
     }
 
     // Construct the Parameters that will get passed to the Callback
-    OperatorParams* op_params = new OperatorParams;
-    op_params->conv_types = convtypes;
-    void* params = static_cast<void*>(op_params);
+    OperatorParams op_params;
+    op_params.conv_types = convtypes;
 
     std::vector<double> xi = {1.0, 1.0, 1.0};
     // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
@@ -222,7 +223,7 @@ int main() {
         pids_out.data(),      // `pids_out`
         x_in.data(),          // `x_out`
         tensor_shape.data(),  // `eko_shape`
-        params,               // `state`
+        &op_params,           // `state`
         nullptr,              // `order_mask`
         xi.data(),            // `xi`
         ren1.data(),          // `ren1`

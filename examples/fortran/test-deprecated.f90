@@ -190,6 +190,11 @@ contains
         type(c_ptr), value, intent(in)        :: state
         real(c_double)                        :: xfx1_test
 
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
         xfx1_test = x
     end function
 
@@ -203,6 +208,11 @@ contains
         type(c_ptr), value, intent(in)        :: state
         real(c_double)                        :: xfx2_test
 
+        ! ignore unused arguments
+        associate(pdg_id => pdg_id); end associate
+        associate(q2 => q2); end associate
+        associate(state => state); end associate
+
         xfx2_test = -x
     end function
 
@@ -214,6 +224,9 @@ contains
         real(c_double), value, intent(in) :: q2
         type(c_ptr), value, intent(in)    :: state
         real(c_double)                    :: alphas_test
+
+        ! ignore unused argument
+        associate(state => state); end associate
 
         alphas_test = q2
     end function
