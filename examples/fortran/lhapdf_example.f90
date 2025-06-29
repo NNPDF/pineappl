@@ -1,6 +1,40 @@
+module callbacks4
+    implicit none
+contains
+    function wrap_xfx(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: wrap_xfx
+        integer, pointer                      :: state_array(:)
+
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_xfxq2(state_array(1), state_array(2), pdg_id, x, q2, wrap_xfx)
+    end function
+
+    function wrap_alphasq2(q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        real(c_double), value, intent(in) :: q2
+        type(c_ptr), value, intent(in)    :: state
+        real(c_double)                    :: wrap_alphasq2
+        integer, pointer                      :: state_array(:)
+
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_alphasq2(state_array(1), state_array(2), q2, wrap_alphasq2)
+    end function
+end module
+
 program lhapdf_example
     use iso_c_binding
     use pineappl
+    use callbacks4
 
     implicit none
 
@@ -31,16 +65,16 @@ program lhapdf_example
     call pineappl_channels_add(channels, 3, [0, 0, 1, -1, 2, -2], [1.0_dp, 1.0_dp, 1.0_dp])
 
     kinematics = [&
-        pineappl_kinematics(pineappl_scale, 0), &
-        pineappl_kinematics(pineappl_x, 0), &
-        pineappl_kinematics(pineappl_x, 1) &
+        pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 0), &
+        pineappl_kinematics(pineappl_kinematics_tag_x, 1) &
     ]
 
-    q2_reweight = pineappl_no_reweight
-    x_reweight = pineappl_applgrid_x
-    q2_mapping = pineappl_applgrid_h0
-    x_mapping = pineappl_applgrid_f2
-    interpolation_meth = pineappl_lagrange
+    q2_reweight = pineappl_reweight_meth_no_reweight
+    x_reweight = pineappl_reweight_meth_applgrid_x
+    q2_mapping = pineappl_map_applgrid_h0
+    x_mapping = pineappl_map_applgrid_f2
+    interpolation_meth = pineappl_interp_meth_lagrange
     interp_info = [ &
         pineappl_interp(1e2_dp, 1e8_dp, 40, 3, q2_reweight, q2_mapping, interpolation_meth), &
         pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, x_reweight, x_mapping, interpolation_meth), &
@@ -49,17 +83,17 @@ program lhapdf_example
 
     ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
     mu_scales_form = [ &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_SCALE, pineappl_scale_func_form_body(0, 0)), &
-        pineappl_scale_func_form(PINEAPPL_SCALE_FUNC_FORM_NO_SCALE, pineappl_scale_func_form_body(0, 0)) &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+        pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, pineappl_scale_func_form_body(0, 0)) &
     ]
 
     convolutions = [ &
-        pineappl_conv(pineappl_unpol_pdf, 2212), &
-        pineappl_conv(pineappl_unpol_pdf, 2212) &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212), &
+        pineappl_conv(pineappl_conv_type_unpol_pdf, 2212) &
     ]
 
-    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pdg, &
+    grid = pineappl_grid_new2(2, [0.0_dp, 1.0_dp, 2.0_dp], 1, [2_1, 0_1, 0_1, 0_1, 0_1], channels, pineappl_pid_basis_pdg, &
         convolutions, 3, interp_info, kinematics, mu_scales_form)
 
     call pineappl_grid_fill_all2(grid, 0, 0.5_dp, [100.0_dp, 0.5_dp, 0.5_dp], [0.5_dp, 0.5_dp, 0.5_dp])
@@ -106,35 +140,4 @@ program lhapdf_example
     ! call pineappl_grid_write(grid, 'test.pineappl.lz4')
     call pineappl_channels_delete(channels)
     call pineappl_grid_delete(grid)
-contains
-
-    function wrap_xfx(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: wrap_xfx
-        integer, pointer                      :: state_array(:)
-
-        call c_f_pointer(state, state_array, [2])
-        call lhapdf_xfxq2(state_array(1), state_array(2), pdg_id, x, q2, wrap_xfx)
-    end function
-
-    function wrap_alphasq2(q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        real(c_double), value, intent(in) :: q2
-        type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: wrap_alphasq2
-        integer, pointer                      :: state_array(:)
-
-        call c_f_pointer(state, state_array, [2])
-        call lhapdf_alphasq2(state_array(1), state_array(2), q2, wrap_alphasq2)
-    end function
-
 end program lhapdf_example
