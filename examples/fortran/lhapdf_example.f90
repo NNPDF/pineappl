@@ -1,6 +1,40 @@
+module callbacks4
+    implicit none
+contains
+    function wrap_xfx(pdg_id, x, q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        integer(c_int32_t), value, intent(in) :: pdg_id
+        real(c_double), value, intent(in)     :: x, q2
+        type(c_ptr), value, intent(in)        :: state
+        real(c_double)                        :: wrap_xfx
+        integer, pointer                      :: state_array(:)
+
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_xfxq2(state_array(1), state_array(2), pdg_id, x, q2, wrap_xfx)
+    end function
+
+    function wrap_alphasq2(q2, state) bind(c)
+        use iso_c_binding
+
+        implicit none
+
+        real(c_double), value, intent(in) :: q2
+        type(c_ptr), value, intent(in)    :: state
+        real(c_double)                    :: wrap_alphasq2
+        integer, pointer                      :: state_array(:)
+
+        call c_f_pointer(state, state_array, [2])
+        call lhapdf_alphasq2(state_array(1), state_array(2), q2, wrap_alphasq2)
+    end function
+end module
+
 program lhapdf_example
     use iso_c_binding
     use pineappl
+    use callbacks4
 
     implicit none
 
@@ -106,35 +140,4 @@ program lhapdf_example
     ! call pineappl_grid_write(grid, 'test.pineappl.lz4')
     call pineappl_channels_delete(channels)
     call pineappl_grid_delete(grid)
-contains
-
-    function wrap_xfx(pdg_id, x, q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        integer(c_int32_t), value, intent(in) :: pdg_id
-        real(c_double), value, intent(in)     :: x, q2
-        type(c_ptr), value, intent(in)        :: state
-        real(c_double)                        :: wrap_xfx
-        integer, pointer                      :: state_array(:)
-
-        call c_f_pointer(state, state_array, [2])
-        call lhapdf_xfxq2(state_array(1), state_array(2), pdg_id, x, q2, wrap_xfx)
-    end function
-
-    function wrap_alphasq2(q2, state) bind(c)
-        use iso_c_binding
-
-        implicit none
-
-        real(c_double), value, intent(in) :: q2
-        type(c_ptr), value, intent(in)    :: state
-        real(c_double)                    :: wrap_alphasq2
-        integer, pointer                      :: state_array(:)
-
-        call c_f_pointer(state, state_array, [2])
-        call lhapdf_alphasq2(state_array(1), state_array(2), q2, wrap_alphasq2)
-    end function
-
 end program lhapdf_example
