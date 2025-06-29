@@ -1,5 +1,5 @@
 CXX = c++ -std=c++11
-CXXFLAGS = -O3 -Wall -Wextra
+CXXFLAGS = -O3 -Wall -Wextra -Werror
 PINEAPPL_DEPS != pkg-config --cflags --libs pineappl_capi
 LHAPDF_DEPS != pkg-config --cflags --libs lhapdf
 
