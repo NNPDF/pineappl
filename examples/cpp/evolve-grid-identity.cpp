@@ -188,9 +188,8 @@ int main() {
     }
 
     // Construct the Parameters that will get passed to the Callback
-    OperatorParams* op_params = new OperatorParams;
-    op_params->conv_types = convtypes;
-    void* params = static_cast<void*>(op_params);
+    OperatorParams op_params;
+    op_params.conv_types = convtypes;
 
     std::vector<double> xi = {1.0, 1.0, 1.0};
     // NOTE: The EKO has to have as shape: (pids_in, x_in, pids_out, x_out)
@@ -222,7 +221,7 @@ int main() {
         pids_out.data(),      // `pids_out`
         x_in.data(),          // `x_out`
         tensor_shape.data(),  // `eko_shape`
-        params,               // `state`
+        &op_params,           // `state`
         nullptr,              // `order_mask`
         xi.data(),            // `xi`
         ren1.data(),          // `ren1`
