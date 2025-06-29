@@ -175,6 +175,22 @@ impl PyFkTable {
         self.fk_table.channels()
     }
 
+    /// Extract the factors from all the channels.
+    ///
+    /// Returns
+    /// -------
+    /// list(float) :
+    ///     list containing the factor values
+    #[must_use]
+    pub fn channels_factors(&self) -> Vec<f64> {
+        self.fk_table
+            .grid()
+            .channels()
+            .iter()
+            .flat_map(|entry| entry.entry().iter().map(|(_, f)| *f))
+            .collect()
+    }
+
     /// Get squared factorization scale.
     ///
     /// Returns
@@ -224,12 +240,8 @@ impl PyFkTable {
     /// ----------
     /// pid_basis: PyPidBasis
     ///     PID basis of the resulting FK Table
-    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) -> PyGrid {
-        let mut grid_mut = self.fk_table.grid().clone();
-        grid_mut.rotate_pid_basis(pid_basis.into());
-        PyGrid {
-            grid: grid_mut.clone(),
-        }
+    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
+        self.fk_table.rotate_pid_basis(pid_basis.into());
     }
 
     /// Write to file.

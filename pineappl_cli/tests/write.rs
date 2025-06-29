@@ -20,6 +20,7 @@ Options:
       --delete-key <KEY>                Delete an internal key-value pair
       --div-bin-norm-dims <DIM1,...>    Divide each bin normalizations by the bin lengths for the given dimensions
       --merge-bins <BIN1-BIN2,...>      Merge specific bins together
+      --merge-channel-factors[=<ON>]    Merge channel factors into the grid [possible values: true, false]
       --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
       --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
       --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]

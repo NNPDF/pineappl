@@ -399,6 +399,36 @@ class TestGrid:
         # Check the convolutions of the GRID
         np.testing.assert_allclose(g.convolve(**params), expected)
 
+    def test_grid_rotations(
+        self,
+        pdf,
+        download_objects,
+        gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
+    ):
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # record the channel factors and check that some factors are not `1`
+        g_pdf_facs = g.channels_factors()
+        with pytest.raises(expected_exception=AssertionError):
+            np.testing.assert_array_equal(g_pdf_facs, 1)
+
+        # rotate in the Evolution basis
+        g.rotate_pid_basis(PidBasis.Evol)
+        assert g.pid_basis == PidBasis.Evol
+
+        # merge the factors and check that the channels are to unity
+        g.split_channels()
+        g.merge_channel_factors()
+        # optimize the grid to remove duplicate channels
+        g_facs = g.channels_factors()
+        np.testing.assert_array_equal(g_facs, 1)
+
+        # check that the FK table can be loaded properly
+        with tempfile.TemporaryDirectory() as tmpdir:
+            g.write_lz4(f"{tmpdir}/grid_merged_factors.pineappl.lz4")
+            _ = Grid.read(f"{tmpdir}/grid_merged_factors.pineappl.lz4")
+
     def test_unpolarized_convolution(
         self,
         pdf,

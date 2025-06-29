@@ -27,7 +27,8 @@ use std::{iter, mem};
 const BIN_AXIS: Axis = Axis(1);
 
 // const ORDER_AXIS: Axis = Axis(0);
-// const CHANNEL_AXIS: Axis = Axis(2);
+
+const CHANNEL_AXIS: Axis = Axis(2);
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
@@ -1481,6 +1482,21 @@ impl Grid {
                     .map(move |entry| Channel::new(vec![entry]))
             })
             .collect();
+    }
+
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    ///
+    /// This method factors out the smallest absolute coefficient from each channel using
+    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
+    pub fn merge_channel_factors(&mut self) {
+        let (factors, new_channels): (Vec<_>, Vec<_>) =
+            self.channels().iter().map(Channel::factor).unzip();
+
+        for (mut subgrids_bo, &factor) in self.subgrids.axis_iter_mut(CHANNEL_AXIS).zip(&factors) {
+            subgrids_bo.map_inplace(|subgrid| subgrid.scale(factor));
+        }
+
+        self.channels = new_channels;
     }
 }
 

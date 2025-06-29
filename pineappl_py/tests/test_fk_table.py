@@ -113,8 +113,31 @@ class TestFkTable:
 
         # Check that FK table is in the Evolution basis and rotate into PDG
         assert fk.pid_basis == PidBasis.Evol
-        new_fk = fk.rotate_pid_basis(PidBasis.Pdg)
-        assert new_fk.pid_basis == PidBasis.Pdg
+        fk.rotate_pid_basis(PidBasis.Pdg)
+        assert fk.pid_basis == PidBasis.Pdg
+
+    def test_fktable_rotations(
+        self,
+        download_objects,
+        fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
+    ):
+        fk_table = download_objects(f"{fkname}")
+        fk = FkTable.read(fk_table)
+
+        # record the channel factors and check they are unity
+        fk_evol_facs = fk.channels_factors()
+        np.testing.assert_array_equal(fk_evol_facs, 1)
+
+        # rotate in the PDG basis and check that all the factors are unity
+        fk.rotate_pid_basis(PidBasis.Pdg)
+        assert fk.pid_basis == PidBasis.Pdg
+        fk_pdg_facs = fk.channels_factors()
+        np.testing.assert_array_equal(fk_pdg_facs, 1)
+
+        # check that the FK table can be loaded properly
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fk.write_lz4(f"{tmpdir}/rotated_fktable.pineappl.lz4")
+            _ = FkTable.read(f"{tmpdir}/rotated_fktable.pineappl.lz4")
 
     def test_unpolarized_convolution(
         self,
