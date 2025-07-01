@@ -1837,6 +1837,32 @@ mod tests {
     }
 
     #[test]
+    fn grid_merge_channel_factors() {
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(vec![(vec![1, -1], 0.5), (vec![2, -2], 2.5)])],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        grid.merge_channel_factors();
+        grid.channels().iter().all(|channel| {
+            channel
+                .entry()
+                .iter()
+                .all(|(_, fac)| (*fac - 1.0).abs() < f64::EPSILON)
+        });
+    }
+
+    #[test]
     fn grid_convolutions() {
         let mut grid = Grid::new(
             BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
