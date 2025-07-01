@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 import pytest
-import tempfile
 
 from numpy.random import Generator, PCG64
 
@@ -162,7 +161,7 @@ class TestGrid:
         with pytest.raises(expected_exception=IndexError):
             assert g.channels()[1]
 
-    def test_write(self, fake_grids):
+    def test_write(self, fake_grids, tmp_path):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -171,9 +170,8 @@ class TestGrid:
         )
 
         # Test writing/dumping the FK table into disk
-        with tempfile.TemporaryDirectory() as tmpdir:
-            g.write(f"{tmpdir}/toy_grid.pineappl")
-            g.write_lz4(f"{tmpdir}/toy_grid.pineappl.lz4")
+        g.write(f"{tmp_path}/toy_grid.pineappl")
+        g.write_lz4(f"{tmp_path}/toy_grid.pineappl.lz4")
 
     def test_set_subgrid(self, fake_grids):
         # Test a proper DIS-case
@@ -403,6 +401,7 @@ class TestGrid:
         self,
         pdf,
         download_objects,
+        tmp_path,
         gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
     ):
         grid = download_objects(f"{gridname}")
@@ -425,9 +424,8 @@ class TestGrid:
         np.testing.assert_array_equal(g_facs, 1)
 
         # check that the FK table can be loaded properly
-        with tempfile.TemporaryDirectory() as tmpdir:
-            g.write_lz4(f"{tmpdir}/grid_merged_factors.pineappl.lz4")
-            _ = Grid.read(f"{tmpdir}/grid_merged_factors.pineappl.lz4")
+        g.write_lz4(f"{tmp_path}/grid_merged_factors.pineappl.lz4")
+        _ = Grid.read(f"{tmp_path}/grid_merged_factors.pineappl.lz4")
 
     def test_unpolarized_convolution(
         self,

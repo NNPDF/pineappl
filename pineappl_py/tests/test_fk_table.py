@@ -5,7 +5,6 @@ three (general) convolutions.
 """
 
 import numpy as np
-import tempfile
 
 from pineappl.boc import Channel, Order
 from pineappl.convolutions import Conv, ConvType
@@ -15,7 +14,7 @@ from pineappl.pids import PidBasis
 
 
 class TestFkTable:
-    def test_convolve(self, fake_grids):
+    def test_convolve(self, fake_grids, tmp_path):
         # Define convolution types and the initial state hadrons
         # We consider an initial state Polarized Proton
         h = ConvType(polarized=True, time_like=False)
@@ -65,9 +64,8 @@ class TestFkTable:
         )
 
         # Test writing/dumping the FK table into disk
-        with tempfile.TemporaryDirectory() as tmpdir:
-            fk.write(f"{tmpdir}/toy_fktable.pineappl")
-            fk.write_lz4(f"{tmpdir}/toy_fktable.pineappl.lz4")
+        fk.write(f"{tmp_path}/toy_fktable.pineappl")
+        fk.write_lz4(f"{tmp_path}/toy_fktable.pineappl.lz4")
 
     def test_fktable(
         self,
@@ -119,6 +117,7 @@ class TestFkTable:
     def test_fktable_rotations(
         self,
         download_objects,
+        tmp_path,
         fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
     ):
         fk_table = download_objects(f"{fkname}")
@@ -135,9 +134,8 @@ class TestFkTable:
         np.testing.assert_array_equal(fk_pdg_facs, 1)
 
         # check that the FK table can be loaded properly
-        with tempfile.TemporaryDirectory() as tmpdir:
-            fk.write_lz4(f"{tmpdir}/rotated_fktable.pineappl.lz4")
-            _ = FkTable.read(f"{tmpdir}/rotated_fktable.pineappl.lz4")
+        fk.write_lz4(f"{tmp_path}/rotated_fktable.pineappl.lz4")
+        _ = FkTable.read(f"{tmp_path}/rotated_fktable.pineappl.lz4")
 
     def test_unpolarized_convolution(
         self,
