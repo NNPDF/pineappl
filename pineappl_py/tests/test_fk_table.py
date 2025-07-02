@@ -122,6 +122,8 @@ class TestFkTable:
         tmp_path,
         fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
     ):
+        expected_results = [3.72524538e04]  # Numbers computed using `v0.8.6`
+
         fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 
@@ -135,22 +137,19 @@ class TestFkTable:
         fk_pdg_facs = fk.channels_factors()
         np.testing.assert_array_equal(fk_pdg_facs, 1)
 
-        # check that the FK table can be loaded properly
-        path = f"{tmp_path}/rotated_fktable.pineappl.lz4"
-        fk.write_lz4(path)
-        fk_mod = FkTable.read(path)
-
-        # check that the convolutions are the same
+        # check that the convolutions are still the same
         np.testing.assert_allclose(
             fk.convolve(
                 pdg_convs=fk.convolutions,
                 xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
             ),
-            fk_mod.convolve(
-                pdg_convs=fk_mod.convolutions,
-                xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
-            ),
+            expected_results,
         )
+
+        # check that the FK table can be loaded properly
+        path = f"{tmp_path}/rotated_fktable.pineappl.lz4"
+        fk.write_lz4(path)
+        _ = FkTable.read(path)
 
     def test_unpolarized_convolution(
         self,
@@ -161,7 +160,7 @@ class TestFkTable:
         """Check the convolution of an actual FK table that involves two
         symmetrical unpolarized protons:
         """
-        expected_results = [3.72524538e04]
+        expected_results = [3.72524538e04]  # Numbers computed using `v0.8.6`
         fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 

@@ -405,6 +405,15 @@ class TestGrid:
         tmp_path,
         gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
     ):
+        expected_results = [
+            +3.71019208e4,
+            +3.71019208e4,
+            +2.13727492e4,
+            -1.83941398e3,
+            +3.22728612e3,
+            +5.45646897e4,
+        ]  # Numbers computed using `v0.8.6`
+
         grid = download_objects(f"{gridname}")
         g = Grid.read(grid)
 
@@ -424,24 +433,20 @@ class TestGrid:
         g_facs = g.channels_factors()
         np.testing.assert_array_equal(g_facs, 1)
 
-        # check that the FK table can be loaded properly
-        path = f"{tmp_path}/grid_merged_factors.pineappl.lz4"
-        g.write_lz4(path)
-        g_mod = Grid.read(path)
-
-        # check that the convolutions are the same
+        # check that the convolutions are still the same
         np.testing.assert_allclose(
             g.convolve(
                 pdg_convs=g.convolutions,
                 xfxs=[pdf.polarized_pdf],
                 alphas=pdf.alphasQ,
             ),
-            g_mod.convolve(
-                pdg_convs=g_mod.convolutions,
-                xfxs=[pdf.polarized_pdf],
-                alphas=pdf.alphasQ,
-            ),
+            expected_results,
         )
+
+        # check that the FK table can be loaded properly
+        path = f"{tmp_path}/grid_merged_factors.pineappl.lz4"
+        g.write_lz4(path)
+        _ = Grid.read(path)
 
     def test_unpolarized_convolution(
         self,
