@@ -427,7 +427,21 @@ class TestGrid:
         # check that the FK table can be loaded properly
         path = f"{tmp_path}/grid_merged_factors.pineappl.lz4"
         g.write_lz4(path)
-        _ = Grid.read(path)
+        g_mod = Grid.read(path)
+
+        # check that the convolutions are the same
+        np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=g.convolutions,
+                xfxs=[pdf.polarized_pdf],
+                alphas=pdf.alphasQ,
+            ),
+            g_mod.convolve(
+                pdg_convs=g_mod.convolutions,
+                xfxs=[pdf.polarized_pdf],
+                alphas=pdf.alphasQ,
+            ),
+        )
 
     def test_unpolarized_convolution(
         self,

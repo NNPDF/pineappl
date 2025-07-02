@@ -117,6 +117,7 @@ class TestFkTable:
 
     def test_fktable_rotations(
         self,
+        pdf,
         download_objects,
         tmp_path,
         fkname: str = "FKTABLE_CMSTTBARTOT8TEV-TOPDIFF8TEVTOT.pineappl.lz4",
@@ -137,7 +138,19 @@ class TestFkTable:
         # check that the FK table can be loaded properly
         path = f"{tmp_path}/rotated_fktable.pineappl.lz4"
         fk.write_lz4(path)
-        _ = FkTable.read(path)
+        fk_mod = FkTable.read(path)
+
+        # check that the convolutions are the same
+        np.testing.assert_allclose(
+            fk.convolve(
+                pdg_convs=fk.convolutions,
+                xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
+            ),
+            fk_mod.convolve(
+                pdg_convs=fk_mod.convolutions,
+                xfxs=[pdf.unpolarized_pdf, pdf.unpolarized_pdf],
+            ),
+        )
 
     def test_unpolarized_convolution(
         self,
