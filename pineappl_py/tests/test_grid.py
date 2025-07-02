@@ -170,8 +170,9 @@ class TestGrid:
         )
 
         # Test writing/dumping the FK table into disk
-        g.write(f"{tmp_path}/toy_grid.pineappl")
-        g.write_lz4(f"{tmp_path}/toy_grid.pineappl.lz4")
+        path = f"{tmp_path}/toy_grid.pineappl"
+        g.write(path)
+        g.write_lz4(path)
 
     def test_set_subgrid(self, fake_grids):
         # Test a proper DIS-case
@@ -424,8 +425,9 @@ class TestGrid:
         np.testing.assert_array_equal(g_facs, 1)
 
         # check that the FK table can be loaded properly
-        g.write_lz4(f"{tmp_path}/grid_merged_factors.pineappl.lz4")
-        _ = Grid.read(f"{tmp_path}/grid_merged_factors.pineappl.lz4")
+        path = f"{tmp_path}/grid_merged_factors.pineappl.lz4"
+        g.write_lz4(path)
+        _ = Grid.read(path)
 
     def test_unpolarized_convolution(
         self,
