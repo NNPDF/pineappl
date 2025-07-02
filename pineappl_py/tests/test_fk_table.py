@@ -64,8 +64,9 @@ class TestFkTable:
         )
 
         # Test writing/dumping the FK table into disk
-        fk.write(f"{tmp_path}/toy_fktable.pineappl")
-        fk.write_lz4(f"{tmp_path}/toy_fktable.pineappl.lz4")
+        path = f"{tmp_path}/toy_fktable.pineappl"
+        fk.write(path)
+        fk.write_lz4(path)
 
     def test_fktable(
         self,
@@ -134,8 +135,9 @@ class TestFkTable:
         np.testing.assert_array_equal(fk_pdg_facs, 1)
 
         # check that the FK table can be loaded properly
-        fk.write_lz4(f"{tmp_path}/rotated_fktable.pineappl.lz4")
-        _ = FkTable.read(f"{tmp_path}/rotated_fktable.pineappl.lz4")
+        path = f"{tmp_path}/rotated_fktable.pineappl.lz4"
+        fk.write_lz4(path)
+        _ = FkTable.read(path)
 
     def test_unpolarized_convolution(
         self,
