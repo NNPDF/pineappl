@@ -692,6 +692,21 @@ impl PyGrid {
             .collect()
     }
 
+    /// Extract the factors from all the channels.
+    ///
+    /// Returns
+    /// -------
+    /// list(float) :
+    ///     list containing the factor values
+    #[must_use]
+    pub fn channels_factors(&self) -> Vec<f64> {
+        self.grid
+            .channels()
+            .iter()
+            .flat_map(|entry| entry.entry().iter().map(|(_, f)| *f))
+            .collect()
+    }
+
     /// Deduplicate channels
     ///
     /// Parameters
@@ -710,6 +725,11 @@ impl PyGrid {
     ///     PID basis of the resulting Grid
     pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
         self.grid.rotate_pid_basis(pid_basis.into());
+    }
+
+    /// Merge the factors of all the channels.
+    pub fn merge_channel_factors(&mut self) {
+        self.grid.merge_channel_factors();
     }
 
     /// Scale all subgrids.
