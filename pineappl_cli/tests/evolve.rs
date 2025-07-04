@@ -103,7 +103,7 @@ const LHCB_WP_7TEV_V2_XIF_2_STR: &str = "b        Grid             FkTable      
 ";
 
 const LHCB_WP_7TEV_V2_XIF_2_ERROR_STR: &str =
-    "Error: no operator for fac1 = 25825.775616000003 found in [6456.443904000001]
+    "Error: no operator for fac1 = '25825.775616000003' found
 ";
 
 const LHCB_WP_7TEV_OPTIMIZED_STR: &str = "b   etal    dsig/detal 
