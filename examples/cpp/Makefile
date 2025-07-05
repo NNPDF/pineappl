@@ -86,7 +86,7 @@ merge-grids: merge-grids.cpp
 modify-grid: modify-grid.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
-PHONY: clean
+.PHONY: clean
 
 clean:
 	rm -f $(PROGRAMS) *.pineappl *.lz4

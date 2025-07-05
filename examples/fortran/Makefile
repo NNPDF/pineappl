@@ -25,7 +25,7 @@ test: test.f90 pineappl.o
 lhapdf_example: lhapdf_example.f90 pineappl.o
 	$(FC) $(FFLAGS) $< pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o $@
 
-PHONY: clean
+.PHONY: clean
 
 clean:
 	rm -f *.o *.mod $(PROGRAMS)
