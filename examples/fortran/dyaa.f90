@@ -9,40 +9,62 @@ program dyaa
         real (dp) s, t, u, x1, x2, jacobian
     end type
 
-    type (pineappl_lumi)    :: lumi
-    integer, dimension(2)   :: pdg_ids
-    real (dp), dimension(1) :: ckm_factors
+    type (pineappl_channels) :: channels
+    integer, dimension(2)    :: pdg_ids
+    real (dp), dimension(1)  :: factors
 
     type (pineappl_grid)     :: grid
-    integer, dimension(4)    :: orders
-    real (dp), dimension(25) :: bins
-
-    type (pineappl_keyval) :: key_vals
 
     integer :: i
 
-    integer              :: order_idx, lumi_idx, calls
+    integer              :: order_idx, channel_idx, calls
     real (dp), parameter :: hbarc2 = 389379372.1_dp
     real (dp)            :: x1, x2, q2, weight, s, t, u, jacobian, ptl, mll, yll, ylp, ylm
     type (psp2to2)       :: tmp
 
-    ! create a new luminosity function for the photon-photon initial state
-    lumi = pineappl_lumi_new()
+    channels = pineappl_channels_new(2)
+    ! create a new channel for the photon-photon initial state
     pdg_ids = [ 22, 22 ]
-    ckm_factors = [ 1.0_dp ]
-    call pineappl_lumi_add(lumi, 1, pdg_ids, ckm_factors)
+    factors = [ 1.0_dp ]
+    call pineappl_channels_add(channels, 1, pdg_ids, factors)
 
-    ! only O(alphas^0 alpha^2 log^0(xiR^2) \log^0(xiF^2)
-    orders = [ 0, 2, 0, 0 ]
-    ! we bin in rapidity from 0 to 2.4 in steps of 0.1
-    bins = [ (i * 0.1_dp, i = 0, 24) ]
 
-    ! create the PineAPPL grid with default interpolation and binning parameters
-    key_vals = pineappl_keyval_new()
-    grid = pineappl_grid_new(lumi, 1, orders, 24, bins, key_vals)
+    grid = pineappl_grid_new2( &
+        ! number of bins
+        24, &
+        ! one-dimensional fill limits: we bin in rapidity from 0 to 2.4 in steps of 0.1
+        [ (i * 0.1_dp, i = 0, 24) ], &
+        ! number of orders
+        1, &
+        ! perturbative orders: only O(alpha^2)
+        [ 0_1, 2_1, 0_1, 0_1, 0_1 ], &
+        channels, &
+        pineappl_pid_basis_pdg, &
+        [ &
+            pineappl_conv(pineappl_conv_type_unpol_pdf, 2212), &
+            pineappl_conv(pineappl_conv_type_unpol_pdf, 2212) &
+        ], &
+        3, &
+        [ &
+            pineappl_interp(1e2_dp, 1e8_dp, 40, 3, pineappl_reweight_meth_no_reweight, pineappl_map_applgrid_h0, pineappl_interp_meth_lagrange), &
+            pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, pineappl_reweight_meth_applgrid_x, pineappl_map_applgrid_f2, pineappl_interp_meth_lagrange), &
+            pineappl_interp(2e-7_dp, 1.0_dp, 50, 3, pineappl_reweight_meth_applgrid_x, pineappl_map_applgrid_f2, pineappl_interp_meth_lagrange) &
+        ], &
+        [ &
+            pineappl_kinematics(pineappl_kinematics_tag_scale, 0), &
+            pineappl_kinematics(pineappl_kinematics_tag_x, 0), &
+            pineappl_kinematics(pineappl_kinematics_tag_x, 1) &
+        ], &
+        [ &
+            pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+            pineappl_scale_func_form(pineappl_scale_func_form_tag_scale, pineappl_scale_func_form_body(0, 0)), &
+            pineappl_scale_func_form(pineappl_scale_func_form_tag_no_scale, pineappl_scale_func_form_body(0, 0)) &
+        ] &
+    )
 
-    call pineappl_keyval_delete(key_vals)
-    call pineappl_lumi_delete(lumi)
+    ! The `pineappl_scale_func_form_body` objects have to defined with two fields - if not required, the value(s) will be ignored
+
+    call pineappl_channels_delete(channels)
 
     ! number of phase-space points that are generated before cuts
     calls = 10000000
@@ -76,18 +98,18 @@ program dyaa
         ! renormalisation and factorisation scale
         q2 = 90.0_dp**2
         order_idx = 0
-        lumi_idx = 0
+        channel_idx = 0
 
         ! fill
         ! - 'grid'
-        ! - for PDF parameters 'x1, x2, q2',
         ! - for perturbative order O(alpha^2) ('order_idx = 0' corresponds to the first four powers
         !   given in 'orders' above)
         ! - for the bin of the differential distribution corresponding to 'abs(yll)'
-        ! - for the first partonic channel ('lumi_idx = 0' corresponds to the lumi entry created
-        !   above in 'lumi')
+        ! - for the first partonic channel ('channel_idx = 0' corresponds to the channel created
+        !   above in 'channels')
+        ! - for PDF parameters 'x1, x2, q2',
         ! - with the given 'weight'
-        call pineappl_grid_fill(grid, x1, x2, q2, order_idx, abs(yll), lumi_idx, weight)
+        call pineappl_grid_fill2(grid, order_idx, abs(yll), channel_idx, [ x1, x2, q2 ], weight)
     end do
 
     ! set metadata - this isn't strictly needed, but usually useful (plot script, ...)
@@ -99,10 +121,6 @@ program dyaa
     ! rapidity doesn't have a unit (other observables could be GeV, TeV, ...)
     call pineappl_grid_set_key_value(grid, 'x1_unit', '')
     call pineappl_grid_set_key_value(grid, 'y_unit', 'pb')
-
-    ! the following are the default values
-    !call pineappl_grid_set_key_value(grid, 'initial_state_1', '2212') ! proton
-    !call pineappl_grid_set_key_value(grid, 'initial_state_2', '2212') ! proton
 
     ! optimize the grid representation (makes the file smaller)
     call pineappl_grid_optimize(grid)
