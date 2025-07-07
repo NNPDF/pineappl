@@ -4,11 +4,9 @@ PINEAPPL_LIBS != pkg-config pineappl_capi --libs
 LHAPDF_LIBS != pkg-config lhapdf --libs
 
 PROGRAMS = \
-	dyaa-deprecated \
+	dyaa \
 	test \
-	test-deprecated \
-	lhapdf_example \
-	lhapdf_example-deprecated
+	lhapdf_example
 
 all: $(PROGRAMS)
 
@@ -18,22 +16,16 @@ test-examples: $(PROGRAMS)
 pineappl.o: pineappl.f90
 	$(FC) $(FFLAGS) -c $< -o $@
 
-dyaa-deprecated: dyaa-deprecated.f90 pineappl.o
+dyaa: dyaa.f90 pineappl.o
 	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
 
 test: test.f90 pineappl.o
 	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
 
-test-deprecated: test-deprecated.f90 pineappl.o
-	$(FC) $(FFLAGS) $< pineappl.o $(PINEAPPL_LIBS) -o $@
-
 lhapdf_example: lhapdf_example.f90 pineappl.o
 	$(FC) $(FFLAGS) $< pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o $@
 
-lhapdf_example-deprecated: lhapdf_example-deprecated.f90 pineappl.o
-	$(FC) $(FFLAGS) $< pineappl.o $(LHAPDF_LIBS) $(PINEAPPL_LIBS) -o $@
-
-PHONY: clean
+.PHONY: clean
 
 clean:
 	rm -f *.o *.mod $(PROGRAMS)

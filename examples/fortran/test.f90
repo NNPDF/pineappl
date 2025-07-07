@@ -95,7 +95,7 @@ program test_pineappl
     integer(kind(pineappl_map)) :: x_mapping
     integer(kind(pineappl_interp_meth)) :: interpolation_meth
 
-    type (pineappl_xfx)    :: xfx1, xfx2, xfx
+    type (pineappl_xfx)    :: xfx
     type (pineappl_alphas) :: alphas
 
     type(c_ptr), target    :: pdfs_state(2)
@@ -254,24 +254,7 @@ program test_pineappl
     call pineappl_grid_split_channels(grid)
 
     ! Construct the callable to the function `xfx` and `alphasQ2`
-    xfx1 = pineappl_xfx(xfx1_test)
-    xfx2 = pineappl_xfx(xfx2_test)
     alphas = pineappl_alphas(alphas_test)
-
-    result = pineappl_grid_convolve_with_one(grid, 2212, xfx1, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp)
-    if (any(result > 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolve_with_one(): ", result
-        error stop "error: pineappl_grid_convolve_with_one"
-    end if
-
-    result = pineappl_grid_convolve_with_two(grid, 2212, xfx1, 2212, xfx2, alphas, &
-        [.true.], [.true.], 1.0_dp, 1.0_dp)
-    if (any(result < 0 .neqv. [.true., .true., .false.])) then
-        write(*, *) "pineappl_grid_convolve_with_two(): ", result
-        error stop "error: pineappl_grid_convolve_with_two"
-    end if
-
     xfx = pineappl_xfx(xfx_test)
     pdfs_array = reshape([0, 0, 1, 0], [2,2])
     pdfs_state(1) = c_loc(pdfs_array(1,1))
