@@ -4,7 +4,7 @@ use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
-use pineappl::grid::{Grid, GridOptFlags};
+use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
 use pineappl::subgrid::{self, Subgrid};
@@ -130,7 +130,7 @@ pub fn convert_into_applgrid(
         // trivial factors
         grid.split_channels();
         grid.merge_channel_factors();
-        grid.optimize_using(GridOptFlags::MERGE_SAME_CHANNELS);
+        grid.optimize();
     }
 
     let combinations: Vec<_> = iter::once(grid.channels().len().try_into().unwrap())
