@@ -6,6 +6,7 @@ use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::{self, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
@@ -92,7 +93,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
 }
 
 pub fn convert_into_applgrid(
-    grid: &Grid,
+    grid: &mut Grid,
     output: &Path,
     discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
@@ -114,8 +115,8 @@ pub fn convert_into_applgrid(
         bail!("APPLgrid does not support grids with more than two convolutions");
     }
 
-
-    // TODO: check that PDG MC IDs are used
+    // APPLgrid only understands PDG PIDs
+    grid.rotate_pid_basis(PidBasis::Pdg);
 
     let non_trivial_factors = grid
         .channels()
