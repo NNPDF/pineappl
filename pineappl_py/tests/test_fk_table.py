@@ -127,15 +127,9 @@ class TestFkTable:
         fk_table = download_objects(f"{fkname}")
         fk = FkTable.read(fk_table)
 
-        # record the channel factors and check they are unity
-        fk_evol_facs = fk.channels_factors()
-        np.testing.assert_array_equal(fk_evol_facs, 1)
-
         # rotate in the PDG basis and check that all the factors are unity
         fk.rotate_pid_basis(PidBasis.Pdg)
         assert fk.pid_basis == PidBasis.Pdg
-        fk_pdg_facs = fk.channels_factors()
-        np.testing.assert_array_equal(fk_pdg_facs, 1)
 
         # check that the convolutions are still the same
         np.testing.assert_allclose(

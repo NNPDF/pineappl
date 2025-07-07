@@ -274,17 +274,6 @@ impl PyChannel {
         }
     }
 
-    /// Get the factors for all the channels.
-    ///
-    /// Returns
-    /// -------
-    /// list(float) :
-    ///     list containing the factor values
-    #[must_use]
-    pub fn factors(&self) -> Vec<f64> {
-        self.entry.entry().iter().map(|(_, f)| *f).collect()
-    }
-
     /// Get list representation.
     ///
     /// Returns

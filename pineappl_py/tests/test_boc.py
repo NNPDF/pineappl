@@ -62,12 +62,10 @@ class TestChannel:
         channel = Channel([([2, -2], 0.5)])
         assert isinstance(channel, Channel)
         assert channel.into_array() == [([2, -2], 0.5)]
-        assert channel.factors() == [0.5]
 
         channels = Channel([([2, -2], 0.5), ([3, -3], 1.5)])
         assert isinstance(channels, Channel)
         assert channels.into_array() == [([2, -2], 0.5), ([3, -3], 1.5)]
-        assert channels.factors() == [0.5, 1.5]
 
 
 class TestKinematics:

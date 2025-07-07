@@ -175,22 +175,6 @@ impl PyFkTable {
         self.fk_table.channels()
     }
 
-    /// Extract the factors from all the channels.
-    ///
-    /// Returns
-    /// -------
-    /// list(float) :
-    ///     list containing the factor values
-    #[must_use]
-    pub fn channels_factors(&self) -> Vec<f64> {
-        self.fk_table
-            .grid()
-            .channels()
-            .iter()
-            .flat_map(|entry| entry.entry().iter().map(|(_, f)| *f))
-            .collect()
-    }
-
     /// Get squared factorization scale.
     ///
     /// Returns
