@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use float_cmp::assert_approx_eq;
+use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
 use pineappl::boc::{Kinematics, Order};
@@ -114,38 +114,42 @@ pub fn convert_into_applgrid(
         bail!("APPLgrid does not support grids with more than two convolutions");
     }
 
-    let lumis = grid.channels().len();
-    let has_pdf1 = !grid.convolutions().is_empty();
-    let has_pdf2 = grid.convolutions().get(1).is_some();
 
     // TODO: check that PDG MC IDs are used
 
-    let combinations: Vec<_> =
-        iter::once(lumis.try_into().unwrap())
-            .chain(
-                grid.channels()
-                    .iter()
-                    .enumerate()
-                    .flat_map(|(index, entry)| {
-                        [
-                            index.try_into().unwrap(),
-                            entry.entry().len().try_into().unwrap(),
-                        ]
-                        .into_iter()
-                        .chain(entry.entry().iter().flat_map(|&(ref pids, factor)| {
-                            // TODO: if the factors aren't trivial, we have to find some other way
-                            // to propagate them
-                            assert_approx_eq!(f64, factor, 1.0, ulps = 4);
+    let non_trivial_factors = grid
+        .channels()
+        .iter()
+        .flat_map(|channel| channel.entry())
+        .any(|&(_, factor)| !approx_eq!(f64, factor, 1.0, ulps = 4));
 
-                            pids.iter()
-                                .copied()
-                                .chain(iter::repeat(0))
-                                .take(2)
-                                .collect::<Vec<_>>()
-                        }))
-                    }),
-            )
-            .collect();
+    // APPLgrid doesn't support non-trivial factors
+    if non_trivial_factors {
+        assert!(false);
+
+    }
+
+    let combinations: Vec<_> = iter::once(grid.channels().len().try_into().unwrap())
+        .chain(
+            grid.channels()
+                .iter()
+                .enumerate()
+                .flat_map(|(index, entry)| {
+                    [
+                        index.try_into().unwrap(),
+                        entry.entry().len().try_into().unwrap(),
+                    ]
+                    .into_iter()
+                    .chain(entry.entry().iter().flat_map(|(pids, _)| {
+                        pids.iter()
+                            .copied()
+                            .chain(iter::repeat(0))
+                            .take(2)
+                            .collect::<Vec<_>>()
+                    }))
+                }),
+        )
+        .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
     let id = "PineAPPL-Lumi.config";
@@ -193,6 +197,9 @@ pub fn convert_into_applgrid(
 
     let mut applgrid =
         ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
+
+    let has_pdf1 = !grid.convolutions().is_empty();
+    let has_pdf2 = grid.convolutions().get(1).is_some();
 
     for (appl_order, order) in order_mask
         .iter()
