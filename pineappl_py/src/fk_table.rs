@@ -224,12 +224,8 @@ impl PyFkTable {
     /// ----------
     /// pid_basis: PyPidBasis
     ///     PID basis of the resulting FK Table
-    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) -> PyGrid {
-        let mut grid_mut = self.fk_table.grid().clone();
-        grid_mut.rotate_pid_basis(pid_basis.into());
-        PyGrid {
-            grid: grid_mut.clone(),
-        }
+    pub fn rotate_pid_basis(&mut self, pid_basis: PyPidBasis) {
+        self.fk_table.rotate_pid_basis(pid_basis.into());
     }
 
     /// Write to file.

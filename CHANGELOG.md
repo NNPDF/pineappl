@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl_grid_evolve_info`, and `pineappl_grid_evolve` to evolve grids
 - C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
   given an optimization assumption
+- added methods `Grid::merge_channel_factors` and `Channel::factor`
 
 ## [1.0.0] - 10/06/2025
 
