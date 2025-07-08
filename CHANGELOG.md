@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   given an optimization assumption
 - added methods `Grid::merge_channel_factors` and `Channel::factor`
 
+### Fixed
+
+- fixed a bug that caused `pineappl export` to fail when called with grid
+  having non-trivial factors in their channel definitions
+
 ## [1.0.0] - 10/06/2025
 
 PineAPPL 1.0 is a major rewrite from the previous version, allowing grids to
