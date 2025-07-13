@@ -205,12 +205,12 @@ pub fn convert_into_applgrid(
     // APPLgrid has either two or one convolution(s)
     let convolutions = grid.convolutions().len();
 
-    for (appl_order, order) in order_mask
+    for order in order_mask
         .iter()
         .enumerate()
         .filter_map(|(index, keep)| keep.then_some(index))
-        .enumerate()
     {
+        let appl_order = grid.orders()[order].alphas - lo_alphas;
         let factor = TAU.powi(grid.orders()[order].alphas.into());
 
         for (bin, subgrids) in grid
