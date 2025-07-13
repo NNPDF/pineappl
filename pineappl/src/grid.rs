@@ -944,17 +944,8 @@ impl Grid {
                     .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
                 for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
-                    if !rhs.is_empty() {
-                        if lhs.is_empty() {
-                            // we can't merge into an EmptySubgridV1
-                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
-                            // transpose `lhs`
-                            todo!();
-                        } else {
-                            lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
-                            *rhs = EmptySubgridV1.into();
-                        }
-                    }
+                    lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
+                    *rhs = EmptySubgridV1.into();
                 }
             }
         }
