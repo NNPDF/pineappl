@@ -111,8 +111,19 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
-    if grid.convolutions().len() > 2 {
-        bail!("APPLgrid does not support grids with more than two convolutions");
+    match grid.convolutions() {
+        [_] => {}
+        [a, b] => {
+            if a != b {
+                if a.cc() == *b {
+                    // use charge conjugate to map hadron-anti-hadron grids to use the same single
+                    // convolution function
+                    let index = if a.pid() < 0 { 0 } else { 1 };
+                    grid.charge_conjugate(index);
+                }
+            }
+        }
+        _ => bail!("APPLgrid does not support grids with more than two convolutions"),
     }
 
     // APPLgrid only understands PDG PIDs

@@ -19,7 +19,7 @@ grids=(
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-atlas-z0-arxiv-1606.01736/pinejet-atlas-z0-arxiv-1606.01736.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-atlas-z0-arxiv-1612.03016/pinejet-atlas-z0-arxiv-1612.03016.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-atlas-z0-arxiv-1710.05167/pinejet-atlas-z0-arxiv-1710.05167.tgz"
-    #"https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cdf-z0-arxiv-0908.3914/pinejet-cdf-z0-arxiv-0908.3914.tgz" # fails due to ppbar PDF mismatch
+    "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cdf-z0-arxiv-0908.3914/pinejet-cdf-z0-arxiv-0908.3914.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-wm-arxiv-1206.2598/pinejet-cms-wm-arxiv-1206.2598.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-wm-arxiv-1312.6283/pinejet-cms-wm-arxiv-1312.6283.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-wm-arxiv-1603.01803/pinejet-cms-wm-arxiv-1603.01803.tgz"
@@ -27,9 +27,9 @@ grids=(
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-wp-arxiv-1312.6283/pinejet-cms-wp-arxiv-1312.6283.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-wp-arxiv-1603.01803/pinejet-cms-wp-arxiv-1603.01803.tgz"
     #"https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-cms-z0-arxiv-1310.7291/pinejet-cms-z0-arxiv-1310.7291.tgz" # fails due to static-scale optimization
-    #"https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-wm-arxiv-1309.2591/pinejet-d0-wm-arxiv-1309.2591.tgz" # fails du to ppbar PDF mismatch
-    #"https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-wp-arxiv-1309.2591/pinejet-d0-wp-arxiv-1309.2591.tgz" # fails du to ppbar PDF mismatch
-    #"https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-z0-arxiv-0702025/pinejet-d0-z0-arxiv-0702025.tgz" # fails du to ppbar PDF mismatch
+    "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-wm-arxiv-1309.2591/pinejet-d0-wm-arxiv-1309.2591.tgz"
+    "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-wp-arxiv-1309.2591/pinejet-d0-wp-arxiv-1309.2591.tgz"
+    "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-d0-z0-arxiv-0702025/pinejet-d0-z0-arxiv-0702025.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-lhcb-wm-arxiv-1505.07024/pinejet-lhcb-wm-arxiv-1505.07024.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-lhcb-wm-arxiv-1511.08039/pinejet-lhcb-wm-arxiv-1511.08039.tgz"
     "https://ploughshare.web.cern.ch/ploughshare/db/pinejet/pinejet-lhcb-wp-arxiv-1505.07024/pinejet-lhcb-wp-arxiv-1505.07024.tgz"
