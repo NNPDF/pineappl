@@ -14,6 +14,7 @@ PROGRAMS = \
 	convolve-grid-deprecated \
 	convolve-grid \
 	get-subgrids \
+	set-subgrids \
 	evolve-grid \
 	evolve-grid-identity \
 	deprecated \
@@ -51,6 +52,9 @@ deprecated: deprecated.cpp
 	$(CXX) $(CXXFLAGS) $< $(LHAPDF_DEPS) $(PINEAPPL_DEPS) -o $@
 
 get-subgrids: get-subgrids.cpp
+	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
+
+set-subgrids: set-subgrids.cpp
 	$(CXX) $(CXXFLAGS) $< $(PINEAPPL_DEPS) -o $@
 
 evolve-grid: evolve-grid.cpp

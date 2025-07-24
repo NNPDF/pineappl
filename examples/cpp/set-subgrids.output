@@ -1,0 +1,4 @@
+Generated sidis-toygrid.pineappl.lz4 containing a toy SIDIS.
+
+Try running the following command to check the bins:
+  - pineappl read --bins sidis-toygrid.pineappl.lz4
