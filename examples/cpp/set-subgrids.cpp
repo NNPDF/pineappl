@@ -101,6 +101,9 @@ void fill_grid(pineappl_grid* grid, std::vector<KinematicsTuple> kin_tuples) {
             }
         }
     }
+
+    // Remove channels object from memory
+    pineappl_channels_delete(channels);
 }
 
 int main() {
