@@ -90,6 +90,18 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
             .map(|(indices, entry)| (indices, *entry))
     }
 
+    /// Clear array, if it is empty.
+    /// 
+    /// See https://github.com/NNPDF/pineappl/issues/338 and https://github.com/NNPDF/pineappl/commit/591cdcfa434ef7028dbbdc5f8da2ab83b273029c.
+    /// Return value indicates, whether it was cleared
+    pub fn clear_if_empty(&mut self) -> bool {
+        if self.indexed_iter().count() == 0 {
+            self.clear();
+            return true;
+        }
+        false
+    }
+
     /// TODO
     ///
     /// # Panics
@@ -996,6 +1008,28 @@ mod tests {
         assert!(array.is_empty());
         assert_eq!(array.non_zeros(), 0);
         assert_eq!(array.explicit_zeros(), 0);
+    }
+
+    #[test]
+    fn clear_if_empty() {
+        let mut array = PackedArray::new(vec![40, 50, 50]);
+
+        array[[0,0,0]] = 1;
+
+        assert!(!array.is_empty());
+
+        // setting the default value does not clear the array on it's own ...
+
+        array[[0,0,0]] = 0;
+
+        assert!(!array.is_empty());
+        assert_eq!(array.indexed_iter().count(),0);
+
+        // ... one needs to make that explicitly
+        array.clear_if_empty();
+
+        assert!(array.is_empty());
+        assert_eq!(array.indexed_iter().count(),0);
     }
 
     #[test]
