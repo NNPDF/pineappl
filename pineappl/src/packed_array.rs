@@ -1014,20 +1014,19 @@ mod tests {
     fn clear_if_empty() {
         let mut array = PackedArray::new(vec![40, 50, 50]);
 
+        // set something, which is not nothing
         array[[0,0,0]] = 1;
-
+        assert!(!array.is_empty());
+        array.clear_if_empty();
         assert!(!array.is_empty());
 
         // setting the default value does not clear the array on it's own ...
-
         array[[0,0,0]] = 0;
-
         assert!(!array.is_empty());
         assert_eq!(array.indexed_iter().count(),0);
 
         // ... one needs to make that explicitly
         array.clear_if_empty();
-
         assert!(array.is_empty());
         assert_eq!(array.indexed_iter().count(),0);
     }
