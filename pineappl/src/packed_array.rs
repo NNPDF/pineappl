@@ -1017,8 +1017,9 @@ mod tests {
         // set something, which is not nothing
         array[[0,0,0]] = 1;
         assert!(!array.is_empty());
-        array.clear_if_empty();
+        let must_be_false = array.clear_if_empty();
         assert!(!array.is_empty());
+        assert!(!must_be_false);
 
         // setting the default value does not clear the array on it's own ...
         array[[0,0,0]] = 0;
@@ -1026,8 +1027,9 @@ mod tests {
         assert_eq!(array.indexed_iter().count(),0);
 
         // ... one needs to make that explicitly
-        array.clear_if_empty();
+        let must_be_true = array.clear_if_empty();
         assert!(array.is_empty());
+        assert!(must_be_true);
         assert_eq!(array.indexed_iter().count(),0);
     }
 
