@@ -1618,8 +1618,8 @@ mod tests {
                 frg: ScaleFuncForm::NoScale,
             },
         );
-        let was_reparied = grid.repair();
-        assert!(!was_reparied);
+        let was_repaired = grid.repair();
+        assert!(!was_repaired);
         // insert nothing
         let x = vec![
             0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
@@ -1629,8 +1629,8 @@ mod tests {
         let sg: SubgridEnum =
             ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x.clone()]).into();
         grid.subgrids_mut()[[0, 0, 0]] = sg;
-        let was_reparied = grid.repair();
-        assert!(was_reparied);
+        let was_repaired = grid.repair();
+        assert!(was_repaired);
     }
 
     #[test]
