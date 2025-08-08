@@ -68,7 +68,9 @@ impl Subgrid for EmptySubgridV1 {
 
     fn optimize_nodes(&mut self) {}
 
-    fn repair(&mut self) -> bool { false }
+    fn repair(&mut self) -> bool {
+        false
+    }
 }
 
 /// TODO
@@ -91,7 +93,9 @@ impl Subgrid for ImportSubgridV1 {
         self.array.is_empty()
     }
 
-    fn repair(&mut self) -> bool { self.array.clear_if_empty() }
+    fn repair(&mut self) -> bool {
+        self.array.clear_if_empty()
+    }
 
     fn merge_impl(&mut self, other: &SubgridEnum, transpose: Option<(usize, usize)>) {
         let lhs_node_values = self.node_values();
@@ -279,7 +283,9 @@ impl Subgrid for InterpSubgridV1 {
         self.array.is_empty()
     }
 
-    fn repair(&mut self) -> bool { self.array.clear_if_empty() }
+    fn repair(&mut self) -> bool {
+        self.array.clear_if_empty()
+    }
 
     fn shape(&self) -> &[usize] {
         self.array.shape()
@@ -493,7 +499,7 @@ pub trait Subgrid {
     fn optimize_nodes(&mut self);
 
     /// Repair subgrid if necessary.
-    fn repair (&mut self) -> bool;
+    fn repair(&mut self) -> bool;
 }
 
 /// Type to iterate over the non-zero contents of a subgrid. The tuple contains the indices of the
