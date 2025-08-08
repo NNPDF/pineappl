@@ -628,6 +628,15 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// Repair grid.
+    pub fn repair(&mut self) -> bool {
+        let mut has_repaired = false;
+        self.subgrids
+            .iter_mut()
+            .for_each(|subgrid| has_repaired |= subgrid.repair());
+        has_repaired
+    }
+
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
