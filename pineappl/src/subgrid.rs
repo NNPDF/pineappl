@@ -713,6 +713,30 @@ mod tests {
     }
 
     #[test]
+    fn import_subgrid_v1_repair() {
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        // create empty grid
+        let mut grid1: SubgridEnum = ImportSubgridV1::new(
+            PackedArray::new(vec![1, 10, 10]),
+            vec![vec![0.0], x.clone(), x.clone()],
+        )
+        .into();
+        assert_eq!(grid1.node_values(), vec![vec![0.0], x.clone(), x.clone()]);
+        assert!(grid1.is_empty());
+        // set a default value
+        if let SubgridEnum::ImportSubgridV1(ref mut x) = grid1 {
+            x.array[[0, 1, 2]] = 0.0;
+        }
+        assert!(!grid1.is_empty());
+        // now fix
+        let has_repaired = grid1.repair();
+        assert!(grid1.is_empty());
+        assert!(has_repaired);
+    }
+
+    #[test]
     fn interp_subgrid_v1_fill_zero() {
         let interps = v0::default_interps(false, 2);
         let mut subgrid = InterpSubgridV1::new(&interps);
@@ -798,5 +822,21 @@ mod tests {
         assert_eq!(node_values[2].len(), 1);
 
         assert_eq!(subgrid.shape(), [23, 1, 1]);
+    }
+
+    #[test]
+    fn interp_subgrid_v1_repair() {
+        let interps = v0::default_interps(false, 2);
+        let mut subgrid = InterpSubgridV1::new(&interps);
+        // Fill something
+        subgrid.fill(&interps, &[1000.0, 0.5, 0.5], 1.0);
+        assert!(!subgrid.is_empty());
+        // The multiply with 0 trick is still possible at f856cd871afc2ba44d5e19e658dba3f38893fcab
+        subgrid.scale(0.);
+        assert!(subgrid.is_empty());
+        // now fix
+        let has_repaired = subgrid.repair();
+        assert!(subgrid.is_empty());
+        assert!(!has_repaired);
     }
 }

@@ -93,9 +93,11 @@ impl<T: Copy + Default + PartialEq> PackedArray<T> {
     /// Clear array, if it is empty.
     ///
     /// See https://github.com/NNPDF/pineappl/issues/338 and https://github.com/NNPDF/pineappl/commit/591cdcfa434ef7028dbbdc5f8da2ab83b273029c.
-    /// Return value indicates, whether it was cleared
+    /// Return value indicates, whether it was cleared (now)
     pub fn clear_if_empty(&mut self) -> bool {
-        if self.indexed_iter().count() == 0 {
+        // 1) are there actually elements?
+        // 2) some of them might be default (and filtered away)
+        if self.lengths.len() > 0 && self.indexed_iter().count() == 0 {
             self.clear();
             return true;
         }
@@ -1012,14 +1014,18 @@ mod tests {
 
     #[test]
     fn clear_if_empty() {
+        // create an empty array
         let mut array = PackedArray::new(vec![40, 50, 50]);
+        let was_repaired = array.clear_if_empty();
+        assert!(array.is_empty());
+        assert!(!was_repaired);
 
         // set something, which is not nothing
         array[[0, 0, 0]] = 1;
         assert!(!array.is_empty());
-        let must_be_false = array.clear_if_empty();
+        let was_repaired = array.clear_if_empty();
         assert!(!array.is_empty());
-        assert!(!must_be_false);
+        assert!(!was_repaired);
 
         // setting the default value does not clear the array on it's own ...
         array[[0, 0, 0]] = 0;
@@ -1027,9 +1033,9 @@ mod tests {
         assert_eq!(array.indexed_iter().count(), 0);
 
         // ... one needs to make that explicitly
-        let must_be_true = array.clear_if_empty();
+        let was_repaired = array.clear_if_empty();
         assert!(array.is_empty());
-        assert!(must_be_true);
+        assert!(was_repaired);
         assert_eq!(array.indexed_iter().count(), 0);
     }
 
