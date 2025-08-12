@@ -3,7 +3,7 @@ use cxx::{let_cxx_string, UniquePtr};
 use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::boc::{Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
 use pineappl::pids::PidBasis;
@@ -114,13 +114,11 @@ pub fn convert_into_applgrid(
     match grid.convolutions() {
         [_] => {}
         [a, b] => {
-            if a != b {
-                if a.cc() == *b {
-                    // use charge conjugate to map hadron-anti-hadron grids to use the same single
-                    // convolution function
-                    let index = if a.pid() < 0 { 0 } else { 1 };
-                    grid.charge_conjugate(index);
-                }
+            if (a != b) && (a.cc() == *b) {
+                // use charge conjugate to map hadron-anti-hadron grids to use the same single
+                // convolution function
+                let index = usize::from(a.pid() < 0);
+                grid.charge_conjugate(index);
             }
         }
         _ => bail!("APPLgrid does not support grids with more than two convolutions"),
@@ -132,7 +130,7 @@ pub fn convert_into_applgrid(
     let non_trivial_factors = grid
         .channels()
         .iter()
-        .flat_map(|channel| channel.entry())
+        .flat_map(Channel::entry)
         .any(|&(_, factor)| !approx_eq!(f64, factor, 1.0, ulps = 4));
 
     // APPLgrid doesn't support non-trivial factors
@@ -392,7 +390,7 @@ pub fn convert_into_applgrid(
             unsafe {
                 applgrid.pin_mut().add_igrid(
                     bin.try_into().unwrap(),
-                    appl_order.try_into().unwrap(),
+                    appl_order.into(),
                     igrid.into_raw(),
                 );
             }

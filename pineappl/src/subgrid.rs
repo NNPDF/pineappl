@@ -420,14 +420,14 @@ impl SubgridEnum {
         }
 
         if let Self::EmptySubgridV1(_) = self {
+            // change the type of `self` to the type of `other`
+            *self = other.clone();
+
             if transpose.is_some() {
-                // change the type of `self` to the type of `other`
-                *self = other.clone();
                 // TODO: emptying `self` could be done more efficiently, we're probably storing a
                 // lot of zeros here
                 self.scale(0.0);
             } else {
-                *self = other.clone();
                 return;
             }
         }
