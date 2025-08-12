@@ -167,9 +167,11 @@ pub fn convert_into_applgrid(
         .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
-    let id = "PineAPPL-Lumi.config";
+    let id = format!("{}.config", output.file_stem()
+        // UNWRAP: because we write to that file in the end, there always must be a file name
+        .unwrap().to_string_lossy());
     // this object is managed by APPLgrid internally
-    ffi::make_lumi_pdf(id, &combinations).into_raw();
+    ffi::make_lumi_pdf(&id, &combinations).into_raw();
 
     let limits: Vec<_> = grid
         .bwfl()
@@ -211,7 +213,7 @@ pub fn convert_into_applgrid(
         - lo_alphas;
 
     let mut applgrid =
-        ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
+        ffi::make_empty_grid(&limits, &id, lo_alphas.into(), loops.into(), "f2", "h0");
 
     // APPLgrid has either two or one convolution(s)
     let convolutions = grid.convolutions().len();
