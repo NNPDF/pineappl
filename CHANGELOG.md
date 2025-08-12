@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added `Grid::repair` to repair bugs that survived by writing bugged grids to
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>
+
 ### Fixed
 
 - added a missing implementation for a branch in `Grid::merge` that was
