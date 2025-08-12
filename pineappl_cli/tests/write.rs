@@ -24,6 +24,7 @@ Options:
       --mul-bin-norm <NORM>             Multiply all bin normalizations with the given factor
       --optimize[=<ENABLE>]             Optimize internal data structure to minimize memory and disk usage [possible values: true, false]
       --optimize-fk-table <OPTIMI>      Optimize internal data structure of an FkTable to minimize memory and disk usage [possible values: Nf6Ind, Nf6Sym, Nf5Ind, Nf5Sym, Nf4Ind, Nf4Sym, Nf3Ind, Nf3Sym]
+      --repair[=<ENABLE>]               Repair bugs saved in the grid [possible values: true, false]
       --rewrite-channel <IDX> <CHAN>    Rewrite the definition of the channel with index IDX
       --rewrite-order <IDX> <ORDER>     Rewrite the definition of the order with index IDX
       --rotate-pid-basis <BASIS>        Rotate the PID basis for this grid [possible values: PDG, EVOL]
@@ -874,6 +875,23 @@ fn multiple_arguments() {
         .assert()
         .success()
         .stdout(MULTIPLE_ARGUMENTS_STR);
+}
+
+#[test]
+fn repair() {
+    let output = NamedTempFile::new("repaired-grid.pineappl.lz4").unwrap();
+
+    Command::cargo_bin("pineappl")
+        .unwrap()
+        .args([
+            "write",
+            "--repair",
+            "../test-data/LHCB_WP_7TEV_opt.pineappl.lz4",
+            output.path().to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .stdout("");
 }
 
 #[test]

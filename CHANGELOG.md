@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added `Grid::repair` to repair bugs that survived by writing bugged grids to
-  disk, for example <https://github.com/NNPDF/pineappl/issues/338>
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>. The CLI
+  offers this functionality via `pineappl write --repair`
 
 ### Fixed
 
