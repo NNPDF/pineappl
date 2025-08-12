@@ -628,13 +628,24 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
-    /// Repair grid.
+    /// Repair the grid if it was written by bugged versions to disk.
+    ///
+    /// Returns `true` if this operations did anything. Currently, this scans for these problems:
+    /// - <https://github.com/NNPDF/pineappl/issues/338>
     pub fn repair(&mut self) -> bool {
-        let mut has_repaired = false;
-        self.subgrids
-            .iter_mut()
-            .for_each(|subgrid| has_repaired |= subgrid.repair());
-        has_repaired
+        let mut repaired = false;
+
+        for subgrid in &mut self.subgrids {
+            // if the subgrid states it isn't empty and also doesn't return any elements it's
+            // broken; we need to fix that to avoid <https://github.com/NNPDF/pineappl/issues/338>
+            if !subgrid.is_empty() && subgrid.indexed_iter().count() == 0 {
+                *subgrid = EmptySubgridV1.into();
+
+                repaired = true;
+            }
+        }
+
+        repaired
     }
 
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
