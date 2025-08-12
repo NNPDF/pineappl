@@ -111,8 +111,19 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
-    if grid.convolutions().len() > 2 {
-        bail!("APPLgrid does not support grids with more than two convolutions");
+    match grid.convolutions() {
+        [_] => {}
+        [a, b] => {
+            if a != b {
+                if a.cc() == *b {
+                    // use charge conjugate to map hadron-anti-hadron grids to use the same single
+                    // convolution function
+                    let index = if a.pid() < 0 { 0 } else { 1 };
+                    grid.charge_conjugate(index);
+                }
+            }
+        }
+        _ => bail!("APPLgrid does not support grids with more than two convolutions"),
     }
 
     // APPLgrid only understands PDG PIDs
@@ -156,9 +167,11 @@ pub fn convert_into_applgrid(
         .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
-    let id = "PineAPPL-Lumi.config";
+    let id = format!("{}.config", output.file_stem()
+        // UNWRAP: because we write to that file in the end, there always must be a file name
+        .unwrap().to_string_lossy());
     // this object is managed by APPLgrid internally
-    ffi::make_lumi_pdf(id, &combinations).into_raw();
+    ffi::make_lumi_pdf(&id, &combinations).into_raw();
 
     let limits: Vec<_> = grid
         .bwfl()
@@ -200,17 +213,17 @@ pub fn convert_into_applgrid(
         - lo_alphas;
 
     let mut applgrid =
-        ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
+        ffi::make_empty_grid(&limits, &id, lo_alphas.into(), loops.into(), "f2", "h0");
 
-    let has_pdf1 = !grid.convolutions().is_empty();
-    let has_pdf2 = grid.convolutions().get(1).is_some();
+    // APPLgrid has either two or one convolution(s)
+    let convolutions = grid.convolutions().len();
 
-    for (appl_order, order) in order_mask
+    for order in order_mask
         .iter()
         .enumerate()
         .filter_map(|(index, keep)| keep.then_some(index))
-        .enumerate()
     {
+        let appl_order = grid.orders()[order].alphas - lo_alphas;
         let factor = TAU.powi(grid.orders()[order].alphas.into());
 
         for (bin, subgrids) in grid
@@ -275,9 +288,7 @@ pub fn convert_into_applgrid(
                     })
                     .collect::<Result<_>>()?;
 
-                // in the DIS case APPLgrid always uses the first x dimension
-
-                let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
+                let (x1_grid, x2_grid) = if convolutions == 2 {
                     (
                         grid.kinematics()
                             .iter()
@@ -297,19 +308,6 @@ pub fn convert_into_applgrid(
                             })
                             // TODO: convert this into an error
                             .unwrap(),
-                    )
-                } else if has_pdf1 {
-                    (
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap(),
-                        Vec::new(),
                     )
                 } else {
                     (
@@ -317,7 +315,7 @@ pub fn convert_into_applgrid(
                             .iter()
                             .zip(subgrid.node_values())
                             .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
@@ -376,7 +374,7 @@ pub fn convert_into_applgrid(
                         weightgrid.as_mut(),
                         appl_q2_idx,
                         appl_x1_idx[indices[1]],
-                        if has_pdf1 && has_pdf2 {
+                        if convolutions == 2 {
                             appl_x2_idx[indices[2]]
                         } else {
                             0
