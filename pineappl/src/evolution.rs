@@ -367,6 +367,7 @@ pub(crate) fn evolve_slice(
 ) -> Result<(Array3<SubgridEnum>, Vec<Channel>)> {
     let gluon_has_pid_zero = gluon_has_pid_zero(grid);
 
+    // TODO: implement matching of different scales for different EKOs
     let mut fac1_scales: Vec<_> = infos.iter().map(|info| info.fac1).collect();
     fac1_scales.sort_by(f64::total_cmp);
     assert!(fac1_scales
@@ -419,6 +420,7 @@ pub(crate) fn evolve_slice(
                 alphas_table,
             )?;
 
+            // skip over zero arrays to speed up evolution and avoid problems with NaNs
             let Some(array) = array else {
                 continue;
             };
