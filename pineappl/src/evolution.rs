@@ -15,9 +15,8 @@ use ndarray::{
     s, Array1, Array2, Array3, ArrayD, ArrayView1, ArrayView4, ArrayViewD, ArrayViewMutD, Axis,
     Ix1, Ix2,
 };
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use std::iter;
-use std::sync::{Arc, Mutex};
 
 /// This structure captures the information needed to create an evolution kernel operator (EKO) for
 /// a specific [`Grid`].
@@ -446,26 +445,29 @@ pub(crate) fn evolve_slice(
             for (pids1, factor) in channel1.entry() {
                 // find the tuple of EKOs that evolve the current channel entry of the grid into
                 // every channel of the FK-table
-                let tmp = channels0.iter().map(|pids0| {
-                    izip!(pids0, pids1, &pids01, &eko_slices)
-                        .map(|(&pid0, &pid1, pids, slices)| {
-                            // for each convolution ...
-                            pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
-                                // find the EKO that matches both the FK-table and the grid PID
-                                ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                let tmp: Vec<_> = channels0
+                    .iter()
+                    .map(|pids0| {
+                        izip!(pids0, pids1, &pids01, &eko_slices)
+                            .map(|(&pid0, &pid1, pids, slices)| {
+                                // for each convolution ...
+                                pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                    // find the EKO that matches both the FK-table and the grid PID
+                                    ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                                })
                             })
-                        })
-                        // if an EKO isn't found, it's zero and therefore the whole FK-table
-                        // channel contribution will be zero
-                        .collect::<Option<Box<[_]>>>()
-                });
+                            // if an EKO isn't found, it's zero and therefore the whole FK-table
+                            // channel contribution will be zero
+                            .collect::<Option<Box<[_]>>>()
+                    })
+                    .collect();
 
-                for (fk_table, ops) in tables.iter_mut().zip(tmp) {
+                tables.par_iter_mut().zip(tmp).for_each(|(fk_table, ops)| {
                     // if there's one zero EKO, the entire tuple is `None`
                     if let Some(ops) = ops {
                         general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
                     }
-                }
+                });
             }
         }
 
