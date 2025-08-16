@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- added a missing implementation for a branch in `Grid::merge` that was
+  triggered when exporting some PineAPPL grids generated from the 'pinejet'
+  group
+- fixed wrong coupling orders when exporting to APPLgrid. This happened when
+  the PineAPPL grid had orders that had any other ordering than 'LO', 'NLO',
+  'NNLO'
+- fixed a bug that caused exported grids to compare unsuccessfully when the
+  convolution functions were proton-anti-proton; APPLgrid doesn't store the
+  types of convolution functions, so we simply convert the grid to use only
+  proton PDFs
+
+## [1.1.0] - 08/07/2025
+
 ### Added
 
 - added a new `V3` metadata reader to the `pineappl evolve` CLI for EKOs
@@ -15,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pineappl_grid_evolve_info`, and `pineappl_grid_evolve` to evolve grids
 - C API: added `pineappl_fktable_optimize` to optimize FK Table-like objects
   given an optimization assumption
+- added methods `Grid::merge_channel_factors` and `Channel::factor`
+
+### Fixed
+
+- fixed a bug that caused `pineappl export` to fail when called with grid
+  having non-trivial factors in their channel definitions
 
 ### Changed
 
@@ -781,7 +802,8 @@ the old file format can still be read with this new version.
 
 - first release
 
-[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/NNPDF/pineappl/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/NNPDF/pineappl/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/NNPDF/pineappl/compare/v0.8.2...v1.0.0
 [0.8.7]: https://github.com/NNPDF/pineappl/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/NNPDF/pineappl/compare/v0.8.5...v0.8.6

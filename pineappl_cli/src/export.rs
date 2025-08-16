@@ -15,7 +15,7 @@ mod applgrid;
 #[cfg(feature = "applgrid")]
 fn convert_into_applgrid(
     output: &Path,
-    grid: &Grid,
+    grid: &mut Grid,
     conv_funs: &mut [Pdf],
     _: usize,
     discard_non_matching_scales: bool,
@@ -32,7 +32,7 @@ fn convert_into_applgrid(
 #[cfg(not(feature = "applgrid"))]
 fn convert_into_applgrid(
     _: &Path,
-    _: &Grid,
+    _: &mut Grid,
     _: &mut [Pdf],
     _: usize,
     _: bool,
@@ -44,7 +44,7 @@ fn convert_into_applgrid(
 
 fn convert_into_grid(
     output: &Path,
-    grid: &Grid,
+    grid: &mut Grid,
     conv_funs: &mut [Pdf],
     scales: usize,
     discard_non_matching_scales: bool,
@@ -101,13 +101,13 @@ impl Subcommand for Opts {
     fn run(&self, cfg: &GlobalConfiguration) -> Result<ExitCode> {
         use prettytable::{cell, row};
 
-        let grid = helpers::read_grid(&self.input)?;
+        let mut grid = helpers::read_grid(&self.input)?;
         let mut conv_funs = helpers::create_conv_funs(&self.conv_funs)?;
 
         // TODO: figure out `member` from `self.pdfset`
         let (grid_type, results, scale_variations, order_mask) = convert_into_grid(
             &self.output,
-            &grid,
+            &mut grid,
             &mut conv_funs,
             self.scales,
             self.discard_non_matching_scales,

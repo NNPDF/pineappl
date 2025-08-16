@@ -1,11 +1,12 @@
 use anyhow::{bail, Result};
 use cxx::{let_cxx_string, UniquePtr};
-use float_cmp::assert_approx_eq;
+use float_cmp::approx_eq;
 use lhapdf::Pdf;
 use ndarray::{s, Axis};
-use pineappl::boc::{Kinematics, Order};
+use pineappl::boc::{Channel, Kinematics, Order};
 use pineappl::grid::Grid;
 use pineappl::interpolation::{Interp, InterpMeth, Map, ReweightMeth};
+use pineappl::pids::PidBasis;
 use pineappl::subgrid::{self, Subgrid};
 use pineappl_applgrid::ffi::{self, grid};
 use std::f64::consts::TAU;
@@ -92,7 +93,7 @@ fn reconstruct_subgrid_params(grid: &Grid, order: usize, bin: usize) -> Result<V
 }
 
 pub fn convert_into_applgrid(
-    grid: &Grid,
+    grid: &mut Grid,
     output: &Path,
     discard_non_matching_scales: bool,
 ) -> Result<(UniquePtr<grid>, Vec<bool>)> {
@@ -110,47 +111,70 @@ pub fn convert_into_applgrid(
         bail!("grid has non-consecutive bin limits, which APPLgrid does not support");
     }
 
-    if grid.convolutions().len() > 2 {
-        bail!("APPLgrid does not support grids with more than two convolutions");
+    match grid.convolutions() {
+        [_] => {}
+        [a, b] => {
+            if (a != b) && (a.cc() == *b) {
+                // use charge conjugate to map hadron-anti-hadron grids to use the same single
+                // convolution function
+                let index = usize::from(a.pid() < 0);
+                grid.charge_conjugate(index);
+            }
+        }
+        _ => bail!("APPLgrid does not support grids with more than two convolutions"),
     }
 
-    let lumis = grid.channels().len();
-    let has_pdf1 = !grid.convolutions().is_empty();
-    let has_pdf2 = grid.convolutions().get(1).is_some();
+    // APPLgrid only understands PDG PIDs
+    grid.rotate_pid_basis(PidBasis::Pdg);
 
-    // TODO: check that PDG MC IDs are used
+    let non_trivial_factors = grid
+        .channels()
+        .iter()
+        .flat_map(Channel::entry)
+        .any(|&(_, factor)| !approx_eq!(f64, factor, 1.0, ulps = 4));
 
-    let combinations: Vec<_> =
-        iter::once(lumis.try_into().unwrap())
-            .chain(
-                grid.channels()
-                    .iter()
-                    .enumerate()
-                    .flat_map(|(index, entry)| {
-                        [
-                            index.try_into().unwrap(),
-                            entry.entry().len().try_into().unwrap(),
-                        ]
-                        .into_iter()
-                        .chain(entry.entry().iter().flat_map(|&(ref pids, factor)| {
-                            // TODO: if the factors aren't trivial, we have to find some other way
-                            // to propagate them
-                            assert_approx_eq!(f64, factor, 1.0, ulps = 4);
+    // APPLgrid doesn't support non-trivial factors
+    if non_trivial_factors {
+        // TODO: this isn't the most efficient strategy, since we also split up channels with
+        // trivial factors
+        grid.split_channels();
+        grid.merge_channel_factors();
+        grid.optimize();
+    }
 
-                            pids.iter()
-                                .copied()
-                                .chain(iter::repeat(0))
-                                .take(2)
-                                .collect::<Vec<_>>()
-                        }))
-                    }),
-            )
-            .collect();
+    let combinations: Vec<_> = iter::once(grid.channels().len().try_into().unwrap())
+        .chain(
+            grid.channels()
+                .iter()
+                .enumerate()
+                .flat_map(|(index, entry)| {
+                    [
+                        index.try_into().unwrap(),
+                        entry.entry().len().try_into().unwrap(),
+                    ]
+                    .into_iter()
+                    .chain(entry.entry().iter().flat_map(|(pids, _)| {
+                        pids.iter()
+                            .copied()
+                            .chain(iter::repeat(0))
+                            .take(2)
+                            .collect::<Vec<_>>()
+                    }))
+                }),
+        )
+        .collect();
 
     // `id` must end with '.config' for APPLgrid to know its type is `lumi_pdf`
-    let id = "PineAPPL-Lumi.config";
+    let id = format!(
+        "{}.config",
+        output
+            .file_stem()
+            // UNWRAP: because we write to that file in the end, there always must be a file name
+            .unwrap()
+            .to_string_lossy()
+    );
     // this object is managed by APPLgrid internally
-    ffi::make_lumi_pdf(id, &combinations).into_raw();
+    ffi::make_lumi_pdf(&id, &combinations).into_raw();
 
     let limits: Vec<_> = grid
         .bwfl()
@@ -192,14 +216,17 @@ pub fn convert_into_applgrid(
         - lo_alphas;
 
     let mut applgrid =
-        ffi::make_empty_grid(&limits, id, lo_alphas.into(), loops.into(), "f2", "h0");
+        ffi::make_empty_grid(&limits, &id, lo_alphas.into(), loops.into(), "f2", "h0");
 
-    for (appl_order, order) in order_mask
+    // APPLgrid has either two or one convolution(s)
+    let convolutions = grid.convolutions().len();
+
+    for order in order_mask
         .iter()
         .enumerate()
         .filter_map(|(index, keep)| keep.then_some(index))
-        .enumerate()
     {
+        let appl_order = grid.orders()[order].alphas - lo_alphas;
         let factor = TAU.powi(grid.orders()[order].alphas.into());
 
         for (bin, subgrids) in grid
@@ -264,9 +291,7 @@ pub fn convert_into_applgrid(
                     })
                     .collect::<Result<_>>()?;
 
-                // in the DIS case APPLgrid always uses the first x dimension
-
-                let (x1_grid, x2_grid) = if has_pdf1 && has_pdf2 {
+                let (x1_grid, x2_grid) = if convolutions == 2 {
                     (
                         grid.kinematics()
                             .iter()
@@ -286,19 +311,6 @@ pub fn convert_into_applgrid(
                             })
                             // TODO: convert this into an error
                             .unwrap(),
-                    )
-                } else if has_pdf1 {
-                    (
-                        grid.kinematics()
-                            .iter()
-                            .zip(subgrid.node_values())
-                            .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 0)
-                                    .then_some(node_values)
-                            })
-                            // TODO: convert this into an error
-                            .unwrap(),
-                        Vec::new(),
                     )
                 } else {
                     (
@@ -306,7 +318,7 @@ pub fn convert_into_applgrid(
                             .iter()
                             .zip(subgrid.node_values())
                             .find_map(|(kin, node_values)| {
-                                matches!(kin, &Kinematics::X(idx) if idx == 1)
+                                matches!(kin, &Kinematics::X(idx) if idx == 0)
                                     .then_some(node_values)
                             })
                             // TODO: convert this into an error
@@ -365,7 +377,7 @@ pub fn convert_into_applgrid(
                         weightgrid.as_mut(),
                         appl_q2_idx,
                         appl_x1_idx[indices[1]],
-                        if has_pdf1 && has_pdf2 {
+                        if convolutions == 2 {
                             appl_x2_idx[indices[2]]
                         } else {
                             0
@@ -383,7 +395,7 @@ pub fn convert_into_applgrid(
             unsafe {
                 applgrid.pin_mut().add_igrid(
                     bin.try_into().unwrap(),
-                    appl_order.try_into().unwrap(),
+                    appl_order.into(),
                     igrid.into_raw(),
                 );
             }

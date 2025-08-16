@@ -27,7 +27,8 @@ use std::{iter, mem};
 const BIN_AXIS: Axis = Axis(1);
 
 // const ORDER_AXIS: Axis = Axis(0);
-// const CHANNEL_AXIS: Axis = Axis(2);
+
+const CHANNEL_AXIS: Axis = Axis(2);
 
 #[derive(Clone, Deserialize, Serialize)]
 struct Mmv4;
@@ -943,17 +944,8 @@ impl Grid {
                     .multi_slice_mut((s![.., .., index], s![.., .., other_index]));
 
                 for (lhs, rhs) in a.iter_mut().zip(b.iter_mut()) {
-                    if !rhs.is_empty() {
-                        if lhs.is_empty() {
-                            // we can't merge into an EmptySubgridV1
-                            *lhs = mem::replace(rhs, EmptySubgridV1.into());
-                            // transpose `lhs`
-                            todo!();
-                        } else {
-                            lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
-                            *rhs = EmptySubgridV1.into();
-                        }
-                    }
+                    lhs.merge(rhs, Some((a_subgrid, b_subgrid)));
+                    *rhs = EmptySubgridV1.into();
                 }
             }
         }
@@ -1410,6 +1402,21 @@ impl Grid {
             })
             .collect();
     }
+
+    /// Merges the factors of the channels into the subgrids to normalize channel coefficients.
+    ///
+    /// This method factors out the smallest absolute coefficient from each channel using
+    /// [`boc::Channel::factor`] and then scales the corresponding subgrids by these factors.
+    pub fn merge_channel_factors(&mut self) {
+        let (factors, new_channels): (Vec<_>, Vec<_>) =
+            self.channels().iter().map(Channel::factor).unzip();
+
+        for (mut subgrids_bo, &factor) in self.subgrids.axis_iter_mut(CHANNEL_AXIS).zip(&factors) {
+            subgrids_bo.map_inplace(|subgrid| subgrid.scale(factor));
+        }
+
+        self.channels = new_channels;
+    }
 }
 
 #[cfg(test)]
@@ -1746,6 +1753,32 @@ mod tests {
         assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
+    }
+
+    #[test]
+    fn grid_merge_channel_factors() {
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![Channel::new(vec![(vec![1, -1], 0.5), (vec![2, -2], 2.5)])],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+
+        grid.merge_channel_factors();
+        grid.channels().iter().all(|channel| {
+            channel
+                .entry()
+                .iter()
+                .all(|(_, fac)| (*fac - 1.0).abs() < f64::EPSILON)
+        });
     }
 
     #[test]

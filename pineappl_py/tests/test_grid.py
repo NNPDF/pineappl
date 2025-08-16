@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 import pytest
-import tempfile
 
 from numpy.random import Generator, PCG64
 
@@ -162,7 +161,7 @@ class TestGrid:
         with pytest.raises(expected_exception=IndexError):
             assert g.channels()[1]
 
-    def test_write(self, fake_grids):
+    def test_write(self, fake_grids, tmp_path):
         g = fake_grids.grid_with_generic_convolution(
             nb_convolutions=2,
             channels=CHANNELS,
@@ -171,9 +170,9 @@ class TestGrid:
         )
 
         # Test writing/dumping the FK table into disk
-        with tempfile.TemporaryDirectory() as tmpdir:
-            g.write(f"{tmpdir}/toy_grid.pineappl")
-            g.write_lz4(f"{tmpdir}/toy_grid.pineappl.lz4")
+        path = f"{tmp_path}/toy_grid.pineappl"
+        g.write(path)
+        g.write_lz4(path)
 
     def test_set_subgrid(self, fake_grids):
         # Test a proper DIS-case
@@ -398,6 +397,48 @@ class TestGrid:
 
         # Check the convolutions of the GRID
         np.testing.assert_allclose(g.convolve(**params), expected)
+
+    def test_grid_rotations(
+        self,
+        pdf,
+        download_objects,
+        tmp_path,
+        gridname: str = "GRID_DYE906R_D_bin_1.pineappl.lz4",
+    ):
+        expected_results = [
+            +3.71019208e4,
+            +3.71019208e4,
+            +2.13727492e4,
+            -1.83941398e3,
+            +3.22728612e3,
+            +5.45646897e4,
+        ]  # Numbers computed using `v0.8.6`
+
+        grid = download_objects(f"{gridname}")
+        g = Grid.read(grid)
+
+        # rotate in the Evolution basis
+        g.rotate_pid_basis(PidBasis.Evol)
+        assert g.pid_basis == PidBasis.Evol
+
+        # merge the factors and check that the channels are to unity
+        g.split_channels()
+        g.merge_channel_factors()
+
+        # check that the convolutions are still the same
+        np.testing.assert_allclose(
+            g.convolve(
+                pdg_convs=g.convolutions,
+                xfxs=[pdf.polarized_pdf],
+                alphas=pdf.alphasQ,
+            ),
+            expected_results,
+        )
+
+        # check that the FK table can be loaded properly
+        path = f"{tmp_path}/grid_merged_factors.pineappl.lz4"
+        g.write_lz4(path)
+        _ = Grid.read(path)
 
     def test_unpolarized_convolution(
         self,

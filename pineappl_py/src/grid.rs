@@ -712,6 +712,11 @@ impl PyGrid {
         self.grid.rotate_pid_basis(pid_basis.into());
     }
 
+    /// Merge the factors of all the channels.
+    pub fn merge_channel_factors(&mut self) {
+        self.grid.merge_channel_factors();
+    }
+
     /// Scale all subgrids.
     ///
     /// Parameters

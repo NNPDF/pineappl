@@ -406,11 +406,7 @@ pub(crate) fn evolve_slice(
     let dim: Vec<_> = infos.iter().map(|info| info.x0.len()).collect();
 
     for subgrids_oc in grid.subgrids().axis_iter(Axis(1)) {
-        // Use Arc<Mutex<>> for thread-safe access to tables
-        let tables = Arc::new(Mutex::new(vec![
-            ArrayD::zeros(dim.clone());
-            channels0.len()
-        ]));
+        let mut tables = vec![ArrayD::zeros(dim.clone()); channels0.len()];
 
         for (subgrids_o, channel1) in subgrids_oc.axis_iter(Axis(1)).zip(grid.channels()) {
             let (x1, array) = ndarray_from_subgrid_orders_slice(
@@ -447,44 +443,30 @@ pub(crate) fn evolve_slice(
                 }
             }
 
-            // Collect channel entry operations for parallelization
-            let channel_operations: Vec<_> = channel1
-                .entry()
-                .iter()
-                .enumerate()
-                .map(|(entry_idx, (pids1, factor))| {
-                    let table_ops: Vec<_> = channels0
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(table_idx, pids0)| {
-                            izip!(pids0, pids1, &pids01, &eko_slices)
-                                .map(|(&pid0, &pid1, pids, slices)| {
-                                    pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
-                                        ((p0 == pid0) && (p1 == pid1)).then_some(op)
-                                    })
-                                })
-                                .collect::<Option<Vec<_>>>()
-                                .map(|ops| (table_idx, ops))
+            for (pids1, factor) in channel1.entry() {
+                // find the tuple of EKOs that evolve the current channel entry of the grid into
+                // every channel of the FK-table
+                let tmp = channels0.iter().map(|pids0| {
+                    izip!(pids0, pids1, &pids01, &eko_slices)
+                        .map(|(&pid0, &pid1, pids, slices)| {
+                            // for each convolution ...
+                            pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                // find the EKO that matches both the FK-table and the grid PID
+                                ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                            })
                         })
-                        .collect();
-                    (entry_idx, *factor, table_ops)
-                })
-                .collect();
-
-            // Parallelize across channel operations
-            channel_operations
-                .into_par_iter()
-                .for_each(|(_, factor, table_ops)| {
-                    table_ops.into_par_iter().for_each(|(table_idx, ops)| {
-                        // Create temporary result
-                        let mut temp_table = ArrayD::zeros(dim.clone());
-                        general_tensor_mul(factor, array.view(), &ops, temp_table.view_mut());
-
-                        // Add to main table under lock
-                        let mut tables_guard = tables.lock().unwrap();
-                        tables_guard[table_idx] += &temp_table;
-                    });
+                        // if an EKO isn't found, it's zero and therefore the whole FK-table
+                        // channel contribution will be zero
+                        .collect::<Option<Box<[_]>>>()
                 });
+
+                for (fk_table, ops) in tables.iter_mut().zip(tmp) {
+                    // if there's one zero EKO, the entire tuple is `None`
+                    if let Some(ops) = ops {
+                        general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                    }
+                }
+            }
         }
 
         let mut node_values = vec![scale_values.to_vec()];
@@ -492,7 +474,6 @@ pub(crate) fn evolve_slice(
             node_values.push(info.x0.clone());
         }
 
-        let tables = Arc::try_unwrap(tables).unwrap().into_inner().unwrap();
         sub_fk_tables.extend(tables.into_iter().map(|table| {
             ImportSubgridV1::new(
                 // TODO: insert one more axis if initial frg scale unequals fac
