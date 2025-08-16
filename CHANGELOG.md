@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
+
 ### Fixed
 
 - added a missing implementation for a branch in `Grid::merge` that was
@@ -36,13 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed a bug that caused `pineappl export` to fail when called with grid
   having non-trivial factors in their channel definitions
-
-### Changed
-
-- the function `evolution::evolve_slice` is now parallelized to take advantage
-  of the number of CPU cores available using the Rayon crate; the number of CPU
-  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
-  variable
 
 ## [1.0.0] - 10/06/2025
 
