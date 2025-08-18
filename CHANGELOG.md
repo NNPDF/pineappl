@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   offers this functionality via `pineappl write --repair` and it can also be
   accessed via Python
 
+### Fixed
+
+- added a missing implementation for a branch in `Grid::merge` that was
+  triggered when exporting some PineAPPL grids generated from the 'pinejet'
+  group
+- fixed wrong coupling orders when exporting to APPLgrid. This happened when
+  the PineAPPL grid had orders that had any other ordering than 'LO', 'NLO',
+  'NNLO'
+- fixed a bug that caused exported grids to compare unsuccessfully when the
+  convolution functions were proton-anti-proton; APPLgrid doesn't store the
+  types of convolution functions, so we simply convert the grid to use only
+  proton PDFs
+
 ## [1.1.0] - 08/07/2025
 
 ### Added

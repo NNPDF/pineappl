@@ -446,23 +446,27 @@ pub(crate) fn evolve_slice(
             }
 
             for (pids1, factor) in channel1.entry() {
-                for (fk_table, ops) in
-                    channels0
-                        .iter()
-                        .zip(tables.iter_mut())
-                        .filter_map(|(pids0, fk_table)| {
-                            izip!(pids0, pids1, &pids01, &eko_slices)
-                                .map(|(&pid0, &pid1, pids, slices)| {
-                                    pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
-                                        ((p0 == pid0) && (p1 == pid1)).then_some(op)
-                                    })
-                                })
-                                // TODO: avoid using `collect`
-                                .collect::<Option<Vec<_>>>()
-                                .map(|ops| (fk_table, ops))
+                // find the tuple of EKOs that evolve the current channel entry of the grid into
+                // every channel of the FK-table
+                let tmp = channels0.iter().map(|pids0| {
+                    izip!(pids0, pids1, &pids01, &eko_slices)
+                        .map(|(&pid0, &pid1, pids, slices)| {
+                            // for each convolution ...
+                            pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                // find the EKO that matches both the FK-table and the grid PID
+                                ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                            })
                         })
-                {
-                    general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                        // if an EKO isn't found, it's zero and therefore the whole FK-table
+                        // channel contribution will be zero
+                        .collect::<Option<Box<[_]>>>()
+                });
+
+                for (fk_table, ops) in tables.iter_mut().zip(tmp) {
+                    // if there's one zero EKO, the entire tuple is `None`
+                    if let Some(ops) = ops {
+                        general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                    }
                 }
             }
         }
