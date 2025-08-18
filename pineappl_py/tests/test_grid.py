@@ -190,6 +190,7 @@ class TestGrid:
             node_values=[np.array([90.0]), xs],
         )
         g.set_subgrid(0, 0, 0, subgrid.into())
+        assert not g.repair()
 
         xs = np.linspace(0.1, 1, 2)
         Q2s = np.linspace(10, 20, 2)
