@@ -444,13 +444,14 @@ pub(crate) fn evolve_slice(
                 }
             }
 
-            for (pids1, factor) in channel1.entry() {
-                // for each channel in the FK-table ...
-                tables
-                    .par_iter_mut()
-                    .zip(&channels0)
-                    .for_each(|(fk_table, pids0)| {
-                        // find the tuple of EKOs that evolve the current channel entry of the grid
+            // for each channel in the FK-table ...
+            tables
+                .par_iter_mut()
+                .zip(&channels0)
+                .for_each(|(fk_table, pids0)| {
+                    // and each sub-channel in the grid ...
+                    for (pids1, factor) in channel1.entry() {
+                        // find the tuple of EKOs that evolve this combination
                         let ops: Option<Box<[_]>> = izip!(pids0, pids1, &pids01, &eko_slices)
                             .map(|(&pid0, &pid1, pids, slices)| {
                                 // for each convolution ...
@@ -467,8 +468,8 @@ pub(crate) fn evolve_slice(
                         if let Some(ops) = ops {
                             general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
                         }
-                    });
-            }
+                    }
+                });
         }
 
         let mut node_values = vec![scale_values.to_vec()];
