@@ -455,9 +455,9 @@ pub(crate) fn evolve_slice(
                         let ops: Option<Box<[_]>> = izip!(pids0, pids1, &pids01, &eko_slices)
                             .map(|(&pid0, &pid1, pids, slices)| {
                                 // for each convolution ...
-                                pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
+                                pids.iter().zip(slices).find_map(|(pid01, op)| {
                                     // find the EKO that matches both the FK-table and the grid PID
-                                    ((p0 == pid0) && (p1 == pid1)).then_some(op)
+                                    (pid01 == &(pid0, pid1)).then_some(op)
                                 })
                             })
                             // if an EKO isn't found, it's zero and therefore the whole FK-table
