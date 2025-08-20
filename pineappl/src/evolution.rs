@@ -445,12 +445,13 @@ pub(crate) fn evolve_slice(
             }
 
             for (pids1, factor) in channel1.entry() {
-                // find the tuple of EKOs that evolve the current channel entry of the grid into
-                // every channel of the FK-table
-                let tmp: Vec<_> = channels0
-                    .iter()
-                    .map(|pids0| {
-                        izip!(pids0, pids1, &pids01, &eko_slices)
+                // for each channel in the FK-table ...
+                tables
+                    .par_iter_mut()
+                    .zip(&channels0)
+                    .for_each(|(fk_table, pids0)| {
+                        // find the tuple of EKOs that evolve the current channel entry of the grid
+                        let ops: Option<Box<[_]>> = izip!(pids0, pids1, &pids01, &eko_slices)
                             .map(|(&pid0, &pid1, pids, slices)| {
                                 // for each convolution ...
                                 pids.iter().zip(slices).find_map(|(&(p0, p1), op)| {
@@ -460,16 +461,13 @@ pub(crate) fn evolve_slice(
                             })
                             // if an EKO isn't found, it's zero and therefore the whole FK-table
                             // channel contribution will be zero
-                            .collect::<Option<Box<[_]>>>()
-                    })
-                    .collect();
+                            .collect();
 
-                tables.par_iter_mut().zip(tmp).for_each(|(fk_table, ops)| {
-                    // if there's one zero EKO, the entire tuple is `None`
-                    if let Some(ops) = ops {
-                        general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
-                    }
-                });
+                        // if there's one zero EKO, the entire tuple is `None`
+                        if let Some(ops) = ops {
+                            general_tensor_mul(*factor, array.view(), &ops, fk_table.view_mut());
+                        }
+                    });
             }
         }
 
