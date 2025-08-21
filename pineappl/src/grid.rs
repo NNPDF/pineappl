@@ -628,6 +628,26 @@ impl Grid {
             .for_each(|subgrid| subgrid.scale(factor));
     }
 
+    /// Repair the grid if it was written by bugged versions to disk.
+    ///
+    /// Returns `true` if this operations did anything. Currently, this scans for these problems:
+    /// - <https://github.com/NNPDF/pineappl/issues/338>
+    pub fn repair(&mut self) -> bool {
+        let mut repaired = false;
+
+        for subgrid in &mut self.subgrids {
+            // if the subgrid states it isn't empty and also doesn't return any elements it's
+            // broken; we need to fix that to avoid <https://github.com/NNPDF/pineappl/issues/338>
+            if !subgrid.is_empty() && subgrid.indexed_iter().count() == 0 {
+                *subgrid = EmptySubgridV1.into();
+
+                repaired = true;
+            }
+        }
+
+        repaired
+    }
+
     /// Scales each subgrid by a factor which is the product of the given values `alphas`, `alpha`,
     /// `logxir`, and `logxif`, each raised to the corresponding powers for each subgrid. In
     /// addition, every subgrid is scaled by a factor `global` independently of its order.
@@ -1589,6 +1609,39 @@ mod tests {
         assert_eq!(grid.bwfl().len(), 4);
         assert_eq!(grid.channels().len(), 2);
         assert_eq!(grid.orders().len(), 1);
+    }
+
+    #[test]
+    fn grid_repair() {
+        use super::super::packed_array::PackedArray;
+        // create emtpy grid
+        let mut grid = Grid::new(
+            BinsWithFillLimits::from_fill_limits([0.0, 0.25, 0.5, 0.75, 1.0].to_vec()).unwrap(),
+            vec![Order::new(0, 2, 0, 0, 0)],
+            vec![channel![1.0 * (2, 2) + 1.0 * (4, 4)]],
+            PidBasis::Pdg,
+            vec![Conv::new(ConvType::UnpolPDF, 2212); 2],
+            v0::default_interps(false, 2),
+            vec![Kinematics::Scale(0), Kinematics::X(0), Kinematics::X(1)],
+            Scales {
+                ren: ScaleFuncForm::Scale(0),
+                fac: ScaleFuncForm::Scale(0),
+                frg: ScaleFuncForm::NoScale,
+            },
+        );
+        let was_repaired = grid.repair();
+        assert!(!was_repaired);
+        // insert nothing
+        let x = vec![
+            0.015625, 0.03125, 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0,
+        ];
+        let mut ar = PackedArray::new(vec![1, 10, 10]);
+        ar[[0, 0, 0]] = 0.;
+        let sg: SubgridEnum =
+            ImportSubgridV1::new(ar, vec![vec![0.0], x.clone(), x.clone()]).into();
+        grid.subgrids_mut()[[0, 0, 0]] = sg;
+        let was_repaired = grid.repair();
+        assert!(was_repaired);
     }
 
     #[test]

@@ -41,6 +41,7 @@ enum OpsArg {
     MulBinNorm(f64),
     Optimize(bool),
     OptimizeFkTable(FkAssumptions),
+    Repair(bool),
     RewriteChannel((usize, Channel)),
     RewriteOrder((usize, Order)),
     RotatePidBasis(PidBasis),
@@ -85,7 +86,7 @@ impl FromArgMatches for MoreArgs {
                         });
                     }
                 }
-                "merge_channel_factors" | "optimize" | "split_channels" | "upgrade" => {
+                "merge_channel_factors" | "optimize" | "repair" | "split_channels" | "upgrade" => {
                     let arguments: Vec<Vec<_>> = matches
                         .remove_occurrences(&id)
                         .unwrap()
@@ -98,6 +99,7 @@ impl FromArgMatches for MoreArgs {
                         args[index] = Some(match id.as_str() {
                             "merge_channel_factors" => OpsArg::MergeChannelFactors(arg[0]),
                             "optimize" => OpsArg::Optimize(arg[0]),
+                            "repair" => OpsArg::Repair(arg[0]),
                             "split_channels" => OpsArg::SplitChannels(arg[0]),
                             "upgrade" => OpsArg::Upgrade(arg[0]),
                             _ => unreachable!(),
@@ -395,6 +397,17 @@ impl Args for MoreArgs {
                 ),
         )
         .arg(
+            Arg::new("repair")
+                .action(ArgAction::Append)
+                .default_missing_value("true")
+                .help("Repair bugs saved in the grid")
+                .long("repair")
+                .num_args(0..=1)
+                .require_equals(true)
+                .value_name("ENABLE")
+                .value_parser(clap::value_parser!(bool)),
+        )
+        .arg(
             Arg::new("rewrite_channel")
                 .action(ArgAction::Append)
                 .allow_hyphen_values(true)
@@ -583,6 +596,9 @@ impl Subcommand for Opts {
                     // UNWRAP: this cannot fail because we only modify the normalizations
                     .unwrap();
                 }
+                OpsArg::Repair(true) => {
+                    grid.repair();
+                }
                 OpsArg::RewriteChannel((index, new_channel)) => {
                     // TODO: check that `index` is valid
                     grid.channels_mut()[*index] = new_channel.clone();
@@ -618,6 +634,7 @@ impl Subcommand for Opts {
                 OpsArg::SplitChannels(true) => grid.split_channels(),
                 OpsArg::Upgrade(true) => grid.upgrade(),
                 OpsArg::MergeChannelFactors(false)
+                | OpsArg::Repair(false)
                 | OpsArg::Optimize(false)
                 | OpsArg::SplitChannels(false)
                 | OpsArg::Upgrade(false) => {}

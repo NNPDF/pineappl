@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- the function `Grid::evolve` now makes use of parallelization to take advantage
-  of the number of CPU cores available using the Rayon crate; the number of CPU
-  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
-  variable
+- added `Grid::repair` to repair bugs that survived by writing bugged grids to
+  disk, for example <https://github.com/NNPDF/pineappl/issues/338>. The CLI
+  offers this functionality via `pineappl write --repair` and it can also be
+  accessed via Python
 
 ### Fixed
 
@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   convolution functions were proton-anti-proton; APPLgrid doesn't store the
   types of convolution functions, so we simply convert the grid to use only
   proton PDFs
+
+### Changed
+
+- the function `Grid::evolve` now makes use of parallelization to take advantage
+  of the number of CPU cores available using the Rayon crate; the number of CPU
+  cores to be used can be controlled via the `RAYON_NUM_THREADS` environment
+  variable
 
 ## [1.1.0] - 08/07/2025
 

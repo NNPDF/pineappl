@@ -811,6 +811,11 @@ impl PyGrid {
     pub fn split_channels(&mut self) {
         self.grid.split_channels();
     }
+
+    /// Repair the grid if it was written by bugged versions to disk.
+    pub fn repair(&mut self) -> bool {
+        self.grid.repair()
+    }
 }
 
 /// Register submodule in parent.
